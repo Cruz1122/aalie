@@ -8,7 +8,8 @@
     "strict": true,
     "skipLibCheck": true,
     "verbatimModuleSyntax": true,
-    "outDir": "./src/ts"
+    "outDir": "./dist"
   },
-  "include": ["src/ts"]
+  "include": ["src/ts/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]
 }
