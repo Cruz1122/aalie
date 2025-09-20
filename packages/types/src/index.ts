@@ -1,7 +1,13 @@
 /** Salud / health */
-export interface Health { status: "ok"; }
-export interface HealthResponse extends Health {
-  ok?: boolean;
+export interface Health { 
+  status: "ok"; 
+}
+
+export interface HealthResponse {
+  ok: boolean;
+  service?: string;
+  error?: string;
+  status?: string;
 }
 
 /** ---- PARSE ---- */
@@ -17,6 +23,15 @@ export interface GrammarParseResponse extends ParseResponse {
   available?: boolean;
   runtime?: string;
   error?: string;
+}
+
+/** Type guard for GrammarParseResponse */
+export function isGrammarParseResponse(obj: unknown): obj is GrammarParseResponse {
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    typeof (obj as any).ok === "boolean"
+  );
 }
 
 /** ---- ANALYZE ---- */

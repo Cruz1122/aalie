@@ -2,7 +2,7 @@
 "use client";
 
 import { parseExpr } from "@aa/grammar";
-import type { GrammarParseRequest, GrammarParseResponse } from "@aa/types";
+import type { GrammarParseRequest } from "@aa/types";
 import { isGrammarParseResponse } from "@aa/types";
 import { useEffect, useState } from "react";
 
@@ -36,7 +36,7 @@ export default function GrammarDebugPage() {
       const data: unknown = await res.json();
       if (isGrammarParseResponse(data)) {
         setApiOk(data.ok);
-        setApiAvail(data.available);
+        setApiAvail(data.available ?? null);
         if (data.error) setErr(String(data.error));
       } else {
         setErr("Respuesta del backend no coincide con el contrato.");

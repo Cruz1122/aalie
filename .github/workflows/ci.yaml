@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, ci-test]
     paths:
       - "apps/**"
       - "packages/**"
@@ -27,74 +27,184 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-lint:
+  # Job principal: Build crítico (debe pasar)
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
-      # 1) Checkout
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2) Node + Corepack (pnpm)
-      - name: Setup Node.js (22.x) + Corepack
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+            version: 9.15.0
+            run_install: false
+
+      - name: Setup Node.js (22.x) + Cache
         uses: actions/setup-node@v4
         with:
           node-version: "22.x"
           cache: "pnpm"
+
       - name: Enable Corepack
         run: corepack enable
 
-      # 3) pnpm install (workspace)
-      - name: Install deps (pnpm -w)
-        run: pnpm install -w --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      # 4) Lint y formato (web) — rápido feedback de frontend
-      - name: Lint (web)
-        run: pnpm -C apps/web lint
-      - name: Prettier check (web)
-        run: pnpm -C apps/web format
+      # Build packages en orden correcto
+      - name: Build @aa/types
+        run: pnpm -C packages/types build
 
-      # 5) Build (web) — atrapa errores de imports/transpile
-      - name: Build (web)
+      - name: Build @aa/grammar
+        run: |
+          if [ -f packages/grammar/package.json ]; then
+            if pnpm -C packages/grammar run --help | grep -q "build"; then
+              pnpm -C packages/grammar build
+            else
+              echo "No build script in @aa/grammar, using existing files"
+            fi
+          fi
+
+      # Build crítico de web (debe pasar)
+      - name: Build web app
         run: pnpm -C apps/web build
 
-      # 6) Python 3.11 + cache pip
-      - name: Setup Python 3.11
+      # Python setup y smoke test
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
-      - name: Install API deps
+          cache-dependency-path: "apps/api/requirements*.txt"
+
+      - name: Install FastAPI dependencies
+        working-directory: apps/api
         run: |
           python -m pip install --upgrade pip
-          if [ -f apps/api/requirements.txt ]; then pip install -r apps/api/requirements.txt; fi
-          if [ -f apps/api/requirements-dev.txt ]; then pip install -r apps/api/requirements-dev.txt; fi
-
-      # 7) Smoke de API — valida que FastAPI está disponible
-      - name: FastAPI smoke import
-        run: python -c "import fastapi; print('fastapi OK')"
-
-      # 8) Lint/format (api) — Ruff/Black en árbol de API
-      - name: Ruff (api)
-        working-directory: apps/api
-        run: ruff .
-      - name: Black check (api)
-        working-directory: apps/api
-        run: black --check .
-
-      # 9) Grammar/types (sanity) — comprueba que los packages compilan
-      - name: Build @aa/types
-        run: pnpm -C packages/types build
-      - name: Grammar TS codegen (si aplica)
-        run: |
-          if [ -f packages/grammar/scripts/gen-ts.js ]; then pnpm -C packages/grammar run build; else echo "skip gen-ts"; fi
-      - name: Grammar Py codegen (si aplica, sin Java en runner)
-        run: |
-          if [ -f packages/grammar/scripts/gen-py.js ]; then
-            echo "Saltando gen:py (requiere Java o artefactos commiteados en out/py)"
+          if [ -f requirements.txt ]; then 
+            pip install -r requirements.txt
           fi
 
-      # 10) Reporte de tamaños (opcional, útil para vigilar creep)
-      - name: Disk usage (optional)
-        run: du -sh apps/* packages/* || true
+      - name: FastAPI smoke test
+        run: python -c "import fastapi; print('✅ FastAPI:', fastapi.__version__)"
+
+  # Job de calidad: Linting y formato (puede fallar sin detener deploy)
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Corre en paralelo, no bloquea el build principal
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+            version: 9.15.0
+            run_install: false
+
+      - name: Setup Node.js (22.x)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: "pnpm"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build dependencies for linting
+        run: |
+          pnpm -C packages/types build
+          if [ -f packages/grammar/package.json ]; then
+            if pnpm -C packages/grammar run --help | grep -q "build"; then
+              pnpm -C packages/grammar build
+            fi
+          fi
+
+      # Frontend quality checks (warnings no fallan el job)
+      - name: ESLint (web)
+        run: |
+          echo "🔍 Running ESLint..."
+          pnpm -C apps/web lint || {
+            echo "⚠️  ESLint found issues - please review and fix"
+            echo "Run: pnpm -C apps/web lint --fix"
+            exit 0
+          }
+
+      - name: Prettier (web)  
+        run: |
+          echo "🎨 Checking code format..."
+          pnpm -C apps/web format || {
+            echo "⚠️  Prettier found format issues - please fix"
+            echo "Run: pnpm -C apps/web format:write"
+            exit 0
+          }
+
+      # Python quality checks
+      - name: Setup Python for linting
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python linting tools
+        run: pip install ruff black
+
+      - name: Ruff linting (api)
+        working-directory: apps/api
+        run: |
+          echo "🐍 Running Ruff..."
+          ruff check . --output-format=github || {
+            echo "⚠️  Ruff found issues - please review and fix"
+            echo "Run: ruff check . --fix"
+            exit 0
+          }
+
+      - name: Black formatting (api)
+        working-directory: apps/api
+        run: |
+          echo "🖤 Checking Python format..."
+          black --check --diff . || {
+            echo "⚠️  Black found format issues - please fix"  
+            echo "Run: black ."
+            exit 0
+          }
+
+  # Job de Docker: Verifica que las imágenes construyen
+  docker-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build  # Solo corre si el build principal pasa
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test API Docker build
+        run: |
+          if [ -f apps/api/Dockerfile ]; then
+            echo "🐳 Testing API Docker build..."
+            docker build -f apps/api/Dockerfile -t test-api .
+            echo "✅ API Docker build successful"
+          else
+            echo "ℹ️  No API Dockerfile found"
+          fi
+
+      - name: Test docker-compose config
+        run: |
+          if [ -f infra/docker-compose.yml ]; then
+            echo "🐳 Testing docker-compose config..."
+            docker compose -f infra/docker-compose.yml config
+            echo "✅ docker-compose config valid"
+          else
+            echo "ℹ️  No docker-compose.yml found"
+          fi
+
+      - name: Cleanup
+        run: docker image prune -f

@@ -4,6 +4,14 @@
   "private": true,
   "type": "module",
   "description": "Gramática ANTLR para el Analizador de Complejidad (TS y Python)",
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": {
+      "import": "./index.ts",
+      "types": "./index.ts"
+    }
+  },
   "scripts": {
     "build": "node ./scripts/gen-ts.js",
     "gen:py": "node ./scripts/gen-py.js",
