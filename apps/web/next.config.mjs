@@ -3,6 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   experimental: {
     typedRoutes: true
-  }
+  },
+  transpilePackages: ['@aa/grammar', '@aa/types', 'ui']
 };
 export default nextConfig;

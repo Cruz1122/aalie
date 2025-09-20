@@ -7,6 +7,8 @@ pnpm-debug.log*
 dist/
 .next/
 out/
+# Excepción: incluir parsers Python generados para evitar dependencia de Java
+!packages/grammar/out/
 
 # Logs
 logs/

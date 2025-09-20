@@ -1,5 +1,3 @@
 packages:
-  - "apps/web"
-  - "packages/grammar/ts"
-  - apps/*
-  - packages/types
+  - "apps/*"
+  - "packages/*"

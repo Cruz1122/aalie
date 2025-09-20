@@ -31,7 +31,7 @@ importers:
     dependencies:
       '@aa/grammar':
         specifier: workspace:^
-        version: link:../../packages/grammar/ts
+        version: link:../../packages/grammar
       '@aa/types':
         specifier: workspace:^
         version: link:../../packages/types
@@ -70,7 +70,7 @@ importers:
         specifier: 5.5.4
         version: 5.5.4
 
-  packages/grammar/ts:
+  packages/grammar:
     dependencies:
       antlr4ts:
         specifier: 0.5.0-alpha.4
@@ -79,6 +79,9 @@ importers:
       antlr4ts-cli:
         specifier: 0.5.0-alpha.4
         version: 0.5.0-alpha.4
+      rimraf:
+        specifier: 5.0.10
+        version: 5.0.10
       typescript:
         specifier: 5.5.4
         version: 5.5.4
@@ -820,6 +823,10 @@ packages:
   reusify@1.1.0:
     resolution: {integrity: sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw==}
     engines: {iojs: '>=1.0.0', node: '>=0.10.0'}
+
+  rimraf@5.0.10:
+    resolution: {integrity: sha512-l0OE8wL34P4nJH/H2ffoaniAokM2qSmrtXHmlpvYr5AVVX8msAyW0l8NVJFDxlSK4u3Uh/f41cQheDVdnYijwQ==}
+    hasBin: true
 
   run-parallel@1.2.0:
     resolution: {integrity: sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==}
@@ -1582,6 +1589,10 @@ snapshots:
       supports-preserve-symlinks-flag: 1.0.0
 
   reusify@1.1.0: {}
+
+  rimraf@5.0.10:
+    dependencies:
+      glob: 10.4.5
 
   run-parallel@1.2.0:
     dependencies:

@@ -82,7 +82,18 @@ from LanguageParser import LanguageParser
 
 - **antlr4ts@0.5.0-alpha.4**: Runtime TypeScript para parsers generados
 - **antlr4ts-cli@0.5.0-alpha.4**: CLI para generar parsers TypeScript
-- **Java 8+**: Requerido para generar parsers Python con el JAR oficial
+- **Java 8+**: Solo requerido para regenerar parsers Python (opcional en dev)
+
+## Archivos Python Pre-generados
+
+Los archivos Python generados (`out/py/`) están committeados en el repo para evitar que cada desarrollador necesite tener Java instalado. Solo necesitas Java si quieres modificar la gramática y regenerar los parsers.
+
+Para usar los parsers Python existentes, simplemente:
+```python
+# La API puede importar directamente sin regenerar
+sys.path.append('/path/to/packages/grammar/out/py')
+from LanguageLexer import LanguageLexer
+```
 
 ## Verificación rápida E2E
 
