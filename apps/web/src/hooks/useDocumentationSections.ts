@@ -6,7 +6,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
     {
       id: "arquitectura",
       title: "Arquitectura general",
-      description: "El sistema está dividido en dos apps principales: web (Next.js + TypeScript) y api (FastAPI + Python), con paquetes compartidos (grammar, types, ui) dentro del monorepo. La comunicación se realiza vía endpoints REST expuestos por FastAPI y consumidos desde la app web.",
+      description:
+        "Monorepo con web (Next.js+TS) y api (FastAPI+Py 3.11), más packages compartidos (grammar, types, ui). La web consume REST del backend (/parse para AST canónico, /analyze para conteos y T(n), /health) y expone un BFF /api/llm/compare para el LLM (Gemini u OpenAI, por env). Procesamiento sin estado: sin BD ni persistencia; todo en memoria por solicitud; desarrollo con Docker Compose.",
       image: {
         src: "/docs/arquitectura.webp",
         alt: "Arquitectura y flujo general",
@@ -18,7 +19,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
     {
       id: "ui-flujo",
       title: "Flujo de análisis en la UI",
-      description: "Desde el editor hasta los resultados, pasando por validaciones y vistas.",
+      description:
+        "El usuario escribe en Monaco (validación inmediata con parser TS en Web Worker); tras una pausa se llama a /parse y, con AST válido, a /analyze. La vista muestra código numerado, tabla de costos (C_k, #ejec, costo) y panel de visualizaciones; el modal ‘Procedimiento’ (Best/Avg/Worst) incluye supuestos, pasos en LaTeX con scroll horizontal y T(n) final; desde allí se dispara la comparación con el LLM.",
       image: {
         src: "/docs/ui-flujo.webp",
         alt: "Flujo de UI y resultados",
@@ -30,7 +32,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
     {
       id: "parse-analyze",
       title: "Backend: parse y analyze",
-      description: "El backend ofrece dos endpoints principales: /parse que genera un AST canónico y /analyze que evalúa costes, compone sumatorias y produce T(n) para Best/Avg/Worst usando SymPy.",
+      description:
+        "/parse usa ANTLR (Python) para devolver un AST canónico o errores con línea/columna; /analyze recibe el AST y opciones (C_k, modo, promedio), aplica reglas de conteo por línea, arma sumatorias y las cierra con SymPy para producir T_best/T_avg/T_worst con pasos en LaTeX y formas cerradas, sin almacenar código ni resultados.",
       image: {
         src: "/docs/parse-analyze.webp",
         alt: "Secuencia parse/analyze",
@@ -42,7 +45,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
     {
       id: "cfg-recursion",
       title: "Visualizaciones: CFG y Recursión",
-      description: "A partir del AST se generan grafos con Cytoscape para CFG y árboles recursivos.",
+      description:
+        "Desde el AST canónico se generan el CFG (bloques y flujo) y, si aplica, el árbol de recursión; ambos se renderizan con Cytoscape.js y se sincronizan con las líneas del código para trazabilidad y comprensión del origen de los términos de T(n).",
       image: {
         src: "/docs/cfg-recursion.webp",
         alt: "Generación de CFG y árbol de recursión",
@@ -54,7 +58,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
     {
       id: "errores",
       title: "Manejo de errores",
-      description: "Estrategias diferenciadas según fallo de API, gramática o sumatoria no cerrable.",
+      description:
+        "API caída → UX limitada con parser cliente y banner; gramática inválida → errores con línea/columna y sugerencias del LLM; sumatoria no cerrable → se muestra sumatoria abierta con recomendaciones (rango, cambio de variable, particiones) y diagnóstico asistido por LLM; no hay BD y los logs son técnicos y temporales.",
       image: {
         src: "/docs/errores.webp",
         alt: "Estrategias de manejo de errores",
@@ -66,7 +71,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
     {
       id: "llm",
       title: "Integración con LLM",
-      description: "Comparativa con LLM a través de un BFF en Next, con proveedores configurables.",
+      description:
+        "El LLM es parte del flujo: corrige gramática, reconoce patrones y estima T(n) con explicación; la web llama al BFF /api/llm/compare que invoca Gemini u OpenAI según variables de entorno y la UI muestra la comparativa (coincidencias, diferencias y supuestos).",
       image: {
         src: "/docs/llm.webp",
         alt: "Flujo de uso de LLM",
@@ -78,7 +84,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
     {
       id: "export",
       title: "Exportación de reportes",
-      description: "Generación de Markdown/HTML con tabla, T(n) (LaTeX) y notas del análisis.",
+      description:
+        "Exporta Markdown/HTML con tabla por línea, pasos en LaTeX y T(n) final para Best/Avg/Worst (opcionalmente con resumen de la comparativa LLM); la exportación no persiste datos y el archivo se genera y descarga al instante.",
       image: {
         src: "/docs/export.webp",
         alt: "Flujo de exportación de reportes",
