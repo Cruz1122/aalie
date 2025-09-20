@@ -9,11 +9,15 @@ services:
     ports:
       - "8000:8000"
     environment:
+      DEV_CORS_ENABLED: "1"
+      DEV_ALLOWED_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000"
       PYTHONDONTWRITEBYTECODE: "1"
       PYTHONUNBUFFERED: "1"
     volumes:
       # Monta solo el código de la API para recarga en caliente
       - ../apps/api:/usr/src/app/apps/api
+      # Monta packages para acceso a parsers grammar
+      - ../packages:/usr/src/app/packages
 
   web:
     build:

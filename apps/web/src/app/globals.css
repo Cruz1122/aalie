@@ -2,6 +2,337 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Variables CSS */
+:root {
+  --primary-color: #0d7ff2;
+}
+
+/* Efectos Glassmorphism */
+.glass {
+  background: rgba(24, 36, 49, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+.glass-header {
+  background: rgba(16, 26, 35, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(34, 54, 73, 0.5);
+}
+
+.glass-card {
+  background: rgba(24, 36, 49, 0.6);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  background: rgba(24, 36, 49, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.4);
+  transform: translateY(-2px);
+}
+
+.glass-button {
+  background: rgba(13, 127, 242, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(13, 127, 242, 0.3);
+  box-shadow: 0 4px 20px 0 rgba(13, 127, 242, 0.3);
+}
+
+.glass-button:hover {
+  background: rgba(13, 127, 242, 1);
+  box-shadow: 0 6px 25px 0 rgba(13, 127, 242, 0.4);
+}
+
+.glass-secondary {
+  background: rgba(34, 54, 73, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-secondary:hover {
+  background: rgba(42, 63, 83, 0.8);
+}
+
+.glass-modal-overlay {
+  background: linear-gradient(
+    135deg,
+    rgba(16, 26, 35, 0.6) 0%,
+    rgba(15, 20, 25, 0.8) 50%,
+    rgba(16, 26, 35, 0.9) 100%
+  );
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+}
+
+.glass-modal-header {
+  background: rgba(16, 26, 35, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.3);
+}
+
+.glass-modal-container {
+  background: rgba(24, 36, 49, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 60px 0 rgba(31, 38, 135, 0.4);
+}
+
 /* Ajustes mínimos globales */
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Fondo con gradiente sutil */
+body {
+  background: linear-gradient(135deg, #101a23 0%, #0f1419 100%);
+  min-height: 100vh;
+}
+
+/* Utilidades para líneas clamp */
+@layer utilities {
+  .line-clamp-4 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+  }
+
+  /* Focus visible mejorado */
+  .focus-visible-enhanced:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Transiciones suaves para elementos interactivos */
+  .transition-enhanced {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Mejores sombras para elementos elevados */
+  .shadow-enhanced {
+    box-shadow:
+      0 1px 3px 0 rgba(0, 0, 0, 0.1),
+      0 1px 2px 0 rgba(0, 0, 0, 0.06),
+      0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+
+  .shadow-enhanced-hover:hover {
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+
+  /* Consistencia en altura de cards */
+  .documentation-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+
+  @media (min-width: 768px) {
+    .documentation-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .documentation-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  /* Altura mínima consistente para cards */
+  .documentation-card {
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .documentation-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  /* Animaciones para el modal */
+  @keyframes modal-fade-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes modal-fade-out {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+  }
+
+  .modal-animate-in {
+    animation: modal-fade-in 0.2s ease-out forwards;
+  }
+
+  .modal-animate-out {
+    animation: modal-fade-out 0.15s ease-in forwards;
+  }
+
+  /* Estilos para kbd elements */
+  kbd {
+    font-family:
+      ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.875em;
+    font-weight: 500;
+  }
+
+  /* Scrollbar personalizada para el modal */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-track-transparent {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+
+  .scrollbar-thumb-white\/20::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-thumb-white\/20::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thumb-white\/20::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
+
+  .scrollbar-thumb-white\/20::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+
+  /* Animaciones específicas para el loader global */
+  @keyframes loader-pulse {
+    0%,
+    100% {
+      opacity: 0.4;
+      transform: scale(0.8);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes loader-bounce {
+    0%,
+    80%,
+    100% {
+      transform: scale(0);
+      opacity: 0.5;
+    }
+    40% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes loader-rotate {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Clases de utilidad para el loader */
+  .loader-animate-pulse {
+    animation: loader-pulse 2s ease-in-out infinite;
+  }
+
+  .loader-animate-bounce {
+    animation: loader-bounce 1.4s ease-in-out infinite;
+  }
+
+  .loader-animate-rotate {
+    animation: loader-rotate 1s linear infinite;
+  }
+
+  /* Estilos para zoom de imagen en modal */
+  .image-zoom-transition {
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .image-zoomed {
+    transform-origin: center;
+    cursor: zoom-out;
+  }
+
+  .image-normal {
+    cursor: zoom-in;
+  }
+
+  /* Mejoras para el backdrop del modal con zoom */
+  .modal-backdrop-zoomed {
+    backdrop-filter: blur(20px);
+    background: rgba(16, 26, 35, 0.95);
+  }
+
+  /* Estilos para modal fullscreen sin scroll */
+  dialog {
+    max-width: none;
+    max-height: none;
+  }
+
+  dialog::backdrop {
+    background: transparent;
+  }
+
+  /* Prevenir scroll en cualquier elemento del modal */
+  .modal-no-scroll {
+    overflow: hidden !important;
+    overscroll-behavior: none;
+  }
+
+  /* Mejorar el ajuste de imagen en diferentes aspectos */
+  .modal-image-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+}

@@ -11,6 +11,23 @@
     "dev": "pnpm -r dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
-    "lint": "pnpm -r lint"
+    "lint:web": "pnpm -C apps/web lint",
+    "lint:web:fix": "pnpm -C apps/web lint:fix",
+    "format:web": "pnpm -C apps/web format",
+    "format:web:write": "pnpm -C apps/web format:write",
+
+    "lint:api": "cd infra && docker compose exec -T api ruff check .",
+    "format:api": "cd infra && docker compose exec -T api black .",
+
+    "lint:all": "pnpm run lint:web || true && pnpm run lint:api",
+    "format:all": "pnpm run format:web || true && pnpm run format:api"
+  },
+  "dependencies": {
+    "antlr4ts": "0.5.0-alpha.4",
+    "antlr4ts-cli": "0.5.0-alpha.4",
+    "next": "^15.5.3",
+    "pnpm": "^10.15.1",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
   }
 }

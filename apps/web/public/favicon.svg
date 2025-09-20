@@ -1,0 +1,32 @@
+<svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Aristas formando la estrella -->
+  <!-- Nodo superior a todos los otros (formando la estrella) -->
+  <line x1="50" y1="15" x2="18" y2="38" stroke="white" stroke-width="2"/>
+  <line x1="50" y1="15" x2="82" y2="38" stroke="white" stroke-width="2"/>
+  <line x1="50" y1="15" x2="25" y2="75" stroke="white" stroke-width="2"/>
+  <line x1="50" y1="15" x2="75" y2="75" stroke="white" stroke-width="2"/>
+  
+  <!-- Conexiones entre nodos laterales y inferiores (completando la estrella) -->
+  <line x1="18" y1="38" x2="75" y2="75" stroke="white" stroke-width="2"/>
+  <line x1="82" y1="38" x2="25" y2="75" stroke="white" stroke-width="2"/>
+  
+  <!-- Conexiones entre nodos del mismo nivel -->
+  <line x1="18" y1="38" x2="82" y2="38" stroke="white" stroke-width="2"/>
+  <line x1="25" y1="75" x2="75" y2="75" stroke="white" stroke-width="2"/>
+  
+  <!-- Conexiones cruzadas adicionales -->
+  <line x1="18" y1="38" x2="25" y2="75" stroke="white" stroke-width="2"/>
+  <line x1="82" y1="38" x2="75" y2="75" stroke="white" stroke-width="2"/>
+  
+  <!-- 5 Nodos -->
+  <!-- Nodo superior (centro de la estrella) -->
+  <circle cx="50" cy="15" r="4" fill="white" stroke="white" stroke-width="1"/>
+  
+  <!-- Nodos laterales superiores -->
+  <circle cx="18" cy="38" r="4" fill="white" stroke="white" stroke-width="1"/>
+  <circle cx="82" cy="38" r="4" fill="white" stroke="white" stroke-width="1"/>
+  
+  <!-- Nodos inferiores -->
+  <circle cx="25" cy="75" r="4" fill="white" stroke="white" stroke-width="1"/>
+  <circle cx="75" cy="75" r="4" fill="white" stroke="white" stroke-width="1"/>
+</svg>
