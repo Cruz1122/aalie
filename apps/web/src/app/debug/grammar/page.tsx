@@ -2,7 +2,7 @@
 "use client";
 
 import { parseExpr } from "@aa/grammar";
-import type { GrammarParseRequest, GrammarParseResponse } from "@aa/types";
+import type { GrammarParseRequest } from "@aa/types";
 import { isGrammarParseResponse } from "@aa/types";
 import { useEffect, useState } from "react";
 

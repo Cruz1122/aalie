@@ -59,6 +59,19 @@ jobs:
       - name: Build @aa/types (required by web)
         run: pnpm -C packages/types build
 
+      - name: Build @aa/grammar (required by web)
+        run: |
+          if [ -f packages/grammar/package.json ]; then
+            if pnpm -C packages/grammar run --help | grep -q "build"; then
+              pnpm -C packages/grammar build
+              echo "@aa/grammar built successfully"
+            else
+              echo "No build script in @aa/grammar, using existing files"
+            fi
+          else
+            echo "No @aa/grammar package found"
+          fi
+
       # 5) Lint y formato (web) — rápido feedback de frontend
       - name: Lint (web)
         run: pnpm -C apps/web lint
