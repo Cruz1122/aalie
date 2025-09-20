@@ -65,11 +65,11 @@ export const useDocumentationSections = (): DocumentationSection[] => {
     },
     {
       id: "llm",
-      title: "Integración con LLM (opcional)",
+      title: "Integración con LLM",
       description: "Comparativa con LLM a través de un BFF en Next, con proveedores configurables.",
       image: {
         src: "/docs/llm.webp",
-        alt: "Flujo de uso de LLM opcional",
+        alt: "Flujo de uso de LLM",
         width: 2000,
         height: 750,
         caption: "Ruta de comparación con LLM y retorno a la UI"
