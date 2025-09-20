@@ -88,6 +88,9 @@ importers:
 
   packages/types:
     devDependencies:
+      rimraf:
+        specifier: 5.0.10
+        version: 5.0.10
       typescript:
         specifier: 5.5.4
         version: 5.5.4
