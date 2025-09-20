@@ -6,7 +6,7 @@ import type { HealthResponse } from "@aa/types";
 
 type Props = { intervalMs?: number };
 
-export default function HealthStatus({ intervalMs = 10_000 }: Readonly<Props>) {
+export default function HealthStatus({ intervalMs = 20_000 }: Readonly<Props>) {
   const [up, setUp] = useState<boolean | null>(null);
   const [msg, setMsg] = useState<string>("Comprobando…");
 

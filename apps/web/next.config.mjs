@@ -4,6 +4,6 @@ const nextConfig = {
   experimental: {
     typedRoutes: true
   },
-  transpilePackages: ['@aa/grammar', '@aa/types', 'ui']
+  transpilePackages: ['@aa/grammar', '@aa/types']
 };
 export default nextConfig;

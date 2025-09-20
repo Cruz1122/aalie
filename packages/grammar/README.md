@@ -1,23 +1,63 @@
-# Grammar Package
+# @aa/grammar
 
-Gramática ANTLR para el Analizador de Complejidad que genera parsers tanto para TypeScript (cliente web) como Python (servidor API).
+**Paquete de gramática ANTLR para análisis de complejidad algorítmica**
 
-## Estructura
+## Propósito
+
+El paquete `@aa/grammar` define la gramática ANTLR y genera los parsers para ambos mundos: TypeScript (cliente/Next.js) y Python (servidor/FastAPI). Provee un AST canónico idéntico en cliente y servidor, garantizando que el pseudocódigo se interpreta igual en la UI (validaciones rápidas) y en el backend (análisis formal).
+
+## Arquitectura
 
 ```
-packages/grammar/
-  package.json          # Dependencias y scripts
-  tsconfig.json         # Configuración TypeScript
-  scripts/
-    gen-ts.js           # Generador TS (antlr4ts-cli)
-    gen-py.js           # Generador Python (JAR oficial)
-  grammar/
-    Language.g4         # Gramática ANTLR
-  src/ts/               # Salida TypeScript generada
-  out/py/               # Salida Python generada
-  tooling/
-    antlr-4.13.2-complete.jar  # JAR oficial de ANTLR
+@aa/grammar
+├── grammar/Language.g4      # Definición de la gramática ANTLR
+├── src/ts/                  # Parsers generados para TypeScript
+├── out/py/                  # Parsers generados para Python
+├── scripts/
+│   ├── gen-ts.js           # Generador para TypeScript (antlr4ts)
+│   └── gen-py.js           # Generador para Python
+└── tooling/antlr-4.13.2-complete.jar
 ```
+
+## Entradas y Salidas
+
+### Entrada
+- **Pseudocódigo del usuario**: Código estructurado que sigue la gramática definida en `Language.g4`
+
+### Salidas
+- **TypeScript** (`src/ts/`): Lexer/Parser/Visitor para validación y UX en Next.js
+- **Python** (`out/py/`): Lexer/Parser/Visitor para análisis formal en FastAPI
+
+## Quién lo usa
+
+- **Web (Next.js)**: Para validación en vivo y feedback inmediato al usuario
+- **API (FastAPI)**: Para parse canónico como fuente de verdad del análisis
+
+## Scripts de construcción
+
+```bash
+# Generar parsers TypeScript
+pnpm run gen:ts
+
+# Generar parsers Python  
+pnpm run gen:py
+
+# Generar ambos
+pnpm run build
+```
+
+## Notas importantes
+
+- Los parsers Python (`out/py/`) se commitean para evitar exigir Java/ANTLR a todos los desarrolladores
+- Este paquete no persiste datos, solo transforma pseudocódigo en AST
+- Cualquier cambio en `Language.g4` requiere regenerar ambos conjuntos de parsers
+- La consistencia entre parsers TS/Python es crítica para la integridad del sistema
+
+## Dependencias
+
+- **ANTLR 4.13.2**: Generador de parsers
+- **antlr4ts**: Runtime TypeScript
+- **Node.js**: Para scripts de generación
 
 ## Instalación
 

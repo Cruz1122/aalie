@@ -93,6 +93,52 @@ export const useDocumentationSections = (): DocumentationSection[] => {
         height: 768,
         caption: "Secuencia de exportación desde la UI"
       }
+    },
+    {
+      id: "monorepo-packages",
+      title: "Paquetes del Monorepo",
+      description:
+        "Este monorepo está organizado en dos paquetes especializados que trabajan en conjunto. El paquete @aa/grammar se encarga de definir la gramática ANTLR y generar parsers tanto para TypeScript como Python, garantizando que el AST sea idéntico entre cliente y servidor. Por otro lado, @aa/types centraliza todos los contratos de API y DTOs compartidos entre la web y el API, proporcionando tipado fuerte y consistencia. La interfaz de usuario utiliza componentes nativos cuidadosamente optimizados para ofrecer el máximo rendimiento.",
+      content: {
+        type: "packages",
+        packages: [
+          {
+            name: "@aa/grammar",
+            purpose: "Gramática ANTLR y parsers",
+            description: "Este paquete define la gramática del lenguaje y se encarga de generar parsers especializados. Para TypeScript, proporciona validación en tiempo real en el cliente, mientras que para Python genera el análisis formal en el servidor. Su objetivo principal es garantizar que ambos entornos interpreten el código de manera absolutamente idéntica, manteniendo un AST canónico.",
+            io: {
+              input: "Pseudocódigo del usuario",
+              outputs: ["TypeScript: src/ts/* (validación/UX)", "Python: out/py/* (análisis formal)"]
+            },
+            usedBy: ["Web (validación en vivo)", "API (parse canónico)"],
+            notes: ["Parsers Python pre-generados para evitar dependencia Java", "No persiste datos, solo transforma a AST", "Crítico para consistencia cliente-servidor"]
+          },
+          {
+            name: "@aa/types",
+            purpose: "Tipos y contratos compartidos",
+            description: "Funciona como la fuente central de verdad para todos los tipos y contratos del sistema. Contiene las interfaces TypeScript compartidas que definen la estructura de requests, responses, modelos de interfaz de usuario y estructuras de costes. Su importancia radica en prevenir desajustes entre el frontend y backend, asegurando comunicación perfecta.",
+            io: {
+              input: "Definiciones TypeScript en src/",
+              outputs: ["dist/index.{js,d.ts} consumible por cualquier paquete"]
+            },
+            usedBy: ["Web (tipado de llamadas/render)", "API (contratos y validación)"],
+            notes: ["Source of truth de contratos", "Cambios requieren versionar y alinear web/API", "Evita desajustes y 'tipo-copia'"]
+          }
+        ]
+      }
+    },
+    {
+      id: "ui-showcase",
+      title: "Demostración de Componentes Nativos",
+      description:
+        "Prueba interactiva de componentes nativos optimizados. Explora botones, modales, bloques LaTeX y tablas de costos implementados directamente con Tailwind CSS para máximo rendimiento.",
+      image: {
+        src: "/docs/ui-flujo.webp",
+        alt: "Componentes UI en acción",
+        width: 1600,
+        height: 1200,
+        caption: "Demostración de componentes nativos: botones, modales, LaTeX y tablas optimizadas"
+      }
     }
   ], []);
 };
