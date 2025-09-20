@@ -36,7 +36,7 @@ export default function GrammarDebugPage() {
       const data: unknown = await res.json();
       if (isGrammarParseResponse(data)) {
         setApiOk(data.ok);
-        setApiAvail(data.available);
+        setApiAvail(data.available ?? null);
         if (data.error) setErr(String(data.error));
       } else {
         setErr("Respuesta del backend no coincide con el contrato.");
