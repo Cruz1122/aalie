@@ -14,7 +14,7 @@ const notoSans = Noto_Sans({
 
 const splineSans = Spline_Sans({
   weight: ["400", "500", "700"],
-  subsets: ["latin"],  
+  subsets: ["latin"],
   display: "swap",
   variable: "--font-spline-sans",
 });
@@ -36,7 +36,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body
         className="min-h-screen bg-[#101a23] text-white antialiased"
-        style={{ fontFamily: 'var(--font-spline-sans), var(--font-noto-sans), sans-serif' }}
+        style={{ fontFamily: "var(--font-spline-sans), var(--font-noto-sans), sans-serif" }}
       >
         <GlobalLoaderProvider>
           {children}
