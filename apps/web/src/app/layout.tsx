@@ -1,4 +1,6 @@
 import "./globals.css";
+import { GlobalLoaderProvider } from "@/contexts/GlobalLoaderContext";
+import { GlobalLoaderOverlay } from "@/components/GlobalLoaderOverlay";
 
 export const metadata = {
   title: "Analizador de Complejidad",
@@ -9,6 +11,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="es">
       <head>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link 
           rel="stylesheet" 
@@ -20,7 +23,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
       </head>
       <body className="min-h-screen bg-[#101a23] text-white antialiased" style={{ fontFamily: '"Spline Sans", "Noto Sans", sans-serif' }}>
-        {children}
+        <GlobalLoaderProvider>
+          {children}
+          <GlobalLoaderOverlay />
+        </GlobalLoaderProvider>
       </body>
     </html>
   );
