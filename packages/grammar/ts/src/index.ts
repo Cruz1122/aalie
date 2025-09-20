@@ -1,13 +1,14 @@
 // path: packages/grammar/ts/src/index.ts
 
-// Re-exporta artefactos generados con rutas ESM válidas (extensión .js obligatoria)
-export { ExprLexer } from "./generated/ExprLexer.js";
-export { ExprParser } from "./generated/ExprParser.js";
-export { ExprVisitor } from "./generated/ExprVisitor.js";
+// Re-exporta artefactos generados con rutas ESM válidas (sin extensión .js)
+export { ExprLexer } from "./generated/ExprLexer";
+export { ExprParser } from "./generated/ExprParser";
+export type { ExprVisitor } from "./generated/ExprVisitor";
 
 import { CharStreams, CommonTokenStream } from "antlr4ts";
-import { ExprLexer } from "./generated/ExprLexer.js";
-import { ExprParser } from "./generated/ExprParser.js";
+import { ExprLexer } from "./generated/ExprLexer";
+import { ExprParser } from "./generated/ExprParser";
+
 
 /**
  * Devuelve true si el input es una expresión válida según la gramática.

@@ -1,80 +1,53 @@
+// path: apps/web/src/components/HealthStatus.tsx
 "use client";
 
 import { useEffect, useState } from "react";
+import type { HealthResponse } from "@aa/types";
 
-type BackendStatus = 'active' | 'warning' | 'error' | 'loading';
+type Props = { intervalMs?: number };
 
-export default function HealthStatus() {
-  const [status, setStatus] = useState<BackendStatus>('loading');
+export default function HealthStatus({ intervalMs = 10_000 }: Props) {
+  const [up, setUp] = useState<boolean | null>(null);
+  const [msg, setMsg] = useState<string>("Comprobando…");
+
+  async function check() {
+    try {
+      const res = await fetch("/api/health", { cache: "no-store" });
+      // Aunque el proxy responda 502/503, intentamos leer el JSON
+      const data = (await res.json().catch(() => ({}))) as Partial<HealthResponse> & {
+        status?: string;
+      };
+
+      const isUp =
+        data?.ok === true ||
+        (typeof data?.status === "string" &&
+          ["ok", "healthy", "up"].includes(data.status.toLowerCase()));
+
+      setUp(isUp);
+      setMsg(isUp ? "Backend conectado" : "Backend desconectado");
+    } catch {
+      setUp(false);
+      setMsg("Backend desconectado");
+    }
+  }
 
   useEffect(() => {
-    const checkBackend = async () => {
-      try {
-        const response = await fetch('/api/health');
-        
-        if (response.ok) {
-          const data = await response.json();
-          // Determinar estado basado en la respuesta
-          if (data.status === 'ok') {
-            setStatus('active');
-          } else if (data.status === 'warning') {
-            setStatus('warning');
-          } else {
-            setStatus('error');
-          }
-        } else {
-          setStatus('error');
-        }
-      } catch {
-        setStatus('error');
-      }
-    };
+    check();
+    const t = setInterval(check, intervalMs);
+    return () => clearInterval(t);
+  }, [intervalMs]);
 
-    checkBackend();
-    const interval = setInterval(checkBackend, 30000);
-    
-    return () => clearInterval(interval);
-  }, []);
-
-  const getStatusConfig = (status: BackendStatus) => {
-    switch (status) {
-      case 'active':
-        return {
-          color: 'bg-green-500',
-          text: 'Backend conectado',
-          textColor: 'text-green-400'
-        };
-      case 'warning':
-        return {
-          color: 'bg-yellow-500',
-          text: 'Backend con advertencia',
-          textColor: 'text-yellow-400'
-        };
-      case 'error':
-        return {
-          color: 'bg-red-500',
-          text: 'Backend desconectado',
-          textColor: 'text-red-400'
-        };
-      case 'loading':
-        return {
-          color: 'bg-gray-500 animate-pulse',
-          text: 'Verificando backend...',
-          textColor: 'text-gray-400'
-        };
-    }
-  };
-
-  const config = getStatusConfig(status);
+  const pillBase =
+    "inline-flex items-center gap-2 rounded-lg px-3 py-1 text-sm";
+  const style = up
+    ? "bg-green-900/40 text-green-300"
+    : "bg-red-900/40 text-red-300";
+  const dot = up ? "bg-green-400" : "bg-red-400";
 
   return (
-    <div className="glass-card p-4 rounded-md">
-      <div className="flex items-center gap-3">
-        <div className={`h-3 w-3 rounded-full ${config.color}`}></div>
-        <span className={`text-sm font-medium ${config.textColor}`}>
-          {config.text}
-        </span>
-      </div>
-    </div>
+    <span className={`${pillBase} ${style}`}>
+      <span className={`inline-block h-2.5 w-2.5 rounded-full ${dot}`} />
+      {msg}
+    </span>
   );
 }

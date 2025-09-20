@@ -2,6 +2,8 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Request
+
 
 from .core.config import get_dev_cors_enabled, get_dev_allowed_origins
 
@@ -23,3 +25,15 @@ if get_dev_cors_enabled():
 def health():
     # Respeta tu forma actual (JSON con {"status":"ok"})
     return JSONResponse({"status": "ok"})
+
+
+@app.post("/grammar/parse")
+async def grammar_parse(request: Request):
+    data = await request.json()
+    # Implementa aquí el parseo real, por ahora responde dummy:
+    return {
+        "ok": True,
+        "available": True,
+        "runtime": "python",
+        "error": None
+    }

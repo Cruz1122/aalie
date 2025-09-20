@@ -14,6 +14,8 @@
     "test": "echo \"(tests se agregarán más adelante)\" && exit 0"
   },
   "dependencies": {
+    "@aa/grammar": "workspace:^",
+    "@aa/types": "workspace:^",
     "lucide-react": "^0.544.0",
     "next": "14.2.0",
     "react": "18.3.1",

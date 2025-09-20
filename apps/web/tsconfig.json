@@ -18,7 +18,9 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+  "@/*": ["./src/*"],
+  "@aa/types": ["../../packages/types/src"],
+  "@aa/grammar": ["../../packages/grammar/ts/src"]
     },
     "skipLibCheck": true,
     "esModuleInterop": true,

@@ -1,0 +1,19 @@
+
+{
+  "name": "@aa/types",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared TypeScript types for algorithmic-analysis (API contracts & models)",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "node -e \"import('node:fs').then(fs=>fs.rmSync('dist',{recursive:true,force:true}))\"",
+    "rebuild": "pnpm run clean && pnpm run build"
+  },
+  "devDependencies": {
+    "typescript": "5.5.4"
+  }
+}
