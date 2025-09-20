@@ -1,11 +1,9 @@
 # path: apps/api/app/main.py
-from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import Request
+from fastapi.responses import JSONResponse
 
-
-from .core.config import get_dev_cors_enabled, get_dev_allowed_origins
+from .core.config import get_dev_allowed_origins, get_dev_cors_enabled
 
 app = FastAPI(title="algorithmic-analysis API", version="0.1.0")
 
@@ -20,6 +18,7 @@ if get_dev_cors_enabled():
         max_age=600,
     )
 
+
 # --- Rutas ---
 @app.get("/health")
 def health():
@@ -29,11 +28,6 @@ def health():
 
 @app.post("/grammar/parse")
 async def grammar_parse(request: Request):
-    data = await request.json()
+    _ = await request.json()  # TODO: Usar data para parseo real
     # Implementa aquí el parseo real, por ahora responde dummy:
-    return {
-        "ok": True,
-        "available": True,
-        "runtime": "python",
-        "error": None
-    }
+    return {"ok": True, "available": True, "runtime": "python", "error": None}

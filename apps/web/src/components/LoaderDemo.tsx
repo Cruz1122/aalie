@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useLoaderExamples } from '@/hooks/useLoaderExamples';
+import React from "react";
+
+import { useLoaderExamples } from "@/hooks/useLoaderExamples";
 
 export const LoaderDemo: React.FC = () => {
   const { showSimpleLoader, analyzeAlgorithm, quickOperation, waitingLoader } = useLoaderExamples();
@@ -9,9 +10,7 @@ export const LoaderDemo: React.FC = () => {
   return (
     <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl border border-slate-600/30 p-6 space-y-6">
       <header className="text-center">
-        <h3 className="text-xl font-bold text-white mb-2">
-          Demo del Loader Global
-        </h3>
+        <h3 className="text-xl font-bold text-white mb-2">Demo del Loader Global</h3>
         <p className="text-slate-300 text-sm">
           Prueba las diferentes variantes del loader integrado
         </p>
@@ -27,9 +26,7 @@ export const LoaderDemo: React.FC = () => {
             <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full group-hover:animate-spin" />
             <h4 className="font-semibold text-white">Spinner</h4>
           </div>
-          <p className="text-xs text-slate-400">
-            Loader básico para cargas simples como imágenes
-          </p>
+          <p className="text-xs text-slate-400">Loader básico para cargas simples como imágenes</p>
         </button>
 
         {/* Loader de progreso */}
@@ -43,9 +40,7 @@ export const LoaderDemo: React.FC = () => {
             </div>
             <h4 className="font-semibold text-white">Progreso</h4>
           </div>
-          <p className="text-xs text-slate-400">
-            Para análisis de algoritmos con pasos detallados
-          </p>
+          <p className="text-xs text-slate-400">Para análisis de algoritmos con pasos detallados</p>
         </button>
 
         {/* Loader dots */}
@@ -82,9 +77,7 @@ export const LoaderDemo: React.FC = () => {
             </div>
             <h4 className="font-semibold text-white">Pulse</h4>
           </div>
-          <p className="text-xs text-slate-400">
-            Para esperas prolongadas como conexiones
-          </p>
+          <p className="text-xs text-slate-400">Para esperas prolongadas como conexiones</p>
         </button>
       </div>
 

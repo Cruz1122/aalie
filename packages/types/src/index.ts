@@ -1,13 +1,22 @@
 /** Salud / health */
 export interface Health { status: "ok"; }
+export interface HealthResponse extends Health {
+  ok?: boolean;
+}
 
 /** ---- PARSE ---- */
 export interface ParseRequest { source: string; }
+export interface GrammarParseRequest { input: string; }
 export interface ParseError { line: number; column: number; message: string; }
 export interface ParseResponse {
   ok: boolean;
   ast?: unknown;          // AST canónico (forma interna)
   errors?: ParseError[];  // Errores con línea/columna
+}
+export interface GrammarParseResponse extends ParseResponse {
+  available?: boolean;
+  runtime?: string;
+  error?: string;
 }
 
 /** ---- ANALYZE ---- */

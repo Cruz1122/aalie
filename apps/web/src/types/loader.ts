@@ -1,6 +1,6 @@
-export type LoaderVariant = 'spinner' | 'dots' | 'progress' | 'pulse';
+export type LoaderVariant = "spinner" | "dots" | "progress" | "pulse";
 
-export type LoaderSize = 'sm' | 'md' | 'lg' | 'xl';
+export type LoaderSize = "sm" | "md" | "lg" | "xl";
 
 export interface LoaderConfig {
   variant?: LoaderVariant;

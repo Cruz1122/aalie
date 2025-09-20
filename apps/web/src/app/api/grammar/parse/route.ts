@@ -1,9 +1,6 @@
 // path: apps/web/src/app/api/grammar/parse/route.ts
+import type { GrammarParseRequest, GrammarParseResponse } from "@aa/types";
 import { NextRequest, NextResponse } from "next/server";
-import type {
-  GrammarParseRequest,
-  GrammarParseResponse
-} from "@aa/types";
 
 function getApiBase(): string {
   const a = process.env.API_INTERNAL_BASE_URL?.replace(/\/+$/, "");
@@ -17,7 +14,7 @@ export async function POST(req: NextRequest) {
   const API_BASE = getApiBase();
 
   // 1) Leer body con forma { input: string }
-  let body: GrammarParseRequest = { input: "" };
+  const body: GrammarParseRequest = { input: "" };
   try {
     const parsed = (await req.json()) as Partial<GrammarParseRequest>;
     if (typeof parsed.input === "string") body.input = parsed.input;
@@ -31,13 +28,11 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
-      cache: "no-store"
+      cache: "no-store",
     });
 
     // Intentar parsear JSON del backend
-    const data = (await r.json().catch(() => null)) as
-      | GrammarParseResponse
-      | null;
+    const data = (await r.json().catch(() => null)) as GrammarParseResponse | null;
 
     if (data && typeof data.ok === "boolean" && data.runtime === "python") {
       // Passthrough del contrato tipado del backend (conservando status)
@@ -49,7 +44,7 @@ export async function POST(req: NextRequest) {
       ok: false,
       available: false,
       runtime: "python",
-      error: `Bad backend response (${r.status})`
+      error: `Bad backend response (${r.status})`,
     };
     return NextResponse.json(fallback, { status: 502 });
   } catch (e: unknown) {
@@ -58,7 +53,7 @@ export async function POST(req: NextRequest) {
       ok: false,
       available: false,
       runtime: "python",
-      error: msg
+      error: msg,
     };
     return NextResponse.json(down, { status: 503 });
   }

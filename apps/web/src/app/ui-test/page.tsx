@@ -1,8 +1,9 @@
 "use client";
-import React, { useState } from "react";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { FlaskConical, Play, Calculator, Code, Sparkles, X } from "lucide-react";
+import React, { useState } from "react";
+
+import Footer from "@/components/Footer";
+import Header from "@/components/Header";
 
 // Datos de ejemplo
 const sampleTableData = [
@@ -21,41 +22,47 @@ const sampleProcedureData = {
         "T(n) = C_1(n+1) + C_2 \\cdot n + C_3 \\cdot n + C_4 \\cdot \\frac{n}{2}",
         "T(n) = C_1 n + C_1 + C_2 n + C_3 n + C_4 \\frac{n}{2}",
         "T(n) = n(C_1 + C_2 + C_3 + \\frac{C_4}{2}) + C_1",
-        "T(n) = \\Theta(n)"
+        "T(n) = \\Theta(n)",
       ],
       Tlatex: "T(n) = n(C_1 + C_2 + C_3 + \\frac{C_4}{2}) + C_1",
-      Tclosed: "T(n) = Θ(n)"
-    }
-  }
+      Tclosed: "T(n) = Θ(n)",
+    },
+  },
 };
 
 // Componentes nativos optimizados
-const NativeButton: React.FC<{ 
+const NativeButton: React.FC<{
   variant?: "primary" | "secondary" | "ghost";
   onClick?: () => void;
   children: React.ReactNode;
   className?: string;
 }> = ({ variant = "primary", onClick, children, className = "" }) => {
-  const baseClasses = "px-6 py-3 rounded-lg font-semibold transition-all duration-200 transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent";
-  
+  const baseClasses =
+    "px-6 py-3 rounded-lg font-semibold transition-all duration-200 transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent";
+
   const variantClasses = {
-    primary: "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg hover:shadow-xl focus:ring-green-500/50",
-    secondary: "glass-card backdrop-blur-sm border border-white/20 text-white hover:bg-white/10 shadow-lg hover:shadow-xl focus:ring-white/50",
-    ghost: "bg-transparent hover:bg-white/10 border border-transparent hover:border-white/20 text-slate-300 hover:text-white focus:ring-white/50"
+    primary:
+      "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg hover:shadow-xl focus:ring-green-500/50",
+    secondary:
+      "glass-card backdrop-blur-sm border border-white/20 text-white hover:bg-white/10 shadow-lg hover:shadow-xl focus:ring-white/50",
+    ghost:
+      "bg-transparent hover:bg-white/10 border border-transparent hover:border-white/20 text-slate-300 hover:text-white focus:ring-white/50",
   };
 
   return (
-    <button 
-      onClick={onClick}
-      className={`${baseClasses} ${variantClasses[variant]} ${className}`}
-    >
+    <button onClick={onClick} className={`${baseClasses} ${variantClasses[variant]} ${className}`}>
       {children}
     </button>
   );
 };
 
-const NativeLatexBlock: React.FC<{ formula: string; className?: string }> = ({ formula, className = "" }) => (
-  <pre className={`whitespace-pre-wrap text-sm leading-6 overflow-x-auto p-3 rounded-md bg-slate-900/40 text-slate-100 border border-white/10 ${className}`}>
+const NativeLatexBlock: React.FC<{ formula: string; className?: string }> = ({
+  formula,
+  className = "",
+}) => (
+  <pre
+    className={`whitespace-pre-wrap text-sm leading-6 overflow-x-auto p-3 rounded-md bg-slate-900/40 text-slate-100 border border-white/10 ${className}`}
+  >
     {formula}
   </pre>
 );
@@ -73,7 +80,7 @@ const NativeTableCosts: React.FC<{ rows: typeof sampleTableData }> = ({ rows }) 
         </tr>
       </thead>
       <tbody className="divide-y divide-white/10">
-        {rows.map(r => (
+        {rows.map((r) => (
           <tr key={r.no} className="bg-slate-900/40 hover:bg-slate-800/50 transition-colors">
             <td className="px-3 py-2 text-slate-200">{r.no}</td>
             <td className="px-3 py-2 font-mono text-[12px] text-slate-100">{r.code}</td>
@@ -94,7 +101,7 @@ export default function UITestPage() {
   return (
     <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">
       <Header />
-      
+
       <main className="flex-1 z-10 p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Header */}
@@ -108,8 +115,8 @@ export default function UITestPage() {
               Componentes Nativos de UI
             </h1>
             <p className="text-dark-text text-base sm:text-lg lg:text-xl leading-relaxed max-w-3xl mx-auto">
-              Demostración de componentes nativos optimizados para máximo rendimiento, 
-              sin dependencias externas.
+              Demostración de componentes nativos optimizados para máximo rendimiento, sin
+              dependencias externas.
             </p>
           </header>
 
@@ -122,10 +129,12 @@ export default function UITestPage() {
                 </div>
                 <div>
                   <h2 className="text-xl sm:text-2xl font-bold text-white">Botones Nativos</h2>
-                  <p className="text-dark-text text-sm">Botones con estilo glass-card, gradientes y transiciones optimizadas</p>
+                  <p className="text-dark-text text-sm">
+                    Botones con estilo glass-card, gradientes y transiciones optimizadas
+                  </p>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="flex flex-wrap gap-4">
                   <NativeButton variant="primary">Primary Button</NativeButton>
@@ -145,24 +154,28 @@ export default function UITestPage() {
                   <Code size={24} className="text-amber-400" />
                 </div>
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-white">Tabla de Análisis de Costos</h2>
-                  <p className="text-dark-text text-sm">Tabla nativa con scroll horizontal y colores optimizados</p>
+                  <h2 className="text-xl sm:text-2xl font-bold text-white">
+                    Tabla de Análisis de Costos
+                  </h2>
+                  <p className="text-dark-text text-sm">
+                    Tabla nativa con scroll horizontal y colores optimizados
+                  </p>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="text-sm text-slate-300 bg-slate-800/50 p-4 rounded-lg border border-white/10">
                   <h3 className="font-semibold text-amber-300 mb-2">Código de ejemplo:</h3>
                   <pre className="font-mono text-xs leading-relaxed">
-{`for i in range(n):
+                    {`for i in range(n):
     sum += i
     if i % 2 == 0:
         print(f'Even: {i}')`}
                   </pre>
                 </div>
-                
+
                 <NativeTableCosts rows={sampleTableData} />
-                
+
                 <p className="text-xs text-slate-400 text-center mt-4">
                   Renderizado nativo con hover effects y responsive design
                 </p>
@@ -177,22 +190,24 @@ export default function UITestPage() {
                 </div>
                 <div>
                   <h2 className="text-xl sm:text-2xl font-bold text-white">Bloques LaTeX</h2>
-                  <p className="text-dark-text text-sm">Renderizado simple de fórmulas con scroll horizontal</p>
+                  <p className="text-dark-text text-sm">
+                    Renderizado simple de fórmulas con scroll horizontal
+                  </p>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <p className="text-sm text-slate-300">
-                  Muestra las fórmulas como texto plano con formato preservado. 
-                  Se puede mejorar más tarde con un renderizador LaTeX si es necesario.
+                  Muestra las fórmulas como texto plano con formato preservado. Se puede mejorar más
+                  tarde con un renderizador LaTeX si es necesario.
                 </p>
-                
+
                 <div className="space-y-3">
                   <NativeLatexBlock formula="T(n) = C_1(n+1) + C_2 \cdot n + C_3 \cdot n + C_4 \cdot \frac{n}{2}" />
                   <NativeLatexBlock formula="T(n) = n(C_1 + C_2 + C_3 + \frac{C_4}{2}) + C_1" />
                   <NativeLatexBlock formula="T(n) = \Theta(n)" />
                 </div>
-                
+
                 <p className="text-xs text-slate-400">
                   Simple y eficiente, con opción de upgrade a KaTeX más tarde
                 </p>
@@ -206,11 +221,13 @@ export default function UITestPage() {
                   <Sparkles size={24} className="text-purple-400" />
                 </div>
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-white">Demostración Interactiva</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-white">
+                    Demostración Interactiva
+                  </h2>
                   <p className="text-dark-text text-sm">Modales nativos optimizados sin glitches</p>
                 </div>
               </div>
-              
+
               <div className="grid sm:grid-cols-2 gap-6">
                 <div className="space-y-4 p-6 rounded-lg bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20">
                   <h3 className="text-lg font-semibold text-blue-300">Modal Simple</h3>
@@ -221,7 +238,7 @@ export default function UITestPage() {
                     Abrir Modal
                   </NativeButton>
                 </div>
-                
+
                 <div className="space-y-4 p-6 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20">
                   <h3 className="text-lg font-semibold text-purple-300">Análisis Completo</h3>
                   <p className="text-sm text-slate-300">
@@ -240,12 +257,15 @@ export default function UITestPage() {
       {/* Modales nativos optimizados */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowModal(false)} />
+          <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowModal(false)}
+          />
           <div className="relative w-full max-w-[600px] glass-card rounded-xl p-6 border border-white/20 shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/20 pb-4 mb-4">
               <h3 className="text-xl font-semibold text-white">Modal Nativo Optimizado</h3>
-              <button 
-                onClick={() => setShowModal(false)} 
+              <button
+                onClick={() => setShowModal(false)}
                 className="text-slate-300 hover:text-white transition-colors p-1 hover:bg-white/10 rounded"
               >
                 <X size={20} />
@@ -280,12 +300,15 @@ export default function UITestPage() {
 
       {showProcedure && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowProcedure(false)} />
+          <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowProcedure(false)}
+          />
           <div className="relative w-full max-w-[1000px] max-h-[90vh] glass-card rounded-xl border border-white/20 shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between border-b border-white/20 p-6">
               <h3 className="text-xl font-semibold text-white">Análisis con Componentes Nativos</h3>
-              <button 
-                onClick={() => setShowProcedure(false)} 
+              <button
+                onClick={() => setShowProcedure(false)}
                 className="text-slate-300 hover:text-white transition-colors p-1 hover:bg-white/10 rounded"
               >
                 <X size={20} />
@@ -332,8 +355,8 @@ export default function UITestPage() {
 
                 {/* Botón de comparación */}
                 <div className="pt-4 border-t border-white/10">
-                  <NativeButton 
-                    variant="secondary" 
+                  <NativeButton
+                    variant="secondary"
                     onClick={() => console.log("Funcionalidad nativa activada")}
                   >
                     Listo para producción

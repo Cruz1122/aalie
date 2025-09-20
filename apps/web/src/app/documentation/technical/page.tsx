@@ -1,13 +1,14 @@
 "use client";
 
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import Link from "next/link";
-import { ImageModal } from "@/components/ImageModal";
+
 import { DocumentationCard } from "@/components/DocumentationCard";
+import Footer from "@/components/Footer";
+import Header from "@/components/Header";
+import { ImageModal } from "@/components/ImageModal";
 import { LoaderDemo } from "@/components/LoaderDemo";
-import { useImageModal } from "@/hooks/useImageModal";
 import { useDocumentationSections } from "@/hooks/useDocumentationSections";
+import { useImageModal } from "@/hooks/useImageModal";
 
 export default function TechnicalDocsPage() {
   const { selectedImage, openModal, closeModal, isModalOpen } = useImageModal();
@@ -24,8 +25,8 @@ export default function TechnicalDocsPage() {
               Documentación Técnica
             </h1>
             <p className="text-dark-text text-sm sm:text-base lg:text-lg leading-relaxed max-w-4xl mx-auto lg:mx-0">
-              Visión general del flujo, arquitectura del monorepo y contratos iniciales de API. 
-              Este documento es un borrador inicial y se actualizará conforme evolucione el proyecto.
+              Visión general del flujo, arquitectura del monorepo y contratos iniciales de API. Este
+              documento es un borrador inicial y se actualizará conforme evolucione el proyecto.
             </p>
           </header>
 
@@ -33,11 +34,7 @@ export default function TechnicalDocsPage() {
           <section aria-label="Secciones de documentación técnica">
             <div className="documentation-grid">
               {sections.map((section) => (
-                <DocumentationCard
-                  key={section.id}
-                  section={section}
-                  onImageClick={openModal}
-                />
+                <DocumentationCard key={section.id} section={section} onImageClick={openModal} />
               ))}
             </div>
           </section>
@@ -53,9 +50,9 @@ export default function TechnicalDocsPage() {
           {/* Footer de navegación */}
           <footer className="text-sm sm:text-base text-dark-text text-center lg:text-left border-t border-white/10 pt-6 mt-8">
             <p>
-              Esta página se está actualizando constantemente. {" "}
-              <Link 
-                href="/documentation" 
+              Esta página se está actualizando constantemente.{" "}
+              <Link
+                href="/documentation"
                 className="text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400/50 rounded px-1 py-0.5"
               >
                 Volver a Documentación
@@ -66,11 +63,7 @@ export default function TechnicalDocsPage() {
       </main>
 
       {/* Modal de imagen */}
-      <ImageModal
-        image={selectedImage}
-        isOpen={isModalOpen}
-        onClose={closeModal}
-      />
+      <ImageModal image={selectedImage} isOpen={isModalOpen} onClose={closeModal} />
 
       <Footer />
     </div>

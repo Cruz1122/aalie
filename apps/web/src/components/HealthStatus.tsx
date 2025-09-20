@@ -1,8 +1,8 @@
 // path: apps/web/src/components/HealthStatus.tsx
 "use client";
 
-import { useEffect, useState } from "react";
 import type { HealthResponse } from "@aa/types";
+import { useEffect, useState } from "react";
 
 type Props = { intervalMs?: number };
 
@@ -37,12 +37,11 @@ export default function HealthStatus({ intervalMs = 20_000 }: Readonly<Props>) {
     return () => clearInterval(t);
   }, [intervalMs]);
 
-  const pillBase =
-    "inline-flex items-center gap-2 rounded-lg px-3 py-1 text-sm";
-  
+  const pillBase = "inline-flex items-center gap-2 rounded-lg px-3 py-1 text-sm";
+
   let style: string;
   let dot: string;
-  
+
   if (up === null) {
     style = "bg-blue-900/40 text-blue-300";
     dot = "bg-blue-400";

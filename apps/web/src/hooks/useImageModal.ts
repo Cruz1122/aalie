@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
-import { ModalImageData } from '@/types/documentation';
+import { useState, useCallback, useEffect } from "react";
+
+import { ModalImageData } from "@/types/documentation";
 
 export const useImageModal = () => {
   const [selectedImage, setSelectedImage] = useState<ModalImageData | null>(null);
@@ -15,14 +16,14 @@ export const useImageModal = () => {
   // Manejo de tecla Escape
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && selectedImage) {
+      if (event.key === "Escape" && selectedImage) {
         closeModal();
       }
     };
 
     if (selectedImage) {
-      document.addEventListener('keydown', handleEscape);
-      return () => document.removeEventListener('keydown', handleEscape);
+      document.addEventListener("keydown", handleEscape);
+      return () => document.removeEventListener("keydown", handleEscape);
     }
   }, [selectedImage, closeModal]);
 

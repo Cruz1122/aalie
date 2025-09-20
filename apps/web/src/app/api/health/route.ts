@@ -17,7 +17,7 @@ export async function GET() {
     const res = await fetch(`${API_BASE}/health`, { cache: "no-store" });
 
     // Intentamos JSON primero; si falla, usamos texto
-    let upstreamOk = res.ok;
+    const upstreamOk = res.ok;
     let ok = false;
     let parseErr: string | null = null;
 
@@ -28,17 +28,14 @@ export async function GET() {
         // Aceptamos varios “OK” convencionales
         const status = (data.status || "").toString().toLowerCase();
         ok = Boolean(
-          data.ok === true ||
-            status === "ok" ||
-            status === "healthy" ||
-            status === "up"
+          data.ok === true || status === "ok" || status === "healthy" || status === "up",
         );
       } else {
         const text = (await res.text()).trim().toLowerCase();
         ok = text === "ok";
       }
-    } catch (e: any) {
-      parseErr = String(e?.message || e);
+    } catch (e: unknown) {
+      parseErr = String(e instanceof Error ? e.message : String(e));
     }
 
     const body: HealthResponse =
@@ -47,8 +44,7 @@ export async function GET() {
         : {
             ok: false,
             error:
-              parseErr ??
-              `Upstream ${API_BASE}/health responded ${res.status} ${res.statusText}`,
+              parseErr ?? `Upstream ${API_BASE}/health responded ${res.status} ${res.statusText}`,
           };
 
     return NextResponse.json(body, { status: body.ok ? 200 : 502 });

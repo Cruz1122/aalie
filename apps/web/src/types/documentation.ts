@@ -23,12 +23,41 @@ export interface PackageContent {
   packages: PackageInfo[];
 }
 
+export interface ToolInfo {
+  name: string;
+  purpose: string;
+  config?: string;
+  features: string[];
+}
+
+export interface CommandInfo {
+  command: string;
+  description: string;
+  result?: string;
+}
+
+export interface ToolsContent {
+  type: "tools";
+  frontend: {
+    title: string;
+    tools: ToolInfo[];
+  };
+  backend: {
+    title: string;
+    tools: ToolInfo[];
+  };
+  automation: {
+    title: string;
+    commands: CommandInfo[];
+  };
+}
+
 export interface DocumentationSection {
   id: string;
   title: string;
   description: string;
   image?: ImageData;
-  content?: PackageContent;
+  content?: PackageContent | ToolsContent;
 }
 
 export interface ModalImageData {

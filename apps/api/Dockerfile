@@ -11,10 +11,12 @@ WORKDIR /usr/src/app/apps/api
 
 # Copiamos requirements primero para aprovechar la cache de capas
 COPY apps/api/requirements.txt /tmp/requirements.txt
+COPY apps/api/requirements-dev.txt /tmp/requirements-dev.txt
 
 # Instalar dependencias
 RUN python -m pip install --upgrade pip && \
-    pip install -r /tmp/requirements.txt
+    pip install -r /tmp/requirements.txt && \
+    pip install -r /tmp/requirements-dev.txt
 
 # Copiar el código fuente de la API
 COPY apps/api/ ./

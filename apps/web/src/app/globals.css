@@ -64,7 +64,12 @@
 }
 
 .glass-modal-overlay {
-  background: linear-gradient(135deg, rgba(16, 26, 35, 0.6) 0%, rgba(15, 20, 25, 0.8) 50%, rgba(16, 26, 35, 0.9) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(16, 26, 35, 0.6) 0%,
+    rgba(15, 20, 25, 0.8) 50%,
+    rgba(16, 26, 35, 0.9) 100%
+  );
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
 }
@@ -86,13 +91,14 @@
 }
 
 /* Ajustes mínimos globales */
-* { 
-  box-sizing: border-box; 
+* {
+  box-sizing: border-box;
 }
 
-html, body { 
-  margin: 0; 
-  padding: 0; 
+html,
+body {
+  margin: 0;
+  padding: 0;
 }
 
 /* Fondo con gradiente sutil */
@@ -124,14 +130,14 @@ body {
 
   /* Mejores sombras para elementos elevados */
   .shadow-enhanced {
-    box-shadow: 
+    box-shadow:
       0 1px 3px 0 rgba(0, 0, 0, 0.1),
       0 1px 2px 0 rgba(0, 0, 0, 0.06),
       0 0 0 1px rgba(255, 255, 255, 0.05);
   }
 
   .shadow-enhanced-hover:hover {
-    box-shadow: 
+    box-shadow:
       0 4px 6px -1px rgba(0, 0, 0, 0.1),
       0 2px 4px -1px rgba(0, 0, 0, 0.06),
       0 0 0 1px rgba(255, 255, 255, 0.1);
@@ -203,7 +209,8 @@ body {
 
   /* Estilos para kbd elements */
   kbd {
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+    font-family:
+      ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
     font-size: 0.875em;
     font-weight: 500;
   }
@@ -212,32 +219,33 @@ body {
   .scrollbar-thin {
     scrollbar-width: thin;
   }
-  
+
   .scrollbar-track-transparent {
     scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
   }
-  
+
   .scrollbar-thumb-white\/20::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
-  
+
   .scrollbar-thumb-white\/20::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   .scrollbar-thumb-white\/20::-webkit-scrollbar-thumb {
     background-color: rgba(255, 255, 255, 0.2);
     border-radius: 4px;
   }
-  
+
   .scrollbar-thumb-white\/20::-webkit-scrollbar-thumb:hover {
     background-color: rgba(255, 255, 255, 0.3);
   }
 
   /* Animaciones específicas para el loader global */
   @keyframes loader-pulse {
-    0%, 100% {
+    0%,
+    100% {
       opacity: 0.4;
       transform: scale(0.8);
     }
@@ -248,7 +256,9 @@ body {
   }
 
   @keyframes loader-bounce {
-    0%, 80%, 100% {
+    0%,
+    80%,
+    100% {
       transform: scale(0);
       opacity: 0.5;
     }
