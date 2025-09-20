@@ -190,7 +190,7 @@ jobs:
         run: |
           if [ -f apps/api/Dockerfile ]; then
             echo "🐳 Testing API Docker build..."
-            docker build -t test-api apps/api
+            docker build -f apps/api/Dockerfile -t test-api .
             echo "✅ API Docker build successful"
           else
             echo "ℹ️  No API Dockerfile found"
