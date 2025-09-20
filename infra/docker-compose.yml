@@ -9,6 +9,8 @@ services:
     ports:
       - "8000:8000"
     environment:
+      DEV_CORS_ENABLED: "1"
+      DEV_ALLOWED_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000"
       PYTHONDONTWRITEBYTECODE: "1"
       PYTHONUNBUFFERED: "1"
     volumes:

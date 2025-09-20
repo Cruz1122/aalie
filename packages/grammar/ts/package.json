@@ -1,0 +1,23 @@
+{
+  "name": "@aa/grammar",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared ANTLR4 TypeScript grammar artifacts for algorithmic-analysis",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "gen": "node ../scripts/gen-ts.mjs",
+    "build": "tsc -p tsconfig.json",
+    "clean": "node -e \"import('node:fs').then(fs=>fs.rmSync('dist',{recursive:true,force:true}))\"",
+    "rebuild": "pnpm run clean && pnpm run gen && pnpm run build"
+  },
+  "dependencies": {
+    "antlr4ts": "0.5.0-alpha.4"
+  },
+  "devDependencies": {
+    "antlr4ts-cli": "0.5.0-alpha.4",
+    "typescript": "5.5.4"
+  }
+}

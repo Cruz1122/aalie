@@ -1,0 +1,5 @@
+setup.py
+aa_grammar.egg-info/PKG-INFO
+aa_grammar.egg-info/SOURCES.txt
+aa_grammar.egg-info/dependency_links.txt
+aa_grammar.egg-info/top_level.txt
