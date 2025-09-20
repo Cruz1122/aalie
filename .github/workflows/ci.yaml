@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "infra/**"
+      - "pnpm-*.yaml"
+      - "package.json"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/ci.yaml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "infra/**"
+      - "pnpm-*.yaml"
+      - "package.json"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/ci.yaml"
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      # 1) Checkout
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2) Node + Corepack (pnpm)
+      - name: Setup Node.js (22.x) + Corepack
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: "pnpm"
+      - name: Enable Corepack
+        run: corepack enable
+
+      # 3) pnpm install (workspace)
+      - name: Install deps (pnpm -w)
+        run: pnpm install -w --frozen-lockfile
+
+      # 4) Lint y formato (web) — rápido feedback de frontend
+      - name: Lint (web)
+        run: pnpm -C apps/web lint
+      - name: Prettier check (web)
+        run: pnpm -C apps/web format
+
+      # 5) Build (web) — atrapa errores de imports/transpile
+      - name: Build (web)
+        run: pnpm -C apps/web build
+
+      # 6) Python 3.11 + cache pip
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install API deps
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f apps/api/requirements.txt ]; then pip install -r apps/api/requirements.txt; fi
+          if [ -f apps/api/requirements-dev.txt ]; then pip install -r apps/api/requirements-dev.txt; fi
+
+      # 7) Smoke de API — valida que FastAPI está disponible
+      - name: FastAPI smoke import
+        run: python -c "import fastapi; print('fastapi OK')"
+
+      # 8) Lint/format (api) — Ruff/Black en árbol de API
+      - name: Ruff (api)
+        working-directory: apps/api
+        run: ruff .
+      - name: Black check (api)
+        working-directory: apps/api
+        run: black --check .
+
+      # 9) Grammar/types (sanity) — comprueba que los packages compilan
+      - name: Build @aa/types
+        run: pnpm -C packages/types build
+      - name: Grammar TS codegen (si aplica)
+        run: |
+          if [ -f packages/grammar/scripts/gen-ts.js ]; then pnpm -C packages/grammar run build; else echo "skip gen-ts"; fi
+      - name: Grammar Py codegen (si aplica, sin Java en runner)
+        run: |
+          if [ -f packages/grammar/scripts/gen-py.js ]; then
+            echo "Saltando gen:py (requiere Java o artefactos commiteados en out/py)"
+          fi
+
+      # 10) Reporte de tamaños (opcional, útil para vigilar creep)
+      - name: Disk usage (optional)
+        run: du -sh apps/* packages/* || true
