@@ -177,7 +177,7 @@ jobs:
           }
 
   # Job de Docker: Verifica que las imágenes construyen
-  docker:
+  docker-integration:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: build  # Solo corre si el build principal pasa
