@@ -16,6 +16,8 @@ services:
     volumes:
       # Monta solo el código de la API para recarga en caliente
       - ../apps/api:/usr/src/app/apps/api
+      # Monta packages para acceso a parsers grammar
+      - ../packages:/usr/src/app/packages
 
   web:
     build:
