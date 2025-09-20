@@ -41,3 +41,6 @@ apps/api/.mypy_cache/
 
 # Stackdump files
 *.stackdump
+
+# Bloquear lockfiles ajenos\ n**/package-lock.json
+**/yarn.lock
