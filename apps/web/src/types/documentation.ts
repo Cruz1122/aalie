@@ -25,8 +25,12 @@ export interface PackageContent {
 
 export interface UIShowcaseContent {
   type: "ui-showcase";
-  features?: string[];
-  components?: string[];
+  implementation: {
+    title: string;
+    description: string;
+    testRoute: string;
+    features: string[];
+  };
 }
 
 export interface ToolInfo {

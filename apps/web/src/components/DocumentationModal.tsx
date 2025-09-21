@@ -2,7 +2,8 @@
 import { useEffect } from "react";
 import { Zap, Package, Settings, Calculator, BarChart3, ArrowRight } from "lucide-react";
 import Formula from "@/components/Formula";
-import { DocumentationSection } from "@/types/documentation";
+import NavigationLink from "@/components/NavigationLink";
+import { DocumentationSection, UIShowcaseContent } from "@/types/documentation";
 
 export default function DocumentationModal({
   open,
@@ -105,6 +106,8 @@ function renderSectionDetail(section: DocumentationSection) {
 
 /* -------- Render: UI Showcase -------- */
 function UIShowcaseDetail({ section }: { section: DocumentationSection }) {
+  const content = section.content as UIShowcaseContent;
+  
   return (
     <article className="p-4 rounded-lg bg-gradient-to-b from-slate-800/50 to-slate-800/30 border border-purple-500/20">
       <header className="space-y-4 mb-6">
@@ -120,19 +123,32 @@ function UIShowcaseDetail({ section }: { section: DocumentationSection }) {
         {section.description}
       </p>
 
-      <div className="grid grid-cols-2 gap-3 text-xs">
-        <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
-          <div className="font-semibold text-purple-300 mb-1">Componentes</div>
-          <div className="text-slate-300">Button, Modal, TableCosts</div>
+      {/* Lista de características */}
+      {content?.implementation?.features && (
+        <div className="mb-6">
+          <h5 className="text-sm font-semibold text-purple-300 mb-3">Componentes Disponibles:</h5>
+          <div className="grid grid-cols-1 gap-2">
+            {content.implementation.features.map((feature, index) => (
+              <div key={index} className="flex items-center gap-2 text-xs text-slate-300">
+                <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
+                {feature}
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-          <div className="font-semibold text-blue-300">Interactivo</div>
-          <div className="text-slate-300">Demos en vivo</div>
-        </div>
-      </div>
+      )}
 
-      {section.image?.caption && (
-        <p className="text-xs text-slate-400 text-center mt-6">{section.image.caption}</p>
+      {/* Botón de redirección */}
+      {content?.implementation?.testRoute && (
+        <div className="text-center">
+          <NavigationLink 
+            href={content.implementation.testRoute}
+            className="inline-flex items-center gap-2 glass-button px-6 py-3 rounded-lg text-white font-semibold transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400/50"
+          >
+            <Zap size={16} />
+            Ver Demostración Interactiva
+          </NavigationLink>
+        </div>
       )}
     </article>
   );

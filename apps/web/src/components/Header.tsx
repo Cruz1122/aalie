@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import NavigationLink from "./NavigationLink";
 import { useState } from "react";
 
 export default function Header() {
@@ -14,7 +14,7 @@ export default function Header() {
     <header className="glass-header relative z-50">
       <div className="flex items-center justify-between whitespace-nowrap px-4 sm:px-10 py-4">
         {/* Logo y Título - Clickeable para ir a inicio */}
-        <Link href="/" className="flex items-center gap-3 text-white hover:opacity-80 transition-opacity">
+        <NavigationLink href="/" className="flex items-center gap-3 text-white hover:opacity-80 transition-opacity">
           <svg
             className="h-7 w-7 text-white"
             fill="none"
@@ -53,23 +53,23 @@ export default function Header() {
             <circle cx="34" cy="35" r="2.5" fill="currentColor" />
           </svg>
           <h1 className="text-xl font-bold">Analizador de Complejidad</h1>
-        </Link>
+        </NavigationLink>
 
         {/* Navegación Desktop */}
         <div className="hidden lg:flex items-center gap-6">
           <nav className="flex items-center gap-6 text-sm font-medium text-dark-text">
-            <Link className="hover:text-white transition-colors" href="/analyzer">
+            <NavigationLink className="hover:text-white transition-colors" href="/analyzer">
               Analizador
-            </Link>
-            <Link className="hover:text-white transition-colors" href="/documentation">
+            </NavigationLink>
+            <NavigationLink className="hover:text-white transition-colors" href="/documentation">
               Documentación
-            </Link>
-            <Link className="hover:text-white transition-colors" href="/">
+            </NavigationLink>
+            <NavigationLink className="hover:text-white transition-colors" href="/">
               Ejemplos
-            </Link>
-            <Link className="hover:text-white transition-colors" href="/about-us">
+            </NavigationLink>
+            <NavigationLink className="hover:text-white transition-colors" href="/about-us">
               Acerca de
-            </Link>
+            </NavigationLink>
           </nav>
           <div className="flex items-center gap-3">
             <button className="glass-button flex items-center justify-center rounded-md h-10 px-4 text-white text-sm font-bold transition-all">
@@ -92,34 +92,34 @@ export default function Header() {
       {isMenuOpen && (
         <div className="lg:hidden absolute top-full left-0 right-0 glass-header border-t border-white/10 z-50 backdrop-blur-sm">
           <nav className="flex flex-col p-4 space-y-4">
-            <Link
+            <NavigationLink
               className="text-dark-text hover:text-white transition-colors py-2 px-3 rounded-md hover:bg-white/5"
               href="/analyzer"
               onClick={toggleMenu}
             >
               Analyzer
-            </Link>
-            <Link
+            </NavigationLink>
+            <NavigationLink
               className="text-dark-text hover:text-white transition-colors py-2 px-3 rounded-md hover:bg-white/5"
               href="/documentation"
               onClick={toggleMenu}
             >
               Documentación
-            </Link>
-            <Link
+            </NavigationLink>
+            <NavigationLink
               className="text-dark-text hover:text-white transition-colors py-2 px-3 rounded-md hover:bg-white/5"
               href="/"
               onClick={toggleMenu}
             >
               Ejemplos
-            </Link>
-            <Link
+            </NavigationLink>
+            <NavigationLink
               className="text-dark-text hover:text-white transition-colors py-2 px-3 rounded-md hover:bg-white/5"
               href="/about-us"
               onClick={toggleMenu}
             >
               Acerca de
-            </Link>
+            </NavigationLink>
             <div className="pt-2 border-t border-white/10">
               <button
                 className="glass-button w-full flex items-center justify-center rounded-md h-10 px-4 text-white text-sm font-bold transition-all"

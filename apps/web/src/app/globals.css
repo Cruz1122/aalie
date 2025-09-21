@@ -370,3 +370,12 @@ body {
   width: 1px !important;
   overflow: hidden !important;
 }
+
+/* Animation delays for page loader */
+.animation-delay-75 {
+  animation-delay: 0.075s;
+}
+
+.animation-delay-150 {
+  animation-delay: 0.15s;
+}

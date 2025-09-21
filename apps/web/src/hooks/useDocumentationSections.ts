@@ -226,28 +226,29 @@ export const useDocumentationSections = (): DocumentationSection[] => {
               },
             ],
           },
-        },
-        image: {
-          src: "/docs/ui-flujo.webp",
-          alt: "Herramientas de calidad de código",
-          width: 1600,
-          height: 900,
-          caption: "Sistema automatizado de linting y formateo para el monorepo completo",
-        },
+        }
       },
       {
         id: "ui-showcase",
         title: "Demostración de Componentes Nativos",
         description:
           "Prueba interactiva de componentes nativos optimizados. Explora botones, modales, bloques LaTeX y tablas de costos implementados directamente con Tailwind CSS para máximo rendimiento.",
-        image: {
-          src: "/docs/ui-flujo.webp",
-          alt: "Componentes UI en acción",
-          width: 1600,
-          height: 1200,
-          caption:
-            "Demostración de componentes nativos: botones, modales, LaTeX y tablas optimizadas",
-        },
+        content: {
+          type: "ui-showcase" as const,
+          implementation: {
+            title: "Componentes Interactivos",
+            description: "Accede a la demostración completa de todos los componentes de la interfaz de usuario.",
+            testRoute: "/ui-test",
+            features: [
+              "Botones con efectos glassmorphism",
+              "Modales responsivos y accesibles",
+              "Tablas de datos optimizadas",
+              "Componentes LaTeX integrados",
+              "Sistema de loaders avanzado",
+              "Formularios con validación",
+            ]
+          }
+        }
       },
       {
         id: "katex-integration",
@@ -334,14 +335,7 @@ export const useDocumentationSections = (): DocumentationSection[] => {
               responsive: "Adaptativo a diferentes tamaños de pantalla",
             },
           },
-        },
-        image: {
-          src: "/docs/ui-flujo.webp",
-          alt: "Sistema de renderizado LaTeX",
-          width: 1600,
-          height: 900,
-          caption: "Integración completa de KaTeX para ecuaciones matemáticas",
-        },
+        }
       },
       {
         id: "analyzer-interface",
@@ -467,14 +461,7 @@ export const useDocumentationSections = (): DocumentationSection[] => {
               },
             ],
           },
-        },
-        image: {
-          src: "/docs/ui-flujo.webp",
-          alt: "Interfaz del analizador de complejidad",
-          width: 1600,
-          height: 1200,
-          caption: "Analizador con interfaz de 3 columnas: código, costos y visualizaciones matemáticas",
-        },
+        }
       },
     ],
     [],
