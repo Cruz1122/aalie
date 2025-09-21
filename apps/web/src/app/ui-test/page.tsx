@@ -3,6 +3,8 @@ import { FlaskConical, Play, Calculator, Code, Sparkles, X } from "lucide-react"
 import React, { useState } from "react";
 
 import Footer from "@/components/Footer";
+import Formula from "@/components/Formula";
+import FormulaBlock from "@/components/FormulaBlock";
 import Header from "@/components/Header";
 
 // Datos de ejemplo
@@ -19,12 +21,12 @@ const sampleProcedureData = {
     best: {
       assumptions: "Todos los elementos son pares, minimizando operaciones condicionales",
       stepsLatex: [
-        "T(n) = C_1(n+1) + C_2 \\cdot n + C_3 \\cdot n + C_4 \\cdot \\frac{n}{2}",
-        "T(n) = C_1 n + C_1 + C_2 n + C_3 n + C_4 \\frac{n}{2}",
-        "T(n) = n(C_1 + C_2 + C_3 + \\frac{C_4}{2}) + C_1",
-        "T(n) = \\Theta(n)",
+        String.raw`T(n) = C_1(n+1) + C_2 \cdot n + C_3 \cdot n + C_4 \cdot \frac{n}{2}`,
+        String.raw`T(n) = C_1 n + C_1 + C_2 n + C_3 n + C_4 \frac{n}{2}`,
+        String.raw`T(n) = n(C_1 + C_2 + C_3 + \frac{C_4}{2}) + C_1`,
+        String.raw`T(n) = \Theta(n)`,
       ],
-      Tlatex: "T(n) = n(C_1 + C_2 + C_3 + \\frac{C_4}{2}) + C_1",
+      Tlatex: String.raw`T(n) = n(C_1 + C_2 + C_3 + \frac{C_4}{2}) + C_1`,
       Tclosed: "T(n) = Θ(n)",
     },
   },
@@ -55,17 +57,6 @@ const NativeButton: React.FC<{
     </button>
   );
 };
-
-const NativeLatexBlock: React.FC<{ formula: string; className?: string }> = ({
-  formula,
-  className = "",
-}) => (
-  <pre
-    className={`whitespace-pre-wrap text-sm leading-6 overflow-x-auto p-3 rounded-md bg-slate-900/40 text-slate-100 border border-white/10 ${className}`}
-  >
-    {formula}
-  </pre>
-);
 
 const NativeTableCosts: React.FC<{ rows: typeof sampleTableData }> = ({ rows }) => (
   <div className="overflow-x-auto rounded-lg border border-white/10">
@@ -182,34 +173,35 @@ export default function UITestPage() {
               </div>
             </section>
 
-            {/* LaTeX Section */}
+            {/* KaTeX Section */}
             <section className="glass-card p-6 sm:p-8 rounded-xl border border-blue-500/20">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 rounded-lg bg-blue-500/20">
                   <Calculator size={24} className="text-blue-400" />
                 </div>
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-white">Bloques LaTeX</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-white">Renderizado KaTeX</h2>
                   <p className="text-dark-text text-sm">
-                    Renderizado simple de fórmulas con scroll horizontal
+                    Fórmulas LaTeX renderizadas con KaTeX para máxima calidad visual
                   </p>
                 </div>
               </div>
 
               <div className="space-y-4">
                 <p className="text-sm text-slate-300">
-                  Muestra las fórmulas como texto plano con formato preservado. Se puede mejorar más
-                  tarde con un renderizador LaTeX si es necesario.
+                  Renderizado matemático profesional con soporte completo para notación LaTeX.
+                  Inline: <Formula latex={String.raw`O(n^2)`} className="text-blue-300" /> y <Formula latex={String.raw`\Theta(n \log n)`} className="text-green-300" />.
                 </p>
 
                 <div className="space-y-3">
-                  <NativeLatexBlock formula="T(n) = C_1(n+1) + C_2 \cdot n + C_3 \cdot n + C_4 \cdot \frac{n}{2}" />
-                  <NativeLatexBlock formula="T(n) = n(C_1 + C_2 + C_3 + \frac{C_4}{2}) + C_1" />
-                  <NativeLatexBlock formula="T(n) = \Theta(n)" />
+                  <h3 className="text-sm font-semibold text-slate-200">Ecuaciones de Ejemplo:</h3>
+                  <FormulaBlock latex={String.raw`T(n) = C_1(n+1) + C_2 \cdot n + C_3 \cdot n + C_4 \cdot \frac{n}{2}`} />
+                  <FormulaBlock latex={String.raw`T(n) = n(C_1 + C_2 + C_3 + \frac{C_4}{2}) + C_1`} />
+                  <FormulaBlock latex={String.raw`T(n) = \Theta(n)`} />
                 </div>
 
                 <p className="text-xs text-slate-400">
-                  Simple y eficiente, con opción de upgrade a KaTeX más tarde
+                  Soporte completo para SSR/CSR, scroll horizontal automático y error handling
                 </p>
               </div>
             </section>
@@ -326,24 +318,22 @@ export default function UITestPage() {
 
                 {/* Pasos en LaTeX */}
                 <section className="space-y-3">
-                  <h4 className="font-semibold text-white">Pasos del Procedimiento</h4>
-                  <div className="overflow-x-auto rounded-lg border border-white/10 bg-slate-900/50 p-4">
-                    <div className="min-w-[600px] space-y-2">
-                      {sampleProcedureData.cases.best?.stepsLatex.map((step, i) => (
-                        <NativeLatexBlock key={i} formula={step} />
-                      ))}
-                    </div>
+                  <h4 className="font-semibold text-white">Pasos del Procedimiento (KaTeX)</h4>
+                  <div className="space-y-2">
+                    {sampleProcedureData.cases.best?.stepsLatex.map((step, i) => (
+                      <FormulaBlock key={`step-${i}`} latex={step} />
+                    ))}
                   </div>
                   <p className="text-xs text-slate-400">
-                    Scroll horizontal para ecuaciones largas, renderizado eficiente
+                    Renderizado matemático profesional con scroll horizontal automático
                   </p>
                 </section>
 
                 {/* T(n) y forma cerrada */}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="p-4 rounded-lg border border-white/10 bg-slate-800/50">
-                    <h4 className="font-semibold text-white mb-2">T(n) (LaTeX)</h4>
-                    <NativeLatexBlock formula={sampleProcedureData.cases.best?.Tlatex || ""} />
+                    <h4 className="font-semibold text-white mb-2">T(n) (KaTeX)</h4>
+                    <FormulaBlock latex={sampleProcedureData.cases.best?.Tlatex || ""} />
                   </div>
                   <div className="p-4 rounded-lg border border-white/10 bg-slate-800/50">
                     <h4 className="font-semibold text-white mb-2">T(n) (forma cerrada)</h4>
@@ -357,9 +347,9 @@ export default function UITestPage() {
                 <div className="pt-4 border-t border-white/10">
                   <NativeButton
                     variant="secondary"
-                    onClick={() => console.log("Funcionalidad nativa activada")}
+                    onClick={() => console.log("KaTeX integrado exitosamente")}
                   >
-                    Listo para producción
+                    KaTeX Integrado ✨
                   </NativeButton>
                 </div>
               </div>

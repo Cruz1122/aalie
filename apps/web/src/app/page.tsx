@@ -1,5 +1,6 @@
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import Link from "next/link";
 
 export default function HomePage() {
   return (
@@ -11,13 +12,16 @@ export default function HomePage() {
         {/* Card Comenzar */}
         <div className="glass-card flex flex-col items-center justify-center text-center p-8 rounded-md">
           <span className="material-symbols-outlined text-6xl text-primary mb-4">code</span>
-          <h2 className="text-xl font-bold mb-2">Comenzar Aquí</h2>
+          <h2 className="text-xl font-bold mb-2">Comenzar Análisis</h2>
           <p className="text-sm text-dark-text mb-6">
-            Escribe o pega código en el editor para comenzar tu análisis de complejidad.
+            Accede al analizador de complejidad para evaluar tu código y obtener métricas detalladas.
           </p>
-          <button className="glass-secondary flex items-center justify-center rounded-md h-10 px-4 text-white text-sm font-bold transition-colors">
-            <span className="material-symbols-outlined mr-2">content_paste</span> Pegar Código
-          </button>
+          <Link 
+            href="/analyzer"
+            className="glass-secondary flex items-center justify-center rounded-md h-10 px-4 text-white text-sm font-bold transition-colors hover:bg-primary/20"
+          >
+            <span className="material-symbols-outlined mr-2">analytics</span>{" "}Ir al Analizador
+          </Link>
         </div>
 
         {/* Card Resultados del Análisis */}
