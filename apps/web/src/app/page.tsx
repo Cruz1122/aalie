@@ -27,7 +27,7 @@ export default function HomePage() {
               }`}
             >
               <span className="material-symbols-outlined text-base">smart_toy</span>
-              Asistente IA
+              Jhon Jairo
             </button>
             <button
               onClick={() => setMode('manual')}
@@ -57,6 +57,9 @@ export default function HomePage() {
               </div>
 
               {/* Título principal */}
+              <h4 className="text-lg lg:text-xl font-semibold text-purple-400">
+                Hola, soy Jhon Jairo.
+              </h4>
               <h2 className="text-2xl lg:text-3xl font-semibold text-white mb-8">
                 ¿En qué puedo ayudarte?
               </h2>
