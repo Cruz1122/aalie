@@ -1,8 +1,9 @@
-import { Eye, Package, ArrowRight, Zap, Settings } from "lucide-react";
+import { Eye, Package, ArrowRight, Zap, Settings, Calculator, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { memo } from "react";
 
 import { DocumentationSection, ModalImageData } from "@/types/documentation";
+import Formula from "@/components/Formula";
 
 import { DocumentationIcon, getIconConfig } from "./DocumentationIcons";
 
@@ -281,6 +282,377 @@ export const DocumentationCard = memo<DocumentationCardProps>(({ section, onImag
                         <p className="text-xs text-emerald-300 font-medium">{cmd.result}</p>
                       )}
                     </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </article>
+    );
+  }
+
+  // Renderizar vista especial para KaTeX
+  if (section.content?.type === "katex") {
+    return (
+      <article className="documentation-card glass-card p-6 rounded-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-xl col-span-2">
+        <div className="documentation-card-content">
+          {/* Header */}
+          <header className="space-y-4 mb-6">
+            <div className="flex justify-center">
+              <Calculator size={56} className="text-emerald-400" />
+            </div>
+            <h2 className="text-xl font-bold text-white leading-tight text-center">
+              {section.title}
+            </h2>
+          </header>
+
+          {/* Descripción general */}
+          <div className="mb-8">
+            <p className="text-sm text-dark-text leading-relaxed text-center">
+              {section.description}
+            </p>
+          </div>
+
+          {/* Implementación Técnica */}
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-emerald-300 text-center mb-6">
+              {section.content.implementation.title}
+            </h3>
+            
+            {/* Librería KaTeX */}
+            <div className="p-4 rounded-lg bg-emerald-800/20 border border-emerald-500/20 mb-6">
+              <h4 className="text-sm font-semibold text-emerald-200 mb-2">
+                {section.content.implementation.library.name}
+              </h4>
+              <p className="text-xs text-emerald-300 mb-3">
+                {section.content.implementation.library.purpose}
+              </p>
+              <div>
+                <h5 className="text-xs font-semibold text-slate-300 mb-2">Características</h5>
+                <ul className="space-y-1">
+                  {section.content.implementation.library.features.map((feature, idx) => (
+                    <li key={idx} className="text-xs text-slate-400 flex items-start gap-1">
+                      <ArrowRight size={8} className="text-emerald-400 mt-0.5 flex-shrink-0" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Componentes y Utilidades */}
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              {/* Componentes */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-blue-300 text-center">Componentes React</h4>
+                {section.content.implementation.components.map((component) => (
+                  <div
+                    key={component.name}
+                    className="p-3 rounded-lg bg-blue-800/20 border border-blue-500/20"
+                  >
+                    <h5 className="text-xs font-semibold text-blue-200 mb-1">{component.name}</h5>
+                    <p className="text-xs text-blue-300 mb-2">{component.purpose}</p>
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium text-slate-300">Props:</p>
+                      <ul className="space-y-1">
+                        {component.props.map((prop, idx) => (
+                          <li key={idx} className="text-xs text-slate-400 ml-2">
+                            • {prop}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <p className="text-xs text-slate-300 mt-2">{component.usage}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Utilidades */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-purple-300 text-center">Utilidades</h4>
+                {section.content.implementation.utilities.map((utility) => (
+                  <div
+                    key={utility.function}
+                    className="p-3 rounded-lg bg-purple-800/20 border border-purple-500/20"
+                  >
+                    <div className="mb-2">
+                      <h5 className="text-xs font-semibold text-purple-200">{utility.function}</h5>
+                      <p className="text-xs text-slate-400">en {utility.file}</p>
+                    </div>
+                    <p className="text-xs text-purple-300 mb-2">{utility.purpose}</p>
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium text-slate-300">Configuración:</p>
+                      <div className="text-xs text-slate-400 bg-slate-900/50 p-2 rounded font-mono">
+                        {Object.entries(utility.config).map(([key, value]) => (
+                          <div key={key}>{key}: {typeof value === 'string' ? `"${value}"` : String(value)}</div>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-xs text-emerald-300 mt-2 font-medium">{utility.security}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Ejemplos */}
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-amber-300 text-center mb-6">
+              {section.content.examples.title}
+            </h3>
+            <div className="grid gap-6">
+              {/* Ejemplo Inline */}
+              <div className="p-4 rounded-lg bg-amber-800/20 border border-amber-500/20">
+                <h4 className="text-sm font-semibold text-amber-200 mb-2">
+                  Matemáticas Inline
+                </h4>
+                <p className="text-xs text-amber-300 mb-3">
+                  {section.content.examples.inline.description}
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-medium text-slate-300 mb-1">Código:</p>
+                    <code className="text-xs font-mono text-slate-400 bg-slate-900/50 px-2 py-1 rounded block">
+                      {section.content.examples.inline.code}
+                    </code>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-300 mb-1">Resultado:</p>
+                    <div className="p-2 rounded bg-slate-900/50 text-center">
+                      <Formula latex="E = mc^2" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ejemplo Block */}
+              <div className="p-4 rounded-lg bg-amber-800/20 border border-amber-500/20">
+                <h4 className="text-sm font-semibold text-amber-200 mb-2">
+                  Ecuaciones en Bloque
+                </h4>
+                <p className="text-xs text-amber-300 mb-3">
+                  {section.content.examples.block.description}
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-medium text-slate-300 mb-1">Código:</p>
+                    <code className="text-xs font-mono text-slate-400 bg-slate-900/50 px-2 py-1 rounded block">
+                      {section.content.examples.block.code}
+                    </code>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-300 mb-1">Resultado:</p>
+                    <div className="p-3 rounded bg-slate-900/50 text-center">
+                      <Formula latex="\sum_{i=1}^{n} i = \frac{n(n+1)}{2}" display={true} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ejemplo Complex */}
+              <div className="p-4 rounded-lg bg-amber-800/20 border border-amber-500/20">
+                <h4 className="text-sm font-semibold text-amber-200 mb-2">
+                  Ecuaciones Complejas
+                </h4>
+                <p className="text-xs text-amber-300 mb-3">
+                  {section.content.examples.complex.description}
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-medium text-slate-300 mb-1">Código:</p>
+                    <code className="text-xs font-mono text-slate-400 bg-slate-900/50 px-2 py-1 rounded block break-all">
+                      {section.content.examples.complex.code}
+                    </code>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-300 mb-1">Resultado:</p>
+                    <div className="p-3 rounded bg-slate-900/50 overflow-x-auto">
+                      <div className="space-y-2">
+                        <Formula latex="T(n) = \sum_{i=1}^{n} \sum_{j=1}^{i} O(1)" display={true} />
+                        <Formula latex="= \sum_{i=1}^{n} i" display={true} />
+                        <Formula latex="= \frac{n(n+1)}{2}" display={true} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Estilos y Configuración */}
+          <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-500/20">
+            <h3 className="text-lg font-semibold text-slate-300 text-center mb-4">
+              {section.content.styling.title}
+            </h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <h4 className="text-sm font-semibold text-blue-300 mb-2">CSS</h4>
+                <ul className="space-y-2">
+                  <li className="text-xs text-slate-400">
+                    <span className="font-medium text-slate-300">Importación:</span> {section.content.styling.css.import}
+                  </li>
+                  <li className="text-xs text-slate-400">
+                    <span className="font-medium text-slate-300">Personalización:</span> {section.content.styling.css.customization}
+                  </li>
+                  <li className="text-xs text-slate-400">
+                    <span className="font-medium text-slate-300">Responsive:</span> {section.content.styling.css.responsive}
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-green-300 mb-2">Temas</h4>
+                <ul className="space-y-2">
+                  <li className="text-xs text-slate-400">
+                    <span className="font-medium text-slate-300">Oscuro:</span> {section.content.styling.themes.dark}
+                  </li>
+                  <li className="text-xs text-slate-400">
+                    <span className="font-medium text-slate-300">Adaptativo:</span> {section.content.styling.themes.responsive}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+    );
+  }
+
+  // Renderizar vista especial para Analyzer
+  if (section.content?.type === "analyzer") {
+    return (
+      <article className="documentation-card glass-card p-6 rounded-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-xl col-span-2">
+        <div className="documentation-card-content">
+          {/* Header */}
+          <header className="space-y-4 mb-6">
+            <div className="flex justify-center">
+              <BarChart3 size={56} className="text-cyan-400" />
+            </div>
+            <h2 className="text-xl font-bold text-white leading-tight text-center">
+              {section.title}
+            </h2>
+          </header>
+
+          {/* Descripción general */}
+          <div className="mb-8">
+            <p className="text-sm text-dark-text leading-relaxed text-center">
+              {section.description}
+            </p>
+          </div>
+
+          {/* Interfaz de 3 Columnas */}
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-cyan-300 text-center mb-6">
+              {section.content.interface.title}
+            </h3>
+            
+            <div className="p-4 rounded-lg bg-cyan-800/20 border border-cyan-500/20 mb-6">
+              <p className="text-xs text-cyan-300 mb-4 text-center">
+                {section.content.interface.layout.description}
+              </p>
+              
+              <div className="grid md:grid-cols-3 gap-4">
+                {section.content.interface.layout.columns.map((column, idx) => (
+                  <div key={column.name} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+                    <h4 className="text-sm font-semibold text-cyan-200 mb-2">{column.name}</h4>
+                    <p className="text-xs text-cyan-300 mb-2">{column.purpose}</p>
+                    <p className="text-xs text-slate-400 mb-2">Componente: {column.component}</p>
+                    <div>
+                      <p className="text-xs font-medium text-slate-300 mb-1">Características:</p>
+                      <ul className="space-y-1">
+                        {column.features.map((feature) => (
+                          <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
+                            <ArrowRight size={8} className="text-cyan-400 mt-0.5 flex-shrink-0" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Responsiveness */}
+            <div className="p-4 rounded-lg bg-blue-800/20 border border-blue-500/20">
+              <h4 className="text-sm font-semibold text-blue-300 text-center mb-4">
+                {section.content.interface.responsiveness.title}
+              </h4>
+              <div className="grid gap-3">
+                {section.content.interface.responsiveness.breakpoints.map((bp) => (
+                  <div key={bp.size} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1">
+                        <p className="text-xs font-semibold text-blue-200">{bp.size}</p>
+                        <p className="text-xs text-blue-300 mb-1">{bp.layout}</p>
+                        <p className="text-xs text-slate-400">{bp.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Modal de Procedimiento */}
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-purple-300 text-center mb-6">
+              {section.content.modal.title}
+            </h3>
+            
+            <div className="p-4 rounded-lg bg-purple-800/20 border border-purple-500/20 mb-4">
+              <p className="text-xs text-purple-300 mb-4 text-center">
+                {section.content.modal.purpose}
+              </p>
+              
+              <div className="space-y-3 mb-4">
+                <div>
+                  <p className="text-xs font-medium text-slate-300 mb-2">Características:</p>
+                  <ul className="space-y-1">
+                    {section.content.modal.features.map((feature) => (
+                      <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
+                        <ArrowRight size={8} className="text-purple-400 mt-0.5 flex-shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-3">
+                {section.content.modal.types.map((type) => (
+                  <div key={type.name} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+                    <h4 className="text-xs font-semibold text-purple-200 mb-1">{type.name}</h4>
+                    <p className="text-xs text-purple-300 mb-2">{type.description}</p>
+                    <p className="text-xs text-slate-400">{type.content}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Componentes */}
+          <div className="p-4 rounded-lg bg-green-800/20 border border-green-500/20">
+            <h3 className="text-lg font-semibold text-green-300 text-center mb-4">
+              {section.content.components.title}
+            </h3>
+            <div className="grid gap-4">
+              {section.content.components.list.map((comp) => (
+                <div key={comp.name} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+                  <div className="mb-2">
+                    <h4 className="text-sm font-semibold text-green-200">{comp.name}</h4>
+                    <p className="text-xs text-slate-400">{comp.file}</p>
+                  </div>
+                  <p className="text-xs text-green-300 mb-2">{comp.purpose}</p>
+                  <div>
+                    <p className="text-xs font-medium text-slate-300 mb-1">Props:</p>
+                    <ul className="space-y-1">
+                      {comp.props.map((prop) => (
+                        <li key={prop} className="text-xs text-slate-400 ml-2">
+                          • {prop}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </div>
               ))}

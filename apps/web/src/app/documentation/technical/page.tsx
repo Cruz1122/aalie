@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { DocumentationCard } from "@/components/DocumentationCard";
+import { DocumentationIndex } from "@/components/DocumentationIndex";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { ImageModal } from "@/components/ImageModal";
@@ -13,6 +14,10 @@ import { useImageModal } from "@/hooks/useImageModal";
 export default function TechnicalDocsPage() {
   const { selectedImage, openModal, closeModal, isModalOpen } = useImageModal();
   const sections = useDocumentationSections();
+
+  const handleSectionClick = (sectionId: string) => {
+    // El scroll se maneja en el componente DocumentationIndex
+  };
 
   return (
     <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">
@@ -30,11 +35,16 @@ export default function TechnicalDocsPage() {
             </p>
           </header>
 
+          {/* Índice de navegación */}
+          <DocumentationIndex sections={sections} onSectionClick={handleSectionClick} />
+
           {/* Grid de documentación */}
           <section aria-label="Secciones de documentación técnica">
             <div className="documentation-grid">
               {sections.map((section) => (
-                <DocumentationCard key={section.id} section={section} onImageClick={openModal} />
+                <div key={section.id} id={section.id} className="scroll-mt-24">
+                  <DocumentationCard section={section} onImageClick={openModal} />
+                </div>
               ))}
             </div>
           </section>

@@ -1,5 +1,5 @@
-import "katex/dist/katex.min.css"; // <-- estilos de KaTeX (global)
 import "./globals.css";
+import "katex/dist/katex.min.css"; // <-- estilos de KaTeX después de globals
 import { Noto_Sans, Spline_Sans } from "next/font/google";
 
 import { GlobalLoaderOverlay } from "@/components/GlobalLoaderOverlay";
