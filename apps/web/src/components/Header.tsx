@@ -13,8 +13,8 @@ export default function Header() {
   return (
     <header className="glass-header relative z-50">
       <div className="flex items-center justify-between whitespace-nowrap px-4 sm:px-10 py-4">
-        {/* Logo y Título */}
-        <div className="flex items-center gap-3 text-white">
+        {/* Logo y Título - Clickeable para ir a inicio */}
+        <Link href="/" className="flex items-center gap-3 text-white hover:opacity-80 transition-opacity">
           <svg
             className="h-7 w-7 text-white"
             fill="none"
@@ -53,13 +53,13 @@ export default function Header() {
             <circle cx="34" cy="35" r="2.5" fill="currentColor" />
           </svg>
           <h1 className="text-xl font-bold">Analizador de Complejidad</h1>
-        </div>
+        </Link>
 
         {/* Navegación Desktop */}
         <div className="hidden lg:flex items-center gap-6">
           <nav className="flex items-center gap-6 text-sm font-medium text-dark-text">
-            <Link className="hover:text-white transition-colors" href="/">
-              Inicio
+            <Link className="hover:text-white transition-colors" href="/analyzer">
+              Analizador
             </Link>
             <Link className="hover:text-white transition-colors" href="/documentation">
               Documentación
@@ -94,10 +94,10 @@ export default function Header() {
           <nav className="flex flex-col p-4 space-y-4">
             <Link
               className="text-dark-text hover:text-white transition-colors py-2 px-3 rounded-md hover:bg-white/5"
-              href="/"
+              href="/analyzer"
               onClick={toggleMenu}
             >
-              Inicio
+              Analyzer
             </Link>
             <Link
               className="text-dark-text hover:text-white transition-colors py-2 px-3 rounded-md hover:bg-white/5"

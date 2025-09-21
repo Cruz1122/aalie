@@ -23,6 +23,12 @@ export interface PackageContent {
   packages: PackageInfo[];
 }
 
+export interface UIShowcaseContent {
+  type: "ui-showcase";
+  features?: string[];
+  components?: string[];
+}
+
 export interface ToolInfo {
   name: string;
   purpose: string;
@@ -161,7 +167,7 @@ export interface DocumentationSection {
   title: string;
   description: string;
   image?: ImageData;
-  content?: PackageContent | ToolsContent | KaTeXContent | AnalyzerContent;
+  content?: PackageContent | UIShowcaseContent | ToolsContent | KaTeXContent | AnalyzerContent;
 }
 
 export interface ModalImageData {
