@@ -1,0 +1,32 @@
+# VCS / OS
+.git
+.gitignore
+.DS_Store
+Thumbs.db
+
+# Node / pnpm
+node_modules
+.pnpm-store
+pnpm-debug.log*
+dist
+out
+.next
+
+# Frontend build caches
+apps/web/.next
+apps/web/node_modules
+
+# Python venv y cachés
+apps/api/.venv
+apps/api/__pycache__
+apps/api/.mypy_cache
+**/__pycache__/
+
+# Logs y coverage
+logs
+*.log
+coverage
+*.coverage
+
+# Docker data local
+docker-data

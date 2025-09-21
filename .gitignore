@@ -1,0 +1,48 @@
+# Node / pnpm
+node_modules/
+.pnpm-store/
+pnpm-debug.log*
+
+# Builds
+dist/
+.next/
+out/
+# Excepción: incluir parsers Python generados para evitar dependencia de Java
+!packages/grammar/out/
+
+# Logs
+logs/
+*.log
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+.env
+.env.*
+
+# Coverage
+coverage/
+*.coverage
+
+# Docker (local data)
+docker-data/
+
+# Python (api)
+apps/api/__pycache__/
+apps/api/.venv/
+apps/api/.mypy_cache/
+
+# Stackdump files
+*.stackdump
+
+# Bloquear lockfiles ajenos\ n**/package-lock.json
+**/yarn.lock

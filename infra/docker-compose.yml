@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    container_name: algoritmos-api
+    ports:
+      - "8000:8000"
+    environment:
+      DEV_CORS_ENABLED: "1"
+      DEV_ALLOWED_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      # Monta solo el código de la API para recarga en caliente
+      - ../apps/api:/usr/src/app/apps/api
+      # Monta packages para acceso a parsers grammar
+      - ../packages:/usr/src/app/packages
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    container_name: algoritmos-web
+    depends_on:
+      - api
+    working_dir: /usr/src/app
+    command: >
+      sh -c "pnpm install -w &&
+             pnpm --filter web dev --port 3000 --hostname 0.0.0.0"
+    ports:
+      - "3000:3000"
+    environment:
+        NODE_ENV: development
+        NEXT_TELEMETRY_DISABLED: "1"
+        NEXT_PUBLIC_API_BASE_URL: "http://localhost:8000"   # para futuras llamadas cliente
+        API_INTERNAL_BASE_URL: "http://api:8000"            # usado por /api/health (SSR/proxy)
+        WATCHPACK_POLLING: "true"
+    volumes:
+      # Código con hot-reload
+      - ../apps/web:/usr/src/app/apps/web
+      - ../packages:/usr/src/app/packages
+      # Volúmenes para node_modules (no los pises con el bind mount)
+      - web_root_node_modules:/usr/src/app/node_modules
+      - web_pkg_node_modules:/usr/src/app/apps/web/node_modules
+
+volumes:
+  web_root_node_modules:
+  web_pkg_node_modules:

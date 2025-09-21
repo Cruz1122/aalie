@@ -1,0 +1,25 @@
+
+{
+  "name": "@aa/types",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Tipos compartidos (requests/responses, DTOs, modelos de UI)",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "node -e \"import('fs').then(fs=>fs.rmSync('dist',{recursive:true,force:true}))\""
+  },
+  "devDependencies": {
+    "typescript": "5.5.4"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "main": "./dist/index.js",
+  "sideEffects": false,
+  "engines": { "node": ">=20 <23" }
+}

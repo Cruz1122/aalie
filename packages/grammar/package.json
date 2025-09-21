@@ -1,0 +1,32 @@
+{
+  "name": "@aa/grammar",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Gramática ANTLR para el Analizador de Complejidad (TS y Python)",
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": {
+      "import": "./index.ts",
+      "types": "./index.ts"
+    }
+  },
+  "scripts": {
+    "build": "node ./scripts/gen-ts.js",
+    "gen:py": "node ./scripts/gen-py.js",
+    "clean": "rimraf src/ts out/py && mkdir -p src/ts out/py",
+    "verify": "node verify-ts.mjs"
+  },
+  "dependencies": {
+    "antlr4ts": "0.5.0-alpha.4"
+  },
+  "devDependencies": {
+    "antlr4ts-cli": "0.5.0-alpha.4",
+    "typescript": "5.5.4",
+    "rimraf": "5.0.10"
+  },
+  "engines": {
+    "node": ">=20 <23"
+  }
+}
