@@ -58,9 +58,6 @@ export default function Header() {
         {/* Navegación Desktop */}
         <div className="hidden lg:flex items-center gap-6">
           <nav className="flex items-center gap-6 text-sm font-medium text-dark-text">
-            <NavigationLink className="hover:text-white transition-colors" href="/analyzer">
-              Analizador
-            </NavigationLink>
             <NavigationLink className="hover:text-white transition-colors" href="/documentation">
               Documentación
             </NavigationLink>
@@ -71,11 +68,6 @@ export default function Header() {
               Acerca de
             </NavigationLink>
           </nav>
-          <div className="flex items-center gap-3">
-            <button className="glass-button flex items-center justify-center rounded-md h-10 px-4 text-white text-sm font-bold transition-all">
-              <span className="material-symbols-outlined mr-2">add</span> Nuevo Análisis
-            </button>
-          </div>
         </div>
 
         {/* Botón Hamburguesa */}
@@ -92,13 +84,6 @@ export default function Header() {
       {isMenuOpen && (
         <div className="lg:hidden absolute top-full left-0 right-0 glass-header border-t border-white/10 z-50 backdrop-blur-sm">
           <nav className="flex flex-col p-4 space-y-4">
-            <NavigationLink
-              className="text-dark-text hover:text-white transition-colors py-2 px-3 rounded-md hover:bg-white/5"
-              href="/analyzer"
-              onClick={toggleMenu}
-            >
-              Analyzer
-            </NavigationLink>
             <NavigationLink
               className="text-dark-text hover:text-white transition-colors py-2 px-3 rounded-md hover:bg-white/5"
               href="/documentation"
@@ -120,14 +105,6 @@ export default function Header() {
             >
               Acerca de
             </NavigationLink>
-            <div className="pt-2 border-t border-white/10">
-              <button
-                className="glass-button w-full flex items-center justify-center rounded-md h-10 px-4 text-white text-sm font-bold transition-all"
-                onClick={toggleMenu}
-              >
-                <span className="material-symbols-outlined mr-2">add</span> Nuevo Análisis
-              </button>
-            </div>
           </nav>
         </div>
       )}

@@ -7,7 +7,7 @@ interface NavigationLoadingWrapperProps {
   children: React.ReactNode;
 }
 
-export default function NavigationLoadingWrapper({ children }: NavigationLoadingWrapperProps) {
+export default function NavigationLoadingWrapper({ children }: Readonly<NavigationLoadingWrapperProps>) {
   const { isLoading } = useNavigation();
   
   return (

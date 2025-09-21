@@ -16,7 +16,7 @@ export default function NavigationLink({
   children, 
   className,
   onClick 
-}: NavigationLinkProps) {
+}: Readonly<NavigationLinkProps>) {
   const { startNavigation } = useNavigation();
 
   const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {

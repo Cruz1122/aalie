@@ -5,11 +5,11 @@ export default function ProcedureModal({
   open,
   onClose,
   selectedLine,
-}: {
+}: Readonly<{
   open: boolean;
   onClose: () => void;
   selectedLine?: number | null;
-}) {
+}>) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();

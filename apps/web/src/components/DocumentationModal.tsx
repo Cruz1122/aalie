@@ -105,7 +105,7 @@ function renderSectionDetail(section: DocumentationSection) {
 }
 
 /* -------- Render: UI Showcase -------- */
-function UIShowcaseDetail({ section }: { section: DocumentationSection }) {
+function UIShowcaseDetail({ section }: Readonly<{ section: DocumentationSection }>) {
   const content = section.content as UIShowcaseContent;
   
   return (
@@ -155,7 +155,7 @@ function UIShowcaseDetail({ section }: { section: DocumentationSection }) {
 }
 
 /* -------- Render: Packages -------- */
-function PackagesDetail({ section }: { section: DocumentationSection }) {
+function PackagesDetail({ section }: Readonly<{ section: DocumentationSection }>) {
   const content = section.content as any;
   return (
     <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
@@ -212,7 +212,7 @@ function PackagesDetail({ section }: { section: DocumentationSection }) {
 }
 
 /* -------- Render: Tools (frontend/backend/automation) -------- */
-function ToolsDetail({ section }: { section: DocumentationSection }) {
+function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
   const content = section.content as any;
 
   return (
@@ -312,7 +312,7 @@ function ToolsDetail({ section }: { section: DocumentationSection }) {
 }
 
 /* -------- Render: KaTeX -------- */
-function KatexDetail({ section }: { section: DocumentationSection }) {
+function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
   const content = section.content as any;
 
   return (

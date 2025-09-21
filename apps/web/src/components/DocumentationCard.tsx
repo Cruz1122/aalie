@@ -6,7 +6,7 @@ import { DocumentationIcon, getIconConfig } from "./DocumentationIcons";
 
 interface DocumentationCardProps {
   section: DocumentationSection;
-  onOpenSection: (section: DocumentationSection) => void; // abre modal con TODO el contenido
+  onOpenSection: (section: DocumentationSection) => void; // abre modal con el contenido
   /** opcional, si quieres seguir abriendo un visor de imagen (diagramas) */
   onImageClick?: (imageData: ModalImageData) => void;
   /** longitud máxima de la descripción visible en la card */
