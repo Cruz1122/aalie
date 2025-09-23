@@ -150,7 +150,131 @@ body {
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   }
 
-  @media (min-width: 768px) {
+  /* Animaciones para el chatbot */
+  .chat-bubble-enter {
+    animation: chatBubbleEnter 0.3s ease-out forwards;
+  }
+
+  @keyframes chatBubbleEnter {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .chat-message-slide-in {
+    animation: chatMessageSlideIn 0.4s ease-out forwards;
+  }
+
+  @keyframes chatMessageSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .chat-message-slide-in-reverse {
+    animation: chatMessageSlideInReverse 0.4s ease-out forwards;
+  }
+
+  @keyframes chatMessageSlideInReverse {
+    from {
+      opacity: 0;
+      transform: translateX(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Pulso suave para el typing indicator */
+  .typing-pulse {
+    animation: typingPulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes typingPulse {
+    0%, 100% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  /* Animación para puntos de escritura estilo WhatsApp */
+  .typing-dots {
+    animation: typingDots 1.4s ease-in-out infinite;
+  }
+
+  .typing-dots:nth-child(1) {
+    animation-delay: 0s;
+  }
+
+  .typing-dots:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  .typing-dots:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+
+  @keyframes typingDots {
+    0%, 60%, 100% {
+      transform: translateY(0);
+      opacity: 0.4;
+    }
+    30% {
+      transform: translateY(-8px);
+      opacity: 1;
+    }
+  }
+
+  /* Animaciones para entrada de componentes */
+  .animate-in {
+    animation-fill-mode: both;
+  }
+
+  .fade-in-0 {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  .slide-in-from-bottom-4 {
+    animation: slideInFromBottom 0.5s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInFromBottom {
+    from {
+      opacity: 0;
+      transform: translateY(1rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .duration-500 {
+    animation-duration: 0.5s;
+  }
+}  @media (min-width: 768px) {
     .documentation-grid {
       grid-template-columns: repeat(2, 1fr);
     }
@@ -350,7 +474,6 @@ body {
     height: 100%;
     overflow: hidden;
   }
-}
 
 /* Estilos específicos para KaTeX */
 .katex {
