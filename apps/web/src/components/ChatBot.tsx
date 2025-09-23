@@ -13,7 +13,8 @@ interface Message {
 interface ChatBotProps {
   isOpen: boolean;
   onClose: () => void;
-  initialMessage?: string;
+  messages: Message[];
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
 }
 
 // Respuestas mockeadas para prueba
@@ -39,28 +40,38 @@ const MOCK_RESPONSES = [
   "Claro, te puedo ayudar. El análisis incluye: supuestos del problema, identificación de la línea más costosa, cálculo de T(n), y determinación de la complejidad asintótica. ¿Por dónde empezamos?"
 ];
 
-export default function ChatBot({ isOpen, onClose, initialMessage }: ChatBotProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
+export default function ChatBot({ isOpen, onClose, messages, setMessages }: ChatBotProps) {
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const isInitialized = useRef(false);
 
   // Auto-scroll al final cuando hay nuevos mensajes
   const scrollToBottom = (immediate = false) => {
     const delay = immediate ? 50 : 100;
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ 
+      messagesEndRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "end",
-        inline: "nearest"
+        inline: "nearest",
       });
     }, delay);
   };
 
   useEffect(() => {
     scrollToBottom();
+  }, [messages]);
+
+  // Responder automáticamente si el último mensaje del historial es del usuario
+  useEffect(() => {
+    if (!messages || messages.length === 0 || isTyping) return;
+    const lastUserIdx = [...messages].map((m) => m.sender).lastIndexOf('user');
+    if (lastUserIdx === -1) return;
+    // Verificar si después de ese mensaje hay una respuesta del bot
+    const hasBotAfter = messages.slice(lastUserIdx + 1).some((m) => m.sender === 'bot');
+    if (!hasBotAfter) {
+      generateBotResponse();
+    }
   }, [messages]);
 
   // Scroll automático cuando aparece el indicador de escritura
@@ -91,37 +102,7 @@ export default function ChatBot({ isOpen, onClose, initialMessage }: ChatBotProp
     }
   }, [isOpen]);
 
-  // Inicializar con mensaje de bienvenida y mensaje inicial si existe (SOLO UNA VEZ)
-  useEffect(() => {
-    if (isOpen && messages.length === 0 && !isInitialized.current) {
-      isInitialized.current = true;
-      
-      const welcomeMessage: Message = {
-        id: 'welcome',
-        content: "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
-        sender: 'bot',
-        timestamp: new Date(),
-      };
-
-      if (initialMessage && initialMessage.trim()) {
-        const userInitialMessage: Message = {
-          id: `user-${Date.now()}`,
-          content: initialMessage,
-          sender: 'user',
-          timestamp: new Date(),
-        };
-        
-        setMessages([welcomeMessage, userInitialMessage]);
-
-        // Si hay mensaje inicial, generar respuesta automática
-        setTimeout(() => {
-          generateBotResponse();
-        }, 1000);
-      } else {
-        setMessages([welcomeMessage]);
-      }
-    }
-  }, [isOpen]);
+  // El historial y bienvenida se maneja en HomePage
 
   const generateBotResponse = () => {
     setIsTyping(true);
@@ -159,31 +140,22 @@ export default function ChatBot({ isOpen, onClose, initialMessage }: ChatBotProp
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+  setMessages(prev => [...prev, userMessage]);
     setInputValue("");
 
-    // Generar respuesta del bot después de un breve delay
-    setTimeout(() => {
-      generateBotResponse();
-    }, 500);
+    // La respuesta del bot se gestiona en el useEffect que observa 'messages'
   };
 
   const clearConversation = () => {
-    setMessages([]);
     setInputValue("");
     setIsTyping(false);
-    isInitialized.current = false; // Reset para permitir reinicializar
-    
-    // Reinicializar con mensaje de bienvenida
-    setTimeout(() => {
-      const welcomeMessage: Message = {
-        id: `welcome-${Date.now()}`,
-        content: "¡Conversación reiniciada! ¿En qué más puedo ayudarte con el análisis de algoritmos?",
-        sender: 'bot',
-        timestamp: new Date(),
-      };
-      setMessages([welcomeMessage]);
-    }, 200);
+    const welcomeMessage: Message = {
+      id: `welcome-${Date.now()}`,
+      content: "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+      sender: 'bot',
+      timestamp: new Date(),
+    };
+    setMessages([welcomeMessage]);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

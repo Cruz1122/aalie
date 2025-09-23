@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import NavigationLink from "@/components/NavigationLink";
 import ChatBot from "@/components/ChatBot";
+
 
 export default function HomePage() {
   const [mode, setMode] = useState<'ai' | 'manual'>('ai');
@@ -12,16 +13,62 @@ export default function HomePage() {
   const [inputMessage, setInputMessage] = useState("");
   const [isAnimating, setIsAnimating] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
+  const [messages, setMessages] = useState([]);
 
+  // Restaurar historial desde sessionStorage al montar
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("aa_chat_messages");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setMessages(parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+        }
+      }
+    } catch (_) {
+      // noop
+    }
+  }, []);
+
+  // Guardar historial en sessionStorage en cada cambio
+  useEffect(() => {
+    try {
+      const serializable = messages.map((m: any) => ({ ...m, timestamp: (m.timestamp instanceof Date ? m.timestamp.toISOString() : m.timestamp) }));
+      sessionStorage.setItem("aa_chat_messages", JSON.stringify(serializable));
+    } catch (_) {
+      // noop
+    }
+  }, [messages]);
+
+  // Inicializar el chat solo la primera vez
   const handleSendMessage = () => {
     if (!inputMessage.trim()) return;
-    
     setIsAnimating(true);
-    
-    // Animación de apertura del chat
     setTimeout(() => {
       setChatOpen(true);
       setIsAnimating(false);
+      setMessages((prev: any[]) => {
+        const userMsg = {
+          id: `user-${Date.now()}`,
+          content: inputMessage,
+          sender: 'user',
+          timestamp: new Date(),
+        };
+        if (prev.length === 0) {
+          return [
+            {
+              id: 'welcome',
+              content: "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+              sender: 'bot',
+              timestamp: new Date(),
+            },
+            userMsg,
+          ];
+        }
+        // Si ya hay historial, añade el nuevo mensaje del usuario
+        return [...prev, userMsg];
+      });
+      setInputMessage("");
     }, 300);
   };
 
@@ -50,11 +97,7 @@ export default function HomePage() {
 
   const handleModeSwitch = (newMode: 'ai' | 'manual') => {
     if (newMode === mode) return;
-    
     setIsSwitching(true);
-    
-    // NO resetear estado del chat - mantenerlo persistente
-    
     setTimeout(() => {
       setMode(newMode);
       setIsSwitching(false);
@@ -141,7 +184,7 @@ export default function HomePage() {
                         className="w-full bg-white/5 border border-slate-600/50 rounded-xl px-4 py-4 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
                         value={inputMessage}
                         onChange={handleInputChange}
-                        onKeyPress={handleKeyPress}
+                        onKeyDown={handleKeyPress}
                         disabled={isAnimating}
                       />
                       <button 
@@ -209,7 +252,8 @@ export default function HomePage() {
                   <ChatBot 
                     isOpen={chatOpen} 
                     onClose={closeChatAndReset}
-                    initialMessage={inputMessage}
+                    messages={messages}
+                    setMessages={setMessages}
                   />
                 </div>
               )}
@@ -218,6 +262,17 @@ export default function HomePage() {
               /* Modo Manual - Layout centrado */
               <div className="max-w-xl mx-auto">
                 <div className="flex flex-col items-center">
+                  {/* Mantener ChatBot montado pero oculto para preservar estado/timers */}
+                  {chatOpen && (
+                    <div className="hidden">
+                      <ChatBot 
+                        isOpen={true}
+                        onClose={closeChatAndReset}
+                        messages={messages}
+                        setMessages={setMessages}
+                      />
+                    </div>
+                  )}
                   
                   {/* Título para modo manual */}
                   <div className="text-center mb-6">
