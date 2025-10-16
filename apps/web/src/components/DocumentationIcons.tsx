@@ -6,6 +6,11 @@ import {
   AlertTriangle,
   Brain,
   FileDown,
+  Package,
+  Shield,
+  Zap,
+  Calculator,
+  BarChart3,
   LucideIcon,
 } from "lucide-react";
 
@@ -51,6 +56,31 @@ const ICON_CONFIG: Record<string, IconConfig> = {
     icon: FileDown,
     color: "text-pink-400",
     bgColor: "bg-pink-500/20 border-pink-500/30",
+  },
+  "monorepo-packages": {
+    icon: Package,
+    color: "text-indigo-400", 
+    bgColor: "bg-indigo-500/20 border-indigo-500/30",
+  },
+  "code-quality": {
+    icon: Shield,
+    color: "text-teal-400",
+    bgColor: "bg-teal-500/20 border-teal-500/30",
+  },
+  "ui-showcase": {
+    icon: Zap,
+    color: "text-yellow-400",
+    bgColor: "bg-yellow-500/20 border-yellow-500/30",
+  },
+  "katex-integration": {
+    icon: Calculator,
+    color: "text-lime-400",
+    bgColor: "bg-lime-500/20 border-lime-500/30",
+  },
+  "analyzer-interface": {
+    icon: BarChart3,
+    color: "text-violet-400",
+    bgColor: "bg-violet-500/20 border-violet-500/30",
   },
 };
 

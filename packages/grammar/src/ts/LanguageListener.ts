@@ -4,14 +4,28 @@
 import { ParseTreeListener } from "antlr4ts/tree/ParseTreeListener";
 
 import { ProgramContext } from "./LanguageParser";
-import { FunctionDeclContext } from "./LanguageParser";
+import { StmtContext } from "./LanguageParser";
 import { BlockContext } from "./LanguageParser";
-import { StatementContext } from "./LanguageParser";
-import { VariableDeclContext } from "./LanguageParser";
+import { AssignmentStmtContext } from "./LanguageParser";
+import { DeclVectorStmtContext } from "./LanguageParser";
+import { CallStmtContext } from "./LanguageParser";
+import { ArgListContext } from "./LanguageParser";
+import { IfStmtContext } from "./LanguageParser";
+import { WhileStmtContext } from "./LanguageParser";
 import { ForStmtContext } from "./LanguageParser";
-import { ReturnStmtContext } from "./LanguageParser";
-import { AssignContext } from "./LanguageParser";
+import { LvalueContext } from "./LanguageParser";
+import { FieldAccessContext } from "./LanguageParser";
+import { IndexSuffixContext } from "./LanguageParser";
 import { ExprContext } from "./LanguageParser";
+import { OrExprContext } from "./LanguageParser";
+import { AndExprContext } from "./LanguageParser";
+import { RelExprContext } from "./LanguageParser";
+import { AddExprContext } from "./LanguageParser";
+import { MulExprContext } from "./LanguageParser";
+import { UnaryExprContext } from "./LanguageParser";
+import { PrimaryContext } from "./LanguageParser";
+import { LengthCallContext } from "./LanguageParser";
+import { CallExprContext } from "./LanguageParser";
 
 
 /**
@@ -31,15 +45,15 @@ export interface LanguageListener extends ParseTreeListener {
 	exitProgram?: (ctx: ProgramContext) => void;
 
 	/**
-	 * Enter a parse tree produced by `LanguageParser.functionDecl`.
+	 * Enter a parse tree produced by `LanguageParser.stmt`.
 	 * @param ctx the parse tree
 	 */
-	enterFunctionDecl?: (ctx: FunctionDeclContext) => void;
+	enterStmt?: (ctx: StmtContext) => void;
 	/**
-	 * Exit a parse tree produced by `LanguageParser.functionDecl`.
+	 * Exit a parse tree produced by `LanguageParser.stmt`.
 	 * @param ctx the parse tree
 	 */
-	exitFunctionDecl?: (ctx: FunctionDeclContext) => void;
+	exitStmt?: (ctx: StmtContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `LanguageParser.block`.
@@ -53,26 +67,70 @@ export interface LanguageListener extends ParseTreeListener {
 	exitBlock?: (ctx: BlockContext) => void;
 
 	/**
-	 * Enter a parse tree produced by `LanguageParser.statement`.
+	 * Enter a parse tree produced by `LanguageParser.assignmentStmt`.
 	 * @param ctx the parse tree
 	 */
-	enterStatement?: (ctx: StatementContext) => void;
+	enterAssignmentStmt?: (ctx: AssignmentStmtContext) => void;
 	/**
-	 * Exit a parse tree produced by `LanguageParser.statement`.
+	 * Exit a parse tree produced by `LanguageParser.assignmentStmt`.
 	 * @param ctx the parse tree
 	 */
-	exitStatement?: (ctx: StatementContext) => void;
+	exitAssignmentStmt?: (ctx: AssignmentStmtContext) => void;
 
 	/**
-	 * Enter a parse tree produced by `LanguageParser.variableDecl`.
+	 * Enter a parse tree produced by `LanguageParser.declVectorStmt`.
 	 * @param ctx the parse tree
 	 */
-	enterVariableDecl?: (ctx: VariableDeclContext) => void;
+	enterDeclVectorStmt?: (ctx: DeclVectorStmtContext) => void;
 	/**
-	 * Exit a parse tree produced by `LanguageParser.variableDecl`.
+	 * Exit a parse tree produced by `LanguageParser.declVectorStmt`.
 	 * @param ctx the parse tree
 	 */
-	exitVariableDecl?: (ctx: VariableDeclContext) => void;
+	exitDeclVectorStmt?: (ctx: DeclVectorStmtContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.callStmt`.
+	 * @param ctx the parse tree
+	 */
+	enterCallStmt?: (ctx: CallStmtContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.callStmt`.
+	 * @param ctx the parse tree
+	 */
+	exitCallStmt?: (ctx: CallStmtContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.argList`.
+	 * @param ctx the parse tree
+	 */
+	enterArgList?: (ctx: ArgListContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.argList`.
+	 * @param ctx the parse tree
+	 */
+	exitArgList?: (ctx: ArgListContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.ifStmt`.
+	 * @param ctx the parse tree
+	 */
+	enterIfStmt?: (ctx: IfStmtContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.ifStmt`.
+	 * @param ctx the parse tree
+	 */
+	exitIfStmt?: (ctx: IfStmtContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.whileStmt`.
+	 * @param ctx the parse tree
+	 */
+	enterWhileStmt?: (ctx: WhileStmtContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.whileStmt`.
+	 * @param ctx the parse tree
+	 */
+	exitWhileStmt?: (ctx: WhileStmtContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `LanguageParser.forStmt`.
@@ -86,26 +144,37 @@ export interface LanguageListener extends ParseTreeListener {
 	exitForStmt?: (ctx: ForStmtContext) => void;
 
 	/**
-	 * Enter a parse tree produced by `LanguageParser.returnStmt`.
+	 * Enter a parse tree produced by `LanguageParser.lvalue`.
 	 * @param ctx the parse tree
 	 */
-	enterReturnStmt?: (ctx: ReturnStmtContext) => void;
+	enterLvalue?: (ctx: LvalueContext) => void;
 	/**
-	 * Exit a parse tree produced by `LanguageParser.returnStmt`.
+	 * Exit a parse tree produced by `LanguageParser.lvalue`.
 	 * @param ctx the parse tree
 	 */
-	exitReturnStmt?: (ctx: ReturnStmtContext) => void;
+	exitLvalue?: (ctx: LvalueContext) => void;
 
 	/**
-	 * Enter a parse tree produced by `LanguageParser.assign`.
+	 * Enter a parse tree produced by `LanguageParser.fieldAccess`.
 	 * @param ctx the parse tree
 	 */
-	enterAssign?: (ctx: AssignContext) => void;
+	enterFieldAccess?: (ctx: FieldAccessContext) => void;
 	/**
-	 * Exit a parse tree produced by `LanguageParser.assign`.
+	 * Exit a parse tree produced by `LanguageParser.fieldAccess`.
 	 * @param ctx the parse tree
 	 */
-	exitAssign?: (ctx: AssignContext) => void;
+	exitFieldAccess?: (ctx: FieldAccessContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.indexSuffix`.
+	 * @param ctx the parse tree
+	 */
+	enterIndexSuffix?: (ctx: IndexSuffixContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.indexSuffix`.
+	 * @param ctx the parse tree
+	 */
+	exitIndexSuffix?: (ctx: IndexSuffixContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `LanguageParser.expr`.
@@ -117,5 +186,104 @@ export interface LanguageListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitExpr?: (ctx: ExprContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.orExpr`.
+	 * @param ctx the parse tree
+	 */
+	enterOrExpr?: (ctx: OrExprContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.orExpr`.
+	 * @param ctx the parse tree
+	 */
+	exitOrExpr?: (ctx: OrExprContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.andExpr`.
+	 * @param ctx the parse tree
+	 */
+	enterAndExpr?: (ctx: AndExprContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.andExpr`.
+	 * @param ctx the parse tree
+	 */
+	exitAndExpr?: (ctx: AndExprContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.relExpr`.
+	 * @param ctx the parse tree
+	 */
+	enterRelExpr?: (ctx: RelExprContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.relExpr`.
+	 * @param ctx the parse tree
+	 */
+	exitRelExpr?: (ctx: RelExprContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.addExpr`.
+	 * @param ctx the parse tree
+	 */
+	enterAddExpr?: (ctx: AddExprContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.addExpr`.
+	 * @param ctx the parse tree
+	 */
+	exitAddExpr?: (ctx: AddExprContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.mulExpr`.
+	 * @param ctx the parse tree
+	 */
+	enterMulExpr?: (ctx: MulExprContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.mulExpr`.
+	 * @param ctx the parse tree
+	 */
+	exitMulExpr?: (ctx: MulExprContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.unaryExpr`.
+	 * @param ctx the parse tree
+	 */
+	enterUnaryExpr?: (ctx: UnaryExprContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.unaryExpr`.
+	 * @param ctx the parse tree
+	 */
+	exitUnaryExpr?: (ctx: UnaryExprContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.primary`.
+	 * @param ctx the parse tree
+	 */
+	enterPrimary?: (ctx: PrimaryContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.primary`.
+	 * @param ctx the parse tree
+	 */
+	exitPrimary?: (ctx: PrimaryContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.lengthCall`.
+	 * @param ctx the parse tree
+	 */
+	enterLengthCall?: (ctx: LengthCallContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.lengthCall`.
+	 * @param ctx the parse tree
+	 */
+	exitLengthCall?: (ctx: LengthCallContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.callExpr`.
+	 * @param ctx the parse tree
+	 */
+	enterCallExpr?: (ctx: CallExprContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.callExpr`.
+	 * @param ctx the parse tree
+	 */
+	exitCallExpr?: (ctx: CallExprContext) => void;
 }
 

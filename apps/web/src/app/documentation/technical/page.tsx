@@ -1,22 +1,37 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
 import { DocumentationCard } from "@/components/DocumentationCard";
 import { DocumentationIndex } from "@/components/DocumentationIndex";
+import DocumentationModal from "@/components/DocumentationModal";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { ImageModal } from "@/components/ImageModal";
 import { LoaderDemo } from "@/components/LoaderDemo";
 import { useDocumentationSections } from "@/hooks/useDocumentationSections";
 import { useImageModal } from "@/hooks/useImageModal";
+import { DocumentationSection } from "@/types/documentation";
 
 export default function TechnicalDocsPage() {
   const { selectedImage, openModal, closeModal, isModalOpen } = useImageModal();
+  const [selectedSection, setSelectedSection] = useState<DocumentationSection | null>(null);
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
   const sections = useDocumentationSections();
 
   const handleSectionClick = (sectionId: string) => {
     // El scroll se maneja en el componente DocumentationIndex
+  };
+
+  const openDocumentationModal = (section: DocumentationSection) => {
+    setSelectedSection(section);
+    setIsDocModalOpen(true);
+  };
+
+  const closeDocumentationModal = () => {
+    setSelectedSection(null);
+    setIsDocModalOpen(false);
   };
 
   return (
@@ -43,7 +58,11 @@ export default function TechnicalDocsPage() {
             <div className="documentation-grid">
               {sections.map((section) => (
                 <div key={section.id} id={section.id} className="scroll-mt-24">
-                  <DocumentationCard section={section} onImageClick={openModal} />
+                  <DocumentationCard 
+                    section={section} 
+                    onImageClick={openModal}
+                    onOpenSection={openDocumentationModal}
+                  />
                 </div>
               ))}
             </div>
@@ -74,6 +93,13 @@ export default function TechnicalDocsPage() {
 
       {/* Modal de imagen */}
       <ImageModal image={selectedImage} isOpen={isModalOpen} onClose={closeModal} />
+      
+      {/* Modal de documentación */}
+      <DocumentationModal 
+        open={isDocModalOpen} 
+        onClose={closeDocumentationModal} 
+        section={selectedSection} 
+      />
 
       <Footer />
     </div>

@@ -7,7 +7,7 @@ interface CostsTableProps {
   onViewProcedure?: (rowNo: number) => void;
 }
 
-export default function CostsTable({ rows, onViewProcedure }: CostsTableProps) {
+export default function CostsTable({ rows, onViewProcedure }: Readonly<CostsTableProps>) {
   return (
     <div className="overflow-x-auto rounded-lg border border-white/10 flex-1">
       <table className="w-full text-sm">

@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .core.config import get_dev_allowed_origins, get_dev_cors_enabled
+from .routers import parse as parse_router
 
 app = FastAPI(title="algorithmic-analysis API", version="0.1.0")
 
@@ -26,8 +27,4 @@ def health():
     return JSONResponse({"status": "ok"})
 
 
-@app.post("/grammar/parse")
-async def grammar_parse(request: Request):
-    _ = await request.json()  # TODO: Usar data para parseo real
-    # Implementa aquí el parseo real, por ahora responde dummy:
-    return {"ok": True, "available": True, "runtime": "python", "error": None}
+app.include_router(parse_router.router)

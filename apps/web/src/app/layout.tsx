@@ -4,6 +4,8 @@ import { Noto_Sans, Spline_Sans } from "next/font/google";
 
 import { GlobalLoaderOverlay } from "@/components/GlobalLoaderOverlay";
 import { GlobalLoaderProvider } from "@/contexts/GlobalLoaderContext";
+import { NavigationProvider } from "@/contexts/NavigationContext";
+import NavigationLoadingWrapper from "@/components/NavigationLoadingWrapper";
 
 const notoSans = Noto_Sans({
   weight: ["400", "500", "700", "900"],
@@ -39,7 +41,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         style={{ fontFamily: "var(--font-spline-sans), var(--font-noto-sans), sans-serif" }}
       >
         <GlobalLoaderProvider>
-          {children}
+          <NavigationProvider>
+            <NavigationLoadingWrapper>
+              {children}
+            </NavigationLoadingWrapper>
+          </NavigationProvider>
           <GlobalLoaderOverlay />
         </GlobalLoaderProvider>
       </body>

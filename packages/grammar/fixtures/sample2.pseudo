@@ -1,0 +1,8 @@
+{
+  sum <- 0;
+  for i <- 1 to 5 do {
+    sum <- sum + i;
+    B[i] <- sum;
+  }
+  if (length(B) >= 5) then { CALL print(sum); }
+}

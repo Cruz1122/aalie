@@ -1,6 +1,6 @@
 "use client";
 
-export default function CodePane({ code }: { code: string }) {
+export default function CodePane({ code }: Readonly<{ code: string }>) {
   const lines = code.split("\n");
   return (
     <div className="rounded-lg border border-white/10 bg-slate-900/50 p-3 h-full overflow-auto">
