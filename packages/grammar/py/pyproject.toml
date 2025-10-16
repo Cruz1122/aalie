@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aa-grammar"
+version = "0.1.0"
+description = "ANTLR4 Python parser for Algorithmic Analysis"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Algorithmic Analysis Team"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+]
+requires-python = ">=3.11"
+dependencies = [
+    "antlr4-python3-runtime==4.13.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=22.0.0",
+    "isort>=5.10.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.isort]
+profile = "black"
+line_length = 88
