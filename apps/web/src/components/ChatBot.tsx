@@ -45,6 +45,7 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Chat
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const animatedMessagesRef = useRef<Set<string>>(new Set());
 
   // Auto-scroll al final cuando hay nuevos mensajes
   const scrollToBottom = (immediate = false) => {
@@ -149,6 +150,7 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Chat
   const clearConversation = () => {
     setInputValue("");
     setIsTyping(false);
+    animatedMessagesRef.current.clear();
     const welcomeMessage: Message = {
       id: `welcome-${Date.now()}`,
       content: "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
@@ -190,7 +192,7 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Chat
           <div className="flex items-center gap-2">
             <button
               onClick={clearConversation}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
+              className="w-8 h-8 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white flex items-center justify-center"
               title="Limpiar conversación"
               disabled={isTyping}
             >
@@ -198,23 +200,28 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Chat
             </button>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
+              className="w-8 h-8 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white flex items-center justify-center"
               title="Volver al inicio"
             >
-              <span className="material-symbols-outlined">arrow_back</span>
+              <span className="material-symbols-outlined text-lg leading-none">arrow_back</span>
             </button>
           </div>
         </div>
 
         {/* Messages Container */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-3">
-          {messages.map((message, index) => (
+        <div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
+          {messages.map((message) => {
+            const isNewMessage = !animatedMessagesRef.current.has(message.id);
+            if (isNewMessage) {
+              animatedMessagesRef.current.add(message.id);
+            }
+            
+            return (
             <div
               key={message.id}
               className={`flex items-start gap-3 ${
                 message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'
-              } chat-message-slide-in`}
-              style={{ animationDelay: `${index * 0.1}s` }}
+              } ${isNewMessage ? 'chat-message-slide-in' : ''}`}
             >
               {/* Avatar */}
               <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -233,7 +240,7 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Chat
               <div className={`flex flex-col max-w-[75%] ${
                 message.sender === 'user' ? 'items-end' : 'items-start'
               }`}>
-                <div className={`px-3 py-2 rounded-xl chat-bubble-enter ${
+                <div className={`px-3 py-2 rounded-xl ${
                   message.sender === 'user'
                     ? 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30'
                     : 'glass-card border-white/10'
@@ -245,7 +252,8 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Chat
                 </span>
               </div>
             </div>
-          ))}
+            );
+          })}
 
           {/* Typing Indicator - Estilo WhatsApp */}
           {isTyping && (
