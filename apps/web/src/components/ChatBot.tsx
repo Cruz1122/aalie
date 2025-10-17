@@ -40,7 +40,7 @@ const MOCK_RESPONSES = [
   "Claro, te puedo ayudar. El análisis incluye: supuestos del problema, identificación de la línea más costosa, cálculo de T(n), y determinación de la complejidad asintótica. ¿Por dónde empezamos?"
 ];
 
-export default function ChatBot({ isOpen, onClose, messages, setMessages }: ChatBotProps) {
+export default function ChatBot({ isOpen, onClose, messages, setMessages }: Readonly<ChatBotProps>) {
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
