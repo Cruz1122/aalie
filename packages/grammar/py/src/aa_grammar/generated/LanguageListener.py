@@ -17,6 +17,87 @@ class LanguageListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by LanguageParser#classDef.
+    def enterClassDef(self, ctx:LanguageParser.ClassDefContext):
+        pass
+
+    # Exit a parse tree produced by LanguageParser#classDef.
+    def exitClassDef(self, ctx:LanguageParser.ClassDefContext):
+        pass
+
+
+    # Enter a parse tree produced by LanguageParser#attrList.
+    def enterAttrList(self, ctx:LanguageParser.AttrListContext):
+        pass
+
+    # Exit a parse tree produced by LanguageParser#attrList.
+    def exitAttrList(self, ctx:LanguageParser.AttrListContext):
+        pass
+
+
+    # Enter a parse tree produced by LanguageParser#procDef.
+    def enterProcDef(self, ctx:LanguageParser.ProcDefContext):
+        pass
+
+    # Exit a parse tree produced by LanguageParser#procDef.
+    def exitProcDef(self, ctx:LanguageParser.ProcDefContext):
+        pass
+
+
+    # Enter a parse tree produced by LanguageParser#paramList.
+    def enterParamList(self, ctx:LanguageParser.ParamListContext):
+        pass
+
+    # Exit a parse tree produced by LanguageParser#paramList.
+    def exitParamList(self, ctx:LanguageParser.ParamListContext):
+        pass
+
+
+    # Enter a parse tree produced by LanguageParser#param.
+    def enterParam(self, ctx:LanguageParser.ParamContext):
+        pass
+
+    # Exit a parse tree produced by LanguageParser#param.
+    def exitParam(self, ctx:LanguageParser.ParamContext):
+        pass
+
+
+    # Enter a parse tree produced by LanguageParser#arrayParam.
+    def enterArrayParam(self, ctx:LanguageParser.ArrayParamContext):
+        pass
+
+    # Exit a parse tree produced by LanguageParser#arrayParam.
+    def exitArrayParam(self, ctx:LanguageParser.ArrayParamContext):
+        pass
+
+
+    # Enter a parse tree produced by LanguageParser#arrayIndex.
+    def enterArrayIndex(self, ctx:LanguageParser.ArrayIndexContext):
+        pass
+
+    # Exit a parse tree produced by LanguageParser#arrayIndex.
+    def exitArrayIndex(self, ctx:LanguageParser.ArrayIndexContext):
+        pass
+
+
+    # Enter a parse tree produced by LanguageParser#arrayDim.
+    def enterArrayDim(self, ctx:LanguageParser.ArrayDimContext):
+        pass
+
+    # Exit a parse tree produced by LanguageParser#arrayDim.
+    def exitArrayDim(self, ctx:LanguageParser.ArrayDimContext):
+        pass
+
+
+    # Enter a parse tree produced by LanguageParser#objectParam.
+    def enterObjectParam(self, ctx:LanguageParser.ObjectParamContext):
+        pass
+
+    # Exit a parse tree produced by LanguageParser#objectParam.
+    def exitObjectParam(self, ctx:LanguageParser.ObjectParamContext):
+        pass
+
+
     # Enter a parse tree produced by LanguageParser#stmt.
     def enterStmt(self, ctx:LanguageParser.StmtContext):
         pass
@@ -68,6 +149,24 @@ class LanguageListener(ParseTreeListener):
 
     # Exit a parse tree produced by LanguageParser#argList.
     def exitArgList(self, ctx:LanguageParser.ArgListContext):
+        pass
+
+
+    # Enter a parse tree produced by LanguageParser#repeatStmt.
+    def enterRepeatStmt(self, ctx:LanguageParser.RepeatStmtContext):
+        pass
+
+    # Exit a parse tree produced by LanguageParser#repeatStmt.
+    def exitRepeatStmt(self, ctx:LanguageParser.RepeatStmtContext):
+        pass
+
+
+    # Enter a parse tree produced by LanguageParser#returnStmt.
+    def enterReturnStmt(self, ctx:LanguageParser.ReturnStmtContext):
+        pass
+
+    # Exit a parse tree produced by LanguageParser#returnStmt.
+    def exitReturnStmt(self, ctx:LanguageParser.ReturnStmtContext):
         pass
 
 

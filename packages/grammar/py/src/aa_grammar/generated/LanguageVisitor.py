@@ -14,6 +14,51 @@ class LanguageVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by LanguageParser#classDef.
+    def visitClassDef(self, ctx:LanguageParser.ClassDefContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by LanguageParser#attrList.
+    def visitAttrList(self, ctx:LanguageParser.AttrListContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by LanguageParser#procDef.
+    def visitProcDef(self, ctx:LanguageParser.ProcDefContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by LanguageParser#paramList.
+    def visitParamList(self, ctx:LanguageParser.ParamListContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by LanguageParser#param.
+    def visitParam(self, ctx:LanguageParser.ParamContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by LanguageParser#arrayParam.
+    def visitArrayParam(self, ctx:LanguageParser.ArrayParamContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by LanguageParser#arrayIndex.
+    def visitArrayIndex(self, ctx:LanguageParser.ArrayIndexContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by LanguageParser#arrayDim.
+    def visitArrayDim(self, ctx:LanguageParser.ArrayDimContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by LanguageParser#objectParam.
+    def visitObjectParam(self, ctx:LanguageParser.ObjectParamContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by LanguageParser#stmt.
     def visitStmt(self, ctx:LanguageParser.StmtContext):
         return self.visitChildren(ctx)
@@ -41,6 +86,16 @@ class LanguageVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by LanguageParser#argList.
     def visitArgList(self, ctx:LanguageParser.ArgListContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by LanguageParser#repeatStmt.
+    def visitRepeatStmt(self, ctx:LanguageParser.RepeatStmtContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by LanguageParser#returnStmt.
+    def visitReturnStmt(self, ctx:LanguageParser.ReturnStmtContext):
         return self.visitChildren(ctx)
 
 

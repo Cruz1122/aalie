@@ -4,12 +4,22 @@
 import { ParseTreeListener } from "antlr4ts/tree/ParseTreeListener";
 
 import { ProgramContext } from "./LanguageParser";
+import { ClassDefContext } from "./LanguageParser";
+import { AttrListContext } from "./LanguageParser";
+import { ProcDefContext } from "./LanguageParser";
+import { ParamListContext } from "./LanguageParser";
+import { ParamContext } from "./LanguageParser";
+import { ArrayParamContext } from "./LanguageParser";
+import { ArrayDimContext } from "./LanguageParser";
+import { ObjectParamContext } from "./LanguageParser";
 import { StmtContext } from "./LanguageParser";
 import { BlockContext } from "./LanguageParser";
 import { AssignmentStmtContext } from "./LanguageParser";
 import { DeclVectorStmtContext } from "./LanguageParser";
 import { CallStmtContext } from "./LanguageParser";
 import { ArgListContext } from "./LanguageParser";
+import { RepeatStmtContext } from "./LanguageParser";
+import { ReturnStmtContext } from "./LanguageParser";
 import { IfStmtContext } from "./LanguageParser";
 import { WhileStmtContext } from "./LanguageParser";
 import { ForStmtContext } from "./LanguageParser";
@@ -43,6 +53,94 @@ export interface LanguageListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitProgram?: (ctx: ProgramContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.classDef`.
+	 * @param ctx the parse tree
+	 */
+	enterClassDef?: (ctx: ClassDefContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.classDef`.
+	 * @param ctx the parse tree
+	 */
+	exitClassDef?: (ctx: ClassDefContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.attrList`.
+	 * @param ctx the parse tree
+	 */
+	enterAttrList?: (ctx: AttrListContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.attrList`.
+	 * @param ctx the parse tree
+	 */
+	exitAttrList?: (ctx: AttrListContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.procDef`.
+	 * @param ctx the parse tree
+	 */
+	enterProcDef?: (ctx: ProcDefContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.procDef`.
+	 * @param ctx the parse tree
+	 */
+	exitProcDef?: (ctx: ProcDefContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.paramList`.
+	 * @param ctx the parse tree
+	 */
+	enterParamList?: (ctx: ParamListContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.paramList`.
+	 * @param ctx the parse tree
+	 */
+	exitParamList?: (ctx: ParamListContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.param`.
+	 * @param ctx the parse tree
+	 */
+	enterParam?: (ctx: ParamContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.param`.
+	 * @param ctx the parse tree
+	 */
+	exitParam?: (ctx: ParamContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.arrayParam`.
+	 * @param ctx the parse tree
+	 */
+	enterArrayParam?: (ctx: ArrayParamContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.arrayParam`.
+	 * @param ctx the parse tree
+	 */
+	exitArrayParam?: (ctx: ArrayParamContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.arrayDim`.
+	 * @param ctx the parse tree
+	 */
+	enterArrayDim?: (ctx: ArrayDimContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.arrayDim`.
+	 * @param ctx the parse tree
+	 */
+	exitArrayDim?: (ctx: ArrayDimContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.objectParam`.
+	 * @param ctx the parse tree
+	 */
+	enterObjectParam?: (ctx: ObjectParamContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.objectParam`.
+	 * @param ctx the parse tree
+	 */
+	exitObjectParam?: (ctx: ObjectParamContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `LanguageParser.stmt`.
@@ -109,6 +207,28 @@ export interface LanguageListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitArgList?: (ctx: ArgListContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.repeatStmt`.
+	 * @param ctx the parse tree
+	 */
+	enterRepeatStmt?: (ctx: RepeatStmtContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.repeatStmt`.
+	 * @param ctx the parse tree
+	 */
+	exitRepeatStmt?: (ctx: RepeatStmtContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.returnStmt`.
+	 * @param ctx the parse tree
+	 */
+	enterReturnStmt?: (ctx: ReturnStmtContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.returnStmt`.
+	 * @param ctx the parse tree
+	 */
+	exitReturnStmt?: (ctx: ReturnStmtContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `LanguageParser.ifStmt`.
