@@ -95,7 +95,6 @@ O con llaves:
 ```
 variable <- expresion;
 variable := expresion;
-variable ← expresion;
 ```
 
 #### Declaración de arrays
@@ -179,7 +178,6 @@ resultado <- fibonacci(n - 1) + fibonacci(n - 2);
 
 #### Operadores de asignación
 - `<-` (ASCII)
-- `←` (Unicode)
 - `:=` (Pascal style)
 
 #### Operadores de comparación

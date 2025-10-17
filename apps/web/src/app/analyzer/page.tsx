@@ -1,11 +1,13 @@
 "use client";
+
 import { useState } from "react";
+
 import CodePane from "@/components/CodePane";
 import CostsTable from "@/components/CostsTable";
-import Formula from "@/components/Formula";
-import ProcedureModal from "@/components/ProcedureModal";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Formula from "@/components/Formula";
+import Header from "@/components/Header";
+import ProcedureModal from "@/components/ProcedureModal";
 
 export default function AnalyzerPage() {
   const [open, setOpen] = useState(false);

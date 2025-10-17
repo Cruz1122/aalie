@@ -10,6 +10,7 @@ import { ProcDefContext } from "./LanguageParser";
 import { ParamListContext } from "./LanguageParser";
 import { ParamContext } from "./LanguageParser";
 import { ArrayParamContext } from "./LanguageParser";
+import { ArrayIndexContext } from "./LanguageParser";
 import { ArrayDimContext } from "./LanguageParser";
 import { ObjectParamContext } from "./LanguageParser";
 import { StmtContext } from "./LanguageParser";
@@ -94,6 +95,13 @@ export interface LanguageVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitArrayParam?: (ctx: ArrayParamContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `LanguageParser.arrayIndex`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitArrayIndex?: (ctx: ArrayIndexContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `LanguageParser.arrayDim`.

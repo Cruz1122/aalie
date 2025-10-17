@@ -1,7 +1,8 @@
 "use client";
 
-import NavigationLink from "./NavigationLink";
 import { useState } from "react";
+
+import NavigationLink from "./NavigationLink";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -61,7 +62,7 @@ export default function Header() {
             <NavigationLink className="hover:text-white transition-colors" href="/documentation">
               Documentación
             </NavigationLink>
-            <NavigationLink className="hover:text-white transition-colors" href="/">
+            <NavigationLink className="hover:text-white transition-colors" href="/examples">
               Ejemplos
             </NavigationLink>
             <NavigationLink className="hover:text-white transition-colors" href="/about-us">
@@ -93,7 +94,7 @@ export default function Header() {
             </NavigationLink>
             <NavigationLink
               className="text-dark-text hover:text-white transition-colors py-2 px-3 rounded-md hover:bg-white/5"
-              href="/"
+              href="/examples"
               onClick={toggleMenu}
             >
               Ejemplos

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Send, User, RotateCcw } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { RotateCcw, Send, User } from "lucide-react";
 
 interface Message {
   id: string;

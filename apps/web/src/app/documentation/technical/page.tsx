@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import NavigationLink from "@/components/NavigationLink";
+import { useEffect, useState } from "react";
 
 import { DocumentationCard } from "@/components/DocumentationCard";
 import { DocumentationIndex } from "@/components/DocumentationIndex";
@@ -10,6 +10,7 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { ImageModal } from "@/components/ImageModal";
 import { LoaderDemo } from "@/components/LoaderDemo";
+import { useNavigation } from "@/contexts/NavigationContext";
 import { useDocumentationSections } from "@/hooks/useDocumentationSections";
 import { useImageModal } from "@/hooks/useImageModal";
 import { DocumentationSection } from "@/types/documentation";
@@ -19,6 +20,12 @@ export default function TechnicalDocsPage() {
   const [selectedSection, setSelectedSection] = useState<DocumentationSection | null>(null);
   const [isDocModalOpen, setIsDocModalOpen] = useState(false);
   const sections = useDocumentationSections();
+  const { finishNavigation } = useNavigation();
+
+  // Finalizar la carga cuando el componente se monte
+  useEffect(() => {
+    finishNavigation();
+  }, [finishNavigation]);
 
   const handleSectionClick = (sectionId: string) => {
     // El scroll se maneja en el componente DocumentationIndex
@@ -80,12 +87,12 @@ export default function TechnicalDocsPage() {
           <footer className="text-sm sm:text-base text-dark-text text-center lg:text-left border-t border-white/10 pt-6 mt-8">
             <p>
               Esta página se está actualizando constantemente.{" "}
-              <Link
+              <NavigationLink
                 href="/documentation"
                 className="text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400/50 rounded px-1 py-0.5"
               >
                 Volver a Documentación
-              </Link>
+              </NavigationLink>
             </p>
           </footer>
         </div>

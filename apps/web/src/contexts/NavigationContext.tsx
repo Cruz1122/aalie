@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
 interface NavigationContextType {
@@ -16,34 +16,64 @@ interface NavigationProviderProps {
   children: ReactNode;
 }
 
-export function NavigationProvider({ children }: NavigationProviderProps) {
+export function NavigationProvider({ children }: Readonly<NavigationProviderProps>) {
   const [isLoading, setIsLoading] = useState(false);
   const pathname = usePathname();
+  const prevPathname = useRef(pathname);
+  const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Detectar cambios de ruta para terminar la carga
+  // Detectar cambios de ruta - dar un tiempo para que la página se monte
   useEffect(() => {
-    setIsLoading(false);
+    if (prevPathname.current !== pathname) {
+      // Si cambió la ruta y está cargando, esperar un poco para que la página se monte
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 100);
+      prevPathname.current = pathname;
+      return () => clearTimeout(timer);
+    }
   }, [pathname]);
 
-  const setLoading = (loading: boolean) => {
+  // Limpiar timeout cuando se desmonte
+  useEffect(() => {
+    return () => {
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const setLoading = useCallback((loading: boolean) => {
     setIsLoading(loading);
-  };
+  }, []);
 
-  const startNavigation = () => {
+  const startNavigation = useCallback(() => {
     setIsLoading(true);
-  };
+    // Auto-hide después de 10 segundos para evitar que se quede pegado si algo falla
+    if (navigationTimeoutRef.current) {
+      clearTimeout(navigationTimeoutRef.current);
+    }
+    navigationTimeoutRef.current = setTimeout(() => {
+      setIsLoading(false);
+    }, 10000);
+  }, []);
 
-  const finishNavigation = () => {
+  const finishNavigation = useCallback(() => {
     setIsLoading(false);
-  };
+    if (navigationTimeoutRef.current) {
+      clearTimeout(navigationTimeoutRef.current);
+    }
+  }, []);
+
+  const contextValue = useMemo(() => ({
+    isLoading,
+    setLoading,
+    startNavigation,
+    finishNavigation
+  }), [isLoading, setLoading, startNavigation, finishNavigation]);
 
   return (
-    <NavigationContext.Provider value={{
-      isLoading,
-      setLoading,
-      startNavigation,
-      finishNavigation
-    }}>
+    <NavigationContext.Provider value={contextValue}>
       {children}
     </NavigationContext.Provider>
   );

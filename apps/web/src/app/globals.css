@@ -502,3 +502,77 @@ body {
 .animation-delay-150 {
   animation-delay: 0.15s;
 }
+
+/* Animación de pulso lento para botón de ayuda */
+.animate-pulse-slow {
+  animation: pulseSlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulseSlow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Animación de vibración sutil cada segundo para el ícono */
+.animate-wiggle {
+  animation: wiggle 1s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+  0%, 90%, 100% {
+    transform: rotate(0deg);
+  }
+  92% {
+    transform: rotate(-5deg);
+  }
+  94% {
+    transform: rotate(5deg);
+  }
+  96% {
+    transform: rotate(-5deg);
+  }
+  98% {
+    transform: rotate(5deg);
+  }
+}
+
+/* Animaciones de entrada y salida para botón de ayuda */
+@keyframes slideInUp {
+  from {
+    transform: translateY(20px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOutDown {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(20px);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

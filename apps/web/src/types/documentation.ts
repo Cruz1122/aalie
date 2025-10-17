@@ -73,7 +73,7 @@ export interface KaTeXUtility {
   file: string;
   function: string;
   purpose: string;
-  config: Record<string, any>;
+  config: Record<string, unknown>;
   security: string;
 }
 
@@ -166,12 +166,81 @@ export interface AnalyzerContent {
   };
 }
 
+export interface GrammarFeature {
+  name: string;
+  description: string;
+  example: string;
+}
+
+export interface GrammarSyntaxSection {
+  name: string;
+  code: string;
+  notes: string[];
+}
+
+export interface GrammarOperatorCategory {
+  name: string;
+  operators: string[];
+  precedence: string;
+}
+
+export interface GrammarContent {
+  type: "grammar";
+  overview: {
+    title: string;
+    description: string;
+    technology: string;
+    location: string;
+    generators: string[];
+  };
+  features: {
+    title: string;
+    items: GrammarFeature[];
+  };
+  syntax: {
+    title: string;
+    sections: GrammarSyntaxSection[];
+  };
+  operators: {
+    title: string;
+    categories: GrammarOperatorCategory[];
+  };
+  ast: {
+    title: string;
+    description: string;
+    nodeTypes: string[];
+    example: {
+      input: string;
+      astFragment: string;
+    };
+  };
+  validation: {
+    title: string;
+    client: {
+      technology: string;
+      purpose: string;
+      features: string[];
+    };
+    server: {
+      technology: string;
+      purpose: string;
+      endpoint: string;
+      features: string[];
+    };
+  };
+  errorHandling: {
+    title: string;
+    features: string[];
+    errorTypes: string[];
+  };
+}
+
 export interface DocumentationSection {
   id: string;
   title: string;
   description: string;
   image?: ImageData;
-  content?: PackageContent | UIShowcaseContent | ToolsContent | KaTeXContent | AnalyzerContent;
+  content?: PackageContent | UIShowcaseContent | ToolsContent | KaTeXContent | AnalyzerContent | GrammarContent;
 }
 
 export interface ModalImageData {

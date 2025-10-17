@@ -19,8 +19,10 @@
   "dependencies": {
     "@aa/grammar": "workspace:^",
     "@aa/types": "workspace:^",
+    "@monaco-editor/react": "^4.7.0",
     "katex": "0.16.10",
     "lucide-react": "^0.544.0",
+    "monaco-editor": "^0.54.0",
     "next": "14.2.0",
     "react": "18.3.1",
     "react-dom": "18.3.1"

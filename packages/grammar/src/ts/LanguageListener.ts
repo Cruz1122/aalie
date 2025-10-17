@@ -10,6 +10,7 @@ import { ProcDefContext } from "./LanguageParser";
 import { ParamListContext } from "./LanguageParser";
 import { ParamContext } from "./LanguageParser";
 import { ArrayParamContext } from "./LanguageParser";
+import { ArrayIndexContext } from "./LanguageParser";
 import { ArrayDimContext } from "./LanguageParser";
 import { ObjectParamContext } from "./LanguageParser";
 import { StmtContext } from "./LanguageParser";
@@ -119,6 +120,17 @@ export interface LanguageListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitArrayParam?: (ctx: ArrayParamContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.arrayIndex`.
+	 * @param ctx the parse tree
+	 */
+	enterArrayIndex?: (ctx: ArrayIndexContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.arrayIndex`.
+	 * @param ctx the parse tree
+	 */
+	exitArrayIndex?: (ctx: ArrayIndexContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `LanguageParser.arrayDim`.
