@@ -13,6 +13,11 @@ Este documento describe la gramática ANTLR4 para el lenguaje de pseudocódigo u
   - [Expresiones](#expresiones)
   - [Operadores](#operadores)
 - [Ejemplos de Algoritmos](#ejemplos-de-algoritmos)
+- [Guía de Desarrollo](#-guía-de-desarrollo)
+  - [Generación de Código (Codegen)](#generación-de-código-codegen)
+  - [Probar el Endpoint /parse](#probar-el-endpoint-parse)
+  - [Activar KaTeX](#activar-katex-para-renderizado-de-fórmulas)
+  - [Contratos de Tipos en @aa/types](#contratos-de-tipos-en-aatypes)
 
 ---
 
@@ -724,11 +729,523 @@ El AST generado incluye:
 
 ---
 
+## 🔧 Guía de Desarrollo
+
+### Generación de Código (Codegen)
+
+El proyecto utiliza ANTLR4 para generar parsers en TypeScript y Python a partir de la gramática `Language.g4`.
+
+#### Generar Parser TypeScript
+
+Desde el directorio `packages/grammar`:
+
+```bash
+npm run build
+```
+
+O desde la raíz del proyecto:
+
+```bash
+pnpm --filter @aa/grammar build
+```
+
+**¿Qué hace esto?**
+- Ejecuta `scripts/gen-ts.mjs`
+- Usa `antlr4ts` para generar el parser TypeScript
+- Genera archivos en `packages/grammar/src/ts/`:
+  - `LanguageLexer.ts`
+  - `LanguageParser.ts`
+  - `LanguageVisitor.ts`
+  - `Language.tokens`, etc.
+
+**Requisitos:**
+- Node.js ≥20 <23
+- `antlr4ts-cli` instalado (incluido en devDependencies)
+
+#### Generar Parser Python
+
+Desde el directorio `packages/grammar`:
+
+```bash
+npm run gen:py
+```
+
+O desde la raíz del proyecto:
+
+```bash
+pnpm --filter @aa/grammar gen:py
+```
+
+**¿Qué hace esto?**
+- Ejecuta `scripts/gen-py.js`
+- Usa el JAR oficial de ANTLR (`tooling/antlr-4.13.2-complete.jar`)
+- Genera archivos en `packages/grammar/out/py/`:
+  - `LanguageLexer.py`
+  - `LanguageParser.py`
+  - `LanguageVisitor.py`
+  - `Language.tokens`, etc.
+
+**Requisitos:**
+- Java ≥8 instalado en el sistema
+- `tooling/antlr-4.13.2-complete.jar` presente
+
+**📝 Nota:** Después de generar el parser Python, copia manualmente los archivos generados a `packages/grammar/py/src/aa_grammar/generated/` si necesitas usarlos en la API.
+
+---
+
+### Probar el Endpoint `/parse`
+
+El backend FastAPI expone un endpoint `/grammar/parse` que recibe pseudocódigo y devuelve el AST.
+
+#### 1. Iniciar el servidor API
+
+Desde el directorio `apps/api`:
+
+```bash
+# Instalar dependencias (primera vez)
+pip install -r requirements.txt
+
+# Iniciar el servidor
+uvicorn app.main:app --reload --port 8000
+```
+
+O usando Docker:
+
+```bash
+cd infra
+docker-compose up api
+```
+
+#### 2. Probar el endpoint
+
+**Con curl:**
+
+```bash
+curl -X POST http://localhost:8000/grammar/parse \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": "factorial(n) BEGIN\n  resultado <- 1;\n  RETURN resultado;\nEND"
+  }'
+```
+
+**Con Python:**
+
+```python
+import requests
+
+response = requests.post(
+    "http://localhost:8000/grammar/parse",
+    json={
+        "input": """
+factorial(n) BEGIN
+  resultado <- 1;
+  FOR i <- 2 TO n DO BEGIN
+    resultado <- resultado * i;
+  END
+  RETURN resultado;
+END
+        """
+    }
+)
+
+print(response.json())
+```
+
+**Con la aplicación web:**
+
+La aplicación Next.js en `apps/web` se comunica con este endpoint a través de `src/services/grammar-api.ts`.
+
+#### 3. Formato de respuesta
+
+**Respuesta exitosa:**
+```json
+{
+  "ok": true,
+  "available": true,
+  "runtime": "python",
+  "ast": {
+    "type": "Program",
+    "body": [...],
+    "pos": {"line": 1, "column": 0}
+  },
+  "errors": []
+}
+```
+
+**Respuesta con errores:**
+```json
+{
+  "ok": false,
+  "available": true,
+  "runtime": "python",
+  "error": "mismatched input ';' expecting 'BEGIN'",
+  "ast": null,
+  "errors": [
+    {
+      "line": 2,
+      "column": 15,
+      "message": "mismatched input ';' expecting 'BEGIN'"
+    }
+  ]
+}
+```
+
+#### 4. Ejecutar tests
+
+Desde `apps/api`:
+
+```bash
+pytest test/test_parse.py -v
+```
+
+---
+
+### Activar KaTeX para Renderizado de Fórmulas
+
+El proyecto utiliza KaTeX para renderizar fórmulas matemáticas en LaTeX.
+
+#### 1. Instalación
+
+KaTeX ya está incluido en las dependencias de `apps/web`:
+
+```json
+{
+  "dependencies": {
+    "katex": "0.16.10",
+    "@types/katex": "^0.16.7"
+  }
+}
+```
+
+Para instalar:
+
+```bash
+cd apps/web
+pnpm install
+```
+
+#### 2. Uso en componentes
+
+El módulo `src/lib/katex.ts` proporciona una función segura para renderizar LaTeX:
+
+```typescript
+import { renderLatexToHtml } from "@/lib/katex";
+
+// Renderizar en modo inline
+const html = renderLatexToHtml("T(n) = O(n^2)");
+
+// Renderizar en modo display (centrado)
+const htmlBlock = renderLatexToHtml("T(n) = \\sum_{i=1}^{n} i", {
+  displayMode: true
+});
+
+// Usar en JSX
+<div dangerouslySetInnerHTML={{ __html: html }} />
+```
+
+#### 3. Configuración
+
+La función `renderLatexToHtml` usa configuraciones seguras por defecto:
+
+```typescript
+{
+  displayMode: false,      // inline por defecto
+  throwOnError: false,     // nunca rompe la UI
+  trust: false,            // no ejecuta código embebido
+  strict: "ignore",        // ignora warnings de LaTeX
+  output: "html"           // genera HTML (no MathML)
+}
+```
+
+#### 4. Estilos CSS
+
+**Importante:** Debes importar los estilos de KaTeX en tu aplicación:
+
+```tsx
+// En apps/web/src/app/layout.tsx o donde uses KaTeX
+import "katex/dist/katex.min.css";
+```
+
+O añade el CDN en `<head>`:
+
+```html
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
+```
+
+#### 5. Ejemplos de uso en el proyecto
+
+- **`Formula.tsx`**: Renderiza fórmulas inline
+- **`FormulaBlock.tsx`**: Renderiza fórmulas en bloque (centradas)
+- **`CostsTable.tsx`**: Muestra fórmulas de costos en tablas
+
+---
+
+### Contratos de Tipos en `@aa/types`
+
+El paquete `@aa/types` (`packages/types/`) define todos los tipos e interfaces compartidos entre el frontend y el backend.
+
+#### Estructura del Paquete
+
+```
+packages/types/
+├── src/
+│   └── index.ts       # Exporta todos los tipos
+├── dist/
+│   ├── index.d.ts     # Definiciones TypeScript compiladas
+│   └── index.js       # Código JavaScript compilado
+├── package.json
+└── tsconfig.json
+```
+
+#### Categorías de Tipos
+
+##### 1. **Health Check**
+
+```typescript
+interface Health {
+  status: "ok";
+}
+
+interface HealthResponse {
+  ok: boolean;
+  service?: string;
+  error?: string;
+  status?: string;
+}
+```
+
+##### 2. **Nodos AST**
+
+Todos los nodos AST heredan de `BaseNode`:
+
+```typescript
+interface BaseNode {
+  type: string;
+  pos: Position;
+}
+
+interface Position {
+  line: number;
+  column: number;
+}
+```
+
+**Tipos de nodos principales:**
+
+- **Literales e identificadores**: `Literal`, `Identifier`
+- **Expresiones**: `Binary`, `Unary`, `Index`, `Field`, `Call`
+- **Statements**: `Block`, `Assign`, `DeclVector`, `If`, `While`, `For`, `Repeat`, `Return`
+- **Parámetros**: `Param`, `ArrayParam`, `ObjectParam`
+- **Nivel superior**: `ProcDef`, `Program`
+
+**Tipo unión:**
+
+```typescript
+type AstNode =
+  | Program
+  | ProcDef
+  | Block
+  | Assign
+  | DeclVector
+  | If
+  | While
+  | For
+  | Repeat
+  | Return
+  | Call
+  | Binary
+  | Unary
+  | Index
+  | Field
+  | Literal
+  | Identifier
+  | Param
+  | ArrayParam
+  | ObjectParam;
+```
+
+##### 3. **Parse API**
+
+```typescript
+interface ParseRequest {
+  source: string;
+}
+
+interface GrammarParseRequest {
+  input: string;
+}
+
+interface ParseError {
+  line: number;
+  column: number;
+  message: string;
+}
+
+interface ParseResponse {
+  ok: boolean;
+  ast?: Program;
+  errors?: ParseError[];
+}
+
+interface GrammarParseResponse extends ParseResponse {
+  available?: boolean;
+  runtime?: string;
+  error?: string;
+}
+```
+
+**Type guard:**
+
+```typescript
+function isGrammarParseResponse(obj: unknown): obj is GrammarParseResponse;
+```
+
+##### 4. **Analyze API**
+
+```typescript
+type CaseMode = "best" | "avg" | "worst" | "all";
+
+interface AnalyzeOptions {
+  mode?: CaseMode;
+  ck?: Record<string, number>;
+  avgModel?: {
+    assumptions?: string;
+    params?: Record<string, unknown>;
+  };
+}
+
+interface LineCost {
+  no: number;           // Número de línea
+  code: string;         // Texto de la línea
+  ck: string;           // Etiqueta de costo (C1, C2, ...)
+  execs: string;        // Número de ejecuciones
+  cost: string;         // Costo total
+}
+
+interface CaseResult {
+  assumptions: string;
+  stepsLatex: string[];
+  Tlatex: string;
+  Tclosed: string;
+}
+
+interface AnalyzeResponse {
+  lines: LineCost[];
+  cases: {
+    best?: CaseResult;
+    avg?: CaseResult;
+    worst?: CaseResult;
+  };
+}
+```
+
+##### 5. **LLM API**
+
+```typescript
+interface LLMCompareRequest {
+  source: string;
+  astSummary?: string;
+  ourResult: {
+    best?: Pick<CaseResult, "Tlatex" | "Tclosed">;
+    avg?: Pick<CaseResult, "Tlatex" | "Tclosed">;
+    worst?: Pick<CaseResult, "Tlatex" | "Tclosed">;
+  };
+}
+
+interface LLMOpinion {
+  explanation: string;
+  T?: string;
+}
+
+interface LLMCompareResponse {
+  llmOpinion: {
+    best?: LLMOpinion;
+    avg?: LLMOpinion;
+    worst?: LLMOpinion;
+  };
+  diffSummary: string;
+}
+```
+
+##### 6. **Documentación**
+
+```typescript
+interface DocumentationSection {
+  id: string;
+  title: string;
+  description: string;
+  image: {
+    src: string;
+    alt: string;
+    width: number;
+    height: number;
+    caption?: string;
+  };
+}
+```
+
+#### Uso en el Proyecto
+
+**En TypeScript (frontend/Next.js):**
+
+```typescript
+import type {
+  ParseRequest,
+  ParseResponse,
+  AstNode,
+  Program,
+  AnalyzeResponse
+} from "@aa/types";
+
+async function parseCode(code: string): Promise<ParseResponse> {
+  const request: ParseRequest = { source: code };
+  const response = await fetch("/api/grammar/parse", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request)
+  });
+  return response.json();
+}
+```
+
+**En Python (backend):**
+
+Los tipos TypeScript sirven como documentación para el contrato de la API. El backend debe devolver JSONs que coincidan con estos tipos.
+
+```python
+# apps/api/app/routers/parse.py
+def parse(payload: Dict[str, Any]) -> Dict[str, Any]:
+    # Devuelve un dict que coincide con GrammarParseResponse
+    return {
+        "ok": True,
+        "available": True,
+        "runtime": "python",
+        "ast": ast_dict,
+        "errors": []
+    }
+```
+
+#### Compilar el Paquete
+
+Para generar los archivos `.d.ts` y `.js`:
+
+```bash
+cd packages/types
+pnpm run build
+```
+
+Esto ejecuta `tsc` y genera `dist/index.d.ts` y `dist/index.js`.
+
+---
+
 ## 🎓 Recursos Adicionales
 
 - **Archivo de gramática**: `Language.g4`
 - **Tests**: `packages/grammar/fixtures/`
 - **Generador de parsers**: `npm run gen:py` (Python) o `npm run build` (TypeScript)
+- **Tipos compartidos**: `packages/types/src/index.ts`
+- **API de parsing**: `apps/api/app/routers/parse.py`
+- **Librería KaTeX**: `apps/web/src/lib/katex.ts`
 
 ---
 
