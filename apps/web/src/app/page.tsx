@@ -1,10 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
+import ChatBot from "@/components/ChatBot";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import NavigationLink from "@/components/NavigationLink";
-import ChatBot from "@/components/ChatBot";
+
+interface Message {
+  id: string;
+  content: string;
+  sender: 'user' | 'bot';
+  timestamp: Date;
+}
 
 
 export default function HomePage() {
@@ -13,7 +21,7 @@ export default function HomePage() {
   const [inputMessage, setInputMessage] = useState("");
   const [isAnimating, setIsAnimating] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<Message[]>([]);
 
   // Restaurar historial desde sessionStorage al montar
   useEffect(() => {
@@ -22,10 +30,18 @@ export default function HomePage() {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          setMessages(parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+          setMessages(parsed.map((m: unknown) => {
+            const message = m as Record<string, unknown>;
+            return {
+              id: message.id as string,
+              content: message.content as string,
+              sender: message.sender as 'user' | 'bot',
+              timestamp: new Date(message.timestamp as string)
+            } as Message;
+          }));
         }
       }
-    } catch (_) {
+    } catch {
       // noop
     }
   }, []);
@@ -33,9 +49,9 @@ export default function HomePage() {
   // Guardar historial en sessionStorage en cada cambio
   useEffect(() => {
     try {
-      const serializable = messages.map((m: any) => ({ ...m, timestamp: (m.timestamp instanceof Date ? m.timestamp.toISOString() : m.timestamp) }));
+      const serializable = messages.map((m: Message) => ({ ...m, timestamp: (m.timestamp instanceof Date ? m.timestamp.toISOString() : m.timestamp) }));
       sessionStorage.setItem("aa_chat_messages", JSON.stringify(serializable));
-    } catch (_) {
+    } catch {
       // noop
     }
   }, [messages]);
@@ -47,8 +63,8 @@ export default function HomePage() {
     setTimeout(() => {
       setChatOpen(true);
       setIsAnimating(false);
-      setMessages((prev: any[]) => {
-        const userMsg = {
+      setMessages((prev: Message[]) => {
+        const userMsg: Message = {
           id: `user-${Date.now()}`,
           content: inputMessage,
           sender: 'user',
@@ -61,7 +77,7 @@ export default function HomePage() {
               content: "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
               sender: 'bot',
               timestamp: new Date(),
-            },
+            } as Message,
             userMsg,
           ];
         }
