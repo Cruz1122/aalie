@@ -10,13 +10,179 @@ export interface HealthResponse {
   status?: string;
 }
 
+/** ---- AST Nodes ---- */
+
+/** Base para todos los nodos AST */
+export interface BaseNode {
+  type: string;
+  pos: Position;
+}
+
+export interface Position {
+  line: number;
+  column: number;
+}
+
+/** Nodos literales e identificadores */
+export interface Literal extends BaseNode {
+  type: "Literal";
+  value: number | boolean | null;
+}
+
+export interface Identifier extends BaseNode {
+  type: "Identifier";
+  name: string;
+}
+
+/** Nodos de expresión */
+export interface Binary extends BaseNode {
+  type: "Binary";
+  op: "==" | "!=" | "<" | "<=" | ">" | ">=" | "+" | "-" | "*" | "/" | "div" | "mod" | "and" | "or";
+  left: AstNode;
+  right: AstNode;
+}
+
+export interface Unary extends BaseNode {
+  type: "Unary";
+  op: "not" | "-";
+  arg: AstNode;
+}
+
+export interface Index extends BaseNode {
+  type: "Index";
+  target: AstNode;
+  index?: AstNode;
+  range?: { start: AstNode; end: AstNode };
+}
+
+export interface Field extends BaseNode {
+  type: "Field";
+  target: AstNode;
+  name: string;
+}
+
+export interface Call extends BaseNode {
+  type: "Call";
+  callee: string;
+  args: AstNode[];
+  statement: boolean;
+  builtIn?: boolean;
+}
+
+/** Nodos de statement */
+export interface Block extends BaseNode {
+  type: "Block";
+  body: AstNode[];
+}
+
+export interface Assign extends BaseNode {
+  type: "Assign";
+  target: AstNode;
+  value: AstNode;
+}
+
+export interface DeclVector extends BaseNode {
+  type: "DeclVector";
+  id: string;
+  dims: AstNode[];
+}
+
+export interface If extends BaseNode {
+  type: "If";
+  test: AstNode;
+  consequent: Block;
+  alternate?: Block;
+}
+
+export interface While extends BaseNode {
+  type: "While";
+  test: AstNode;
+  body: Block;
+}
+
+export interface For extends BaseNode {
+  type: "For";
+  var: string;
+  start: AstNode;
+  end: AstNode;
+  body: Block;
+}
+
+export interface Repeat extends BaseNode {
+  type: "Repeat";
+  body: Block;
+  test: AstNode;
+}
+
+export interface Return extends BaseNode {
+  type: "Return";
+  value: AstNode;
+}
+
+/** Nodos de parámetros */
+export interface Param extends BaseNode {
+  type: "Param";
+  name: string;
+}
+
+export interface ArrayParam extends BaseNode {
+  type: "ArrayParam";
+  name: string;
+  start: Identifier | Literal;
+  end?: Identifier | Literal;
+}
+
+export interface ObjectParam extends BaseNode {
+  type: "ObjectParam";
+  className: string;
+  name: string;
+}
+
+export type ParamNode = Param | ArrayParam | ObjectParam;
+
+/** Nodos de nivel superior */
+export interface ProcDef extends BaseNode {
+  type: "ProcDef";
+  name: string;
+  params: ParamNode[];
+  body: Block;
+}
+
+export interface Program extends BaseNode {
+  type: "Program";
+  body: (ProcDef | AstNode)[];
+}
+
+/** Tipo unión para todos los nodos AST */
+export type AstNode =
+  | Program
+  | ProcDef
+  | Block
+  | Assign
+  | DeclVector
+  | If
+  | While
+  | For
+  | Repeat
+  | Return
+  | Call
+  | Binary
+  | Unary
+  | Index
+  | Field
+  | Literal
+  | Identifier
+  | Param
+  | ArrayParam
+  | ObjectParam;
+
 /** ---- PARSE ---- */
 export interface ParseRequest { source: string; }
 export interface GrammarParseRequest { input: string; }
 export interface ParseError { line: number; column: number; message: string; }
 export interface ParseResponse {
   ok: boolean;
-  ast?: unknown;          // AST canónico (forma interna)
+  ast?: Program;          // AST canónico tipado
   errors?: ParseError[];  // Errores con línea/columna
 }
 export interface GrammarParseResponse extends ParseResponse {

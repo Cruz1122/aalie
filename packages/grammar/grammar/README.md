@@ -557,6 +557,125 @@ END
 }
 ```
 
+### Ejemplo completo de ParseResponse
+
+**Request (factorial):**
+```json
+{
+  "input": "factorial(n) BEGIN\n  resultado <- 1;\n  FOR i <- 2 TO n DO BEGIN\n    resultado <- resultado * i;\n  END\n  RETURN resultado;\nEND"
+}
+```
+
+**Response exitosa con AST completo:**
+```json
+{
+  "ok": true,
+  "available": true,
+  "runtime": "python",
+  "error": null,
+  "ast": {
+    "type": "Program",
+    "body": [
+      {
+        "type": "ProcDef",
+        "name": "factorial",
+        "params": [
+          {
+            "type": "Param",
+            "name": "n",
+            "pos": { "line": 1, "column": 10 }
+          }
+        ],
+        "body": {
+          "type": "Block",
+          "body": [
+            {
+              "type": "Assign",
+              "target": {
+                "type": "Identifier",
+                "name": "resultado",
+                "pos": { "line": 2, "column": 2 }
+              },
+              "value": {
+                "type": "Literal",
+                "value": 1,
+                "pos": { "line": 2, "column": 15 }
+              },
+              "pos": { "line": 2, "column": 2 }
+            },
+            {
+              "type": "For",
+              "var": "i",
+              "start": {
+                "type": "Literal",
+                "value": 2,
+                "pos": { "line": 3, "column": 13 }
+              },
+              "end": {
+                "type": "Identifier",
+                "name": "n",
+                "pos": { "line": 3, "column": 18 }
+              },
+              "body": {
+                "type": "Block",
+                "body": [
+                  {
+                    "type": "Assign",
+                    "target": {
+                      "type": "Identifier",
+                      "name": "resultado",
+                      "pos": { "line": 4, "column": 4 }
+                    },
+                    "value": {
+                      "type": "Binary",
+                      "op": "*",
+                      "left": {
+                        "type": "Identifier",
+                        "name": "resultado",
+                        "pos": { "line": 4, "column": 17 }
+                      },
+                      "right": {
+                        "type": "Identifier",
+                        "name": "i",
+                        "pos": { "line": 4, "column": 29 }
+                      },
+                      "pos": { "line": 4, "column": 27 }
+                    },
+                    "pos": { "line": 4, "column": 4 }
+                  }
+                ],
+                "pos": { "line": 3, "column": 23 }
+              },
+              "pos": { "line": 3, "column": 2 }
+            },
+            {
+              "type": "Return",
+              "value": {
+                "type": "Identifier",
+                "name": "resultado",
+                "pos": { "line": 6, "column": 9 }
+              },
+              "pos": { "line": 6, "column": 2 }
+            }
+          ],
+          "pos": { "line": 1, "column": 13 }
+        },
+        "pos": { "line": 1, "column": 0 }
+      }
+    ],
+    "pos": { "line": 1, "column": 0 }
+  },
+  "errors": []
+}
+```
+
+**Características clave del AST:**
+- Cada nodo incluye `pos` con `line` y `column` para rastreo preciso de errores
+- Los operadores están normalizados a un conjunto cerrado (`==`, `!=`, `<=`, `>=`, `<`, `>`, `+`, `-`, `*`, `/`, `div`, `mod`, `and`, `or`, `not`)
+- Los nodos `Call` tienen `statement: true` si se usan como statement, `false` si están en una expresión
+- Los bloques siempre son nodos `Block` con un array `body`
+- Los tipos TypeScript completos están disponibles en `@aa/types`
+
 ### Estructura del AST
 
 El AST generado incluye:
