@@ -112,10 +112,10 @@ export default function HomePage() {
               />
             ) : (
               <ManualModeView
-                chatOpen={chatOpen}
                 messages={messages}
                 setMessages={setMessages}
-                onClose={closeChatAndReset}
+                onOpenChat={() => setChatOpen(true)}
+                onSwitchToAIMode={() => setMode('ai')}
               />
             )}
           </div>

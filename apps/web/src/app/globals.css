@@ -540,6 +540,23 @@ body {
   }
 }
 
+/* Animación de vibración suave constante para botón de ayuda con IA */
+.animate-shake {
+  animation: shake 2s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-1px);
+  }
+  75% {
+    transform: translateX(1px);
+  }
+}
+
 /* Animaciones de entrada y salida para botón de ayuda */
 @keyframes slideInUp {
   from {

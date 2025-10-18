@@ -5,7 +5,6 @@ import { GrammarApiService } from "@/services/grammar-api";
 
 import { AnalyzerEditor } from "./AnalyzerEditor";
 import { ASTTreeView } from "./ASTTreeView";
-import ChatBot from "./ChatBot";
 
 // Constantes
 const COPY_FEEDBACK_DURATION = 2000; // 2 segundos
@@ -25,14 +24,13 @@ interface Message {
 }
 
 interface ManualModeViewProps {
-  readonly chatOpen: boolean;
   readonly messages: Message[];
   readonly setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
-  readonly onClose: () => void;
+  readonly onOpenChat: () => void;
+  readonly onSwitchToAIMode: () => void;
 }
 
-export default function ManualModeView({ chatOpen, messages, setMessages, onClose }: ManualModeViewProps) {
-  const [code, setCode] = useState(`busquedaBinaria(A[n], x, inicio, fin) BEGIN
+const DEFAULT_CODE = `busquedaBinaria(A[n], x, inicio, fin) BEGIN
   IF (inicio > fin) THEN BEGIN
     RETURN -1;
   END
@@ -48,7 +46,17 @@ export default function ManualModeView({ chatOpen, messages, setMessages, onClos
       RETURN busquedaBinaria(A, x, mitad + 1, fin);
     END
   END
-END`);
+END`;
+
+export default function ManualModeView({ messages, setMessages, onOpenChat, onSwitchToAIMode }: ManualModeViewProps) {
+  // Cargar código desde localStorage o usar valor por defecto
+  const [code, setCode] = useState(() => {
+    if (globalThis.window !== undefined) {
+      const savedCode = localStorage.getItem('manualModeCode');
+      return savedCode || DEFAULT_CODE;
+    }
+    return DEFAULT_CODE;
+  });
   const [ast, setAst] = useState<Program | null>(null);
   const [showAstModal, setShowAstModal] = useState(false);
   const [localParseOk, setLocalParseOk] = useState(false);
@@ -56,10 +64,13 @@ END`);
   const [viewMode, setViewMode] = useState<'tree' | 'json'>('tree');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [showAIHelpButton, setShowAIHelpButton] = useState(false);
+  const [backendParseError, setBackendParseError] = useState<string | null>(null);
   
   // Refs para evitar memory leaks con timeouts
   const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const analysisTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const aiHelpTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Manejar cambios en el estado de parsing local
   const handleParseStatusChange = (ok: boolean, _isParsing: boolean) => {
@@ -75,8 +86,57 @@ END`);
       if (analysisTimeoutRef.current) {
         clearTimeout(analysisTimeoutRef.current);
       }
+      if (aiHelpTimeoutRef.current) {
+        clearTimeout(aiHelpTimeoutRef.current);
+      }
     };
   }, []);
+
+  // Detectar errores de parsing y mostrar botón de ayuda después de 3 segundos
+  useEffect(() => {
+    // Limpiar timeout anterior
+    if (aiHelpTimeoutRef.current) {
+      clearTimeout(aiHelpTimeoutRef.current);
+    }
+
+    // Si no hay errores locales, ocultar el botón
+    if (localParseOk) {
+      setShowAIHelpButton(false);
+      setBackendParseError(null);
+      return;
+    }
+
+    // Si hay errores locales, esperar 3 segundos y consultar backend
+    aiHelpTimeoutRef.current = setTimeout(async () => {
+      try {
+        const data = await GrammarApiService.parseCode(code);
+        if (data.ok) {
+          setShowAIHelpButton(false);
+          setBackendParseError(null);
+        } else {
+          setBackendParseError(data.error || "Error de sintaxis detectado");
+          setShowAIHelpButton(true);
+        }
+      } catch (e) {
+        console.error("Error al verificar parse:", e);
+        setBackendParseError("Error al verificar el código");
+        setShowAIHelpButton(true);
+      }
+    }, 3000);
+
+    return () => {
+      if (aiHelpTimeoutRef.current) {
+        clearTimeout(aiHelpTimeoutRef.current);
+      }
+    };
+  }, [localParseOk, code]);
+
+  // Guardar código en localStorage cuando cambia
+  useEffect(() => {
+    if (globalThis.window !== undefined) {
+      localStorage.setItem('manualModeCode', code);
+    }
+  }, [code]);
 
   // Resetear estado de copiado cuando se cierra el modal
   useEffect(() => {
@@ -150,17 +210,6 @@ END`);
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="flex flex-col items-center">
-        {/* Mantener ChatBot montado pero oculto para preservar estado/timers */}
-        {chatOpen && (
-          <div className="hidden">
-            <ChatBot 
-              isOpen={true}
-              onClose={onClose}
-              messages={messages}
-              setMessages={setMessages}
-            />
-          </div>
-        )}        
         {/* Contenedor flex: editor a la izquierda, botones a la derecha */}
         <div className="flex flex-col lg:flex-row gap-6 w-full items-center lg:items-center">
           {/* Editor de Código con Monaco - 75% en desktop, 100% en mobile */}
@@ -184,12 +233,12 @@ END`);
             >
               {isAnalyzing ? (
                 <>
-                  <span className="material-symbols-outlined text-base animate-spin">progress_activity</span>
+                  <span className="material-symbols-outlined text-base animate-spin">progress_activity</span>{' '}
                   Analizando...
                 </>
               ) : (
                 <>
-                  <span className="material-symbols-outlined text-base">analytics</span>
+                  <span className="material-symbols-outlined text-base">analytics</span>{' '}
                   Analizar Código
                 </>
               )}
@@ -200,9 +249,87 @@ END`);
               disabled={!localParseOk || !ast}
               className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg text-white text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-yellow-400/50 bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 hover:from-yellow-500/30 hover:to-amber-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              <span className="material-symbols-outlined">account_tree</span>
+              <span className="material-symbols-outlined">account_tree</span>{' '}
               Ver AST
             </button>
+
+            {/* Botón de Ayuda con IA - aparece después de 3 segundos si hay error */}
+            {showAIHelpButton && backendParseError && (
+              <button
+                onClick={() => {
+                  // Crear mensaje con el código completo y el error
+                  const errorMessage = `Tengo el siguiente error en mi código:
+
+\`\`\`
+${code}
+\`\`\`
+
+Error: ${backendParseError}
+
+¿Puedes ayudarme a identificar y solucionar el problema?`;
+                  
+                  const newMessage: Message = {
+                    id: Date.now().toString(),
+                    content: errorMessage,
+                    sender: 'user',
+                    timestamp: new Date()
+                  };
+                  
+                  // Si no hay mensajes previos, agregar mensaje de bienvenida
+                  if (messages.length === 0) {
+                    const welcomeMessage: Message = {
+                      id: 'welcome',
+                      content: "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+                      sender: 'bot',
+                      timestamp: new Date()
+                    };
+                    setMessages([welcomeMessage, newMessage]);
+                  } else {
+                    setMessages(prev => [...prev, newMessage]);
+                  }
+                  
+                  // Primero cambiar al modo asistente para evitar mostrar ambas vistas
+                  setTimeout(() => {
+                    onSwitchToAIMode();
+                    
+                    // Luego abrir el chat después de cambiar de modo
+                    setTimeout(() => {
+                      onOpenChat();
+                    }, 100);
+                  }, 50);
+                  
+                  // Simular respuesta del bot
+                  setTimeout(() => {
+                    const botResponse: Message = {
+                      id: (Date.now() + 1).toString(),
+                      content: `Perfecto, veo tu código y el error. Voy a analizar el problema y ayudarte a solucionarlo.
+
+**Error detectado:** ${backendParseError}
+
+Déjame revisar tu código línea por línea:
+
+${code.split('\n').slice(0, 3).join('\n')}
+...
+
+Algunas sugerencias para verificar:
+- Todas las estructuras deben tener BEGIN y END correctamente emparejados
+- Las expresiones deben estar bien formadas
+- Los identificadores no deben tener caracteres especiales no permitidos
+- Los operadores deben estar correctamente utilizados
+
+¿Quieres que analicemos una parte específica del código más en detalle?`,
+                      sender: 'bot',
+                      timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, botResponse]);
+                  }, 1500);
+                }}
+                className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg text-white text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 animate-[slideInUp_0.3s_ease-out] animate-pulse-slow"
+              >
+                <span className="material-symbols-outlined text-base animate-shake">smart_toy</span>{' '}
+                Ayuda con IA
+              </button>
+            )}
           </div>
         </div>
 
@@ -215,11 +342,68 @@ END`);
                 : 'bg-red-500/10 border-red-500/30 text-red-300'
             }`}
           >
-            <div className="flex items-center gap-3">
-              <span className="material-symbols-outlined text-2xl">
-                {analysisResult.success ? 'check_circle' : 'error'}
-              </span>
-              <p className="text-sm font-medium">{analysisResult.message}</p>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-2xl">
+                  {analysisResult.success ? 'check_circle' : 'error'}
+                </span>
+                <p className="text-sm font-medium">{analysisResult.message}</p>
+              </div>
+              
+              {/* Botón de ayuda con IA cuando hay error */}
+              {!analysisResult.success && (
+                <button
+                  onClick={() => {
+                    // Crear mensaje automático con el error
+                    const errorMessage = `Tengo el siguiente error en mi código: ${analysisResult.message}. ¿Puedes ayudarme a solucionarlo?`;
+                    const newMessage: Message = {
+                      id: Date.now().toString(),
+                      content: errorMessage,
+                      sender: 'user',
+                      timestamp: new Date()
+                    };
+                    
+                    // Si no hay mensajes previos, agregar mensaje de bienvenida
+                    if (messages.length === 0) {
+                      const welcomeMessage: Message = {
+                        id: 'welcome',
+                        content: "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+                        sender: 'bot',
+                        timestamp: new Date()
+                      };
+                      setMessages([welcomeMessage, newMessage]);
+                    } else {
+                      setMessages(prev => [...prev, newMessage]);
+                    }
+                    
+                    // Abrir el chat
+                    onOpenChat();
+                    
+                    // Simular respuesta del bot
+                    setTimeout(() => {
+                      const botResponse: Message = {
+                        id: (Date.now() + 1).toString(),
+                        content: `Entiendo que tienes un error de sintaxis. Voy a ayudarte a identificar y corregir el problema. ${analysisResult.message}. 
+
+Algunas sugerencias comunes:
+- Verifica que todas las estructuras tengan BEGIN y END correctamente emparejados
+- Asegúrate de que las expresiones estén bien formadas
+- Revisa que los identificadores no tengan caracteres especiales no permitidos
+- Confirma que los operadores estén correctamente utilizados
+
+¿Puedes compartir más detalles sobre qué intentabas hacer en tu código?`,
+                        sender: 'bot',
+                        timestamp: new Date()
+                      };
+                      setMessages(prev => [...prev, botResponse]);
+                    }, 1000);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 transition-all hover:scale-105 text-xs font-semibold whitespace-nowrap"
+                >
+                  <span className="material-symbols-outlined text-base">smart_toy</span>{' '}
+                  Ayuda con IA
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -255,7 +439,7 @@ END`);
                   }`}
                 >
                   <span className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-base">account_tree</span>
+                    <span className="material-symbols-outlined text-base">account_tree</span>{' '}
                     Vista de Árbol
                   </span>
                 </button>
@@ -268,7 +452,7 @@ END`);
                   }`}
                 >
                   <span className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-base">code</span>
+                    <span className="material-symbols-outlined text-base">code</span>{' '}
                     Vista JSON
                   </span>
                 </button>
