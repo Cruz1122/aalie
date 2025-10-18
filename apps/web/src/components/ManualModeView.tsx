@@ -288,7 +288,8 @@ Error: ${backendParseError}
                     setMessages(prev => [...prev, newMessage]);
                   }
                   
-                  // Primero cambiar al modo asistente para evitar mostrar ambas vistas
+                  // Cambiar al modo asistente y abrir el chat
+                  // El ChatBot real se encargará de generar la respuesta usando LLM
                   setTimeout(() => {
                     onSwitchToAIMode();
                     
@@ -297,32 +298,6 @@ Error: ${backendParseError}
                       onOpenChat();
                     }, 100);
                   }, 50);
-                  
-                  // Simular respuesta del bot
-                  setTimeout(() => {
-                    const botResponse: Message = {
-                      id: (Date.now() + 1).toString(),
-                      content: `Perfecto, veo tu código y el error. Voy a analizar el problema y ayudarte a solucionarlo.
-
-**Error detectado:** ${backendParseError}
-
-Déjame revisar tu código línea por línea:
-
-${code.split('\n').slice(0, 3).join('\n')}
-...
-
-Algunas sugerencias para verificar:
-- Todas las estructuras deben tener BEGIN y END correctamente emparejados
-- Las expresiones deben estar bien formadas
-- Los identificadores no deben tener caracteres especiales no permitidos
-- Los operadores deben estar correctamente utilizados
-
-¿Quieres que analicemos una parte específica del código más en detalle?`,
-                      sender: 'bot',
-                      timestamp: new Date()
-                    };
-                    setMessages(prev => [...prev, botResponse]);
-                  }, 1500);
                 }}
                 className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg text-white text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 animate-[slideInUp_0.3s_ease-out] animate-pulse-slow"
               >

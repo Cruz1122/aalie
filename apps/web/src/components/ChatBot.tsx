@@ -17,28 +17,74 @@ interface ChatBotProps {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
 }
 
-// Respuestas mockeadas para prueba
-const MOCK_RESPONSES = [
-  "¡Excelente! Veo que quieres analizar un algoritmo. Para empezar, necesito que me proporciones el código del algoritmo que deseas analizar. ¿Podrías pegarlo o escribirlo?",
-  
-  "Entiendo que necesitas ayuda con análisis de complejidad. Te puedo ayudar a determinar la complejidad temporal y espacial de tu código. ¿Qué algoritmo específico te interesa?",
-  
-  "Para hacer un análisis completo, necesito más detalles. ¿El algoritmo es de ordenamiento, búsqueda, o algún otro tipo? Esto me ayudará a darte mejor orientación.",
-  
-  "Perfecto. Una vez que tengas el código listo, podremos analizarlo línea por línea y calcular su complejidad usando el método de conteo de operaciones. ¿Tienes alguna duda específica sobre el algoritmo?",
-  
-  "¡Genial! Recuerda que puedo ayudarte con diferentes tipos de análisis: mejor caso, caso promedio y peor caso. También puedo explicarte cada paso del análisis matemático.",
-  
-  "Interesante. Para el análisis de complejidad, primero identificamos las operaciones básicas, luego contamos cuántas veces se ejecutan en función del tamaño de entrada n. ¿Ya tienes el código que quieres analizar?",
-  
-  "Te ayudo con eso. El análisis de algoritmos incluye complejidad temporal O(n), complejidad espacial, y casos de uso. ¿Qué aspecto específico te interesa más?",
-  
-  "¡Buena pregunta! Para algoritmos recursivos, usamos ecuaciones de recurrencia y el teorema maestro. Para algoritmos iterativos, contamos directamente los ciclos. ¿Cuál es tu caso?",
-  
-  "Me parece que necesitas un análisis detallado. Puedo explicarte paso a paso: identificación de operaciones, conteo de ejecuciones, formulación matemática y simplificación a notación Big-O.",
-  
-  "Claro, te puedo ayudar. El análisis incluye: supuestos del problema, identificación de la línea más costosa, cálculo de T(n), y determinación de la complejidad asintótica. ¿Por dónde empezamos?"
-];
+// ============== FUNCIONES API ==============
+
+/**
+ * Clasifica la intención del mensaje del usuario usando Grok-3-Mini
+ */
+async function classifyIntent(message: string): Promise<'parser_assist' | 'general'> {
+  try {
+    const response = await fetch('/api/llm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        job: 'classify',
+        prompt: message
+      })
+    });
+
+    if (!response.ok) {
+      console.error('Error clasificando intención, usando general por defecto');
+      return 'general';
+    }
+
+    const result = await response.json();
+    
+    // Extraer el contenido de la respuesta de Azure AI Inference
+    const content = result?.data?.choices?.[0]?.message?.content || '';
+    const classification = content.trim().toLowerCase();
+    
+    // Determinar si es parser_assist o general
+    return classification.includes('parser') ? 'parser_assist' : 'general';
+  } catch (error) {
+    console.error('Error en clasificación:', error);
+    return 'general'; // Fallback a general si hay error
+  }
+}
+
+/**
+ * Obtiene respuesta del LLM con el job apropiado
+ */
+async function getLLMResponse(message: string, job: 'parser_assist' | 'general'): Promise<string> {
+  try {
+    const response = await fetch('/api/llm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        job,
+        prompt: message
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    // Extraer el contenido de la respuesta de Azure AI Inference
+    const content = result?.data?.choices?.[0]?.message?.content || '';
+    
+    if (!content) {
+      throw new Error('Respuesta vacía del LLM');
+    }
+    
+    return content;
+  } catch (error) {
+    console.error('Error obteniendo respuesta LLM:', error);
+    throw error;
+  }
+}
 
 export default function ChatBot({ isOpen, onClose, messages, setMessages }: Readonly<ChatBotProps>) {
   const [inputValue, setInputValue] = useState("");
@@ -46,6 +92,7 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Read
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const animatedMessagesRef = useRef<Set<string>>(new Set());
+  const processingRef = useRef(false); // Para evitar llamadas duplicadas
 
   // Auto-scroll al final cuando hay nuevos mensajes
   const scrollToBottom = (immediate = false) => {
@@ -65,7 +112,7 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Read
 
   // Responder automáticamente si el último mensaje del historial es del usuario
   useEffect(() => {
-    if (!messages || messages.length === 0 || isTyping) return;
+    if (!messages || messages.length === 0 || isTyping || processingRef.current) return;
     const lastUserIdx = [...messages].map((m) => m.sender).lastIndexOf('user');
     if (lastUserIdx === -1) return;
     // Verificar si después de ese mensaje hay una respuesta del bot
@@ -105,30 +152,61 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Read
 
   // El historial y bienvenida se maneja en HomePage
 
-  const generateBotResponse = () => {
+  const generateBotResponse = async () => {
+    // Evitar llamadas duplicadas
+    if (processingRef.current) return;
+    
+    processingRef.current = true;
     setIsTyping(true);
     
     // Hacer scroll inmediatamente para mostrar el indicador
     setTimeout(() => {
       scrollToBottom(true);
     }, 50);
-    
-    // Simular tiempo de "escritura" más realista
-    const typingTime = 800 + Math.random() * 400; // Entre 0.8 y 1.2 segundos
-    
-    setTimeout(() => {
-      const randomResponse = MOCK_RESPONSES[Math.floor(Math.random() * MOCK_RESPONSES.length)];
+
+    try {
+      // Obtener el último mensaje del usuario
+      const lastUserMessage = [...messages]
+        .reverse()
+        .find(m => m.sender === 'user');
+
+      if (!lastUserMessage) {
+        setIsTyping(false);
+        processingRef.current = false;
+        return;
+      }
+
+      // Paso 1: Clasificar intención (rápido con Grok-3-Mini)
+      const intent = await classifyIntent(lastUserMessage.content);
       
+      // Paso 2: Obtener respuesta con el modelo apropiado
+      const responseText = await getLLMResponse(lastUserMessage.content, intent);
+
+      // Crear mensaje del bot
       const botResponse: Message = {
         id: `bot-${Date.now()}`,
-        content: randomResponse,
+        content: responseText,
         sender: 'bot',
         timestamp: new Date(),
       };
 
       setMessages(prev => [...prev, botResponse]);
+    } catch (error) {
+      console.error('Error generando respuesta:', error);
+      
+      // Mensaje de error amigable
+      const errorResponse: Message = {
+        id: `bot-error-${Date.now()}`,
+        content: "Disculpa, tuve un problema al procesar tu mensaje. ¿Podrías intentarlo de nuevo?",
+        sender: 'bot',
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, errorResponse]);
+    } finally {
       setIsTyping(false);
-    }, typingTime);
+      processingRef.current = false;
+    }
   };
 
   const handleSendMessage = () => {
@@ -160,7 +238,7 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Read
     setMessages([welcomeMessage]);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -245,7 +323,7 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Read
                     ? 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30'
                     : 'glass-card border-white/10'
                 } ${message.sender === 'user' ? 'rounded-br-md' : 'rounded-bl-md'}`}>
-                  <p className="text-white text-xs leading-relaxed">{message.content}</p>
+                  <p className="text-white text-xs leading-relaxed whitespace-pre-wrap">{message.content}</p>
                 </div>
                 <span className="text-xs text-slate-500 mt-1 px-1">
                   {formatTime(message.timestamp)}
@@ -282,7 +360,7 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Read
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               placeholder="Escribe tu mensaje..."
               className="flex-1 bg-white/5 border border-slate-600/50 rounded-lg px-3 py-2 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
               disabled={isTyping}
