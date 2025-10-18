@@ -134,6 +134,18 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
           defaultValue={initialValue}
           onChange={handleEditorChange}
           onMount={handleEditorDidMount}
+          loading={
+            <div className="flex items-center justify-center h-full">
+              <div className="flex flex-col items-center gap-3">
+                <div className="flex gap-2">
+                  <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+                <span className="text-sm text-slate-300 font-medium">Cargando editor...</span>
+              </div>
+            </div>
+          }
           options={{
             minimap: { enabled: false },
             fontSize: 14,

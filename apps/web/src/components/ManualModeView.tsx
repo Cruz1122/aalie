@@ -342,68 +342,11 @@ Algunas sugerencias para verificar:
                 : 'bg-red-500/10 border-red-500/30 text-red-300'
             }`}
           >
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-2xl">
-                  {analysisResult.success ? 'check_circle' : 'error'}
-                </span>
-                <p className="text-sm font-medium">{analysisResult.message}</p>
-              </div>
-              
-              {/* Botón de ayuda con IA cuando hay error */}
-              {!analysisResult.success && (
-                <button
-                  onClick={() => {
-                    // Crear mensaje automático con el error
-                    const errorMessage = `Tengo el siguiente error en mi código: ${analysisResult.message}. ¿Puedes ayudarme a solucionarlo?`;
-                    const newMessage: Message = {
-                      id: Date.now().toString(),
-                      content: errorMessage,
-                      sender: 'user',
-                      timestamp: new Date()
-                    };
-                    
-                    // Si no hay mensajes previos, agregar mensaje de bienvenida
-                    if (messages.length === 0) {
-                      const welcomeMessage: Message = {
-                        id: 'welcome',
-                        content: "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
-                        sender: 'bot',
-                        timestamp: new Date()
-                      };
-                      setMessages([welcomeMessage, newMessage]);
-                    } else {
-                      setMessages(prev => [...prev, newMessage]);
-                    }
-                    
-                    // Abrir el chat
-                    onOpenChat();
-                    
-                    // Simular respuesta del bot
-                    setTimeout(() => {
-                      const botResponse: Message = {
-                        id: (Date.now() + 1).toString(),
-                        content: `Entiendo que tienes un error de sintaxis. Voy a ayudarte a identificar y corregir el problema. ${analysisResult.message}. 
-
-Algunas sugerencias comunes:
-- Verifica que todas las estructuras tengan BEGIN y END correctamente emparejados
-- Asegúrate de que las expresiones estén bien formadas
-- Revisa que los identificadores no tengan caracteres especiales no permitidos
-- Confirma que los operadores estén correctamente utilizados
-
-¿Puedes compartir más detalles sobre qué intentabas hacer en tu código?`,
-                        sender: 'bot',
-                        timestamp: new Date()
-                      };
-                      setMessages(prev => [...prev, botResponse]);
-                    }, 1000);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 transition-all hover:scale-105 text-xs font-semibold whitespace-nowrap"
-                >
-                  <span className="material-symbols-outlined text-base">smart_toy</span>{' '}
-                  Ayuda con IA
-                </button>
-              )}
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-2xl">
+                {analysisResult.success ? 'check_circle' : 'error'}
+              </span>
+              <p className="text-sm font-medium">{analysisResult.message}</p>
             </div>
           </div>
         )}
