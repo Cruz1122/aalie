@@ -38,6 +38,11 @@ services:
         NEXT_PUBLIC_API_BASE_URL: "http://localhost:8000"   # para futuras llamadas cliente
         API_INTERNAL_BASE_URL: "http://api:8000"            # usado por /api/health (SSR/proxy)
         WATCHPACK_POLLING: "true"
+        # Configuración LLM
+        LLM_MODE: "LOCAL"                                   # LOCAL para LM Studio, REMOTE para GitHub Models
+        LM_STUDIO_ENDPOINT: "http://host.docker.internal:1234/v1"  # Acceso al host desde Docker
+        LM_STUDIO_API_KEY: "lm-studio"
+        GITHUB_TOKEN: ""                                    # Token de GitHub para modo REMOTE
     volumes:
       # Código con hot-reload
       - ../apps/web:/usr/src/app/apps/web

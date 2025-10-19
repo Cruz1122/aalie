@@ -1,4 +1,3 @@
-// Parser Worker - Ejecuta ANTLR en background
 import {
   ASTBuilder,
   CharStreams,
@@ -21,7 +20,6 @@ export interface ParseWorkerResponse {
   errors?: ParseError[];
 }
 
-// Listen for messages from main thread
 self.addEventListener("message", (event: MessageEvent<ParseWorkerRequest>) => {
   const { id, code } = event.data;
 

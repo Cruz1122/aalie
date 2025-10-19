@@ -89,10 +89,31 @@ async function getLLMResponse(message: string, job: 'parser_assist' | 'general')
 export default function ChatBot({ isOpen, onClose, messages, setMessages }: Readonly<ChatBotProps>) {
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [llmStatus, setLlmStatus] = useState<{mode: 'LOCAL' | 'REMOTE', model?: string} | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const animatedMessagesRef = useRef<Set<string>>(new Set());
   const processingRef = useRef(false); // Para evitar llamadas duplicadas
+
+  // Obtener estado del LLM
+  const fetchLlmStatus = async () => {
+    try {
+      const response = await fetch('/api/llm/status');
+      if (response.ok) {
+        const result = await response.json();
+        setLlmStatus({ mode: result.status.mode, model: result.status.jobs.general });
+      }
+    } catch (error) {
+      console.error('Error obteniendo estado LLM:', error);
+    }
+  };
+
+  // Cargar estado del LLM al abrir el chat
+  useEffect(() => {
+    if (isOpen) {
+      fetchLlmStatus();
+    }
+  }, [isOpen]);
 
   // Auto-scroll al final cuando hay nuevos mensajes
   const scrollToBottom = (immediate = false) => {
@@ -265,6 +286,21 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Read
               <p className="text-slate-400 text-sm">
                 Asistente de análisis de algoritmos
               </p>
+              {llmStatus && (
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    llmStatus.mode === 'LOCAL' 
+                      ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
+                      : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                  }`}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5"></span>
+                    {llmStatus.mode === 'LOCAL' ? 'Local' : 'Remoto'}
+                  </span>
+                  <span className="text-slate-500 text-xs">
+                    {llmStatus.model}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2">
