@@ -1,6 +1,7 @@
 "use client";
 
 import { useNavigation } from "@/contexts/NavigationContext";
+
 import PageLoader from "./PageLoader";
 
 interface NavigationLoadingWrapperProps {

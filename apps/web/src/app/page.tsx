@@ -90,7 +90,7 @@ export default function HomePage() {
     <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">
       <Header />
 
-      <main className="flex-1 p-6 z-10">
+      <main className="flex-1 p-4 z-10">
         <ModeToggle mode={mode} isSwitching={isSwitching} onModeSwitch={handleModeSwitch} />
 
         <div className="max-w-7xl mx-auto">

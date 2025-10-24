@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 interface NavigationContextType {
   isLoading: boolean;

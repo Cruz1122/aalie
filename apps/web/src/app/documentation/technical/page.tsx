@@ -1,6 +1,5 @@
 "use client";
 
-import NavigationLink from "@/components/NavigationLink";
 import { useEffect, useState } from "react";
 
 import { DocumentationCard } from "@/components/DocumentationCard";
@@ -10,6 +9,7 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { ImageModal } from "@/components/ImageModal";
 import { LoaderDemo } from "@/components/LoaderDemo";
+import NavigationLink from "@/components/NavigationLink";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useDocumentationSections } from "@/hooks/useDocumentationSections";
 import { useImageModal } from "@/hooks/useImageModal";

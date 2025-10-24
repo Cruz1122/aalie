@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { RotateCcw, Send, User } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+
+import MarkdownRenderer from './MarkdownRenderer';
 
 interface Message {
   id: string;
@@ -274,36 +276,33 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Read
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <div className="flex flex-col glass-modal-container rounded-2xl overflow-hidden" style={{ height: '55vh' }}>
+      <div className="flex flex-col glass-modal-container rounded-2xl overflow-hidden" style={{ height: '70vh' }}>
         {/* Header */}
-        <div className="glass-modal-header p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center">
+        <div className="glass-modal-header p-2.5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center flex-shrink-0">
               <span className="material-symbols-outlined text-purple-300 text-lg">smart_toy</span>
             </div>
-            <div>
-              <h3 className="text-white font-semibold">Jhon Jairo</h3>
-              <p className="text-slate-400 text-sm">
-                Asistente de análisis de algoritmos
-              </p>
-              {llmStatus && (
-                <div className="flex items-center gap-2 mt-1">
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="text-white font-semibold text-xs">Jhon Jairo</h3>
+                {llmStatus && (
+                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium flex-shrink-0 ${
                     llmStatus.mode === 'LOCAL' 
                       ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
                       : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
                   }`}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5"></span>
-                    {llmStatus.mode === 'LOCAL' ? 'Local' : 'Remoto'}
+                    <span className="w-1 h-1 rounded-full bg-current mr-1"></span>
+                    {llmStatus.mode === 'LOCAL' ? 'Local' : 'Remoto'} • {llmStatus.model}
                   </span>
-                  <span className="text-slate-500 text-xs">
-                    {llmStatus.model}
-                  </span>
-                </div>
-              )}
+                )}
+              </div>
+              <p className="text-slate-400 text-[10px] truncate">
+                Asistente de análisis de algoritmos
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             <button
               onClick={clearConversation}
               className="w-8 h-8 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white flex items-center justify-center"
@@ -323,7 +322,7 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Read
         </div>
 
         {/* Messages Container */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
+        <div className="flex-1 overflow-y-auto p-2.5 space-y-2.5 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
           {messages.map((message) => {
             const isNewMessage = !animatedMessagesRef.current.has(message.id);
             if (isNewMessage) {
@@ -333,7 +332,7 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Read
             return (
             <div
               key={message.id}
-              className={`flex items-start gap-3 ${
+              className={`flex items-start gap-2 ${
                 message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'
               } ${isNewMessage ? 'chat-message-slide-in' : ''}`}
             >
@@ -351,17 +350,68 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Read
               </div>
 
               {/* Message Bubble */}
-              <div className={`flex flex-col max-w-[75%] ${
+              <div className={`flex flex-col ${
+                message.content.includes('**CÓDIGO ADJUNTO:**') ? 'max-w-[85%]' : 'max-w-[75%]'
+              } ${
                 message.sender === 'user' ? 'items-end' : 'items-start'
               }`}>
-                <div className={`px-3 py-2 rounded-xl ${
+                <div className={`${
+                  message.sender === 'bot' ? 'px-2 py-1.5' : 'px-2.5 py-1.5'
+                } rounded-xl ${
                   message.sender === 'user'
                     ? 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30'
                     : 'glass-card border-white/10'
                 } ${message.sender === 'user' ? 'rounded-br-md' : 'rounded-bl-md'}`}>
-                  <p className="text-white text-xs leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                  {message.sender === 'user' ? (
+                    // Detectar si es un mensaje de ayuda con IA (contiene **CÓDIGO ADJUNTO:**)
+                    (() => {
+                      const isAIHelpMessage = message.content.includes('**CÓDIGO ADJUNTO:**');
+                      
+                      if (isAIHelpMessage) {
+                        const codeRegex = /```pseudocode\n([\s\S]*?)\n```/;
+                        const errorRegex = /```error\n([\s\S]*?)\n```/;
+                        const codeMatch = codeRegex.exec(message.content);
+                        const errorMatch = errorRegex.exec(message.content);
+                        
+                        return (
+                          <div className="space-y-2.5 min-w-[250px]">
+                            {/* Código Adjunto */}
+                            <div className="space-y-1">
+                              <div className="bg-slate-800/70 border border-slate-600/40 rounded-md p-2.5 overflow-x-auto max-h-[200px] overflow-y-auto">
+                                <pre className="text-slate-200 text-[10px] font-mono whitespace-pre leading-relaxed">
+                                  {codeMatch?.[1] || ''}
+                                </pre>
+                              </div>
+                            </div>
+                            
+                            {/* Error Detectado */}
+                            <div className="space-y-1">
+                              <div className="bg-red-900/40 border border-red-500/40 rounded-md px-2.5 py-1.5">
+                                <span className="text-red-200 text-[10px] font-medium">
+                                  Error: {errorMatch?.[1] || ''}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            {/* Solicitud */}
+                            <div className="pt-1">
+                              <p className="text-white text-[11px] font-medium">
+                                Ayúdame a solucionar este error
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <p className="text-white text-[11px] leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                      );
+                    })()
+                  ) : (
+                    <MarkdownRenderer content={message.content} />
+                  )}
                 </div>
-                <span className="text-xs text-slate-500 mt-1 px-1">
+                <span className="text-[10px] text-slate-500 mt-0.5 px-1">
                   {formatTime(message.timestamp)}
                 </span>
               </div>
@@ -371,15 +421,15 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Read
 
           {/* Typing Indicator - Estilo WhatsApp */}
           {isTyping && (
-            <div className="flex items-start gap-3 chat-message-slide-in">
+            <div className="flex items-start gap-2 chat-message-slide-in">
               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center flex-shrink-0">
                 <span className="material-symbols-outlined text-purple-300 text-xs">smart_toy</span>
               </div>
-              <div className="glass-card border-white/10 px-3 py-2 rounded-xl rounded-bl-md min-w-[50px]">
-                <div className="flex items-center justify-center space-x-1 h-4">
-                  <div className="w-1.5 h-1.5 bg-slate-300 rounded-full typing-dots"></div>
-                  <div className="w-1.5 h-1.5 bg-slate-300 rounded-full typing-dots"></div>
-                  <div className="w-1.5 h-1.5 bg-slate-300 rounded-full typing-dots"></div>
+              <div className="glass-card border-white/10 px-2.5 py-1.5 rounded-xl rounded-bl-md min-w-[45px]">
+                <div className="flex items-center justify-center space-x-1 h-3">
+                  <div className="w-1 h-1 bg-slate-300 rounded-full typing-dots"></div>
+                  <div className="w-1 h-1 bg-slate-300 rounded-full typing-dots"></div>
+                  <div className="w-1 h-1 bg-slate-300 rounded-full typing-dots"></div>
                 </div>
               </div>
             </div>
@@ -389,7 +439,7 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Read
         </div>
 
         {/* Input Container */}
-        <div className="glass-modal-header p-3 border-t border-white/10">
+        <div className="glass-modal-header p-2.5 border-t border-white/10">
           <div className="flex items-center gap-2">
             <input
               ref={inputRef}
@@ -398,13 +448,13 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Read
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Escribe tu mensaje..."
-              className="flex-1 bg-white/5 border border-slate-600/50 rounded-lg px-3 py-2 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+              className="flex-1 bg-white/5 border border-slate-600/50 rounded-lg px-2.5 py-1.5 text-white placeholder-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
               disabled={isTyping}
             />
             <button
               onClick={handleSendMessage}
               disabled={!inputValue.trim() || isTyping}
-              className="p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/30 text-purple-300 hover:from-purple-500/30 hover:to-blue-500/30 hover:text-purple-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-1.5 rounded-lg bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/30 text-purple-300 hover:from-purple-500/30 hover:to-blue-500/30 hover:text-purple-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send size={16} />
             </button>

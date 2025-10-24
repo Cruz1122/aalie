@@ -1,7 +1,7 @@
-import NavigationLink from "@/components/NavigationLink";
 
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import NavigationLink from "@/components/NavigationLink";
 
 export const metadata = {
   title: "Acerca de - Analizador de Complejidad",

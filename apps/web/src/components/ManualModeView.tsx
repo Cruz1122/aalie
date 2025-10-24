@@ -257,16 +257,21 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
             {showAIHelpButton && backendParseError && (
               <button
                 onClick={() => {
-                  // Crear mensaje con el código completo y el error
-                  const errorMessage = `Tengo el siguiente error en mi código:
+                  // Crear mensaje estructurado con el código y el error para el LLM
+                  const errorMessage = `Necesito ayuda con un error de sintaxis en mi código de pseudocódigo.
 
-\`\`\`
+**CÓDIGO ADJUNTO:**
+\`\`\`pseudocode
 ${code}
 \`\`\`
 
-Error: ${backendParseError}
+**ERROR DETECTADO:**
+\`\`\`error
+${backendParseError}
+\`\`\`
 
-¿Puedes ayudarme a identificar y solucionar el problema?`;
+**SOLICITUD:**
+Por favor, analiza el código y el error, identifica la causa del problema y proporciona una solución corregida. Explica qué estaba mal y cómo solucionarlo.`;
                   
                   const newMessage: Message = {
                     id: Date.now().toString(),

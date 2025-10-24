@@ -1,7 +1,9 @@
 "use client";
-import { memo, useMemo } from "react";
 import { Eye, Info } from "lucide-react";
+import { memo, useMemo } from "react";
+
 import { DocumentationSection, ModalImageData } from "@/types/documentation";
+
 import { DocumentationIcon, getIconConfig } from "./DocumentationIcons";
 
 interface DocumentationCardProps {

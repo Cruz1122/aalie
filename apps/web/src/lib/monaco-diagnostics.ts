@@ -1,6 +1,6 @@
 // Monaco Diagnostics Adapter
-import type * as Monaco from "monaco-editor";
 import type { ParseError } from "@aa/types";
+import type * as Monaco from "monaco-editor";
 
 /**
  * Convierte errores del parser a markers de Monaco

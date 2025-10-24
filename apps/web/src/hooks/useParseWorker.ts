@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
 import type { ParseError, Program } from "@aa/types";
+import { useCallback, useEffect, useRef, useState } from "react";
+
 import type {
   ParseWorkerRequest,
   ParseWorkerResponse,

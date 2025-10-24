@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
         local: {
           endpoint: process.env.LM_STUDIO_ENDPOINT || "http://localhost:1234/v1",
           apiKey: process.env.LM_STUDIO_API_KEY || "lm-studio",
-          model: "lmstudio-community/Llama-3.2-1B-Instruct-GGUF"
+          model: "qwen/qwen3-4b-2507",
         },
         remote: {
           endpoint: "https://models.github.ai/inference",
@@ -24,9 +24,9 @@ export async function GET(req: NextRequest) {
         }
       },
       jobs: {
-        classify: LLM_MODE === 'LOCAL' ? 'lmstudio-community/Llama-3.2-1B-Instruct-GGUF' : 'grok-3-mini',
-        parser_assist: LLM_MODE === 'LOCAL' ? 'lmstudio-community/Llama-3.2-1B-Instruct-GGUF' : 'gpt-5-nano',
-        general: LLM_MODE === 'LOCAL' ? 'lmstudio-community/Llama-3.2-1B-Instruct-GGUF' : 'gpt-5-nano'
+        classify: LLM_MODE === 'LOCAL' ? 'qwen/qwen3-4b-2507' : 'grok-3-mini',
+        parser_assist: LLM_MODE === 'LOCAL' ? 'qwen/qwen3-4b-2507' : 'gpt-5-nano',
+        general: LLM_MODE === 'LOCAL' ? 'qwen/qwen3-4b-2507' : 'gpt-5-nano'
       }
     };
 

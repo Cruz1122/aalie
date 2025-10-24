@@ -50,11 +50,11 @@ export default function AIModeView({
     `transition-all duration-300 ${delay} ${isAnimating ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`;
 
   return (
-    <div className={`flex flex-col items-center justify-center min-h-[300px] text-center transition-all duration-500 ${animClass}`}>
+    <div className={`flex flex-col items-center justify-center min-h-[calc(100vh-16rem)] text-center transition-all duration-500 ${animClass}`}>
       {/* Icono del robot */}
       <div className={`mb-6 transition-all duration-300 ${isAnimating ? 'scale-0' : 'scale-100'}`}>
         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center">
-          <span className="material-symbols-outlined text-purple-300 text-2xl">smart_toy</span>
+          <span className="material-symbols-outlined text-purple-300 text-3xl">smart_toy</span>
         </div>
       </div>
 
