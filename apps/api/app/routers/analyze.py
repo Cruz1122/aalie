@@ -2,6 +2,8 @@ from fastapi import APIRouter, Body
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 from ..analysis.dummy_analyzer import create_dummy_analysis
+from ..analysis.for_analyzer import create_for_analysis
+from ..analysis.nested_for_example import create_nested_for_analysis
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
@@ -110,6 +112,48 @@ def analyze_dummy() -> Dict[str, Any]:
             "errors": [
                 {
                     "message": f"Error en análisis dummy: {str(e)}",
+                    "line": None,
+                    "column": None
+                }
+            ]
+        }
+
+@router.get("/for-example")
+def analyze_for_example() -> Dict[str, Any]:
+    """
+    Endpoint de prueba para verificar las reglas de bucles FOR.
+    Devuelve un análisis con un bucle FOR de ejemplo.
+    """
+    try:
+        result = create_for_analysis()
+        return result
+    except Exception as e:
+        return {
+            "ok": False,
+            "errors": [
+                {
+                    "message": f"Error en análisis de bucle FOR: {str(e)}",
+                    "line": None,
+                    "column": None
+                }
+            ]
+        }
+
+@router.get("/nested-for-example")
+def analyze_nested_for_example() -> Dict[str, Any]:
+    """
+    Endpoint de prueba para verificar las reglas de bucles FOR anidados.
+    Devuelve un análisis con bucles FOR anidados de ejemplo.
+    """
+    try:
+        result = create_nested_for_analysis()
+        return result
+    except Exception as e:
+        return {
+            "ok": False,
+            "errors": [
+                {
+                    "message": f"Error en análisis de bucles FOR anidados: {str(e)}",
                     "line": None,
                     "column": None
                 }

@@ -26,6 +26,7 @@ class BaseAnalyzer:
         self.symbols: Dict[str, str] = {}   # ej: { "n": "length(A)" }
         self.notes: List[str] = []          # reglas aplicadas / comentarios
         self.memo: Dict[str, List[LineCost]] = {}  # PD: cache de filas por nodo+contexto
+        self.counter = 0                    # contador para generar constantes C_k
         
         # Inicializar procedimiento básico
         self._init_procedure()
@@ -204,3 +205,13 @@ class BaseAnalyzer:
             String hash del contexto
         """
         return "|".join(self.loop_stack) if self.loop_stack else "root"
+
+    def C(self) -> str:
+        """
+        Genera la siguiente constante C_k.
+        
+        Returns:
+            String con la siguiente constante (ej: "C_{1}", "C_{2}", etc.)
+        """
+        self.counter += 1
+        return f"C_{{{self.counter}}}"
