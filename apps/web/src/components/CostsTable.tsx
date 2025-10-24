@@ -20,12 +20,13 @@ export default function CostsTable({ rows, onViewProcedure }: Readonly<CostsTabl
       <table className="w-full text-sm">
         <thead className="bg-slate-800 text-slate-100">
           <tr>
-            <th className="px-2 py-2 text-left w-8">#</th>
-            <th className="px-2 py-2 text-left">Tipo</th>
-            <th className="px-2 py-2 text-left w-12">C_k</th>
-            <th className="px-2 py-2 text-left w-16">#ejec</th>
-            <th className="px-2 py-2 text-left">Nota</th>
-            <th className="px-2 py-2 text-center w-10">Ver</th>
+            <th className="px-2 py-2 text-left w-12">#</th>
+            <th className="px-2 py-2 text-left w-20">Tipo</th>
+            <th className="px-2 py-2 text-left w-24">
+              <Formula latex="C_k" />
+            </th>
+            <th className="px-2 py-2 text-left w-32">Número de ejecuciones</th>
+            <th className="px-2 py-2 text-center w-16">Ver</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/10">
@@ -59,9 +60,6 @@ export default function CostsTable({ rows, onViewProcedure }: Readonly<CostsTabl
               </td>
               <td className="px-2 py-2">
                 {renderVariable(r.count)}
-              </td>
-              <td className="px-2 py-2 text-amber-300 text-xs max-w-[120px] truncate" title={r.note}>
-                {r.note || '—'}
               </td>
               <td className="px-2 py-2 text-center">
                 {r.ck === "—" ? (

@@ -1,15 +1,64 @@
 "use client";
 
 import type { AnalyzeOpenResponse } from "@aa/types";
-import { useEffect } from "react";
+import React, { useEffect, useMemo, useCallback, useState, useRef } from "react";
 
 import Formula from "./Formula";
 
-// Helper para renderizar variables con KaTeX
-function renderVariable(variable: string) {
-  // Renderizar todo con KaTeX para consistencia visual
+// Helper para renderizar variables con KaTeX (memoizado)
+const RenderVariable = React.memo(({ variable }: { variable: string }) => {
   return <Formula latex={variable} />
-}
+});
+RenderVariable.displayName = 'RenderVariable';
+
+// Componente de lista virtualizada simple para pasos del procedimiento
+const VirtualizedStepsList = React.memo(({ steps }: { steps: string[] }) => {
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: Math.min(10, steps.length) });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const itemHeight = 80; // Altura estimada por paso
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const scrollTop = e.currentTarget.scrollTop;
+    const containerHeight = e.currentTarget.clientHeight;
+    
+    const start = Math.floor(scrollTop / itemHeight);
+    const end = Math.min(steps.length, start + Math.ceil(containerHeight / itemHeight) + 2);
+    
+    setVisibleRange({ start, end });
+  }, [steps.length, itemHeight]);
+
+  const visibleSteps = steps.slice(visibleRange.start, visibleRange.end);
+  const totalHeight = steps.length * itemHeight;
+  const offsetY = visibleRange.start * itemHeight;
+
+  return (
+    <div 
+      ref={containerRef}
+      className="space-y-3 max-h-96 overflow-y-auto scrollbar-custom"
+      onScroll={handleScroll}
+      style={{ 
+        scrollBehavior: 'smooth',
+        willChange: 'scroll-position'
+      }}
+    >
+      <div style={{ height: totalHeight, position: 'relative' }}>
+        <div style={{ transform: `translateY(${offsetY}px)` }}>
+          {visibleSteps.map((step, index) => (
+            <div key={visibleRange.start + index} className="flex items-start gap-3 p-2" style={{ height: itemHeight }}>
+              <div className="flex-shrink-0 w-6 h-6 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs font-medium">
+                {visibleRange.start + index + 1}
+              </div>
+              <div className="flex-1 bg-slate-900/50 p-3 rounded-lg border border-white/10">
+                <Formula latex={step} display />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+});
+VirtualizedStepsList.displayName = 'VirtualizedStepsList';
 
 interface ProcedureModalProps {
   open: boolean;
@@ -24,6 +73,45 @@ export default function ProcedureModal({
   selectedLine,
   analysisData,
 }: Readonly<ProcedureModalProps>) {
+  const [scrollDebounce, setScrollDebounce] = useState<NodeJS.Timeout | null>(null);
+
+  // Memoizar el título del modal
+  const modalTitle = useMemo(() => {
+    const isLineProcedure = selectedLine !== null && selectedLine !== undefined;
+    return isLineProcedure 
+      ? `Procedimiento - Línea ${selectedLine}`
+      : "Procedimiento Completo";
+  }, [selectedLine]);
+
+  // Memoizar los pasos del procedimiento
+  const procedureSteps = useMemo(() => {
+    return analysisData?.totals?.procedure || [];
+  }, [analysisData?.totals?.procedure]);
+
+  // Memoizar los símbolos
+  const symbols = useMemo(() => {
+    return analysisData?.totals?.symbols || {};
+  }, [analysisData?.totals?.symbols]);
+
+  // Memoizar las notas
+  const notes = useMemo(() => {
+    return analysisData?.totals?.notes || [];
+  }, [analysisData?.totals?.notes]);
+
+  // Optimizar el manejo de scroll con debouncing
+  const handleScroll = useCallback((_e: React.UIEvent<HTMLDivElement>) => {
+    if (scrollDebounce) {
+      clearTimeout(scrollDebounce);
+    }
+    
+    const timeout = setTimeout(() => {
+      // Aquí podríamos agregar lógica adicional si es necesario
+      setScrollDebounce(null);
+    }, 16); // ~60fps
+    
+    setScrollDebounce(timeout);
+  }, [scrollDebounce]);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -41,15 +129,15 @@ export default function ProcedureModal({
     return () => {
       document.body.style.overflow = "unset";
       document.removeEventListener("keydown", onKey);
+      if (scrollDebounce) {
+        clearTimeout(scrollDebounce);
+      }
     };
-  }, [open, onClose]);
+  }, [open, onClose, scrollDebounce]);
 
   if (!open) return null;
 
   const isLineProcedure = selectedLine !== null && selectedLine !== undefined;
-  const modalTitle = isLineProcedure 
-    ? `Procedimiento - Línea ${selectedLine}`
-    : "Procedimiento Completo";
 
   return (
     <div className="fixed inset-0 z-50">
@@ -65,7 +153,14 @@ export default function ProcedureModal({
             ✕
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-custom">
+        <div 
+          className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-custom"
+          onScroll={handleScroll}
+          style={{ 
+            scrollBehavior: 'smooth',
+            willChange: 'scroll-position'
+          }}
+        >
           {isLineProcedure ? (
             // Contenido específico para una línea
             <div className="space-y-4">
@@ -115,29 +210,33 @@ export default function ProcedureModal({
                   {/* Pasos del procedimiento */}
                   <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
                     <h4 className="font-semibold text-white mb-3">Pasos del Procedimiento</h4>
-                    <div className="space-y-3 max-h-96 overflow-y-auto scrollbar-custom">
-                      {analysisData.totals.procedure.map((step, index) => (
-                        <div key={index} className="flex items-start gap-3 p-2">
-                          <div className="flex-shrink-0 w-6 h-6 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs font-medium">
-                            {index + 1}
+                    {procedureSteps.length > 20 ? (
+                      <VirtualizedStepsList steps={procedureSteps} />
+                    ) : (
+                      <div className="space-y-3 max-h-96 overflow-y-auto scrollbar-custom">
+                        {procedureSteps.map((step, index) => (
+                          <div key={index} className="flex items-start gap-3 p-2">
+                            <div className="flex-shrink-0 w-6 h-6 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs font-medium">
+                              {index + 1}
+                            </div>
+                            <div className="flex-1 bg-slate-900/50 p-3 rounded-lg border border-white/10">
+                              <Formula latex={step} display />
+                            </div>
                           </div>
-                          <div className="flex-1 bg-slate-900/50 p-3 rounded-lg border border-white/10">
-                            <Formula latex={step} display />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Símbolos */}
-                  {analysisData.totals.symbols && (
+                  {Object.keys(symbols).length > 0 && (
                     <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
                       <h4 className="font-semibold text-white mb-3">Símbolos</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto scrollbar-custom">
-                        {Object.entries(analysisData.totals.symbols).map(([symbol, description]) => (
+                        {Object.entries(symbols).map(([symbol, description]) => (
                           <div key={symbol} className="flex items-center gap-2 p-2 bg-slate-900/50 rounded border border-white/10">
                             <div className="flex-shrink-0">
-                              {renderVariable(symbol)}
+                              <RenderVariable variable={symbol} />
                             </div>
                             <span className="text-slate-300 text-xs">= {description}</span>
                           </div>
@@ -147,11 +246,11 @@ export default function ProcedureModal({
                   )}
 
                   {/* Notas */}
-                  {analysisData.totals.notes && (
+                  {notes.length > 0 && (
                     <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
                       <h4 className="font-semibold text-white mb-3">Notas</h4>
                       <ul className="space-y-2 max-h-32 overflow-y-auto scrollbar-custom">
-                        {analysisData.totals.notes.map((note, index) => (
+                        {notes.map((note, index) => (
                           <li key={index} className="flex items-start gap-2 text-sm text-slate-300">
                             <span className="text-amber-400 mt-1 flex-shrink-0">•</span>
                             <span>{note}</span>

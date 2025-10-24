@@ -405,6 +405,9 @@ body {
   .scrollbar-custom {
     scrollbar-width: thin;
     scrollbar-color: #475569 #1e293b;
+    /* Optimizaciones de rendimiento */
+    will-change: scroll-position;
+    contain: layout style paint;
   }
 
   .scrollbar-custom::-webkit-scrollbar {
@@ -420,6 +423,8 @@ body {
   .scrollbar-custom::-webkit-scrollbar-thumb {
     background-color: #475569; /* slate-600 */
     border-radius: 4px;
+    /* Optimización de transiciones */
+    transition: background-color 0.1s ease;
   }
 
   .scrollbar-custom::-webkit-scrollbar-thumb:hover {
