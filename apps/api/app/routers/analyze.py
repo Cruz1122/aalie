@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Body
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
+from ..analysis.dummy_analyzer import create_dummy_analysis
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
@@ -14,7 +15,7 @@ class LineCost(BaseModel):
     kind: str  # "assign" | "if" | "for" | "while" | "repeat" | "call" | "return" | "decl" | "other"
     ck: str
     count: str
-    note: str = None
+    note: Optional[str] = None
 
 class AnalyzeOpenResponse(BaseModel):
     ok: bool = True
@@ -93,6 +94,27 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
     }
     
     return fixture_response
+
+@router.get("/dummy")
+def analyze_dummy() -> Dict[str, Any]:
+    """
+    Endpoint de prueba para verificar la funcionalidad de BaseAnalyzer.
+    Devuelve un análisis dummy con datos de ejemplo.
+    """
+    try:
+        result = create_dummy_analysis()
+        return result
+    except Exception as e:
+        return {
+            "ok": False,
+            "errors": [
+                {
+                    "message": f"Error en análisis dummy: {str(e)}",
+                    "line": None,
+                    "column": None
+                }
+            ]
+        }
 
 @router.post("/closed")
 def analyze_closed(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
