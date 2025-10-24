@@ -7,6 +7,7 @@ from ..analysis.nested_for_example import create_nested_for_analysis
 from ..analysis.if_analyzer import create_if_analysis, create_if_with_else_analysis
 from ..analysis.for_if_combined_example import create_for_if_combined_analysis
 from ..analysis.simple_analyzer import create_simple_analysis, create_call_analysis, create_return_analysis
+from ..analysis.while_repeat_analyzer import create_while_analysis, create_repeat_analysis, create_while_repeat_combined_analysis
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
@@ -283,6 +284,69 @@ def analyze_return_example() -> Dict[str, Any]:
             "errors": [
                 {
                     "message": f"Error en análisis de returns: {str(e)}",
+                    "line": None,
+                    "column": None
+                }
+            ]
+        }
+
+@router.get("/while-example")
+def analyze_while_example() -> Dict[str, Any]:
+    """
+    Endpoint de prueba para verificar las reglas de bucles WHILE.
+    Devuelve un análisis con un bucle WHILE de ejemplo.
+    """
+    try:
+        result = create_while_analysis()
+        return result
+    except Exception as e:
+        return {
+            "ok": False,
+            "errors": [
+                {
+                    "message": f"Error en análisis de bucle WHILE: {str(e)}",
+                    "line": None,
+                    "column": None
+                }
+            ]
+        }
+
+@router.get("/repeat-example")
+def analyze_repeat_example() -> Dict[str, Any]:
+    """
+    Endpoint de prueba para verificar las reglas de bucles REPEAT.
+    Devuelve un análisis con un bucle REPEAT de ejemplo.
+    """
+    try:
+        result = create_repeat_analysis()
+        return result
+    except Exception as e:
+        return {
+            "ok": False,
+            "errors": [
+                {
+                    "message": f"Error en análisis de bucle REPEAT: {str(e)}",
+                    "line": None,
+                    "column": None
+                }
+            ]
+        }
+
+@router.get("/while-repeat-combined-example")
+def analyze_while_repeat_combined_example() -> Dict[str, Any]:
+    """
+    Endpoint de prueba para verificar la combinación de bucles WHILE con REPEAT.
+    Devuelve un análisis que combina WHILE con REPEAT anidado.
+    """
+    try:
+        result = create_while_repeat_combined_analysis()
+        return result
+    except Exception as e:
+        return {
+            "ok": False,
+            "errors": [
+                {
+                    "message": f"Error en análisis combinado WHILE-REPEAT: {str(e)}",
                     "line": None,
                     "column": None
                 }
