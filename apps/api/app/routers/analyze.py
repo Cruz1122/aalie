@@ -6,6 +6,7 @@ from ..analysis.for_analyzer import create_for_analysis
 from ..analysis.nested_for_example import create_nested_for_analysis
 from ..analysis.if_analyzer import create_if_analysis, create_if_with_else_analysis
 from ..analysis.for_if_combined_example import create_for_if_combined_analysis
+from ..analysis.simple_analyzer import create_simple_analysis, create_call_analysis, create_return_analysis
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
@@ -219,6 +220,69 @@ def analyze_for_if_combined_example() -> Dict[str, Any]:
             "errors": [
                 {
                     "message": f"Error en análisis combinado FOR-IF: {str(e)}",
+                    "line": None,
+                    "column": None
+                }
+            ]
+        }
+
+@router.get("/simple-example")
+def analyze_simple_example() -> Dict[str, Any]:
+    """
+    Endpoint de prueba para verificar las reglas de líneas simples.
+    Devuelve un análisis con asignaciones simples de ejemplo.
+    """
+    try:
+        result = create_simple_analysis()
+        return result
+    except Exception as e:
+        return {
+            "ok": False,
+            "errors": [
+                {
+                    "message": f"Error en análisis de líneas simples: {str(e)}",
+                    "line": None,
+                    "column": None
+                }
+            ]
+        }
+
+@router.get("/call-example")
+def analyze_call_example() -> Dict[str, Any]:
+    """
+    Endpoint de prueba para verificar las reglas de llamadas a función.
+    Devuelve un análisis con llamadas de ejemplo.
+    """
+    try:
+        result = create_call_analysis()
+        return result
+    except Exception as e:
+        return {
+            "ok": False,
+            "errors": [
+                {
+                    "message": f"Error en análisis de llamadas: {str(e)}",
+                    "line": None,
+                    "column": None
+                }
+            ]
+        }
+
+@router.get("/return-example")
+def analyze_return_example() -> Dict[str, Any]:
+    """
+    Endpoint de prueba para verificar las reglas de return.
+    Devuelve un análisis con returns de ejemplo.
+    """
+    try:
+        result = create_return_analysis()
+        return result
+    except Exception as e:
+        return {
+            "ok": False,
+            "errors": [
+                {
+                    "message": f"Error en análisis de returns: {str(e)}",
                     "line": None,
                     "column": None
                 }

@@ -4,6 +4,7 @@ from .base import BaseAnalyzer
 from .dummy_analyzer import DummyAnalyzer, create_dummy_analysis
 from .for_analyzer import ForAnalyzer, create_for_analysis
 from .if_analyzer import IfAnalyzer, create_if_analysis, create_if_with_else_analysis
+from .simple_analyzer import SimpleAnalyzer, create_simple_analysis, create_call_analysis, create_return_analysis
 
 __all__ = [
     "BaseAnalyzer",
@@ -13,5 +14,9 @@ __all__ = [
     "create_for_analysis",
     "IfAnalyzer",
     "create_if_analysis",
-    "create_if_with_else_analysis"
+    "create_if_with_else_analysis",
+    "SimpleAnalyzer",
+    "create_simple_analysis",
+    "create_call_analysis",
+    "create_return_analysis"
 ]
