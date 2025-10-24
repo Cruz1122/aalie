@@ -381,6 +381,51 @@ body {
     background-color: rgba(255, 255, 255, 0.3);
   }
 
+  /* Scrollbar oscuro personalizado para el modal */
+  .scrollbar-track-slate-800::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-track-slate-800::-webkit-scrollbar-track {
+    background: #1e293b; /* slate-800 */
+    border-radius: 4px;
+  }
+
+  .scrollbar-thumb-slate-600::-webkit-scrollbar-thumb {
+    background-color: #475569; /* slate-600 */
+    border-radius: 4px;
+  }
+
+  .scrollbar-thumb-slate-600::-webkit-scrollbar-thumb:hover {
+    background-color: #64748b; /* slate-500 */
+  }
+
+  /* Ocultar scrollbar por defecto en elementos con scroll personalizado */
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: #475569 #1e293b;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: #1e293b; /* slate-800 */
+    border-radius: 4px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: #475569; /* slate-600 */
+    border-radius: 4px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background-color: #64748b; /* slate-500 */
+  }
+
   /* Animaciones específicas para el loader global */
   @keyframes loader-pulse {
     0%,

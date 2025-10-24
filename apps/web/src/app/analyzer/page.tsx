@@ -1,5 +1,6 @@
 "use client";
 
+import type { AnalyzeOpenResponse } from "@aa/types";
 import { useState } from "react";
 
 import CodePane from "@/components/CodePane";
@@ -24,17 +25,68 @@ export default function AnalyzerPage() {
     "}",
   ].join("\n");
 
-  const rows = [
-    { no: 1, code: "function sum(n) {", ck: "—", execs: "—", cost: "—" },
-    { no: 2, code: "let s = 0;", ck: "C1", execs: "1", cost: "C1 × 1" },
-    { no: 3, code: "for (i = 1; i <= n; i++) {", ck: "C2", execs: "n+1", cost: "C2 × (n+1)" },
-    { no: 4, code: "s = s + i;", ck: "C3", execs: "n", cost: "C3 × n" },
-    { no: 6, code: "return s;", ck: "C4", execs: "1", cost: "C4 × 1" },
-  ];
+  // Fixture de datos usando los nuevos tipos
+  const analysisData: AnalyzeOpenResponse = {
+    ok: true,
+    byLine: [
+      {
+        line: 1,
+        kind: "decl",
+        ck: "c_1",
+        count: "1",
+        note: "declaración de variable"
+      },
+      {
+        line: 2,
+        kind: "for",
+        ck: "c_2 + c_3",
+        count: "n + 1",
+        note: "inicialización del bucle"
+      },
+      {
+        line: 3,
+        kind: "assign",
+        ck: "c_4 + c_5",
+        count: "n",
+        note: "asignación dentro del bucle"
+      },
+      {
+        line: 4,
+        kind: "for",
+        ck: "c_6",
+        count: "1",
+        note: "incremento del bucle"
+      }
+    ],
+    totals: {
+      T_open: String.raw`c_1 + (c_2 + c_3) \cdot (n + 1) + (c_4 + c_5) \cdot n + c_6`,
+      procedure: [
+        String.raw`T(n) = \sum_{i=1}^{n} \text{costo de línea } i`,
+        String.raw`T(n) = c_1 + (c_2 + c_3) \cdot (n + 1) + (c_4 + c_5) \cdot n + c_6`,
+        String.raw`T(n) = c_1 + (c_2 + c_3) \cdot n + (c_2 + c_3) + (c_4 + c_5) \cdot n + c_6`,
+        String.raw`T(n) = (c_2 + c_3 + c_4 + c_5) \cdot n + c_1 + c_2 + c_3 + c_6`
+      ],
+      symbols: {
+        "n": "length(A)",
+        "c_1": "costo de declaración",
+        "c_2": "costo de asignación en bucle",
+        "c_3": "costo de comparación",
+        "c_4": "costo de asignación",
+        "c_5": "costo de indexación",
+        "c_6": "costo de incremento"
+      },
+      notes: [
+        "Bucle for: n iteraciones + 1 comparación final",
+        "Asignación dentro del bucle: n ejecuciones",
+        "Incremento: n ejecuciones"
+      ]
+    }
+  };
 
+  // Usar los datos del fixture para las ecuaciones
   const fx1 = String.raw`\sum_{i=1}^{n} i = \frac{n(n+1)}{2}`;
-  const fx2 = String.raw`T(n) = C_2 (n+1) + C_3 \sum_{i=1}^{n} 1 + C_4 \cdot 1 + C_1 \cdot 1`;
-  const fx3 = String.raw`T(n) = (C_2 + C_3) n + (C_2 + C_1 + C_4)`;
+  const fx2 = analysisData.totals.T_open;
+  const fx3 = String.raw`T(n) = (c_2 + c_3 + c_4 + c_5) \cdot n + c_1 + c_2 + c_3 + c_6`;
 
   const handleViewLineProcedure = (lineNo: number) => {
     setSelectedLine(lineNo);
@@ -85,7 +137,7 @@ export default function AnalyzerPage() {
                   </h2>
                 </div>
                 <div className="flex-1 flex flex-col">
-                  <CostsTable rows={rows} onViewProcedure={handleViewLineProcedure} />
+                  <CostsTable rows={analysisData.byLine} onViewProcedure={handleViewLineProcedure} />
                   <div className="mt-4 pt-4 border-t border-white/10">
                     <button
                       onClick={handleViewGeneralProcedure}
@@ -109,14 +161,14 @@ export default function AnalyzerPage() {
                 <div className="flex-1 space-y-4">
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium text-slate-300">Fórmula base:</h3>
-                    <div className="overflow-x-auto rounded-md border border-white/10 bg-slate-900/50 p-3">
+                    <div className="overflow-x-auto rounded-md border border-white/10 bg-slate-900/50 p-3 scrollbar-custom">
                       <Formula latex={fx1} display />
                     </div>
                   </div>
                   
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium text-slate-300">Función de costo T(n):</h3>
-                    <div className="overflow-x-auto rounded-md border border-white/10 bg-slate-900/50 p-3">
+                    <div className="overflow-x-auto rounded-md border border-white/10 bg-slate-900/50 p-3 scrollbar-custom">
                       <div className="min-w-fit">
                         <Formula latex={fx2} display />
                       </div>
@@ -125,7 +177,7 @@ export default function AnalyzerPage() {
                   
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium text-slate-300">Forma simplificada:</h3>
-                    <div className="overflow-x-auto rounded-md border border-white/10 bg-slate-900/50 p-3">
+                    <div className="overflow-x-auto rounded-md border border-white/10 bg-slate-900/50 p-3 scrollbar-custom">
                       <Formula latex={fx3} display />
                     </div>
                   </div>
@@ -172,7 +224,8 @@ export default function AnalyzerPage() {
       <ProcedureModal 
         open={open} 
         onClose={() => setOpen(false)} 
-        selectedLine={selectedLine} 
+        selectedLine={selectedLine}
+        analysisData={analysisData}
       />
       <Footer />
     </div>

@@ -201,6 +201,53 @@ export function isGrammarParseResponse(obj: unknown): obj is GrammarParseRespons
 }
 
 /** ---- ANALYZE ---- */
+
+/** Modo de análisis de complejidad */
+export type AnalyzeMode = "worst" | "best" | "avg";
+
+/** Tipos de operaciones por línea */
+export type LineKind =
+  | "assign" | "if" | "for" | "while" | "repeat"
+  | "call" | "return" | "decl" | "other";
+
+/** Costo de una línea específica */
+export interface LineCost {
+  line: number;         // 1-based
+  kind: LineKind;       // tipo de operación (para badges)
+  ck: string;           // costo(s) elemental(es), ej: "C_assign + C_index"
+  count: string;        // # ejecuciones (abierto o cerrado), ej: "n", "\sum_{i=1}^{n} 1"
+  note?: string;        // aclaraciones (p. ej., "worst: max(then, else)")
+}
+
+/** Request para análisis de algoritmo */
+export interface AnalyzeRequest {
+  source: string;
+  mode?: AnalyzeMode;   // por defecto "worst" en S3
+}
+
+/** Response exitoso con análisis abierto */
+export interface AnalyzeOpenResponse {
+  ok: true;
+  byLine: LineCost[];   // tabla por línea
+  totals: {
+    T_open: string;                 // Σ C_k · count_k (KaTeX)
+    procedure: string[];            // pasos (KaTeX) para construir T_open
+    symbols?: Record<string,string>;// p.ej.: { n: "length(A)" }
+    notes?: string[];               // reglas usadas (for, while, if)
+    // S4 añadirá: T_closed, bigO/bigOmega/bigTheta, proofSteps
+  };
+}
+
+/** Response de error en análisis */
+export interface AnalyzeError {
+  ok: false;
+  errors: { message: string; line?: number; column?: number }[];
+}
+
+/** Union type para response de análisis */
+export type AnalyzeResponse = AnalyzeOpenResponse | AnalyzeError;
+
+// Tipos legacy mantenidos para compatibilidad
 export type CaseMode = "best" | "avg" | "worst" | "all";
 
 export interface AnalyzeOptions {
@@ -209,7 +256,7 @@ export interface AnalyzeOptions {
   avgModel?: { assumptions?: string; params?: Record<string, unknown> };
 }
 
-export interface LineCost {
+export interface LineCostLegacy {
   no: number;              // Nº de línea del código
   code: string;            // Texto de la línea
   ck: string;              // Etiqueta de costo elemental (C1, C2, …)
@@ -224,8 +271,8 @@ export interface CaseResult {
   Tclosed: string;         // T(n) en forma cerrada y simplificada
 }
 
-export interface AnalyzeResponse {
-  lines: LineCost[];
+export interface AnalyzeResponseLegacy {
+  lines: LineCostLegacy[];
   cases: {
     best?: CaseResult;
     avg?: CaseResult;

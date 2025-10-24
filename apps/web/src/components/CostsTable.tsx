@@ -1,10 +1,17 @@
 "use client";
 
-type Row = { no: number; code: string; ck: string; execs: string; cost: string };
+import type { LineCost } from "@aa/types";
+import Formula from "./Formula";
+
+// Helper para renderizar variables con KaTeX
+function renderVariable(variable: string) {
+  // Renderizar todo con KaTeX para consistencia visual
+  return <Formula latex={variable} />
+}
 
 interface CostsTableProps {
-  rows: Row[];
-  onViewProcedure?: (rowNo: number) => void;
+  rows: LineCost[];
+  onViewProcedure?: (lineNo: number) => void;
 }
 
 export default function CostsTable({ rows, onViewProcedure }: Readonly<CostsTableProps>) {
@@ -14,35 +21,60 @@ export default function CostsTable({ rows, onViewProcedure }: Readonly<CostsTabl
         <thead className="bg-slate-800 text-slate-100">
           <tr>
             <th className="px-2 py-2 text-left w-8">#</th>
-            <th className="px-2 py-2 text-left">Código</th>
+            <th className="px-2 py-2 text-left">Tipo</th>
             <th className="px-2 py-2 text-left w-12">C_k</th>
             <th className="px-2 py-2 text-left w-16">#ejec</th>
-            <th className="px-2 py-2 text-left">Costo</th>
+            <th className="px-2 py-2 text-left">Nota</th>
             <th className="px-2 py-2 text-center w-10">Ver</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/10">
           {rows.map((r) => (
-            <tr key={r.no} className="bg-slate-900/40 hover:bg-slate-800/50 transition-colors">
-              <td className="px-2 py-2 text-slate-200 text-xs">{r.no}</td>
-              <td className="px-2 py-2 font-mono text-[10px] text-slate-100 max-w-[120px] xl:max-w-[140px] truncate" title={r.code}>
-                {r.code}
+            <tr key={r.line} className="bg-slate-900/40 hover:bg-slate-800/50 transition-colors">
+              <td className="px-2 py-2 text-slate-200 text-xs">{r.line}</td>
+              <td className="px-2 py-2">
+                {(() => {
+                  const getBadgeStyle = (kind: string) => {
+                    switch (kind) {
+                      case 'assign': return 'bg-blue-500/20 text-blue-300';
+                      case 'for': return 'bg-purple-500/20 text-purple-300';
+                      case 'while': return 'bg-orange-500/20 text-orange-300';
+                      case 'if': return 'bg-green-500/20 text-green-300';
+                      case 'call': return 'bg-cyan-500/20 text-cyan-300';
+                      case 'return': return 'bg-pink-500/20 text-pink-300';
+                      case 'decl': return 'bg-yellow-500/20 text-yellow-300';
+                      default: return 'bg-gray-500/20 text-gray-300';
+                    }
+                  };
+                  
+                  return (
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getBadgeStyle(r.kind)}`}>
+                      {r.kind}
+                    </span>
+                  );
+                })()}
               </td>
-              <td className="px-2 py-2 text-sky-300 text-xs">{r.ck}</td>
-              <td className="px-2 py-2 text-emerald-300 text-xs">{r.execs}</td>
-              <td className="px-2 py-2 text-amber-300 text-xs">{r.cost}</td>
+              <td className="px-2 py-2">
+                {renderVariable(r.ck)}
+              </td>
+              <td className="px-2 py-2">
+                {renderVariable(r.count)}
+              </td>
+              <td className="px-2 py-2 text-amber-300 text-xs max-w-[120px] truncate" title={r.note}>
+                {r.note || '—'}
+              </td>
               <td className="px-2 py-2 text-center">
-                {r.ck !== "—" ? (
+                {r.ck === "—" ? (
+                  <span className="text-slate-600 text-xs">—</span>
+                ) : (
                   <button
-                    onClick={() => onViewProcedure?.(r.no)}
+                    onClick={() => onViewProcedure?.(r.line)}
                     className="p-1 rounded-md hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
-                    title={`Ver procedimiento para línea ${r.no}`}
-                    aria-label={`Ver procedimiento para línea ${r.no}`}
+                    title={`Ver procedimiento para línea ${r.line}`}
+                    aria-label={`Ver procedimiento para línea ${r.line}`}
                   >
                     <span className="material-symbols-outlined text-xs">visibility</span>
                   </button>
-                ) : (
-                  <span className="text-slate-600 text-xs">—</span>
                 )}
               </td>
             </tr>
