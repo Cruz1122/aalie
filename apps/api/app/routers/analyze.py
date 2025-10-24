@@ -4,6 +4,8 @@ from pydantic import BaseModel
 from ..analysis.dummy_analyzer import create_dummy_analysis
 from ..analysis.for_analyzer import create_for_analysis
 from ..analysis.nested_for_example import create_nested_for_analysis
+from ..analysis.if_analyzer import create_if_analysis, create_if_with_else_analysis
+from ..analysis.for_if_combined_example import create_for_if_combined_analysis
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
@@ -154,6 +156,69 @@ def analyze_nested_for_example() -> Dict[str, Any]:
             "errors": [
                 {
                     "message": f"Error en análisis de bucles FOR anidados: {str(e)}",
+                    "line": None,
+                    "column": None
+                }
+            ]
+        }
+
+@router.get("/if-example")
+def analyze_if_example() -> Dict[str, Any]:
+    """
+    Endpoint de prueba para verificar las reglas de condicionales IF.
+    Devuelve un análisis con un condicional IF simple de ejemplo.
+    """
+    try:
+        result = create_if_analysis()
+        return result
+    except Exception as e:
+        return {
+            "ok": False,
+            "errors": [
+                {
+                    "message": f"Error en análisis de condicional IF: {str(e)}",
+                    "line": None,
+                    "column": None
+                }
+            ]
+        }
+
+@router.get("/if-with-else-example")
+def analyze_if_with_else_example() -> Dict[str, Any]:
+    """
+    Endpoint de prueba para verificar las reglas de condicionales IF con ELSE.
+    Devuelve un análisis con un condicional IF con ELSE de ejemplo.
+    """
+    try:
+        result = create_if_with_else_analysis()
+        return result
+    except Exception as e:
+        return {
+            "ok": False,
+            "errors": [
+                {
+                    "message": f"Error en análisis de condicional IF con ELSE: {str(e)}",
+                    "line": None,
+                    "column": None
+                }
+            ]
+        }
+
+@router.get("/for-if-combined-example")
+def analyze_for_if_combined_example() -> Dict[str, Any]:
+    """
+    Endpoint de prueba para verificar la combinación de bucles FOR con condicionales IF.
+    Devuelve un análisis que combina FOR con IF anidado.
+    """
+    try:
+        result = create_for_if_combined_analysis()
+        return result
+    except Exception as e:
+        return {
+            "ok": False,
+            "errors": [
+                {
+                    "message": f"Error en análisis combinado FOR-IF: {str(e)}",
                     "line": None,
                     "column": None
                 }
