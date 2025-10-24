@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useNavigation } from "@/contexts/NavigationContext";
 import { ReactNode, MouseEvent } from "react";
+
+import { useNavigation } from "@/contexts/NavigationContext";
 
 interface NavigationLinkProps {
   href: string;

@@ -314,12 +314,12 @@ export const useDocumentationSections = (): DocumentationSection[] => {
             },
             block: {
               description: "Ecuaciones centradas en modo display",
-              code: '<Formula latex="\\sum_{i=1}^{n} i = \\frac{n(n+1)}{2}" displayMode={true} />',
+              code: String.raw`<Formula latex="\sum_{i=1}^{n} i = \frac{n(n+1)}{2}" displayMode={true} />`,
               result: "Ecuación centrada en bloque separado",
             },
             complex: {
               description: "Ecuaciones complejas con scroll",
-              code: '<div><Formula latex="T(n) = \\sum_{i=1}^{n} \\sum_{j=1}^{i} O(1)" /><Formula latex="= \\sum_{i=1}^{n} i" /><Formula latex="= \\frac{n(n+1)}{2}" /></div>',
+              code: String.raw`<div><Formula latex="T(n) = \sum_{i=1}^{n} \sum_{j=1}^{i} O(1)" /><Formula latex="= \sum_{i=1}^{n} i" /><Formula latex="= \frac{n(n+1)}{2}" /></div>`,
               result: "Ecuación larga con múltiples pasos separados",
             },
           },
@@ -336,6 +336,173 @@ export const useDocumentationSections = (): DocumentationSection[] => {
             },
           },
         }
+      },
+      {
+        id: "grammar-parser",
+        title: "Gramática y Parser",
+        description:
+          "Sistema completo de parsing basado en ANTLR4 que define la sintaxis del lenguaje de pseudocódigo y genera parsers para TypeScript y Python. Soporta procedimientos, estructuras de control, arrays con rangos, operadores normalizados y produce un AST canónico con información de posición para diagnósticos precisos.",
+        content: {
+          type: "grammar",
+          overview: {
+            title: "Visión General",
+            description: "La gramática define un lenguaje de pseudocódigo estructurado para análisis algorítmico, con soporte completo para procedimientos, estructuras de control y expresiones matemáticas.",
+            technology: "ANTLR 4.13.2",
+            location: "packages/grammar/grammar/Language.g4",
+            generators: [
+              "TypeScript: validación en tiempo real en el cliente (Web Worker)",
+              "Python: análisis formal en el servidor (FastAPI)",
+            ],
+          },
+          features: {
+            title: "Características Principales",
+            items: [
+              {
+                name: "Procedimientos con Parámetros Tipados",
+                description: "Define funciones con parámetros escalares, arrays con rangos (A[1]..[n]) y objetos tipados.",
+                example: "factorial(n) BEGIN ... END",
+              },
+              {
+                name: "Estructuras de Control",
+                description: "Soporte completo para IF-THEN-ELSE, FOR, WHILE y REPEAT-UNTIL con bloques obligatorios.",
+                example: "FOR i <- 1 TO n DO BEGIN ... END",
+              },
+              {
+                name: "Operadores Normalizados",
+                description: "Conjunto cerrado de operadores aritméticos, relacionales y lógicos con precedencia estándar.",
+                example: "resultado <- (a + b) * c DIV 2",
+              },
+              {
+                name: "Arrays Multidimensionales",
+                description: "Soporte para declaración y acceso a arrays con múltiples dimensiones.",
+                example: "matriz[i][j] <- valor",
+              },
+              {
+                name: "AST con Posiciones",
+                description: "Cada nodo incluye información de línea y columna para diagnósticos precisos y trazabilidad.",
+                example: '{"type": "Assign", "pos": {"line": 5, "column": 2}}',
+              },
+            ],
+          },
+          syntax: {
+            title: "Sintaxis del Lenguaje",
+            sections: [
+              {
+                name: "Definición de Procedimientos",
+                code: String.raw`nombreProcedimiento(parametros) BEGIN
+    sentencias...
+END`,
+                notes: [
+                  "Parámetros escalares: procedimiento(a, b, c)",
+                  "Arrays: procedimiento(A[n]) o procedimiento(A[1]..[n])",
+                  "Objetos: procedimiento(Clase objeto)",
+                ],
+              },
+              {
+                name: "Asignación",
+                code: String.raw`variable <- expresion;
+variable := expresion;
+variable ← expresion;`,
+                notes: ["Soporta múltiples operadores de asignación", "Punto y coma obligatorio"],
+              },
+              {
+                name: "Estructuras de Control",
+                code: "IF (condicion) THEN BEGIN ... END ELSE BEGIN ... END\nFOR variable <- inicio TO fin DO BEGIN ... END\nWHILE (condicion) DO BEGIN ... END\nREPEAT ... UNTIL (condicion);",
+                notes: [
+                  "Bloques BEGIN...END obligatorios",
+                  "También se pueden usar llaves { }",
+                  "Condiciones entre paréntesis",
+                ],
+              },
+              {
+                name: "Llamadas a Procedimientos",
+                code: "CALL nombreProcedimiento(argumentos);\nresultado <- funcion(argumentos);",
+                notes: [
+                  "CALL para statements",
+                  "Sin CALL para expresiones",
+                  "Soporte para recursión",
+                ],
+              },
+            ],
+          },
+          operators: {
+            title: "Operadores Soportados",
+            categories: [
+              {
+                name: "Aritméticos",
+                operators: ["+", "-", "*", "/", "DIV", "MOD"],
+                precedence: "Multiplicativos > Aditivos",
+              },
+              {
+                name: "Relacionales",
+                operators: ["=", "!=", "<>", "≠", "<", ">", "<=", "≤", ">=", "≥"],
+                precedence: "Menor que operadores lógicos",
+              },
+              {
+                name: "Lógicos",
+                operators: ["AND", "OR", "NOT"],
+                precedence: "NOT > AND > OR",
+              },
+            ],
+          },
+          ast: {
+            title: "Estructura del AST",
+            description: "El AST generado es canónico e idéntico entre TypeScript y Python, garantizando consistencia entre cliente y servidor.",
+            nodeTypes: [
+              "Program: Nodo raíz con array de procedimientos",
+              "ProcDef: Definición de procedimiento con nombre, parámetros y cuerpo",
+              "Block: Bloque de sentencias",
+              "Assign: Asignación de variable",
+              "For/While/If: Estructuras de control",
+              "Binary/Unary: Expresiones con operadores",
+              "Call: Llamada a procedimiento (con flag statement: true/false)",
+              "Return: Retorno de valor",
+              "Identifier/Literal: Valores y referencias",
+            ],
+            example: {
+              input: "factorial(n) BEGIN\n  resultado <- 1;\n  RETURN resultado;\nEND",
+              astFragment: '{\n  "type": "ProcDef",\n  "name": "factorial",\n  "params": [{"type": "Param", "name": "n"}],\n  "body": {"type": "Block", "body": [...]},\n  "pos": {"line": 1, "column": 0}\n}',
+            },
+          },
+          validation: {
+            title: "Validación en Tiempo Real",
+            client: {
+              technology: "Parser TypeScript en Web Worker",
+              purpose: "Validación inmediata durante la edición",
+              features: [
+                "Subrayado de errores en Monaco Editor",
+                "Diagnósticos con línea y columna",
+                "Sin bloquear el thread principal",
+                "Fallback cuando API no disponible",
+              ],
+            },
+            server: {
+              technology: "Parser Python con ANTLR",
+              purpose: "Análisis formal y generación de AST canónico",
+              endpoint: "/grammar/parse",
+              features: [
+                "AST completo y validado",
+                "Errores detallados con posiciones",
+                "Procesamiento sin estado",
+                "Pre-generado (sin dependencia Java en runtime)",
+              ],
+            },
+          },
+          errorHandling: {
+            title: "Manejo de Errores",
+            features: [
+              "Mensajes descriptivos con línea y columna exacta",
+              "Sugerencias contextuales del parser",
+              "Visualización en Monaco con markers",
+              "Asistencia opcional del LLM para corrección",
+            ],
+            errorTypes: [
+              "Errores sintácticos: tokens inesperados, bloques incompletos",
+              "Errores semánticos: tipos incompatibles, variables no declaradas (análisis futuro)",
+              "Errores de estructura: falta de BEGIN/END, paréntesis no cerrados",
+            ],
+          },
+        },
       },
       {
         id: "analyzer-interface",

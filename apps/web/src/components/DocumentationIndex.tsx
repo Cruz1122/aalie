@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { ChevronDown, ChevronRight, FileText, Package, Settings, Calculator, BarChart3, Zap } from "lucide-react";
+import { useState } from "react";
 
 import { DocumentationSection } from "@/types/documentation";
 

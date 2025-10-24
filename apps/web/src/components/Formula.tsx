@@ -1,5 +1,6 @@
 "use client";
 import { useMemo } from "react";
+
 import { renderLatexToHtml } from "@/lib/katex";
 
 type Props = {

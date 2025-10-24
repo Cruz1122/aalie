@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 
 from .core.config import get_dev_allowed_origins, get_dev_cors_enabled
 from .routers import parse as parse_router
+from .routers import analyze as analyze_router
 
 app = FastAPI(title="algorithmic-analysis API", version="0.1.0")
 
@@ -28,3 +29,4 @@ def health():
 
 
 app.include_router(parse_router.router)
+app.include_router(analyze_router.router)

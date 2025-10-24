@@ -1,19 +1,42 @@
 "use client";
+
+import { Zap, Package, Settings, Calculator, BarChart3, ArrowRight, Code2 } from "lucide-react";
+import Image from "next/image";
 import { useEffect } from "react";
-import { Zap, Package, Settings, Calculator, BarChart3, ArrowRight } from "lucide-react";
+
 import Formula from "@/components/Formula";
 import NavigationLink from "@/components/NavigationLink";
-import { DocumentationSection, UIShowcaseContent } from "@/types/documentation";
+import {
+  DocumentationSection,
+  UIShowcaseContent,
+  PackageContent,
+  PackageInfo,
+  ToolsContent,
+  ToolInfo,
+  CommandInfo,
+  KaTeXContent,
+  KaTeXComponent,
+  KaTeXUtility,
+  AnalyzerContent,
+  AnalyzerColumn,
+  AnalyzerBreakpoint,
+  AnalyzerModalType,
+  AnalyzerComponentInfo,
+  GrammarContent,
+  GrammarFeature,
+  GrammarSyntaxSection,
+  GrammarOperatorCategory,
+} from "@/types/documentation";
 
 export default function DocumentationModal({
   open,
   onClose,
   section,
-}: {
+}: Readonly<{
   open: boolean;
   onClose: () => void;
   section: DocumentationSection | null;
-}) {
+}>) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -41,7 +64,7 @@ export default function DocumentationModal({
 
   return (
     <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div className="absolute left-1/2 top-1/2 w-[min(90vw,800px)] max-h-[80vh] overflow-y-auto -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 p-6 ring-1 ring-white/10 shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
           <h3 className="text-lg font-semibold text-white">{section.title}</h3>
@@ -85,6 +108,8 @@ function renderSectionDetail(section: DocumentationSection) {
       return <KatexDetail section={section} />;
     case "analyzer":
       return <AnalyzerDetail section={section} />;
+    case "grammar":
+      return <GrammarDetail section={section} />;
     default:
       // Por defecto solo muestra el diagrama si existe
       return (
@@ -92,9 +117,11 @@ function renderSectionDetail(section: DocumentationSection) {
           {section.image?.src && (
             <div className="flex justify-center">
               {/* Imagen redimensionada para el modal */}
-              <img
+              <Image
                 src={section.image.src}
                 alt={section.image.alt || section.title}
+                width={section.image.width || 800}
+                height={section.image.height || 400}
                 className="rounded-lg border border-white/10 max-w-full max-h-[400px] object-contain"
               />
             </div>
@@ -156,7 +183,7 @@ function UIShowcaseDetail({ section }: Readonly<{ section: DocumentationSection 
 
 /* -------- Render: Packages -------- */
 function PackagesDetail({ section }: Readonly<{ section: DocumentationSection }>) {
-  const content = section.content as any;
+  const content = section.content as PackageContent;
   return (
     <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
       <header className="space-y-4 mb-6">
@@ -169,7 +196,7 @@ function PackagesDetail({ section }: Readonly<{ section: DocumentationSection }>
       <p className="text-sm text-slate-300 text-center mb-6">{section.description}</p>
 
       <div className="grid md:grid-cols-2 gap-6 mb-2 max-w-4xl mx-auto">
-        {content?.packages?.map((pkg: any) => (
+        {content?.packages?.map((pkg: PackageInfo) => (
           <div key={pkg.name} className="space-y-4 p-4 rounded-lg bg-slate-800/50 border border-white/10">
             <div>
               <h5 className="text-base font-semibold text-white mb-1">{pkg.name}</h5>
@@ -213,7 +240,7 @@ function PackagesDetail({ section }: Readonly<{ section: DocumentationSection }>
 
 /* -------- Render: Tools (frontend/backend/automation) -------- */
 function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
-  const content = section.content as any;
+  const content = section.content as ToolsContent;
 
   return (
     <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
@@ -233,7 +260,7 @@ function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
             {content?.frontend?.title}
           </h5>
           <div className="space-y-4">
-            {content?.frontend?.tools?.map((tool: any) => (
+            {content?.frontend?.tools?.map((tool: ToolInfo) => (
               <div key={tool.name} className="p-4 rounded-lg bg-blue-800/20 border border-blue-500/20">
                 <div className="mb-3">
                   <h6 className="text-sm font-semibold text-blue-200 mb-1">{tool.name}</h6>
@@ -262,7 +289,7 @@ function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
             {content?.backend?.title}
           </h5>
           <div className="space-y-4">
-            {content?.backend?.tools?.map((tool: any) => (
+            {content?.backend?.tools?.map((tool: ToolInfo) => (
               <div key={tool.name} className="p-4 rounded-lg bg-green-800/20 border border-green-500/20">
                 <div className="mb-3">
                   <h6 className="text-sm font-semibold text-green-200 mb-1">{tool.name}</h6>
@@ -292,7 +319,7 @@ function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
           {content?.automation?.title}
         </h5>
         <div className="grid gap-3">
-          {content?.automation?.commands?.map((cmd: any, idx: number) => (
+          {content?.automation?.commands?.map((cmd: CommandInfo, idx: number) => (
             <div key={idx} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
               <div className="flex items-start gap-3">
                 <code className="text-xs font-mono text-purple-300 bg-purple-900/30 px-2 py-1 rounded flex-shrink-0">
@@ -313,7 +340,7 @@ function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
 
 /* -------- Render: KaTeX -------- */
 function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
-  const content = section.content as any;
+  const content = section.content as KaTeXContent;
 
   return (
     <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
@@ -356,7 +383,7 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
           {/* Componentes */}
           <div className="space-y-4">
             <h6 className="text-sm font-semibold text-blue-300 text-center">Componentes React</h6>
-            {content?.implementation?.components?.map((component: any) => (
+            {content?.implementation?.components?.map((component: KaTeXComponent) => (
               <div key={component.name} className="p-3 rounded-lg bg-blue-800/20 border border-blue-500/20">
                 <h6 className="text-xs font-semibold text-blue-200 mb-1">{component.name}</h6>
                 <p className="text-xs text-blue-300 mb-2">{component.purpose}</p>
@@ -376,7 +403,7 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
           {/* Utilidades */}
           <div className="space-y-4">
             <h6 className="text-sm font-semibold text-purple-300 text-center">Utilidades</h6>
-            {content?.implementation?.utilities?.map((utility: any) => (
+            {content?.implementation?.utilities?.map((utility: KaTeXUtility) => (
               <div key={utility.function} className="p-3 rounded-lg bg-purple-800/20 border border-purple-500/20">
                 <div className="mb-2">
                   <h6 className="text-xs font-semibold text-purple-200">{utility.function}</h6>
@@ -515,9 +542,285 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
   );
 }
 
+/* -------- Render: Grammar -------- */
+function GrammarDetail({ section }: Readonly<{ section: DocumentationSection }>) {
+  const content = section.content as GrammarContent;
+
+  return (
+    <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+      <header className="space-y-4 mb-6">
+        <div className="flex justify-center">
+          <Code2 size={56} className="text-green-400" />
+        </div>
+        <h4 className="text-lg font-semibold text-white text-center">{section.title}</h4>
+      </header>
+
+      <p className="text-sm text-slate-300 text-center mb-8">{section.description}</p>
+
+      {/* Overview */}
+      <section className="mb-8 p-4 rounded-lg bg-green-800/20 border border-green-500/20">
+        <h5 className="text-lg font-semibold text-green-300 text-center mb-4">
+          {content?.overview?.title}
+        </h5>
+        <p className="text-sm text-slate-300 text-center mb-4">{content?.overview?.description}</p>
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="text-xs">
+            <p className="text-slate-400">
+              <span className="font-semibold text-green-300">Tecnología:</span>{" "}
+              {content?.overview?.technology}
+            </p>
+          </div>
+          <div className="text-xs">
+            <p className="text-slate-400">
+              <span className="font-semibold text-green-300">Ubicación:</span>{" "}
+              <code className="bg-slate-900/50 px-1 rounded">{content?.overview?.location}</code>
+            </p>
+          </div>
+        </div>
+        <div className="mt-4">
+          <p className="text-xs font-semibold text-green-300 mb-2">Generadores:</p>
+          <ul className="space-y-1">
+            {content?.overview?.generators?.map((gen: string, idx: number) => (
+              <li key={idx} className="text-xs text-slate-400 flex items-start gap-1">
+                <ArrowRight size={8} className="text-green-400 mt-0.5 flex-shrink-0" />
+                <span>{gen}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* Características */}
+      <section className="mb-8">
+        <h5 className="text-lg font-semibold text-blue-300 text-center mb-6">
+          {content?.features?.title}
+        </h5>
+        <div className="grid gap-4">
+          {content?.features?.items?.map((feature: GrammarFeature, idx: number) => (
+            <div key={idx} className="p-4 rounded-lg bg-blue-800/20 border border-blue-500/20">
+              <h6 className="text-sm font-semibold text-blue-200 mb-2">{feature.name}</h6>
+              <p className="text-xs text-blue-300 mb-2">{feature.description}</p>
+              <div className="bg-slate-900/50 p-2 rounded">
+                <code className="text-xs font-mono text-green-300">{feature.example}</code>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Sintaxis */}
+      <section className="mb-8">
+        <h5 className="text-lg font-semibold text-purple-300 text-center mb-6">
+          {content?.syntax?.title}
+        </h5>
+        <div className="grid gap-4">
+          {content?.syntax?.sections?.map((syntaxSection: GrammarSyntaxSection, idx: number) => (
+            <div key={idx} className="p-4 rounded-lg bg-purple-800/20 border border-purple-500/20">
+              <h6 className="text-sm font-semibold text-purple-200 mb-3">{syntaxSection.name}</h6>
+              <div className="bg-slate-900/50 p-3 rounded mb-3 overflow-x-auto">
+                <pre className="text-xs font-mono text-green-300 whitespace-pre">
+                  {syntaxSection.code}
+                </pre>
+              </div>
+              {syntaxSection.notes && syntaxSection.notes.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-300 mb-1">Notas:</p>
+                  <ul className="space-y-1">
+                    {syntaxSection.notes.map((note: string, noteIdx: number) => (
+                      <li key={noteIdx} className="text-xs text-slate-400 flex items-start gap-1">
+                        <ArrowRight size={8} className="text-purple-400 mt-0.5 flex-shrink-0" />
+                        <span>{note}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Operadores */}
+      <section className="mb-8">
+        <h5 className="text-lg font-semibold text-amber-300 text-center mb-6">
+          {content?.operators?.title}
+        </h5>
+        <div className="grid md:grid-cols-3 gap-4">
+          {content?.operators?.categories?.map((category: GrammarOperatorCategory, idx: number) => (
+            <div key={idx} className="p-4 rounded-lg bg-amber-800/20 border border-amber-500/20">
+              <h6 className="text-sm font-semibold text-amber-200 mb-2">{category.name}</h6>
+              <div className="mb-2">
+                <p className="text-xs font-semibold text-slate-300 mb-1">Operadores:</p>
+                <div className="flex flex-wrap gap-1">
+                  {category.operators?.map((op: string, opIdx: number) => (
+                    <code
+                      key={opIdx}
+                      className="text-xs font-mono text-amber-300 bg-slate-900/50 px-2 py-0.5 rounded"
+                    >
+                      {op}
+                    </code>
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs text-slate-400">
+                <span className="font-semibold text-slate-300">Precedencia:</span>{" "}
+                {category.precedence}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* AST */}
+      <section className="mb-8 p-4 rounded-lg bg-cyan-800/20 border border-cyan-500/20">
+        <h5 className="text-lg font-semibold text-cyan-300 text-center mb-4">
+          {content?.ast?.title}
+        </h5>
+        <p className="text-sm text-slate-300 text-center mb-4">{content?.ast?.description}</p>
+        
+        <div className="mb-4">
+          <p className="text-xs font-semibold text-cyan-300 mb-2">Tipos de Nodos:</p>
+          <div className="grid md:grid-cols-2 gap-2">
+            {content?.ast?.nodeTypes?.map((nodeType: string, idx: number) => (
+              <div key={idx} className="text-xs text-slate-400 flex items-start gap-1">
+                <ArrowRight size={8} className="text-cyan-400 mt-0.5 flex-shrink-0" />
+                <code className="text-cyan-300">{nodeType}</code>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {content?.ast?.example && (
+          <div className="mt-4">
+            <p className="text-xs font-semibold text-cyan-300 mb-2">Ejemplo:</p>
+            <div className="mb-2">
+              <p className="text-xs text-slate-400 mb-1">Entrada:</p>
+              <div className="bg-slate-900/50 p-2 rounded overflow-x-auto">
+                <pre className="text-xs font-mono text-green-300 whitespace-pre">
+                  {content.ast.example.input}
+                </pre>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 mb-1">AST (fragmento):</p>
+              <div className="bg-slate-900/50 p-2 rounded overflow-x-auto">
+                <pre className="text-xs font-mono text-cyan-300 whitespace-pre">
+                  {content.ast.example.astFragment}
+                </pre>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Validación */}
+      <section className="mb-8">
+        <h5 className="text-lg font-semibold text-emerald-300 text-center mb-6">
+          {content?.validation?.title}
+        </h5>
+        <div className="grid md:grid-cols-2 gap-4">
+          {/* Cliente */}
+          <div className="p-4 rounded-lg bg-emerald-800/20 border border-emerald-500/20">
+            <h6 className="text-sm font-semibold text-emerald-200 mb-3">Cliente (TypeScript)</h6>
+            <p className="text-xs text-emerald-300 mb-2">
+              <span className="font-semibold">Tecnología:</span>{" "}
+              {content?.validation?.client?.technology}
+            </p>
+            <p className="text-xs text-emerald-300 mb-3">
+              <span className="font-semibold">Propósito:</span>{" "}
+              {content?.validation?.client?.purpose}
+            </p>
+            <div>
+              <p className="text-xs font-semibold text-slate-300 mb-1">Características:</p>
+              <ul className="space-y-1">
+                {content?.validation?.client?.features?.map((feature: string, idx: number) => (
+                  <li key={idx} className="text-xs text-slate-400 flex items-start gap-1">
+                    <ArrowRight size={8} className="text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Servidor */}
+          <div className="p-4 rounded-lg bg-blue-800/20 border border-blue-500/20">
+            <h6 className="text-sm font-semibold text-blue-200 mb-3">Servidor (Python)</h6>
+            <p className="text-xs text-blue-300 mb-2">
+              <span className="font-semibold">Tecnología:</span>{" "}
+              {content?.validation?.server?.technology}
+            </p>
+            <p className="text-xs text-blue-300 mb-2">
+              <span className="font-semibold">Endpoint:</span>{" "}
+              <code className="bg-slate-900/50 px-1 rounded">
+                {content?.validation?.server?.endpoint}
+              </code>
+            </p>
+            <p className="text-xs text-blue-300 mb-3">
+              <span className="font-semibold">Propósito:</span>{" "}
+              {content?.validation?.server?.purpose}
+            </p>
+            <div>
+              <p className="text-xs font-semibold text-slate-300 mb-1">Características:</p>
+              <ul className="space-y-1">
+                {content?.validation?.server?.features?.map((feature: string, idx: number) => (
+                  <li key={idx} className="text-xs text-slate-400 flex items-start gap-1">
+                    <ArrowRight size={8} className="text-blue-400 mt-0.5 flex-shrink-0" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Manejo de Errores */}
+      <section className="p-4 rounded-lg bg-red-800/20 border border-red-500/20">
+        <h5 className="text-lg font-semibold text-red-300 text-center mb-4">
+          {content?.errorHandling?.title}
+        </h5>
+        <div className="mb-4">
+          <p className="text-xs font-semibold text-slate-300 mb-2">Características:</p>
+          <ul className="space-y-1">
+            {content?.errorHandling?.features?.map((feature: string, idx: number) => (
+              <li key={idx} className="text-xs text-slate-400 flex items-start gap-1">
+                <ArrowRight size={8} className="text-red-400 mt-0.5 flex-shrink-0" />
+                <span>{feature}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <p className="text-xs font-semibold text-slate-300 mb-2">Tipos de Errores:</p>
+          <ul className="space-y-1">
+            {content?.errorHandling?.errorTypes?.map((errorType: string, idx: number) => (
+              <li key={idx} className="text-xs text-slate-400 flex items-start gap-1">
+                <ArrowRight size={8} className="text-red-400 mt-0.5 flex-shrink-0" />
+                <span>{errorType}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* Enlace a guía de usuario */}
+      <div className="text-center mt-6">
+        <NavigationLink
+          href="/user-guide"
+          className="inline-flex items-center gap-2 glass-button px-6 py-3 rounded-lg text-white font-semibold transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400/50"
+        >
+          <Code2 size={16} />
+          Ver Guía de Usuario Completa
+        </NavigationLink>
+      </div>
+    </article>
+  );
+}
+
 /* -------- Render: Analyzer -------- */
-function AnalyzerDetail({ section }: { section: DocumentationSection }) {
-  const content = section.content as any;
+function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>) {
+  const content = section.content as AnalyzerContent;
 
   return (
     <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
@@ -542,7 +845,7 @@ function AnalyzerDetail({ section }: { section: DocumentationSection }) {
           </p>
 
           <div className="grid md:grid-cols-3 gap-4">
-            {content?.interface?.layout?.columns?.map((column: any) => (
+            {content?.interface?.layout?.columns?.map((column: AnalyzerColumn) => (
               <div key={column.name} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
                 <h6 className="text-sm font-semibold text-cyan-200 mb-2">{column.name}</h6>
                 <p className="text-xs text-cyan-300 mb-2">{column.purpose}</p>
@@ -569,7 +872,7 @@ function AnalyzerDetail({ section }: { section: DocumentationSection }) {
             {content?.interface?.responsiveness?.title}
           </h6>
           <div className="grid gap-3">
-            {content?.interface?.responsiveness?.breakpoints?.map((bp: any) => (
+            {content?.interface?.responsiveness?.breakpoints?.map((bp: AnalyzerBreakpoint) => (
               <div key={bp.size} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
                 <p className="text-xs font-semibold text-blue-200">{bp.size}</p>
                 <p className="text-xs text-blue-300 mb-1">{bp.layout}</p>
@@ -604,7 +907,7 @@ function AnalyzerDetail({ section }: { section: DocumentationSection }) {
           </div>
 
           <div className="grid md:grid-cols-2 gap-3">
-            {content?.modal?.types?.map((type: any) => (
+            {content?.modal?.types?.map((type: AnalyzerModalType) => (
               <div key={type.name} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
                 <h6 className="text-xs font-semibold text-purple-200 mb-1">{type.name}</h6>
                 <p className="text-xs text-purple-300 mb-2">{type.description}</p>
@@ -621,7 +924,7 @@ function AnalyzerDetail({ section }: { section: DocumentationSection }) {
           {content?.components?.title}
         </h5>
         <div className="grid gap-4">
-          {content?.components?.list?.map((comp: any) => (
+          {content?.components?.list?.map((comp: AnalyzerComponentInfo) => (
             <div key={comp.name} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
               <div className="mb-2">
                 <h6 className="text-sm font-semibold text-green-200">{comp.name}</h6>

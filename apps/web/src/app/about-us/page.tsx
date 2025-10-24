@@ -1,7 +1,7 @@
-import Link from "next/link";
 
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import NavigationLink from "@/components/NavigationLink";
 
 export const metadata = {
   title: "Acerca de - Analizador de Complejidad",
@@ -230,12 +230,12 @@ export default function AboutPage() {
         <div className="text-center glass-secondary p-8 rounded-xl">
           <h3 className="text-xl font-bold text-white mb-6">Enlaces Útiles</h3>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link
+            <NavigationLink
               href="/"
               className="glass-button inline-flex items-center justify-center px-6 py-3 rounded-lg text-white font-medium transition-all hover:scale-105"
             >
               <span className="material-symbols-outlined mr-2">home</span> Ir al Analizador
-            </Link>
+            </NavigationLink>
             <a
               href="/privacy"
               className="glass-secondary inline-flex items-center justify-center px-6 py-3 rounded-lg text-white font-medium transition-all hover:scale-105"

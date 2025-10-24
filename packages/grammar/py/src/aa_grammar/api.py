@@ -22,9 +22,8 @@ def parse_to_ast(source: str) -> Tuple[Dict[str, Any] | None, List[Dict[str, Any
     errors = lex_err.errors + par_err.errors
 
     try:
-        # Temporalmente retornar información básica del árbol para probar que el parser funciona
-        ast = {"type": "ParseTree", "rule": tree.getRuleIndex(), "text": tree.getText()}
-        # ast = ASTBuilder().visit(tree)  # Comentado temporalmente
+        # Usar el ASTBuilder para construir un AST limpio
+        ast = ASTBuilder().visit(tree)
     except Exception as e:  # AST puede fallar si el árbol está incompleto
         errors.append({"line": 1, "column": 1, "message": f"AST error: {e}"})
         ast = None

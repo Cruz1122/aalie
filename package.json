@@ -15,10 +15,8 @@
     "lint:web:fix": "pnpm -C apps/web lint:fix",
     "format:web": "pnpm -C apps/web format",
     "format:web:write": "pnpm -C apps/web format:write",
-
     "lint:api": "cd infra && docker compose exec -T api ruff check .",
     "format:api": "cd infra && docker compose exec -T api black .",
-
     "lint:all": "pnpm run lint:web || true && pnpm run lint:api",
     "format:all": "pnpm run format:web || true && pnpm run format:api"
   },

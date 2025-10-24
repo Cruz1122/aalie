@@ -3,9 +3,9 @@ import "katex/dist/katex.min.css"; // <-- estilos de KaTeX después de globals
 import { Noto_Sans, Spline_Sans } from "next/font/google";
 
 import { GlobalLoaderOverlay } from "@/components/GlobalLoaderOverlay";
+import NavigationLoadingWrapper from "@/components/NavigationLoadingWrapper";
 import { GlobalLoaderProvider } from "@/contexts/GlobalLoaderContext";
 import { NavigationProvider } from "@/contexts/NavigationContext";
-import NavigationLoadingWrapper from "@/components/NavigationLoadingWrapper";
 
 const notoSans = Noto_Sans({
   weight: ["400", "500", "700", "900"],

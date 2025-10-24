@@ -381,6 +381,56 @@ body {
     background-color: rgba(255, 255, 255, 0.3);
   }
 
+  /* Scrollbar oscuro personalizado para el modal */
+  .scrollbar-track-slate-800::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-track-slate-800::-webkit-scrollbar-track {
+    background: #1e293b; /* slate-800 */
+    border-radius: 4px;
+  }
+
+  .scrollbar-thumb-slate-600::-webkit-scrollbar-thumb {
+    background-color: #475569; /* slate-600 */
+    border-radius: 4px;
+  }
+
+  .scrollbar-thumb-slate-600::-webkit-scrollbar-thumb:hover {
+    background-color: #64748b; /* slate-500 */
+  }
+
+  /* Ocultar scrollbar por defecto en elementos con scroll personalizado */
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: #475569 #1e293b;
+    /* Optimizaciones de rendimiento */
+    will-change: scroll-position;
+    contain: layout style paint;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: #1e293b; /* slate-800 */
+    border-radius: 4px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: #475569; /* slate-600 */
+    border-radius: 4px;
+    /* Optimización de transiciones */
+    transition: background-color 0.1s ease;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background-color: #64748b; /* slate-500 */
+  }
+
   /* Animaciones específicas para el loader global */
   @keyframes loader-pulse {
     0%,
@@ -501,4 +551,95 @@ body {
 
 .animation-delay-150 {
   animation-delay: 0.15s;
+}
+
+/* Animación de pulso lento para botón de ayuda */
+.animate-pulse-slow {
+  animation: pulseSlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulseSlow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Animación de vibración sutil cada segundo para el ícono */
+.animate-wiggle {
+  animation: wiggle 1s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+  0%, 90%, 100% {
+    transform: rotate(0deg);
+  }
+  92% {
+    transform: rotate(-5deg);
+  }
+  94% {
+    transform: rotate(5deg);
+  }
+  96% {
+    transform: rotate(-5deg);
+  }
+  98% {
+    transform: rotate(5deg);
+  }
+}
+
+/* Animación de vibración suave constante para botón de ayuda con IA */
+.animate-shake {
+  animation: shake 2s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-1px);
+  }
+  75% {
+    transform: translateX(1px);
+  }
+}
+
+/* Animaciones de entrada y salida para botón de ayuda */
+@keyframes slideInUp {
+  from {
+    transform: translateY(20px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOutDown {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(20px);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
