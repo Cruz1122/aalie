@@ -111,6 +111,13 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         """
         Simplifica expresiones de conteo aplicando fórmulas conocidas.
         
+        Aplica las siguientes simplificaciones:
+        - \sum_{i=1}^{n} 1 → n
+        - \sum_{i=2}^{n} 1 → n - 1
+        - \sum_{i=3}^{n} 1 → n - 2
+        
+        Mantiene paréntesis cuando detecta \cdot para preservar agrupación.
+        
         Args:
             count: Expresión de conteo con sumatorias
             
@@ -120,27 +127,27 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         if not count:
             return count
         
-        import re
-        
         result = count
+        needs_parens = '\\cdot' in result
         
-        # Detectar si hay \cdot en la expresión (necesitamos mantener paréntesis)
-        has_cdot = '\\cdot' in result
+        # Definir simplificaciones de sumatorias conocidas
+        sum_reductions = {
+            1: 'n',
+            2: 'n - 1',
+            3: 'n - 2',
+        }
         
-        # Simplificaciones usando reemplazo directo (más robusto que regex complejas)
-        replacements = [
-            # Primero los casos con paréntesis
-            (r'(\sum_{i=1}^{n} 1)', '(n)' if has_cdot else 'n'),
-            (r'(\sum_{i=2}^{n} 1)', '(n - 1)' if has_cdot else 'n - 1'),
-            (r'(\sum_{i=3}^{n} 1)', '(n - 2)' if has_cdot else 'n - 2'),
-            # Luego sin paréntesis externos
-            (r'\\sum_\{i=1\}^\{n\} 1', '(n)' if has_cdot else 'n'),
-            (r'\\sum_\{i=2\}^\{n\} 1', '(n - 1)' if has_cdot else 'n - 1'),
-            (r'\\sum_\{i=3\}^\{n\} 1', '(n - 2)' if has_cdot else 'n - 2'),
-        ]
-        
-        for pattern, replacement in replacements:
-            result = result.replace(pattern, replacement)
+        # Aplicar simplificaciones para cada caso
+        for k, simplified in sum_reductions.items():
+            # Procesar casos con paréntesis externos: (\sum_{i=k}^{n} 1)
+            pattern_with_parens = f'(\\sum_{{i={k}}}^{{n}} 1)'
+            replacement_with_parens = f'({simplified})' if needs_parens else simplified
+            result = result.replace(pattern_with_parens, replacement_with_parens)
+            
+            # Procesar casos sin paréntesis externos: \sum_{i=k}^{n} 1
+            pattern_without_parens = f'\\sum_{{i={k}}}^{{n}} 1'
+            replacement_without_parens = f'({simplified})' if needs_parens else simplified
+            result = result.replace(pattern_without_parens, replacement_without_parens)
         
         return result
     
