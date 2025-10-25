@@ -64,6 +64,21 @@ class BaseAnalyzer:
         else:
             final_count = count
         
+        # Simplificar count después de aplicar multiplicadores si el método está disponible
+        if hasattr(self, '_simplify_count'):
+            simplified_count = self._simplify_count(final_count)
+            final_count = simplified_count
+        
+        # Guardar count_raw con multiplicadores aplicados (sin simplificar)
+        if self.loop_stack:
+            if count == "1":
+                count_raw_final = "\\cdot".join([f"({m})" for m in self.loop_stack])
+            else:
+                mult = "\\cdot".join([f"({m})" for m in self.loop_stack])
+                count_raw_final = f"({count})\\cdot{mult}"
+        else:
+            count_raw_final = count
+        
         # Normalizar strings si el método está disponible
         if hasattr(self, '_normalize_string'):
             final_count = self._normalize_string(final_count)
@@ -74,7 +89,8 @@ class BaseAnalyzer:
             "line": line,
             "kind": kind,
             "ck": ck,              # Ej: "C_{2} + C_{3}"
-            "count": final_count,  # Ej: "n", "(n)*(\sum ...)"
+            "count": final_count,   # Ej: "n", versión simplificada
+            "count_raw": count_raw_final,  # Ej: "\\sum_{i=2}^{n} 1", versión con sumatorias
             "note": note
         }
         

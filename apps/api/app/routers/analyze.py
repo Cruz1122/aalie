@@ -17,6 +17,7 @@ class LineCost(BaseModel):
     kind: str  # "assign" | "if" | "for" | "while" | "repeat" | "call" | "return" | "decl" | "other"
     ck: str
     count: str
+    count_raw: str  # Sumatorias sin simplificar
     note: Optional[str] = None
 
 class AnalyzeOpenResponse(BaseModel):

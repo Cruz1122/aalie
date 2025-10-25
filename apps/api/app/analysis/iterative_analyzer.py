@@ -107,6 +107,43 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         
         return s
     
+    def _simplify_count(self, count: str) -> str:
+        """
+        Simplifica expresiones de conteo aplicando fórmulas conocidas.
+        
+        Args:
+            count: Expresión de conteo con sumatorias
+            
+        Returns:
+            Expresión simplificada
+        """
+        if not count:
+            return count
+        
+        import re
+        
+        result = count
+        
+        # Detectar si hay \cdot en la expresión (necesitamos mantener paréntesis)
+        has_cdot = '\\cdot' in result
+        
+        # Simplificaciones usando reemplazo directo (más robusto que regex complejas)
+        replacements = [
+            # Primero los casos con paréntesis
+            (r'(\sum_{i=1}^{n} 1)', '(n)' if has_cdot else 'n'),
+            (r'(\sum_{i=2}^{n} 1)', '(n - 1)' if has_cdot else 'n - 1'),
+            (r'(\sum_{i=3}^{n} 1)', '(n - 2)' if has_cdot else 'n - 2'),
+            # Luego sin paréntesis externos
+            (r'\\sum_\{i=1\}^\{n\} 1', '(n)' if has_cdot else 'n'),
+            (r'\\sum_\{i=2\}^\{n\} 1', '(n - 1)' if has_cdot else 'n - 1'),
+            (r'\\sum_\{i=3\}^\{n\} 1', '(n - 2)' if has_cdot else 'n - 2'),
+        ]
+        
+        for pattern, replacement in replacements:
+            result = result.replace(pattern, replacement)
+        
+        return result
+    
     def analyze(self, ast: Dict[str, Any], mode: str = "worst") -> Dict[str, Any]:
         """
         Analiza un AST completo y retorna el resultado.
