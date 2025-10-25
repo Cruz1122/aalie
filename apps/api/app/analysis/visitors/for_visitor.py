@@ -76,6 +76,45 @@ class ForVisitor:
         except (ValueError, TypeError):
             return False
     
+    def _simplify_algebraic_expression(self, expr: str) -> str:
+        """
+        Simplifica expresiones algebraicas comunes.
+        
+        Args:
+            expr: Expresión a simplificar
+            
+        Returns:
+            Expresión simplificada
+        """
+        import re
+        
+        # Patrones de simplificación
+        simplifications = [
+            # (n) - (1) + 2 = n + 1
+            (r'\(n\)\s*-\s*\(1\)\s*\+\s*2', 'n + 1'),
+            # (n) - (2) + 2 = n
+            (r'\(n\)\s*-\s*\(2\)\s*\+\s*2', 'n'),
+            # (n) - (3) + 2 = n - 1
+            (r'\(n\)\s*-\s*\(3\)\s*\+\s*2', 'n - 1'),
+            # (n) - (k) + 2 = n - k + 2 (donde k es un número)
+            (r'\(n\)\s*-\s*\((\d+)\)\s*\+\s*2', r'n - \1 + 2'),
+            # (n) - (variable) + 2 = n - variable + 2
+            (r'\(n\)\s*-\s*\(([a-zA-Z_][a-zA-Z0-9_]*)\)\s*\+\s*2', r'n - \1 + 2'),
+            # (variable) - (1) + 2 = variable + 1
+            (r'\(([a-zA-Z_][a-zA-Z0-9_]*)\)\s*-\s*\(1\)\s*\+\s*2', r'\1 + 1'),
+            # (variable) - (2) + 2 = variable
+            (r'\(([a-zA-Z_][a-zA-Z0-9_]*)\)\s*-\s*\(2\)\s*\+\s*2', r'\1'),
+            # (variable) - (k) + 2 = variable - k + 2
+            (r'\(([a-zA-Z_][a-zA-Z0-9_]*)\)\s*-\s*\((\d+)\)\s*\+\s*2', r'\1 - \2 + 2'),
+        ]
+        
+        # Aplicar simplificaciones
+        result = expr
+        for pattern, replacement in simplifications:
+            result = re.sub(pattern, replacement, result)
+        
+        return result
+    
     def visitFor(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """
         Visita un nodo FOR y aplica las reglas de análisis.
@@ -102,17 +141,9 @@ class ForVisitor:
         if self._is_int(a) and self._is_int(b):
             header_count = str(int(b) - int(a) + 2)   # aquí sí calculas el valor numérico
         else:
-            # Simplificar expresiones comunes
-            if a == "1" and b == "(n) - (1)":
-                header_count = "n"  # (n-1) - 1 + 2 = n
-            elif a == "1" and b == "n":
-                header_count = "n + 1"  # n - 1 + 2 = n + 1
-            elif a == "1" and b.startswith("(n) - (") and b.endswith(")"):
-                # Para casos como (n) - (i), simplificar a n - i + 1
-                inner_expr = b[7:-1]  # extraer "i" de "(n) - (i)"
-                header_count = f"n - {inner_expr} + 1"  # n - i + 1
-            else:
-                header_count = f"({b}) - ({a}) + 2"       # caso general
+            # Generar expresión general y aplicar simplificación algebraica
+            general_expr = f"({b}) - ({a}) + 2"
+            header_count = self._simplify_algebraic_expression(general_expr)
         
         # Para cabeceras de bucles anidados, integrar con sumatorios activos
         if self.loop_stack and len(self.loop_stack) > 0:
