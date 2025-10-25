@@ -219,12 +219,12 @@ resultado <- fibonacci(n - 1) + fibonacci(n - 2);
 **Código:**
 ```
 busquedaLineal(A[n], x, n) BEGIN
-FOR i <- 1 TO n DO BEGIN
-IF (A[i] = x) THEN BEGIN
-RETURN i;
-END
-END
-RETURN -1;
+    FOR i <- 1 TO n DO BEGIN
+        IF (A[i] = x) THEN BEGIN
+            RETURN i;
+        END
+    END
+    RETURN -1;
 END
 ```
 
@@ -246,21 +246,21 @@ END
 **Código:**
 ```
 busquedaBinaria(A[n], x, inicio, fin) BEGIN
-IF (inicio > fin) THEN BEGIN
-RETURN -1;
-END
-mitad <- (inicio + fin) / 2;
-IF (A[mitad] = x) THEN BEGIN
-RETURN mitad;
-END
-ELSE BEGIN
-IF (x < A[mitad]) THEN BEGIN
-RETURN busquedaBinaria(A, x, inicio, mitad - 1);
-END
-ELSE BEGIN
-RETURN busquedaBinaria(A, x, mitad + 1, fin);
-END
-END
+    IF (inicio > fin) THEN BEGIN
+        RETURN -1;
+    END
+    mitad <- (inicio + fin) / 2;
+    IF (A[mitad] = x) THEN BEGIN
+        RETURN mitad;
+    END
+    ELSE BEGIN
+        IF (x < A[mitad]) THEN BEGIN
+            RETURN busquedaBinaria(A, x, inicio, mitad - 1);
+        END
+        ELSE BEGIN
+            RETURN busquedaBinaria(A, x, mitad + 1, fin);
+        END
+    END
 END
 ```
 
@@ -282,15 +282,15 @@ END
 **Código:**
 ```
 burbuja(A[n], n) BEGIN
-FOR i <- 1 TO n - 1 DO BEGIN
-FOR j <- 1 TO n - i DO BEGIN
-IF (A[j] > A[j + 1]) THEN BEGIN
-temp <- A[j];
-A[j] <- A[j + 1];
-A[j + 1] <- temp;
-END
-END
-END
+    FOR i <- 1 TO n - 1 DO BEGIN
+        FOR j <- 1 TO n - i DO BEGIN
+            IF (A[j] > A[j + 1]) THEN BEGIN
+                temp <- A[j];
+                A[j] <- A[j + 1];
+                A[j + 1] <- temp;
+            END
+        END
+    END
 END
 ```
 
@@ -312,15 +312,15 @@ END
 **Código:**
 ```
 insercion(A[n], n) BEGIN
-FOR i <- 2 TO n DO BEGIN
-clave <- A[i];
-j <- i - 1;
-WHILE (j > 0 AND A[j] > clave) DO BEGIN
-A[j + 1] <- A[j];
-j <- j - 1;
-END
-A[j + 1] <- clave;
-END
+    FOR i <- 2 TO n DO BEGIN
+        clave <- A[i];
+        j <- i - 1;
+        WHILE (j > 0 AND A[j] > clave) DO BEGIN
+            A[j + 1] <- A[j];
+            j <- j - 1;
+        END
+        A[j + 1] <- clave;
+    END
 END
 ```
 
@@ -342,17 +342,17 @@ END
 **Código:**
 ```
 seleccion(A[n], n) BEGIN
-FOR i <- 1 TO n - 1 DO BEGIN
-min_idx <- i;
-FOR j <- i + 1 TO n DO BEGIN
-IF (A[j] < A[min_idx]) THEN BEGIN
-min_idx <- j;
-END
-END
-temp <- A[i];
-A[i] <- A[min_idx];
-A[min_idx] <- temp;
-END
+    FOR i <- 1 TO n - 1 DO BEGIN
+        min_idx <- i;
+        FOR j <- i + 1 TO n DO BEGIN
+            IF (A[j] < A[min_idx]) THEN BEGIN
+                min_idx <- j;
+            END
+        END
+        temp <- A[i];
+        A[i] <- A[min_idx];
+        A[min_idx] <- temp;
+    END
 END
 ```
 
@@ -374,19 +374,19 @@ END
 **Código:**
 ```
 fibonacci(n) BEGIN
-IF (n <= 1) THEN BEGIN
-RETURN n;
-END
-ELSE BEGIN
-RETURN fibonacci(n - 1) + fibonacci(n - 2);
-END
+    IF (n <= 1) THEN BEGIN
+        RETURN n;
+    END
+    ELSE BEGIN
+        RETURN fibonacci(n - 1) + fibonacci(n - 2);
+    END
 END
 ```
 
 **Formato JSON para parser:**
 ```json
 {
-  "input": "fibonacci(n) BEGIN\nIF (n <= 1) THEN BEGIN\nRETURN n;\nEND\nELSE BEGIN\nRETURN fibonacci(n - 1) + fibonacci(n - 2);\nEND\nEND"
+  "input": "fibonacci(n) BEGIN\nIF (n <= 1) THEN BEGIN\nRETURN n;\nEND\nELSE BEGIN\nRETURN fibonacci(n - 1) + fibonacci(n - 2;\nEND\nEND"
 }
 ```
 
@@ -401,12 +401,12 @@ END
 **Código:**
 ```
 mcd(a, b) BEGIN
-WHILE (b != 0) DO BEGIN
-temp <- b;
-b <- a MOD b;
-a <- temp;
-END
-RETURN a;
+    WHILE (b != 0) DO BEGIN
+        temp <- b;
+        b <- a MOD b;
+        a <- temp;
+    END
+    RETURN a;
 END
 ```
 
@@ -428,11 +428,11 @@ END
 **Código:**
 ```
 factorial(n) BEGIN
-resultado <- 1;
-FOR i <- 2 TO n DO BEGIN
-resultado <- resultado * i;
-END
-RETURN resultado;
+    resultado <- 1;
+    FOR i <- 2 TO n DO BEGIN
+        resultado <- resultado * i;
+    END
+    RETURN resultado;
 END
 ```
 
@@ -454,14 +454,14 @@ END
 **Código:**
 ```
 hanoi(n, origen, destino, auxiliar) BEGIN
-IF (n = 1) THEN BEGIN
-CALL moverDisco(origen, destino);
-END
-ELSE BEGIN
-CALL hanoi(n - 1, origen, auxiliar, destino);
-CALL moverDisco(origen, destino);
-CALL hanoi(n - 1, auxiliar, destino, origen);
-END
+    IF (n = 1) THEN BEGIN
+        CALL moverDisco(origen, destino);
+    END
+    ELSE BEGIN
+        CALL hanoi(n - 1, origen, auxiliar, destino);
+        CALL moverDisco(origen, destino);
+        CALL hanoi(n - 1, auxiliar, destino, origen);
+    END
 END
 ```
 
@@ -483,24 +483,24 @@ END
 **Código:**
 ```
 quicksort(A[n], izq, der) BEGIN
-IF (izq < der) THEN BEGIN
-pivot <- A[der];
-i <- izq - 1;
-FOR j <- izq TO der - 1 DO BEGIN
-IF (A[j] <= pivot) THEN BEGIN
-i <- i + 1;
-temp <- A[i];
-A[i] <- A[j];
-A[j] <- temp;
-END
-END
-temp <- A[i + 1];
-A[i + 1] <- A[der];
-A[der] <- temp;
-pi <- i + 1;
-CALL quicksort(A, izq, pi - 1);
-CALL quicksort(A, pi + 1, der);
-END
+    IF (izq < der) THEN BEGIN
+        pivot <- A[der];
+        i <- izq - 1;
+        FOR j <- izq TO der - 1 DO BEGIN
+            IF (A[j] <= pivot) THEN BEGIN
+                i <- i + 1;
+                temp <- A[i];
+                A[i] <- A[j];
+                A[j] <- temp;
+            END
+        END
+        temp <- A[i + 1];
+        A[i + 1] <- A[der];
+        A[der] <- temp;
+        pi <- i + 1;
+        CALL quicksort(A, izq, pi - 1);
+        CALL quicksort(A, pi + 1, der);
+    END
 END
 ```
 

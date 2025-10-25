@@ -92,40 +92,6 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Barra de herramientas con estilo glass - solo si showToolbar es true */}
-      {showToolbar && (
-        <div className="glass-card flex items-center justify-between px-4 py-3 rounded-xl">
-          <div className="flex items-center gap-3">
-            {parseResult.isParsing && (
-              <span className="text-sm text-slate-300 flex items-center gap-2">
-                <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
-                Parseando...
-              </span>
-            )}
-            {!parseResult.isParsing && parseResult.ok && (
-              <span className="text-sm text-emerald-300 flex items-center gap-2">
-                <span className="inline-block w-2 h-2 bg-emerald-400 rounded-full" />
-                Sin errores
-              </span>
-            )}
-            {!parseResult.isParsing && !parseResult.ok && (
-              <span className="text-sm text-red-300 flex items-center gap-2">
-                <span className="inline-block w-2 h-2 bg-red-400 rounded-full" />
-                {parseResult.errors?.length} error(es)
-              </span>
-            )}
-          </div>
-
-          <button
-            onClick={() => setShowAstModal(true)}
-            disabled={!parseResult.ok || !parseResult.ast}
-            className="glass-button px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
-          >
-            Ver AST (local)
-          </button>
-        </div>
-      )}
-
       {/* Editor con borde glass */}
       <div className="glass-card rounded-xl overflow-hidden">
         <MonacoEditor

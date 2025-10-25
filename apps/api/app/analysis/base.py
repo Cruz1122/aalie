@@ -53,8 +53,22 @@ class BaseAnalyzer:
             note: Nota opcional sobre la línea
         """
         # Aplicar multiplicadores del stack de bucles
-        mult = "*".join([f"({m})" for m in self.loop_stack]) if self.loop_stack else ""
-        final_count = f"({count})*{mult}" if mult else f"{count}"
+        if self.loop_stack:
+            if count == "1":
+                # Si count es 1, solo usar los multiplicadores
+                final_count = "\\cdot".join([f"({m})" for m in self.loop_stack])
+            else:
+                # Si count no es 1, multiplicar por los multiplicadores
+                mult = "\\cdot".join([f"({m})" for m in self.loop_stack])
+                final_count = f"({count})\\cdot{mult}"
+        else:
+            final_count = count
+        
+        # Normalizar strings si el método está disponible
+        if hasattr(self, '_normalize_string'):
+            final_count = self._normalize_string(final_count)
+            if note:
+                note = self._normalize_string(note)
         
         row = {
             "line": line,
@@ -96,9 +110,18 @@ class BaseAnalyzer:
         for r in self.rows:
             if r['ck'] != "—" and r['count'] != "—":
                 term = f"({r['ck']})\\cdot({r['count']})"
+                # Normalizar si el método está disponible
+                if hasattr(self, '_normalize_string'):
+                    term = self._normalize_string(term)
                 terms.append(term)
         
-        return " + ".join(terms) if terms else "0"
+        result = " + ".join(terms) if terms else "0"
+        
+        # Normalizar el resultado final si el método está disponible
+        if hasattr(self, '_normalize_string'):
+            result = self._normalize_string(result)
+        
+        return result
 
     # --- util 4: emitir respuesta estándar ---
     def result(self) -> AnalyzeOpenResponse:

@@ -164,35 +164,160 @@ export default function ProcedureModal({
           {isLineProcedure ? (
             // Contenido específico para una línea
             <div className="space-y-4">
-              <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                <h4 className="font-semibold text-white mb-2">Análisis de Línea {selectedLine}</h4>
-                <div className="space-y-3">
-                  <div className="p-3 rounded bg-slate-900/50 border border-blue-500/20">
-                    <span className="text-sm font-medium text-blue-300">Costo Individual</span>
-                    <p className="text-slate-300 mt-1 text-sm">
-                      Análisis detallado del costo computacional para esta línea específica.
-                    </p>
+              {analysisData && (() => {
+                const lineData = analysisData.byLine.find(line => line.line === selectedLine);
+                if (!lineData) {
+                  return (
+                    <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                      <p className="text-red-300">No se encontró información para la línea {selectedLine}</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-4">
+                    {/* Información de la línea */}
+                    <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+                      <h4 className="font-semibold text-white mb-3">Análisis de Línea {selectedLine}</h4>
+                      
+                      {/* Tipo de operación */}
+                      <div className="mb-4">
+                        <span className="text-sm font-medium text-slate-400">Tipo de operación:</span>
+                        <div className="mt-1">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${
+                            lineData.kind === 'assign' ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' :
+                            lineData.kind === 'if' ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' :
+                            lineData.kind === 'for' ? 'bg-green-500/20 text-green-300 border-green-500/30' :
+                            lineData.kind === 'while' ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' :
+                            lineData.kind === 'repeat' ? 'bg-orange-500/20 text-orange-300 border-orange-500/30' :
+                            lineData.kind === 'call' ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' :
+                            lineData.kind === 'return' ? 'bg-pink-500/20 text-pink-300 border-pink-500/30' :
+                            lineData.kind === 'decl' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' :
+                            'bg-gray-500/20 text-gray-300 border-gray-500/30'
+                          }`}>
+                            {lineData.kind === 'assign' ? 'Asignación' :
+                             lineData.kind === 'if' ? 'Condicional' :
+                             lineData.kind === 'for' ? 'Bucle For' :
+                             lineData.kind === 'while' ? 'Bucle While' :
+                             lineData.kind === 'repeat' ? 'Bucle Repeat' :
+                             lineData.kind === 'call' ? 'Llamada' :
+                             lineData.kind === 'return' ? 'Retorno' :
+                             lineData.kind === 'decl' ? 'Declaración' :
+                             'Otro'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Costo elemental */}
+                      <div className="mb-4">
+                        <span className="text-sm font-medium text-slate-400">Costo elemental (C<sub>k</sub>):</span>
+                        <div className="mt-2 p-3 rounded bg-slate-900/50 border border-blue-500/20">
+                          <Formula latex={lineData.ck} display />
+                        </div>
+                        <p className="text-slate-300 mt-1 text-xs">
+                          Costo computacional básico de esta operación
+                        </p>
+                      </div>
+
+                      {/* Número de ejecuciones */}
+                      <div className="mb-4">
+                        <span className="text-sm font-medium text-slate-400">Número de ejecuciones:</span>
+                        <div className="mt-2 p-3 rounded bg-slate-900/50 border border-amber-500/20">
+                          <Formula latex={lineData.count} display />
+                        </div>
+                        <p className="text-slate-300 mt-1 text-xs">
+                          Cuántas veces se ejecuta esta línea
+                        </p>
+                      </div>
+
+                      {/* Notas adicionales */}
+                      {lineData.note && (
+                        <div className="mb-4">
+                          <span className="text-sm font-medium text-slate-400">Notas:</span>
+                          <div className="mt-2 p-3 rounded bg-slate-900/50 border border-green-500/20">
+                            <p className="text-slate-300 text-sm">{lineData.note}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Fórmula de costo total */}
+                      <div className="mb-4">
+                        <span className="text-sm font-medium text-slate-400">Costo total de la línea:</span>
+                        <div className="mt-2 p-3 rounded bg-slate-900/50 border border-purple-500/20">
+                          <Formula latex={`${lineData.ck} \\cdot ${lineData.count}`} display />
+                        </div>
+                        <p className="text-slate-300 mt-1 text-xs">
+                          Producto del costo elemental por el número de ejecuciones
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Información adicional del análisis completo */}
+                    <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+                      <h4 className="font-semibold text-white mb-3">Contexto del Análisis</h4>
+                      
+                      {/* Ecuación principal */}
+                      <div className="mb-4">
+                        <span className="text-sm font-medium text-slate-400">Ecuación de eficiencia completa:</span>
+                        <div className="mt-2 p-3 rounded bg-slate-900/50 border border-white/10">
+                          <Formula latex={analysisData.totals.T_open} display />
+                        </div>
+                      </div>
+
+                      {/* Pasos del procedimiento */}
+                      {analysisData.totals.procedure && analysisData.totals.procedure.length > 0 && (
+                        <div className="mb-4">
+                          <span className="text-sm font-medium text-slate-400">Pasos del procedimiento:</span>
+                          <div className="mt-2 space-y-2 max-h-48 overflow-y-auto scrollbar-custom">
+                            {analysisData.totals.procedure.map((step, index) => (
+                              <div key={index} className="flex items-start gap-2 p-2 bg-slate-900/50 rounded border border-white/10">
+                                <div className="flex-shrink-0 w-5 h-5 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs font-medium">
+                                  {index + 1}
+                                </div>
+                                <div className="flex-1">
+                                  <Formula latex={step} />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Símbolos */}
+                      {analysisData.totals.symbols && Object.keys(analysisData.totals.symbols).length > 0 && (
+                        <div className="mb-4">
+                          <span className="text-sm font-medium text-slate-400">Símbolos utilizados:</span>
+                          <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 max-h-32 overflow-y-auto scrollbar-custom">
+                            {Object.entries(analysisData.totals.symbols).map(([symbol, description]) => (
+                              <div key={symbol} className="flex items-center gap-2 p-2 bg-slate-900/50 rounded border border-white/10">
+                                <div className="flex-shrink-0">
+                                  <Formula latex={symbol} />
+                                </div>
+                                <span className="text-slate-300 text-xs">= {description}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Notas generales */}
+                      {analysisData.totals.notes && analysisData.totals.notes.length > 0 && (
+                        <div>
+                          <span className="text-sm font-medium text-slate-400">Notas generales:</span>
+                          <ul className="mt-2 space-y-1 max-h-24 overflow-y-auto scrollbar-custom">
+                            {analysisData.totals.notes.map((note, index) => (
+                              <li key={index} className="flex items-start gap-2 text-sm text-slate-300">
+                                <span className="text-amber-400 mt-1 flex-shrink-0">•</span>
+                                <span>{note}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="p-3 rounded bg-amber-500/10 border border-amber-500/20">
-                    <span className="text-sm font-medium text-amber-300">Ejecuciones</span>
-                    <p className="text-slate-300 mt-1 text-sm">
-                      Número de veces que se ejecuta esta instrucción.
-                    </p>
-                  </div>
-                  <div className="p-3 rounded bg-green-500/10 border border-green-500/20">
-                    <span className="text-sm font-medium text-green-300">Fórmula Resultante</span>
-                    <p className="text-slate-300 mt-1 text-sm">
-                      Expresión matemática del costo para esta línea.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="text-sm text-slate-300 text-center py-4 border-2 border-dashed border-slate-600 rounded-lg">
-                <p className="text-sm">🔍 Procedimiento específico para línea {selectedLine}</p>
-                <p className="text-xs text-slate-400 mt-1">
-                  Sprint 3/4: detalles matemáticos y pasos de cálculo
-                </p>
-              </div>
+                );
+              })()}
             </div>
           ) : (
             // Contenido general (análisis completo)

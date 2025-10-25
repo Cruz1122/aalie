@@ -1,5 +1,6 @@
 import type { Program } from "@aa/types";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { GrammarApiService } from "@/services/grammar-api";
 
@@ -49,6 +50,8 @@ const DEFAULT_CODE = `busquedaBinaria(A[n], x, inicio, fin) BEGIN
 END`;
 
 export default function ManualModeView({ messages, setMessages, onOpenChat, onSwitchToAIMode }: ManualModeViewProps) {
+  const router = useRouter();
+  
   // Cargar código desde localStorage o usar valor por defecto
   const [code, setCode] = useState(() => {
     if (globalThis.window !== undefined) {
@@ -207,6 +210,96 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
     }
   };
 
+  // Función para analizar complejidad (ejecutar análisis completo)
+  const handleAnalyzeComplexity = async () => {
+    setIsAnalyzing(true);
+    setAnalysisResult(null);
+    
+    try {
+      // 1) Parse
+      const parseRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/grammar/parse`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: code }),
+      }).then(r => r.json());
+
+      if (!parseRes.ok) {
+        const msg = parseRes.errors?.map((e: any) => `L${e.line}:${e.column} ${e.message}`).join("\n") || "Error de parseo";
+        setAnalysisResult({
+          success: false,
+          message: `Errores de sintaxis:\n${msg}`
+        });
+        return;
+      }
+
+      // 2) Clasificar
+      let cls: any;
+      try {
+        const clsResponse = await fetch("/api/llm/classify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ source: code, mode: "auto" }),
+        });
+        
+        if (!clsResponse.ok) {
+          throw new Error(`HTTP ${clsResponse.status}: ${clsResponse.statusText}`);
+        }
+        
+        cls = await clsResponse.json();
+        console.log(`[ManualMode] Clasificación: ${cls.kind} (método: ${cls.method})`);
+      } catch (error) {
+        console.warn(`[ManualMode] Error en clasificación:`, error);
+        setAnalysisResult({
+          success: false,
+          message: "Error al clasificar el algoritmo. Intenta nuevamente."
+        });
+        return;
+      }
+
+      // Permitir algoritmos iterativos y básicos (asignaciones, etc.)
+      if (cls.kind === "recursive" || cls.kind === "hybrid") {
+        setAnalysisResult({
+          success: false,
+          message: "Por ahora solo analizamos algoritmos iterativos y básicos. Intenta con uno iterativo o básico, o cambia a S4 luego."
+        });
+        return;
+      }
+
+      // 3) Analizar
+      const analyzeRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: code, mode: "worst" }),
+      }).then(r => r.json());
+
+      if (!analyzeRes.ok) {
+        setAnalysisResult({
+          success: false,
+          message: "No se pudo analizar el algoritmo."
+        });
+        return;
+      }
+
+      // 4) Guardar resultados y redirigir
+      if (globalThis.window !== undefined) {
+        sessionStorage.setItem('analyzerCode', code);
+        sessionStorage.setItem('analyzerResults', JSON.stringify(analyzeRes));
+      }
+      
+      // Redirigir al analizador
+      router.push('/analyzer');
+
+    } catch (error) {
+      console.error("Error en análisis de complejidad:", error);
+      setAnalysisResult({
+        success: false,
+        message: "Error al analizar el algoritmo. Intenta nuevamente."
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="flex flex-col items-center">
@@ -240,6 +333,24 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
                 <>
                   <span className="material-symbols-outlined text-base">analytics</span>{' '}
                   Analizar Código
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={handleAnalyzeComplexity}
+              disabled={isAnalyzing || !localParseOk || code.trim() === ''}
+              className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg text-white text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-green-400/50 bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 hover:from-green-500/30 hover:to-emerald-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+            >
+              {isAnalyzing ? (
+                <>
+                  <span className="material-symbols-outlined text-base animate-spin">progress_activity</span>{' '}
+                  Analizando...
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-base">functions</span>{' '}
+                  Analizar Complejidad
                 </>
               )}
             </button>

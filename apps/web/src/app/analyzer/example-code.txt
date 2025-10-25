@@ -1,0 +1,38 @@
+// Ejemplo de algoritmo básico (asignaciones simples)
+procedure basicAssignment()
+  x = 5
+  y = 10
+  z = x + y
+  return z
+end procedure
+
+// Ejemplo de algoritmo iterativo para probar el analizador
+procedure sum(n)
+  s = 0
+  for i = 1 to n do
+    s = s + i
+  end for
+  return s
+end procedure
+
+// Otro ejemplo con while
+procedure findMax(A, n)
+  max = A[1]
+  i = 2
+  while i <= n do
+    if A[i] > max then
+      max = A[i]
+    end if
+    i = i + 1
+  end while
+  return max
+end procedure
+
+// Ejemplo de algoritmo recursivo (no será analizado en S3)
+procedure factorial(n)
+  if n <= 1 then
+    return 1
+  else
+    return n * factorial(n - 1)
+  end if
+end procedure
