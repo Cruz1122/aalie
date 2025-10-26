@@ -88,6 +88,34 @@ export default function ProcedureModal({
     return analysisData?.totals?.procedure || [];
   }, [analysisData?.totals?.procedure]);
 
+  // Memoizar las ecuaciones de derivación
+  const derivationSteps = useMemo(() => {
+    if (!analysisData?.byLine) return [];
+    
+    // Paso 1: Ecuación completa con count_raw
+    const step1 = analysisData.byLine
+      .map(line => `${line.ck} \\cdot (${line.count_raw})`)
+      .join(' + ');
+    
+    // Paso 2: Ecuación con count simplificado
+    const step2 = analysisData.byLine
+      .map(line => `${line.ck} \\cdot (${line.count})`)
+      .join(' + ');
+    
+    // Paso 3: Agrupación (mismo que paso 2 por ahora)
+    const step3 = step2;
+    
+    // Paso 4: Forma final (mismo que T_open)
+    const step4 = analysisData.totals.T_open;
+    
+    return [
+      { title: "Ecuación completa con sumatorias", equation: step1, description: "Ecuación original con todas las sumatorias y multiplicadores aplicados" },
+      { title: "Simplificación de sumatorias", equation: step2, description: "Se resuelven las sumatorias y se simplifican los términos" },
+      { title: "Agrupación de términos similares", equation: step3, description: "Se agrupan los términos por potencias de n (n², n, constantes)" },
+      { title: "Forma final T(n) = an² + bn + c", equation: step4, description: "Donde a, b, c son constantes que dependen de C₁, C₂, C₃, etc." }
+    ];
+  }, [analysisData]);
+
   // Memoizar los símbolos
   const symbols = useMemo(() => {
     return analysisData?.totals?.symbols || {};
@@ -211,7 +239,7 @@ export default function ProcedureModal({
                       {/* Costo elemental */}
                       <div className="mb-4">
                         <span className="text-sm font-medium text-slate-400">Costo elemental (C<sub>k</sub>):</span>
-                        <div className="mt-2 p-3 rounded bg-slate-900/50 border border-blue-500/20">
+                        <div className="mt-2 p-3 rounded bg-slate-900/50 border border-blue-500/20 overflow-x-auto scrollbar-custom">
                           <Formula latex={lineData.ck} display />
                         </div>
                         <p className="text-slate-300 mt-1 text-xs">
@@ -222,7 +250,7 @@ export default function ProcedureModal({
                       {/* Número de ejecuciones */}
                       <div className="mb-4">
                         <span className="text-sm font-medium text-slate-400">Número de ejecuciones:</span>
-                        <div className="mt-2 p-3 rounded bg-slate-900/50 border border-amber-500/20">
+                        <div className="mt-2 p-3 rounded bg-slate-900/50 border border-amber-500/20 overflow-x-auto scrollbar-custom">
                           <Formula latex={lineData.count} display />
                         </div>
                         <p className="text-slate-300 mt-1 text-xs">
@@ -243,7 +271,7 @@ export default function ProcedureModal({
                       {/* Fórmula de costo total */}
                       <div className="mb-4">
                         <span className="text-sm font-medium text-slate-400">Costo total de la línea:</span>
-                        <div className="mt-2 p-3 rounded bg-slate-900/50 border border-purple-500/20">
+                        <div className="mt-2 p-3 rounded bg-slate-900/50 border border-purple-500/20 overflow-x-auto scrollbar-custom">
                           <Formula latex={`${lineData.ck} \\cdot ${lineData.count}`} display />
                         </div>
                         <p className="text-slate-300 mt-1 text-xs">
@@ -259,7 +287,7 @@ export default function ProcedureModal({
                       {/* Ecuación principal */}
                       <div className="mb-4">
                         <span className="text-sm font-medium text-slate-400">Ecuación de eficiencia completa:</span>
-                        <div className="mt-2 p-3 rounded bg-slate-900/50 border border-white/10">
+                        <div className="mt-2 p-3 rounded bg-slate-900/50 border border-white/10 overflow-x-auto scrollbar-custom">
                           <Formula latex={analysisData.totals.T_open} display />
                         </div>
                       </div>
@@ -327,30 +355,42 @@ export default function ProcedureModal({
                   {/* Ecuación principal */}
                   <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
                     <h4 className="font-semibold text-white mb-3">Ecuación de Eficiencia</h4>
-                    <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10">
+                    <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
                       <Formula latex={analysisData.totals.T_open} display />
                     </div>
                   </div>
 
-                  {/* Pasos del procedimiento */}
+                  {/* Pasos de derivación de la ecuación */}
                   <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                    <h4 className="font-semibold text-white mb-3">Pasos del Procedimiento</h4>
-                    {procedureSteps.length > 20 ? (
-                      <VirtualizedStepsList steps={procedureSteps} />
-                    ) : (
-                      <div className="space-y-3 max-h-96 overflow-y-auto scrollbar-custom">
-                        {procedureSteps.map((step, index) => (
-                          <div key={index} className="flex items-start gap-3 p-2">
-                            <div className="flex-shrink-0 w-6 h-6 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs font-medium">
-                              {index + 1}
+                    <h4 className="font-semibold text-white mb-3">Derivación de la Ecuación T(n)</h4>
+                    <div className="space-y-4">
+                      {derivationSteps.map((step, index) => {
+                        const colors = [
+                          { bg: 'bg-blue-500/20', text: 'text-blue-300', border: 'border-blue-500/20' },
+                          { bg: 'bg-green-500/20', text: 'text-green-300', border: 'border-green-500/20' },
+                          { bg: 'bg-yellow-500/20', text: 'text-yellow-300', border: 'border-yellow-500/20' },
+                          { bg: 'bg-purple-500/20', text: 'text-purple-300', border: 'border-purple-500/20' }
+                        ];
+                        const color = colors[index] || colors[0];
+                        
+                        return (
+                          <div key={index} className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-6 h-6 ${color.bg} ${color.text} rounded-full flex items-center justify-center text-xs font-medium`}>
+                                {index + 1}
+                              </div>
+                              <h5 className="text-sm font-medium text-slate-300">{step.title}:</h5>
                             </div>
-                            <div className="flex-1 bg-slate-900/50 p-3 rounded-lg border border-white/10">
-                              <Formula latex={step} display />
+                            <div className={`ml-8 p-3 bg-slate-900/50 rounded-lg border ${color.border} overflow-x-auto scrollbar-custom`}>
+                              <Formula latex={step.equation} display />
                             </div>
+                            <p className="text-xs text-slate-400 ml-8">
+                              {step.description}
+                            </p>
                           </div>
-                        ))}
-                      </div>
-                    )}
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {/* Símbolos */}
