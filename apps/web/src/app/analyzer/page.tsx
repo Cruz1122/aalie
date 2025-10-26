@@ -30,7 +30,6 @@ export default function AnalyzerPage() {
     }
     return "";
   });
-  const [parsing, setParsing] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [data, setData] = useState<AnalyzeOpenResponse | null>(() => {
     // Cargar resultados desde sessionStorage si vienen del editor manual
@@ -165,7 +164,7 @@ export default function AnalyzerPage() {
   };
 
   // Función heurística de fallback para clasificar algoritmos
-  const heuristicKind = (ast: any): ClassifyResponse["kind"] => {
+  const heuristicKind = (ast: unknown): ClassifyResponse["kind"] => {
     try {
       const text = JSON.stringify(ast);
       if (text.includes('"type":"For"') || text.includes('"type":"While"') || text.includes('"type":"Repeat"')) {
@@ -183,70 +182,76 @@ export default function AnalyzerPage() {
     }
   };
 
-  // Función principal del flujo de análisis
-  async function onAnalyzeClick() {
-    setParsing(true);
+  // Handler para el clic del botón de análisis
+  const handleAnalyze = async () => {
+    // Verificar que no esté ya analizando
+    if (analyzing) return;
+
+    // Activar estado de carga inmediatamente
+    setAnalyzing(true);
+
     try {
-      // 1) /parse
+      // 1) Parsear el código
       const parseRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/grammar/parse`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source }), // JSON.stringify preserva \n
+        body: JSON.stringify({ source }),
       }).then(r => r.json() as Promise<ParseResponse>);
 
-      setParsing(false);
-
       if (!parseRes.ok) {
+        console.error("Error en parse:", parseRes);
         return;
       }
 
-      // 2) Clasificar (BFF). Si falla, heurística.
+      // 2) Clasificar el algoritmo
       let kind: ClassifyResponse["kind"];
       try {
         const clsResponse = await fetch("/api/llm/classify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ source, mode: "auto" }), // Permitir modo auto
+          body: JSON.stringify({ source, mode: "auto" }),
         });
         
-        if (!clsResponse.ok) {
-          throw new Error(`HTTP ${clsResponse.status}: ${clsResponse.statusText}`);
+        if (clsResponse.ok) {
+          const cls = await clsResponse.json() as ClassifyResponse & { method?: string; mode?: string };
+          kind = cls.kind;
+          console.log(`[Analyzer] Clasificación: ${kind} (método: ${cls.method})`);
+        } else {
+          throw new Error(`HTTP ${clsResponse.status}`);
         }
-        
-        const cls = await clsResponse.json() as ClassifyResponse & { method?: string; mode?: string };
-        kind = cls.kind;
-        console.log(`[Analyzer] Clasificación: ${kind} (método: ${cls.method}, modo: ${cls.mode})`);
       } catch (error) {
         console.warn(`[Analyzer] Error en clasificación, usando heurística:`, error);
-        kind = heuristicKind(parseRes.ast); // fallback
-        console.log(`[Analyzer] Fallback heurístico: ${kind}`);
+        kind = heuristicKind(parseRes.ast);
       }
 
-      // Permitir algoritmos iterativos y básicos (asignaciones, etc.)
+      // 3) Rechazar algoritmos recursivos o híbridos
       if (kind === "recursive" || kind === "hybrid") {
+        console.warn(`[Analyzer] Algoritmo ${kind} no soportado`);
         return;
       }
 
-      // 3) /analyze (modo worst por ahora)
-      setAnalyzing(true);
+      // 4) Realizar el análisis de complejidad
       const analyzeRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source, mode: "worst" }),
       }).then(r => r.json() as Promise<AnalyzeOpenResponse>);
-      setAnalyzing(false);
 
       if (!analyzeRes.ok) {
+        console.error("Error en análisis:", analyzeRes);
         return;
       }
 
+      // 5) Actualizar los datos
       setData(analyzeRes);
-    } catch (e: any) {
-      console.error("Error en análisis:", e);
-      setParsing(false);
+      
+    } catch (error) {
+      console.error("[Analyzer] Error inesperado:", error);
+    } finally {
+      // Siempre desactivar el estado de carga al finalizar
       setAnalyzing(false);
     }
-  }
+  };
 
   const handleViewLineProcedure = (lineNo: number) => {
     setSelectedLine(lineNo);
@@ -258,17 +263,8 @@ export default function AnalyzerPage() {
     setOpen(true);
   };
 
-  // Función para obtener el texto del botón según el estado
-  function getButtonText() {
-    if (parsing) return "Parseando...";
-    if (analyzing) return "Analizando...";
-    return "Analizar";
-  }
-
-  // Función para verificar si el botón debe estar deshabilitado
-  function isButtonDisabled() {
-    return parsing || analyzing || !source.trim();
-  }
+  // Computar si el botón debe estar deshabilitado
+  const isButtonDisabled = analyzing || !source.trim() || !localParseOk;
 
   return (
     <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">
@@ -296,11 +292,18 @@ export default function AnalyzerPage() {
                   Código Fuente
                 </h2>
                   <button
-                    onClick={onAnalyzeClick}
-                    disabled={isButtonDisabled()}
-                    className="glass-button px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    onClick={handleAnalyze}
+                    disabled={isButtonDisabled}
+                    className="glass-button px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center w-[100px] h-[36px]"
                   >
-                    {getButtonText()}
+                    {analyzing ? (
+                      <div className="relative">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping absolute" />
+                        <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                      </div>
+                    ) : (
+                      "Analizar"
+                    )}
                   </button>
                 </div>
                 <div className="flex-1 overflow-hidden">
