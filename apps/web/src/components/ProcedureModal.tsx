@@ -207,12 +207,23 @@ export default function ProcedureModal({
     // Paso 4: Forma final con constantes a, b, c, etc.
     const step4 = createFinalSimplifiedForm(step3);
     
-    return [
+    // Crear array de pasos con sus ecuaciones
+    const allSteps = [
       { title: "Ecuación completa con sumatorias", equation: step1, description: "Ecuación original con todas las sumatorias y multiplicadores aplicados" },
       { title: "Simplificación de sumatorias", equation: step2, description: "Se resuelven las sumatorias y se simplifican los términos" },
       { title: "Agrupación de términos similares", equation: step3, description: "Se agrupan los términos por patrones similares (n+1, n, constantes)" },
       { title: "Forma final en términos de n", equation: step4, description: "Forma final simplificada en términos de n con constantes a, b, c, etc." }
     ];
+    
+    // Filtrar pasos que son diferentes al anterior
+    const filteredSteps = allSteps.filter((step, index) => {
+      if (index === 0) return true; // Siempre mostrar el primer paso
+      
+      const previousStep = allSteps[index - 1];
+      return step.equation !== previousStep.equation;
+    });
+    
+    return filteredSteps;
   }, [analysisData]);
 
   // Memoizar los símbolos
