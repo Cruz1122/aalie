@@ -88,6 +88,105 @@ export default function ProcedureModal({
     return analysisData?.totals?.procedure || [];
   }, [analysisData?.totals?.procedure]);
 
+  // Función para extraer el patrón de un término (n+1, n, 1, etc.)
+  const extractPattern = (count: string): string => {
+    // Normalizar espacios y paréntesis
+    const normalized = count.replaceAll(/\s+/g, '').replaceAll(/\(/g, '').replaceAll(/\)/g, '');
+    
+    // Mapeo de patrones comunes
+    const patternMap: Record<string, string> = {
+      '1': '1',
+      'n': 'n',
+      'n+1': 'n+1',
+      '1+n': 'n+1',
+      'n-1': 'n-1',
+      '-1+n': 'n-1'
+    };
+    
+    // Verificar patrones exactos primero
+    if (patternMap[normalized]) {
+      return patternMap[normalized];
+    }
+    
+    // Verificar patrones que contienen subcadenas
+    if (normalized.includes('n^2') || normalized.includes('n²')) return 'n²';
+    if (normalized.includes('n^3') || normalized.includes('n³')) return 'n³';
+    if (normalized.includes('log') || normalized.includes('ln')) return 'log(n)';
+    
+    // Si contiene n pero no es un patrón conocido, devolver como está
+    if (normalized.includes('n')) return normalized;
+    
+    // Constante por defecto
+    return '1';
+  };
+
+  // Función para agrupar términos similares
+  const groupSimilarTerms = (terms: Array<{ck: string, count: string}>): string => {
+    const groups: Record<string, string[]> = {};
+    
+    // Agrupar términos por patrón
+    for (const term of terms) {
+      const pattern = extractPattern(term.count);
+      if (!groups[pattern]) {
+        groups[pattern] = [];
+      }
+      groups[pattern].push(term.ck);
+    }
+    
+    // Construir la ecuación agrupada
+    const groupedTerms = Object.entries(groups).map(([pattern, coefficients]) => {
+      const coefficientStr = coefficients.length === 1 
+        ? coefficients[0] 
+        : `(${coefficients.join(' + ')})`;
+      
+      return `${coefficientStr} \\cdot (${pattern})`;
+    });
+    
+    return groupedTerms.join(' + ');
+  };
+
+
+  // Función para crear la forma final más simplificada
+  const createFinalSimplifiedForm = (groupedEquation: string): string => {
+    // Si la ecuación está vacía, devolver una forma genérica
+    if (!groupedEquation || groupedEquation.trim() === '') {
+      return 'T(n) = O(1)';
+    }
+    
+    // Detectar el tipo de complejidad basado en los patrones presentes
+    const complexityTypes = {
+      quadratic: groupedEquation.includes('n²') || groupedEquation.includes('n^2'),
+      linear: groupedEquation.includes('n+1') || groupedEquation.includes('n-1') || groupedEquation.includes(' n '),
+      constant: groupedEquation.includes('1)') || groupedEquation.includes(' 1 '),
+      logarithmic: groupedEquation.includes('log')
+    };
+    
+    // Construir la forma final con nomenclatura consistente: an² + bn + c
+    const terms: string[] = [];
+    let coefficientIndex = 0;
+    const coefficients = ['a', 'b', 'c', 'd', 'e', 'f'];
+    
+    if (complexityTypes.quadratic) {
+      terms.push(`${coefficients[coefficientIndex++]} \\cdot n^2`);
+    }
+    if (complexityTypes.linear) {
+      terms.push(`${coefficients[coefficientIndex++]} \\cdot n`);
+    }
+    if (complexityTypes.constant) {
+      terms.push(coefficients[coefficientIndex++]);
+    }
+    if (complexityTypes.logarithmic) {
+      terms.push(`${coefficients[coefficientIndex++]} \\cdot \\log(n)`);
+    }
+    
+    // Si no se detectó ningún patrón específico, usar la ecuación original
+    if (terms.length === 0) {
+      return groupedEquation;
+    }
+    
+    return terms.join(' + ');
+  };
+
   // Memoizar las ecuaciones de derivación
   const derivationSteps = useMemo(() => {
     if (!analysisData?.byLine) return [];
@@ -102,17 +201,17 @@ export default function ProcedureModal({
       .map(line => `${line.ck} \\cdot (${line.count})`)
       .join(' + ');
     
-    // Paso 3: Agrupación (mismo que paso 2 por ahora)
-    const step3 = step2;
+    // Paso 3: Agrupación de términos similares
+    const step3 = groupSimilarTerms(analysisData.byLine.map(line => ({ ck: line.ck, count: line.count })));
     
-    // Paso 4: Forma final (mismo que T_open)
-    const step4 = analysisData.totals.T_open;
+    // Paso 4: Forma final con constantes a, b, c, etc.
+    const step4 = createFinalSimplifiedForm(step3);
     
     return [
       { title: "Ecuación completa con sumatorias", equation: step1, description: "Ecuación original con todas las sumatorias y multiplicadores aplicados" },
       { title: "Simplificación de sumatorias", equation: step2, description: "Se resuelven las sumatorias y se simplifican los términos" },
-      { title: "Agrupación de términos similares", equation: step3, description: "Se agrupan los términos por potencias de n (n², n, constantes)" },
-      { title: "Forma final T(n) = an² + bn + c", equation: step4, description: "Donde a, b, c son constantes que dependen de C₁, C₂, C₃, etc." }
+      { title: "Agrupación de términos similares", equation: step3, description: "Se agrupan los términos por patrones similares (n+1, n, constantes)" },
+      { title: "Forma final en términos de n", equation: step4, description: "Forma final simplificada en términos de n con constantes a, b, c, etc." }
     ];
   }, [analysisData]);
 
