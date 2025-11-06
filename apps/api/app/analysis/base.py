@@ -27,6 +27,7 @@ class BaseAnalyzer:
         self.notes: List[str] = []          # reglas aplicadas / comentarios
         self.memo: Dict[str, List[LineCost]] = {}  # PD: cache de filas por nodo+contexto
         self.counter = 0                    # contador para generar constantes C_k
+        self.t_polynomial: Optional[str] = None  # forma polinómica T(n) = an² + bn + c
         
         # Inicializar procedimiento básico
         self._init_procedure()
@@ -52,36 +53,21 @@ class BaseAnalyzer:
             count: Número de ejecuciones (string KaTeX)
             note: Nota opcional sobre la línea
         """
-        # Aplicar multiplicadores del stack de bucles
+        # Aplicar multiplicadores del stack de bucles (guardar en count_raw)
         if self.loop_stack:
             if count == "1":
                 # Si count es 1, solo usar los multiplicadores
-                final_count = "\\cdot".join([f"({m})" for m in self.loop_stack])
-            else:
-                # Si count no es 1, multiplicar por los multiplicadores
-                mult = "\\cdot".join([f"({m})" for m in self.loop_stack])
-                final_count = f"({count})\\cdot{mult}"
-        else:
-            final_count = count
-        
-        # Simplificar count después de aplicar multiplicadores si el método está disponible
-        if hasattr(self, '_simplify_count'):
-            simplified_count = self._simplify_count(final_count)
-            final_count = simplified_count
-        
-        # Guardar count_raw con multiplicadores aplicados (sin simplificar)
-        if self.loop_stack:
-            if count == "1":
                 count_raw_final = "\\cdot".join([f"({m})" for m in self.loop_stack])
             else:
+                # Si count no es 1, multiplicar por los multiplicadores
                 mult = "\\cdot".join([f"({m})" for m in self.loop_stack])
                 count_raw_final = f"({count})\\cdot{mult}"
         else:
             count_raw_final = count
         
-        # Normalizar strings si el método está disponible
+        # Normalizar strings si el método está disponible (solo formato básico)
         if hasattr(self, '_normalize_string'):
-            final_count = self._normalize_string(final_count)
+            count_raw_final = self._normalize_string(count_raw_final)
             if note:
                 note = self._normalize_string(note)
         
@@ -89,7 +75,7 @@ class BaseAnalyzer:
             "line": line,
             "kind": kind,
             "ck": ck,              # Ej: "C_{2} + C_{3}"
-            "count": final_count,   # Ej: "n", versión simplificada
+            "count": count_raw_final,   # Inicialmente igual a count_raw, el LLM lo simplificará
             "count_raw": count_raw_final,  # Ej: "\\sum_{i=2}^{n} 1", versión con sumatorias
             "note": note
         }
@@ -147,15 +133,21 @@ class BaseAnalyzer:
         Returns:
             Diccionario que cumple el contrato AnalyzeOpenResponse
         """
+        totals = {
+            "T_open": self.build_t_open(),
+            "procedure": self.procedure,
+            "symbols": self.symbols if self.symbols else None,
+            "notes": self.notes if self.notes else None
+        }
+        
+        # Agregar T_polynomial si está disponible
+        if self.t_polynomial:
+            totals["T_polynomial"] = self.t_polynomial
+        
         return {
             "ok": True,
             "byLine": self.rows,
-            "totals": {
-                "T_open": self.build_t_open(),
-                "procedure": self.procedure,
-                "symbols": self.symbols if self.symbols else None,
-                "notes": self.notes if self.notes else None
-            }
+            "totals": totals
         }
 
     # --- util 5: memoización (PD) ---
@@ -234,6 +226,7 @@ class BaseAnalyzer:
         self.symbols.clear()
         self.notes.clear()
         self.memo.clear()
+        self.t_polynomial = None
         self._init_procedure()
 
     def get_context_hash(self) -> str:

@@ -76,45 +76,6 @@ class ForVisitor:
         except (ValueError, TypeError):
             return False
     
-    def _simplify_algebraic_expression(self, expr: str) -> str:
-        """
-        Simplifica expresiones algebraicas comunes.
-        
-        Args:
-            expr: Expresión a simplificar
-            
-        Returns:
-            Expresión simplificada
-        """
-        import re
-        
-        # Patrones de simplificación
-        simplifications = [
-            # (n) - (1) + 2 = n + 1
-            (r'\(n\)\s*-\s*\(1\)\s*\+\s*2', 'n + 1'),
-            # (n) - (2) + 2 = n
-            (r'\(n\)\s*-\s*\(2\)\s*\+\s*2', 'n'),
-            # (n) - (3) + 2 = n - 1
-            (r'\(n\)\s*-\s*\(3\)\s*\+\s*2', 'n - 1'),
-            # (n) - (k) + 2 = n - k + 2 (donde k es un número)
-            (r'\(n\)\s*-\s*\((\d+)\)\s*\+\s*2', r'n - \1 + 2'),
-            # (n) - (variable) + 2 = n - variable + 2
-            (r'\(n\)\s*-\s*\(([a-zA-Z_][a-zA-Z0-9_]*)\)\s*\+\s*2', r'n - \1 + 2'),
-            # (variable) - (1) + 2 = variable + 1
-            (r'\(([a-zA-Z_][a-zA-Z0-9_]*)\)\s*-\s*\(1\)\s*\+\s*2', r'\1 + 1'),
-            # (variable) - (2) + 2 = variable
-            (r'\(([a-zA-Z_][a-zA-Z0-9_]*)\)\s*-\s*\(2\)\s*\+\s*2', r'\1'),
-            # (variable) - (k) + 2 = variable - k + 2
-            (r'\(([a-zA-Z_][a-zA-Z0-9_]*)\)\s*-\s*\((\d+)\)\s*\+\s*2', r'\1 - \2 + 2'),
-        ]
-        
-        # Aplicar simplificaciones
-        result = expr
-        for pattern, replacement in simplifications:
-            result = re.sub(pattern, replacement, result)
-        
-        return result
-    
     def visitFor(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """
         Visita un nodo FOR y aplica las reglas de análisis.
@@ -141,9 +102,8 @@ class ForVisitor:
         if self._is_int(a) and self._is_int(b):
             header_count = str(int(b) - int(a) + 2)   # aquí sí calculas el valor numérico
         else:
-            # Generar expresión general y aplicar simplificación algebraica
-            general_expr = f"({b}) - ({a}) + 2"
-            header_count = self._simplify_algebraic_expression(general_expr)
+            # Generar expresión general (sin simplificar, el LLM lo hará)
+            header_count = f"({b}) - ({a}) + 2"
         
         # Para cabeceras de bucles anidados, integrar con sumatorios activos
         if self.loop_stack and len(self.loop_stack) > 0:
@@ -166,24 +126,15 @@ class ForVisitor:
                     )
                     return  # No agregar multiplicador, ya está integrado
         
-        # Para cabeceras de bucles anidados, no aplicar multiplicadores del stack
-        if self.loop_stack and len(self.loop_stack) > 0 and var == "j":
-            # Agregar fila sin multiplicadores para cabeceras anidadas
-            self.rows.append({
-                "line": line,
-                "kind": "for",
-                "ck": ck_header,
-                "count": header_count,
-                "note": f"Cabecera del bucle for {var}={a}..{b}"
-            })
-        else:
-            self.add_row(
-                line=line,
-                kind="for",
-                ck=ck_header,
-                count=header_count,
-                note=f"Cabecera del bucle for {var}={a}..{b}"
-            )
+        # Para cabeceras de bucles anidados, usar add_row para generar count_raw correctamente
+        # add_row aplicará los multiplicadores del stack automáticamente
+        self.add_row(
+            line=line,
+            kind="for",
+            ck=ck_header,
+            count=header_count,
+            note=f"Cabecera del bucle for {var}={a}..{b}"
+        )
         
         # 2) Multiplicador del cuerpo: Σ_{v=a}^{b} 1
         mult = f"\\sum_{{{var}={a}}}^{{{b}}} 1"

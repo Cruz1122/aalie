@@ -6,6 +6,7 @@ from .visitors.for_visitor import ForVisitor
 from .visitors.if_visitor import IfVisitor
 from .visitors.while_repeat_visitor import WhileRepeatVisitor
 from .visitors.simple_visitor import SimpleVisitor
+from .llm_simplifier import simplify_counts_with_llm
 
 
 class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor, SimpleVisitor):
@@ -72,7 +73,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
     
     def _normalize_string(self, s: str) -> str:
         """
-        Normaliza strings eliminando paréntesis extra y mejorando formato.
+        Normaliza strings con formato básico (solo formato, no simplificación).
         
         Args:
             s: String a normalizar
@@ -83,73 +84,11 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         if not s:
             return s
         
-        # Eliminar paréntesis extra alrededor de sumas
-        s = s.replace("(\\sum_{", "\\sum_{")
-        s = s.replace("} 1)", "} 1")
-        
-        # Simplificar expresiones algebraicas simples
-        s = s.replace("(n) - (1) + 2", "n + 1")
-        s = s.replace("(1) + 2", "3")
-        s = s.replace("(n) + 1", "n + 1")
-        
-        # Simplificar sumatorias que se multiplican por 1
-        import re
-        
-        # Patrón: (1)*(\sum_{...} 1) -> \sum_{...} 1
-        s = re.sub(r'\(1\)\*\(\\sum_\{([^}]+)\} 1\)', r'\\sum_{\1} 1', s)
-        
-        # Simplificar sumatorias anidadas: (1)*(\sum_{i=1}^{n} 1)*(\sum_{j=1}^{m} 1) -> \sum_{i=1}^{n} \sum_{j=1}^{m} 1
-        s = re.sub(r'\(1\)\*\(\\sum_\{([^}]+)\} 1\)\*\(\\sum_\{([^}]+)\} 1\)', r'\\sum_{\1} \\sum_{\2} 1', s)
-        
         # Mejorar formato de rangos
         s = s.replace("i=1\\ldotsn", "i=1..n")
         s = s.replace("i=1\\ldots n", "i=1..n")
         
         return s
-    
-    def _simplify_count(self, count: str) -> str:
-        """
-        Simplifica expresiones de conteo aplicando fórmulas conocidas.
-        
-        Aplica las siguientes simplificaciones:
-        - \sum_{i=1}^{n} 1 → n
-        - \sum_{i=2}^{n} 1 → n - 1
-        - \sum_{i=3}^{n} 1 → n - 2
-        
-        Mantiene paréntesis cuando detecta \cdot para preservar agrupación.
-        
-        Args:
-            count: Expresión de conteo con sumatorias
-            
-        Returns:
-            Expresión simplificada
-        """
-        if not count:
-            return count
-        
-        result = count
-        needs_parens = '\\cdot' in result
-        
-        # Definir simplificaciones de sumatorias conocidas
-        sum_reductions = {
-            1: 'n',
-            2: 'n - 1',
-            3: 'n - 2',
-        }
-        
-        # Aplicar simplificaciones para cada caso
-        for k, simplified in sum_reductions.items():
-            # Procesar casos con paréntesis externos: (\sum_{i=k}^{n} 1)
-            pattern_with_parens = f'(\\sum_{{i={k}}}^{{n}} 1)'
-            replacement_with_parens = f'({simplified})' if needs_parens else simplified
-            result = result.replace(pattern_with_parens, replacement_with_parens)
-            
-            # Procesar casos sin paréntesis externos: \sum_{i=k}^{n} 1
-            pattern_without_parens = f'\\sum_{{i={k}}}^{{n}} 1'
-            replacement_without_parens = f'({simplified})' if needs_parens else simplified
-            result = result.replace(pattern_without_parens, replacement_without_parens)
-        
-        return result
     
     def analyze(self, ast: Dict[str, Any], mode: str = "worst") -> Dict[str, Any]:
         """
@@ -175,6 +114,26 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         
         # Visitar el AST completo
         self.visit(ast, mode)
+        
+        # Simplificar counts usando LLM
+        llm_result = simplify_counts_with_llm(self.rows)
+        
+        if llm_result:
+            # Actualizar counts con los simplificados del LLM
+            counts = llm_result.get("counts", [])
+            if len(counts) == len(self.rows):
+                for i, row in enumerate(self.rows):
+                    row["count"] = counts[i]
+                
+                # Guardar T_polynomial
+                t_polynomial = llm_result.get("T_polynomial")
+                if t_polynomial:
+                    self.t_polynomial = t_polynomial
+            else:
+                print(f"[IterativeAnalyzer] Número de counts del LLM ({len(counts)}) no coincide con número de filas ({len(self.rows)})")
+        else:
+            # Si el LLM falla, usar count_raw como count (ya está así por defecto)
+            print("[IterativeAnalyzer] LLM falló, usando count_raw como count")
         
         # Retornar resultado
         return self.result()

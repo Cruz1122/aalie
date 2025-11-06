@@ -234,6 +234,7 @@ export interface AnalyzeOpenResponse {
     procedure: string[];            // pasos (KaTeX) para construir T_open
     symbols?: Record<string,string>;// p.ej.: { n: "length(A)" }
     notes?: string[];               // reglas usadas (for, while, if)
+    T_polynomial?: string;          // forma polinómica T(n) = an² + bn + c (KaTeX)
     // S4 añadirá: T_closed, bigO/bigOmega/bigTheta, proofSteps
   };
 }
