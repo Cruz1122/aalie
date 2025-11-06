@@ -114,7 +114,7 @@ callExpr   : ID LPAREN argList? RPAREN ;
 LPAREN: '(' ; RPAREN: ')' ; LBRACE: '{' ; RBRACE: '}' ; LBRACK: '[' ; RBRACK: ']' ;
 RANGE: '..' ; SEMI: ';' ;
 
-ASSIGN: '<-' | ':=' ;
+ASSIGN: '<-' | ':=' | '🡨' ;
 PLUS:'+' ; MINUS:'-' ; MUL:'*' ; DIVOP:'/' ;
 EQ:'=' ; NEQ:'!=' | '<>' | '≠' ; LE:'<=' | '≤' ; GE:'>=' | '≥' ; LT:'<' ; GT:'>' ;
 

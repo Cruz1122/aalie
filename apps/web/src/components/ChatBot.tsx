@@ -41,13 +41,15 @@ async function classifyIntent(message: string): Promise<'parser_assist' | 'gener
     }
 
     const result = await response.json();
-    
-    // Extraer el contenido de la respuesta de Azure AI Inference
-    const content = result?.data?.choices?.[0]?.message?.content || '';
-    const classification = content.trim().toLowerCase();
-    
-    // Determinar si es parser_assist o general
-    return classification.includes('parser') ? 'parser_assist' : 'general';
+    // Backend ahora normaliza e incluye 'intent'
+    const intentField = result?.intent as string | undefined;
+    if (intentField === 'parser_assist' || intentField === 'general') {
+      return intentField;
+    }
+    // Fallback: leer texto de Gemini
+    const text = result?.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const classification = String(text).trim().toLowerCase();
+    return classification === 'parser_assist' ? 'parser_assist' : 'general';
   } catch (error) {
     console.error('Error en clasificación:', error);
     return 'general'; // Fallback a general si hay error
@@ -57,14 +59,27 @@ async function classifyIntent(message: string): Promise<'parser_assist' | 'gener
 /**
  * Obtiene respuesta del LLM con el job apropiado
  */
-async function getLLMResponse(message: string, job: 'parser_assist' | 'general'): Promise<string> {
+async function getLLMResponse(
+  message: string, 
+  job: 'parser_assist' | 'general',
+  chatHistory: Message[]
+): Promise<string> {
   try {
+    // Convertir historial a formato para el LLM (últimos 10 mensajes)
+    const historyForLLM = chatHistory
+      .slice(-10)
+      .map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'model',
+        content: msg.content
+      }));
+
     const response = await fetch('/api/llm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         job,
-        prompt: message
+        prompt: message,
+        chatHistory: historyForLLM
       })
     });
 
@@ -73,15 +88,12 @@ async function getLLMResponse(message: string, job: 'parser_assist' | 'general')
     }
 
     const result = await response.json();
-    
-    // Extraer el contenido de la respuesta de Azure AI Inference
-    const content = result?.data?.choices?.[0]?.message?.content || '';
-    
-    if (!content) {
+    // Extraer el contenido de la respuesta de Gemini
+    const content = result?.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (!content || String(content).trim().length === 0) {
       throw new Error('Respuesta vacía del LLM');
     }
-    
-    return content;
+    return String(content);
   } catch (error) {
     console.error('Error obteniendo respuesta LLM:', error);
     throw error;
@@ -202,8 +214,8 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Read
       // Paso 1: Clasificar intención (rápido con Grok-3-Mini)
       const intent = await classifyIntent(lastUserMessage.content);
       
-      // Paso 2: Obtener respuesta con el modelo apropiado
-      const responseText = await getLLMResponse(lastUserMessage.content, intent);
+      // Paso 2: Obtener respuesta con el modelo apropiado (incluyendo historial)
+      const responseText = await getLLMResponse(lastUserMessage.content, intent, messages);
 
       // Crear mensaje del bot
       const botResponse: Message = {
