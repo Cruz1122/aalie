@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 
 import { GrammarApiService } from "@/services/grammar-api";
 
+import { AnalysisLoader } from "./AnalysisLoader";
 import { AnalyzerEditor } from "./AnalyzerEditor";
 import { ASTTreeView } from "./ASTTreeView";
 
@@ -66,9 +67,16 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'tree' | 'json'>('tree');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isVerifyingParse, setIsVerifyingParse] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<{ success: boolean; message: string } | null>(null);
   const [showAIHelpButton, setShowAIHelpButton] = useState(false);
   const [backendParseError, setBackendParseError] = useState<string | null>(null);
+  
+  // Estados para el loader de análisis de complejidad
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisMessage, setAnalysisMessage] = useState("Iniciando análisis...");
+  const [algorithmType, setAlgorithmType] = useState<"iterative" | "recursive" | "hybrid" | "unknown" | undefined>(undefined);
+  const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
   
   // Refs para evitar memory leaks con timeouts
   const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -170,9 +178,69 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
     }
   };
 
-  // Función para analizar el código
+  // Función helper para animar progreso dentro de una etapa
+  const animateProgress = async <T,>(
+    start: number,
+    end: number,
+    duration: number,
+    onUpdate: (progress: number) => void,
+    waitForPromise?: Promise<T>
+  ): Promise<T | void> => {
+    // Si no hay promesa, solo animar el progreso
+    if (!waitForPromise) {
+      return new Promise((resolve) => {
+        const startTime = Date.now();
+        const animate = () => {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(1, elapsed / duration);
+          const currentProgress = start + (end - start) * progress;
+          onUpdate(currentProgress);
+          
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            onUpdate(end);
+            resolve();
+          }
+        };
+        animate();
+      });
+    }
+    
+    // Si hay promesa, animar el progreso independientemente
+    // pero esperar a que la promesa se resuelva antes de continuar
+    const animationPromise = new Promise<void>((resolve) => {
+      const startTime = Date.now();
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(1, elapsed / duration);
+        const currentProgress = start + (end - start) * progress;
+        onUpdate(currentProgress);
+        
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          onUpdate(end);
+          resolve();
+        }
+      };
+      animate();
+    });
+    
+    // Esperar a que ambas terminen (animación y promesa)
+    try {
+      const [result] = await Promise.all([waitForPromise, animationPromise]);
+      return result;
+    } catch (error) {
+      // Si hay error, asegurar que el progreso llegue al final
+      onUpdate(end);
+      throw error;
+    }
+  };
+
+  // Función para verificar parse (estado independiente)
   const handleAnalyzeCode = async () => {
-    setIsAnalyzing(true);
+    setIsVerifyingParse(true);
     setAnalysisResult(null);
     
     // Limpiar timeout anterior si existe
@@ -201,7 +269,7 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
         message: ANALYSIS_MESSAGES.ERROR_CONNECTION
       });
     } finally {
-      setIsAnalyzing(false);
+      setIsVerifyingParse(false);
       // Auto-ocultar el mensaje después de 5 segundos
       analysisTimeoutRef.current = setTimeout(() => {
         setAnalysisResult(null);
@@ -210,98 +278,156 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
     }
   };
 
-  // Función para analizar complejidad (ejecutar análisis completo)
-  const handleAnalyzeComplexity = async () => {
-    setIsAnalyzing(true);
-    setAnalysisResult(null);
-    
+  // Función helper para clasificar algoritmo (heurística)
+  const heuristicKind = (ast: Program | null): "iterative" | "recursive" | "hybrid" | "unknown" => {
+    if (!ast) return "unknown";
     try {
-      // 1) Parse
-      const parseRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/grammar/parse`, {
+      const hasIterative = JSON.stringify(ast).includes('"type":"For"') || 
+                          JSON.stringify(ast).includes('"type":"While"') ||
+                          JSON.stringify(ast).includes('"type":"Repeat"');
+      const hasRecursive = JSON.stringify(ast).includes('"type":"Call"');
+      if (hasIterative && hasRecursive) return "hybrid";
+      if (hasRecursive) return "recursive";
+      if (hasIterative) return "iterative";
+      return "unknown";
+    } catch { 
+      return "unknown"; 
+    }
+  };
+
+  // Función para analizar complejidad (ejecutar análisis completo con loader)
+  const handleAnalyzeComplexity = async () => {
+    // Verificar que no esté ya analizando
+    if (isAnalyzing) return;
+
+    // Activar estado de carga inmediatamente
+    setIsAnalyzing(true);
+    setAnalysisProgress(0);
+    setAnalysisMessage("Iniciando análisis...");
+    setAlgorithmType(undefined);
+    setIsAnalysisComplete(false);
+    setAnalysisResult(null);
+
+    try {
+      // 1) Parsear el código (0-20%)
+      setAnalysisMessage("Parseando código...");
+      const parsePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/grammar/parse`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source: code }),
       }).then(r => r.json());
+      
+      // Animar progreso mientras se parsea (espera a que parsePromise se resuelva)
+      const parseRes = await animateProgress(0, 20, 2000, setAnalysisProgress, parsePromise) as any;
 
       if (!parseRes.ok) {
         const msg = parseRes.errors?.map((e: any) => `L${e.line}:${e.column} ${e.message}`).join("\n") || "Error de parseo";
-        setAnalysisResult({
-          success: false,
-          message: `Errores de sintaxis:\n${msg}`
-        });
+        setAnalysisMessage(`Errores de sintaxis:\n${msg}`);
         return;
       }
 
-      // 2) Clasificar
-      let cls: any;
+      // 2) Clasificar el algoritmo (20-40%)
+      setAnalysisMessage("Clasificando algoritmo...");
+      let kind: "iterative" | "recursive" | "hybrid" | "unknown";
       try {
-        const clsResponse = await fetch("/api/llm/classify", {
+        const clsPromise = fetch("/api/llm/classify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ source: code, mode: "auto" }),
         });
         
-        if (!clsResponse.ok) {
-          throw new Error(`HTTP ${clsResponse.status}: ${clsResponse.statusText}`);
-        }
+        // Animar progreso mientras se clasifica (espera a que clsPromise se resuelva)
+        const clsResponse = await animateProgress(20, 40, 3000, setAnalysisProgress, clsPromise) as Response;
         
-        cls = await clsResponse.json();
-        console.log(`[ManualMode] Clasificación: ${cls.kind} (método: ${cls.method})`);
+        if (clsResponse.ok) {
+          const cls = await clsResponse.json() as { kind: string; method?: string; mode?: string };
+          kind = cls.kind as "iterative" | "recursive" | "hybrid" | "unknown";
+          setAlgorithmType(kind);
+          setAnalysisMessage(`Algoritmo identificado: ${kind === "iterative" ? "Iterativo" : kind === "recursive" ? "Recursivo" : kind === "hybrid" ? "Híbrido" : "Desconocido"}`);
+          console.log(`[ManualMode] Clasificación: ${kind} (método: ${cls.method})`);
+        } else {
+          throw new Error(`HTTP ${clsResponse.status}`);
+        }
       } catch (error) {
-        console.warn(`[ManualMode] Error en clasificación:`, error);
-        setAnalysisResult({
-          success: false,
-          message: "Error al clasificar el algoritmo. Intenta nuevamente."
-        });
+        console.warn(`[ManualMode] Error en clasificación, usando heurística:`, error);
+        kind = heuristicKind(parseRes.ast);
+        setAlgorithmType(kind);
+        setAnalysisMessage(`Algoritmo identificado: ${kind === "iterative" ? "Iterativo" : kind === "recursive" ? "Recursivo" : kind === "hybrid" ? "Híbrido" : "Desconocido"}`);
+      }
+
+      // 3) Rechazar algoritmos recursivos o híbridos
+      if (kind === "recursive" || kind === "hybrid") {
+        setAnalysisMessage("Por ahora solo analizamos algoritmos iterativos y básicos. Intenta con uno iterativo o básico, o cambia a S4 luego.");
         return;
       }
 
-      // Permitir algoritmos iterativos y básicos (asignaciones, etc.)
-      if (cls.kind === "recursive" || cls.kind === "hybrid") {
-        setAnalysisResult({
-          success: false,
-          message: "Por ahora solo analizamos algoritmos iterativos y básicos. Intenta con uno iterativo o básico, o cambia a S4 luego."
-        });
-        return;
-      }
-
-      // 3) Analizar
-      const analyzeRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
+      // 4) Realizar el análisis de complejidad (40-80%)
+      setAnalysisMessage("Hallando sumatorias...");
+      await animateProgress(40, 50, 500, setAnalysisProgress);
+      
+      setAnalysisMessage("Simplificando expresiones matemáticas...");
+      const analyzePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source: code, mode: "worst" }),
       }).then(r => r.json());
+      
+      // Animar progreso mientras se simplifica (espera a que analyzePromise se resuelva)
+      const analyzeRes = await animateProgress(50, 70, 5000, setAnalysisProgress, analyzePromise) as any;
+      
+      setAnalysisMessage("Generando forma polinómica...");
+      await animateProgress(70, 80, 500, setAnalysisProgress);
 
       if (!analyzeRes.ok) {
-        setAnalysisResult({
-          success: false,
-          message: "No se pudo analizar el algoritmo."
-        });
+        setAnalysisMessage("No se pudo analizar el algoritmo.");
         return;
       }
 
-      // 4) Guardar resultados y redirigir
+      // 5) Finalizar (80-100%)
+      setAnalysisMessage("Finalizando análisis...");
+      await animateProgress(80, 100, 500, setAnalysisProgress);
+      
+      // 6) Guardar resultados
       if (globalThis.window !== undefined) {
         sessionStorage.setItem('analyzerCode', code);
         sessionStorage.setItem('analyzerResults', JSON.stringify(analyzeRes));
       }
       
+      // 7) Mostrar completado y esperar 2 segundos
+      setAnalysisMessage("Análisis completo");
+      setIsAnalysisComplete(true);
+      
+      // Esperar 2 segundos antes de redirigir
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      
       // Redirigir al analizador
       router.push('/analyzer');
 
     } catch (error) {
-      console.error("Error en análisis de complejidad:", error);
-      setAnalysisResult({
-        success: false,
-        message: "Error al analizar el algoritmo. Intenta nuevamente."
-      });
-    } finally {
-      setIsAnalyzing(false);
+      console.error("[ManualMode] Error inesperado:", error);
+      setAnalysisMessage("Error durante el análisis");
+      setTimeout(() => {
+        setIsAnalyzing(false);
+        setAnalysisProgress(0);
+        setAnalysisMessage("Iniciando análisis...");
+        setAlgorithmType(undefined);
+        setIsAnalysisComplete(false);
+      }, 2000);
     }
   };
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Loader de análisis */}
+      {isAnalyzing && (
+        <AnalysisLoader
+          progress={analysisProgress}
+          message={analysisMessage}
+          algorithmType={algorithmType}
+          isComplete={isAnalysisComplete}
+        />
+      )}
+      
       <div className="flex flex-col items-center">
         {/* Contenedor flex: editor a la izquierda, botones a la derecha */}
         <div className="flex flex-col lg:flex-row gap-6 w-full items-center lg:items-center">
@@ -321,18 +447,18 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
           <div className="w-full lg:w-[25%] flex flex-col gap-3">
             <button
               onClick={handleAnalyzeCode}
-              disabled={isAnalyzing || code.trim() === ''}
+              disabled={isVerifyingParse || code.trim() === ''}
               className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg text-white text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-400/50 bg-gradient-to-br from-blue-500/20 to-blue-500/20 border border-blue-500/30 hover:from-blue-500/30 hover:to-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              {isAnalyzing ? (
+              {isVerifyingParse ? (
                 <>
                   <span className="material-symbols-outlined text-base animate-spin">progress_activity</span>{' '}
-                  Analizando...
+                  Verificando...
                 </>
               ) : (
                 <>
-                  <span className="material-symbols-outlined text-base">analytics</span>{' '}
-                  Analizar Código
+                  <span className="material-symbols-outlined text-base">check_circle</span>{' '}
+                  Verificar Parse
                 </>
               )}
             </button>

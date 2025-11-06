@@ -4,6 +4,7 @@ import type { AnalyzeOpenResponse, ParseResponse, Program } from "@aa/types";
 import { useEffect, useRef, useState } from "react";
 
 import { AnalyzerEditor } from "@/components/AnalyzerEditor";
+import { AnalysisLoader } from "@/components/AnalysisLoader";
 import { ASTTreeView } from "@/components/ASTTreeView";
 import ChatBot from "@/components/ChatBot";
 import Footer from "@/components/Footer";
@@ -31,6 +32,10 @@ export default function AnalyzerPage() {
     return "";
   });
   const [analyzing, setAnalyzing] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisMessage, setAnalysisMessage] = useState("Iniciando análisis...");
+  const [algorithmType, setAlgorithmType] = useState<"iterative" | "recursive" | "hybrid" | "unknown" | undefined>(undefined);
+  const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
   const [data, setData] = useState<AnalyzeOpenResponse | null>(() => {
     // Cargar resultados desde sessionStorage si vienen del editor manual
     if (globalThis.window !== undefined) {
@@ -182,6 +187,97 @@ export default function AnalyzerPage() {
     }
   };
 
+  // Función helper para animar progreso dentro de una etapa
+  // El progreso avanza gradualmente pero espera a que la promesa real se resuelva
+  const animateProgress = async <T,>(
+    start: number,
+    end: number,
+    duration: number,
+    onUpdate: (progress: number) => void,
+    waitForPromise?: Promise<T>
+  ): Promise<T | void> => {
+    // Si no hay promesa, solo animar el progreso
+    if (!waitForPromise) {
+      return new Promise((resolve) => {
+        const startTime = Date.now();
+        const animate = () => {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(1, elapsed / duration);
+          const currentProgress = start + (end - start) * progress;
+          onUpdate(currentProgress);
+          
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            onUpdate(end);
+            resolve();
+          }
+        };
+        animate();
+      });
+    }
+    
+    // Si hay promesa, animar el progreso independientemente
+    // pero esperar a que la promesa se resuelva antes de continuar
+    // La animación actualiza el estado (porcentaje) independientemente de la promesa
+    let animationId: number | null = null;
+    let promiseResolved = false;
+    let promiseResult: T | undefined = undefined;
+    let promiseError: any = undefined;
+    
+    // Iniciar la promesa en paralelo
+    const promiseTask = waitForPromise
+      .then((result) => {
+        promiseResult = result;
+        promiseResolved = true;
+      })
+      .catch((error) => {
+        promiseError = error;
+        promiseResolved = true;
+      });
+    
+    // Animar el progreso independientemente (actualiza el porcentaje)
+    const animationPromise = new Promise<void>((resolve) => {
+      const startTime = Date.now();
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(1, elapsed / duration);
+        const currentProgress = start + (end - start) * progress;
+        // Actualizar el porcentaje basándose en el tiempo, no en la promesa
+        onUpdate(currentProgress);
+        
+        if (progress < 1) {
+          animationId = requestAnimationFrame(animate);
+        } else {
+          // Asegurar que llegue al final
+          onUpdate(end);
+          resolve();
+        }
+      };
+      animate();
+    });
+    
+    // Esperar a que ambas terminen (animación y promesa)
+    // La animación actualiza el porcentaje, la promesa controla cuándo continuar
+    try {
+      await Promise.all([promiseTask, animationPromise]);
+      // Limpiar animación si aún está corriendo
+      if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+      }
+      // Asegurar que el progreso esté en el final
+      onUpdate(end);
+      return promiseResult;
+    } catch (error) {
+      // Si hay error, asegurar que el progreso llegue al final
+      if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+      }
+      onUpdate(end);
+      throw promiseError || error;
+    }
+  };
+
   // Handler para el clic del botón de análisis
   const handleAnalyze = async () => {
     // Verificar que no esté ya analizando
@@ -189,32 +285,47 @@ export default function AnalyzerPage() {
 
     // Activar estado de carga inmediatamente
     setAnalyzing(true);
+    setAnalysisProgress(0);
+    setAnalysisMessage("Iniciando análisis...");
+    setAlgorithmType(undefined);
+    setIsAnalysisComplete(false);
 
     try {
-      // 1) Parsear el código
-      const parseRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/grammar/parse`, {
+      // 1) Parsear el código (0-20%)
+      setAnalysisMessage("Parseando código...");
+      const parsePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/grammar/parse`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source }),
       }).then(r => r.json() as Promise<ParseResponse>);
+      
+      // Animar progreso mientras se parsea (espera a que parsePromise se resuelva)
+      const parseRes = await animateProgress(0, 20, 2000, setAnalysisProgress, parsePromise) as ParseResponse;
 
       if (!parseRes.ok) {
         console.error("Error en parse:", parseRes);
+        setAnalysisMessage("Error al parsear el código");
         return;
       }
 
-      // 2) Clasificar el algoritmo
+      // 2) Clasificar el algoritmo (20-40%)
+      setAnalysisMessage("Clasificando algoritmo...");
       let kind: ClassifyResponse["kind"];
       try {
-        const clsResponse = await fetch("/api/llm/classify", {
+        const clsPromise = fetch("/api/llm/classify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ source, mode: "auto" }),
         });
         
+        // Animar progreso mientras se clasifica (espera a que clsPromise se resuelva)
+        const clsResponse = await animateProgress(20, 40, 3000, setAnalysisProgress, clsPromise) as Response;
+        
         if (clsResponse.ok) {
           const cls = await clsResponse.json() as ClassifyResponse & { method?: string; mode?: string };
           kind = cls.kind;
+          setAlgorithmType(kind);
+          setAnalysisMessage(`Algoritmo identificado: ${kind === "iterative" ? "Iterativo" : kind === "recursive" ? "Recursivo" : kind === "hybrid" ? "Híbrido" : "Desconocido"}`);
           console.log(`[Analyzer] Clasificación: ${kind} (método: ${cls.method})`);
         } else {
           throw new Error(`HTTP ${clsResponse.status}`);
@@ -222,34 +333,71 @@ export default function AnalyzerPage() {
       } catch (error) {
         console.warn(`[Analyzer] Error en clasificación, usando heurística:`, error);
         kind = heuristicKind(parseRes.ast);
+        setAlgorithmType(kind);
+        setAnalysisMessage(`Algoritmo identificado: ${kind === "iterative" ? "Iterativo" : kind === "recursive" ? "Recursivo" : kind === "hybrid" ? "Híbrido" : "Desconocido"}`);
       }
 
       // 3) Rechazar algoritmos recursivos o híbridos
       if (kind === "recursive" || kind === "hybrid") {
         console.warn(`[Analyzer] Algoritmo ${kind} no soportado`);
+        setAnalysisMessage(`Algoritmo ${kind} no soportado`);
         return;
       }
 
-      // 4) Realizar el análisis de complejidad
-      const analyzeRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
+      // 4) Realizar el análisis de complejidad (40-80%)
+      setAnalysisMessage("Hallando sumatorias...");
+      await animateProgress(40, 50, 500, setAnalysisProgress);
+      
+      setAnalysisMessage("Simplificando expresiones matemáticas...");
+      const analyzePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source, mode: "worst" }),
       }).then(r => r.json() as Promise<AnalyzeOpenResponse>);
+      
+      // Animar progreso mientras se simplifica (espera a que analyzePromise se resuelva)
+      const analyzeRes = await animateProgress(50, 70, 5000, setAnalysisProgress, analyzePromise) as AnalyzeOpenResponse;
+      
+      setAnalysisMessage("Generando forma polinómica...");
+      await animateProgress(70, 80, 500, setAnalysisProgress);
 
       if (!analyzeRes.ok) {
         console.error("Error en análisis:", analyzeRes);
+        setAnalysisMessage("Error al analizar el algoritmo");
         return;
       }
 
-      // 5) Actualizar los datos
+      // 5) Finalizar (80-100%)
+      setAnalysisMessage("Finalizando análisis...");
+      await animateProgress(80, 100, 500, setAnalysisProgress);
+      
+      // 6) Actualizar los datos
       setData(analyzeRes);
+      
+      // 7) Mostrar completado y esperar 2 segundos
+      setAnalysisMessage("Análisis completo");
+      setIsAnalysisComplete(true);
+      
+      // Esperar 2 segundos antes de cerrar el loader
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      
+      // Cerrar loader
+      setAnalyzing(false);
+      setAnalysisProgress(0);
+      setAnalysisMessage("Iniciando análisis...");
+      setAlgorithmType(undefined);
+      setIsAnalysisComplete(false);
       
     } catch (error) {
       console.error("[Analyzer] Error inesperado:", error);
-    } finally {
-      // Siempre desactivar el estado de carga al finalizar
-      setAnalyzing(false);
+      setAnalysisMessage("Error durante el análisis");
+      setTimeout(() => {
+        setAnalyzing(false);
+        setAnalysisProgress(0);
+        setAnalysisMessage("Iniciando análisis...");
+        setAlgorithmType(undefined);
+        setIsAnalysisComplete(false);
+      }, 2000);
     }
   };
 
@@ -268,6 +416,16 @@ export default function AnalyzerPage() {
 
   return (
     <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">
+      {/* Loader de análisis */}
+      {analyzing && (
+        <AnalysisLoader
+          progress={analysisProgress}
+          message={analysisMessage}
+          algorithmType={algorithmType}
+          isComplete={isAnalysisComplete}
+        />
+      )}
+      
       <Header />
       
       <main className="flex-1 p-6 z-10">
