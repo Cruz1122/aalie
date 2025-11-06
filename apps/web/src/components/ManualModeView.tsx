@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { GrammarApiService } from "@/services/grammar-api";
+import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
+import { heuristicKind } from "@/lib/algorithm-classifier";
 
 import { AnalysisLoader } from "./AnalysisLoader";
 import { AnalyzerEditor } from "./AnalyzerEditor";
@@ -52,6 +54,7 @@ END`;
 
 export default function ManualModeView({ messages, setMessages, onOpenChat, onSwitchToAIMode }: ManualModeViewProps) {
   const router = useRouter();
+  const { animateProgress } = useAnalysisProgress();
   
   // Cargar código desde localStorage o usar valor por defecto
   const [code, setCode] = useState(() => {
@@ -178,65 +181,6 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
     }
   };
 
-  // Función helper para animar progreso dentro de una etapa
-  const animateProgress = async <T,>(
-    start: number,
-    end: number,
-    duration: number,
-    onUpdate: (progress: number) => void,
-    waitForPromise?: Promise<T>
-  ): Promise<T | void> => {
-    // Si no hay promesa, solo animar el progreso
-    if (!waitForPromise) {
-      return new Promise((resolve) => {
-        const startTime = Date.now();
-        const animate = () => {
-          const elapsed = Date.now() - startTime;
-          const progress = Math.min(1, elapsed / duration);
-          const currentProgress = start + (end - start) * progress;
-          onUpdate(currentProgress);
-          
-          if (progress < 1) {
-            requestAnimationFrame(animate);
-          } else {
-            onUpdate(end);
-            resolve();
-          }
-        };
-        animate();
-      });
-    }
-    
-    // Si hay promesa, animar el progreso independientemente
-    // pero esperar a que la promesa se resuelva antes de continuar
-    const animationPromise = new Promise<void>((resolve) => {
-      const startTime = Date.now();
-      const animate = () => {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(1, elapsed / duration);
-        const currentProgress = start + (end - start) * progress;
-        onUpdate(currentProgress);
-        
-        if (progress < 1) {
-          requestAnimationFrame(animate);
-        } else {
-          onUpdate(end);
-          resolve();
-        }
-      };
-      animate();
-    });
-    
-    // Esperar a que ambas terminen (animación y promesa)
-    try {
-      const [result] = await Promise.all([waitForPromise, animationPromise]);
-      return result;
-    } catch (error) {
-      // Si hay error, asegurar que el progreso llegue al final
-      onUpdate(end);
-      throw error;
-    }
-  };
 
   // Función para verificar parse (estado independiente)
   const handleAnalyzeCode = async () => {
@@ -278,22 +222,6 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
     }
   };
 
-  // Función helper para clasificar algoritmo (heurística)
-  const heuristicKind = (ast: Program | null): "iterative" | "recursive" | "hybrid" | "unknown" => {
-    if (!ast) return "unknown";
-    try {
-      const hasIterative = JSON.stringify(ast).includes('"type":"For"') || 
-                          JSON.stringify(ast).includes('"type":"While"') ||
-                          JSON.stringify(ast).includes('"type":"Repeat"');
-      const hasRecursive = JSON.stringify(ast).includes('"type":"Call"');
-      if (hasIterative && hasRecursive) return "hybrid";
-      if (hasRecursive) return "recursive";
-      if (hasIterative) return "iterative";
-      return "unknown";
-    } catch { 
-      return "unknown"; 
-    }
-  };
 
   // Función para analizar complejidad (ejecutar análisis completo con loader)
   const handleAnalyzeComplexity = async () => {
@@ -318,10 +246,10 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
       }).then(r => r.json());
       
       // Animar progreso mientras se parsea (espera a que parsePromise se resuelva)
-      const parseRes = await animateProgress(0, 20, 2000, setAnalysisProgress, parsePromise) as any;
+      const parseRes = await animateProgress(0, 20, 2000, setAnalysisProgress, parsePromise) as { ok: boolean; ast?: Program; errors?: Array<{ line: number; column: number; message: string }> };
 
       if (!parseRes.ok) {
-        const msg = parseRes.errors?.map((e: any) => `L${e.line}:${e.column} ${e.message}`).join("\n") || "Error de parseo";
+        const msg = parseRes.errors?.map((e: { line: number; column: number; message: string }) => `L${e.line}:${e.column} ${e.message}`).join("\n") || "Error de parseo";
         setAnalysisMessage(`Errores de sintaxis:\n${msg}`);
         return;
       }
@@ -350,7 +278,7 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
         }
       } catch (error) {
         console.warn(`[ManualMode] Error en clasificación, usando heurística:`, error);
-        kind = heuristicKind(parseRes.ast);
+        kind = heuristicKind(parseRes.ast || null);
         setAlgorithmType(kind);
         setAnalysisMessage(`Algoritmo identificado: ${kind === "iterative" ? "Iterativo" : kind === "recursive" ? "Recursivo" : kind === "hybrid" ? "Híbrido" : "Desconocido"}`);
       }
@@ -373,7 +301,7 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
       }).then(r => r.json());
       
       // Animar progreso mientras se simplifica (espera a que analyzePromise se resuelva)
-      const analyzeRes = await animateProgress(50, 70, 5000, setAnalysisProgress, analyzePromise) as any;
+      const analyzeRes = await animateProgress(50, 70, 5000, setAnalysisProgress, analyzePromise) as { ok: boolean; [key: string]: unknown };
       
       setAnalysisMessage("Generando forma polinómica...");
       await animateProgress(70, 80, 500, setAnalysisProgress);

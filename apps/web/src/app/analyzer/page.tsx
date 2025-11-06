@@ -12,12 +12,16 @@ import FormulaBlock from "@/components/FormulaBlock";
 import Header from "@/components/Header";
 import LineTable from "@/components/LineTable";
 import ProcedureModal from "@/components/ProcedureModal";
+import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
+import { heuristicKind } from "@/lib/algorithm-classifier";
 import { GrammarApiService } from "@/services/grammar-api";
 import { useChatHistory } from "@/hooks/useChatHistory";
 
 type ClassifyResponse = { kind: "iterative" | "recursive" | "hybrid" | "unknown" };
 
 export default function AnalyzerPage() {
+  const { animateProgress } = useAnalysisProgress();
+  
   // Estados del flujo de análisis
   const [source, setSource] = useState<string>(() => {
     // Cargar código desde sessionStorage si viene del editor manual
@@ -168,115 +172,7 @@ export default function AnalyzerPage() {
     // Cambiar al modo AI (funcionalidad futura)
   };
 
-  // Función heurística de fallback para clasificar algoritmos
-  const heuristicKind = (ast: unknown): ClassifyResponse["kind"] => {
-    try {
-      const text = JSON.stringify(ast);
-      if (text.includes('"type":"For"') || text.includes('"type":"While"') || text.includes('"type":"Repeat"')) {
-        return "iterative";
-      }
-      // súper simple detección de recursión:
-      const m = /"type":"ProcDef","name":"([^"]+)"/.exec(text);
-      if (m) {
-        const name = m[1];
-        if (text.includes(`"type":"Call","callee":"${name}"`)) return "recursive";
-      }
-      return "unknown";
-    } catch { 
-      return "unknown"; 
-    }
-  };
 
-  // Función helper para animar progreso dentro de una etapa
-  // El progreso avanza gradualmente pero espera a que la promesa real se resuelva
-  const animateProgress = async <T,>(
-    start: number,
-    end: number,
-    duration: number,
-    onUpdate: (progress: number) => void,
-    waitForPromise?: Promise<T>
-  ): Promise<T | void> => {
-    // Si no hay promesa, solo animar el progreso
-    if (!waitForPromise) {
-      return new Promise((resolve) => {
-        const startTime = Date.now();
-        const animate = () => {
-          const elapsed = Date.now() - startTime;
-          const progress = Math.min(1, elapsed / duration);
-          const currentProgress = start + (end - start) * progress;
-          onUpdate(currentProgress);
-          
-          if (progress < 1) {
-            requestAnimationFrame(animate);
-          } else {
-            onUpdate(end);
-            resolve();
-          }
-        };
-        animate();
-      });
-    }
-    
-    // Si hay promesa, animar el progreso independientemente
-    // pero esperar a que la promesa se resuelva antes de continuar
-    // La animación actualiza el estado (porcentaje) independientemente de la promesa
-    let animationId: number | null = null;
-    let promiseResolved = false;
-    let promiseResult: T | undefined = undefined;
-    let promiseError: any = undefined;
-    
-    // Iniciar la promesa en paralelo
-    const promiseTask = waitForPromise
-      .then((result) => {
-        promiseResult = result;
-        promiseResolved = true;
-      })
-      .catch((error) => {
-        promiseError = error;
-        promiseResolved = true;
-      });
-    
-    // Animar el progreso independientemente (actualiza el porcentaje)
-    const animationPromise = new Promise<void>((resolve) => {
-      const startTime = Date.now();
-      const animate = () => {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(1, elapsed / duration);
-        const currentProgress = start + (end - start) * progress;
-        // Actualizar el porcentaje basándose en el tiempo, no en la promesa
-        onUpdate(currentProgress);
-        
-        if (progress < 1) {
-          animationId = requestAnimationFrame(animate);
-        } else {
-          // Asegurar que llegue al final
-          onUpdate(end);
-          resolve();
-        }
-      };
-      animate();
-    });
-    
-    // Esperar a que ambas terminen (animación y promesa)
-    // La animación actualiza el porcentaje, la promesa controla cuándo continuar
-    try {
-      await Promise.all([promiseTask, animationPromise]);
-      // Limpiar animación si aún está corriendo
-      if (animationId !== null) {
-        cancelAnimationFrame(animationId);
-      }
-      // Asegurar que el progreso esté en el final
-      onUpdate(end);
-      return promiseResult;
-    } catch (error) {
-      // Si hay error, asegurar que el progreso llegue al final
-      if (animationId !== null) {
-        cancelAnimationFrame(animationId);
-      }
-      onUpdate(end);
-      throw promiseError || error;
-    }
-  };
 
   // Handler para el clic del botón de análisis
   const handleAnalyze = async () => {
