@@ -118,6 +118,7 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
             fontFamily: "'Spline Sans', 'Noto Sans', 'Monaco', 'Menlo', 'Consolas', monospace",
             fontLigatures: true,
             lineNumbers: "on",
+            lineNumbersMinChars: 3,
             rulers: [],
             wordWrap: "on",
             scrollBeyondLastLine: false,
