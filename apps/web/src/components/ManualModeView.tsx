@@ -80,6 +80,7 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
   const [analysisMessage, setAnalysisMessage] = useState("Iniciando análisis...");
   const [algorithmType, setAlgorithmType] = useState<"iterative" | "recursive" | "hybrid" | "unknown" | undefined>(undefined);
   const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   
   // Refs para evitar memory leaks con timeouts
   const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -235,6 +236,7 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
     setAlgorithmType(undefined);
     setIsAnalysisComplete(false);
     setAnalysisResult(null);
+    setAnalysisError(null);
 
     try {
       // 1) Parsear el código (0-20%)
@@ -249,8 +251,16 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
       const parseRes = await animateProgress(0, 20, 2000, setAnalysisProgress, parsePromise) as { ok: boolean; ast?: Program; errors?: Array<{ line: number; column: number; message: string }> };
 
       if (!parseRes.ok) {
-        const msg = parseRes.errors?.map((e: { line: number; column: number; message: string }) => `L${e.line}:${e.column} ${e.message}`).join("\n") || "Error de parseo";
-        setAnalysisMessage(`Errores de sintaxis:\n${msg}`);
+        const msg = parseRes.errors?.map((e: { line: number; column: number; message: string }) => `Línea ${e.line}:${e.column} ${e.message}`).join("\n") || "Error de parseo";
+        setAnalysisError(`Errores de sintaxis:\n${msg}`);
+        setTimeout(() => {
+          setIsAnalyzing(false);
+          setAnalysisProgress(0);
+          setAnalysisMessage("Iniciando análisis...");
+          setAlgorithmType(undefined);
+          setIsAnalysisComplete(false);
+          setAnalysisError(null);
+        }, 3000);
         return;
       }
 
@@ -285,7 +295,16 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
 
       // 3) Rechazar algoritmos recursivos o híbridos
       if (kind === "recursive" || kind === "hybrid") {
-        setAnalysisMessage("Por ahora solo analizamos algoritmos iterativos y básicos. Intenta con uno iterativo o básico, o cambia a S4 luego.");
+        const kindLabel = kind === "recursive" ? "recursivo" : "híbrido";
+        setAnalysisError(`El algoritmo ${kindLabel} no está soportado en esta versión. Por favor, usa un algoritmo iterativo o básico, o cambia a S4 luego.`);
+        setTimeout(() => {
+          setIsAnalyzing(false);
+          setAnalysisProgress(0);
+          setAnalysisMessage("Iniciando análisis...");
+          setAlgorithmType(undefined);
+          setIsAnalysisComplete(false);
+          setAnalysisError(null);
+        }, 3000);
         return;
       }
 
@@ -307,7 +326,18 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
       await animateProgress(70, 80, 500, setAnalysisProgress);
 
       if (!analyzeRes.ok) {
-        setAnalysisMessage("No se pudo analizar el algoritmo.");
+        const errorMsg = (analyzeRes as { errors?: Array<{ message: string; line?: number; column?: number }> }).errors?.map((e: { message: string; line?: number; column?: number }) => 
+          e.message || `Error en línea ${e.line || '?'}`
+        ).join("\n") || "No se pudo analizar el algoritmo";
+        setAnalysisError(errorMsg);
+        setTimeout(() => {
+          setIsAnalyzing(false);
+          setAnalysisProgress(0);
+          setAnalysisMessage("Iniciando análisis...");
+          setAlgorithmType(undefined);
+          setIsAnalysisComplete(false);
+          setAnalysisError(null);
+        }, 3000);
         return;
       }
 
@@ -333,14 +363,16 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
 
     } catch (error) {
       console.error("[ManualMode] Error inesperado:", error);
-      setAnalysisMessage("Error durante el análisis");
+      const errorMsg = error instanceof Error ? error.message : "Error inesperado durante el análisis";
+      setAnalysisError(errorMsg);
       setTimeout(() => {
         setIsAnalyzing(false);
         setAnalysisProgress(0);
         setAnalysisMessage("Iniciando análisis...");
         setAlgorithmType(undefined);
         setIsAnalysisComplete(false);
-      }, 2000);
+        setAnalysisError(null);
+      }, 3000);
     }
   };
 
@@ -353,6 +385,15 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
           message={analysisMessage}
           algorithmType={algorithmType}
           isComplete={isAnalysisComplete}
+          error={analysisError}
+          onClose={() => {
+            setIsAnalyzing(false);
+            setAnalysisProgress(0);
+            setAnalysisMessage("Iniciando análisis...");
+            setAlgorithmType(undefined);
+            setIsAnalysisComplete(false);
+            setAnalysisError(null);
+          }}
         />
       )}
       

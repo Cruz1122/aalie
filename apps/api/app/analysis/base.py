@@ -22,24 +22,11 @@ class BaseAnalyzer:
     def __init__(self):
         self.rows: List[LineCost] = []      # tabla por línea
         self.loop_stack: List[str] = []     # multiplicadores activos (strings KaTeX)
-        self.procedure: List[str] = []      # pasos KaTeX/strings breves
         self.symbols: Dict[str, str] = {}   # ej: { "n": "length(A)" }
         self.notes: List[str] = []          # reglas aplicadas / comentarios
         self.memo: Dict[str, List[LineCost]] = {}  # PD: cache de filas por nodo+contexto
         self.counter = 0                    # contador para generar constantes C_k
         self.t_polynomial: Optional[str] = None  # forma polinómica T(n) = an² + bn + c
-        
-        # Inicializar procedimiento básico
-        self._init_procedure()
-
-    def _init_procedure(self):
-        """Inicializa los pasos básicos del procedimiento."""
-        self.procedure = [
-            r"1) Se asignan costos constantes C_{1}, C_{2}, \ldots",
-            r"2) Se extraen por línea los costos C_{k} y los conteos #ejecuciones",
-            r"3) Se multiplican los conteos por los iteradores activos (for/while/repeat)",
-            r"4) Se suman los términos para formar T_{\text{open}}"
-        ]
 
     # --- util 1: agregar fila ---
     def add_row(self, line: int, kind: str, ck: str, count: str, note: Optional[str] = None):
@@ -135,7 +122,6 @@ class BaseAnalyzer:
         """
         totals = {
             "T_open": self.build_t_open(),
-            "procedure": self.procedure,
             "symbols": self.symbols if self.symbols else None,
             "notes": self.notes if self.notes else None
         }
@@ -209,25 +195,15 @@ class BaseAnalyzer:
         """
         self.notes.append(note)
 
-    def add_procedure_step(self, step: str):
-        """
-        Agrega un paso al procedimiento.
-        
-        Args:
-            step: Paso del procedimiento en formato KaTeX
-        """
-        self.procedure.append(step)
 
     def clear(self):
         """Limpia todos los datos del analizador."""
         self.rows.clear()
         self.loop_stack.clear()
-        self.procedure.clear()
         self.symbols.clear()
         self.notes.clear()
         self.memo.clear()
         self.t_polynomial = None
-        self._init_procedure()
 
     def get_context_hash(self) -> str:
         """

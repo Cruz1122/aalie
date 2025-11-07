@@ -518,14 +518,10 @@ class WhileRepeatVisitor:
             
             self.pop_multiplier()
             
-            # 3) Procedimiento con información del cierre
+            # 3) Procedimiento con información del cierre (ahora manejado por LLM)
             change_op = change_rule.get("operator", "")
             change_const = change_rule.get("constant", "1")
             initial_val = closure_info.get("initial_value") or f"{var_name}_0"
-            self.add_procedure_step(
-                rf"WHILE@{L}: variable {var_name}, cambio {change_op}{change_const}, límite {limit}, "
-                rf"iteraciones: {iterations}, condición: ({iterations}) + 1 veces; cuerpo multiplicado por {iterations}."
-            )
         else:
             # Fallback: usar símbolo simbólico t_{while_L}
             # 1) Condición: se evalúa (t_{while_L} + 1) veces
@@ -547,11 +543,6 @@ class WhileRepeatVisitor:
                 self.visit(body, mode)
             
             self.pop_multiplier()
-            
-            # 3) Procedimiento
-            self.add_procedure_step(
-                rf"WHILE@{L}: condición {t}+1 veces; cuerpo multiplicado por {t}."
-            )
     
     def visitRepeat(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """
@@ -582,9 +573,4 @@ class WhileRepeatVisitor:
             ck=ck_cond,
             count=f"1 + {t}",
             note=f"Condición del bucle repeat en línea {L}"
-        )
-        
-        # 3) Procedimiento
-        self.add_procedure_step(
-            rf"REPEAT@{L}: cuerpo y condición se evalúan 1+{t} veces."
         )

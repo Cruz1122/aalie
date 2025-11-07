@@ -138,8 +138,4 @@ class IfVisitor:
             if chosen:
                 chosen[0] = {**chosen[0], "note": annotate}
             self.rows.extend(chosen)
-        
-        # 5) Procedure
-        self.add_procedure_step(
-            r"IF: guardia evaluada una vez; en peor caso se toma \max(\text{then}, \text{else})."
-        )
+

@@ -83,10 +83,6 @@ export default function ProcedureModal({
       : "Procedimiento Completo";
   }, [selectedLine]);
 
-  // Memoizar los pasos del procedimiento
-  const procedureSteps = useMemo(() => {
-    return analysisData?.totals?.procedure || [];
-  }, [analysisData?.totals?.procedure]);
 
   // Función para extraer el patrón de un término (n+1, n, 1, etc.)
   const extractPattern = (count: string): string => {
@@ -402,18 +398,18 @@ export default function ProcedureModal({
                         </div>
                       </div>
 
-                      {/* Pasos del procedimiento */}
-                      {analysisData.totals.procedure && analysisData.totals.procedure.length > 0 && (
+                      {/* Pasos del procedimiento específico de la línea */}
+                      {lineData.procedure && lineData.procedure.length > 0 && (
                         <div className="mb-4">
-                          <span className="text-sm font-medium text-slate-400">Pasos del procedimiento:</span>
+                          <span className="text-sm font-medium text-slate-400">Procedimiento de simplificación:</span>
                           <div className="mt-2 space-y-2 max-h-48 overflow-y-auto scrollbar-custom">
-                            {analysisData.totals.procedure.map((step, index) => (
+                            {lineData.procedure.map((step, index) => (
                               <div key={index} className="flex items-start gap-2 p-2 bg-slate-900/50 rounded border border-white/10">
                                 <div className="flex-shrink-0 w-5 h-5 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs font-medium">
                                   {index + 1}
                                 </div>
                                 <div className="flex-1">
-                                  <Formula latex={step} />
+                                  <Formula latex={step} display />
                                 </div>
                               </div>
                             ))}

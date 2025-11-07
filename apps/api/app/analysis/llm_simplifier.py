@@ -234,6 +234,28 @@ def _validate_llm_response(result: Dict[str, Any], num_rows: int) -> bool:
             print(f"[LLM Simplifier] Count en posición {i} no es válido: {count}")
             return False
     
+    # Validar procedures_by_line si está presente (opcional pero debe tener el mismo número de elementos)
+    procedures_by_line = result.get("procedures_by_line")
+    if procedures_by_line is not None:
+        if not isinstance(procedures_by_line, list):
+            print(f"[LLM Simplifier] procedures_by_line no es un array: {type(procedures_by_line)}")
+            return False
+        
+        if len(procedures_by_line) != num_rows:
+            print(f"[LLM Simplifier] Número de procedures_by_line ({len(procedures_by_line)}) no coincide con número de filas ({num_rows})")
+            return False
+        
+        # Validar que cada procedimiento sea un array de strings
+        for i, procedure in enumerate(procedures_by_line):
+            if not isinstance(procedure, list):
+                print(f"[LLM Simplifier] Procedure en posición {i} no es un array: {type(procedure)}")
+                return False
+            
+            for j, step in enumerate(procedure):
+                if not isinstance(step, str) or not step.strip():
+                    print(f"[LLM Simplifier] Paso {j} del procedimiento {i} no es válido: {step}")
+                    return False
+    
     return True
 
 
@@ -263,11 +285,29 @@ def simplify_counts_with_llm(rows: List[Dict[str, Any]]) -> Optional[Dict[str, A
     prompt_parts.append("1. Simplifica cada count_raw eliminando paréntesis innecesarios y simplificando operaciones")
     prompt_parts.append("2. Simplifica sumatorias: \\sum_{i=1}^{n} 1 → n, \\sum_{i=2}^{n} 1 → n-1, etc.")
     prompt_parts.append("3. Genera la forma polinómica T(n) = an² + bn + c basándote en los counts simplificados")
+    prompt_parts.append("4. Para cada línea, genera un procedimiento completo que muestre el proceso desde la expresión original hasta la forma polinómica")
+    prompt_parts.append("   - Cada paso debe ser explicativo y detallado")
+    prompt_parts.append("   - Usa \\text{} para texto descriptivo en LaTeX, con un espacio DENTRO del \\text{} al final (antes del cierre de llaves)")
+    prompt_parts.append("   - Incluye las ecuaciones correspondientes en cada paso para contrastar")
+    prompt_parts.append("   - Muestra SOLO los pasos donde haya transformaciones reales (no repitas pasos innecesarios)")
+    prompt_parts.append("   - Si la expresión ya está simplificada (ej: count_raw = 1), muestra solo el paso relevante")
+    prompt_parts.append("   - SIEMPRE incluye una conclusión final como \"Forma final\" o \"Forma simplificada\"")
+    prompt_parts.append("   - Cada paso debe incluir dos puntos antes del espacio final dentro del \\text{}")
+    prompt_parts.append("   - Ejemplo: \\text{Paso 1: Expresión original: } \\sum_{i=1}^{n} 1")
+    prompt_parts.append("   - Ejemplo: \\text{Paso 2: Simplificación de sumatoria: } \\sum_{i=1}^{n} 1 = n")
+    prompt_parts.append("   - Ejemplo: \\text{Forma final: } C_k \\cdot n = a \\cdot n")
+    prompt_parts.append("   - Para expresiones constantes simples (ej: 1), muestra: \\text{Forma constante: } 1")
     prompt_parts.append("\nFORMATO DE SALIDA (JSON):")
-    prompt_parts.append('{"counts": ["expresión1", "expresión2", ...], "T_polynomial": "a \\cdot n^2 + b \\cdot n + c"}')
+    prompt_parts.append('{"counts": ["expresión1", "expresión2", ...], "T_polynomial": "a \\cdot n^2 + b \\cdot n + c", "procedures_by_line": [[...], [...], ...]}')
     prompt_parts.append("\nIMPORTANTE:")
     prompt_parts.append("- El array 'counts' debe tener exactamente el mismo número de elementos que las líneas de entrada")
-    prompt_parts.append("- Mantén el orden de los counts igual al orden de las líneas")
+    prompt_parts.append("- El array 'procedures_by_line' debe tener exactamente el mismo número de elementos que las líneas de entrada")
+    prompt_parts.append("- Cada elemento de 'procedures_by_line' es un array de pasos en formato LaTeX")
+    prompt_parts.append("- Cada paso debe usar \\text{} para texto descriptivo (con espacio DENTRO del \\text{} al final) e incluir las ecuaciones correspondientes")
+    prompt_parts.append("- Muestra SOLO los pasos donde haya transformaciones reales (evita pasos repetitivos o innecesarios)")
+    prompt_parts.append("- Para expresiones constantes simples, muestra solo un paso relevante")
+    prompt_parts.append("- SIEMPRE incluye una conclusión final como \"Forma final\" o \"Forma simplificada\"")
+    prompt_parts.append("- Mantén el orden de los counts y procedures_by_line igual al orden de las líneas")
     prompt_parts.append("- Usa formato LaTeX para todas las expresiones")
     prompt_parts.append("- Si N es la variable, úsala en lugar de n en las expresiones")
     

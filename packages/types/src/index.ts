@@ -217,6 +217,7 @@ export interface LineCost {
   ck: string;           // costo(s) elemental(es), ej: "C_assign + C_index"
   count: string;        // # ejecuciones (abierto o cerrado), ej: "n", "\sum_{i=1}^{n} 1"
   note?: string;        // aclaraciones (p. ej., "worst: max(then, else)")
+  procedure?: string[]; // procedimiento completo por línea (desde count_raw hasta forma polinómica)
 }
 
 /** Request para análisis de algoritmo */

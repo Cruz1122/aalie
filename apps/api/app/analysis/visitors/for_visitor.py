@@ -146,11 +146,3 @@ class ForVisitor:
         
         # 4) Salir del contexto del bucle
         self.pop_multiplier()
-        
-        # 5) Agregar pasos al procedimiento
-        self.add_procedure_step(
-            rf"En for {var}={a}\ldots{b}, cabecera: ({b})-({a})+2."
-        )
-        self.add_procedure_step(
-            rf"Cuerpo multiplicado por \sum_{{{var}={a}}}^{{{b}}} 1."
-        )

@@ -104,14 +104,6 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Limpiar estado previo
         self.clear()
         
-        # Agregar pasos básicos del procedimiento
-        self.procedure = [
-            r"1) Se asignan costos constantes C_{1}, C_{2}, \ldots",
-            r"2) Se extraen por línea los costos C_{k} y los conteos #ejecuciones",
-            r"3) Se multiplican los conteos por los iteradores activos (for/while/repeat)",
-            r"4) Se suman los términos para formar T_{\text{open}}"
-        ]
-        
         # Visitar el AST completo
         self.visit(ast, mode)
         
@@ -129,6 +121,12 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 t_polynomial = llm_result.get("T_polynomial")
                 if t_polynomial:
                     self.t_polynomial = t_polynomial
+                
+                # Guardar procedures_by_line si está disponible
+                procedures_by_line = llm_result.get("procedures_by_line")
+                if procedures_by_line and len(procedures_by_line) == len(self.rows):
+                    for i, row in enumerate(self.rows):
+                        row["procedure"] = procedures_by_line[i]
             else:
                 print(f"[IterativeAnalyzer] Número de counts del LLM ({len(counts)}) no coincide con número de filas ({len(self.rows)})")
         else:

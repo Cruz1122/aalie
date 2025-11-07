@@ -40,6 +40,7 @@ export default function AnalyzerPage() {
   const [analysisMessage, setAnalysisMessage] = useState("Iniciando análisis...");
   const [algorithmType, setAlgorithmType] = useState<"iterative" | "recursive" | "hybrid" | "unknown" | undefined>(undefined);
   const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [data, setData] = useState<AnalyzeOpenResponse | null>(() => {
     // Cargar resultados desde sessionStorage si vienen del editor manual
     if (globalThis.window !== undefined) {
@@ -185,6 +186,7 @@ export default function AnalyzerPage() {
     setAnalysisMessage("Iniciando análisis...");
     setAlgorithmType(undefined);
     setIsAnalysisComplete(false);
+    setAnalysisError(null);
 
     try {
       // 1) Parsear el código (0-20%)
@@ -200,7 +202,18 @@ export default function AnalyzerPage() {
 
       if (!parseRes.ok) {
         console.error("Error en parse:", parseRes);
-        setAnalysisMessage("Error al parsear el código");
+        const errorMsg = parseRes.errors?.map((e: { line?: number; column?: number; message: string }) => 
+          `Línea ${e.line || '?'}:${e.column || '?'} ${e.message}`
+        ).join("\n") || "Error al parsear el código";
+        setAnalysisError(errorMsg);
+        setTimeout(() => {
+          setAnalyzing(false);
+          setAnalysisProgress(0);
+          setAnalysisMessage("Iniciando análisis...");
+          setAlgorithmType(undefined);
+          setIsAnalysisComplete(false);
+          setAnalysisError(null);
+        }, 3000);
         return;
       }
 
@@ -236,7 +249,16 @@ export default function AnalyzerPage() {
       // 3) Rechazar algoritmos recursivos o híbridos
       if (kind === "recursive" || kind === "hybrid") {
         console.warn(`[Analyzer] Algoritmo ${kind} no soportado`);
-        setAnalysisMessage(`Algoritmo ${kind} no soportado`);
+        const kindLabel = kind === "recursive" ? "recursivo" : "híbrido";
+        setAnalysisError(`El algoritmo ${kindLabel} no está soportado en esta versión. Por favor, usa un algoritmo iterativo.`);
+        setTimeout(() => {
+          setAnalyzing(false);
+          setAnalysisProgress(0);
+          setAnalysisMessage("Iniciando análisis...");
+          setAlgorithmType(undefined);
+          setIsAnalysisComplete(false);
+          setAnalysisError(null);
+        }, 3000);
         return;
       }
 
@@ -259,7 +281,18 @@ export default function AnalyzerPage() {
 
       if (!analyzeRes.ok) {
         console.error("Error en análisis:", analyzeRes);
-        setAnalysisMessage("Error al analizar el algoritmo");
+        const errorMsg = (analyzeRes as { errors?: Array<{ message: string; line?: number; column?: number }> }).errors?.map((e: { message: string; line?: number; column?: number }) => 
+          e.message || `Error en línea ${e.line || '?'}`
+        ).join("\n") || "Error al analizar el algoritmo";
+        setAnalysisError(errorMsg);
+        setTimeout(() => {
+          setAnalyzing(false);
+          setAnalysisProgress(0);
+          setAnalysisMessage("Iniciando análisis...");
+          setAlgorithmType(undefined);
+          setIsAnalysisComplete(false);
+          setAnalysisError(null);
+        }, 3000);
         return;
       }
 
@@ -286,14 +319,16 @@ export default function AnalyzerPage() {
       
     } catch (error) {
       console.error("[Analyzer] Error inesperado:", error);
-      setAnalysisMessage("Error durante el análisis");
+      const errorMsg = error instanceof Error ? error.message : "Error inesperado durante el análisis";
+      setAnalysisError(errorMsg);
       setTimeout(() => {
         setAnalyzing(false);
         setAnalysisProgress(0);
         setAnalysisMessage("Iniciando análisis...");
         setAlgorithmType(undefined);
         setIsAnalysisComplete(false);
-      }, 2000);
+        setAnalysisError(null);
+      }, 3000);
     }
   };
 
@@ -319,6 +354,15 @@ export default function AnalyzerPage() {
           message={analysisMessage}
           algorithmType={algorithmType}
           isComplete={isAnalysisComplete}
+          error={analysisError}
+          onClose={() => {
+            setAnalyzing(false);
+            setAnalysisProgress(0);
+            setAnalysisMessage("Iniciando análisis...");
+            setAlgorithmType(undefined);
+            setIsAnalysisComplete(false);
+            setAnalysisError(null);
+          }}
         />
       )}
       
