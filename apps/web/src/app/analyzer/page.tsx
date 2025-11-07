@@ -488,6 +488,26 @@ export default function AnalyzerPage() {
                           <h3 className="text-sm font-medium text-slate-300">Función de costo T(n):</h3>
                           <FormulaBlock latex={data.totals.T_open} />
                   </div>
+
+                  {data.totals.T_polynomial && (
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-medium text-slate-300">Forma polinómica T(n):</h3>
+                      <FormulaBlock latex={data.totals.T_polynomial as unknown as string} />
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-slate-300">Notación asintótica:</h3>
+                    {(() => {
+                      const base = (data.totals as any)?.T_polynomial as string | undefined || data.totals.T_open;
+                      const bigO = base.includes('n^3') ? 'O(n^3)'
+                                 : base.includes('n^2') ? 'O(n^2)'
+                                 : /(^|[^\^])n(?![\w^])/.test(base) ? 'O(n)'
+                                 : base.includes('\\log(n)') ? 'O(\\log n)'
+                                 : 'O(1)';
+                      return <FormulaBlock latex={bigO} />;
+                    })()}
+                  </div>
                   
                   <div className="space-y-2">
                           <h3 className="text-sm font-medium text-slate-300">Procedimiento:</h3>

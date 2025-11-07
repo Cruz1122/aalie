@@ -390,21 +390,21 @@ def generate_procedures_with_llm(rows: List[Dict[str, Any]]) -> Optional[Dict[st
         "3. Solo incluye pasos donde ocurra una transformación real; evita repeticiones innecesarias"
     )
     prompt_parts.append(
-        "4. Siempre incluye una conclusión final como \"Forma final\" o \"Forma simplificada\""
+        "4. Siempre incluye una conclusión final como \\\"Forma final: \\\" seguida de la forma canónica completa en términos de n (por ejemplo, a \\cdot n^2 + b \\cdot n + c; si es lineal: a \\cdot n + b; si es logarítmica: a \\cdot \\log(n) + b; si es constante: a)"
     )
     prompt_parts.append(
-        "5. Cuando muestres ecuaciones, escribe explícitamente la transición (por ejemplo, =, →)"
+        "5. Añade una última etapa denominada \\\"Notación asintótica: \\\" con la clase Big-O correspondiente (por ejemplo, O(n^2), O(n), O(\\log n), O(1))"
     )
 
     prompt_parts.append("\nFORMATO DE SALIDA (JSON):")
-    prompt_parts.append('{"procedures_by_line": [["paso 1", "paso 2", ...], ...]}')
+    prompt_parts.append('{"procedures_by_line": [ ["paso 1", "paso 2", ..., "\\\\text{Forma final: } a \\cdot n^2 + b \\cdot n + c", "\\\\text{Notación asintótica: } O(n^2)"], ... ]}')
 
     prompt_parts.append("\nIMPORTANTE:")
     prompt_parts.append(
         "- El array 'procedures_by_line' debe tener exactamente el mismo número de elementos que las líneas proporcionadas"
     )
     prompt_parts.append(
-        "- Cada paso debe comenzar con \\text{Paso X: ... } siguiendo los requisitos de espaciado"
+        "- Cada paso debe comenzar con \\text{Paso X: ... } y las etapas finales deben ser \\text{Forma final: } ... y \\text{Notación asintótica: } ..."
     )
     prompt_parts.append(
         "- Incluye las ecuaciones correspondientes para contrastar original y simplificado"

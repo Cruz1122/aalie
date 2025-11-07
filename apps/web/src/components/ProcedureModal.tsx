@@ -135,7 +135,7 @@ export default function ProcedureModal({
         ? coefficients[0] 
         : `(${coefficients.join(' + ')})`;
       
-      return `${coefficientStr} \\cdot (${pattern})`;
+      return `${coefficientStr} (${pattern})`;
     });
     
     return groupedTerms.join(' + ');
@@ -143,44 +143,44 @@ export default function ProcedureModal({
 
 
   // Función para crear la forma final más simplificada
-  const createFinalSimplifiedForm = (groupedEquation: string): string => {
-    // Si la ecuación está vacía, devolver una forma genérica
+  const createFinalSimplifiedForm = (groupedEquation: string, tPolynomial?: string | null): string => {
+    // Priorizar T_polynomial del backend si está disponible
+    if (tPolynomial && tPolynomial.trim().length > 0) {
+      return tPolynomial;
+    }
     if (!groupedEquation || groupedEquation.trim() === '') {
-      return 'T(n) = O(1)';
+      return 'a';
     }
-    
-    // Detectar el tipo de complejidad basado en los patrones presentes
-    const complexityTypes = {
-      quadratic: groupedEquation.includes('n²') || groupedEquation.includes('n^2'),
-      linear: groupedEquation.includes('n+1') || groupedEquation.includes('n-1') || groupedEquation.includes(' n '),
-      constant: groupedEquation.includes('1)') || groupedEquation.includes(' 1 '),
-      logarithmic: groupedEquation.includes('log')
-    };
-    
-    // Construir la forma final con nomenclatura consistente: an² + bn + c
+
+    const hasCubic = groupedEquation.includes('n^3') || groupedEquation.includes('n³');
+    const hasQuadratic = groupedEquation.includes('n^2') || groupedEquation.includes('n²');
+    const hasLinear = /(^|[^\^])n(?![\w^])/.test(groupedEquation) || groupedEquation.includes('n+1') || groupedEquation.includes('n-1');
+    const hasLog = groupedEquation.includes('log');
+
+    const coeffs = ['a', 'b', 'c', 'd'];
     const terms: string[] = [];
-    let coefficientIndex = 0;
-    const coefficients = ['a', 'b', 'c', 'd', 'e', 'f'];
-    
-    if (complexityTypes.quadratic) {
-      terms.push(`${coefficients[coefficientIndex++]} \\cdot n^2`);
+
+    if (hasCubic) {
+      terms.push(`${coeffs[0]} \\cdot n^3`, `${coeffs[1]} \\cdot n^2`, `${coeffs[2]} \\cdot n`, `${coeffs[3]}`);
+      return terms.join(' + ');
     }
-    if (complexityTypes.linear) {
-      terms.push(`${coefficients[coefficientIndex++]} \\cdot n`);
+
+    if (hasQuadratic) {
+      terms.push(`${coeffs[0]} \\cdot n^2`, `${coeffs[1]} \\cdot n`, `${coeffs[2]}`);
+      return terms.join(' + ');
     }
-    if (complexityTypes.constant) {
-      terms.push(coefficients[coefficientIndex++]);
+
+    if (hasLinear) {
+      terms.push(`${coeffs[0]} \\cdot n`, `${coeffs[1]}`);
+      return terms.join(' + ');
     }
-    if (complexityTypes.logarithmic) {
-      terms.push(`${coefficients[coefficientIndex++]} \\cdot \\log(n)`);
+
+    if (hasLog) {
+      terms.push(`${coeffs[0]} \\cdot \\log(n)`, `${coeffs[1]}`);
+      return terms.join(' + ');
     }
-    
-    // Si no se detectó ningún patrón específico, usar la ecuación original
-    if (terms.length === 0) {
-      return groupedEquation;
-    }
-    
-    return terms.join(' + ');
+
+    return `${coeffs[0]}`; // constante
   };
 
   // Memoizar las ecuaciones de derivación
@@ -200,15 +200,24 @@ export default function ProcedureModal({
     // Paso 3: Agrupación de términos similares
     const step3 = groupSimilarTerms(analysisData.byLine.map(line => ({ ck: line.ck, count: line.count })));
     
-    // Paso 4: Forma final con constantes a, b, c, etc.
-    const step4 = createFinalSimplifiedForm(step3);
+    // Paso 4: Forma final con constantes a, b, c, etc. (usar T_polynomial si está)
+    const tPoly = (analysisData.totals as any)?.T_polynomial as string | undefined;
+    const step4 = createFinalSimplifiedForm(step3, tPoly);
+    
+    // Paso 5: Notación asintótica a partir de la forma final
+    const bigO = step4.includes('n^3') ? 'O(n^3)'
+               : step4.includes('n^2') ? 'O(n^2)'
+               : /(^|[^\^])n(?![\w^])/.test(step4) ? 'O(n)'
+               : step4.includes('\\log(n)') ? 'O(\\log n)'
+               : 'O(1)';
     
     // Crear array de pasos con sus ecuaciones
     const allSteps = [
       { title: "Ecuación completa con sumatorias", equation: step1, description: "Ecuación original con todas las sumatorias y multiplicadores aplicados" },
       { title: "Simplificación de sumatorias", equation: step2, description: "Se resuelven las sumatorias y se simplifican los términos" },
       { title: "Agrupación de términos similares", equation: step3, description: "Se agrupan los términos por patrones similares (n+1, n, constantes)" },
-      { title: "Forma final en términos de n", equation: step4, description: "Forma final simplificada en términos de n con constantes a, b, c, etc." }
+      { title: "Forma final en términos de n", equation: step4, description: "Forma polinómica canónica en términos de n (a, b, c)" },
+      { title: "Notación asintótica", equation: bigO, description: "Clase de complejidad temporal Big-O derivada de la forma final" }
     ];
     
     // Filtrar pasos que son diferentes al anterior
@@ -463,6 +472,33 @@ export default function ProcedureModal({
                     <h4 className="font-semibold text-white mb-3">Ecuación de Eficiencia</h4>
                     <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
                       <Formula latex={analysisData.totals.T_open} display />
+                    </div>
+                  </div>
+
+                  {/* Forma polinómica T(n) si está disponible */}
+                  {analysisData.totals.T_polynomial && (
+                    <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+                      <h4 className="font-semibold text-white mb-3">Forma polinómica T(n)</h4>
+                      <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
+                        <Formula latex={analysisData.totals.T_polynomial as unknown as string} display />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Notación asintótica derivada de T(n) o de la forma detectada */}
+                  <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+                    <h4 className="font-semibold text-white mb-3">Notación asintótica</h4>
+                    <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
+                      {(() => {
+                        const tPoly = (analysisData.totals as any)?.T_polynomial as string | undefined;
+                        const base = tPoly && tPoly.trim().length > 0 ? tPoly : (derivationSteps[3]?.equation || '');
+                        const bigO = base.includes('n^3') ? 'O(n^3)'
+                                   : base.includes('n^2') ? 'O(n^2)'
+                                   : /(^|[^\^])n(?![\w^])/.test(base) ? 'O(n)'
+                                   : base.includes('\\log(n)') ? 'O(\\log n)'
+                                   : 'O(1)';
+                        return <Formula latex={bigO} display />;
+                      })()}
                     </div>
                   </div>
 
