@@ -16,7 +16,6 @@ interface AnalyzerEditorProps {
   readonly onAstChange?: (ast: Program) => void;
   readonly onParseStatusChange?: (ok: boolean, isParsing: boolean) => void;
   readonly height?: string;
-  readonly showToolbar?: boolean;
 }
 
 export function AnalyzerEditor(props: AnalyzerEditorProps) {
@@ -26,7 +25,6 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
     onAstChange,
     onParseStatusChange,
     height,
-    showToolbar = true,
   } = props;
   const [code, setCode] = useState(initialValue);
   const [showAstModal, setShowAstModal] = useState(false);

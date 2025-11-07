@@ -97,9 +97,13 @@ O con llaves:
 ### Sentencias
 
 #### Asignación
+El lenguaje soporta múltiples operadores de asignación:
 ```
-variable <- expresion;
-variable := expresion;
+variable <- expresion;    // Forma estándar
+variable := expresion;    // Forma alternativa
+variable 🡨 expresion;    // Símbolo Unicode (flecha izquierda)
+variable ← expresion;     // Símbolo Unicode (flecha izquierda alternativa)
+variable ⟵ expresion;     // Símbolo Unicode (flecha larga izquierda)
 ```
 
 #### Declaración de arrays
@@ -182,8 +186,13 @@ resultado <- fibonacci(n - 1) + fibonacci(n - 2);
 ### Operadores
 
 #### Operadores de asignación
-- `<-` (ASCII)
-- `:=` (Pascal style)
+- `<-` (ASCII estándar)
+- `:=` (estilo Pascal)
+- `🡨` (símbolo Unicode - flecha izquierda)
+- `←` (símbolo Unicode - flecha izquierda alternativa)
+- `⟵` (símbolo Unicode - flecha larga izquierda)
+
+**Nota**: La gramática acepta todos estos operadores y los normaliza internamente. El archivo `Language.g4` debe guardarse en UTF-8 para reconocer correctamente los símbolos Unicode.
 
 #### Operadores de comparación
 - `=` (igual)

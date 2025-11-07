@@ -7,7 +7,7 @@ import type { AnalyzeOpenResponse } from "@aa/types";
 interface GeneralProcedureModalProps {
   open: boolean;
   onClose: () => void;
-  data: AnalyzeOpenResponse | null;
+  data: AnalyzeOpenResponse | undefined;
 }
 
 const normalizePolynomial = (poly?: string): string => {

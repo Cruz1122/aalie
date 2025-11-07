@@ -48,7 +48,7 @@ const VirtualizedStepsList = React.memo(({ steps }: { steps: string[] }) => {
               <div className="flex-shrink-0 w-6 h-6 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs font-medium">
                 {visibleRange.start + index + 1}
               </div>
-              <div className="flex-1 bg-slate-900/50 p-3 rounded-lg border border-white/10">
+              <div className="flex-1 min-w-0 bg-slate-900/50 p-3 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
                 <Formula latex={step} display />
               </div>
             </div>
@@ -85,9 +85,9 @@ export default function ProcedureModal({
 
 
   // Función para extraer el patrón de un término (n+1, n, 1, etc.)
-  const extractPattern = (count: string): string => {
+  const extractPattern = useCallback((count: string): string => {
     // Normalizar espacios y paréntesis
-    const normalized = count.replaceAll(/\s+/g, '').replaceAll(/\(/g, '').replaceAll(/\)/g, '');
+    const normalized = count.replaceAll(/\s+/g, '').replaceAll('(', '').replaceAll(')', '');
     
     // Mapeo de patrones comunes
     const patternMap: Record<string, string> = {
@@ -114,10 +114,10 @@ export default function ProcedureModal({
     
     // Constante por defecto
     return '1';
-  };
+  }, []);
 
   // Función para agrupar términos similares
-  const groupSimilarTerms = (terms: Array<{ck: string, count: string}>): string => {
+  const groupSimilarTerms = useCallback((terms: Array<{ck: string, count: string}>): string => {
     const groups: Record<string, string[]> = {};
     
     // Agrupar términos por patrón
@@ -139,11 +139,11 @@ export default function ProcedureModal({
     });
     
     return groupedTerms.join(' + ');
-  };
+  }, [extractPattern]);
 
 
   // Función para crear la forma final más simplificada
-  const createFinalSimplifiedForm = (groupedEquation: string, tPolynomial?: string | null): string => {
+  const createFinalSimplifiedForm = useCallback((groupedEquation: string, tPolynomial?: string | null): string => {
     // Priorizar T_polynomial del backend si está disponible
     if (tPolynomial && tPolynomial.trim().length > 0) {
       return tPolynomial;
@@ -154,7 +154,8 @@ export default function ProcedureModal({
 
     const hasCubic = groupedEquation.includes('n^3') || groupedEquation.includes('n³');
     const hasQuadratic = groupedEquation.includes('n^2') || groupedEquation.includes('n²');
-    const hasLinear = /(^|[^\^])n(?![\w^])/.test(groupedEquation) || groupedEquation.includes('n+1') || groupedEquation.includes('n-1');
+    const linearPattern = String.raw`(^|[^\^])n(?![\w^])`;
+    const hasLinear = new RegExp(linearPattern).test(groupedEquation) || groupedEquation.includes('n+1') || groupedEquation.includes('n-1');
     const hasLog = groupedEquation.includes('log');
 
     const coeffs = ['a', 'b', 'c', 'd'];
@@ -181,15 +182,80 @@ export default function ProcedureModal({
     }
 
     return `${coeffs[0]}`; // constante
-  };
+  }, []);
+
+  // Helper para calcular Big-O
+  const calculateBigOFromExpression = useCallback((expr: string): string => {
+    if (expr.includes('n^3')) return 'O(n^3)';
+    if (expr.includes('n^2')) return 'O(n^2)';
+    const linearPattern = String.raw`(^|[^\^])n(?![\w^])`;
+    if (new RegExp(linearPattern).test(expr)) return 'O(n)';
+    const logPattern = String.raw`\log(n)|log(n)`;
+    if (new RegExp(logPattern).test(expr)) return String.raw`O(\log n)`;
+    return 'O(1)';
+  }, []);
+
+  const sanitizeProcedureStep = useCallback((step: string): string => {
+    const trimmedStep = step.trim();
+    const textCheckPattern = String.raw`\text\{`;
+    
+    // Si no contiene \text{}, retornar tal cual
+    if (!trimmedStep.includes(textCheckPattern)) {
+      return trimmedStep;
+    }
+
+    // Pattern para encontrar todos los bloques \text{...} y procesarlos individualmente
+    const textBlockRegex = /\\text\{([^}]*)\}/g;
+    const matches = Array.from(trimmedStep.matchAll(textBlockRegex));
+    
+    if (matches.length === 0) {
+      return trimmedStep;
+    }
+    
+    // Procesar cada bloque encontrado y crear un mapa de reemplazos
+    const replacements = new Map<string, string>();
+    for (const match of matches) {
+      const originalMatch = match[0];
+      if (replacements.has(originalMatch)) {
+        continue; // Ya procesado
+      }
+      
+      const content = match[1] ?? '';
+      let normalizedContent = content.replaceAll(/\s+/g, ' ').trim();
+      
+      // Normalizar dos puntos: asegurar formato ": " si hay dos puntos
+      normalizedContent = normalizedContent.replaceAll(/\s*:\s*/g, ': ').trim();
+      
+      // Asegurar espacio al final dentro de las llaves (requisito de formato)
+      const finalContent = normalizedContent.endsWith(' ') 
+        ? normalizedContent 
+        : `${normalizedContent} `;
+      
+      const sanitized = `\\text{${finalContent}}`;
+      replacements.set(originalMatch, sanitized);
+    }
+    
+    // Aplicar todos los reemplazos
+    let sanitized = trimmedStep;
+    for (const [original, replacement] of replacements) {
+      sanitized = sanitized.replaceAll(original, replacement);
+    }
+
+    // Limpiar posibles espacios múltiples entre bloques
+    const cleaned = sanitized
+      .replaceAll(/\s+/g, ' ') // Normalizar espacios múltiples
+      .trim();
+
+    return cleaned;
+  }, []);
 
   // Memoizar las ecuaciones de derivación
   const derivationSteps = useMemo(() => {
     if (!analysisData?.byLine) return [];
     
-    // Paso 1: Ecuación completa con count_raw
+    // Paso 1: Ecuación completa con count_raw (o count si count_raw no está disponible)
     const step1 = analysisData.byLine
-      .map(line => `${line.ck} \\cdot (${line.count_raw})`)
+      .map(line => `${line.ck} \\cdot (${line.count_raw ?? line.count})`)
       .join(' + ');
     
     // Paso 2: Ecuación con count simplificado
@@ -201,15 +267,11 @@ export default function ProcedureModal({
     const step3 = groupSimilarTerms(analysisData.byLine.map(line => ({ ck: line.ck, count: line.count })));
     
     // Paso 4: Forma final con constantes a, b, c, etc. (usar T_polynomial si está)
-    const tPoly = (analysisData.totals as any)?.T_polynomial as string | undefined;
-    const step4 = createFinalSimplifiedForm(step3, tPoly);
+    const tPoly = analysisData.totals?.T_polynomial;
+    const step4 = createFinalSimplifiedForm(step3, typeof tPoly === 'string' ? tPoly : undefined);
     
     // Paso 5: Notación asintótica a partir de la forma final
-    const bigO = step4.includes('n^3') ? 'O(n^3)'
-               : step4.includes('n^2') ? 'O(n^2)'
-               : /(^|[^\^])n(?![\w^])/.test(step4) ? 'O(n)'
-               : step4.includes('\\log(n)') ? 'O(\\log n)'
-               : 'O(1)';
+    const bigO = calculateBigOFromExpression(step4);
     
     // Crear array de pasos con sus ecuaciones
     const allSteps = [
@@ -229,7 +291,7 @@ export default function ProcedureModal({
     });
     
     return filteredSteps;
-  }, [analysisData]);
+  }, [analysisData, groupSimilarTerms, createFinalSimplifiedForm, calculateBigOFromExpression]);
 
   // Memoizar los símbolos
   const symbols = useMemo(() => {
@@ -327,27 +389,24 @@ export default function ProcedureModal({
                       <div className="mb-4">
                         <span className="text-sm font-medium text-slate-400">Tipo de operación:</span>
                         <div className="mt-1">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${
-                            lineData.kind === 'assign' ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' :
-                            lineData.kind === 'if' ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' :
-                            lineData.kind === 'for' ? 'bg-green-500/20 text-green-300 border-green-500/30' :
-                            lineData.kind === 'while' ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' :
-                            lineData.kind === 'repeat' ? 'bg-orange-500/20 text-orange-300 border-orange-500/30' :
-                            lineData.kind === 'call' ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' :
-                            lineData.kind === 'return' ? 'bg-pink-500/20 text-pink-300 border-pink-500/30' :
-                            lineData.kind === 'decl' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' :
-                            'bg-gray-500/20 text-gray-300 border-gray-500/30'
-                          }`}>
-                            {lineData.kind === 'assign' ? 'Asignación' :
-                             lineData.kind === 'if' ? 'Condicional' :
-                             lineData.kind === 'for' ? 'Bucle For' :
-                             lineData.kind === 'while' ? 'Bucle While' :
-                             lineData.kind === 'repeat' ? 'Bucle Repeat' :
-                             lineData.kind === 'call' ? 'Llamada' :
-                             lineData.kind === 'return' ? 'Retorno' :
-                             lineData.kind === 'decl' ? 'Declaración' :
-                             'Otro'}
-                          </span>
+                          {(() => {
+                            const kindConfig: Record<string, { label: string; className: string }> = {
+                              assign: { label: 'Asignación', className: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
+                              if: { label: 'Condicional', className: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
+                              for: { label: 'Bucle For', className: 'bg-green-500/20 text-green-300 border-green-500/30' },
+                              while: { label: 'Bucle While', className: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' },
+                              repeat: { label: 'Bucle Repeat', className: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
+                              call: { label: 'Llamada', className: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' },
+                              return: { label: 'Retorno', className: 'bg-pink-500/20 text-pink-300 border-pink-500/30' },
+                              decl: { label: 'Declaración', className: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' }
+                            };
+                            const config = kindConfig[lineData.kind] || { label: 'Otro', className: 'bg-gray-500/20 text-gray-300 border-gray-500/30' };
+                            return (
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${config.className}`}>
+                                {config.label}
+                              </span>
+                            );
+                          })()}
                         </div>
                       </div>
 
@@ -417,8 +476,8 @@ export default function ProcedureModal({
                                 <div className="flex-shrink-0 w-5 h-5 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs font-medium">
                                   {index + 1}
                                 </div>
-                                <div className="flex-1">
-                                  <Formula latex={step} display />
+                                <div className="flex-1 min-w-0 overflow-x-auto scrollbar-custom">
+                                  <Formula latex={sanitizeProcedureStep(step)} display />
                                 </div>
                               </div>
                             ))}
@@ -490,13 +549,9 @@ export default function ProcedureModal({
                     <h4 className="font-semibold text-white mb-3">Notación asintótica</h4>
                     <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
                       {(() => {
-                        const tPoly = (analysisData.totals as any)?.T_polynomial as string | undefined;
-                        const base = tPoly && tPoly.trim().length > 0 ? tPoly : (derivationSteps[3]?.equation || '');
-                        const bigO = base.includes('n^3') ? 'O(n^3)'
-                                   : base.includes('n^2') ? 'O(n^2)'
-                                   : /(^|[^\^])n(?![\w^])/.test(base) ? 'O(n)'
-                                   : base.includes('\\log(n)') ? 'O(\\log n)'
-                                   : 'O(1)';
+                        const tPoly = analysisData.totals?.T_polynomial;
+                        const base = typeof tPoly === 'string' && tPoly.trim().length > 0 ? tPoly : (derivationSteps[3]?.equation || '');
+                        const bigO = calculateBigOFromExpression(base);
                         return <Formula latex={bigO} display />;
                       })()}
                     </div>

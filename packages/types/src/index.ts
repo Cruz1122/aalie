@@ -215,7 +215,8 @@ export interface LineCost {
   line: number;         // 1-based
   kind: LineKind;       // tipo de operación (para badges)
   ck: string;           // costo(s) elemental(es), ej: "C_assign + C_index"
-  count: string;        // # ejecuciones (abierto o cerrado), ej: "n", "\sum_{i=1}^{n} 1"
+  count: string;        // # ejecuciones (simplificado), ej: "n", "n^2"
+  count_raw?: string;   // # ejecuciones (con sumatorias sin simplificar), ej: "\sum_{i=1}^{n} 1"
   note?: string;        // aclaraciones (p. ej., "worst: max(then, else)")
   procedure?: string[]; // procedimiento completo por línea (desde count_raw hasta forma polinómica)
 }

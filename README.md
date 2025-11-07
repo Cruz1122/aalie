@@ -78,11 +78,43 @@ docker-compose up
 ## 📚 Documentación Detallada
 
 - **[Gramática ANTLR y Sintaxis del Lenguaje](packages/grammar/grammar/README.md)** — Referencia completa de sintaxis, ejemplos y estructura del AST
+- **[Guía de Análisis de Algoritmos](apps/api/app/analysis/README.md)** — Documentación técnica del sistema de análisis, reglas, y flujo de trabajo
 - **Guía de Desarrollo** (en README de gramática):
   - [Generación de código TS/Py](packages/grammar/grammar/README.md#generación-de-código-codegen)
   - [Probar endpoint /parse](packages/grammar/grammar/README.md#probar-el-endpoint-parse)
   - [Configurar KaTeX](packages/grammar/grammar/README.md#activar-katex-para-renderizado-de-fórmulas)
   - [Contratos de tipos @aa/types](packages/grammar/grammar/README.md#contratos-de-tipos-en-aatypes)
+
+## 🚀 Guía de Usuario
+
+### Flujo de Análisis Completo
+
+1. **Ingresar código**: Escribe o pega tu algoritmo en pseudocódigo en el editor.
+2. **Verificar sintaxis**: El editor muestra errores en tiempo real. Usa "Verificar Parse" para validar.
+3. **Analizar complejidad**: Haz clic en "Analizar Complejidad" para iniciar el análisis completo.
+4. **Revisar resultados**:
+   - **Tabla de costos por línea**: Visualiza el costo elemental (Cₖ) y número de ejecuciones por línea.
+   - **Selector de casos**: Cambia entre Mejor/Promedio/Peor caso (actualmente solo Peor caso disponible).
+   - **Tarjetas de resumen**: Ve la notación asintótica (Big-O) para cada caso.
+   - **Procedimientos detallados**: 
+     - Haz clic en "Ver Procedimiento" en la tarjeta del Peor caso para ver el procedimiento general.
+     - Haz clic en una línea de la tabla para ver el procedimiento específico de esa línea.
+
+### Características del Loader de Análisis
+
+- **Progreso en tiempo real**: Muestra el porcentaje de avance durante cada etapa.
+- **Etapas visibles**: Parseo → Clasificación → Hallazgo de sumatorias → Simplificación → Finalización.
+- **Identificación de tipo**: Muestra el tipo de algoritmo detectado (iterativo, recursivo, híbrido, desconocido).
+- **Manejo de errores**: Si ocurre un error, se muestra un mensaje y puedes cerrar el loader.
+
+### Operadores de Asignación Soportados
+
+El lenguaje acepta múltiples formas de asignación:
+- `<-` (estándar ASCII)
+- `:=` (estilo Pascal)
+- `🡨`, `←`, `⟵` (símbolos Unicode)
+
+**Nota**: El archivo de gramática debe guardarse en UTF-8 para reconocer correctamente los símbolos Unicode.
 
 ## Tecnologías Principales
 
@@ -128,12 +160,17 @@ Aplicación Next.js con editor de código, análisis de complejidad y modo IA.
 - Renderizado de fórmulas con KaTeX
 - Visualización de AST
 - Chatbot integrado
+- Loader de análisis a pantalla completa con etapas, porcentajes sincronizados y estado de error
+- Tarjetas por caso (mejor/promedio/peor) con selección persistente en `sessionStorage` y badges Big-O
+- Modal dedicado para el procedimiento general y vista detallada por línea con pasos normalizados
+- Sanitización automática de procedimientos LaTeX que maneja múltiples bloques `\text{}` intercalados con expresiones matemáticas 
 
 ### `apps/api`
 API REST con FastAPI que expone endpoints de parsing y análisis.
 
 **Endpoints principales:**
 - `POST /grammar/parse` — Parsea pseudocódigo y devuelve AST
+- `POST /analyze/open` — Analiza complejidad temporal (método abierto S3)
 - `GET /health` — Health check
 
 ## Testing

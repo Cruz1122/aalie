@@ -614,3 +614,30 @@ apps/api/app/analysis/
 ---
 
 **Nota**: Este sistema está diseñado para ser extensible y mantenible. Las reglas están claramente documentadas y separadas por responsabilidad, permitiendo fácil adición de nuevas funcionalidades y corrección de bugs.
+
+## Integración con LLM
+
+Desde S3 la simplificación matemática se delega a Gemini (Google Generative AI). Esta versión implementa un flujo en dos fases:
+
+1. **`simplify_counts_with_llm` (gemini-2.5-flash)**
+    - Recibe todos los `count_raw` en una sola petición.
+    - Devuelve los `count` simplificados y la forma polinómica `T_polynomial` en formato canónico (sin coeficientes cero ni puntos medios).
+    - El prompt fuerza índices de sumatoria únicos para evitar mezclar variables ligadas con libres.
+
+2. **`generate_procedures_with_llm` (gemini-2.5-flash-lite)**
+    - Utiliza los resultados de la etapa anterior para construir el procedimiento detallado por línea.
+    - Cada paso incluye descripción en `\text{}`, transforma solo cuando hay cambios reales y finaliza con “Forma final” y “Notación asintótica”.
+
+ ### Sanitización en backend/frontend
+ - El backend conserva tanto `count_raw` como `count` y persiste `procedure` en cada fila para que el frontend pueda renderizarlo sin recalcular nada.
+ - En `ProcedureModal` se normalizan los pasos recibidos del LLM mediante `sanitizeProcedureStep`, que:
+   - Encuentra y procesa **todos** los bloques `\text{}` en un paso (no solo el primero).
+   - Normaliza espacios y dos puntos dentro de cada bloque.
+   - Asegura un espacio al final dentro de cada `\text{... }`.
+   - Preserva expresiones matemáticas entre bloques de texto.
+   - Corrige casos donde múltiples `\text{}` están intercalados con fórmulas (ej: `\text{Como } n^2 \text{ y } n \text{ no dependen...`).
+ - Se añadió un helper para derivar Big-O a partir de la forma polinómica, reutilizado en las tarjetas de casos (peor/mejor/promedio).
+
+### Notas adicionales
+- El helper `_apply_loop_multipliers` genera sumatorias anidadas en lugar de productos directos, lo que evita mezclar variables unbound.
+- `BaseAnalyzer.add_row` agrega `count_raw` y deja el resto del postprocesado a las llamadas LLM, simplificando los visitantes (`ForVisitor`, `WhileVisitor`, etc.).

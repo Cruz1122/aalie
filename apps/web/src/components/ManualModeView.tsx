@@ -1,10 +1,10 @@
 import type { Program } from "@aa/types";
-import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
-import { GrammarApiService } from "@/services/grammar-api";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { heuristicKind } from "@/lib/algorithm-classifier";
+import { GrammarApiService } from "@/services/grammar-api";
 
 import { AnalysisLoader } from "./AnalysisLoader";
 import { AnalyzerEditor } from "./AnalyzerEditor";
@@ -20,12 +20,14 @@ const ANALYSIS_MESSAGES = {
   ERROR_CONNECTION: "Error al conectar con el servidor",
 } as const;
 
-interface Message {
+type Message = {
   id: string;
   content: string;
   sender: 'user' | 'bot';
   timestamp: Date;
-}
+};
+
+type AlgorithmKind = "iterative" | "recursive" | "hybrid" | "unknown";
 
 interface ManualModeViewProps {
   readonly messages: Message[];
@@ -223,6 +225,22 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
     }
   };
 
+  const formatAlgorithmKind = (value: AlgorithmKind): string => {
+    switch (value) {
+      case "iterative":
+        return "Iterativo";
+      case "recursive":
+        return "Recursivo";
+      case "hybrid":
+        return "Híbrido";
+      default:
+        return "Desconocido";
+    }
+  };
+
+  const formatUnsupportedKindMessage = (value: AlgorithmKind): string => {
+    return value === "recursive" ? "recursivo" : "híbrido";
+  };
 
   // Función para analizar complejidad (ejecutar análisis completo con loader)
   const handleAnalyzeComplexity = async () => {
@@ -266,7 +284,7 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
 
       // 2) Clasificar el algoritmo (20-40%)
       setAnalysisMessage("Clasificando algoritmo...");
-      let kind: "iterative" | "recursive" | "hybrid" | "unknown";
+      let kind: AlgorithmKind;
       try {
         const clsPromise = fetch("/api/llm/classify", {
           method: "POST",
@@ -279,9 +297,9 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
         
         if (clsResponse.ok) {
           const cls = await clsResponse.json() as { kind: string; method?: string; mode?: string };
-          kind = cls.kind as "iterative" | "recursive" | "hybrid" | "unknown";
+          kind = cls.kind as AlgorithmKind;
           setAlgorithmType(kind);
-          setAnalysisMessage(`Algoritmo identificado: ${kind === "iterative" ? "Iterativo" : kind === "recursive" ? "Recursivo" : kind === "hybrid" ? "Híbrido" : "Desconocido"}`);
+          setAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKind(kind)}`);
           console.log(`[ManualMode] Clasificación: ${kind} (método: ${cls.method})`);
         } else {
           throw new Error(`HTTP ${clsResponse.status}`);
@@ -290,13 +308,12 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
         console.warn(`[ManualMode] Error en clasificación, usando heurística:`, error);
         kind = heuristicKind(parseRes.ast || null);
         setAlgorithmType(kind);
-        setAnalysisMessage(`Algoritmo identificado: ${kind === "iterative" ? "Iterativo" : kind === "recursive" ? "Recursivo" : kind === "hybrid" ? "Híbrido" : "Desconocido"}`);
+        setAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKind(kind)}`);
       }
 
       // 3) Rechazar algoritmos recursivos o híbridos
       if (kind === "recursive" || kind === "hybrid") {
-        const kindLabel = kind === "recursive" ? "recursivo" : "híbrido";
-        setAnalysisError(`El algoritmo ${kindLabel} no está soportado en esta versión. Por favor, usa un algoritmo iterativo o básico, o cambia a S4 luego.`);
+        setAnalysisError(`El algoritmo ${formatUnsupportedKindMessage(kind)} no está soportado en esta versión. Por favor, usa un algoritmo iterativo o básico, o cambia a S4 luego.`);
         setTimeout(() => {
           setIsAnalyzing(false);
           setAnalysisProgress(0);
@@ -408,7 +425,6 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
               onAstChange={setAst}
               onParseStatusChange={handleParseStatusChange}
               height="420px"
-              showToolbar={false}
             />
           </div>
 

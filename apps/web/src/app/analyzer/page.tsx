@@ -3,21 +3,21 @@
 import type { AnalyzeOpenResponse, ParseResponse, Program } from "@aa/types";
 import { useEffect, useRef, useState } from "react";
 
-import { AnalyzerEditor } from "@/components/AnalyzerEditor";
 import { AnalysisLoader } from "@/components/AnalysisLoader";
+import { AnalyzerEditor } from "@/components/AnalyzerEditor";
 import { ASTTreeView } from "@/components/ASTTreeView";
 import ChatBot from "@/components/ChatBot";
 import Footer from "@/components/Footer";
-import FormulaBlock from "@/components/FormulaBlock";
 import Formula from "@/components/Formula";
+import GeneralProcedureModal from "@/components/GeneralProcedureModal";
 import Header from "@/components/Header";
 import LineTable from "@/components/LineTable";
 import ProcedureModal from "@/components/ProcedureModal";
-import GeneralProcedureModal from "@/components/GeneralProcedureModal";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
-import { heuristicKind } from "@/lib/algorithm-classifier";
-import { GrammarApiService } from "@/services/grammar-api";
 import { useChatHistory } from "@/hooks/useChatHistory";
+import { heuristicKind } from "@/lib/algorithm-classifier";
+import { calculateBigO, getSavedCase, saveCase } from "@/lib/polynomial";
+import { GrammarApiService } from "@/services/grammar-api";
 
 type ClassifyResponse = { kind: "iterative" | "recursive" | "hybrid" | "unknown" };
 
@@ -28,10 +28,10 @@ export default function AnalyzerPage() {
   const [source, setSource] = useState<string>(() => {
     // Cargar código desde sessionStorage si viene del editor manual
     if (globalThis.window !== undefined) {
-      const savedCode = sessionStorage.getItem('analyzerCode');
+      const savedCode = globalThis.window.sessionStorage.getItem('analyzerCode');
       if (savedCode) {
         // Limpiar el código guardado después de cargarlo
-        sessionStorage.removeItem('analyzerCode');
+        globalThis.window.sessionStorage.removeItem('analyzerCode');
         return savedCode;
       }
     }
@@ -46,10 +46,10 @@ export default function AnalyzerPage() {
   const [data, setData] = useState<AnalyzeOpenResponse | null>(() => {
     // Cargar resultados desde sessionStorage si vienen del editor manual
     if (globalThis.window !== undefined) {
-      const savedResults = sessionStorage.getItem('analyzerResults');
+      const savedResults = globalThis.window.sessionStorage.getItem('analyzerResults');
       if (savedResults) {
         // Limpiar los resultados guardados después de cargarlos
-        sessionStorage.removeItem('analyzerResults');
+        globalThis.window.sessionStorage.removeItem('analyzerResults');
         try {
           return JSON.parse(savedResults);
         } catch (error) {
@@ -166,17 +166,6 @@ export default function AnalyzerPage() {
     }
   };
 
-  // Funciones para manejar el chat
-  const handleOpenChat = () => {
-    setIsChatOpen(true);
-  };
-
-  const handleSwitchToAIMode = () => {
-    // Cambiar al modo AI (funcionalidad futura)
-  };
-
-
-
   // Handler para el clic del botón de análisis
   const handleAnalyze = async () => {
     // Verificar que no esté ya analizando
@@ -236,7 +225,7 @@ export default function AnalyzerPage() {
           const cls = await clsResponse.json() as ClassifyResponse & { method?: string; mode?: string };
           kind = cls.kind;
           setAlgorithmType(kind);
-          setAnalysisMessage(`Algoritmo identificado: ${kind === "iterative" ? "Iterativo" : kind === "recursive" ? "Recursivo" : kind === "hybrid" ? "Híbrido" : "Desconocido"}`);
+          setAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKind(kind)}`);
           console.log(`[Analyzer] Clasificación: ${kind} (método: ${cls.method})`);
         } else {
           throw new Error(`HTTP ${clsResponse.status}`);
@@ -245,14 +234,13 @@ export default function AnalyzerPage() {
         console.warn(`[Analyzer] Error en clasificación, usando heurística:`, error);
         kind = heuristicKind(parseRes.ast);
         setAlgorithmType(kind);
-        setAnalysisMessage(`Algoritmo identificado: ${kind === "iterative" ? "Iterativo" : kind === "recursive" ? "Recursivo" : kind === "hybrid" ? "Híbrido" : "Desconocido"}`);
+        setAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKind(kind)}`);
       }
 
       // 3) Rechazar algoritmos recursivos o híbridos
       if (kind === "recursive" || kind === "hybrid") {
         console.warn(`[Analyzer] Algoritmo ${kind} no soportado`);
-        const kindLabel = kind === "recursive" ? "recursivo" : "híbrido";
-        setAnalysisError(`El algoritmo ${kindLabel} no está soportado en esta versión. Por favor, usa un algoritmo iterativo.`);
+        setAnalysisError(`El algoritmo ${formatUnsupportedKindMessage(kind)} no está soportado en esta versión. Por favor, usa un algoritmo iterativo.`);
         setTimeout(() => {
           setAnalyzing(false);
           setAnalysisProgress(0);
@@ -344,19 +332,99 @@ export default function AnalyzerPage() {
     setOpenGeneral(true);
   };
 
-  // Selector de casos (worst por defecto, preparado para best/average)
-  const [selectedCase, setSelectedCase] = useState<'worst' | 'average' | 'best'>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = window.sessionStorage.getItem('analyzerSelectedCase');
-      if (saved === 'best' || saved === 'average' || saved === 'worst') return saved;
+  type CaseType = 'worst' | 'average' | 'best';
+
+  // Helper para obtener Big-O de los datos
+  const getBigOFromData = (analysisData: AnalyzeOpenResponse | null): string => {
+    if (!analysisData?.ok) return 'O(—)';
+    const base = analysisData.totals?.T_polynomial ?? analysisData.totals.T_open;
+    return calculateBigO(base);
+  };
+
+  // Helper para obtener el label del caso
+  const getCaseLabel = (caseType: CaseType): string => {
+    switch (caseType) {
+      case 'worst': return 'Peor';
+      case 'average': return 'Promedio';
+      case 'best': return 'Mejor';
+      default: return '';
     }
-    return 'worst';
-  });
+  };
+
+  // Helper para obtener el estilo del badge según el caso
+  const getCaseBadgeStyle = (caseType: CaseType): string => {
+    switch (caseType) {
+      case 'worst': return 'bg-red-500/15 text-red-300 border-red-500/25';
+      case 'average': return 'bg-yellow-500/15 text-yellow-300 border-yellow-500/25';
+      case 'best': return 'bg-green-500/15 text-green-300 border-green-500/25';
+      default: return '';
+    }
+  };
+
+  // Helper para obtener el estilo del botón del selector según el caso
+  const getSelectorButtonStyle = (caseType: CaseType, isSelected: boolean): string => {
+    if (!isSelected) return 'text-slate-300 hover:bg-white/5';
+    
+    switch (caseType) {
+      case 'worst': return 'bg-red-500/20 text-red-300 border border-red-500/30';
+      case 'average': return 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30';
+      case 'best': return 'bg-green-500/20 text-green-300 border border-green-500/30';
+      default: return '';
+    }
+  };
+
+  const formatAlgorithmKind = (value: ClassifyResponse["kind"]): string => {
+    switch (value) {
+      case "iterative":
+        return "Iterativo";
+      case "recursive":
+        return "Recursivo";
+      case "hybrid":
+        return "Híbrido";
+      default:
+        return "Desconocido";
+    }
+  };
+
+  const formatUnsupportedKindMessage = (value: ClassifyResponse["kind"]): string => {
+    return value === "recursive" ? "recursivo" : "híbrido";
+  };
+
+  const renderLineCostContent = () => {
+    if (!data) {
+      return (
+        <div className="flex-1 flex items-center justify-center text-slate-400">
+          <div className="text-center">
+            <span className="material-symbols-outlined text-4xl mb-2 block">table_chart</span>
+            <p>Ejecuta el análisis para ver los costos</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (selectedCase !== 'worst') {
+      return (
+        <div className="flex-1 flex items-center justify-center text-slate-400">
+          <div className="text-center">
+            <span className="material-symbols-outlined text-4xl mb-2 block">hourglass_empty</span>
+            <p>El caso &quot;{getCaseLabel(selectedCase)}&quot; estará disponible próximamente</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="overflow-auto scrollbar-custom" style={{ maxHeight: '285px' }}>
+        <LineTable rows={data.byLine} onViewProcedure={handleViewLineProcedure} />
+      </div>
+    );
+  };
+
+  // Selector de casos (worst por defecto, preparado para best/average)
+  const [selectedCase, setSelectedCase] = useState<CaseType>(getSavedCase);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.setItem('analyzerSelectedCase', selectedCase);
-    }
+    saveCase(selectedCase);
   }, [selectedCase]);
 
   // Computar si el botón debe estar deshabilitado
@@ -419,8 +487,7 @@ export default function AnalyzerPage() {
                     onChange={setSource}
                     onAstChange={setAst}
                     onParseStatusChange={handleParseStatusChange}
-                    height="400px"
-                    showToolbar={true}
+                    height="430px"
                   />
                 </div>
 
@@ -442,7 +509,7 @@ export default function AnalyzerPage() {
                           className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all opacity-40 cursor-not-allowed bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30"
                         >
                           <span className="material-symbols-outlined text-sm">smart_toy</span>
-                          Ayuda IA
+                          <span>Ayuda IA</span>
                         </button>
                       )}
                       <button
@@ -451,7 +518,7 @@ export default function AnalyzerPage() {
                         className="flex items-center gap-2 py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-yellow-400/50 bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 hover:from-yellow-500/30 hover:to-amber-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
                       >
                         <span className="material-symbols-outlined text-sm">account_tree</span>
-                        Ver AST
+                        <span>Ver AST</span>
                       </button>
                     </div>
                   </div>
@@ -466,54 +533,31 @@ export default function AnalyzerPage() {
                 <div className="glass-card p-4 rounded-lg h-full flex flex-col">
                   <div className="flex items-center justify-between mb-3">
                     <h2 className="text-white font-semibold flex items-center gap-2">
-                      <span className="material-symbols-outlined mr-2 text-amber-400">table_chart</span>{" "}
-                      Costos por Línea
+                      <span className="material-symbols-outlined mr-2 text-amber-400">table_chart</span>
+                      <span>Costos por Línea</span>
                       <span
-                        className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide ${selectedCase === 'worst' ? 'bg-red-500/15 text-red-300 border-red-500/25' :
-                            selectedCase === 'average' ? 'bg-yellow-500/15 text-yellow-300 border-yellow-500/25' :
-                              'bg-green-500/15 text-green-300 border-green-500/25'
-                          }`}
+                        className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide ${getCaseBadgeStyle(selectedCase)}`}
                       >
-                        {selectedCase === 'worst' ? 'Peor' : selectedCase === 'average' ? 'Promedio' : 'Mejor'}
+                        {getCaseLabel(selectedCase)}
                       </span>
                     </h2>
                     <div className="flex items-center gap-1 bg-slate-800/60 border border-white/10 rounded-lg p-1">
                       <button
                         onClick={() => setSelectedCase('best')}
-                        className={`px-2 py-1 text-xs rounded-md ${selectedCase === 'best' ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'text-slate-300 hover:bg-white/5'}`}
+                        className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle('best', selectedCase === 'best')}`}
                       >Mejor</button>
                       <button
                         onClick={() => setSelectedCase('average')}
-                        className={`px-2 py-1 text-xs rounded-md ${selectedCase === 'average' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' : 'text-slate-300 hover:bg:white/5'}`}
+                        className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle('average', selectedCase === 'average')}`}
                       >Promedio</button>
                       <button
                         onClick={() => setSelectedCase('worst')}
-                        className={`px-2 py-1 text-xs rounded-md ${selectedCase === 'worst' ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'text-slate-300 hover:bg-white/5'}`}
+                        className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle('worst', selectedCase === 'worst')}`}
                       >Peor</button>
                     </div>
                   </div>
                   <div className="flex-1 flex flex-col overflow-hidden">
-                    {data ? (
-                      selectedCase === 'worst' ? (
-                        <div className="overflow-auto scrollbar-custom" style={{ maxHeight: '285px' }}>
-                          <LineTable rows={data.byLine} onViewProcedure={handleViewLineProcedure} />
-                        </div>
-                      ) : (
-                        <div className="flex-1 flex items-center justify-center text-slate-400">
-                          <div className="text-center">
-                            <span className="material-symbols-outlined text-4xl mb-2 block">hourglass_empty</span>
-                            <p>El caso “{selectedCase === 'best' ? 'Mejor' : 'Promedio'}” estará disponible próximamente</p>
-                          </div>
-                        </div>
-                      )
-                    ) : (
-                      <div className="flex-1 flex items-center justify-center text-slate-400">
-                        <div className="text-center">
-                          <span className="material-symbols-outlined text-4xl mb-2 block">table_chart</span>
-                          <p>Ejecuta el análisis para ver los costos</p>
-                        </div>
-                      </div>
-                    )}
+                    {renderLineCostContent()}
                   </div>
                 </div>
 
@@ -534,7 +578,7 @@ export default function AnalyzerPage() {
                         title="Próximamente"
                       >
                         <span className="material-symbols-outlined text-sm">visibility</span>
-                        Ver Procedimiento (próximamente)
+                        <span>Ver Procedimiento (próximamente)</span>
                       </button>
                     </div>
                   </div>
@@ -552,7 +596,7 @@ export default function AnalyzerPage() {
                         title="Próximamente"
                       >
                         <span className="material-symbols-outlined text-sm">visibility</span>
-                        Ver Procedimiento (próximamente)
+                        <span>Ver Procedimiento (próximamente)</span>
                       </button>
                     </div>
                   </div>
@@ -560,27 +604,18 @@ export default function AnalyzerPage() {
                     <div className="h-full flex flex-col items-center justify-center gap-2">
                       <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30">
                         <div className="scale-110">
-                          <Formula latex={(() => {
-                            if (!data || !(data as any).ok) return 'O(—)';
-                            const base = ((data.totals as any)?.T_polynomial as string | undefined) || data.totals.T_open;
-                            const poly = typeof base === 'string' ? base : '';
-                            if (poly.includes('n^3')) return 'O(n^3)';
-                            if (poly.includes('n^2')) return 'O(n^2)';
-                            if (/([^\\^]|^)n(?![\\w^])/.test(poly)) return 'O(n)';
-                            if (poly.includes('\\\log(n)')) return 'O(\\log n)';
-                            return 'O(1)';
-                          })()} />
+                          <Formula latex={getBigOFromData(data)} />
                         </div>
                       </div>
                       <h3 className="font-semibold text-red-300 mb-1">Peor caso</h3>
                       <button
                         onClick={handleViewGeneralProcedure}
-                        disabled={!data || !(data as any).ok}
-                        className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors ${data && (data as any).ok ? 'text-white glass-secondary hover:bg-sky-500/20' : 'text-slate-400 border border-white/10 bg:white/5 cursor-not-allowed opacity-60'}`}
-                        title={data && (data as any).ok ? 'Ver procedimiento general' : 'Ejecuta el análisis para ver el procedimiento'}
+                        disabled={!data?.ok}
+                        className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors ${data?.ok ? 'text-white glass-secondary hover:bg-sky-500/20' : 'text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60'}`}
+                        title={data?.ok ? 'Ver procedimiento general' : 'Ejecuta el análisis para ver el procedimiento'}
                       >
                         <span className="material-symbols-outlined text-sm">visibility</span>
-                        Ver Procedimiento
+                        <span>Ver Procedimiento</span>
                       </button>
                     </div>
                   </div>
@@ -596,13 +631,13 @@ export default function AnalyzerPage() {
         open={open}
         onClose={() => setOpen(false)}
         selectedLine={selectedLine}
-        analysisData={data}
+        analysisData={data ?? undefined}
       />
       {/* Modal de procedimiento general */}
       <GeneralProcedureModal
         open={openGeneral}
         onClose={() => setOpenGeneral(false)}
-        data={data || null}
+        data={data ?? undefined}
       />
 
       {/* Modal AST */}
@@ -629,10 +664,11 @@ export default function AnalyzerPage() {
             <div className="flex gap-2 px-5 py-3 border-b border-white/10">
               <button
                 onClick={() => setViewMode('tree')}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${viewMode === 'tree'
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                  viewMode === 'tree'
                     ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
-                  }`}
+                }`}
               >
                 <span className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-base">account_tree</span>{' '}
@@ -641,10 +677,11 @@ export default function AnalyzerPage() {
               </button>
               <button
                 onClick={() => setViewMode('json')}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${viewMode === 'json'
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                  viewMode === 'json'
                     ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
                     : 'text-slate-400 hover:text-white hover:bg-white/5'
-                  }`}
+                }`}
               >
                 <span className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-base">code</span>{' '}
@@ -658,7 +695,7 @@ export default function AnalyzerPage() {
               {viewMode === 'tree' ? (
                 <ASTTreeView node={ast} />
               ) : (
-                <pre className="text-xs text-slate-200 p-4 rounded-lg border border-white/10 overflow-x-auto font-mono h-full">
+                <pre className="whitespace-pre-wrap break-words text-xs">
                   {JSON.stringify(ast, null, 2)}
                 </pre>
               )}
@@ -672,8 +709,9 @@ export default function AnalyzerPage() {
               <div className="flex gap-2">
                 <button
                   onClick={handleCopyJson}
-                  className={`glass-secondary px-4 py-2 text-xs font-semibold rounded-lg transition-all hover:scale-105 flex items-center gap-2 ${copied ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'text-slate-200'
-                    }`}
+                  className={`glass-secondary px-4 py-2 text-xs font-semibold rounded-lg transition-all hover:scale-105 flex items-center gap-2 ${
+                    copied ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'text-slate-200'
+                  }`}
                 >
                   <span className="material-symbols-outlined text-sm">
                     {copied ? 'check' : 'content_copy'}

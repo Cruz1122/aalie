@@ -10,45 +10,21 @@ from dotenv import load_dotenv
 env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env")
 load_dotenv(env_path)
 
+# Constantes
+CONTENT_TYPE_JSON = "application/json"
+GEMINI_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
+DEFAULT_TIMEOUT = 90.0
 
-def _call_gemini_api(
+
+def _prepare_request_body(
     prompt: str,
-    *,
-    model: str,
-    max_retries: int = 1,
     temperature: float = 0.0,
-    top_p: float = 0.0,
-    top_k: int = 1,
+    top_p: Optional[float] = None,
+    top_k: Optional[int] = None,
     max_output_tokens: int = 8000,
-    response_mime_type: str = "application/json"
-) -> Optional[Dict[str, Any]]:
-    """
-    Llama directamente a la API de Gemini para simplificar expresiones.
-    
-    Args:
-        prompt: Prompt para el LLM
-        max_retries: Número máximo de reintentos (total 2 intentos)
-        
-    Returns:
-        Respuesta del LLM como diccionario, o None si falla
-    """
-    api_key = os.getenv("API_KEY")
-    if not api_key:
-        print("[LLM Simplifier] ERROR: API_KEY no encontrada en variables de entorno")
-        return None
-    
-    print(
-        f"[LLM Simplifier] Llamando a Gemini API ({model}) con {len(prompt)} caracteres de prompt"
-    )
-    
-    url = (
-        "https://generativelanguage.googleapis.com/v1beta/models/"
-        f"{model}:generateContent"
-    )
-    headers = {
-        "Content-Type": "application/json",
-    }
-    
+    response_mime_type: str = CONTENT_TYPE_JSON
+) -> Dict[str, Any]:
+    """Prepara el cuerpo de la petición para la API de Gemini."""
     system_instruction = {
         "parts": [{
             "text": """Eres un asistente especializado en simplificar expresiones matemáticas de análisis de algoritmos.
@@ -119,7 +95,7 @@ IMPORTANTE:
         "parts": [{"text": prompt}]
     }]
     
-    generation_config = {
+    generation_config: Dict[str, Any] = {
         "temperature": temperature,
         "maxOutputTokens": max_output_tokens,
         "responseMimeType": response_mime_type,
@@ -129,80 +105,131 @@ IMPORTANTE:
     if top_k is not None:
         generation_config["topK"] = top_k
     
-    body = {
+    return {
         "system_instruction": system_instruction,
         "contents": contents,
         "generationConfig": generation_config
     }
+
+
+def _parse_response(response_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Parsea la respuesta de la API de Gemini y extrae el JSON."""
+    if "candidates" not in response_data or len(response_data["candidates"]) == 0:
+        print("[LLM Simplifier] ERROR: No hay candidates en la respuesta")
+        print(f"[LLM Simplifier] Respuesta completa: {json.dumps(response_data, indent=2)[:1000]}")
+        return None
+    
+    candidate = response_data["candidates"][0]
+    
+    finish_reason = candidate.get("finishReason", "")
+    if finish_reason and finish_reason != "STOP":
+        print(f"[LLM Simplifier] WARNING: Finish reason no es STOP: {finish_reason}")
+    
+    content = candidate.get("content", {})
+    parts = content.get("parts", []) if isinstance(content, dict) else []
+    
+    if not parts:
+        print("[LLM Simplifier] ERROR: No hay parts en la respuesta")
+        print(f"[LLM Simplifier] Content completo: {json.dumps(content, indent=2)[:500]}")
+        print(f"[LLM Simplifier] Candidate completo: {json.dumps(candidate, indent=2)[:500]}")
+        return None
+    
+    text = parts[0].get("text", "")
+    if not text:
+        print("[LLM Simplifier] ERROR: Texto vacío en respuesta")
+        return None
+    
+    try:
+        parsed = json.loads(text)
+        print("[LLM Simplifier] JSON parseado correctamente")
+        return parsed
+    except json.JSONDecodeError as e:
+        print(f"[LLM Simplifier] ERROR parseando JSON: {e}")
+        print(f"[LLM Simplifier] Respuesta completa: {text}")
+        return None
+
+
+def _handle_error_response(response: httpx.Response) -> Optional[str]:
+    """Maneja errores en la respuesta de la API."""
+    if response.headers.get("content-type", "").startswith(CONTENT_TYPE_JSON):
+        error_data = response.json()
+        return error_data.get("error", {}).get("message", f"HTTP {response.status_code}")
+    return f"HTTP {response.status_code}"
+
+
+def _call_gemini_api(
+    prompt: str,
+    *,
+    model: str,
+    max_retries: int = 1,
+    temperature: float = 0.0,
+    top_p: Optional[float] = None,
+    top_k: Optional[int] = None,
+    max_output_tokens: int = 8000,
+    response_mime_type: str = CONTENT_TYPE_JSON
+) -> Optional[Dict[str, Any]]:
+    """
+    Llama directamente a la API de Gemini para simplificar expresiones.
+    
+    Args:
+        prompt: Prompt para el LLM
+        model: Modelo de Gemini a usar
+        max_retries: Número máximo de reintentos (total max_retries + 1 intentos)
+        temperature: Temperatura para la generación
+        top_p: Top-p para la generación
+        top_k: Top-k para la generación
+        max_output_tokens: Número máximo de tokens de salida
+        response_mime_type: Tipo MIME de la respuesta
+        
+    Returns:
+        Respuesta del LLM como diccionario, o None si falla
+    """
+    api_key = os.getenv("API_KEY")
+    if not api_key:
+        print("[LLM Simplifier] ERROR: API_KEY no encontrada en variables de entorno")
+        return None
+    
+    print(
+        f"[LLM Simplifier] Llamando a Gemini API ({model}) con {len(prompt)} caracteres de prompt"
+    )
+    
+    url = f"{GEMINI_API_BASE_URL}/{model}:generateContent"
+    headers = {
+        "Content-Type": CONTENT_TYPE_JSON,
+    }
+    
+    body = _prepare_request_body(
+        prompt,
+        temperature=temperature,
+        top_p=top_p,
+        top_k=top_k,
+        max_output_tokens=max_output_tokens,
+        response_mime_type=response_mime_type
+    )
     
     params = {"key": api_key}
-    timeout = 30.0
     
     # Intentar con reintentos
     for attempt in range(max_retries + 1):
         try:
-            with httpx.Client(timeout=timeout) as client:
+            with httpx.Client(timeout=DEFAULT_TIMEOUT) as client:
                 response = client.post(url, headers=headers, params=params, json=body)
                 
                 if response.status_code == 200:
                     data = response.json()
                     print(f"[LLM Simplifier] Respuesta recibida (intento {attempt + 1})")
                     print(f"[LLM Simplifier] Estructura de respuesta: {list(data.keys())}")
-                    # Extraer el texto de la respuesta
-                    if "candidates" in data and len(data["candidates"]) > 0:
-                        candidate = data["candidates"][0]
-                        print(f"[LLM Simplifier] Candidate keys: {list(candidate.keys())}")
-                        
-                        # Verificar finishReason por si hay bloqueo de seguridad
-                        finish_reason = candidate.get("finishReason", "")
-                        if finish_reason:
-                            print(f"[LLM Simplifier] Finish reason: {finish_reason}")
-                            if finish_reason != "STOP":
-                                print(f"[LLM Simplifier] WARNING: Finish reason no es STOP: {finish_reason}")
-                        
-                        content = candidate.get("content", {})
-                        print(f"[LLM Simplifier] Content keys: {list(content.keys()) if isinstance(content, dict) else 'No es dict'}")
-                        print(f"[LLM Simplifier] Content type: {type(content)}")
-                        parts = content.get("parts", []) if isinstance(content, dict) else []
-                        print(f"[LLM Simplifier] Parts encontrados: {len(parts)}")
-                        if isinstance(content, dict) and not parts:
-                            print(f"[LLM Simplifier] Content completo cuando no hay parts: {json.dumps(content, indent=2)[:500]}")
-                        if parts and len(parts) > 0:
-                            text = parts[0].get("text", "")
-                            if text:
-                                print(f"[LLM Simplifier] Texto recibido: {text[:300]}")
-                                try:
-                                    parsed = json.loads(text)
-                                    print("[LLM Simplifier] JSON parseado correctamente")
-                                    return parsed
-                                except json.JSONDecodeError as e:
-                                    print(f"[LLM Simplifier] ERROR parseando JSON: {e}")
-                                    print(f"[LLM Simplifier] Respuesta completa: {text}")
-                                    if attempt < max_retries:
-                                        print("[LLM Simplifier] Reintentando...")
-                                        continue
-                                    return None
-                            else:
-                                print("[LLM Simplifier] ERROR: Texto vacío en respuesta")
-                                if attempt < max_retries:
-                                    continue
-                                return None
-                        else:
-                            print("[LLM Simplifier] ERROR: No hay parts en la respuesta")
-                            print(f"[LLM Simplifier] Content completo: {json.dumps(content, indent=2)[:500]}")
-                            print(f"[LLM Simplifier] Candidate completo: {json.dumps(candidate, indent=2)[:500]}")
-                            if attempt < max_retries:
-                                continue
-                            return None
-                    else:
-                        print("[LLM Simplifier] ERROR: No hay candidates en la respuesta")
-                        print(f"[LLM Simplifier] Respuesta completa: {json.dumps(data, indent=2)[:1000]}")
-                        if attempt < max_retries:
-                            continue
-                        return None
+                    
+                    parsed = _parse_response(data)
+                    if parsed:
+                        return parsed
+                    
+                    if attempt < max_retries:
+                        print("[LLM Simplifier] Reintentando...")
+                        continue
+                    return None
                 else:
-                    error_data = response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
-                    error_msg = error_data.get("error", {}).get("message", f"HTTP {response.status_code}")
+                    error_msg = _handle_error_response(response)
                     print(f"[LLM Simplifier] Error en intento {attempt + 1}: {error_msg}")
                     if attempt < max_retries:
                         continue
@@ -310,7 +337,7 @@ def simplify_counts_with_llm(rows: List[Dict[str, Any]]) -> Optional[Dict[str, A
         top_p=0.0,
         top_k=1,
         max_output_tokens=8000,
-        response_mime_type="application/json",
+        response_mime_type=CONTENT_TYPE_JSON,
     )
     
     if not result:
@@ -424,7 +451,7 @@ def generate_procedures_with_llm(rows: List[Dict[str, Any]]) -> Optional[Dict[st
         top_p=0.0,
         top_k=1,
         max_output_tokens=4000,
-        response_mime_type="application/json",
+        response_mime_type=CONTENT_TYPE_JSON,
     )
 
     if not result:
