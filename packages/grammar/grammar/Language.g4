@@ -53,6 +53,7 @@ objectParam
 stmt
   : assignmentStmt
   | callStmt
+  | printStmt             // NUEVO: print(expr, ...)
   | ifStmt
   | whileStmt
   | repeatStmt            // NUEVO: repeat...until
@@ -73,6 +74,10 @@ declVectorStmt : ID indexSuffix+ ';'? ;
 
 // Llamada como sentencia (con CALL)
 callStmt       : CALL_KW ID LPAREN argList? RPAREN ';'? ;
+
+// Print como sentencia: print(expr, ...)
+printStmt      : PRINT_KW LPAREN argList? RPAREN ';'? ;
+
 argList        : expr (',' expr)* ;
 
 // NUEVO: repeat…until (do-while)
@@ -103,6 +108,7 @@ primary    : INT
            | TRUE_KW
            | FALSE_KW
            | NULL_KW
+           | STRING
            | lengthCall
            | callExpr                 // llamada como EXPRESIÓN (sin CALL)
            | lvalue
@@ -130,11 +136,15 @@ CALL_KW: C A L L ; AND_KW: A N D ; OR_KW: O R ; NOT_KW: N O T ;
 TRUE_KW: T ; FALSE_KW: F ; NULL_KW: N U L L ; LENGTH_KW: L E N G T H ;
 DIV_KW: D I V ; MOD_KW: M O D ;
 
+// ====== STRING debe ir ANTES de keywords para evitar conflictos ======
+STRING : '"' ( '\\' . | ~["\\\r\n] )* '"' ;
+
 // ====== NUEVOS keywords ======
 CLASS_KW : C L A S S ;
 RETURN_KW: R E T U R N ;
 REPEAT_KW: R E P E A T ;
 UNTIL_KW : U N T I L ;
+PRINT_KW : P R I N T ;
 
 ID  : [A-Za-z_][A-Za-z_0-9]* ;
 INT : [0-9]+ ;

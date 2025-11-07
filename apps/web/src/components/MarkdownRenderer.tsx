@@ -7,10 +7,16 @@ import '../styles/highlight.css';
 interface MarkdownRendererProps {
   readonly content: string;
   readonly className?: string;
+  readonly onAnalyzeCode?: (code: string) => void;
 }
 
 interface CopyButtonProps {
   readonly code: string;
+}
+
+interface AnalyzeButtonProps {
+  readonly code: string;
+  readonly onAnalyze?: (code: string) => void;
 }
 
 // Componente de botón de copia
@@ -30,7 +36,7 @@ const CopyButton = ({ code }: CopyButtonProps) => {
   return (
     <button
       onClick={handleCopy}
-      className="absolute top-2 right-2 p-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white rounded transition-colors duration-200 text-xs"
+      className="p-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white rounded transition-colors duration-200 text-xs"
       title={copied ? '¡Copiado!' : 'Copiar código'}
     >
       {copied ? (
@@ -42,6 +48,29 @@ const CopyButton = ({ code }: CopyButtonProps) => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
         </svg>
       )}
+    </button>
+  );
+};
+
+// Componente de botón de análisis
+const AnalyzeButton = ({ code, onAnalyze }: AnalyzeButtonProps) => {
+  if (!onAnalyze) return null;
+
+  // Detectar si es código de pseudocódigo (contiene palabras clave comunes)
+  const isPseudocode = /BEGIN|END|FOR|WHILE|IF|THEN|ELSE|RETURN|CALL/i.test(code);
+
+  if (!isPseudocode) return null;
+
+  return (
+    <button
+      onClick={() => onAnalyze(code)}
+      className="px-3 py-1.5 bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 text-emerald-200 rounded-lg transition-all duration-200 text-xs font-semibold flex items-center gap-1 hover:from-green-500/30 hover:to-emerald-500/30 hover:text-emerald-100 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-green-400/40 active:scale-95"
+      title="Analizar complejidad"
+    >
+      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+      </svg>
+      <span className="text-[10px]">Analizar</span>
     </button>
   );
 };
@@ -145,6 +174,9 @@ const CustomPre = (props: any) => {
   };
 
   const codeContent = extractTextContent(props.children);
+  // Obtener onAnalyzeCode del contexto (se pasa desde MarkdownRenderer)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onAnalyzeCode = (props as any).onAnalyzeCode;
 
   return (
     <div className="relative group w-full">
@@ -154,7 +186,10 @@ const CustomPre = (props: any) => {
         </pre>
       </div>
       {codeContent?.trim() && (
-        <CopyButton code={codeContent} />
+        <div className="absolute top-2 right-2 flex items-center gap-1.5">
+          <AnalyzeButton code={codeContent} onAnalyze={onAnalyzeCode} />
+          <CopyButton code={codeContent} />
+        </div>
       )}
     </div>
   );
@@ -225,7 +260,11 @@ const CustomTd = (props: any) => (
   </td>
 );
 
-export default function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
+export default function MarkdownRenderer({ content, className, onAnalyzeCode }: MarkdownRendererProps) {
+  // Crear un componente Pre personalizado que incluye onAnalyzeCode
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const PreWithAnalyze = (props: any) => <CustomPre {...props} onAnalyzeCode={onAnalyzeCode} />;
+
   return (
     <div className={className}>
       <ReactMarkdown
@@ -240,7 +279,7 @@ export default function MarkdownRenderer({ content, className }: MarkdownRendere
           ol: CustomOl,
           li: CustomLi,
           code: CustomCode,
-          pre: CustomPre,
+          pre: PreWithAnalyze,
           blockquote: CustomBlockquote,
           strong: CustomStrong,
           em: CustomEm,

@@ -33,6 +33,14 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
   );
   const monacoRef = useRef<MonacoReact | null>(null);
 
+  // Sincronizar cambios externos del código
+  useEffect(() => {
+    setCode(initialValue);
+    if (editorRef.current && editorRef.current.getValue() !== initialValue) {
+      editorRef.current.setValue(initialValue);
+    }
+  }, [initialValue]);
+
   // Parsear código con worker
   const parseResult = useParseWorker(code);
 

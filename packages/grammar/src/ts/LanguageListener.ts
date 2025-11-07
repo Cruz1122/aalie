@@ -18,6 +18,7 @@ import { BlockContext } from "./LanguageParser";
 import { AssignmentStmtContext } from "./LanguageParser";
 import { DeclVectorStmtContext } from "./LanguageParser";
 import { CallStmtContext } from "./LanguageParser";
+import { PrintStmtContext } from "./LanguageParser";
 import { ArgListContext } from "./LanguageParser";
 import { RepeatStmtContext } from "./LanguageParser";
 import { ReturnStmtContext } from "./LanguageParser";
@@ -208,6 +209,17 @@ export interface LanguageListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitCallStmt?: (ctx: CallStmtContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `LanguageParser.printStmt`.
+	 * @param ctx the parse tree
+	 */
+	enterPrintStmt?: (ctx: PrintStmtContext) => void;
+	/**
+	 * Exit a parse tree produced by `LanguageParser.printStmt`.
+	 * @param ctx the parse tree
+	 */
+	exitPrintStmt?: (ctx: PrintStmtContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `LanguageParser.argList`.

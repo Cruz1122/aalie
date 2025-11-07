@@ -178,6 +178,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             self.visitAssign(node, mode)
         elif node_type == "Call":
             self.visitCallStmt(node, mode)
+        elif node_type == "Print":
+            self.visitPrint(node, mode)
         elif node_type == "Return":
             self.visitReturn(node, mode)
         elif node_type == "Decl":

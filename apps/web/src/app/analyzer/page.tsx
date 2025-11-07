@@ -26,12 +26,11 @@ export default function AnalyzerPage() {
 
   // Estados del flujo de análisis
   const [source, setSource] = useState<string>(() => {
-    // Cargar código desde sessionStorage si viene del editor manual
+    // Cargar código desde sessionStorage si viene del editor manual o del chatbot
     if (globalThis.window !== undefined) {
       const savedCode = globalThis.window.sessionStorage.getItem('analyzerCode');
       if (savedCode) {
-        // Limpiar el código guardado después de cargarlo
-        globalThis.window.sessionStorage.removeItem('analyzerCode');
+        // NO limpiar el código aquí todavía, se limpiará después de cargar
         return savedCode;
       }
     }
@@ -44,16 +43,22 @@ export default function AnalyzerPage() {
   const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [data, setData] = useState<AnalyzeOpenResponse | null>(() => {
-    // Cargar resultados desde sessionStorage si vienen del editor manual
+    // Cargar resultados desde sessionStorage si vienen del editor manual o del chatbot
     if (globalThis.window !== undefined) {
       const savedResults = globalThis.window.sessionStorage.getItem('analyzerResults');
       if (savedResults) {
-        // Limpiar los resultados guardados después de cargarlos
-        globalThis.window.sessionStorage.removeItem('analyzerResults');
         try {
-          return JSON.parse(savedResults);
+          const parsed = JSON.parse(savedResults);
+          // Limpiar los resultados guardados después de cargarlos
+          globalThis.window.sessionStorage.removeItem('analyzerResults');
+          // También limpiar el código después de cargarlo
+          globalThis.window.sessionStorage.removeItem('analyzerCode');
+          return parsed;
         } catch (error) {
           console.error('Error parsing saved results:', error);
+          // Limpiar datos corruptos
+          globalThis.window.sessionStorage.removeItem('analyzerResults');
+          globalThis.window.sessionStorage.removeItem('analyzerCode');
         }
       }
     }
@@ -144,6 +149,9 @@ export default function AnalyzerPage() {
       setViewMode('tree');
     }
   }, [showAstModal]);
+
+  // Estado para indicar que se debe ejecutar análisis automático (ya no se usa, se eliminó)
+  // Los datos ahora vienen directamente desde sessionStorage cuando están guardados
 
   // Función para copiar JSON
   const handleCopyJson = async () => {
@@ -321,6 +329,9 @@ export default function AnalyzerPage() {
       }, 3000);
     }
   };
+
+  // Los datos ya están cargados desde sessionStorage en el estado inicial
+  // Si hay datos guardados, se mostrarán directamente sin necesidad de re-analizar
 
   const handleViewLineProcedure = (lineNo: number) => {
     setSelectedLine(lineNo);
@@ -736,6 +747,14 @@ export default function AnalyzerPage() {
         onClose={() => setIsChatOpen(false)}
         messages={messages}
         setMessages={setMessages}
+        onAnalyzeCode={(code: string) => {
+          // Guardar código y recargar la página con el nuevo código
+          if (globalThis.window !== undefined) {
+            sessionStorage.setItem('analyzerCode', code);
+          }
+          // Recargar para que el código se cargue desde sessionStorage
+          globalThis.window.location.reload();
+        }}
       />
 
       <Footer />

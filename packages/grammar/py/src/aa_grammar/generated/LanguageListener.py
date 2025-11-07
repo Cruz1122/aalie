@@ -143,6 +143,15 @@ class LanguageListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by LanguageParser#printStmt.
+    def enterPrintStmt(self, ctx:LanguageParser.PrintStmtContext):
+        pass
+
+    # Exit a parse tree produced by LanguageParser#printStmt.
+    def exitPrintStmt(self, ctx:LanguageParser.PrintStmtContext):
+        pass
+
+
     # Enter a parse tree produced by LanguageParser#argList.
     def enterArgList(self, ctx:LanguageParser.ArgListContext):
         pass

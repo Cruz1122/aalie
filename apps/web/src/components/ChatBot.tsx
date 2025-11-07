@@ -17,6 +17,7 @@ interface ChatBotProps {
   onClose: () => void;
   messages: Message[];
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  onAnalyzeCode?: (code: string) => void;
 }
 
 // ============== FUNCIONES API ==============
@@ -100,7 +101,7 @@ async function getLLMResponse(
   }
 }
 
-export default function ChatBot({ isOpen, onClose, messages, setMessages }: Readonly<ChatBotProps>) {
+export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnalyzeCode }: Readonly<ChatBotProps>) {
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [llmStatus, setLlmStatus] = useState<{mode: 'LOCAL' | 'REMOTE', model?: string} | null>(null);
@@ -420,7 +421,7 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages }: Read
                       );
                     })()
                   ) : (
-                    <MarkdownRenderer content={message.content} />
+                    <MarkdownRenderer content={message.content} onAnalyzeCode={onAnalyzeCode} />
                   )}
                 </div>
                 <span className="text-[10px] text-slate-500 mt-0.5 px-1">

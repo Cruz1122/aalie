@@ -26,7 +26,7 @@ export interface Position {
 /** Nodos literales e identificadores */
 export interface Literal extends BaseNode {
   type: "Literal";
-  value: number | boolean | null;
+  value: number | boolean | string | null;
 }
 
 export interface Identifier extends BaseNode {
@@ -119,6 +119,11 @@ export interface Return extends BaseNode {
   value: AstNode;
 }
 
+export interface Print extends BaseNode {
+  type: "Print";
+  args: AstNode[];
+}
+
 /** Nodos de parámetros */
 export interface Param extends BaseNode {
   type: "Param";
@@ -165,6 +170,7 @@ export type AstNode =
   | For
   | Repeat
   | Return
+  | Print
   | Call
   | Binary
   | Unary
@@ -208,7 +214,7 @@ export type AnalyzeMode = "worst" | "best" | "avg";
 /** Tipos de operaciones por línea */
 export type LineKind =
   | "assign" | "if" | "for" | "while" | "repeat"
-  | "call" | "return" | "decl" | "other";
+  | "call" | "print" | "return" | "decl" | "other";
 
 /** Costo de una línea específica */
 export interface LineCost {

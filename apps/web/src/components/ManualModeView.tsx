@@ -1,6 +1,6 @@
 import type { Program } from "@aa/types";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { heuristicKind } from "@/lib/algorithm-classifier";
@@ -36,6 +36,27 @@ interface ManualModeViewProps {
   readonly onSwitchToAIMode: () => void;
 }
 
+export interface ManualModeViewHandle {
+  analyzeCode: (source: string) => Promise<void>;
+}
+
+const formatAlgorithmKindLabel = (value: AlgorithmKind): string => {
+  switch (value) {
+    case "iterative":
+      return "Iterativo";
+    case "recursive":
+      return "Recursivo";
+    case "hybrid":
+      return "Híbrido";
+    default:
+      return "Desconocido";
+  }
+};
+
+const formatUnsupportedKindMessage = (value: AlgorithmKind): string => {
+  return value === "recursive" ? "recursivo" : "híbrido";
+};
+
 const DEFAULT_CODE = `busquedaBinaria(A[n], x, inicio, fin) BEGIN
   IF (inicio > fin) THEN BEGIN
     RETURN -1;
@@ -54,7 +75,7 @@ const DEFAULT_CODE = `busquedaBinaria(A[n], x, inicio, fin) BEGIN
   END
 END`;
 
-export default function ManualModeView({ messages, setMessages, onOpenChat, onSwitchToAIMode }: ManualModeViewProps) {
+const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(function ManualModeView({ messages, setMessages, onOpenChat, onSwitchToAIMode }, ref) {
   const router = useRouter();
   const { animateProgress } = useAnalysisProgress();
   
@@ -225,29 +246,10 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
     }
   };
 
-  const formatAlgorithmKind = (value: AlgorithmKind): string => {
-    switch (value) {
-      case "iterative":
-        return "Iterativo";
-      case "recursive":
-        return "Recursivo";
-      case "hybrid":
-        return "Híbrido";
-      default:
-        return "Desconocido";
-    }
-  };
-
-  const formatUnsupportedKindMessage = (value: AlgorithmKind): string => {
-    return value === "recursive" ? "recursivo" : "híbrido";
-  };
-
-  // Función para analizar complejidad (ejecutar análisis completo con loader)
-  const handleAnalyzeComplexity = async () => {
-    // Verificar que no esté ya analizando
+  const runAnalysis = useCallback(async (sourceCode: string) => {
+    if (!sourceCode.trim()) return;
     if (isAnalyzing) return;
 
-    // Activar estado de carga inmediatamente
     setIsAnalyzing(true);
     setAnalysisProgress(0);
     setAnalysisMessage("Iniciando análisis...");
@@ -255,21 +257,22 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
     setIsAnalysisComplete(false);
     setAnalysisResult(null);
     setAnalysisError(null);
+    setBackendParseError(null);
+    setShowAIHelpButton(false);
 
     try {
-      // 1) Parsear el código (0-20%)
       setAnalysisMessage("Parseando código...");
       const parsePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/grammar/parse`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: code }),
+        body: JSON.stringify({ source: sourceCode }),
       }).then(r => r.json());
-      
-      // Animar progreso mientras se parsea (espera a que parsePromise se resuelva)
+
       const parseRes = await animateProgress(0, 20, 2000, setAnalysisProgress, parsePromise) as { ok: boolean; ast?: Program; errors?: Array<{ line: number; column: number; message: string }> };
 
       if (!parseRes.ok) {
         const msg = parseRes.errors?.map((e: { line: number; column: number; message: string }) => `Línea ${e.line}:${e.column} ${e.message}`).join("\n") || "Error de parseo";
+        setLocalParseOk(false);
         setAnalysisError(`Errores de sintaxis:\n${msg}`);
         setTimeout(() => {
           setIsAnalyzing(false);
@@ -282,24 +285,24 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
         return;
       }
 
-      // 2) Clasificar el algoritmo (20-40%)
+      setLocalParseOk(true);
+
       setAnalysisMessage("Clasificando algoritmo...");
       let kind: AlgorithmKind;
       try {
         const clsPromise = fetch("/api/llm/classify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ source: code, mode: "auto" }),
+          body: JSON.stringify({ source: sourceCode, mode: "auto" }),
         });
-        
-        // Animar progreso mientras se clasifica (espera a que clsPromise se resuelva)
+
         const clsResponse = await animateProgress(20, 40, 3000, setAnalysisProgress, clsPromise) as Response;
-        
+
         if (clsResponse.ok) {
           const cls = await clsResponse.json() as { kind: string; method?: string; mode?: string };
           kind = cls.kind as AlgorithmKind;
           setAlgorithmType(kind);
-          setAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKind(kind)}`);
+          setAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKindLabel(kind)}`);
           console.log(`[ManualMode] Clasificación: ${kind} (método: ${cls.method})`);
         } else {
           throw new Error(`HTTP ${clsResponse.status}`);
@@ -308,10 +311,9 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
         console.warn(`[ManualMode] Error en clasificación, usando heurística:`, error);
         kind = heuristicKind(parseRes.ast || null);
         setAlgorithmType(kind);
-        setAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKind(kind)}`);
+        setAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKindLabel(kind)}`);
       }
 
-      // 3) Rechazar algoritmos recursivos o híbridos
       if (kind === "recursive" || kind === "hybrid") {
         setAnalysisError(`El algoritmo ${formatUnsupportedKindMessage(kind)} no está soportado en esta versión. Por favor, usa un algoritmo iterativo o básico, o cambia a S4 luego.`);
         setTimeout(() => {
@@ -325,20 +327,18 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
         return;
       }
 
-      // 4) Realizar el análisis de complejidad (40-80%)
       setAnalysisMessage("Hallando sumatorias...");
       await animateProgress(40, 50, 500, setAnalysisProgress);
-      
+
       setAnalysisMessage("Simplificando expresiones matemáticas...");
       const analyzePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: code, mode: "worst" }),
+        body: JSON.stringify({ source: sourceCode, mode: "worst" }),
       }).then(r => r.json());
-      
-      // Animar progreso mientras se simplifica (espera a que analyzePromise se resuelva)
+
       const analyzeRes = await animateProgress(50, 70, 5000, setAnalysisProgress, analyzePromise) as { ok: boolean; [key: string]: unknown };
-      
+
       setAnalysisMessage("Generando forma polinómica...");
       await animateProgress(70, 80, 500, setAnalysisProgress);
 
@@ -358,26 +358,20 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
         return;
       }
 
-      // 5) Finalizar (80-100%)
       setAnalysisMessage("Finalizando análisis...");
       await animateProgress(80, 100, 500, setAnalysisProgress);
-      
-      // 6) Guardar resultados
+
       if (globalThis.window !== undefined) {
-        sessionStorage.setItem('analyzerCode', code);
+        sessionStorage.setItem('analyzerCode', sourceCode);
         sessionStorage.setItem('analyzerResults', JSON.stringify(analyzeRes));
       }
-      
-      // 7) Mostrar completado y esperar 2 segundos
+
       setAnalysisMessage("Análisis completo");
       setIsAnalysisComplete(true);
-      
-      // Esperar 2 segundos antes de redirigir
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      
-      // Redirigir al analizador
-      router.push('/analyzer');
 
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      router.push('/analyzer');
     } catch (error) {
       console.error("[ManualMode] Error inesperado:", error);
       const errorMsg = error instanceof Error ? error.message : "Error inesperado durante el análisis";
@@ -391,7 +385,26 @@ export default function ManualModeView({ messages, setMessages, onOpenChat, onSw
         setAnalysisError(null);
       }, 3000);
     }
+  }, [animateProgress, heuristicKind, isAnalyzing, router]);
+
+  const handleAnalyzeComplexity = () => {
+    void runAnalysis(code);
   };
+
+  useImperativeHandle(ref, () => ({
+    analyzeCode: async (source: string) => {
+      if (!source.trim()) return;
+
+      setCode(source);
+      setLocalParseOk(false);
+
+      if (globalThis.window !== undefined) {
+        localStorage.setItem('manualModeCode', source);
+      }
+
+      await runAnalysis(source);
+    },
+  }), [runAnalysis]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -548,7 +561,7 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
               <span className="material-symbols-outlined text-2xl">
                 {analysisResult.success ? 'check_circle' : 'error'}
               </span>
-              <p className="text-sm font-medium">{analysisResult.message}</p>
+              <p className="text-sm font-medium whitespace-pre-line">{analysisResult.message}</p>
             </div>
           </div>
         )}
@@ -645,4 +658,6 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
       </div>
     </div>
   );
-}
+});
+
+export default ManualModeView;

@@ -29,6 +29,7 @@ import type {
   AssignmentStmtContext,
   DeclVectorStmtContext,
   CallStmtContext,
+  PrintStmtContext,
   IfStmtContext,
   WhileStmtContext,
   ForStmtContext,
@@ -70,7 +71,7 @@ export function getPos(ctxOrToken: ParserRuleContext | Token | null | undefined)
 }
 
 // Helpers de construcción
-export function lit(value: number | boolean | null, ctx?: ParserRuleContext | Token): Literal {
+export function lit(value: number | boolean | string | null, ctx?: ParserRuleContext | Token): Literal {
   return {
     type: "Literal",
     value,
@@ -265,6 +266,16 @@ export class ASTBuilder extends AbstractParseTreeVisitor<AstNode> implements Lan
     };
   }
 
+  visitPrintStmt(ctx: PrintStmtContext): AstNode {
+    const args = ctx.argList() ? this._visitArgList(ctx.argList()!) : [];
+    
+    return {
+      type: "Print",
+      args,
+      pos: getPos(ctx),
+    };
+  }
+
   visitIfStmt(ctx: IfStmtContext): AstNode {
     const test = this.visit(ctx.expr()) as AstNode;
     const blocks = ctx.block();
@@ -394,6 +405,18 @@ export class ASTBuilder extends AbstractParseTreeVisitor<AstNode> implements Lan
     }
     if (ctx.NULL_KW()) {
       return lit(null, ctx.NULL_KW()!.symbol);
+    }
+    if (ctx.STRING()) {
+      const raw = ctx.STRING()!.text;
+      try {
+        // Intentar parsear como JSON string para manejar escapes
+        const value = JSON.parse(raw) as string;
+        return lit(value, ctx.STRING()!.symbol);
+      } catch {
+        // Si falla, simplemente remover las comillas externas
+        const value = raw.slice(1, -1);
+        return lit(value, ctx.STRING()!.symbol);
+      }
     }
     if (ctx.lengthCall()) {
       return this.visitLengthCall(ctx.lengthCall()!);

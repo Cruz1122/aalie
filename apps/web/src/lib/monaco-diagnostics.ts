@@ -70,6 +70,7 @@ export function registerPseudocodeLanguage(monaco: typeof Monaco): void {
       "UNTIL",
       "RETURN",
       "CALL",
+      "PRINT",
       "AND",
       "OR",
       "NOT",
@@ -103,11 +104,11 @@ export function registerPseudocodeLanguage(monaco: typeof Monaco): void {
 
     tokenizer: {
       root: [
-        // Keywords
-        [/\b(?:BEGIN|END|IF|THEN|ELSE|FOR|TO|DO|WHILE|REPEAT|UNTIL|RETURN|CALL|AND|OR|NOT|DIV|MOD|TRUE|FALSE|NULL|length)\b/, "keyword"],
+        // Strings - usar estado stringState para manejar correctamente
+        [/"/, { token: "string.quote", next: "@stringState" }],
 
-        // Identifiers
-        [/[a-zA-Z_]\w*/, "identifier"],
+        // Keywords
+        [/\b(BEGIN|END|IF|THEN|ELSE|FOR|TO|DO|WHILE|REPEAT|UNTIL|RETURN|CALL|PRINT|AND|OR|NOT|DIV|MOD|TRUE|FALSE|NULL|length)\b/i, "keyword"],
 
         // Numbers
         [/\d+/, "number"],
@@ -119,8 +120,16 @@ export function registerPseudocodeLanguage(monaco: typeof Monaco): void {
         // Delimiters
         [/[(){}[\];,.]/, "delimiter"],
 
+        // Identifiers - debe ir después de keywords para que no capture las palabras clave
+        [/[a-zA-Z_]\w*/, "identifier"],
+
         // Whitespace
         [/\s+/, "white"],
+      ],
+      stringState: [
+        [/[^"\\]+/, "string"],
+        [/\\./, "string.escape"],
+        [/"/, { token: "string.quote", next: "@pop" }],
       ],
     },
   });
@@ -130,12 +139,16 @@ export function registerPseudocodeLanguage(monaco: typeof Monaco): void {
     base: "vs-dark",
     inherit: true,
     rules: [
-      { token: "keyword", foreground: "60a5fa", fontStyle: "bold" }, // Blue-400
-      { token: "identifier", foreground: "e2e8f0" }, // Slate-200
-      { token: "number", foreground: "34d399" }, // Emerald-400
-      { token: "operator", foreground: "3b82f6" }, // Blue-500
-      { token: "delimiter", foreground: "94a3b8" }, // Slate-400
-      { token: "comment", foreground: "64748b", fontStyle: "italic" }, // Slate-500
+      { token: "keyword", foreground: "60a5fa", fontStyle: "bold" }, // Blue-400 - palabras clave en azul
+      { token: "identifier", foreground: "e2e8f0" }, // Slate-200 - identificadores en gris claro
+      { token: "number", foreground: "34d399" }, // Emerald-400 - números en verde
+      { token: "string", foreground: "fbbf24" }, // Amber-400 - strings en amarillo
+      { token: "string.quote", foreground: "fbbf24" }, // Amber-400 - comillas de string en amarillo
+      { token: "string.escape", foreground: "fbbf24" }, // Amber-400 - escapes en string en amarillo
+      { token: "operator", foreground: "3b82f6" }, // Blue-500 - operadores en azul
+      { token: "delimiter", foreground: "94a3b8" }, // Slate-400 - delimitadores en gris
+      { token: "comment", foreground: "64748b", fontStyle: "italic" }, // Slate-500 - comentarios en gris
+      { token: "white", foreground: "ffffff" }, // Blanco para espacios
     ],
     colors: {
       // Fondo y colores base más suaves

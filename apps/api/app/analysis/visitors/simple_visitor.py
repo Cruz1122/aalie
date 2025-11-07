@@ -39,7 +39,11 @@ class SimpleVisitor:
             elif expr_type == "number":
                 return str(expr.get("value", "0"))
             elif expr_type == "literal":
-                return str(expr.get("value", "0"))
+                value = expr.get("value", "0")
+                if isinstance(value, str):
+                    escaped = value.replace("\\", "\\\\").replace("\"", "\\\"")
+                    return f'"{escaped}"'
+                return str(value)
             elif expr_type == "binary":
                 left = self._expr_to_str(expr.get("left", ""))
                 right = self._expr_to_str(expr.get("right", ""))
@@ -116,6 +120,27 @@ class SimpleVisitor:
         
         ck = " + ".join(ck_terms)
         self.add_row(line, "return", ck, "1")
+    
+    def visitPrint(self, node: Dict[str, Any], _mode: str = "worst") -> None:
+        """
+        Visita un print y aplica las reglas de análisis.
+        
+        El coste es constante como una asignación, aunque puede depender 
+        de los parámetros/operaciones en los argumentos.
+        
+        Args:
+            node: Nodo de print del AST
+            mode: Modo de análisis
+        """
+        line = node.get("pos", {}).get("line", 0)
+        ck_terms = [self.C()]  # costo base de print (constante)
+        
+        # Agregar costo de evaluar cada argumento
+        for arg in node.get("args", []):
+            ck_terms += self._cost_of_expr(arg)
+        
+        ck = " + ".join(ck_terms)
+        self.add_row(line, "print", ck, "1")
     
     def visitDecl(self, node: Dict[str, Any], _mode: str = "worst") -> None:
         """
@@ -274,6 +299,8 @@ class SimpleVisitor:
             self.visitAssign(node, mode)
         elif node_type == "Call":
             self.visitCallStmt(node, mode)
+        elif node_type == "Print":
+            self.visitPrint(node, mode)
         elif node_type == "Return":
             self.visitReturn(node, mode)
         elif node_type == "Decl":

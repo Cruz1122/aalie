@@ -18,6 +18,7 @@ import { BlockContext } from "./LanguageParser";
 import { AssignmentStmtContext } from "./LanguageParser";
 import { DeclVectorStmtContext } from "./LanguageParser";
 import { CallStmtContext } from "./LanguageParser";
+import { PrintStmtContext } from "./LanguageParser";
 import { ArgListContext } from "./LanguageParser";
 import { RepeatStmtContext } from "./LanguageParser";
 import { ReturnStmtContext } from "./LanguageParser";
@@ -151,6 +152,13 @@ export interface LanguageVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitCallStmt?: (ctx: CallStmtContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `LanguageParser.printStmt`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitPrintStmt?: (ctx: PrintStmtContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `LanguageParser.argList`.

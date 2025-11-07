@@ -19,7 +19,7 @@
 .hljs-keyword,
 .hljs-selector-tag,
 .hljs-subst {
-  color: #f472b6;
+  color: #60a5fa; /* Blue-400 - palabras clave en azul */
   font-weight: bold;
 }
 
@@ -39,7 +39,7 @@
 .hljs-title,
 .hljs-section,
 .hljs-selector-id {
-  color: #60a5fa;
+  color: #60a5fa; /* Blue-400 - títulos y secciones en azul */
   font-weight: bold;
 }
 

@@ -93,19 +93,19 @@ docker-compose up
 2. **Verificar sintaxis**: El editor muestra errores en tiempo real. Usa "Verificar Parse" para validar.
 3. **Analizar complejidad**: Haz clic en "Analizar Complejidad" para iniciar el análisis completo.
 4. **Revisar resultados**:
-   - **Tabla de costos por línea**: Visualiza el costo elemental (Cₖ) y número de ejecuciones por línea.
-   - **Selector de casos**: Cambia entre Mejor/Promedio/Peor caso (actualmente solo Peor caso disponible).
-   - **Tarjetas de resumen**: Ve la notación asintótica (Big-O) para cada caso.
+   - **Tabla de costos por línea**: Visualiza el costo elemental (Cₖ), número de ejecuciones y costo total por línea. Incluye selector de casos (Best/Avg/Worst) en la esquina superior derecha.
+   - **Tarjetas de resumen**: Tres tarjetas muestran la notación asintótica (Big-O) para cada caso, con el Big-O renderizado en LaTeX dentro del círculo del icono.
    - **Procedimientos detallados**: 
-     - Haz clic en "Ver Procedimiento" en la tarjeta del Peor caso para ver el procedimiento general.
-     - Haz clic en una línea de la tabla para ver el procedimiento específico de esa línea.
+     - **Procedimiento general**: Haz clic en "Ver Procedimiento" en la tarjeta del Peor caso para ver el procedimiento completo con ecuación de eficiencia, forma polinómica y notación asintótica.
+     - **Procedimiento por línea**: Haz clic en cualquier línea de la tabla para ver los pasos detallados de esa línea específica, desde la expresión original hasta la forma final con notación asintótica.
 
 ### Características del Loader de Análisis
 
-- **Progreso en tiempo real**: Muestra el porcentaje de avance durante cada etapa.
+- **Progreso en tiempo real**: Muestra el porcentaje de avance durante cada etapa, sincronizado con las promesas del backend.
 - **Etapas visibles**: Parseo → Clasificación → Hallazgo de sumatorias → Simplificación → Finalización.
-- **Identificación de tipo**: Muestra el tipo de algoritmo detectado (iterativo, recursivo, híbrido, desconocido).
-- **Manejo de errores**: Si ocurre un error, se muestra un mensaje y puedes cerrar el loader.
+- **Identificación de tipo**: Muestra el tipo de algoritmo detectado (iterativo, recursivo, híbrido, desconocido) con animación de "pop".
+- **Manejo de errores**: Si ocurre un error, se muestra un mensaje descriptivo y puedes cerrar el loader sin recargar la página.
+- **Reutilizable**: El mismo loader se usa tanto en el editor manual como en el chatbot, manteniendo consistencia visual.
 
 ### Operadores de Asignación Soportados
 
@@ -156,14 +156,16 @@ Tipos e interfaces TypeScript compartidos entre frontend y backend.
 Aplicación Next.js con editor de código, análisis de complejidad y modo IA.
 
 **Características:**
-- Editor Monaco con syntax highlighting
+- Editor Monaco con syntax highlighting (incluye soporte para strings literales)
 - Renderizado de fórmulas con KaTeX
 - Visualización de AST
-- Chatbot integrado
+- Chatbot integrado con análisis directo desde bloques de código
 - Loader de análisis a pantalla completa con etapas, porcentajes sincronizados y estado de error
-- Tarjetas por caso (mejor/promedio/peor) con selección persistente en `sessionStorage` y badges Big-O
+- Análisis desde dos puntos de entrada: editor manual y chatbot (mismo loader reutilizable)
+- Tarjetas por caso (mejor/promedio/peor) con selección persistente en `sessionStorage` y badges Big-O renderizados en LaTeX
 - Modal dedicado para el procedimiento general y vista detallada por línea con pasos normalizados
-- Sanitización automática de procedimientos LaTeX que maneja múltiples bloques `\text{}` intercalados con expresiones matemáticas 
+- Sanitización automática de procedimientos LaTeX que maneja múltiples bloques `\text{}` intercalados con expresiones matemáticas
+- Soporte completo para sentencias `print()` con strings literales y múltiples argumentos 
 
 ### `apps/api`
 API REST con FastAPI que expone endpoints de parsing y análisis.
