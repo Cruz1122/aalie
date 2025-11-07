@@ -11,25 +11,19 @@ except Exception:
     parse_to_ast = None
     GRAMMAR_AVAILABLE = False
 
-@router.post("/parse")
-def parse(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+def parse_source(source: str) -> Dict[str, Any]:
     """
-    Parsea pseudocódigo y devuelve AST o errores.
+    Función auxiliar para parsear código fuente y devolver AST o errores.
     
-    Body compat:
-      { "input": string }  o  { "source": string }
-    Respuesta compat con el frontend:
-      { ok, available, runtime, error?, ast?, errors? }
+    Args:
+        source: Código fuente a parsear
+        
+    Returns:
+        Diccionario con ok, ast, errors
     """
-    # Extraer source de input o source para compatibilidad
-    source = str(payload.get("input") or payload.get("source") or "")
-
     if not GRAMMAR_AVAILABLE or parse_to_ast is None:
         return {
             "ok": False,
-            "available": False,
-            "runtime": "python",
-            "error": "aa_grammar no disponible",
             "ast": None,
             "errors": [{"line": 0, "column": 0, "message": "aa_grammar no disponible"}],
         }
@@ -48,14 +42,34 @@ def parse(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         for e in raw_errors
     ]
     
-    # Mensaje compacto (primero) para `error`
-    msg = None if ok else errors_list[0]["message"]
-    
     return {
         "ok": ok,
-        "available": True,
-        "runtime": "python",
-        "error": msg,
         "ast": ast if ok else None,
         "errors": errors_list,
+    }
+
+@router.post("/parse")
+def parse(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """
+    Parsea pseudocódigo y devuelve AST o errores.
+    
+    Body compat:
+      { "input": string }  o  { "source": string }
+    Respuesta compat con el frontend:
+      { ok, available, runtime, error?, ast?, errors? }
+    """
+    # Extraer source de input o source para compatibilidad
+    source = str(payload.get("input") or payload.get("source") or "")
+
+    # Usar la función parse_source
+    result = parse_source(source)
+    
+    # Agregar campos adicionales para compatibilidad con el frontend
+    return {
+        "ok": result["ok"],
+        "available": GRAMMAR_AVAILABLE,
+        "runtime": "python",
+        "error": result["errors"][0]["message"] if result["errors"] else None,
+        "ast": result["ast"],
+        "errors": result["errors"],
     }

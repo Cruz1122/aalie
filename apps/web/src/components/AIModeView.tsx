@@ -18,6 +18,7 @@ interface AIModeViewProps {
   readonly onSendMessage: () => void;
   readonly onSuggestionClick: (suggestion: string) => void;
   readonly onClose: () => void;
+  readonly onAnalyzeCode?: (code: string) => void;
 }
 
 export default function AIModeView({
@@ -31,6 +32,7 @@ export default function AIModeView({
   onSendMessage,
   onSuggestionClick,
   onClose,
+  onAnalyzeCode,
 }: AIModeViewProps) {
   if (chatOpen) {
     return (
@@ -40,6 +42,7 @@ export default function AIModeView({
           onClose={onClose}
           messages={messages}
           setMessages={setMessages}
+          onAnalyzeCode={onAnalyzeCode}
         />
       </div>
     );
@@ -91,34 +94,26 @@ export default function AIModeView({
       {/* Sugerencias como chips simples */}
       <div className={`flex flex-wrap gap-1 justify-center max-w-xl w-full mb-8 ${fadeClass('delay-200')}`}>
         <SuggestionButton
-          icon="sort"
+          icon="code"
           iconColor="blue-400"
-          label="Ordenamiento"
-          text="Analiza la complejidad de un algoritmo de ordenamiento burbuja"
+          label="Generar código"
+          text="Genera el código de ordenamiento por inserción en pseudocódigo"
           onClick={onSuggestionClick}
           disabled={isAnimating}
         />
         <SuggestionButton
-          icon="search"
+          icon="bug_report"
+          iconColor="red-400"
+          label="Corregir error"
+          text="Tengo un error de sintaxis en mi código, ¿puedes ayudarme?"
+          onClick={onSuggestionClick}
+          disabled={isAnimating}
+        />
+        <SuggestionButton
+          icon="school"
           iconColor="green-400"
-          label="Búsqueda binaria"
-          text="Necesito ayuda con la búsqueda binaria y su análisis"
-          onClick={onSuggestionClick}
-          disabled={isAnimating}
-        />
-        <SuggestionButton
-          icon="account_tree"
-          iconColor="orange-400"
-          label="Recorrido de árbol"
-          text="Quiero analizar un algoritmo de recorrido de árbol"
-          onClick={onSuggestionClick}
-          disabled={isAnimating}
-        />
-        <SuggestionButton
-          icon="functions"
-          iconColor="purple-400"
-          label="Fibonacci"
-          text="Ayúdame con la secuencia de Fibonacci y su complejidad"
+          label="Explicar concepto"
+          text="Explícame qué es la notación Big-O y cómo se calcula"
           onClick={onSuggestionClick}
           disabled={isAnimating}
         />

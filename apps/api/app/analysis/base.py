@@ -1,6 +1,7 @@
 # apps/api/app/analysis/base.py
 
 from typing import List, Dict, Any, Optional
+import re
 
 # Tipos de datos que espejan el contrato ya implementado
 LineCost = Dict[str, Any]
@@ -22,23 +23,11 @@ class BaseAnalyzer:
     def __init__(self):
         self.rows: List[LineCost] = []      # tabla por línea
         self.loop_stack: List[str] = []     # multiplicadores activos (strings KaTeX)
-        self.procedure: List[str] = []      # pasos KaTeX/strings breves
         self.symbols: Dict[str, str] = {}   # ej: { "n": "length(A)" }
         self.notes: List[str] = []          # reglas aplicadas / comentarios
         self.memo: Dict[str, List[LineCost]] = {}  # PD: cache de filas por nodo+contexto
         self.counter = 0                    # contador para generar constantes C_k
-        
-        # Inicializar procedimiento básico
-        self._init_procedure()
-
-    def _init_procedure(self):
-        """Inicializa los pasos básicos del procedimiento."""
-        self.procedure = [
-            r"1) Se asignan costos constantes C_{1}, C_{2}, \ldots",
-            r"2) Se extraen por línea los costos C_{k} y los conteos #ejecuciones",
-            r"3) Se multiplican los conteos por los iteradores activos (for/while/repeat)",
-            r"4) Se suman los términos para formar T_{\text{open}}"
-        ]
+        self.t_polynomial: Optional[str] = None  # forma polinómica T(n) = an² + bn + c
 
     # --- util 1: agregar fila ---
     def add_row(self, line: int, kind: str, ck: str, count: str, note: Optional[str] = None):
@@ -52,19 +41,64 @@ class BaseAnalyzer:
             count: Número de ejecuciones (string KaTeX)
             note: Nota opcional sobre la línea
         """
-        # Aplicar multiplicadores del stack de bucles
-        mult = "*".join([f"({m})" for m in self.loop_stack]) if self.loop_stack else ""
-        final_count = f"({count})*{mult}" if mult else f"{count}"
+        count_raw_final = self._apply_loop_multipliers(count)
+        
+        # Normalizar strings si el método está disponible (solo formato básico)
+        if hasattr(self, '_normalize_string'):
+            count_raw_final = self._normalize_string(count_raw_final)
+            if note:
+                note = self._normalize_string(note)
         
         row = {
             "line": line,
             "kind": kind,
             "ck": ck,              # Ej: "C_{2} + C_{3}"
-            "count": final_count,  # Ej: "n", "(n)*(\sum ...)"
+            "count": count_raw_final,   # Inicialmente igual a count_raw, el LLM lo simplificará
+            "count_raw": count_raw_final,  # Ej: "\\sum_{i=2}^{n} 1", versión con sumatorias
             "note": note
         }
         
         self.rows.append(row)
+
+    def _apply_loop_multipliers(self, base_count: str) -> str:
+        """Envuelve el conteo base con los multiplicadores activos del stack."""
+
+        expr = base_count or "1"
+
+        for multiplier in reversed(self.loop_stack):
+            sum_info = self._parse_sum_multiplier(multiplier)
+
+            if sum_info:
+                var, start, end = sum_info
+                expr = f"\\sum_{{{var}={start}}}^{{{end}}} ({expr})"
+            else:
+                if expr == "1":
+                    expr = multiplier
+                else:
+                    expr = f"({expr})\\cdot({multiplier})"
+
+        return expr
+
+    @staticmethod
+    def _parse_sum_multiplier(multiplier: str) -> Optional[List[str]]:
+        """
+        Detecta si un multiplicador representa una sumatoria y extrae sus componentes.
+
+        Returns:
+            [var, start, end] si es una sumatoria, None en caso contrario.
+        """
+
+        if not isinstance(multiplier, str):
+            return None
+
+        pattern = r"^\\sum_\{([^=}]+)=([^}]*)\}\^\{([^}]*)\}\s*1$"
+        match = re.match(pattern, multiplier.strip())
+
+        if not match:
+            return None
+
+        var, start, end = match.groups()
+        return [var.strip(), start.strip(), end.strip()]
 
     # --- util 2: gestionar contexto de bucles ---
     def push_multiplier(self, m: str):
@@ -96,9 +130,18 @@ class BaseAnalyzer:
         for r in self.rows:
             if r['ck'] != "—" and r['count'] != "—":
                 term = f"({r['ck']})\\cdot({r['count']})"
+                # Normalizar si el método está disponible
+                if hasattr(self, '_normalize_string'):
+                    term = self._normalize_string(term)
                 terms.append(term)
         
-        return " + ".join(terms) if terms else "0"
+        result = " + ".join(terms) if terms else "0"
+        
+        # Normalizar el resultado final si el método está disponible
+        if hasattr(self, '_normalize_string'):
+            result = self._normalize_string(result)
+        
+        return result
 
     # --- util 4: emitir respuesta estándar ---
     def result(self) -> AnalyzeOpenResponse:
@@ -108,15 +151,20 @@ class BaseAnalyzer:
         Returns:
             Diccionario que cumple el contrato AnalyzeOpenResponse
         """
+        totals = {
+            "T_open": self.build_t_open(),
+            "symbols": self.symbols if self.symbols else None,
+            "notes": self.notes if self.notes else None
+        }
+        
+        # Agregar T_polynomial si está disponible
+        if self.t_polynomial:
+            totals["T_polynomial"] = self.t_polynomial
+        
         return {
             "ok": True,
             "byLine": self.rows,
-            "totals": {
-                "T_open": self.build_t_open(),
-                "procedure": self.procedure,
-                "symbols": self.symbols if self.symbols else None,
-                "notes": self.notes if self.notes else None
-            }
+            "totals": totals
         }
 
     # --- util 5: memoización (PD) ---
@@ -178,24 +226,15 @@ class BaseAnalyzer:
         """
         self.notes.append(note)
 
-    def add_procedure_step(self, step: str):
-        """
-        Agrega un paso al procedimiento.
-        
-        Args:
-            step: Paso del procedimiento en formato KaTeX
-        """
-        self.procedure.append(step)
 
     def clear(self):
         """Limpia todos los datos del analizador."""
         self.rows.clear()
         self.loop_stack.clear()
-        self.procedure.clear()
         self.symbols.clear()
         self.notes.clear()
         self.memo.clear()
-        self._init_procedure()
+        self.t_polynomial = None
 
     def get_context_hash(self) -> str:
         """

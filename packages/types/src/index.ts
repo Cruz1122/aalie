@@ -26,7 +26,7 @@ export interface Position {
 /** Nodos literales e identificadores */
 export interface Literal extends BaseNode {
   type: "Literal";
-  value: number | boolean | null;
+  value: number | boolean | string | null;
 }
 
 export interface Identifier extends BaseNode {
@@ -119,6 +119,11 @@ export interface Return extends BaseNode {
   value: AstNode;
 }
 
+export interface Print extends BaseNode {
+  type: "Print";
+  args: AstNode[];
+}
+
 /** Nodos de parámetros */
 export interface Param extends BaseNode {
   type: "Param";
@@ -165,6 +170,7 @@ export type AstNode =
   | For
   | Repeat
   | Return
+  | Print
   | Call
   | Binary
   | Unary
@@ -208,15 +214,17 @@ export type AnalyzeMode = "worst" | "best" | "avg";
 /** Tipos de operaciones por línea */
 export type LineKind =
   | "assign" | "if" | "for" | "while" | "repeat"
-  | "call" | "return" | "decl" | "other";
+  | "call" | "print" | "return" | "decl" | "other";
 
 /** Costo de una línea específica */
 export interface LineCost {
   line: number;         // 1-based
   kind: LineKind;       // tipo de operación (para badges)
   ck: string;           // costo(s) elemental(es), ej: "C_assign + C_index"
-  count: string;        // # ejecuciones (abierto o cerrado), ej: "n", "\sum_{i=1}^{n} 1"
+  count: string;        // # ejecuciones (simplificado), ej: "n", "n^2"
+  count_raw?: string;   // # ejecuciones (con sumatorias sin simplificar), ej: "\sum_{i=1}^{n} 1"
   note?: string;        // aclaraciones (p. ej., "worst: max(then, else)")
+  procedure?: string[]; // procedimiento completo por línea (desde count_raw hasta forma polinómica)
 }
 
 /** Request para análisis de algoritmo */
@@ -234,6 +242,7 @@ export interface AnalyzeOpenResponse {
     procedure: string[];            // pasos (KaTeX) para construir T_open
     symbols?: Record<string,string>;// p.ej.: { n: "length(A)" }
     notes?: string[];               // reglas usadas (for, while, if)
+    T_polynomial?: string;          // forma polinómica T(n) = an² + bn + c (KaTeX)
     // S4 añadirá: T_closed, bigO/bigOmega/bigTheta, proofSteps
   };
 }

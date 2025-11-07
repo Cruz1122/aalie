@@ -28,8 +28,13 @@ const tableOfContents: TableOfContentsItem[] = [
     { id: "gramatica-estructuras", title: "Estructuras de Control" },
     { id: "gramatica-operadores", title: "Operadores" },
     { id: "gramatica-arrays", title: "Arrays" },
+    { id: "gramatica-print", title: "Sentencias PRINT" },
   ]},
-  { id: "analisis", title: "Análisis de Complejidad" },
+  { id: "analisis", title: "Análisis de Complejidad", subsections: [
+    { id: "analisis-editor", title: "Desde el Editor Manual" },
+    { id: "analisis-chatbot", title: "Desde el Chatbot" },
+    { id: "analisis-resultados", title: "Interpretando Resultados" },
+  ]},
   { id: "ejemplos", title: "Ejemplos Rápidos" },
   { id: "errores", title: "Solución de Problemas" },
 ];
@@ -267,7 +272,10 @@ END`}
                     <div className="bg-black/30 rounded-lg p-4 font-mono text-sm overflow-x-auto">
                       <pre className="text-green-300">
                         {`variable <- expresion;    // Recomendado
-                        variable := expresion;    // Estilo Pascal`}
+variable := expresion;    // Estilo Pascal
+variable 🡨 expresion;     // Unicode
+variable ← expresion;     // Unicode
+variable ⟵ expresion;     // Unicode`}
                       </pre>
                     </div>
                     <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mt-3">
@@ -385,7 +393,7 @@ resto <- total MOD cantidad;`}
                   </div>
                 </div>
 
-                <div id="gramatica-arrays" className="scroll-mt-24">
+                <div id="gramatica-arrays" className="mb-6 scroll-mt-24">
                   <h3 className="text-xl font-semibold text-white mb-3">Arrays</h3>
                   <div className="space-y-3 text-dark-text">
                     <p>Declaración y uso de arrays:</p>
@@ -406,39 +414,137 @@ matriz[i][j] <- A[i] + 1;`}
                     </div>
                   </div>
                 </div>
+
+                <div id="gramatica-print" className="scroll-mt-24">
+                  <h3 className="text-xl font-semibold text-white mb-3">Sentencias PRINT</h3>
+                  <div className="space-y-3 text-dark-text">
+                    <p>
+                      La sentencia <code className="text-green-300">print</code> permite mostrar valores en la consola:
+                    </p>
+                    <div className="bg-black/30 rounded-lg p-4 font-mono text-sm overflow-x-auto">
+                      <pre className="text-green-300">
+{`print("Hola mundo");
+print("Total: ", resultado);
+print("Valor de n: " + n);
+print("Suma: ", a + b);
+
+// Escapar comillas internas
+print("Dijo \"hola\" y salió");`}
+                      </pre>
+                    </div>
+                    <ul className="list-disc list-inside space-y-2 ml-4">
+                      <li>
+                        <strong>Strings literales:</strong> Entre comillas dobles <code className="text-green-300">"texto"</code>
+                      </li>
+                      <li>
+                        <strong>Múltiples argumentos:</strong> Separados por coma, se concatenan automáticamente
+                      </li>
+                      <li>
+                        <strong>Expresiones:</strong> Puedes incluir variables y operaciones matemáticas
+                      </li>
+                      <li>
+                        <strong>Escapar comillas:</strong> Usa <code className="text-green-300">\"</code> para comillas dentro del string
+                      </li>
+                    </ul>
+                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mt-3">
+                      <p className="text-blue-300 text-sm">
+                        <strong>💡 Nota:</strong> El costo de <code className="text-green-300">print</code> es constante (O(1)) más el costo de evaluar sus argumentos.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </section>
 
               {/* Análisis de Complejidad */}
               <section id="analisis" className="glass-card p-6 scroll-mt-24">
                 <h2 className="text-2xl font-bold text-white mb-4">Análisis de Complejidad</h2>
-                <div className="space-y-4 text-dark-text">
-                  <p>
-                    Una vez que tu código es válido, el sistema realiza automáticamente el análisis
-                    de complejidad temporal:
-                  </p>
-                  <ol className="list-decimal list-inside space-y-3 ml-4">
-                    <li>
-                      <strong className="text-white">Validación:</strong> El parser verifica que la
-                      sintaxis sea correcta
-                    </li>
-                    <li>
-                      <strong className="text-white">AST:</strong> Se genera un árbol de sintaxis
-                      abstracta (AST)
-                    </li>
-                    <li>
-                      <strong className="text-white">Análisis:</strong> Se calcula el costo de cada
-                      línea y el número de ejecuciones
-                    </li>
-                    <li>
-                      <strong className="text-white">Visualización:</strong> Se muestran los
-                      resultados en formato tabla y ecuaciones LaTeX
-                    </li>
-                  </ol>
-                  <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 mt-4">
-                    <p className="text-green-300 text-sm">
-                      <strong>✓ Resultado:</strong> Obtendrás la complejidad en Best Case, Average
-                      Case y Worst Case con los pasos detallados del cálculo.
+
+                <div id="analisis-editor" className="mb-6 scroll-mt-24">
+                  <h3 className="text-xl font-semibold text-white mb-3">Desde el Editor Manual</h3>
+                  <div className="space-y-3 text-dark-text">
+                    <p>
+                      En el modo manual, puedes escribir código directamente en el editor y analizarlo:
                     </p>
+                    <ol className="list-decimal list-inside space-y-2 ml-4">
+                      <li>
+                        <strong className="text-white">Escribe tu código:</strong> El editor valida
+                        la sintaxis en tiempo real
+                      </li>
+                      <li>
+                        <strong className="text-white">Verifica el parse:</strong> Usa el botón "Verificar Parse" para validar la sintaxis
+                      </li>
+                      <li>
+                        <strong className="text-white">Analiza complejidad:</strong> Haz clic en "Analizar Complejidad" para iniciar el análisis completo
+                      </li>
+                      <li>
+                        <strong className="text-white">Revisa resultados:</strong> Se abrirá la página de resultados con tabla de costos y procedimientos detallados
+                      </li>
+                    </ol>
+                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mt-3">
+                      <p className="text-blue-300 text-sm">
+                        <strong>💡 Consejo:</strong> Si hay errores de sintaxis, espera 3 segundos y aparecerá un botón "Ayuda con IA" que enviará tu código al chatbot para corrección automática.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="analisis-chatbot" className="mb-6 scroll-mt-24">
+                  <h3 className="text-xl font-semibold text-white mb-3">Desde el Chatbot</h3>
+                  <div className="space-y-3 text-dark-text">
+                    <p>
+                      También puedes analizar código directamente desde el chatbot:
+                    </p>
+                    <ol className="list-decimal list-inside space-y-2 ml-4">
+                      <li>
+                        <strong className="text-white">Pide código al chatbot:</strong> Solicita un algoritmo o pega código en el chat
+                      </li>
+                      <li>
+                        <strong className="text-white">Botón "Analizar":</strong> Cuando el chatbot devuelve código en un bloque de pseudocódigo, aparecerá un botón verde "Analizar" junto al botón de copiar
+                      </li>
+                      <li>
+                        <strong className="text-white">Loader en el chat:</strong> El análisis se ejecuta directamente en la vista del chat con el mismo loader que el editor manual
+                      </li>
+                      <li>
+                        <strong className="text-white">Navegación automática:</strong> Al completar el análisis, se navega automáticamente a la página de resultados
+                      </li>
+                    </ol>
+                    <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 mt-3">
+                      <p className="text-green-300 text-sm">
+                        <strong>✓ Ventaja:</strong> Puedes pedir correcciones al chatbot y analizar el código corregido sin salir del chat.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="analisis-resultados" className="scroll-mt-24">
+                  <h3 className="text-xl font-semibold text-white mb-3">Interpretando Resultados</h3>
+                  <div className="space-y-4 text-dark-text">
+                    <p>
+                      Una vez completado el análisis, verás:
+                    </p>
+                    <ul className="list-disc list-inside space-y-2 ml-4">
+                      <li>
+                        <strong className="text-white">Tabla de costos por línea:</strong> Muestra el costo elemental (Cₖ), número de ejecuciones y costo total por línea
+                      </li>
+                      <li>
+                        <strong className="text-white">Selector de casos:</strong> En la esquina superior derecha, cambia entre Mejor/Promedio/Peor caso (actualmente solo Peor caso disponible)
+                      </li>
+                      <li>
+                        <strong className="text-white">Tarjetas de resumen:</strong> Tres tarjetas muestran la notación asintótica (Big-O) para cada caso, con un botón "Ver Procedimiento" en la tarjeta del Peor caso
+                      </li>
+                      <li>
+                        <strong className="text-white">Procedimientos detallados:</strong>
+                        <ul className="list-disc list-inside ml-6 mt-2 space-y-1">
+                          <li>Procedimiento general: Haz clic en "Ver Procedimiento" en la tarjeta del Peor caso</li>
+                          <li>Procedimiento por línea: Haz clic en cualquier línea de la tabla para ver los pasos específicos de esa línea</li>
+                        </ul>
+                      </li>
+                    </ul>
+                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mt-4">
+                      <p className="text-yellow-300 text-sm">
+                        <strong>⚠️ Nota:</strong> Los procedimientos muestran pasos detallados en LaTeX, desde la expresión original hasta la forma polinómica final y la notación asintótica.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </section>

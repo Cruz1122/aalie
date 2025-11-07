@@ -84,6 +84,11 @@ class LanguageVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by LanguageParser#printStmt.
+    def visitPrintStmt(self, ctx:LanguageParser.PrintStmtContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by LanguageParser#argList.
     def visitArgList(self, ctx:LanguageParser.ArgListContext):
         return self.visitChildren(ctx)

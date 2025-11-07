@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import type { Program } from "@aa/types";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
+import { AnalysisLoader } from "@/components/AnalysisLoader";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import NavigationLink from "@/components/NavigationLink";
 import { useNavigation } from "@/contexts/NavigationContext";
+import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
+import { heuristicKind } from "@/lib/algorithm-classifier";
 
 interface Example {
   id: number;
@@ -201,9 +206,38 @@ END`,
   },
 ];
 
+type AlgorithmKind = "iterative" | "recursive" | "hybrid" | "unknown";
+
+const formatAlgorithmKindLabel = (value: AlgorithmKind): string => {
+  switch (value) {
+    case "iterative":
+      return "Iterativo";
+    case "recursive":
+      return "Recursivo";
+    case "hybrid":
+      return "Híbrido";
+    default:
+      return "Desconocido";
+  }
+};
+
+const formatUnsupportedKindMessage = (value: AlgorithmKind): string => {
+  return value === "recursive" ? "recursivo" : "híbrido";
+};
+
 export default function ExamplesPage() {
+  const router = useRouter();
+  const { animateProgress } = useAnalysisProgress();
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const { finishNavigation } = useNavigation();
+  
+  // Estados para el loader de análisis
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisMessage, setAnalysisMessage] = useState("Iniciando análisis...");
+  const [algorithmType, setAlgorithmType] = useState<AlgorithmKind | undefined>(undefined);
+  const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   // Finalizar la carga cuando el componente se monte
   useEffect(() => {
@@ -220,9 +254,169 @@ export default function ExamplesPage() {
     }
   };
 
+  const runAnalysis = useCallback(async (sourceCode: string) => {
+    if (!sourceCode.trim()) return;
+    if (isAnalyzing) return;
+
+    setIsAnalyzing(true);
+    setAnalysisProgress(0);
+    setAnalysisMessage("Iniciando análisis...");
+    setAlgorithmType(undefined);
+    setIsAnalysisComplete(false);
+    setAnalysisError(null);
+
+    try {
+      setAnalysisMessage("Parseando código...");
+      const parsePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/grammar/parse`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: sourceCode }),
+      }).then(r => r.json());
+
+      const parseRes = await animateProgress(0, 20, 2000, setAnalysisProgress, parsePromise) as { ok: boolean; ast?: Program; errors?: Array<{ line: number; column: number; message: string }> };
+
+      if (!parseRes.ok) {
+        const msg = parseRes.errors?.map((e: { line: number; column: number; message: string }) => `Línea ${e.line}:${e.column} ${e.message}`).join("\n") || "Error de parseo";
+        setAnalysisError(`Errores de sintaxis:\n${msg}`);
+        setTimeout(() => {
+          setIsAnalyzing(false);
+          setAnalysisProgress(0);
+          setAnalysisMessage("Iniciando análisis...");
+          setAlgorithmType(undefined);
+          setIsAnalysisComplete(false);
+          setAnalysisError(null);
+        }, 3000);
+        return;
+      }
+
+      setAnalysisMessage("Clasificando algoritmo...");
+      let kind: AlgorithmKind;
+      try {
+        const clsPromise = fetch("/api/llm/classify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ source: sourceCode, mode: "auto" }),
+        });
+
+        const clsResponse = await animateProgress(20, 40, 3000, setAnalysisProgress, clsPromise) as Response;
+
+        if (clsResponse.ok) {
+          const cls = await clsResponse.json() as { kind: string; method?: string; mode?: string };
+          kind = cls.kind as AlgorithmKind;
+          setAlgorithmType(kind);
+          setAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKindLabel(kind)}`);
+        } else {
+          throw new Error(`HTTP ${clsResponse.status}`);
+        }
+      } catch (error) {
+        console.warn(`[Examples] Error en clasificación, usando heurística:`, error);
+        kind = heuristicKind(parseRes.ast || null);
+        setAlgorithmType(kind);
+        setAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKindLabel(kind)}`);
+      }
+
+      if (kind === "recursive" || kind === "hybrid") {
+        setAnalysisError(`El algoritmo ${formatUnsupportedKindMessage(kind)} no está soportado en esta versión. Por favor, usa un algoritmo iterativo o básico, o cambia a S4 luego.`);
+        setTimeout(() => {
+          setIsAnalyzing(false);
+          setAnalysisProgress(0);
+          setAnalysisMessage("Iniciando análisis...");
+          setAlgorithmType(undefined);
+          setIsAnalysisComplete(false);
+          setAnalysisError(null);
+        }, 3000);
+        return;
+      }
+
+      setAnalysisMessage("Hallando sumatorias...");
+      await animateProgress(40, 50, 500, setAnalysisProgress);
+
+      setAnalysisMessage("Simplificando expresiones matemáticas...");
+      const analyzePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: sourceCode, mode: "worst" }),
+      }).then(r => r.json());
+
+      const analyzeRes = await animateProgress(50, 70, 5000, setAnalysisProgress, analyzePromise) as { ok: boolean; [key: string]: unknown };
+
+      setAnalysisMessage("Generando forma polinómica...");
+      await animateProgress(70, 80, 500, setAnalysisProgress);
+
+      if (!analyzeRes.ok) {
+        const errorMsg = (analyzeRes as { errors?: Array<{ message: string; line?: number; column?: number }> }).errors?.map((e: { message: string; line?: number; column?: number }) => 
+          e.message || `Error en línea ${e.line || '?'}`
+        ).join("\n") || "No se pudo analizar el algoritmo";
+        setAnalysisError(errorMsg);
+        setTimeout(() => {
+          setIsAnalyzing(false);
+          setAnalysisProgress(0);
+          setAnalysisMessage("Iniciando análisis...");
+          setAlgorithmType(undefined);
+          setIsAnalysisComplete(false);
+          setAnalysisError(null);
+        }, 3000);
+        return;
+      }
+
+      setAnalysisMessage("Finalizando análisis...");
+      await animateProgress(80, 100, 500, setAnalysisProgress);
+
+      // Guardar código y resultados en sessionStorage (igual que ManualModeView y chatbot)
+      if (globalThis.window !== undefined) {
+        sessionStorage.setItem('analyzerCode', sourceCode);
+        sessionStorage.setItem('analyzerResults', JSON.stringify(analyzeRes));
+      }
+
+      setAnalysisMessage("Análisis completo");
+      setIsAnalysisComplete(true);
+
+      // Esperar 2 segundos antes de navegar (igual que ManualModeView)
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Navegar a /analyzer con los datos (el loader se ocultará automáticamente al desmontarse)
+      router.push('/analyzer');
+    } catch (error) {
+      console.error("[Examples] Error inesperado:", error);
+      const errorMsg = error instanceof Error ? error.message : "Error inesperado durante el análisis";
+      setAnalysisError(errorMsg);
+      setTimeout(() => {
+        setIsAnalyzing(false);
+        setAnalysisProgress(0);
+        setAnalysisMessage("Iniciando análisis...");
+        setAlgorithmType(undefined);
+        setIsAnalysisComplete(false);
+        setAnalysisError(null);
+      }, 3000);
+    }
+  }, [animateProgress, isAnalyzing, router]);
+
+  const handleAnalyze = (code: string) => {
+    void runAnalysis(code);
+  };
+
   return (
     <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">
       <Header />
+
+      {/* Loader de análisis */}
+      {isAnalyzing && (
+        <AnalysisLoader
+          progress={analysisProgress}
+          message={analysisMessage}
+          algorithmType={algorithmType}
+          isComplete={isAnalysisComplete}
+          error={analysisError}
+          onClose={() => {
+            setIsAnalyzing(false);
+            setAnalysisProgress(0);
+            setAnalysisMessage("Iniciando análisis...");
+            setAlgorithmType(undefined);
+            setIsAnalysisComplete(false);
+            setAnalysisError(null);
+          }}
+        />
+      )}
 
       <main className="flex-1 z-10 p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto space-y-6 lg:space-y-8">
@@ -256,10 +450,25 @@ export default function ExamplesPage() {
                     </div>
                     <p className="text-xs text-primary font-mono mt-1">{example.complexity}</p>
                   </div>
+                </div>
+
+                {/* Descripción */}
+                <p className="text-dark-text text-sm leading-relaxed">{example.description}</p>
+
+                {/* Código */}
+                <div className="flex-1 bg-slate-900/50 border border-white/10 rounded-lg p-4 overflow-x-auto scrollbar-custom">
+                  <pre className="text-green-300 font-mono text-xs leading-relaxed whitespace-pre">
+                    {example.code}
+                  </pre>
+                </div>
+
+                {/* Footer con acción */}
+                <div className="flex items-center justify-between gap-2">
                   <button
                     onClick={() => handleCopy(example.code, example.id)}
-                    className="glass-secondary px-3 py-2 rounded text-xs font-semibold transition-colors flex items-center gap-1 hover:bg-white/20"
+                    className="glass-secondary px-3 py-1.5 rounded text-xs font-semibold transition-colors flex items-center gap-1 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Copiar código"
+                    disabled={isAnalyzing}
                   >
                     {copiedId === example.id ? (
                       <>
@@ -273,31 +482,23 @@ export default function ExamplesPage() {
                       </>
                     )}
                   </button>
-                </div>
-
-                {/* Descripción */}
-                <p className="text-dark-text text-sm leading-relaxed">{example.description}</p>
-
-                {/* Código */}
-                <div className="flex-1 bg-black/30 rounded-lg p-4 overflow-x-auto">
-                  <pre className="text-green-300 font-mono text-xs leading-relaxed">
-                    {example.code}
-                  </pre>
-                </div>
-
-                {/* Footer con acción */}
-                <div className="flex justify-end">
-                  <NavigationLink
-                    href="/analyzer"
-                    onClick={() => {
-                      // Guardar el código en sessionStorage para que el analyzer lo cargue
-                      sessionStorage.setItem("loadExample", example.code);
-                    }}
-                    className="text-blue-400 hover:text-blue-300 text-sm font-semibold flex items-center gap-1 transition-colors"
+                  <button
+                    onClick={() => handleAnalyze(example.code)}
+                    disabled={isAnalyzing}
+                    className="flex items-center justify-center gap-2 py-1.5 px-4 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-green-400/50 bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 hover:from-green-500/30 hover:to-emerald-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
                   >
-                    Probar en el analizador{" "}
-                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                  </NavigationLink>
+                    {isAnalyzing ? (
+                      <>
+                        <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>{' '}
+                        Analizando...
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-sm">functions</span>{' '}
+                        Analizar
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             ))}

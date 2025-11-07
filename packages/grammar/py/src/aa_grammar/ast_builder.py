@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import ast as py_ast
 from typing import Any, Dict, List
 from antlr4 import ParserRuleContext, Token  # type: ignore
 from .generated.LanguageVisitor import LanguageVisitor  # type: ignore
@@ -144,6 +146,10 @@ class ASTBuilder(LanguageVisitor):
         callee = ctx.ID().getText()
         args = self._visit_arglist(ctx.argList())
         return {"type": "Call", "callee": callee, "args": args, "statement": True, "pos": get_pos(ctx)}
+    
+    def visitPrintStmt(self, ctx: LanguageParser.PrintStmtContext):
+        args = self._visit_arglist(ctx.argList())
+        return {"type": "Print", "args": args, "pos": get_pos(ctx)}
 
     def visitIfStmt(self, ctx: LanguageParser.IfStmtContext):
         test = self.visit(ctx.expr())
@@ -206,6 +212,13 @@ class ASTBuilder(LanguageVisitor):
             return lit(False, ctx.FALSE_KW())
         if ctx.NULL_KW():
             return lit(None, ctx.NULL_KW())
+        if ctx.STRING():
+            raw = ctx.STRING().getText()
+            try:
+                value: Any = py_ast.literal_eval(raw)
+            except Exception:
+                value = raw[1:-1]
+            return lit(value, ctx.STRING())
         if ctx.lengthCall():
             return self.visit(ctx.lengthCall())
         if ctx.callExpr():

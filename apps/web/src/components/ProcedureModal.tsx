@@ -48,7 +48,7 @@ const VirtualizedStepsList = React.memo(({ steps }: { steps: string[] }) => {
               <div className="flex-shrink-0 w-6 h-6 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs font-medium">
                 {visibleRange.start + index + 1}
               </div>
-              <div className="flex-1 bg-slate-900/50 p-3 rounded-lg border border-white/10">
+              <div className="flex-1 min-w-0 bg-slate-900/50 p-3 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
                 <Formula latex={step} display />
               </div>
             </div>
@@ -83,10 +83,215 @@ export default function ProcedureModal({
       : "Procedimiento Completo";
   }, [selectedLine]);
 
-  // Memoizar los pasos del procedimiento
-  const procedureSteps = useMemo(() => {
-    return analysisData?.totals?.procedure || [];
-  }, [analysisData?.totals?.procedure]);
+
+  // Función para extraer el patrón de un término (n+1, n, 1, etc.)
+  const extractPattern = useCallback((count: string): string => {
+    // Normalizar espacios y paréntesis
+    const normalized = count.replaceAll(/\s+/g, '').replaceAll('(', '').replaceAll(')', '');
+    
+    // Mapeo de patrones comunes
+    const patternMap: Record<string, string> = {
+      '1': '1',
+      'n': 'n',
+      'n+1': 'n+1',
+      '1+n': 'n+1',
+      'n-1': 'n-1',
+      '-1+n': 'n-1'
+    };
+    
+    // Verificar patrones exactos primero
+    if (patternMap[normalized]) {
+      return patternMap[normalized];
+    }
+    
+    // Verificar patrones que contienen subcadenas
+    if (normalized.includes('n^2') || normalized.includes('n²')) return 'n²';
+    if (normalized.includes('n^3') || normalized.includes('n³')) return 'n³';
+    if (normalized.includes('log') || normalized.includes('ln')) return 'log(n)';
+    
+    // Si contiene n pero no es un patrón conocido, devolver como está
+    if (normalized.includes('n')) return normalized;
+    
+    // Constante por defecto
+    return '1';
+  }, []);
+
+  // Función para agrupar términos similares
+  const groupSimilarTerms = useCallback((terms: Array<{ck: string, count: string}>): string => {
+    const groups: Record<string, string[]> = {};
+    
+    // Agrupar términos por patrón
+    for (const term of terms) {
+      const pattern = extractPattern(term.count);
+      if (!groups[pattern]) {
+        groups[pattern] = [];
+      }
+      groups[pattern].push(term.ck);
+    }
+    
+    // Construir la ecuación agrupada
+    const groupedTerms = Object.entries(groups).map(([pattern, coefficients]) => {
+      const coefficientStr = coefficients.length === 1 
+        ? coefficients[0] 
+        : `(${coefficients.join(' + ')})`;
+      
+      return `${coefficientStr} (${pattern})`;
+    });
+    
+    return groupedTerms.join(' + ');
+  }, [extractPattern]);
+
+
+  // Función para crear la forma final más simplificada
+  const createFinalSimplifiedForm = useCallback((groupedEquation: string, tPolynomial?: string | null): string => {
+    // Priorizar T_polynomial del backend si está disponible
+    if (tPolynomial && tPolynomial.trim().length > 0) {
+      return tPolynomial;
+    }
+    if (!groupedEquation || groupedEquation.trim() === '') {
+      return 'a';
+    }
+
+    const hasCubic = groupedEquation.includes('n^3') || groupedEquation.includes('n³');
+    const hasQuadratic = groupedEquation.includes('n^2') || groupedEquation.includes('n²');
+    const linearPattern = String.raw`(^|[^\^])n(?![\w^])`;
+    const hasLinear = new RegExp(linearPattern).test(groupedEquation) || groupedEquation.includes('n+1') || groupedEquation.includes('n-1');
+    const hasLog = groupedEquation.includes('log');
+
+    const coeffs = ['a', 'b', 'c', 'd'];
+    const terms: string[] = [];
+
+    if (hasCubic) {
+      terms.push(`${coeffs[0]} \\cdot n^3`, `${coeffs[1]} \\cdot n^2`, `${coeffs[2]} \\cdot n`, `${coeffs[3]}`);
+      return terms.join(' + ');
+    }
+
+    if (hasQuadratic) {
+      terms.push(`${coeffs[0]} \\cdot n^2`, `${coeffs[1]} \\cdot n`, `${coeffs[2]}`);
+      return terms.join(' + ');
+    }
+
+    if (hasLinear) {
+      terms.push(`${coeffs[0]} \\cdot n`, `${coeffs[1]}`);
+      return terms.join(' + ');
+    }
+
+    if (hasLog) {
+      terms.push(`${coeffs[0]} \\cdot \\log(n)`, `${coeffs[1]}`);
+      return terms.join(' + ');
+    }
+
+    return `${coeffs[0]}`; // constante
+  }, []);
+
+  // Helper para calcular Big-O
+  const calculateBigOFromExpression = useCallback((expr: string): string => {
+    if (expr.includes('n^3')) return 'O(n^3)';
+    if (expr.includes('n^2')) return 'O(n^2)';
+    const linearPattern = String.raw`(^|[^\^])n(?![\w^])`;
+    if (new RegExp(linearPattern).test(expr)) return 'O(n)';
+    const logPattern = String.raw`\log(n)|log(n)`;
+    if (new RegExp(logPattern).test(expr)) return String.raw`O(\log n)`;
+    return 'O(1)';
+  }, []);
+
+  const sanitizeProcedureStep = useCallback((step: string): string => {
+    const trimmedStep = step.trim();
+    const textCheckPattern = String.raw`\text\{`;
+    
+    // Si no contiene \text{}, retornar tal cual
+    if (!trimmedStep.includes(textCheckPattern)) {
+      return trimmedStep;
+    }
+
+    // Pattern para encontrar todos los bloques \text{...} y procesarlos individualmente
+    const textBlockRegex = /\\text\{([^}]*)\}/g;
+    const matches = Array.from(trimmedStep.matchAll(textBlockRegex));
+    
+    if (matches.length === 0) {
+      return trimmedStep;
+    }
+    
+    // Procesar cada bloque encontrado y crear un mapa de reemplazos
+    const replacements = new Map<string, string>();
+    for (const match of matches) {
+      const originalMatch = match[0];
+      if (replacements.has(originalMatch)) {
+        continue; // Ya procesado
+      }
+      
+      const content = match[1] ?? '';
+      let normalizedContent = content.replaceAll(/\s+/g, ' ').trim();
+      
+      // Normalizar dos puntos: asegurar formato ": " si hay dos puntos
+      normalizedContent = normalizedContent.replaceAll(/\s*:\s*/g, ': ').trim();
+      
+      // Asegurar espacio al final dentro de las llaves (requisito de formato)
+      const finalContent = normalizedContent.endsWith(' ') 
+        ? normalizedContent 
+        : `${normalizedContent} `;
+      
+      const sanitized = `\\text{${finalContent}}`;
+      replacements.set(originalMatch, sanitized);
+    }
+    
+    // Aplicar todos los reemplazos
+    let sanitized = trimmedStep;
+    for (const [original, replacement] of replacements) {
+      sanitized = sanitized.replaceAll(original, replacement);
+    }
+
+    // Limpiar posibles espacios múltiples entre bloques
+    const cleaned = sanitized
+      .replaceAll(/\s+/g, ' ') // Normalizar espacios múltiples
+      .trim();
+
+    return cleaned;
+  }, []);
+
+  // Memoizar las ecuaciones de derivación
+  const derivationSteps = useMemo(() => {
+    if (!analysisData?.byLine) return [];
+    
+    // Paso 1: Ecuación completa con count_raw (o count si count_raw no está disponible)
+    const step1 = analysisData.byLine
+      .map(line => `${line.ck} \\cdot (${line.count_raw ?? line.count})`)
+      .join(' + ');
+    
+    // Paso 2: Ecuación con count simplificado
+    const step2 = analysisData.byLine
+      .map(line => `${line.ck} \\cdot (${line.count})`)
+      .join(' + ');
+    
+    // Paso 3: Agrupación de términos similares
+    const step3 = groupSimilarTerms(analysisData.byLine.map(line => ({ ck: line.ck, count: line.count })));
+    
+    // Paso 4: Forma final con constantes a, b, c, etc. (usar T_polynomial si está)
+    const tPoly = analysisData.totals?.T_polynomial;
+    const step4 = createFinalSimplifiedForm(step3, typeof tPoly === 'string' ? tPoly : undefined);
+    
+    // Paso 5: Notación asintótica a partir de la forma final
+    const bigO = calculateBigOFromExpression(step4);
+    
+    // Crear array de pasos con sus ecuaciones
+    const allSteps = [
+      { title: "Ecuación completa con sumatorias", equation: step1, description: "Ecuación original con todas las sumatorias y multiplicadores aplicados" },
+      { title: "Simplificación de sumatorias", equation: step2, description: "Se resuelven las sumatorias y se simplifican los términos" },
+      { title: "Agrupación de términos similares", equation: step3, description: "Se agrupan los términos por patrones similares (n+1, n, constantes)" },
+      { title: "Forma final en términos de n", equation: step4, description: "Forma polinómica canónica en términos de n (a, b, c)" },
+      { title: "Notación asintótica", equation: bigO, description: "Clase de complejidad temporal Big-O derivada de la forma final" }
+    ];
+    
+    // Filtrar pasos que son diferentes al anterior
+    const filteredSteps = allSteps.filter((step, index) => {
+      if (index === 0) return true; // Siempre mostrar el primer paso
+      
+      const previousStep = allSteps[index - 1];
+      return step.equation !== previousStep.equation;
+    });
+    
+    return filteredSteps;
+  }, [analysisData, groupSimilarTerms, createFinalSimplifiedForm, calculateBigOFromExpression]);
 
   // Memoizar los símbolos
   const symbols = useMemo(() => {
@@ -164,35 +369,157 @@ export default function ProcedureModal({
           {isLineProcedure ? (
             // Contenido específico para una línea
             <div className="space-y-4">
-              <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                <h4 className="font-semibold text-white mb-2">Análisis de Línea {selectedLine}</h4>
-                <div className="space-y-3">
-                  <div className="p-3 rounded bg-slate-900/50 border border-blue-500/20">
-                    <span className="text-sm font-medium text-blue-300">Costo Individual</span>
-                    <p className="text-slate-300 mt-1 text-sm">
-                      Análisis detallado del costo computacional para esta línea específica.
-                    </p>
+              {analysisData && (() => {
+                const lineData = analysisData.byLine.find(line => line.line === selectedLine);
+                if (!lineData) {
+                  return (
+                    <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                      <p className="text-red-300">No se encontró información para la línea {selectedLine}</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-4">
+                    {/* Información de la línea */}
+                    <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+                      <h4 className="font-semibold text-white mb-3">Análisis de Línea {selectedLine}</h4>
+                      
+                      {/* Tipo de operación */}
+                      <div className="mb-4">
+                        <span className="text-sm font-medium text-slate-400">Tipo de operación:</span>
+                        <div className="mt-1">
+                          {(() => {
+                            const kindConfig: Record<string, { label: string; className: string }> = {
+                              assign: { label: 'Asignación', className: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
+                              if: { label: 'Condicional', className: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
+                              for: { label: 'Bucle For', className: 'bg-green-500/20 text-green-300 border-green-500/30' },
+                              while: { label: 'Bucle While', className: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' },
+                              repeat: { label: 'Bucle Repeat', className: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
+                              call: { label: 'Llamada', className: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' },
+                              return: { label: 'Retorno', className: 'bg-pink-500/20 text-pink-300 border-pink-500/30' },
+                              decl: { label: 'Declaración', className: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' }
+                            };
+                            const config = kindConfig[lineData.kind] || { label: 'Otro', className: 'bg-gray-500/20 text-gray-300 border-gray-500/30' };
+                            return (
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${config.className}`}>
+                                {config.label}
+                              </span>
+                            );
+                          })()}
+                        </div>
+                      </div>
+
+                      {/* Costo elemental */}
+                      <div className="mb-4">
+                        <span className="text-sm font-medium text-slate-400">Costo elemental (C<sub>k</sub>):</span>
+                        <div className="mt-2 p-3 rounded bg-slate-900/50 border border-blue-500/20 overflow-x-auto scrollbar-custom">
+                          <Formula latex={lineData.ck} display />
+                        </div>
+                        <p className="text-slate-300 mt-1 text-xs">
+                          Costo computacional básico de esta operación
+                        </p>
+                      </div>
+
+                      {/* Número de ejecuciones */}
+                      <div className="mb-4">
+                        <span className="text-sm font-medium text-slate-400">Número de ejecuciones:</span>
+                        <div className="mt-2 p-3 rounded bg-slate-900/50 border border-amber-500/20 overflow-x-auto scrollbar-custom">
+                          <Formula latex={lineData.count} display />
+                        </div>
+                        <p className="text-slate-300 mt-1 text-xs">
+                          Cuántas veces se ejecuta esta línea
+                        </p>
+                      </div>
+
+                      {/* Notas adicionales */}
+                      {lineData.note && (
+                        <div className="mb-4">
+                          <span className="text-sm font-medium text-slate-400">Notas:</span>
+                          <div className="mt-2 p-3 rounded bg-slate-900/50 border border-green-500/20">
+                            <p className="text-slate-300 text-sm">{lineData.note}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Fórmula de costo total */}
+                      <div className="mb-4">
+                        <span className="text-sm font-medium text-slate-400">Costo total de la línea:</span>
+                        <div className="mt-2 p-3 rounded bg-slate-900/50 border border-purple-500/20 overflow-x-auto scrollbar-custom">
+                          <Formula latex={`${lineData.ck} \\cdot ${lineData.count}`} display />
+                        </div>
+                        <p className="text-slate-300 mt-1 text-xs">
+                          Producto del costo elemental por el número de ejecuciones
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Información adicional del análisis completo */}
+                    <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+                      <h4 className="font-semibold text-white mb-3">Contexto del Análisis</h4>
+                      
+                      {/* Ecuación principal */}
+                      <div className="mb-4">
+                        <span className="text-sm font-medium text-slate-400">Ecuación de eficiencia completa:</span>
+                        <div className="mt-2 p-3 rounded bg-slate-900/50 border border-white/10 overflow-x-auto scrollbar-custom">
+                          <Formula latex={analysisData.totals.T_open} display />
+                        </div>
+                      </div>
+
+                      {/* Pasos del procedimiento específico de la línea */}
+                      {lineData.procedure && lineData.procedure.length > 0 && (
+                        <div className="mb-4">
+                          <span className="text-sm font-medium text-slate-400">Procedimiento de simplificación:</span>
+                          <div className="mt-2 space-y-2 max-h-48 overflow-y-auto scrollbar-custom">
+                            {lineData.procedure.map((step, index) => (
+                              <div key={index} className="flex items-start gap-2 p-2 bg-slate-900/50 rounded border border-white/10">
+                                <div className="flex-shrink-0 w-5 h-5 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs font-medium">
+                                  {index + 1}
+                                </div>
+                                <div className="flex-1 min-w-0 overflow-x-auto scrollbar-custom">
+                                  <Formula latex={sanitizeProcedureStep(step)} display />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Símbolos */}
+                      {analysisData.totals.symbols && Object.keys(analysisData.totals.symbols).length > 0 && (
+                        <div className="mb-4">
+                          <span className="text-sm font-medium text-slate-400">Símbolos utilizados:</span>
+                          <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 max-h-32 overflow-y-auto scrollbar-custom">
+                            {Object.entries(analysisData.totals.symbols).map(([symbol, description]) => (
+                              <div key={symbol} className="flex items-center gap-2 p-2 bg-slate-900/50 rounded border border-white/10">
+                                <div className="flex-shrink-0">
+                                  <Formula latex={symbol} />
+                                </div>
+                                <span className="text-slate-300 text-xs">= {description}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Notas generales */}
+                      {analysisData.totals.notes && analysisData.totals.notes.length > 0 && (
+                        <div>
+                          <span className="text-sm font-medium text-slate-400">Notas generales:</span>
+                          <ul className="mt-2 space-y-1 max-h-24 overflow-y-auto scrollbar-custom">
+                            {analysisData.totals.notes.map((note, index) => (
+                              <li key={index} className="flex items-start gap-2 text-sm text-slate-300">
+                                <span className="text-amber-400 mt-1 flex-shrink-0">•</span>
+                                <span>{note}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="p-3 rounded bg-amber-500/10 border border-amber-500/20">
-                    <span className="text-sm font-medium text-amber-300">Ejecuciones</span>
-                    <p className="text-slate-300 mt-1 text-sm">
-                      Número de veces que se ejecuta esta instrucción.
-                    </p>
-                  </div>
-                  <div className="p-3 rounded bg-green-500/10 border border-green-500/20">
-                    <span className="text-sm font-medium text-green-300">Fórmula Resultante</span>
-                    <p className="text-slate-300 mt-1 text-sm">
-                      Expresión matemática del costo para esta línea.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="text-sm text-slate-300 text-center py-4 border-2 border-dashed border-slate-600 rounded-lg">
-                <p className="text-sm">🔍 Procedimiento específico para línea {selectedLine}</p>
-                <p className="text-xs text-slate-400 mt-1">
-                  Sprint 3/4: detalles matemáticos y pasos de cálculo
-                </p>
-              </div>
+                );
+              })()}
             </div>
           ) : (
             // Contenido general (análisis completo)
@@ -202,30 +529,65 @@ export default function ProcedureModal({
                   {/* Ecuación principal */}
                   <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
                     <h4 className="font-semibold text-white mb-3">Ecuación de Eficiencia</h4>
-                    <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10">
+                    <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
                       <Formula latex={analysisData.totals.T_open} display />
                     </div>
                   </div>
 
-                  {/* Pasos del procedimiento */}
-                  <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                    <h4 className="font-semibold text-white mb-3">Pasos del Procedimiento</h4>
-                    {procedureSteps.length > 20 ? (
-                      <VirtualizedStepsList steps={procedureSteps} />
-                    ) : (
-                      <div className="space-y-3 max-h-96 overflow-y-auto scrollbar-custom">
-                        {procedureSteps.map((step, index) => (
-                          <div key={index} className="flex items-start gap-3 p-2">
-                            <div className="flex-shrink-0 w-6 h-6 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs font-medium">
-                              {index + 1}
-                            </div>
-                            <div className="flex-1 bg-slate-900/50 p-3 rounded-lg border border-white/10">
-                              <Formula latex={step} display />
-                            </div>
-                          </div>
-                        ))}
+                  {/* Forma polinómica T(n) si está disponible */}
+                  {analysisData.totals.T_polynomial && (
+                    <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+                      <h4 className="font-semibold text-white mb-3">Forma polinómica T(n)</h4>
+                      <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
+                        <Formula latex={analysisData.totals.T_polynomial as unknown as string} display />
                       </div>
-                    )}
+                    </div>
+                  )}
+
+                  {/* Notación asintótica derivada de T(n) o de la forma detectada */}
+                  <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+                    <h4 className="font-semibold text-white mb-3">Notación asintótica</h4>
+                    <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
+                      {(() => {
+                        const tPoly = analysisData.totals?.T_polynomial;
+                        const base = typeof tPoly === 'string' && tPoly.trim().length > 0 ? tPoly : (derivationSteps[3]?.equation || '');
+                        const bigO = calculateBigOFromExpression(base);
+                        return <Formula latex={bigO} display />;
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Pasos de derivación de la ecuación */}
+                  <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+                    <h4 className="font-semibold text-white mb-3">Derivación de la Ecuación T(n)</h4>
+                    <div className="space-y-4">
+                      {derivationSteps.map((step, index) => {
+                        const colors = [
+                          { bg: 'bg-blue-500/20', text: 'text-blue-300', border: 'border-blue-500/20' },
+                          { bg: 'bg-green-500/20', text: 'text-green-300', border: 'border-green-500/20' },
+                          { bg: 'bg-yellow-500/20', text: 'text-yellow-300', border: 'border-yellow-500/20' },
+                          { bg: 'bg-purple-500/20', text: 'text-purple-300', border: 'border-purple-500/20' }
+                        ];
+                        const color = colors[index] || colors[0];
+                        
+                        return (
+                          <div key={index} className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-6 h-6 ${color.bg} ${color.text} rounded-full flex items-center justify-center text-xs font-medium`}>
+                                {index + 1}
+                              </div>
+                              <h5 className="text-sm font-medium text-slate-300">{step.title}:</h5>
+                            </div>
+                            <div className={`ml-8 p-3 bg-slate-900/50 rounded-lg border ${color.border} overflow-x-auto scrollbar-custom`}>
+                              <Formula latex={step.equation} display />
+                            </div>
+                            <p className="text-xs text-slate-400 ml-8">
+                              {step.description}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {/* Símbolos */}

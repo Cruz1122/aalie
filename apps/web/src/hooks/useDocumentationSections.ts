@@ -22,7 +22,7 @@ export const useDocumentationSections = (): DocumentationSection[] => {
         id: "ui-flujo",
         title: "Flujo de análisis en la UI",
         description:
-          "El usuario escribe en Monaco (validación inmediata con parser TS en Web Worker); tras una pausa se llama a /parse y, con AST válido, a /analyze. La vista muestra código numerado, tabla de costos (C_k, #ejec, costo) y panel de visualizaciones; el modal ‘Procedimiento’ (Best/Avg/Worst) incluye supuestos, pasos en LaTeX con scroll horizontal y T(n) final; desde allí se dispara la comparación con el LLM.",
+          "El usuario escribe en Monaco (validación inmediata con parser TS en Web Worker); tras una pausa se llama a /parse y, con AST válido, a /analyze. El análisis puede iniciarse desde el editor manual o desde el chatbot. Durante el análisis, un loader a pantalla completa muestra el progreso, etapas (parseo, clasificación, sumatorias, simplificación) y el tipo de algoritmo identificado. La vista muestra código numerado, tabla de costos (C_k, #ejec, costo) con selector de casos (Best/Avg/Worst), tarjetas de resumen con notación asintótica, y modales de procedimiento detallado (general y por línea) con pasos en LaTeX normalizados.",
         image: {
           src: "/docs/ui-flujo.webp",
           alt: "Flujo de UI y resultados",
@@ -74,7 +74,7 @@ export const useDocumentationSections = (): DocumentationSection[] => {
         id: "llm",
         title: "Integración con LLM",
         description:
-          "El LLM es parte del flujo: corrige gramática, reconoce patrones y estima T(n) con explicación; la web llama al BFF /api/llm/compare que invoca Gemini u OpenAI según variables de entorno y la UI muestra la comparativa (coincidencias, diferencias y supuestos).",
+          "El LLM es parte del flujo en múltiples puntos: (1) Corrección de gramática: cuando hay errores de sintaxis, el chatbot puede sugerir correcciones; (2) Análisis directo: desde bloques de código en el chat, se puede iniciar análisis completo con el mismo loader que el editor manual; (3) Simplificación matemática: el backend usa Gemini para simplificar expresiones count_raw y generar formas polinómicas canónicas; (4) Generación de procedimientos: se usa un modelo más ligero (Gemini Flash Lite) para generar pasos detallados en LaTeX con notación asintótica. La web llama al BFF /api/llm/* que invoca Gemini u OpenAI según variables de entorno.",
         image: {
           src: "/docs/llm.webp",
           alt: "Flujo de uso de LLM",
@@ -378,9 +378,9 @@ export const useDocumentationSections = (): DocumentationSection[] => {
                 example: "matriz[i][j] <- valor",
               },
               {
-                name: "AST con Posiciones",
-                description: "Cada nodo incluye información de línea y columna para diagnósticos precisos y trazabilidad.",
-                example: '{"type": "Assign", "pos": {"line": 5, "column": 2}}',
+                name: "Sentencias PRINT",
+                description: "Permite mostrar valores en consola con soporte para strings literales, variables y expresiones.",
+                example: 'print("Total: ", resultado);',
               },
             ],
           },
@@ -402,8 +402,14 @@ END`,
                 name: "Asignación",
                 code: String.raw`variable <- expresion;
 variable := expresion;
-variable ← expresion;`,
-                notes: ["Soporta múltiples operadores de asignación", "Punto y coma obligatorio"],
+variable 🡨 expresion;
+variable ← expresion;
+variable ⟵ expresion;`,
+                notes: [
+                  "Soporta múltiples operadores de asignación (ASCII y Unicode)",
+                  "Punto y coma obligatorio",
+                  "Símbolos Unicode: 🡨, ←, ⟵",
+                ],
               },
               {
                 name: "Estructuras de Control",
@@ -421,6 +427,16 @@ variable ← expresion;`,
                   "CALL para statements",
                   "Sin CALL para expresiones",
                   "Soporte para recursión",
+                ],
+              },
+              {
+                name: "Sentencias PRINT",
+                code: 'print("Texto literal", variable1, expresion2);\nprint("Total: " + n);',
+                notes: [
+                  "Soporta múltiples argumentos separados por coma",
+                  "Strings literales entre comillas dobles",
+                  "Escapar comillas internas con \\\"",
+                  "Puede incluir variables y expresiones",
                 ],
               },
             ],
@@ -456,8 +472,9 @@ variable ← expresion;`,
               "For/While/If: Estructuras de control",
               "Binary/Unary: Expresiones con operadores",
               "Call: Llamada a procedimiento (con flag statement: true/false)",
+              "Print: Sentencia de impresión con múltiples argumentos",
               "Return: Retorno de valor",
-              "Identifier/Literal: Valores y referencias",
+              "Identifier/Literal: Valores y referencias (incluye strings)",
             ],
             example: {
               input: "factorial(n) BEGIN\n  resultado <- 1;\n  RETURN resultado;\nEND",

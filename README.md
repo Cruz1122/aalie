@@ -78,11 +78,43 @@ docker-compose up
 ## 📚 Documentación Detallada
 
 - **[Gramática ANTLR y Sintaxis del Lenguaje](packages/grammar/grammar/README.md)** — Referencia completa de sintaxis, ejemplos y estructura del AST
+- **[Guía de Análisis de Algoritmos](apps/api/app/analysis/README.md)** — Documentación técnica del sistema de análisis, reglas, y flujo de trabajo
 - **Guía de Desarrollo** (en README de gramática):
   - [Generación de código TS/Py](packages/grammar/grammar/README.md#generación-de-código-codegen)
   - [Probar endpoint /parse](packages/grammar/grammar/README.md#probar-el-endpoint-parse)
   - [Configurar KaTeX](packages/grammar/grammar/README.md#activar-katex-para-renderizado-de-fórmulas)
   - [Contratos de tipos @aa/types](packages/grammar/grammar/README.md#contratos-de-tipos-en-aatypes)
+
+## 🚀 Guía de Usuario
+
+### Flujo de Análisis Completo
+
+1. **Ingresar código**: Escribe o pega tu algoritmo en pseudocódigo en el editor.
+2. **Verificar sintaxis**: El editor muestra errores en tiempo real. Usa "Verificar Parse" para validar.
+3. **Analizar complejidad**: Haz clic en "Analizar Complejidad" para iniciar el análisis completo.
+4. **Revisar resultados**:
+   - **Tabla de costos por línea**: Visualiza el costo elemental (Cₖ), número de ejecuciones y costo total por línea. Incluye selector de casos (Best/Avg/Worst) en la esquina superior derecha.
+   - **Tarjetas de resumen**: Tres tarjetas muestran la notación asintótica (Big-O) para cada caso, con el Big-O renderizado en LaTeX dentro del círculo del icono.
+   - **Procedimientos detallados**: 
+     - **Procedimiento general**: Haz clic en "Ver Procedimiento" en la tarjeta del Peor caso para ver el procedimiento completo con ecuación de eficiencia, forma polinómica y notación asintótica.
+     - **Procedimiento por línea**: Haz clic en cualquier línea de la tabla para ver los pasos detallados de esa línea específica, desde la expresión original hasta la forma final con notación asintótica.
+
+### Características del Loader de Análisis
+
+- **Progreso en tiempo real**: Muestra el porcentaje de avance durante cada etapa, sincronizado con las promesas del backend.
+- **Etapas visibles**: Parseo → Clasificación → Hallazgo de sumatorias → Simplificación → Finalización.
+- **Identificación de tipo**: Muestra el tipo de algoritmo detectado (iterativo, recursivo, híbrido, desconocido) con animación de "pop".
+- **Manejo de errores**: Si ocurre un error, se muestra un mensaje descriptivo y puedes cerrar el loader sin recargar la página.
+- **Reutilizable**: El mismo loader se usa tanto en el editor manual como en el chatbot, manteniendo consistencia visual.
+
+### Operadores de Asignación Soportados
+
+El lenguaje acepta múltiples formas de asignación:
+- `<-` (estándar ASCII)
+- `:=` (estilo Pascal)
+- `🡨`, `←`, `⟵` (símbolos Unicode)
+
+**Nota**: El archivo de gramática debe guardarse en UTF-8 para reconocer correctamente los símbolos Unicode.
 
 ## Tecnologías Principales
 
@@ -124,16 +156,23 @@ Tipos e interfaces TypeScript compartidos entre frontend y backend.
 Aplicación Next.js con editor de código, análisis de complejidad y modo IA.
 
 **Características:**
-- Editor Monaco con syntax highlighting
+- Editor Monaco con syntax highlighting (incluye soporte para strings literales)
 - Renderizado de fórmulas con KaTeX
 - Visualización de AST
-- Chatbot integrado
+- Chatbot integrado con análisis directo desde bloques de código
+- Loader de análisis a pantalla completa con etapas, porcentajes sincronizados y estado de error
+- Análisis desde dos puntos de entrada: editor manual y chatbot (mismo loader reutilizable)
+- Tarjetas por caso (mejor/promedio/peor) con selección persistente en `sessionStorage` y badges Big-O renderizados en LaTeX
+- Modal dedicado para el procedimiento general y vista detallada por línea con pasos normalizados
+- Sanitización automática de procedimientos LaTeX que maneja múltiples bloques `\text{}` intercalados con expresiones matemáticas
+- Soporte completo para sentencias `print()` con strings literales y múltiples argumentos 
 
 ### `apps/api`
 API REST con FastAPI que expone endpoints de parsing y análisis.
 
 **Endpoints principales:**
 - `POST /grammar/parse` — Parsea pseudocódigo y devuelve AST
+- `POST /analyze/open` — Analiza complejidad temporal (método abierto S3)
 - `GET /health` — Health check
 
 ## Testing

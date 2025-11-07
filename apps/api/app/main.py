@@ -2,6 +2,12 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from dotenv import load_dotenv
+import os
+
+# Cargar variables de entorno desde .env
+env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
+load_dotenv(env_path)
 
 from .core.config import get_dev_allowed_origins, get_dev_cors_enabled
 from .routers import parse as parse_router
