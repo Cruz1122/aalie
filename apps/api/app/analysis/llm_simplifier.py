@@ -11,7 +11,17 @@ env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__
 load_dotenv(env_path)
 
 
-def _call_gemini_api(prompt: str, max_retries: int = 1) -> Optional[Dict[str, Any]]:
+def _call_gemini_api(
+    prompt: str,
+    *,
+    model: str,
+    max_retries: int = 1,
+    temperature: float = 0.0,
+    top_p: float = 0.0,
+    top_k: int = 1,
+    max_output_tokens: int = 8000,
+    response_mime_type: str = "application/json"
+) -> Optional[Dict[str, Any]]:
     """
     Llama directamente a la API de Gemini para simplificar expresiones.
     
@@ -27,9 +37,14 @@ def _call_gemini_api(prompt: str, max_retries: int = 1) -> Optional[Dict[str, An
         print("[LLM Simplifier] ERROR: API_KEY no encontrada en variables de entorno")
         return None
     
-    print(f"[LLM Simplifier] Llamando a Gemini API con {len(prompt)} caracteres de prompt")
+    print(
+        f"[LLM Simplifier] Llamando a Gemini API ({model}) con {len(prompt)} caracteres de prompt"
+    )
     
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        f"{model}:generateContent"
+    )
     headers = {
         "Content-Type": "application/json",
     }
@@ -105,10 +120,14 @@ IMPORTANTE:
     }]
     
     generation_config = {
-        "temperature": 0.3,
-        "maxOutputTokens": 8000,
-        "responseMimeType": "application/json"
+        "temperature": temperature,
+        "maxOutputTokens": max_output_tokens,
+        "responseMimeType": response_mime_type,
     }
+    if top_p is not None:
+        generation_config["topP"] = top_p
+    if top_k is not None:
+        generation_config["topK"] = top_k
     
     body = {
         "system_instruction": system_instruction,
@@ -203,7 +222,7 @@ IMPORTANTE:
     return None
 
 
-def _validate_llm_response(result: Dict[str, Any], num_rows: int) -> bool:
+def _validate_simplification_response(result: Dict[str, Any], num_rows: int) -> bool:
     """
     Valida que la respuesta del LLM sea correcta.
     
@@ -234,28 +253,6 @@ def _validate_llm_response(result: Dict[str, Any], num_rows: int) -> bool:
             print(f"[LLM Simplifier] Count en posición {i} no es válido: {count}")
             return False
     
-    # Validar procedures_by_line si está presente (opcional pero debe tener el mismo número de elementos)
-    procedures_by_line = result.get("procedures_by_line")
-    if procedures_by_line is not None:
-        if not isinstance(procedures_by_line, list):
-            print(f"[LLM Simplifier] procedures_by_line no es un array: {type(procedures_by_line)}")
-            return False
-        
-        if len(procedures_by_line) != num_rows:
-            print(f"[LLM Simplifier] Número de procedures_by_line ({len(procedures_by_line)}) no coincide con número de filas ({num_rows})")
-            return False
-        
-        # Validar que cada procedimiento sea un array de strings
-        for i, procedure in enumerate(procedures_by_line):
-            if not isinstance(procedure, list):
-                print(f"[LLM Simplifier] Procedure en posición {i} no es un array: {type(procedure)}")
-                return False
-            
-            for j, step in enumerate(procedure):
-                if not isinstance(step, str) or not step.strip():
-                    print(f"[LLM Simplifier] Paso {j} del procedimiento {i} no es válido: {step}")
-                    return False
-    
     return True
 
 
@@ -285,38 +282,36 @@ def simplify_counts_with_llm(rows: List[Dict[str, Any]]) -> Optional[Dict[str, A
     prompt_parts.append("1. Simplifica cada count_raw eliminando paréntesis innecesarios y simplificando operaciones")
     prompt_parts.append("2. Simplifica sumatorias: \\sum_{i=1}^{n} 1 → n, \\sum_{i=2}^{n} 1 → n-1, etc.")
     prompt_parts.append("3. Genera la forma polinómica T(n) = an² + bn + c basándote en los counts simplificados")
-    prompt_parts.append("4. Para cada línea, genera un procedimiento completo que muestre el proceso desde la expresión original hasta la forma polinómica")
-    prompt_parts.append("   - Cada paso debe ser explicativo y detallado")
-    prompt_parts.append("   - Usa \\text{} para texto descriptivo en LaTeX, con un espacio DENTRO del \\text{} al final (antes del cierre de llaves)")
-    prompt_parts.append("   - Incluye las ecuaciones correspondientes en cada paso para contrastar")
-    prompt_parts.append("   - Muestra SOLO los pasos donde haya transformaciones reales (no repitas pasos innecesarios)")
-    prompt_parts.append("   - Si la expresión ya está simplificada (ej: count_raw = 1), muestra solo el paso relevante")
-    prompt_parts.append("   - SIEMPRE incluye una conclusión final como \"Forma final\" o \"Forma simplificada\"")
-    prompt_parts.append("   - Cada paso debe incluir dos puntos antes del espacio final dentro del \\text{}")
-    prompt_parts.append("   - Ejemplo: \\text{Paso 1: Expresión original: } \\sum_{i=1}^{n} 1")
-    prompt_parts.append("   - Ejemplo: \\text{Paso 2: Simplificación de sumatoria: } \\sum_{i=1}^{n} 1 = n")
-    prompt_parts.append("   - Ejemplo: \\text{Forma final: } C_k \\cdot n = a \\cdot n")
-    prompt_parts.append("   - Para expresiones constantes simples (ej: 1), muestra: \\text{Forma constante: } 1")
+    prompt_parts.append("4. Usa SIEMPRE la misma forma canónica en los counts simplificados: combina términos semejantes, ordena por grado descendente y evita factorizaciones o permutaciones equivalentes")
+    prompt_parts.append("5. Cuando existan sumatorias anidadas, conserva la notación explícita \\sum con índices únicos para las variables ligadas; NO conviertas sumatorias en productos que mezclen variables ligadas con variables libres")
+    prompt_parts.append("6. Si la expresión puede escribirse como polinomio en n, devuelve la forma expandida ordenada como a\\cdot n^2 + b\\cdot n + c, sin espacios adicionales ni factorizaciones")
+
     prompt_parts.append("\nFORMATO DE SALIDA (JSON):")
-    prompt_parts.append('{"counts": ["expresión1", "expresión2", ...], "T_polynomial": "a \\cdot n^2 + b \\cdot n + c", "procedures_by_line": [[...], [...], ...]}')
+    prompt_parts.append('{"counts": ["expresión1", "expresión2", ...], "T_polynomial": "a \\cdot n^2 + b \\cdot n + c"}')
+
     prompt_parts.append("\nIMPORTANTE:")
     prompt_parts.append("- El array 'counts' debe tener exactamente el mismo número de elementos que las líneas de entrada")
-    prompt_parts.append("- El array 'procedures_by_line' debe tener exactamente el mismo número de elementos que las líneas de entrada")
-    prompt_parts.append("- Cada elemento de 'procedures_by_line' es un array de pasos en formato LaTeX")
-    prompt_parts.append("- Cada paso debe usar \\text{} para texto descriptivo (con espacio DENTRO del \\text{} al final) e incluir las ecuaciones correspondientes")
-    prompt_parts.append("- Muestra SOLO los pasos donde haya transformaciones reales (evita pasos repetitivos o innecesarios)")
-    prompt_parts.append("- Para expresiones constantes simples, muestra solo un paso relevante")
-    prompt_parts.append("- SIEMPRE incluye una conclusión final como \"Forma final\" o \"Forma simplificada\"")
-    prompt_parts.append("- Mantén el orden de los counts y procedures_by_line igual al orden de las líneas")
+    prompt_parts.append("- Mantén el orden de los counts igual al orden de las líneas")
     prompt_parts.append("- Usa formato LaTeX para todas las expresiones")
     prompt_parts.append("- Si N es la variable, úsala en lugar de n en las expresiones")
-    
+    prompt_parts.append("- Devuelve expresiones deterministas: sin factorizaciones alternativas ni cambios en el orden de los términos entre ejecuciones")
+    prompt_parts.append("- Revisa que los índices de sumatoria no entren en conflicto con variables libres; renómbralos si es necesario para mantenerlos ligados")
+
     prompt = "\n".join(prompt_parts)
     print(f"[LLM Simplifier] Prompt generado:\n{prompt[:500]}...")
     
     # Llamar al LLM
     print(f"[LLM Simplifier] Simplificando {len(rows)} filas con LLM")
-    result = _call_gemini_api(prompt, max_retries=1)
+    result = _call_gemini_api(
+        prompt,
+        model="gemini-2.5-flash",
+        max_retries=1,
+        temperature=0.0,
+        top_p=0.0,
+        top_k=1,
+        max_output_tokens=8000,
+        response_mime_type="application/json",
+    )
     
     if not result:
         print("[LLM Simplifier] ERROR: No se pudo obtener respuesta del LLM, usando count_raw como count")
@@ -325,10 +320,120 @@ def simplify_counts_with_llm(rows: List[Dict[str, Any]]) -> Optional[Dict[str, A
     print(f"[LLM Simplifier] Respuesta recibida del LLM: {list(result.keys())}")
     
     # Validar respuesta
-    if not _validate_llm_response(result, len(rows)):
+    if not _validate_simplification_response(result, len(rows)):
         print("[LLM Simplifier] ERROR: Respuesta del LLM inválida, usando count_raw como count")
         return None
     
     print("[LLM Simplifier] Respuesta validada correctamente, retornando resultado")
+    return result
+
+
+def _validate_procedures_response(result: Dict[str, Any], num_rows: int) -> bool:
+    """Valida la respuesta del modelo para procedimientos paso a paso."""
+
+    if not isinstance(result, dict):
+        return False
+
+    procedures = result.get("procedures_by_line")
+    if not isinstance(procedures, list):
+        print("[LLM Simplifier] procedures_by_line no es un array")
+        return False
+
+    if len(procedures) != num_rows:
+        print(
+            f"[LLM Simplifier] Número de procedures_by_line ({len(procedures)}) no coincide con número de filas ({num_rows})"
+        )
+        return False
+
+    for i, procedure in enumerate(procedures):
+        if not isinstance(procedure, list):
+            print(
+                f"[LLM Simplifier] Procedure en posición {i} no es un array: {type(procedure)}"
+            )
+            return False
+        for j, step in enumerate(procedure):
+            if not isinstance(step, str) or not step.strip():
+                print(
+                    f"[LLM Simplifier] Paso {j} del procedimiento {i} no es válido: {step}"
+                )
+                return False
+
+    return True
+
+
+def generate_procedures_with_llm(rows: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Genera procedimientos detallados a partir de count_raw y count simplificado."""
+
+    if not rows:
+        return None
+
+    prompt_parts: List[str] = [
+        "Genera procedimientos de simplificación detallados en LaTeX para las siguientes líneas:\n\n"
+    ]
+
+    for i, row in enumerate(rows):
+        ck = row.get("ck", "")
+        original = row.get("count_raw", "")
+        simplified = row.get("count", "")
+        prompt_parts.append(
+            f"Línea {i + 1}: C_k = {ck}\n  Expresión original: {original}\n  Expresión simplificada: {simplified}"
+        )
+
+    prompt_parts.append("\nINSTRUCCIONES:")
+    prompt_parts.append(
+        "1. Para cada línea, produce un procedimiento paso a paso que explique cómo se transformó la expresión original en la forma simplificada"
+    )
+    prompt_parts.append(
+        "2. Usa \\text{} para el texto descriptivo en cada paso, con un espacio al final dentro de las llaves"
+    )
+    prompt_parts.append(
+        "3. Solo incluye pasos donde ocurra una transformación real; evita repeticiones innecesarias"
+    )
+    prompt_parts.append(
+        "4. Siempre incluye una conclusión final como \"Forma final\" o \"Forma simplificada\""
+    )
+    prompt_parts.append(
+        "5. Cuando muestres ecuaciones, escribe explícitamente la transición (por ejemplo, =, →)"
+    )
+
+    prompt_parts.append("\nFORMATO DE SALIDA (JSON):")
+    prompt_parts.append('{"procedures_by_line": [["paso 1", "paso 2", ...], ...]}')
+
+    prompt_parts.append("\nIMPORTANTE:")
+    prompt_parts.append(
+        "- El array 'procedures_by_line' debe tener exactamente el mismo número de elementos que las líneas proporcionadas"
+    )
+    prompt_parts.append(
+        "- Cada paso debe comenzar con \\text{Paso X: ... } siguiendo los requisitos de espaciado"
+    )
+    prompt_parts.append(
+        "- Incluye las ecuaciones correspondientes para contrastar original y simplificado"
+    )
+    prompt_parts.append(
+        "- Mantén la notación original de variables (respeta mayúsculas/minúsculas)"
+    )
+
+    prompt = "\n".join(prompt_parts)
+    print(f"[LLM Simplifier] Prompt de procedimientos generado:\n{prompt[:500]}...")
+
+    result = _call_gemini_api(
+        prompt,
+        model="gemini-2.5-flash-lite",
+        max_retries=1,
+        temperature=0.0,
+        top_p=0.0,
+        top_k=1,
+        max_output_tokens=4000,
+        response_mime_type="application/json",
+    )
+
+    if not result:
+        print("[LLM Simplifier] ERROR: No se pudo obtener procedimientos del LLM")
+        return None
+
+    if not _validate_procedures_response(result, len(rows)):
+        print("[LLM Simplifier] ERROR: Respuesta de procedimientos inválida")
+        return None
+
     return result
 

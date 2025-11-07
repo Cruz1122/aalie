@@ -6,7 +6,7 @@ from .visitors.for_visitor import ForVisitor
 from .visitors.if_visitor import IfVisitor
 from .visitors.while_repeat_visitor import WhileRepeatVisitor
 from .visitors.simple_visitor import SimpleVisitor
-from .llm_simplifier import simplify_counts_with_llm
+from .llm_simplifier import simplify_counts_with_llm, generate_procedures_with_llm
 
 
 class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor, SimpleVisitor):
@@ -107,32 +107,39 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Visitar el AST completo
         self.visit(ast, mode)
         
-        # Simplificar counts usando LLM
         llm_result = simplify_counts_with_llm(self.rows)
-        
+
         if llm_result:
             # Actualizar counts con los simplificados del LLM
             counts = llm_result.get("counts", [])
             if len(counts) == len(self.rows):
                 for i, row in enumerate(self.rows):
                     row["count"] = counts[i]
-                
+
                 # Guardar T_polynomial
                 t_polynomial = llm_result.get("T_polynomial")
                 if t_polynomial:
                     self.t_polynomial = t_polynomial
-                
-                # Guardar procedures_by_line si está disponible
-                procedures_by_line = llm_result.get("procedures_by_line")
-                if procedures_by_line and len(procedures_by_line) == len(self.rows):
-                    for i, row in enumerate(self.rows):
-                        row["procedure"] = procedures_by_line[i]
+
+                # Generar procedimientos detallados con modelo ligero
+                procedures_result = generate_procedures_with_llm(self.rows)
+                if procedures_result:
+                    procedures = procedures_result.get("procedures_by_line", [])
+                    if len(procedures) == len(self.rows):
+                        for i, row in enumerate(self.rows):
+                            row["procedure"] = procedures[i]
+                    else:
+                        print(
+                            f"[IterativeAnalyzer] Número de procedimientos del LLM ({len(procedures)}) no coincide con número de filas ({len(self.rows)})"
+                        )
             else:
-                print(f"[IterativeAnalyzer] Número de counts del LLM ({len(counts)}) no coincide con número de filas ({len(self.rows)})")
+                print(
+                    f"[IterativeAnalyzer] Número de counts del LLM ({len(counts)}) no coincide con número de filas ({len(self.rows)})"
+                )
         else:
             # Si el LLM falla, usar count_raw como count (ya está así por defecto)
             print("[IterativeAnalyzer] LLM falló, usando count_raw como count")
-        
+
         # Retornar resultado
         return self.result()
     

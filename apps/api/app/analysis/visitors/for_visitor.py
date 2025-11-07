@@ -105,27 +105,6 @@ class ForVisitor:
             # Generar expresión general (sin simplificar, el LLM lo hará)
             header_count = f"({b}) - ({a}) + 2"
         
-        # Para cabeceras de bucles anidados, integrar con sumatorios activos
-        if self.loop_stack and len(self.loop_stack) > 0:
-            # Si hay un sumatorio activo por i y estamos en el bucle de j
-            outer_mult = self.loop_stack[-1]
-            if var == "j" and "\\sum_{i=" in outer_mult:
-                # Integrar la cabecera en el sumatorio externo
-                # \sum_{i=...}^{...} ( (b) - (a) + 2) )
-                import re
-                match = re.match(r"\\sum_{i=(.+?)}^{(.+?)} 1$", outer_mult)
-                if match:
-                    start_i, end_i = match.groups()
-                    integrated_count = f"\\sum_{{i={start_i}}}^{{{end_i}}} ({header_count})"
-                    self.add_row(
-                        line=line,
-                        kind="for",
-                        ck=ck_header,
-                        count=integrated_count,
-                        note=f"Cabecera del bucle for {var}={a}..{b}"
-                    )
-                    return  # No agregar multiplicador, ya está integrado
-        
         # Para cabeceras de bucles anidados, usar add_row para generar count_raw correctamente
         # add_row aplicará los multiplicadores del stack automáticamente
         self.add_row(

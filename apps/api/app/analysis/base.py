@@ -1,6 +1,7 @@
 # apps/api/app/analysis/base.py
 
 from typing import List, Dict, Any, Optional
+import re
 
 # Tipos de datos que espejan el contrato ya implementado
 LineCost = Dict[str, Any]
@@ -40,17 +41,7 @@ class BaseAnalyzer:
             count: Número de ejecuciones (string KaTeX)
             note: Nota opcional sobre la línea
         """
-        # Aplicar multiplicadores del stack de bucles (guardar en count_raw)
-        if self.loop_stack:
-            if count == "1":
-                # Si count es 1, solo usar los multiplicadores
-                count_raw_final = "\\cdot".join([f"({m})" for m in self.loop_stack])
-            else:
-                # Si count no es 1, multiplicar por los multiplicadores
-                mult = "\\cdot".join([f"({m})" for m in self.loop_stack])
-                count_raw_final = f"({count})\\cdot{mult}"
-        else:
-            count_raw_final = count
+        count_raw_final = self._apply_loop_multipliers(count)
         
         # Normalizar strings si el método está disponible (solo formato básico)
         if hasattr(self, '_normalize_string'):
@@ -68,6 +59,46 @@ class BaseAnalyzer:
         }
         
         self.rows.append(row)
+
+    def _apply_loop_multipliers(self, base_count: str) -> str:
+        """Envuelve el conteo base con los multiplicadores activos del stack."""
+
+        expr = base_count or "1"
+
+        for multiplier in reversed(self.loop_stack):
+            sum_info = self._parse_sum_multiplier(multiplier)
+
+            if sum_info:
+                var, start, end = sum_info
+                expr = f"\\sum_{{{var}={start}}}^{{{end}}} ({expr})"
+            else:
+                if expr == "1":
+                    expr = multiplier
+                else:
+                    expr = f"({expr})\\cdot({multiplier})"
+
+        return expr
+
+    @staticmethod
+    def _parse_sum_multiplier(multiplier: str) -> Optional[List[str]]:
+        """
+        Detecta si un multiplicador representa una sumatoria y extrae sus componentes.
+
+        Returns:
+            [var, start, end] si es una sumatoria, None en caso contrario.
+        """
+
+        if not isinstance(multiplier, str):
+            return None
+
+        pattern = r"^\\sum_\{([^=}]+)=([^}]*)\}\^\{([^}]*)\}\s*1$"
+        match = re.match(pattern, multiplier.strip())
+
+        if not match:
+            return None
+
+        var, start, end = match.groups()
+        return [var.strip(), start.strip(), end.strip()]
 
     # --- util 2: gestionar contexto de bucles ---
     def push_multiplier(self, m: str):
