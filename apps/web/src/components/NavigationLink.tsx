@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import { ReactNode, MouseEvent } from "react";
 
 import { useNavigation } from "@/contexts/NavigationContext";
@@ -37,7 +38,7 @@ export default function NavigationLink({
 
   return (
     <Link 
-      href={href}
+      href={href as Route}
       className={className}
       onClick={handleClick}
     >
