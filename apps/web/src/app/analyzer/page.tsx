@@ -15,7 +15,7 @@ import LineTable from "@/components/LineTable";
 import ProcedureModal from "@/components/ProcedureModal";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { useChatHistory } from "@/hooks/useChatHistory";
-import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
+import { getApiKey } from "@/hooks/useApiKey";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 import { calculateBigO, getSavedCase, saveCase } from "@/lib/polynomial";
 import { GrammarApiService } from "@/services/grammar-api";
@@ -83,46 +83,17 @@ export default function AnalyzerPage() {
   const [localParseOk, setLocalParseOk] = useState(false);
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'tree' | 'json'>('tree');
-  const [showAIHelpButton, setShowAIHelpButton] = useState(false);
-  const [backendParseError, setBackendParseError] = useState<string | null>(null);
-  const [hasValidApiKey, setHasValidApiKey] = useState<boolean>(false);
-
   // Estados del chat
   const { messages, setMessages } = useChatHistory();
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Refs para evitar memory leaks con timeouts
   const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const aiHelpTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Manejar cambios en el estado de parsing local
   const handleParseStatusChange = (ok: boolean, _isParsing: boolean) => {
     setLocalParseOk(ok);
   };
-
-  // Verificar API_KEY al montar y cuando cambie
-  useEffect(() => {
-    const checkApiKey = async () => {
-      const status = await getApiKeyStatus();
-      // Solo habilitar el botón si hay API_KEY disponible (localStorage o servidor)
-      setHasValidApiKey(status.hasAny);
-    };
-    
-    checkApiKey();
-    
-    // Escuchar cambios en la API_KEY
-    const handleApiKeyChange = async () => {
-      await checkApiKey();
-    };
-    
-    window.addEventListener('apiKeyChanged', handleApiKeyChange);
-    window.addEventListener('storage', handleApiKeyChange);
-    
-    return () => {
-      window.removeEventListener('apiKeyChanged', handleApiKeyChange);
-      window.removeEventListener('storage', handleApiKeyChange);
-    };
-  }, []);
 
   // Cleanup de timeouts al desmontar
   useEffect(() => {
@@ -130,50 +101,8 @@ export default function AnalyzerPage() {
       if (copyTimeoutRef.current) {
         clearTimeout(copyTimeoutRef.current);
       }
-      if (aiHelpTimeoutRef.current) {
-        clearTimeout(aiHelpTimeoutRef.current);
-      }
     };
   }, []);
-
-  // Detectar errores de parsing y mostrar botón de ayuda después de 3 segundos
-  useEffect(() => {
-    // Limpiar timeout anterior
-    if (aiHelpTimeoutRef.current) {
-      clearTimeout(aiHelpTimeoutRef.current);
-    }
-
-    // Si no hay errores locales, ocultar el botón
-    if (localParseOk) {
-      setShowAIHelpButton(false);
-      setBackendParseError(null);
-      return;
-    }
-
-    // Si hay errores locales, esperar 3 segundos y consultar backend
-    aiHelpTimeoutRef.current = setTimeout(async () => {
-      try {
-        const data = await GrammarApiService.parseCode(source);
-        if (data.ok) {
-          setShowAIHelpButton(false);
-          setBackendParseError(null);
-        } else {
-          setBackendParseError(data.error || "Error de sintaxis detectado");
-          setShowAIHelpButton(true);
-        }
-      } catch (e) {
-        console.error("Error al verificar parse:", e);
-        setBackendParseError("Error al verificar el código");
-        setShowAIHelpButton(true);
-      }
-    }, 3000);
-
-    return () => {
-      if (aiHelpTimeoutRef.current) {
-        clearTimeout(aiHelpTimeoutRef.current);
-      }
-    };
-  }, [localParseOk, source]);
 
   // Resetear estado de copiado cuando se cierra el modal
   useEffect(() => {
@@ -564,64 +493,6 @@ export default function AnalyzerPage() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      {/* Botón de Ayuda con IA - solo se muestra si hay API_KEY disponible */}
-                      {showAIHelpButton && backendParseError && hasValidApiKey && (
-                        <button
-                          onClick={async () => {
-                            // Crear mensaje estructurado con el código y el error para el LLM
-                            const errorMessage = `Necesito ayuda con un error de sintaxis en mi código de pseudocódigo.
-
-**CÓDIGO ADJUNTO:**
-\`\`\`pseudocode
-${source}
-\`\`\`
-
-**ERROR DETECTADO:**
-\`\`\`error
-${backendParseError}
-\`\`\`
-
-**SOLICITUD:**
-Por favor, analiza el código y el error, identifica la causa del problema y proporciona una solución corregida. Explica qué estaba mal y cómo solucionarlo.`;
-                            
-                            const newMessage: Message = {
-                              id: `user-help-${Date.now()}`,
-                              content: errorMessage,
-                              sender: 'user',
-                              timestamp: new Date()
-                            };
-                            
-                            // Verificar si ya existe un mensaje con el mismo contenido para evitar duplicados
-                            const messageExists = messages.some(
-                              msg => msg.sender === 'user' && 
-                              msg.content.includes('**CÓDIGO ADJUNTO:**') &&
-                              msg.content.includes(source.slice(0, 50))
-                            );
-                            
-                            if (!messageExists) {
-                              setMessages(prev => {
-                                if (prev.length > 0) {
-                                  return [...prev, newMessage];
-                                }
-                                const welcomeMessage: Message = {
-                                  id: 'welcome',
-                                  content: "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
-                                  sender: 'bot',
-                                  timestamp: new Date()
-                                };
-                                return [welcomeMessage, newMessage];
-                              });
-                            }
-                            
-                            // Abrir el chat
-                            setIsChatOpen(true);
-                          }}
-                          className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 cursor-pointer"
-                        >
-                          <span className="material-symbols-outlined text-sm">smart_toy</span>
-                          <span>Ayuda IA</span>
-                        </button>
-                      )}
                       <button
                         onClick={() => setShowAstModal(true)}
                         disabled={!localParseOk || !ast}
