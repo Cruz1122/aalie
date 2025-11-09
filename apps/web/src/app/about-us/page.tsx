@@ -71,19 +71,27 @@ export default function AboutPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                <span className="text-dark-text text-sm">Base del proyecto completada</span>
+                <span className="text-dark-text text-sm">Editor Monaco con syntax highlighting</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                <span className="text-dark-text text-sm">Arquitectura monorepo funcional</span>
+                <span className="text-dark-text text-sm">Parsing completo con ANTLR4</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                <span className="text-dark-text text-sm">Editor y parsing en desarrollo</span>
+                <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                <span className="text-dark-text text-sm">Análisis de complejidad temporal (método S3)</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                <span className="text-dark-text text-sm">Análisis de complejidad próximamente</span>
+                <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                <span className="text-dark-text text-sm">Chatbot integrado con IA</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                <span className="text-dark-text text-sm">Visualizaciones AST y tablas de costos</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                <span className="text-dark-text text-sm">Soporte para mejor/promedio/peor caso</span>
               </div>
             </div>
           </div>
@@ -107,9 +115,10 @@ export default function AboutPage() {
               <div>
                 <h4 className="text-white font-medium mb-2 text-sm">Backend</h4>
                 <ul className="text-dark-text text-xs space-y-1">
-                  <li>FastAPI (Python)</li>
+                  <li>FastAPI (Python 3.11+)</li>
                   <li>ANTLR4 Parser</li>
                   <li>SymPy (Matemáticas)</li>
+                  <li>Azure AI / Gemini (LLM)</li>
                   <li>Docker Compose</li>
                 </ul>
               </div>
@@ -117,42 +126,80 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Roadmap */}
+        {/* Características Implementadas */}
         <div className="glass-card p-8 rounded-xl mb-12">
-          <h2 className="text-2xl font-bold text-white mb-8 text-center">Roadmap de Desarrollo</h2>
+          <h2 className="text-2xl font-bold text-white mb-8 text-center">Características Implementadas</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="relative">
               <div className="glass-secondary p-4 rounded-lg border-l-4 border-green-400">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                  <h3 className="text-white font-semibold text-sm">Sprint 2-3</h3>
+                  <h3 className="text-white font-semibold text-sm">Análisis Completo</h3>
                 </div>
                 <p className="text-dark-text text-sm">
-                  Editor Monaco + Gramática ANTLR4 + Parsing dual
+                  Análisis de complejidad temporal (método S3) con soporte para bucles FOR, WHILE, condicionales IF y recursión
                 </p>
               </div>
             </div>
 
             <div className="relative">
-              <div className="glass-secondary p-4 rounded-lg border-l-4 border-yellow-400">
+              <div className="glass-secondary p-4 rounded-lg border-l-4 border-green-400">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
-                  <h3 className="text-white font-semibold text-sm">Sprint 4</h3>
+                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                  <h3 className="text-white font-semibold text-sm">Editor Avanzado</h3>
                 </div>
                 <p className="text-dark-text text-sm">
-                  Análisis de complejidad + Cierre de sumatorias
+                  Editor Monaco con validación en tiempo real, syntax highlighting y soporte para múltiples operadores de asignación
                 </p>
               </div>
             </div>
 
             <div className="relative">
-              <div className="glass-secondary p-4 rounded-lg border-l-4 border-blue-400">
+              <div className="glass-secondary p-4 rounded-lg border-l-4 border-green-400">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
-                  <h3 className="text-white font-semibold text-sm">Sprint 5-6</h3>
+                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                  <h3 className="text-white font-semibold text-sm">Asistente IA</h3>
                 </div>
-                <p className="text-dark-text text-sm">Visualizaciones + CFG + Documentación</p>
+                <p className="text-dark-text text-sm">
+                  Chatbot integrado con modelos de lenguaje (Azure AI/Gemini) para asistencia y clasificación de algoritmos
+                </p>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="glass-secondary p-4 rounded-lg border-l-4 border-green-400">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                  <h3 className="text-white font-semibold text-sm">Visualizaciones</h3>
+                </div>
+                <p className="text-dark-text text-sm">
+                  Visualización de AST, tablas de costos por línea y gráficos de flujo de control
+                </p>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="glass-secondary p-4 rounded-lg border-l-4 border-green-400">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                  <h3 className="text-white font-semibold text-sm">Fórmulas LaTeX</h3>
+                </div>
+                <p className="text-dark-text text-sm">
+                  Renderizado de fórmulas matemáticas con KaTeX, incluyendo ecuaciones de eficiencia y notación Big-O
+                </p>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="glass-secondary p-4 rounded-lg border-l-4 border-green-400">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                  <h3 className="text-white font-semibold text-sm">Procedimientos Detallados</h3>
+                </div>
+                <p className="text-dark-text text-sm">
+                  Explicaciones paso a paso del análisis, procedimientos generales y por línea con normalización automática
+                </p>
               </div>
             </div>
           </div>
@@ -252,7 +299,7 @@ export default function AboutPage() {
             </a>
           </div>
           <p className="text-xs text-dark-text mt-6">
-            Proyecto académico - Universidad de Caldas 2025
+            Proyecto académico - Universidad de Caldas 2025-2
           </p>
         </div>
       </main>

@@ -15,11 +15,19 @@ import LineTable from "@/components/LineTable";
 import ProcedureModal from "@/components/ProcedureModal";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { useChatHistory } from "@/hooks/useChatHistory";
+import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 import { calculateBigO, getSavedCase, saveCase } from "@/lib/polynomial";
 import { GrammarApiService } from "@/services/grammar-api";
 
 type ClassifyResponse = { kind: "iterative" | "recursive" | "hybrid" | "unknown" };
+
+interface Message {
+  id: string;
+  content: string;
+  sender: 'user' | 'bot';
+  timestamp: Date;
+}
 
 export default function AnalyzerPage() {
   const { animateProgress } = useAnalysisProgress();
@@ -77,6 +85,7 @@ export default function AnalyzerPage() {
   const [viewMode, setViewMode] = useState<'tree' | 'json'>('tree');
   const [showAIHelpButton, setShowAIHelpButton] = useState(false);
   const [backendParseError, setBackendParseError] = useState<string | null>(null);
+  const [hasValidApiKey, setHasValidApiKey] = useState<boolean>(false);
 
   // Estados del chat
   const { messages, setMessages } = useChatHistory();
@@ -90,6 +99,30 @@ export default function AnalyzerPage() {
   const handleParseStatusChange = (ok: boolean, _isParsing: boolean) => {
     setLocalParseOk(ok);
   };
+
+  // Verificar API_KEY al montar y cuando cambie
+  useEffect(() => {
+    const checkApiKey = async () => {
+      const status = await getApiKeyStatus();
+      // Solo habilitar el botón si hay API_KEY disponible (localStorage o servidor)
+      setHasValidApiKey(status.hasAny);
+    };
+    
+    checkApiKey();
+    
+    // Escuchar cambios en la API_KEY
+    const handleApiKeyChange = async () => {
+      await checkApiKey();
+    };
+    
+    window.addEventListener('apiKeyChanged', handleApiKeyChange);
+    window.addEventListener('storage', handleApiKeyChange);
+    
+    return () => {
+      window.removeEventListener('apiKeyChanged', handleApiKeyChange);
+      window.removeEventListener('storage', handleApiKeyChange);
+    };
+  }, []);
 
   // Cleanup de timeouts al desmontar
   useEffect(() => {
@@ -220,10 +253,11 @@ export default function AnalyzerPage() {
       setAnalysisMessage("Clasificando algoritmo...");
       let kind: ClassifyResponse["kind"];
       try {
+        const apiKey = getApiKey();
         const clsPromise = fetch("/api/llm/classify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ source, mode: "auto" }),
+          body: JSON.stringify({ source, mode: "auto", apiKey: apiKey || undefined }),
         });
 
         // Animar progreso mientras se clasifica (espera a que clsPromise se resuelva)
@@ -264,14 +298,31 @@ export default function AnalyzerPage() {
       setAnalysisMessage("Hallando sumatorias...");
       await animateProgress(40, 50, 500, setAnalysisProgress);
 
-      setAnalysisMessage("Simplificando expresiones matemáticas...");
+      // Verificar estado de API_KEY
+      const apiKeyStatus = await getApiKeyStatus();
+      const apiKey = getApiKey();
+      const hasApiKey = apiKeyStatus.hasAny;
+      
+      // Mostrar mensaje según disponibilidad de API_KEY
+      if (hasApiKey) {
+        setAnalysisMessage("Simplificando expresiones matemáticas...");
+      } else {
+        setAnalysisMessage("Analizando (sin simplificación LLM)...");
+      }
+      
+      const body: any = { source, mode: "worst" };
+      if (apiKey) {
+        body.api_key = apiKey;
+      }
+      // Si no hay apiKey en localStorage, el backend intentará usar la de variables de entorno
+      
       const analyzePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source, mode: "worst" }),
+        body: JSON.stringify(body),
       }).then(r => r.json() as Promise<AnalyzeOpenResponse>);
 
-      // Animar progreso mientras se simplifica (espera a que analyzePromise se resuelva)
+      // Animar progreso mientras se analiza (espera a que analyzePromise se resuelva)
       const analyzeRes = await animateProgress(50, 70, 5000, setAnalysisProgress, analyzePromise) as AnalyzeOpenResponse;
 
       setAnalysisMessage("Generando forma polinómica...");
@@ -513,11 +564,59 @@ export default function AnalyzerPage() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      {/* Botón de Ayuda con IA - deshabilitado por el momento */}
-                      {showAIHelpButton && backendParseError && (
+                      {/* Botón de Ayuda con IA - solo se muestra si hay API_KEY disponible */}
+                      {showAIHelpButton && backendParseError && hasValidApiKey && (
                         <button
-                          disabled
-                          className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all opacity-40 cursor-not-allowed bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30"
+                          onClick={async () => {
+                            // Crear mensaje estructurado con el código y el error para el LLM
+                            const errorMessage = `Necesito ayuda con un error de sintaxis en mi código de pseudocódigo.
+
+**CÓDIGO ADJUNTO:**
+\`\`\`pseudocode
+${source}
+\`\`\`
+
+**ERROR DETECTADO:**
+\`\`\`error
+${backendParseError}
+\`\`\`
+
+**SOLICITUD:**
+Por favor, analiza el código y el error, identifica la causa del problema y proporciona una solución corregida. Explica qué estaba mal y cómo solucionarlo.`;
+                            
+                            const newMessage: Message = {
+                              id: `user-help-${Date.now()}`,
+                              content: errorMessage,
+                              sender: 'user',
+                              timestamp: new Date()
+                            };
+                            
+                            // Verificar si ya existe un mensaje con el mismo contenido para evitar duplicados
+                            const messageExists = messages.some(
+                              msg => msg.sender === 'user' && 
+                              msg.content.includes('**CÓDIGO ADJUNTO:**') &&
+                              msg.content.includes(source.slice(0, 50))
+                            );
+                            
+                            if (!messageExists) {
+                              setMessages(prev => {
+                                if (prev.length > 0) {
+                                  return [...prev, newMessage];
+                                }
+                                const welcomeMessage: Message = {
+                                  id: 'welcome',
+                                  content: "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+                                  sender: 'bot',
+                                  timestamp: new Date()
+                                };
+                                return [welcomeMessage, newMessage];
+                              });
+                            }
+                            
+                            // Abrir el chat
+                            setIsChatOpen(true);
+                          }}
+                          className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 cursor-pointer"
                         >
                           <span className="material-symbols-outlined text-sm">smart_toy</span>
                           <span>Ayuda IA</span>

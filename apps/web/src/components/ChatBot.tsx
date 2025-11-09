@@ -2,7 +2,7 @@
 
 import { RotateCcw, Send, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-
+import { getApiKey, setApiKey, validateApiKey } from "@/hooks/useApiKey";
 import MarkdownRenderer from './MarkdownRenderer';
 
 interface Message {
@@ -23,17 +23,25 @@ interface ChatBotProps {
 // ============== FUNCIONES API ==============
 
 /**
- * Clasifica la intención del mensaje del usuario usando Grok-3-Mini
+ * Clasifica la intención del mensaje del usuario usando Gemini
  */
-async function classifyIntent(message: string): Promise<'parser_assist' | 'general'> {
+async function classifyIntent(message: string, apiKey: string | null): Promise<'parser_assist' | 'general'> {
   try {
+    const body: any = {
+      job: 'classify',
+      prompt: message,
+    };
+    
+    // Solo enviar apiKey si hay una del cliente
+    // Si no hay apiKey, el backend usará la de variables de entorno
+    if (apiKey) {
+      body.apiKey = apiKey;
+    }
+    
     const response = await fetch('/api/llm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        job: 'classify',
-        prompt: message
-      })
+      body: JSON.stringify(body)
     });
 
     if (!response.ok) {
@@ -63,7 +71,8 @@ async function classifyIntent(message: string): Promise<'parser_assist' | 'gener
 async function getLLMResponse(
   message: string, 
   job: 'parser_assist' | 'general',
-  chatHistory: Message[]
+  chatHistory: Message[],
+  apiKey: string | null
 ): Promise<string> {
   try {
     // Convertir historial a formato para el LLM (últimos 10 mensajes)
@@ -74,14 +83,22 @@ async function getLLMResponse(
         content: msg.content
       }));
 
+    const body: any = {
+      job,
+      prompt: message,
+      chatHistory: historyForLLM,
+    };
+    
+    // Solo enviar apiKey si hay una del cliente
+    // Si no hay apiKey, el backend usará la de variables de entorno
+    if (apiKey) {
+      body.apiKey = apiKey;
+    }
+
     const response = await fetch('/api/llm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        job,
-        prompt: message,
-        chatHistory: historyForLLM
-      })
+      body: JSON.stringify(body)
     });
 
     if (!response.ok) {
@@ -104,30 +121,32 @@ async function getLLMResponse(
 export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnalyzeCode }: Readonly<ChatBotProps>) {
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [llmStatus, setLlmStatus] = useState<{mode: 'LOCAL' | 'REMOTE', model?: string} | null>(null);
+  const [apiKey, setApiKeyState] = useState<string | null>(null);
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [showApiKeyCard, setShowApiKeyCard] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const animatedMessagesRef = useRef<Set<string>>(new Set());
   const processingRef = useRef(false); // Para evitar llamadas duplicadas
 
-  // Obtener estado del LLM
-  const fetchLlmStatus = async () => {
-    try {
-      const response = await fetch('/api/llm/status');
-      if (response.ok) {
-        const result = await response.json();
-        setLlmStatus({ mode: result.status.mode, model: result.status.jobs.general });
-      }
-    } catch (error) {
-      console.error('Error obteniendo estado LLM:', error);
-    }
-  };
-
-  // Cargar estado del LLM al abrir el chat
+  // Cargar API_KEY al montar el componente y verificar cambios
   useEffect(() => {
-    if (isOpen) {
-      fetchLlmStatus();
-    }
+    const checkApiKey = () => {
+      const stored = getApiKey();
+      setApiKeyState(stored);
+      
+      // No verificar API_KEY del servidor (no hacer peticiones)
+      // El backend usará automáticamente la API_KEY de variables de entorno si está disponible
+      // Mostrar card solo si no hay API_KEY del cliente
+      // Si no hay API_KEY del cliente, el backend intentará usar la de variables de entorno
+      setShowApiKeyCard(stored === null);
+    };
+    
+    checkApiKey();
+    // Verificar cada vez que el componente se monte o cuando cambie el localStorage
+    const interval = setInterval(checkApiKey, 1000);
+    
+    return () => clearInterval(interval);
   }, [isOpen]);
 
   // Auto-scroll al final cuando hay nuevos mensajes
@@ -148,15 +167,19 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnal
 
   // Responder automáticamente si el último mensaje del historial es del usuario
   useEffect(() => {
-    if (!messages || messages.length === 0 || isTyping || processingRef.current) return;
+    if (!messages || messages.length === 0 || isTyping || processingRef.current || !isOpen) return;
     const lastUserIdx = [...messages].map((m) => m.sender).lastIndexOf('user');
     if (lastUserIdx === -1) return;
     // Verificar si después de ese mensaje hay una respuesta del bot
     const hasBotAfter = messages.slice(lastUserIdx + 1).some((m) => m.sender === 'bot');
     if (!hasBotAfter) {
-      generateBotResponse();
+      // Usar un pequeño delay para asegurar que el estado se haya actualizado completamente
+      const timeoutId = setTimeout(() => {
+        generateBotResponse();
+      }, 200);
+      return () => clearTimeout(timeoutId);
     }
-  }, [messages]);
+  }, [messages, isOpen]);
 
   // Scroll automático cuando aparece el indicador de escritura
   useEffect(() => {
@@ -192,6 +215,15 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnal
     // Evitar llamadas duplicadas
     if (processingRef.current) return;
     
+    // Verificar API_KEY del cliente
+    // Si no hay API_KEY del cliente, el backend intentará usar la de variables de entorno
+    const currentApiKey = getApiKey();
+    
+    // No verificar API_KEY del servidor (no hacer peticiones)
+    // Permitir que el backend maneje la API_KEY automáticamente
+    // Solo requerir API_KEY del cliente si queremos garantizar que funcione
+    // Por ahora, permitimos intentar sin API_KEY del cliente
+    
     processingRef.current = true;
     setIsTyping(true);
     
@@ -212,11 +244,13 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnal
         return;
       }
 
-      // Paso 1: Clasificar intención (rápido con Grok-3-Mini)
-      const intent = await classifyIntent(lastUserMessage.content);
+      // Paso 1: Clasificar intención
+      // Si no hay API_KEY del cliente, el backend usará la de variables de entorno
+      const intent = await classifyIntent(lastUserMessage.content, currentApiKey);
       
       // Paso 2: Obtener respuesta con el modelo apropiado (incluyendo historial)
-      const responseText = await getLLMResponse(lastUserMessage.content, intent, messages);
+      // Si no hay API_KEY del cliente, el backend usará la de variables de entorno
+      const responseText = await getLLMResponse(lastUserMessage.content, intent, messages, currentApiKey);
 
       // Crear mensaje del bot
       const botResponse: Message = {
@@ -245,8 +279,15 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnal
     }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
+
+    // Verificar API_KEY del cliente
+    // Si no hay API_KEY del cliente, el backend intentará usar la de variables de entorno
+    const currentApiKey = getApiKey();
+    
+    // No verificar API_KEY del servidor (no hacer peticiones)
+    // Permitir que el backend maneje la API_KEY automáticamente
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
@@ -255,10 +296,29 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnal
       timestamp: new Date(),
     };
 
-  setMessages(prev => [...prev, userMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInputValue("");
 
     // La respuesta del bot se gestiona en el useEffect que observa 'messages'
+  };
+
+  const handleSaveApiKey = () => {
+    if (validateApiKey(apiKeyInput)) {
+      const success = setApiKey(apiKeyInput);
+      if (success) {
+        setApiKeyState(apiKeyInput);
+        setShowApiKeyCard(false);
+        setApiKeyInput("");
+        // Agregar mensaje de bienvenida cuando se configura la API_KEY
+        const welcomeMessage: Message = {
+          id: `welcome-${Date.now()}`,
+          content: "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+          sender: 'bot',
+          timestamp: new Date(),
+        };
+        setMessages([welcomeMessage]);
+      }
+    }
   };
 
   const clearConversation = () => {
@@ -297,19 +357,7 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnal
               <span className="material-symbols-outlined text-purple-300 text-lg">smart_toy</span>
             </div>
             <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="text-white font-semibold text-xs">Jhon Jairo</h3>
-                {llmStatus && (
-                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium flex-shrink-0 ${
-                    llmStatus.mode === 'LOCAL' 
-                      ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
-                      : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                  }`}>
-                    <span className="w-1 h-1 rounded-full bg-current mr-1"></span>
-                    {llmStatus.mode === 'LOCAL' ? 'Local' : 'Remoto'} • {llmStatus.model}
-                  </span>
-                )}
-              </div>
+              <h3 className="text-white font-semibold text-xs">Jhon Jairo</h3>
               <p className="text-slate-400 text-[10px] truncate">
                 Asistente de análisis de algoritmos
               </p>
@@ -336,6 +384,74 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnal
 
         {/* Messages Container */}
         <div className="flex-1 overflow-y-auto p-2.5 space-y-2.5 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
+          {/* Card de API_KEY si no está configurada */}
+          {showApiKeyCard && (
+            <div className="glass-card border-yellow-500/30 p-4 rounded-xl mb-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-yellow-400 text-lg">key</span>
+                </div>
+                <div className="flex-1 space-y-3">
+                  <div>
+                    <h4 className="text-white font-semibold text-sm mb-1">Chatbot no disponible</h4>
+                    <p className="text-slate-300 text-xs">
+                      El chatbot requiere una API Key de Gemini para funcionar. Configura tu API Key para habilitar el chatbot. Puedes obtenerla en{" "}
+                      <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">
+                        Google AI Studio
+                      </a>
+                      .
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="password"
+                      value={apiKeyInput}
+                      onChange={(e) => setApiKeyInput(e.target.value)}
+                      placeholder="API Key de Gemini"
+                      className={`flex-1 px-2.5 py-1.5 rounded-lg bg-white/5 border ${
+                        apiKeyInput && !validateApiKey(apiKeyInput)
+                          ? "border-red-500/50 focus:border-red-500"
+                          : apiKeyInput && validateApiKey(apiKeyInput)
+                          ? "border-green-500/50 focus:border-green-500"
+                          : "border-slate-600/50 focus:border-slate-500"
+                      } text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-1 ${
+                        apiKeyInput && !validateApiKey(apiKeyInput)
+                          ? "focus:ring-red-500/50"
+                          : apiKeyInput && validateApiKey(apiKeyInput)
+                          ? "focus:ring-green-500/50"
+                          : "focus:ring-slate-500/50"
+                      } transition-all`}
+                    />
+                    <button
+                      onClick={handleSaveApiKey}
+                      disabled={!validateApiKey(apiKeyInput)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        validateApiKey(apiKeyInput)
+                          ? "bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30"
+                          : "bg-slate-500/20 text-slate-500 border border-slate-500/30 cursor-not-allowed"
+                      }`}
+                    >
+                      Guardar
+                    </button>
+                  </div>
+                  {apiKeyInput && !validateApiKey(apiKeyInput) && (
+                    <p className="text-red-400 text-[10px]">
+                      API Key inválida
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={onClose}
+                  className="w-6 h-6 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white flex items-center justify-center flex-shrink-0"
+                  title="Cerrar"
+                >
+                  <span className="material-symbols-outlined text-sm">close</span>
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {/* Mostrar mensajes (el backend manejará la API_KEY automáticamente) */}
           {messages.map((message) => {
             const isNewMessage = !animatedMessagesRef.current.has(message.id);
             if (isNewMessage) {

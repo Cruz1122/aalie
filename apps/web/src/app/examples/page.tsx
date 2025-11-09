@@ -10,6 +10,7 @@ import Header from "@/components/Header";
 import NavigationLink from "@/components/NavigationLink";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
+import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 
 interface Example {
@@ -292,10 +293,11 @@ export default function ExamplesPage() {
       setAnalysisMessage("Clasificando algoritmo...");
       let kind: AlgorithmKind;
       try {
+        const apiKey = getApiKey();
         const clsPromise = fetch("/api/llm/classify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ source: sourceCode, mode: "auto" }),
+          body: JSON.stringify({ source: sourceCode, mode: "auto", apiKey: apiKey || undefined }),
         });
 
         const clsResponse = await animateProgress(20, 40, 3000, setAnalysisProgress, clsPromise) as Response;
@@ -331,11 +333,28 @@ export default function ExamplesPage() {
       setAnalysisMessage("Hallando sumatorias...");
       await animateProgress(40, 50, 500, setAnalysisProgress);
 
-      setAnalysisMessage("Simplificando expresiones matemáticas...");
+      // Verificar estado de API_KEY
+      const apiKeyStatus = await getApiKeyStatus();
+      const apiKey = getApiKey();
+      const hasApiKey = apiKeyStatus.hasAny;
+      
+      // Mostrar mensaje según disponibilidad de API_KEY
+      if (hasApiKey) {
+        setAnalysisMessage("Simplificando expresiones matemáticas...");
+      } else {
+        setAnalysisMessage("Analizando (sin simplificación LLM)...");
+      }
+      
+      const body: any = { source: sourceCode, mode: "worst" };
+      if (apiKey) {
+        body.api_key = apiKey;
+      }
+      // Si no hay apiKey en localStorage, el backend intentará usar la de variables de entorno
+      
       const analyzePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: sourceCode, mode: "worst" }),
+        body: JSON.stringify(body),
       }).then(r => r.json());
 
       const analyzeRes = await animateProgress(50, 70, 5000, setAnalysisProgress, analyzePromise) as { ok: boolean; [key: string]: unknown };

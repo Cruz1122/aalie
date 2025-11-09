@@ -1,19 +1,30 @@
 import { NextRequest } from "next/server";
-import { LLM_EXPORTABLE_CONFIG, LLMMode } from "../llm-config";
+import { LLM_EXPORTABLE_CONFIG } from "../llm-config";
 
 export const runtime = "nodejs";
 
+// Validar formato de API_KEY de Gemini
+function validateApiKey(key: string | undefined): boolean {
+  if (!key || typeof key !== 'string') {
+    return false;
+  }
+  const API_KEY_REGEX = /^AIza[0-9A-Za-z_-]{35,40}$/;
+  return API_KEY_REGEX.test(key.trim());
+}
+
 export async function GET(req: NextRequest) {
   try {
-    const LLM_MODE = (process.env.LLM_MODE as LLMMode) || 'REMOTE';
+    // Verificar si hay API_KEY en las variables de entorno del servidor
+    const serverApiKey = process.env.API_KEY;
+    const hasServerApiKey = validateApiKey(serverApiKey);
+    
     const status = {
-      mode: LLM_MODE,
       timestamp: new Date().toISOString(),
       config: LLM_EXPORTABLE_CONFIG,
-      jobs: {
-        classify: LLM_MODE === 'LOCAL' ? LLM_EXPORTABLE_CONFIG.local.model : LLM_EXPORTABLE_CONFIG.jobs.classify,
-        parser_assist: LLM_MODE === 'LOCAL' ? LLM_EXPORTABLE_CONFIG.local.model : LLM_EXPORTABLE_CONFIG.jobs.parser_assist,
-        general: LLM_MODE === 'LOCAL' ? LLM_EXPORTABLE_CONFIG.local.model : LLM_EXPORTABLE_CONFIG.jobs.general
+      jobs: LLM_EXPORTABLE_CONFIG.jobs,
+      apiKey: {
+        serverAvailable: hasServerApiKey,
+        // No exponemos la API_KEY real por seguridad
       }
     };
     return new Response(JSON.stringify({ ok: true, status }), {

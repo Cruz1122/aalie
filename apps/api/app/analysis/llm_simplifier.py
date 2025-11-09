@@ -166,7 +166,8 @@ def _call_gemini_api(
     top_p: Optional[float] = None,
     top_k: Optional[int] = None,
     max_output_tokens: int = 8000,
-    response_mime_type: str = CONTENT_TYPE_JSON
+    response_mime_type: str = CONTENT_TYPE_JSON,
+    api_key: Optional[str] = None
 ) -> Optional[Dict[str, Any]]:
     """
     Llama directamente a la API de Gemini para simplificar expresiones.
@@ -180,13 +181,17 @@ def _call_gemini_api(
         top_k: Top-k para la generación
         max_output_tokens: Número máximo de tokens de salida
         response_mime_type: Tipo MIME de la respuesta
+        api_key: API Key de Gemini (opcional, si no se proporciona se usa la variable de entorno)
         
     Returns:
         Respuesta del LLM como diccionario, o None si falla
     """
-    api_key = os.getenv("API_KEY")
+    # Obtener API_KEY: prioridad al parámetro, luego variables de entorno
     if not api_key:
-        print("[LLM Simplifier] ERROR: API_KEY no encontrada en variables de entorno")
+        api_key = os.getenv("API_KEY")
+    
+    if not api_key:
+        print("[LLM Simplifier] INFO: API_KEY no disponible, saltando simplificación")
         return None
     
     print(
@@ -283,16 +288,17 @@ def _validate_simplification_response(result: Dict[str, Any], num_rows: int) -> 
     return True
 
 
-def simplify_counts_with_llm(rows: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+def simplify_counts_with_llm(rows: List[Dict[str, Any]], api_key: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """
     Simplifica los count_raw usando el LLM.
     
     Args:
         rows: Lista de filas con count_raw y ck
+        api_key: API Key de Gemini (opcional, si no se proporciona se usa la variable de entorno)
         
     Returns:
         Diccionario con 'counts' (array de strings) y 'T_polynomial' (string),
-        o None si hay error
+        o None si hay error o no hay API_KEY
     """
     if not rows:
         return None
@@ -338,6 +344,7 @@ def simplify_counts_with_llm(rows: List[Dict[str, Any]]) -> Optional[Dict[str, A
         top_k=1,
         max_output_tokens=8000,
         response_mime_type=CONTENT_TYPE_JSON,
+        api_key=api_key,
     )
     
     if not result:
@@ -388,8 +395,17 @@ def _validate_procedures_response(result: Dict[str, Any], num_rows: int) -> bool
     return True
 
 
-def generate_procedures_with_llm(rows: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
-    """Genera procedimientos detallados a partir de count_raw y count simplificado."""
+def generate_procedures_with_llm(rows: List[Dict[str, Any]], api_key: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    """
+    Genera procedimientos detallados a partir de count_raw y count simplificado.
+    
+    Args:
+        rows: Lista de filas con count_raw y count
+        api_key: API Key de Gemini (opcional, si no se proporciona se usa la variable de entorno)
+        
+    Returns:
+        Diccionario con 'procedures_by_line' o None si hay error o no hay API_KEY
+    """
 
     if not rows:
         return None
@@ -452,10 +468,11 @@ def generate_procedures_with_llm(rows: List[Dict[str, Any]]) -> Optional[Dict[st
         top_k=1,
         max_output_tokens=4000,
         response_mime_type=CONTENT_TYPE_JSON,
+        api_key=api_key,
     )
 
     if not result:
-        print("[LLM Simplifier] ERROR: No se pudo obtener procedimientos del LLM")
+        print("[LLM Simplifier] INFO: No se pudo obtener procedimientos del LLM (API_KEY no disponible o error)")
         return None
 
     if not _validate_procedures_response(result, len(rows)):

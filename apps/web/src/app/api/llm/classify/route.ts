@@ -2,15 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 
 import {
   getJobConfig,
-  LLMMode,
-  LOCAL_ENDPOINT,
-  LOCAL_API_KEY,
-  REMOTE_API_KEY,
-  REMOTE_ENDPOINT_BASE,
+  GEMINI_ENDPOINT_BASE,
   JobResolvedConfig
 } from "../llm-config";
 
 export const runtime = "nodejs";
+
+// Validar formato de API_KEY de Gemini
+function validateApiKey(key: string | undefined): boolean {
+  if (!key || typeof key !== 'string') {
+    return false;
+  }
+  const API_KEY_REGEX = /^AIza[0-9A-Za-z_-]{35,40}$/;
+  return API_KEY_REGEX.test(key.trim());
+}
 
 type ClassifyResponse = { kind: "iterative" | "recursive" | "hybrid" | "unknown" };
 type ClassifyRequest = { source: string; mode?: "llm" | "local" | "auto" };
@@ -61,52 +66,7 @@ function heuristicClassify(source: string): ClassifyResponse["kind"] {
   }
 }
 
-async function checkLMStudioConnectivity(): Promise<boolean> {
-  try {
-    const response = await fetch(`${LOCAL_ENDPOINT}/models`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${LOCAL_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      signal: AbortSignal.timeout(5000),
-    });
-    return response.ok;
-  } catch (error) {
-    console.log(`[Classify API] LM Studio no disponible: ${error}`);
-    return false;
-  }
-}
-
 type ChatMessage = { role: string; content: string };
-
-async function callLocalLLM(
-  config: JobResolvedConfig,
-  messages: Array<ChatMessage>
-) {
-  const requestBody = {
-    messages,
-    model: config.model,
-    temperature: config.temperature,
-    max_tokens: config.maxTokens,
-    stream: false,
-    response_format: { type: "json_object" },
-  };
-  const response = await fetch(`${LOCAL_ENDPOINT}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${LOCAL_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestBody),
-  });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const errorMsg = errorData?.error?.message || `HTTP ${response.status}`;
-    throw new Error(`LM Studio Error ${response.status}: ${errorMsg}`);
-  }
-  return await response.json();
-}
 
 function buildClassifyMessages(config: JobResolvedConfig, source: string): Array<ChatMessage> {
   return [
@@ -115,27 +75,6 @@ function buildClassifyMessages(config: JobResolvedConfig, source: string): Array
   ];
 }
 
-async function callLLMWithMode(
-  config: JobResolvedConfig,
-  messages: Array<ChatMessage>,
-  mode: LLMMode
-) {
-  if (mode === 'LOCAL') {
-    const isLMStudioAvailable = await checkLMStudioConnectivity();
-    if (isLMStudioAvailable) {
-      try {
-        return await callLocalLLM(config, messages);
-      } catch (localError) {
-        const errorMessage = localError instanceof Error ? localError.message : String(localError);
-        console.warn(`[Classify API] Fallback a REMOTE: Error en LM Studio - ${errorMessage}`);
-        return await callRemoteLLM(config, messages);
-      }
-    }
-    console.warn(`[Classify API] Fallback a REMOTE: LM Studio no disponible en ${LOCAL_ENDPOINT}`);
-    return await callRemoteLLM(config, messages);
-  }
-  return await callRemoteLLM(config, messages);
-}
 
 function parseKindFromGemini(data: GeminiResponse): ClassifyResponse["kind"] | null {
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -152,9 +91,10 @@ function parseKindFromGemini(data: GeminiResponse): ClassifyResponse["kind"] | n
   return null;
 }
 
-async function callRemoteLLM(
+async function callGeminiLLM(
   config: JobResolvedConfig,
-  messages: Array<ChatMessage>
+  messages: Array<ChatMessage>,
+  apiKey: string
 ) {
   const systemInstruction = {
     parts: [{ text: config.systemPrompt }],
@@ -173,7 +113,7 @@ async function callRemoteLLM(
     contents,
     generationConfig,
   };
-  const url = `${REMOTE_ENDPOINT_BASE}/${encodeURIComponent(config.model)}:generateContent?key=${encodeURIComponent(REMOTE_API_KEY)}`;
+  const url = `${GEMINI_ENDPOINT_BASE}/${encodeURIComponent(config.model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -187,12 +127,11 @@ async function callRemoteLLM(
   return await response.json();
 }
 
-async function classifyWithLLM(source: string, mode?: "llm" | "local" | "auto"): Promise<ClassifyResponse["kind"]> {
+async function classifyWithLLM(source: string, apiKey: string, mode?: "llm" | "local" | "auto"): Promise<ClassifyResponse["kind"]> {
   if (mode === "local") return heuristicClassify(source);
-  const LLM_MODE: LLMMode = (process.env.LLM_MODE as LLMMode) || 'REMOTE';
-  const config = getJobConfig('classify', LLM_MODE);
+  const config = getJobConfig('classify');
   const messages: Array<ChatMessage> = buildClassifyMessages(config, source);
-  const data = await callLLMWithMode(config, messages, LLM_MODE);
+  const data = await callGeminiLLM(config, messages, apiKey);
   const kind = parseKindFromGemini(data);
   if (kind) return kind;
   console.warn(`[Classify API] Fallback a heurística: LLM response no válida`);
@@ -201,21 +140,34 @@ async function classifyWithLLM(source: string, mode?: "llm" | "local" | "auto"):
 
 export async function POST(req: NextRequest) {
   try {
-    const { source, mode } = await req.json() as ClassifyRequest;
+    const { source, mode, apiKey } = await req.json() as ClassifyRequest & { apiKey?: string };
     if (!source || typeof source !== 'string') {
       return NextResponse.json(
         { error: "Source code is required" }, 
         { status: 400 }
       );
     }
+    
+    // Obtener API_KEY: prioridad a variables de entorno del servidor, luego al parámetro del request
+    // Si hay API_KEY en el servidor, no se requiere que el cliente la envíe
+    const serverApiKey = process.env.API_KEY;
+    const hasServerApiKey = validateApiKey(serverApiKey);
+    
+    // Usar API_KEY del servidor si está disponible, si no, usar la del cliente
+    const geminiApiKey = hasServerApiKey ? serverApiKey : (apiKey || null);
+    
     let kind: ClassifyResponse["kind"];
     let method: string;
     try {
       if (mode === "local") {
         kind = heuristicClassify(source);
         method = "heuristic";
+      } else if (!geminiApiKey) {
+        // Si no hay API_KEY, usar heurística
+        kind = heuristicClassify(source);
+        method = "heuristic_no_api_key";
       } else {
-        kind = await classifyWithLLM(source, mode);
+        kind = await classifyWithLLM(source, geminiApiKey, mode);
         method = "llm";
       }
     } catch (error) {
@@ -227,7 +179,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ 
       kind,
       method,
-      mode: (process.env.LLM_MODE as LLMMode) || 'REMOTE',
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -237,7 +188,6 @@ export async function POST(req: NextRequest) {
       { 
         error: "Internal server error",
         details: errorMessage,
-        mode: (process.env.LLM_MODE as LLMMode) || 'REMOTE'
       }, 
       { status: 500 }
     );

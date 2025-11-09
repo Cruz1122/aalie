@@ -11,6 +11,7 @@ import ManualModeView, { ManualModeViewHandle } from "@/components/ManualModeVie
 import ModeToggle from "@/components/ModeToggle";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
+import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 import type { Program } from "@aa/types";
 
@@ -169,10 +170,20 @@ export default function HomePage() {
       setChatAnalysisMessage("Clasificando algoritmo...");
       let kind: "iterative" | "recursive" | "hybrid" | "unknown";
       try {
+        // No verificar API_KEY del servidor (no hacer peticiones)
+        // El backend usará automáticamente la API_KEY de variables de entorno si está disponible
+        const apiKey = getApiKey();
+        
+        const body: any = { source: sourceCode, mode: "auto" };
+        if (apiKey) {
+          body.apiKey = apiKey;
+        }
+        // Si no hay apiKey, el backend intentará usar la de variables de entorno
+        
         const clsPromise = fetch("/api/llm/classify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ source: sourceCode, mode: "auto" }),
+          body: JSON.stringify(body),
         });
 
         const clsResponse = await animateProgress(20, 40, 3000, setChatAnalysisProgress, clsPromise) as Response;
@@ -202,11 +213,29 @@ export default function HomePage() {
       setChatAnalysisMessage("Hallando sumatorias...");
       await animateProgress(40, 50, 500, setChatAnalysisProgress);
 
-      setChatAnalysisMessage("Simplificando expresiones matemáticas...");
+      // No verificar API_KEY del servidor (no hacer peticiones)
+      // Verificar estado de API_KEY
+      const apiKeyStatus = await getApiKeyStatus();
+      const apiKey = getApiKey();
+      const hasApiKey = apiKeyStatus.hasAny;
+      
+      // Mostrar mensaje según disponibilidad de API_KEY
+      if (hasApiKey) {
+        setChatAnalysisMessage("Simplificando expresiones matemáticas...");
+      } else {
+        setChatAnalysisMessage("Analizando (sin simplificación LLM)...");
+      }
+      
+      const body: any = { source: sourceCode, mode: "worst" };
+      if (apiKey) {
+        body.api_key = apiKey;
+      }
+      // Si no hay apiKey en localStorage, el backend intentará usar la de variables de entorno
+      
       const analyzePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: sourceCode, mode: "worst" }),
+        body: JSON.stringify(body),
       }).then(r => r.json());
 
       const analyzeRes = await animateProgress(50, 70, 5000, setChatAnalysisProgress, analyzePromise) as { ok: boolean; [key: string]: unknown };

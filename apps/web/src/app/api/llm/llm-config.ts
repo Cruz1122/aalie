@@ -1,20 +1,15 @@
-// Configuración centralizada para selección de modelo LLM por job/modo
+// Configuración centralizada para modelos LLM de Gemini
 
-export type LLMMode = 'LOCAL' | 'REMOTE';
 export type LLMJob = 'classify' | 'parser_assist' | 'general' | 'simplifier';
 
-export const LOCAL_MODEL = 'qwen/qwen3-4b-2507';
-export const REMOTE_MODELS = {
+export const GEMINI_MODELS = {
   classify: 'gemini-2.0-flash-lite',
   parser_assist: 'gemini-2.5-flash',
   general: 'gemini-2.5-flash',
   simplifier: 'gemini-2.5-flash',
 };
 
-export const LOCAL_ENDPOINT = process.env.LM_STUDIO_ENDPOINT || 'http://localhost:1234/v1';
-export const LOCAL_API_KEY = process.env.LM_STUDIO_API_KEY || 'lm-studio';
-export const REMOTE_ENDPOINT_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
-export const REMOTE_API_KEY = process.env.API_KEY!;
+export const GEMINI_ENDPOINT_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 // Parámetros por job (temperatura, tokens, prompts)
 export const JOB_CONFIG = {
@@ -190,11 +185,9 @@ export const JOB_CONFIG = {
   }
 };
 
-// Helper para obtener modelo por modo/job
-type ModelSelector = { mode: LLMMode; job: LLMJob };
-export function getModel({ mode, job }: ModelSelector): string {
-  if (mode === 'LOCAL') return LOCAL_MODEL;
-  return REMOTE_MODELS[job];
+// Helper para obtener modelo por job
+export function getModel(job: LLMJob): string {
+  return GEMINI_MODELS[job];
 }
 
 export function getPrompt(job: LLMJob) {
@@ -208,9 +201,9 @@ export interface JobResolvedConfig {
   systemPrompt: string;
 }
 
-export function getJobConfig(job: LLMJob, mode: LLMMode): JobResolvedConfig {
+export function getJobConfig(job: LLMJob): JobResolvedConfig {
   return {
-    model: getModel({ mode, job }),
+    model: getModel(job),
     temperature: JOB_CONFIG[job].temperature,
     maxTokens: JOB_CONFIG[job].maxTokens,
     systemPrompt: getPrompt(job),
@@ -219,18 +212,8 @@ export function getJobConfig(job: LLMJob, mode: LLMMode): JobResolvedConfig {
 
 // Export estructuras para endpoints/status fácilmente
 export const LLM_EXPORTABLE_CONFIG = {
-  local: {
-    endpoint: LOCAL_ENDPOINT,
-    model: LOCAL_MODEL,
-    description: 'Modelo local vía LM Studio',
-  },
-  remote: {
-    endpoint: REMOTE_ENDPOINT_BASE,
-    models: Object.values(REMOTE_MODELS),
-    description: 'Modelos remotos Gemini Google AI Studio',
-  },
-  jobs: {
-    ...REMOTE_MODELS,
-    local: LOCAL_MODEL,
-  }
+  endpoint: GEMINI_ENDPOINT_BASE,
+  models: Object.values(GEMINI_MODELS),
+  description: 'Modelos Gemini Google AI Studio',
+  jobs: GEMINI_MODELS,
 };

@@ -90,13 +90,14 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         
         return s
     
-    def analyze(self, ast: Dict[str, Any], mode: str = "worst") -> Dict[str, Any]:
+    def analyze(self, ast: Dict[str, Any], mode: str = "worst", api_key: Optional[str] = None) -> Dict[str, Any]:
         """
         Analiza un AST completo y retorna el resultado.
         
         Args:
             ast: AST del algoritmo a analizar
             mode: Modo de análisis ("worst", "best", "avg")
+            api_key: API Key de Gemini (opcional, si no se proporciona se usa la variable de entorno)
             
         Returns:
             Resultado del análisis con byLine, T_open, procedure, etc.
@@ -107,7 +108,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Visitar el AST completo
         self.visit(ast, mode)
         
-        llm_result = simplify_counts_with_llm(self.rows)
+        llm_result = simplify_counts_with_llm(self.rows, api_key=api_key)
 
         if llm_result:
             # Actualizar counts con los simplificados del LLM
@@ -121,8 +122,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 if t_polynomial:
                     self.t_polynomial = t_polynomial
 
-                # Generar procedimientos detallados con modelo ligero
-                procedures_result = generate_procedures_with_llm(self.rows)
+                # Generar procedimientos detallados con modelo ligero (pasar api_key si está disponible)
+                procedures_result = generate_procedures_with_llm(self.rows, api_key=api_key)
                 if procedures_result:
                     procedures = procedures_result.get("procedures_by_line", [])
                     if len(procedures) == len(self.rows):
@@ -136,9 +137,16 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 print(
                     f"[IterativeAnalyzer] Número de counts del LLM ({len(counts)}) no coincide con número de filas ({len(self.rows)})"
                 )
+                # Si el número de counts no coincide, usar count_raw como count
+                for row in self.rows:
+                    row["count"] = row.get("count_raw", "1")
         else:
-            # Si el LLM falla, usar count_raw como count (ya está así por defecto)
-            print("[IterativeAnalyzer] LLM falló, usando count_raw como count")
+            # Si no hay resultado del LLM (por falta de API_KEY o error), usar count_raw como count
+            print("[IterativeAnalyzer] LLM no disponible o falló, usando count_raw como count")
+            # Asegurar que count_raw se use como count cuando no hay simplificación
+            for row in self.rows:
+                # Siempre usar count_raw como count cuando no hay simplificación LLM
+                row["count"] = row.get("count_raw", "1")
 
         # Retornar resultado
         return self.result()

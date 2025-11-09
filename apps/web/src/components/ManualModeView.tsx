@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
+import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 import { GrammarApiService } from "@/services/grammar-api";
 
@@ -97,6 +98,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
   const [analysisResult, setAnalysisResult] = useState<{ success: boolean; message: string } | null>(null);
   const [showAIHelpButton, setShowAIHelpButton] = useState(false);
   const [backendParseError, setBackendParseError] = useState<string | null>(null);
+  const [hasValidApiKey, setHasValidApiKey] = useState<boolean>(false);
   
   // Estados para el loader de análisis de complejidad
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -114,6 +116,30 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
   const handleParseStatusChange = (ok: boolean, _isParsing: boolean) => {
     setLocalParseOk(ok);
   };
+
+  // Verificar API_KEY al montar y cuando cambie
+  useEffect(() => {
+    const checkApiKey = async () => {
+      const status = await getApiKeyStatus();
+      // Solo habilitar el botón si hay API_KEY disponible (localStorage o servidor)
+      setHasValidApiKey(status.hasAny);
+    };
+    
+    checkApiKey();
+    
+    // Escuchar cambios en la API_KEY
+    const handleApiKeyChange = async () => {
+      await checkApiKey();
+    };
+    
+    window.addEventListener('apiKeyChanged', handleApiKeyChange);
+    window.addEventListener('storage', handleApiKeyChange);
+    
+    return () => {
+      window.removeEventListener('apiKeyChanged', handleApiKeyChange);
+      window.removeEventListener('storage', handleApiKeyChange);
+    };
+  }, []);
 
   // Cleanup de timeouts al desmontar
   useEffect(() => {
@@ -290,10 +316,18 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
       setAnalysisMessage("Clasificando algoritmo...");
       let kind: AlgorithmKind;
       try {
+        // Obtener API_KEY del localStorage (el backend usará la de variables de entorno si no hay)
+        const apiKey = getApiKey();
+        
+        const body: any = { source: sourceCode, mode: "auto" };
+        if (apiKey) {
+          body.apiKey = apiKey;
+        }
+        
         const clsPromise = fetch("/api/llm/classify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ source: sourceCode, mode: "auto" }),
+          body: JSON.stringify(body),
         });
 
         const clsResponse = await animateProgress(20, 40, 3000, setAnalysisProgress, clsPromise) as Response;
@@ -330,11 +364,28 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
       setAnalysisMessage("Hallando sumatorias...");
       await animateProgress(40, 50, 500, setAnalysisProgress);
 
-      setAnalysisMessage("Simplificando expresiones matemáticas...");
+      // Verificar estado de API_KEY
+      const apiKeyStatus = await getApiKeyStatus();
+      const apiKey = getApiKey();
+      const hasApiKey = apiKeyStatus.hasAny;
+      
+      // Mostrar mensaje según disponibilidad de API_KEY
+      if (hasApiKey) {
+        setAnalysisMessage("Simplificando expresiones matemáticas...");
+      } else {
+        setAnalysisMessage("Analizando (sin simplificación LLM)...");
+      }
+      
+      const body: any = { source: sourceCode, mode: "worst" };
+      if (apiKey) {
+        body.api_key = apiKey;
+      }
+      // Si no hay apiKey en localStorage, el backend intentará usar la de variables de entorno
+      
       const analyzePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: sourceCode, mode: "worst" }),
+        body: JSON.stringify(body),
       }).then(r => r.json());
 
       const analyzeRes = await animateProgress(50, 70, 5000, setAnalysisProgress, analyzePromise) as { ok: boolean; [key: string]: unknown };
@@ -488,12 +539,20 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
               Ver AST
             </button>
 
-            {/* Botón de Ayuda con IA - aparece después de 3 segundos si hay error */}
-            {showAIHelpButton && backendParseError && (
-              <button
-                onClick={() => {
-                  // Crear mensaje estructurado con el código y el error para el LLM
-                  const errorMessage = `Necesito ayuda con un error de sintaxis en mi código de pseudocódigo.
+            {/* Botón de Ayuda con IA - aparece después de 3 segundos si hay error y hay API_KEY */}
+            {showAIHelpButton && backendParseError && hasValidApiKey && (
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  onClick={async () => {
+                    // No verificar API_KEY del servidor (no hacer peticiones)
+                    // El backend manejará la API_KEY automáticamente
+                    const apiKey = getApiKey();
+                    
+                    // Permitir continuar incluso sin API_KEY del cliente
+                    // El backend intentará usar la de variables de entorno
+                    
+                    // Crear mensaje estructurado con el código y el error para el LLM
+                    const errorMessage = `Necesito ayuda con un error de sintaxis en mi código de pseudocódigo.
 
 **CÓDIGO ADJUNTO:**
 \`\`\`pseudocode
@@ -507,43 +566,65 @@ ${backendParseError}
 
 **SOLICITUD:**
 Por favor, analiza el código y el error, identifica la causa del problema y proporciona una solución corregida. Explica qué estaba mal y cómo solucionarlo.`;
-                  
-                  const newMessage: Message = {
-                    id: Date.now().toString(),
-                    content: errorMessage,
-                    sender: 'user',
-                    timestamp: new Date()
-                  };
-                  
-                  // Si no hay mensajes previos, agregar mensaje de bienvenida
-                  if (messages.length === 0) {
-                    const welcomeMessage: Message = {
-                      id: 'welcome',
-                      content: "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
-                      sender: 'bot',
+                    
+                    const newMessage: Message = {
+                      id: `user-help-${Date.now()}`,
+                      content: errorMessage,
+                      sender: 'user',
                       timestamp: new Date()
                     };
-                    setMessages([welcomeMessage, newMessage]);
-                  } else {
-                    setMessages(prev => [...prev, newMessage]);
-                  }
-                  
-                  // Cambiar al modo asistente y abrir el chat
-                  // El ChatBot real se encargará de generar la respuesta usando LLM
-                  setTimeout(() => {
-                    onSwitchToAIMode();
                     
-                    // Luego abrir el chat después de cambiar de modo
+                    // Verificar si ya existe un mensaje con el mismo contenido para evitar duplicados
+                    const messageExists = messages.some(
+                      msg => msg.sender === 'user' && 
+                      msg.content.includes('**CÓDIGO ADJUNTO:**') &&
+                      msg.content.includes(code.slice(0, 50)) // Verificar primeros 50 caracteres del código
+                    );
+                    
+                    if (messageExists) {
+                      // Si el mensaje ya existe, solo cambiar al modo AI y abrir el chat
+                      onSwitchToAIMode();
+                      setTimeout(() => {
+                        onOpenChat();
+                      }, 100);
+                      return;
+                    }
+                    
+                    // Agregar mensaje de bienvenida solo si no hay mensajes previos
+                    // Usar una función de actualización para evitar problemas de estado
+                    setMessages(prev => {
+                      // Si ya hay mensajes, solo agregar el nuevo mensaje
+                      if (prev.length > 0) {
+                        return [...prev, newMessage];
+                      }
+                      
+                      // Si no hay mensajes, agregar bienvenida y el nuevo mensaje
+                      const welcomeMessage: Message = {
+                        id: 'welcome',
+                        content: "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+                        sender: 'bot',
+                        timestamp: new Date()
+                      };
+                      return [welcomeMessage, newMessage];
+                    });
+                    
+                    // Cambiar al modo asistente y abrir el chat después de que se actualice el estado
+                    // El ChatBot detectará el nuevo mensaje y generará la respuesta automáticamente
                     setTimeout(() => {
-                      onOpenChat();
+                      onSwitchToAIMode();
+                      
+                      // Luego abrir el chat después de cambiar de modo
+                      setTimeout(() => {
+                        onOpenChat();
+                      }, 150);
                     }, 100);
-                  }, 50);
-                }}
-                className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg text-white text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 animate-[slideInUp_0.3s_ease-out] animate-pulse-slow"
-              >
-                <span className="material-symbols-outlined text-base animate-shake">smart_toy</span>{' '}
-                Ayuda con IA
-              </button>
+                  }}
+                  className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg text-white text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 border animate-[slideInUp_0.3s_ease-out] bg-gradient-to-br from-purple-500/20 to-purple-500/20 border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 animate-pulse-slow cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-base animate-shake">smart_toy</span>{' '}
+                  Ayuda con IA
+                </button>
+              </div>
             )}
           </div>
         </div>

@@ -11,6 +11,7 @@ router = APIRouter(prefix="/analyze", tags=["analyze"])
 class AnalyzeRequest(BaseModel):
     source: str
     mode: str = "worst"  # "worst" | "best" | "avg"
+    api_key: Optional[str] = None  # API Key de Gemini (opcional)
 
 class LineCost(BaseModel):
     line: int
@@ -56,8 +57,8 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
         # 2) Crear analizador iterativo
         analyzer = IterativeAnalyzer()
         
-        # 3) Analizar el AST
-        result = analyzer.analyze(ast, payload.mode)
+        # 3) Analizar el AST (pasar api_key si está disponible)
+        result = analyzer.analyze(ast, payload.mode, api_key=payload.api_key)
         
         return result
         
