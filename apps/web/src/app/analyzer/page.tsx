@@ -219,23 +219,18 @@ export default function AnalyzerPage() {
       setAnalysisMessage("Hallando sumatorias...");
       await animateProgress(40, 50, 500, setAnalysisProgress);
 
-      // Verificar estado de API_KEY
+      // Verificar estado de API_KEY (se mantiene para otras funciones como ChatBot)
       const apiKeyStatus = await getApiKeyStatus();
       const apiKey = getApiKey();
       const hasApiKey = apiKeyStatus.hasAny;
       
-      // Mostrar mensaje según disponibilidad de API_KEY
-      if (hasApiKey) {
-        setAnalysisMessage("Simplificando expresiones matemáticas...");
-      } else {
-        setAnalysisMessage("Analizando (sin simplificación LLM)...");
-      }
+      // Mensaje de carga actualizado (ya no depende de API key para simplificación)
+      setAnalysisMessage("Cerrando sumatorias...");
       
       const body: { source: string; mode: string; api_key?: string } = { source, mode: "worst" };
       if (apiKey) {
-        body.api_key = apiKey;
+        body.api_key = apiKey;  // Mantener por compatibilidad, pero backend ya no lo usa para simplificación
       }
-      // Si no hay apiKey en localStorage, el backend intentará usar la de variables de entorno
       
       const analyzePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
         method: "POST",

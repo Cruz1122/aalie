@@ -1,12 +1,14 @@
 # apps/api/app/analysis/iterative_analyzer.py
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
+from sympy import Expr, latex, Integer
 from .base import BaseAnalyzer
 from .visitors.for_visitor import ForVisitor
 from .visitors.if_visitor import IfVisitor
 from .visitors.while_repeat_visitor import WhileRepeatVisitor
 from .visitors.simple_visitor import SimpleVisitor
-from .llm_simplifier import simplify_counts_with_llm, generate_procedures_with_llm
+from .summation_closer import SummationCloser
+from .complexity_classes import ComplexityClasses
 
 
 class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor, SimpleVisitor):
@@ -97,7 +99,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         Args:
             ast: AST del algoritmo a analizar
             mode: Modo de análisis ("worst", "best", "avg")
-            api_key: API Key de Gemini (opcional, si no se proporciona se usa la variable de entorno)
+            api_key: API Key (ignorado, mantenido por compatibilidad)
             
         Returns:
             Resultado del análisis con byLine, T_open, procedure, etc.
@@ -108,45 +110,117 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Visitar el AST completo
         self.visit(ast, mode)
         
-        llm_result = simplify_counts_with_llm(self.rows, api_key=api_key)
-
-        if llm_result:
-            # Actualizar counts con los simplificados del LLM
-            counts = llm_result.get("counts", [])
-            if len(counts) == len(self.rows):
-                for i, row in enumerate(self.rows):
-                    row["count"] = counts[i]
-
-                # Guardar T_polynomial
-                t_polynomial = llm_result.get("T_polynomial")
-                if t_polynomial:
-                    self.t_polynomial = t_polynomial
-
-                # Generar procedimientos detallados con modelo ligero (pasar api_key si está disponible)
-                procedures_result = generate_procedures_with_llm(self.rows, api_key=api_key)
-                if procedures_result:
-                    procedures = procedures_result.get("procedures_by_line", [])
-                    if len(procedures) == len(self.rows):
-                        for i, row in enumerate(self.rows):
-                            row["procedure"] = procedures[i]
+        # Usar SymPy para cerrar sumatorias y generar procedimientos
+        closer = SummationCloser()
+        complexity = ComplexityClasses()
+        
+        # Detectar variable principal (n por defecto)
+        variable = "n"
+        
+        # Cerrar sumatorias y generar procedimientos para cada fila
+        for row in self.rows:
+            # Obtener expresión SymPy si está disponible
+            count_raw_expr = row.get("count_raw_expr")
+            count_raw_latex = row.get("count_raw", "1")
+            
+            # Preferir usar count_raw_expr directamente si está disponible
+            if count_raw_expr is not None:
+                try:
+                    # Pasar el objeto SymPy directamente a close_summation
+                    closed_count, steps = closer.close_summation(count_raw_expr, variable)
+                    row["count"] = closed_count
+                    
+                    # Generar procedimiento paso a paso
+                    if steps:
+                        row["procedure"] = steps
                     else:
-                        print(
-                            f"[IterativeAnalyzer] Número de procedimientos del LLM ({len(procedures)}) no coincide con número de filas ({len(self.rows)})"
-                        )
-            else:
-                print(
-                    f"[IterativeAnalyzer] Número de counts del LLM ({len(counts)}) no coincide con número de filas ({len(self.rows)})"
-                )
-                # Si el número de counts no coincide, usar count_raw como count
-                for row in self.rows:
-                    row["count"] = row.get("count_raw", "1")
-        else:
-            # Si no hay resultado del LLM (por falta de API_KEY o error), usar count_raw como count
-            print("[IterativeAnalyzer] LLM no disponible o falló, usando count_raw como count")
-            # Asegurar que count_raw se use como count cuando no hay simplificación
+                        # Si no hay pasos, crear uno básico
+                        count_raw_latex_str = latex(count_raw_expr) if hasattr(count_raw_expr, '__str__') else str(count_raw_expr)
+                        row["procedure"] = [
+                            f"\\text{{Expresión original: }} {count_raw_latex_str}",
+                            f"\\text{{Resultado: }} {closed_count}"
+                        ]
+                    continue
+                except Exception as e:
+                    print(f"[IterativeAnalyzer] Error cerrando sumatoria con Expr para {count_raw_expr}: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    # Fallback: convertir a LaTeX y procesar normalmente
+            
+            # Fallback: procesar desde LaTeX
+            # Asegurar que siempre tengamos un string LaTeX para close_summation
+            if count_raw_expr is not None:
+                try:
+                    # Convertir expresión SymPy a LaTeX para procesamiento
+                    count_raw_latex = latex(count_raw_expr)
+                    # Verificar que el resultado sea un string
+                    if not isinstance(count_raw_latex, str):
+                        count_raw_latex = str(count_raw_latex)
+                except Exception as e:
+                    print(f"[IterativeAnalyzer] Error convirtiendo count_raw_expr a LaTeX: {e}")
+                    # Fallback: usar count_raw si está disponible
+                    if not isinstance(count_raw_latex, str):
+                        count_raw_latex = "1"
+            
+            # Asegurar que count_raw_latex sea un string
+            if not isinstance(count_raw_latex, str):
+                count_raw_latex = str(count_raw_latex) if count_raw_latex is not None else "1"
+            
+            # Cerrar sumatoria (trabaja con LaTeX por ahora, pero recibe SymPy internamente)
+            try:
+                closed_count, steps = closer.close_summation(count_raw_latex, variable)
+                row["count"] = closed_count
+                
+                # Generar procedimiento paso a paso
+                if steps:
+                    row["procedure"] = steps
+                else:
+                    # Si no hay pasos, crear uno básico
+                    row["procedure"] = [
+                        f"\\text{{Expresión original: }} {count_raw_latex}",
+                        f"\\text{{Resultado: }} {closed_count}"
+                    ]
+            except Exception as e:
+                print(f"[IterativeAnalyzer] Error cerrando sumatoria para {count_raw_latex}: {e}")
+                import traceback
+                traceback.print_exc()
+                # Fallback: usar expresión original
+                row["count"] = count_raw_latex
+                row["procedure"] = [f"\\text{{Error al simplificar: }} {count_raw_latex}"]
+        
+        # Calcular T_polynomial sumando términos cerrados
+        # Construir expresión total: Σ C_k · count_k
+        if self.rows:
+            # Agrupar términos similares
+            terms_by_count = {}
             for row in self.rows:
-                # Siempre usar count_raw como count cuando no hay simplificación LLM
-                row["count"] = row.get("count_raw", "1")
+                ck = row.get("ck", "")
+                count = row.get("count", "1")
+                
+                if count not in terms_by_count:
+                    terms_by_count[count] = []
+                terms_by_count[count].append(ck)
+            
+            # Construir T_polynomial
+            polynomial_terms = []
+            for count, cks in terms_by_count.items():
+                if len(cks) == 1:
+                    polynomial_terms.append(f"({cks[0]}) \\cdot ({count})")
+                else:
+                    ck_sum = " + ".join(cks)
+                    polynomial_terms.append(f"({ck_sum}) \\cdot ({count})")
+            
+            # Simplificar usando SymPy para obtener forma polinómica
+            try:
+                # Construir expresión total
+                total_expr = " + ".join(polynomial_terms)
+                
+                # Extraer forma polinómica usando ComplexityClasses
+                # Por ahora, usar la expresión agrupada
+                self.t_polynomial = total_expr
+            except Exception as e:
+                print(f"[IterativeAnalyzer] Error calculando T_polynomial: {e}")
+                self.t_polynomial = " + ".join(polynomial_terms)
 
         # Retornar resultado
         return self.result()
@@ -246,6 +320,6 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             line=line,
             kind="other",
             ck=ck,
-            count="1",
+            count=Integer(1),  # Usar Integer(1) de SymPy
             note=f"Statement {node_type}"
         )

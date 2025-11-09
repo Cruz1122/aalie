@@ -1,7 +1,8 @@
 # apps/api/app/analysis/base.py
 
-from typing import List, Dict, Any, Optional
-import re
+from typing import List, Dict, Any, Optional, Union
+from sympy import Symbol, Sum, Integer, Expr, latex, sympify
+from .expr_converter import ExprConverter
 
 # Tipos de datos que espejan el contrato ya implementado
 LineCost = Dict[str, Any]
@@ -22,15 +23,17 @@ class BaseAnalyzer:
     
     def __init__(self):
         self.rows: List[LineCost] = []      # tabla por línea
-        self.loop_stack: List[str] = []     # multiplicadores activos (strings KaTeX)
+        self.loop_stack: List[Expr] = []    # multiplicadores activos (expresiones SymPy)
         self.symbols: Dict[str, str] = {}   # ej: { "n": "length(A)" }
         self.notes: List[str] = []          # reglas aplicadas / comentarios
         self.memo: Dict[str, List[LineCost]] = {}  # PD: cache de filas por nodo+contexto
         self.counter = 0                    # contador para generar constantes C_k
         self.t_polynomial: Optional[str] = None  # forma polinómica T(n) = an² + bn + c
+        self.variable = "n"                  # variable principal del algoritmo
+        self.expr_converter = ExprConverter(self.variable)
 
     # --- util 1: agregar fila ---
-    def add_row(self, line: int, kind: str, ck: str, count: str, note: Optional[str] = None):
+    def add_row(self, line: int, kind: str, ck: str, count: Union[str, Expr], note: Optional[str] = None):
         """
         Inserta una fila aplicando el multiplicador del contexto de bucles.
         
@@ -38,76 +41,150 @@ class BaseAnalyzer:
             line: Número de línea
             kind: Tipo de instrucción (assign, for, while, if, etc.)
             ck: Costo individual de la línea (string KaTeX)
-            count: Número de ejecuciones (string KaTeX)
+            count: Número de ejecuciones (puede ser string o Expr de SymPy)
             note: Nota opcional sobre la línea
         """
-        count_raw_final = self._apply_loop_multipliers(count)
+        # Convertir count a SymPy si es string
+        if isinstance(count, str):
+            count_expr = self._str_to_sympy(count)
+        else:
+            count_expr = count
+        
+        # Aplicar multiplicadores del stack
+        count_raw_expr = self._apply_loop_multipliers(count_expr)
         
         # Normalizar strings si el método está disponible (solo formato básico)
         if hasattr(self, '_normalize_string'):
-            count_raw_final = self._normalize_string(count_raw_final)
             if note:
                 note = self._normalize_string(note)
+        
+        # Convertir a LaTeX para almacenar (mantener compatibilidad con formato actual)
+        try:
+            count_raw_latex = latex(count_raw_expr)
+            # Asegurar que sea un string
+            if not isinstance(count_raw_latex, str):
+                count_raw_latex = str(count_raw_latex)
+        except Exception as e:
+            print(f"[BaseAnalyzer] Error convirtiendo count_raw_expr a LaTeX: {e}")
+            # Fallback: convertir a string directamente
+            count_raw_latex = str(count_raw_expr) if count_raw_expr is not None else "1"
+        
+        count_latex = count_raw_latex  # Inicialmente igual, se simplificará después
         
         row = {
             "line": line,
             "kind": kind,
             "ck": ck,              # Ej: "C_{2} + C_{3}"
-            "count": count_raw_final,   # Inicialmente igual a count_raw, el LLM lo simplificará
-            "count_raw": count_raw_final,  # Ej: "\\sum_{i=2}^{n} 1", versión con sumatorias
+            "count": count_latex,   # LaTeX para compatibilidad, se actualizará después
+            "count_raw": count_raw_latex,  # LaTeX de la expresión con sumatorias
+            "count_raw_expr": count_raw_expr,  # Expresión SymPy (nuevo campo interno)
             "note": note
         }
         
         self.rows.append(row)
 
-    def _apply_loop_multipliers(self, base_count: str) -> str:
-        """Envuelve el conteo base con los multiplicadores activos del stack."""
-
-        expr = base_count or "1"
-
+    def _apply_loop_multipliers(self, base_count: Expr) -> Expr:
+        """
+        Envuelve el conteo base con los multiplicadores activos del stack.
+        
+        Args:
+            base_count: Expresión SymPy base
+            
+        Returns:
+            Expresión SymPy con multiplicadores aplicados
+        """
+        expr = base_count if base_count is not None else Integer(1)
+        
+        # Aplicar multiplicadores del stack (de más interno a más externo)
         for multiplier in reversed(self.loop_stack):
-            sum_info = self._parse_sum_multiplier(multiplier)
-
-            if sum_info:
-                var, start, end = sum_info
-                expr = f"\\sum_{{{var}={start}}}^{{{end}}} ({expr})"
+            if isinstance(multiplier, Sum):
+                # Es una sumatoria, envolver la expresión
+                var_sym = multiplier.args[1][0]  # Variable de la sumatoria
+                start_expr = multiplier.args[1][1]  # Límite inferior
+                end_expr = multiplier.args[1][2]  # Límite superior
+                expr = Sum(expr, (var_sym, start_expr, end_expr))
             else:
-                if expr == "1":
+                # Es una expresión multiplicativa
+                if expr == Integer(1):
                     expr = multiplier
                 else:
-                    expr = f"({expr})\\cdot({multiplier})"
-
+                    expr = expr * multiplier
+        
         return expr
-
-    @staticmethod
-    def _parse_sum_multiplier(multiplier: str) -> Optional[List[str]]:
+    
+    def _str_to_sympy(self, expr_str: str) -> Expr:
         """
-        Detecta si un multiplicador representa una sumatoria y extrae sus componentes.
-
+        Convierte un string a expresión SymPy.
+        
+        Args:
+            expr_str: String representando una expresión
+            
         Returns:
-            [var, start, end] si es una sumatoria, None en caso contrario.
+            Expresión SymPy
         """
-
-        if not isinstance(multiplier, str):
-            return None
-
-        pattern = r"^\\sum_\{([^=}]+)=([^}]*)\}\^\{([^}]*)\}\s*1$"
-        match = re.match(pattern, multiplier.strip())
-
-        if not match:
-            return None
-
-        var, start, end = match.groups()
-        return [var.strip(), start.strip(), end.strip()]
+        if not expr_str or expr_str.strip() == "":
+            return Integer(1)
+        
+        expr_str = expr_str.strip()
+        
+        # Intentar parsear directamente
+        try:
+            # Crear contexto con símbolos comunes
+            n = Symbol(self.variable, integer=True, positive=True)
+            i = Symbol('i', integer=True)
+            j = Symbol('j', integer=True)
+            k = Symbol('k', integer=True)
+            m = Symbol('m', integer=True, positive=True)
+            
+            syms = {
+                self.variable: n,
+                'i': i,
+                'j': j,
+                'k': k,
+                'm': m
+            }
+            
+            return sympify(expr_str, locals=syms)
+        except:
+            # Fallback: retornar 1
+            return Integer(1)
+    
+    def _expr_to_sympy(self, expr: Any) -> Expr:
+        """
+        Convierte una expresión del AST a SymPy usando ExprConverter.
+        
+        Args:
+            expr: Expresión del AST
+            
+        Returns:
+            Expresión SymPy
+        """
+        return self.expr_converter.ast_to_sympy(expr)
 
     # --- util 2: gestionar contexto de bucles ---
-    def push_multiplier(self, m: str):
+    def push_multiplier(self, m: Union[str, Expr]):
         """
         Activa un multiplicador (p.ej., iteraciones de un for).
         
         Args:
-            m: Multiplicador en formato KaTeX (ej: "\\sum_{i=1}^{n} 1")
+            m: Multiplicador (puede ser string LaTeX o Expr de SymPy)
         """
+        if isinstance(m, str):
+            # Convertir string LaTeX a SymPy
+            # Intentar parsear como sumatoria: \sum_{var=start}^{end} 1
+            import re
+            pattern = r"\\sum_\{([^=}]+)=([^}]*)\}\^\{([^}]*)\}\s*1"
+            match = re.match(pattern, m.strip())
+            if match:
+                var_name, start_str, end_str = match.groups()
+                var_sym = Symbol(var_name.strip(), integer=True)
+                start_expr = self._str_to_sympy(start_str.strip())
+                end_expr = self._str_to_sympy(end_str.strip())
+                m = Sum(Integer(1), (var_sym, start_expr, end_expr))
+            else:
+                # No es una sumatoria, convertir a expresión SymPy
+                m = self._str_to_sympy(m)
+        
         self.loop_stack.append(m)
 
     def pop_multiplier(self):
@@ -126,22 +203,64 @@ class BaseAnalyzer:
         if not self.rows:
             return "0"
         
+        # Construir expresión SymPy
+        from sympy import Add, Mul, Symbol as SymSymbol
+        
         terms = []
         for r in self.rows:
-            if r['ck'] != "—" and r['count'] != "—":
-                term = f"({r['ck']})\\cdot({r['count']})"
-                # Normalizar si el método está disponible
-                if hasattr(self, '_normalize_string'):
-                    term = self._normalize_string(term)
-                terms.append(term)
+            if r.get('ck') != "—" and r.get('count') != "—":
+                # Obtener expresión SymPy si está disponible
+                count_expr = r.get('count_raw_expr')
+                if count_expr is None:
+                    # Fallback: convertir desde LaTeX
+                    count_expr = self._str_to_sympy(r.get('count_raw', '1'))
+                
+                # Crear término: C_k * count_expr
+                # C_k es solo un símbolo para mostrar, no afecta la expresión SymPy
+                # Multiplicamos directamente
+                terms.append(count_expr)
         
-        result = " + ".join(terms) if terms else "0"
+        if not terms:
+            return "0"
         
-        # Normalizar el resultado final si el método está disponible
-        if hasattr(self, '_normalize_string'):
-            result = self._normalize_string(result)
+        # Sumar todos los términos
+        total_expr = Add(*terms) if len(terms) > 1 else terms[0]
         
-        return result
+        # Simplificar completamente: evaluar todas las sumatorias
+        from sympy import preorder_traversal
+        from sympy import simplify as sympy_simplify, expand
+        
+        # Evaluar todas las sumatorias en la expresión
+        def evaluate_sums_in_expr(expr):
+            """Evalúa todas las sumatorias en la expresión."""
+            # Verificar si hay Sum sin evaluar
+            has_sum = False
+            for subexpr in preorder_traversal(expr):
+                if isinstance(subexpr, Sum):
+                    has_sum = True
+                    break
+            
+            if has_sum:
+                # Reemplazar todas las Sum con su evaluación
+                expr = expr.replace(lambda x: isinstance(x, Sum), lambda x: x.doit())
+                expr = sympy_simplify(expr)
+                # Verificar recursivamente si aún hay Sum
+                return evaluate_sums_in_expr(expr)
+            
+            return expr
+        
+        # Evaluar todas las sumatorias
+        total_expr = evaluate_sums_in_expr(total_expr)
+        
+        # Simplificar y expandir para obtener la forma más simple
+        try:
+            total_expr = expand(total_expr)
+            total_expr = sympy_simplify(total_expr)
+        except:
+            total_expr = sympy_simplify(total_expr)
+        
+        # Convertir a LaTeX
+        return latex(total_expr)
 
     # --- util 4: emitir respuesta estándar ---
     def result(self) -> AnalyzeOpenResponse:
@@ -161,9 +280,23 @@ class BaseAnalyzer:
         if self.t_polynomial:
             totals["T_polynomial"] = self.t_polynomial
         
+        # Limpiar filas: eliminar objetos SymPy y asegurar que todo sea serializable
+        clean_rows = []
+        for row in self.rows:
+            clean_row = dict(row)
+            # Eliminar count_raw_expr (objeto SymPy no serializable)
+            if 'count_raw_expr' in clean_row:
+                del clean_row['count_raw_expr']
+            # Asegurar que count y count_raw sean strings
+            if 'count' in clean_row and not isinstance(clean_row['count'], str):
+                clean_row['count'] = str(clean_row['count'])
+            if 'count_raw' in clean_row and not isinstance(clean_row['count_raw'], str):
+                clean_row['count_raw'] = str(clean_row['count_raw'])
+            clean_rows.append(clean_row)
+        
         return {
             "ok": True,
-            "byLine": self.rows,
+            "byLine": clean_rows,
             "totals": totals
         }
 
@@ -243,7 +376,11 @@ class BaseAnalyzer:
         Returns:
             String hash del contexto
         """
-        return "|".join(self.loop_stack) if self.loop_stack else "root"
+        # Convertir expresiones SymPy a strings para el hash
+        if not self.loop_stack:
+            return "root"
+        # Usar representación LaTeX de las expresiones
+        return "|".join([latex(expr) for expr in self.loop_stack])
 
     def C(self) -> str:
         """

@@ -97,7 +97,21 @@ El Sistema de Análisis de Algoritmos es una herramienta completa para el análi
 
 **Métodos Clave**:
 ```python
-def analyze(self, ast: Dict[str, Any], mode: str = "worst") -> Dict[str, Any]
+def analyze(self, ast: Dict[str, Any], mode: str = "worst", api_key: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Analiza un AST completo y retorna el resultado.
+    
+    Args:
+        ast: AST del algoritmo a analizar
+        mode: Modo de análisis ("worst", "best", "avg")
+        api_key: API Key (ignorado, mantenido por compatibilidad)
+    
+    Returns:
+        Resultado del análisis con byLine, T_open, procedure, etc.
+    """
+    # Usa SymPy para cerrar sumatorias y generar procedimientos
+    # No requiere API key para simplificación
+
 def visit(self, node: Any, mode: str = "worst") -> None
 def _expr_to_str(self, expr: Any) -> str
 def _normalize_string(self, s: str) -> str
@@ -615,29 +629,43 @@ apps/api/app/analysis/
 
 **Nota**: Este sistema está diseñado para ser extensible y mantenible. Las reglas están claramente documentadas y separadas por responsabilidad, permitiendo fácil adición de nuevas funcionalidades y corrección de bugs.
 
-## Integración con LLM
+## Simplificación y Cierre de Sumatorias
 
-Desde S3 la simplificación matemática se delega a Gemini (Google Generative AI). Esta versión implementa un flujo en dos fases:
+Desde S3 la simplificación matemática se realiza usando **SymPy** (biblioteca de cálculo simbólico de Python). Esta versión implementa un sistema determinista y educativo:
 
-1. **`simplify_counts_with_llm` (gemini-2.5-flash)**
-    - Recibe todos los `count_raw` en una sola petición.
-    - Devuelve los `count` simplificados y la forma polinómica `T_polynomial` en formato canónico (sin coeficientes cero ni puntos medios).
-    - El prompt fuerza índices de sumatoria únicos para evitar mezclar variables ligadas con libres.
+1. **`SummationCloser`**
+    - Cierra sumatorias usando SymPy para evaluación simbólica exacta.
+    - Genera procedimientos paso a paso educativos para cada tipo de sumatoria.
+    - Maneja casos canónicos:
+      - Sumatorias simples: `\sum_{i=1}^{n} 1 → n`
+      - Sumatorias anidadas rectangulares: `\sum_{i=1}^{n} \sum_{j=1}^{m} 1 → n \cdot m`
+      - Sumatorias triangulares: `\sum_{i=1}^{n} \sum_{j=1}^{i} 1 → \frac{n(n+1)}{2}`
+      - Sumatorias con límites dependientes: `\sum_{i=1}^{n-1} \sum_{j=i+1}^{n} 1 → \frac{n(n-1)}{2}`
 
-2. **`generate_procedures_with_llm` (gemini-2.5-flash-lite)**
-    - Utiliza los resultados de la etapa anterior para construir el procedimiento detallado por línea.
-    - Cada paso incluye descripción en `\text{}`, transforma solo cuando hay cambios reales y finaliza con “Forma final” y “Notación asintótica”.
+2. **`ComplexityClasses`**
+    - Extrae términos dominantes de polinomios usando SymPy.
+    - Calcula clases de complejidad O/Ω/Θ automáticamente.
+    - Maneja polinomios, funciones logarítmicas y combinaciones.
 
- ### Sanitización en backend/frontend
- - El backend conserva tanto `count_raw` como `count` y persiste `procedure` en cada fila para que el frontend pueda renderizarlo sin recalcular nada.
- - En `ProcedureModal` se normalizan los pasos recibidos del LLM mediante `sanitizeProcedureStep`, que:
-   - Encuentra y procesa **todos** los bloques `\text{}` en un paso (no solo el primero).
-   - Normaliza espacios y dos puntos dentro de cada bloque.
-   - Asegura un espacio al final dentro de cada `\text{... }`.
-   - Preserva expresiones matemáticas entre bloques de texto.
-   - Corrige casos donde múltiples `\text{}` están intercalados con fórmulas (ej: `\text{Como } n^2 \text{ y } n \text{ no dependen...`).
- - Se añadió un helper para derivar Big-O a partir de la forma polinómica, reutilizado en las tarjetas de casos (peor/mejor/promedio).
+### Ventajas del Sistema SymPy
+
+- **Determinismo**: Resultados siempre consistentes y verificables.
+- **Velocidad**: Más rápido que llamadas a API externas.
+- **Precisión**: Cálculo simbólico exacto sin aproximaciones.
+- **Educativo**: Procedimientos paso a paso estructurados y claros.
+- **Sin dependencias externas**: No requiere API keys para simplificación.
+
+### Sanitización en backend/frontend
+- El backend conserva tanto `count_raw` como `count` y persiste `procedure` en cada fila para que el frontend pueda renderizarlo sin recalcular nada.
+- En `ProcedureModal` se normalizan los pasos recibidos mediante `sanitizeProcedureStep`, que:
+  - Encuentra y procesa **todos** los bloques `\text{}` en un paso (no solo el primero).
+  - Normaliza espacios y dos puntos dentro de cada bloque.
+  - Asegura un espacio al final dentro de cada `\text{... }`.
+  - Preserva expresiones matemáticas entre bloques de texto.
+  - Corrige casos donde múltiples `\text{}` están intercalados con fórmulas (ej: `\text{Como } n^2 \text{ y } n \text{ no dependen...`).
+- Se añadió un helper para derivar Big-O a partir de la forma polinómica, reutilizado en las tarjetas de casos (peor/mejor/promedio).
 
 ### Notas adicionales
 - El helper `_apply_loop_multipliers` genera sumatorias anidadas en lugar de productos directos, lo que evita mezclar variables unbound.
-- `BaseAnalyzer.add_row` agrega `count_raw` y deja el resto del postprocesado a las llamadas LLM, simplificando los visitantes (`ForVisitor`, `WhileVisitor`, etc.).
+- `BaseAnalyzer.add_row` agrega `count_raw` y deja el resto del postprocesado a `SummationCloser`, simplificando los visitantes (`ForVisitor`, `WhileVisitor`, etc.).
+- El sistema ya no depende de API keys para simplificación, aunque se mantiene compatibilidad con el campo `api_key` en requests (se ignora para simplificación).

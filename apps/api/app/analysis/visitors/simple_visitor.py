@@ -1,6 +1,7 @@
 # apps/api/app/analysis/visitors/simple_visitor.py
 
 from typing import Any, Dict, List, Optional
+from sympy import Integer, Expr
 
 
 class SimpleVisitor:
@@ -87,7 +88,7 @@ class SimpleVisitor:
         ck_terms.append(self.C())  # -> "C_{k}"
         
         ck = " + ".join(ck_terms)
-        self.add_row(line, "assign", ck, "1")
+        self.add_row(line, "assign", ck, Integer(1))
     
     def visitCallStmt(self, node: Dict[str, Any], _mode: str = "worst") -> None:
         """
@@ -104,7 +105,7 @@ class SimpleVisitor:
             ck_terms += self._cost_of_expr(arg)
         
         ck = " + ".join(ck_terms)
-        self.add_row(line, "call", ck, "1")
+        self.add_row(line, "call", ck, Integer(1))
     
     def visitReturn(self, node: Dict[str, Any], _mode: str = "worst") -> None:
         """
@@ -119,7 +120,7 @@ class SimpleVisitor:
         ck_terms.append(self.C())  # costo del return
         
         ck = " + ".join(ck_terms)
-        self.add_row(line, "return", ck, "1")
+        self.add_row(line, "return", ck, Integer(1))
     
     def visitPrint(self, node: Dict[str, Any], _mode: str = "worst") -> None:
         """
@@ -140,7 +141,7 @@ class SimpleVisitor:
             ck_terms += self._cost_of_expr(arg)
         
         ck = " + ".join(ck_terms)
-        self.add_row(line, "print", ck, "1")
+        self.add_row(line, "print", ck, Integer(1))
     
     def visitDecl(self, node: Dict[str, Any], _mode: str = "worst") -> None:
         """
@@ -158,7 +159,7 @@ class SimpleVisitor:
             ck_terms += self._cost_of_expr(node["size"])
         
         ck = " + ".join(ck_terms)
-        self.add_row(line, "decl", ck, "1")
+        self.add_row(line, "decl", ck, Integer(1))
     
     def _cost_of_lvalue(self, lv: Dict[str, Any]) -> List[str]:
         """
@@ -346,6 +347,6 @@ class SimpleVisitor:
             line=line,
             kind="other",
             ck=ck,
-            count="1",
+            count=Integer(1),
             note=f"Statement {node_type}"
         )

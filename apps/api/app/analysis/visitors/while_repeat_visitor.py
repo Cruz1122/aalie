@@ -1,6 +1,7 @@
 # apps/api/app/analysis/visitors/while_repeat_visitor.py
 
 from typing import Any, Dict, List, Optional
+from sympy import Symbol, Integer, Expr, sympify, Sum
 import re
 
 
@@ -70,6 +71,38 @@ class WhileRepeatVisitor:
                 return str(expr.get("value", str(expr)))
         else:
             return str(expr)
+    
+    def _str_to_sympy(self, expr_str: str) -> Expr:
+        """
+        Convierte un string a expresión SymPy.
+        
+        Args:
+            expr_str: String representando una expresión
+            
+        Returns:
+            Expresión SymPy
+        """
+        if not expr_str or expr_str.strip() == "":
+            return Integer(1)
+        
+        try:
+            # Crear contexto con símbolos comunes
+            variable = getattr(self, 'variable', 'n')
+            n = Symbol(variable, integer=True, positive=True)
+            i = Symbol('i', integer=True)
+            j = Symbol('j', integer=True)
+            k = Symbol('k', integer=True)
+            
+            syms = {
+                variable: n,
+                'i': i,
+                'j': j,
+                'k': k,
+            }
+            
+            return sympify(expr_str, locals=syms)
+        except:
+            return Integer(1)
     
     def _extract_condition_info(self, test: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
@@ -481,25 +514,35 @@ class WhileRepeatVisitor:
             # Si iterations es algo como "n - i_0", usar sumatoria: \sum_{k=0}^{iterations-1} 1
             # O simplemente usar la expresión directamente si es simple
             # Por ahora, usar la expresión directamente como multiplicador
-            mult_expr = iterations
+            # Convertir iterations (string) a SymPy
+            try:
+                iterations_expr = sympify(iterations)
+            except:
+                # Fallback: usar string y convertir después
+                iterations_expr = self._str_to_sympy(iterations)
+            
+            mult_expr = iterations_expr
             
             # Si hay multiplicadores externos (anidado), integrar
             if self.loop_stack:
                 # Integrar con multiplicadores externos
                 outer_mult = self.loop_stack[-1]
-                # Si el multiplicador externo es una sumatoria, integrar
-                match = re.match(r"\\sum_{(\w+)=(.+?)}^{(.+?)} 1$", outer_mult)
-                if match:
-                    outer_var, outer_start, outer_end = match.groups()
-                    # Integrar: \sum_{outer_var=outer_start}^{outer_end} iterations
-                    mult_expr = f"\\sum_{{{outer_var}={outer_start}}}^{{{outer_end}}} ({iterations})"
+                
+                # outer_mult ahora es un objeto SymPy (Sum o Expr)
+                if isinstance(outer_mult, Sum):
+                    # Es una sumatoria, envolver iterations_expr dentro
+                    var_sym = outer_mult.args[1][0]  # Variable de la sumatoria
+                    start_expr = outer_mult.args[1][1]  # Límite inferior
+                    end_expr = outer_mult.args[1][2]  # Límite superior
+                    mult_expr = Sum(iterations_expr, (var_sym, start_expr, end_expr))
                 else:
-                    # Multiplicar directamente
-                    mult_expr = f"({iterations}) \\cdot ({outer_mult})"
+                    # Es una expresión multiplicativa
+                    mult_expr = iterations_expr * outer_mult
             
             # 1) Condición: se evalúa (iterations + 1) veces
             ck_cond = self.C()
-            cond_count = f"({iterations}) + 1"
+            # Usar iterations_expr que ya convertimos arriba
+            cond_count = iterations_expr + Integer(1)
             self.add_row(
                 line=L,
                 kind="while",
@@ -509,6 +552,7 @@ class WhileRepeatVisitor:
             )
             
             # 2) Cuerpo: se ejecuta iterations veces
+            # mult_expr ya es una expresión SymPy
             self.push_multiplier(mult_expr)
             
             # Visitar el cuerpo del bucle
@@ -526,16 +570,19 @@ class WhileRepeatVisitor:
             # Fallback: usar símbolo simbólico t_{while_L}
             # 1) Condición: se evalúa (t_{while_L} + 1) veces
             ck_cond = self.C()  # C_{k} para evaluar la condición
+            # Convertir t a SymPy
+            t_sym = Symbol(t, real=True)
+            cond_count = t_sym + Integer(1)
             self.add_row(
                 line=L,
                 kind="while",
                 ck=ck_cond,
-                count=f"{t} + 1",
+                count=cond_count,
                 note=f"Condición del bucle while en línea {L}"
             )
             
             # 2) Cuerpo: se ejecuta t_{while_L} veces
-            self.push_multiplier(t)  # multiplicador simbólico
+            self.push_multiplier(t_sym)  # multiplicador simbólico
             
             # Visitar el cuerpo del bucle
             body = node.get("body")
@@ -554,9 +601,11 @@ class WhileRepeatVisitor:
         """
         L = node.get("pos", {}).get("line", 0)
         t = self.iter_sym("repeat", L)
+        t_sym = Symbol(t, real=True)
         
         # 1) Cuerpo: al menos 1 vez -> (1 + t_{repeat_L})
-        self.push_multiplier(f"1 + {t}")
+        mult_expr = Integer(1) + t_sym
+        self.push_multiplier(mult_expr)
         
         # Visitar el cuerpo del bucle
         body = node.get("body")
@@ -567,10 +616,11 @@ class WhileRepeatVisitor:
         
         # 2) Condición: se evalúa también (1 + t_{repeat_L}) veces
         ck_cond = self.C()
+        cond_count = Integer(1) + t_sym
         self.add_row(
             line=L,
             kind="repeat",
             ck=ck_cond,
-            count=f"1 + {t}",
+            count=cond_count,
             note=f"Condición del bucle repeat en línea {L}"
         )

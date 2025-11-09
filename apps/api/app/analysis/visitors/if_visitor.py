@@ -1,6 +1,7 @@
 # apps/api/app/analysis/visitors/if_visitor.py
 
 from typing import Any, Dict, List, Optional
+from sympy import Integer, Expr
 
 
 class IfVisitor:
@@ -80,7 +81,7 @@ class IfVisitor:
             line=line,
             kind="if",
             ck=ck_guard,
-            count="1",
+            count=Integer(1),
             note="Evaluación de la condición"
         )
         

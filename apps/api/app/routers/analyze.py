@@ -57,8 +57,8 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
         # 2) Crear analizador iterativo
         analyzer = IterativeAnalyzer()
         
-        # 3) Analizar el AST (pasar api_key si está disponible)
-        result = analyzer.analyze(ast, payload.mode, api_key=payload.api_key)
+        # 3) Analizar el AST (api_key se ignora, mantenido por compatibilidad)
+        result = analyzer.analyze(ast, payload.mode)
         
         return result
         

@@ -1,6 +1,7 @@
 # apps/api/app/analysis/visitors/for_visitor.py
 
 from typing import Any, Dict, List, Optional
+from sympy import Symbol, Sum, Integer, Expr
 
 
 class ForVisitor:
@@ -13,9 +14,62 @@ class ForVisitor:
     - Procedimiento explicativo
     """
     
+    def _expr_to_sympy(self, expr: Any) -> Expr:
+        """
+        Convierte una expresión del AST a SymPy.
+        
+        Args:
+            expr: Expresión del AST
+            
+        Returns:
+            Expresión SymPy
+        """
+        # Usar el método de BaseAnalyzer si está disponible
+        if hasattr(self, 'expr_converter'):
+            return self.expr_converter.ast_to_sympy(expr)
+        # Fallback: usar método de BaseAnalyzer si existe
+        if hasattr(self, '_expr_to_sympy') and callable(getattr(super(), '_expr_to_sympy', None)):
+            return super()._expr_to_sympy(expr)
+        # Último fallback: convertir a string y luego a SymPy
+        return self._str_to_sympy(self._expr_to_str(expr))
+    
+    def _str_to_sympy(self, expr_str: str) -> Expr:
+        """
+        Convierte un string a expresión SymPy.
+        
+        Args:
+            expr_str: String representando una expresión
+            
+        Returns:
+            Expresión SymPy
+        """
+        from sympy import sympify, Symbol, Integer
+        
+        if not expr_str or expr_str.strip() == "":
+            return Integer(1)
+        
+        try:
+            # Crear contexto con símbolos comunes
+            variable = getattr(self, 'variable', 'n')
+            n = Symbol(variable, integer=True, positive=True)
+            i = Symbol('i', integer=True)
+            j = Symbol('j', integer=True)
+            k = Symbol('k', integer=True)
+            
+            syms = {
+                variable: n,
+                'i': i,
+                'j': j,
+                'k': k,
+            }
+            
+            return sympify(expr_str, locals=syms)
+        except:
+            return Integer(1)
+    
     def _expr_to_str(self, expr: Any) -> str:
         """
-        Convierte una expresión del AST a string.
+        Convierte una expresión del AST a string (método legacy, usar _expr_to_sympy).
         
         Args:
             expr: Expresión del AST
@@ -23,6 +77,12 @@ class ForVisitor:
         Returns:
             String representando la expresión
         """
+        # Si hay un método _expr_to_sympy, usarlo y convertir a string
+        if hasattr(self, '_expr_to_sympy'):
+            sympy_expr = self._expr_to_sympy(expr)
+            return str(sympy_expr)
+        
+        # Fallback al método original
         if expr is None:
             return ""
         elif isinstance(expr, str):
@@ -42,9 +102,8 @@ class ForVisitor:
                 left = self._expr_to_str(expr.get("left", ""))
                 right = self._expr_to_str(expr.get("right", ""))
                 op = expr.get("operator", "")
-                # Asegurar que el operador no se pierda
                 if not op:
-                    op = "-"  # fallback para operadores perdidos
+                    op = "-"
                 return f"({left}) {op} ({right})"
             elif expr_type == "index":
                 target = self._expr_to_str(expr.get("target", ""))
@@ -55,7 +114,6 @@ class ForVisitor:
                 op = expr.get("operator", "")
                 return f"{op}({arg})"
             else:
-                # Fallback para tipos desconocidos
                 return str(expr.get("value", str(expr)))
         else:
             return str(expr)
@@ -91,19 +149,28 @@ class ForVisitor:
         end_expr = node.get("end")  # expresión de fin
         body = node.get("body")  # cuerpo del bucle
         
-        # Convertir expresiones a strings
-        a = self._expr_to_str(start_expr)
-        b = self._expr_to_str(end_expr)
+        # Convertir expresiones a SymPy
+        a_expr = self._expr_to_sympy(start_expr)
+        b_expr = self._expr_to_sympy(end_expr)
+        
+        # Convertir también a strings para notas y comparaciones
+        a_str = str(a_expr)
+        b_str = str(b_expr)
         
         # 1) Cabecera del for: (b - a + 2) evaluaciones
         ck_header = self.C()  # generar siguiente constante
         
         # Calcular header_count: (b - a + 2) evaluaciones
-        if self._is_int(a) and self._is_int(b):
-            header_count = str(int(b) - int(a) + 2)   # aquí sí calculas el valor numérico
-        else:
-            # Generar expresión general (sin simplificar, el LLM lo hará)
-            header_count = f"({b}) - ({a}) + 2"
+        # Intentar evaluar numéricamente si es posible
+        try:
+            if isinstance(a_expr, Integer) and isinstance(b_expr, Integer):
+                header_count = Integer(int(b_expr) - int(a_expr) + 2)
+            else:
+                # Generar expresión general
+                header_count = b_expr - a_expr + Integer(2)
+        except:
+            # Fallback: expresión general
+            header_count = b_expr - a_expr + Integer(2)
         
         # Para cabeceras de bucles anidados, usar add_row para generar count_raw correctamente
         # add_row aplicará los multiplicadores del stack automáticamente
@@ -112,11 +179,12 @@ class ForVisitor:
             kind="for",
             ck=ck_header,
             count=header_count,
-            note=f"Cabecera del bucle for {var}={a}..{b}"
+            note=f"Cabecera del bucle for {var}={a_str}..{b_str}"
         )
         
         # 2) Multiplicador del cuerpo: Σ_{v=a}^{b} 1
-        mult = f"\\sum_{{{var}={a}}}^{{{b}}} 1"
+        var_sym = Symbol(var, integer=True)
+        mult = Sum(Integer(1), (var_sym, a_expr, b_expr))
         self.push_multiplier(mult)
         
         # 3) Visitar el cuerpo del bucle
