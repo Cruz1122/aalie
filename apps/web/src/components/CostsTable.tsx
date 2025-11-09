@@ -1,6 +1,7 @@
 "use client";
 
 import type { LineCost } from "@aa/types";
+
 import Formula from "./Formula";
 
 // Helper para renderizar variables con KaTeX

@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useMemo } from "react";
-import Formula from "./Formula";
 import type { AnalyzeOpenResponse } from "@aa/types";
+import React, { useMemo } from "react";
+
+
+import Formula from "./Formula";
 
 interface GeneralProcedureModalProps {
   open: boolean;
@@ -13,7 +15,7 @@ interface GeneralProcedureModalProps {
 const normalizePolynomial = (poly?: string): string => {
   if (!poly) return "";
   // Reemplazar \\cdot por espacio y limpiar espacios
-  let p = poly.replace(/\\cdot/g, " ").replace(/\s+/g, " ").trim();
+  const p = poly.replace(/\\cdot/g, " ").replace(/\s+/g, " ").trim();
   // Separar por + y filtrar términos con "0 *"
   const parts = p.split("+").map(s => s.trim()).filter(term => !/^0\s/.test(term));
   // Volver a unir respetando espacios alrededor de +
@@ -31,7 +33,7 @@ const deriveBigO = (base: string): string => {
 
 export default function GeneralProcedureModal({ open, onClose, data }: Readonly<GeneralProcedureModalProps>) {
   const tOpen = data?.totals?.T_open || "";
-  const rawPoly = (data?.totals as any)?.T_polynomial as string | undefined;
+  const rawPoly = (data?.totals as { T_polynomial?: string })?.T_polynomial;
   const normPoly = normalizePolynomial(rawPoly);
   const bigO = deriveBigO(normPoly && normPoly !== "0" ? normPoly : tOpen);
 

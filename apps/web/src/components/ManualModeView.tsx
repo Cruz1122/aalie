@@ -319,7 +319,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
         // Obtener API_KEY del localStorage (el backend usará la de variables de entorno si no hay)
         const apiKey = getApiKey();
         
-        const body: any = { source: sourceCode, mode: "auto" };
+        const body: { source: string; mode: string; apiKey?: string } = { source: sourceCode, mode: "auto" };
         if (apiKey) {
           body.apiKey = apiKey;
         }
@@ -376,7 +376,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
         setAnalysisMessage("Analizando (sin simplificación LLM)...");
       }
       
-      const body: any = { source: sourceCode, mode: "worst" };
+      const body: { source: string; mode: string; api_key?: string } = { source: sourceCode, mode: "worst" };
       if (apiKey) {
         body.api_key = apiKey;
       }
@@ -436,7 +436,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
         setAnalysisError(null);
       }, 3000);
     }
-  }, [animateProgress, heuristicKind, isAnalyzing, router]);
+  }, [animateProgress, isAnalyzing, router]);
 
   const handleAnalyzeComplexity = () => {
     void runAnalysis(code);
@@ -546,8 +546,6 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
                   onClick={async () => {
                     // No verificar API_KEY del servidor (no hacer peticiones)
                     // El backend manejará la API_KEY automáticamente
-                    const apiKey = getApiKey();
-                    
                     // Permitir continuar incluso sin API_KEY del cliente
                     // El backend intentará usar la de variables de entorno
                     

@@ -434,7 +434,7 @@ print("Dijo \"hola\" y salió");`}
                     </div>
                     <ul className="list-disc list-inside space-y-2 ml-4">
                       <li>
-                        <strong>Strings literales:</strong> Entre comillas dobles <code className="text-green-300">"texto"</code>
+                        <strong>Strings literales:</strong> Entre comillas dobles <code className="text-green-300">&quot;texto&quot;</code>
                       </li>
                       <li>
                         <strong>Múltiples argumentos:</strong> Separados por coma, se concatenan automáticamente
@@ -443,7 +443,7 @@ print("Dijo \"hola\" y salió");`}
                         <strong>Expresiones:</strong> Puedes incluir variables y operaciones matemáticas
                       </li>
                       <li>
-                        <strong>Escapar comillas:</strong> Usa <code className="text-green-300">\"</code> para comillas dentro del string
+                        <strong>Escapar comillas:</strong> Usa <code className="text-green-300">\&quot;</code> para comillas dentro del string
                       </li>
                     </ul>
                     <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mt-3">
@@ -471,10 +471,10 @@ print("Dijo \"hola\" y salió");`}
                         la sintaxis en tiempo real
                       </li>
                       <li>
-                        <strong className="text-white">Verifica el parse:</strong> Usa el botón "Verificar Parse" para validar la sintaxis
+                        <strong className="text-white">Verifica el parse:</strong> Usa el botón &quot;Verificar Parse&quot; para validar la sintaxis
                       </li>
                       <li>
-                        <strong className="text-white">Analiza complejidad:</strong> Haz clic en "Analizar Complejidad" para iniciar el análisis completo
+                        <strong className="text-white">Analiza complejidad:</strong> Haz clic en &quot;Analizar Complejidad&quot; para iniciar el análisis completo
                       </li>
                       <li>
                         <strong className="text-white">Revisa resultados:</strong> Se abrirá la página de resultados con tabla de costos y procedimientos detallados
@@ -482,7 +482,7 @@ print("Dijo \"hola\" y salió");`}
                     </ol>
                     <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mt-3">
                       <p className="text-blue-300 text-sm">
-                        <strong>💡 Consejo:</strong> Si hay errores de sintaxis, espera 3 segundos y aparecerá un botón "Ayuda con IA" que enviará tu código al chatbot para corrección automática.
+                        <strong>💡 Consejo:</strong> Si hay errores de sintaxis, espera 3 segundos y aparecerá un botón &quot;Ayuda con IA&quot; que enviará tu código al chatbot para corrección automática.
                       </p>
                     </div>
                   </div>
@@ -499,7 +499,7 @@ print("Dijo \"hola\" y salió");`}
                         <strong className="text-white">Pide código al chatbot:</strong> Solicita un algoritmo o pega código en el chat
                       </li>
                       <li>
-                        <strong className="text-white">Botón "Analizar":</strong> Cuando el chatbot devuelve código en un bloque de pseudocódigo, aparecerá un botón verde "Analizar" junto al botón de copiar
+                        <strong className="text-white">Botón &quot;Analizar&quot;:</strong> Cuando el chatbot devuelve código en un bloque de pseudocódigo, aparecerá un botón verde &quot;Analizar&quot; junto al botón de copiar
                       </li>
                       <li>
                         <strong className="text-white">Loader en el chat:</strong> El análisis se ejecuta directamente en la vista del chat con el mismo loader que el editor manual
@@ -530,12 +530,12 @@ print("Dijo \"hola\" y salió");`}
                         <strong className="text-white">Selector de casos:</strong> En la esquina superior derecha, cambia entre Mejor/Promedio/Peor caso (actualmente solo Peor caso disponible)
                       </li>
                       <li>
-                        <strong className="text-white">Tarjetas de resumen:</strong> Tres tarjetas muestran la notación asintótica (Big-O) para cada caso, con un botón "Ver Procedimiento" en la tarjeta del Peor caso
+                        <strong className="text-white">Tarjetas de resumen:</strong> Tres tarjetas muestran la notación asintótica (Big-O) para cada caso, con un botón &quot;Ver Procedimiento&quot; en la tarjeta del Peor caso
                       </li>
                       <li>
                         <strong className="text-white">Procedimientos detallados:</strong>
                         <ul className="list-disc list-inside ml-6 mt-2 space-y-1">
-                          <li>Procedimiento general: Haz clic en "Ver Procedimiento" en la tarjeta del Peor caso</li>
+                          <li>Procedimiento general: Haz clic en &quot;Ver Procedimiento&quot; en la tarjeta del Peor caso</li>
                           <li>Procedimiento por línea: Haz clic en cualquier línea de la tabla para ver los pasos específicos de esa línea</li>
                         </ul>
                       </li>

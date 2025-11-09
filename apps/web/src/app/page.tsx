@@ -1,5 +1,6 @@
 "use client";
 
+import type { Program } from "@aa/types";
 import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 
@@ -9,11 +10,10 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import ManualModeView, { ManualModeViewHandle } from "@/components/ManualModeView";
 import ModeToggle from "@/components/ModeToggle";
-import { useChatHistory } from "@/hooks/useChatHistory";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
+import { useChatHistory } from "@/hooks/useChatHistory";
 import { heuristicKind } from "@/lib/algorithm-classifier";
-import type { Program } from "@aa/types";
 
 interface Message {
   id: string;
@@ -174,7 +174,7 @@ export default function HomePage() {
         // El backend usará automáticamente la API_KEY de variables de entorno si está disponible
         const apiKey = getApiKey();
         
-        const body: any = { source: sourceCode, mode: "auto" };
+        const body: { source: string; mode: string; apiKey?: string } = { source: sourceCode, mode: "auto" };
         if (apiKey) {
           body.apiKey = apiKey;
         }
@@ -226,7 +226,7 @@ export default function HomePage() {
         setChatAnalysisMessage("Analizando (sin simplificación LLM)...");
       }
       
-      const body: any = { source: sourceCode, mode: "worst" };
+      const body: { source: string; mode: string; api_key?: string } = { source: sourceCode, mode: "worst" };
       if (apiKey) {
         body.api_key = apiKey;
       }
@@ -275,7 +275,7 @@ export default function HomePage() {
       setChatAnalysisMessage("Ocurrió un error");
       setIsChatAnalyzing(false);
     }
-  }, [animateProgress, router, isChatAnalyzing]);
+  }, [animateProgress, router]);
 
   const handleChatLoaderClose = () => {
     setChatLoaderVisible(false);

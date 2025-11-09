@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+
 import { LLM_EXPORTABLE_CONFIG } from "../llm-config";
 
 export const runtime = "nodejs";
@@ -12,7 +13,7 @@ function validateApiKey(key: string | undefined): boolean {
   return API_KEY_REGEX.test(key.trim());
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     // Verificar si hay API_KEY en las variables de entorno del servidor
     const serverApiKey = process.env.API_KEY;

@@ -37,7 +37,7 @@ export default function NavigationLink({
 
   return (
     <Link 
-      href={href as any}
+      href={href}
       className={className}
       onClick={handleClick}
     >

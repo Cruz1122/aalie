@@ -14,20 +14,12 @@ import Header from "@/components/Header";
 import LineTable from "@/components/LineTable";
 import ProcedureModal from "@/components/ProcedureModal";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
+import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
-import { getApiKey } from "@/hooks/useApiKey";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 import { calculateBigO, getSavedCase, saveCase } from "@/lib/polynomial";
-import { GrammarApiService } from "@/services/grammar-api";
 
 type ClassifyResponse = { kind: "iterative" | "recursive" | "hybrid" | "unknown" };
-
-interface Message {
-  id: string;
-  content: string;
-  sender: 'user' | 'bot';
-  timestamp: Date;
-}
 
 export default function AnalyzerPage() {
   const { animateProgress } = useAnalysisProgress();
@@ -239,7 +231,7 @@ export default function AnalyzerPage() {
         setAnalysisMessage("Analizando (sin simplificación LLM)...");
       }
       
-      const body: any = { source, mode: "worst" };
+      const body: { source: string; mode: string; api_key?: string } = { source, mode: "worst" };
       if (apiKey) {
         body.api_key = apiKey;
       }

@@ -1,8 +1,10 @@
 "use client";
 
 import { RotateCcw, Send, User } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
 import { getApiKey, setApiKey, validateApiKey } from "@/hooks/useApiKey";
+
 import MarkdownRenderer from './MarkdownRenderer';
 
 interface Message {
@@ -27,7 +29,7 @@ interface ChatBotProps {
  */
 async function classifyIntent(message: string, apiKey: string | null): Promise<'parser_assist' | 'general'> {
   try {
-    const body: any = {
+    const body: { job: string; prompt: string; apiKey?: string } = {
       job: 'classify',
       prompt: message,
     };
@@ -83,7 +85,7 @@ async function getLLMResponse(
         content: msg.content
       }));
 
-    const body: any = {
+    const body: { job: string; prompt: string; chatHistory: Array<{ role: string; content: string }>; apiKey?: string } = {
       job,
       prompt: message,
       chatHistory: historyForLLM,
@@ -121,7 +123,6 @@ async function getLLMResponse(
 export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnalyzeCode }: Readonly<ChatBotProps>) {
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [apiKey, setApiKeyState] = useState<string | null>(null);
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [showApiKeyCard, setShowApiKeyCard] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -133,7 +134,6 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnal
   useEffect(() => {
     const checkApiKey = () => {
       const stored = getApiKey();
-      setApiKeyState(stored);
       
       // No verificar API_KEY del servidor (no hacer peticiones)
       // El backend usará automáticamente la API_KEY de variables de entorno si está disponible
@@ -165,53 +165,7 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnal
     scrollToBottom();
   }, [messages]);
 
-  // Responder automáticamente si el último mensaje del historial es del usuario
-  useEffect(() => {
-    if (!messages || messages.length === 0 || isTyping || processingRef.current || !isOpen) return;
-    const lastUserIdx = [...messages].map((m) => m.sender).lastIndexOf('user');
-    if (lastUserIdx === -1) return;
-    // Verificar si después de ese mensaje hay una respuesta del bot
-    const hasBotAfter = messages.slice(lastUserIdx + 1).some((m) => m.sender === 'bot');
-    if (!hasBotAfter) {
-      // Usar un pequeño delay para asegurar que el estado se haya actualizado completamente
-      const timeoutId = setTimeout(() => {
-        generateBotResponse();
-      }, 200);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [messages, isOpen]);
-
-  // Scroll automático cuando aparece el indicador de escritura
-  useEffect(() => {
-    if (isTyping) {
-      // Scroll más rápido cuando aparece el indicador
-      setTimeout(() => {
-        scrollToBottom(true);
-      }, 100);
-    }
-  }, [isTyping]);
-
-  // Scroll automático cuando se abra el chat
-  useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => {
-        scrollToBottom();
-      }, 100);
-    }
-  }, [isOpen]);
-
-  // Focus en el input cuando se abre el chat
-  useEffect(() => {
-    if (isOpen && inputRef.current) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 300);
-    }
-  }, [isOpen]);
-
-  // El historial y bienvenida se maneja en HomePage
-
-  const generateBotResponse = async () => {
+  const generateBotResponse = useCallback(async () => {
     // Evitar llamadas duplicadas
     if (processingRef.current) return;
     
@@ -277,17 +231,56 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnal
       setIsTyping(false);
       processingRef.current = false;
     }
-  };
+  }, [messages, setMessages]);
+
+  // Responder automáticamente si el último mensaje del historial es del usuario
+  useEffect(() => {
+    if (!messages || messages.length === 0 || isTyping || processingRef.current || !isOpen) return;
+    const lastUserIdx = [...messages].map((m) => m.sender).lastIndexOf('user');
+    if (lastUserIdx === -1) return;
+    // Verificar si después de ese mensaje hay una respuesta del bot
+    const hasBotAfter = messages.slice(lastUserIdx + 1).some((m) => m.sender === 'bot');
+    if (!hasBotAfter) {
+      // Usar un pequeño delay para asegurar que el estado se haya actualizado completamente
+      const timeoutId = setTimeout(() => {
+        generateBotResponse();
+      }, 200);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [messages, isOpen, isTyping, generateBotResponse]);
+
+  // Scroll automático cuando aparece el indicador de escritura
+  useEffect(() => {
+    if (isTyping) {
+      // Scroll más rápido cuando aparece el indicador
+      setTimeout(() => {
+        scrollToBottom(true);
+      }, 100);
+    }
+  }, [isTyping]);
+
+  // Scroll automático cuando se abra el chat
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+    }
+  }, [isOpen]);
+
+  // Focus en el input cuando se abre el chat
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 300);
+    }
+  }, [isOpen]);
+
+  // El historial y bienvenida se maneja en HomePage
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
-
-    // Verificar API_KEY del cliente
-    // Si no hay API_KEY del cliente, el backend intentará usar la de variables de entorno
-    const currentApiKey = getApiKey();
-    
-    // No verificar API_KEY del servidor (no hacer peticiones)
-    // Permitir que el backend maneje la API_KEY automáticamente
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
@@ -306,7 +299,6 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnal
     if (validateApiKey(apiKeyInput)) {
       const success = setApiKey(apiKeyInput);
       if (success) {
-        setApiKeyState(apiKeyInput);
         setShowApiKeyCard(false);
         setApiKeyInput("");
         // Agregar mensaje de bienvenida cuando se configura la API_KEY

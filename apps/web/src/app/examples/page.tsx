@@ -345,7 +345,7 @@ export default function ExamplesPage() {
         setAnalysisMessage("Analizando (sin simplificación LLM)...");
       }
       
-      const body: any = { source: sourceCode, mode: "worst" };
+      const body: { source: string; mode: string; api_key?: string } = { source: sourceCode, mode: "worst" };
       if (apiKey) {
         body.api_key = apiKey;
       }
@@ -528,7 +528,7 @@ export default function ExamplesPage() {
             <h2 className="text-xl font-bold text-white mb-4">Cómo usar estos ejemplos</h2>
             <div className="space-y-3 text-dark-text text-sm">
               <p>
-                1. <strong className="text-white">Copiar:</strong> Haz clic en el botón "Copiar" de
+                1. <strong className="text-white">Copiar:</strong> Haz clic en el botón &quot;Copiar&quot; de
                 cualquier ejemplo para copiar el código al portapapeles.
               </p>
               <p>

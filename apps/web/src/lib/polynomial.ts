@@ -31,7 +31,7 @@ export function normalizePolynomial(poly?: string): string {
   if (!poly) return '';
   
   // Reemplazar \cdot por espacio y limpiar espacios
-  let normalized = poly.replaceAll(/\\cdot/g, ' ').replaceAll(/\s+/g, ' ').trim();
+  const normalized = poly.replaceAll(/\\cdot/g, ' ').replaceAll(/\s+/g, ' ').trim();
   
   // Separar por + y filtrar términos con "0 *"
   const parts = normalized.split('+').map(s => s.trim()).filter(term => !/^0\s/.test(term));
