@@ -25,6 +25,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
     
     def __init__(self):
         super().__init__()
+        self.big_o: Optional[str] = None
+        self.big_omega: Optional[str] = None
+        self.big_theta: Optional[str] = None
     
     def _expr_to_str(self, expr: Any) -> str:
         """
@@ -188,42 +191,138 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 row["count"] = count_raw_latex
                 row["procedure"] = [f"\\text{{Error al simplificar: }} {count_raw_latex}"]
         
-        # Calcular T_polynomial sumando términos cerrados
-        # Construir expresión total: Σ C_k · count_k
-        if self.rows:
-            # Agrupar términos similares
-            terms_by_count = {}
-            for row in self.rows:
-                ck = row.get("ck", "")
-                count = row.get("count", "1")
-                
-                if count not in terms_by_count:
-                    terms_by_count[count] = []
-                terms_by_count[count].append(ck)
-            
-            # Construir T_polynomial
-            polynomial_terms = []
-            for count, cks in terms_by_count.items():
-                if len(cks) == 1:
-                    polynomial_terms.append(f"({cks[0]}) \\cdot ({count})")
-                else:
-                    ck_sum = " + ".join(cks)
-                    polynomial_terms.append(f"({ck_sum}) \\cdot ({count})")
-            
-            # Simplificar usando SymPy para obtener forma polinómica
+        # Calcular T_polynomial y notaciones asintóticas usando SymPy
+        # Obtener expresión SymPy de T_open directamente (más robusto que parsear LaTeX)
+        t_open_expr = self.build_t_open_expr()
+        
+        # Calcular T_polynomial: agrupar términos con C_k (para mostrar estructura)
+        self._calculate_t_polynomial_fallback()
+        
+        # Calcular notaciones asintóticas usando la expresión SymPy directamente
+        if t_open_expr is not None:
             try:
-                # Construir expresión total
-                total_expr = " + ".join(polynomial_terms)
+                from sympy import latex as sympy_latex
                 
-                # Extraer forma polinómica usando ComplexityClasses
-                # Por ahora, usar la expresión agrupada
-                self.t_polynomial = total_expr
+                # Convertir expresión SymPy a LaTeX para ComplexityClasses
+                t_open_latex = sympy_latex(t_open_expr)
+                
+                # Calcular notaciones asintóticas usando ComplexityClasses
+                # Pero primero, extraer término dominante directamente desde SymPy (más robusto)
+                from sympy import Poly, Symbol
+                from sympy.polys.polytools import LC, LM
+                
+                n_sym = Symbol(variable, integer=True, positive=True)
+                
+                try:
+                    # Intentar como polinomio
+                    poly = Poly(t_open_expr, n_sym)
+                    if poly:
+                        # Obtener término líder
+                        leading_coeff = LC(poly)
+                        leading_monom = LM(poly)
+                        dominant_expr = leading_coeff * leading_monom
+                        
+                        # Convertir a LaTeX
+                        dominant_latex = sympy_latex(dominant_expr)
+                        
+                        # Construir notaciones asintóticas
+                        self.big_o = f"O({dominant_latex})"
+                        self.big_omega = f"\\Omega({dominant_latex})"
+                        self.big_theta = f"\\Theta({dominant_latex})"
+                    else:
+                        # Fallback: usar ComplexityClasses con LaTeX
+                        self.big_o = complexity.calculate_big_o(t_open_latex, variable)
+                        self.big_omega = complexity.calculate_big_omega(t_open_latex, variable)
+                        self.big_theta = complexity.calculate_big_theta(t_open_latex, variable)
+                except:
+                    # Fallback: usar ComplexityClasses con LaTeX
+                    self.big_o = complexity.calculate_big_o(t_open_latex, variable)
+                    self.big_omega = complexity.calculate_big_omega(t_open_latex, variable)
+                    self.big_theta = complexity.calculate_big_theta(t_open_latex, variable)
             except Exception as e:
-                print(f"[IterativeAnalyzer] Error calculando T_polynomial: {e}")
-                self.t_polynomial = " + ".join(polynomial_terms)
+                print(f"[IterativeAnalyzer] Error calculando notaciones asintóticas desde expresión SymPy: {e}")
+                import traceback
+                traceback.print_exc()
+                # Valores por defecto
+                self.big_o = "O(1)"
+                self.big_omega = "\\Omega(1)"
+                self.big_theta = "\\Theta(1)"
+        else:
+            # Si no hay expresión, usar valores por defecto
+            self.big_o = "O(1)"
+            self.big_omega = "\\Omega(1)"
+            self.big_theta = "\\Theta(1)"
 
         # Retornar resultado
         return self.result()
+    
+    def _calculate_t_polynomial_fallback(self):
+        """
+        Método fallback para calcular T_polynomial agrupando términos similares.
+        """
+        # Agrupar términos similares
+        terms_by_count = {}
+        for row in self.rows:
+            ck = row.get("ck", "")
+            count = row.get("count", "1")
+            
+            if count not in terms_by_count:
+                terms_by_count[count] = []
+            terms_by_count[count].append(ck)
+        
+        # Construir T_polynomial
+        polynomial_terms = []
+        for count, cks in terms_by_count.items():
+            if len(cks) == 1:
+                polynomial_terms.append(f"({cks[0]}) \\cdot ({count})")
+            else:
+                ck_sum = " + ".join(cks)
+                polynomial_terms.append(f"({ck_sum}) \\cdot ({count})")
+        
+        self.t_polynomial = " + ".join(polynomial_terms)
+    
+    def _latex_to_sympy_expr(self, latex_str: str, variable: str = "n") -> Optional[Expr]:
+        """
+        Convierte una expresión LaTeX a SymPy Expr.
+        
+        Args:
+            latex_str: Expresión en formato LaTeX
+            variable: Variable principal (por defecto "n")
+            
+        Returns:
+            Expresión SymPy o None si hay error
+        """
+        try:
+            from sympy import sympify, Symbol
+            import re
+            
+            # Normalizar LaTeX a formato SymPy
+            expr_str = latex_str
+            
+            # Reemplazar operadores LaTeX
+            expr_str = expr_str.replace('\\cdot', '*')
+            expr_str = expr_str.replace(' ', '')
+            
+            # Manejar fracciones LaTeX: \frac{a}{b} -> (a)/(b)
+            expr_str = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', r'(\1)/(\2)', expr_str)
+            
+            # Reemplazar potencias LaTeX: n^2 -> n**2, n^{2} -> n**2
+            expr_str = re.sub(r'(\w+)\^(\d+)', r'\1**\2', expr_str)
+            expr_str = re.sub(r'(\w+)\^\{(\d+)\}', r'\1**\2', expr_str)
+            
+            # Reemplazar logaritmos: \log(n) -> log(n)
+            expr_str = re.sub(r'\\log\((\w+)\)', r'log(\1)', expr_str)
+            expr_str = re.sub(r'\\log\{(\w+)\}', r'log(\1)', expr_str)
+            
+            # Crear símbolos
+            n = Symbol(variable, integer=True, positive=True)
+            from sympy import log
+            syms = {variable: n, 'log': log}
+            
+            return sympify(expr_str, locals=syms)
+        except Exception as e:
+            print(f"[IterativeAnalyzer] Error en _latex_to_sympy_expr para {latex_str}: {e}")
+            return None
     
     def visit(self, node: Any, mode: str = "worst") -> None:
         """

@@ -35,7 +35,18 @@ export default function GeneralProcedureModal({ open, onClose, data }: Readonly<
   const tOpen = data?.totals?.T_open || "";
   const rawPoly = (data?.totals as { T_polynomial?: string })?.T_polynomial;
   const normPoly = normalizePolynomial(rawPoly);
-  const bigO = deriveBigO(normPoly && normPoly !== "0" ? normPoly : tOpen);
+  
+  // Usar notaciones asintóticas del backend (calculadas con SymPy) si están disponibles
+  const totals = data?.totals as { 
+    T_polynomial?: string;
+    big_o?: string;
+    big_omega?: string;
+    big_theta?: string;
+  } | undefined;
+  
+  const bigO = totals?.big_o || deriveBigO(normPoly && normPoly !== "0" ? normPoly : tOpen);
+  const bigOmega = totals?.big_omega || "\\Omega(1)";
+  const bigTheta = totals?.big_theta || "\\Theta(1)";
 
   const grouped = useMemo(() => {
     if (!data?.byLine) return "";
@@ -72,8 +83,19 @@ export default function GeneralProcedureModal({ open, onClose, data }: Readonly<
           {/* Notación asintótica */}
           <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
             <h4 className="text-white font-semibold mb-2">Notación asintótica</h4>
-            <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto">
-              <Formula latex={bigO} display />
+            <div className="space-y-3">
+              <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto">
+                <div className="text-sm text-slate-400 mb-1">Big-O (cota superior):</div>
+                <Formula latex={bigO} display />
+              </div>
+              <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto">
+                <div className="text-sm text-slate-400 mb-1">Big-Omega (cota inferior):</div>
+                <Formula latex={bigOmega} display />
+              </div>
+              <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto">
+                <div className="text-sm text-slate-400 mb-1">Big-Theta (cota ajustada):</div>
+                <Formula latex={bigTheta} display />
+              </div>
             </div>
           </div>
         </div>

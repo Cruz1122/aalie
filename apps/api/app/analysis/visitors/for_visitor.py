@@ -67,6 +67,85 @@ class ForVisitor:
         except:
             return Integer(1)
     
+    def _ast_expr_to_readable_str(self, expr: Any) -> str:
+        """
+        Convierte una expresión del AST a string legible para notas.
+        Esto es más confiable que convertir desde SymPy porque preserva el orden original.
+        
+        Args:
+            expr: Expresión del AST
+            
+        Returns:
+            String legible representando la expresión
+        """
+        if expr is None:
+            return ""
+        elif isinstance(expr, str):
+            return expr
+        elif isinstance(expr, (int, float)):
+            return str(expr)
+        elif isinstance(expr, dict):
+            expr_type = expr.get("type", "").lower() if isinstance(expr.get("type"), str) else ""
+            
+            if expr_type == "identifier":
+                return expr.get("name", "unknown")
+            elif expr_type == "number":
+                return str(expr.get("value", "0"))
+            elif expr_type == "literal":
+                value = expr.get("value", "0")
+                # Manejar valores booleanos y None
+                if value is True:
+                    return "TRUE"
+                elif value is False:
+                    return "FALSE"
+                elif value is None:
+                    return "NULL"
+                return str(value)
+            elif expr_type == "binary":
+                left = self._ast_expr_to_readable_str(expr.get("left", ""))
+                right = self._ast_expr_to_readable_str(expr.get("right", ""))
+                # Intentar obtener el operador de múltiples campos posibles
+                op = expr.get("operator", "") or expr.get("op", "")
+                if not op:
+                    op = "-"  # Default
+                
+                # Para operadores binarios, formatear legiblemente
+                if op == "+":
+                    return f"{left} + {right}"
+                elif op == "-":
+                    return f"{left} - {right}"
+                elif op == "*":
+                    return f"{left} * {right}"
+                elif op == "/":
+                    return f"{left} / {right}"
+                elif op in ["<", ">", "<=", ">=", "==", "!=", "="]:
+                    return f"{left} {op} {right}"
+                else:
+                    return f"{left} {op} {right}"
+            elif expr_type == "index":
+                target = self._ast_expr_to_readable_str(expr.get("target", ""))
+                index = self._ast_expr_to_readable_str(expr.get("index", ""))
+                return f"{target}[{index}]"
+            elif expr_type == "unary":
+                arg = self._ast_expr_to_readable_str(expr.get("arg", ""))
+                op = expr.get("operator", "") or expr.get("op", "")
+                if op == "-":
+                    return f"-{arg}"
+                elif op == "+":
+                    return f"+{arg}"
+                return f"{op}{arg}" if op else str(arg)
+            else:
+                # Fallback: intentar obtener un valor o representar el tipo
+                if "value" in expr:
+                    return str(expr["value"])
+                # Si no hay valor, intentar representar el tipo o el dict completo como último recurso
+                if expr_type:
+                    return expr_type
+                # Último recurso: convertir a string (puede mostrar el dict completo)
+                return str(expr)
+        else:
+            return str(expr)
+    
     def _expr_to_str(self, expr: Any) -> str:
         """
         Convierte una expresión del AST a string (método legacy, usar _expr_to_sympy).
@@ -82,41 +161,8 @@ class ForVisitor:
             sympy_expr = self._expr_to_sympy(expr)
             return str(sympy_expr)
         
-        # Fallback al método original
-        if expr is None:
-            return ""
-        elif isinstance(expr, str):
-            return expr
-        elif isinstance(expr, (int, float)):
-            return str(expr)
-        elif isinstance(expr, dict):
-            expr_type = expr.get("type", "")
-            
-            if expr_type == "identifier":
-                return expr.get("name", "unknown")
-            elif expr_type == "number":
-                return str(expr.get("value", "0"))
-            elif expr_type == "literal":
-                return str(expr.get("value", "0"))
-            elif expr_type == "binary":
-                left = self._expr_to_str(expr.get("left", ""))
-                right = self._expr_to_str(expr.get("right", ""))
-                op = expr.get("operator", "")
-                if not op:
-                    op = "-"
-                return f"({left}) {op} ({right})"
-            elif expr_type == "index":
-                target = self._expr_to_str(expr.get("target", ""))
-                index = self._expr_to_str(expr.get("index", ""))
-                return f"{target}[{index}]"
-            elif expr_type == "unary":
-                arg = self._expr_to_str(expr.get("arg", ""))
-                op = expr.get("operator", "")
-                return f"{op}({arg})"
-            else:
-                return str(expr.get("value", str(expr)))
-        else:
-            return str(expr)
+        # Fallback: usar método legible
+        return self._ast_expr_to_readable_str(expr)
     
     def _is_int(self, value: str) -> bool:
         """
@@ -153,11 +199,13 @@ class ForVisitor:
         a_expr = self._expr_to_sympy(start_expr)
         b_expr = self._expr_to_sympy(end_expr)
         
-        # Convertir también a strings para notas y comparaciones
-        a_str = str(a_expr)
-        b_str = str(b_expr)
+        # Generar strings para la nota desde el AST original (más confiable que desde SymPy)
+        # Esto evita problemas de representación cuando SymPy reordena términos
+        a_str = self._ast_expr_to_readable_str(start_expr)
+        b_str = self._ast_expr_to_readable_str(end_expr)
         
         # 1) Cabecera del for: (b - a + 2) evaluaciones
+        # La cabecera se evalúa: evaluación inicial + b - a evaluaciones de condición + 1 final = (b - a + 2)
         ck_header = self.C()  # generar siguiente constante
         
         # Calcular header_count: (b - a + 2) evaluaciones
@@ -166,7 +214,7 @@ class ForVisitor:
             if isinstance(a_expr, Integer) and isinstance(b_expr, Integer):
                 header_count = Integer(int(b_expr) - int(a_expr) + 2)
             else:
-                # Generar expresión general
+                # Generar expresión general: (b - a + 2)
                 header_count = b_expr - a_expr + Integer(2)
         except:
             # Fallback: expresión general
@@ -183,6 +231,8 @@ class ForVisitor:
         )
         
         # 2) Multiplicador del cuerpo: Σ_{v=a}^{b} 1
+        # El cuerpo se ejecuta (b - a + 1) veces (iteraciones)
+        # Sum(1, (var, a, b)) suma desde a hasta b inclusive = (b - a + 1) iteraciones
         var_sym = Symbol(var, integer=True)
         mult = Sum(Integer(1), (var_sym, a_expr, b_expr))
         self.push_multiplier(mult)

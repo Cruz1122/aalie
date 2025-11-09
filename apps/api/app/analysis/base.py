@@ -93,16 +93,61 @@ class BaseAnalyzer:
         Returns:
             Expresión SymPy con multiplicadores aplicados
         """
+        from sympy import Symbol, preorder_traversal
+        
         expr = base_count if base_count is not None else Integer(1)
         
-        # Aplicar multiplicadores del stack (de más interno a más externo)
-        for multiplier in reversed(self.loop_stack):
+        # Recolectar todas las variables ya usadas en la expresión
+        used_vars = set()
+        for subexpr in preorder_traversal(expr):
+            if isinstance(subexpr, Symbol):
+                used_vars.add(subexpr.name)
+        
+        # Aplicar multiplicadores del stack (de más externo a más interno)
+        # NOTA: En SymPy, cuando construimos Sum(expr, (var, a, b)), el nuevo límite
+        # se agrega al final, pero SymPy interpreta el PRIMER límite como el más EXTERNO.
+        # Por lo tanto, debemos procesar loop_stack en orden directo (no reversed),
+        # porque loop_stack[0] es el bucle más externo y loop_stack[-1] es el más interno.
+        for multiplier in self.loop_stack:
             if isinstance(multiplier, Sum):
                 # Es una sumatoria, envolver la expresión
                 var_sym = multiplier.args[1][0]  # Variable de la sumatoria
                 start_expr = multiplier.args[1][1]  # Límite inferior
                 end_expr = multiplier.args[1][2]  # Límite superior
+                
+                # Verificar si la variable ya está en uso
+                var_name = var_sym.name if isinstance(var_sym, Symbol) else str(var_sym)
+                if var_name in used_vars:
+                    # Renombrar la variable para evitar colisión
+                    # Usar convención: i -> j -> k -> l -> m -> ...
+                    var_names = ['i', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't']
+                    # Encontrar el siguiente nombre disponible
+                    new_var_name = None
+                    for candidate in var_names:
+                        if candidate not in used_vars:
+                            new_var_name = candidate
+                            break
+                    
+                    # Si no hay más nombres disponibles, usar var_name con índice
+                    if new_var_name is None:
+                        idx = 0
+                        while f"{var_name}_{idx}" in used_vars:
+                            idx += 1
+                        new_var_name = f"{var_name}_{idx}"
+                    
+                    # Crear nuevo símbolo con el nombre renombrado
+                    var_sym = Symbol(new_var_name, integer=True)
+                
+                # Agregar la variable a las usadas
+                used_vars.add(var_sym.name)
+                
+                # Crear la sumatoria con la variable (posiblemente renombrada)
                 expr = Sum(expr, (var_sym, start_expr, end_expr))
+                
+                # Actualizar used_vars para incluir todas las variables en la nueva expresión
+                for subexpr in preorder_traversal(expr):
+                    if isinstance(subexpr, Symbol):
+                        used_vars.add(subexpr.name)
             else:
                 # Es una expresión multiplicativa
                 if expr == Integer(1):
@@ -261,6 +306,74 @@ class BaseAnalyzer:
         
         # Convertir a LaTeX
         return latex(total_expr)
+    
+    def build_t_open_expr(self) -> Optional[Expr]:
+        """
+        Construye la expresión SymPy de T_open = Σ C_{k}·count_{k}.
+        
+        Returns:
+            Expresión SymPy simplificada o None si no hay términos
+        """
+        if not self.rows:
+            return None
+        
+        # Construir expresión SymPy
+        from sympy import Add
+        
+        terms = []
+        for r in self.rows:
+            if r.get('ck') != "—" and r.get('count') != "—":
+                # Obtener expresión SymPy si está disponible
+                count_expr = r.get('count_raw_expr')
+                if count_expr is None:
+                    # Fallback: convertir desde LaTeX
+                    count_expr = self._str_to_sympy(r.get('count_raw', '1'))
+                
+                # Crear término: C_k * count_expr
+                # C_k es solo un símbolo para mostrar, no afecta la expresión SymPy
+                # Multiplicamos directamente
+                terms.append(count_expr)
+        
+        if not terms:
+            return None
+        
+        # Sumar todos los términos
+        total_expr = Add(*terms) if len(terms) > 1 else terms[0]
+        
+        # Simplificar completamente: evaluar todas las sumatorias
+        from sympy import preorder_traversal
+        from sympy import simplify as sympy_simplify, expand
+        
+        # Evaluar todas las sumatorias en la expresión
+        def evaluate_sums_in_expr(expr):
+            """Evalúa todas las sumatorias en la expresión."""
+            # Verificar si hay Sum sin evaluar
+            has_sum = False
+            for subexpr in preorder_traversal(expr):
+                if isinstance(subexpr, Sum):
+                    has_sum = True
+                    break
+            
+            if has_sum:
+                # Reemplazar todas las Sum con su evaluación
+                expr = expr.replace(lambda x: isinstance(x, Sum), lambda x: x.doit())
+                expr = sympy_simplify(expr)
+                # Verificar recursivamente si aún hay Sum
+                return evaluate_sums_in_expr(expr)
+            
+            return expr
+        
+        # Evaluar todas las sumatorias
+        total_expr = evaluate_sums_in_expr(total_expr)
+        
+        # Simplificar y expandir para obtener la forma más simple
+        try:
+            total_expr = expand(total_expr)
+            total_expr = sympy_simplify(total_expr)
+        except:
+            total_expr = sympy_simplify(total_expr)
+        
+        return total_expr
 
     # --- util 4: emitir respuesta estándar ---
     def result(self) -> AnalyzeOpenResponse:
@@ -279,6 +392,14 @@ class BaseAnalyzer:
         # Agregar T_polynomial si está disponible
         if self.t_polynomial:
             totals["T_polynomial"] = self.t_polynomial
+        
+        # Agregar notaciones asintóticas si están disponibles (solo en IterativeAnalyzer)
+        if hasattr(self, 'big_o') and self.big_o:
+            totals["big_o"] = self.big_o
+        if hasattr(self, 'big_omega') and self.big_omega:
+            totals["big_omega"] = self.big_omega
+        if hasattr(self, 'big_theta') and self.big_theta:
+            totals["big_theta"] = self.big_theta
         
         # Limpiar filas: eliminar objetos SymPy y asegurar que todo sea serializable
         clean_rows = []

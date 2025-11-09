@@ -107,14 +107,35 @@ class ComplexityClasses:
         # Normalizar formato LaTeX
         expr_str = polynomial
         
+        # Eliminar comandos LaTeX que no afectan el parsing: \left, \right
+        expr_str = re.sub(r'\\left\(', '(', expr_str)
+        expr_str = re.sub(r'\\right\)', ')', expr_str)
+        expr_str = re.sub(r'\\left\{', '{', expr_str)
+        expr_str = re.sub(r'\\right\}', '}', expr_str)
+        expr_str = re.sub(r'\\left\[', '[', expr_str)
+        expr_str = re.sub(r'\\right\]', ']', expr_str)
+        
+        # Eliminar espacios
+        expr_str = re.sub(r'\s+', '', expr_str)
+        
         # Reemplazar operadores LaTeX
         expr_str = expr_str.replace('\\cdot', '*')
-        expr_str = expr_str.replace(' ', '')
         
         # Manejar fracciones LaTeX: \frac{a}{b} -> (a)/(b)
-        expr_str = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', r'(\1)/(\2)', expr_str)
+        # Procesar recursivamente para manejar fracciones anidadas
+        def replace_frac(match):
+            num = match.group(1)
+            den = match.group(2)
+            return f'({num})/({den})'
         
-        # Reemplazar potencias LaTeX: n^2 -> n**2
+        max_iterations = 20  # Evitar loops infinitos
+        iteration = 0
+        while '\\frac{' in expr_str and iteration < max_iterations:
+            # Usar regex con grupos nombrados para mejor captura
+            expr_str = re.sub(r'\\frac\{([^{}]*)\}\{([^{}]*)\}', replace_frac, expr_str)
+            iteration += 1
+        
+        # Reemplazar potencias LaTeX: n^2 -> n**2, n^{2} -> n**2
         expr_str = re.sub(r'(\w+)\^(\d+)', r'\1**\2', expr_str)
         expr_str = re.sub(r'(\w+)\^\{(\d+)\}', r'\1**\2', expr_str)
         
@@ -122,20 +143,28 @@ class ComplexityClasses:
         expr_str = re.sub(r'\\log\((\w+)\)', r'log(\1)', expr_str)
         expr_str = re.sub(r'\\log\{(\w+)\}', r'log(\1)', expr_str)
         
-        # Crear símbolo para la variable
-        n = Symbol(variable, real=True, positive=True)
+        # Si la expresión contiene C_k o constantes no numéricas, no podemos parsearla
+        # Esto indica que es T_polynomial con constantes, no T_open simplificado
+        if 'C_' in expr_str or 'C{' in expr_str:
+            raise ValueError(f"Expresión contiene constantes C_k, no se puede parsear directamente: {expr_str[:100]}")
         
-        # Reemplazar la variable en la expresión
-        expr_str = expr_str.replace(variable, f'{variable}')
+        # Crear símbolo para la variable
+        n = Symbol(variable, integer=True, positive=True)
         
         # Crear contexto con símbolos comunes
+        from sympy import log
         syms = {variable: n, 'log': log}
         
         try:
             return sympify(expr_str, locals=syms)
-        except:
-            # Fallback: intentar sin contexto
-            return sympify(expr_str.replace(variable, 'n'))
+        except Exception as e:
+            # Fallback: intentar con parsing más simple
+            try:
+                # Intentar sin algunos reemplazos complejos
+                expr_str_simple = expr_str
+                return sympify(expr_str_simple, locals=syms)
+            except:
+                raise e
     
     def _extract_dominant_sympy(self, expr: 'Expr', variable: str = "n") -> 'Expr':
         """

@@ -238,12 +238,15 @@ export interface AnalyzeOpenResponse {
   ok: true;
   byLine: LineCost[];   // tabla por línea
   totals: {
-    T_open: string;                 // Σ C_k · count_k (KaTeX)
-    procedure: string[];            // pasos (KaTeX) para construir T_open
+    T_open: string;                 // Σ C_k · count_k (KaTeX) - simplificado con SymPy
+    procedure?: string[];            // pasos (KaTeX) para construir T_open (legacy, puede estar vacío)
     symbols?: Record<string,string>;// p.ej.: { n: "length(A)" }
     notes?: string[];               // reglas usadas (for, while, if)
-    T_polynomial?: string;          // forma polinómica T(n) = an² + bn + c (KaTeX)
-    // S4 añadirá: T_closed, bigO/bigOmega/bigTheta, proofSteps
+    T_polynomial?: string;          // forma polinómica T(n) = an² + bn + c (KaTeX) - simplificado con SymPy
+    big_o?: string;                 // Notación Big-O calculada con SymPy (ej: "O(n^2)")
+    big_omega?: string;             // Notación Big-Omega calculada con SymPy (ej: "Ω(n^2)")
+    big_theta?: string;             // Notación Big-Theta calculada con SymPy (ej: "Θ(n^2)")
+    // S4 añadirá: T_closed, proofSteps
   };
 }
 

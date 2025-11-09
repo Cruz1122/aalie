@@ -270,8 +270,16 @@ export default function ProcedureModal({
     const tPoly = analysisData.totals?.T_polynomial;
     const step4 = createFinalSimplifiedForm(step3, typeof tPoly === 'string' ? tPoly : undefined);
     
-    // Paso 5: Notación asintótica a partir de la forma final
-    const bigO = calculateBigOFromExpression(step4);
+    // Paso 5: Notación asintótica desde el backend (calculada con SymPy)
+    const totals = analysisData?.totals as { 
+      big_o?: string;
+      big_omega?: string;
+      big_theta?: string;
+    } | undefined;
+    
+    const bigO = totals?.big_o || calculateBigOFromExpression(step4);
+    const bigOmega = totals?.big_omega || "\\Omega(1)";
+    const bigTheta = totals?.big_theta || "\\Theta(1)";
     
     // Crear array de pasos con sus ecuaciones
     const allSteps = [
@@ -279,7 +287,7 @@ export default function ProcedureModal({
       { title: "Simplificación de sumatorias", equation: step2, description: "Se resuelven las sumatorias y se simplifican los términos" },
       { title: "Agrupación de términos similares", equation: step3, description: "Se agrupan los términos por patrones similares (n+1, n, constantes)" },
       { title: "Forma final en términos de n", equation: step4, description: "Forma polinómica canónica en términos de n (a, b, c)" },
-      { title: "Notación asintótica", equation: bigO, description: "Clase de complejidad temporal Big-O derivada de la forma final" }
+      { title: "Notación asintótica", equation: `${bigO}, ${bigOmega}, ${bigTheta}`, description: "Clases de complejidad temporal (Big-O, Big-Omega, Big-Theta) calculadas con SymPy" }
     ];
     
     // Filtrar pasos que son diferentes al anterior

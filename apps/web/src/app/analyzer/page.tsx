@@ -315,6 +315,12 @@ export default function AnalyzerPage() {
   // Helper para obtener Big-O de los datos
   const getBigOFromData = (analysisData: AnalyzeOpenResponse | null): string => {
     if (!analysisData?.ok) return 'O(—)';
+    // Usar notación asintótica del backend (calculada con SymPy) si está disponible
+    const totals = analysisData.totals as { big_o?: string } | undefined;
+    if (totals?.big_o) {
+      return totals.big_o;
+    }
+    // Fallback: calcular desde T_polynomial o T_open
     const base = analysisData.totals?.T_polynomial ?? analysisData.totals.T_open;
     return calculateBigO(base);
   };

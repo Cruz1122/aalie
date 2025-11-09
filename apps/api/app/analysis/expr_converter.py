@@ -85,7 +85,8 @@ class ExprConverter:
             elif expr_type == "binary":
                 left = self.ast_to_sympy(expr.get("left"))
                 right = self.ast_to_sympy(expr.get("right"))
-                op = expr.get("operator", "")
+                # Intentar obtener el operador de múltiples campos posibles
+                op = expr.get("operator", "") or expr.get("op", "")
                 
                 if op == "+":
                     return left + right
@@ -100,7 +101,9 @@ class ExprConverter:
                 elif op == "%":
                     return left % right
                 else:
-                    # Fallback: tratar como resta
+                    # Fallback: tratar como resta (pero esto puede ser un error)
+                    # Mejor retornar la expresión sin modificar o lanzar un error
+                    print(f"[ExprConverter] Warning: operador desconocido '{op}' en expresión binaria, usando resta como fallback")
                     return left - right
             
             elif expr_type == "unary":

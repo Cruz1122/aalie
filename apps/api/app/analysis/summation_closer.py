@@ -34,51 +34,11 @@ class SummationCloser:
         # Si recibimos un objeto SymPy directamente, trabajar con él
         if isinstance(expr, Expr):
             try:
-                # Evaluar directamente con SymPy
-                from sympy import summation, simplify, expand, factor
-                
-                # Función recursiva para evaluar todas las sumatorias
-                def evaluate_all_sums(expr: Expr) -> Expr:
-                    """Evalúa recursivamente todas las sumatorias en la expresión."""
-                    # Si es una Sum, evaluarla
-                    if isinstance(expr, Sum):
-                        try:
-                            evaluated = expr.doit()
-                            return simplify(evaluated)
-                        except:
-                            # Si no se puede evaluar, intentar expandir y reevaluar
-                            try:
-                                expanded = expand(expr)
-                                if isinstance(expanded, Sum):
-                                    return expanded.doit()
-                                return evaluate_all_sums(expanded)
-                            except:
-                                return expr
-                    
-                    # Si es una expresión compuesta (Add, Mul, etc.), evaluar recursivamente
-                    if hasattr(expr, 'args'):
-                        # Evaluar cada argumento recursivamente
-                        evaluated_args = [evaluate_all_sums(arg) for arg in expr.args]
-                        # Reconstruir la expresión con los argumentos evaluados
-                        if isinstance(expr, (Add, Mul)):
-                            try:
-                                new_expr = expr.func(*evaluated_args)
-                                # Simplificar el resultado
-                                new_expr = simplify(new_expr)
-                                # Verificar si aún hay Sum sin evaluar
-                                if hasattr(new_expr, 'args'):
-                                    for arg in new_expr.args:
-                                        if isinstance(arg, Sum):
-                                            # Hay más sumatorias, seguir evaluando
-                                            return evaluate_all_sums(new_expr)
-                                return new_expr
-                            except:
-                                return expr
-                    
-                    return expr
+                # Generar pasos educativos desde la estructura SymPy
+                steps = self._generate_steps_from_sympy(expr, variable)
                 
                 # Evaluar todas las sumatorias recursivamente
-                result_expr = evaluate_all_sums(expr)
+                result_expr = self._evaluate_all_sums_sympy(expr)
                 
                 # Simplificar completamente el resultado
                 result_expr = simplify(result_expr)
@@ -105,7 +65,15 @@ class SummationCloser:
                 
                 # Convertir a LaTeX
                 closed_latex = self._sympy_to_latex(result_expr)
-                steps = [f"\\text{{Resultado: }} {closed_latex}"]
+                
+                # Agregar resultado final si no está en los pasos
+                if steps:
+                    # Verificar si el último paso ya contiene el resultado
+                    last_step = steps[-1]
+                    if closed_latex not in last_step and "Resultado" not in last_step:
+                        steps.append(f"\\text{{Resultado: }} {closed_latex}")
+                else:
+                    steps = [f"\\text{{Resultado: }} {closed_latex}"]
                 
                 return closed_latex, steps
             except Exception as e:
@@ -896,4 +864,812 @@ class SummationCloser:
             return latex_str
         except:
             return str(expr)
+    
+    def _evaluate_all_sums_sympy(self, expr: Expr) -> Expr:
+        """
+        Evalúa recursivamente todas las sumatorias en una expresión SymPy.
+        
+        Args:
+            expr: Expresión SymPy
+            
+        Returns:
+            Expresión SymPy con todas las sumatorias evaluadas
+        """
+        from sympy import simplify, expand
+        
+        def evaluate_all_sums(expr: Expr) -> Expr:
+            """Evalúa recursivamente todas las sumatorias en la expresión."""
+            # Si es una Sum, evaluarla
+            if isinstance(expr, Sum):
+                try:
+                    evaluated = expr.doit()
+                    return simplify(evaluated)
+                except:
+                    # Si no se puede evaluar, intentar expandir y reevaluar
+                    try:
+                        expanded = expand(expr)
+                        if isinstance(expanded, Sum):
+                            return expanded.doit()
+                        return evaluate_all_sums(expanded)
+                    except:
+                        return expr
+            
+            # Si es una expresión compuesta (Add, Mul, etc.), evaluar recursivamente
+            if hasattr(expr, 'args'):
+                # Evaluar cada argumento recursivamente
+                evaluated_args = [evaluate_all_sums(arg) for arg in expr.args]
+                # Reconstruir la expresión con los argumentos evaluados
+                if isinstance(expr, (Add, Mul)):
+                    try:
+                        new_expr = expr.func(*evaluated_args)
+                        # Simplificar el resultado
+                        new_expr = simplify(new_expr)
+                        # Verificar si aún hay Sum sin evaluar
+                        if hasattr(new_expr, 'args'):
+                            for arg in new_expr.args:
+                                if isinstance(arg, Sum):
+                                    # Hay más sumatorias, seguir evaluando
+                                    return evaluate_all_sums(new_expr)
+                        return new_expr
+                    except:
+                        return expr
+            
+            return expr
+        
+        return evaluate_all_sums(expr)
+    
+    def _generate_steps_from_sympy(self, expr: Expr, variable: str = "n") -> List[str]:
+        """
+        Genera pasos educativos paso a paso desde una expresión SymPy.
+        
+        Args:
+            expr: Expresión SymPy que puede contener Sum
+            variable: Variable principal (por defecto "n")
+            
+        Returns:
+            Lista de pasos en formato LaTeX
+        """
+        steps = []
+        
+        # Si la expresión es directamente una Sum, analizar su estructura SymPy
+        # Esto es más preciso que detectar patrones desde LaTeX
+        if isinstance(expr, Sum):
+            return self._generate_steps_from_sympy_structure(expr, variable)
+        
+        # Si no es una Sum, verificar si contiene Sum dentro
+        from sympy import preorder_traversal
+        has_sum = False
+        for subexpr in preorder_traversal(expr):
+            if isinstance(subexpr, Sum):
+                has_sum = True
+                break
+        
+        if has_sum:
+            # Contiene Sum, analizar estructura SymPy
+            return self._generate_steps_from_sympy_structure(expr, variable)
+        
+        # Si no hay Sum, es una expresión simple
+        # Convertir a LaTeX y detectar patrón
+        expr_latex = self._sympy_to_latex(expr)
+        pattern_type = self._detect_pattern(expr_latex)
+        
+        # Generar pasos según el patrón detectado
+        if pattern_type == 'constant_sum':
+            steps = self._generate_constant_sum_steps(expr_latex, variable)
+        elif pattern_type == 'triangular':
+            steps = self._generate_triangular_steps(expr_latex, variable)
+        elif pattern_type == 'nested_rectangular':
+            steps = self._generate_nested_rectangular_steps(expr_latex, variable)
+        elif pattern_type == 'arithmetic_sum':
+            steps = self._generate_arithmetic_sum_steps(expr_latex, variable)
+        else:
+            # Expresión simple sin patrón conocido
+            steps = [f"\\text{{Expresión: }} {expr_latex}"]
+        
+        return steps
+    
+    def _generate_steps_from_sympy_structure(self, expr: Expr, variable: str = "n") -> List[str]:
+        """
+        Genera pasos educativos analizando la estructura SymPy directamente.
+        
+        Args:
+            expr: Expresión SymPy
+            variable: Variable principal
+            
+        Returns:
+            Lista de pasos en formato LaTeX
+        """
+        steps = []
+        from sympy import preorder_traversal
+        
+        # Si la expresión es directamente una Sum, analizarla
+        if isinstance(expr, Sum):
+            steps.extend(self._analyze_single_sum(expr, variable))
+            return steps
+        
+        # Buscar todas las Sum en la expresión
+        sums_found = []
+        for subexpr in preorder_traversal(expr):
+            if isinstance(subexpr, Sum):
+                # Evitar agregar la misma Sum múltiples veces
+                # Comparar por estructura, no por identidad
+                is_duplicate = False
+                for existing_sum in sums_found:
+                    if (isinstance(existing_sum, Sum) and isinstance(subexpr, Sum) and
+                        len(existing_sum.args) == len(subexpr.args) and
+                        existing_sum.args[0] == subexpr.args[0] and
+                        existing_sum.args[1] == subexpr.args[1]):
+                        is_duplicate = True
+                        break
+                if not is_duplicate:
+                    sums_found.append(subexpr)
+        
+        # Si hay una sola Sum, analizarla en detalle
+        if len(sums_found) == 1:
+            sum_expr = sums_found[0]
+            steps.extend(self._analyze_single_sum(sum_expr, variable))
+        elif len(sums_found) > 1:
+            # Sumatorias anidadas o múltiples
+            # Ordenar por profundidad: la más externa primero
+            # (las que no están dentro de otra Sum)
+            outer_sums = []
+            inner_sums = []
+            
+            for sum_expr in sums_found:
+                # Verificar si esta Sum está dentro de otra
+                is_inner = False
+                for other_sum in sums_found:
+                    if other_sum != sum_expr:
+                        # Verificar si sum_expr está dentro de other_sum
+                        for subexpr in preorder_traversal(other_sum):
+                            if subexpr == sum_expr:
+                                is_inner = True
+                                break
+                        if is_inner:
+                            break
+                
+                if is_inner:
+                    inner_sums.append(sum_expr)
+                else:
+                    outer_sums.append(sum_expr)
+            
+            # Si hay una externa y una interna, son anidadas
+            if len(outer_sums) == 1 and len(inner_sums) >= 1:
+                steps.extend(self._analyze_nested_sums([outer_sums[0]] + inner_sums, variable))
+            else:
+                # Múltiples sumatorias independientes o estructura compleja
+                for sum_expr in sums_found:
+                    steps.extend(self._analyze_single_sum(sum_expr, variable))
+        else:
+            # No hay sumatorias, es una expresión simple
+            expr_latex = self._sympy_to_latex(expr)
+            steps.append(f"\\text{{Expresión: }} {expr_latex}")
+        
+        return steps
+    
+    def _analyze_single_sum(self, sum_expr: Sum, variable: str = "n") -> List[str]:
+        """
+        Analiza una sumatoria simple y genera pasos educativos.
+        
+        Args:
+            sum_expr: Expresión Sum de SymPy
+            variable: Variable principal
+            
+        Returns:
+            Lista de pasos en formato LaTeX
+        """
+        steps = []
+        from sympy import Integer, Symbol, latex, Integer as Int, preorder_traversal
+        
+        try:
+            # PRIMERO: Verificar si hay múltiples límites (SymPy representa sumatorias anidadas así)
+            # Sum(body, (var1, start1, end1), (var2, start2, end2), ...)
+            if len(sum_expr.args) > 2:
+                # Hay múltiples límites, es una sumatoria anidada
+                return self._analyze_multiple_limits_sum(sum_expr, variable)
+            
+            # SEGUNDO: Verificar si el cuerpo es otra Sum (sumatoria anidada)
+            body = sum_expr.args[0]
+            limits = sum_expr.args[1]
+            
+            # Buscar Sum dentro del cuerpo
+            inner_sum = None
+            if isinstance(body, Sum):
+                inner_sum = body
+            else:
+                # Buscar Sum en el cuerpo
+                for subexpr in preorder_traversal(body):
+                    if isinstance(subexpr, Sum) and subexpr != sum_expr:
+                        inner_sum = subexpr
+                        break
+            
+            # Si hay una Sum anidada, manejarla de manera especial
+            if inner_sum is not None:
+                return self._analyze_nested_sum_with_structure(sum_expr, inner_sum, variable)
+            
+            # TERCERO: Analizar como sumatoria simple
+            # Sum(body, (var, start, end))
+            # SymPy usa Tuple, no tuple de Python estándar
+            if len(sum_expr.args) >= 2:
+                # Verificar que limits tenga al menos 3 elementos y se pueda acceder por índice
+                try:
+                    if len(limits) >= 3 and limits[0] is not None and limits[1] is not None and limits[2] is not None:
+                        sum_var = limits[0]
+                        start = limits[1]
+                        end = limits[2]
+                    
+                    # Convertir a LaTeX para mostrar
+                    var_latex = latex(sum_var)
+                    start_latex = latex(start)
+                    end_latex = latex(end)
+                    body_latex = latex(body)
+                    sum_latex = f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {body_latex}"
+                    
+                    steps.append(f"\\text{{Sumatoria: }} {sum_latex}")
+                    
+                    # Analizar el cuerpo
+                    # Verificar si el cuerpo es constante respecto a la variable de suma
+                    from sympy import Symbol as SymSymbol
+                    body_depends_on_var = body.has(sum_var) if isinstance(sum_var, SymSymbol) else False
+                    
+                    # Si el cuerpo es 1, es una sumatoria constante
+                    if body == Int(1) or body == 1:
+                        # Calcular y simplificar el resultado usando SymPy
+                        from sympy import simplify
+                        result_expr = end - start + Int(1)
+                        result_simplified = simplify(result_expr)
+                        result_latex = latex(result_simplified)
+                        
+                        # Calcular también la expresión sin simplificar para mostrar el paso
+                        formula_expr = end - start + Int(1)
+                        formula_latex = latex(formula_expr)
+                        
+                        steps.append(
+                            f"\\text{{Aplicando fórmula de sumatoria constante: }} "
+                            f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} 1 = {formula_latex}"
+                        )
+                        # Si la simplificación cambia algo, mostrar el paso
+                        if result_latex != formula_latex:
+                            steps.append(
+                                f"\\text{{Simplificando: }} {formula_latex} = {result_latex}"
+                            )
+                        else:
+                            # Asegurar que el resultado final esté en los pasos
+                            if result_latex not in steps[-1]:
+                                steps.append(f"\\text{{Resultado: }} {result_latex}")
+                    # Si el cuerpo NO depende de la variable de suma, es constante (factor constante)
+                    elif not body_depends_on_var:
+                        # Aplicar regla de factor constante: Σ_{i=a}^{b} c = c · (b - a + 1)
+                        from sympy import simplify
+                        result_expr = body * (end - start + Int(1))
+                        result_simplified = simplify(result_expr)
+                        result_latex = latex(result_simplified)
+                        body_latex_display = latex(body)
+                        
+                        steps.append(
+                            f"\\text{{Aplicando factor constante: }} "
+                            f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {body_latex_display} = "
+                            f"{body_latex_display} \\cdot \\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} 1"
+                        )
+                        steps.append(
+                            f"\\text{{Evaluando sumatoria constante: }} "
+                            f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} 1 = {end_latex} - {start_latex} + 1"
+                        )
+                        # Simplificar si es necesario
+                        const_count_expr = end - start + Int(1)
+                        const_count_simplified = simplify(const_count_expr)
+                        const_count_latex = latex(const_count_simplified)
+                        if const_count_latex != f"{end_latex} - {start_latex} + 1":
+                            steps.append(
+                                f"\\text{{Simplificando: }} {end_latex} - {start_latex} + 1 = {const_count_latex}"
+                            )
+                        steps.append(
+                            f"\\text{{Multiplicando: }} {body_latex_display} \\cdot {const_count_latex} = {result_latex}"
+                        )
+                    # Si el cuerpo es la variable de la sumatoria, es una suma aritmética
+                    elif body == sum_var:
+                        steps.append(
+                            f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                            f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
+                            f"\\frac{{{end_latex} \\left({end_latex} + 1\\right)}}{{2}}"
+                        )
+                    # Si el cuerpo depende de la variable de forma lineal (como -i + n + 1)
+                    else:
+                        # Analizar si el cuerpo es una expresión lineal en la variable de suma
+                        from sympy import expand, collect, Add as SymAdd, Mul as SymMul
+                        
+                        # Expandir el cuerpo para ver sus términos
+                        body_expanded = expand(body)
+                        
+                        # Verificar si es una expresión Add (suma de términos)
+                        if isinstance(body_expanded, SymAdd):
+                            # Separar términos que dependen de sum_var y términos constantes (respecto a sum_var)
+                            terms_with_var = []
+                            constant_terms = []
+                            
+                            for term in body_expanded.args:
+                                # Verificar si el término depende de sum_var
+                                if term.has(sum_var):
+                                    terms_with_var.append(term)
+                                else:
+                                    constant_terms.append(term)
+                            
+                            # Si hay términos que dependen de la variable y términos constantes
+                            if terms_with_var and constant_terms:
+                                # Generar pasos explicativos usando propiedad de linealidad
+                                terms_var_latex = latex(SymAdd(*terms_with_var))
+                                const_terms_latex = latex(SymAdd(*constant_terms))
+                                
+                                steps.append(
+                                    f"\\text{{Aplicando propiedad de linealidad: }} "
+                                    f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} "
+                                    f"\\left({terms_var_latex} + {const_terms_latex}\\right) = "
+                                    f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} + "
+                                    f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {const_terms_latex}"
+                                )
+                                
+                                # Evaluar cada parte y combinar resultados
+                                const_result_latex = None
+                                var_result_latex = None
+                                
+                                # Parte constante
+                                if constant_terms:
+                                    const_sum = Sum(SymAdd(*constant_terms), (sum_var, start, end))
+                                    try:
+                                        const_result = const_sum.doit()
+                                        const_result_simplified = simplify(const_result)
+                                        const_result_latex = latex(const_result_simplified)
+                                        steps.append(
+                                            f"\\text{{Evaluando sumatoria constante: }} "
+                                            f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {const_terms_latex} = {const_result_latex}"
+                                        )
+                                    except:
+                                        pass
+                                
+                                # Parte con variable
+                                if terms_with_var:
+                                    # Construir expresión con términos de variable
+                                    var_sum_expr = SymAdd(*terms_with_var)
+                                    
+                                    # Verificar si es de la forma k*sum_var (suma aritmética)
+                                    if len(terms_with_var) == 1:
+                                        term = terms_with_var[0]
+                                        # Verificar si el término es proporcional a sum_var
+                                        # Intentar factorizar sum_var
+                                        from sympy import factor
+                                        term_factored = factor(term)
+                                        
+                                        if isinstance(term_factored, SymMul):
+                                            # Buscar si sum_var está en los factores
+                                            has_var = False
+                                            coeff = 1
+                                            for factor_elem in term_factored.args:
+                                                if factor_elem == sum_var:
+                                                    has_var = True
+                                                elif not factor_elem.has(sum_var):
+                                                    coeff = coeff * factor_elem if coeff != 1 else factor_elem
+                                            
+                                            if has_var:
+                                                # Es de la forma k*sum_var
+                                                var_sum = Sum(sum_var, (sum_var, start, end))
+                                                try:
+                                                    var_sum_result = var_sum.doit()
+                                                    var_sum_simplified = simplify(var_sum_result)
+                                                    var_sum_latex = latex(var_sum_simplified)
+                                                    
+                                                    if coeff != 1:
+                                                        coeff_latex = latex(coeff)
+                                                        total_result = coeff * var_sum_result
+                                                        total_simplified = simplify(total_result)
+                                                        total_latex = latex(total_simplified)
+                                                        
+                                                        steps.append(
+                                                            f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                                            f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = "
+                                                            f"{coeff_latex} \\cdot \\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
+                                                            f"{coeff_latex} \\cdot {var_sum_latex} = {total_latex}"
+                                                        )
+                                                        var_result_latex = total_latex
+                                                    else:
+                                                        steps.append(
+                                                            f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                                            f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = {var_sum_latex}"
+                                                        )
+                                                        var_result_latex = var_sum_latex
+                                                except:
+                                                    steps.append(
+                                                        f"\\text{{Evaluando sumatoria: }} "
+                                                        f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
+                                                    )
+                                            else:
+                                                # No es proporcional a sum_var, evaluar directamente
+                                                var_sum = Sum(var_sum_expr, (sum_var, start, end))
+                                                try:
+                                                    var_sum_result = var_sum.doit()
+                                                    var_sum_simplified = simplify(var_sum_result)
+                                                    var_sum_latex = latex(var_sum_simplified)
+                                                    steps.append(
+                                                        f"\\text{{Evaluando sumatoria: }} "
+                                                        f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = {var_sum_latex}"
+                                                    )
+                                                    var_result_latex = var_sum_latex
+                                                except:
+                                                    steps.append(
+                                                        f"\\text{{Evaluando sumatoria: }} "
+                                                        f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
+                                                    )
+                                        else:
+                                            # No es un Mul, verificar si es directamente sum_var
+                                            if term == sum_var:
+                                                var_sum = Sum(sum_var, (sum_var, start, end))
+                                                try:
+                                                    var_sum_result = var_sum.doit()
+                                                    var_sum_simplified = simplify(var_sum_result)
+                                                    var_sum_latex = latex(var_sum_simplified)
+                                                    steps.append(
+                                                        f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                                        f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = {var_sum_latex}"
+                                                    )
+                                                    var_result_latex = var_sum_latex
+                                                except:
+                                                    steps.append(
+                                                        f"\\text{{Evaluando sumatoria: }} "
+                                                        f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
+                                                    )
+                                            else:
+                                                # Evaluar directamente
+                                                var_sum = Sum(var_sum_expr, (sum_var, start, end))
+                                                try:
+                                                    var_sum_result = var_sum.doit()
+                                                    var_sum_simplified = simplify(var_sum_result)
+                                                    var_sum_latex = latex(var_sum_simplified)
+                                                    steps.append(
+                                                        f"\\text{{Evaluando sumatoria: }} "
+                                                        f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = {var_sum_latex}"
+                                                    )
+                                                    var_result_latex = var_sum_latex
+                                                except:
+                                                    steps.append(
+                                                        f"\\text{{Evaluando sumatoria: }} "
+                                                        f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
+                                                    )
+                                    else:
+                                        # Múltiples términos con variable, evaluar directamente
+                                        var_sum = Sum(var_sum_expr, (sum_var, start, end))
+                                        try:
+                                            var_sum_result = var_sum.doit()
+                                            var_sum_simplified = simplify(var_sum_result)
+                                            var_sum_latex = latex(var_sum_simplified)
+                                            steps.append(
+                                                f"\\text{{Evaluando sumatoria: }} "
+                                                f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = {var_sum_latex}"
+                                            )
+                                            var_result_latex = var_sum_latex
+                                        except:
+                                            steps.append(
+                                                f"\\text{{Evaluando sumatoria: }} "
+                                                f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
+                                            )
+                            
+                            elif terms_with_var:
+                                # Solo términos que dependen de la variable
+                                steps.append(
+                                    f"\\text{{Evaluando sumatoria con cuerpo dependiente de la variable: }} {sum_latex}"
+                                )
+                            else:
+                                # Solo términos constantes (debería haber sido detectado antes como constante)
+                                steps.append(
+                                    f"\\text{{Aplicando fórmula de sumatoria constante: }} {sum_latex}"
+                                )
+                        else:
+                            # No es una Add, es una expresión más compleja
+                            steps.append(
+                                f"\\text{{Evaluando sumatoria: }} {sum_latex}"
+                            )
+                        
+                        # Agregar resultado final combinado si hay partes separadas (solo dentro del bloque Add)
+                        if isinstance(body_expanded, SymAdd) and terms_with_var and constant_terms:
+                            if 'const_result_latex' in locals() and 'var_result_latex' in locals() and const_result_latex and var_result_latex:
+                                # Combinar resultados
+                                try:
+                                    from sympy import sympify
+                                    total_expr = sympify(var_result_latex.replace('\\', '')) + sympify(const_result_latex.replace('\\', ''))
+                                    total_simplified = simplify(total_expr)
+                                    total_latex = latex(total_simplified)
+                                    steps.append(
+                                        f"\\text{{Combinando resultados: }} {var_result_latex} + {const_result_latex} = {total_latex}"
+                                    )
+                                except:
+                                    pass
+                        
+                        # Agregar resultado final (para todos los casos)
+                        try:
+                            evaluated = sum_expr.doit()
+                            evaluated_simplified = simplify(evaluated)
+                            evaluated_latex = latex(evaluated_simplified)
+                            # Solo agregar si no está ya en los pasos
+                            if evaluated_latex not in " ".join(steps):
+                                steps.append(f"\\text{{Resultado: }} {evaluated_latex}")
+                        except:
+                            pass
+                except (TypeError, IndexError, AttributeError) as e:
+                    # No se puede acceder a limits como secuencia o tiene estructura inesperada
+                    try:
+                        sum_latex = latex(sum_expr)
+                        steps.append(f"\\text{{Sumatoria: }} {sum_latex}")
+                    except:
+                        steps.append(f"\\text{{Error: no se pudo procesar la sumatoria}}")
+        except Exception as e:
+            print(f"[SummationCloser] Error analizando sumatoria: {e}")
+            import traceback
+            traceback.print_exc()
+            try:
+                sum_latex = latex(sum_expr)
+                steps.append(f"\\text{{Sumatoria: }} {sum_latex}")
+            except:
+                steps.append(f"\\text{{Error: no se pudo procesar la sumatoria}}")
+        
+        return steps
+    
+    def _analyze_nested_sums(self, sums: List[Sum], variable: str = "n") -> List[str]:
+        """
+        Analiza sumatorias anidadas y genera pasos educativos.
+        
+        Args:
+            sums: Lista de expresiones Sum (primera es externa, siguientes son internas)
+            variable: Variable principal
+            
+        Returns:
+            Lista de pasos en formato LaTeX
+        """
+        steps = []
+        from sympy import latex, Integer as Int
+        
+        if len(sums) >= 2:
+            # Dos o más sumatorias: son anidadas
+            outer_sum = sums[0]   # La primera es la externa
+            inner_sum = sums[1]   # La segunda es la interna
+            
+            # Extraer información de ambas sumatorias
+            outer_body = outer_sum.args[0]
+            outer_limits = outer_sum.args[1]
+            inner_body = inner_sum.args[0]
+            inner_limits = inner_sum.args[1]
+            
+            if isinstance(outer_limits, tuple) and len(outer_limits) >= 3:
+                outer_var = outer_limits[0]
+                outer_start = outer_limits[1]
+                outer_end = outer_limits[2]
+                
+                if isinstance(inner_limits, tuple) and len(inner_limits) >= 3:
+                    inner_var = inner_limits[0]
+                    inner_start = inner_limits[1]
+                    inner_end = inner_limits[2]
+                    
+                    # Convertir a LaTeX
+                    outer_var_latex = latex(outer_var)
+                    outer_start_latex = latex(outer_start)
+                    outer_end_latex = latex(outer_end)
+                    inner_var_latex = latex(inner_var)
+                    inner_start_latex = latex(inner_start)
+                    inner_end_latex = latex(inner_end)
+                    inner_body_latex = latex(inner_body)
+                    
+                    # Mostrar estructura anidada
+                    steps.append(
+                        f"\\text{{Sumatorias anidadas: }} "
+                        f"\\sum_{{{outer_var_latex}={outer_start_latex}}}^{{{outer_end_latex}}} "
+                        f"\\left(\\sum_{{{inner_var_latex}={inner_start_latex}}}^{{{inner_end_latex}}} {inner_body_latex}\\right)"
+                    )
+                    
+                    # Si el cuerpo interno es 1, es una sumatoria constante anidada
+                    if inner_body == Int(1) or inner_body == 1:
+                        steps.append(
+                            f"\\text{{Evaluando sumatoria interna: }} "
+                            f"\\sum_{{{inner_var_latex}={inner_start_latex}}}^{{{inner_end_latex}}} 1 = {inner_end_latex} - {inner_start_latex} + 1"
+                        )
+                        
+                        # Simplificar si es posible
+                        try:
+                            from sympy import simplify
+                            inner_result_expr = inner_end - inner_start + Int(1)
+                            inner_result_simplified = simplify(inner_result_expr)
+                            inner_result_latex = latex(inner_result_simplified)
+                            
+                            steps.append(
+                                f"\\text{{Simplificando: }} {inner_end_latex} - {inner_start_latex} + 1 = {inner_result_latex}"
+                            )
+                            
+                            # Sustituir en la sumatoria externa
+                            steps.append(
+                                f"\\text{{Sustituyendo en sumatoria externa: }} "
+                                f"\\sum_{{{outer_var_latex}={outer_start_latex}}}^{{{outer_end_latex}}} {inner_result_latex}"
+                            )
+                            
+                            # Si el resultado interno no depende de la variable externa, es constante
+                            if not inner_result_expr.has(outer_var):
+                                steps.append(
+                                    f"\\text{{Aplicando factor constante: }} "
+                                    f"{inner_result_latex} \\cdot \\sum_{{{outer_var_latex}={outer_start_latex}}}^{{{outer_end_latex}}} 1 = "
+                                    f"{inner_result_latex} \\cdot ({outer_end_latex} - {outer_start_latex} + 1)"
+                                )
+                            else:
+                                # El resultado interno depende de la variable externa (caso triangular o dependiente)
+                                steps.append(
+                                    f"\\text{{Evaluando sumatoria externa con límite dependiente: }} "
+                                    f"\\sum_{{{outer_var_latex}={outer_start_latex}}}^{{{outer_end_latex}}} {inner_result_latex}"
+                                )
+                        except Exception as e:
+                            print(f"[SummationCloser] Error en análisis de sumatorias anidadas: {e}")
+        else:
+            # Una sola sumatoria o ninguna
+            for i, sum_expr in enumerate(sums):
+                sum_latex = latex(sum_expr)
+                steps.append(f"\\text{{Sumatoria: }} {sum_latex}")
+        
+        return steps
+    
+    def _analyze_nested_sum_with_structure(self, outer_sum: Sum, inner_sum: Sum, variable: str = "n") -> List[str]:
+        """
+        Analiza una sumatoria anidada donde el cuerpo de la externa es una Sum interna.
+        
+        Args:
+            outer_sum: Sumatoria externa
+            inner_sum: Sumatoria interna (cuerpo de la externa)
+            variable: Variable principal
+            
+        Returns:
+            Lista de pasos en formato LaTeX
+        """
+        return self._analyze_nested_sums([outer_sum, inner_sum], variable)
+    
+    def _analyze_multiple_limits_sum(self, sum_expr: Sum, variable: str = "n") -> List[str]:
+        """
+        Analiza una sumatoria con múltiples límites (representación de SymPy para sumatorias anidadas).
+        
+        Args:
+            sum_expr: Expresión Sum con múltiples límites
+            variable: Variable principal
+            
+        Returns:
+            Lista de pasos en formato LaTeX
+        """
+        steps = []
+        from sympy import latex, Integer as Int
+        
+        # Sum(body, (var1, start1, end1), (var2, start2, end2), ...)
+        body = sum_expr.args[0]
+        all_limits = sum_expr.args[1:]
+        
+        if len(all_limits) >= 2:
+            # Hay múltiples límites, tratar como sumatorias anidadas
+            # En SymPy, cuando se construye Sum(body, limit1, limit2, ...),
+            # los límites se ordenan de más externo a más interno.
+            # Entonces all_limits[0] es el más externo y all_limits[-1] es el más interno.
+            # Por ejemplo: Sum(1, (i, 1, n-1), (j, i+1, n))
+            #   - (i, 1, n-1) es externo (primer límite)
+            #   - (j, i+1, n) es interno (segundo límite, j depende de i)
+            
+            # Verificar que los límites sean secuencias con al menos 3 elementos
+            # SymPy usa su propio tipo de tupla (Tuple), no tuple de Python estándar
+            try:
+                # Extraer información de todos los límites
+                limits_info = []
+                for limit in all_limits:
+                    if len(limit) >= 3:
+                        var = limit[0]
+                        start = limit[1]
+                        end = limit[2]
+                        limits_info.append({
+                            'var': var,
+                            'start': start,
+                            'end': end,
+                            'var_latex': latex(var),
+                            'start_latex': latex(start),
+                            'end_latex': latex(end)
+                        })
+                
+                if not limits_info:
+                    # No se pudieron extraer los límites
+                    sum_latex = latex(sum_expr)
+                    steps.append(f"\\text{{Sumatoria: }} {sum_latex}")
+                    return steps
+                
+                # Construir representación de sumatorias anidadas (de externa a interna)
+                # all_limits está ordenado de externo a interno
+                # all_limits[0] es el más externo, all_limits[-1] es el más interno
+                # Para mostrar correctamente en LaTeX: construir envolviendo desde el más interno hacia el más externo
+                body_latex = latex(body)
+                
+                # Construir cadena de sumatorias anidadas envolviendo desde interno a externo
+                # limits_info[-1] es el más interno, limits_info[0] es el más externo
+                # Construimos envolviendo: empezamos con el cuerpo, luego envuelve el interno, luego el externo
+                sum_chain = body_latex
+                # Construir de interno a externo (iterando en orden inverso) para que el externo envuelva al interno
+                for limit_info in reversed(limits_info):  # Empezar con interno ([-1]), terminar con externo ([0])
+                    sum_chain = f"\\sum_{{{limit_info['var_latex']}={limit_info['start_latex']}}}^{{{limit_info['end_latex']}}} {sum_chain}"
+                
+                steps.append(f"\\text{{Sumatorias anidadas: }} {sum_chain}")
+                
+                # Para el análisis, usar el más interno y el más externo
+                inner_limits = all_limits[-1]  # Último límite = más interno
+                outer_limits = all_limits[0]  # Primer límite = más externo
+                
+                inner_var = limits_info[-1]['var']
+                inner_start = limits_info[-1]['start']
+                inner_end = limits_info[-1]['end']
+                inner_var_latex = limits_info[-1]['var_latex']
+                inner_start_latex = limits_info[-1]['start_latex']
+                inner_end_latex = limits_info[-1]['end_latex']
+                
+                outer_var = limits_info[0]['var']
+                outer_start = limits_info[0]['start']
+                outer_end = limits_info[0]['end']
+                outer_var_latex = limits_info[0]['var_latex']
+                outer_start_latex = limits_info[0]['start_latex']
+                outer_end_latex = limits_info[0]['end_latex']
+                
+                # Importar funciones necesarias
+                from sympy import simplify, expand
+                
+                # Si el cuerpo es 1, es una sumatoria constante anidada
+                if body == Int(1) or body == 1:
+                    # Calcular la expresión usando SymPy primero
+                    inner_result_expr = expand(inner_end - inner_start + Int(1))
+                    inner_result_simplified = simplify(inner_result_expr)
+                    inner_result_latex = latex(inner_result_simplified)
+                    
+                    # Calcular también la expresión sin simplificar para mostrar el paso
+                    inner_result_unsimplified = inner_end - inner_start + Int(1)
+                    inner_result_unsimplified_latex = latex(inner_result_unsimplified)
+                    
+                    steps.append(
+                        f"\\text{{Evaluando sumatoria interna: }} "
+                        f"\\sum_{{{inner_var_latex}={inner_start_latex}}}^{{{inner_end_latex}}} 1 = {inner_result_unsimplified_latex}"
+                    )
+                    
+                    # Mostrar el paso de simplificación si cambia
+                    if inner_result_latex != inner_result_unsimplified_latex:
+                        steps.append(
+                            f"\\text{{Simplificando: }} {inner_result_unsimplified_latex} = {inner_result_latex}"
+                        )
+                    
+                    # Sustituir en la sumatoria externa
+                    steps.append(
+                        f"\\text{{Sustituyendo en sumatoria externa: }} "
+                        f"\\sum_{{{outer_var_latex}={outer_start_latex}}}^{{{outer_end_latex}}} {inner_result_latex}"
+                    )
+                    
+                    # Verificar si el resultado interno depende de la variable externa
+                    if inner_result_expr.has(outer_var):
+                        # El resultado interno depende de la variable externa (caso triangular o dependiente)
+                        steps.append(
+                            f"\\text{{Evaluando sumatoria externa con límite dependiente: }} "
+                            f"\\sum_{{{outer_var_latex}={outer_start_latex}}}^{{{outer_end_latex}}} {inner_result_latex}"
+                        )
+                    else:
+                        # El resultado interno NO depende de la variable externa, es constante
+                        steps.append(
+                            f"\\text{{Aplicando factor constante: }} "
+                            f"{inner_result_latex} \\cdot \\sum_{{{outer_var_latex}={outer_start_latex}}}^{{{outer_end_latex}}} 1 = "
+                            f"{inner_result_latex} \\cdot ({outer_end_latex} - {outer_start_latex} + 1)"
+                        )
+                
+                # Evaluar la sumatoria completa para obtener el resultado final
+                try:
+                    evaluated = sum_expr.doit()
+                    evaluated_simplified = simplify(evaluated)
+                    evaluated_latex = latex(evaluated_simplified)
+                    if evaluated_latex not in " ".join(steps):
+                        steps.append(f"\\text{{Resultado: }} {evaluated_latex}")
+                except Exception as e:
+                    print(f"[SummationCloser] Error evaluando sumatoria múltiple: {e}")
+                    import traceback
+                    traceback.print_exc()
+            except (IndexError, TypeError) as e:
+                # Si no se pueden extraer los elementos, no es una estructura válida
+                print(f"[SummationCloser] Error extrayendo límites de sumatoria múltiple: {e}")
+                return steps
+        
+        return steps
 
