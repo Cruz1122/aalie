@@ -3,7 +3,7 @@
 import { RotateCcw, Send, User } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { getApiKey, setApiKey, validateApiKey } from "@/hooks/useApiKey";
+import { getApiKey, getApiKeyStatus, setApiKey, validateApiKey } from "@/hooks/useApiKey";
 
 import MarkdownRenderer from './MarkdownRenderer';
 
@@ -132,14 +132,13 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnal
 
   // Cargar API_KEY al montar el componente y verificar cambios
   useEffect(() => {
-    const checkApiKey = () => {
+    const checkApiKey = async () => {
       const stored = getApiKey();
       
-      // No verificar API_KEY del servidor (no hacer peticiones)
-      // El backend usará automáticamente la API_KEY de variables de entorno si está disponible
-      // Mostrar card solo si no hay API_KEY del cliente
-      // Si no hay API_KEY del cliente, el backend intentará usar la de variables de entorno
-      setShowApiKeyCard(stored === null);
+      // Verificar si hay API_KEY disponible (localStorage o servidor)
+      // Solo mostrar card si no hay ninguna API_KEY disponible
+      const status = await getApiKeyStatus();
+      setShowApiKeyCard(!status.hasAny);
     };
     
     checkApiKey();

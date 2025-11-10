@@ -567,15 +567,19 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                       timestamp: new Date()
                     };
                     
-                    // Verificar si ya existe un mensaje con el mismo contenido para evitar duplicados
+                    // Verificar si ya existe un mensaje con exactamente el mismo código y error
+                    // Solo evitar duplicados si es el mismo código y el mismo error
+                    const codeHash = code.trim().slice(0, 100); // Usar más caracteres para mejor comparación
+                    const errorHash = backendParseError?.trim().slice(0, 50) || '';
                     const messageExists = messages.some(
                       msg => msg.sender === 'user' && 
                       msg.content.includes('**CÓDIGO ADJUNTO:**') &&
-                      msg.content.includes(code.slice(0, 50)) // Verificar primeros 50 caracteres del código
+                      msg.content.includes(codeHash) &&
+                      msg.content.includes(errorHash)
                     );
                     
+                    // Si el mensaje ya existe exactamente igual, solo abrir el chat sin agregar duplicado
                     if (messageExists) {
-                      // Si el mensaje ya existe, solo cambiar al modo AI y abrir el chat
                       onSwitchToAIMode();
                       setTimeout(() => {
                         onOpenChat();

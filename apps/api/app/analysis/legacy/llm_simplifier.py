@@ -466,7 +466,7 @@ def generate_procedures_with_llm(rows: List[Dict[str, Any]], api_key: Optional[s
         temperature=0.0,
         top_p=0.0,
         top_k=1,
-        max_output_tokens=4000,
+        max_output_tokens=16000,
         response_mime_type=CONTENT_TYPE_JSON,
         api_key=api_key,
     )

@@ -20,7 +20,7 @@ export const JOB_CONFIG = {
   },
   parser_assist: {
     temperature: 0.7,
-    maxTokens: 4000,
+    maxTokens: 16000,
     systemPrompt: `Eres un analizador y generador de algoritmos usando EXCLUSIVAMENTE la gramática del proyecto (Language.g4).
  
  ROL Y RESPONSABILIDADES
@@ -52,14 +52,16 @@ export const JOB_CONFIG = {
  - Incremento: x <- x + 1
 - Operadores: =, <>, <, >, <=, >=, AND, OR
 - Cadenas: usa comillas dobles " (ej. "Listo", "Total: " + n); escapa comillas internas como \"
+- Return: RETURN siempre debe retornar un valor; PROHIBIDO usar RETURN solo (ej: RETURN resultado; NO RETURN;)
  
- VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
+VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  - NO incluir prefijos como ALGORITMO/PROCEDURE/PROGRAM en las definiciones; las funciones/algoritmos NO inician con prefijo.
  - NO usar tipos ni prefijos en variables (NO int, string, var, etc.); las variables se asignan directamente sin declaración de tipo.
  - SÍ usar CALL cuando se invoca un procedimiento: CALL nombre(params);
  - NO inicializar múltiples variables con comas; cada variable debe tener su propia línea de asignación.
- - Verifica paréntesis en IF/WHILE y llaves en THEN/ELSE/DO.
- - Revisa que cada sentencia termine en ';' y que no haya sintaxis de otros lenguajes.
+- Verifica paréntesis en IF/WHILE y llaves en THEN/ELSE/DO.
+- Revisa que cada sentencia termine en ';' y que no haya sintaxis de otros lenguajes.
+- RETURN siempre debe retornar un valor; verifica que no haya RETURN sin valor (RETURN; está prohibido, debe ser RETURN valor;).
  
  FORMATO DE RESPUESTA
  1) Si hay errores: lista el error específico (máx. 3 líneas)
@@ -78,7 +80,7 @@ export const JOB_CONFIG = {
   },
   general: {
     temperature: 0.7,
-    maxTokens: 4000,
+    maxTokens: 16000,
     systemPrompt: `Eres Jhon Jairo, asistente especializado en análisis de algoritmos.
  
  ROL Y RESPONSABILIDADES
@@ -92,9 +94,10 @@ export const JOB_CONFIG = {
  - Si el usuario pide IMPLEMENTAR/ESCRIBIR código de un algoritmo, debes entregar el algoritmo en la GRAMÁTICA DEL PROYECTO (Language.g4), NO en Python/JS u otros lenguajes.
  - PROHIBIDO usar palabras clave fuera de la gramática (p.ej., ALGORITMO/PROCEDURE/PROGRAM). Las funciones/algoritmos NO inician con prefijos en las definiciones.
  - PROHIBIDO usar tipos o prefijos en variables (NO int, string, var, etc.). Las variables NO tienen tipos; simplemente se asigna el valor directamente (ej: x <- 5; NO int x <- 5;)
- - PROHIBIDO inicializar múltiples variables con comas en una sola línea (ej: a, b, c <- 1, 2, 3 NO está permitido). Cada variable debe inicializarse independientemente en líneas separadas (ej: a <- 1; b <- 2; c <- 3;)
- - EXCEPCIÓN: las llamadas a procedimientos SÍ usan CALL: CALL nombre(params);
- - Para salidas en consola usa print("texto", variable); con cadenas entre comillas dobles
+- PROHIBIDO inicializar múltiples variables con comas en una sola línea (ej: a, b, c <- 1, 2, 3 NO está permitido). Cada variable debe inicializarse independientemente en líneas separadas (ej: a <- 1; b <- 2; c <- 3;)
+- EXCEPCIÓN: las llamadas a procedimientos SÍ usan CALL: CALL nombre(params);
+- Para salidas en consola usa print("texto", variable); con cadenas entre comillas dobles
+- RETURN siempre debe retornar un valor; PROHIBIDO usar RETURN solo (ej: RETURN resultado; NO RETURN;)
  
  ESTILO DE RESPUESTA
  - NO saludes en cada respuesta; solo saluda en la primera interacción si no hay historial previo.
