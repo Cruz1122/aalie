@@ -5,6 +5,8 @@ interface Message {
   content: string;
   sender: 'user' | 'bot';
   timestamp: Date;
+  isError?: boolean;
+  retryMessageId?: string;
 }
 
 const STORAGE_KEY = "aa_chat_messages";
@@ -27,7 +29,9 @@ export function useChatHistory() {
           id: message.id as string,
           content: message.content as string,
           sender: message.sender as 'user' | 'bot',
-          timestamp: new Date(message.timestamp as string)
+          timestamp: new Date(message.timestamp as string),
+          isError: message.isError as boolean | undefined,
+          retryMessageId: message.retryMessageId as string | undefined,
         } as Message;
       }));
     } catch {

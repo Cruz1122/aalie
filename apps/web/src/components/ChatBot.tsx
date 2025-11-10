@@ -12,6 +12,8 @@ interface Message {
   content: string;
   sender: 'user' | 'bot';
   timestamp: Date;
+  isError?: boolean;
+  retryMessageId?: string; // ID del mensaje del usuario que se debe reintentar
 }
 
 interface ChatBotProps {
@@ -104,10 +106,33 @@ async function getLLMResponse(
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData?.error || `HTTP error! status: ${response.status}`;
+      // Todos los errores 500 son del LLM/Gemini, también 400 (API_KEY) y errores que mencionen Gemini o API_KEY
+      const isGeminiError = response.status === 500 || 
+                           response.status === 400 || 
+                           errorMessage.includes('Gemini') || 
+                           errorMessage.includes('API_KEY') ||
+                           errorMessage.includes('LLM');
+      const error = new Error(errorMessage);
+      (error as any).isGeminiError = isGeminiError;
+      throw error;
     }
 
     const result = await response.json();
+    
+    // Verificar si la respuesta indica un error
+    if (!result.ok) {
+      const errorMessage = result?.error || 'Error desconocido del LLM';
+      // Todos los errores 500 son del LLM/Gemini, también errores que mencionen Gemini, API_KEY o LLM
+      const isGeminiError = errorMessage.includes('Gemini') || 
+                           errorMessage.includes('API_KEY') ||
+                           errorMessage.includes('LLM');
+      const error = new Error(errorMessage);
+      (error as any).isGeminiError = isGeminiError;
+      throw error;
+    }
+    
     // Extraer el contenido de la respuesta de Gemini
     const content = result?.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     if (!content || String(content).trim().length === 0) {
@@ -164,7 +189,7 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnal
     scrollToBottom();
   }, [messages]);
 
-  const generateBotResponse = useCallback(async () => {
+  const generateBotResponse = useCallback(async (retryMessageId?: string) => {
     // Evitar llamadas duplicadas
     if (processingRef.current) return;
     
@@ -186,10 +211,17 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnal
     }, 50);
 
     try {
-      // Obtener el último mensaje del usuario
-      const lastUserMessage = [...messages]
-        .reverse()
-        .find(m => m.sender === 'user');
+      // Obtener el mensaje del usuario a procesar
+      let lastUserMessage: Message | undefined;
+      if (retryMessageId) {
+        // Si hay un ID de reintento, buscar ese mensaje específico
+        lastUserMessage = messages.find(m => m.id === retryMessageId && m.sender === 'user');
+      } else {
+        // Si no, obtener el último mensaje del usuario
+        lastUserMessage = [...messages]
+          .reverse()
+          .find(m => m.sender === 'user');
+      }
 
       if (!lastUserMessage) {
         setIsTyping(false);
@@ -217,12 +249,32 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnal
     } catch (error) {
       console.error('Error generando respuesta:', error);
       
-      // Mensaje de error amigable
+      // Verificar si es un error de Gemini/LLM
+      // Todos los errores 500 son del LLM/Gemini
+      const isGeminiError = (error as any)?.isGeminiError || 
+                           (error instanceof Error && (
+                             error.message.includes('Gemini') || 
+                             error.message.includes('API_KEY') ||
+                             error.message.includes('LLM') ||
+                             error.message.includes('HTTP error! status: 400') ||
+                             error.message.includes('HTTP error! status: 500')
+                           ));
+      
+      // Obtener el mensaje del usuario que causó el error
+      const lastUserMessage = retryMessageId 
+        ? messages.find(m => m.id === retryMessageId && m.sender === 'user')
+        : [...messages].reverse().find(m => m.sender === 'user');
+      
+      // Mensaje de error con información de reintento si es error de Gemini
       const errorResponse: Message = {
         id: `bot-error-${Date.now()}`,
-        content: "Disculpa, tuve un problema al procesar tu mensaje. ¿Podrías intentarlo de nuevo?",
+        content: isGeminiError 
+          ? `Error de Gemini: ${error instanceof Error ? error.message : 'Error desconocido'}`
+          : "Disculpa, tuve un problema al procesar tu mensaje. ¿Podrías intentarlo de nuevo?",
         sender: 'bot',
         timestamp: new Date(),
+        isError: true,
+        retryMessageId: lastUserMessage?.id,
       };
       
       setMessages(prev => [...prev, errorResponse]);
@@ -480,6 +532,8 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnal
                 } rounded-xl ${
                   message.sender === 'user'
                     ? 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30'
+                    : message.isError
+                    ? 'glass-card border-red-500/20'
                     : 'glass-card border-white/10'
                 } ${message.sender === 'user' ? 'rounded-br-md' : 'rounded-bl-md'}`}>
                   {message.sender === 'user' ? (
@@ -527,6 +581,32 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnal
                         <p className="text-white text-[11px] leading-relaxed whitespace-pre-wrap">{message.content}</p>
                       );
                     })()
+                  ) : message.isError ? (
+                    // Mensaje de error minimalista con botón de reintentar
+                    <div className="space-y-1.5">
+                      <p className="text-red-300 text-[11px] leading-relaxed">
+                        {message.content}
+                      </p>
+                      {message.retryMessageId && (
+                        <div className="flex justify-center">
+                          <button
+                            onClick={() => {
+                              // Eliminar el mensaje de error antes de reintentar
+                              setMessages(prev => prev.filter(m => m.id !== message.id));
+                              // Reintentar
+                              setTimeout(() => {
+                                generateBotResponse(message.retryMessageId);
+                              }, 100);
+                            }}
+                            disabled={isTyping}
+                            className="flex items-center gap-1 px-2 py-1 rounded-md bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300 text-[10px] font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <span className="material-symbols-outlined text-xs">refresh</span>
+                            Reintentar
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <MarkdownRenderer content={message.content} onAnalyzeCode={onAnalyzeCode} />
                   )}

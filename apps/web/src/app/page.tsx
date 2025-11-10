@@ -20,6 +20,8 @@ interface Message {
   content: string;
   sender: 'user' | 'bot';
   timestamp: Date;
+  isError?: boolean;
+  retryMessageId?: string;
 }
 
 export default function HomePage() {

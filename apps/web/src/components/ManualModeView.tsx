@@ -26,6 +26,8 @@ type Message = {
   content: string;
   sender: 'user' | 'bot';
   timestamp: Date;
+  isError?: boolean;
+  retryMessageId?: string;
 };
 
 type AlgorithmKind = "iterative" | "recursive" | "hybrid" | "unknown";
