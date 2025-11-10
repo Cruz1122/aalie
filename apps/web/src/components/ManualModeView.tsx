@@ -294,7 +294,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
         body: JSON.stringify({ source: sourceCode }),
       }).then(r => r.json());
 
-      const parseRes = await animateProgress(0, 20, 2000, setAnalysisProgress, parsePromise) as { ok: boolean; ast?: Program; errors?: Array<{ line: number; column: number; message: string }> };
+      const parseRes = await animateProgress(0, 20, 800, setAnalysisProgress, parsePromise) as { ok: boolean; ast?: Program; errors?: Array<{ line: number; column: number; message: string }> };
 
       if (!parseRes.ok) {
         const msg = parseRes.errors?.map((e: { line: number; column: number; message: string }) => `Línea ${e.line}:${e.column} ${e.message}`).join("\n") || "Error de parseo";
@@ -330,7 +330,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
           body: JSON.stringify(body),
         });
 
-        const clsResponse = await animateProgress(20, 40, 3000, setAnalysisProgress, clsPromise) as Response;
+        const clsResponse = await animateProgress(20, 40, 1200, setAnalysisProgress, clsPromise) as Response;
 
         if (clsResponse.ok) {
           const cls = await clsResponse.json() as { kind: string; method?: string; mode?: string };
@@ -362,7 +362,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
       }
 
       setAnalysisMessage("Hallando sumatorias...");
-      await animateProgress(40, 50, 500, setAnalysisProgress);
+      await animateProgress(40, 50, 200, setAnalysisProgress);
 
       // Verificar estado de API_KEY (se mantiene para otras funciones como ChatBot)
       const apiKeyStatus = await getApiKeyStatus();
@@ -383,10 +383,10 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
         body: JSON.stringify(body),
       }).then(r => r.json());
 
-      const analyzeRes = await animateProgress(50, 70, 5000, setAnalysisProgress, analyzePromise) as { ok: boolean; [key: string]: unknown };
+      const analyzeRes = await animateProgress(50, 70, 2000, setAnalysisProgress, analyzePromise) as { ok: boolean; [key: string]: unknown };
 
       setAnalysisMessage("Generando forma polinómica...");
-      await animateProgress(70, 80, 500, setAnalysisProgress);
+      await animateProgress(70, 80, 200, setAnalysisProgress);
 
       if (!analyzeRes.ok) {
         const errorMsg = (analyzeRes as { errors?: Array<{ message: string; line?: number; column?: number }> }).errors?.map((e: { message: string; line?: number; column?: number }) => 
@@ -405,7 +405,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
       }
 
       setAnalysisMessage("Finalizando análisis...");
-      await animateProgress(80, 100, 500, setAnalysisProgress);
+      await animateProgress(80, 100, 200, setAnalysisProgress);
 
       if (globalThis.window !== undefined) {
         sessionStorage.setItem('analyzerCode', sourceCode);
@@ -415,7 +415,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
       setAnalysisMessage("Análisis completo");
       setIsAnalysisComplete(true);
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
       router.push('/analyzer');
     } catch (error) {

@@ -274,7 +274,7 @@ export default function ExamplesPage() {
         body: JSON.stringify({ source: sourceCode }),
       }).then(r => r.json());
 
-      const parseRes = await animateProgress(0, 20, 2000, setAnalysisProgress, parsePromise) as { ok: boolean; ast?: Program; errors?: Array<{ line: number; column: number; message: string }> };
+      const parseRes = await animateProgress(0, 20, 800, setAnalysisProgress, parsePromise) as { ok: boolean; ast?: Program; errors?: Array<{ line: number; column: number; message: string }> };
 
       if (!parseRes.ok) {
         const msg = parseRes.errors?.map((e: { line: number; column: number; message: string }) => `Línea ${e.line}:${e.column} ${e.message}`).join("\n") || "Error de parseo";
@@ -300,7 +300,7 @@ export default function ExamplesPage() {
           body: JSON.stringify({ source: sourceCode, mode: "auto", apiKey: apiKey || undefined }),
         });
 
-        const clsResponse = await animateProgress(20, 40, 3000, setAnalysisProgress, clsPromise) as Response;
+        const clsResponse = await animateProgress(20, 40, 1200, setAnalysisProgress, clsPromise) as Response;
 
         if (clsResponse.ok) {
           const cls = await clsResponse.json() as { kind: string; method?: string; mode?: string };
@@ -331,7 +331,7 @@ export default function ExamplesPage() {
       }
 
       setAnalysisMessage("Hallando sumatorias...");
-      await animateProgress(40, 50, 500, setAnalysisProgress);
+      await animateProgress(40, 50, 200, setAnalysisProgress);
 
       // Verificar estado de API_KEY
       const apiKeyStatus = await getApiKeyStatus();
@@ -357,10 +357,10 @@ export default function ExamplesPage() {
         body: JSON.stringify(body),
       }).then(r => r.json());
 
-      const analyzeRes = await animateProgress(50, 70, 5000, setAnalysisProgress, analyzePromise) as { ok: boolean; [key: string]: unknown };
+      const analyzeRes = await animateProgress(50, 70, 2000, setAnalysisProgress, analyzePromise) as { ok: boolean; [key: string]: unknown };
 
       setAnalysisMessage("Generando forma polinómica...");
-      await animateProgress(70, 80, 500, setAnalysisProgress);
+      await animateProgress(70, 80, 200, setAnalysisProgress);
 
       if (!analyzeRes.ok) {
         const errorMsg = (analyzeRes as { errors?: Array<{ message: string; line?: number; column?: number }> }).errors?.map((e: { message: string; line?: number; column?: number }) => 
@@ -379,7 +379,7 @@ export default function ExamplesPage() {
       }
 
       setAnalysisMessage("Finalizando análisis...");
-      await animateProgress(80, 100, 500, setAnalysisProgress);
+      await animateProgress(80, 100, 200, setAnalysisProgress);
 
       // Guardar código y resultados en sessionStorage (igual que ManualModeView y chatbot)
       if (globalThis.window !== undefined) {
@@ -390,8 +390,8 @@ export default function ExamplesPage() {
       setAnalysisMessage("Análisis completo");
       setIsAnalysisComplete(true);
 
-      // Esperar 2 segundos antes de navegar (igual que ManualModeView)
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Esperar antes de navegar
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
       // Navegar a /analyzer con los datos (el loader se ocultará automáticamente al desmontarse)
       router.push('/analyzer');

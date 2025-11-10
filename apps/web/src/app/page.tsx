@@ -11,7 +11,7 @@ import Header from "@/components/Header";
 import ManualModeView, { ManualModeViewHandle } from "@/components/ManualModeView";
 import ModeToggle from "@/components/ModeToggle";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
-import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
+import { getApiKey } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 
@@ -157,7 +157,7 @@ export default function HomePage() {
         body: JSON.stringify({ source: sourceCode }),
       }).then(r => r.json());
 
-      const parseRes = await animateProgress(0, 20, 2000, setChatAnalysisProgress, parsePromise) as { ok: boolean; ast?: Program; errors?: Array<{ line: number; column: number; message: string }> };
+      const parseRes = await animateProgress(0, 20, 800, setChatAnalysisProgress, parsePromise) as { ok: boolean; ast?: Program; errors?: Array<{ line: number; column: number; message: string }> };
 
       if (!parseRes.ok) {
         const msg = parseRes.errors?.map((e) => `Línea ${e.line}:${e.column} ${e.message}`).join("\n") || "Error de parseo";
@@ -186,7 +186,7 @@ export default function HomePage() {
           body: JSON.stringify(body),
         });
 
-        const clsResponse = await animateProgress(20, 40, 3000, setChatAnalysisProgress, clsPromise) as Response;
+        const clsResponse = await animateProgress(20, 40, 1200, setChatAnalysisProgress, clsPromise) as Response;
 
         if (clsResponse.ok) {
           const cls = await clsResponse.json() as { kind: "iterative" | "recursive" | "hybrid" | "unknown"; method?: string };
@@ -211,12 +211,10 @@ export default function HomePage() {
       }
 
       setChatAnalysisMessage("Hallando sumatorias...");
-      await animateProgress(40, 50, 500, setChatAnalysisProgress);
+      await animateProgress(40, 50, 200, setChatAnalysisProgress);
 
       // Verificar estado de API_KEY (se mantiene para otras funciones como ChatBot)
-      const apiKeyStatus = await getApiKeyStatus();
       const apiKey = getApiKey();
-      const hasApiKey = apiKeyStatus.hasAny;
       
       // Mensaje de carga actualizado (ya no depende de API key para simplificación)
       setChatAnalysisMessage("Cerrando sumatorias...");
@@ -232,10 +230,10 @@ export default function HomePage() {
         body: JSON.stringify(body),
       }).then(r => r.json());
 
-      const analyzeRes = await animateProgress(50, 70, 5000, setChatAnalysisProgress, analyzePromise) as { ok: boolean; [key: string]: unknown };
+      const analyzeRes = await animateProgress(50, 70, 2000, setChatAnalysisProgress, analyzePromise) as { ok: boolean; [key: string]: unknown };
 
       setChatAnalysisMessage("Generando forma polinómica...");
-      await animateProgress(70, 80, 500, setChatAnalysisProgress);
+      await animateProgress(70, 80, 200, setChatAnalysisProgress);
 
       if (!analyzeRes.ok) {
         const errorMsg = (analyzeRes as { errors?: Array<{ message: string; line?: number; column?: number }> }).errors?.map((e) => e.message || `Error en línea ${e.line ?? '?'}`).join("\n") || "No se pudo analizar el algoritmo";
@@ -246,7 +244,7 @@ export default function HomePage() {
       }
 
       setChatAnalysisMessage("Finalizando análisis...");
-      await animateProgress(80, 100, 500, setChatAnalysisProgress);
+      await animateProgress(80, 100, 200, setChatAnalysisProgress);
 
       // Guardar código y resultados en sessionStorage (igual que ManualModeView)
       if (globalThis.window !== undefined) {

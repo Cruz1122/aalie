@@ -133,6 +133,12 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     closed_count, steps = closer.close_summation(count_raw_expr, variable)
                     row["count"] = closed_count
                     
+                    # Guardar la expresión SymPy evaluada para usar en build_t_open_expr
+                    from sympy import simplify
+                    count_evaluated = closer._evaluate_all_sums_sympy(count_raw_expr)
+                    count_evaluated = simplify(count_evaluated)
+                    row["count_expr"] = count_evaluated  # Expresión SymPy evaluada
+                    
                     # Generar procedimiento paso a paso
                     if steps:
                         row["procedure"] = steps
@@ -201,41 +207,105 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Calcular notaciones asintóticas usando la expresión SymPy directamente
         if t_open_expr is not None:
             try:
-                from sympy import latex as sympy_latex
+                from sympy import latex as sympy_latex, Symbol, expand, simplify, degree
+                from sympy.polys.polytools import Poly, LC, LM
+                from sympy import preorder_traversal
                 
-                # Convertir expresión SymPy a LaTeX para ComplexityClasses
-                t_open_latex = sympy_latex(t_open_expr)
+                # Primero, asegurarse de que la expresión esté completamente simplificada
+                t_open_expr = expand(t_open_expr)
+                t_open_expr = simplify(t_open_expr)
                 
-                # Calcular notaciones asintóticas usando ComplexityClasses
-                # Pero primero, extraer término dominante directamente desde SymPy (más robusto)
-                from sympy import Poly, Symbol
-                from sympy.polys.polytools import LC, LM
+                # Verificar y eliminar variables de iteración que no deberían estar
+                iteration_vars = ['i', 'j', 'k']
+                for var_name in iteration_vars:
+                    var_symbol = Symbol(var_name, integer=True)
+                    if t_open_expr.has(var_symbol):
+                        # Intentar expandir y simplificar para eliminar la variable
+                        t_open_expr = expand(t_open_expr)
+                        t_open_expr = simplify(t_open_expr)
                 
                 n_sym = Symbol(variable, integer=True, positive=True)
                 
+                # Método robusto: buscar término con mayor potencia de n
                 try:
-                    # Intentar como polinomio
-                    poly = Poly(t_open_expr, n_sym)
-                    if poly:
-                        # Obtener término líder
-                        leading_coeff = LC(poly)
-                        leading_monom = LM(poly)
-                        dominant_expr = leading_coeff * leading_monom
+                    # Expandir completamente y buscar manualmente
+                    expanded = expand(t_open_expr)
+                    
+                    # Si es una expresión Add (suma de términos), analizar cada término
+                    if hasattr(expanded, 'args') and len(expanded.args) > 0:
+                        terms = expanded.args
+                        max_degree = -1
+                        dominant_term = None
                         
-                        # Convertir a LaTeX
-                        dominant_latex = sympy_latex(dominant_expr)
+                        for term in terms:
+                            # Calcular el grado de este término respecto a n
+                            # Método directo: buscar potencias de n en el término
+                            term_degree = 0
+                            
+                            # Buscar todas las potencias de n en el término
+                            # No confiar en has() ya que puede fallar en algunos casos
+                            from sympy import preorder_traversal, Pow
+                            
+                            # Recorrer todos los subexpresiones buscando n y n^k
+                            for subexpr in preorder_traversal(term):
+                                # Comparar por nombre del símbolo, no por identidad (pueden tener diferentes propiedades)
+                                if isinstance(subexpr, Symbol) and subexpr.name == n_sym.name:
+                                    # Encontramos n directamente
+                                    term_degree = max(term_degree, 1)
+                                elif isinstance(subexpr, Pow):
+                                    # Verificar si es una potencia de n (comparar por nombre)
+                                    try:
+                                        if isinstance(subexpr.base, Symbol) and subexpr.base.name == n_sym.name:
+                                            exp_val = subexpr.exp
+                                            if exp_val.is_number:
+                                                exp_int = int(float(exp_val))
+                                                term_degree = max(term_degree, exp_int)
+                                    except:
+                                        pass
+                            
+                            if term_degree > max_degree:
+                                max_degree = term_degree
+                                dominant_term = term
                         
-                        # Construir notaciones asintóticas
+                        if dominant_term is not None and max_degree >= 0:
+                            # Simplificar el término dominante
+                            dominant_term = simplify(dominant_term)
+                            
+                            # Para notación asintótica, simplificar el coeficiente: O(5n²/2) -> O(n²)
+                            # Extraer solo la potencia de n sin el coeficiente
+                            if max_degree > 0:
+                                # Crear solo n^max_degree para la notación asintótica
+                                from sympy import Symbol as SymSymbol
+                                n_for_notation = SymSymbol(variable, integer=True, positive=True)
+                                if max_degree == 1:
+                                    dominant_latex = sympy_latex(n_for_notation)
+                                else:
+                                    dominant_latex = sympy_latex(n_for_notation**max_degree)
+                            else:
+                                dominant_latex = sympy_latex(dominant_term)
+                            
+                            # Construir notaciones asintóticas
+                            self.big_o = f"O({dominant_latex})"
+                            self.big_omega = f"\\Omega({dominant_latex})"
+                            self.big_theta = f"\\Theta({dominant_latex})"
+                        else:
+                            # Fallback: usar ComplexityClasses
+                            t_open_latex = sympy_latex(t_open_expr)
+                            self.big_o = complexity.calculate_big_o(t_open_latex, variable)
+                            self.big_omega = complexity.calculate_big_omega(t_open_latex, variable)
+                            self.big_theta = complexity.calculate_big_theta(t_open_latex, variable)
+                    else:
+                        # Expresión simple, usar directamente
+                        dominant_latex = sympy_latex(simplify(t_open_expr))
                         self.big_o = f"O({dominant_latex})"
                         self.big_omega = f"\\Omega({dominant_latex})"
                         self.big_theta = f"\\Theta({dominant_latex})"
-                    else:
-                        # Fallback: usar ComplexityClasses con LaTeX
-                        self.big_o = complexity.calculate_big_o(t_open_latex, variable)
-                        self.big_omega = complexity.calculate_big_omega(t_open_latex, variable)
-                        self.big_theta = complexity.calculate_big_theta(t_open_latex, variable)
-                except:
+                except Exception as e:
+                    print(f"[IterativeAnalyzer] Error calculando término dominante: {e}")
+                    import traceback
+                    traceback.print_exc()
                     # Fallback: usar ComplexityClasses con LaTeX
+                    t_open_latex = sympy_latex(t_open_expr)
                     self.big_o = complexity.calculate_big_o(t_open_latex, variable)
                     self.big_omega = complexity.calculate_big_omega(t_open_latex, variable)
                     self.big_theta = complexity.calculate_big_theta(t_open_latex, variable)

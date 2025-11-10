@@ -63,6 +63,25 @@ class SummationCloser:
                     result_expr = result_expr.replace(lambda x: isinstance(x, Sum), lambda x: x.doit())
                     result_expr = simplify(result_expr)
                 
+                # Verificar y eliminar variables de iteración que no deberían estar en el resultado final
+                # Las variables i, j, k son variables de iteración que deben ser eliminadas
+                iteration_vars = ['i', 'j', 'k']
+                for var_name in iteration_vars:
+                    var_symbol = Symbol(var_name, integer=True)
+                    if result_expr.has(var_symbol):
+                        # La expresión todavía contiene una variable de iteración
+                        # Esto significa que alguna sumatoria no se evaluó completamente
+                        # Intentar forzar la evaluación expandiendo y simplificando
+                        try:
+                            result_expr = expand(result_expr)
+                            result_expr = simplify(result_expr)
+                            # Si aún contiene la variable, intentar factorizar y simplificar
+                            if result_expr.has(var_symbol):
+                                result_expr = factor(result_expr)
+                                result_expr = simplify(result_expr)
+                        except:
+                            pass
+                
                 # Convertir a LaTeX
                 closed_latex = self._sympy_to_latex(result_expr)
                 
@@ -858,7 +877,25 @@ class SummationCloser:
             String LaTeX
         """
         try:
-            latex_str = latex(expr)
+            # Verificar y eliminar variables de iteración que no deberían estar en el resultado final
+            iteration_vars = ['i', 'j', 'k']
+            cleaned_expr = expr
+            for var_name in iteration_vars:
+                var_symbol = Symbol(var_name, integer=True)
+                if cleaned_expr.has(var_symbol):
+                    # La expresión todavía contiene una variable de iteración
+                    # Intentar expandir, factorizar y simplificar para eliminarla
+                    try:
+                        from sympy import expand, factor, simplify
+                        cleaned_expr = expand(cleaned_expr)
+                        cleaned_expr = simplify(cleaned_expr)
+                        if cleaned_expr.has(var_symbol):
+                            cleaned_expr = factor(cleaned_expr)
+                            cleaned_expr = simplify(cleaned_expr)
+                    except:
+                        pass
+            
+            latex_str = latex(cleaned_expr)
             # Normalizar formato
             latex_str = latex_str.replace('*', ' \\cdot ')
             return latex_str
@@ -875,21 +912,64 @@ class SummationCloser:
         Returns:
             Expresión SymPy con todas las sumatorias evaluadas
         """
-        from sympy import simplify, expand
+        from sympy import simplify, expand, factor, summation
         
         def evaluate_all_sums(expr: Expr) -> Expr:
             """Evalúa recursivamente todas las sumatorias en la expresión."""
             # Si es una Sum, evaluarla
             if isinstance(expr, Sum):
                 try:
-                    evaluated = expr.doit()
-                    return simplify(evaluated)
+                    # Si la Sum tiene múltiples límites (sumatorias anidadas compactas),
+                    # evaluarlas una por una de adentro hacia afuera
+                    if len(expr.args) > 2:
+                        # Tiene múltiples límites: Sum(body, (var1, a1, b1), (var2, a2, b2), ...)
+                        # Evaluar de adentro hacia afuera
+                        body = expr.args[0]
+                        all_limits = list(expr.args[1:])
+                        
+                        # Crear sumatorias anidadas explícitas (de más interna a más externa)
+                        # all_limits[0] es la más externa, all_limits[-1] es la más interna
+                        result = body
+                        for limit in reversed(all_limits):
+                            # Evaluar esta sumatoria
+                            if len(limit) >= 3:
+                                var = limit[0]
+                                start = limit[1]
+                                end = limit[2]
+                                # Usar summation() en lugar de Sum().doit() para mejor evaluación
+                                try:
+                                    result = summation(result, (var, start, end))
+                                    result = simplify(result)
+                                except:
+                                    # Fallback a Sum().doit()
+                                    result = Sum(result, (var, start, end)).doit()
+                                    result = simplify(result)
+                        
+                        return simplify(result)
+                    else:
+                        # Sumatoria simple con un solo límite
+                        evaluated = expr.doit()
+                        evaluated = simplify(evaluated)
+                        # Si el resultado todavía contiene Sum, seguir evaluando
+                        if isinstance(evaluated, Sum):
+                            return evaluate_all_sums(evaluated)
+                        # Verificar si el resultado contiene más Sum anidadas
+                        from sympy import preorder_traversal
+                        has_nested_sum = False
+                        for subexpr in preorder_traversal(evaluated):
+                            if isinstance(subexpr, Sum):
+                                has_nested_sum = True
+                                break
+                        if has_nested_sum:
+                            return evaluate_all_sums(evaluated)
+                        return evaluated
                 except:
                     # Si no se puede evaluar, intentar expandir y reevaluar
                     try:
                         expanded = expand(expr)
                         if isinstance(expanded, Sum):
-                            return expanded.doit()
+                            evaluated = expanded.doit()
+                            return simplify(evaluate_all_sums(evaluated))
                         return evaluate_all_sums(expanded)
                     except:
                         return expr
@@ -905,18 +985,40 @@ class SummationCloser:
                         # Simplificar el resultado
                         new_expr = simplify(new_expr)
                         # Verificar si aún hay Sum sin evaluar
-                        if hasattr(new_expr, 'args'):
-                            for arg in new_expr.args:
-                                if isinstance(arg, Sum):
-                                    # Hay más sumatorias, seguir evaluando
-                                    return evaluate_all_sums(new_expr)
+                        from sympy import preorder_traversal
+                        has_sum = False
+                        for subexpr in preorder_traversal(new_expr):
+                            if isinstance(subexpr, Sum):
+                                has_sum = True
+                                break
+                        if has_sum:
+                            # Hay más sumatorias, seguir evaluando
+                            return evaluate_all_sums(new_expr)
                         return new_expr
                     except:
                         return expr
             
             return expr
         
-        return evaluate_all_sums(expr)
+        result = evaluate_all_sums(expr)
+        
+        # Verificar y eliminar variables de iteración que no deberían estar en el resultado final
+        iteration_vars = ['i', 'j', 'k']
+        for var_name in iteration_vars:
+            var_symbol = Symbol(var_name, integer=True)
+            if result.has(var_symbol):
+                # La expresión todavía contiene una variable de iteración
+                # Intentar expandir, factorizar y simplificar para eliminarla
+                try:
+                    result = expand(result)
+                    result = simplify(result)
+                    if result.has(var_symbol):
+                        result = factor(result)
+                        result = simplify(result)
+                except:
+                    pass
+        
+        return result
     
     def _generate_steps_from_sympy(self, expr: Expr, variable: str = "n") -> List[str]:
         """
@@ -1499,6 +1601,28 @@ class SummationCloser:
                                     f"\\text{{Evaluando sumatoria externa con límite dependiente: }} "
                                     f"\\sum_{{{outer_var_latex}={outer_start_latex}}}^{{{outer_end_latex}}} {inner_result_latex}"
                                 )
+                                
+                                # Evaluar la sumatoria externa completa
+                                try:
+                                    from sympy import summation
+                                    outer_result = summation(inner_result_simplified, (outer_var, outer_start, outer_end))
+                                    outer_result = simplify(outer_result)
+                                    
+                                    # Verificar y eliminar variables de iteración
+                                    iteration_vars = ['i', 'j', 'k']
+                                    for var_name in iteration_vars:
+                                        var_symbol = Symbol(var_name, integer=True)
+                                        if outer_result.has(var_symbol):
+                                            outer_result = expand(outer_result)
+                                            outer_result = simplify(outer_result)
+                                            if outer_result.has(var_symbol):
+                                                outer_result = factor(outer_result)
+                                                outer_result = simplify(outer_result)
+                                    
+                                    outer_result_latex = latex(outer_result)
+                                    steps.append(f"\\text{{Resultado: }} {outer_result_latex}")
+                                except Exception as eval_error:
+                                    print(f"[SummationCloser] Error evaluando sumatoria externa: {eval_error}")
                         except Exception as e:
                             print(f"[SummationCloser] Error en análisis de sumatorias anidadas: {e}")
         else:
@@ -1659,6 +1783,23 @@ class SummationCloser:
                 try:
                     evaluated = sum_expr.doit()
                     evaluated_simplified = simplify(evaluated)
+                    
+                    # Verificar y eliminar variables de iteración que no deberían estar en el resultado final
+                    iteration_vars = ['i', 'j', 'k']
+                    for var_name in iteration_vars:
+                        var_symbol = Symbol(var_name, integer=True)
+                        if evaluated_simplified.has(var_symbol):
+                            # La expresión todavía contiene una variable de iteración
+                            # Intentar expandir, factorizar y simplificar para eliminarla
+                            try:
+                                evaluated_simplified = expand(evaluated_simplified)
+                                evaluated_simplified = simplify(evaluated_simplified)
+                                if evaluated_simplified.has(var_symbol):
+                                    evaluated_simplified = factor(evaluated_simplified)
+                                    evaluated_simplified = simplify(evaluated_simplified)
+                            except:
+                                pass
+                    
                     evaluated_latex = latex(evaluated_simplified)
                     if evaluated_latex not in " ".join(steps):
                         steps.append(f"\\text{{Resultado: }} {evaluated_latex}")

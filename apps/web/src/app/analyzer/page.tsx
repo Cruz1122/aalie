@@ -151,7 +151,7 @@ export default function AnalyzerPage() {
       }).then(r => r.json() as Promise<ParseResponse>);
 
       // Animar progreso mientras se parsea (espera a que parsePromise se resuelva)
-      const parseRes = await animateProgress(0, 20, 2000, setAnalysisProgress, parsePromise) as ParseResponse;
+      const parseRes = await animateProgress(0, 20, 800, setAnalysisProgress, parsePromise) as ParseResponse;
 
       if (!parseRes.ok) {
         console.error("Error en parse:", parseRes);
@@ -182,7 +182,7 @@ export default function AnalyzerPage() {
         });
 
         // Animar progreso mientras se clasifica (espera a que clsPromise se resuelva)
-        const clsResponse = await animateProgress(20, 40, 3000, setAnalysisProgress, clsPromise) as Response;
+        const clsResponse = await animateProgress(20, 40, 1200, setAnalysisProgress, clsPromise) as Response;
 
         if (clsResponse.ok) {
           const cls = await clsResponse.json() as ClassifyResponse & { method?: string; mode?: string };
@@ -217,7 +217,7 @@ export default function AnalyzerPage() {
 
       // 4) Realizar el análisis de complejidad (40-80%)
       setAnalysisMessage("Hallando sumatorias...");
-      await animateProgress(40, 50, 500, setAnalysisProgress);
+      await animateProgress(40, 50, 200, setAnalysisProgress);
 
       // Verificar estado de API_KEY (se mantiene para otras funciones como ChatBot)
       const apiKeyStatus = await getApiKeyStatus();
@@ -239,10 +239,10 @@ export default function AnalyzerPage() {
       }).then(r => r.json() as Promise<AnalyzeOpenResponse>);
 
       // Animar progreso mientras se analiza (espera a que analyzePromise se resuelva)
-      const analyzeRes = await animateProgress(50, 70, 5000, setAnalysisProgress, analyzePromise) as AnalyzeOpenResponse;
+      const analyzeRes = await animateProgress(50, 70, 2000, setAnalysisProgress, analyzePromise) as AnalyzeOpenResponse;
 
       setAnalysisMessage("Generando forma polinómica...");
-      await animateProgress(70, 80, 500, setAnalysisProgress);
+      await animateProgress(70, 80, 200, setAnalysisProgress);
 
       if (!analyzeRes.ok) {
         console.error("Error en análisis:", analyzeRes);
@@ -263,17 +263,17 @@ export default function AnalyzerPage() {
 
       // 5) Finalizar (80-100%)
       setAnalysisMessage("Finalizando análisis...");
-      await animateProgress(80, 100, 500, setAnalysisProgress);
+      await animateProgress(80, 100, 200, setAnalysisProgress);
 
       // 6) Actualizar los datos
       setData(analyzeRes);
 
-      // 7) Mostrar completado y esperar 2 segundos
+      // 7) Mostrar completado y esperar antes de cerrar
       setAnalysisMessage("Análisis completo");
       setIsAnalysisComplete(true);
 
-      // Esperar 2 segundos antes de cerrar el loader
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Esperar antes de cerrar el loader
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
       // Cerrar loader
       setAnalyzing(false);
