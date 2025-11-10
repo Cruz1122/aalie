@@ -1,4 +1,4 @@
-# apps/api/tests/test_expr_converter.py
+# tests/unit/test_expr_converter.py
 
 import unittest
 from app.analysis.expr_converter import ExprConverter

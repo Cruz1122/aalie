@@ -537,7 +537,7 @@ export default function AnalyzerPage() {
 
                 {/* Card de ecuaciones matemáticas (abajo en pantallas grandes) */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="glass-card p-4 rounded-lg text-center">
+                  <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(34,197,94,0.3)] hover:shadow-[0_12px_40px_0_rgba(34,197,94,0.4)]">
                     <div className="h-full flex flex-col items-center justify-center gap-2">
                       <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/30">
                         <div className="scale-110">
@@ -556,7 +556,7 @@ export default function AnalyzerPage() {
                       </button>
                     </div>
                   </div>
-                  <div className="glass-card p-4 rounded-lg text-center">
+                  <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(234,179,8,0.3)] hover:shadow-[0_12px_40px_0_rgba(234,179,8,0.4)]">
                     <div className="h-full flex flex-col items-center justify-center gap-2">
                       <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30">
                         <div className="scale-110">
@@ -574,7 +574,7 @@ export default function AnalyzerPage() {
                       </button>
                     </div>
                   </div>
-                  <div className="glass-card p-4 rounded-lg text-center">
+                  <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(239,68,68,0.3)] hover:shadow-[0_12px_40px_0_rgba(239,68,68,0.4)]">
                     <div className="h-full flex flex-col items-center justify-center gap-2">
                       <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30">
                         <div className="scale-110">

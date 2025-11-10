@@ -1,14 +1,18 @@
-# apps/api/test_full_integration.py
+# tests/integration/test_iterative_analyzer.py
 """
-Test completo de integración para verificar que todo el sistema funciona correctamente.
+Tests de integración para IterativeAnalyzer.
+Verifica el flujo completo desde AST hasta resultado final.
 """
 
-def test_full_workflow():
-    """Test del flujo completo desde AST hasta resultado final"""
-    print("Testing Full Workflow...")
-    try:
-        from app.analysis.iterative_analyzer import IterativeAnalyzer
-        
+import pytest
+from app.analysis.iterative_analyzer import IterativeAnalyzer
+
+
+class TestIterativeAnalyzer:
+    """Tests de integración completa para IterativeAnalyzer."""
+    
+    def test_full_workflow_triangular_loops(self):
+        """Test: Flujo completo con bucles anidados triangulares"""
         analyzer = IterativeAnalyzer()
         
         # AST de algoritmo simple con bucles anidados
@@ -56,9 +60,6 @@ def test_full_workflow():
         assert "totals" in result, "Debe tener totals"
         assert "T_open" in result["totals"], "Debe tener T_open"
         
-        print(f"✓ Análisis completado: {len(result['byLine'])} filas")
-        print(f"✓ T_open generado: {result['totals']['T_open'][:100]}...")
-        
         # Verificar que todas las filas tienen los campos necesarios
         for row in result["byLine"]:
             assert "line" in row, "Debe tener line"
@@ -70,29 +71,8 @@ def test_full_workflow():
             assert isinstance(row["count"], str), "count debe ser string"
             assert "unknown" not in row["count"].lower(), f"count no debe ser 'unknown': {row['count']}"
         
-        print("✓ Todas las filas tienen campos válidos")
-        print("✓ Full Workflow: TEST PASÓ\n")
-        return True
-    except Exception as e:
-        print(f"✗ Full Workflow: ERROR - {e}")
-        import traceback
-        traceback.print_exc()
-        return False
-
-
-if __name__ == "__main__":
-    print("=" * 60)
-    print("TEST DE INTEGRACIÓN COMPLETA")
-    print("=" * 60)
-    print()
-    
-    result = test_full_workflow()
-    
-    print("=" * 60)
-    if result:
-        print("🎉 TEST DE INTEGRACIÓN COMPLETO PASÓ!")
-        exit(0)
-    else:
-        print("❌ TEST DE INTEGRACIÓN FALLÓ")
-        exit(1)
+        # Verificar que T_open está generado
+        t_open = result["totals"]["T_open"]
+        assert isinstance(t_open, str), "T_open debe ser string"
+        assert len(t_open) > 0, "T_open no debe estar vacío"
 

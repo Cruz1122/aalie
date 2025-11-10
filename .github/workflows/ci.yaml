@@ -91,6 +91,48 @@ jobs:
       - name: FastAPI smoke test
         run: python -c "import fastapi; print('✅ FastAPI:', fastapi.__version__)"
 
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "apps/api/requirements*.txt"
+
+      - name: Install Python dependencies
+        working-directory: apps/api
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Install grammar package
+        run: |
+          if [ -d packages/grammar/py ]; then
+            echo "📦 Installing grammar package..."
+            pip install -e packages/grammar/py
+          else
+            echo "⚠️  Grammar package not found, tests may fail"
+          fi
+
+      - name: Run tests
+        working-directory: apps/api
+        run: |
+          echo "🧪 Running tests..."
+          pytest tests/ -v --tb=short
+
+      - name: Test summary
+        if: always()
+        run: |
+          echo "✅ Tests completed"
+
   # Job de calidad: Linting y formato (puede fallar sin detener deploy)
   quality:
     runs-on: ubuntu-latest
@@ -180,7 +222,7 @@ jobs:
   docker-integration:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: build  # Solo corre si el build principal pasa
+    needs: [build, test]  # Solo corre si el build principal y los tests pasan
 
     steps:
       - name: Checkout

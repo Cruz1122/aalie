@@ -1,11 +1,11 @@
-# apps/api/tests/test_base_analyzer_sympy.py
+# tests/unit/test_base_analyzer.py
 
 import unittest
 from app.analysis.base import BaseAnalyzer
 from sympy import Symbol, Sum, Integer, latex
 
 
-class TestBaseAnalyzerSymPy(unittest.TestCase):
+class TestBaseAnalyzer(unittest.TestCase):
     """Tests para BaseAnalyzer con SymPy."""
     
     def setUp(self):
