@@ -1,7 +1,7 @@
 # apps/api/app/analysis/visitors/while_repeat_visitor.py
 
 from typing import Any, Dict, List, Optional
-from sympy import Symbol, Integer, Expr, sympify, Sum
+from sympy import Symbol, Integer, Expr, sympify, Sum, Rational, latex
 import re
 
 
@@ -488,6 +488,53 @@ class WhileRepeatVisitor:
             "success": True
         }
     
+    def _get_while_exit_probability(self, node: Dict[str, Any]) -> Optional[tuple]:
+        """
+        Obtiene la probabilidad de salida del WHILE desde el avgModel.
+        
+        Args:
+            node: Nodo WHILE del AST
+        
+        Returns:
+            Tupla (p_sympy, p_str) si se encuentra, None si no
+        """
+        if not hasattr(self, 'avg_model') or self.avg_model is None:
+            return None
+        
+        # Obtener condición del while
+        test = node.get("test", {})
+        condition_str = self._expr_to_str(test)
+        
+        # Buscar predicado relacionado con la condición de salida
+        # Por ejemplo, si la condición es "i < n", buscar "i >= n" o "salir del while"
+        exit_predicate = f"salir del while: {condition_str}"
+        
+        # Obtener contexto
+        context = None
+        if hasattr(self, 'loop_stack') and self.loop_stack:
+            last_mult = self.loop_stack[-1]
+            if isinstance(last_mult, Sum):
+                var_sym = last_mult.args[1][0]
+                if hasattr(var_sym, 'name'):
+                    context = {"loop_var": var_sym.name}
+        
+        # Intentar obtener probabilidad
+        try:
+            p_str = self.avg_model.get_probability(exit_predicate, context)
+            p_sympy = self.avg_model.get_probability_sympy(exit_predicate, context)
+            return (p_sympy, p_str)
+        except:
+            # Si no se encuentra, intentar con la condición inversa
+            try:
+                # Para condición "i < n", la probabilidad de salir podría ser modelada como
+                # la probabilidad de que "i >= n" (condición falsa)
+                p_str = self.avg_model.get_probability(condition_str, context)
+                p_sympy = self.avg_model.get_probability_sympy(condition_str, context)
+                # Si obtenemos una probabilidad, asumir que es la probabilidad de que la condición sea falsa (salir)
+                return (p_sympy, p_str)
+            except:
+                return None
+    
     def visitWhile(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """
         Visita un bucle WHILE y aplica las reglas de análisis.
@@ -499,7 +546,61 @@ class WhileRepeatVisitor:
         L = node.get("pos", {}).get("line", 0)
         t = self.iter_sym("while", L)
         
-        # Intentar analizar el cierre del WHILE
+        # Para modo promedio, intentar obtener probabilidad de salida
+        if mode == "avg":
+            exit_prob = self._get_while_exit_probability(node)
+            if exit_prob:
+                p_sympy, p_str = exit_prob
+                # E[#iteraciones] = 1/p para proceso geométrico
+                from sympy import Pow
+                try:
+                    # Calcular 1/p
+                    if isinstance(p_sympy, Rational):
+                        # Si p es una fracción, calcular 1/p directamente
+                        iterations_expr = Rational(1) / p_sympy
+                    else:
+                        # Si p es un símbolo, usar 1/p simbólico
+                        iterations_expr = Pow(p_sympy, -1)
+                    
+                    # Multiplicador para el cuerpo
+                    mult_expr = iterations_expr
+                    
+                    # Si hay multiplicadores externos, integrar
+                    if hasattr(self, 'loop_stack') and self.loop_stack:
+                        outer_mult = self.loop_stack[-1]
+                        if isinstance(outer_mult, Sum):
+                            var_sym = outer_mult.args[1][0]
+                            start_expr = outer_mult.args[1][1]
+                            end_expr = outer_mult.args[1][2]
+                            mult_expr = Sum(iterations_expr, (var_sym, start_expr, end_expr))
+                        else:
+                            mult_expr = iterations_expr * outer_mult
+                    
+                    # Condición: se evalúa (iterations + 1) veces
+                    ck_cond = self.C()
+                    cond_count = iterations_expr + Integer(1)
+                    self.add_row(
+                        line=L,
+                        kind="while",
+                        ck=ck_cond,
+                        count=cond_count,
+                        note=f"Condición del bucle while en línea {L} (avg: E[#] = 1/p, p={p_str})"
+                    )
+                    
+                    # Cuerpo: se ejecuta E[#iteraciones] veces
+                    self.push_multiplier(mult_expr)
+                    
+                    body = node.get("body")
+                    if body:
+                        self.visit(body, mode)
+                    
+                    self.pop_multiplier()
+                    return
+                except Exception as e:
+                    print(f"[WhileRepeatVisitor] Error calculando E[#iteraciones] = 1/p: {e}")
+                    # Fallback: usar símbolo
+        
+        # Intentar analizar el cierre del WHILE (para worst/best o fallback de avg)
         closure_info = self._analyze_while_closure(node)
         
         if closure_info and closure_info.get("success"):
@@ -567,21 +668,29 @@ class WhileRepeatVisitor:
             change_const = change_rule.get("constant", "1")
             initial_val = closure_info.get("initial_value") or f"{var_name}_0"
         else:
-            # Fallback: usar símbolo simbólico t_{while_L}
-            # 1) Condición: se evalúa (t_{while_L} + 1) veces
+            # Fallback: usar símbolo simbólico
+            if mode == "avg":
+                # En promedio, usar símbolo t̄_while_L (esperanza)
+                t_bar = f"\\bar{{t}}_{{while_{L}}}"
+                t_sym = Symbol(f"t_bar_while_{L}", real=True, positive=True)
+                note_text = f"Condición del bucle while en línea {L} (avg: E[#] = {t_bar})"
+            else:
+                # En worst/best, usar símbolo t_while_L
+                t_sym = Symbol(t, real=True)
+                note_text = f"Condición del bucle while en línea {L}"
+            
+            # 1) Condición: se evalúa (t + 1) veces
             ck_cond = self.C()  # C_{k} para evaluar la condición
-            # Convertir t a SymPy
-            t_sym = Symbol(t, real=True)
             cond_count = t_sym + Integer(1)
             self.add_row(
                 line=L,
                 kind="while",
                 ck=ck_cond,
                 count=cond_count,
-                note=f"Condición del bucle while en línea {L}"
+                note=note_text
             )
             
-            # 2) Cuerpo: se ejecuta t_{while_L} veces
+            # 2) Cuerpo: se ejecuta t veces
             self.push_multiplier(t_sym)  # multiplicador simbólico
             
             # Visitar el cuerpo del bucle

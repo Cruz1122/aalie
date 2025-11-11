@@ -18,6 +18,7 @@ import { getApiKey } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 import { calculateBigO, getSavedCase, saveCase } from "@/lib/polynomial";
+import { getBestAsymptoticNotation as getBestNotation } from "@/lib/asymptotic-notation";
 
 type ClassifyResponse = { kind: "iterative" | "recursive" | "hybrid" | "unknown" };
 
@@ -45,6 +46,7 @@ export default function AnalyzerPage() {
   const [data, setData] = useState<{
     worst: AnalyzeOpenResponse | null;
     best: AnalyzeOpenResponse | null;
+    avg?: AnalyzeOpenResponse | null;
   }>(() => {
     // Cargar resultados desde sessionStorage si vienen del editor manual o del chatbot
     if (globalThis.window !== undefined) {
@@ -58,7 +60,7 @@ export default function AnalyzerPage() {
           globalThis.window.sessionStorage.removeItem('analyzerCode');
           // Si es el formato antiguo (solo worst), convertirlo al nuevo formato
           if (parsed && !parsed.worst && !parsed.best) {
-            return { worst: parsed, best: null };
+            return { worst: parsed, best: null, avg: null };
           }
           return parsed;
         } catch (error) {
@@ -69,7 +71,7 @@ export default function AnalyzerPage() {
         }
       }
     }
-    return { worst: null, best: null };
+    return { worst: null, best: null, avg: null };
   });
 
   // Estados para el modal
@@ -232,8 +234,20 @@ export default function AnalyzerPage() {
       // Mensaje de carga actualizado (ya no depende de API key para simplificación)
       setAnalysisMessage("Cerrando sumatorias...");
       
-      // Realizar una sola petición que trae ambos casos (worst y best)
-      const analyzeBody: { source: string; mode: string; api_key?: string } = { source, mode: "all" };
+      // Realizar una sola petición que trae todos los casos (worst, best y avg)
+      const analyzeBody: { 
+        source: string; 
+        mode: string; 
+        api_key?: string;
+        avgModel?: { mode: string; predicates?: Record<string, string> };
+      } = { 
+        source, 
+        mode: "all",
+        avgModel: {
+          mode: "uniform",
+          predicates: {}
+        }
+      };
       if (apiKey) {
         analyzeBody.api_key = apiKey;  // Mantener por compatibilidad, pero backend ya no lo usa para simplificación
       }
@@ -245,15 +259,16 @@ export default function AnalyzerPage() {
       }).then(r => r.json());
 
       // Animar progreso mientras se analiza (espera a que analyzePromise se resuelva)
-      const analyzeRes = await animateProgress(50, 70, 2000, setAnalysisProgress, analyzePromise) as {
+      const analyzeRes = await animateProgress(50, 95, 2500, setAnalysisProgress, analyzePromise) as {
         ok: boolean;
         worst?: AnalyzeOpenResponse;
         best?: AnalyzeOpenResponse;
+        avg?: AnalyzeOpenResponse;
         errors?: Array<{ message: string; line?: number; column?: number }>;
       };
 
       setAnalysisMessage("Generando forma polinómica...");
-      await animateProgress(70, 80, 200, setAnalysisProgress);
+      await animateProgress(95, 100, 200, setAnalysisProgress);
 
       // Verificar errores
       if (!analyzeRes.ok) {
@@ -273,10 +288,10 @@ export default function AnalyzerPage() {
         return;
       }
 
-      // Verificar que tenemos ambos casos
+      // Verificar que tenemos worst y best (avg es opcional)
       if (!analyzeRes.worst || !analyzeRes.best) {
-        console.error("Error: No se recibieron ambos casos en la respuesta", analyzeRes);
-        setAnalysisError("Error: No se pudieron obtener ambos casos del análisis");
+        console.error("Error: No se recibieron worst y best en la respuesta", analyzeRes);
+        setAnalysisError("Error: No se pudieron obtener worst y best del análisis");
         setTimeout(() => {
           setAnalyzing(false);
           setAnalysisProgress(0);
@@ -288,12 +303,12 @@ export default function AnalyzerPage() {
         return;
       }
 
-      // 5) Finalizar (80-100%)
-      setAnalysisMessage("Finalizando análisis...");
-      await animateProgress(80, 100, 200, setAnalysisProgress);
-
-      // 6) Actualizar los datos con ambos casos
-      setData({ worst: analyzeRes.worst, best: analyzeRes.best });
+      // 6) Actualizar los datos con todos los casos (worst, best y avg si está disponible)
+      setData({ 
+        worst: analyzeRes.worst, 
+        best: analyzeRes.best,
+        avg: analyzeRes.avg  // Puede ser undefined si falló, pero el frontend lo maneja
+      });
 
       // 7) Mostrar completado y esperar antes de cerrar
       setAnalysisMessage("Análisis completo");
@@ -333,8 +348,8 @@ export default function AnalyzerPage() {
   };
 
   const [openGeneral, setOpenGeneral] = useState(false);
-  const [generalProcedureCase, setGeneralProcedureCase] = useState<'worst' | 'best'>('worst');
-  const handleViewGeneralProcedure = (caseType: 'worst' | 'best' = 'worst') => {
+  const [generalProcedureCase, setGeneralProcedureCase] = useState<'worst' | 'best' | 'average'>('worst');
+  const handleViewGeneralProcedure = (caseType: 'worst' | 'best' | 'average' = 'worst') => {
     setGeneralProcedureCase(caseType);
     setOpenGeneral(true);
   };
@@ -342,33 +357,76 @@ export default function AnalyzerPage() {
   type CaseType = 'worst' | 'average' | 'best';
 
   // Helper para obtener Big-O de los datos según el caso
-  const getBigOFromData = (caseType: 'worst' | 'best' = 'worst'): string => {
-    const analysisData = caseType === 'worst' ? data?.worst : data?.best;
+  // Helper para obtener la mejor notación asintótica disponible según el caso
+  // Usa la lógica de priorización: Θ > (Ω,O) > solo O > solo Ω
+  const getBestAsymptoticNotation = (caseType: 'worst' | 'best' | 'average') => {
+    const analysisData = caseType === 'worst' ? data?.worst : 
+                        caseType === 'best' ? data?.best :
+                        caseType === 'average' ? data?.avg : null;
+    
+    if (!analysisData?.ok) {
+      return {
+        notation: caseType === 'best' ? 'Ω(—)' : caseType === 'worst' ? 'O(—)' : 'Θ(—)',
+        type: 'single-bound' as const,
+        boundType: (caseType === 'best' ? 'lower' : caseType === 'worst' ? 'upper' : 'exact') as const,
+        hasHypothesis: false,
+        isConditional: false,
+        chips: [],
+      };
+    }
+    
+    const totals = analysisData.totals as {
+      big_theta?: string;
+      big_o?: string;
+      big_omega?: string;
+      avg_model_info?: { mode: string; note: string };
+      hypotheses?: string[];
+      symbols?: Record<string, string>;
+    };
+    
+    return getBestNotation(caseType, totals);
+  };
+
+  // Helpers legacy (mantener para compatibilidad si se usan en otros lugares)
+  const getBigOFromData = (caseType: 'worst' | 'best' | 'average' = 'worst'): string => {
+    const analysisData = caseType === 'worst' ? data?.worst : 
+                        caseType === 'best' ? data?.best :
+                        caseType === 'average' ? data?.avg : null;
     if (!analysisData?.ok) return 'O(—)';
-    // Usar notación asintótica del backend (calculada con SymPy) si está disponible
     const totals = analysisData.totals as { big_o?: string } | undefined;
     if (totals?.big_o) {
       return totals.big_o;
     }
-    // Fallback: calcular desde T_polynomial o T_open
     const base = analysisData.totals?.T_polynomial ?? analysisData.totals.T_open;
     return calculateBigO(base);
   };
 
-  // Helper para obtener Big Omega de los datos según el caso
-  const getBigOmegaFromData = (caseType: 'worst' | 'best' = 'best'): string => {
-    const analysisData = caseType === 'worst' ? data?.worst : data?.best;
+  const getBigOmegaFromData = (caseType: 'worst' | 'best' | 'average' = 'best'): string => {
+    const analysisData = caseType === 'worst' ? data?.worst : 
+                        caseType === 'best' ? data?.best :
+                        caseType === 'average' ? data?.avg : null;
     if (!analysisData?.ok) return 'Ω(—)';
-    // Usar notación asintótica del backend (calculada con SymPy) si está disponible
     const totals = analysisData.totals as { big_omega?: string } | undefined;
     if (totals?.big_omega) {
       return totals.big_omega;
     }
-    // Fallback: calcular desde T_polynomial o T_open (usar calculateBigO como aproximación)
     const base = analysisData.totals?.T_polynomial ?? analysisData.totals.T_open;
     const bigO = calculateBigO(base);
-    // Convertir O a Ω (mismo valor para mejor caso)
     return bigO.replace('O(', 'Ω(');
+  };
+
+  const getBigThetaFromData = (caseType: 'worst' | 'best' | 'average' = 'worst'): string => {
+    const analysisData = caseType === 'worst' ? data?.worst : 
+                        caseType === 'best' ? data?.best :
+                        caseType === 'average' ? data?.avg : null;
+    if (!analysisData?.ok) return 'Θ(—)';
+    const totals = analysisData.totals as { big_theta?: string } | undefined;
+    if (totals?.big_theta) {
+      return totals.big_theta;
+    }
+    const base = analysisData.totals?.T_polynomial ?? analysisData.totals.T_open;
+    const bigO = calculateBigO(base);
+    return bigO.replace('O(', 'Θ(');
   };
 
   // Helper para obtener el label del caso
@@ -421,7 +479,7 @@ export default function AnalyzerPage() {
   };
 
   const renderLineCostContent = () => {
-    if (!data || (!data.worst && !data.best)) {
+    if (!data || (!data.worst && !data.best && !data.avg)) {
       return (
         <div className="flex-1 flex items-center justify-center text-slate-400">
           <div className="text-center">
@@ -434,7 +492,8 @@ export default function AnalyzerPage() {
 
     // Obtener datos según el caso seleccionado
     const currentData = selectedCase === 'worst' ? data?.worst : 
-                       selectedCase === 'best' ? data?.best : null;
+                       selectedCase === 'best' ? data?.best :
+                       selectedCase === 'average' ? data?.avg : null;
 
     if (!currentData || !currentData.ok) {
       return (
@@ -603,10 +662,29 @@ export default function AnalyzerPage() {
                     <div className="h-full flex flex-col items-center justify-center gap-2">
                       <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/30">
                         <div className="scale-110">
-                          <Formula latex={getBigOmegaFromData('best')} />
+                          <Formula latex={getBestAsymptoticNotation('best').notation} />
                         </div>
                       </div>
                       <h3 className="font-semibold text-green-300 mb-1">Mejor caso</h3>
+                      {getBestAsymptoticNotation('best').chips.length > 0 && (
+                        <div className="flex flex-wrap gap-1 justify-center mt-1">
+                          {getBestAsymptoticNotation('best').chips.map((chip, idx) => (
+                            <span
+                              key={idx}
+                              className={`text-[9px] px-1.5 py-0.5 rounded border ${
+                                chip.type === 'hypothesis' || chip.type === 'conditional'
+                                  ? 'bg-amber-500/20 text-amber-200 border-amber-500/30'
+                                  : chip.type === 'model'
+                                  ? 'bg-blue-500/20 text-blue-200 border-blue-500/30'
+                                  : 'bg-slate-500/20 text-slate-300 border-slate-500/30'
+                              }`}
+                              title={chip.type === 'bound-only' ? 'Solo se conoce esta cota' : undefined}
+                            >
+                              {chip.label}
+                            </span>
+                          ))}
+                        </div>
+                      )}
 
                       <button
                         onClick={() => handleViewGeneralProcedure('best')}
@@ -619,21 +697,38 @@ export default function AnalyzerPage() {
                       </button>
                     </div>
                   </div>
-                  <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(234,179,8,0.3)] hover:shadow-[0_12px_40px_0_rgba(234,179,8,0.4)]">
+                  <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(234,179,8,0.3)] hover:shadow-[0_12px_40px_0_rgba(234,179,8,0.4)] relative">
+                    {/* Ícono de ayuda en esquina superior derecha */}
+                    {data?.avg?.totals?.avg_model_info && (
+                      <div className="absolute top-2 right-2 group">
+                        <button
+                          className="w-5 h-5 rounded-full bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/30 flex items-center justify-center text-xs font-semibold transition-colors"
+                          title={data.avg.totals.avg_model_info.note}
+                        >
+                          ?
+                        </button>
+                        {/* Tooltip */}
+                        <div className="absolute right-0 top-6 w-48 p-2 bg-slate-800 border border-yellow-500/30 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-xs text-left">
+                          <div className="text-yellow-300 font-semibold mb-1">Modelo:</div>
+                          <div className="text-slate-300">{data.avg.totals.avg_model_info.note}</div>
+                        </div>
+                      </div>
+                    )}
                     <div className="h-full flex flex-col items-center justify-center gap-2">
                       <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30">
                         <div className="scale-110">
-                          <Formula latex={"O(—)"} />
+                          <Formula latex={getBestAsymptoticNotation('average').notation} />
                         </div>
                       </div>
                       <h3 className="font-semibold text-yellow-300 mb-1">Caso promedio</h3>
                       <button
-                        disabled
-                        className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60"
-                        title="Próximamente"
+                        onClick={() => handleViewGeneralProcedure('average')}
+                        disabled={!data?.avg?.ok}
+                        className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors ${data?.avg?.ok ? 'text-white glass-secondary hover:bg-sky-500/20' : 'text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60'}`}
+                        title={data?.avg?.ok ? 'Ver procedimiento general (caso promedio)' : 'Ejecuta el análisis para ver el procedimiento'}
                       >
                         <span className="material-symbols-outlined text-sm">visibility</span>
-                        <span>Ver Procedimiento (próximamente)</span>
+                        <span>Ver Procedimiento</span>
                       </button>
                     </div>
                   </div>
@@ -641,10 +736,29 @@ export default function AnalyzerPage() {
                     <div className="h-full flex flex-col items-center justify-center gap-2">
                       <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30">
                         <div className="scale-110">
-                          <Formula latex={getBigOFromData('worst')} />
+                          <Formula latex={getBestAsymptoticNotation('worst').notation} />
                         </div>
                       </div>
                       <h3 className="font-semibold text-red-300 mb-1">Peor caso</h3>
+                      {getBestAsymptoticNotation('worst').chips.length > 0 && (
+                        <div className="flex flex-wrap gap-1 justify-center mt-1">
+                          {getBestAsymptoticNotation('worst').chips.map((chip, idx) => (
+                            <span
+                              key={idx}
+                              className={`text-[9px] px-1.5 py-0.5 rounded border ${
+                                chip.type === 'hypothesis' || chip.type === 'conditional'
+                                  ? 'bg-amber-500/20 text-amber-200 border-amber-500/30'
+                                  : chip.type === 'model'
+                                  ? 'bg-blue-500/20 text-blue-200 border-blue-500/30'
+                                  : 'bg-slate-500/20 text-slate-300 border-slate-500/30'
+                              }`}
+                              title={chip.type === 'bound-only' ? 'Solo se conoce esta cota' : undefined}
+                            >
+                              {chip.label}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       <button
                         onClick={() => handleViewGeneralProcedure('worst')}
                         disabled={!data?.worst?.ok}
@@ -668,13 +782,17 @@ export default function AnalyzerPage() {
         open={open}
         onClose={() => setOpen(false)}
         selectedLine={selectedLine}
-        analysisData={selectedCase === 'worst' ? data?.worst : selectedCase === 'best' ? data?.best : undefined}
+        analysisData={selectedCase === 'worst' ? data?.worst : 
+                      selectedCase === 'best' ? data?.best :
+                      selectedCase === 'average' ? data?.avg : undefined}
       />
       {/* Modal de procedimiento general */}
       <GeneralProcedureModal
         open={openGeneral}
         onClose={() => setOpenGeneral(false)}
-        data={generalProcedureCase === 'worst' ? data?.worst : data?.best}
+        data={generalProcedureCase === 'worst' ? data?.worst : 
+              generalProcedureCase === 'best' ? data?.best :
+              generalProcedureCase === 'average' ? data?.avg : undefined}
       />
 
       {/* Modal AST */}

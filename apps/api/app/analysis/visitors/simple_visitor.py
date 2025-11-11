@@ -107,7 +107,7 @@ class SimpleVisitor:
         ck = " + ".join(ck_terms)
         self.add_row(line, "call", ck, Integer(1))
     
-    def visitReturn(self, node: Dict[str, Any], _mode: str = "worst") -> None:
+    def visitReturn(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """
         Visita un return y aplica las reglas de análisis.
         
@@ -120,7 +120,54 @@ class SimpleVisitor:
         ck_terms.append(self.C())  # costo del return
         
         ck = " + ".join(ck_terms)
-        self.add_row(line, "return", ck, Integer(1))
+        
+        # En caso promedio con early return en bucle:
+        # - return i (éxito): 1 (siempre ocurre en Modelo A, no multiplicado por E[iter])
+        # - return -1 (fracaso): 0 (nunca ocurre en Modelo A)
+        count = Integer(1)
+        note = None
+        
+        if mode == "avg":
+            # Detectar si es return de éxito o fracaso
+            value_expr = node.get("value")
+            is_success = False
+            is_failure = False
+            
+            # Verificar si el return es -1 (fracaso)
+            if isinstance(value_expr, dict):
+                value_type = value_expr.get("type", "").lower()
+                # Verificar Unary con op="-"
+                if value_type in ("unary", "Unary") and value_expr.get("op") == "-":
+                    arg = value_expr.get("arg", {})
+                    if isinstance(arg, dict):
+                        arg_type = arg.get("type", "").lower()
+                        # Verificar si el argumento es un literal/number con value=1
+                        if arg_type in ("literal", "number", "Literal", "Number") and arg.get("value") == 1:
+                            is_failure = True
+                # Verificar si es directamente un número -1
+                elif value_type in ("number", "Number", "literal", "Literal") and value_expr.get("value") == -1:
+                    is_failure = True
+                # Verificar si es un identificador (éxito)
+                elif value_type in ("identifier", "Identifier"):
+                    # return i (éxito) - variable positiva
+                    is_success = True
+            
+            # Verificar si estamos dentro de un bucle con early return
+            has_active_loop = hasattr(self, 'loop_stack') and len(self.loop_stack) > 0
+            
+            # En Modelo A (uniforme condicionado a éxito):
+            # - return i (éxito dentro del bucle): 1 (siempre ocurre, no multiplicado por E[iter])
+            # - return -1 (fracaso, dentro o fuera del bucle): 0 (nunca ocurre)
+            if is_failure:
+                count = Integer(0)
+                note = "avg: fracaso (nunca ocurre con éxito seguro)"
+            elif is_success and has_active_loop:
+                # return i dentro del bucle: siempre ocurre exactamente una vez (no multiplicado por E[iter])
+                count = Integer(1)
+                # La nota se agregará en IfVisitor si es necesario, aquí solo marcamos éxito
+                note = "avg: éxito seguro"
+        
+        self.add_row(line, "return", ck, count, note=note)
     
     def visitPrint(self, node: Dict[str, Any], _mode: str = "worst") -> None:
         """

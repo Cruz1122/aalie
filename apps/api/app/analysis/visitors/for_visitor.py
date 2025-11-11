@@ -261,9 +261,9 @@ class ForVisitor:
         a_str = self._ast_expr_to_readable_str(start_expr)
         b_str = self._ast_expr_to_readable_str(end_expr)
         
-        # Detectar si el cuerpo tiene returns (para best case)
+        # Detectar si el cuerpo tiene returns (para best case y avg case)
         has_return = False
-        if mode == "best" and body:
+        if body:
             has_return = self._has_return_in_body(body)
         
         # 1) Cabecera del for
@@ -274,6 +274,25 @@ class ForVisitor:
             # Evaluación inicial + 1 evaluación de condición = 2
             header_count = Integer(2)
             header_note = f"Cabecera del bucle for {var}={a_str}..{b_str} (best: early return en primera iteración)"
+        elif mode == "avg" and has_return:
+            # En caso promedio con early return: E[iter] = (n+1)/2
+            # Cabecera: E[iter] + 1 = (n+1)/2 + 1 = (n+3)/2
+            from sympy import Rational, Symbol as SymSymbol
+            # Para bucle 1..n: E[iter] = (n+1)/2
+            # Usar la variable principal del algoritmo (normalmente 'n')
+            try:
+                n_sym = SymSymbol(self.variable if hasattr(self, 'variable') else 'n', integer=True, positive=True)
+                # E[iter] = (n+1)/2
+                e_iter = (n_sym + Integer(1)) / Integer(2)
+                # Cabecera: E[iter] + 1 = (n+1)/2 + 1 = (n+3)/2
+                header_count = e_iter + Integer(1)
+                header_note = f"Cabecera del bucle for {var}={a_str}..{b_str} (avg: E[iter] + 1)"
+            except:
+                # Fallback: usar expresión simbólica genérica
+                n_sym = SymSymbol('n', integer=True, positive=True)
+                e_iter = (n_sym + Integer(1)) / Integer(2)
+                header_count = e_iter + Integer(1)
+                header_note = f"Cabecera del bucle for {var}={a_str}..{b_str} (avg: E[iter] + 1)"
         else:
             # Cabecera normal: (b - a + 2) evaluaciones
             # La cabecera se evalúa: evaluación inicial + b - a evaluaciones de condición + 1 final = (b - a + 2)
@@ -302,6 +321,18 @@ class ForVisitor:
         if mode == "best" and has_return:
             # En best case con early return: solo 1 iteración (el return se ejecuta en la primera)
             mult = Integer(1)
+        elif mode == "avg" and has_return:
+            # En caso promedio con early return: E[iter] = (n+1)/2
+            # Usar E[iter] como multiplicador en lugar de Σ_{i=1}^{n} 1
+            from sympy import Symbol as SymSymbol
+            try:
+                # E[iter] = (n+1)/2
+                n_sym = SymSymbol(self.variable if hasattr(self, 'variable') else 'n', integer=True, positive=True)
+                mult = (n_sym + Integer(1)) / Integer(2)
+            except:
+                # Fallback: usar expresión simbólica genérica
+                n_sym = SymSymbol('n', integer=True, positive=True)
+                mult = (n_sym + Integer(1)) / Integer(2)
         else:
             # Multiplicador normal: Σ_{v=a}^{b} 1
             # El cuerpo se ejecuta (b - a + 1) veces (iteraciones)

@@ -32,7 +32,10 @@ const deriveBigO = (base: string): string => {
 };
 
 export default function GeneralProcedureModal({ open, onClose, data }: Readonly<GeneralProcedureModalProps>) {
-  const tOpen = data?.totals?.T_open || "";
+  // Detectar si es caso promedio
+  const isAvgCase = data?.totals?.avg_model_info !== undefined;
+  
+  const tOpen = data?.totals?.A_of_n || data?.totals?.T_open || "";
   const rawPoly = (data?.totals as { T_polynomial?: string })?.T_polynomial;
   const normPoly = normalizePolynomial(rawPoly);
   
@@ -42,6 +45,10 @@ export default function GeneralProcedureModal({ open, onClose, data }: Readonly<
     big_o?: string;
     big_omega?: string;
     big_theta?: string;
+    avg_model_info?: { mode: string; note: string };
+    hypotheses?: string[];
+    notes?: string[];
+    procedure?: string[];  // Pasos del procedimiento (para caso promedio)
   } | undefined;
   
   const bigO = totals?.big_o || deriveBigO(normPoly && normPoly !== "0" ? normPoly : tOpen);
@@ -50,8 +57,19 @@ export default function GeneralProcedureModal({ open, onClose, data }: Readonly<
 
   const grouped = useMemo(() => {
     if (!data?.byLine) return "";
-    return data.byLine.map(line => `${line.ck} \\cdot (${line.count})`).join(" + ");
+    // Para caso promedio, usar expectedRuns si está disponible
+    return data.byLine.map(line => {
+      const count = line.expectedRuns || line.count;
+      return `${line.ck} \\cdot (${count})`;
+    }).join(" + ");
   }, [data?.byLine]);
+  
+  // Obtener pasos del procedimiento para caso promedio desde procedure
+  const avgProcedureSteps = useMemo(() => {
+    if (!isAvgCase || !totals?.procedure) return [];
+    // Los pasos del procedimiento para promedio están en totals.procedure
+    return totals.procedure;
+  }, [isAvgCase, totals?.procedure]);
 
   if (!open) return null;
 
@@ -64,21 +82,44 @@ export default function GeneralProcedureModal({ open, onClose, data }: Readonly<
           <button onClick={onClose} className="text-slate-300 hover:text-white transition-colors p-1 hover:bg-white/10 rounded" aria-label="Cerrar modal">✕</button>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-custom">
-          {/* T_open */}
+          {/* T_open o A(n) */}
           <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-            <h4 className="text-white font-semibold mb-2">Ecuación de Eficiencia T(n)</h4>
+            <h4 className="text-white font-semibold mb-2">
+              {isAvgCase ? "Ecuación de Eficiencia Promedio A(n)" : "Ecuación de Eficiencia T(n)"}
+            </h4>
             <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto">
               <Formula latex={tOpen} display />
             </div>
+            {isAvgCase && totals?.avg_model_info && (
+              <p className="text-slate-300 mt-2 text-sm">
+                Modelo: {totals.avg_model_info.note}
+              </p>
+            )}
           </div>
 
           {/* Forma polinómica */}
           <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-            <h4 className="text-white font-semibold mb-2">Forma polinómica T(n)</h4>
+            <h4 className="text-white font-semibold mb-2">
+              {isAvgCase ? "Forma polinómica A(n)" : "Forma polinómica T(n)"}
+            </h4>
             <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto">
               <Formula latex={(normPoly && normPoly !== "0") ? normPoly : grouped} display />
             </div>
           </div>
+
+          {/* Pasos del procedimiento para caso promedio */}
+          {isAvgCase && avgProcedureSteps.length > 0 && (
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+              <h4 className="text-white font-semibold mb-3">Procedimiento de Caso Promedio</h4>
+              <div className="space-y-3">
+                {avgProcedureSteps.map((step, index) => (
+                  <div key={index} className="bg-slate-900/50 p-3 rounded border border-white/10">
+                    <Formula latex={step} display />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Notación asintótica */}
           <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
@@ -97,6 +138,16 @@ export default function GeneralProcedureModal({ open, onClose, data }: Readonly<
                 <Formula latex={bigTheta} display />
               </div>
             </div>
+            {isAvgCase && totals?.hypotheses && totals.hypotheses.length > 0 && (
+              <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded">
+                <div className="text-sm text-yellow-300 font-semibold mb-1">Hipótesis:</div>
+                <ul className="text-sm text-yellow-200 space-y-1">
+                  {totals.hypotheses.map((hyp, idx) => (
+                    <li key={idx}>• {hyp}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       </div>

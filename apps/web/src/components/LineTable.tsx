@@ -46,6 +46,9 @@ function Badge({ kind }: { readonly kind: LineCost["kind"] }) {
 }
 
 export default function LineTable({ rows, onViewProcedure }: Readonly<LineTableProps>) {
+  // Detectar si estamos en modo promedio (si alguna fila tiene expectedRuns)
+  const isAvgMode = rows.some(row => row.expectedRuns !== undefined);
+  
   return (
     <div className="overflow-auto">
       <table className="w-full text-sm">
@@ -54,7 +57,13 @@ export default function LineTable({ rows, onViewProcedure }: Readonly<LineTableP
             <th className="text-center p-2 font-semibold text-slate-300">#</th>
             <th className="text-center p-2 font-semibold text-slate-300">Tipo</th>
             <th className="text-center p-2 font-semibold text-slate-300">C<sub>k</sub></th>
-            <th className="text-center p-2 font-semibold text-slate-300"># ejecuciones</th>
+            <th className="text-center p-2 font-semibold text-slate-300">
+              {isAvgMode ? (
+                <Formula latex="E[\# \text{ ejecuciones}]" />
+              ) : (
+                "# ejecuciones"
+              )}
+            </th>
             {onViewProcedure && (
               <th className="text-center p-2 font-semibold text-slate-300">Acción</th>
             )}
@@ -71,7 +80,7 @@ export default function LineTable({ rows, onViewProcedure }: Readonly<LineTableP
                 <Formula latex={row.ck} />
               </td>
               <td className="p-2 text-center whitespace-nowrap text-slate-200">
-                <Formula latex={row.count} />
+                <Formula latex={row.expectedRuns || row.count} />
               </td>
               {onViewProcedure && (
                 <td className="p-2 text-center">

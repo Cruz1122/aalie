@@ -9,6 +9,7 @@ from .visitors.while_repeat_visitor import WhileRepeatVisitor
 from .visitors.simple_visitor import SimpleVisitor
 from .summation_closer import SummationCloser
 from .complexity_classes import ComplexityClasses
+from .avg_model import AvgModel
 
 
 class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor, SimpleVisitor):
@@ -95,7 +96,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         
         return s
     
-    def analyze(self, ast: Dict[str, Any], mode: str = "worst", api_key: Optional[str] = None) -> Dict[str, Any]:
+    def analyze(self, ast: Dict[str, Any], mode: str = "worst", api_key: Optional[str] = None, avg_model: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Analiza un AST completo y retorna el resultado.
         
@@ -103,12 +104,30 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             ast: AST del algoritmo a analizar
             mode: Modo de análisis ("worst", "best", "avg")
             api_key: API Key (ignorado, mantenido por compatibilidad)
+            avg_model: Diccionario con configuración del modelo probabilístico para caso promedio
+                      {"mode": "uniform"|"symbolic", "predicates": {...}}
             
         Returns:
             Resultado del análisis con byLine, T_open, procedure, etc.
         """
         # Limpiar estado previo
         self.clear()
+        
+        # Establecer modo
+        self.mode = mode
+        
+        # Crear instancia de AvgModel si mode == "avg"
+        if mode == "avg":
+            if avg_model:
+                self.avg_model = AvgModel(
+                    mode=avg_model.get("mode", "uniform"),
+                    predicates=avg_model.get("predicates", {})
+                )
+            else:
+                # Por defecto, modelo uniforme sin predicados
+                self.avg_model = AvgModel(mode="uniform", predicates={})
+        else:
+            self.avg_model = None
         
         # Visitar el AST completo
         self.visit(ast, mode)
@@ -126,12 +145,63 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             count_raw_expr = row.get("count_raw_expr")
             count_raw_latex = row.get("count_raw", "1")
             
+            # En caso promedio con early return, ajustar returns ANTES de procesar
+            # return i (éxito): siempre ocurre exactamente 1 vez, no E[iter] veces
+            # return -1 (fracaso): nunca ocurre (0)
+            if mode == "avg" and row.get("kind") == "return":
+                note = row.get("note", "")
+                from sympy import Integer
+                # Verificar fracaso PRIMERO (más específico)
+                # return -1: nunca ocurre (0)
+                if note and ("fracaso" in note or "nunca ocurre" in note):
+                    # return -1: nunca ocurre (0)
+                    row["count_raw_expr"] = Integer(0)
+                    row["count_raw"] = "0"
+                    row["count"] = "0"
+                    row["expectedRuns"] = "0"
+                    # Generar procedimiento
+                    row["procedure"] = [
+                        f"\\text{{Esperanza de ejecuciones para línea {row.get('line', '?')}: }} E[N_{{{row.get('line', '?')}}}] = 0",
+                        "\\text{Resultado: } 0"
+                    ]
+                    continue  # Saltar procesamiento normal
+                # Verificar éxito (dentro o fuera del bucle)
+                # Verificar que sea éxito real, no "éxito seguro" en contexto de fracaso
+                elif note and ("éxito seguro" in note or ("éxito" in note and "siempre ocurre" in note and "fracaso" not in note)):
+                    # return i: siempre ocurre 1 vez, no multiplicado por E[iter]
+                    row["count_raw_expr"] = Integer(1)
+                    row["count_raw"] = "1"
+                    row["count"] = "1"
+                    row["expectedRuns"] = "1"
+                    # Generar procedimiento
+                    row["procedure"] = [
+                        f"\\text{{Esperanza de ejecuciones para línea {row.get('line', '?')}: }} E[N_{{{row.get('line', '?')}}}] = 1",
+                        "\\text{Resultado: } 1"
+                    ]
+                    continue  # Saltar procesamiento normal
+            
             # Preferir usar count_raw_expr directamente si está disponible
             if count_raw_expr is not None:
                 try:
+                    # Actualizar count_raw para reflejar count_raw_expr (puede incluir probabilidades)
+                    # Esto asegura que count_raw muestre la expresión con probabilidad antes del cierre
+                    try:
+                        count_raw_latex_from_expr = latex(count_raw_expr)
+                        if isinstance(count_raw_latex_from_expr, str):
+                            row["count_raw"] = count_raw_latex_from_expr
+                            # También actualizar expectedRuns en modo promedio para que refleje la probabilidad
+                            if mode == "avg":
+                                row["expectedRuns"] = count_raw_latex_from_expr
+                    except:
+                        pass  # Si falla, mantener count_raw original
+                    
                     # Pasar el objeto SymPy directamente a close_summation
                     closed_count, steps = closer.close_summation(count_raw_expr, variable)
                     row["count"] = closed_count
+                    
+                    # En modo promedio, actualizar expectedRuns con la expresión cerrada
+                    if mode == "avg":
+                        row["expectedRuns"] = closed_count
                     
                     # Guardar la expresión SymPy evaluada para usar en build_t_open_expr
                     from sympy import simplify
@@ -140,15 +210,27 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     row["count_expr"] = count_evaluated  # Expresión SymPy evaluada
                     
                     # Generar procedimiento paso a paso
-                    if steps:
-                        row["procedure"] = steps
-                    else:
-                        # Si no hay pasos, crear uno básico
-                        count_raw_latex_str = latex(count_raw_expr) if hasattr(count_raw_expr, '__str__') else str(count_raw_expr)
-                        row["procedure"] = [
-                            f"\\text{{Expresión original: }} {count_raw_latex_str}",
-                            f"\\text{{Resultado: }} {closed_count}"
+                    if mode == "avg":
+                        # Para caso promedio, agregar explicación de E[N_ℓ]
+                        count_raw_latex_str = row.get("count_raw", latex(count_raw_expr) if hasattr(count_raw_expr, '__str__') else str(count_raw_expr))
+                        procedure_steps = [
+                            f"\\text{{Esperanza de ejecuciones para línea {row.get('line', '?')}: }} E[N_{{{row.get('line', '?')}}}] = {count_raw_latex_str}"
                         ]
+                        if steps:
+                            procedure_steps.extend(steps)
+                        else:
+                            procedure_steps.append(f"\\text{{Resultado: }} E[N_{{{row.get('line', '?')}}}] = {closed_count}")
+                        row["procedure"] = procedure_steps
+                    else:
+                        # Para worst/best, procedimiento normal
+                        if steps:
+                            row["procedure"] = steps
+                        else:
+                            count_raw_latex_str = row.get("count_raw", latex(count_raw_expr) if hasattr(count_raw_expr, '__str__') else str(count_raw_expr))
+                            row["procedure"] = [
+                                f"\\text{{Expresión original: }} {count_raw_latex_str}",
+                                f"\\text{{Resultado: }} {closed_count}"
+                            ]
                     continue
                 except Exception as e:
                     print(f"[IterativeAnalyzer] Error cerrando sumatoria con Expr para {count_raw_expr}: {e}")
@@ -169,26 +251,49 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     print(f"[IterativeAnalyzer] Error convirtiendo count_raw_expr a LaTeX: {e}")
                     # Fallback: usar count_raw si está disponible
                     if not isinstance(count_raw_latex, str):
-                        count_raw_latex = "1"
+                        # Si count_raw_expr es 0, mantener "0"
+                        if count_raw_expr == 0 or (hasattr(count_raw_expr, '__eq__') and count_raw_expr == 0):
+                            count_raw_latex = "0"
+                        else:
+                            count_raw_latex = "1"
             
             # Asegurar que count_raw_latex sea un string
+            # Si count_raw es "0", mantener "0", no convertir a "1"
             if not isinstance(count_raw_latex, str):
-                count_raw_latex = str(count_raw_latex) if count_raw_latex is not None else "1"
+                if count_raw_latex == 0 or (hasattr(count_raw_latex, '__eq__') and count_raw_latex == 0):
+                    count_raw_latex = "0"
+                else:
+                    count_raw_latex = str(count_raw_latex) if count_raw_latex is not None else "1"
             
             # Cerrar sumatoria (trabaja con LaTeX por ahora, pero recibe SymPy internamente)
             try:
                 closed_count, steps = closer.close_summation(count_raw_latex, variable)
                 row["count"] = closed_count
                 
+                # En modo promedio, actualizar expectedRuns con la expresión cerrada
+                if mode == "avg":
+                    row["expectedRuns"] = closed_count
+                
                 # Generar procedimiento paso a paso
-                if steps:
-                    row["procedure"] = steps
-                else:
-                    # Si no hay pasos, crear uno básico
-                    row["procedure"] = [
-                        f"\\text{{Expresión original: }} {count_raw_latex}",
-                        f"\\text{{Resultado: }} {closed_count}"
+                if mode == "avg":
+                    # Para caso promedio, agregar explicación de E[N_ℓ]
+                    procedure_steps = [
+                        f"\\text{{Esperanza de ejecuciones para línea {row.get('line', '?')}: }} E[N_{{{row.get('line', '?')}}}] = {count_raw_latex}"
                     ]
+                    if steps:
+                        procedure_steps.extend(steps)
+                    else:
+                        procedure_steps.append(f"\\text{{Resultado: }} E[N_{{{row.get('line', '?')}}}] = {closed_count}")
+                    row["procedure"] = procedure_steps
+                else:
+                    # Para worst/best, procedimiento normal
+                    if steps:
+                        row["procedure"] = steps
+                    else:
+                        row["procedure"] = [
+                            f"\\text{{Expresión original: }} {count_raw_latex}",
+                            f"\\text{{Resultado: }} {closed_count}"
+                        ]
             except Exception as e:
                 print(f"[IterativeAnalyzer] Error cerrando sumatoria para {count_raw_latex}: {e}")
                 import traceback
@@ -203,6 +308,10 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         
         # Calcular T_polynomial: agrupar términos con C_k (para mostrar estructura)
         self._calculate_t_polynomial_fallback()
+        
+        # Generar procedimiento general para caso promedio
+        if mode == "avg":
+            self._generate_avg_procedure()
         
         # Calcular notaciones asintóticas usando la expresión SymPy directamente
         if t_open_expr is not None:
@@ -287,9 +396,31 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                                 dominant_latex = "1"
                             
                             # Construir notaciones asintóticas
-                            self.big_o = f"O({dominant_latex})"
-                            self.big_omega = f"\\Omega({dominant_latex})"
-                            self.big_theta = f"\\Theta({dominant_latex})"
+                            # Para caso promedio con símbolos, agregar hipótesis
+                            if mode == "avg" and self.avg_model and self.avg_model.has_symbols():
+                                # Verificar si hay símbolos probabilísticos en la expresión
+                                from sympy import Symbol as SymSymbol
+                                prob_symbols = ['p', 'q', 'r', 's', 't']
+                                has_prob_symbols = False
+                                for sym_name in prob_symbols:
+                                    sym = SymSymbol(sym_name, real=True)
+                                    if t_open_expr.has(sym):
+                                        has_prob_symbols = True
+                                        break
+                                
+                                if has_prob_symbols:
+                                    # Notación condicionada
+                                    self.big_o = f"O({dominant_latex}) \\text{{ (para }} p > 0 \\text{{ constante)}}"
+                                    self.big_omega = f"\\Omega({dominant_latex}) \\text{{ (para }} p > 0 \\text{{ constante)}}"
+                                    self.big_theta = f"\\Theta({dominant_latex}) \\text{{ (para }} p > 0 \\text{{ constante)}}"
+                                else:
+                                    self.big_o = f"O({dominant_latex})"
+                                    self.big_omega = f"\\Omega({dominant_latex})"
+                                    self.big_theta = f"\\Theta({dominant_latex})"
+                            else:
+                                self.big_o = f"O({dominant_latex})"
+                                self.big_omega = f"\\Omega({dominant_latex})"
+                                self.big_theta = f"\\Theta({dominant_latex})"
                         else:
                             # Fallback: usar ComplexityClasses
                             t_open_latex = sympy_latex(t_open_expr)
@@ -336,6 +467,134 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Retornar resultado
         return self.result()
     
+    def _generate_avg_procedure(self):
+        """
+        Genera los pasos del procedimiento para caso promedio.
+        Almacena los pasos en self.procedure_steps para incluirlos en totals.procedure.
+        """
+        if self.mode != "avg" or not self.avg_model:
+            return
+        
+        procedure_steps = []
+        
+        # Paso 1: Definición de caso promedio
+        procedure_steps.append(
+            "\\text{Paso 1: Definición de caso promedio}"
+        )
+        procedure_steps.append(
+            "A(n) = \\sum_{I \\in I_n} T(I) \\cdot p(I)"
+        )
+        
+        # Paso 2: Si es uniforme, mostrar fórmula uniforme
+        if self.avg_model.mode == "uniform":
+            procedure_steps.append(
+                "\\text{Paso 2: Modelo uniforme}"
+            )
+            procedure_steps.append(
+                "A(n) = \\frac{1}{|I_n|} \\sum_{I \\in I_n} T(I)"
+            )
+        
+        # Paso 3: Linealidad de la esperanza
+        procedure_steps.append(
+            "\\text{Paso 3: Linealidad de la esperanza}"
+        )
+        procedure_steps.append(
+            "A(n) = \\sum_{\\ell} C_{\\ell} \\cdot E[N_{\\ell}]"
+        )
+        
+        # Paso 4: Cálculo de E[N_ℓ] por constructo
+        procedure_steps.append(
+            "\\text{Paso 4: Cálculo de } E[N_{\\ell}] \\text{ por constructo}"
+        )
+        
+        # Agregar explicaciones por tipo de constructo encontrado
+        constructos_encontrados = set()
+        for row in self.rows:
+            kind = row.get("kind", "")
+            if kind in ["for", "if", "while", "repeat"]:
+                constructos_encontrados.add(kind)
+        
+        if "for" in constructos_encontrados:
+            # Verificar si hay early return para mostrar regla correcta
+            has_early_return_avg = False
+            for row in self.rows:
+                if row.get("kind") == "for" and "E[iter]" in str(row.get("note", "")):
+                    has_early_return_avg = True
+                    break
+            if has_early_return_avg:
+                procedure_steps.append(
+                    "\\text{- FOR con early return: } E[iter] = \\frac{n+1}{2} \\text{ (uniforme condicionado a éxito)}"
+                )
+            else:
+                procedure_steps.append(
+                    "\\text{- FOR: } E[N_{cuerpo}] = b - a + 1 \\text{ (determinista)}"
+                )
+        if "if" in constructos_encontrados:
+            # Verificar si hay early return para mostrar regla correcta
+            has_early_return_avg = False
+            has_success_return = False
+            for row in self.rows:
+                if row.get("kind") == "return" and row.get("note") and "éxito seguro" in row.get("note", ""):
+                    has_early_return_avg = True
+                    has_success_return = True
+                    break
+            if has_early_return_avg and has_success_return:
+                procedure_steps.append(
+                    "\\text{- IF con early return: siempre entra en THEN (éxito seguro), no aplicar probabilidades}"
+                )
+            else:
+                model_info = self.avg_model.get_model_info()
+                p_str = self.avg_model.get_default_probability()
+                procedure_steps.append(
+                    f"\\text{{- IF: }} E[N_{{then}}] = p \\cdot \\#visitas, E[N_{{else}}] = (1-p) \\cdot \\#visitas \\text{{ (con }} p = {p_str} \\text{{ por defecto)}}"
+                )
+        if "while" in constructos_encontrados:
+            procedure_steps.append(
+                "\\text{- WHILE: } E[\\#iteraciones] = \\frac{1}{p} \\text{ (geométrico) o símbolo } \\bar{{t}}_{{while}}"
+            )
+        
+        # Paso 5: Cierre de sumatorias
+        procedure_steps.append(
+            "\\text{Paso 5: Cierre de sumatorias}"
+        )
+        t_open = self.build_t_open()
+        procedure_steps.append(
+            f"A(n) = {t_open}"
+        )
+        
+        # Paso 6: Resultado y modelo
+        procedure_steps.append(
+            "\\text{Paso 6: Resultado y modelo usado}"
+        )
+        # Detectar si estamos en Modelo A (éxito seguro con early return)
+        has_success_return = False
+        has_failure_return = False
+        for row in self.rows:
+            if row.get("kind") == "return":
+                note = row.get("note", "")
+                if note and ("éxito seguro" in note or ("éxito" in note and "siempre ocurre" in note)):
+                    has_success_return = True
+                if note and ("fracaso" in note or "nunca ocurre" in note):
+                    has_failure_return = True
+        # Si hay early return en bucle y éxito seguro, es Modelo A
+        if has_success_return and has_failure_return:
+            model_note = "uniforme (éxito)"
+        else:
+            model_info = self.avg_model.get_model_info()
+            model_note = model_info['note']
+        procedure_steps.append(
+            f"\\text{{Modelo: {model_note}}}"
+        )
+        
+        # Agregar hipótesis si hay símbolos
+        if self.avg_model.has_symbols():
+            procedure_steps.append(
+                "\\text{Hipótesis: Probabilidades simbólicas (p, q, etc.) son constantes > 0}"
+            )
+        
+        # Almacenar en un campo separado para totals.procedure (no en notes)
+        self.procedure_steps = procedure_steps
+    
     def _calculate_t_polynomial_fallback(self):
         """
         Método fallback para calcular T_polynomial agrupando términos similares.
@@ -350,7 +609,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 terms_by_count[count] = []
             terms_by_count[count].append(ck)
         
-        # Construir T_polynomial
+        # Construir T_polynomial (o A(n) para promedio)
         polynomial_terms = []
         for count, cks in terms_by_count.items():
             if len(cks) == 1:

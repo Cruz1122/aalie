@@ -225,12 +225,20 @@ export interface LineCost {
   count_raw?: string;   // # ejecuciones (con sumatorias sin simplificar), ej: "\sum_{i=1}^{n} 1"
   note?: string;        // aclaraciones (p. ej., "worst: max(then, else)")
   procedure?: string[]; // procedimiento completo por línea (desde count_raw hasta forma polinómica)
+  expectedRuns?: string; // E[# ejecuciones] para caso promedio (KaTeX)
+}
+
+/** Modelo probabilístico para caso promedio */
+export interface AvgModelConfig {
+  mode: "uniform" | "symbolic";  // modo del modelo
+  predicates?: Record<string, string>;  // predicados a probabilidades, ej: {"A[j] > A[j+1]": "1/2"}
 }
 
 /** Request para análisis de algoritmo */
 export interface AnalyzeRequest {
   source: string;
   mode?: AnalyzeMode;   // por defecto "worst" en S3
+  avgModel?: AvgModelConfig;  // modelo probabilístico para caso promedio
 }
 
 /** Response exitoso con análisis abierto */
@@ -238,14 +246,20 @@ export interface AnalyzeOpenResponse {
   ok: true;
   byLine: LineCost[];   // tabla por línea
   totals: {
-    T_open: string;                 // Σ C_k · count_k (KaTeX) - simplificado con SymPy
+    T_open: string;                 // Σ C_k · count_k (KaTeX) - simplificado con SymPy (o A(n) para promedio)
     procedure?: string[];            // pasos (KaTeX) para construir T_open (legacy, puede estar vacío)
     symbols?: Record<string,string>;// p.ej.: { n: "length(A)" }
-    notes?: string[];               // reglas usadas (for, while, if)
+    notes?: string[];               // reglas usadas (for, while, if) o pasos de procedimiento para promedio
     T_polynomial?: string;          // forma polinómica T(n) = an² + bn + c (KaTeX) - simplificado con SymPy
     big_o?: string;                 // Notación Big-O calculada con SymPy (ej: "O(n^2)")
     big_omega?: string;             // Notación Big-Omega calculada con SymPy (ej: "Ω(n^2)")
     big_theta?: string;             // Notación Big-Theta calculada con SymPy (ej: "Θ(n^2)")
+    A_of_n?: string;                // A(n) para caso promedio (alias de T_open)
+    avg_model_info?: {              // información del modelo probabilístico usado
+      mode: string;                 // "uniform" | "symbolic"
+      note: string;                 // badge del modelo, ej: "uniforme (p=1/2)"
+    };
+    hypotheses?: string[];          // hipótesis cuando hay símbolos probabilísticos
     // S4 añadirá: T_closed, proofSteps
   };
 }

@@ -8,10 +8,15 @@ from ..routers.parse import parse_source
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
 # Modelos Pydantic que reflejan los tipos de @aa/types
+class AvgModelConfig(BaseModel):
+    mode: str = "uniform"  # "uniform" | "symbolic"
+    predicates: Optional[Dict[str, str]] = None  # ej: {"A[j] > A[j+1]": "1/2"}
+
 class AnalyzeRequest(BaseModel):
     source: str
     mode: str = "worst"  # "worst" | "best" | "avg"
     api_key: Optional[str] = None  # API Key de Gemini (opcional)
+    avgModel: Optional[AvgModelConfig] = None  # Modelo probabilístico para caso promedio
 
 class LineCost(BaseModel):
     line: int
@@ -38,7 +43,8 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
     - totals.T_open: ecuación de eficiencia abierta
     - totals.procedure: pasos para construir T_open
     
-    Si mode="all", devuelve ambos casos (worst y best) en una sola respuesta.
+    Si mode="all", devuelve todos los casos (worst, best y avg) en una sola respuesta.
+    Si mode="avg", se requiere avgModel para el análisis de caso promedio.
     """
     try:
         # 1) Parsear el código fuente
@@ -56,33 +62,80 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
                 "errors": [{"message": "No se pudo obtener el AST del código", "line": None, "column": None}]
             }
         
-        # 2) Determinar si debemos analizar ambos casos
-        analyze_both = payload.mode == "all"
+        # 2) Determinar si debemos analizar todos los casos
+        analyze_all = payload.mode == "all"
         
-        if analyze_both:
-            # Analizar ambos casos (worst y best)
+        if analyze_all:
+            # Analizar todos los casos (worst, best y avg)
             analyzer_worst = IterativeAnalyzer()
             analyzer_best = IterativeAnalyzer()
+            analyzer_avg = IterativeAnalyzer()
             
+            # Analizar worst y best
             result_worst = analyzer_worst.analyze(ast, "worst")
             result_best = analyzer_best.analyze(ast, "best")
             
-            # Verificar que ambos análisis fueron exitosos
+            # Verificar que worst y best fueron exitosos
             if not result_worst.get("ok", False):
                 return result_worst
             if not result_best.get("ok", False):
                 return result_best
             
-            # Devolver ambos casos en una sola respuesta
-            return {
+            # Preparar avgModel para caso promedio
+            avg_model_dict = None
+            if payload.avgModel:
+                avg_model_dict = {
+                    "mode": payload.avgModel.mode,
+                    "predicates": payload.avgModel.predicates or {}
+                }
+            else:
+                # Por defecto, usar modelo uniforme sin predicados
+                avg_model_dict = {
+                    "mode": "uniform",
+                    "predicates": {}
+                }
+            
+            # Analizar caso promedio
+            result_avg = analyzer_avg.analyze(ast, "avg", api_key=payload.api_key, avg_model=avg_model_dict)
+            
+            # Verificar que avg fue exitoso (si falla, continuar sin él o devolver error)
+            # Por ahora, si falla, lo incluimos como None para que el frontend pueda manejarlo
+            if not result_avg.get("ok", False):
+                # Log del error pero continuar sin avg
+                print(f"[analyze_open] Error en análisis promedio: {result_avg.get('errors', [])}")
+                result_avg = None
+            
+            # Devolver todos los casos en una sola respuesta
+            response = {
                 "ok": True,
                 "worst": result_worst,
                 "best": result_best
             }
+            
+            # Incluir avg solo si fue exitoso
+            if result_avg:
+                response["avg"] = result_avg
+            
+            return response
         else:
             # Analizar solo el caso solicitado (compatibilidad hacia atrás)
             analyzer = IterativeAnalyzer()
-            result = analyzer.analyze(ast, payload.mode)
+            
+            # Preparar avgModel si mode == "avg"
+            avg_model_dict = None
+            if payload.mode == "avg" and payload.avgModel:
+                avg_model_dict = {
+                    "mode": payload.avgModel.mode,
+                    "predicates": payload.avgModel.predicates or {}
+                }
+            elif payload.mode == "avg":
+                # Por defecto, usar modelo uniforme sin predicados
+                avg_model_dict = {
+                    "mode": "uniform",
+                    "predicates": {}
+                }
+            
+            result = analyzer.analyze(ast, payload.mode, api_key=payload.api_key, avg_model=avg_model_dict)
             return result
         
     except Exception as e:
