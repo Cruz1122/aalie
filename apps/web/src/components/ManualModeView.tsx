@@ -395,18 +395,38 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
       // Mensaje de carga actualizado (ya no depende de API key para simplificación)
       setAnalysisMessage("Cerrando sumatorias...");
       
-      const body: { source: string; mode: string; api_key?: string } = { source: sourceCode, mode: "worst" };
+      // Realizar una sola petición que trae todos los casos (worst, best y avg)
+      const analyzeBody: { 
+        source: string; 
+        mode: string; 
+        api_key?: string;
+        avgModel?: { mode: string; predicates?: Record<string, string> };
+      } = { 
+        source: sourceCode, 
+        mode: "all",
+        avgModel: {
+          mode: "uniform",
+          predicates: {}
+        }
+      };
       if (apiKey) {
-        body.api_key = apiKey;  // Mantener por compatibilidad, pero backend ya no lo usa para simplificación
+        analyzeBody.api_key = apiKey;  // Mantener por compatibilidad, pero backend ya no lo usa para simplificación
       }
       
       const analyzePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify(analyzeBody),
       }).then(r => r.json());
 
-      const analyzeRes = await animateProgress(50, 70, 2000, setAnalysisProgress, analyzePromise) as { ok: boolean; [key: string]: unknown };
+      const analyzeRes = await animateProgress(50, 70, 2000, setAnalysisProgress, analyzePromise) as { 
+        ok: boolean; 
+        worst?: unknown;
+        best?: unknown;
+        avg?: unknown;
+        errors?: Array<{ message: string; line?: number; column?: number }>;
+        [key: string]: unknown;
+      };
 
       setAnalysisMessage("Generando forma polinómica...");
       await animateProgress(70, 80, 200, setAnalysisProgress);

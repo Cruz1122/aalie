@@ -62,7 +62,15 @@ export default function AnalyzerPage() {
           if (parsed && !parsed.worst && !parsed.best) {
             return { worst: parsed, best: null, avg: null };
           }
-          return parsed;
+          // Si es el formato nuevo (con worst, best, avg), extraer solo esos campos
+          if (parsed && (parsed.worst || parsed.best)) {
+            return {
+              worst: parsed.worst || null,
+              best: parsed.best || null,
+              avg: parsed.avg || null
+            };
+          }
+          return { worst: null, best: null, avg: null };
         } catch (error) {
           console.error('Error parsing saved results:', error);
           // Limpiar datos corruptos

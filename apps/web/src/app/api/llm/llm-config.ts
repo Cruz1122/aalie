@@ -43,23 +43,34 @@ export const JOB_CONFIG = {
  - Asignación: usar SOLO alguno de estos operadores: <-, :=, 🡨
  - PROHIBIDO inicializar múltiples variables con comas en una sola línea (ej: a, b, c <- 1, 2, 3 NO está permitido)
  - Cada variable debe inicializarse independientemente en líneas separadas (ej: a <- 1; b <- 2; c <- 3;)
- - Condicional: IF (condición) THEN { ... } ELSE { ... }
- - WHILE: WHILE (condición) DO { ... }
- - FOR: FOR variable <- inicio TO fin DO { ... }
+ - Condicional: IF (condición) THEN BEGIN ... END ELSE BEGIN ... END (también puedes usar llaves: IF (condición) THEN { ... } ELSE { ... })
+ - WHILE: WHILE (condición) DO BEGIN ... END (OBLIGATORIO el DO antes del bloque; también puedes usar llaves: WHILE (condición) DO { ... })
+ - FOR: FOR variable <- inicio TO fin DO BEGIN ... END (OBLIGATORIO el DO antes del bloque; también puedes usar llaves: FOR variable <- inicio TO fin DO { ... })
+ - REPEAT: REPEAT ... UNTIL (condición); (no usa DO)
  - Print: print("Texto", variable1, expresion2); // usa comillas dobles para cadenas literales
  - Arrays base 1: A[1]..A[n]
- - Punto y coma al final de cada sentencia
+ - Punto y coma al final de cada sentencia (excepto después de END)
  - Incremento: x <- x + 1
 - Operadores: =, <>, <, >, <=, >=, AND, OR
 - Cadenas: usa comillas dobles " (ej. "Listo", "Total: " + n); escapa comillas internas como \"
 - Return: RETURN siempre debe retornar un valor; PROHIBIDO usar RETURN solo (ej: RETURN resultado; NO RETURN;)
+ 
+ ⚠️ REGLA CRÍTICA: WHILE y FOR SIEMPRE requieren la palabra clave DO antes del bloque. 
+    CORRECTO: WHILE (i < n) DO BEGIN ... END
+    CORRECTO: WHILE (i < n) DO { ... }
+    INCORRECTO: WHILE (i < n) { ... } (FALTA DO - ERROR DE SINTAXIS)
+    CORRECTO: FOR i <- 1 TO n DO BEGIN ... END
+    CORRECTO: FOR i <- 1 TO n DO { ... }
+    INCORRECTO: FOR i <- 1 TO n { ... } (FALTA DO - ERROR DE SINTAXIS)
  
 VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  - NO incluir prefijos como ALGORITMO/PROCEDURE/PROGRAM en las definiciones; las funciones/algoritmos NO inician con prefijo.
  - NO usar tipos ni prefijos en variables (NO int, string, var, etc.); las variables se asignan directamente sin declaración de tipo.
  - SÍ usar CALL cuando se invoca un procedimiento: CALL nombre(params);
  - NO inicializar múltiples variables con comas; cada variable debe tener su propia línea de asignación.
-- Verifica paréntesis en IF/WHILE y llaves en THEN/ELSE/DO.
+- Verifica que TODOS los WHILE tengan DO antes del bloque (WHILE (cond) DO { ... }, NO WHILE (cond) { ... })
+- Verifica que TODOS los FOR tengan DO antes del bloque (FOR var <- inicio TO fin DO { ... }, NO FOR var <- inicio TO fin { ... })
+- Verifica paréntesis en IF/WHILE y llaves/BEGIN-END en THEN/ELSE/DO.
 - Revisa que cada sentencia termine en ';' y que no haya sintaxis de otros lenguajes.
 - RETURN siempre debe retornar un valor; verifica que no haya RETURN sin valor (RETURN; está prohibido, debe ser RETURN valor;).
  
@@ -99,6 +110,25 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
 - Para salidas en consola usa print("texto", variable); con cadenas entre comillas dobles
 - RETURN siempre debe retornar un valor; PROHIBIDO usar RETURN solo (ej: RETURN resultado; NO RETURN;)
  
+ SINTAXIS OBLIGATORIA (CRÍTICA - DEBES SEGUIRLA EXACTAMENTE)
+ - Definición de procedimiento: nombre(params) BEGIN ... END (sin prefijos como ALGORITMO/PROCEDURE/PROGRAM)
+ - Condicional: IF (condición) THEN BEGIN ... END ELSE BEGIN ... END (o usar llaves { ... } en lugar de BEGIN...END)
+ - WHILE: WHILE (condición) DO BEGIN ... END (OBLIGATORIO el DO antes del bloque; también puedes usar llaves: WHILE (condición) DO { ... })
+ - FOR: FOR variable <- inicio TO fin DO BEGIN ... END (OBLIGATORIO el DO antes del bloque; también puedes usar llaves: FOR variable <- inicio TO fin DO { ... })
+ - REPEAT: REPEAT ... UNTIL (condición); (no usa DO)
+ - Asignación: usar SOLO alguno de estos operadores: <-, :=, 🡨
+ - Arrays base 1: A[1]..A[n]
+ - Punto y coma al final de cada sentencia (excepto después de END)
+ - Operadores: =, <>, <, >, <=, >=, AND, OR
+ 
+ ⚠️ REGLA CRÍTICA: WHILE y FOR SIEMPRE requieren la palabra clave DO antes del bloque. 
+    CORRECTO: WHILE (i < n) DO BEGIN ... END
+    CORRECTO: WHILE (i < n) DO { ... }
+    INCORRECTO: WHILE (i < n) { ... } (FALTA DO)
+    CORRECTO: FOR i <- 1 TO n DO BEGIN ... END
+    CORRECTO: FOR i <- 1 TO n DO { ... }
+    INCORRECTO: FOR i <- 1 TO n { ... } (FALTA DO)
+ 
  ESTILO DE RESPUESTA
  - NO saludes en cada respuesta; solo saluda en la primera interacción si no hay historial previo.
  - Mantén el contexto de la conversación; si el usuario hace una pregunta de seguimiento, responde en ese contexto.
@@ -108,13 +138,15 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  
  CUANDO TE PIDAN CÓDIGO
  - Produce el algoritmo en un bloque etiquetado como 'pseudocode' y que cumpla la gramática:
+ - VERIFICA ANTES DE ENTREGAR que todos los WHILE y FOR tengan DO antes del bloque
  
  \`\`\`pseudocode
  ...código en la gramática del proyecto...
  \`\`\`
  
  NOTA
- - La salida de código debe ser auto-contenida y ejecutable conforme a la gramática del proyecto.`
+ - La salida de código debe ser auto-contenida y ejecutable conforme a la gramática del proyecto.
+ - SIEMPRE verifica que WHILE y FOR incluyan DO antes del bloque antes de entregar el código.`
   },
   simplifier: {
     temperature: 0,
