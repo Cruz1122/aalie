@@ -18,39 +18,53 @@ export default function Footer() {
   const [hasLocalApiKey, setHasLocalApiKey] = useState<boolean>(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState<boolean>(true);
 
-  // Función para actualizar el estado de API_KEY
+  // Función para actualizar el estado de API_KEY (memoizada sin dependencias problemáticas)
   const updateApiKeyStatus = useCallback(async () => {
+    // Verificar localStorage primero (sin hacer request)
+    const stored = getApiKey();
+    const hasLocal = stored !== null;
+    setHasLocalApiKey(hasLocal);
+    
+    if (stored) {
+      setApiKeyValue(stored);
+    }
+    
+    // Solo verificar servidor si no hay en localStorage
     setIsCheckingStatus(true);
     try {
-      const status = await getApiKeyStatus();
-      setHasServerApiKey(status.hasServer);
-      
-      const stored = getApiKey();
-      setHasLocalApiKey(stored !== null);
-      
-      if (stored) {
-        setApiKeyValue(stored);
-      }
-      
-      // Determinar el estado principal (solo si no se está editando)
-      setStatus(prevStatus => {
-        // No actualizar si se está editando o mostrando el input
-        if (isEditing || showInput) {
-          return prevStatus;
-        }
+      if (!hasLocal) {
+        // Solo hacer request si no hay en localStorage
+        const status = await getApiKeyStatus();
+        setHasServerApiKey(status.hasServer);
         
-        if (status.hasServer) {
-          return "server";
-        } else if (status.hasLocalStorage) {
+        // Determinar el estado principal (solo si no se está editando)
+        setStatus(prevStatus => {
+          // No actualizar si se está editando o mostrando el input
+          if (isEditing || showInput) {
+            return prevStatus;
+          }
+          
+          if (status.hasServer) {
+            return "server";
+          } else {
+            return "none";
+          }
+        });
+      } else {
+        // Si hay en localStorage, no hacer request al servidor
+        setHasServerApiKey(false);
+        setStatus(prevStatus => {
+          if (isEditing || showInput) {
+            return prevStatus;
+          }
           return "valid";
-        } else {
-          return "none";
-        }
-      });
+        });
+      }
     } catch (error) {
       console.error("[Footer] Error verificando estado de API_KEY:", error);
-      if (!isEditing) {
-        setStatus("none");
+      setHasServerApiKey(false);
+      if (!isEditing && !showInput) {
+        setStatus(hasLocal ? "valid" : "none");
       }
     } finally {
       setIsCheckingStatus(false);
@@ -65,10 +79,14 @@ export default function Footer() {
 
   // Escuchar cambios en localStorage (cuando se guarda API_KEY desde otros componentes)
   useEffect(() => {
+    // Usar una función estable que no cause re-renders innecesarios
     const handleStorageChange = (e: StorageEvent) => {
       // Verificar si el cambio es en la API_KEY
       if (e.key === 'gemini_api_key' || e.key === null) {
-        updateApiKeyStatus();
+        // Solo actualizar si no se está editando
+        if (!isEditing && !showInput) {
+          updateApiKeyStatus();
+        }
       }
     };
 
@@ -90,14 +108,20 @@ export default function Footer() {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('apiKeyChanged', handleApiKeyChange);
     };
-  }, [showInput, isEditing, updateApiKeyStatus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Sin dependencias para evitar re-crear listeners
 
-  // Actualizar cuando se abre/cierra el input
+  // Actualizar cuando se cierra el input (solo cuando se cierra, no cuando se abre)
   useEffect(() => {
-    if (!showInput) {
-      updateApiKeyStatus();
+    if (!showInput && !isEditing) {
+      // Usar un pequeño delay para evitar múltiples actualizaciones
+      const timeoutId = setTimeout(() => {
+        updateApiKeyStatus();
+      }, 100);
+      return () => clearTimeout(timeoutId);
     }
-  }, [showInput, updateApiKeyStatus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showInput]); // Solo cuando showInput cambia
   
   // Validar en tiempo real mientras se escribe
   useEffect(() => {
@@ -121,12 +145,15 @@ export default function Footer() {
       if (success) {
         setIsEditing(false);
         setShowInput(false);
-        // Actualizar estado después de guardar
-        getApiKeyStatus().then((status) => {
-          setHasServerApiKey(status.hasServer);
-          setHasLocalApiKey(status.hasLocalStorage);
-          // El useEffect se encargará de actualizar el estado visual
-        });
+        // Actualizar estado local sin hacer request adicional
+        // El evento 'apiKeyChanged' disparará la actualización
+        const stored = getApiKey();
+        setHasLocalApiKey(stored !== null);
+        if (stored) {
+          setApiKeyValue(stored);
+          setStatus("valid");
+        }
+        // No hacer request adicional a getApiKeyStatus aquí
       }
     }
   };
@@ -136,12 +163,10 @@ export default function Footer() {
     setApiKeyValue("");
     setIsEditing(false);
     setShowInput(false);
-    // Actualizar estado después de eliminar
-    getApiKeyStatus().then((status) => {
-      setHasServerApiKey(status.hasServer);
-      setHasLocalApiKey(status.hasLocalStorage);
-      // El useEffect se encargará de actualizar el estado visual
-    });
+    // Actualizar estado local sin hacer request adicional
+    setHasLocalApiKey(false);
+    setStatus("none");
+    // El evento 'apiKeyChanged' ya se disparó, no necesitamos otro request
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

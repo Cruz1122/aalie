@@ -119,19 +119,42 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
     setLocalParseOk(ok);
   };
 
-  // Verificar API_KEY al montar y cuando cambie
+  // Verificar API_KEY al montar y cuando cambie (sin hacer requests innecesarios)
   useEffect(() => {
-    const checkApiKey = async () => {
-      const status = await getApiKeyStatus();
-      // Solo habilitar el botón si hay API_KEY disponible (localStorage o servidor)
-      setHasValidApiKey(status.hasAny);
+    const checkApiKey = () => {
+      // Verificar solo localStorage primero (sin hacer request al servidor)
+      const stored = getApiKey();
+      if (stored) {
+        setHasValidApiKey(true);
+        return;
+      }
+      
+      // Solo verificar servidor si no hay en localStorage
+      // Hacer esto de forma asíncrona pero sin bloquear
+      getApiKeyStatus().then((status) => {
+        setHasValidApiKey(status.hasAny);
+      }).catch((error) => {
+        console.error('[ManualModeView] Error verificando API_KEY:', error);
+        setHasValidApiKey(false);
+      });
     };
     
     checkApiKey();
     
-    // Escuchar cambios en la API_KEY
-    const handleApiKeyChange = async () => {
-      await checkApiKey();
+    // Escuchar cambios en la API_KEY (solo eventos, sin polling)
+    const handleApiKeyChange = () => {
+      // Verificar localStorage primero
+      const stored = getApiKey();
+      if (stored) {
+        setHasValidApiKey(true);
+      } else {
+        // Solo si no hay en localStorage, verificar servidor
+        getApiKeyStatus().then((status) => {
+          setHasValidApiKey(status.hasAny);
+        }).catch(() => {
+          setHasValidApiKey(false);
+        });
+      }
     };
     
     window.addEventListener('apiKeyChanged', handleApiKeyChange);
@@ -366,10 +389,8 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
       setAnalysisMessage("Hallando sumatorias...");
       await animateProgress(40, 50, 200, setAnalysisProgress);
 
-      // Verificar estado de API_KEY (se mantiene para otras funciones como ChatBot)
-      const apiKeyStatus = await getApiKeyStatus();
+      // Obtener API key (solo necesitamos la key, no el status completo)
       const apiKey = getApiKey();
-      const hasApiKey = apiKeyStatus.hasAny;
       
       // Mensaje de carga actualizado (ya no depende de API key para simplificación)
       setAnalysisMessage("Cerrando sumatorias...");

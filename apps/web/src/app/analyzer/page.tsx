@@ -14,7 +14,7 @@ import Header from "@/components/Header";
 import LineTable from "@/components/LineTable";
 import ProcedureModal from "@/components/ProcedureModal";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
-import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
+import { getApiKey } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 import { calculateBigO, getSavedCase, saveCase } from "@/lib/polynomial";
@@ -42,7 +42,10 @@ export default function AnalyzerPage() {
   const [algorithmType, setAlgorithmType] = useState<"iterative" | "recursive" | "hybrid" | "unknown" | undefined>(undefined);
   const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
-  const [data, setData] = useState<AnalyzeOpenResponse | null>(() => {
+  const [data, setData] = useState<{
+    worst: AnalyzeOpenResponse | null;
+    best: AnalyzeOpenResponse | null;
+  }>(() => {
     // Cargar resultados desde sessionStorage si vienen del editor manual o del chatbot
     if (globalThis.window !== undefined) {
       const savedResults = globalThis.window.sessionStorage.getItem('analyzerResults');
@@ -53,6 +56,10 @@ export default function AnalyzerPage() {
           globalThis.window.sessionStorage.removeItem('analyzerResults');
           // También limpiar el código después de cargarlo
           globalThis.window.sessionStorage.removeItem('analyzerCode');
+          // Si es el formato antiguo (solo worst), convertirlo al nuevo formato
+          if (parsed && !parsed.worst && !parsed.best) {
+            return { worst: parsed, best: null };
+          }
           return parsed;
         } catch (error) {
           console.error('Error parsing saved results:', error);
@@ -62,7 +69,7 @@ export default function AnalyzerPage() {
         }
       }
     }
-    return null;
+    return { worst: null, best: null };
   });
 
   // Estados para el modal
@@ -219,37 +226,57 @@ export default function AnalyzerPage() {
       setAnalysisMessage("Hallando sumatorias...");
       await animateProgress(40, 50, 200, setAnalysisProgress);
 
-      // Verificar estado de API_KEY (se mantiene para otras funciones como ChatBot)
-      const apiKeyStatus = await getApiKeyStatus();
+      // Obtener API key (solo necesitamos la key, no el status completo)
       const apiKey = getApiKey();
-      const hasApiKey = apiKeyStatus.hasAny;
       
       // Mensaje de carga actualizado (ya no depende de API key para simplificación)
       setAnalysisMessage("Cerrando sumatorias...");
       
-      const body: { source: string; mode: string; api_key?: string } = { source, mode: "worst" };
+      // Realizar una sola petición que trae ambos casos (worst y best)
+      const analyzeBody: { source: string; mode: string; api_key?: string } = { source, mode: "all" };
       if (apiKey) {
-        body.api_key = apiKey;  // Mantener por compatibilidad, pero backend ya no lo usa para simplificación
+        analyzeBody.api_key = apiKey;  // Mantener por compatibilidad, pero backend ya no lo usa para simplificación
       }
       
       const analyzePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      }).then(r => r.json() as Promise<AnalyzeOpenResponse>);
+        body: JSON.stringify(analyzeBody),
+      }).then(r => r.json());
 
       // Animar progreso mientras se analiza (espera a que analyzePromise se resuelva)
-      const analyzeRes = await animateProgress(50, 70, 2000, setAnalysisProgress, analyzePromise) as AnalyzeOpenResponse;
+      const analyzeRes = await animateProgress(50, 70, 2000, setAnalysisProgress, analyzePromise) as {
+        ok: boolean;
+        worst?: AnalyzeOpenResponse;
+        best?: AnalyzeOpenResponse;
+        errors?: Array<{ message: string; line?: number; column?: number }>;
+      };
 
       setAnalysisMessage("Generando forma polinómica...");
       await animateProgress(70, 80, 200, setAnalysisProgress);
 
+      // Verificar errores
       if (!analyzeRes.ok) {
         console.error("Error en análisis:", analyzeRes);
-        const errorMsg = (analyzeRes as { errors?: Array<{ message: string; line?: number; column?: number }> }).errors?.map((e: { message: string; line?: number; column?: number }) =>
+        const errorMsg = analyzeRes.errors?.map((e: { message: string; line?: number; column?: number }) =>
           e.message || `Error en línea ${e.line || '?'}`
         ).join("\n") || "Error al analizar el algoritmo";
         setAnalysisError(errorMsg);
+        setTimeout(() => {
+          setAnalyzing(false);
+          setAnalysisProgress(0);
+          setAnalysisMessage("Iniciando análisis...");
+          setAlgorithmType(undefined);
+          setIsAnalysisComplete(false);
+          setAnalysisError(null);
+        }, 3000);
+        return;
+      }
+
+      // Verificar que tenemos ambos casos
+      if (!analyzeRes.worst || !analyzeRes.best) {
+        console.error("Error: No se recibieron ambos casos en la respuesta", analyzeRes);
+        setAnalysisError("Error: No se pudieron obtener ambos casos del análisis");
         setTimeout(() => {
           setAnalyzing(false);
           setAnalysisProgress(0);
@@ -265,8 +292,8 @@ export default function AnalyzerPage() {
       setAnalysisMessage("Finalizando análisis...");
       await animateProgress(80, 100, 200, setAnalysisProgress);
 
-      // 6) Actualizar los datos
-      setData(analyzeRes);
+      // 6) Actualizar los datos con ambos casos
+      setData({ worst: analyzeRes.worst, best: analyzeRes.best });
 
       // 7) Mostrar completado y esperar antes de cerrar
       setAnalysisMessage("Análisis completo");
@@ -306,14 +333,17 @@ export default function AnalyzerPage() {
   };
 
   const [openGeneral, setOpenGeneral] = useState(false);
-  const handleViewGeneralProcedure = () => {
+  const [generalProcedureCase, setGeneralProcedureCase] = useState<'worst' | 'best'>('worst');
+  const handleViewGeneralProcedure = (caseType: 'worst' | 'best' = 'worst') => {
+    setGeneralProcedureCase(caseType);
     setOpenGeneral(true);
   };
 
   type CaseType = 'worst' | 'average' | 'best';
 
-  // Helper para obtener Big-O de los datos
-  const getBigOFromData = (analysisData: AnalyzeOpenResponse | null): string => {
+  // Helper para obtener Big-O de los datos según el caso
+  const getBigOFromData = (caseType: 'worst' | 'best' = 'worst'): string => {
+    const analysisData = caseType === 'worst' ? data?.worst : data?.best;
     if (!analysisData?.ok) return 'O(—)';
     // Usar notación asintótica del backend (calculada con SymPy) si está disponible
     const totals = analysisData.totals as { big_o?: string } | undefined;
@@ -323,6 +353,22 @@ export default function AnalyzerPage() {
     // Fallback: calcular desde T_polynomial o T_open
     const base = analysisData.totals?.T_polynomial ?? analysisData.totals.T_open;
     return calculateBigO(base);
+  };
+
+  // Helper para obtener Big Omega de los datos según el caso
+  const getBigOmegaFromData = (caseType: 'worst' | 'best' = 'best'): string => {
+    const analysisData = caseType === 'worst' ? data?.worst : data?.best;
+    if (!analysisData?.ok) return 'Ω(—)';
+    // Usar notación asintótica del backend (calculada con SymPy) si está disponible
+    const totals = analysisData.totals as { big_omega?: string } | undefined;
+    if (totals?.big_omega) {
+      return totals.big_omega;
+    }
+    // Fallback: calcular desde T_polynomial o T_open (usar calculateBigO como aproximación)
+    const base = analysisData.totals?.T_polynomial ?? analysisData.totals.T_open;
+    const bigO = calculateBigO(base);
+    // Convertir O a Ω (mismo valor para mejor caso)
+    return bigO.replace('O(', 'Ω(');
   };
 
   // Helper para obtener el label del caso
@@ -375,7 +421,7 @@ export default function AnalyzerPage() {
   };
 
   const renderLineCostContent = () => {
-    if (!data) {
+    if (!data || (!data.worst && !data.best)) {
       return (
         <div className="flex-1 flex items-center justify-center text-slate-400">
           <div className="text-center">
@@ -386,7 +432,11 @@ export default function AnalyzerPage() {
       );
     }
 
-    if (selectedCase !== 'worst') {
+    // Obtener datos según el caso seleccionado
+    const currentData = selectedCase === 'worst' ? data?.worst : 
+                       selectedCase === 'best' ? data?.best : null;
+
+    if (!currentData || !currentData.ok) {
       return (
         <div className="flex-1 flex items-center justify-center text-slate-400">
           <div className="text-center">
@@ -398,18 +448,30 @@ export default function AnalyzerPage() {
     }
 
     return (
-      <div className="overflow-auto scrollbar-custom" style={{ maxHeight: '285px' }}>
-        <LineTable rows={data.byLine} onViewProcedure={handleViewLineProcedure} />
+      <div className="overflow-auto scrollbar-custom" style={{ height: '285px' }}>
+        <LineTable rows={currentData.byLine} onViewProcedure={handleViewLineProcedure} />
       </div>
     );
   };
 
   // Selector de casos (worst por defecto, preparado para best/average)
-  const [selectedCase, setSelectedCase] = useState<CaseType>(getSavedCase);
+  // Inicializar con 'worst' para evitar errores de hidratación (el servidor no tiene acceso a sessionStorage)
+  const [selectedCase, setSelectedCase] = useState<CaseType>('worst');
+  const [isHydrated, setIsHydrated] = useState(false);
 
+  // Cargar el caso guardado solo en el cliente después de la hidratación
   useEffect(() => {
-    saveCase(selectedCase);
-  }, [selectedCase]);
+    setIsHydrated(true);
+    const savedCase = getSavedCase();
+    setSelectedCase(savedCase);
+  }, []);
+
+  // Guardar el caso seleccionado en sessionStorage
+  useEffect(() => {
+    if (isHydrated) {
+      saveCase(selectedCase);
+    }
+  }, [selectedCase, isHydrated]);
 
   // Computar si el botón debe estar deshabilitado
   const isButtonDisabled = analyzing || !source.trim() || !localParseOk;
@@ -530,7 +592,7 @@ export default function AnalyzerPage() {
                       >Peor</button>
                     </div>
                   </div>
-                  <div className="flex-1 flex flex-col overflow-hidden">
+                  <div className="flex flex-col" style={{ height: '285px' }}>
                     {renderLineCostContent()}
                   </div>
                 </div>
@@ -541,18 +603,19 @@ export default function AnalyzerPage() {
                     <div className="h-full flex flex-col items-center justify-center gap-2">
                       <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/30">
                         <div className="scale-110">
-                          <Formula latex={"O(—)"} />
+                          <Formula latex={getBigOmegaFromData('best')} />
                         </div>
                       </div>
                       <h3 className="font-semibold text-green-300 mb-1">Mejor caso</h3>
 
                       <button
-                        disabled
-                        className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60"
-                        title="Próximamente"
+                        onClick={() => handleViewGeneralProcedure('best')}
+                        disabled={!data?.best?.ok}
+                        className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors ${data?.best?.ok ? 'text-white glass-secondary hover:bg-sky-500/20' : 'text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60'}`}
+                        title={data?.best?.ok ? 'Ver procedimiento general (mejor caso)' : 'Ejecuta el análisis para ver el procedimiento'}
                       >
                         <span className="material-symbols-outlined text-sm">visibility</span>
-                        <span>Ver Procedimiento (próximamente)</span>
+                        <span>Ver Procedimiento</span>
                       </button>
                     </div>
                   </div>
@@ -578,15 +641,15 @@ export default function AnalyzerPage() {
                     <div className="h-full flex flex-col items-center justify-center gap-2">
                       <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30">
                         <div className="scale-110">
-                          <Formula latex={getBigOFromData(data)} />
+                          <Formula latex={getBigOFromData('worst')} />
                         </div>
                       </div>
                       <h3 className="font-semibold text-red-300 mb-1">Peor caso</h3>
                       <button
-                        onClick={handleViewGeneralProcedure}
-                        disabled={!data?.ok}
-                        className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors ${data?.ok ? 'text-white glass-secondary hover:bg-sky-500/20' : 'text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60'}`}
-                        title={data?.ok ? 'Ver procedimiento general' : 'Ejecuta el análisis para ver el procedimiento'}
+                        onClick={() => handleViewGeneralProcedure('worst')}
+                        disabled={!data?.worst?.ok}
+                        className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors ${data?.worst?.ok ? 'text-white glass-secondary hover:bg-sky-500/20' : 'text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60'}`}
+                        title={data?.worst?.ok ? 'Ver procedimiento general (peor caso)' : 'Ejecuta el análisis para ver el procedimiento'}
                       >
                         <span className="material-symbols-outlined text-sm">visibility</span>
                         <span>Ver Procedimiento</span>
@@ -605,13 +668,13 @@ export default function AnalyzerPage() {
         open={open}
         onClose={() => setOpen(false)}
         selectedLine={selectedLine}
-        analysisData={data ?? undefined}
+        analysisData={selectedCase === 'worst' ? data?.worst : selectedCase === 'best' ? data?.best : undefined}
       />
       {/* Modal de procedimiento general */}
       <GeneralProcedureModal
         open={openGeneral}
         onClose={() => setOpenGeneral(false)}
-        data={data ?? undefined}
+        data={generalProcedureCase === 'worst' ? data?.worst : data?.best}
       />
 
       {/* Modal AST */}

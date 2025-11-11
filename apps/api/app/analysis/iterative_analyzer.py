@@ -282,7 +282,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                                 else:
                                     dominant_latex = sympy_latex(n_for_notation**max_degree)
                             else:
-                                dominant_latex = sympy_latex(dominant_term)
+                                # Si es constante (grado 0), mostrar como "1" en notación asintótica
+                                # En notación asintótica, todas las constantes son equivalentes a 1
+                                dominant_latex = "1"
                             
                             # Construir notaciones asintóticas
                             self.big_o = f"O({dominant_latex})"
@@ -295,8 +297,16 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                             self.big_omega = complexity.calculate_big_omega(t_open_latex, variable)
                             self.big_theta = complexity.calculate_big_theta(t_open_latex, variable)
                     else:
-                        # Expresión simple, usar directamente
-                        dominant_latex = sympy_latex(simplify(t_open_expr))
+                        # Expresión simple, verificar si es constante
+                        simplified = simplify(t_open_expr)
+                        # Verificar si la expresión es constante (no depende de n)
+                        n_sym = Symbol(variable, integer=True, positive=True)
+                        if not simplified.has(n_sym):
+                            # Es constante, mostrar como "1"
+                            dominant_latex = "1"
+                        else:
+                            # No es constante, usar la expresión
+                            dominant_latex = sympy_latex(simplified)
                         self.big_o = f"O({dominant_latex})"
                         self.big_omega = f"\\Omega({dominant_latex})"
                         self.big_theta = f"\\Theta({dominant_latex})"
@@ -458,7 +468,41 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             mode: Modo de análisis
         """
         for stmt in node.get("body", []):
+            # Guardar el número de rows antes de visitar el statement
+            rows_before = len(self.rows)
+            
             self.visit(stmt, mode)
+            
+            # En modo "best", verificar si se ejecutó un return que termina la función
+            if mode == "best":
+                should_stop = False
+                
+                # Verificar si el statement que acabamos de visitar es un return
+                # y si no hay bucles activos (lo que significa que termina la función)
+                if (isinstance(stmt, dict) and stmt.get("type") == "Return" and 
+                    len(self.loop_stack) == 0):
+                    # Un return fuera de bucles termina la función
+                    should_stop = True
+                
+                # Verificar si acabamos de visitar un for que ejecutó un return
+                # Cuando un for tiene un return en su cuerpo y se ejecuta en best case,
+                # el return termina la función después de que el for termina
+                elif (isinstance(stmt, dict) and stmt.get("type") == "For" and 
+                      len(self.loop_stack) == 0):
+                    # El for terminó (loop_stack está vacío ahora)
+                    # Buscar si hay un return reciente con nota "early-exit"
+                    # que se agregó durante la visita del for
+                    for row in self.rows[rows_before:]:
+                        if (row.get("kind") == "return" and 
+                            row.get("note") and 
+                            "early-exit" in row.get("note", "").lower()):
+                            # Se ejecutó un return dentro del for que termina la función
+                            should_stop = True
+                            break
+                
+                # Si debemos detener, salir del bucle
+                if should_stop:
+                    break
     
     def visitProcDef(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """

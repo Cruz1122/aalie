@@ -37,6 +37,8 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
     - byLine: tabla por línea
     - totals.T_open: ecuación de eficiencia abierta
     - totals.procedure: pasos para construir T_open
+    
+    Si mode="all", devuelve ambos casos (worst y best) en una sola respuesta.
     """
     try:
         # 1) Parsear el código fuente
@@ -54,13 +56,34 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
                 "errors": [{"message": "No se pudo obtener el AST del código", "line": None, "column": None}]
             }
         
-        # 2) Crear analizador iterativo
-        analyzer = IterativeAnalyzer()
+        # 2) Determinar si debemos analizar ambos casos
+        analyze_both = payload.mode == "all"
         
-        # 3) Analizar el AST (api_key se ignora, mantenido por compatibilidad)
-        result = analyzer.analyze(ast, payload.mode)
-        
-        return result
+        if analyze_both:
+            # Analizar ambos casos (worst y best)
+            analyzer_worst = IterativeAnalyzer()
+            analyzer_best = IterativeAnalyzer()
+            
+            result_worst = analyzer_worst.analyze(ast, "worst")
+            result_best = analyzer_best.analyze(ast, "best")
+            
+            # Verificar que ambos análisis fueron exitosos
+            if not result_worst.get("ok", False):
+                return result_worst
+            if not result_best.get("ok", False):
+                return result_best
+            
+            # Devolver ambos casos en una sola respuesta
+            return {
+                "ok": True,
+                "worst": result_worst,
+                "best": result_best
+            }
+        else:
+            # Analizar solo el caso solicitado (compatibilidad hacia atrás)
+            analyzer = IterativeAnalyzer()
+            result = analyzer.analyze(ast, payload.mode)
+            return result
         
     except Exception as e:
         return {

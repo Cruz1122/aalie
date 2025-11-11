@@ -155,22 +155,52 @@ export default function ChatBot({ isOpen, onClose, messages, setMessages, onAnal
   const animatedMessagesRef = useRef<Set<string>>(new Set());
   const processingRef = useRef(false); // Para evitar llamadas duplicadas
 
-  // Cargar API_KEY al montar el componente y verificar cambios
+  // Cargar API_KEY al montar el componente y verificar cambios (sin polling)
   useEffect(() => {
     const checkApiKey = async () => {
+      // Verificar solo localStorage primero (sin hacer request al servidor)
       const stored = getApiKey();
       
-      // Verificar si hay API_KEY disponible (localStorage o servidor)
-      // Solo mostrar card si no hay ninguna API_KEY disponible
-      const status = await getApiKeyStatus();
-      setShowApiKeyCard(!status.hasAny);
+      // Si hay API_KEY en localStorage, no mostrar la card
+      if (stored) {
+        setShowApiKeyCard(false);
+        return;
+      }
+      
+      // Solo verificar servidor si no hay en localStorage y el chatbot está abierto
+      // Esto evita hacer requests innecesarios
+      if (isOpen) {
+        try {
+          const status = await getApiKeyStatus();
+          setShowApiKeyCard(!status.hasAny);
+        } catch (error) {
+          console.error('[ChatBot] Error verificando API_KEY:', error);
+          // Si hay error, asumir que no hay API_KEY disponible
+          setShowApiKeyCard(true);
+        }
+      }
     };
     
     checkApiKey();
-    // Verificar cada vez que el componente se monte o cuando cambie el localStorage
-    const interval = setInterval(checkApiKey, 1000);
     
-    return () => clearInterval(interval);
+    // Escuchar cambios en localStorage en lugar de hacer polling
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'gemini_api_key' || e.key === null) {
+        checkApiKey();
+      }
+    };
+    
+    const handleApiKeyChange = () => {
+      checkApiKey();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('apiKeyChanged', handleApiKeyChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('apiKeyChanged', handleApiKeyChange);
+    };
   }, [isOpen]);
 
   // Auto-scroll al final cuando hay nuevos mensajes

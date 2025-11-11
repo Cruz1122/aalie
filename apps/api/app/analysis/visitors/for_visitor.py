@@ -9,8 +9,9 @@ class ForVisitor:
     Visitor que implementa las reglas específicas para bucles FOR.
     
     Implementa:
-    - Cabecera del for: (b - a + 2) evaluaciones
-    - Cuerpo del for: multiplicado por Σ_{v=a}^{b} 1
+    - Cabecera del for: (b - a + 2) evaluaciones (worst case)
+    - Cuerpo del for: multiplicado por Σ_{v=a}^{b} 1 (worst case)
+    - Best case con early return: cabecera = 2, multiplicador = 1 (solo primera iteración)
     - Procedimiento explicativo
     """
     
@@ -180,6 +181,62 @@ class ForVisitor:
         except (ValueError, TypeError):
             return False
     
+    def _has_return_in_body(self, body_node: Dict[str, Any]) -> bool:
+        """
+        Detecta si un bloque de código contiene un return.
+        Busca recursivamente en el AST.
+        
+        Args:
+            body_node: Nodo del cuerpo a analizar
+            
+        Returns:
+            True si contiene un return, False en caso contrario
+        """
+        if body_node is None:
+            return False
+        
+        if not isinstance(body_node, dict):
+            return False
+        
+        node_type = body_node.get("type", "").lower()
+        
+        # Si es un return, encontrado
+        if node_type == "return":
+            return True
+        
+        # Si es un bloque, buscar en sus hijos
+        if node_type == "block":
+            for stmt in body_node.get("body", []):
+                if self._has_return_in_body(stmt):
+                    return True
+        
+        # Si es un IF, buscar en ambas ramas
+        elif node_type == "if":
+            consequent = body_node.get("consequent")
+            alternate = body_node.get("alternate")
+            if self._has_return_in_body(consequent) or self._has_return_in_body(alternate):
+                return True
+        
+        # Si es un FOR, WHILE, REPEAT, buscar en el cuerpo
+        elif node_type in ("for", "while", "repeat"):
+            body = body_node.get("body")
+            if self._has_return_in_body(body):
+                return True
+        
+        # Buscar en campos comunes
+        for key in ["body", "consequent", "alternate", "value"]:
+            if key in body_node:
+                child = body_node[key]
+                if isinstance(child, dict):
+                    if self._has_return_in_body(child):
+                        return True
+                elif isinstance(child, list):
+                    for item in child:
+                        if isinstance(item, dict) and self._has_return_in_body(item):
+                            return True
+        
+        return False
+    
     def visitFor(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """
         Visita un nodo FOR y aplica las reglas de análisis.
@@ -204,21 +261,32 @@ class ForVisitor:
         a_str = self._ast_expr_to_readable_str(start_expr)
         b_str = self._ast_expr_to_readable_str(end_expr)
         
-        # 1) Cabecera del for: (b - a + 2) evaluaciones
-        # La cabecera se evalúa: evaluación inicial + b - a evaluaciones de condición + 1 final = (b - a + 2)
+        # Detectar si el cuerpo tiene returns (para best case)
+        has_return = False
+        if mode == "best" and body:
+            has_return = self._has_return_in_body(body)
+        
+        # 1) Cabecera del for
         ck_header = self.C()  # generar siguiente constante
         
-        # Calcular header_count: (b - a + 2) evaluaciones
-        # Intentar evaluar numéricamente si es posible
-        try:
-            if isinstance(a_expr, Integer) and isinstance(b_expr, Integer):
-                header_count = Integer(int(b_expr) - int(a_expr) + 2)
-            else:
-                # Generar expresión general: (b - a + 2)
+        if mode == "best" and has_return:
+            # En best case con early return: solo se evalúa la condición inicial y una vez más (2 evaluaciones)
+            # Evaluación inicial + 1 evaluación de condición = 2
+            header_count = Integer(2)
+            header_note = f"Cabecera del bucle for {var}={a_str}..{b_str} (best: early return en primera iteración)"
+        else:
+            # Cabecera normal: (b - a + 2) evaluaciones
+            # La cabecera se evalúa: evaluación inicial + b - a evaluaciones de condición + 1 final = (b - a + 2)
+            try:
+                if isinstance(a_expr, Integer) and isinstance(b_expr, Integer):
+                    header_count = Integer(int(b_expr) - int(a_expr) + 2)
+                else:
+                    # Generar expresión general: (b - a + 2)
+                    header_count = b_expr - a_expr + Integer(2)
+            except:
+                # Fallback: expresión general
                 header_count = b_expr - a_expr + Integer(2)
-        except:
-            # Fallback: expresión general
-            header_count = b_expr - a_expr + Integer(2)
+            header_note = f"Cabecera del bucle for {var}={a_str}..{b_str}"
         
         # Para cabeceras de bucles anidados, usar add_row para generar count_raw correctamente
         # add_row aplicará los multiplicadores del stack automáticamente
@@ -227,14 +295,20 @@ class ForVisitor:
             kind="for",
             ck=ck_header,
             count=header_count,
-            note=f"Cabecera del bucle for {var}={a_str}..{b_str}"
+            note=header_note
         )
         
-        # 2) Multiplicador del cuerpo: Σ_{v=a}^{b} 1
-        # El cuerpo se ejecuta (b - a + 1) veces (iteraciones)
-        # Sum(1, (var, a, b)) suma desde a hasta b inclusive = (b - a + 1) iteraciones
-        var_sym = Symbol(var, integer=True)
-        mult = Sum(Integer(1), (var_sym, a_expr, b_expr))
+        # 2) Multiplicador del cuerpo
+        if mode == "best" and has_return:
+            # En best case con early return: solo 1 iteración (el return se ejecuta en la primera)
+            mult = Integer(1)
+        else:
+            # Multiplicador normal: Σ_{v=a}^{b} 1
+            # El cuerpo se ejecuta (b - a + 1) veces (iteraciones)
+            # Sum(1, (var, a, b)) suma desde a hasta b inclusive = (b - a + 1) iteraciones
+            var_sym = Symbol(var, integer=True)
+            mult = Sum(Integer(1), (var_sym, a_expr, b_expr))
+        
         self.push_multiplier(mult)
         
         # 3) Visitar el cuerpo del bucle

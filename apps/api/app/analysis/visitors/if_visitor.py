@@ -13,6 +13,10 @@ class IfVisitor:
     - Rama THEN: líneas internas, ya multiplicadas por bucles activos
     - Rama ELSE: igual que THEN (si existe)
     - En peor caso: tomar la rama dominante (la que "cuesta más")
+    - En mejor caso: 
+        * Si no hay ELSE y no hay early return: NO ejecutar THEN (condición falsa)
+        * Si hay early return: ejecutar la rama con early return (termina temprano)
+        * Si hay ELSE: elegir la rama con menor costo
     """
     
     def _expr_to_str(self, expr: Any) -> str:
@@ -136,6 +140,58 @@ class IfVisitor:
                     annotate = "worst: max(then, else)"
             
             # Anotar en la primera fila elegida
+            if chosen:
+                chosen[0] = {**chosen[0], "note": annotate}
+            self.rows.extend(chosen)
+        
+        elif mode == "best":
+            # Helper para detectar si una rama contiene early returns
+            # Un early return es un return o break que está dentro de un bucle
+            def has_early_return(rows):
+                # Verificar si hay bucles activos (multiplicadores en el stack)
+                has_active_loops = hasattr(self, 'loop_stack') and len(self.loop_stack) > 0
+                
+                for row in rows:
+                    # Si es un return o break, y hay bucles activos, es un early return
+                    if row.get("kind") in ("return", "break"):
+                        # Si hay bucles activos, es un early return (puede terminar el bucle temprano)
+                        # Si no hay bucles, también puede ser un early return (termina la función temprano)
+                        # En best case, cualquier return es favorable
+                        return True
+                return False
+            
+            if not else_buf:
+                # Si no hay else, en best case la condición es falsa (no se ejecuta el THEN)
+                # EXCEPTO si hay early return, que es favorable (termina temprano)
+                if has_early_return(then_buf):
+                    chosen = then_buf  # Ejecutar early return en best case (favorable)
+                    annotate = "best: early-exit (then)"
+                else:
+                    # En best case sin early return: condición falsa → NO ejecutar THEN
+                    chosen = []
+                    annotate = "best: condition false (no then, no else)"
+            else:
+                # Verificar early returns en ambas ramas
+                then_has_early = has_early_return(then_buf)
+                else_has_early = has_early_return(else_buf)
+                
+                # En best case, preferir ramas con early return (permiten salir temprano)
+                if then_has_early and not else_has_early:
+                    chosen = then_buf
+                    annotate = "best: early-exit (then)"
+                elif else_has_early and not then_has_early:
+                    chosen = else_buf
+                    annotate = "best: early-exit (else)"
+                else:
+                    # Si ambas tienen early return o ninguna, elegir la que tiene menos filas
+                    # Menos filas => menor costo => mejor caso
+                    chosen = then_buf if len(then_buf) <= len(else_buf) else else_buf
+                    if then_has_early or else_has_early:
+                        annotate = "best: min(then, else) with early-exit"
+                    else:
+                        annotate = "best: min(then, else)"
+            
+            # Anotar en la primera fila elegida (si hay alguna)
             if chosen:
                 chosen[0] = {**chosen[0], "note": annotate}
             self.rows.extend(chosen)

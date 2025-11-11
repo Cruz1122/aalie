@@ -175,9 +175,16 @@ class ComplexityClasses:
             variable: Variable principal
             
         Returns:
-            Término dominante como expresión SymPy
+            Término dominante como expresión SymPy (si es constante, retorna 1)
         """
         n = Symbol(variable, real=True, positive=True)
+        n_sym = Symbol(variable, real=True, positive=True)
+        
+        # Verificar si la expresión es constante (no depende de n)
+        if not expr.has(n_sym):
+            # Es constante, retornar 1 para notación asintótica
+            from sympy import Integer
+            return Integer(1)
         
         try:
             # Intentar como polinomio
@@ -187,16 +194,19 @@ class ComplexityClasses:
                 leading_coeff = LC(poly)
                 leading_monom = LM(poly)
                 lt = leading_coeff * leading_monom
-                return simplify(lt)
+                simplified = simplify(lt)
+                
+                # Si el término dominante es constante, retornar 1
+                if not simplified.has(n_sym):
+                    from sympy import Integer
+                    return Integer(1)
+                
+                return simplified
         except:
             pass
         
         # Si no es un polinomio simple, analizar comportamiento asintótico
         try:
-            # Calcular límite cuando n -> oo
-            # Comparar con funciones conocidas
-            n_sym = Symbol(variable, real=True, positive=True)
-            
             # Verificar si es exponencial
             if expr.has(exp):
                 return expr
@@ -217,11 +227,25 @@ class ComplexityClasses:
                 if poly:
                     leading_coeff = LC(poly)
                     leading_monom = LM(poly)
-                    return leading_coeff * leading_monom
+                    result = leading_coeff * leading_monom
+                    # Si es constante, retornar 1
+                    if not result.has(n_sym):
+                        from sympy import Integer
+                        return Integer(1)
+                    return result
             
-            # Fallback: usar la expresión completa simplificada
-            return simplify(expr)
+            # Fallback: verificar si es constante después de simplificar
+            simplified = simplify(expr)
+            if not simplified.has(n_sym):
+                from sympy import Integer
+                return Integer(1)
+            
+            return simplified
         except:
+            # Si hay error, verificar si es constante
+            if not expr.has(n_sym):
+                from sympy import Integer
+                return Integer(1)
             return expr
     
     def _sympy_to_latex(self, expr: 'Expr') -> str:
