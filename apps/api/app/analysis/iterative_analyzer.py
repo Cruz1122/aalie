@@ -1,5 +1,3 @@
-# apps/api/app/analysis/iterative_analyzer.py
-
 from typing import Any, Dict, List, Optional, Union
 from sympy import Expr, latex, Integer
 from .base import BaseAnalyzer
@@ -205,14 +203,22 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     
                     # Guardar la expresión SymPy evaluada para usar en build_t_open_expr
                     from sympy import simplify
-                    count_evaluated = closer._evaluate_all_sums_sympy(count_raw_expr)
-                    count_evaluated = simplify(count_evaluated)
+                    # Si contiene símbolos iterativos, no intentar evaluar sumatorias
+                    # (ya se manejan en close_summation)
+                    if closer._has_iterative_symbols(count_raw_expr) and not closer._has_summations(count_raw_expr):
+                        # Es un símbolo iterativo puro, usar la expresión tal cual
+                        count_evaluated = simplify(count_raw_expr)
+                    else:
+                        # Evaluar sumatorias si las hay
+                        count_evaluated = closer._evaluate_all_sums_sympy(count_raw_expr)
+                        count_evaluated = simplify(count_evaluated)
                     row["count_expr"] = count_evaluated  # Expresión SymPy evaluada
                     
-                    # Generar procedimiento paso a paso
+                    # Generar procedimiento paso a paso (consistente entre modos)
+                    count_raw_latex_str = row.get("count_raw", latex(count_raw_expr) if hasattr(count_raw_expr, '__str__') else str(count_raw_expr))
+                    
                     if mode == "avg":
                         # Para caso promedio, agregar explicación de E[N_ℓ]
-                        count_raw_latex_str = row.get("count_raw", latex(count_raw_expr) if hasattr(count_raw_expr, '__str__') else str(count_raw_expr))
                         procedure_steps = [
                             f"\\text{{Esperanza de ejecuciones para línea {row.get('line', '?')}: }} E[N_{{{row.get('line', '?')}}}] = {count_raw_latex_str}"
                         ]
@@ -223,10 +229,11 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                         row["procedure"] = procedure_steps
                     else:
                         # Para worst/best, procedimiento normal
+                        # Si hay pasos generados (incluyendo para símbolos iterativos), usarlos
                         if steps:
                             row["procedure"] = steps
                         else:
-                            count_raw_latex_str = row.get("count_raw", latex(count_raw_expr) if hasattr(count_raw_expr, '__str__') else str(count_raw_expr))
+                            # Si no hay pasos, generar procedimiento básico
                             row["procedure"] = [
                                 f"\\text{{Expresión original: }} {count_raw_latex_str}",
                                 f"\\text{{Resultado: }} {closed_count}"
@@ -730,7 +737,11 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             # Guardar el número de rows antes de visitar el statement
             rows_before = len(self.rows)
             
-            self.visit(stmt, mode)
+            # Si el statement es un While, pasar el bloque actual como contexto padre
+            if isinstance(stmt, dict) and stmt.get("type") == "While":
+                self.visitWhile(stmt, mode, parent_context=node)
+            else:
+                self.visit(stmt, mode)
             
             # En modo "best", verificar si se ejecutó un return que termina la función
             if mode == "best":

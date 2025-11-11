@@ -1,4 +1,3 @@
-# path: apps/api/app/core/config.py
 import os
 
 

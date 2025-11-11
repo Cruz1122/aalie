@@ -115,26 +115,21 @@ class WhileRepeatVisitor:
             Diccionario con variable, límite y operador, o None si no se puede analizar
         """
         if not isinstance(test, dict):
-            print(f"[While Closure] _extract_condition_info: test no es dict, es {type(test)}")
             return None
         
         expr_type = test.get("type", "")
         expr_type_lower = expr_type.lower()
-        print(f"[While Closure] _extract_condition_info: expr_type={expr_type}")
         
         # El AST usa 'op' no 'operator'
         op = test.get("op", "") or test.get("operator", "")
-        print(f"[While Closure] _extract_condition_info: operator={op}")
         
         # Si es una condición compuesta con AND/OR, analizar recursivamente
         if op.lower() in ("and", "or", "&&", "||"):
-            print(f"[While Closure] _extract_condition_info: Condición compuesta con {op}, analizando partes")
             # Intentar analizar la parte izquierda primero
             left = test.get("left", {})
             if isinstance(left, dict):
                 left_info = self._extract_condition_info(left)
                 if left_info:
-                    print(f"[While Closure] _extract_condition_info: Encontrada condición simple en left: {left_info}")
                     return left_info
             
             # Si left no funciona, intentar right
@@ -142,21 +137,17 @@ class WhileRepeatVisitor:
             if isinstance(right, dict):
                 right_info = self._extract_condition_info(right)
                 if right_info:
-                    print(f"[While Closure] _extract_condition_info: Encontrada condición simple en right: {right_info}")
                     return right_info
             
             # Si ninguna parte es analizable, fallback
-            print(f"[While Closure] _extract_condition_info: No se pudo analizar ninguna parte de la condición compuesta")
             return None
         
         # Solo analizar condiciones Binary simples (puede ser "Binary" o "binary")
         if expr_type_lower != "binary":
-            print(f"[While Closure] _extract_condition_info: No es binary, es {expr_type}")
             return None
         
         # Solo operadores de comparación simples
         if op not in ("<", "<=", ">", ">=", "=", "==", "<>", "!="):
-            print(f"[While Closure] _extract_condition_info: Operador no válido: {op}")
             return None
         
         left = test.get("left", {})
@@ -253,6 +244,94 @@ class WhileRepeatVisitor:
                             if isinstance(item, dict):
                                 self._find_assignments_to_var(item, var_name, assignments)
     
+    def _find_initial_value_of_var(self, var_name: str, while_line: int, parent_context: Optional[Dict[str, Any]] = None) -> Optional[str]:
+        """
+        Busca el valor inicial de la variable de control antes del while.
+        
+        Args:
+            var_name: Nombre de la variable de control
+            while_line: Línea donde empieza el while
+            parent_context: Contexto del bloque padre que contiene el while
+            
+        Returns:
+            Expresión del valor inicial, o None si no se encuentra
+        """
+        # Buscar en el contexto padre (bloque que contiene el while)
+        if parent_context:
+            assignments = []
+            self._find_assignments_before_line(parent_context, var_name, while_line, assignments)
+            
+            if assignments:
+                # Tomar la última asignación encontrada (la más cercana al while)
+                last_assign = assignments[-1]
+                value = last_assign.get("value")
+                if value:
+                    initial_expr = self._expr_to_str(value)
+                    return initial_expr
+        
+        # Si hay un loop_stack activo (FOR anidado), la variable podría depender
+        # de la variable del FOR. Por ejemplo: j <- i - 1 dentro de FOR i
+        # En este caso, el valor inicial se debería encontrar en el bloque padre,
+        # pero si no se encuentra, podríamos considerar la variable del FOR
+        # como parte del contexto (esto se maneja implícitamente en la expresión)
+        
+        return None
+    
+    def _find_assignments_before_line(self, node: Dict[str, Any], var_name: str, target_line: int, assignments: List[Dict[str, Any]]) -> None:
+        """
+        Busca asignaciones a una variable que ocurren antes de una línea específica.
+        
+        Args:
+            node: Nodo del AST a analizar
+            var_name: Nombre de la variable
+            target_line: Línea objetivo (solo asignaciones antes de esta línea)
+            assignments: Lista donde se acumulan las asignaciones encontradas
+        """
+        if not isinstance(node, dict):
+            return
+        
+        node_type = node.get("type", "").lower()
+        
+        # Si es un bloque, buscar en sus statements
+        if node_type == "block":
+            for stmt in node.get("body", []):
+                if not isinstance(stmt, dict):
+                    continue
+                
+                # Verificar la línea del statement
+                stmt_line = stmt.get("pos", {}).get("line", 0)
+                
+                # Si la línea es mayor o igual a target_line, no seguir buscando
+                # (ya pasamos el while)
+                if stmt_line > 0 and stmt_line >= target_line:
+                    break
+                
+                # Si es una asignación a la variable, agregarla
+                if stmt.get("type", "").lower() == "assign":
+                    target = stmt.get("target", {})
+                    if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
+                        if target.get("name", "") == var_name:
+                            assignments.append({
+                                "target": target,
+                                "value": stmt.get("value", {}),
+                                "node": stmt,
+                                "line": stmt_line
+                            })
+                else:
+                    # Buscar recursivamente en otros tipos de nodos
+                    self._find_assignments_before_line(stmt, var_name, target_line, assignments)
+        else:
+            # Buscar en otros campos comunes
+            for key in ["body", "consequent", "alternate"]:
+                if key in node:
+                    child = node[key]
+                    if isinstance(child, dict):
+                        self._find_assignments_before_line(child, var_name, target_line, assignments)
+                    elif isinstance(child, list):
+                        for item in child:
+                            if isinstance(item, dict):
+                                self._find_assignments_before_line(item, var_name, target_line, assignments)
+    
     def _analyze_body_for_variable_change(self, body: Dict[str, Any], var_name: str) -> Optional[Dict[str, Any]]:
         """
         Analiza el cuerpo del WHILE para encontrar asignaciones a la variable de control.
@@ -270,8 +349,6 @@ class WhileRepeatVisitor:
         # Buscar todas las asignaciones a la variable de control recursivamente
         assignments = []
         self._find_assignments_to_var(body, var_name, assignments)
-        
-        print(f"[While Closure] _analyze_body_for_variable_change: Encontradas {len(assignments)} asignaciones a {var_name}")
         
         if not assignments:
             return None
@@ -340,17 +417,15 @@ class WhileRepeatVisitor:
                         break
         
         if not change_rules:
-            print(f"[While Closure] _analyze_body_for_variable_change: No se encontraron reglas de cambio válidas")
             return None
         
         # Si hay múltiples reglas de cambio, usar la primera
         # En el futuro se podría mejorar para detectar el peor caso o la más común
         change_rule = change_rules[0]
-        print(f"[While Closure] _analyze_body_for_variable_change: Regla de cambio seleccionada: {change_rule}")
         
         return {
             "change_rule": change_rule,
-            "initial_value": initial_value  # None por ahora, se usará variable simbólica
+            "initial_value": initial_value  # Se buscará en el contexto padre
         }
     
     def _is_simple_constant(self, expr: str) -> bool:
@@ -369,7 +444,127 @@ class WhileRepeatVisitor:
         except (ValueError, TypeError):
             return False
     
-    def _calculate_iterations(self, var_name: str, initial: Optional[str], change_rule: Dict[str, Any], limit: str, operator: str) -> Optional[str]:
+    def _has_early_exit_condition(self, test: Dict[str, Any], var_name: str) -> bool:
+        """
+        Detecta si la condición del WHILE puede ser falsa desde el inicio en best case.
+        
+        Esto ocurre cuando la condición tiene una parte AND con una comparación que no depende
+        solo de la variable de control (por ejemplo, comparaciones de arrays).
+        
+        Args:
+            test: Nodo de la condición del WHILE
+            var_name: Nombre de la variable de control
+            
+        Returns:
+            True si la condición puede ser falsa desde el inicio en best case
+        """
+        if not isinstance(test, dict):
+            return False
+        
+        test_type = test.get("type", "").lower()
+        operator = test.get("operator", "").lower()
+        
+        # Si es un AND, verificar si alguna parte puede ser falsa desde el inicio
+        if test_type in ("binary", "binaryop") and operator in ("and", "&&"):
+            left = test.get("left", {})
+            right = test.get("right", {})
+            
+            print(f"[Early Exit] Detected AND condition, checking left and right for non-control comparisons")
+            
+            # Verificar si alguna parte tiene una comparación con arrays u otras variables
+            # (no solo la variable de control)
+            left_has_non_control = self._has_non_control_comparison(left, var_name)
+            right_has_non_control = self._has_non_control_comparison(right, var_name)
+            
+            print(f"[Early Exit] left has non-control: {left_has_non_control}, right has non-control: {right_has_non_control}")
+            
+            if left_has_non_control or right_has_non_control:
+                return True
+        
+        # Si es una comparación que no es solo con la variable de control
+        if test_type in ("binary", "binaryop") and operator in (">", "<", ">=", "<=", "==", "!=", "=", "<>"):
+            if self._has_non_control_comparison(test, var_name):
+                return True
+        
+        return False
+    
+    def _has_non_control_comparison(self, node: Dict[str, Any], var_name: str) -> bool:
+        """
+        Verifica si un nodo contiene una comparación que no es solo con la variable de control.
+        
+        Args:
+            node: Nodo del AST
+            var_name: Nombre de la variable de control
+            
+        Returns:
+            True si hay una comparación que involucra otras variables (como arrays)
+        """
+        if not isinstance(node, dict):
+            return False
+        
+        node_type = node.get("type", "").lower()
+        operator = node.get("op", "") or node.get("operator", "")
+        operator = operator.lower()
+        
+        # Si el nodo mismo es un Index (acceso a array), retornar True
+        if node_type == "index":
+            return True
+        
+        # Si es una comparación
+        if node_type in ("binary", "binaryop") and operator in (">", "<", ">=", "<=", "==", "!=", "=", "<>"):
+            left = node.get("left", {})
+            right = node.get("right", {})
+            
+            # Verificar si alguna parte es un acceso a array o una variable diferente
+            left_type = left.get("type", "").lower() if isinstance(left, dict) else ""
+            right_type = right.get("type", "").lower() if isinstance(right, dict) else ""
+            
+            # Verificar acceso a array (puede ser "Index", "ArrayAccess", "IndexSuffix", "lvalue", etc.)
+            # El AST usa "Index" para acceso a array: {type: "Index", target: {...}, index: {...}}
+            has_array_access = False
+            if left_type in ("index", "arrayaccess", "indexsuffix", "lvalue") or right_type in ("index", "arrayaccess", "indexsuffix", "lvalue"):
+                has_array_access = True
+            elif isinstance(left, dict) and ("index" in left or "suffix" in left or left_type == "index"):
+                has_array_access = True
+            elif isinstance(right, dict) and ("index" in right or "suffix" in right or right_type == "index"):
+                has_array_access = True
+            
+            if has_array_access:
+                return True
+            
+            # Si hay una variable diferente a la de control
+            if left_type in ("identifier", "variable"):
+                left_name = left.get("name", "") if isinstance(left, dict) else ""
+                if left_name and left_name != var_name:
+                    return True
+            if right_type in ("identifier", "variable"):
+                right_name = right.get("name", "") if isinstance(right, dict) else ""
+                if right_name and right_name != var_name:
+                    return True
+            
+            # Verificar si hay acceso a array mediante verificación de estructura
+            # Un acceso a array suele tener estructura como: {type: "lvalue", name: "A", suffix: [...]}
+            if isinstance(left, dict):
+                if "suffix" in left or (left_type == "lvalue" and "name" in left):
+                    # Verificar si tiene sufijos (acceso a array)
+                    suffix = left.get("suffix", [])
+                    if suffix:
+                        return True
+            if isinstance(right, dict):
+                if "suffix" in right or (right_type == "lvalue" and "name" in right):
+                    suffix = right.get("suffix", [])
+                    if suffix:
+                        return True
+        
+        # Recursivamente verificar hijos
+        for key in ["left", "right", "operand", "test", "then", "else"]:
+            if key in node:
+                if self._has_non_control_comparison(node[key], var_name):
+                    return True
+        
+        return False
+    
+    def _calculate_iterations(self, var_name: str, initial: Optional[str], change_rule: Dict[str, Any], limit: str, operator: str, mode: str = "worst") -> Optional[str]:
         """
         Calcula el número de iteraciones basándose en valor inicial, regla de cambio, límite y operador.
         
@@ -425,35 +620,74 @@ class WhileRepeatVisitor:
         
         return None
     
-    def _analyze_while_closure(self, node: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _analyze_while_closure(self, node: Dict[str, Any], parent_context: Optional[Dict[str, Any]] = None, mode: str = "worst") -> Optional[Dict[str, Any]]:
         """
         Analiza el cierre de un bucle WHILE.
         
         Args:
             node: Nodo WHILE del AST
+            parent_context: Contexto del bloque padre que contiene el while (opcional)
+            mode: Modo de análisis ("worst", "best", "avg")
             
         Returns:
             Diccionario con información del cierre, o None si no se puede analizar
         """
         test = node.get("test", {})
         body = node.get("body", {})
+        L = node.get("pos", {}).get("line", 0)
         
-        # Debug: verificar estructura del nodo
-        print(f"[While Closure] Analizando WHILE, test type: {type(test)}, body type: {type(body)}")
-        if isinstance(test, dict):
-            print(f"[While Closure] test keys: {list(test.keys()) if isinstance(test, dict) else 'N/A'}")
-        if isinstance(body, dict):
-            print(f"[While Closure] body keys: {list(body.keys()) if isinstance(body, dict) else 'N/A'}")
+        # 0) VERIFICAR BEST CASE ANTES: Si es best case y hay condición AND con array/variable diferente
+        # Para insertion sort: WHILE (j > 0 AND A[j] > key)
+        # En best case: A[j] <= key desde el inicio, entonces la condición es falsa, 0 iteraciones
+        test_op = test.get("op", "") or test.get("operator", "")
+        test_type = test.get("type", "").lower()
         
-        # 1) Extraer información de la condición
+        if mode == "best" and test_type in ("binary", "binaryop") and test_op.lower() in ("and", "&&"):
+            # Verificar si hay una parte que no depende solo de la variable de control
+            left = test.get("left", {})
+            right = test.get("right", {})
+            
+            # Primero extraer información para obtener var_name (necesitamos saber cuál es la variable de control)
+            condition_info = self._extract_condition_info(test)
+            if condition_info:
+                var_name = condition_info["variable"]
+            else:
+                # Si no se puede extraer, intentar detectar var_name de otra manera
+                # Por ejemplo, buscar en la parte izquierda que suele ser la comparación con la variable
+                if isinstance(left, dict):
+                    left_left = left.get("left", {})
+                    if isinstance(left_left, dict) and left_left.get("type", "").lower() == "identifier":
+                        var_name = left_left.get("name", "")
+                    else:
+                        var_name = None
+                else:
+                    var_name = None
+            
+            if var_name:
+                # Verificar si alguna parte tiene acceso a array u otra variable
+                left_result = self._has_non_control_comparison(left, var_name)
+                right_result = self._has_non_control_comparison(right, var_name)
+                has_array_or_other_var = left_result or right_result
+                
+                if has_array_or_other_var:
+                    # En best case, asumir que la parte con array/variable es falsa desde el inicio
+                    # Por lo tanto, el WHILE solo evalúa la condición una vez y sale (0 iteraciones)
+                    # Retornar información mínima para best case con 0 iteraciones
+                    return {
+                        "variable": var_name,
+                        "initial_value": None,
+                        "change_rule": {"operator": "-", "constant": "1"},
+                        "limit": "0",
+                        "operator": ">",
+                        "iterations": "0",
+                        "success": True,
+                        "mode": mode
+                    }
+        
+        # 1) Extraer información de la condición (para worst/avg case o si best case no aplica)
         condition_info = self._extract_condition_info(test)
         if not condition_info:
-            print(f"[While Closure] No se pudo extraer información de la condición")
-            if isinstance(test, dict):
-                print(f"[While Closure] test type: {test.get('type', 'unknown')}")
             return None
-        
-        print(f"[While Closure] Condición extraída: variable={condition_info['variable']}, limit={condition_info['limit']}, operator={condition_info['operator']}")
         
         var_name = condition_info["variable"]
         limit = condition_info["limit"]
@@ -462,21 +696,20 @@ class WhileRepeatVisitor:
         # 2) Analizar el cuerpo para encontrar cambios a la variable
         body_info = self._analyze_body_for_variable_change(body, var_name)
         if not body_info:
-            print(f"[While Closure] No se encontró cambio a la variable {var_name} en el cuerpo")
             return None
-        
-        print(f"[While Closure] Cambio encontrado: operator={body_info['change_rule']['operator']}, constant={body_info['change_rule']['constant']}")
         
         change_rule = body_info["change_rule"]
-        initial_value = body_info["initial_value"]
         
-        # 3) Calcular iteraciones
-        iterations = self._calculate_iterations(var_name, initial_value, change_rule, limit, operator)
+        # 3) Buscar valor inicial de la variable en el contexto padre
+        initial_value = self._find_initial_value_of_var(var_name, L, parent_context)
+        if not initial_value:
+            # Si no se encontró en el contexto padre, usar variable simbólica
+            initial_value = None
+        
+        # 4) Calcular iteraciones normalmente
+        iterations = self._calculate_iterations(var_name, initial_value, change_rule, limit, operator, mode)
         if not iterations:
-            print(f"[While Closure] No se pudo calcular iteraciones")
             return None
-        
-        print(f"[While Closure] Iteraciones calculadas: {iterations}")
         
         return {
             "variable": var_name,
@@ -485,7 +718,8 @@ class WhileRepeatVisitor:
             "limit": limit,
             "operator": operator,
             "iterations": iterations,
-            "success": True
+            "success": True,
+            "mode": mode
         }
     
     def _get_while_exit_probability(self, node: Dict[str, Any]) -> Optional[tuple]:
@@ -535,18 +769,24 @@ class WhileRepeatVisitor:
             except:
                 return None
     
-    def visitWhile(self, node: Dict[str, Any], mode: str = "worst") -> None:
+    def visitWhile(self, node: Dict[str, Any], mode: str = "worst", parent_context: Optional[Dict[str, Any]] = None) -> None:
         """
         Visita un bucle WHILE y aplica las reglas de análisis.
         
         Args:
             node: Nodo WHILE del AST
             mode: Modo de análisis
+            parent_context: Contexto del bloque padre que contiene el while (opcional)
         """
         L = node.get("pos", {}).get("line", 0)
         t = self.iter_sym("while", L)
         
-        # Para modo promedio, intentar obtener probabilidad de salida
+        # Estrategia unificada:
+        # 1. En modo promedio, intentar probabilidad primero (si está disponible)
+        # 2. Si no hay probabilidad o modo != "avg", intentar análisis de cierre
+        # 3. Si ambos fallan, usar símbolo iterativo con nota mejorada
+        
+        # Paso 1: Intentar probabilidad en modo promedio
         if mode == "avg":
             exit_prob = self._get_while_exit_probability(node)
             if exit_prob:
@@ -584,7 +824,7 @@ class WhileRepeatVisitor:
                         kind="while",
                         ck=ck_cond,
                         count=cond_count,
-                        note=f"Condición del bucle while en línea {L} (avg: E[#] = 1/p, p={p_str})"
+                        note=f"Condición del bucle while en línea {L} (avg: E[#iteraciones] = 1/p, p={p_str})"
                     )
                     
                     # Cuerpo: se ejecuta E[#iteraciones] veces
@@ -598,10 +838,10 @@ class WhileRepeatVisitor:
                     return
                 except Exception as e:
                     print(f"[WhileRepeatVisitor] Error calculando E[#iteraciones] = 1/p: {e}")
-                    # Fallback: usar símbolo
+                    # Continuar con análisis de cierre como fallback
         
-        # Intentar analizar el cierre del WHILE (para worst/best o fallback de avg)
-        closure_info = self._analyze_while_closure(node)
+        # Paso 2: Intentar análisis de cierre (para todos los modos, incluyendo avg como fallback)
+        closure_info = self._analyze_while_closure(node, parent_context, mode)
         
         if closure_info and closure_info.get("success"):
             # Análisis exitoso: usar expresiones concretas
@@ -610,12 +850,9 @@ class WhileRepeatVisitor:
             change_rule = closure_info["change_rule"]
             limit = closure_info["limit"]
             operator = closure_info["operator"]
+            initial_value = closure_info.get("initial_value")
             
-            # Convertir iteraciones a sumatoria para el multiplicador
-            # Si iterations es algo como "n - i_0", usar sumatoria: \sum_{k=0}^{iterations-1} 1
-            # O simplemente usar la expresión directamente si es simple
-            # Por ahora, usar la expresión directamente como multiplicador
-            # Convertir iterations (string) a SymPy
+            # Convertir iteraciones (string) a SymPy
             try:
                 iterations_expr = sympify(iterations)
             except:
@@ -625,7 +862,7 @@ class WhileRepeatVisitor:
             mult_expr = iterations_expr
             
             # Si hay multiplicadores externos (anidado), integrar
-            if self.loop_stack:
+            if hasattr(self, 'loop_stack') and self.loop_stack:
                 # Integrar con multiplicadores externos
                 outer_mult = self.loop_stack[-1]
                 
@@ -641,20 +878,55 @@ class WhileRepeatVisitor:
                     mult_expr = iterations_expr * outer_mult
             
             # 1) Condición: se evalúa (iterations + 1) veces
+            # En best case con 0 iteraciones, la condición se evalúa 1 vez (y sale)
             ck_cond = self.C()
-            # Usar iterations_expr que ya convertimos arriba
-            cond_count = iterations_expr + Integer(1)
+            if mode == "best" and iterations == "0":
+                cond_count = Integer(1)
+            else:
+                cond_count = iterations_expr + Integer(1)
+            
+            # Generar nota descriptiva
+            change_op = change_rule.get("operator", "")
+            change_const = change_rule.get("constant", "1")
+            mode_info = closure_info.get("mode", mode)
+            
+            # Agregar información del modo si es best case y hay 0 iteraciones
+            if mode_info == "best" and iterations == "0":
+                if initial_value:
+                    note_text = f"Condición del bucle while en línea {L} (best case: condición falsa desde el inicio, variable {var_name} inicializada en {initial_value})"
+                else:
+                    note_text = f"Condición del bucle while en línea {L} (best case: condición falsa desde el inicio, variable {var_name})"
+            elif mode_info == "best":
+                if initial_value:
+                    note_text = f"Condición del bucle while en línea {L} (best case: variable {var_name} inicializada en {initial_value}, cambia en {change_op} {change_const}, límite: {var_name} {operator} {limit})"
+                else:
+                    note_text = f"Condición del bucle while en línea {L} (best case: variable {var_name} cambia en {change_op} {change_const}, límite: {var_name} {operator} {limit})"
+            elif mode_info == "worst":
+                if initial_value:
+                    note_text = f"Condición del bucle while en línea {L} (worst case: variable {var_name} inicializada en {initial_value}, cambia en {change_op} {change_const}, límite: {var_name} {operator} {limit})"
+                else:
+                    note_text = f"Condición del bucle while en línea {L} (worst case: variable {var_name} cambia en {change_op} {change_const}, límite: {var_name} {operator} {limit})"
+            else:
+                if initial_value:
+                    note_text = f"Condición del bucle while en línea {L} (variable {var_name} inicializada en {initial_value}, cambia en {change_op} {change_const}, límite: {var_name} {operator} {limit})"
+                else:
+                    note_text = f"Condición del bucle while en línea {L} (variable {var_name} cambia en {change_op} {change_const}, límite: {var_name} {operator} {limit})"
+            
             self.add_row(
                 line=L,
                 kind="while",
                 ck=ck_cond,
                 count=cond_count,
-                note=f"Condición del bucle while en línea {L}"
+                note=note_text
             )
             
             # 2) Cuerpo: se ejecuta iterations veces
-            # mult_expr ya es una expresión SymPy
-            self.push_multiplier(mult_expr)
+            # En best case con 0 iteraciones, el multiplicador debe ser 0
+            if mode == "best" and iterations == "0":
+                # El cuerpo no se ejecuta, usar multiplicador 0
+                self.push_multiplier(Integer(0))
+            else:
+                self.push_multiplier(mult_expr)
             
             # Visitar el cuerpo del bucle
             body = node.get("body")
@@ -662,25 +934,28 @@ class WhileRepeatVisitor:
                 self.visit(body, mode)
             
             self.pop_multiplier()
-            
-            # 3) Procedimiento con información del cierre (ahora manejado por LLM)
-            change_op = change_rule.get("operator", "")
-            change_const = change_rule.get("constant", "1")
-            initial_val = closure_info.get("initial_value") or f"{var_name}_0"
         else:
-            # Fallback: usar símbolo simbólico
+            # Paso 3: Fallback - usar símbolo iterativo con nota mejorada
             if mode == "avg":
                 # En promedio, usar símbolo t̄_while_L (esperanza)
                 t_bar = f"\\bar{{t}}_{{while_{L}}}"
                 t_sym = Symbol(f"t_bar_while_{L}", real=True, positive=True)
-                note_text = f"Condición del bucle while en línea {L} (avg: E[#] = {t_bar})"
+                note_text = (
+                    f"Condición del bucle while en línea {L} "
+                    f"(avg: E[#iteraciones] = {t_bar}). "
+                    f"Variable iterativa no acotada - requiere análisis adicional para determinar límites."
+                )
             else:
                 # En worst/best, usar símbolo t_while_L
                 t_sym = Symbol(t, real=True)
-                note_text = f"Condición del bucle while en línea {L}"
+                note_text = (
+                    f"Condición del bucle while en línea {L}. "
+                    f"Variable iterativa {t} no acotada - no se pudo determinar el número de iteraciones. "
+                    f"Requiere análisis adicional o asumir límites según el caso ({mode} case)."
+                )
             
             # 1) Condición: se evalúa (t + 1) veces
-            ck_cond = self.C()  # C_{k} para evaluar la condición
+            ck_cond = self.C()
             cond_count = t_sym + Integer(1)
             self.add_row(
                 line=L,
@@ -691,7 +966,7 @@ class WhileRepeatVisitor:
             )
             
             # 2) Cuerpo: se ejecuta t veces
-            self.push_multiplier(t_sym)  # multiplicador simbólico
+            self.push_multiplier(t_sym)
             
             # Visitar el cuerpo del bucle
             body = node.get("body")

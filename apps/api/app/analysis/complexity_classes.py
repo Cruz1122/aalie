@@ -1,5 +1,3 @@
-# apps/api/app/analysis/complexity_classes.py
-
 from typing import Dict, Optional
 from sympy import Symbol, sympify, simplify, latex, oo, limit, log, exp, symbols
 from sympy import Poly, degree

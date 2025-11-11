@@ -30,10 +30,21 @@ L es la línea (1-based) donde empieza el ciclo. Esto hace los símbolos determi
 
 ### Características Importantes
 
-- **No "cerramos"** `t_{…}`. Son variables simbólicas (PD-friendly)
+- **Análisis de Cierre**: El sistema intenta analizar el cierre del bucle WHILE en todos los modos (best, average, worst)
+  - Busca el valor inicial de la variable de control en el contexto padre
+  - Identifica la regla de cambio de la variable en el cuerpo
+  - Calcula el número de iteraciones cuando es posible
+  - Si el análisis es exitoso, usa expresiones concretas en lugar de símbolos
+- **Modo Promedio**: Prioriza el uso de probabilidades cuando están disponibles (E[#iteraciones] = 1/p)
+  - Si no hay probabilidad disponible, intenta análisis de cierre como fallback
+- **Símbolos Iterativos**: Cuando no se puede cerrar el bucle, se usan símbolos `t_{while_L}` o `\bar{t}_{while_L}` (para promedio)
+  - Estos símbolos son variables simbólicas no acotadas (PD-friendly)
+  - `close_summation` detecta estos símbolos y genera pasos educativos apropiados
+  - No se intenta cerrar símbolos iterativos, solo se simplifican algebraicamente
 - **La condición** siempre es una sola constante `C_{k}` (más lo que cueste evaluarla si trae expresiones)
 - **Los multiplicadores** usan `push_multiplier(...)/pop_multiplier(...)` para afectar a todo el cuerpo (y bucles anidados)
 - **Memoización**: la clave de memo debe incluir el ID/line del nodo → así reusamos el mismo `t_{while_L}/t_{repeat_L}` si el subárbol se visita otra vez en el mismo contexto
+- **Rastreo de Variables**: El sistema rastrea asignaciones a la variable de control antes del while para determinar el valor inicial
 
 ## Implementación
 
@@ -47,22 +58,51 @@ def iter_sym(self, kind: str, line: int) -> str:
 
 ### WHILE (cond) DO block
 
+**Estrategia Unificada**:
+
+1. **Modo Promedio**: 
+   - Intentar obtener probabilidad de salida desde `avgModel`
+   - Si está disponible: usar E[#iteraciones] = 1/p
+   - Si no está disponible: continuar con análisis de cierre
+
+2. **Análisis de Cierre** (todos los modos):
+   - Extraer información de la condición (variable, límite, operador)
+   - Buscar valor inicial de la variable en el contexto padre
+   - Analizar cuerpo para encontrar cambio de la variable
+   - Calcular número de iteraciones
+   - Si es exitoso: usar expresión concreta (ej: `(i-1) - 0 + 1 = i`)
+   - Si falla: usar símbolo iterativo con nota mejorada
+
+3. **Fallback**:
+   - Usar símbolo `t_{while_L}` (o `\bar{t}_{while_L}` en promedio)
+   - Generar nota explicativa sobre el símbolo iterativo
+
 ```python
-def visit_while(self, node, mode="worst"):
-    L = node["pos"]["line"]
+def visitWhile(self, node, mode="worst", parent_context=None):
+    L = node.get("pos", {}).get("line", 0)
     t = self.iter_sym("while", L)
-
-    # 1) Condición: se evalúa (t_{while_L} + 1) veces
-    ck_cond = self.C()  # C_{k} para evaluar la condición
-    self.add_row(L, "while", ck_cond, f"{t} + 1")
-
-    # 2) Cuerpo: se ejecuta t_{while_L} veces
-    self.push_multiplier(t)        # multiplicador simbólico
-    self.visit(node["body"], mode) # el cuerpo hereda el multiplicador y los de fuera
-    self.pop_multiplier()
-
-    # 3) Procedimiento
-    self.procedure.append(rf"WHILE@{L}: condición {t}+1 veces; cuerpo multiplicado por {t}.")
+    
+    # Paso 1: Intentar probabilidad en modo promedio
+    if mode == "avg":
+        exit_prob = self._get_while_exit_probability(node)
+        if exit_prob:
+            # Usar E[#iteraciones] = 1/p
+            # ... (código de probabilidad)
+            return
+    
+    # Paso 2: Intentar análisis de cierre (todos los modos)
+    closure_info = self._analyze_while_closure(node, parent_context)
+    
+    if closure_info and closure_info.get("success"):
+        # Usar expresión concreta: iterations_expr + 1
+        iterations_expr = sympify(closure_info["iterations"])
+        cond_count = iterations_expr + Integer(1)
+        # ... (código con expresión concreta)
+    else:
+        # Paso 3: Fallback - usar símbolo iterativo
+        t_sym = Symbol(t, real=True)
+        cond_count = t_sym + Integer(1)
+        # ... (código con símbolo)
 ```
 
 ### REPEAT block UNTIL (cond)
@@ -181,14 +221,96 @@ Prueba bucles WHILE con REPEAT anidados para demostrar multiplicadores anidados.
 4. **Memoización**: La clave de memo incluye el ID/line del nodo para reutilización
 5. **Integración Perfecta**: Funciona perfectamente con bucles FOR e IF ya implementados
 
+## Análisis de Cierre de WHILE
+
+El sistema intenta analizar el cierre de bucles WHILE en todos los modos para determinar el número exacto de iteraciones.
+
+### Proceso de Análisis
+
+1. **Extracción de Condición**: Analiza la condición del while para identificar:
+   - Variable de control (ej: `j`)
+   - Límite de la condición (ej: `0`)
+   - Operador de comparación (ej: `>`)
+
+2. **Búsqueda de Valor Inicial**: Busca asignaciones a la variable de control antes del while:
+   - Analiza el bloque padre que contiene el while
+   - Encuentra la última asignación a la variable antes de la línea del while
+   - Extrae el valor de la asignación (ej: `i - 1`)
+
+3. **Análisis del Cuerpo**: Busca cambios a la variable de control en el cuerpo:
+   - Identifica asignaciones a la variable (ej: `j <- j - 1`)
+   - Determina la regla de cambio (operador y constante)
+
+4. **Cálculo de Iteraciones**: Calcula el número de iteraciones basándose en:
+   - Valor inicial de la variable
+   - Regla de cambio
+   - Límite de la condición
+   - Operador de comparación
+
+### Ejemplo: Insertion Sort
+
+```pseudocode
+FOR i <- 2 TO n DO BEGIN
+    clave <- A[i];
+    j <- i - 1;                    # Valor inicial: j = i - 1
+    WHILE (j > 0 AND A[j] > clave) DO BEGIN
+        A[j + 1] <- A[j];
+        j <- j - 1;                # Cambio: j decrementa en 1
+    END
+END
+```
+
+**Análisis**:
+- Variable de control: `j`
+- Valor inicial: `i - 1` (encontrado en el bloque padre)
+- Cambio: `j <- j - 1` (decrementa en 1)
+- Límite: `0`
+- Operador: `>`
+- Iteraciones: `(i - 1) - 0 = i - 1` (en el peor caso)
+
+### Manejo de Símbolos Iterativos
+
+Cuando el análisis de cierre falla (por ejemplo, condiciones complejas con AND/OR que dependen de datos), el sistema usa símbolos iterativos:
+
+- **Best/Worst**: `t_{while_L}` - Variable iterativa no acotada
+- **Average**: `\bar{t}_{while_L}` - Esperanza de número de iteraciones
+
+El sistema `close_summation` detecta estos símbolos y:
+- No intenta cerrarlos (son variables simbólicas válidas)
+- Genera pasos educativos explicando qué representan
+- Simplifica algebraicamente (ej: `t + 1`, `2*t`)
+- Indica que requieren análisis adicional para acotar
+
 ## Notas Prácticas
 
-Estos símbolos (`t_{while_L}`, `t_{repeat_L}`) aparecerán en T_open y en procedure.
+### Cuando se Usa Expresión Concreta
+
+- El análisis de cierre es exitoso
+- Se encuentra valor inicial de la variable
+- Se identifica la regla de cambio
+- Se puede calcular el número de iteraciones
+
+**Ejemplo**: `(i - 1) + 1` para la condición del while en insertion sort
+
+### Cuando se Usa Símbolo Iterativo
+
+- El análisis de cierre falla
+- No se puede determinar el valor inicial
+- La condición es demasiado compleja
+- La regla de cambio no es determinística
+
+**Ejemplo**: `t_{while_327} + 1` para condiciones complejas
+
+### Consistencia entre Modos
+
+- **Best/Worst/Average**: Todos intentan el análisis de cierre
+- **Average**: Prioriza probabilidad si está disponible, pero puede usar análisis de cierre como fallback
+- **Presentación**: Mismo tipo de información cuando el análisis de cierre funciona
 
 Para best/worst/avg en S4:
 - **worst**: propondrás cotas superiores para `t_{…}`
 - **best**: cotas inferiores (p. ej., 0 para while, 0 extra para repeat)
-- **avg**: expectativas si el usuario anota probabilidades; si no, política por defecto
+- **avg**: expectativas si el usuario anota probabilidades; si no, política por defecto o análisis de cierre
 
 ## Próximos Pasos
 

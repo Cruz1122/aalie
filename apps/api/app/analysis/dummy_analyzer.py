@@ -1,5 +1,3 @@
-# apps/api/app/analysis/dummy_analyzer.py
-
 from .base import BaseAnalyzer
 
 

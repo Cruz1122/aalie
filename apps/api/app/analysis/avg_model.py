@@ -1,5 +1,3 @@
-# apps/api/app/analysis/avg_model.py
-
 from typing import Dict, Optional, Any
 from sympy import Symbol, sympify, Integer, Rational
 

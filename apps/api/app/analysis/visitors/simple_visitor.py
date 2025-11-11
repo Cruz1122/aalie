@@ -376,7 +376,19 @@ class SimpleVisitor:
             mode: Modo de análisis
         """
         for stmt in node.get("body", []):
-            self.visit(stmt, mode)
+            # Si el statement es un While, pasar el bloque actual como contexto padre
+            if isinstance(stmt, dict) and stmt.get("type") == "While":
+                # Verificar si el visitor tiene el método visitWhile con parent_context
+                if hasattr(self, 'visitWhile'):
+                    try:
+                        self.visitWhile(stmt, mode, parent_context=node)
+                    except TypeError:
+                        # Si visitWhile no acepta parent_context, llamar sin él
+                        self.visitWhile(stmt, mode)
+                else:
+                    self.visit(stmt, mode)
+            else:
+                self.visit(stmt, mode)
     
     def visitOther(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """

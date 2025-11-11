@@ -1,5 +1,3 @@
-# apps/api/app/analysis/summation_closer.py
-
 from typing import List, Tuple, Optional, Union
 from sympy import Symbol, summation, simplify, latex, sympify, oo, Sum, expand, factor, Expr, Add, Mul
 from sympy.parsing.sympy_parser import parse_expr
@@ -20,6 +18,56 @@ class SummationCloser:
     def __init__(self):
         pass
     
+    def _has_iterative_symbols(self, expr: Expr) -> bool:
+        """
+        Verifica si una expresión contiene símbolos iterativos (t_while_L, t_repeat_L, etc.).
+        
+        Args:
+            expr: Expresión SymPy
+            
+        Returns:
+            True si contiene símbolos iterativos, False en caso contrario
+        """
+        from sympy import preorder_traversal
+        
+        # Patrones de nombres de símbolos iterativos
+        iterative_patterns = [
+            't_while_',
+            't_repeat_',
+            't_bar_while_',
+            't_bar_repeat_',
+            'bar{t}_{while_',
+            'bar{t}_{repeat_',
+        ]
+        
+        for subexpr in preorder_traversal(expr):
+            if isinstance(subexpr, Symbol):
+                symbol_name = subexpr.name if hasattr(subexpr, 'name') else str(subexpr)
+                # Verificar si el nombre del símbolo coincide con algún patrón iterativo
+                for pattern in iterative_patterns:
+                    if pattern in symbol_name:
+                        return True
+        
+        return False
+    
+    def _has_summations(self, expr: Expr) -> bool:
+        """
+        Verifica si una expresión contiene sumatorias.
+        
+        Args:
+            expr: Expresión SymPy
+            
+        Returns:
+            True si contiene sumatorias, False en caso contrario
+        """
+        from sympy import preorder_traversal
+        
+        for subexpr in preorder_traversal(expr):
+            if isinstance(subexpr, Sum):
+                return True
+        
+        return False
+    
     def close_summation(self, expr: Union[str, Expr], variable: str = "n") -> Tuple[str, List[str]]:
         """
         Cierra una sumatoria y genera pasos educativos.
@@ -34,11 +82,55 @@ class SummationCloser:
         # Si recibimos un objeto SymPy directamente, trabajar con él
         if isinstance(expr, Expr):
             try:
-                # Generar pasos educativos desde la estructura SymPy
-                steps = self._generate_steps_from_sympy(expr, variable)
+                # Verificar si contiene símbolos iterativos
+                has_iterative = self._has_iterative_symbols(expr)
+                has_sums = self._has_summations(expr)
                 
-                # Evaluar todas las sumatorias recursivamente
-                result_expr = self._evaluate_all_sums_sympy(expr)
+                # Si solo contiene símbolos iterativos (sin sumatorias), generar pasos educativos
+                if has_iterative and not has_sums:
+                    # Es una expresión con símbolos iterativos pero sin sumatorias
+                    # No intentar cerrarla, solo simplificar y generar pasos educativos
+                    result_expr = simplify(expr)
+                    
+                    # Intentar simplificar algebraicamente (ej: t + 1, 2*t, etc.)
+                    try:
+                        expanded = expand(result_expr)
+                        result_expr = simplify(expanded)
+                    except:
+                        pass
+                    
+                    # Convertir a LaTeX
+                    closed_latex = self._sympy_to_latex(result_expr)
+                    
+                    # Generar pasos educativos explicando el símbolo iterativo
+                    steps = [
+                        f"\\text{{Expresión con variable iterativa no acotada: }} {closed_latex}",
+                        f"\\text{{Esta variable representa el número de iteraciones de un bucle no acotado.}}",
+                        f"\\text{{Requiere análisis adicional o asumir límites para acotar.}}",
+                        f"\\text{{Resultado: }} {closed_latex}"
+                    ]
+                    
+                    return closed_latex, steps
+                
+                # Generar pasos educativos desde la estructura SymPy
+                # Intentar obtener el resultado evaluado directamente si es una suma aritmética
+                steps = []
+                result_expr = None
+                
+                # Si la expresión es directamente una Sum, intentar analizarla para obtener el resultado
+                if isinstance(expr, Sum):
+                    steps_result = self._analyze_single_sum(expr, variable)
+                    if isinstance(steps_result, tuple):
+                        steps_list, evaluated = steps_result
+                        steps = steps_list
+                        if evaluated is not None:
+                            result_expr = evaluated
+                
+                # Si no se obtuvo resultado, generar pasos y evaluar normalmente
+                if result_expr is None:
+                    steps = self._generate_steps_from_sympy(expr, variable)
+                    # Evaluar todas las sumatorias recursivamente
+                    result_expr = self._evaluate_all_sums_sympy(expr)
                 
                 # Simplificar completamente el resultado
                 result_expr = simplify(result_expr)
@@ -111,6 +203,53 @@ class SummationCloser:
         
         if not expr or expr.strip() == "":
             return "1", []
+        
+        # Verificar si el string contiene símbolos iterativos en formato LaTeX
+        iterative_patterns_latex = [
+            r't_\{while_',
+            r't_\{repeat_',
+            r'\\bar\{t\}_\{while_',
+            r'\\bar\{t\}_\{repeat_',
+            r'bar\{t\}_\{while_',
+            r'bar\{t\}_\{repeat_',
+        ]
+        
+        has_iterative_latex = False
+        for pattern in iterative_patterns_latex:
+            if re.search(pattern, expr):
+                has_iterative_latex = True
+                break
+        
+        # Si contiene símbolos iterativos y no hay sumatorias, manejar como símbolo iterativo
+        has_sums_latex = '\\sum' in expr
+        if has_iterative_latex and not has_sums_latex:
+            # Es una expresión con símbolos iterativos pero sin sumatorias
+            # Intentar simplificar algebraicamente
+            try:
+                # Convertir a SymPy para simplificar
+                sympy_expr = self._parse_algebraic_to_sympy(expr, variable)
+                simplified = simplify(sympy_expr)
+                closed_latex = self._sympy_to_latex(simplified)
+                
+                # Generar pasos educativos
+                steps = [
+                    f"\\text{{Expresión con variable iterativa no acotada: }} {expr}",
+                    f"\\text{{Esta variable representa el número de iteraciones de un bucle no acotado.}}",
+                    f"\\text{{Requiere análisis adicional o asumir límites para acotar.}}",
+                    f"\\text{{Resultado: }} {closed_latex}"
+                ]
+                
+                return closed_latex, steps
+            except Exception as e:
+                print(f"[SummationCloser] Error procesando símbolo iterativo {expr}: {e}")
+                # Fallback: devolver expresión original con pasos educativos
+                steps = [
+                    f"\\text{{Expresión con variable iterativa no acotada: }} {expr}",
+                    f"\\text{{Esta variable representa el número de iteraciones de un bucle no acotado.}}",
+                    f"\\text{{Requiere análisis adicional o asumir límites para acotar.}}",
+                    f"\\text{{Resultado: }} {expr}"
+                ]
+                return expr, steps
         
         # Primero, simplificar expresiones algebraicas sin sumatorias
         # Esto maneja casos como "(n) - (2) + 2" → "n"
@@ -299,10 +438,37 @@ class SummationCloser:
         if match:
             var, start, end = match.groups()
             
-            steps.append(
-                f"\\text{{Aplicando fórmula de suma aritmética: }} "
-                f"\\sum_{{{var}={start}}}^{{{end}}} {var} = \\frac{{{end}({end}+1)}}{{2}}"
-            )
+            # Convertir a números si es posible para calcular correctamente
+            try:
+                start_val = int(start) if start.strip().isdigit() else start
+                end_val = int(end) if end.strip().isdigit() else end
+                
+                if start_val == 1:
+                    # Caso especial: suma desde 1
+                    steps.append(
+                        f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                        f"\\sum_{{{var}={start}}}^{{{end}}} {var} = \\frac{{{end}({end}+1)}}{{2}}"
+                    )
+                else:
+                    # Caso general: suma desde a hasta b
+                    # Fórmula: Σ_{i=a}^{b} i = (b(b+1))/2 - ((a-1)a)/2
+                    start_minus_one = start_val - 1
+                    steps.append(
+                        f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                        f"\\sum_{{{var}={start}}}^{{{end}}} {var} = "
+                        f"\\sum_{{{var}=1}}^{{{end}}} {var} - \\sum_{{{var}=1}}^{{{start_minus_one}}} {var}"
+                    )
+                    steps.append(
+                        f"\\text{{Evaluando: }} "
+                        f"\\frac{{{end}({end}+1)}}{{2}} - \\frac{{{start_minus_one}({start})}}{{2}}"
+                    )
+            except:
+                # Si no se puede convertir a números, usar fórmula general
+                steps.append(
+                    f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                    f"\\sum_{{{var}={start}}}^{{{end}}} {var} = "
+                    f"\\frac{{{end}({end}+1) - {start}({start}-1)}}{{2}}"
+                )
         
         return steps
     
@@ -948,21 +1114,59 @@ class SummationCloser:
                         return simplify(result)
                     else:
                         # Sumatoria simple con un solo límite
-                        evaluated = expr.doit()
-                        evaluated = simplify(evaluated)
-                        # Si el resultado todavía contiene Sum, seguir evaluando
-                        if isinstance(evaluated, Sum):
-                            return evaluate_all_sums(evaluated)
-                        # Verificar si el resultado contiene más Sum anidadas
-                        from sympy import preorder_traversal
-                        has_nested_sum = False
-                        for subexpr in preorder_traversal(evaluated):
-                            if isinstance(subexpr, Sum):
-                                has_nested_sum = True
-                                break
-                        if has_nested_sum:
-                            return evaluate_all_sums(evaluated)
-                        return evaluated
+                        # Intentar usar summation() primero, que es más robusto para sumatorias simbólicas
+                        body = expr.args[0]
+                        limits = expr.args[1]
+                        if len(limits) >= 3:
+                            sum_var = limits[0]
+                            start = limits[1]
+                            end = limits[2]
+                            try:
+                                # Usar summation() que maneja mejor las sumatorias simbólicas
+                                from sympy import summation
+                                evaluated = summation(body, (sum_var, start, end))
+                                evaluated = simplify(evaluated)
+                                # Verificar si el resultado todavía contiene Sum, seguir evaluando
+                                if isinstance(evaluated, Sum):
+                                    return evaluate_all_sums(evaluated)
+                                # Verificar si el resultado contiene más Sum anidadas
+                                from sympy import preorder_traversal
+                                has_nested_sum = False
+                                for subexpr in preorder_traversal(evaluated):
+                                    if isinstance(subexpr, Sum):
+                                        has_nested_sum = True
+                                        break
+                                if has_nested_sum:
+                                    return evaluate_all_sums(evaluated)
+                                return evaluated
+                            except Exception as e1:
+                                # Fallback a doit()
+                                try:
+                                    evaluated = expr.doit()
+                                    evaluated = simplify(evaluated)
+                                    # Si el resultado todavía contiene Sum, seguir evaluando
+                                    if isinstance(evaluated, Sum):
+                                        return evaluate_all_sums(evaluated)
+                                    # Verificar si el resultado contiene más Sum anidadas
+                                    from sympy import preorder_traversal
+                                    has_nested_sum = False
+                                    for subexpr in preorder_traversal(evaluated):
+                                        if isinstance(subexpr, Sum):
+                                            has_nested_sum = True
+                                            break
+                                    if has_nested_sum:
+                                        return evaluate_all_sums(evaluated)
+                                    return evaluated
+                                except Exception as e2:
+                                    print(f"[SummationCloser] Error evaluando sumatoria: {e1}, {e2}")
+                                    return expr
+                        else:
+                            # No se pudo extraer límites, intentar doit()
+                            evaluated = expr.doit()
+                            evaluated = simplify(evaluated)
+                            if isinstance(evaluated, Sum):
+                                return evaluate_all_sums(evaluated)
+                            return evaluated
                 except:
                     # Si no se puede evaluar, intentar expandir y reevaluar
                     try:
@@ -1086,7 +1290,12 @@ class SummationCloser:
         
         # Si la expresión es directamente una Sum, analizarla
         if isinstance(expr, Sum):
-            steps.extend(self._analyze_single_sum(expr, variable))
+            steps_result = self._analyze_single_sum(expr, variable)
+            if isinstance(steps_result, tuple):
+                steps_list, _ = steps_result
+                steps.extend(steps_list)
+            else:
+                steps.extend(steps_result)
             return steps
         
         # Buscar todas las Sum en la expresión
@@ -1141,7 +1350,12 @@ class SummationCloser:
             else:
                 # Múltiples sumatorias independientes o estructura compleja
                 for sum_expr in sums_found:
-                    steps.extend(self._analyze_single_sum(sum_expr, variable))
+                    steps_result = self._analyze_single_sum(sum_expr, variable)
+                    if isinstance(steps_result, tuple):
+                        steps_list, _ = steps_result
+                        steps.extend(steps_list)
+                    else:
+                        steps.extend(steps_result)
         else:
             # No hay sumatorias, es una expresión simple
             expr_latex = self._sympy_to_latex(expr)
@@ -1149,7 +1363,7 @@ class SummationCloser:
         
         return steps
     
-    def _analyze_single_sum(self, sum_expr: Sum, variable: str = "n") -> List[str]:
+    def _analyze_single_sum(self, sum_expr: Sum, variable: str = "n") -> tuple[List[str], Optional[Expr]]:
         """
         Analiza una sumatoria simple y genera pasos educativos.
         
@@ -1158,9 +1372,10 @@ class SummationCloser:
             variable: Variable principal
             
         Returns:
-            Lista de pasos en formato LaTeX
+            Tupla (lista de pasos en formato LaTeX, expresión evaluada o None)
         """
         steps = []
+        evaluated_result = None
         from sympy import Integer, Symbol, latex, Integer as Int, preorder_traversal
         
         try:
@@ -1212,6 +1427,18 @@ class SummationCloser:
                     # Analizar el cuerpo
                     # Verificar si el cuerpo es constante respecto a la variable de suma
                     from sympy import Symbol as SymSymbol
+                    from sympy import simplify as sympy_simplify
+                    
+                    # PRIMERO: Verificar si el cuerpo es exactamente la variable de la sumatoria
+                    # Usar comparación más robusta: simplificar ambos y comparar
+                    body_simplified = sympy_simplify(body)
+                    sum_var_simplified = sympy_simplify(sum_var)
+                    is_arithmetic_sum = (body_simplified == sum_var_simplified) or (body == sum_var)
+                    
+                    # Verificar también si body es un Symbol con el mismo nombre
+                    if not is_arithmetic_sum and isinstance(body, SymSymbol) and isinstance(sum_var, SymSymbol):
+                        is_arithmetic_sum = (body.name == sum_var.name)
+                    
                     body_depends_on_var = body.has(sum_var) if isinstance(sum_var, SymSymbol) else False
                     
                     # Si el cuerpo es 1, es una sumatoria constante
@@ -1239,6 +1466,144 @@ class SummationCloser:
                             # Asegurar que el resultado final esté en los pasos
                             if result_latex not in steps[-1]:
                                 steps.append(f"\\text{{Resultado: }} {result_latex}")
+                    # Si el cuerpo es la variable de la sumatoria, es una suma aritmética
+                    # DEBE ir ANTES del caso de factor constante
+                    elif is_arithmetic_sum:
+                        # Calcular la suma aritmética correctamente
+                        from sympy import simplify, summation
+                        # Fórmula: Σ_{i=a}^{b} i = (b(b+1))/2 - ((a-1)a)/2
+                        # Usar summation() que es más robusto para sumatorias simbólicas
+                        try:
+                            # Usar summation() directamente
+                            result_expr = summation(body, (sum_var, start, end))
+                            result_simplified = simplify(result_expr)
+                            
+                            # Verificar que no contenga la variable de iteración
+                            if isinstance(sum_var, SymSymbol) and result_simplified.has(sum_var):
+                                # Todavía contiene la variable, intentar expandir y simplificar más
+                                from sympy import expand, factor
+                                result_simplified = expand(result_simplified)
+                                result_simplified = simplify(result_simplified)
+                                if result_simplified.has(sum_var):
+                                    result_simplified = factor(result_simplified)
+                                    result_simplified = simplify(result_simplified)
+                            
+                            result_latex = latex(result_simplified)
+                            
+                            # Generar paso explicativo
+                            if start == Int(1) or (isinstance(start, Integer) and int(start) == 1):
+                                # Caso especial: suma desde 1
+                                steps.append(
+                                    f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                    f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
+                                    f"\\frac{{{end_latex} \\left({end_latex} + 1\\right)}}{{2}}"
+                                )
+                                if result_latex not in steps[-1]:
+                                    steps.append(f"\\text{{Resultado: }} {result_latex}")
+                            else:
+                                # Caso general: suma desde a hasta b
+                                # Mostrar fórmula: Σ_{i=a}^{b} i = Σ_{i=1}^{b} i - Σ_{i=1}^{a-1} i
+                                start_minus_one = simplify(start - Int(1))
+                                start_minus_one_latex = latex(start_minus_one)
+                                
+                                # Calcular manualmente para mostrar los pasos correctos
+                                try:
+                                    # Calcular n(n+1)/2 - (a-1)a/2
+                                    if isinstance(start, Integer):
+                                        start_val = int(start)
+                                        # Fórmula manual: n(n+1)/2 - (start_val-1)start_val/2
+                                        from sympy import Integer as IntSym
+                                        result_manual = (end * (end + IntSym(1))) / IntSym(2) - (IntSym(start_val - 1) * IntSym(start_val)) / IntSym(2)
+                                        result_manual = simplify(result_manual)
+                                        result_manual_latex = latex(result_manual)
+                                        
+                                        steps.append(
+                                            f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                            f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
+                                            f"\\sum_{{{var_latex}=1}}^{{{end_latex}}} {var_latex} - \\sum_{{{var_latex}=1}}^{{{start_minus_one_latex}}} {var_latex}"
+                                        )
+                                        steps.append(
+                                            f"\\text{{Evaluando: }} "
+                                            f"\\frac{{{end_latex}({end_latex}+1)}}{{2}} - \\frac{{({start_val-1})({start_val})}}{{2}} = {result_manual_latex}"
+                                        )
+                                        
+                                        # Usar el resultado manual si es diferente del de summation()
+                                        if result_manual_latex != result_latex:
+                                            # Preferir el resultado manual si no contiene variables de iteración
+                                            if not result_manual.has(sum_var) if isinstance(sum_var, SymSymbol) else True:
+                                                result_latex = result_manual_latex
+                                                result_simplified = result_manual
+                                    else:
+                                        # start no es un Integer, usar expresión general
+                                        steps.append(
+                                            f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                            f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
+                                            f"\\sum_{{{var_latex}=1}}^{{{end_latex}}} {var_latex} - \\sum_{{{var_latex}=1}}^{{{start_minus_one_latex}}} {var_latex}"
+                                        )
+                                        steps.append(
+                                            f"\\text{{Evaluando: }} "
+                                            f"\\frac{{{end_latex}({end_latex}+1)}}{{2}} - \\frac{{{start_minus_one_latex}({start_latex})}}{{2}} = {result_latex}"
+                                        )
+                                except Exception as e3:
+                                    print(f"[SummationCloser] Error calculando manualmente: {e3}")
+                                    # Usar resultado de summation()
+                                    steps.append(
+                                        f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                        f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
+                                        f"\\sum_{{{var_latex}=1}}^{{{end_latex}}} {var_latex} - \\sum_{{{var_latex}=1}}^{{{start_minus_one_latex}}} {var_latex}"
+                                    )
+                                    steps.append(
+                                        f"\\text{{Evaluando: }} "
+                                        f"\\frac{{{end_latex}({end_latex}+1)}}{{2}} - \\frac{{{start_minus_one_latex}({start_latex})}}{{2}} = {result_latex}"
+                                    )
+                        except Exception as e:
+                            print(f"[SummationCloser] Error calculando suma aritmética con summation(): {e}")
+                            import traceback
+                            traceback.print_exc()
+                            # Fallback: intentar con doit()
+                            try:
+                                sum_expr = Sum(body, (sum_var, start, end))
+                                result_expr = sum_expr.doit()
+                                result_simplified = simplify(result_expr)
+                                result_latex = latex(result_simplified)
+                                
+                                if start == Int(1) or (isinstance(start, Integer) and int(start) == 1):
+                                    steps.append(
+                                        f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                        f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
+                                        f"\\frac{{{end_latex} \\left({end_latex} + 1\\right)}}{{2}}"
+                                    )
+                                else:
+                                    start_minus_one = simplify(start - Int(1))
+                                    start_minus_one_latex = latex(start_minus_one)
+                                    steps.append(
+                                        f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                        f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
+                                        f"\\sum_{{{var_latex}=1}}^{{{end_latex}}} {var_latex} - \\sum_{{{var_latex}=1}}^{{{start_minus_one_latex}}} {var_latex}"
+                                    )
+                                    steps.append(
+                                        f"\\text{{Evaluando: }} "
+                                        f"\\frac{{{end_latex}({end_latex}+1)}}{{2}} - \\frac{{{start_minus_one_latex}({start_latex})}}{{2}} = {result_latex}"
+                                    )
+                            except Exception as e2:
+                                print(f"[SummationCloser] Error con doit() también: {e2}")
+                                # Último fallback: fórmula general
+                                steps.append(
+                                    f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                    f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
+                                    f"\\frac{{{end_latex} \\left({end_latex} + 1\\right) - {start_latex} \\left({start_latex} - 1\\right)}}{{2}}"
+                                )
+                                result_latex = f"\\frac{{{end_latex} \\left({end_latex} + 1\\right) - {start_latex} \\left({start_latex} - 1\\right)}}{{2}}"
+                        
+                        # Asegurar que el resultado final esté en los pasos si no está ya
+                        if steps and result_latex not in steps[-1] and "Resultado" not in steps[-1]:
+                            # Verificar si el último paso ya muestra el resultado
+                            last_step_has_result = any(result_latex in step for step in steps)
+                            if not last_step_has_result:
+                                steps.append(f"\\text{{Resultado: }} {result_latex}")
+                        
+                        # Retornar el resultado evaluado
+                        return steps, result_simplified
                     # Si el cuerpo NO depende de la variable de suma, es constante (factor constante)
                     elif not body_depends_on_var:
                         # Aplicar regla de factor constante: Σ_{i=a}^{b} c = c · (b - a + 1)
@@ -1267,13 +1632,6 @@ class SummationCloser:
                             )
                         steps.append(
                             f"\\text{{Multiplicando: }} {body_latex_display} \\cdot {const_count_latex} = {result_latex}"
-                        )
-                    # Si el cuerpo es la variable de la sumatoria, es una suma aritmética
-                    elif body == sum_var:
-                        steps.append(
-                            f"\\text{{Aplicando fórmula de suma aritmética: }} "
-                            f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
-                            f"\\frac{{{end_latex} \\left({end_latex} + 1\\right)}}{{2}}"
                         )
                     # Si el cuerpo depende de la variable de forma lineal (como -i + n + 1)
                     else:

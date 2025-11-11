@@ -1,5 +1,3 @@
-# apps/api/app/analysis/expr_converter.py
-
 from typing import Any, Dict, Optional
 from sympy import Symbol, Integer, sympify, Expr
 
