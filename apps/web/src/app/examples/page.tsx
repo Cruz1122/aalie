@@ -13,21 +13,54 @@ import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 
+type ExampleCategory = "simple" | "iterative" | "recursive" | "greedy";
+
 interface Example {
   id: number;
   name: string;
   description: string;
   complexity: string;
   code: string;
+  category: ExampleCategory;
+  note?: string;
 }
 
 const examples: Example[] = [
+  // Simples/Unknown
   {
     id: 1,
+    name: "Asignación Simple",
+    description:
+      "Operación básica de asignación sin bucles. Este tipo de algoritmo se clasifica como 'unknown' ya que no tiene estructuras de control complejas.",
+    complexity: "O(1)",
+    code: `suma(a, b) BEGIN
+    resultado <- a + b;
+    RETURN resultado;
+END`,
+    category: "simple",
+    note: "Se clasificará como 'unknown' en el análisis (sin bucles complejos)",
+  },
+  {
+    id: 2,
+    name: "Acceso a Array Simple",
+    description:
+      "Acceso directo a un elemento de un array. Operación de tiempo constante sin bucles.",
+    complexity: "O(1)",
+    code: `obtenerElemento(A[n], indice) BEGIN
+    elemento <- A[indice];
+    RETURN elemento;
+END`,
+    category: "simple",
+    note: "Se clasificará como 'unknown' en el análisis",
+  },
+  
+  // Iterativos
+  {
+    id: 3,
     name: "Búsqueda Lineal",
     description:
       "Recorre un array secuencialmente buscando un elemento específico. Es el algoritmo de búsqueda más simple, ideal para arrays pequeños o no ordenados.",
-    complexity: "O(n)",
+    complexity: "Best: O(1), Worst: O(n), Avg: O(n/2)",
     code: `busquedaLineal(A[n], x, n) BEGIN
     FOR i <- 1 TO n DO BEGIN
         IF (A[i] = x) THEN BEGIN
@@ -36,37 +69,104 @@ const examples: Example[] = [
     END
     RETURN -1;
 END`,
+    category: "iterative",
   },
   {
-    id: 2,
-    name: "Búsqueda Binaria",
+    id: 4,
+    name: "Búsqueda Binaria Iterativa",
     description:
-      "Busca un elemento en un array ordenado dividiendo el espacio de búsqueda a la mitad en cada iteración. Requiere que el array esté previamente ordenado, pero es mucho más eficiente que la búsqueda lineal.",
-    complexity: "O(log n)",
-    code: `busquedaBinaria(A[n], x, inicio, fin) BEGIN
-    IF (inicio > fin) THEN BEGIN
-        RETURN -1;
-    END
-    mitad <- (inicio + fin) / 2;
-    IF (A[mitad] = x) THEN BEGIN
-        RETURN mitad;
-    END
-    ELSE BEGIN
-        IF (x < A[mitad]) THEN BEGIN
-            RETURN busquedaBinaria(A, x, inicio, mitad - 1);
+      "Busca un elemento en un array ordenado dividiendo el espacio de búsqueda a la mitad en cada iteración. Versión iterativa de la búsqueda binaria.",
+    complexity: "Best: O(1), Worst: O(log n), Avg: O(log n)",
+    code: `busquedaBinariaIterativa(A[n], x, n) BEGIN
+    izq <- 1;
+    der <- n;
+    WHILE (izq <= der) DO BEGIN
+        mitad <- (izq + der) / 2;
+        IF (A[mitad] = x) THEN BEGIN
+            RETURN mitad;
         END
         ELSE BEGIN
-            RETURN busquedaBinaria(A, x, mitad + 1, fin);
+            IF (A[mitad] < x) THEN BEGIN
+                izq <- mitad + 1;
+            END
+            ELSE BEGIN
+                der <- mitad - 1;
+            END
         END
     END
+    RETURN -1;
 END`,
+    category: "iterative",
   },
   {
-    id: 3,
+    id: 5,
+    name: "Factorial Iterativo",
+    description:
+      "Calcula el factorial de un número de forma iterativa. Es más eficiente que la versión recursiva y no tiene riesgo de stack overflow para números grandes.",
+    complexity: "O(n)",
+    code: `factorial(n) BEGIN
+    resultado <- 1;
+    FOR i <- 2 TO n DO BEGIN
+        resultado <- resultado * i;
+    END
+    RETURN resultado;
+END`,
+    category: "iterative",
+  },
+  {
+    id: 6,
+    name: "Suma de Array",
+    description:
+      "Calcula la suma de todos los elementos de un array. Algoritmo lineal simple que recorre el array una vez.",
+    complexity: "O(n)",
+    code: `sumaArray(A[n], n) BEGIN
+    suma <- 0;
+    FOR i <- 1 TO n DO BEGIN
+        suma <- suma + A[i];
+    END
+    RETURN suma;
+END`,
+    category: "iterative",
+  },
+  {
+    id: 7,
+    name: "Máximo de Array",
+    description:
+      "Encuentra el elemento máximo en un array. Recorre el array comparando cada elemento con el máximo actual.",
+    complexity: "Best: O(n), Worst: O(n), Avg: O(n)",
+    code: `maximoArray(A[n], n) BEGIN
+    maximo <- A[1];
+    FOR i <- 2 TO n DO BEGIN
+        IF (A[i] > maximo) THEN BEGIN
+            maximo <- A[i];
+        END
+    END
+    RETURN maximo;
+END`,
+    category: "iterative",
+  },
+  {
+    id: 8,
+    name: "Máximo Común Divisor - Algoritmo de Euclides",
+    description:
+      "Calcula el máximo común divisor de dos números usando el algoritmo de Euclides. Es uno de los algoritmos más antiguos y eficientes, con complejidad logarítmica.",
+    complexity: "O(log min(a, b))",
+    code: `mcd(a, b) BEGIN
+    WHILE (b != 0) DO BEGIN
+        temp <- b;
+        b <- a MOD b;
+        a <- temp;
+    END
+    RETURN a;
+END`,
+    category: "iterative",
+  },
+  {
+    id: 9,
     name: "Ordenamiento Burbuja (Bubble Sort)",
     description:
       "Ordena un array comparando elementos adyacentes e intercambiándolos si están en el orden incorrecto. Es uno de los algoritmos de ordenamiento más simples, pero también uno de los menos eficientes.",
-    complexity: "O(n²)",
+    complexity: "Best: O(n), Worst: O(n²), Avg: O(n²)",
     code: `burbuja(A[n], n) BEGIN
     FOR i <- 1 TO n - 1 DO BEGIN
         FOR j <- 1 TO n - i DO BEGIN
@@ -78,13 +178,14 @@ END`,
         END
     END
 END`,
+    category: "iterative",
   },
   {
-    id: 4,
+    id: 10,
     name: "Ordenamiento por Inserción (Insertion Sort)",
     description:
       "Construye el array ordenado insertando cada elemento en su posición correcta. Es eficiente para arrays pequeños o casi ordenados, con mejor rendimiento que Bubble Sort en la práctica.",
-    complexity: "O(n²) peor caso, O(n) mejor caso",
+    complexity: "Best: O(n), Worst: O(n²), Avg: O(n²)",
     code: `insercion(A[n], n) BEGIN
     FOR i <- 2 TO n DO BEGIN
         clave <- A[i];
@@ -96,9 +197,10 @@ END`,
         A[j + 1] <- clave;
     END
 END`,
+    category: "iterative",
   },
   {
-    id: 5,
+    id: 11,
     name: "Ordenamiento por Selección (Selection Sort)",
     description:
       "Encuentra el elemento mínimo y lo coloca en su posición final en cada iteración. Realiza menos intercambios que Bubble Sort, pero tiene la misma complejidad temporal.",
@@ -116,12 +218,41 @@ END`,
         A[min_idx] <- temp;
     END
 END`,
+    category: "iterative",
+  },
+  
+  // Recursivos
+  {
+    id: 12,
+    name: "Búsqueda Binaria Recursiva",
+    description:
+      "Busca un elemento en un array ordenado usando recursión. Divide el espacio de búsqueda a la mitad en cada llamada recursiva.",
+    complexity: "Best: O(1), Worst: O(log n), Avg: O(log n)",
+    code: `busquedaBinaria(A[n], x, inicio, fin) BEGIN
+    IF (inicio > fin) THEN BEGIN
+        RETURN -1;
+    END
+    mitad <- (inicio + fin) / 2;
+    IF (A[mitad] = x) THEN BEGIN
+        RETURN mitad;
+    END
+    ELSE BEGIN
+        IF (x < A[mitad]) THEN BEGIN
+            RETURN busquedaBinaria(A, x, inicio, mitad - 1);
+        END
+        ELSE BEGIN
+            RETURN busquedaBinaria(A, x, mitad + 1, fin);
+        END
+    END
+END`,
+    category: "recursive",
+    note: "No soportado actualmente - requiere análisis recursivo (S4)",
   },
   {
-    id: 6,
+    id: 13,
     name: "Fibonacci Recursivo",
     description:
-      "Calcula el n-ésimo número de Fibonacci usando recursión directa. Es un ejemplo clásico de recursión, pero muy ineficiente debido a la repetición de cálculos. Ideal para demostrar análisis de complejidad exponencial.",
+      "Calcula el n-ésimo número de Fibonacci usando recursión directa. Es un ejemplo clásico de recursión, pero muy ineficiente debido a la repetición de cálculos.",
     complexity: "O(2ⁿ) - Exponencial",
     code: `fibonacci(n) BEGIN
     IF (n <= 1) THEN BEGIN
@@ -131,38 +262,11 @@ END`,
         RETURN fibonacci(n - 1) + fibonacci(n - 2);
     END
 END`,
+    category: "recursive",
+    note: "No soportado actualmente - requiere análisis recursivo (S4)",
   },
   {
-    id: 7,
-    name: "Máximo Común Divisor - Algoritmo de Euclides",
-    description:
-      "Calcula el máximo común divisor de dos números usando el algoritmo de Euclides. Es uno de los algoritmos más antiguos y eficientes, con complejidad logarítmica.",
-    complexity: "O(log min(a, b))",
-    code: `mcd(a, b) BEGIN
-    WHILE (b != 0) DO BEGIN
-        temp <- b;
-        b <- a MOD b;
-        a <- temp;
-    END
-    RETURN a;
-END`,
-  },
-  {
-    id: 8,
-    name: "Factorial Iterativo",
-    description:
-      "Calcula el factorial de un número de forma iterativa. Es más eficiente que la versión recursiva y no tiene riesgo de stack overflow para números grandes.",
-    complexity: "O(n)",
-    code: `factorial(n) BEGIN
-    resultado <- 1;
-    FOR i <- 2 TO n DO BEGIN
-        resultado <- resultado * i;
-    END
-    RETURN resultado;
-END`,
-  },
-  {
-    id: 9,
+    id: 14,
     name: "Torres de Hanoi",
     description:
       "Resuelve el problema clásico de las Torres de Hanoi usando recursión. Demuestra cómo un problema aparentemente simple puede tener complejidad exponencial.",
@@ -177,9 +281,11 @@ END`,
         CALL hanoi(n - 1, auxiliar, destino, origen);
     END
 END`,
+    category: "recursive",
+    note: "No soportado actualmente - requiere análisis recursivo (S4)",
   },
   {
-    id: 10,
+    id: 15,
     name: "QuickSort (Ordenamiento Rápido)",
     description:
       "Algoritmo de ordenamiento divide y conquista usando particionamiento. Es uno de los algoritmos de ordenamiento más eficientes en la práctica, aunque su peor caso es cuadrático.",
@@ -204,6 +310,31 @@ END`,
         CALL quicksort(A, pi + 1, der);
     END
 END`,
+    category: "recursive",
+    note: "No soportado actualmente - híbrido recursivo-iterativo (requiere S4)",
+  },
+  
+  // Voraces (Greedy)
+  {
+    id: 16,
+    name: "Cambio de Monedas (Greedy)",
+    description:
+      "Algoritmo voraz para el problema de cambio de monedas. Encuentra el número mínimo de monedas necesarias para formar una cantidad dada.",
+    complexity: "O(n)",
+    code: `cambioMonedas(cantidad, monedas[n], n) BEGIN
+    resultado <- 0;
+    i <- n;
+    WHILE (cantidad > 0 AND i >= 1) DO BEGIN
+        IF (monedas[i] <= cantidad) THEN BEGIN
+            num_monedas <- cantidad / monedas[i];
+            resultado <- resultado + num_monedas;
+            cantidad <- cantidad - (num_monedas * monedas[i]);
+        END
+        i <- i - 1;
+    END
+    RETURN resultado;
+END`,
+    category: "greedy",
   },
 ];
 
@@ -464,84 +595,127 @@ export default function ExamplesPage() {
               Ejemplos de Algoritmos
             </h1>
             <p className="text-dark-text text-sm sm:text-base lg:text-lg leading-relaxed max-w-4xl mx-auto lg:mx-0">
-              Colección de 10 algoritmos clásicos escritos en nuestro lenguaje de pseudocódigo.
-              Copia cualquier ejemplo y pégalo en el{" "}
-              <NavigationLink href="/analyzer" className="text-blue-400 hover:text-blue-300 underline">
-                analizador
-              </NavigationLink>{" "}
-              para ver su complejidad.
+              Colección de algoritmos clásicos organizados por categorías. Los ejemplos están clasificados como simples (unknown), iterativos, recursivos y voraces.
+              Copia cualquier ejemplo y analízalo directamente desde esta página.
             </p>
           </header>
 
-          {/* Grid de ejemplos */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {examples.map((example) => (
-              <div
-                key={example.id}
-                className="glass-card p-6 flex flex-col space-y-4 hover:scale-[1.02] transition-transform"
-              >
-                {/* Header del ejemplo */}
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-primary font-bold text-lg">#{example.id}</span>
-                      <h3 className="text-xl font-bold text-white">{example.name}</h3>
+          {/* Categorías */}
+          {(["simple", "iterative", "recursive", "greedy"] as ExampleCategory[]).map((category) => {
+            const categoryExamples = examples.filter((ex) => ex.category === category);
+            if (categoryExamples.length === 0) return null;
+
+            const categoryLabels: Record<ExampleCategory, { label: string; description: string; color: string }> = {
+              simple: {
+                label: "Simples/Unknown",
+                description: "Algoritmos básicos sin bucles complejos. Se clasificarán como 'unknown' en el análisis.",
+                color: "bg-gray-500/20 border-gray-500/30 text-gray-300",
+              },
+              iterative: {
+                label: "Iterativos",
+                description: "Algoritmos con bucles FOR/WHILE. Totalmente soportados por el analizador iterativo.",
+                color: "bg-blue-500/20 border-blue-500/30 text-blue-300",
+              },
+              recursive: {
+                label: "Recursivos",
+                description: "Algoritmos con llamadas recursivas. No soportados actualmente (requieren S4).",
+                color: "bg-red-500/20 border-red-500/30 text-red-300",
+              },
+              greedy: {
+                label: "Voraces (Greedy)",
+                description: "Algoritmos voraces que toman decisiones locales óptimas. Soportados si son iterativos.",
+                color: "bg-purple-500/20 border-purple-500/30 text-purple-300",
+              },
+            };
+
+            const catInfo = categoryLabels[category];
+
+            return (
+              <div key={category} className="space-y-4">
+                <div className="glass-card p-4">
+                  <h2 className="text-xl font-bold text-white mb-2">{catInfo.label}</h2>
+                  <p className="text-sm text-dark-text">{catInfo.description}</p>
+                </div>
+
+                {/* Grid de ejemplos de esta categoría */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {categoryExamples.map((example) => (
+                    <div
+                      key={example.id}
+                      className="glass-card p-5 flex flex-col space-y-3 hover:scale-[1.01] transition-transform"
+                    >
+                      {/* Header del ejemplo */}
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <h3 className="text-lg font-semibold text-white">{example.name}</h3>
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium border ${catInfo.color}`}>
+                              {catInfo.label}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-400 font-mono">{example.complexity}</p>
+                          {example.note && (
+                            <div className="mt-2 p-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded text-xs text-yellow-300">
+                              <strong>Nota:</strong> {example.note}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Descripción */}
+                      <p className="text-dark-text text-sm leading-relaxed">{example.description}</p>
+
+                      {/* Código */}
+                      <div className="flex-1 bg-slate-900/50 border border-white/10 rounded p-3 overflow-x-auto scrollbar-custom">
+                        <pre className="text-green-300 font-mono text-xs leading-relaxed whitespace-pre">
+                          {example.code}
+                        </pre>
+                      </div>
+
+                      {/* Footer con acción */}
+                      <div className="flex items-center justify-between gap-2 pt-1">
+                        <button
+                          onClick={() => handleCopy(example.code, example.id)}
+                          className="px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1 border border-white/10 hover:bg-white/5 hover:border-white/20 disabled:opacity-50 disabled:cursor-not-allowed text-slate-300"
+                          title="Copiar código"
+                          disabled={isAnalyzing}
+                        >
+                          {copiedId === example.id ? (
+                            <>
+                              <span className="material-symbols-outlined text-sm">check</span>{" "}
+                              Copiado
+                            </>
+                          ) : (
+                            <>
+                              <span className="material-symbols-outlined text-sm">content_copy</span>{" "}
+                              Copiar
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleAnalyze(example.code)}
+                          disabled={isAnalyzing || example.category === "recursive"}
+                          className="flex items-center justify-center gap-2 py-1.5 px-4 rounded text-white text-xs font-medium transition-colors bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {isAnalyzing ? (
+                            <>
+                              <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>{' '}
+                              Analizando...
+                            </>
+                          ) : (
+                            <>
+                              <span className="material-symbols-outlined text-sm">functions</span>{' '}
+                              Analizar
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
-                    <p className="text-xs text-primary font-mono mt-1">{example.complexity}</p>
-                  </div>
-                </div>
-
-                {/* Descripción */}
-                <p className="text-dark-text text-sm leading-relaxed">{example.description}</p>
-
-                {/* Código */}
-                <div className="flex-1 bg-slate-900/50 border border-white/10 rounded-lg p-4 overflow-x-auto scrollbar-custom">
-                  <pre className="text-green-300 font-mono text-xs leading-relaxed whitespace-pre">
-                    {example.code}
-                  </pre>
-                </div>
-
-                {/* Footer con acción */}
-                <div className="flex items-center justify-between gap-2">
-                  <button
-                    onClick={() => handleCopy(example.code, example.id)}
-                    className="glass-secondary px-3 py-1.5 rounded text-xs font-semibold transition-colors flex items-center gap-1 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Copiar código"
-                    disabled={isAnalyzing}
-                  >
-                    {copiedId === example.id ? (
-                      <>
-                        <span className="material-symbols-outlined text-sm">check</span>{" "}
-                        Copiado
-                      </>
-                    ) : (
-                      <>
-                        <span className="material-symbols-outlined text-sm">content_copy</span>{" "}
-                        Copiar
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => handleAnalyze(example.code)}
-                    disabled={isAnalyzing}
-                    className="flex items-center justify-center gap-2 py-1.5 px-4 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-green-400/50 bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 hover:from-green-500/30 hover:to-emerald-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
-                  >
-                    {isAnalyzing ? (
-                      <>
-                        <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>{' '}
-                        Analizando...
-                      </>
-                    ) : (
-                      <>
-                        <span className="material-symbols-outlined text-sm">functions</span>{' '}
-                        Analizar
-                      </>
-                    )}
-                  </button>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
 
           {/* Información adicional */}
           <div className="glass-card p-6">
@@ -552,7 +726,8 @@ export default function ExamplesPage() {
                 cualquier ejemplo para copiar el código al portapapeles.
               </p>
               <p>
-                2. <strong className="text-white">Analizar:</strong> Ve al{" "}
+                2. <strong className="text-white">Analizar:</strong> Haz clic en el botón &quot;Analizar&quot; para
+                analizar el algoritmo directamente desde esta página, o ve al{" "}
                 <NavigationLink href="/analyzer" className="text-blue-400 hover:text-blue-300 underline">
                   analizador
                 </NavigationLink>{" "}
@@ -560,12 +735,17 @@ export default function ExamplesPage() {
               </p>
               <p>
                 3. <strong className="text-white">Explorar:</strong> El sistema calculará
-                automáticamente la complejidad temporal mostrando el análisis detallado.
+                automáticamente la complejidad temporal para best/worst/average case mostrando el análisis detallado.
               </p>
               <p>
                 4. <strong className="text-white">Modificar:</strong> Experimenta modificando los
                 ejemplos para entender cómo afectan los cambios a la complejidad.
               </p>
+              <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <p className="text-blue-300 text-sm">
+                  <strong>💡 Nota sobre categorías:</strong> Los algoritmos simples se clasificarán como &quot;unknown&quot; en el análisis (no tienen bucles complejos). Los algoritmos recursivos no están soportados actualmente y requieren el sistema S4 para su análisis.
+                </p>
+              </div>
             </div>
           </div>
 

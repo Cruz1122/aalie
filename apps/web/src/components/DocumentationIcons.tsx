@@ -12,6 +12,7 @@ import {
   Calculator,
   BarChart3,
   Code2,
+  Cpu,
   LucideIcon,
 } from "lucide-react";
 
@@ -82,6 +83,11 @@ const ICON_CONFIG: Record<string, IconConfig> = {
     icon: BarChart3,
     color: "text-violet-400",
     bgColor: "bg-violet-500/20 border-violet-500/30",
+  },
+  "iterative-analyzer": {
+    icon: Cpu,
+    color: "text-cyan-400",
+    bgColor: "bg-cyan-500/20 border-cyan-500/30",
   },
   "grammar-parser": {
     icon: Code2,

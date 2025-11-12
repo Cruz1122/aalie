@@ -141,6 +141,28 @@ export interface AnalyzerModalType {
   content: string;
 }
 
+export interface AnalysisMode {
+  name: string;
+  description: string;
+  features: string[];
+}
+
+export interface AnalysisModes {
+  title: string;
+  modes: AnalysisMode[];
+}
+
+export interface VisitorInfo {
+  name: string;
+  description: string;
+  features: string[];
+}
+
+export interface AlgorithmCategory {
+  name: string;
+  examples: string[];
+}
+
 export interface AnalyzerContent {
   type: "analyzer";
   interface: {
@@ -154,6 +176,7 @@ export interface AnalyzerContent {
       breakpoints: AnalyzerBreakpoint[];
     };
   };
+  analysisModes?: AnalysisModes;
   modal: {
     title: string;
     purpose: string;
@@ -163,6 +186,28 @@ export interface AnalyzerContent {
   components: {
     title: string;
     list: AnalyzerComponentInfo[];
+  };
+  implementation?: {
+    title: string;
+    description: string;
+    features: string[];
+  };
+  visitors?: {
+    title: string;
+    list: VisitorInfo[];
+  };
+  algorithms?: {
+    title: string;
+    categories: AlgorithmCategory[];
+  };
+  api?: {
+    title: string;
+    endpoint: {
+      name: string;
+      description: string;
+      request: Record<string, unknown>;
+      response: Record<string, unknown>;
+    };
   };
 }
 

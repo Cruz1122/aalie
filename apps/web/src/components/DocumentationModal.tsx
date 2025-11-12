@@ -22,6 +22,9 @@ import {
   AnalyzerBreakpoint,
   AnalyzerModalType,
   AnalyzerComponentInfo,
+  AnalysisMode,
+  VisitorInfo,
+  AlgorithmCategory,
   GrammarContent,
   GrammarFeature,
   GrammarSyntaxSection,
@@ -917,6 +920,140 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
           </div>
         </div>
       </section>
+
+      {/* Modos de Análisis */}
+      {content?.analysisModes && (
+        <section className="mb-8">
+          <h5 className="text-lg font-semibold text-yellow-300 text-center mb-6">
+            {content.analysisModes.title}
+          </h5>
+          <div className="grid md:grid-cols-3 gap-4">
+            {content.analysisModes.modes.map((mode: AnalysisMode) => (
+              <div key={mode.name} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+                <h6 className="text-sm font-semibold text-yellow-200 mb-2">{mode.name}</h6>
+                <p className="text-xs text-yellow-300 mb-2">{mode.description}</p>
+                <div>
+                  <p className="text-xs font-medium text-slate-300 mb-1">Características:</p>
+                  <ul className="space-y-1">
+                    {mode.features.map((feature: string) => (
+                      <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
+                        <ArrowRight size={8} className="text-yellow-400 mt-0.5 flex-shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Implementación Técnica */}
+      {content?.implementation && (
+        <section className="mb-8">
+          <h5 className="text-lg font-semibold text-orange-300 text-center mb-6">
+            {content.implementation.title}
+          </h5>
+          <div className="p-4 rounded-lg bg-orange-800/20 border border-orange-500/20">
+            <p className="text-xs text-orange-300 mb-4 text-center">
+              {content.implementation.description}
+            </p>
+            <div>
+              <p className="text-xs font-medium text-slate-300 mb-2">Características:</p>
+              <ul className="space-y-1">
+                {content.implementation.features.map((feature: string) => (
+                  <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
+                    <ArrowRight size={8} className="text-orange-400 mt-0.5 flex-shrink-0" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Visitors Especializados */}
+      {content?.visitors && (
+        <section className="mb-8">
+          <h5 className="text-lg font-semibold text-indigo-300 text-center mb-6">
+            {content.visitors.title}
+          </h5>
+          <div className="grid md:grid-cols-2 gap-4">
+            {content.visitors.list.map((visitor: VisitorInfo) => (
+              <div key={visitor.name} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+                <h6 className="text-sm font-semibold text-indigo-200 mb-2">{visitor.name}</h6>
+                <p className="text-xs text-indigo-300 mb-2">{visitor.description}</p>
+                <div>
+                  <p className="text-xs font-medium text-slate-300 mb-1">Características:</p>
+                  <ul className="space-y-1">
+                    {visitor.features.map((feature: string) => (
+                      <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
+                        <ArrowRight size={8} className="text-indigo-400 mt-0.5 flex-shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Algoritmos Soportados */}
+      {content?.algorithms && (
+        <section className="mb-8">
+          <h5 className="text-lg font-semibold text-teal-300 text-center mb-6">
+            {content.algorithms.title}
+          </h5>
+          <div className="space-y-4">
+            {content.algorithms.categories.map((category: AlgorithmCategory) => (
+              <div key={category.name} className="p-4 rounded-lg bg-teal-800/20 border border-teal-500/20">
+                <h6 className="text-sm font-semibold text-teal-200 mb-3">{category.name}</h6>
+                <ul className="space-y-1">
+                  {category.examples.map((example: string) => (
+                    <li key={example} className="text-xs text-slate-400 flex items-start gap-1">
+                      <ArrowRight size={8} className="text-teal-400 mt-0.5 flex-shrink-0" />
+                      <span>{example}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* API y Endpoints */}
+      {content?.api && (
+        <section className="mb-8">
+          <h5 className="text-lg font-semibold text-pink-300 text-center mb-6">
+            {content.api.title}
+          </h5>
+          <div className="p-4 rounded-lg bg-pink-800/20 border border-pink-500/20">
+            <div className="mb-4">
+              <h6 className="text-sm font-semibold text-pink-200 mb-2">{content.api.endpoint.name}</h6>
+              <p className="text-xs text-pink-300 mb-3">{content.api.endpoint.description}</p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+                <p className="text-xs font-medium text-slate-300 mb-2">Request:</p>
+                <pre className="text-xs text-slate-400 overflow-x-auto">
+                  {JSON.stringify(content.api.endpoint.request, null, 2)}
+                </pre>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+                <p className="text-xs font-medium text-slate-300 mb-2">Response:</p>
+                <pre className="text-xs text-slate-400 overflow-x-auto">
+                  {JSON.stringify(content.api.endpoint.response, null, 2)}
+                </pre>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Componentes */}
       <section className="p-4 rounded-lg bg-green-800/20 border border-green-500/20">

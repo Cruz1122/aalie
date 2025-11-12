@@ -527,22 +527,74 @@ print("Dijo \"hola\" y salió");`}
                         <strong className="text-white">Tabla de costos por línea:</strong> Muestra el costo elemental (Cₖ), número de ejecuciones y costo total por línea
                       </li>
                       <li>
-                        <strong className="text-white">Selector de casos:</strong> En la esquina superior derecha, cambia entre Mejor/Promedio/Peor caso (actualmente solo Peor caso disponible)
+                        <strong className="text-white">Selector de casos:</strong> En la esquina superior derecha, cambia entre Mejor/Promedio/Peor caso
                       </li>
                       <li>
-                        <strong className="text-white">Tarjetas de resumen:</strong> Tres tarjetas muestran la notación asintótica (Big-O) para cada caso, con un botón &quot;Ver Procedimiento&quot; en la tarjeta del Peor caso
+                        <strong className="text-white">Tarjetas de resumen:</strong> Tres tarjetas muestran la notación asintótica (Big-O) para cada caso, con botones &quot;Ver Procedimiento&quot; en cada tarjeta
                       </li>
                       <li>
                         <strong className="text-white">Procedimientos detallados:</strong>
                         <ul className="list-disc list-inside ml-6 mt-2 space-y-1">
-                          <li>Procedimiento general: Haz clic en &quot;Ver Procedimiento&quot; en la tarjeta del Peor caso</li>
+                          <li>Procedimiento general: Haz clic en &quot;Ver Procedimiento&quot; en cualquier tarjeta para ver el análisis completo</li>
                           <li>Procedimiento por línea: Haz clic en cualquier línea de la tabla para ver los pasos específicos de esa línea</li>
                         </ul>
                       </li>
                     </ul>
+
+                    <div className="mt-6">
+                      <h4 className="font-semibold text-white mb-3">Modos de Análisis</h4>
+                      <div className="space-y-4">
+                        <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                          <h5 className="font-semibold text-green-300 mb-2">Best Case (Mejor Caso)</h5>
+                          <p className="text-sm text-dark-text">
+                            Analiza el mejor caso del algoritmo, considerando:
+                          </p>
+                          <ul className="list-disc list-inside ml-4 mt-2 text-sm text-dark-text space-y-1">
+                            <li>Ramas de IF con menos líneas de código</li>
+                            <li>Mínimo número de iteraciones en bucles</li>
+                            <li>Complejidad mínima esperada (cota inferior)</li>
+                          </ul>
+                          <p className="text-sm text-dark-text mt-2">
+                            <strong>Ejemplo:</strong> En búsqueda lineal, el best case es O(1) si el elemento está en la primera posición.
+                          </p>
+                        </div>
+
+                        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                          <h5 className="font-semibold text-red-300 mb-2">Worst Case (Peor Caso)</h5>
+                          <p className="text-sm text-dark-text">
+                            Analiza el peor caso del algoritmo, considerando:
+                          </p>
+                          <ul className="list-disc list-inside ml-4 mt-2 text-sm text-dark-text space-y-1">
+                            <li>Ramas de IF con más líneas de código</li>
+                            <li>Máximo número de iteraciones en bucles</li>
+                            <li>Complejidad máxima esperada (cota superior)</li>
+                          </ul>
+                          <p className="text-sm text-dark-text mt-2">
+                            <strong>Ejemplo:</strong> En búsqueda lineal, el worst case es O(n) si el elemento no existe o está al final.
+                          </p>
+                        </div>
+
+                        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                          <h5 className="font-semibold text-blue-300 mb-2">Average Case (Caso Promedio)</h5>
+                          <p className="text-sm text-dark-text">
+                            Analiza el caso promedio usando modelos probabilísticos:
+                          </p>
+                          <ul className="list-disc list-inside ml-4 mt-2 text-sm text-dark-text space-y-1">
+                            <li><strong>Modelo Uniforme:</strong> Distribución uniforme de probabilidades (p = 1/2 por defecto)</li>
+                            <li><strong>Modelo Simbólico:</strong> Probabilidades expresadas simbólicamente</li>
+                            <li>Esperanzas matemáticas (expectedRuns) para cada línea</li>
+                            <li>Complejidad promedio esperada A(n) = E[T(n)]</li>
+                          </ul>
+                          <p className="text-sm text-dark-text mt-2">
+                            <strong>Ejemplo:</strong> En búsqueda lineal, el average case es O(n/2) ≈ O(n) asumiendo distribución uniforme.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mt-4">
                       <p className="text-yellow-300 text-sm">
-                        <strong>⚠️ Nota:</strong> Los procedimientos muestran pasos detallados en LaTeX, desde la expresión original hasta la forma polinómica final y la notación asintótica.
+                        <strong>⚠️ Nota:</strong> Los procedimientos muestran pasos detallados en LaTeX, desde la expresión original hasta la forma polinómica final y la notación asintótica. Para caso promedio, se muestra A(n) en lugar de T(n).
                       </p>
                     </div>
                   </div>

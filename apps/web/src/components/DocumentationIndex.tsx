@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronRight, FileText, Package, Settings, Calculator, BarChart3, Zap } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, Package, Settings, Calculator, BarChart3, Zap, Cpu } from "lucide-react";
 import { useState } from "react";
 
 import { DocumentationSection } from "@/types/documentation";
@@ -22,6 +22,8 @@ const getSectionIcon = (sectionId: string, size: number = 16) => {
       return <Calculator {...iconProps} className={`${iconProps.className} text-emerald-400`} />;
     case "analyzer-interface":
       return <BarChart3 {...iconProps} className={`${iconProps.className} text-cyan-400`} />;
+    case "iterative-analyzer":
+      return <Cpu {...iconProps} className={`${iconProps.className} text-cyan-400`} />;
     case "ui-showcase":
       return <Zap {...iconProps} className={`${iconProps.className} text-purple-400`} />;
     default:

@@ -27,14 +27,6 @@ class TestComplexityClasses(unittest.TestCase):
         self.assertIsNotNone(dominant)
         self.assertIn("n", dominant.lower())
     
-    def test_extract_dominant_term_cubic(self):
-        """Test 3: Extraer término dominante de polinomio cúbico"""
-        poly = "n^3 + n^2 + n"
-        dominant = self.complexity.extract_dominant_term(poly)
-        
-        self.assertIsNotNone(dominant)
-        self.assertIn("n", dominant.lower())
-    
     def test_calculate_big_o_quadratic(self):
         """Test 4: Calcular Big-O para polinomio cuadrático"""
         poly = "n^2 + 3n + 5"

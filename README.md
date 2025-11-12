@@ -79,6 +79,7 @@ docker-compose up
 
 - **[Gramática ANTLR y Sintaxis del Lenguaje](packages/grammar/grammar/README.md)** — Referencia completa de sintaxis, ejemplos y estructura del AST
 - **[Guía de Análisis de Algoritmos](apps/api/app/analysis/README.md)** — Documentación técnica del sistema de análisis, reglas, y flujo de trabajo
+- **[Análisis Iterativo Unificado](apps/api/app/analysis/README_ITERATIVE.md)** — Documentación completa del analizador iterativo con soporte para best/worst/average case
 - **Guía de Desarrollo** (en README de gramática):
   - [Generación de código TS/Py](packages/grammar/grammar/README.md#generación-de-código-codegen)
   - [Probar endpoint /parse](packages/grammar/grammar/README.md#probar-el-endpoint-parse)
@@ -95,8 +96,12 @@ docker-compose up
 4. **Revisar resultados**:
    - **Tabla de costos por línea**: Visualiza el costo elemental (Cₖ), número de ejecuciones y costo total por línea. Incluye selector de casos (Best/Avg/Worst) en la esquina superior derecha.
    - **Tarjetas de resumen**: Tres tarjetas muestran la notación asintótica (Big-O) para cada caso, con el Big-O renderizado en LaTeX dentro del círculo del icono.
+   - **Análisis de casos**:
+     - **Best Case**: Muestra el mejor caso del algoritmo (complejidad mínima)
+     - **Worst Case**: Muestra el peor caso del algoritmo (complejidad máxima)
+     - **Average Case**: Muestra el caso promedio usando modelos probabilísticos (uniform o symbolic)
    - **Procedimientos detallados**: 
-     - **Procedimiento general**: Haz clic en "Ver Procedimiento" en la tarjeta del Peor caso para ver el procedimiento completo con ecuación de eficiencia, forma polinómica y notación asintótica.
+     - **Procedimiento general**: Haz clic en "Ver Procedimiento" en cualquier tarjeta para ver el procedimiento completo con ecuación de eficiencia, forma polinómica y notación asintótica.
      - **Procedimiento por línea**: Haz clic en cualquier línea de la tabla para ver los pasos detallados de esa línea específica, desde la expresión original hasta la forma final con notación asintótica.
 
 ### Características del Loader de Análisis
@@ -173,19 +178,44 @@ API REST con FastAPI que expone endpoints de parsing y análisis.
 **Endpoints principales:**
 - `POST /grammar/parse` — Parsea pseudocódigo y devuelve AST
 - `POST /analyze/open` — Analiza complejidad temporal (método abierto S3)
+  - Soporta modos: `worst`, `best`, `avg`, `all`
+  - Modelos de caso promedio: `uniform`, `symbolic`
+  - Genera análisis completo con T_open, A_of_n, y procedimientos detallados
 - `GET /health` — Health check
+
+**Análisis Iterativo Completo:**
+- ✅ Análisis de best/worst/average case
+- ✅ Modelos probabilísticos para caso promedio
+- ✅ Soporte para bucles FOR, WHILE, REPEAT
+- ✅ Análisis de condicionales IF con selección de rama dominante
+- ✅ Cálculo de complejidad temporal con sumatorias y simplificación
+- ✅ Tests exhaustivos con casos comunes, intermedios y complejos
 
 ## Testing
 
 ```bash
 # Tests del backend (Python)
 cd apps/api
-pytest test/ -v
+pytest tests/ -v
 
 # Tests de la gramática
 cd packages/grammar
 npm run verify
 ```
+
+**Tests Exhaustivos del Analizador Iterativo:**
+- Tests de casos comunes: búsqueda lineal, búsqueda binaria, factorial, suma/máximo de array
+- Tests de casos intermedios: selection sort, bubble sort, insertion sort, multiplicación de matrices
+- Tests de casos complejos: bucles anidados variables, WHILE complejos, IF anidados, REPEAT-UNTIL
+- Tests de caso promedio: verificación de modelos uniforme y simbólico
+- Todos los tests cubren best/worst/average case
+
+**Ubicación de Tests:**
+- `apps/api/tests/integration/test_iterative_analyzer.py` — Tests básicos y casos comunes
+- `apps/api/tests/integration/test_intermediate_algorithms.py` — Tests de algoritmos intermedios
+- `apps/api/tests/integration/test_complex_algorithms.py` — Tests de algoritmos complejos
+- `apps/api/tests/integration/test_avg_case.py` — Tests específicos de caso promedio
+- `apps/api/tests/integration/test_algorithms.py` — Tests de algoritmos completos
 
 ## Contribuir
 
