@@ -291,9 +291,6 @@ export default function AnalyzerPage() {
         errors?: Array<{ message: string; line?: number; column?: number }>;
       };
 
-      setAnalysisMessage("Generando forma polinómica...");
-      await animateProgress(95, 100, 200, setAnalysisProgress);
-
       // Verificar errores
       if (!analyzeRes.ok) {
         console.error("Error en análisis:", analyzeRes);
@@ -334,10 +331,18 @@ export default function AnalyzerPage() {
         avg: analyzeRes.avg  // Puede ser undefined si falló, pero el frontend lo maneja
       });
       
-      // Asegurar que algorithmType se mantenga (puede haberse perdido)
-      if (!algorithmType && (analyzeRes.worst?.totals?.recurrence || analyzeRes.best?.totals?.recurrence)) {
+      // Asegurar que algorithmType se mantenga usando la variable local 'kind'
+      // que ya tiene el valor correcto (no depender del estado que puede no haberse actualizado)
+      // IMPORTANTE: Usar 'kind' en lugar de 'algorithmType' para evitar problemas de timing
+      if (kind) {
+        // Usar el tipo que ya fue clasificado (puede ser "hybrid", "recursive", etc.)
+        setAlgorithmType(kind);
+        console.log(`[Analyzer] algorithmType establecido desde clasificación: ${kind}`);
+      } else if (analyzeRes.worst?.totals?.recurrence || analyzeRes.best?.totals?.recurrence) {
+        // Fallback: si no hay kind pero hay recurrencia, asumir recursive
+        // (esto no debería pasar normalmente, pero es un fallback de seguridad)
         setAlgorithmType("recursive");
-        console.log('[Analyzer] algorithmType restaurado a "recursive" basado en datos');
+        console.log('[Analyzer] algorithmType establecido a "recursive" como fallback basado en datos');
       }
       
       // Debug: verificar que el tipo de algoritmo sea correcto

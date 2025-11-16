@@ -1675,7 +1675,22 @@ class RecursiveAnalyzer(BaseAnalyzer):
             latex_str = re.sub(re.escape(r'\left[') + r'\s*n\s*' + re.escape(r'\right]'), 'n', latex_str)
             
             # Simplificar paréntesis innecesarios alrededor de n simple: (n) → n
+            # PERO NO simplificar si está dentro de comandos LaTeX como \Theta(n), \Omega(n), O(n)
+            # Proteger comandos LaTeX comunes antes de simplificar
+            # Lista de comandos LaTeX que deben mantener (n) con paréntesis
+            latex_commands = ['Theta', 'Omega', 'O', 'o']
+            for cmd in latex_commands:
+                # Proteger el patrón \comando(n) para que no se simplifique
+                pattern = re.escape(f'\\{cmd}') + r'\s*\(n\)'
+                # Reemplazar temporalmente con un marcador único
+                latex_str = re.sub(pattern, f'__PROTECTED_{cmd}__', latex_str)
+            
+            # Ahora simplificar (n) → n solo si no está protegido
             latex_str = re.sub(r'\(n\)(?=\s|$|\)|,|})', 'n', latex_str)
+            
+            # Restaurar los comandos protegidos
+            for cmd in latex_commands:
+                latex_str = latex_str.replace(f'__PROTECTED_{cmd}__', f'\\{cmd}(n)')
             
         except Exception as e:
             # Si hay un error en el regex, retornar la cadena original

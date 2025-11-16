@@ -216,12 +216,12 @@ export default function RecursiveProcedureModal({
                 </div>
               )}
 
-              {/* Resultado final */}
+              {/* Ecuación de eficiencia */}
               {theta && (
                 <div className="p-4 rounded-lg bg-green-500/20 border border-green-500/30">
-                  <h5 className="text-green-300 font-semibold mb-2 text-sm">Resultado Final</h5>
+                  <h5 className="text-green-300 font-semibold mb-2 text-sm">Ecuación de eficiencia</h5>
                   <div className="text-lg flex justify-center">
-                    <Formula latex={theta} display />
+                    <Formula latex={`T(n) = ${theta}`} display />
                   </div>
                 </div>
               )}
