@@ -187,7 +187,7 @@ class BaseAnalyzer:
             }
             
             return sympify(expr_str, locals=syms)
-        except:
+        except Exception:
             # Fallback: retornar 1
             return Integer(1)
     
@@ -246,7 +246,7 @@ class BaseAnalyzer:
             return "0"
         
         # Construir expresión SymPy
-        from sympy import Add, Mul, Symbol as SymSymbol
+        from sympy import Add
         
         terms = []
         for r in self.rows:
@@ -272,7 +272,6 @@ class BaseAnalyzer:
         total_expr = Add(*terms) if len(terms) > 1 else terms[0]
         
         # Simplificar completamente: evaluar todas las sumatorias
-        from sympy import preorder_traversal
         from sympy import simplify as sympy_simplify, expand
         from app.analysis.summation_closer import SummationCloser
         
@@ -284,7 +283,7 @@ class BaseAnalyzer:
         try:
             total_expr = expand(total_expr)
             total_expr = sympy_simplify(total_expr)
-        except:
+        except Exception:
             total_expr = sympy_simplify(total_expr)
         
         # Convertir a LaTeX
@@ -336,7 +335,7 @@ class BaseAnalyzer:
         try:
             total_expr = expand(total_expr)
             total_expr = sympy_simplify(total_expr)
-        except:
+        except Exception:
             total_expr = sympy_simplify(total_expr)
         
         return total_expr
@@ -390,7 +389,7 @@ class BaseAnalyzer:
                     try:
                         from sympy import latex
                         clean_row[key] = latex(value)
-                    except:
+                    except Exception:
                         clean_row[key] = str(value)
                 # Asegurar que count, count_raw y expectedRuns sean strings
                 elif key in ['count', 'count_raw', 'expectedRuns'] and not isinstance(value, str):

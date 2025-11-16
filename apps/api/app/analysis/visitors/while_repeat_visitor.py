@@ -1,7 +1,7 @@
 # apps/api/app/analysis/visitors/while_repeat_visitor.py
 
 from typing import Any, Dict, List, Optional
-from sympy import Symbol, Integer, Expr, sympify, Sum, Rational, latex
+from sympy import Symbol, Integer, Expr, sympify, Sum, Rational
 import re
 
 
@@ -101,7 +101,7 @@ class WhileRepeatVisitor:
             }
             
             return sympify(expr_str, locals=syms)
-        except:
+        except Exception:
             return Integer(1)
     
     def _extract_condition_info(self, test: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -757,7 +757,7 @@ class WhileRepeatVisitor:
             p_str = self.avg_model.get_probability(exit_predicate, context)
             p_sympy = self.avg_model.get_probability_sympy(exit_predicate, context)
             return (p_sympy, p_str)
-        except:
+        except Exception:
             # Si no se encuentra, intentar con la condición inversa
             try:
                 # Para condición "i < n", la probabilidad de salir podría ser modelada como
@@ -766,7 +766,7 @@ class WhileRepeatVisitor:
                 p_sympy = self.avg_model.get_probability_sympy(condition_str, context)
                 # Si obtenemos una probabilidad, asumir que es la probabilidad de que la condición sea falsa (salir)
                 return (p_sympy, p_str)
-            except:
+            except Exception:
                 return None
     
     def visitWhile(self, node: Dict[str, Any], mode: str = "worst", parent_context: Optional[Dict[str, Any]] = None) -> None:
@@ -855,7 +855,7 @@ class WhileRepeatVisitor:
             # Convertir iteraciones (string) a SymPy
             try:
                 iterations_expr = sympify(iterations)
-            except:
+            except Exception:
                 # Fallback: usar string y convertir después
                 iterations_expr = self._str_to_sympy(iterations)
             

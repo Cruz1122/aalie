@@ -1,5 +1,5 @@
 from typing import Dict, Optional, Any
-from sympy import Symbol, sympify, Integer, Rational
+from sympy import Symbol, Integer, Rational
 
 
 class AvgModel:
@@ -117,7 +117,6 @@ class AvgModel:
                 func_name = prob_str.split("(")[0].strip()
                 var_name = prob_str.split("(")[1].split(")")[0].strip()
                 var_sym = Symbol(var_name, integer=True)
-                func_sym = Symbol(func_name, real=True)
                 # Retornar como función aplicada
                 from sympy import Function
                 p_func = Function(func_name)

@@ -1,5 +1,5 @@
 from typing import List, Tuple, Optional, Union
-from sympy import Symbol, summation, simplify, latex, sympify, oo, Sum, expand, factor, Expr, Add, Mul
+from sympy import Symbol, summation, simplify, latex, sympify, Sum, expand, factor, Expr, Add, Mul
 from sympy.parsing.sympy_parser import parse_expr
 import re
 
@@ -96,7 +96,7 @@ class SummationCloser:
                     try:
                         expanded = expand(result_expr)
                         result_expr = simplify(expanded)
-                    except:
+                    except Exception:
                         pass
                     
                     # Convertir a LaTeX
@@ -139,7 +139,7 @@ class SummationCloser:
                 try:
                     expanded = expand(result_expr)
                     result_expr = simplify(expanded)
-                except:
+                except Exception:
                     pass
                 
                 # Verificar si aún hay Sum sin evaluar y forzar su evaluación
@@ -171,7 +171,7 @@ class SummationCloser:
                             if result_expr.has(var_symbol):
                                 result_expr = factor(result_expr)
                                 result_expr = simplify(result_expr)
-                        except:
+                        except Exception:
                             pass
                 
                 # Convertir a LaTeX
@@ -198,7 +198,7 @@ class SummationCloser:
         if not isinstance(expr, str):
             try:
                 expr = str(expr)
-            except:
+            except Exception:
                 expr = "1"
         
         if not expr or expr.strip() == "":
@@ -344,9 +344,9 @@ class SummationCloser:
             try:
                 start_val = int(start) if start.strip().isdigit() else start
                 end_val = int(end) if end.strip().isdigit() else end
-            except:
-                start_val = start
-                end_val = end
+            except Exception:
+                # start_val y end_val no se usan después, pero se mantienen para compatibilidad
+                pass
             
             # Generar paso explicativo
             if start == '1' and end == variable:
@@ -441,7 +441,7 @@ class SummationCloser:
             # Convertir a números si es posible para calcular correctamente
             try:
                 start_val = int(start) if start.strip().isdigit() else start
-                end_val = int(end) if end.strip().isdigit() else end
+                # end_val no se usa después
                 
                 if start_val == 1:
                     # Caso especial: suma desde 1
@@ -462,7 +462,7 @@ class SummationCloser:
                         f"\\text{{Evaluando: }} "
                         f"\\frac{{{end}({end}+1)}}{{2}} - \\frac{{{start_minus_one}({start})}}{{2}}"
                     )
-            except:
+            except Exception:
                 # Si no se puede convertir a números, usar fórmula general
                 steps.append(
                     f"\\text{{Aplicando fórmula de suma aritmética: }} "
@@ -480,7 +480,7 @@ class SummationCloser:
         try:
             steps.append(f"\\text{{Simplificando expresión: }} {expr}")
             # SymPy manejará la simplificación
-        except Exception as e:
+        except Exception:
             steps.append(f"\\text{{No se pudo simplificar automáticamente: }} {expr}")
         
         return steps
@@ -511,11 +511,11 @@ class SummationCloser:
         Returns:
             Expresión SymPy simplificada
         """
-        # Crear símbolos
-        n = Symbol(variable, integer=True, positive=True)
-        i = Symbol('i', integer=True)
-        j = Symbol('j', integer=True)
-        k = Symbol('k', integer=True)
+        # Crear símbolos (algunos no se usan pero se mantienen para compatibilidad futura)
+        # n = Symbol(variable, integer=True, positive=True)  # No usado actualmente
+        # i = Symbol('i', integer=True)  # No usado actualmente
+        # j = Symbol('j', integer=True)  # No usado actualmente
+        # k = Symbol('k', integer=True)  # No usado actualmente
         
         # Convertir LaTeX a expresión SymPy
         sympy_expr = self._latex_to_sympy(expr, variable)
@@ -536,11 +536,11 @@ class SummationCloser:
         Returns:
             Expresión SymPy
         """
-        # Crear símbolos
-        n = Symbol(variable, integer=True, positive=True)
-        i = Symbol('i', integer=True)
-        j = Symbol('j', integer=True)
-        k = Symbol('k', integer=True)
+        # Crear símbolos (algunos no se usan pero se mantienen para compatibilidad futura)
+        # n = Symbol(variable, integer=True, positive=True)  # No usado actualmente
+        # i = Symbol('i', integer=True)  # No usado actualmente
+        # j = Symbol('j', integer=True)  # No usado actualmente
+        # k = Symbol('k', integer=True)  # No usado actualmente
         
         # Si la expresión ya no tiene sumatorias, convertir directamente
         if '\\sum' not in expr:
@@ -616,7 +616,7 @@ class SummationCloser:
             # Convertir cuerpo a SymPy (puede contener expresiones complejas)
             try:
                 body_expr = self._parse_body(body_str, variable)
-            except:
+            except Exception:
                 body_expr = 1  # Fallback
             
             # Crear Sum de SymPy
@@ -778,7 +778,7 @@ class SummationCloser:
                 while expr_clean.endswith(')') and expr_clean.count('(') < expr_clean.count(')'):
                     expr_clean = expr_clean[:-1].strip()
                 return sympify(expr_clean)
-            except:
+            except Exception:
                 return sympify("0")  # Fallback final
     
     def _parse_limit(self, limit_str: str, variable: str) -> 'Expr':
@@ -796,7 +796,7 @@ class SummationCloser:
         # Si es una expresión como "n-1"
         try:
             return sympify(limit_str.replace(variable, variable))
-        except:
+        except Exception:
             return Symbol(limit_str, integer=True)
     
     def _simplify_algebraic_expression(self, expr: str, variable: str) -> str:
@@ -808,7 +808,7 @@ class SummationCloser:
         if not isinstance(expr, str):
             try:
                 expr = str(expr)
-            except:
+            except Exception:
                 return "1"
         
         # Si no hay sumatorias, simplificar directamente
@@ -970,7 +970,7 @@ class SummationCloser:
         # Intentar parsear como expresión algebraica
         try:
             return self._parse_algebraic_to_sympy(body, variable)
-        except:
+        except Exception:
             return 1  # Fallback
     
     def _extract_sum_body(self, expr: str, start_pos: int) -> str:
@@ -1058,14 +1058,14 @@ class SummationCloser:
                         if cleaned_expr.has(var_symbol):
                             cleaned_expr = factor(cleaned_expr)
                             cleaned_expr = simplify(cleaned_expr)
-                    except:
+                    except Exception:
                         pass
             
             latex_str = latex(cleaned_expr)
             # Normalizar formato
             latex_str = latex_str.replace('*', ' \\cdot ')
             return latex_str
-        except:
+        except Exception:
             return str(expr)
     
     def _evaluate_all_sums_sympy(self, expr: Expr) -> Expr:
@@ -1106,7 +1106,7 @@ class SummationCloser:
                                 try:
                                     result = summation(result, (var, start, end))
                                     result = simplify(result)
-                                except:
+                                except Exception:
                                     # Fallback a Sum().doit()
                                     result = Sum(result, (var, start, end)).doit()
                                     result = simplify(result)
@@ -1167,7 +1167,7 @@ class SummationCloser:
                             if isinstance(evaluated, Sum):
                                 return evaluate_all_sums(evaluated)
                             return evaluated
-                except:
+                except Exception:
                     # Si no se puede evaluar, intentar expandir y reevaluar
                     try:
                         expanded = expand(expr)
@@ -1175,7 +1175,7 @@ class SummationCloser:
                             evaluated = expanded.doit()
                             return simplify(evaluate_all_sums(evaluated))
                         return evaluate_all_sums(expanded)
-                    except:
+                    except Exception:
                         return expr
             
             # Si es una expresión compuesta (Add, Mul, etc.), evaluar recursivamente
@@ -1199,7 +1199,7 @@ class SummationCloser:
                             # Hay más sumatorias, seguir evaluando
                             return evaluate_all_sums(new_expr)
                         return new_expr
-                    except:
+                    except Exception:
                         return expr
             
             return expr
@@ -1219,7 +1219,7 @@ class SummationCloser:
                     if result.has(var_symbol):
                         result = factor(result)
                         result = simplify(result)
-                except:
+                except Exception:
                     pass
         
         return result
@@ -1376,7 +1376,7 @@ class SummationCloser:
         """
         steps = []
         evaluated_result = None
-        from sympy import Integer, Symbol, latex, Integer as Int, preorder_traversal
+        from sympy import Integer, latex, Integer as Int, preorder_traversal
         
         try:
             # PRIMERO: Verificar si hay múltiples límites (SymPy representa sumatorias anidadas así)
@@ -1636,7 +1636,7 @@ class SummationCloser:
                     # Si el cuerpo depende de la variable de forma lineal (como -i + n + 1)
                     else:
                         # Analizar si el cuerpo es una expresión lineal en la variable de suma
-                        from sympy import expand, collect, Add as SymAdd, Mul as SymMul
+                        from sympy import expand, Add as SymAdd, Mul as SymMul
                         
                         # Expandir el cuerpo para ver sus términos
                         body_expanded = expand(body)
@@ -1683,7 +1683,7 @@ class SummationCloser:
                                             f"\\text{{Evaluando sumatoria constante: }} "
                                             f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {const_terms_latex} = {const_result_latex}"
                                         )
-                                    except:
+                                    except Exception:
                                         pass
                                 
                                 # Parte con variable
@@ -1736,7 +1736,7 @@ class SummationCloser:
                                                             f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = {var_sum_latex}"
                                                         )
                                                         var_result_latex = var_sum_latex
-                                                except:
+                                                except Exception:
                                                     steps.append(
                                                         f"\\text{{Evaluando sumatoria: }} "
                                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
@@ -1753,7 +1753,7 @@ class SummationCloser:
                                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = {var_sum_latex}"
                                                     )
                                                     var_result_latex = var_sum_latex
-                                                except:
+                                                except Exception:
                                                     steps.append(
                                                         f"\\text{{Evaluando sumatoria: }} "
                                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
@@ -1771,7 +1771,7 @@ class SummationCloser:
                                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = {var_sum_latex}"
                                                     )
                                                     var_result_latex = var_sum_latex
-                                                except:
+                                                except Exception:
                                                     steps.append(
                                                         f"\\text{{Evaluando sumatoria: }} "
                                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
@@ -1788,7 +1788,7 @@ class SummationCloser:
                                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = {var_sum_latex}"
                                                     )
                                                     var_result_latex = var_sum_latex
-                                                except:
+                                                except Exception:
                                                     steps.append(
                                                         f"\\text{{Evaluando sumatoria: }} "
                                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
@@ -1805,7 +1805,7 @@ class SummationCloser:
                                                 f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = {var_sum_latex}"
                                             )
                                             var_result_latex = var_sum_latex
-                                        except:
+                                        except Exception:
                                             steps.append(
                                                 f"\\text{{Evaluando sumatoria: }} "
                                                 f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
@@ -1839,7 +1839,7 @@ class SummationCloser:
                                     steps.append(
                                         f"\\text{{Combinando resultados: }} {var_result_latex} + {const_result_latex} = {total_latex}"
                                     )
-                                except:
+                                except Exception:
                                     pass
                         
                         # Agregar resultado final (para todos los casos)
@@ -1850,14 +1850,14 @@ class SummationCloser:
                             # Solo agregar si no está ya en los pasos
                             if evaluated_latex not in " ".join(steps):
                                 steps.append(f"\\text{{Resultado: }} {evaluated_latex}")
-                        except:
+                        except Exception:
                             pass
-                except (TypeError, IndexError, AttributeError) as e:
+                except (TypeError, IndexError, AttributeError):
                     # No se puede acceder a limits como secuencia o tiene estructura inesperada
                     try:
                         sum_latex = latex(sum_expr)
                         steps.append(f"\\text{{Sumatoria: }} {sum_latex}")
-                    except:
+                    except Exception:
                         steps.append(f"\\text{{Error: no se pudo procesar la sumatoria}}")
         except Exception as e:
             print(f"[SummationCloser] Error analizando sumatoria: {e}")
@@ -1866,7 +1866,7 @@ class SummationCloser:
             try:
                 sum_latex = latex(sum_expr)
                 steps.append(f"\\text{{Sumatoria: }} {sum_latex}")
-            except:
+            except Exception:
                 steps.append(f"\\text{{Error: no se pudo procesar la sumatoria}}")
         
         return steps
@@ -1891,7 +1891,7 @@ class SummationCloser:
             inner_sum = sums[1]   # La segunda es la interna
             
             # Extraer información de ambas sumatorias
-            outer_body = outer_sum.args[0]
+            # outer_body = outer_sum.args[0]  # No usado actualmente
             outer_limits = outer_sum.args[1]
             inner_body = inner_sum.args[0]
             inner_limits = inner_sum.args[1]
@@ -2074,10 +2074,10 @@ class SummationCloser:
                 steps.append(f"\\text{{Sumatorias anidadas: }} {sum_chain}")
                 
                 # Para el análisis, usar el más interno y el más externo
-                inner_limits = all_limits[-1]  # Último límite = más interno
-                outer_limits = all_limits[0]  # Primer límite = más externo
+                # inner_limits = all_limits[-1]  # Último límite = más interno - No usado
+                # outer_limits = all_limits[0]  # Primer límite = más externo - No usado
                 
-                inner_var = limits_info[-1]['var']
+                # inner_var = limits_info[-1]['var']  # No usado actualmente
                 inner_start = limits_info[-1]['start']
                 inner_end = limits_info[-1]['end']
                 inner_var_latex = limits_info[-1]['var_latex']
@@ -2085,8 +2085,8 @@ class SummationCloser:
                 inner_end_latex = limits_info[-1]['end_latex']
                 
                 outer_var = limits_info[0]['var']
-                outer_start = limits_info[0]['start']
-                outer_end = limits_info[0]['end']
+                # outer_start = limits_info[0]['start']  # No usado actualmente
+                # outer_end = limits_info[0]['end']  # No usado actualmente
                 outer_var_latex = limits_info[0]['var_latex']
                 outer_start_latex = limits_info[0]['start_latex']
                 outer_end_latex = limits_info[0]['end_latex']
@@ -2155,7 +2155,7 @@ class SummationCloser:
                                 if evaluated_simplified.has(var_symbol):
                                     evaluated_simplified = factor(evaluated_simplified)
                                     evaluated_simplified = simplify(evaluated_simplified)
-                            except:
+                            except Exception:
                                 pass
                     
                     evaluated_latex = latex(evaluated_simplified)
@@ -2163,6 +2163,7 @@ class SummationCloser:
                         steps.append(f"\\text{{Resultado: }} {evaluated_latex}")
                 except Exception as e:
                     print(f"[SummationCloser] Error evaluando sumatoria múltiple: {e}")
+                    # e se usa en el print, así que está bien
                     import traceback
                     traceback.print_exc()
             except (IndexError, TypeError) as e:

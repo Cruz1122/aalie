@@ -17,7 +17,8 @@ tests/
 ├── integration/              # Tests de integración
 │   ├── test_sympy_integration.py # Integración básica SymPy
 │   ├── test_iterative_analyzer.py # Analizador iterativo
-│   └── test_algorithms.py        # Algoritmos completos
+│   ├── test_algorithms.py        # Algoritmos completos
+│   └── test_recursive_algorithms.py # Algoritmos recursivos con Teorema Maestro
 └── system/                   # Tests de sistema/endpoints
     ├── test_parse_endpoint.py    # Endpoint /grammar/parse
     └── test_analyze_endpoint.py  # Endpoint /analyze/open
@@ -41,6 +42,7 @@ Los tests de integración verifican la interacción entre componentes:
 - **test_sympy_integration.py**: Verifica que los componentes trabajen juntos con SymPy
 - **test_iterative_analyzer.py**: Prueba el flujo completo del analizador iterativo
 - **test_algorithms.py**: Verifica el análisis de algoritmos completos (insertion sort, bubble sort, etc.)
+- **test_recursive_algorithms.py**: Prueba algoritmos recursivos con Teorema Maestro (merge sort, binary search, Strassen, etc.)
 
 ### Tests de Sistema (`system/`)
 
@@ -118,7 +120,18 @@ pytest tests/unit/test_summation_closer.py -v
 pytest tests/integration/test_algorithms.py::TestAlgorithms::test_insertion_sort -v
 ```
 
-### Ejemplo 3: Ejecutar tests de un endpoint
+### Ejemplo 3: Ejecutar tests de algoritmos recursivos
+
+```bash
+# Todos los tests recursivos
+pytest tests/integration/test_recursive_algorithms.py -v
+
+# Un test específico
+pytest tests/integration/test_recursive_algorithms.py::TestRecursiveAlgorithms::test_merge_sort_case_2 -v
+pytest tests/integration/test_recursive_algorithms.py::TestRecursiveAlgorithms::test_strassen_case_1 -v
+```
+
+### Ejemplo 4: Ejecutar tests de un endpoint
 
 ```bash
 pytest tests/system/test_analyze_endpoint.py::TestAnalyzeEndpoint::test_bubble_sort -v

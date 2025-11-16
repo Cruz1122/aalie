@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 from sympy import Expr, latex, Integer
 from .base import BaseAnalyzer
 from .visitors.for_visitor import ForVisitor
@@ -190,7 +190,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                             # También actualizar expectedRuns en modo promedio para que refleje la probabilidad
                             if mode == "avg":
                                 row["expectedRuns"] = count_raw_latex_from_expr
-                    except:
+                    except Exception:
                         pass  # Si falla, mantener count_raw original
                     
                     # Pasar el objeto SymPy directamente a close_summation
@@ -323,9 +323,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Calcular notaciones asintóticas usando la expresión SymPy directamente
         if t_open_expr is not None:
             try:
-                from sympy import latex as sympy_latex, Symbol, expand, simplify, degree
-                from sympy.polys.polytools import Poly, LC, LM
-                from sympy import preorder_traversal
+                from sympy import latex as sympy_latex, Symbol, expand, simplify
                 
                 # Primero, asegurarse de que la expresión esté completamente simplificada
                 t_open_expr = expand(t_open_expr)
@@ -376,7 +374,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                                             if exp_val.is_number:
                                                 exp_int = int(float(exp_val))
                                                 term_degree = max(term_degree, exp_int)
-                                    except:
+                                    except Exception:
                                         pass
                             
                             if term_degree > max_degree:

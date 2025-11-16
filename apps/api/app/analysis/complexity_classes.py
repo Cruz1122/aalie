@@ -1,6 +1,5 @@
-from typing import Dict, Optional
-from sympy import Symbol, sympify, simplify, latex, oo, limit, log, exp, symbols
-from sympy import Poly, degree
+from sympy import Symbol, sympify, latex, oo, log, exp, Expr
+from sympy import Poly
 from sympy.polys.polytools import LC, LM
 import re
 
@@ -165,7 +164,7 @@ class ComplexityClasses:
                 # Intentar sin algunos reemplazos complejos
                 expr_str_simple = expr_str
                 return sympify(expr_str_simple, locals=syms)
-            except:
+            except Exception:
                 raise e
     
     def _extract_dominant_sympy(self, expr: 'Expr', variable: str = "n") -> 'Expr':
@@ -233,7 +232,7 @@ class ComplexityClasses:
                     if var_symbol != var_symbol_for_poly:
                         result_term = result_term.subs(var_symbol_for_poly, var_symbol)
                     return result_term
-        except Exception as e1:
+        except Exception:
             # Si as_poly() falla, intentar crear Poly directamente
             try:
                 poly = Poly(expr_for_poly, var_symbol_for_poly, domain=ZZ)
@@ -246,7 +245,7 @@ class ComplexityClasses:
                         if var_symbol != var_symbol_for_poly:
                             result_term = result_term.subs(var_symbol_for_poly, var_symbol)
                         return result_term
-            except Exception as e2:
+            except Exception:
                 # Ambos métodos fallaron, continuar con método alternativo
                 pass
         
@@ -328,6 +327,6 @@ class ComplexityClasses:
             # Asegurar que log se muestre como \log
             latex_str = latex_str.replace('log', '\\log')
             return latex_str
-        except:
+        except Exception:
             return str(expr)
 

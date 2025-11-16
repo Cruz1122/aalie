@@ -19,6 +19,6 @@ export function heuristicKind(_ast: Program | null | unknown): AlgorithmKind {
   // Esta función está deprecada. El código debe usar el API route /api/llm/classify
   // que ahora usa el backend Python como fuente única de verdad.
   console.warn("[heuristicKind] Esta función está deprecada. Usar el API route /api/llm/classify directamente.");
-  return "unknown";
+    return "unknown"; 
 }
 

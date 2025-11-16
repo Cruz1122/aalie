@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any
 from sympy import Symbol, Integer, sympify, Expr
 
 
@@ -118,7 +118,7 @@ class ExprConverter:
             elif expr_type == "index":
                 # Para expresiones indexadas como A[i], tratamos el índice como expresión
                 # pero no podemos hacer mucho más sin contexto del array
-                target = self.ast_to_sympy(expr.get("target", ""))
+                # target = self.ast_to_sympy(expr.get("target", ""))  # No usado actualmente
                 index = self.ast_to_sympy(expr.get("index", ""))
                 # Retornar solo el índice como expresión (el array no afecta el conteo)
                 return index
@@ -135,7 +135,7 @@ class ExprConverter:
             # Fallback final: convertir a string y parsear
             try:
                 return sympify(str(expr))
-            except:
+            except Exception:
                 return Integer(0)
     
     def get_symbol(self, name: str) -> Symbol:

@@ -1,7 +1,7 @@
 # apps/api/app/analysis/visitors/if_visitor.py
 
-from typing import Any, Dict, List, Optional
-from sympy import Integer, Expr, Symbol, Mul, Rational
+from typing import Any, Dict
+from sympy import Integer, Mul, Rational
 
 
 class IfVisitor:
@@ -133,7 +133,7 @@ class IfVisitor:
                     # También actualizar expectedRuns para caso promedio
                     if hasattr(self, 'mode') and self.mode == "avg":
                         new_row["expectedRuns"] = new_count_raw_latex
-                except:
+                except Exception:
                     # Si falla la conversión, dejar el count_raw original
                     pass
                 

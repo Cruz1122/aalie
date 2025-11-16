@@ -1,7 +1,7 @@
 # apps/api/app/analysis/visitors/simple_visitor.py
 
-from typing import Any, Dict, List, Optional
-from sympy import Integer, Expr
+from typing import Any, Dict, List
+from sympy import Integer
 
 
 class SimpleVisitor:

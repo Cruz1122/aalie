@@ -1,8 +1,7 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 import math
-from sympy import Expr, latex, Integer, Symbol, sympify, simplify, limit, oo
+from sympy import Expr, latex, Integer, Symbol
 from .base import BaseAnalyzer
-from .expr_converter import ExprConverter
 
 
 class RecursiveAnalyzer(BaseAnalyzer):
@@ -122,7 +121,6 @@ class RecursiveAnalyzer(BaseAnalyzer):
         """
         # Por ahora, validación básica: debe tener llamadas recursivas
         # La validación completa se hace durante la extracción
-        body = proc_def.get("body", {})
         has_recursive_calls = self._has_recursive_calls(proc_def)
         
         if not has_recursive_calls:
@@ -452,23 +450,98 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         # Estrategia 1: Buscar división directa en argumentos
         # Ejemplo: mergeSort(A, izq, medio) donde medio = (izq + der) / 2
+        # O: mergeSort3Vias(A, izq, tercio1) donde tercio1 = izq + tamaño / 3
         for i, arg in enumerate(args):
             b_value = self._extract_division_factor(arg)
-            if b_value:
+            if b_value and b_value >= 2:  # Asegurar que b >= 2
                 return {"b": b_value, "offset": 0}
         
         # Estrategia 2: Comparar argumentos con parámetros originales
         # Si el procedimiento recibe (A, izq, der) y llamamos con (A, izq, medio)
         # donde medio = (izq + der) / 2, detectar que el rango se divide por 2
+        # O si llamamos con (A, izq, tercio1) donde tercio1 = izq + tamaño / 3
         b_value = self._detect_size_reduction_by_comparison(args, params, proc_def)
-        if b_value:
+        if b_value and b_value >= 2:  # Asegurar que b >= 2
             return {"b": b_value, "offset": 0}
         
-        # Estrategia 3: Buscar floor/ceil de divisiones
+        # Estrategia 3: Buscar divisiones indirectas en el cuerpo
+        # Para casos como mergeSort3Vias donde se calcula tercio1 = izq + tamaño / 3
+        # y luego se llama con (A, izq, tercio1)
+        # O para multiplicarMatrices donde se calcula mitad = n / 2
+        # y luego se llama con (A11, B11, mitad)
+        body = proc_def.get("body", {}) or proc_def.get("block", {})
+        b_value = self._detect_indirect_division(body, args, params)
+        if b_value and b_value >= 2:  # Asegurar que b >= 2
+            return {"b": b_value, "offset": 0}
+        
+        # Estrategia 3.5: Si un argumento es un identificador simple (variable),
+        # buscar directamente si esa variable se asignó con una división
+        # Esto maneja casos donde el argumento es simplemente "mitad" sin estar en una expresión compleja
+        for arg in args:
+            if isinstance(arg, dict):
+                arg_type = arg.get("type", "").lower()
+                if arg_type == "identifier":
+                    var_name = arg.get("name") or arg.get("id", "")
+                    if var_name:
+                        b_value = self._find_variable_division(body, var_name)
+                        if b_value and b_value >= 2:
+                            return {"b": b_value, "offset": 0}
+        
+        # Estrategia 4: Buscar floor/ceil de divisiones
         for arg in args:
             b_value = self._extract_floor_ceil_division(arg)
-            if b_value:
+            if b_value and b_value >= 2:  # Asegurar que b >= 2
                 return {"b": b_value, "offset": 0}
+        
+        return None
+    
+    def _detect_indirect_division(self, body: Any, args: List[Any], params: List[Any]) -> Optional[float]:
+        """
+        Detecta divisiones indirectas donde los argumentos son variables calculadas con divisiones.
+        
+        Ejemplo: En mergeSort3Vias, se calcula tercio1 = izq + tamaño / 3,
+        y luego se llama con (A, izq, tercio1). Necesitamos detectar el / 3.
+        
+        Args:
+            body: Cuerpo del procedimiento donde buscar asignaciones
+            args: Argumentos de la llamada recursiva
+            params: Parámetros del procedimiento
+            
+        Returns:
+            Factor b si se encuentra una división indirecta
+        """
+        if not args or not params:
+            return None
+        
+        # Buscar argumentos que sean identificadores (variables)
+        division_factors = []
+        for arg in args:
+            if isinstance(arg, dict):
+                arg_type = arg.get("type", "").lower()
+                if arg_type == "identifier":
+                    var_name = arg.get("name", "") or arg.get("id", "")
+                    if var_name:
+                        # Buscar si esta variable se asignó con una división
+                        b_value = self._find_variable_division(body, var_name)
+                        if b_value:
+                            division_factors.append(b_value)
+                # También buscar divisiones dentro de expresiones binarias
+                elif arg_type == "binary":
+                    b_value = self._extract_division_factor(arg)
+                    if b_value:
+                        division_factors.append(b_value)
+        
+        # Si encontramos divisiones, usar la más común
+        if division_factors:
+            from collections import Counter
+            counter = Counter(division_factors)
+            most_common = counter.most_common(1)[0]
+            # Si hay una división dominante (al menos 50% de las divisiones)
+            if most_common[1] >= len(division_factors) * 0.5:
+                return most_common[0]
+            # Si todas las divisiones son iguales, usar ese valor
+            if len(set(division_factors)) == 1:
+                return division_factors[0]
         
         return None
     
@@ -601,8 +674,12 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         Maneja casos como:
         - n / 2 → 2
+        - n / 3 → 3
+        - n / 4 → 4
         - (izq + der) / 2 → 2 (si izq + der representa n)
+        - tamaño / 3 → 3
         - (a + b) / c → c (si a + b representa n)
+        - izq + tamaño / 3 → 3 (extrae la división dentro de la suma)
         
         Args:
             expr: Expresión del AST
@@ -617,6 +694,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         if expr_type == "binary":
             op = expr.get("operator", "") or expr.get("op", "")
+            
+            # Si es una división directa: expr / constante
             if op == "/" or op == "div":
                 left = expr.get("left", {}) or expr.get("lhs", {})
                 right = expr.get("right", {}) or expr.get("rhs", {})
@@ -632,7 +711,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                                 # (puede ser un identificador, suma, etc.)
                                 if self._represents_size_variable(left):
                                     return b
-                        except:
+                        except Exception:
                             pass
                     # También verificar si right es un número directo
                     elif isinstance(right, (int, float)):
@@ -650,13 +729,31 @@ class RecursiveAnalyzer(BaseAnalyzer):
                                 b = float(right_expr.evalf())
                                 if b > 0 and self._represents_size_variable(left):
                                     return b
-                        except:
+                        except Exception:
                             pass
                 # También verificar si right es un número directo (no dict)
                 elif isinstance(right, (int, float)):
                     if right > 0:
                         if self._represents_size_variable(left):
                             return float(right)
+            
+            # Si es una suma o resta, buscar divisiones dentro de ella
+            # Ejemplo: izq + tamaño / 3 → buscar / 3 dentro de la expresión
+            elif op in ["+", "-"]:
+                left = expr.get("left", {}) or expr.get("lhs", {})
+                right = expr.get("right", {}) or expr.get("rhs", {})
+                
+                # Buscar división en el lado izquierdo
+                if isinstance(left, dict):
+                    b_value = self._extract_division_factor(left)
+                    if b_value:
+                        return b_value
+                
+                # Buscar división en el lado derecho
+                if isinstance(right, dict):
+                    b_value = self._extract_division_factor(right)
+                    if b_value:
+                        return b_value
         
         return None
     
@@ -679,7 +776,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         if expr_type == "identifier":
             name = expr.get("name", "").lower()
             # Parámetros comunes que representan tamaño
-            if name in ["n", "size", "length", "der", "end", "high"]:
+            if name in ["n", "size", "length", "tamaño", "tamanio", "der", "end", "high", "fin"]:
                 return True
             # También podría ser izq + der que representa el rango
             return True  # Por ahora, asumir que cualquier identificador puede ser tamaño
@@ -709,8 +806,6 @@ class RecursiveAnalyzer(BaseAnalyzer):
         """
         if not isinstance(expr, dict):
             return None
-        
-        expr_type = expr.get("type", "").lower()
         
         # Por ahora, simplificado: buscar divisiones dentro de unary/function calls
         # En el futuro, se puede mejorar para detectar floor/ceil explícitos
@@ -979,7 +1074,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 try:
                     exp_str = c.split("^")[1]
                     return int(exp_str)
-                except:
+                except Exception:
                     return 1
             return 1
         
@@ -1100,7 +1195,6 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         if expr_type == "binary":
             op = condition.get("operator", "")
-            left = condition.get("left", {})
             right = condition.get("right", {})
             
             # Verificar si es una comparación con constante
@@ -1112,7 +1206,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                         try:
                             n0 = int(float(right.get("value", 0)))
                             return max(1, n0)  # Mínimo 1
-                        except:
+                        except Exception:
                             pass
         
         return None
@@ -1141,7 +1235,6 @@ class RecursiveAnalyzer(BaseAnalyzer):
         n_sym = Symbol("n", integer=True, positive=True)
         g_n_expr = n_sym ** log_b_a
         
-        g_n_latex = self._simplify_expr_latex(g_n_expr)
         log_b_a_str = self._simplify_number_latex(log_b_a)
         
         # Simplificar n^{1} → n y n^{0} → 1
@@ -1216,7 +1309,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             
             return comparison_result
             
-        except Exception as e:
+        except Exception:
             # Fallback a método simplificado
             return self._compare_f_with_g_simple(f_n_str, log_b_a)
     
@@ -1248,7 +1341,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 try:
                     k = float(parts[1].strip())
                     return n_sym ** k
-                except:
+                except Exception:
                     pass
         
         # Manejar n log n
@@ -1263,7 +1356,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             # Reemplazar n con el símbolo
             expr_str_clean = expr_str.replace("n", str(n_sym))
             return sympify(expr_str_clean, locals={"log": log})
-        except:
+        except Exception:
             # Fallback: asumir n
             return n_sym
     
@@ -1365,7 +1458,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             if str(base) == "n":
                 try:
                     return float(exp)
-                except:
+                except Exception:
                     pass
         
         # Si es n directamente
@@ -1427,7 +1520,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 match = re.search(r'n\^?\{?(\d+(?:\.\d+)?)\}?', f_n_str)
                 if match:
                     return float(match.group(1))
-            except:
+            except Exception:
                 pass
         
         return None
@@ -1501,6 +1594,23 @@ class RecursiveAnalyzer(BaseAnalyzer):
             # Simplificar exponentes con .0 innecesarios dentro de llaves: {2.0} → {2}
             latex_str = re.sub(r'\{(\d+)\.0+(\}|\s)', r'{\1\2', latex_str)
             
+            # Redondear exponentes decimales largos a 2 decimales: n^{2.8073549220576} → n^{2.81}
+            def round_exponent(match):
+                exp_str = match.group(1)
+                try:
+                    exp_num = float(exp_str)
+                    rounded = round(exp_num, 2)
+                    # Si después de redondear es un entero, quitar decimales
+                    if abs(rounded - round(rounded)) < 1e-10:
+                        return f"^{{{int(round(rounded))}}}"
+                    # Siempre mostrar 2 decimales para exponentes decimales
+                    return f"^{{{rounded:.2f}}}"
+                except Exception:
+                    return match.group(0)
+            
+            # Buscar patrones como n^{2.8073549220576} o cualquier exponente decimal
+            latex_str = re.sub(r'\^\{(\d+\.\d+)\}', round_exponent, latex_str)
+            
             # Simplificar exponentes decimales innecesarios: 2.0 → 2 (cuando está dentro de n^{2.0})
             latex_str = re.sub(r'\^\{(\d+)\.0+\}', r'^{\1}', latex_str)
             
@@ -1530,12 +1640,21 @@ class RecursiveAnalyzer(BaseAnalyzer):
             latex_str = re.sub(r'1\s+' + log_pattern + r'\s*\(\s*n\s*\)', r'\\log n', latex_str)
             # Manejar log sin backslash (con y sin espacios) - solo cuando hay espacios antes del 1
             # Para evitar reemplazar números como "21 log n", solo reemplazar si hay espacio, inicio, o paréntesis antes
-            latex_str = re.sub(r'(?<=\s|\(|^)1\s+log\s+n', 'log n', latex_str)
-            latex_str = re.sub(r'(?<=\s|\(|^)1\s*log\s+n', 'log n', latex_str)
+            # Usar alternativas simples para evitar problemas con lookbehinds de ancho variable
+            latex_str = re.sub(r'(?<=\s)1\s+log\s+n', 'log n', latex_str)
+            latex_str = re.sub(r'(?<=\()1\s+log\s+n', 'log n', latex_str)
+            latex_str = re.sub(r'^1\s+log\s+n', 'log n', latex_str)
+            latex_str = re.sub(r'(?<=\s)1\s*log\s+n', 'log n', latex_str)
+            latex_str = re.sub(r'(?<=\()1\s*log\s+n', 'log n', latex_str)
+            latex_str = re.sub(r'^1\s*log\s+n', 'log n', latex_str)
             # Manejar casos sin espacios: 1logn → log n (solo si está aislado)
-            latex_str = re.sub(r'(?<=\s|\(|^)1log\s+n', 'log n', latex_str)
+            latex_str = re.sub(r'(?<=\s)1log\s+n', 'log n', latex_str)
+            latex_str = re.sub(r'(?<=\()1log\s+n', 'log n', latex_str)
+            latex_str = re.sub(r'^1log\s+n', 'log n', latex_str)
             # Simplificar 1\log n (sin espacios) → \log n
-            latex_str = re.sub(r'(?<=\s|\(|^)1' + log_pattern + r'n', r'\\log n', latex_str)
+            latex_str = re.sub(r'(?<=\s)1' + log_pattern + r'n', r'\\log n', latex_str)
+            latex_str = re.sub(r'(?<=\()1' + log_pattern + r'n', r'\\log n', latex_str)
+            latex_str = re.sub(r'^1' + log_pattern + r'n', r'\\log n', latex_str)
             
             # Simplificar \log n \cdot 1 → \log n (diferentes formatos)
             latex_str = re.sub(log_pattern + r'\s+n\s+' + cdot_pattern + r'\s*1(?=\s|$|\)|}|,)', r'\\log n', latex_str)
@@ -1545,7 +1664,10 @@ class RecursiveAnalyzer(BaseAnalyzer):
             
             # Simplificar expresiones generales: 1 * cualquier_expresión → cualquier_expresión
             # (solo si está precedido por espacios, inicio, o paréntesis)
-            latex_str = re.sub(r'(?<=\s|\(|^)1\s*\*\s*', '', latex_str)  # 1 * expr
+            # Separar las alternativas para evitar problemas con lookbehinds
+            latex_str = re.sub(r'(?<=\s)1\s*\*\s*', '', latex_str)  # 1 * expr después de espacio
+            latex_str = re.sub(r'(?<=\()1\s*\*\s*', '', latex_str)  # 1 * expr después de (
+            latex_str = re.sub(r'^1\s*\*\s*', '', latex_str)  # 1 * expr al inicio
             latex_str = re.sub(r'\*\s*1(?=\s|$|\)|}|,)', '', latex_str)  # expr * 1
             
             # Simplificar paréntesis LaTeX de SymPy: \left(n\right) → n (cuando es simple)
@@ -1579,7 +1701,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         try:
             simplified = simplify(expr)
             simplified = powsimp(simplified, force=True)
-        except:
+        except Exception:
             simplified = expr
         
         # Convertir a LaTeX
@@ -1614,7 +1736,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     return f"\\frac{{1}}{{{frac.denominator}}}"
                 else:
                     return f"\\frac{{{frac.numerator}}}{{{frac.denominator}}}"
-        except:
+        except Exception:
             pass
         
         # Redondear a 2 decimales y eliminar .0 si es necesario

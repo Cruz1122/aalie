@@ -1,6 +1,6 @@
 # apps/api/app/analysis/visitors/for_visitor.py
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 from sympy import Symbol, Sum, Integer, Expr
 
 
@@ -65,7 +65,7 @@ class ForVisitor:
             }
             
             return sympify(expr_str, locals=syms)
-        except:
+        except Exception:
             return Integer(1)
     
     def _ast_expr_to_readable_str(self, expr: Any) -> str:
@@ -277,7 +277,7 @@ class ForVisitor:
         elif mode == "avg" and has_return:
             # En caso promedio con early return: E[iter] = (n+1)/2
             # Cabecera: E[iter] + 1 = (n+1)/2 + 1 = (n+3)/2
-            from sympy import Rational, Symbol as SymSymbol
+            from sympy import Symbol as SymSymbol
             # Para bucle 1..n: E[iter] = (n+1)/2
             # Usar la variable principal del algoritmo (normalmente 'n')
             try:
@@ -287,7 +287,7 @@ class ForVisitor:
                 # Cabecera: E[iter] + 1 = (n+1)/2 + 1 = (n+3)/2
                 header_count = e_iter + Integer(1)
                 header_note = f"Cabecera del bucle for {var}={a_str}..{b_str} (avg: E[iter] + 1)"
-            except:
+            except Exception:
                 # Fallback: usar expresión simbólica genérica
                 n_sym = SymSymbol('n', integer=True, positive=True)
                 e_iter = (n_sym + Integer(1)) / Integer(2)
@@ -302,7 +302,7 @@ class ForVisitor:
                 else:
                     # Generar expresión general: (b - a + 2)
                     header_count = b_expr - a_expr + Integer(2)
-            except:
+            except Exception:
                 # Fallback: expresión general
                 header_count = b_expr - a_expr + Integer(2)
             header_note = f"Cabecera del bucle for {var}={a_str}..{b_str}"
@@ -329,7 +329,7 @@ class ForVisitor:
                 # E[iter] = (n+1)/2
                 n_sym = SymSymbol(self.variable if hasattr(self, 'variable') else 'n', integer=True, positive=True)
                 mult = (n_sym + Integer(1)) / Integer(2)
-            except:
+            except Exception:
                 # Fallback: usar expresión simbólica genérica
                 n_sym = SymSymbol('n', integer=True, positive=True)
                 mult = (n_sym + Integer(1)) / Integer(2)
