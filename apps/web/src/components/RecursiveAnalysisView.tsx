@@ -4,6 +4,7 @@ import React, { useMemo, useEffect, useState } from "react";
 import type { AnalyzeOpenResponse } from "@aa/types";
 import Formula from "./Formula";
 import RecursiveProcedureModal from "./RecursiveProcedureModal";
+import RecursionTreeModal from "./RecursionTreeModal";
 
 interface RecursiveAnalysisViewProps {
   data: {
@@ -31,6 +32,7 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
 
   const { worstData, bestData, avgData, recurrence, master, proof, theta, T_open } = analysisData;
   const [showProcedureModal, setShowProcedureModal] = useState(false);
+  const [showTreeModal, setShowTreeModal] = useState(false);
 
   // Debug: log solo una vez cuando cambian los datos
   useEffect(() => {
@@ -113,15 +115,14 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
           </button>
         </div>
 
-        {/* Botón para árbol de recurrencia (futuro) */}
+        {/* Botón para árbol de recurrencia */}
         <div className="mb-4">
           <button
-            disabled
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60"
-            title="Funcionalidad futura"
+            onClick={() => setShowTreeModal(true)}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors"
           >
             <span className="material-symbols-outlined text-sm">account_tree</span>
-            <span>Ver Árbol de Recurrencia (Próximamente)</span>
+            <span>Ver Árbol de Recurrencia</span>
           </button>
         </div>
       </div>
@@ -172,6 +173,13 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
         master={master}
         proof={proof}
         theta={theta || T_open}
+      />
+
+      {/* Modal del árbol de recursión */}
+      <RecursionTreeModal
+        open={showTreeModal}
+        onClose={() => setShowTreeModal(false)}
+        recurrence={recurrence}
       />
     </div>
   );

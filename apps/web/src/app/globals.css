@@ -658,3 +658,139 @@ body {
     opacity: 0;
   }
 }
+
+/* Estilos para el árbol de recursión con ReactFlow */
+.recursion-tree-container .react-flow__node {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.recursion-tree-container .react-flow__node-default {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.recursion-tree-container .react-flow__edge {
+  z-index: 1 !important;
+  pointer-events: none !important;
+  opacity: 1 !important;
+  display: block !important;
+}
+
+.recursion-tree-container .react-flow__edge-path {
+  stroke: #64748b !important;
+  stroke-width: 3px !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+.recursion-tree-container path.react-flow__edge-path {
+  stroke: #64748b !important;
+  stroke-width: 3px !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.recursion-tree-container svg.react-flow__edges {
+  z-index: 1 !important;
+  pointer-events: none !important;
+  display: block !important;
+  overflow: visible !important;
+}
+
+.recursion-tree-container .react-flow__connectionline {
+  stroke: #64748b !important;
+  stroke-width: 2px !important;
+}
+
+.recursion-tree-container .react-flow__edge.selected .react-flow__edge-path {
+  stroke: #a855f7 !important;
+}
+
+.recursion-tree-container .react-flow__edge-text {
+  fill: #cbd5e1 !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+
+.recursion-tree-container .react-flow__edge-textbg {
+  fill: rgba(15, 23, 42, 0.85) !important;
+  fill-opacity: 0.95 !important;
+  stroke: rgba(100, 116, 139, 0.4) !important;
+  stroke-width: 1px !important;
+  rx: 4px !important;
+  ry: 4px !important;
+}
+
+.recursion-tree-container .react-flow__background {
+  background-color: transparent !important;
+}
+
+.recursion-tree-container .react-flow__pane {
+  cursor: grab;
+}
+
+.recursion-tree-container .react-flow__pane:active {
+  cursor: grabbing;
+}
+
+.recursion-tree-container .react-flow__controls {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 0.5rem !important;
+}
+
+.recursion-tree-container .react-flow__controls button {
+  background: rgba(51, 65, 85, 1) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+}
+
+.recursion-tree-container .react-flow__controls button:hover {
+  background: rgba(71, 85, 105, 1) !important;
+}
+
+.recursion-tree-container .react-flow__minimap {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 0.5rem !important;
+}
+
+/* Estilos para el slider de n inicial - diseño simple */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+input[type="range"]::-webkit-slider-track {
+  background: #475569;
+  height: 4px;
+  border-radius: 2px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: #a855f7;
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  background: #9333ea;
+}
+
+input[type="range"]::-moz-range-track {
+  background: #475569;
+  height: 4px;
+  border-radius: 2px;
+  border: none;
+}
