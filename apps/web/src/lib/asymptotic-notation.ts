@@ -248,12 +248,21 @@ export function getBestAsymptoticNotation(
          !omegaNorm.includes('log') && !oNorm.includes('log') &&
          omegaNorm.match(/n\^?\d*/)?.[0] === oNorm.match(/n\^?\d*/)?.[0])) {
       // Si son iguales, mostrar como Theta
+      // Verificar si hay hipótesis o condiciones en las notaciones
+      const omegaHasHyp = hasHypothesis(bigOmega);
+      const oHasHyp = hasHypothesis(bigO);
+      const omegaIsCond = isConditional(bigOmega);
+      const oIsCond = isConditional(bigO);
+      
+      const finalHasHyp = hasHypothesisFlag || omegaHasHyp || oHasHyp;
+      const finalIsCond = isConditionalFlag || omegaIsCond || oIsCond;
+      
       return {
         notation: `Θ(${omegaContent})`,
         type: 'theta',
         boundType: 'exact',
-        hasHypothesis,
-        isConditional,
+        hasHypothesis: finalHasHyp,
+        isConditional: finalIsCond,
         chips,
       };
     }

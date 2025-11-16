@@ -56,7 +56,7 @@ async function classifyWithBackend(source: string): Promise<ClassifyResponse["ki
       const errorText = await response.text().catch(() => "");
       console.error(`[Classify API] Backend error ${response.status}: ${errorText}`);
       throw new Error(`Backend error: ${response.status} - ${errorText.substring(0, 100)}`);
-    }
+      }
     
     const data = await response.json();
     
@@ -70,7 +70,7 @@ async function classifyWithBackend(source: string): Promise<ClassifyResponse["ki
     } else {
       console.error(`[Classify API] Backend response invalid:`, data);
       throw new Error(`Backend response invalid: ${data.errors?.[0]?.message || 'Unknown error'}`);
-    }
+}
   } catch (error) {
     console.error(`[Classify API] Error calling backend at ${url}:`, error);
     if (error instanceof TypeError && error.message.includes('fetch')) {

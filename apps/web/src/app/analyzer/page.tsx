@@ -414,10 +414,15 @@ export default function AnalyzerPage() {
                         caseType === 'average' ? data?.avg : null;
     
     if (!analysisData?.ok) {
+      const getBoundType = (): 'lower' | 'upper' | 'exact' => {
+        if (caseType === 'best') return 'lower';
+        if (caseType === 'worst') return 'upper';
+        return 'exact';
+      };
       return {
         notation: caseType === 'best' ? 'Ω(—)' : caseType === 'worst' ? 'O(—)' : 'Θ(—)',
         type: 'single-bound' as const,
-        boundType: (caseType === 'best' ? 'lower' : caseType === 'worst' ? 'upper' : 'exact') as const,
+        boundType: getBoundType(),
         hasHypothesis: false,
         isConditional: false,
         chips: [],
@@ -681,11 +686,31 @@ export default function AnalyzerPage() {
                     (data?.worst?.totals?.recurrence || data?.best?.totals?.recurrence || data?.avg?.totals?.recurrence);
                   
                   if (isRecursive) {
-                    return <RecursiveAnalysisView data={data} />;
+                    // Asegurar que avg esté definido (null en lugar de undefined)
+                    const dataWithAvg: {
+                      worst: AnalyzeOpenResponse | null;
+                      best: AnalyzeOpenResponse | null;
+                      avg: AnalyzeOpenResponse | null;
+                    } | null = data ? {
+                      worst: data.worst ?? null,
+                      best: data.best ?? null,
+                      avg: data.avg ?? null,
+                    } : null;
+                    return <RecursiveAnalysisView data={dataWithAvg} />;
                   } else {
+                    // Asegurar que avg esté definido (null en lugar de undefined)
+                    const dataWithAvg: {
+                      worst: AnalyzeOpenResponse | null;
+                      best: AnalyzeOpenResponse | null;
+                      avg: AnalyzeOpenResponse | null;
+                    } | null = data ? {
+                      worst: data.worst ?? null,
+                      best: data.best ?? null,
+                      avg: data.avg ?? null,
+                    } : null;
                     return (
                       <IterativeAnalysisView
-                        data={data}
+                        data={dataWithAvg}
                         selectedCase={selectedCase}
                         onCaseChange={setSelectedCase}
                         onViewLineProcedure={handleViewLineProcedure}
@@ -705,17 +730,17 @@ export default function AnalyzerPage() {
         open={open}
         onClose={() => setOpen(false)}
         selectedLine={selectedLine}
-        analysisData={selectedCase === 'worst' ? data?.worst : 
-                      selectedCase === 'best' ? data?.best :
-                      selectedCase === 'average' ? data?.avg : undefined}
+        analysisData={selectedCase === 'worst' ? (data?.worst || undefined) : 
+                      selectedCase === 'best' ? (data?.best || undefined) :
+                      selectedCase === 'average' ? (data?.avg || undefined) : undefined}
       />
       {/* Modal de procedimiento general */}
       <GeneralProcedureModal
         open={openGeneral}
         onClose={() => setOpenGeneral(false)}
-        data={generalProcedureCase === 'worst' ? data?.worst : 
-              generalProcedureCase === 'best' ? data?.best :
-              generalProcedureCase === 'average' ? data?.avg : undefined}
+        data={generalProcedureCase === 'worst' ? (data?.worst || undefined) : 
+              generalProcedureCase === 'best' ? (data?.best || undefined) :
+              generalProcedureCase === 'average' ? (data?.avg || undefined) : undefined}
       />
 
       {/* Modal AST */}
