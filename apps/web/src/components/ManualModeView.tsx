@@ -344,7 +344,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
         // Obtener API_KEY del localStorage (el backend usará la de variables de entorno si no hay)
         const apiKey = getApiKey();
         
-        const body: { source: string; mode: string; apiKey?: string } = { source: sourceCode, mode: "auto" };
+        const body: { source: string; mode: string; apiKey?: string } = { source: sourceCode, mode: "local" };
         if (apiKey) {
           body.apiKey = apiKey;
         }
@@ -371,19 +371,6 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
         kind = heuristicKind(parseRes.ast || null);
         setAlgorithmType(kind);
         setAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKindLabel(kind)}`);
-      }
-
-      if (kind === "recursive" || kind === "hybrid") {
-        setAnalysisError(`El algoritmo ${formatUnsupportedKindMessage(kind)} no está soportado en esta versión. Por favor, usa un algoritmo iterativo o básico, o cambia a S4 luego.`);
-        setTimeout(() => {
-          setIsAnalyzing(false);
-          setAnalysisProgress(0);
-          setAnalysisMessage("Iniciando análisis...");
-          setAlgorithmType(undefined);
-          setIsAnalysisComplete(false);
-          setAnalysisError(null);
-        }, 3000);
-        return;
       }
 
       setAnalysisMessage("Hallando sumatorias...");

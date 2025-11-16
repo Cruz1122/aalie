@@ -17,7 +17,7 @@ function validateApiKey(key: string | undefined): boolean {
   return API_KEY_REGEX.test(key.trim());
 }
 
-type ClassifyResponse = { kind: "iterative" | "recursive" | "hybrid" | "unknown" };
+type ClassifyResponse = { kind: "iterative" | "recursive" | "hybrid" | "unknown"; method?: string };
 type ClassifyRequest = { source: string; mode?: "llm" | "local" | "auto" };
 
 type GeminiTextPart = { text?: string };
@@ -25,44 +25,58 @@ type GeminiContent = { parts?: GeminiTextPart[] };
 type GeminiCandidate = { content?: GeminiContent };
 type GeminiResponse = { candidates?: GeminiCandidate[] };
 
-function getProcedureName(source: string): string {
-  const lines = source.split('\n');
-  const procRegex = /\b(procedure|function)\s+(\w+)/i;
-  for (const line of lines) {
-    const procMatch = procRegex.exec(line);
-    if (procMatch) return procMatch[2].toLowerCase();
-  }
-  return '';
+/**
+ * Obtiene la URL base del backend API.
+ * Usa API_INTERNAL_BASE_URL en Docker o API_BASE_URL/fallback en desarrollo local.
+ */
+function getApiBase(): string {
+  const a = process.env.API_INTERNAL_BASE_URL?.replace(/\/+$/, "");
+  if (a) return a;
+  const b = process.env.API_BASE_URL?.replace(/\/+$/, "");
+  if (b) return b;
+  return process.env.DOCKER ? "http://api:8000" : "http://localhost:8000";
 }
 
-function hasRecursiveCall(lines: string[], procedureName: string): boolean {
-  for (const line of lines) {
-    const lowerLine = line.toLowerCase();
-    if ((lowerLine.includes(procedureName) && lowerLine.includes('call')) ||
-        (lowerLine.includes(procedureName) && lowerLine.includes('('))) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function classifyByFlags(hasIterative: boolean, hasRecursive: boolean): ClassifyResponse["kind"] {
-  if (hasIterative && hasRecursive) return "hybrid";
-  if (hasRecursive) return "recursive";
-  if (hasIterative) return "iterative";
-  return "unknown";
-}
-
-function heuristicClassify(source: string): ClassifyResponse["kind"] {
+/**
+ * Llama al backend Python para clasificar el algoritmo usando AST.
+ * Esta es la fuente única de verdad para clasificación.
+ */
+async function classifyWithBackend(source: string): Promise<ClassifyResponse["kind"]> {
+  const apiBaseUrl = getApiBase();
+  const url = `${apiBaseUrl}/classify`;
+  
   try {
-    const text = source.toLowerCase();
-    const hasIterative = /\b(for|while|repeat)\b/.test(text);
-    const lines = source.split('\n');
-    const procedureName = getProcedureName(source);
-    const hasRecursive = procedureName ? hasRecursiveCall(lines, procedureName) : false;
-    return classifyByFlags(hasIterative, hasRecursive);
-  } catch {
-    return "unknown";
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ source }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      console.error(`[Classify API] Backend error ${response.status}: ${errorText}`);
+      throw new Error(`Backend error: ${response.status} - ${errorText.substring(0, 100)}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data || typeof data !== 'object') {
+      console.error(`[Classify API] Invalid backend response:`, data);
+      throw new Error("Backend response is not an object");
+    }
+    
+    if (data.ok && data.kind) {
+      return data.kind as ClassifyResponse["kind"];
+    } else {
+      console.error(`[Classify API] Backend response invalid:`, data);
+      throw new Error(`Backend response invalid: ${data.errors?.[0]?.message || 'Unknown error'}`);
+    }
+  } catch (error) {
+    console.error(`[Classify API] Error calling backend at ${url}:`, error);
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error(`Failed to connect to backend at ${url}. Check if the backend is running.`);
+    }
+    throw error;
   }
 }
 
@@ -128,14 +142,14 @@ async function callGeminiLLM(
 }
 
 async function classifyWithLLM(source: string, apiKey: string, mode?: "llm" | "local" | "auto"): Promise<ClassifyResponse["kind"]> {
-  if (mode === "local") return heuristicClassify(source);
+  if (mode === "local") return classifyWithBackend(source);
   const config = getJobConfig('classify');
   const messages: Array<ChatMessage> = buildClassifyMessages(config, source);
   const data = await callGeminiLLM(config, messages, apiKey);
   const kind = parseKindFromGemini(data);
   if (kind) return kind;
-  console.warn(`[Classify API] Fallback a heurística: LLM response no válida`);
-  return heuristicClassify(source);
+  console.warn(`[Classify API] Fallback a backend Python: LLM response no válida`);
+  return classifyWithBackend(source);
 }
 
 export async function POST(req: NextRequest) {
@@ -148,33 +162,57 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    // Obtener API_KEY: prioridad a variables de entorno del servidor, luego al parámetro del request
-    // Si hay API_KEY en el servidor, no se requiere que el cliente la envíe
-    const serverApiKey = process.env.API_KEY;
-    const hasServerApiKey = validateApiKey(serverApiKey);
-    
-    // Usar API_KEY del servidor si está disponible, si no, usar la del cliente
-    const geminiApiKey = hasServerApiKey ? serverApiKey : (apiKey || null);
-    
+    // Usar backend Python por defecto (fuente única de verdad basada en AST)
+    // El LLM solo se usa si explícitamente se solicita con mode="llm" y hay API key
     let kind: ClassifyResponse["kind"];
     let method: string;
+    
     try {
-      if (mode === "local") {
-        kind = heuristicClassify(source);
-        method = "heuristic";
-      } else if (!geminiApiKey) {
-        // Si no hay API_KEY, usar heurística
-        kind = heuristicClassify(source);
-        method = "heuristic_no_api_key";
+      // Solo usar LLM si explícitamente se solicita y hay API key disponible
+      if (mode === "llm") {
+        const serverApiKey = process.env.API_KEY;
+        const hasServerApiKey = validateApiKey(serverApiKey);
+        const geminiApiKey = hasServerApiKey ? serverApiKey : (apiKey || null);
+        
+        if (geminiApiKey) {
+          try {
+            kind = await classifyWithLLM(source, geminiApiKey, mode);
+            method = "llm";
+          } catch (error) {
+            // Fallback a backend Python si el LLM falla
+            console.warn(`[Classify API] LLM falló, usando backend Python: ${error instanceof Error ? error.message : String(error)}`);
+            kind = await classifyWithBackend(source);
+            method = "ast_llm_fallback";
+          }
+        } else {
+          // No hay API key, usar backend Python
+          kind = await classifyWithBackend(source);
+          method = "ast_no_api_key";
+        }
       } else {
-        kind = await classifyWithLLM(source, geminiApiKey, mode);
-        method = "llm";
+        // Por defecto, usar backend Python (fuente única de verdad basada en AST)
+        try {
+          kind = await classifyWithBackend(source);
+          method = "ast";
+        } catch (error) {
+          // Si falla, intentar de nuevo con mejor logging
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.error(`[Classify API] Error inicial en backend: ${errorMessage}`);
+          throw error; // Relanzar para que se maneje en el catch externo
+        }
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.warn(`[Classify API] Fallback a heurística: ${errorMessage}`);
-      kind = heuristicClassify(source);
-      method = "heuristic_fallback";
+      console.warn(`[Classify API] Error, usando backend Python: ${errorMessage}`);
+      try {
+        kind = await classifyWithBackend(source);
+        method = "ast_error_fallback";
+      } catch (fallbackError) {
+        // Si el backend también falla, retornar unknown
+        console.error(`[Classify API] Backend también falló:`, fallbackError);
+        kind = "unknown";
+        method = "error";
+      }
     }
     return NextResponse.json({ 
       kind,

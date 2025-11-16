@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 interface AnalysisLoaderProps {
   progress: number;
@@ -50,6 +50,18 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
   onClose,
 }) => {
   const hasError = !!error;
+  const [isClosing, setIsClosing] = useState(false);
+  
+  // Iniciar animación de cierre cuando se completa
+  useEffect(() => {
+    if (isComplete && !hasError) {
+      // Esperar un momento antes de iniciar el fade-out
+      const timer = setTimeout(() => {
+        setIsClosing(true);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isComplete, hasError]);
   
   const handleClose = () => {
     if (onClose) {
@@ -60,12 +72,12 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
   };
   
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center">
+    <div className={`fixed inset-0 z-[60] flex items-center justify-center transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`}>
       {/* Overlay con efecto glass */}
-      <div className="absolute inset-0 glass-modal-overlay" />
+      <div className={`absolute inset-0 glass-modal-overlay transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`} />
 
       {/* Contenedor del loader - tamaño fijo grande */}
-      <div className="relative z-10 glass-modal-container rounded-2xl p-8 w-[600px] h-[400px] mx-4 shadow-2xl modal-animate-in flex flex-col justify-center">
+      <div className={`relative z-10 glass-modal-container rounded-2xl p-8 w-[600px] h-[400px] mx-4 shadow-2xl flex flex-col justify-center transition-all duration-300 ${isClosing ? 'opacity-0 scale-95 translate-y-2' : 'opacity-100 scale-100 translate-y-0'}`}>
         {/* Icono de estado */}
         <div className="flex justify-center mb-6">
           {hasError ? (
@@ -134,9 +146,15 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
         {/* Indicador de etapas */}
         {!isComplete && !hasError && (
           <div className="text-center">
-            <p className="text-xs text-slate-400">
-              Por favor, espera mientras se completa el análisis...
-            </p>
+            {(algorithmType === "recursive" || algorithmType === "hybrid") ? (
+              <p className="text-xs text-slate-400">
+                Analizando recurrencia con Teorema Maestro...
+              </p>
+            ) : (
+              <p className="text-xs text-slate-400">
+                Por favor, espera mientras se completa el análisis...
+              </p>
+            )}
           </div>
         )}
         

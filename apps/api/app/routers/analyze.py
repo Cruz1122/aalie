@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 from ..analysis import IterativeAnalyzer, AnalyzerRegistry
 from ..analysis.dummy_analyzer import create_dummy_analysis
+from ..analysis.algorithm_classifier import detect_algorithm_kind
 from ..routers.parse import parse_source
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
@@ -17,6 +18,7 @@ class AnalyzeRequest(BaseModel):
     mode: str = "worst"  # "worst" | "best" | "avg"
     api_key: Optional[str] = None  # API Key de Gemini (opcional)
     avgModel: Optional[AvgModelConfig] = None  # Modelo probabilístico para caso promedio
+    algorithm_kind: Optional[str] = None  # "iterative" | "recursive" | "hybrid" | "unknown" - se detecta automáticamente si no se proporciona
 
 class LineCost(BaseModel):
     line: int
@@ -62,14 +64,26 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
                 "errors": [{"message": "No se pudo obtener el AST del código", "line": None, "column": None}]
             }
         
-        # 2) Determinar si debemos analizar todos los casos
+        # 2) Determinar el tipo de algoritmo
+        algorithm_kind = payload.algorithm_kind
+        if not algorithm_kind:
+            # Detectar automáticamente desde el AST usando el módulo compartido
+            algorithm_kind = detect_algorithm_kind(ast)
+        
+        # Seleccionar analizador según el tipo
+        analyzer_class = AnalyzerRegistry.get(algorithm_kind)
+        if not analyzer_class:
+            # Fallback a iterativo si no se reconoce el tipo
+            analyzer_class = IterativeAnalyzer
+        
+        # 3) Determinar si debemos analizar todos los casos
         analyze_all = payload.mode == "all"
         
         if analyze_all:
             # Analizar todos los casos (worst, best y avg)
-            analyzer_worst = IterativeAnalyzer()
-            analyzer_best = IterativeAnalyzer()
-            analyzer_avg = IterativeAnalyzer()
+            analyzer_worst = analyzer_class()
+            analyzer_best = analyzer_class()
+            analyzer_avg = analyzer_class()
             
             # Analizar worst y best
             result_worst = analyzer_worst.analyze(ast, "worst")
@@ -119,7 +133,7 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
             return response
         else:
             # Analizar solo el caso solicitado (compatibilidad hacia atrás)
-            analyzer = IterativeAnalyzer()
+            analyzer = analyzer_class()
             
             # Preparar avgModel si mode == "avg"
             avg_model_dict = None

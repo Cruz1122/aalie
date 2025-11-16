@@ -428,7 +428,7 @@ export default function ExamplesPage() {
         const clsPromise = fetch("/api/llm/classify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ source: sourceCode, mode: "auto", apiKey: apiKey || undefined }),
+          body: JSON.stringify({ source: sourceCode, mode: "local", apiKey: apiKey || undefined }),
         });
 
         const clsResponse = await animateProgress(20, 40, 1200, setAnalysisProgress, clsPromise) as Response;
@@ -446,19 +446,6 @@ export default function ExamplesPage() {
         kind = heuristicKind(parseRes.ast || null);
         setAlgorithmType(kind);
         setAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKindLabel(kind)}`);
-      }
-
-      if (kind === "recursive" || kind === "hybrid") {
-        setAnalysisError(`El algoritmo ${formatUnsupportedKindMessage(kind)} no está soportado en esta versión. Por favor, usa un algoritmo iterativo o básico, o cambia a S4 luego.`);
-        setTimeout(() => {
-          setIsAnalyzing(false);
-          setAnalysisProgress(0);
-          setAnalysisMessage("Iniciando análisis...");
-          setAlgorithmType(undefined);
-          setIsAnalysisComplete(false);
-          setAnalysisError(null);
-        }, 3000);
-        return;
       }
 
       setAnalysisMessage("Hallando sumatorias...");

@@ -239,6 +239,7 @@ export interface AnalyzeRequest {
   source: string;
   mode?: AnalyzeMode;   // por defecto "worst" en S3
   avgModel?: AvgModelConfig;  // modelo probabilístico para caso promedio
+  algorithm_kind?: "iterative" | "recursive" | "hybrid" | "unknown";  // tipo de algoritmo (se detecta automáticamente si no se proporciona)
 }
 
 /** Response exitoso con análisis abierto */
@@ -260,6 +261,30 @@ export interface AnalyzeOpenResponse {
       note: string;                 // badge del modelo, ej: "uniforme (p=1/2)"
     };
     hypotheses?: string[];          // hipótesis cuando hay símbolos probabilísticos
+    // Análisis recursivo (Teorema Maestro)
+    recurrence?: {                  // recurrencia extraída T(n) = a·T(n/b) + f(n)
+      form: string;                 // forma LaTeX: "T(n) = a T(n/b) + f(n)"
+      a: number;                    // número de subproblemas
+      b: number;                    // factor de reducción (> 1)
+      f: string;                    // trabajo no recursivo f(n) (LaTeX)
+      n0: number;                   // umbral base
+      applicable: boolean;          // si es aplicable Teorema Maestro
+      notes: string[];              // notas sobre redondeos, dominio, etc.
+    };
+    master?: {                      // resultado del Teorema Maestro
+      case: 1 | 2 | 3 | null;      // caso aplicado (1, 2, 3) o null si no aplicable
+      nlogba: string;               // expresión LaTeX de n^(log_b a)
+      comparison: "smaller" | "equal" | "larger" | null;  // comparación f(n) vs g(n)
+      regularity: {                 // condición de regularidad (Caso 3)
+        checked: boolean;           // si se verificó o se asumió
+        note: string;               // nota sobre la verificación
+      };
+      theta: string | null;         // resultado Θ(...) en LaTeX
+    };
+    proof?: Array<{                 // pasos de prueba del análisis
+      id: string;                   // identificador del paso (extract, critical, compare, etc.)
+      text: string;                 // texto del paso en LaTeX
+    }>;
     // S4 añadirá: T_closed, proofSteps
   };
 }

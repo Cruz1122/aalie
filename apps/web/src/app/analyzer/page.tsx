@@ -13,6 +13,8 @@ import GeneralProcedureModal from "@/components/GeneralProcedureModal";
 import Header from "@/components/Header";
 import LineTable from "@/components/LineTable";
 import ProcedureModal from "@/components/ProcedureModal";
+import IterativeAnalysisView from "@/components/IterativeAnalysisView";
+import RecursiveAnalysisView from "@/components/RecursiveAnalysisView";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
@@ -195,7 +197,7 @@ export default function AnalyzerPage() {
         const clsPromise = fetch("/api/llm/classify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ source, mode: "auto", apiKey: apiKey || undefined }),
+          body: JSON.stringify({ source, mode: "local", apiKey: apiKey || undefined }),
         });
 
         // Animar progreso mientras se clasifica (espera a que clsPromise se resuelva)
@@ -217,30 +219,34 @@ export default function AnalyzerPage() {
         setAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKind(kind)}`);
       }
 
-      // 3) Rechazar algoritmos recursivos o híbridos
-      if (kind === "recursive" || kind === "hybrid") {
-        console.warn(`[Analyzer] Algoritmo ${kind} no soportado`);
-        setAnalysisError(`El algoritmo ${formatUnsupportedKindMessage(kind)} no está soportado en esta versión. Por favor, usa un algoritmo iterativo.`);
-        setTimeout(() => {
-          setAnalyzing(false);
-          setAnalysisProgress(0);
-          setAnalysisMessage("Iniciando análisis...");
-          setAlgorithmType(undefined);
-          setIsAnalysisComplete(false);
-          setAnalysisError(null);
-        }, 3000);
-        return;
+      // 3) Realizar el análisis de complejidad (40-80%)
+      const isRecursive = kind === "recursive" || kind === "hybrid";
+      
+      let progressBeforeAnalysis: number;
+      
+      if (isRecursive) {
+        setAnalysisMessage("Verificando condiciones...");
+        await animateProgress(40, 50, 300, setAnalysisProgress);
+        setAnalysisMessage("Extrayendo recurrencia...");
+        await animateProgress(50, 65, 400, setAnalysisProgress);
+        setAnalysisMessage("Normalizando recurrencia...");
+        await animateProgress(65, 75, 300, setAnalysisProgress);
+        setAnalysisMessage("Aplicando Teorema Maestro...");
+        await animateProgress(75, 85, 500, setAnalysisProgress);
+        // Añadir transición suave antes de iniciar el análisis real
+        setAnalysisMessage("Iniciando análisis de complejidad...");
+        await animateProgress(85, 90, 400, setAnalysisProgress);
+        progressBeforeAnalysis = 90;
+      } else {
+        setAnalysisMessage("Hallando sumatorias...");
+        await animateProgress(40, 50, 200, setAnalysisProgress);
+        setAnalysisMessage("Cerrando sumatorias...");
+        await animateProgress(50, 55, 200, setAnalysisProgress);
+        progressBeforeAnalysis = 55;
       }
-
-      // 4) Realizar el análisis de complejidad (40-80%)
-      setAnalysisMessage("Hallando sumatorias...");
-      await animateProgress(40, 50, 200, setAnalysisProgress);
 
       // Obtener API key (solo necesitamos la key, no el status completo)
       const apiKey = getApiKey();
-      
-      // Mensaje de carga actualizado (ya no depende de API key para simplificación)
-      setAnalysisMessage("Cerrando sumatorias...");
       
       // Realizar una sola petición que trae todos los casos (worst, best y avg)
       const analyzeBody: { 
@@ -248,16 +254,25 @@ export default function AnalyzerPage() {
         mode: string; 
         api_key?: string;
         avgModel?: { mode: string; predicates?: Record<string, string> };
+        algorithm_kind?: string;
       } = { 
         source, 
         mode: "all",
         avgModel: {
           mode: "uniform",
           predicates: {}
-        }
+        },
+        algorithm_kind: kind  // Enviar el tipo de algoritmo al backend
       };
       if (apiKey) {
         analyzeBody.api_key = apiKey;  // Mantener por compatibilidad, pero backend ya no lo usa para simplificación
+      }
+      
+      // Actualizar mensaje antes de iniciar el análisis real
+      if (isRecursive) {
+        setAnalysisMessage("Calculando complejidad...");
+      } else {
+        setAnalysisMessage("Analizando complejidad...");
       }
       
       const analyzePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
@@ -266,8 +281,9 @@ export default function AnalyzerPage() {
         body: JSON.stringify(analyzeBody),
       }).then(r => r.json());
 
-      // Animar progreso mientras se analiza (espera a que analyzePromise se resuelva)
-      const analyzeRes = await animateProgress(50, 95, 2500, setAnalysisProgress, analyzePromise) as {
+      // Animar progreso mientras se analiza (continuar desde donde quedó según el tipo)
+      // Para recursivos: 90 → 95, para iterativos: 55 → 95
+      const analyzeRes = await animateProgress(progressBeforeAnalysis, 95, 2500, setAnalysisProgress, analyzePromise) as {
         ok: boolean;
         worst?: AnalyzeOpenResponse;
         best?: AnalyzeOpenResponse;
@@ -317,20 +333,45 @@ export default function AnalyzerPage() {
         best: analyzeRes.best,
         avg: analyzeRes.avg  // Puede ser undefined si falló, pero el frontend lo maneja
       });
+      
+      // Asegurar que algorithmType se mantenga (puede haberse perdido)
+      if (!algorithmType && (analyzeRes.worst?.totals?.recurrence || analyzeRes.best?.totals?.recurrence)) {
+        setAlgorithmType("recursive");
+        console.log('[Analyzer] algorithmType restaurado a "recursive" basado en datos');
+      }
+      
+      // Debug: verificar que el tipo de algoritmo sea correcto
+      console.log('[Analyzer] Datos actualizados:', {
+        algorithmType: algorithmType || "recursive (detectado desde datos)",
+        hasWorst: !!analyzeRes.worst,
+        hasBest: !!analyzeRes.best,
+        hasAvg: !!analyzeRes.avg,
+        worstHasRecurrence: !!analyzeRes.worst?.totals?.recurrence,
+        worstHasMaster: !!analyzeRes.worst?.totals?.master
+      });
 
-      // 7) Mostrar completado y esperar antes de cerrar
+      // 7) Mostrar completado y cerrar de forma suave
       setAnalysisMessage("Análisis completo");
       setIsAnalysisComplete(true);
+      
+      // Animar a 100% antes de cerrar
+      await animateProgress(95, 100, 300, setAnalysisProgress);
 
-      // Esperar antes de cerrar el loader
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      // Esperar un momento para mostrar el mensaje de completado
+      // El loader iniciará su animación de fade-out automáticamente después de 300ms
+      await new Promise((resolve) => setTimeout(resolve, 900));
 
-      // Cerrar loader
+      // Cerrar loader después de que la animación de fade-out haya comenzado
+      // La animación dura 300ms, así que esperamos un poco más para que termine
       setAnalyzing(false);
-      setAnalysisProgress(0);
-      setAnalysisMessage("Iniciando análisis...");
-      setAlgorithmType(undefined);
-      setIsAnalysisComplete(false);
+      
+      // Resetear estados después de que termine la animación de cierre
+      setTimeout(() => {
+        setAnalysisProgress(0);
+        setAnalysisMessage("Iniciando análisis...");
+        setAlgorithmType(undefined);
+        setIsAnalysisComplete(false);
+      }, 350);
 
     } catch (error) {
       console.error("[Analyzer] Error inesperado:", error);
@@ -632,153 +673,27 @@ export default function AnalyzerPage() {
             {/* Columna derecha: costos y ecuaciones (vertical en pantallas grandes) */}
             <section className="lg:col-span-8 h-full">
               <div className="grid grid-cols-1 xl:grid-cols-1 gap-6 h-full">
-                {/* Card de costos por línea (encima en pantallas grandes) */}
-                <div className="glass-card p-4 rounded-lg h-full flex flex-col">
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-white font-semibold flex items-center gap-2">
-                      <span className="material-symbols-outlined mr-2 text-amber-400">table_chart</span>
-                      <span>Costos por Línea</span>
-                      <span
-                        className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide ${getCaseBadgeStyle(selectedCase)}`}
-                      >
-                        {getCaseLabel(selectedCase)}
-                      </span>
-                    </h2>
-                    <div className="flex items-center gap-1 bg-slate-800/60 border border-white/10 rounded-lg p-1">
-                      <button
-                        onClick={() => setSelectedCase('best')}
-                        className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle('best', selectedCase === 'best')}`}
-                      >Mejor</button>
-                      <button
-                        onClick={() => setSelectedCase('average')}
-                        className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle('average', selectedCase === 'average')}`}
-                      >Promedio</button>
-                      <button
-                        onClick={() => setSelectedCase('worst')}
-                        className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle('worst', selectedCase === 'worst')}`}
-                      >Peor</button>
-                    </div>
-                  </div>
-                  <div className="flex flex-col" style={{ height: '285px' }}>
-                    {renderLineCostContent()}
-                  </div>
-                </div>
-
-                {/* Card de ecuaciones matemáticas (abajo en pantallas grandes) */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(34,197,94,0.3)] hover:shadow-[0_12px_40px_0_rgba(34,197,94,0.4)]">
-                    <div className="h-full flex flex-col items-center justify-center gap-2">
-                      <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/30">
-                        <div className="scale-110">
-                          <Formula latex={getBestAsymptoticNotation('best').notation} />
-                        </div>
-                      </div>
-                      <h3 className="font-semibold text-green-300 mb-1">Mejor caso</h3>
-                      {getBestAsymptoticNotation('best').chips.length > 0 && (
-                        <div className="flex flex-wrap gap-1 justify-center mt-1">
-                          {getBestAsymptoticNotation('best').chips.map((chip, idx) => (
-                            <span
-                              key={idx}
-                              className={`text-[9px] px-1.5 py-0.5 rounded border ${
-                                chip.type === 'hypothesis' || chip.type === 'conditional'
-                                  ? 'bg-amber-500/20 text-amber-200 border-amber-500/30'
-                                  : chip.type === 'model'
-                                  ? 'bg-blue-500/20 text-blue-200 border-blue-500/30'
-                                  : 'bg-slate-500/20 text-slate-300 border-slate-500/30'
-                              }`}
-                              title={chip.type === 'bound-only' ? 'Solo se conoce esta cota' : undefined}
-                            >
-                              {chip.label}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      <button
-                        onClick={() => handleViewGeneralProcedure('best')}
-                        disabled={!data?.best?.ok}
-                        className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors ${data?.best?.ok ? 'text-white glass-secondary hover:bg-sky-500/20' : 'text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60'}`}
-                        title={data?.best?.ok ? 'Ver procedimiento general (mejor caso)' : 'Ejecuta el análisis para ver el procedimiento'}
-                      >
-                        <span className="material-symbols-outlined text-sm">visibility</span>
-                        <span>Ver Procedimiento</span>
-                      </button>
-                    </div>
-                  </div>
-                  <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(234,179,8,0.3)] hover:shadow-[0_12px_40px_0_rgba(234,179,8,0.4)] relative">
-                    {/* Ícono de ayuda en esquina superior derecha */}
-                    {data?.avg?.totals?.avg_model_info && (
-                      <div className="absolute top-2 right-2 group">
-                        <button
-                          className="w-5 h-5 rounded-full bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/30 flex items-center justify-center text-xs font-semibold transition-colors"
-                          title={data.avg.totals.avg_model_info.note}
-                        >
-                          ?
-                        </button>
-                        {/* Tooltip */}
-                        <div className="absolute right-0 top-6 w-48 p-2 bg-slate-800 border border-yellow-500/30 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-xs text-left">
-                          <div className="text-yellow-300 font-semibold mb-1">Modelo:</div>
-                          <div className="text-slate-300">{data.avg.totals.avg_model_info.note}</div>
-                        </div>
-                      </div>
-                    )}
-                    <div className="h-full flex flex-col items-center justify-center gap-2">
-                      <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30">
-                        <div className="scale-110">
-                          <Formula latex={getBestAsymptoticNotation('average').notation} />
-                        </div>
-                      </div>
-                      <h3 className="font-semibold text-yellow-300 mb-1">Caso promedio</h3>
-                      <button
-                        onClick={() => handleViewGeneralProcedure('average')}
-                        disabled={!data?.avg?.ok}
-                        className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors ${data?.avg?.ok ? 'text-white glass-secondary hover:bg-sky-500/20' : 'text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60'}`}
-                        title={data?.avg?.ok ? 'Ver procedimiento general (caso promedio)' : 'Ejecuta el análisis para ver el procedimiento'}
-                      >
-                        <span className="material-symbols-outlined text-sm">visibility</span>
-                        <span>Ver Procedimiento</span>
-                      </button>
-                    </div>
-                  </div>
-                  <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(239,68,68,0.3)] hover:shadow-[0_12px_40px_0_rgba(239,68,68,0.4)]">
-                    <div className="h-full flex flex-col items-center justify-center gap-2">
-                      <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30">
-                        <div className="scale-110">
-                          <Formula latex={getBestAsymptoticNotation('worst').notation} />
-                        </div>
-                      </div>
-                      <h3 className="font-semibold text-red-300 mb-1">Peor caso</h3>
-                      {getBestAsymptoticNotation('worst').chips.length > 0 && (
-                        <div className="flex flex-wrap gap-1 justify-center mt-1">
-                          {getBestAsymptoticNotation('worst').chips.map((chip, idx) => (
-                            <span
-                              key={idx}
-                              className={`text-[9px] px-1.5 py-0.5 rounded border ${
-                                chip.type === 'hypothesis' || chip.type === 'conditional'
-                                  ? 'bg-amber-500/20 text-amber-200 border-amber-500/30'
-                                  : chip.type === 'model'
-                                  ? 'bg-blue-500/20 text-blue-200 border-blue-500/30'
-                                  : 'bg-slate-500/20 text-slate-300 border-slate-500/30'
-                              }`}
-                              title={chip.type === 'bound-only' ? 'Solo se conoce esta cota' : undefined}
-                            >
-                              {chip.label}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      <button
-                        onClick={() => handleViewGeneralProcedure('worst')}
-                        disabled={!data?.worst?.ok}
-                        className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors ${data?.worst?.ok ? 'text-white glass-secondary hover:bg-sky-500/20' : 'text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60'}`}
-                        title={data?.worst?.ok ? 'Ver procedimiento general (peor caso)' : 'Ejecuta el análisis para ver el procedimiento'}
-                      >
-                        <span className="material-symbols-outlined text-sm">visibility</span>
-                        <span>Ver Procedimiento</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                {(() => {
+                  // Determinar si es recursivo basado en algorithmType o en los datos
+                  const isRecursive = 
+                    algorithmType === "recursive" || 
+                    algorithmType === "hybrid" ||
+                    (data?.worst?.totals?.recurrence || data?.best?.totals?.recurrence || data?.avg?.totals?.recurrence);
+                  
+                  if (isRecursive) {
+                    return <RecursiveAnalysisView data={data} />;
+                  } else {
+                    return (
+                      <IterativeAnalysisView
+                        data={data}
+                        selectedCase={selectedCase}
+                        onCaseChange={setSelectedCase}
+                        onViewLineProcedure={handleViewLineProcedure}
+                        onViewGeneralProcedure={handleViewGeneralProcedure}
+                      />
+                    );
+                  }
+                })()}
               </div>
             </section>
           </div>

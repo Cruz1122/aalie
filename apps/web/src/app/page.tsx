@@ -176,7 +176,7 @@ export default function HomePage() {
         // El backend usará automáticamente la API_KEY de variables de entorno si está disponible
         const apiKey = getApiKey();
         
-        const body: { source: string; mode: string; apiKey?: string } = { source: sourceCode, mode: "auto" };
+        const body: { source: string; mode: string; apiKey?: string } = { source: sourceCode, mode: "local" };
         if (apiKey) {
           body.apiKey = apiKey;
         }
@@ -205,12 +205,6 @@ export default function HomePage() {
         setChatAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKind(kind)}`);
       }
 
-      if (kind === "recursive" || kind === "hybrid") {
-        setChatAnalysisError(`El algoritmo ${formatUnsupportedKindMessage(kind)} no está soportado en esta versión. Por favor, usa un algoritmo iterativo.`);
-        setChatAnalysisMessage("Análisis abortado");
-        setIsChatAnalyzing(false);
-        return;
-      }
 
       setChatAnalysisMessage("Hallando sumatorias...");
       await animateProgress(40, 50, 200, setChatAnalysisProgress);
