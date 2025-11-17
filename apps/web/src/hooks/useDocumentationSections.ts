@@ -975,6 +975,168 @@ variable ⟵ expresion;`,
           },
         }
       },
+      {
+        id: "recursive-analyzer",
+        title: "Analizador Recursivo y Teorema Maestro",
+        description:
+          "Sistema completo de análisis para algoritmos recursivos e híbridos que utiliza el Teorema Maestro para resolver recurrencias de la forma T(n) = a·T(n/b) + f(n). Incluye extracción automática de recurrencias, visualización del árbol de recursión, y procedimiento completo con pasos de prueba.",
+        content: {
+          type: "analyzer",
+          interface: {
+            title: "Análisis Recursivo",
+            description: "El sistema detecta automáticamente algoritmos recursivos e híbridos y aplica el Teorema Maestro para determinar su complejidad temporal.",
+            features: [
+              "Detección automática de llamadas recursivas",
+              "Extracción de parámetros a, b y f(n) de la recurrencia",
+              "Aplicación del Teorema Maestro con los 3 casos",
+              "Visualización del árbol de recursión",
+              "Procedimiento completo con pasos de prueba en LaTeX",
+              "Ecuación de eficiencia final T(n) = Θ(...)",
+            ],
+          },
+          masterTheorem: {
+            title: "Teorema Maestro",
+            description: "El Teorema Maestro resuelve recurrencias de la forma T(n) = a·T(n/b) + f(n) donde a ≥ 1, b > 1, y f(n) es una función asintóticamente positiva.",
+            cases: [
+              {
+                case: 1,
+                condition: "f(n) < n^{\\log_b a}",
+                result: "T(n) = \\Theta(n^{\\log_b a})",
+                description: "El trabajo no recursivo es menor que el trabajo en las hojas del árbol",
+                example: "\\text{Merge Sort: }T(n) = 2T(n/2) + n \\Rightarrow T(n) = \\Theta(n \\log n)",
+              },
+              {
+                case: 2,
+                condition: "f(n) = n^{\\log_b a}",
+                result: "T(n) = \\Theta(n^{\\log_b a} \\cdot \\log n)",
+                description: "El trabajo no recursivo es igual al trabajo en las hojas",
+                example: "\\text{Binary Search: }T(n) = T(n/2) + 1 \\Rightarrow T(n) = \\Theta(\\log n)",
+              },
+              {
+                case: 3,
+                condition: "f(n) > n^{\\log_b a} \\text{ y condición de regularidad}",
+                result: "T(n) = \\Theta(f(n))",
+                description: "El trabajo no recursivo domina sobre el trabajo en las hojas",
+                example: "\\text{QuickSort (peor caso): }T(n) = T(n-1) + n \\Rightarrow T(n) = \\Theta(n^2)",
+              },
+            ],
+          },
+          recurrenceExtraction: {
+            title: "Extracción de Recurrencias",
+            description: "El sistema analiza el AST para identificar llamadas recursivas y extraer los parámetros de la recurrencia.",
+            process: [
+              "Identificación del procedimiento principal",
+              "Búsqueda de llamadas recursivas al mismo procedimiento",
+              "Análisis de los parámetros de las llamadas recursivas",
+              "Detección del tamaño del subproblema (n/b)",
+              "Conteo del número de llamadas recursivas (a)",
+              "Identificación del trabajo no recursivo f(n)",
+              "Normalización a la forma T(n) = a·T(n/b) + f(n)",
+            ],
+            requirements: [
+              "El algoritmo debe tener llamadas recursivas al mismo procedimiento",
+              "Los parámetros recursivos deben dividir el problema de forma constante (n/b)",
+              "El número de llamadas recursivas debe ser constante (a)",
+              "El trabajo no recursivo debe ser identificable",
+            ],
+          },
+          visualization: {
+            title: "Visualizaciones",
+            components: [
+              {
+                name: "Árbol de Recursión",
+                description: "Visualización interactiva del árbol de llamadas recursivas",
+                features: [
+                  "Nodos representan llamadas recursivas",
+                  "Etiquetas muestran el tamaño del problema en cada nivel",
+                  "Conexiones muestran la estructura de la recursión",
+                  "Colores indican diferentes niveles del árbol",
+                ],
+              },
+              {
+                name: "Procedimiento Completo",
+                description: "Modal detallado con todos los pasos del análisis",
+                features: [
+                  "Modal interactivo con scroll",
+                  "Renderizado LaTeX de ecuaciones",
+                  "Navegación por teclado (Escape para cerrar)",
+                  "Overlay semitransparente con backdrop blur",
+                ],
+                sections: [
+                  "Ecuación de recurrencia extraída",
+                  "Parámetros a, b, f(n) y n₀",
+                  "Cálculo de g(n) = n^(log_b a)",
+                  "Comparación de f(n) vs g(n)",
+                  "Aplicación del caso correspondiente",
+                  "Pasos de prueba en LaTeX",
+                  "Ecuación de eficiencia final T(n) = Θ(...)",
+                ],
+              },
+            ],
+          },
+          examples: {
+            title: "Algoritmos Soportados",
+            categories: [
+              {
+                name: "Divide and Conquer",
+                examples: [
+                  "Merge Sort: T(n) = 2T(n/2) + n → Θ(n log n)",
+                  "Binary Search: T(n) = T(n/2) + 1 → Θ(log n)",
+                  "Quick Sort (mejor caso): T(n) = 2T(n/2) + n → Θ(n log n)",
+                  "Strassen: T(n) = 7T(n/2) + n² → Θ(n^(log₂ 7))",
+                ],
+              },
+              {
+                name: "Recursión Simple",
+                examples: [
+                  "Factorial recursivo: T(n) = T(n-1) + 1 → Θ(n)",
+                  "Fibonacci recursivo: T(n) = T(n-1) + T(n-2) + 1 → Θ(2ⁿ)",
+                  "Torres de Hanoi: T(n) = 2T(n-1) + 1 → Θ(2ⁿ)",
+                ],
+              },
+            ],
+          },
+          api: {
+            title: "API y Endpoints",
+            endpoint: {
+              name: "POST /analyze/open",
+              description: "Endpoint principal que detecta y analiza algoritmos recursivos automáticamente",
+              request: {
+                source: "string - Código pseudocódigo",
+                mode: "worst | best | avg | all",
+                algorithm_kind: "string (opcional) - iterative | recursive | hybrid | unknown",
+              },
+              response: {
+                ok: "boolean",
+                worst: {
+                  totals: {
+                    recurrence: {
+                      form: "string - T(n) = a·T(n/b) + f(n)",
+                      a: "number - número de subproblemas",
+                      b: "number - factor de reducción",
+                      f: "string - trabajo no recursivo (LaTeX)",
+                      n0: "number - umbral base",
+                      applicable: "boolean",
+                    },
+                    master: {
+                      case: "1 | 2 | 3 - caso del Teorema Maestro",
+                      nlogba: "string - n^(log_b a) en LaTeX",
+                      comparison: "smaller | equal | larger",
+                      theta: "string - T(n) = Θ(...) en LaTeX",
+                      regularity: {
+                        checked: "boolean",
+                        note: "string",
+                      },
+                    },
+                    T_open: "string - Ecuación de eficiencia final",
+                    proof: "Array<{id: string, text: string}> - Pasos de prueba",
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     ],
     [],
   );

@@ -94,20 +94,34 @@ docker-compose up
 2. **Verificar sintaxis**: El editor muestra errores en tiempo real. Usa "Verificar Parse" para validar.
 3. **Analizar complejidad**: Haz clic en "Analizar Complejidad" para iniciar el análisis completo.
 4. **Revisar resultados**:
-   - **Tabla de costos por línea**: Visualiza el costo elemental (Cₖ), número de ejecuciones y costo total por línea. Incluye selector de casos (Best/Avg/Worst) en la esquina superior derecha.
-   - **Tarjetas de resumen**: Tres tarjetas muestran la notación asintótica (Big-O) para cada caso, con el Big-O renderizado en LaTeX dentro del círculo del icono.
-   - **Análisis de casos**:
-     - **Best Case**: Muestra el mejor caso del algoritmo (complejidad mínima)
-     - **Worst Case**: Muestra el peor caso del algoritmo (complejidad máxima)
-     - **Average Case**: Muestra el caso promedio usando modelos probabilísticos (uniform o symbolic)
-   - **Procedimientos detallados**: 
-     - **Procedimiento general**: Haz clic en "Ver Procedimiento" en cualquier tarjeta para ver el procedimiento completo con ecuación de eficiencia, forma polinómica y notación asintótica.
-     - **Procedimiento por línea**: Haz clic en cualquier línea de la tabla para ver los pasos detallados de esa línea específica, desde la expresión original hasta la forma final con notación asintótica.
+   - **Para algoritmos iterativos**:
+     - **Tabla de costos por línea**: Visualiza el costo elemental (Cₖ), número de ejecuciones y costo total por línea. Incluye selector de casos (Best/Avg/Worst) en la esquina superior derecha.
+     - **Tarjetas de resumen**: Tres tarjetas muestran la notación asintótica (Big-O) para cada caso, con el Big-O renderizado en LaTeX dentro del círculo del icono.
+     - **Análisis de casos**:
+       - **Best Case**: Muestra el mejor caso del algoritmo (complejidad mínima)
+       - **Worst Case**: Muestra el peor caso del algoritmo (complejidad máxima)
+       - **Average Case**: Muestra el caso promedio usando modelos probabilísticos (uniform o symbolic)
+     - **Procedimientos detallados**: 
+       - **Procedimiento general**: Haz clic en "Ver Procedimiento" en cualquier tarjeta para ver el procedimiento completo con ecuación de eficiencia, forma polinómica y notación asintótica.
+       - **Procedimiento por línea**: Haz clic en cualquier línea de la tabla para ver los pasos detallados de esa línea específica, desde la expresión original hasta la forma final con notación asintótica.
+   - **Para algoritmos recursivos e híbridos**:
+     - **Vista recursiva**: Muestra tarjetas con la ecuación de eficiencia T(n) = Θ(...) para cada caso (best/avg/worst)
+     - **Procedimiento completo del Teorema Maestro**: Haz clic en "Ver Procedimiento" para abrir un modal detallado con:
+       - Ecuación de recurrencia extraída T(n) = a·T(n/b) + f(n)
+       - Parámetros a, b, f(n) y n₀
+       - Cálculo de g(n) = n^(log_b a)
+       - Comparación de f(n) vs g(n) para determinar el caso
+       - Visualización de los 3 casos del Teorema Maestro con el caso aplicado resaltado
+       - Pasos de prueba completos en LaTeX
+       - Ecuación de eficiencia final T(n) = Θ(...)
+     - **Árbol de recursión**: Visualización interactiva del árbol de llamadas recursivas (próximamente)
 
 ### Características del Loader de Análisis
 
 - **Progreso en tiempo real**: Muestra el porcentaje de avance durante cada etapa, sincronizado con las promesas del backend.
-- **Etapas visibles**: Parseo → Clasificación → Hallazgo de sumatorias → Simplificación → Finalización.
+- **Etapas visibles**: 
+  - **Algoritmos iterativos**: Parseo → Clasificación → Hallazgo de sumatorias → Simplificación → Finalización
+  - **Algoritmos recursivos**: Parseo → Clasificación → Verificación de condiciones → Extracción de recurrencia → Normalización → Aplicación del Teorema Maestro → Finalización
 - **Identificación de tipo**: Muestra el tipo de algoritmo detectado (iterativo, recursivo, híbrido, desconocido) con animación de "pop".
 - **Manejo de errores**: Si ocurre un error, se muestra un mensaje descriptivo y puedes cerrar el loader sin recargar la página.
 - **Reutilizable**: El mismo loader se usa tanto en el editor manual como en el chatbot, manteniendo consistencia visual.
@@ -181,6 +195,9 @@ API REST con FastAPI que expone endpoints de parsing y análisis.
   - Soporta modos: `worst`, `best`, `avg`, `all`
   - Modelos de caso promedio: `uniform`, `symbolic`
   - Genera análisis completo con T_open, A_of_n, y procedimientos detallados
+  - Detección automática de algoritmos recursivos e híbridos
+  - Aplicación del Teorema Maestro para algoritmos recursivos
+- `POST /classify` — Clasifica algoritmo como iterative, recursive, hybrid o unknown
 - `GET /health` — Health check
 
 **Análisis Iterativo Completo:**
@@ -190,6 +207,15 @@ API REST con FastAPI que expone endpoints de parsing y análisis.
 - ✅ Análisis de condicionales IF con selección de rama dominante
 - ✅ Cálculo de complejidad temporal con sumatorias y simplificación
 - ✅ Tests exhaustivos con casos comunes, intermedios y complejos
+
+**Análisis Recursivo con Teorema Maestro:**
+- ✅ Detección automática de algoritmos recursivos e híbridos
+- ✅ Extracción de recurrencias de la forma T(n) = a·T(n/b) + f(n)
+- ✅ Aplicación del Teorema Maestro con los 3 casos
+- ✅ Visualización del árbol de recursión
+- ✅ Procedimiento completo con pasos de prueba en LaTeX
+- ✅ Ecuación de eficiencia final T(n) = Θ(...)
+- ✅ Soporte para algoritmos divide-and-conquer
 
 ## Testing
 
@@ -209,6 +235,13 @@ npm run verify
 - Tests de casos complejos: bucles anidados variables, WHILE complejos, IF anidados, REPEAT-UNTIL
 - Tests de caso promedio: verificación de modelos uniforme y simbólico
 - Todos los tests cubren best/worst/average case
+
+**Tests del Analizador Recursivo:**
+- Tests de extracción de recurrencias: merge sort, binary search, quick sort
+- Tests del Teorema Maestro: verificación de los 3 casos
+- Tests de estructura: validación de parámetros a, b, f(n), n₀
+- Tests de pasos de prueba: verificación de generación de pasos en LaTeX
+- Tests de algoritmos divide-and-conquer completos
 
 **Ubicación de Tests:**
 - `apps/api/tests/integration/test_iterative_analyzer.py` — Tests básicos y casos comunes

@@ -167,23 +167,25 @@ export interface AnalyzerContent {
   type: "analyzer";
   interface: {
     title: string;
-    layout: {
+    description?: string;
+    features?: string[];
+    layout?: {
       description: string;
       columns: AnalyzerColumn[];
     };
-    responsiveness: {
+    responsiveness?: {
       title: string;
       breakpoints: AnalyzerBreakpoint[];
     };
   };
   analysisModes?: AnalysisModes;
-  modal: {
+  modal?: {
     title: string;
     purpose: string;
     features: string[];
     types: AnalyzerModalType[];
   };
-  components: {
+  components?: {
     title: string;
     list: AnalyzerComponentInfo[];
   };
@@ -208,6 +210,33 @@ export interface AnalyzerContent {
       request: Record<string, unknown>;
       response: Record<string, unknown>;
     };
+  };
+  // Campos específicos para analizador recursivo
+  masterTheorem?: {
+    title: string;
+    description: string;
+    cases: Array<{
+      case: number;
+      condition: string;
+      result: string;
+      description: string;
+      example: string;
+    }>;
+  };
+  recurrenceExtraction?: {
+    title: string;
+    description: string;
+    process: string[];
+    requirements: string[];
+  };
+  visualization?: {
+    title: string;
+    components: Array<{
+      name: string;
+      description: string;
+      features: string[];
+      sections?: string[];
+    }>;
   };
 }
 

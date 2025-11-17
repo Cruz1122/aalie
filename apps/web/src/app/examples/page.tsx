@@ -246,7 +246,6 @@ END`,
     END
 END`,
     category: "recursive",
-    note: "No soportado actualmente - requiere análisis recursivo (S4)",
   },
   {
     id: 13,
@@ -263,7 +262,6 @@ END`,
     END
 END`,
     category: "recursive",
-    note: "No soportado actualmente - requiere análisis recursivo (S4)",
   },
   {
     id: 14,
@@ -282,7 +280,6 @@ END`,
     END
 END`,
     category: "recursive",
-    note: "No soportado actualmente - requiere análisis recursivo (S4)",
   },
   {
     id: 15,
@@ -311,7 +308,6 @@ END`,
     END
 END`,
     category: "recursive",
-    note: "No soportado actualmente - híbrido recursivo-iterativo (requiere S4)",
   },
   
   // Voraces (Greedy)
@@ -605,7 +601,7 @@ export default function ExamplesPage() {
               },
               recursive: {
                 label: "Recursivos",
-                description: "Algoritmos con llamadas recursivas. No soportados actualmente (requieren S4).",
+                description: "Algoritmos con llamadas recursivas. Analizados con el Teorema Maestro.",
                 color: "bg-red-500/20 border-red-500/30 text-red-300",
               },
               greedy: {
@@ -681,7 +677,7 @@ export default function ExamplesPage() {
                         </button>
                         <button
                           onClick={() => handleAnalyze(example.code)}
-                          disabled={isAnalyzing || example.category === "recursive"}
+                          disabled={isAnalyzing}
                           className="flex items-center justify-center gap-2 py-1.5 px-4 rounded text-white text-xs font-medium transition-colors bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           {isAnalyzing ? (
@@ -730,7 +726,7 @@ export default function ExamplesPage() {
               </p>
               <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
                 <p className="text-blue-300 text-sm">
-                  <strong>💡 Nota sobre categorías:</strong> Los algoritmos simples se clasificarán como &quot;unknown&quot; en el análisis (no tienen bucles complejos). Los algoritmos recursivos no están soportados actualmente y requieren el sistema S4 para su análisis.
+                  <strong>💡 Nota sobre categorías:</strong> Los algoritmos simples se clasificarán como &quot;unknown&quot; en el análisis (no tienen bucles complejos). Los algoritmos recursivos se analizan automáticamente usando el Teorema Maestro, incluyendo visualización del árbol de recursión y procedimiento completo con pasos de prueba.
                 </p>
               </div>
             </div>
