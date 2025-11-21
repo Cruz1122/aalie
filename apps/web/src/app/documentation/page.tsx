@@ -58,8 +58,8 @@ export default function DocumentationPage() {
           <span className="material-symbols-outlined text-6xl text-primary mb-4">code_blocks</span>
           <h2 className="text-xl font-bold mb-2">Ejemplos de Algoritmos</h2>
           <p className="text-sm text-dark-text mb-6">
-            Colección de 10 algoritmos clásicos listos para usar. Copia cualquier ejemplo y
-            analiza su complejidad en el analizador.
+            Colección de algoritmos clásicos organizados por métodos de análisis. Copia cualquier ejemplo y
+            analiza su complejidad con el método más apropiado (iteración, teorema maestro, o árbol de recursión).
           </p>
           <NavigationLink
             href="/examples"

@@ -13,7 +13,7 @@ import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 
-type ExampleCategory = "simple" | "iterative" | "recursive" | "greedy";
+type ExampleCategory = "simple" | "iterative" | "recursive_iteration" | "recursive_master" | "recursive_tree";
 
 interface Example {
   id: number;
@@ -26,7 +26,7 @@ interface Example {
 }
 
 const examples: Example[] = [
-  // Simples/Unknown
+  // ========== Algoritmos Unknown/Básicos ==========
   {
     id: 1,
     name: "Asignación Simple",
@@ -54,7 +54,7 @@ END`,
     note: "Se clasificará como 'unknown' en el análisis",
   },
   
-  // Iterativos
+  // ========== Iterativos ==========
   {
     id: 3,
     name: "Búsqueda Lineal",
@@ -221,12 +221,67 @@ END`,
     category: "iterative",
   },
   
-  // Recursivos
+  // ========== Recursivos/Híbridos (Método Iterativo) ==========
   {
     id: 12,
+    name: "Fibonacci Recursivo",
+    description:
+      "Calcula el n-ésimo número de Fibonacci usando recursión directa. Analizado con el método de iteración (unrolling) porque no cumple las condiciones del Teorema Maestro ni del Árbol de Recursión.",
+    complexity: "O(2ⁿ) - Exponencial",
+    code: `fibonacci(n) BEGIN
+    IF (n <= 1) THEN BEGIN
+        RETURN n;
+    END
+    ELSE BEGIN
+        RETURN fibonacci(n - 1) + fibonacci(n - 2);
+    END
+END`,
+    category: "recursive_iteration",
+    note: "Se analiza con método de iteración (desenrollado)",
+  },
+  {
+    id: 13,
+    name: "Torres de Hanoi",
+    description:
+      "Resuelve el problema clásico de las Torres de Hanoi usando recursión. Analizado con el método de iteración porque la recurrencia T(n) = 2T(n-1) + 1 no divide uniformemente.",
+    complexity: "O(2ⁿ)",
+    code: `hanoi(n, origen, destino, auxiliar) BEGIN
+    IF (n = 1) THEN BEGIN
+        CALL moverDisco(origen, destino);
+    END
+    ELSE BEGIN
+        CALL hanoi(n - 1, origen, auxiliar, destino);
+        CALL moverDisco(origen, destino);
+        CALL hanoi(n - 1, auxiliar, destino, origen);
+    END
+END`,
+    category: "recursive_iteration",
+    note: "Se analiza con método de iteración (desenrollado)",
+  },
+  {
+    id: 14,
+    name: "Factorial Recursivo",
+    description:
+      "Calcula el factorial de un número usando recursión. Analizado con el método de iteración porque la recurrencia T(n) = T(n-1) + O(1) no divide uniformemente.",
+    complexity: "O(n)",
+    code: `factorialRecursivo(n) BEGIN
+    IF (n <= 1) THEN BEGIN
+        RETURN 1;
+    END
+    ELSE BEGIN
+        RETURN n * factorialRecursivo(n - 1);
+    END
+END`,
+    category: "recursive_iteration",
+    note: "Se analiza con método de iteración (desenrollado)",
+  },
+  
+  // ========== Recursivos/Híbridos (Teorema Maestro) ==========
+  {
+    id: 15,
     name: "Búsqueda Binaria Recursiva",
     description:
-      "Busca un elemento en un array ordenado usando recursión. Divide el espacio de búsqueda a la mitad en cada llamada recursiva.",
+      "Busca un elemento en un array ordenado usando recursión. Analizado con el Teorema Maestro porque T(n) = T(n/2) + O(1) con a=1, b=2.",
     complexity: "Best: O(1), Worst: O(log n), Avg: O(log n)",
     code: `busquedaBinaria(A[n], x, inicio, fin) BEGIN
     IF (inicio > fin) THEN BEGIN
@@ -245,47 +300,113 @@ END`,
         END
     END
 END`,
-    category: "recursive",
+    category: "recursive_master",
+    note: "Se analiza con Teorema Maestro (a=1, b=2)",
   },
+  
+  // ========== Recursivos/Híbridos (Árbol de Recursión) ==========
   {
-    id: 13,
-    name: "Fibonacci Recursivo",
+    id: 16,
+    name: "MergeSort (Ordenamiento por Mezcla)",
     description:
-      "Calcula el n-ésimo número de Fibonacci usando recursión directa. Es un ejemplo clásico de recursión, pero muy ineficiente debido a la repetición de cálculos.",
-    complexity: "O(2ⁿ) - Exponencial",
-    code: `fibonacci(n) BEGIN
-    IF (n <= 1) THEN BEGIN
-        RETURN n;
+      "Algoritmo de ordenamiento divide y conquista que divide el array en dos mitades, ordena cada mitad recursivamente y las combina. Analizado con el método de Árbol de Recursión porque T(n) = 2T(n/2) + n con a=2, b=2.",
+    complexity: "O(n log n)",
+    code: `mergeSort(A[n], inicio, fin) BEGIN
+    IF (inicio < fin) THEN BEGIN
+        medio <- (inicio + fin) / 2;
+        CALL mergeSort(A, inicio, medio);
+        CALL mergeSort(A, medio + 1, fin);
+        CALL mezclar(A, inicio, medio, fin);
     END
-    ELSE BEGIN
-        RETURN fibonacci(n - 1) + fibonacci(n - 2);
+END
+
+mezclar(A[n], inicio, medio, fin) BEGIN
+    i <- inicio;
+    j <- medio + 1;
+    k <- 1;
+    temp[n] <- nuevo arreglo;
+    WHILE (i <= medio AND j <= fin) DO BEGIN
+        IF (A[i] <= A[j]) THEN BEGIN
+            temp[k] <- A[i];
+            i <- i + 1;
+        END
+        ELSE BEGIN
+            temp[k] <- A[j];
+            j <- j + 1;
+        END
+        k <- k + 1;
+    END
+    WHILE (i <= medio) DO BEGIN
+        temp[k] <- A[i];
+        i <- i + 1;
+        k <- k + 1;
+    END
+    WHILE (j <= fin) DO BEGIN
+        temp[k] <- A[j];
+        j <- j + 1;
+        k <- k + 1;
+    END
+    FOR i <- 1 TO k - 1 DO BEGIN
+        A[inicio + i - 1] <- temp[i];
     END
 END`,
-    category: "recursive",
+    category: "recursive_tree",
+    note: "Se analiza con método de Árbol de Recursión (a=2, b=2)",
   },
   {
-    id: 14,
-    name: "Torres de Hanoi",
+    id: 17,
+    name: "Algoritmo Divide Desigual",
     description:
-      "Resuelve el problema clásico de las Torres de Hanoi usando recursión. Demuestra cómo un problema aparentemente simple puede tener complejidad exponencial.",
-    complexity: "O(2ⁿ)",
-    code: `hanoi(n, origen, destino, auxiliar) BEGIN
-    IF (n = 1) THEN BEGIN
-        CALL moverDisco(origen, destino);
+      "Divide un problema en 3 subproblemas iguales. Analizado con el método de Árbol de Recursión porque T(n) = 3T(n/3) + 1 con a=3, b=3.",
+    complexity: "O(n)",
+    code: `algoritmoDivideDesigual(arreglo, inicio, fin) BEGIN
+    IF (fin - inicio <= 1) THEN BEGIN
+        RETURN arreglo[inicio];
     END
     ELSE BEGIN
-        CALL hanoi(n - 1, origen, auxiliar, destino);
-        CALL moverDisco(origen, destino);
-        CALL hanoi(n - 1, auxiliar, destino, origen);
+        medio1 <- inicio + (fin - inicio) DIV 3;
+        medio2 <- inicio + 2 * (fin - inicio) DIV 3;
+        resultado1 <- algoritmoDivideDesigual(arreglo, inicio, medio1);
+        resultado2 <- algoritmoDivideDesigual(arreglo, medio1, medio2);
+        resultado3 <- algoritmoDivideDesigual(arreglo, medio2, fin);
+        RETURN resultado1 + resultado2 + resultado3;
     END
 END`,
-    category: "recursive",
+    category: "recursive_tree",
+    note: "Se analiza con método de Árbol de Recursión (a=3, b=3)",
   },
   {
-    id: 15,
+    id: 18,
+    name: "Algoritmo Cuaternario",
+    description:
+      "Divide un problema en 4 subproblemas iguales. Analizado con el método de Árbol de Recursión porque T(n) = 4T(n/4) + 1 con a=4, b=4.",
+    complexity: "O(n)",
+    code: `algoritmoCuaternario(arreglo, inicio, fin) BEGIN
+    IF (fin - inicio <= 1) THEN BEGIN
+        RETURN arreglo[inicio];
+    END
+    ELSE BEGIN
+        tamaño <- fin - inicio;
+        punto1 <- inicio + tamaño DIV 4;
+        punto2 <- inicio + 2 * tamaño DIV 4;
+        punto3 <- inicio + 3 * tamaño DIV 4;
+        
+        resultado1 <- algoritmoCuaternario(arreglo, inicio, punto1);
+        resultado2 <- algoritmoCuaternario(arreglo, punto1, punto2);
+        resultado3 <- algoritmoCuaternario(arreglo, punto2, punto3);
+        resultado4 <- algoritmoCuaternario(arreglo, punto3, fin);
+        
+        RETURN resultado1 + resultado2 + resultado3 + resultado4;
+    END
+END`,
+    category: "recursive_tree",
+    note: "Se analiza con método de Árbol de Recursión (a=4, b=4)",
+  },
+  {
+    id: 19,
     name: "QuickSort (Ordenamiento Rápido)",
     description:
-      "Algoritmo de ordenamiento divide y conquista usando particionamiento. Es uno de los algoritmos de ordenamiento más eficientes en la práctica, aunque su peor caso es cuadrático.",
+      "Algoritmo de ordenamiento divide y conquista usando particionamiento. En el mejor caso, analizado con el método de Árbol de Recursión porque T(n) = 2T(n/2) + n con a=2, b=2.",
     complexity: "O(n log n) promedio, O(n²) peor caso",
     code: `quicksort(A[n], izq, der) BEGIN
     IF (izq < der) THEN BEGIN
@@ -307,30 +428,8 @@ END`,
         CALL quicksort(A, pi + 1, der);
     END
 END`,
-    category: "recursive",
-  },
-  
-  // Voraces (Greedy)
-  {
-    id: 16,
-    name: "Cambio de Monedas (Greedy)",
-    description:
-      "Algoritmo voraz para el problema de cambio de monedas. Encuentra el número mínimo de monedas necesarias para formar una cantidad dada.",
-    complexity: "O(n)",
-    code: `cambioMonedas(cantidad, monedas[n], n) BEGIN
-    resultado <- 0;
-    i <- n;
-    WHILE (cantidad > 0 AND i >= 1) DO BEGIN
-        IF (monedas[i] <= cantidad) THEN BEGIN
-            num_monedas <- cantidad / monedas[i];
-            resultado <- resultado + num_monedas;
-            cantidad <- cantidad - (num_monedas * monedas[i]);
-        END
-        i <- i - 1;
-    END
-    RETURN resultado;
-END`,
-    category: "greedy",
+    category: "recursive_tree",
+    note: "En el mejor caso se analiza con método de Árbol de Recursión (a=2, b=2)",
   },
 ];
 
@@ -357,6 +456,7 @@ export default function ExamplesPage() {
   const router = useRouter();
   const { animateProgress } = useAnalysisProgress();
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [viewingCodeId, setViewingCodeId] = useState<number | null>(null);
   const { finishNavigation } = useNavigation();
   
   // Estados para el loader de análisis
@@ -572,25 +672,74 @@ export default function ExamplesPage() {
       )}
 
       <main className="flex-1 z-10 p-4 sm:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto space-y-6 lg:space-y-8">
-          <header className="space-y-3 text-center lg:text-left">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white leading-tight">
+        <div className="max-w-7xl mx-auto space-y-4 lg:space-y-6">
+          <header className="space-y-2 text-center lg:text-left">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white leading-tight">
               Ejemplos de Algoritmos
             </h1>
-            <p className="text-dark-text text-sm sm:text-base lg:text-lg leading-relaxed max-w-4xl mx-auto lg:mx-0">
-              Colección de algoritmos clásicos organizados por categorías. Los ejemplos están clasificados como simples (unknown), iterativos, recursivos y voraces.
-              Copia cualquier ejemplo y analízalo directamente desde esta página.
+            <p className="text-dark-text text-xs sm:text-sm lg:text-base leading-relaxed max-w-4xl mx-auto lg:mx-0">
+              Colección de algoritmos clásicos organizados por métodos de análisis. Los ejemplos están agrupados por: algoritmos básicos (unknown), iterativos, y recursivos clasificados según el método utilizado (iteración, teorema maestro, o árbol de recursión).
             </p>
           </header>
 
+          {/* Índice de Contenido */}
+          <div className="glass-card p-4 rounded-lg">
+            <h2 className="text-base font-bold text-white mb-3 flex items-center gap-2">
+              <span className="material-symbols-outlined text-lg">list</span>
+              Índice de Contenido
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {(["simple", "iterative", "recursive_iteration", "recursive_master", "recursive_tree"] as ExampleCategory[]).map((category) => {
+                const categoryExamples = examples.filter((ex) => ex.category === category);
+                if (categoryExamples.length === 0) return null;
+
+                const categoryLabels: Record<ExampleCategory, { label: string; color: string }> = {
+                  simple: {
+                    label: "Algoritmos Unknown/Básicos",
+                    color: "bg-gray-500/20 border-gray-500/30 text-gray-300",
+                  },
+                  iterative: {
+                    label: "Iterativos",
+                    color: "bg-blue-500/20 border-blue-500/30 text-blue-300",
+                  },
+                  recursive_iteration: {
+                    label: "Recursivos (Método Iterativo)",
+                    color: "bg-purple-500/20 border-purple-500/30 text-purple-300",
+                  },
+                  recursive_master: {
+                    label: "Recursivos (Teorema Maestro)",
+                    color: "bg-orange-500/20 border-orange-500/30 text-orange-300",
+                  },
+                  recursive_tree: {
+                    label: "Recursivos (Árbol de Recursión)",
+                    color: "bg-cyan-500/20 border-cyan-500/30 text-cyan-300",
+                  },
+                };
+
+                const catInfo = categoryLabels[category];
+
+                return (
+                  <a
+                    key={category}
+                    href={`#category-${category}`}
+                    className={`p-3 rounded border ${catInfo.color} hover:opacity-80 transition-opacity text-xs font-medium`}
+                  >
+                    <div className="font-semibold mb-1">{catInfo.label}</div>
+                    <div className="text-xs opacity-75">{categoryExamples.length} ejemplo{categoryExamples.length !== 1 ? 's' : ''}</div>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Categorías */}
-          {(["simple", "iterative", "recursive", "greedy"] as ExampleCategory[]).map((category) => {
+          {(["simple", "iterative", "recursive_iteration", "recursive_master", "recursive_tree"] as ExampleCategory[]).map((category) => {
             const categoryExamples = examples.filter((ex) => ex.category === category);
             if (categoryExamples.length === 0) return null;
 
             const categoryLabels: Record<ExampleCategory, { label: string; description: string; color: string }> = {
               simple: {
-                label: "Simples/Unknown",
+                label: "Algoritmos Unknown/Básicos",
                 description: "Algoritmos básicos sin bucles complejos. Se clasificarán como 'unknown' en el análisis.",
                 color: "bg-gray-500/20 border-gray-500/30 text-gray-300",
               },
@@ -599,99 +748,114 @@ export default function ExamplesPage() {
                 description: "Algoritmos con bucles FOR/WHILE. Totalmente soportados por el analizador iterativo.",
                 color: "bg-blue-500/20 border-blue-500/30 text-blue-300",
               },
-              recursive: {
-                label: "Recursivos",
-                description: "Algoritmos con llamadas recursivas. Analizados con el Teorema Maestro.",
-                color: "bg-red-500/20 border-red-500/30 text-red-300",
-              },
-              greedy: {
-                label: "Voraces (Greedy)",
-                description: "Algoritmos voraces que toman decisiones locales óptimas. Soportados si son iterativos.",
+              recursive_iteration: {
+                label: "Recursivos/Híbridos (Método Iterativo)",
+                description: "Algoritmos recursivos analizados con el método de iteración (unrolling). Se usan cuando la recurrencia no cumple las condiciones del Teorema Maestro ni del Árbol de Recursión.",
                 color: "bg-purple-500/20 border-purple-500/30 text-purple-300",
+              },
+              recursive_master: {
+                label: "Recursivos/Híbridos (Teorema Maestro)",
+                description: "Algoritmos recursivos analizados con el Teorema Maestro. Se usan cuando la recurrencia tiene la forma T(n) = aT(n/b) + f(n) con a < 2 o no cumple las condiciones del Árbol de Recursión.",
+                color: "bg-orange-500/20 border-orange-500/30 text-orange-300",
+              },
+              recursive_tree: {
+                label: "Recursivos/Híbridos (Árbol de Recursión)",
+                description: "Algoritmos recursivos analizados con el método de Árbol de Recursión. Se usan cuando a ≥ 2, divide uniformemente y es divide-and-conquer. Incluye visualización del árbol y tabla por niveles.",
+                color: "bg-cyan-500/20 border-cyan-500/30 text-cyan-300",
               },
             };
 
             const catInfo = categoryLabels[category];
 
             return (
-              <div key={category} className="space-y-4">
-                <div className="glass-card p-4">
-                  <h2 className="text-xl font-bold text-white mb-2">{catInfo.label}</h2>
-                  <p className="text-sm text-dark-text">{catInfo.description}</p>
+              <div key={category} id={`category-${category}`} className="space-y-3 scroll-mt-20">
+                <div className="glass-card p-3">
+                  <h2 className="text-base font-bold text-white mb-1">{catInfo.label}</h2>
+                  <p className="text-xs text-dark-text">{catInfo.description}</p>
                 </div>
 
                 {/* Grid de ejemplos de esta categoría */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {categoryExamples.map((example) => (
                     <div
                       key={example.id}
-                      className="glass-card p-5 flex flex-col space-y-3 hover:scale-[1.01] transition-transform"
+                      className="glass-card p-4 flex flex-col space-y-2 hover:scale-[1.02] transition-transform"
                     >
                       {/* Header del ejemplo */}
                       <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <h3 className="text-lg font-semibold text-white">{example.name}</h3>
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium border ${catInfo.color}`}>
-                              {catInfo.label}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-400 font-mono">{example.complexity}</p>
-                          {example.note && (
-                            <div className="mt-2 p-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded text-xs text-yellow-300">
-                              <strong>Nota:</strong> {example.note}
-                            </div>
-                          )}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-semibold text-white mb-1 truncate">{example.name}</h3>
+                          <p className="text-[10px] text-slate-400 font-mono">{example.complexity}</p>
                         </div>
                       </div>
 
                       {/* Descripción */}
-                      <p className="text-dark-text text-sm leading-relaxed">{example.description}</p>
+                      <p className="text-dark-text text-xs leading-relaxed line-clamp-3">{example.description}</p>
 
-                      {/* Código */}
-                      <div className="flex-1 bg-slate-900/50 border border-white/10 rounded p-3 overflow-x-auto scrollbar-custom">
-                        <pre className="text-green-300 font-mono text-xs leading-relaxed whitespace-pre">
-                          {example.code}
-                        </pre>
-                      </div>
+                      {example.note && (
+                        <div className="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-[10px] text-yellow-300">
+                          <strong>Nota:</strong> {example.note}
+                        </div>
+                      )}
 
-                      {/* Footer con acción */}
-                      <div className="flex items-center justify-between gap-2 pt-1">
+                      {/* Botones de acción */}
+                      <div className="flex flex-col gap-2 pt-1">
                         <button
-                          onClick={() => handleCopy(example.code, example.id)}
-                          className="px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center gap-1 border border-white/10 hover:bg-white/5 hover:border-white/20 disabled:opacity-50 disabled:cursor-not-allowed text-slate-300"
-                          title="Copiar código"
+                          onClick={() => setViewingCodeId(viewingCodeId === example.id ? null : example.id)}
+                          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded text-xs font-medium transition-colors border border-white/10 hover:bg-white/5 hover:border-white/20 text-slate-300"
                           disabled={isAnalyzing}
                         >
-                          {copiedId === example.id ? (
-                            <>
-                              <span className="material-symbols-outlined text-sm">check</span>{" "}
-                              Copiado
-                            </>
-                          ) : (
-                            <>
-                              <span className="material-symbols-outlined text-sm">content_copy</span>{" "}
-                              Copiar
-                            </>
-                          )}
+                          <span className="material-symbols-outlined text-sm">
+                            {viewingCodeId === example.id ? 'visibility_off' : 'visibility'}
+                          </span>
+                          {viewingCodeId === example.id ? 'Ocultar Código' : 'Ver Código'}
                         </button>
-                        <button
-                          onClick={() => handleAnalyze(example.code)}
-                          disabled={isAnalyzing}
-                          className="flex items-center justify-center gap-2 py-1.5 px-4 rounded text-white text-xs font-medium transition-colors bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          {isAnalyzing ? (
-                            <>
-                              <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>{' '}
-                              Analizando...
-                            </>
-                          ) : (
-                            <>
-                              <span className="material-symbols-outlined text-sm">functions</span>{' '}
-                              Analizar
-                            </>
-                          )}
-                        </button>
+                        
+                        {viewingCodeId === example.id && (
+                          <div className="bg-slate-900/50 border border-white/10 rounded p-2 overflow-x-auto scrollbar-custom max-h-64">
+                            <pre className="text-green-300 font-mono text-[10px] leading-relaxed whitespace-pre">
+                              {example.code}
+                            </pre>
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => handleCopy(example.code, example.id)}
+                            className="flex items-center justify-center gap-1 py-1.5 px-2 rounded text-xs font-medium transition-colors border border-white/10 hover:bg-white/5 hover:border-white/20 disabled:opacity-50 disabled:cursor-not-allowed text-slate-300"
+                            title="Copiar código"
+                            disabled={isAnalyzing}
+                          >
+                            {copiedId === example.id ? (
+                              <>
+                                <span className="material-symbols-outlined text-xs">check</span>
+                                <span className="hidden sm:inline">Copiado</span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="material-symbols-outlined text-xs">content_copy</span>
+                                <span className="hidden sm:inline">Copiar</span>
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => handleAnalyze(example.code)}
+                            disabled={isAnalyzing}
+                            className="flex items-center justify-center gap-1 py-1.5 px-2 rounded text-white text-xs font-medium transition-colors bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            {isAnalyzing ? (
+                              <>
+                                <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span>
+                                <span className="hidden sm:inline">Analizando...</span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="material-symbols-outlined text-xs">functions</span>
+                                <span className="hidden sm:inline">Analizar</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -701,15 +865,18 @@ export default function ExamplesPage() {
           })}
 
           {/* Información adicional */}
-          <div className="glass-card p-6">
-            <h2 className="text-xl font-bold text-white mb-4">Cómo usar estos ejemplos</h2>
-            <div className="space-y-3 text-dark-text text-sm">
+          <div className="glass-card p-4">
+            <h2 className="text-base font-bold text-white mb-3">Cómo usar estos ejemplos</h2>
+            <div className="space-y-2 text-dark-text text-xs">
               <p>
-                1. <strong className="text-white">Copiar:</strong> Haz clic en el botón &quot;Copiar&quot; de
-                cualquier ejemplo para copiar el código al portapapeles.
+                1. <strong className="text-white">Ver Código:</strong> Haz clic en el botón &quot;Ver Código&quot; para
+                ver el código completo del algoritmo.
               </p>
               <p>
-                2. <strong className="text-white">Analizar:</strong> Haz clic en el botón &quot;Analizar&quot; para
+                2. <strong className="text-white">Copiar:</strong> Haz clic en el botón &quot;Copiar&quot; para copiar el código al portapapeles.
+              </p>
+              <p>
+                3. <strong className="text-white">Analizar:</strong> Haz clic en el botón &quot;Analizar&quot; para
                 analizar el algoritmo directamente desde esta página, o ve al{" "}
                 <NavigationLink href="/analyzer" className="text-blue-400 hover:text-blue-300 underline">
                   analizador
@@ -717,24 +884,25 @@ export default function ExamplesPage() {
                 y pega el código en el editor.
               </p>
               <p>
-                3. <strong className="text-white">Explorar:</strong> El sistema calculará
+                4. <strong className="text-white">Explorar:</strong> El sistema calculará
                 automáticamente la complejidad temporal para best/worst/average case mostrando el análisis detallado.
               </p>
-              <p>
-                4. <strong className="text-white">Modificar:</strong> Experimenta modificando los
-                ejemplos para entender cómo afectan los cambios a la complejidad.
-              </p>
-              <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                <p className="text-blue-300 text-sm">
-                  <strong>💡 Nota sobre categorías:</strong> Los algoritmos simples se clasificarán como &quot;unknown&quot; en el análisis (no tienen bucles complejos). Los algoritmos recursivos se analizan automáticamente usando el Teorema Maestro, incluyendo visualización del árbol de recursión y procedimiento completo con pasos de prueba.
+              <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <p className="text-blue-300 text-xs font-semibold mb-2">
+                  💡 Nota sobre métodos de análisis:
                 </p>
+                <ul className="space-y-1 text-[11px] text-blue-200 list-disc list-inside">
+                  <li><strong>Método de Iteración:</strong> Para recurrencias no uniformes como T(n) = T(n-1) + f(n) o T(n) = T(n-1) + T(n-2) + f(n)</li>
+                  <li><strong>Teorema Maestro:</strong> Para recurrencias T(n) = aT(n/b) + f(n) con a &lt; 2 o que no cumplen las condiciones del Árbol de Recursión</li>
+                  <li><strong>Árbol de Recursión:</strong> Para recurrencias con a ≥ 2, divide uniformemente, divide-and-conquer. Incluye visualización del árbol y tabla detallada por niveles</li>
+                </ul>
               </div>
             </div>
           </div>
 
           {/* Navegación */}
-          <footer className="text-sm sm:text-base text-dark-text text-center border-t border-white/10 pt-6">
-            <div className="flex justify-between items-center">
+          <footer className="text-xs sm:text-sm text-dark-text text-center border-t border-white/10 pt-4">
+            <div className="flex justify-between items-center flex-wrap gap-4">
               <NavigationLink
                 href="/user-guide"
                 className="text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors"
