@@ -18,6 +18,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         self.recurrence: Optional[Dict[str, Any]] = None
         self.master: Optional[Dict[str, Any]] = None
         self.iteration: Optional[Dict[str, Any]] = None
+        self.recursion_tree: Optional[Dict[str, Any]] = None
         self.proof: List[Dict[str, str]] = []
         self.proof_steps: List[Dict[str, str]] = []
         # Inicializar expr_converter si no está en BaseAnalyzer
@@ -77,7 +78,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "errors": [{"message": f"No aplicable: {self.recurrence.get('notes', ['Razón desconocida'])[0]}", "line": None, "column": None}]
             }
         
-        # 4. Aplicar método apropiado (Iteración o Teorema Maestro)
+        # 4. Aplicar método apropiado (Iteración, Árbol de Recursión o Teorema Maestro)
         method = self.recurrence.get("method", "master")
         
         if method == "iteration":
@@ -90,6 +91,16 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 }
             
             self.iteration = iteration_result["iteration"]
+        elif method == "recursion_tree":
+            # Aplicar Método de Árbol de Recursión
+            tree_result = self._apply_recursion_tree_method()
+            if not tree_result["success"]:
+                return {
+                    "ok": False,
+                    "errors": [{"message": f"Error aplicando Método de Árbol de Recursión: {tree_result['reason']}", "line": None, "column": None}]
+                }
+            
+            self.recursion_tree = tree_result["recursion_tree"]
         else:
             # Aplicar Teorema Maestro
             master_result = self._apply_master_theorem()
@@ -294,8 +305,13 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # 5. Detectar caso base n0
         n0 = self._detect_base_case(proc_def)
         
-        # 6. Detectar si debe usar Método de Iteración o Teorema Maestro
+        # 6. Detectar si debe usar Método de Iteración, Árbol de Recursión o Teorema Maestro
         use_iteration = self._detect_iteration_method(proc_def, recursive_calls)
+        use_recursion_tree = False
+        
+        if not use_iteration:
+            # Solo considerar Árbol de Recursión si no aplica Iteración
+            use_recursion_tree = self._detect_recursion_tree_method(proc_def, recursive_calls, a, b)
         
         # 7. Construir recurrencia con método apropiado
         # Simplificar b para mostrar
@@ -313,6 +329,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
         else:
             recurrence_form = f"T(n) = {a} \\cdot T(n/{b_str}) + f(n)"
         
+        # Determinar método a usar
+        if use_iteration:
+            method = "iteration"
+        elif use_recursion_tree:
+            method = "recursion_tree"
+        else:
+            method = "master"
+        
         recurrence = {
             "form": recurrence_form,
             "a": a,
@@ -321,12 +345,17 @@ class RecursiveAnalyzer(BaseAnalyzer):
             "n0": n0,
             "applicable": True,
             "notes": [],
-            "method": "iteration" if use_iteration else "master"
+            "method": method
         }
         
         # Simplificar valores para mostrar en proof
         b_display = self._simplify_number_latex(b)
-        method_name = "Método de Iteración" if use_iteration else "Teorema Maestro"
+        method_names = {
+            "iteration": "Método de Iteración",
+            "recursion_tree": "Método de Árbol de Recursión",
+            "master": "Teorema Maestro"
+        }
+        method_name = method_names.get(method, "Teorema Maestro")
         self.proof_steps.append({"id": "method", "text": f"\\text{{Método detectado: }} \\text{{{method_name}}}"})
         self.proof_steps.append({"id": "extract", "text": f"\\text{{Parámetros extraídos: }} a={a}, b={b_display}, f(n)={f_n}, n_0={n0}"})
         
@@ -1935,6 +1964,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Determinar T_open según el método usado
         if self.iteration:
             t_open = self.iteration.get("theta", "N/A")
+        elif self.recursion_tree:
+            t_open = self.recursion_tree.get("theta", "N/A")
         elif self.master:
             t_open = self.master.get("theta", "N/A")
         else:
@@ -1954,6 +1985,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Agregar resultado del método aplicado
         if self.iteration:
             totals["iteration"] = self.iteration
+        elif self.recursion_tree:
+            totals["recursion_tree"] = self.recursion_tree
         elif self.master:
             totals["master"] = self.master
         
@@ -1994,6 +2027,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         self.proof = []
         self.proof_steps = []
         self.iteration = None
+        self.recursion_tree = None
     
     # ============================================================================
     # MÉTODO DE ITERACIÓN (UNROLLING)
@@ -2585,4 +2619,360 @@ class RecursiveAnalyzer(BaseAnalyzer):
             "evaluated": evaluated,
             "theta": theta
         }
+    
+    # ============================================================================
+    # MÉTODO DE ÁRBOL DE RECURSIÓN
+    # ============================================================================
+    
+    def _detect_recursion_tree_method(self, proc_def: Dict[str, Any], recursive_calls: List[Dict[str, Any]], a: int, b: float) -> bool:
+        """
+        Detecta si debe usarse el Método de Árbol de Recursión.
+        
+        Reglas para usar Método de Árbol de Recursión:
+        1. a ≥ 2: Hay múltiples llamadas recursivas
+        2. Subproblemas uniformes: Todos tienen el mismo tamaño (mismo b)
+        3. Divide-and-conquer: Estructura de dividir y combinar
+        4. NO es recurrencia lineal: a ≠ 1
+        5. Reducción uniforme: Todas las llamadas reciben el mismo g(n)
+        6. Combina resultados: El algoritmo suma/combina costos de subproblemas
+        7. Útil para visualización: Aunque se pueda usar Teorema Maestro, el árbol aporta intuición
+        
+        Args:
+            proc_def: Nodo ProcDef del procedimiento
+            recursive_calls: Lista de llamadas recursivas encontradas
+            a: Número de subproblemas
+            b: Factor de reducción
+            
+        Returns:
+            True si debe usar Método de Árbol de Recursión
+        """
+        # Regla 1 y 4: a ≥ 2 y a ≠ 1
+        if a < 2:
+            return False
+        
+        # Regla 2: Verificar que todos los subproblemas tienen el mismo tamaño
+        # Esto ya se verificó en _extract_recurrence, pero confirmamos aquí
+        subproblem_sizes = []
+        for call in recursive_calls:
+            size_info = self._analyze_subproblem_size(call, proc_def)
+            if size_info and size_info.get("b"):
+                subproblem_sizes.append(size_info["b"])
+        
+        if not subproblem_sizes or len(set(subproblem_sizes)) > 1:
+            return False
+        
+        # Regla 3: Verificar que es divide-and-conquer (no decrease-and-conquer)
+        # Si hay subtracción (n-1, n-k), no es divide-and-conquer
+        has_subtraction = any(
+            self._analyze_subproblem_type(call, proc_def) and
+            self._analyze_subproblem_type(call, proc_def).get("type") == "subtraction"
+            for call in recursive_calls
+        )
+        if has_subtraction:
+            return False
+        
+        # Regla 5: Verificar reducción uniforme (todas las llamadas usan n/b)
+        # Esto ya está garantizado si b es constante
+        
+        # Regla 6: Verificar que combina resultados (puede ser suma, max, min, etc.)
+        # Por defecto, si a ≥ 2 y es divide-and-conquer, asumimos que combina
+        # (esto se puede refinar más adelante)
+        
+        # Regla 7: Es útil para visualización cuando a ≥ 2
+        return True
+    
+    def _apply_recursion_tree_method(self) -> Dict[str, Any]:
+        """
+        Aplica el Método de Árbol de Recursión a la recurrencia extraída.
+        
+        Implementa los 7 pasos del método:
+        1. Extraer T(n) = a·T(n/b) + f(n)
+        2. Construir nivel 0 (raíz)
+        3. Construir nivel i (generalización)
+        4. Calcular altura h = log_b(n)
+        5. Sumar costos por nivel
+        6. Identificar nivel dominante
+        7. Derivar Θ final
+        
+        Returns:
+            {"success": bool, "recursion_tree": dict, "reason": str}
+        """
+        if not self.recurrence:
+            return {
+                "success": False,
+                "reason": "No hay recurrencia extraída"
+            }
+        
+        self.proof_steps.append({"id": "tree_start", "text": "\\text{Aplicando Método de Árbol de Recursión}"})
+        
+        # Paso 1: Extraer parámetros de la recurrencia
+        a = self.recurrence["a"]
+        b = self.recurrence["b"]
+        f_n = self.recurrence["f"]
+        n0 = self.recurrence["n0"]
+        
+        self.proof_steps.append({
+            "id": "tree_extract",
+            "text": f"T(n) = {a} \\cdot T(n/{self._simplify_number_latex(b)}) + {f_n}"
+        })
+        
+        # Paso 2-3: Construir niveles del árbol
+        levels = self._build_tree_levels(a, b, f_n, n0)
+        
+        # Paso 4: Calcular altura
+        height_expr = f"\\log_{{{self._simplify_number_latex(b)}}}(n)"
+        if n0 == 1:
+            height_latex = f"h = {height_expr}"
+        else:
+            height_latex = f"h = {height_expr} \\approx \\log_{{{self._simplify_number_latex(b)}}}(n)"
+        
+        self.proof_steps.append({"id": "tree_height", "text": height_latex})
+        
+        # Paso 5: Calcular sumatoria
+        summation_result = self._calculate_tree_sum(levels, a, b, f_n)
+        
+        self.proof_steps.append({
+            "id": "tree_summation",
+            "text": f"T(n) = \\sum_{{i=0}}^{{{height_expr}}} a^i \\cdot f(n/b^i) = {summation_result['expression']}"
+        })
+        
+        # Paso 6: Identificar nivel dominante
+        dominating_level = self._identify_dominating_level(levels, a, b, f_n)
+        
+        # El reason ya viene con LaTeX formateado completamente
+        self.proof_steps.append({
+            "id": "tree_dominating",
+            "text": f"\\text{{Nivel dominante: }} {dominating_level['reason']}"
+        })
+        
+        # Paso 7: Resultado final
+        theta = summation_result.get("theta", f"\\Theta({f_n})")
+        
+        self.proof_steps.append({
+            "id": "tree_result",
+            "text": f"T(n) = {theta}"
+        })
+        
+        # Construir tabla por niveles para UI
+        table_by_levels = []
+        for i, level in enumerate(levels):
+            table_by_levels.append({
+                "level": i,
+                "num_nodes": level["num_nodes_latex"],
+                "subproblem_size": level["subproblem_size_latex"],
+                "cost_per_node": level["cost_per_node_latex"],
+                "total_cost": level["total_cost_latex"]
+            })
+        
+        recursion_tree = {
+            "method": "recursion_tree",
+            "levels": levels,
+            "height": height_expr,
+            "summation": summation_result,
+            "dominating_level": dominating_level,
+            "table_by_levels": table_by_levels,
+            "theta": theta
+        }
+        
+        return {
+            "success": True,
+            "recursion_tree": recursion_tree
+        }
+    
+    def _build_tree_levels(self, a: int, b: float, f_n: str, n0: int) -> List[Dict[str, Any]]:
+        """
+        Construye la información de cada nivel del árbol de recursión.
+        
+        Args:
+            a: Número de subproblemas
+            b: Factor de reducción
+            f_n: Función f(n) (LaTeX)
+            n0: Caso base
+            
+        Returns:
+            Lista de diccionarios con información de cada nivel
+        """
+        levels = []
+        
+        # Calcular número máximo de niveles (hasta llegar al caso base)
+        # h ≈ log_b(n), pero generamos suficientes niveles para llenar el modal
+        max_levels = 10  # Generar 10 niveles para visualización
+        
+        # Detectar si f(n) es constante para simplificar notación
+        f_simplified = f_n.strip().lower()
+        is_constant = f_simplified == "1" or f_simplified == "c" or f_simplified.replace(" ", "") == "c_1"
+        
+        for i in range(max_levels + 1):
+            # Número de nodos en el nivel i: a^i
+            num_nodes = a ** i
+            num_nodes_latex = f"{a}^{i}" if i > 0 else "1"
+            
+            # Tamaño del subproblema en el nivel i: n/b^i
+            if i == 0:
+                subproblem_size_latex = "n"
+            else:
+                b_str = self._simplify_number_latex(b)
+                subproblem_size_latex = f"n/{b_str}^{i}"
+            
+            # Costo por nodo: f(n/b^i)
+            # Si f(n) es constante, no usar notación de evaluación
+            if is_constant:
+                cost_per_node_latex = f_n
+            elif i == 0:
+                cost_per_node_latex = f_n
+            else:
+                b_str = self._simplify_number_latex(b)
+                cost_per_node_latex = f"{f_n}|_{{n/{b_str}^{i}}}"
+            
+            # Costo total del nivel: a^i · f(n/b^i)
+            # Si f(n) es constante, simplificar a^i · c
+            if is_constant:
+                if i == 0:
+                    total_cost_latex = f_n
+                else:
+                    total_cost_latex = f"{a}^{i} \\cdot {f_n}"
+            elif i == 0:
+                total_cost_latex = f_n
+            else:
+                b_str = self._simplify_number_latex(b)
+                total_cost_latex = f"{a}^{i} \\cdot {f_n}|_{{n/{b_str}^{i}}}"
+            
+            levels.append({
+                "level": i,
+                "num_nodes": num_nodes,
+                "num_nodes_latex": num_nodes_latex,
+                "subproblem_size_latex": subproblem_size_latex,
+                "cost_per_node_latex": cost_per_node_latex,
+                "total_cost_latex": total_cost_latex
+            })
+        
+        return levels
+    
+    def _calculate_tree_sum(self, levels: List[Dict[str, Any]], a: int, b: float, f_n: str) -> Dict[str, str]:
+        """
+        Calcula la sumatoria de costos por niveles.
+        
+        Args:
+            levels: Lista de niveles del árbol
+            a: Número de subproblemas
+            b: Factor de reducción
+            f_n: Función f(n)
+            
+        Returns:
+            {"expression": str, "evaluated": str, "theta": str}
+        """
+        b_str = self._simplify_number_latex(b)
+        height_expr = f"\\log_{{{b_str}}}(n)"
+        
+        # Evaluar según el tipo de f(n)
+        f_simplified = f_n.strip().lower()
+        
+        # Construir expresión de la sumatoria (simplificar si f(n) es constante)
+        if f_simplified == "1" or f_simplified == "c" or f_simplified.replace(" ", "") == "c_1":
+            # Si f(n) es constante, no usar notación de evaluación
+            expression = f"\\sum_{{i=0}}^{{{height_expr}}} {a}^i \\cdot {f_n}"
+        else:
+            expression = f"\\sum_{{i=0}}^{{{height_expr}}} {a}^i \\cdot {f_n}|_{{n/{b_str}^i}}"
+        
+        # Caso 1: f(n) = constante (1, c)
+        if f_simplified == "1" or f_simplified == "c" or f_simplified.replace(" ", "") == "c_1":
+            # Σ a^i · c = c · Σ a^i = c · (a^(log_b(n)+1) - 1)/(a - 1)
+            # Si a = b, entonces: Σ a^i = Σ 1^i = log_b(n) + 1 ≈ log_b(n)
+            # Pero el costo real es: Σ a^i = (a^(log_b(n)+1) - 1)/(a - 1)
+            # Si a = b: Σ b^i = (b^(log_b(n)+1) - 1)/(b - 1) = (b·n - 1)/(b - 1) ≈ n
+            if a == int(b):
+                # Suma geométrica: Σ b^i desde i=0 hasta log_b(n) = (b^(log_b(n)+1) - 1)/(b - 1) = (b·n - 1)/(b - 1) = Θ(n)
+                evaluated = f"{f_n} \\cdot \\sum_{{i=0}}^{{{height_expr}}} {a}^i = {f_n} \\cdot \\frac{{{a}^{{\\log_{{{b_str}}}(n)+1}} - 1}}{{{a} - 1}} = {f_n} \\cdot \\frac{{{a} \\cdot n - 1}}{{{a} - 1}}"
+                theta = f"\\Theta(n)"
+            else:
+                # Si a ≠ b, el término dominante es a^log_b(n) = n^log_b(a)
+                evaluated = f"{f_n} \\cdot \\sum_{{i=0}}^{{{height_expr}}} {a}^i = {f_n} \\cdot \\frac{{{a}^{{\\log_{{{b_str}}}(n)+1}} - 1}}{{{a} - 1}} \\approx {f_n} \\cdot n^{{\\log_{{{b_str}}} {a}}}"
+                theta = f"\\Theta(n^{{\\log_{{{b_str}}} {a}}})"
+        
+        # Caso 2: f(n) = n (lineal)
+        elif f_simplified == "n" or "n" in f_simplified and "^" not in f_simplified:
+            # Σ a^i · (n/b^i) = n · Σ (a/b)^i
+            # Si a = b, entonces Σ 1^i = log_b(n), entonces T(n) = n·log_b(n)
+            if a == int(b):
+                evaluated = f"n \\cdot \\sum_{{i=0}}^{{{height_expr}}} 1 = n \\cdot {height_expr}"
+                theta = f"\\Theta(n \\log n)"
+            # Si a < b, la suma converge: n · (1 - (a/b)^(log_b(n)+1))/(1 - a/b) ≈ n
+            elif a < b:
+                evaluated = f"n \\cdot \\sum_{{i=0}}^{{{height_expr}}} ({a}/{b_str})^i \\approx n"
+                theta = f"\\Theta(n)"
+            # Si a > b, domina el último nivel: n · (a/b)^(log_b(n)) ≈ n · a^log_b(n) / b^log_b(n) = n^log_b(a)
+            else:
+                evaluated = f"n \\cdot \\sum_{{i=0}}^{{{height_expr}}} ({a}/{b_str})^i \\approx n^{{\\log_{{{b_str}}} {a}}}"
+                theta = f"\\Theta(n^{{\\log_{{{b_str}}} {a}}})"
+        
+        # Caso 3: f(n) = n^2 (cuadrática)
+        elif "^2" in f_simplified or "n^2" in f_simplified:
+            # Similar al caso anterior pero con n^2
+            if a == int(b):
+                evaluated = f"n^2 \\cdot \\sum_{{i=0}}^{{{height_expr}}} ({a}/{b_str}^2)^i \\approx n^2"
+                theta = f"\\Theta(n^2)"
+            else:
+                evaluated = f"n^2 \\cdot \\sum_{{i=0}}^{{{height_expr}}} ({a}/{b_str}^2)^i"
+                theta = f"\\Theta(n^2)"
+        
+        # Caso por defecto: usar expresión general
+        else:
+            evaluated = expression
+            theta = f"\\Theta({f_n} \\cdot n^{{\\log_{{{b_str}}} {a}}})"
+        
+        return {
+            "expression": expression,
+            "evaluated": evaluated,
+            "theta": theta
+        }
+    
+    def _identify_dominating_level(self, levels: List[Dict[str, Any]], a: int, b: float, f_n: str) -> Dict[str, Any]:
+        """
+        Identifica qué nivel del árbol domina el costo total.
+        
+        Args:
+            levels: Lista de niveles del árbol
+            a: Número de subproblemas
+            b: Factor de reducción
+            f_n: Función f(n)
+            
+        Returns:
+            {"level": int|str, "reason": str}
+        """
+        f_simplified = f_n.strip().lower()
+        
+        # Comparar n^log_b(a) con f(n)
+        # Si f(n) = O(n^log_b(a) - ε), entonces dominan las hojas (caso 1)
+        # Si f(n) = Θ(n^log_b(a)), entonces trabajo equilibrado (caso 2)
+        # Si f(n) = Ω(n^log_b(a) + ε), entonces domina la raíz (caso 3)
+        
+        b_str = self._simplify_number_latex(b)
+        nlogba = f"n^{{\\log_{{{b_str}}} {a}}}"
+        height_expr = f"\\log_{{{b_str}}}(n)"
+        
+        # Caso: f(n) = constante
+        if f_simplified == "1" or f_simplified == "c" or f_simplified.replace(" ", "") == "c_1":
+            if a == int(b):
+                # Cuando a=b y f(n)=constante, cada nivel tiene costo a^i·c
+                # El nivel i tiene costo 3^i·c, así que los niveles más profundos tienen mayor costo
+                # Pero el costo total es Θ(n) debido a la suma geométrica
+                return {"level": "leaves", "reason": f"{a}^{{i}} \\text{{ (cada nodo tiene costo }} {f_n} \\text{{)}} \\\\ \\text{{Último nivel tiene costo }} \\Theta(n)"}
+            else:
+                if a > b:
+                    return {"level": "leaves", "reason": f"\\text{{Trabajo en hojas }} {nlogba} \\\\ \\text{{Trabajo en raíz }} {f_n}"}
+                else:
+                    return {"level": "root", "reason": f"\\text{{Trabajo en raíz }} {f_n} \\\\ \\text{{Trabajo en hojas (}} a < b \\text{{)}}"}
+        
+        # Caso: f(n) = n
+        elif f_simplified == "n":
+            if a == int(b):
+                return {"level": "all", "reason": f"\\text{{Cada nivel tiene costo }} n \\\\ \\text{{Total }} = n \\cdot \\log n"}
+            elif a < b:
+                return {"level": "root", "reason": f"\\text{{Trabajo en raíz }} {f_n} \\\\ \\text{{Trabajo en hojas}}"}
+            else:
+                return {"level": "leaves", "reason": f"\\text{{Trabajo en hojas }} {nlogba} \\\\ \\text{{Trabajo en raíz }} {f_n}"}
+        
+        # Caso por defecto
+        else:
+            return {"level": "unknown", "reason": f"\\text{{Depende de la relación entre }} {f_n} \\text{{ y }} {nlogba}"}
 

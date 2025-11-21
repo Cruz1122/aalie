@@ -30,6 +30,19 @@ interface RecursionTreeModalProps {
     f: string;
     n0: number;
   } | null | undefined;
+  recursionTreeData?: {
+    method: "recursion_tree";
+    levels?: Array<{
+      level: number;
+      num_nodes: number;
+      num_nodes_latex: string;
+      subproblem_size_latex: string;
+      cost_per_node_latex: string;
+      total_cost_latex: string;
+    }>;
+    height?: string;
+    theta?: string;
+  } | null | undefined;
 }
 
 interface TreeNodeData {
@@ -141,6 +154,7 @@ export default function RecursionTreeModal({
   open,
   onClose,
   recurrence,
+  recursionTreeData,
 }: Readonly<RecursionTreeModalProps>) {
   const [maxDepth, setMaxDepth] = useState<number | null>(null);
   const [orientation, setOrientation] = useState<"vertical" | "horizontal">("vertical");

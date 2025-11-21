@@ -55,6 +55,9 @@ export const JOB_CONFIG = {
  - Punto y coma al final de cada sentencia (excepto después de END)
  - Incremento: x <- x + 1
 - Operadores: =, <>, <, >, <=, >=, AND, OR
+- ⚠️ OPERADOR MÓDULO: usar MOD, NO usar % (ej: IF (n MOD 2 = 0) THEN ... NO IF (n % 2 = 0))
+- ⚠️ DIVISIÓN ENTERA: usar DIV (ej: exponente DIV 2, NO exponente / 2 para división entera)
+- DIVISIÓN REAL: usar / (ej: (izq + der) / 2)
 - Cadenas: usa comillas dobles " (ej. "Listo", "Total: " + n); escapa comillas internas como \"
 - Return: RETURN siempre debe retornar un valor; PROHIBIDO usar RETURN solo (ej: RETURN resultado; NO RETURN;)
  
@@ -74,6 +77,13 @@ export const JOB_CONFIG = {
     CORRECTO: FOR i <- 1 TO n DO { ... }
     INCORRECTO: FOR i <- 1 TO n { ... } (FALTA DO - ERROR DE SINTAXIS)
  
+ ⚠️ REGLA CRÍTICA 3: OPERADORES ARITMÉTICOS
+    - MÓDULO: usar MOD (ej: n MOD 2 = 0), PROHIBIDO usar % (NO n % 2)
+    - DIVISIÓN ENTERA: usar DIV (ej: exponente DIV 2), NO usar / para división entera
+    - DIVISIÓN REAL: usar / (ej: (izq + der) / 2)
+    - EJEMPLO CORRECTO: IF (exponente MOD 2 = 0) THEN BEGIN ... END
+    - EJEMPLO INCORRECTO: IF (exponente % 2 = 0) THEN BEGIN ... END (ERROR: % no existe)
+ 
 VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  - NO incluir prefijos como ALGORITMO/PROCEDURE/PROGRAM en las definiciones; las funciones/algoritmos NO inician con prefijo.
  - NO usar tipos ni prefijos en variables (NO int, string, var, etc.); las variables se asignan directamente sin declaración de tipo.
@@ -82,6 +92,8 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
 - ⚠️ Verifica que TODOS los IF tengan BEGIN/END o llaves después de THEN y ELSE (IF (cond) THEN BEGIN ... END, NO IF (cond) THEN ...)
 - ⚠️ Verifica que TODOS los WHILE tengan DO antes del bloque (WHILE (cond) DO { ... }, NO WHILE (cond) { ... })
 - ⚠️ Verifica que TODOS los FOR tengan DO antes del bloque (FOR var <- inicio TO fin DO { ... }, NO FOR var <- inicio TO fin { ... })
+- ⚠️ Verifica que NO se use % para módulo; usar MOD (ej: n MOD 2, NO n % 2)
+- ⚠️ Verifica que para división entera se use DIV (ej: n DIV 2, NO n / 2 cuando se requiere división entera)
 - Verifica paréntesis en IF/WHILE y llaves/BEGIN-END en THEN/ELSE/DO.
 - Revisa que cada sentencia termine en ';' y que no haya sintaxis de otros lenguajes.
 - RETURN siempre debe retornar un valor; verifica que no haya RETURN sin valor (RETURN; está prohibido, debe ser RETURN valor;).
@@ -138,6 +150,8 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  - Arrays base 1: A[1]..A[n]
  - Punto y coma al final de cada sentencia (excepto después de END)
  - Operadores: =, <>, <, >, <=, >=, AND, OR
+ - ⚠️ OPERADOR MÓDULO: usar MOD, NO usar % (ej: IF (n MOD 2 = 0) THEN ... NO IF (n % 2 = 0))
+ - ⚠️ DIVISIÓN ENTERA: usar DIV (ej: exponente DIV 2, NO exponente / 2 para división entera)
  
  ⚠️ REGLA CRÍTICA 1: IF SIEMPRE requiere BEGIN...END o llaves { } después de THEN y ELSE.
     CORRECTO: IF (n <= 1) THEN BEGIN RETURN 1; END ELSE BEGIN ... END
@@ -154,6 +168,13 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
     CORRECTO: FOR i <- 1 TO n DO BEGIN ... END
     CORRECTO: FOR i <- 1 TO n DO { ... }
     INCORRECTO: FOR i <- 1 TO n { ... } (FALTA DO)
+ 
+ ⚠️ REGLA CRÍTICA 3: OPERADORES ARITMÉTICOS
+    - MÓDULO: usar MOD (ej: n MOD 2 = 0), PROHIBIDO usar % (NO n % 2)
+    - DIVISIÓN ENTERA: usar DIV (ej: exponente DIV 2), NO usar / para división entera
+    - DIVISIÓN REAL: usar / (ej: (izq + der) / 2)
+    - EJEMPLO CORRECTO: IF (exponente MOD 2 = 0) THEN BEGIN ... END
+    - EJEMPLO INCORRECTO: IF (exponente % 2 = 0) THEN BEGIN ... END (ERROR: % no existe)
  
  ESTILO DE RESPUESTA
  - NO saludes en cada respuesta; solo saluda en la primera interacción si no hay historial previo.

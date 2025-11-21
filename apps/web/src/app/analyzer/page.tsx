@@ -231,7 +231,7 @@ export default function AnalyzerPage() {
         await animateProgress(50, 65, 400, setAnalysisProgress);
         setAnalysisMessage("Normalizando recurrencia...");
         await animateProgress(65, 75, 300, setAnalysisProgress);
-        setAnalysisMessage("Aplicando Teorema Maestro...");
+        setAnalysisMessage("Detectando método de análisis...");
         await animateProgress(75, 85, 500, setAnalysisProgress);
         // Añadir transición suave antes de iniciar el análisis real
         setAnalysisMessage("Iniciando análisis de complejidad...");
@@ -324,7 +324,24 @@ export default function AnalyzerPage() {
         return;
       }
 
-      // 6) Actualizar los datos con todos los casos (worst, best y avg si está disponible)
+      // 6) Detectar el método usado y actualizar mensaje
+      let detectedMethod = "método recursivo";
+      if (isRecursive && analyzeRes.worst?.totals?.recurrence) {
+        const method = analyzeRes.worst.totals.recurrence.method || analyzeRes.best?.totals?.recurrence?.method;
+        if (method === "iteration") {
+          detectedMethod = "Método de Iteración";
+          setAnalysisMessage("Aplicando Método de Iteración...");
+        } else if (method === "recursion_tree") {
+          detectedMethod = "Método de Árbol de Recursión";
+          setAnalysisMessage("Aplicando Método de Árbol de Recursión...");
+        } else {
+          detectedMethod = "Teorema Maestro";
+          setAnalysisMessage("Aplicando Teorema Maestro...");
+        }
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+      
+      // Actualizar los datos con todos los casos (worst, best y avg si está disponible)
       setData({ 
         worst: analyzeRes.worst, 
         best: analyzeRes.best,
@@ -348,15 +365,18 @@ export default function AnalyzerPage() {
       // Debug: verificar que el tipo de algoritmo sea correcto
       console.log('[Analyzer] Datos actualizados:', {
         algorithmType: algorithmType || "recursive (detectado desde datos)",
+        method: detectedMethod,
         hasWorst: !!analyzeRes.worst,
         hasBest: !!analyzeRes.best,
         hasAvg: !!analyzeRes.avg,
         worstHasRecurrence: !!analyzeRes.worst?.totals?.recurrence,
-        worstHasMaster: !!analyzeRes.worst?.totals?.master
+        worstHasMaster: !!analyzeRes.worst?.totals?.master,
+        worstHasIteration: !!analyzeRes.worst?.totals?.iteration,
+        worstHasRecursionTree: !!analyzeRes.worst?.totals?.recursion_tree
       });
 
       // 7) Mostrar completado y cerrar de forma suave
-      setAnalysisMessage("Análisis completo");
+      setAnalysisMessage(`Análisis completo con ${detectedMethod}`);
       setIsAnalysisComplete(true);
       
       // Animar a 100% antes de cerrar

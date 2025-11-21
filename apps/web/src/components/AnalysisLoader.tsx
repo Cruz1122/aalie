@@ -148,7 +148,7 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
           <div className="text-center">
             {(algorithmType === "recursive" || algorithmType === "hybrid") ? (
               <p className="text-xs text-slate-400">
-                Analizando recurrencia con Teorema Maestro...
+                Analizando recurrencia...
               </p>
             ) : (
               <p className="text-xs text-slate-400">

@@ -270,7 +270,7 @@ export interface AnalyzeOpenResponse {
       n0: number;                   // umbral base
       applicable: boolean;          // si es aplicable el método
       notes: string[];              // notas sobre redondeos, dominio, etc.
-      method?: "master" | "iteration";  // método usado (Teorema Maestro o Método de Iteración)
+      method?: "master" | "iteration" | "recursion_tree";  // método usado (Teorema Maestro, Método de Iteración o Árbol de Recursión)
     };
     master?: {                      // resultado del Teorema Maestro
       case: 1 | 2 | 3 | null;      // caso aplicado (1, 2, 3) o null si no aplicable
@@ -295,6 +295,35 @@ export interface AnalyzeOpenResponse {
         expression: string;         // expresión de la sumatoria (LaTeX)
         evaluated: string;          // resultado evaluado (LaTeX)
       };
+      theta: string;                // resultado final Θ(...) en LaTeX
+    };
+    recursion_tree?: {              // resultado del Método de Árbol de Recursión
+      method: "recursion_tree";     // identificador del método
+      levels: Array<{               // información de cada nivel del árbol
+        level: number;              // índice del nivel (0 = raíz)
+        num_nodes: number;          // número de nodos en el nivel (a^i)
+        num_nodes_latex: string;    // número de nodos en LaTeX
+        subproblem_size_latex: string;  // tamaño del subproblema en LaTeX (n/b^i)
+        cost_per_node_latex: string;    // costo por nodo en LaTeX (f(n/b^i))
+        total_cost_latex: string;       // costo total del nivel en LaTeX (a^i · f(n/b^i))
+      }>;
+      height: string;               // altura del árbol en LaTeX (log_b(n))
+      summation: {                  // evaluación de la sumatoria
+        expression: string;         // expresión de la sumatoria (LaTeX)
+        evaluated: string;          // resultado evaluado (LaTeX)
+        theta: string;              // resultado final en notación Θ
+      };
+      dominating_level: {           // nivel dominante
+        level: string | number;     // nivel que domina ("root", "leaves", "all", o número)
+        reason: string;             // razón de por qué ese nivel domina
+      };
+      table_by_levels: Array<{      // tabla para UI
+        level: number;              // índice del nivel
+        num_nodes: string;          // número de nodos en LaTeX
+        subproblem_size: string;    // tamaño del subproblema en LaTeX
+        cost_per_node: string;      // costo por nodo en LaTeX
+        total_cost: string;         // costo total del nivel en LaTeX
+      }>;
       theta: string;                // resultado final Θ(...) en LaTeX
     };
     proof?: Array<{                 // pasos de prueba del análisis
