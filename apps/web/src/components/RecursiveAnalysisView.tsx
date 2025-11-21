@@ -187,15 +187,15 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
           theta={theta || T_open}
         />
       ) : (
-        <RecursiveProcedureModal
-          open={showProcedureModal}
-          onClose={() => setShowProcedureModal(false)}
-          data={worstData || bestData || avgData}
-          recurrence={recurrence}
-          master={master}
-          proof={proof}
-          theta={theta || T_open}
-        />
+      <RecursiveProcedureModal
+        open={showProcedureModal}
+        onClose={() => setShowProcedureModal(false)}
+        data={worstData || bestData || avgData}
+        recurrence={recurrence}
+        master={master}
+        proof={proof}
+        theta={theta || T_open}
+      />
       )}
 
       {/* Modal del árbol de recursión */}

@@ -560,6 +560,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
             if b_value and b_value >= 2:  # Asegurar que b >= 2
                 return {"b": b_value, "offset": 0}
         
+        # Estrategia 5: Detectar tamaños variables por reducción de rango
+        # Para casos como QuickSort: quicksort(A, izq, pi-1) y quicksort(A, pi+1, der)
+        # Los tamaños son variables pero sugerir divide-and-conquer con b=2 (mejor caso)
+        # o inferir peor caso si hay patrones de decrease-and-conquer
+        b_value = self._detect_variable_size_reduction(args, params, proc_def)
+        if b_value and b_value >= 2:
+            return {"b": b_value, "offset": 0}
+        
         return None
     
     def _detect_indirect_division(self, body: Any, args: List[Any], params: List[Any]) -> Optional[float]:
@@ -860,6 +868,57 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     return True
         
         return False
+    
+    def _detect_variable_size_reduction(self, args: List[Any], params: List[Any], proc_def: Dict[str, Any]) -> Optional[float]:
+        """
+        Detecta reducción de tamaño variable para casos como QuickSort.
+        
+        Para QuickSort: quicksort(A, izq, pi-1) y quicksort(A, pi+1, der)
+        Los tamaños son variables pero podemos inferir divide-and-conquer con b=2
+        (mejor caso) basándonos en que hay dos llamadas recursivas.
+        
+        Args:
+            args: Argumentos de la llamada recursiva
+            params: Parámetros del procedimiento
+            proc_def: Nodo ProcDef
+            
+        Returns:
+            Factor b estimado (típicamente 2 para divide-and-conquer) o None
+        """
+        if not args or not params:
+            return None
+        
+        # Para QuickSort y algoritmos similares, los argumentos suelen ser:
+        # - Primer argumento: el mismo array/estructura
+        # - Argumentos siguientes: expresiones aritméticas que reducen el rango
+        
+        # Verificar si los argumentos son expresiones aritméticas (resta/suma)
+        # que sugieren división del rango
+        has_arithmetic_expressions = False
+        for i, arg in enumerate(args):
+            if i == 0:
+                continue  # Saltar el primer argumento (array/estructura)
+            
+            if isinstance(arg, dict):
+                arg_type = arg.get("type", "").lower()
+                if arg_type == "binary":
+                    op = arg.get("op", "")
+                    # Si hay expresiones con + o -, sugiere manipulación del rango
+                    if op in ["+", "-"]:
+                        has_arithmetic_expressions = True
+                        break
+        
+        # Si encontramos expresiones aritméticas que modifican el rango,
+        # y el procedimiento tiene múltiples llamadas recursivas,
+        # inferir que es divide-and-conquer con b=2 (mejor caso común)
+        if has_arithmetic_expressions:
+            # Verificar si hay múltiples llamadas recursivas (divide-and-conquer)
+            recursive_calls = self._find_recursive_calls(proc_def)
+            if len(recursive_calls) >= 2:
+                # QuickSort y algoritmos similares típicamente dividen por 2
+                return 2.0
+        
+        return None
     
     def _extract_floor_ceil_division(self, expr: Any) -> Optional[float]:
         """

@@ -783,10 +783,12 @@ El AST generado incluye:
    ```
    ✅ RETURN factorial(n - 1);
    ✅ resultado <- fibonacci(n - 1) + fibonacci(n - 2);
+   ✅ quicksort(A, izq, pi - 1);  // Como statement directo, sin CALL
    ❌ RETURN CALL factorial(n - 1);
    ❌ resultado <- CALL fibonacci(n - 1) + CALL fibonacci(n - 2);
+   ❌ CALL quicksort(A, izq, pi - 1);  // INCORRECTO para recursivas
    ```
-   Las llamadas recursivas siempre se hacen como expresiones (en RETURN, asignaciones, etc.), sin usar la palabra clave CALL.
+   Las llamadas recursivas siempre se hacen como expresiones (en RETURN, asignaciones, etc.) o directamente como statements sin CALL. Solo usa CALL para funciones auxiliares no recursivas.
 
 5. **Arrays pueden usar literales en rangos**
    ```
