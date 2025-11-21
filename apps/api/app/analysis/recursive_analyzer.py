@@ -15,6 +15,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
     def __init__(self):
         super().__init__()
         self.procedure_name: Optional[str] = None
+        self.proc_def: Optional[Dict[str, Any]] = None
+        self.ast: Optional[Dict[str, Any]] = None  # Guardar AST completo para buscar funciones auxiliares
         self.recurrence: Optional[Dict[str, Any]] = None
         self.master: Optional[Dict[str, Any]] = None
         self.iteration: Optional[Dict[str, Any]] = None
@@ -42,6 +44,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Limpiar estado previo
         self.clear()
         self.mode = mode
+        self.ast = ast  # Guardar AST completo
         
         # 1. Encontrar el procedimiento principal
         proc_def = self._find_main_procedure(ast)
@@ -51,6 +54,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "errors": [{"message": "No se encontró un procedimiento principal", "line": None, "column": None}]
             }
         
+        self.proc_def = proc_def  # Guardar para uso posterior
         self.procedure_name = proc_def.get("name")
         
         # 2. Validar condiciones iniciales (divide-and-conquer canónico)
@@ -132,6 +136,28 @@ class RecursiveAnalyzer(BaseAnalyzer):
         for item in body:
             if isinstance(item, dict) and item.get("type") == "ProcDef":
                 return item
+        
+        return None
+    
+    def _find_procedure_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+        """
+        Encuentra un procedimiento por su nombre en el AST.
+        
+        Args:
+            name: Nombre del procedimiento a buscar
+            
+        Returns:
+            Nodo ProcDef del procedimiento o None
+        """
+        if not self.ast or not isinstance(self.ast, dict):
+            return None
+        
+        body = self.ast.get("body", [])
+        for item in body:
+            if isinstance(item, dict) and item.get("type") == "ProcDef":
+                proc_name = item.get("name", "")
+                if proc_name and proc_name.lower() == name.lower():
+                    return item
         
         return None
     
@@ -1091,11 +1117,22 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         node_type = node.get("type", "")
         
-        # Excluir llamadas recursivas
+        # Manejar llamadas a funciones
         if node_type == "Call":
             call_name = node.get("name") or node.get("callee", "")
-            if call_name and call_name.lower() == (self.procedure_name or "").lower():
-                return "0"  # No cuenta trabajo recursivo
+            if call_name:
+                # Si es recursiva, no cuenta trabajo
+                if call_name.lower() == (self.procedure_name or "").lower():
+                    return "0"  # No cuenta trabajo recursivo
+                # Si es una función auxiliar, buscar su definición y analizar su complejidad
+                else:
+                    aux_proc = self._find_procedure_by_name(call_name)
+                    if aux_proc:
+                        # Analizar la complejidad de la función auxiliar
+                        aux_complexity = self._analyze_work_complexity(aux_proc.get("body", {}), recursive_calls)
+                        return aux_complexity
+                    # Si no se encuentra la definición, asumir O(1) por defecto
+                    return "1"
         
         max_complexity = "1"  # Por defecto, constante
         
@@ -1110,6 +1147,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 max_complexity = "n"
             else:
                 max_complexity = "1"
+        
+        # Buscar bucles WHILE y REPEAT
+        if node_type in ["While", "Repeat"]:
+            # Si hay un bucle WHILE/REPEAT, probablemente itera sobre alguna variable
+            # Si la condición incluye comparaciones con parámetros (como medio, fin, n, etc.), es O(n)
+            test = node.get("test", {}) or node.get("condition", {})
+            if self._while_depends_on_size(test):
+                max_complexity = "n"
         
         # Buscar bucles anidados
         if node_type in ["For", "While", "Repeat"]:
@@ -1161,6 +1206,56 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 name = end.get("name", "").lower()
                 if name in ["der", "right", "end", "n", "size", "length"]:
                     return True
+        
+        return False
+    
+    def _while_depends_on_size(self, test: Any) -> bool:
+        """
+        Verifica si un bucle WHILE/REPEAT depende de variables de tamaño.
+        
+        Args:
+            test: Condición del bucle (test o condition)
+            
+        Returns:
+            True si la condición depende de variables de tamaño (medio, fin, n, etc.)
+        """
+        if not isinstance(test, dict):
+            return False
+        
+        node_type = test.get("type", "").lower()
+        
+        # Si es una comparación binaria (<=, <, >=, >, =, etc.)
+        if node_type in ["binary", "binaryop"]:
+            left = test.get("left", {})
+            right = test.get("right", {})
+            
+            # Verificar si alguno de los lados es un parámetro de tamaño
+            size_params = ["medio", "fin", "end", "n", "size", "length", "inicio", "start"]
+            
+            def is_size_param(node):
+                if not isinstance(node, dict):
+                    return False
+                if node.get("type", "").lower() == "identifier":
+                    name = node.get("name", "").lower()
+                    return name in size_params
+                return False
+            
+            if is_size_param(left) or is_size_param(right):
+                return True
+            
+            # Verificar recursivamente en expresiones compuestas
+            if isinstance(left, dict):
+                if self._while_depends_on_size(left):
+                    return True
+            if isinstance(right, dict):
+                if self._while_depends_on_size(right):
+                    return True
+        
+        # Si es una operación lógica (AND, OR), verificar ambos lados
+        if node_type in ["logical", "logicalop"]:
+            left = test.get("left", {})
+            right = test.get("right", {})
+            return self._while_depends_on_size(left) or self._while_depends_on_size(right)
         
         return False
     
@@ -1422,6 +1517,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
         b = self.recurrence["b"]
         f_n_str = self.recurrence["f"]
         
+        # Detectar si hay un return temprano (mejor caso O(1))
+        has_early_return = self._detect_early_return()
+        
         # Calcular g(n) = n^(log_b a)
         log_b_a = math.log(a, b) if b > 1 else 1
         n_sym = Symbol("n", integer=True, positive=True)
@@ -1458,23 +1556,252 @@ class RecursiveAnalyzer(BaseAnalyzer):
             regularity_result = self._check_regularity(a, b, f_n_str)
             regularity = regularity_result
         
-        # Calcular theta
-        theta = self._calculate_theta(case, g_n_expr, f_n_str, log_b_a)
+        # Calcular theta (worst/average case)
+        theta_worst_avg = self._calculate_theta(case, g_n_expr, f_n_str, log_b_a)
+        
+        # Calcular mejor caso: siempre usar O (big-O) en lugar de Θ para best case
+        # Si hay return temprano, es O(1), sino es O del mismo valor que worst/average
+        if has_early_return:
+            theta_best = "O(1)"
+            self.proof_steps.append({"id": "best_case", "text": "\\text{Mejor caso: } O(1) \\text{ (return temprano detectado)}"})
+        else:
+            # Convertir Θ(...) a O(...) para best case
+            # Reemplazar \Theta por O en la expresión LaTeX
+            theta_best = theta_worst_avg.replace("\\Theta", "O")
+            best_case_text = f"\\text{{Mejor caso: }} {theta_best}"
+            self.proof_steps.append({"id": "best_case", "text": best_case_text})
         
         master = {
             "case": case,
             "nlogba": nlogba,
             "comparison": comparison,
             "regularity": regularity,
-            "theta": theta
+            "theta": theta_worst_avg,
+            "theta_best": theta_best,
+            "has_early_return": has_early_return
         }
         
-        self.proof_steps.append({"id": "conclude", "text": f"\\text{{Caso }} {case} \\Rightarrow T(n) = {theta}"})
+        self.proof_steps.append({"id": "conclude", "text": f"\\text{{Caso }} {case} \\Rightarrow T(n) = {theta_worst_avg}"})
+        if has_early_return:
+            # theta_best ya contiene "O(1)", no necesitamos agregar otro "O"
+            self.proof_steps.append({"id": "conclude_best", "text": f"\\text{{Mejor caso: }} T(n) = {theta_best}"})
         
         return {
             "success": True,
             "master": master
         }
+    
+    def _detect_early_return(self) -> bool:
+        """
+        Detecta si hay un return temprano antes de las llamadas recursivas.
+        
+        Un return temprano hace que el mejor caso sea O(1).
+        Ejemplo: En búsqueda binaria, si el elemento está en el medio, se retorna O(1).
+        
+        Returns:
+            True si hay un return temprano detectado
+        """
+        proc_def = self.proc_def  # Usar el proc_def guardado
+        if not proc_def:
+            return False
+        
+        body = proc_def.get("body", {}) or proc_def.get("block", {})
+        recursive_calls = self._find_recursive_calls(proc_def)
+        
+        if not recursive_calls:
+            return False
+        
+        # Si body es un Block, obtener su lista de statements
+        statements_list = None
+        if isinstance(body, dict) and body.get("type") == "Block":
+            statements_list = body.get("body", []) or body.get("statements", [])
+        elif isinstance(body, list):
+            statements_list = body
+        
+        # Buscar returns que estén antes de cualquier llamada recursiva en el flujo de control
+        # Esto buscará en todo el body, incluyendo estructuras anidadas como IFs
+        return self._has_return_before_recursive_calls(body, recursive_calls)
+    
+    def _has_return_before_recursive_calls(self, node: Any, recursive_calls: List[Dict[str, Any]]) -> bool:
+        """
+        Verifica si hay un return antes de las llamadas recursivas en el flujo de control.
+        
+        Patrón común: IF condición THEN RETURN valor; ELSE llamadas_recursivas
+        
+        Args:
+            node: Nodo del AST
+            recursive_calls: Lista de llamadas recursivas
+            
+        Returns:
+            True si hay un return antes de las llamadas recursivas
+        """
+        if not isinstance(node, dict):
+            return False
+        
+        node_type = node.get("type", "")
+        
+        # Si es un Return, verificar que no contiene llamadas recursivas
+        if node_type == "Return":
+            return not self._contains_recursive_call(node, recursive_calls)
+        
+        # Si es un If, verificar patrón común: return en THEN, recursivas en ELSE
+        if node_type == "If" or node_type == "Conditional":
+            then_body = node.get("then", {}) or node.get("thenBody", {}) or node.get("consequent", {})
+            else_body = node.get("else", {}) or node.get("elseBody", {}) or node.get("alternate", {})
+            
+            # Verificar si en THEN hay return sin recursivas Y en ELSE hay recursivas
+            if then_body and else_body:
+                # Buscar todos los returns en THEN (pueden estar dentro de Blocks)
+                returns_in_then = self._find_return_statements(then_body)
+                
+                # Verificar si alguno de los returns en THEN NO contiene recursivas
+                has_early_return_in_then = False
+                if returns_in_then:
+                    for ret in returns_in_then:
+                        if not self._contains_recursive_call(ret, recursive_calls):
+                            has_early_return_in_then = True
+                            break
+                
+                # Verificar recursivas en ELSE (pueden estar anidadas en otros IFs o dentro de Returns)
+                # IMPORTANTE: Buscar recursivamente, incluso si están dentro de otro IF anidado
+                has_recursive_in_else = self._has_recursive_calls_in_node(else_body)
+                
+                # Patrón clásico: return temprano en THEN, recursivas en ELSE (directas o anidadas)
+                if has_early_return_in_then and has_recursive_in_else:
+                    return True
+        
+        # Si es un Block o Begin, buscar secuencialmente
+        if node_type == "Block" or node_type == "Begin":
+            statements = node.get("statements", []) or node.get("body", [])
+            if isinstance(statements, list):
+                found_early_return = False
+                for stmt in statements:
+                    if not isinstance(stmt, dict):
+                        continue
+                    
+                    # Si es un Return sin recursivas, marcarlo
+                    if stmt.get("type") == "Return":
+                        if not self._contains_recursive_call(stmt, recursive_calls):
+                            found_early_return = True
+                            continue
+                    
+                    # Si es un IF, verificar si tiene el patrón return en THEN, recursivas en ELSE
+                    if stmt.get("type") == "If" or stmt.get("type") == "Conditional":
+                        # Buscar recursivamente en este IF
+                        if self._has_return_before_recursive_calls(stmt, recursive_calls):
+                            return True
+                    
+                    # Si encontramos recursivas después de un return temprano, es válido
+                    if self._has_recursive_calls_in_node(stmt):
+                        if found_early_return:
+                            return True
+                        # Si encontramos recursivas antes de return temprano, continuar buscando
+                
+                # Si hay return temprano pero no encontramos recursivas después en este nivel,
+                # buscar recursivamente en hijos
+                if found_early_return:
+                    # Verificar si hay recursivas en algún lugar después
+                    for stmt in statements:
+                        if self._has_recursive_calls_in_node(stmt):
+                            return True
+                    # Si no hay recursivas visibles aquí, buscar recursivamente
+                    return True  # Hay return temprano, asumir que es válido
+        
+        # Buscar recursivamente en otros nodos
+        # Pero NO en "statements" o "body" si ya los procesamos arriba
+        processed_keys = set()
+        if node_type == "Block" or node_type == "Begin":
+            processed_keys.add("statements")
+            processed_keys.add("body")
+        if node_type == "If" or node_type == "Conditional":
+            processed_keys.add("then")
+            processed_keys.add("thenBody")
+            processed_keys.add("consequent")
+            processed_keys.add("else")
+            processed_keys.add("elseBody")
+            processed_keys.add("alternate")
+        
+        for key, value in node.items():
+            if key in ["type", "pos", "name", "callee"] or key in processed_keys:
+                continue
+            if isinstance(value, list):
+                for item in value:
+                    if self._has_return_before_recursive_calls(item, recursive_calls):
+                        return True
+            elif isinstance(value, dict):
+                if self._has_return_before_recursive_calls(value, recursive_calls):
+                    return True
+        
+        return False
+    
+    def _has_recursive_calls_in_node(self, node: Any) -> bool:
+        """
+        Verifica si un nodo o sus hijos contienen llamadas recursivas.
+        
+        Args:
+            node: Nodo del AST
+            
+        Returns:
+            True si contiene llamadas recursivas
+        """
+        if not isinstance(node, dict):
+            return False
+        
+        node_type = node.get("type", "")
+        
+        if node_type == "Call":
+            call_name = node.get("name") or node.get("callee", "")
+            if call_name and call_name.lower() == (self.procedure_name or "").lower():
+                return True
+        
+        # Buscar recursivamente en TODOS los campos (incluyendo "value" de Return, "args" de Call, etc.)
+        for key, value in node.items():
+            if key in ["type", "pos"]:
+                continue
+            if isinstance(value, list):
+                for item in value:
+                    if self._has_recursive_calls_in_node(item):
+                        return True
+            elif isinstance(value, dict):
+                if self._has_recursive_calls_in_node(value):
+                    return True
+        
+        return False
+    
+    def _contains_recursive_call(self, node: Any, recursive_calls: List[Dict[str, Any]]) -> bool:
+        """
+        Verifica si un nodo contiene alguna llamada recursiva.
+        
+        Args:
+            node: Nodo del AST
+            recursive_calls: Lista de llamadas recursivas
+            
+        Returns:
+            True si contiene una llamada recursiva
+        """
+        if not isinstance(node, dict):
+            return False
+        
+        node_type = node.get("type", "")
+        
+        if node_type == "Call":
+            call_name = node.get("name") or node.get("callee", "")
+            if call_name and call_name.lower() == (self.procedure_name or "").lower():
+                return True
+        
+        # Buscar recursivamente
+        for key, value in node.items():
+            if key in ["type", "pos"]:
+                continue
+            if isinstance(value, list):
+                for item in value:
+                    if self._contains_recursive_call(item, recursive_calls):
+                        return True
+            elif isinstance(value, dict):
+                if self._contains_recursive_call(value, recursive_calls):
+                    return True
+        
+        return False
     
     def _compare_f_with_g(self, f_n_str: str, log_b_a: float) -> Dict[str, Any]:
         """
@@ -1998,13 +2325,18 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Construir byLine básico (puede estar vacío para recursivos)
         by_line = []
         
-        # Determinar T_open según el método usado
+        # Determinar T_open según el método usado y el modo
         if self.iteration:
             t_open = self.iteration.get("theta", "N/A")
         elif self.recursion_tree:
             t_open = self.recursion_tree.get("theta", "N/A")
         elif self.master:
-            t_open = self.master.get("theta", "N/A")
+            # Para master theorem, usar theta_best si mode="best"
+            # Sino usar theta (worst/average)
+            if self.mode == "best":
+                t_open = self.master.get("theta_best", self.master.get("theta", "N/A"))
+            else:
+                t_open = self.master.get("theta", "N/A")
         else:
             t_open = "N/A"
         
@@ -2059,6 +2391,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
         """Limpia todos los datos del analizador."""
         super().clear()
         self.procedure_name = None
+        self.proc_def = None
+        self.ast = None
         self.recurrence = None
         self.master = None
         self.proof = []

@@ -43,6 +43,14 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
   // Detectar método usado
   const isIterationMethod = recurrence?.method === "iteration";
   const isRecursionTreeMethod = recurrence?.method === "recursion_tree";
+  
+  // Obtener T_open para cada caso
+  const bestT = bestData?.totals?.T_open || bestData?.totals?.recursion_tree?.theta || bestData?.totals?.iteration?.theta || bestData?.totals?.master?.theta_best || bestData?.totals?.master?.theta || theta || "N/A";
+  const worstT = worstData?.totals?.T_open || worstData?.totals?.recursion_tree?.theta || worstData?.totals?.iteration?.theta || worstData?.totals?.master?.theta || theta || "N/A";
+  const avgT = avgData?.totals?.T_open || avgData?.totals?.recursion_tree?.theta || avgData?.totals?.iteration?.theta || avgData?.totals?.master?.theta || theta || "N/A";
+  
+  // Detectar si hay diferencias entre los casos
+  const hasDifferentComplexities = bestT !== worstT || bestT !== avgT || worstT !== avgT;
 
   // Debug: log solo una vez cuando cambian los datos
   useEffect(() => {
@@ -204,8 +212,25 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
                 <span className="material-symbols-outlined text-base">functions</span>
                 <span>Ecuación de Eficiencia</span>
               </h3>
-              <div className="bg-slate-800/60 p-3 rounded border border-white/10 flex items-center justify-center overflow-x-auto flex-1 min-h-[120px]">
-                <Formula latex={`T(n) = ${theta || recursionTree.theta || "N/A"}`} display />
+              <div className="bg-slate-800/60 p-3 rounded border border-white/10 flex flex-col items-center justify-center gap-3 overflow-x-auto flex-1 min-h-[120px]">
+                {hasDifferentComplexities ? (
+                  <>
+                    <div className="text-center">
+                      <div className="text-xs text-green-300 mb-1">Mejor caso:</div>
+                      <Formula latex={`T(n) = ${bestT}`} display />
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-yellow-300 mb-1">Caso promedio:</div>
+                      <Formula latex={`T(n) = ${avgT}`} display />
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-red-300 mb-1">Peor caso:</div>
+                      <Formula latex={`T(n) = ${worstT}`} display />
+                    </div>
+                  </>
+                ) : (
+                  <Formula latex={`T(n) = ${theta || recursionTree.theta || worstT || "N/A"}`} display />
+                )}
               </div>
             </div>
           </div>
@@ -216,7 +241,7 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
             <div className="h-full flex flex-col items-center justify-center gap-2">
               <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/30">
                 <div className="scale-110">
-                  <Formula latex={bestData?.totals?.recursion_tree?.theta || bestData?.totals?.iteration?.theta || bestData?.totals?.master?.theta || bestData?.totals?.T_open || theta || "N/A"} />
+                  <Formula latex={bestData?.totals?.T_open || bestData?.totals?.recursion_tree?.theta || bestData?.totals?.iteration?.theta || bestData?.totals?.master?.theta_best || bestData?.totals?.master?.theta || theta || "N/A"} />
                 </div>
               </div>
               <h3 className="font-semibold text-green-300 mb-1">Mejor caso</h3>
@@ -227,7 +252,7 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
             <div className="h-full flex flex-col items-center justify-center gap-2">
               <div className="w-20 h-20 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30">
                 <div className="scale-110">
-                  <Formula latex={avgData?.totals?.recursion_tree?.theta || avgData?.totals?.iteration?.theta || avgData?.totals?.master?.theta || avgData?.totals?.T_open || theta || "N/A"} />
+                  <Formula latex={avgData?.totals?.T_open || avgData?.totals?.recursion_tree?.theta || avgData?.totals?.iteration?.theta || avgData?.totals?.master?.theta || theta || "N/A"} />
                 </div>
               </div>
               <h3 className="font-semibold text-yellow-300 mb-1">Caso promedio</h3>
@@ -238,7 +263,7 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
             <div className="h-full flex flex-col items-center justify-center gap-2">
               <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30">
                 <div className="scale-110">
-                  <Formula latex={worstData?.totals?.recursion_tree?.theta || worstData?.totals?.iteration?.theta || worstData?.totals?.master?.theta || worstData?.totals?.T_open || theta || "N/A"} />
+                  <Formula latex={worstData?.totals?.T_open || worstData?.totals?.recursion_tree?.theta || worstData?.totals?.iteration?.theta || worstData?.totals?.master?.theta || theta || "N/A"} />
                 </div>
               </div>
               <h3 className="font-semibold text-red-300 mb-1">Peor caso</h3>

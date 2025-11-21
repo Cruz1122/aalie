@@ -324,7 +324,6 @@ mezclar(A[n], inicio, medio, fin) BEGIN
     i <- inicio;
     j <- medio + 1;
     k <- 1;
-    temp[n] <- nuevo arreglo;
     WHILE (i <= medio AND j <= fin) DO BEGIN
         IF (A[i] <= A[j]) THEN BEGIN
             temp[k] <- A[i];
@@ -386,10 +385,10 @@ END`,
         RETURN arreglo[inicio];
     END
     ELSE BEGIN
-        tamaño <- fin - inicio;
-        punto1 <- inicio + tamaño DIV 4;
-        punto2 <- inicio + 2 * tamaño DIV 4;
-        punto3 <- inicio + 3 * tamaño DIV 4;
+        tamano <- fin - inicio;
+        punto1 <- inicio + tamano DIV 4;
+        punto2 <- inicio + 2 * tamano DIV 4;
+        punto3 <- inicio + 3 * tamano DIV 4;
         
         resultado1 <- algoritmoCuaternario(arreglo, inicio, punto1);
         resultado2 <- algoritmoCuaternario(arreglo, punto1, punto2);
@@ -407,7 +406,7 @@ END`,
     name: "QuickSort (Ordenamiento Rápido)",
     description:
       "Algoritmo de ordenamiento divide y conquista usando particionamiento. En el mejor caso, analizado con el método de Árbol de Recursión porque T(n) = 2T(n/2) + n con a=2, b=2.",
-    complexity: "O(n log n) promedio, O(n²) peor caso",
+    complexity: "Best: O(n log n), Worst: O(n²), Avg: O(n log n)",
     code: `quicksort(A[n], izq, der) BEGIN
     IF (izq < der) THEN BEGIN
         pivot <- A[der];
@@ -785,7 +784,7 @@ export default function ExamplesPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <h3 className="text-sm font-semibold text-white mb-1 truncate">{example.name}</h3>
-                          <p className="text-[10px] text-slate-400 font-mono">{example.complexity}</p>
+                          <p className="text-[10px] text-slate-400 font-mono break-words">{example.complexity}</p>
                         </div>
                       </div>
 
