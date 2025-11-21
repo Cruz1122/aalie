@@ -261,15 +261,16 @@ export interface AnalyzeOpenResponse {
       note: string;                 // badge del modelo, ej: "uniforme (p=1/2)"
     };
     hypotheses?: string[];          // hipótesis cuando hay símbolos probabilísticos
-    // Análisis recursivo (Teorema Maestro)
-    recurrence?: {                  // recurrencia extraída T(n) = a·T(n/b) + f(n)
-      form: string;                 // forma LaTeX: "T(n) = a T(n/b) + f(n)"
+    // Análisis recursivo (Teorema Maestro o Método de Iteración)
+    recurrence?: {                  // recurrencia extraída T(n) = a·T(n/b) + f(n) o T(n) = T(g(n)) + f(n)
+      form: string;                 // forma LaTeX: "T(n) = a T(n/b) + f(n)" o "T(n) = T(n-1) + f(n)"
       a: number;                    // número de subproblemas
       b: number;                    // factor de reducción (> 1)
       f: string;                    // trabajo no recursivo f(n) (LaTeX)
       n0: number;                   // umbral base
-      applicable: boolean;          // si es aplicable Teorema Maestro
+      applicable: boolean;          // si es aplicable el método
       notes: string[];              // notas sobre redondeos, dominio, etc.
+      method?: "master" | "iteration";  // método usado (Teorema Maestro o Método de Iteración)
     };
     master?: {                      // resultado del Teorema Maestro
       case: 1 | 2 | 3 | null;      // caso aplicado (1, 2, 3) o null si no aplicable
@@ -281,8 +282,23 @@ export interface AnalyzeOpenResponse {
       };
       theta: string | null;         // resultado Θ(...) en LaTeX
     };
+    iteration?: {                   // resultado del Método de Iteración (Unrolling)
+      method: "iteration";          // identificador del método
+      g_function: string;           // función g(n): "n-1", "n/2", etc. (LaTeX)
+      expansions: string[];         // lista de expansiones simbólicas (LaTeX)
+      general_form: string;         // forma general T(n) = T(g^k(n)) + Σ... (LaTeX)
+      base_case: {                  // determinación del caso base
+        condition: string;          // condición g^k(n) = n0 (LaTeX)
+        k: string;                  // expresión para k (LaTeX)
+      };
+      summation: {                  // evaluación de la sumatoria
+        expression: string;         // expresión de la sumatoria (LaTeX)
+        evaluated: string;          // resultado evaluado (LaTeX)
+      };
+      theta: string;                // resultado final Θ(...) en LaTeX
+    };
     proof?: Array<{                 // pasos de prueba del análisis
-      id: string;                   // identificador del paso (extract, critical, compare, etc.)
+      id: string;                   // identificador del paso (extract, critical, compare, iteration_start, etc.)
       text: string;                 // texto del paso en LaTeX
     }>;
     // S4 añadirá: T_closed, proofSteps

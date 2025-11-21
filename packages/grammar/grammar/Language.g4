@@ -86,7 +86,7 @@ repeatStmt     : REPEAT_KW stmt+ UNTIL_KW LPAREN expr RPAREN ';'? ;
 // Return de procedimientos
 returnStmt     : RETURN_KW expr ';' ;
 
-ifStmt         : IF_KW LPAREN expr RPAREN THEN_KW block (ELSE_KW block)? ;
+ifStmt         : IF_KW LPAREN expr RPAREN THEN_KW block (ELSE_KW (ifStmt | block))? ;
 whileStmt      : WHILE_KW LPAREN expr RPAREN DO_KW block ;
 forStmt        : FOR_KW ID ASSIGN expr TO_KW expr DO_KW block ;
 

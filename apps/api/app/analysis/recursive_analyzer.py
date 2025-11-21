@@ -17,6 +17,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         self.procedure_name: Optional[str] = None
         self.recurrence: Optional[Dict[str, Any]] = None
         self.master: Optional[Dict[str, Any]] = None
+        self.iteration: Optional[Dict[str, Any]] = None
         self.proof: List[Dict[str, str]] = []
         self.proof_steps: List[Dict[str, str]] = []
         # Inicializar expr_converter si no está en BaseAnalyzer
@@ -69,22 +70,36 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         self.recurrence = extraction_result["recurrence"]
         
-        # Si no es aplicable Teorema Maestro, retornar error
+        # Si no es aplicable ningún método, retornar error
         if not self.recurrence.get("applicable", False):
             return {
                 "ok": False,
                 "errors": [{"message": f"No aplicable: {self.recurrence.get('notes', ['Razón desconocida'])[0]}", "line": None, "column": None}]
             }
         
-        # 4. Aplicar Teorema Maestro
-        master_result = self._apply_master_theorem()
-        if not master_result["success"]:
-            return {
-                "ok": False,
-                "errors": [{"message": f"Error aplicando Teorema Maestro: {master_result['reason']}", "line": None, "column": None}]
-            }
+        # 4. Aplicar método apropiado (Iteración o Teorema Maestro)
+        method = self.recurrence.get("method", "master")
         
-        self.master = master_result["master"]
+        if method == "iteration":
+            # Aplicar Método de Iteración
+            iteration_result = self._apply_iteration_method()
+            if not iteration_result["success"]:
+                return {
+                    "ok": False,
+                    "errors": [{"message": f"Error aplicando Método de Iteración: {iteration_result['reason']}", "line": None, "column": None}]
+                }
+            
+            self.iteration = iteration_result["iteration"]
+        else:
+            # Aplicar Teorema Maestro
+            master_result = self._apply_master_theorem()
+            if not master_result["success"]:
+                return {
+                    "ok": False,
+                    "errors": [{"message": f"Error aplicando Teorema Maestro: {master_result['reason']}", "line": None, "column": None}]
+                }
+            
+            self.master = master_result["master"]
         
         # 5. Generar resultado
         return self.result()
@@ -208,11 +223,27 @@ class RecursiveAnalyzer(BaseAnalyzer):
         self.proof_steps.append({"id": "extract", "text": f"\\text{{Encontradas }} {len(recursive_calls)} \\text{{ llamadas recursivas}}"})
         
         # 2. Analizar tamaños de subproblemas
+        # Primero intentar con decrease-and-conquer (para método de iteración)
         subproblem_sizes = []
         for call in recursive_calls:
-            size_info = self._analyze_subproblem_size(call, proc_def)
-            if size_info:
-                subproblem_sizes.append(size_info)
+            # Intentar primero detectar decrease-and-conquer (n-1, n-k)
+            subproblem_info = self._analyze_subproblem_type(call, proc_def)
+            if subproblem_info and subproblem_info["type"] in ["subtraction", "division"]:
+                # Para decrease-and-conquer, crear estructura compatible
+                factor = subproblem_info.get("factor", 1)
+                pattern = subproblem_info.get("pattern", "n-1")
+                # Para decrease-and-conquer, no usamos "b" tradicional
+                # En su lugar, almacenamos la información en el subproblem_size
+                subproblem_sizes.append({
+                    "type": subproblem_info["type"],
+                    "pattern": pattern,
+                    "factor": factor
+                })
+            else:
+                # Si no es decrease-and-conquer, intentar divide-and-conquer
+                size_info = self._analyze_subproblem_size(call, proc_def)
+                if size_info:
+                    subproblem_sizes.append(size_info)
         
         if not subproblem_sizes:
             return {
@@ -220,19 +251,38 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "reason": "No se pudieron determinar los tamaños de los subproblemas"
             }
         
-        # 3. Verificar que todos los subproblemas tienen el mismo tamaño relativo (mismo b)
-        b_values = [s["b"] for s in subproblem_sizes if s.get("b")]
-        if not b_values or len(set(b_values)) > 1:
-            return {
-                "success": False,
-                "recurrence": {
-                    "applicable": False,
-                    "notes": ["Subproblemas de tamaños distintos o no proporcionales"]
-                },
-                "reason": "Subproblemas de tamaños distintos"
-            }
+        # 3. Verificar que todos los subproblemas tienen el mismo tamaño relativo
+        # Distinguir entre decrease-and-conquer y divide-and-conquer
+        has_subtraction = any(s.get("type") == "subtraction" for s in subproblem_sizes)
         
-        b = b_values[0]
+        if has_subtraction:
+            # Para decrease-and-conquer, verificar que todos tienen el mismo patrón
+            patterns = [s.get("pattern") for s in subproblem_sizes if s.get("type") == "subtraction"]
+            if not patterns or len(set(patterns)) > 1:
+                return {
+                    "success": False,
+                    "recurrence": {
+                        "applicable": False,
+                        "notes": ["Subproblemas de tamaños distintos"]
+                    },
+                    "reason": "Subproblemas de tamaños distintos"
+                }
+            # Usar un b ficticio para decrease-and-conquer (se usará solo si aplica Teorema Maestro)
+            # Para método de iteración, se detectará más adelante
+            b = 2  # Valor por defecto, no se usará para decrease-and-conquer
+        else:
+            # Para divide-and-conquer, verificar que todos tienen el mismo b
+            b_values = [s["b"] for s in subproblem_sizes if s.get("b")]
+            if not b_values or len(set(b_values)) > 1:
+                return {
+                    "success": False,
+                    "recurrence": {
+                        "applicable": False,
+                        "notes": ["Subproblemas de tamaños distintos o no proporcionales"]
+                    },
+                    "reason": "Subproblemas de tamaños distintos"
+                }
+            b = b_values[0]
         
         # 3.5. Determinar el valor de 'a' considerando ramas mutuamente excluyentes
         # Si las llamadas recursivas están en un IF-ELSE, solo se ejecuta una rama
@@ -244,10 +294,24 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # 5. Detectar caso base n0
         n0 = self._detect_base_case(proc_def)
         
-        # 6. Construir recurrencia
+        # 6. Detectar si debe usar Método de Iteración o Teorema Maestro
+        use_iteration = self._detect_iteration_method(proc_def, recursive_calls)
+        
+        # 7. Construir recurrencia con método apropiado
         # Simplificar b para mostrar
         b_str = self._simplify_number_latex(b)
-        recurrence_form = f"T(n) = {a} \\cdot T(n/{b_str}) + f(n)"
+        
+        if use_iteration:
+            # Para método de iteración, la forma es diferente
+            # Analizar el tipo de subproblema
+            subproblem_info = self._analyze_subproblem_type(recursive_calls[0], proc_def)
+            if subproblem_info:
+                pattern = subproblem_info.get("pattern", "n-1")
+                recurrence_form = f"T(n) = T({pattern}) + f(n)"
+            else:
+                recurrence_form = f"T(n) = T(n-1) + f(n)"
+        else:
+            recurrence_form = f"T(n) = {a} \\cdot T(n/{b_str}) + f(n)"
         
         recurrence = {
             "form": recurrence_form,
@@ -256,11 +320,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
             "f": f_n,
             "n0": n0,
             "applicable": True,
-            "notes": []
+            "notes": [],
+            "method": "iteration" if use_iteration else "master"
         }
         
         # Simplificar valores para mostrar en proof
         b_display = self._simplify_number_latex(b)
+        method_name = "Método de Iteración" if use_iteration else "Teorema Maestro"
+        self.proof_steps.append({"id": "method", "text": f"\\text{{Método detectado: }} \\text{{{method_name}}}"})
         self.proof_steps.append({"id": "extract", "text": f"\\text{{Parámetros extraídos: }} a={a}, b={b_display}, f(n)={f_n}, n_0={n0}"})
         
         return {
@@ -1801,14 +1868,22 @@ class RecursiveAnalyzer(BaseAnalyzer):
         Genera la respuesta estándar del análisis recursivo.
         
         Returns:
-            Diccionario con byLine, totals (incluyendo recurrence, master, proof)
+            Diccionario con byLine, totals (incluyendo recurrence, master o iteration, proof)
         """
         # Construir byLine básico (puede estar vacío para recursivos)
         by_line = []
         
+        # Determinar T_open según el método usado
+        if self.iteration:
+            t_open = self.iteration.get("theta", "N/A")
+        elif self.master:
+            t_open = self.master.get("theta", "N/A")
+        else:
+            t_open = "N/A"
+        
         # Construir totals
         totals = {
-            "T_open": self.master["theta"] if self.master else "N/A",
+            "T_open": t_open,
             "symbols": self.symbols if self.symbols else None,
             "notes": self.notes if self.notes else None
         }
@@ -1817,7 +1892,10 @@ class RecursiveAnalyzer(BaseAnalyzer):
         if self.recurrence:
             totals["recurrence"] = self.recurrence
         
-        if self.master:
+        # Agregar resultado del método aplicado
+        if self.iteration:
+            totals["iteration"] = self.iteration
+        elif self.master:
             totals["master"] = self.master
         
         # Construir proof desde proof_steps
@@ -1856,4 +1934,596 @@ class RecursiveAnalyzer(BaseAnalyzer):
         self.master = None
         self.proof = []
         self.proof_steps = []
+        self.iteration = None
+    
+    # ============================================================================
+    # MÉTODO DE ITERACIÓN (UNROLLING)
+    # ============================================================================
+    
+    def _detect_iteration_method(self, proc_def: Dict[str, Any], recursive_calls: List[Dict[str, Any]]) -> bool:
+        """
+        Detecta si debe usarse el Método de Iteración en lugar del Teorema Maestro.
+        
+        Reglas para usar Método de Iteración:
+        1. Un solo llamado recursivo (a = 1)
+        2. Subproblema decrease-and-conquer (n-1, n-k, n/c)
+        3. No es divide-and-conquer (no múltiples subproblemas)
+        4. a = 1 (no aplica Teorema Maestro típico)
+        5. Subproblema estrictamente más pequeño g(n) < n
+        6. No combina múltiples resultados
+        
+        Args:
+            proc_def: Nodo ProcDef del procedimiento
+            recursive_calls: Lista de llamadas recursivas encontradas
+            
+        Returns:
+            True si debe usar Método de Iteración
+        """
+        # Regla 1: Un solo llamado recursivo
+        if len(recursive_calls) != 1:
+            return False
+        
+        # Regla 3 y 4: Verificar que a = 1 (no hay múltiples llamadas en ramas paralelas)
+        a = self._calculate_recursive_calls_count(proc_def, recursive_calls)
+        if a != 1:
+            return False
+        
+        # Regla 2 y 5: Analizar tipo de subproblema
+        call = recursive_calls[0]
+        subproblem_info = self._analyze_subproblem_type(call, proc_def)
+        
+        if not subproblem_info:
+            return False
+        
+        # Debe ser decrease-and-conquer (substracción o división)
+        if subproblem_info["type"] not in ["subtraction", "division"]:
+            return False
+        
+        # Regla 6: No debe combinar múltiples resultados (verificar que no hay suma de llamadas recursivas)
+        if self._combines_multiple_results(proc_def, recursive_calls):
+            return False
+        
+        return True
+    
+    def _analyze_subproblem_type(self, call: Dict[str, Any], proc_def: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Analiza el tipo de subproblema en una llamada recursiva para Método de Iteración.
+        
+        Clasifica el subproblema como:
+        - "subtraction": n-1, n-k, n-c
+        - "division": n/2, n/c
+        - "range_halving": (inicio + fin) / 2
+        - "unknown": No se puede clasificar
+        
+        Args:
+            call: Nodo Call recursivo
+            proc_def: Nodo ProcDef del procedimiento
+            
+        Returns:
+            {"type": str, "pattern": str, "factor": float|int} o None
+        """
+        params = proc_def.get("params", [])
+        if not params:
+            return None
+        
+        args = call.get("args", [])
+        if not args:
+            return None
+        
+        # Obtener el nombre del primer parámetro (usualmente el tamaño)
+        first_param = params[0]
+        if isinstance(first_param, dict):
+            param_name = first_param.get("name", "")
+        else:
+            param_name = str(first_param)
+        
+        # Analizar primer argumento (suele ser el tamaño)
+        first_arg = args[0]
+        
+        if isinstance(first_arg, dict):
+            arg_type = first_arg.get("type", "").lower()
+            
+            # Caso: n - 1 o n - k (BinaryExpression con operador -)
+            if arg_type == "binary":
+                op = first_arg.get("op", "")
+                
+                if op == "-":
+                    left = first_arg.get("left", {})
+                    right = first_arg.get("right", {})
+                    
+                    # Verificar que left es el parámetro original
+                    if isinstance(left, dict):
+                        left_name = left.get("name", "") or left.get("id", "")
+                        if left_name == param_name:
+                            # Extraer el valor de resta
+                            if isinstance(right, dict) and right.get("type", "").lower() == "literal":
+                                value = right.get("value", 1)
+                                return {
+                                    "type": "subtraction",
+                                    "pattern": f"n-{value}",
+                                    "factor": value
+                                }
+                            elif isinstance(right, dict) and right.get("type", "").lower() == "identifier":
+                                # Es n - k donde k es una variable
+                                return {
+                                    "type": "subtraction",
+                                    "pattern": "n-k",
+                                    "factor": 1  # Asumimos 1 por defecto
+                                }
+                
+                # Caso: n / 2 o n / c (BinaryExpression con operador /)
+                elif op == "/":
+                    left = first_arg.get("left", {})
+                    right = first_arg.get("right", {})
+                    
+                    if isinstance(left, dict):
+                        left_name = left.get("name", "") or left.get("id", "")
+                        if left_name == param_name:
+                            # Extraer el factor de división
+                            if isinstance(right, dict) and right.get("type", "").lower() == "literal":
+                                value = right.get("value", 2)
+                                return {
+                                    "type": "division",
+                                    "pattern": f"n/{value}",
+                                    "factor": value
+                                }
+                        # También verificar si left es una expresión (inicio + fin) / 2
+                        elif self._is_range_halving_pattern(first_arg, params):
+                            return {
+                                "type": "range_halving",
+                                "pattern": "(inicio+fin)/2",
+                                "factor": 2
+                            }
+            
+            # Caso: parámetro directo sin modificación (n)
+            elif arg_type == "identifier":
+                arg_name = first_arg.get("name", "") or first_arg.get("id", "")
+                if arg_name == param_name:
+                    # No es decrease-and-conquer, es recursión directa
+                    return None
+        
+        return None
+    
+    def _is_range_halving_pattern(self, expr: Dict[str, Any], params: List[Any]) -> bool:
+        """
+        Detecta si una expresión es del tipo (inicio + fin) / 2.
+        
+        Args:
+            expr: Expresión binaria
+            params: Parámetros del procedimiento
+            
+        Returns:
+            True si es un patrón de range halving
+        """
+        if not isinstance(expr, dict):
+            return False
+        
+        op = expr.get("op", "")
+        if op == "/":
+            left = expr.get("left", {})
+            right = expr.get("right", {})
+            
+            # Verificar que right es 2
+            if isinstance(right, dict) and right.get("type", "").lower() == "literal":
+                if right.get("value") == 2:
+                    # Verificar que left es una suma de dos parámetros
+                    if isinstance(left, dict) and left.get("op", "") == "+":
+                        return True
+        
+        return False
+    
+    def _combines_multiple_results(self, proc_def: Dict[str, Any], recursive_calls: List[Dict[str, Any]]) -> bool:
+        """
+        Verifica si el algoritmo combina múltiples resultados recursivos.
+        
+        Por ejemplo: return T(n/2) + T(n/2) no es válido para iteración.
+        Pero: return T(n-1) + n es válido.
+        
+        Args:
+            proc_def: Nodo ProcDef del procedimiento
+            recursive_calls: Lista de llamadas recursivas
+            
+        Returns:
+            True si combina múltiples resultados recursivos
+        """
+        # Si hay más de una llamada recursiva, definitivamente combina múltiples resultados
+        if len(recursive_calls) > 1:
+            return True
+        
+        # Buscar returns que sumen múltiples llamadas recursivas
+        body = proc_def.get("body", {})
+        
+        # Buscar nodos Return
+        returns = self._find_return_statements(body)
+        
+        for ret in returns:
+            ret_expr = ret.get("expr", {})
+            if self._contains_multiple_recursive_calls(ret_expr, self.procedure_name):
+                return True
+        
+        return False
+    
+    def _find_return_statements(self, node: Any) -> List[Dict[str, Any]]:
+        """
+        Encuentra todos los statements Return en el AST.
+        
+        Args:
+            node: Nodo del AST
+            
+        Returns:
+            Lista de nodos Return
+        """
+        returns = []
+        
+        if not isinstance(node, dict):
+            return returns
+        
+        node_type = node.get("type", "")
+        if node_type == "Return":
+            returns.append(node)
+        
+        # Buscar recursivamente
+        for key, value in node.items():
+            if key in ["type", "pos"]:
+                continue
+            if isinstance(value, list):
+                for item in value:
+                    returns.extend(self._find_return_statements(item))
+            elif isinstance(value, dict):
+                returns.extend(self._find_return_statements(value))
+        
+        return returns
+    
+    def _contains_multiple_recursive_calls(self, expr: Any, proc_name: str) -> bool:
+        """
+        Verifica si una expresión contiene múltiples llamadas recursivas.
+        
+        Args:
+            expr: Expresión a analizar
+            proc_name: Nombre del procedimiento recursivo
+            
+        Returns:
+            True si contiene más de una llamada recursiva
+        """
+        if not isinstance(expr, dict):
+            return False
+        
+        # Contar llamadas recursivas en la expresión
+        calls = []
+        self._collect_recursive_calls(expr, proc_name, calls)
+        
+        return len(calls) > 1
+    
+    def _apply_iteration_method(self) -> Dict[str, Any]:
+        """
+        Aplica el Método de Iteración (Unrolling) a la recurrencia extraída.
+        
+        Implementa los 7 pasos del método:
+        1. Identificar la recurrencia T(n) = T(g(n)) + f(n)
+        2. Expandir una vez
+        3. Expandir k veces (patrón general)
+        4. Determinar k en el caso base
+        5. Sustituir k en la suma
+        6. Evaluar la sumatoria
+        7. Simplificar a Θ(·)
+        
+        Returns:
+            {"success": bool, "iteration": dict, "reason": str}
+        """
+        if not self.recurrence:
+            return {
+                "success": False,
+                "reason": "No hay recurrencia extraída"
+            }
+        
+        self.proof_steps.append({"id": "iteration_start", "text": "\\text{Aplicando Método de Iteración (Unrolling)}"})
+        
+        # Paso 1: Identificar la recurrencia
+        a = self.recurrence["a"]
+        f_n_str = self.recurrence["f"]
+        n0 = self.recurrence["n0"]
+        
+        # Obtener información del subproblema
+        proc_def = self._find_main_procedure({"body": []})  # Necesitamos acceso al proc_def
+        # Por ahora, inferir g(n) desde la forma de la recurrencia
+        recurrence_form = self.recurrence.get("form", "")
+        
+        # Extraer g(n) de la forma T(n) = T(g(n)) + f(n)
+        g_n_info = self._extract_g_function()
+        if not g_n_info:
+            return {
+                "success": False,
+                "reason": "No se pudo extraer la función g(n)"
+            }
+        
+        g_type = g_n_info["type"]
+        g_pattern = g_n_info["pattern"]
+        
+        self.proof_steps.append({"id": "step1", "text": f"\\text{{Paso 1: Recurrencia identificada }} T(n) = T({g_pattern}) + f(n)"})
+        
+        # Paso 2: Expandir una vez
+        expansions = self._expand_recurrence(g_n_info, f_n_str, num_expansions=3)
+        
+        if len(expansions) > 0:
+            self.proof_steps.append({"id": "step2", "text": f"\\text{{Paso 2: Primera expansión }} {expansions[0]}"})
+        
+        if len(expansions) > 1:
+            self.proof_steps.append({"id": "step2b", "text": f"\\text{{Segunda expansión }} {expansions[1]}"})
+        
+        # Paso 3: Expresar forma general con k
+        general_form = self._create_general_form(g_n_info, f_n_str)
+        self.proof_steps.append({"id": "step3", "text": f"\\text{{Paso 3: Forma general }} {general_form}"})
+        
+        # Paso 4: Determinar k en el caso base
+        k_expr = self._determine_k_from_base_case(g_n_info, n0)
+        self.proof_steps.append({"id": "step4", "text": f"\\text{{Paso 4: Caso base }} {g_pattern} = {n0} \\Rightarrow k = {k_expr}"})
+        
+        # Paso 5: Sustituir k en la suma
+        substituted_form = self._substitute_k_in_summation(g_n_info, f_n_str, k_expr, n0)
+        self.proof_steps.append({"id": "step5", "text": f"\\text{{Paso 5: Sustitución }} {substituted_form}"})
+        
+        # Paso 6: Evaluar la sumatoria
+        summation_result = self._solve_summation(g_n_info, f_n_str, k_expr)
+        self.proof_steps.append({"id": "step6", "text": f"\\text{{Paso 6: Evaluación }} {summation_result['evaluated']}"})
+        
+        # Paso 7: Simplificar a notación asintótica
+        theta = summation_result["theta"]
+        self.proof_steps.append({"id": "step7", "text": f"\\text{{Paso 7: Resultado }} T(n) = \\Theta({theta})"})
+        
+        # Construir resultado
+        iteration = {
+            "method": "iteration",
+            "g_function": g_pattern,
+            "expansions": expansions,
+            "general_form": general_form,
+            "base_case": {
+                "condition": f"{g_pattern} = {n0}",
+                "k": k_expr
+            },
+            "summation": {
+                "expression": substituted_form,
+                "evaluated": summation_result["evaluated"]
+            },
+            "theta": f"\\Theta({theta})"
+        }
+        
+        return {
+            "success": True,
+            "iteration": iteration
+        }
+    
+    def _extract_g_function(self) -> Optional[Dict[str, Any]]:
+        """
+        Extrae la función g(n) de la recurrencia almacenada.
+        
+        Returns:
+            {"type": str, "pattern": str, "factor": float} o None
+        """
+        # Analizar la forma de la recurrencia para extraer g(n)
+        form = self.recurrence.get("form", "")
+        
+        # Buscar patrón T(n-k), T(n/k), etc.
+        import re
+        
+        # Patrón para n-k
+        match = re.search(r'T\((n-(\d+))\)', form)
+        if match:
+            k = int(match.group(2))
+            return {
+                "type": "subtraction",
+                "pattern": f"n-{k}",
+                "factor": k
+            }
+        
+        # Patrón para n/k
+        match = re.search(r'T\(n/(\d+)\)', form)
+        if match:
+            k = int(match.group(1))
+            return {
+                "type": "division",
+                "pattern": f"n/{k}",
+                "factor": k
+            }
+        
+        # Por defecto, asumir n-1
+        return {
+            "type": "subtraction",
+            "pattern": "n-1",
+            "factor": 1
+        }
+    
+    def _expand_recurrence(self, g_n_info: Dict[str, Any], f_n: str, num_expansions: int = 3) -> List[str]:
+        """
+        Genera expansiones simbólicas de la recurrencia.
+        
+        Args:
+            g_n_info: Información de la función g(n)
+            f_n: Función f(n)
+            num_expansions: Número de expansiones a generar
+            
+        Returns:
+            Lista de strings LaTeX con las expansiones
+        """
+        g_type = g_n_info["type"]
+        g_pattern = g_n_info["pattern"]
+        factor = g_n_info["factor"]
+        
+        expansions = []
+        
+        if g_type == "subtraction":
+            # T(n) = T(n-1) + f(n)
+            # T(n) = T(n-2) + f(n-1) + f(n)
+            # T(n) = T(n-3) + f(n-2) + f(n-1) + f(n)
+            for i in range(1, num_expansions + 1):
+                terms = []
+                # Agregar T(n-i)
+                terms.append(f"T(n-{i})")
+                # Agregar suma de f(n-j) para j = 0..i-1
+                f_terms = []
+                for j in range(i):
+                    if j == 0:
+                        f_terms.append(f"({f_n})")
+                    else:
+                        f_terms.append(f"({f_n}|_{{n-{j}}})")
+                terms.append(" + ".join(f_terms))
+                
+                expansion = f"T(n) = {' + '.join(terms)}"
+                expansions.append(expansion)
+        
+        elif g_type == "division":
+            # T(n) = T(n/2) + f(n)
+            # T(n) = T(n/4) + f(n/2) + f(n)
+            for i in range(1, num_expansions + 1):
+                denominator = factor ** i
+                terms = []
+                terms.append(f"T(n/{denominator})")
+                # Agregar suma de f(n/2^j) para j = 0..i-1
+                f_terms = []
+                for j in range(i):
+                    if j == 0:
+                        f_terms.append(f"({f_n})")
+                    else:
+                        denom_j = factor ** j
+                        f_terms.append(f"({f_n}|_{{n/{denom_j}}})")
+                terms.append(" + ".join(f_terms))
+                
+                expansion = f"T(n) = {' + '.join(terms)}"
+                expansions.append(expansion)
+        
+        return expansions
+    
+    def _create_general_form(self, g_n_info: Dict[str, Any], f_n: str) -> str:
+        """
+        Crea la forma general T(n) = T(g^k(n)) + Σ f(g^i(n)).
+        
+        Args:
+            g_n_info: Información de la función g(n)
+            f_n: Función f(n)
+            
+        Returns:
+            String LaTeX con la forma general
+        """
+        g_type = g_n_info["type"]
+        factor = g_n_info["factor"]
+        
+        if g_type == "subtraction":
+            return f"T(n) = T(n-k) + \\sum_{{i=0}}^{{k-1}} ({f_n})|_{{n-i}}"
+        elif g_type == "division":
+            return f"T(n) = T(n/{factor}^k) + \\sum_{{i=0}}^{{k-1}} ({f_n})|_{{n/{factor}^i}}"
+        else:
+            return f"T(n) = T(g^k(n)) + \\sum_{{i=0}}^{{k-1}} f(g^i(n))"
+    
+    def _determine_k_from_base_case(self, g_n_info: Dict[str, Any], n0: int) -> str:
+        """
+        Determina el valor de k cuando se alcanza el caso base.
+        
+        Args:
+            g_n_info: Información de la función g(n)
+            n0: Tamaño del caso base
+            
+        Returns:
+            Expresión LaTeX para k
+        """
+        g_type = g_n_info["type"]
+        factor = g_n_info["factor"]
+        
+        if g_type == "subtraction":
+            # n - k = n0 => k = n - n0
+            if n0 == 1:
+                return "n-1"
+            else:
+                return f"n-{n0}"
+        elif g_type == "division":
+            # n / c^k = n0 => k = log_c(n/n0)
+            if n0 == 1:
+                return f"\\log_{{{factor}}}(n)"
+            else:
+                return f"\\log_{{{factor}}}(n/{n0})"
+        else:
+            return "k"
+    
+    def _substitute_k_in_summation(self, g_n_info: Dict[str, Any], f_n: str, k_expr: str, n0: int) -> str:
+        """
+        Sustituye k en la sumatoria.
+        
+        Args:
+            g_n_info: Información de la función g(n)
+            f_n: Función f(n)
+            k_expr: Expresión para k
+            n0: Tamaño del caso base
+            
+        Returns:
+            String LaTeX con la sustitución
+        """
+        g_type = g_n_info["type"]
+        factor = g_n_info["factor"]
+        
+        if g_type == "subtraction":
+            return f"T(n) = T({n0}) + \\sum_{{i=0}}^{{{k_expr}}} ({f_n})|_{{n-i}}"
+        elif g_type == "division":
+            return f"T(n) = T({n0}) + \\sum_{{i=0}}^{{{k_expr}}} ({f_n})|_{{n/{factor}^i}}"
+        else:
+            return f"T(n) = T({n0}) + \\sum f(\\cdot)"
+    
+    def _solve_summation(self, g_n_info: Dict[str, Any], f_n: str, k_expr: str) -> Dict[str, str]:
+        """
+        Evalúa la sumatoria y simplifica a notación asintótica.
+        
+        Args:
+            g_n_info: Información de la función g(n)
+            f_n: Función f(n)
+            k_expr: Expresión para k
+            
+        Returns:
+            {"evaluated": str, "theta": str}
+        """
+        g_type = g_n_info["type"]
+        factor = g_n_info["factor"]
+        
+        # Simplificar f(n) para análisis
+        f_simplified = f_n.strip().lower()
+        
+        # Detectar el tipo de sumatoria
+        if f_simplified == "1" or f_simplified == "c":
+            # Sumatoria constante: Σ c = c * k
+            if g_type == "subtraction":
+                evaluated = f"\\Theta(n)"
+                theta = "n"
+            else:  # division
+                evaluated = f"\\Theta(\\log n)"
+                theta = "\\log n"
+        
+        elif f_simplified == "n" or "n" in f_simplified:
+            # Sumatoria aritmética o geométrica
+            if g_type == "subtraction":
+                # Σ (n-i) para i=0..n-1 = n + (n-1) + ... + 1 = n(n+1)/2
+                evaluated = f"\\sum_{{i=0}}^{{n-1}} (n-i) = \\frac{{n(n+1)}}{{2}}"
+                theta = "n^2"
+            else:  # division
+                # Σ n/2^i para i=0..log(n) ≈ 2n (serie geométrica)
+                evaluated = f"\\sum_{{i=0}}^{{\\log n}} n/{factor}^i \\approx 2n"
+                theta = "n"
+        
+        elif "^" in f_simplified or "2" in f_simplified:
+            # Polinomio de grado superior
+            if g_type == "subtraction":
+                evaluated = f"\\Theta(n^3)"
+                theta = "n^3"
+            else:
+                evaluated = f"\\Theta(n^2)"
+                theta = "n^2"
+        
+        else:
+            # Por defecto
+            if g_type == "subtraction":
+                evaluated = f"\\Theta(n)"
+                theta = "n"
+            else:
+                evaluated = f"\\Theta(n)"
+                theta = "n"
+        
+        return {
+            "evaluated": evaluated,
+            "theta": theta
+        }
 

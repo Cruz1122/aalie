@@ -1021,6 +1021,59 @@ variable ⟵ expresion;`,
               },
             ],
           },
+          iterationMethod: {
+            title: "Método de Iteración (Unrolling)",
+            description: "El Método de Iteración resuelve recurrencias de la forma T(n) = T(g(n)) + f(n) mediante expansión simbólica, donde hay un solo llamado recursivo y el subproblema es decrease-and-conquer.",
+            criteria: [
+              "Un solo llamado recursivo (a = 1)",
+              "Subproblema decrease-and-conquer: n-1, n-k, n/c",
+              "No divide-and-conquer (no múltiples subproblemas)",
+              "Subproblema estrictamente más pequeño: g(n) < n",
+              "No combina múltiples resultados recursivos",
+            ],
+            steps: [
+              {
+                step: 1,
+                description: "Identificar la recurrencia T(n) = T(g(n)) + f(n)",
+              },
+              {
+                step: 2,
+                description: "Expandir una vez: T(n) = T(g(g(n))) + f(g(n)) + f(n)",
+              },
+              {
+                step: 3,
+                description: "Expandir k veces: T(n) = T(g^k(n)) + Σ f(g^i(n))",
+              },
+              {
+                step: 4,
+                description: "Determinar k del caso base: g^k(n) = n₀",
+              },
+              {
+                step: 5,
+                description: "Sustituir k en la sumatoria",
+              },
+              {
+                step: 6,
+                description: "Evaluar la sumatoria (aritmética, geométrica, constante)",
+              },
+              {
+                step: 7,
+                description: "Simplificar a notación Θ(·)",
+              },
+            ],
+            examples: [
+              {
+                name: "Factorial",
+                recurrence: "T(n) = T(n-1) + 1",
+                result: "T(n) = \\Theta(n)",
+              },
+              {
+                name: "Suma de arreglo",
+                recurrence: "T(n) = T(n-1) + n",
+                result: "T(n) = \\Theta(n^2)",
+              },
+            ],
+          },
           recurrenceExtraction: {
             title: "Extracción de Recurrencias",
             description: "El sistema analiza el AST para identificar llamadas recursivas y extraer los parámetros de la recurrencia.",

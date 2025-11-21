@@ -27,7 +27,7 @@ Este documento describe la gramática ANTLR4 para el lenguaje de pseudocódigo u
 - **Arrays con rangos**: Soporte para parámetros de array con notación `A[inicio]..[fin]`
 - **Estructuras de control**: `IF-THEN-ELSE`, `FOR`, `WHILE`, `REPEAT-UNTIL`
 - **Operadores normalizados**: Comparación, aritméticos y lógicos
-- **Llamadas a funciones**: Con `CALL` para statements o directas en expresiones
+- **Llamadas a funciones**: Con `CALL` para statements (no recursivas) o directas en expresiones (recursivas sin CALL)
 - **Return explícito**: Para retornar valores de procedimientos
 
 ---
@@ -178,10 +178,12 @@ matriz[i][j]
 objeto.campo
 ```
 
-**Llamadas en expresiones:**
+**Llamadas en expresiones (sin CALL):**
 ```
 resultado <- fibonacci(n - 1) + fibonacci(n - 2);
+RETURN factorial(n - 1);
 ```
+**Nota:** Las llamadas recursivas NO usan CALL, simplemente se invocan directamente como expresiones.
 
 ### Operadores
 
@@ -391,6 +393,39 @@ fibonacci(n) BEGIN
     END
 END
 ```
+
+---
+
+### 7. Factorial con IF-ELSE-IF Encadenado
+
+**Descripción:** Calcula el factorial de un número usando múltiples condiciones IF-ELSE-IF explícitas.
+
+**Complejidad:** O(n) - Lineal
+
+**Código:**
+```
+calcularFactorialRecursivo(n) BEGIN
+    IF (n < 0) THEN BEGIN
+        print("Error: El factorial no está definido para números negativos.");
+        RETURN -1;
+    END ELSE IF (n = 0) THEN BEGIN
+        RETURN 1;
+    END ELSE IF (n = 1) THEN BEGIN
+        RETURN 1;
+    END ELSE BEGIN
+        RETURN n * calcularFactorialRecursivo(n - 1);
+    END
+END
+```
+
+**Formato JSON para parser:**
+```json
+{
+  "input": "calcularFactorialRecursivo(n) BEGIN\nIF (n < 0) THEN BEGIN\nprint(\"Error: El factorial no está definido para números negativos.\");\nRETURN -1;\nEND ELSE IF (n = 0) THEN BEGIN\nRETURN 1;\nEND ELSE IF (n = 1) THEN BEGIN\nRETURN 1;\nEND ELSE BEGIN\nRETURN n * calcularFactorialRecursivo(n - 1);\nEND\nEND"
+}
+```
+
+**Nota:** La estructura `IF-ELSE IF-ELSE` es explícita en la gramática, permitiendo encadenar múltiples condiciones sin necesidad de anidar bloques BEGIN-END adicionales.
 
 **Formato JSON para parser:**
 ```json
@@ -715,6 +750,21 @@ El AST generado incluye:
    ✅ IF (x > 0) THEN BEGIN resultado <- 1; END
    ❌ IF (x > 0) THEN resultado <- 1;
    ```
+   
+   **IF-ELSE-IF encadenado es explícito:**
+   ```
+   ✅ IF (n < 0) THEN BEGIN
+         print("Error");
+         RETURN -1;
+      END ELSE IF (n = 0) THEN BEGIN
+         RETURN 1;
+      END ELSE IF (n = 1) THEN BEGIN
+         RETURN 1;
+      END ELSE BEGIN
+         RETURN n * factorial(n - 1);
+      END
+   ```
+   El `ELSE` puede ir seguido directamente de otro `IF` o de un bloque `BEGIN...END`.
 
 2. **FOR y WHILE requieren bloques**
    ```
@@ -729,7 +779,16 @@ El AST generado incluye:
    ❌ resultado <- CALL funcion(x);
    ```
 
-4. **Arrays pueden usar literales en rangos**
+4. **Llamadas recursivas NO usan CALL, solo se invocan directamente**
+   ```
+   ✅ RETURN factorial(n - 1);
+   ✅ resultado <- fibonacci(n - 1) + fibonacci(n - 2);
+   ❌ RETURN CALL factorial(n - 1);
+   ❌ resultado <- CALL fibonacci(n - 1) + CALL fibonacci(n - 2);
+   ```
+   Las llamadas recursivas siempre se hacen como expresiones (en RETURN, asignaciones, etc.), sin usar la palabra clave CALL.
+
+5. **Arrays pueden usar literales en rangos**
    ```
    ✅ procedimiento(A[1]..[n])
    ✅ procedimiento(A[n])

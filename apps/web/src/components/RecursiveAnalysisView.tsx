@@ -4,6 +4,7 @@ import React, { useMemo, useEffect, useState } from "react";
 import type { AnalyzeOpenResponse } from "@aa/types";
 import Formula from "./Formula";
 import RecursiveProcedureModal from "./RecursiveProcedureModal";
+import IterationProcedureModal from "./IterationProcedureModal";
 import RecursionTreeModal from "./RecursionTreeModal";
 
 interface RecursiveAnalysisViewProps {
@@ -33,21 +34,27 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
   const { worstData, bestData, avgData, recurrence, master, proof, theta, T_open } = analysisData;
   const [showProcedureModal, setShowProcedureModal] = useState(false);
   const [showTreeModal, setShowTreeModal] = useState(false);
+  
+  // Detectar si es Método de Iteración
+  const isIterationMethod = recurrence?.method === "iteration";
+  const iteration = worstData?.totals?.iteration || bestData?.totals?.iteration || avgData?.totals?.iteration;
 
   // Debug: log solo una vez cuando cambian los datos
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development' && recurrence && master) {
+    if (process.env.NODE_ENV === 'development' && recurrence) {
       console.log('[RecursiveAnalysisView] Datos cargados:', {
         hasRecurrence: !!recurrence,
         hasMaster: !!master,
+        hasIteration: !!iteration,
         hasProof: !!proof,
+        method: recurrence.method,
         theta,
         T_open
       });
     }
-  }, [recurrence, master, proof, theta, T_open]);
+  }, [recurrence, master, iteration, proof, theta, T_open]);
 
-  if (!recurrence || !master) {
+  if (!recurrence || (!master && !iteration)) {
     return (
       <div className="flex-1 flex items-center justify-center text-slate-400">
         <div className="text-center">
@@ -55,7 +62,7 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
           <p>Ejecuta el análisis para ver los resultados</p>
           {process.env.NODE_ENV === 'development' && (
             <div className="mt-4 text-xs text-red-400">
-              <p>Debug: recurrence={recurrence ? '✓' : '✗'}, master={master ? '✓' : '✗'}</p>
+              <p>Debug: recurrence={recurrence ? '✓' : '✗'}, master={master ? '✓' : '✗'}, iteration={iteration ? '✓' : '✗'}</p>
               <p>Data structure: {JSON.stringify({ 
                 hasWorst: !!worstData, 
                 hasBest: !!bestData, 
@@ -76,8 +83,12 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
           <h2 className="text-white font-semibold flex items-center gap-3 mb-3">
             <span className="material-symbols-outlined text-orange-400">science</span>
             <span>Método de Análisis</span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide bg-orange-500/20 text-orange-300 border-orange-500/30">
-              Teorema Maestro
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide ${
+              isIterationMethod 
+                ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                : 'bg-orange-500/20 text-orange-300 border-orange-500/30'
+            }`}>
+              {isIterationMethod ? 'Método de Iteración' : 'Teorema Maestro'}
             </span>
           </h2>
         </div>
@@ -165,15 +176,27 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
       </div>
 
       {/* Modal de procedimiento completo */}
-      <RecursiveProcedureModal
-        open={showProcedureModal}
-        onClose={() => setShowProcedureModal(false)}
-        data={worstData || bestData || avgData}
-        recurrence={recurrence}
-        master={master}
-        proof={proof}
-        theta={theta || T_open}
-      />
+      {isIterationMethod ? (
+        <IterationProcedureModal
+          open={showProcedureModal}
+          onClose={() => setShowProcedureModal(false)}
+          data={worstData || bestData || avgData}
+          recurrence={recurrence}
+          iteration={iteration}
+          proof={proof}
+          theta={theta || T_open}
+        />
+      ) : (
+        <RecursiveProcedureModal
+          open={showProcedureModal}
+          onClose={() => setShowProcedureModal(false)}
+          data={worstData || bestData || avgData}
+          recurrence={recurrence}
+          master={master}
+          proof={proof}
+          theta={theta || T_open}
+        />
+      )}
 
       {/* Modal del árbol de recursión */}
       <RecursionTreeModal
