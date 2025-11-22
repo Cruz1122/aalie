@@ -4,7 +4,7 @@ Verifica el análisis de bucles anidados variables, WHILE complejos, IF anidados
 """
 
 import pytest
-from app.analysis.iterative_analyzer import IterativeAnalyzer
+from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
 
 
 class TestComplexAlgorithms:

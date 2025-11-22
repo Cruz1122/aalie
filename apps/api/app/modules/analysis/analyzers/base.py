@@ -1,11 +1,8 @@
 from typing import List, Dict, Any, Optional, Union
 from sympy import Symbol, Sum, Integer, Expr, latex, sympify
-from .expr_converter import ExprConverter
-from .avg_model import AvgModel
-
-# Tipos de datos que espejan el contrato ya implementado
-LineCost = Dict[str, Any]
-AnalyzeOpenResponse = Dict[str, Any]
+from ..utils.expr_converter import ExprConverter
+from ..models.avg_model import AvgModel
+from ...shared.types import LineCost, AnalyzeOpenResponse
 
 
 class BaseAnalyzer:
@@ -273,7 +270,7 @@ class BaseAnalyzer:
         
         # Simplificar completamente: evaluar todas las sumatorias
         from sympy import simplify as sympy_simplify, expand
-        from app.analysis.summation_closer import SummationCloser
+        from ..utils.summation_closer import SummationCloser
         
         # Usar SummationCloser para evaluar todas las sumatorias correctamente
         closer = SummationCloser()
@@ -325,7 +322,7 @@ class BaseAnalyzer:
         
         # Simplificar completamente
         from sympy import simplify as sympy_simplify, expand
-        from app.analysis.summation_closer import SummationCloser
+        from ..utils.summation_closer import SummationCloser
         
         # Usar SummationCloser para evaluar todas las sumatorias correctamente
         closer = SummationCloser()

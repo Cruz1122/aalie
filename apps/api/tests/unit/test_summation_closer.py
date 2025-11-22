@@ -1,7 +1,7 @@
 # tests/unit/test_summation_closer.py
 
 import unittest
-from app.analysis.summation_closer import SummationCloser
+from app.modules.analysis.utils.summation_closer import SummationCloser
 
 
 class TestSummationCloser(unittest.TestCase):

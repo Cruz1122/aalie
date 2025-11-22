@@ -2,13 +2,14 @@
 
 import type { Program } from "@aa/types";
 import { useRouter } from "next/navigation";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import AIModeView from "@/components/AIModeView";
 import { AnalysisLoader } from "@/components/AnalysisLoader";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import ManualModeView, { ManualModeViewHandle } from "@/components/ManualModeView";
+import MethodSelector, { MethodType } from "@/components/MethodSelector";
 import ModeToggle from "@/components/ModeToggle";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey } from "@/hooks/useApiKey";
@@ -41,6 +42,32 @@ export default function HomePage() {
   const [chatAnalysisComplete, setChatAnalysisComplete] = useState(false);
   const [chatAnalysisError, setChatAnalysisError] = useState<string | null>(null);
   const [isChatAnalyzing, setIsChatAnalyzing] = useState(false);
+  const [showMethodSelector, setShowMethodSelector] = useState(false);
+  const [applicableMethods, setApplicableMethods] = useState<MethodType[]>([]);
+  const [defaultMethod, setDefaultMethod] = useState<MethodType>("master");
+  const methodSelectionPromiseRef = useRef<{ resolve: (method: MethodType) => void; reject: () => void } | null>(null);
+  const minProgressRef = useRef<number>(0);
+
+  // Efecto para mantener el progreso mínimo cuando el selector está visible
+  useEffect(() => {
+    if (showMethodSelector && minProgressRef.current > 0) {
+      // Establecer el progreso al mínimo inmediatamente
+      setChatAnalysisProgress(minProgressRef.current);
+      
+      // Usar un intervalo para mantener el progreso mientras el selector está visible
+      const intervalId = setInterval(() => {
+        setChatAnalysisProgress((prev) => {
+          const minProgress = minProgressRef.current;
+          if (prev < minProgress) {
+            return minProgress;
+          }
+          return prev;
+        });
+      }, 100); // Verificar cada 100ms
+      
+      return () => clearInterval(intervalId);
+    }
+  }, [showMethodSelector]);
 
   // Función para analizar código desde el chatbot
   const handleAnalyzeCodeFromChat = (code: string) => {
@@ -205,15 +232,111 @@ export default function HomePage() {
         setChatAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKind(kind)}`);
       }
 
-
-      setChatAnalysisMessage("Hallando sumatorias...");
-      await animateProgress(40, 50, 200, setChatAnalysisProgress);
+      const isRecursive = kind === "recursive" || kind === "hybrid";
+      
+      let selectedMethod: MethodType | undefined = undefined;
+      
+      if (isRecursive) {
+        setChatAnalysisMessage("Verificando condiciones...");
+        await animateProgress(40, 50, 300, setChatAnalysisProgress);
+        setChatAnalysisMessage("Extrayendo recurrencia...");
+        await animateProgress(50, 65, 400, setChatAnalysisProgress);
+        setChatAnalysisMessage("Normalizando recurrencia...");
+        await animateProgress(65, 75, 300, setChatAnalysisProgress);
+        setChatAnalysisMessage("Detectando método de análisis...");
+        await animateProgress(75, 85, 500, setChatAnalysisProgress);
+        
+        // Guardar el progreso actual antes de detectar métodos
+        const progressBeforeMethodSelection = 85;
+        
+        // Detectar métodos aplicables
+        selectedMethod = "master";
+        try {
+          const detectMethodsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/detect-methods`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              source: sourceCode,
+              algorithm_kind: kind
+            }),
+          });
+          
+          const detectMethodsResult = await detectMethodsResponse.json() as {
+            ok: boolean;
+            applicable_methods?: MethodType[];
+            default_method?: MethodType;
+            errors?: Array<{ message: string }>;
+          };
+          
+          if (detectMethodsResult.ok && detectMethodsResult.applicable_methods) {
+            const methods = detectMethodsResult.applicable_methods;
+            const defaultMethodValue = (detectMethodsResult.default_method || "master") as MethodType;
+            
+            setApplicableMethods(methods);
+            setDefaultMethod(defaultMethodValue);
+            
+            // Si hay múltiples métodos aplicables, mostrar selector
+            if (methods.length > 1) {
+              setChatAnalysisMessage("Selecciona el método de análisis...");
+              
+              // Guardar el progreso mínimo para evitar que baje
+              minProgressRef.current = progressBeforeMethodSelection;
+              
+              // Establecer el progreso directamente al valor guardado
+              setChatAnalysisProgress(progressBeforeMethodSelection);
+              
+              setShowMethodSelector(true);
+              
+              // Esperar un poco para que el selector se renderice completamente
+              await new Promise((resolve) => setTimeout(resolve, 200));
+              
+              // Crear un Promise que se resolverá cuando el usuario seleccione un método
+              selectedMethod = await new Promise<MethodType>((resolve, reject) => {
+                methodSelectionPromiseRef.current = { resolve, reject };
+                setTimeout(() => {
+                  if (methodSelectionPromiseRef.current) {
+                    methodSelectionPromiseRef.current.resolve(defaultMethodValue);
+                    methodSelectionPromiseRef.current = null;
+                  }
+                }, 60000);
+              }).catch(() => defaultMethodValue);
+              
+              setShowMethodSelector(false);
+              methodSelectionPromiseRef.current = null;
+              // Limpiar el progreso mínimo después de ocultar el selector
+              minProgressRef.current = 0;
+              
+              setChatAnalysisMessage("Método seleccionado, continuando análisis...");
+              // Mantener el progreso y avanzar suavemente
+              await animateProgress(progressBeforeMethodSelection, 90, 400, setChatAnalysisProgress);
+            } else {
+              selectedMethod = defaultMethodValue;
+              // Continuar con el progreso normalmente
+              setChatAnalysisMessage("Iniciando análisis de complejidad...");
+              await animateProgress(progressBeforeMethodSelection, 90, 400, setChatAnalysisProgress);
+            }
+          } else {
+            selectedMethod = "master";
+            // Continuar con el progreso normalmente
+            setChatAnalysisMessage("Iniciando análisis de complejidad...");
+            await animateProgress(progressBeforeMethodSelection, 90, 400, setChatAnalysisProgress);
+          }
+        } catch (error) {
+          console.warn("Error detectando métodos, usando método por defecto:", error);
+          selectedMethod = "master";
+          // Continuar con el progreso normalmente
+          setChatAnalysisMessage("Iniciando análisis de complejidad...");
+          await animateProgress(progressBeforeMethodSelection, 90, 400, setChatAnalysisProgress);
+        }
+      } else {
+        setChatAnalysisMessage("Hallando sumatorias...");
+        await animateProgress(40, 50, 200, setChatAnalysisProgress);
+        setChatAnalysisMessage("Cerrando sumatorias...");
+        await animateProgress(50, 55, 200, setChatAnalysisProgress);
+      }
 
       // Verificar estado de API_KEY (se mantiene para otras funciones como ChatBot)
       const apiKey = getApiKey();
-      
-      // Mensaje de carga actualizado (ya no depende de API key para simplificación)
-      setChatAnalysisMessage("Cerrando sumatorias...");
       
       // Realizar una sola petición que trae todos los casos (worst, best y avg)
       const analyzeBody: { 
@@ -221,14 +344,22 @@ export default function HomePage() {
         mode: string; 
         api_key?: string;
         avgModel?: { mode: string; predicates?: Record<string, string> };
+        algorithm_kind?: string;
+        preferred_method?: MethodType;
       } = { 
         source: sourceCode, 
         mode: "all",
         avgModel: {
           mode: "uniform",
           predicates: {}
-        }
+        },
+        algorithm_kind: kind
       };
+      
+      // Solo agregar preferred_method si es recursivo y hay un método seleccionado
+      if (isRecursive && selectedMethod) {
+        analyzeBody.preferred_method = selectedMethod;
+      }
       if (apiKey) {
         analyzeBody.api_key = apiKey;  // Mantener por compatibilidad, pero backend ya no lo usa para simplificación
       }
@@ -239,7 +370,10 @@ export default function HomePage() {
         body: JSON.stringify(analyzeBody),
       }).then(r => r.json());
 
-      const analyzeRes = await animateProgress(50, 70, 2000, setChatAnalysisProgress, analyzePromise) as { 
+      // Ajustar el progreso inicial según si es recursivo o no
+      const progressStart = isRecursive ? 90 : 55;
+      setChatAnalysisMessage("Analizando complejidad...");
+      const analyzeRes = await animateProgress(progressStart, 70, 2000, setChatAnalysisProgress, analyzePromise) as { 
         ok: boolean; 
         worst?: unknown;
         best?: unknown;
@@ -367,6 +501,25 @@ export default function HomePage() {
           isComplete={chatAnalysisComplete}
           error={chatAnalysisError}
           onClose={chatAnalysisError ? handleChatLoaderClose : undefined}
+        />
+      )}
+
+      {showMethodSelector && applicableMethods.length > 0 && isChatAnalyzing && (
+        <MethodSelector
+          applicableMethods={applicableMethods}
+          defaultMethod={defaultMethod}
+          onSelect={(method) => {
+            console.log('[MethodSelector] Método seleccionado:', method);
+            if (methodSelectionPromiseRef.current) {
+              methodSelectionPromiseRef.current.resolve(method);
+            }
+          }}
+          onCancel={() => {
+            console.log('[MethodSelector] Cancelado, usando método por defecto:', defaultMethod);
+            if (methodSelectionPromiseRef.current) {
+              methodSelectionPromiseRef.current.resolve(defaultMethod);
+            }
+          }}
         />
       )}
     </div>

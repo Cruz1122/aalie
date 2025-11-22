@@ -1,13 +1,13 @@
 from typing import Any, Dict, Optional
 from sympy import Expr, latex, Integer
 from .base import BaseAnalyzer
-from .visitors.for_visitor import ForVisitor
-from .visitors.if_visitor import IfVisitor
-from .visitors.while_repeat_visitor import WhileRepeatVisitor
-from .visitors.simple_visitor import SimpleVisitor
-from .summation_closer import SummationCloser
-from .complexity_classes import ComplexityClasses
-from .avg_model import AvgModel
+from ..visitors.for_visitor import ForVisitor
+from ..visitors.if_visitor import IfVisitor
+from ..visitors.while_repeat_visitor import WhileRepeatVisitor
+from ..visitors.simple_visitor import SimpleVisitor
+from ..utils.summation_closer import SummationCloser
+from ..utils.complexity_classes import ComplexityClasses
+from ..models.avg_model import AvgModel
 
 
 class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor, SimpleVisitor):

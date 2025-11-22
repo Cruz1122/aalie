@@ -116,8 +116,8 @@ def test_with_requests():
 def test_direct_analyzer():
     """Prueba el analizador directamente sin servidor."""
     try:
-        from app.routers.parse import parse_source
-        from app.analysis import RecursiveAnalyzer
+        from app.modules.parsing.service import parse_source
+        from app.modules.analysis.analyzers.recursive import RecursiveAnalyzer
         
         print("\n" + "=" * 60)
         print("PRUEBA DIRECTA DEL ANALIZADOR")

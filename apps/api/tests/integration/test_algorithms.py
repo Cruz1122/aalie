@@ -5,7 +5,7 @@ Verifica el análisis de algoritmos complejos como insertion sort y bubble sort.
 """
 
 import pytest
-from app.analysis.iterative_analyzer import IterativeAnalyzer
+from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
 
 
 class TestAlgorithms:

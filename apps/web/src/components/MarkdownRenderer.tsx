@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
+import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
 import '../styles/highlight.css';
 
 interface MarkdownRendererProps {
@@ -180,8 +182,8 @@ const CustomPre = (props: any) => {
 
   return (
     <div className="relative group w-full">
-      <div className="bg-slate-800/70 border border-slate-600/40 rounded-md p-2.5 overflow-x-auto max-h-[300px] overflow-y-auto mb-1.5">
-        <pre className="text-slate-200 text-[10px] font-mono whitespace-pre leading-relaxed m-0">
+      <div className="bg-slate-800/70 border border-slate-600/40 rounded-md p-2.5 overflow-x-auto max-h-[300px] overflow-y-auto mb-1.5" style={{ maxWidth: '100%', width: '100%' }}>
+        <pre className="text-slate-200 text-[10px] font-mono whitespace-pre leading-relaxed m-0" style={{ maxWidth: '100%', wordBreak: 'break-word' }}>
           {codeContent}
         </pre>
       </div>
@@ -268,8 +270,8 @@ export default function MarkdownRenderer({ content, className, onAnalyzeCode }: 
   return (
     <div className={className}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight]}
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[rehypeHighlight, rehypeKatex]}
         components={{
           h1: CustomH1,
           h2: CustomH2,

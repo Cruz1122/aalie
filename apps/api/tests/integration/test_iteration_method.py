@@ -6,7 +6,7 @@ en lugar del Teorema Maestro, y que los resultados sean correctos.
 """
 
 import pytest
-from app.analysis.recursive_analyzer import RecursiveAnalyzer
+from app.modules.analysis.analyzers.recursive import RecursiveAnalyzer
 
 
 class TestIterationMethod:

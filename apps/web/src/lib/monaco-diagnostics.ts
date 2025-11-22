@@ -104,6 +104,9 @@ export function registerPseudocodeLanguage(monaco: typeof Monaco): void {
 
     tokenizer: {
       root: [
+        // Comments - debe ir primero para que tenga prioridad
+        [/\/\/.*$/, "comment"], // Comentarios de una línea con //
+
         // Strings - usar estado stringState para manejar correctamente
         [/"/, { token: "string.quote", next: "@stringState" }],
 
@@ -147,7 +150,7 @@ export function registerPseudocodeLanguage(monaco: typeof Monaco): void {
       { token: "string.escape", foreground: "fbbf24" }, // Amber-400 - escapes en string en amarillo
       { token: "operator", foreground: "3b82f6" }, // Blue-500 - operadores en azul
       { token: "delimiter", foreground: "94a3b8" }, // Slate-400 - delimitadores en gris
-      { token: "comment", foreground: "64748b", fontStyle: "italic" }, // Slate-500 - comentarios en gris
+      { token: "comment", foreground: "64748b", fontStyle: "italic" }, // Slate-500 - comentarios en gris (más visible)
       { token: "white", foreground: "ffffff" }, // Blanco para espacios
     ],
     colors: {

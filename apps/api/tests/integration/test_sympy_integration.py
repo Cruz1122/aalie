@@ -5,7 +5,7 @@ Verifica que los componentes trabajan juntos correctamente.
 """
 
 import pytest
-from app.analysis.iterative_analyzer import IterativeAnalyzer
+from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
 
 
 class TestSymPyIntegration:

@@ -1,7 +1,7 @@
 # tests/unit/test_expr_converter.py
 
 import unittest
-from app.analysis.expr_converter import ExprConverter
+from app.modules.analysis.utils.expr_converter import ExprConverter
 from sympy import Symbol, Integer, sympify
 
 

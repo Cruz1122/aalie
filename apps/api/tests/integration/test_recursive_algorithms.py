@@ -5,7 +5,7 @@ Verifica el análisis de algoritmos recursivos divide-and-conquer.
 """
 
 import pytest
-from app.analysis.recursive_analyzer import RecursiveAnalyzer
+from app.modules.analysis.analyzers.recursive import RecursiveAnalyzer
 
 
 class TestRecursiveAlgorithms:

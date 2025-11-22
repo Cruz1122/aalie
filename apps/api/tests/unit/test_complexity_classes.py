@@ -1,7 +1,7 @@
 # tests/unit/test_complexity_classes.py
 
 import unittest
-from app.analysis.complexity_classes import ComplexityClasses
+from app.modules.analysis.utils.complexity_classes import ComplexityClasses
 
 
 class TestComplexityClasses(unittest.TestCase):
