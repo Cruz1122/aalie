@@ -106,11 +106,9 @@ def _find_procedure_definition(ast: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         ast: AST del programa
         
     Returns:
-        Definición del procedimiento o None si no se encuentra
+        Nodo ProcDef del procedimiento principal o None si no se encuentra
         
     Author: Juan Camilo Cruz Parra (@Cruz1122)
-    """
-        Nodo ProcDef del procedimiento principal o None si no se encuentra
     """
     body = ast.get("body", [])
     if not isinstance(body, list):

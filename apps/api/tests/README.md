@@ -104,6 +104,15 @@ pytest tests/ -n auto
 
 # Ver cobertura de código
 pytest tests/ --cov=app --cov-report=html
+
+# Ver cobertura con reporte en terminal y HTML
+pytest tests/ --cov=app --cov-report=term --cov-report=html
+
+# Ver cobertura con líneas faltantes
+pytest tests/ --cov=app --cov-report=term-missing
+
+# Verificar umbral mínimo de cobertura (80%)
+pytest tests/ --cov=app --cov-report=term --cov-fail-under=80
 ```
 
 ## Ejemplos de Uso
@@ -245,6 +254,66 @@ class TestMyEndpoint:
         data = response.json()
         assert data.get("ok")
 ```
+
+## Cobertura de Código
+
+### Generar Reportes de Cobertura
+
+La cobertura de código se mide usando `pytest-cov` y `coverage`. Para generar reportes:
+
+```bash
+# Reporte en terminal
+pytest tests/ --cov=app --cov-report=term
+
+# Reporte HTML (se genera en htmlcov/index.html)
+pytest tests/ --cov=app --cov-report=html
+
+# Reporte XML (útil para CI/CD)
+pytest tests/ --cov=app --cov-report=xml
+
+# Reporte completo (terminal + HTML + XML)
+pytest tests/ --cov=app --cov-report=term --cov-report=html --cov-report=xml
+
+# Ver líneas no cubiertas
+pytest tests/ --cov=app --cov-report=term-missing
+```
+
+### Interpretación de Métricas
+
+- **Cobertura de líneas**: Porcentaje de líneas de código ejecutadas por los tests
+- **Cobertura de ramas**: Porcentaje de ramas condicionales probadas
+- **Cobertura de funciones**: Porcentaje de funciones probadas
+
+### Umbrales Objetivo
+
+- **Módulos críticos**: >= 90% de cobertura
+- **Módulos generales**: >= 80% de cobertura
+- **Módulos auxiliares**: >= 70% de cobertura
+
+### Ver Reporte HTML
+
+Después de ejecutar `pytest tests/ --cov=app --cov-report=html`:
+
+1. Abre el archivo `htmlcov/index.html` en tu navegador
+2. Navega por los módulos para ver qué líneas están cubiertas
+3. Las líneas en rojo no están cubiertas por tests
+4. Las líneas en verde están cubiertas
+
+### Cobertura en CI
+
+El pipeline de CI ejecuta automáticamente los tests con cobertura y:
+- Genera reportes HTML disponibles como artefactos
+- Verifica que la cobertura sea >= 80%
+- Falla el build si la cobertura está por debajo del umbral
+
+### Mejorar Cobertura
+
+Para identificar áreas que necesitan más tests:
+
+1. Ejecuta `pytest tests/ --cov=app --cov-report=term-missing`
+2. Revisa el reporte HTML en `htmlcov/index.html`
+3. Enfócate en módulos con cobertura < 80%
+4. Agrega tests para casos edge y manejo de errores
 
 ## Mejores Prácticas
 

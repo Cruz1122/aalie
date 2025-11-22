@@ -555,6 +555,19 @@ class BaseAnalyzer:
         self.t_polynomial = None
         self.procedure_steps = None
 
+    def add_procedure_step(self, step: str) -> None:
+        """
+        Agrega un paso al procedimiento para caso promedio.
+        
+        Args:
+            step: String con el paso del procedimiento (puede contener LaTeX)
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
+        if self.procedure_steps is None:
+            self.procedure_steps = []
+        self.procedure_steps.append(step)
+
     def get_context_hash(self) -> str:
         """
         Genera un hash del contexto actual (loop_stack).

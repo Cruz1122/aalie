@@ -3,3 +3,8 @@ uvicorn[standard]>=0.27,<1.0
 antlr4-python3-runtime==4.13.2
 python-dotenv>=1.0.0
 sympy>=1.12,<2.0
+
+# aa_grammar - Paquete local para parsing de pseudocódigo
+# Instalar desde apps/api/ con: pip install -e ../../packages/grammar/py
+# O desde la raíz del proyecto: pip install -e packages/grammar/py
+-e ../../packages/grammar/py

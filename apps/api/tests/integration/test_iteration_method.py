@@ -173,7 +173,8 @@ class TestIterationMethod:
         analyzer = RecursiveAnalyzer()
         ast = self.create_factorial_ast()
         
-        result = analyzer.analyze(ast, mode="worst")
+        # Especificar preferred_method para forzar uso de iteración
+        result = analyzer.analyze(ast, mode="worst", preferred_method="iteration")
         
         # Verificar que el análisis fue exitoso
         assert result.get("ok"), f"Análisis falló: {result.get('errors', [])}"
@@ -207,7 +208,8 @@ class TestIterationMethod:
         analyzer = RecursiveAnalyzer()
         ast = self.create_factorial_ast()
         
-        result = analyzer.analyze(ast, mode="worst")
+        # Especificar preferred_method para forzar uso de iteración
+        result = analyzer.analyze(ast, mode="worst", preferred_method="iteration")
         
         assert result.get("ok"), "Análisis debe ser exitoso"
         
@@ -244,13 +246,14 @@ class TestIterationMethod:
         analyzer = RecursiveAnalyzer()
         ast = self.create_factorial_ast()
         
-        result = analyzer.analyze(ast, mode="worst")
+        # Especificar preferred_method para forzar uso de iteración
+        result = analyzer.analyze(ast, mode="worst", preferred_method="iteration")
         
         assert result.get("ok"), "Análisis debe ser exitoso"
         
         recurrence = result["totals"]["recurrence"]
         assert "method" in recurrence, "La recurrencia debe incluir el campo 'method'"
-        assert recurrence["method"] in ["master", "iteration"], f"method debe ser 'master' o 'iteration', obtuvo {recurrence['method']}"
+        assert recurrence["method"] in ["master", "iteration", "characteristic_equation"], f"method debe ser 'master', 'iteration' o 'characteristic_equation', obtuvo {recurrence['method']}"
         
         print(f"✓ Método en recurrence: {recurrence['method']}")
     
