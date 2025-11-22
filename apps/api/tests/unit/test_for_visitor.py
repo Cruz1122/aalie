@@ -117,3 +117,87 @@ class TestForVisitor(unittest.TestCase):
         result = self.analyzer._has_return_in_body(body)
         self.assertFalse(result)
 
+    def test_has_return_in_body_in_if_then(self):
+        """Test: Detecta return en rama THEN de IF"""
+        body = {
+            "type": "if",
+            "condition": {"type": "binary", "operator": ">", "left": {}, "right": {}},
+            "consequent": {
+                "type": "block",
+                "body": [
+                    {"type": "Return", "value": {"type": "number", "value": 1}}
+                ]
+            }
+        }
+        result = self.analyzer._has_return_in_body(body)
+        self.assertTrue(result)
+
+    def test_has_return_in_body_in_if_else(self):
+        """Test: Detecta return en rama ELSE de IF"""
+        body = {
+            "type": "if",
+            "condition": {"type": "binary", "operator": ">", "left": {}, "right": {}},
+            "alternate": {
+                "type": "block",
+                "body": [
+                    {"type": "Return", "value": {"type": "number", "value": 0}}
+                ]
+            }
+        }
+        result = self.analyzer._has_return_in_body(body)
+        self.assertTrue(result)
+
+    def test_has_return_in_body_in_nested_for(self):
+        """Test: Detecta return en bucle FOR anidado"""
+        body = {
+            "type": "for",
+            "variable": "i",
+            "start": {"value": 1},
+            "end": {"value": 10},
+            "body": {
+                "type": "block",
+                "body": [
+                    {"type": "Return", "value": {"type": "number", "value": 1}}
+                ]
+            }
+        }
+        result = self.analyzer._has_return_in_body(body)
+        self.assertTrue(result)
+
+    def test_has_return_in_body_none(self):
+        """Test: Maneja None en body"""
+        result = self.analyzer._has_return_in_body(None)
+        self.assertFalse(result)
+
+    def test_has_return_in_body_not_dict(self):
+        """Test: Maneja body que no es dict"""
+        result = self.analyzer._has_return_in_body("not_a_dict")
+        self.assertFalse(result)
+
+    def test_str_to_sympy_complex(self):
+        """Test: Convierte string complejo a SymPy"""
+        result = self.analyzer._str_to_sympy("n + 1")
+        self.assertIsNotNone(result)
+
+    def test_str_to_sympy_with_whitespace(self):
+        """Test: Maneja string con espacios en blanco"""
+        result = self.analyzer._str_to_sympy("  n  ")
+        self.assertIsNotNone(result)
+
+    def test_expr_to_str_complex(self):
+        """Test: Convierte expresión compleja a string"""
+        expr = {
+            "type": "binary",
+            "operator": "*",
+            "left": {
+                "type": "binary",
+                "operator": "+",
+                "left": {"type": "identifier", "name": "a"},
+                "right": {"type": "identifier", "name": "b"}
+            },
+            "right": {"type": "identifier", "name": "c"}
+        }
+        result = self.analyzer._expr_to_str(expr)
+        self.assertIsInstance(result, str)
+        self.assertGreater(len(result), 0)
+

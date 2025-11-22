@@ -77,6 +77,174 @@ class TestIterativeAnalyzer:
         assert isinstance(t_open, str), "T_open debe ser string"
         assert len(t_open) > 0, "T_open no debe estar vacío"
 
+    def test_normalize_string(self):
+        """Test: _normalize_string normaliza strings con formato especial"""
+        analyzer = IterativeAnalyzer()
+        result = analyzer._normalize_string("i=1\\ldotsn")
+        assert result == "i=1..n"
+    
+    def test_normalize_string_with_space(self):
+        """Test: _normalize_string normaliza strings con espacio"""
+        analyzer = IterativeAnalyzer()
+        result = analyzer._normalize_string("i=1\\ldots n")
+        assert result == "i=1..n"
+    
+    def test_normalize_string_empty(self):
+        """Test: _normalize_string maneja string vacío"""
+        analyzer = IterativeAnalyzer()
+        result = analyzer._normalize_string("")
+        assert result == ""
+    
+    def test_normalize_string_none(self):
+        """Test: _normalize_string maneja None"""
+        analyzer = IterativeAnalyzer()
+        result = analyzer._normalize_string(None)
+        assert result is None
+    
+    def test_expr_to_str_binary_no_operator(self):
+        """Test: _expr_to_str usa fallback para operador faltante"""
+        analyzer = IterativeAnalyzer()
+        expr = {
+            "type": "binary",
+            "left": {"type": "identifier", "name": "a"},
+            "right": {"type": "identifier", "name": "b"}
+            # Sin operator
+        }
+        result = analyzer._expr_to_str(expr)
+        # Debe usar "-" como fallback
+        assert "a" in result
+        assert "b" in result
+    
+    def test_expr_to_str_unary(self):
+        """Test: _expr_to_str maneja expresión unaria"""
+        analyzer = IterativeAnalyzer()
+        expr = {
+            "type": "unary",
+            "operator": "-",
+            "arg": {"type": "number", "value": 5}
+        }
+        result = analyzer._expr_to_str(expr)
+        assert isinstance(result, str)
+    
+    def test_expr_to_str_unknown_type(self):
+        """Test: _expr_to_str maneja tipo desconocido (fallback)"""
+        analyzer = IterativeAnalyzer()
+        expr = {"type": "unknown_type", "value": 42}
+        result = analyzer._expr_to_str(expr)
+        assert isinstance(result, str)
+    
+    def test_visit_proc_def(self):
+        """Test: visitProcDef visita definición de procedimiento"""
+        analyzer = IterativeAnalyzer()
+        node = {
+            "type": "ProcDef",
+            "pos": {"line": 1},
+            "name": "test",
+            "params": [{"name": "n"}],
+            "body": {
+                "type": "Block",
+                "body": [
+                    {"type": "Assign", "pos": {"line": 2}, "target": {"type": "identifier", "name": "x"}, "value": {"type": "number", "value": 1}}
+                ]
+            }
+        }
+        analyzer.visitProcDef(node)
+        assert len(analyzer.rows) > 0
+    
+    def test_visit_other(self):
+        """Test: visitOther visita nodo desconocido"""
+        analyzer = IterativeAnalyzer()
+        node = {
+            "type": "UnknownType",
+            "pos": {"line": 5}
+        }
+        initial_rows = len(analyzer.rows)
+        analyzer.visitOther(node)
+        assert len(analyzer.rows) > initial_rows
+    
+    def test_analyze_with_invalid_ast(self):
+        """Test: analyze maneja AST inválido"""
+        analyzer = IterativeAnalyzer()
+        # AST con estructura incorrecta
+        ast = None
+        result = analyzer.analyze(ast, mode="worst")
+        # Debe manejar el error y retornar resultado válido o error
+        assert result is not None
+    
+    def test_latex_to_sympy_expr_simple(self):
+        """Test: _latex_to_sympy_expr convierte expresión LaTeX simple"""
+        analyzer = IterativeAnalyzer()
+        result = analyzer._latex_to_sympy_expr("n + 1")
+        assert result is not None
+    
+    def test_latex_to_sympy_expr_with_cdot(self):
+        """Test: _latex_to_sympy_expr maneja \\cdot"""
+        analyzer = IterativeAnalyzer()
+        result = analyzer._latex_to_sympy_expr("n \\cdot 2")
+        assert result is not None
+    
+    def test_latex_to_sympy_expr_with_frac(self):
+        """Test: _latex_to_sympy_expr maneja fracciones LaTeX"""
+        analyzer = IterativeAnalyzer()
+        result = analyzer._latex_to_sympy_expr("\\frac{n}{2}")
+        assert result is not None
+    
+    def test_latex_to_sympy_expr_with_log(self):
+        """Test: _latex_to_sympy_expr maneja logaritmos LaTeX"""
+        analyzer = IterativeAnalyzer()
+        result = analyzer._latex_to_sympy_expr("n \\log(n)")
+        assert result is not None
+    
+    def test_latex_to_sympy_expr_with_power(self):
+        """Test: _latex_to_sympy_expr maneja potencias LaTeX"""
+        analyzer = IterativeAnalyzer()
+        result = analyzer._latex_to_sympy_expr("n^2")
+        assert result is not None
+    
+    def test_latex_to_sympy_expr_with_power_braces(self):
+        """Test: _latex_to_sympy_expr maneja potencias con llaves"""
+        analyzer = IterativeAnalyzer()
+        result = analyzer._latex_to_sympy_expr("n^{3}")
+        assert result is not None
+    
+    def test_latex_to_sympy_expr_error(self):
+        """Test: _latex_to_sympy_expr maneja errores"""
+        analyzer = IterativeAnalyzer()
+        # Expresión que causará error
+        result = analyzer._latex_to_sympy_expr("invalid!!!")
+        assert result is None
+    
+    def test_calculate_t_polynomial_fallback(self):
+        """Test: _calculate_t_polynomial_fallback calcula T_polynomial"""
+        analyzer = IterativeAnalyzer()
+        # Agregar algunas filas
+        analyzer.add_row(1, "assign", "C_1", "n", "test")
+        analyzer.add_row(2, "assign", "C_2", "n", "test")
+        analyzer.add_row(3, "assign", "C_3", "1", "test")
+        analyzer._calculate_t_polynomial_fallback()
+        assert analyzer.t_polynomial is not None
+        assert isinstance(analyzer.t_polynomial, str)
+        assert len(analyzer.t_polynomial) > 0
+    
+    def test_calculate_t_polynomial_fallback_single_ck(self):
+        """Test: _calculate_t_polynomial_fallback con un solo C_k por término"""
+        analyzer = IterativeAnalyzer()
+        analyzer.add_row(1, "assign", "C_1", "n", "test")
+        analyzer._calculate_t_polynomial_fallback()
+        assert analyzer.t_polynomial is not None
+        assert "C_1" in analyzer.t_polynomial
+    
+    def test_calculate_t_polynomial_fallback_multiple_ck(self):
+        """Test: _calculate_t_polynomial_fallback con múltiples C_k por término"""
+        analyzer = IterativeAnalyzer()
+        analyzer.add_row(1, "assign", "C_1", "n", "test")
+        analyzer.add_row(2, "assign", "C_2", "n", "test")
+        analyzer._calculate_t_polynomial_fallback()
+        assert analyzer.t_polynomial is not None
+        # Debe agrupar C_1 y C_2 juntos
+        assert "C_1" in analyzer.t_polynomial
+        assert "C_2" in analyzer.t_polynomial
+
 
 class TestCommonAlgorithms:
     """Tests para algoritmos comunes."""

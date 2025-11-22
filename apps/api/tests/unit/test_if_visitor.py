@@ -97,3 +97,61 @@ class TestIfVisitor(unittest.TestCase):
         result = self.analyzer._expr_to_str("test")
         self.assertEqual(result, "test")
 
+    def test_expr_to_str_complex(self):
+        """Test: Convierte expresión compleja a string"""
+        expr = {
+            "type": "binary",
+            "operator": "&&",
+            "left": {
+                "type": "binary",
+                "operator": ">",
+                "left": {"type": "identifier", "name": "x"},
+                "right": {"type": "number", "value": 0}
+            },
+            "right": {
+                "type": "binary",
+                "operator": "<",
+                "left": {"type": "identifier", "name": "y"},
+                "right": {"type": "number", "value": 10}
+            }
+        }
+        result = self.analyzer._expr_to_str(expr)
+        self.assertIsInstance(result, str)
+        self.assertGreater(len(result), 0)
+
+    def test_expr_to_str_unary(self):
+        """Test: Convierte expresión unaria a string"""
+        expr = {
+            "type": "unary",
+            "operator": "!",
+            "arg": {"type": "identifier", "name": "flag"}
+        }
+        result = self.analyzer._expr_to_str(expr)
+        self.assertIsInstance(result, str)
+
+    def test_visit_if_with_nested_if(self):
+        """Test: Visita IF anidado"""
+        node = {
+            "type": "If",
+            "pos": {"line": 2},
+            "test": {"type": "binary", "left": {"type": "identifier", "name": "x"}, "op": ">", "right": {"type": "number", "value": 0}},
+            "consequent": {
+                "type": "Block",
+                "body": [
+                    {
+                        "type": "If",
+                        "pos": {"line": 3},
+                        "test": {"type": "binary", "left": {"type": "identifier", "name": "y"}, "op": ">", "right": {"type": "number", "value": 0}},
+                        "consequent": {
+                            "type": "Block",
+                            "body": [
+                                {"type": "Assign", "pos": {"line": 4}, "target": {"type": "identifier", "name": "z"}, "value": {"type": "number", "value": 1}}
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+        self.analyzer.visitIf(node, mode="worst")
+        self.assertGreater(len(self.analyzer.rows), 0)
+

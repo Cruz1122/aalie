@@ -103,3 +103,58 @@ class TestWhileRepeatVisitor(unittest.TestCase):
         self.assertFalse(self.analyzer._is_simple_constant("n"))
         self.assertFalse(self.analyzer._is_simple_constant("n + 1"))
 
+    def test_is_simple_constant_float(self):
+        """Test: Detecta constantes flotantes"""
+        self.assertTrue(self.analyzer._is_simple_constant("3.14"))
+        self.assertTrue(self.analyzer._is_simple_constant("0.5"))
+
+    def test_is_simple_constant_negative(self):
+        """Test: Detecta constantes negativas"""
+        self.assertTrue(self.analyzer._is_simple_constant("-1"))
+        self.assertTrue(self.analyzer._is_simple_constant("-42"))
+
+    def test_is_simple_constant_invalid(self):
+        """Test: Rechaza expresiones que no son constantes"""
+        self.assertFalse(self.analyzer._is_simple_constant("x + 1"))
+        self.assertFalse(self.analyzer._is_simple_constant(""))
+        self.assertFalse(self.analyzer._is_simple_constant("abc"))
+
+    def test_str_to_sympy_complex(self):
+        """Test: Convierte string complejo a SymPy"""
+        result = self.analyzer._str_to_sympy("n + 1")
+        self.assertIsNotNone(result)
+
+    def test_str_to_sympy_with_symbols(self):
+        """Test: Convierte string con símbolos a SymPy"""
+        result = self.analyzer._str_to_sympy("i + j")
+        self.assertIsNotNone(result)
+
+    def test_str_to_sympy_error_handling(self):
+        """Test: Maneja errores en conversión a SymPy"""
+        # String que no se puede parsear
+        result = self.analyzer._str_to_sympy("invalid!!!")
+        # Debe retornar Integer(1) como fallback
+        self.assertEqual(result, Integer(1))
+
+    def test_expr_to_str_complex(self):
+        """Test: Convierte expresión compleja a string"""
+        expr = {
+            "type": "binary",
+            "operator": "&&",
+            "left": {
+                "type": "binary",
+                "operator": "<",
+                "left": {"type": "identifier", "name": "i"},
+                "right": {"type": "identifier", "name": "n"}
+            },
+            "right": {
+                "type": "binary",
+                "operator": ">",
+                "left": {"type": "identifier", "name": "x"},
+                "right": {"type": "number", "value": 0}
+            }
+        }
+        result = self.analyzer._expr_to_str(expr)
+        self.assertIsInstance(result, str)
+        self.assertGreater(len(result), 0)
+
