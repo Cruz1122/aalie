@@ -68,7 +68,7 @@ export const JOB_CONFIG = {
 - ⚠️ OPERADOR MÓDULO: usar MOD, NO usar % (ej: IF (n MOD 2 = 0) THEN ... NO IF (n % 2 = 0))
 - ⚠️ DIVISIÓN ENTERA: usar DIV (ej: exponente DIV 2, NO exponente / 2 para división entera)
 - DIVISIÓN REAL: usar / (ej: (izq + der) / 2)
-- Cadenas: usa comillas dobles " (ej. "Listo", "Total: " + n); escapa comillas internas como \"
+- Cadenas: usa comillas dobles " (ej. "Listo", "Total: " + n); escapa comillas internas como "
 - Return: RETURN siempre debe retornar un valor; PROHIBIDO usar RETURN solo (ej: RETURN resultado; NO RETURN;)
  
  ⚠️ REGLA CRÍTICA 1: IF SIEMPRE requiere BEGIN...END o llaves { } después de THEN y ELSE.
@@ -258,16 +258,16 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  - Mantén las variables exactamente como aparecen en la entrada
  
  REGLAS DE SIMPLIFICACIÓN DE SUMATORIAS:
- - \sum_{i=1}^{n} 1 → n (mantener notación: si es n, queda n; si es N, queda N)
- - \sum_{i=2}^{n} 1 → n - 1
- - \sum_{i=k}^{n} 1 → n - k + 1
- - \sum_{i=a}^{b} 1 → b - a + 1 (cuando a y b son constantes o expresiones)
- - \sum_{i=0}^{n} 1 → n + 1 (porque incluye 0)
- - \sum_{i=2}^{n} 1 → n - 1 (porque empieza en 2)
+ - \\sum_{i=1}^{n} 1 → n (mantener notación: si es n, queda n; si es N, queda N)
+ - \\sum_{i=2}^{n} 1 → n - 1
+ - \\sum_{i=k}^{n} 1 → n - k + 1
+ - \\sum_{i=a}^{b} 1 → b - a + 1 (cuando a y b son constantes o expresiones)
+ - \\sum_{i=0}^{n} 1 → n + 1 (porque incluye 0)
+ - \\sum_{i=2}^{n} 1 → n - 1 (porque empieza en 2)
  - Simplificar multiplicaciones de sumatorias:
-   * (\sum_{i=a}^{b} 1) \cdot (\sum_{j=c}^{d} 1) → (b-a+1)(d-c+1) cuando se pueden calcular
-   * (\sum_{I=0}^{n} 1) \cdot (\sum_{J=2}^{n} 1) → (n+1)(n-1) = n² - 1
-   * (\sum_{i=2}^{n} 1) \cdot (\sum_{j=2}^{n} 1) → (n-1)² = n² - 2n + 1
+   * (\\sum_{i=a}^{b} 1) \\cdot (\\sum_{j=c}^{d} 1) → (b-a+1)(d-c+1) cuando se pueden calcular
+   * (\\sum_{I=0}^{n} 1) \\cdot (\\sum_{J=2}^{n} 1) → (n+1)(n-1) = n² - 1
+   * (\\sum_{i=2}^{n} 1) \\cdot (\\sum_{j=2}^{n} 1) → (n-1)² = n² - 2n + 1
  - Para sumatorias anidadas o con límites complejos, simplificar paso a paso
  
  REGLAS DE SIMPLIFICACIÓN ALGEBRAICA GENERAL:
@@ -281,26 +281,26 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  - Si una expresión tiene variables de bucles, simplifica solo los paréntesis y operaciones, pero mantén las variables
  - Ejemplo: ((n) - (i)) - (1) + 2 → n - i + 1 (NO simplificar a 0, hay variable i)
  - Agrupar términos similares: n + n → 2n, n - n → 0 (solo cuando no hay variables de bucles)
- - Simplificar multiplicaciones: (1) \cdot (n) → n, (n) \cdot (1) → n
+ - Simplificar multiplicaciones: (1) \\cdot (n) → n, (n) \\cdot (1) → n
  - Mantener formato LaTeX en la salida
  - Usa SIEMPRE la misma forma canónica en los counts simplificados: combina términos semejantes, ordena por grados descendentes y evita factorizaciones o permutaciones equivalentes
- - Cuando existan sumatorias anidadas, conserva la notación explícita \sum con índices únicos para las variables ligadas; NO conviertas sumatorias en productos que mezclen variables ligadas con variables libres
- - Si la expresión puede escribirse como polinomio en n, devuelve la forma expandida ordenada como a\cdot n^2 + b\cdot n + c, sin espacios adicionales ni factorizaciones
+ - Cuando existan sumatorias anidadas, conserva la notación explícita \\sum con índices únicos para las variables ligadas; NO conviertas sumatorias en productos que mezclen variables ligadas con variables libres
+ - Si la expresión puede escribirse como polinomio en n, devuelve la forma expandida ordenada como a\\cdot n^2 + b\\cdot n + c, sin espacios adicionales ni factorizaciones
  
  EJEMPLOS (respetando notación original):
  - Si entrada tiene 'n': ((n)) → n, (n) - (0) + 2 → n + 2
  - Si entrada tiene 'N': ((N)) → N, (N) - (0) + 2 → N + 2
  - n+1-2 → n-1
- - (1) \cdot (n) → n
- - \sum_{i=1}^{n} 1 → n
- - \sum_{i=0}^{n} 1 → n + 1
- - (\sum_{i=1}^{n} 1) \cdot (2) → 2n
- - (\sum_{I=0}^{n} 1) \cdot (\sum_{J=2}^{n} 1) → (n+1)(n-1) = n² - 1
- - ((n) - (2) + 2) \cdot (\sum_{I=0}^{n} 1) → n \cdot (n+1) = n² + n
- - (\sum_{I=0}^{n} 1) \cdot (\sum_{J=2}^{n} 1) \cdot (\sum_{K=a}^{b} 1) → (n+1)(n-1)(b-a+1)
+ - (1) \\cdot (n) → n
+ - \\sum_{i=1}^{n} 1 → n
+ - \\sum_{i=0}^{n} 1 → n + 1
+ - (\\sum_{i=1}^{n} 1) \\cdot (2) → 2n
+ - (\\sum_{I=0}^{n} 1) \\cdot (\\sum_{J=2}^{n} 1) → (n+1)(n-1) = n² - 1
+ - ((n) - (2) + 2) \\cdot (\\sum_{I=0}^{n} 1) → n \\cdot (n+1) = n² + n
+ - (\\sum_{I=0}^{n} 1) \\cdot (\\sum_{J=2}^{n} 1) \\cdot (\\sum_{K=a}^{b} 1) → (n+1)(n-1)(b-a+1)
  - ((n) - (i)) - (1) + 2 → n - i + 1 (NO simplificar a 0, hay variable i)
  - ((n) - (1)) - (1) + 2 → n (sin variables de bucles externos)
- - \sum_{i=1}^{(n) - (1)} ((n) - (i)) - (1) + 2 → \sum_{i=1}^{n-1} (n - i + 1) (mantener variable i en la expresión)
+ - \\sum_{i=1}^{(n) - (1)} ((n) - (i)) - (1) + 2 → \\sum_{i=1}^{n-1} (n - i + 1) (mantener variable i en la expresión)
  
  IMPORTANTE:
  - Devuelve SOLO un objeto JSON válido

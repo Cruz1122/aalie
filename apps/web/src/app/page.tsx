@@ -14,7 +14,6 @@ import ModeToggle from "@/components/ModeToggle";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
-import { heuristicKind } from "@/lib/algorithm-classifier";
 
 interface Message {
   id: string;
@@ -167,6 +166,99 @@ export default function HomePage() {
     }, 300);
   };
 
+  type AlgorithmKind = "iterative" | "recursive" | "hybrid" | "unknown";
+
+  const handleMethodSelectionForRecursive = useCallback(async (
+    defaultMethodValue: MethodType,
+    progressBeforeMethodSelection: number
+  ): Promise<MethodType> => {
+    setChatAnalysisMessage("Selecciona el método de análisis...");
+    minProgressRef.current = progressBeforeMethodSelection;
+    setChatAnalysisProgress(progressBeforeMethodSelection);
+    setShowMethodSelector(true);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    
+    const selectedMethod = await new Promise<MethodType>((resolve) => {
+      methodSelectionPromiseRef.current = { resolve, reject: () => resolve(defaultMethodValue) };
+      setTimeout(() => {
+        if (methodSelectionPromiseRef.current) {
+          methodSelectionPromiseRef.current.resolve(defaultMethodValue);
+          methodSelectionPromiseRef.current = null;
+        }
+      }, 60000);
+    }).catch(() => defaultMethodValue);
+    
+    setShowMethodSelector(false);
+    methodSelectionPromiseRef.current = null;
+    minProgressRef.current = 0;
+    setChatAnalysisMessage("Método seleccionado, continuando análisis...");
+    await animateProgress(progressBeforeMethodSelection, 90, 400, setChatAnalysisProgress);
+    return selectedMethod;
+  }, [animateProgress]);
+
+  const detectAndSelectMethodForRecursive = useCallback(async (
+    sourceCode: string,
+    kind: AlgorithmKind
+  ): Promise<MethodType | undefined> => {
+    const progressBeforeMethodSelection = 85;
+    
+    try {
+      const detectMethodsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/detect-methods`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: sourceCode, algorithm_kind: kind }),
+      });
+      const detectMethodsResult = await detectMethodsResponse.json() as {
+        ok: boolean;
+        applicable_methods?: MethodType[];
+        default_method?: MethodType;
+        errors?: Array<{ message: string }>;
+      };
+      
+      if (!detectMethodsResult.ok || !detectMethodsResult.applicable_methods) {
+        setChatAnalysisMessage("Iniciando análisis de complejidad...");
+        await animateProgress(progressBeforeMethodSelection, 90, 400, setChatAnalysisProgress);
+        return undefined;
+      }
+      
+      const methods = detectMethodsResult.applicable_methods;
+      const defaultMethodValue: MethodType = detectMethodsResult.default_method || "master";
+      setApplicableMethods(methods);
+      setDefaultMethod(defaultMethodValue);
+      
+      if (methods.length > 1) {
+        return await handleMethodSelectionForRecursive(defaultMethodValue, progressBeforeMethodSelection);
+      }
+      
+      setChatAnalysisMessage("Iniciando análisis de complejidad...");
+      await animateProgress(progressBeforeMethodSelection, 90, 400, setChatAnalysisProgress);
+      return defaultMethodValue;
+    } catch (error) {
+      console.warn("Error detectando métodos, usando método por defecto:", error);
+      setChatAnalysisMessage("Iniciando análisis de complejidad...");
+      await animateProgress(progressBeforeMethodSelection, 90, 400, setChatAnalysisProgress);
+      return "master";
+    }
+  }, [animateProgress, handleMethodSelectionForRecursive]);
+
+  const prepareRecursiveAnalysisSteps = useCallback(async (): Promise<void> => {
+    setChatAnalysisMessage("Verificando condiciones...");
+    await animateProgress(40, 50, 300, setChatAnalysisProgress);
+    setChatAnalysisMessage("Extrayendo recurrencia...");
+    await animateProgress(50, 65, 400, setChatAnalysisProgress);
+    setChatAnalysisMessage("Normalizando recurrencia...");
+    await animateProgress(65, 75, 300, setChatAnalysisProgress);
+    setChatAnalysisMessage("Detectando método de análisis...");
+    await animateProgress(75, 85, 500, setChatAnalysisProgress);
+  }, [animateProgress]);
+
+  const prepareIterativeAnalysisSteps = useCallback(async (): Promise<void> => {
+    setChatAnalysisMessage("Hallando sumatorias...");
+    await animateProgress(40, 50, 200, setChatAnalysisProgress);
+    setChatAnalysisMessage("Cerrando sumatorias...");
+    await animateProgress(50, 55, 200, setChatAnalysisProgress);
+  }, [animateProgress]);
+
   const runChatAnalysis = useCallback(async (sourceCode: string) => {
     if (!sourceCode) return;
 
@@ -179,13 +271,13 @@ export default function HomePage() {
     setChatAnalysisError(null);
 
     try {
+      // Parse source code
       setChatAnalysisMessage("Parseando código...");
       const parsePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/grammar/parse`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source: sourceCode }),
       }).then(r => r.json());
-
       const parseRes = await animateProgress(0, 20, 800, setChatAnalysisProgress, parsePromise) as { ok: boolean; ast?: Program; errors?: Array<{ line: number; column: number; message: string }> };
 
       if (!parseRes.ok) {
@@ -196,29 +288,23 @@ export default function HomePage() {
         return;
       }
 
+      // Classify algorithm
       setChatAnalysisMessage("Clasificando algoritmo...");
-      let kind: "iterative" | "recursive" | "hybrid" | "unknown";
+      let kind: AlgorithmKind;
       try {
-        // No verificar API_KEY del servidor (no hacer peticiones)
-        // El backend usará automáticamente la API_KEY de variables de entorno si está disponible
         const apiKey = getApiKey();
-        
         const body: { source: string; mode: string; apiKey?: string } = { source: sourceCode, mode: "local" };
         if (apiKey) {
           body.apiKey = apiKey;
         }
-        // Si no hay apiKey, el backend intentará usar la de variables de entorno
-        
         const clsPromise = fetch("/api/llm/classify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
-
         const clsResponse = await animateProgress(20, 40, 1200, setChatAnalysisProgress, clsPromise) as Response;
-
         if (clsResponse.ok) {
-          const cls = await clsResponse.json() as { kind: "iterative" | "recursive" | "hybrid" | "unknown"; method?: string };
+          const cls = await clsResponse.json() as { kind: AlgorithmKind; method?: string };
           kind = cls.kind;
           setChatAlgorithmType(kind);
           setChatAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKind(kind)}`);
@@ -226,119 +312,25 @@ export default function HomePage() {
           throw new Error(`HTTP ${clsResponse.status}`);
         }
       } catch (error) {
-        console.warn("[ChatAnalysis] Error en clasificación, usando heurística", error);
-        kind = heuristicKind(parseRes.ast ?? null);
+        console.warn("[ChatAnalysis] Error en clasificación", error);
+        kind = "unknown";
         setChatAlgorithmType(kind);
-        setChatAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKind(kind)}`);
+        setChatAnalysisMessage(`No se pudo clasificar el algoritmo`);
       }
 
       const isRecursive = kind === "recursive" || kind === "hybrid";
-      
       let selectedMethod: MethodType | undefined = undefined;
       
+      // Prepare and detect methods for recursive algorithms
       if (isRecursive) {
-        setChatAnalysisMessage("Verificando condiciones...");
-        await animateProgress(40, 50, 300, setChatAnalysisProgress);
-        setChatAnalysisMessage("Extrayendo recurrencia...");
-        await animateProgress(50, 65, 400, setChatAnalysisProgress);
-        setChatAnalysisMessage("Normalizando recurrencia...");
-        await animateProgress(65, 75, 300, setChatAnalysisProgress);
-        setChatAnalysisMessage("Detectando método de análisis...");
-        await animateProgress(75, 85, 500, setChatAnalysisProgress);
-        
-        // Guardar el progreso actual antes de detectar métodos
-        const progressBeforeMethodSelection = 85;
-        
-        // Detectar métodos aplicables
-        selectedMethod = "master";
-        try {
-          const detectMethodsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/detect-methods`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              source: sourceCode,
-              algorithm_kind: kind
-            }),
-          });
-          
-          const detectMethodsResult = await detectMethodsResponse.json() as {
-            ok: boolean;
-            applicable_methods?: MethodType[];
-            default_method?: MethodType;
-            errors?: Array<{ message: string }>;
-          };
-          
-          if (detectMethodsResult.ok && detectMethodsResult.applicable_methods) {
-            const methods = detectMethodsResult.applicable_methods;
-            const defaultMethodValue = (detectMethodsResult.default_method || "master") as MethodType;
-            
-            setApplicableMethods(methods);
-            setDefaultMethod(defaultMethodValue);
-            
-            // Si hay múltiples métodos aplicables, mostrar selector
-            if (methods.length > 1) {
-              setChatAnalysisMessage("Selecciona el método de análisis...");
-              
-              // Guardar el progreso mínimo para evitar que baje
-              minProgressRef.current = progressBeforeMethodSelection;
-              
-              // Establecer el progreso directamente al valor guardado
-              setChatAnalysisProgress(progressBeforeMethodSelection);
-              
-              setShowMethodSelector(true);
-              
-              // Esperar un poco para que el selector se renderice completamente
-              await new Promise((resolve) => setTimeout(resolve, 200));
-              
-              // Crear un Promise que se resolverá cuando el usuario seleccione un método
-              selectedMethod = await new Promise<MethodType>((resolve, reject) => {
-                methodSelectionPromiseRef.current = { resolve, reject };
-                setTimeout(() => {
-                  if (methodSelectionPromiseRef.current) {
-                    methodSelectionPromiseRef.current.resolve(defaultMethodValue);
-                    methodSelectionPromiseRef.current = null;
-                  }
-                }, 60000);
-              }).catch(() => defaultMethodValue);
-              
-              setShowMethodSelector(false);
-              methodSelectionPromiseRef.current = null;
-              // Limpiar el progreso mínimo después de ocultar el selector
-              minProgressRef.current = 0;
-              
-              setChatAnalysisMessage("Método seleccionado, continuando análisis...");
-              // Mantener el progreso y avanzar suavemente
-              await animateProgress(progressBeforeMethodSelection, 90, 400, setChatAnalysisProgress);
-            } else {
-              selectedMethod = defaultMethodValue;
-              // Continuar con el progreso normalmente
-              setChatAnalysisMessage("Iniciando análisis de complejidad...");
-              await animateProgress(progressBeforeMethodSelection, 90, 400, setChatAnalysisProgress);
-            }
-          } else {
-            selectedMethod = "master";
-            // Continuar con el progreso normalmente
-            setChatAnalysisMessage("Iniciando análisis de complejidad...");
-            await animateProgress(progressBeforeMethodSelection, 90, 400, setChatAnalysisProgress);
-          }
-        } catch (error) {
-          console.warn("Error detectando métodos, usando método por defecto:", error);
-          selectedMethod = "master";
-          // Continuar con el progreso normalmente
-          setChatAnalysisMessage("Iniciando análisis de complejidad...");
-          await animateProgress(progressBeforeMethodSelection, 90, 400, setChatAnalysisProgress);
-        }
+        await prepareRecursiveAnalysisSteps();
+        selectedMethod = await detectAndSelectMethodForRecursive(sourceCode, kind);
       } else {
-        setChatAnalysisMessage("Hallando sumatorias...");
-        await animateProgress(40, 50, 200, setChatAnalysisProgress);
-        setChatAnalysisMessage("Cerrando sumatorias...");
-        await animateProgress(50, 55, 200, setChatAnalysisProgress);
+        await prepareIterativeAnalysisSteps();
       }
 
-      // Verificar estado de API_KEY (se mantiene para otras funciones como ChatBot)
+      // Perform analysis
       const apiKey = getApiKey();
-      
-      // Realizar una sola petición que trae todos los casos (worst, best y avg)
       const analyzeBody: { 
         source: string; 
         mode: string; 
@@ -349,19 +341,15 @@ export default function HomePage() {
       } = { 
         source: sourceCode, 
         mode: "all",
-        avgModel: {
-          mode: "uniform",
-          predicates: {}
-        },
+        avgModel: { mode: "uniform", predicates: {} },
         algorithm_kind: kind
       };
       
-      // Solo agregar preferred_method si es recursivo y hay un método seleccionado
       if (isRecursive && selectedMethod) {
         analyzeBody.preferred_method = selectedMethod;
       }
       if (apiKey) {
-        analyzeBody.api_key = apiKey;  // Mantener por compatibilidad, pero backend ya no lo usa para simplificación
+        analyzeBody.api_key = apiKey;
       }
       
       const analyzePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
@@ -370,7 +358,6 @@ export default function HomePage() {
         body: JSON.stringify(analyzeBody),
       }).then(r => r.json());
 
-      // Ajustar el progreso inicial según si es recursivo o no
       const progressStart = isRecursive ? 90 : 55;
       setChatAnalysisMessage("Analizando complejidad...");
       const analyzeRes = await animateProgress(progressStart, 70, 2000, setChatAnalysisProgress, analyzePromise) as { 
@@ -385,8 +372,9 @@ export default function HomePage() {
       setChatAnalysisMessage("Generando forma polinómica...");
       await animateProgress(70, 80, 200, setChatAnalysisProgress);
 
+      // Finalize analysis
       if (!analyzeRes.ok) {
-        const errorMsg = (analyzeRes as { errors?: Array<{ message: string; line?: number; column?: number }> }).errors?.map((e) => e.message || `Error en línea ${e.line ?? '?'}`).join("\n") || "No se pudo analizar el algoritmo";
+        const errorMsg = analyzeRes.errors?.map((e) => e.message || `Error en línea ${e.line ?? '?'}`).join("\n") || "No se pudo analizar el algoritmo";
         setChatAnalysisError(errorMsg);
         setChatAnalysisMessage("Análisis detenido");
         setIsChatAnalyzing(false);
@@ -396,7 +384,6 @@ export default function HomePage() {
       setChatAnalysisMessage("Finalizando análisis...");
       await animateProgress(80, 100, 200, setChatAnalysisProgress);
 
-      // Guardar código y resultados en sessionStorage (igual que ManualModeView)
       if (globalThis.window !== undefined) {
         sessionStorage.setItem('analyzerCode', sourceCode);
         sessionStorage.setItem('analyzerResults', JSON.stringify(analyzeRes));
@@ -404,11 +391,7 @@ export default function HomePage() {
 
       setChatAnalysisMessage("Análisis completo");
       setChatAnalysisComplete(true);
-
-      // Esperar 2 segundos antes de navegar (igual que ManualModeView)
       await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Navegar a /analyzer con los datos (el loader se ocultará automáticamente al desmontarse)
       router.push('/analyzer');
     } catch (error) {
       console.error("[ChatAnalysis] Error inesperado", error);
@@ -417,7 +400,7 @@ export default function HomePage() {
       setChatAnalysisMessage("Ocurrió un error");
       setIsChatAnalyzing(false);
     }
-  }, [animateProgress, router]);
+  }, [animateProgress, router, detectAndSelectMethodForRecursive, prepareIterativeAnalysisSteps, prepareRecursiveAnalysisSteps]);
 
   const handleChatLoaderClose = () => {
     setChatLoaderVisible(false);
@@ -442,16 +425,6 @@ export default function HomePage() {
     }
   };
 
-  const formatUnsupportedKindMessage = (value: "iterative" | "recursive" | "hybrid" | "unknown"): string => {
-    switch (value) {
-      case "recursive":
-        return "recursivo";
-      case "hybrid":
-        return "híbrido";
-      default:
-        return value;
-    }
-  };
 
   return (
     <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">

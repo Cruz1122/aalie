@@ -177,8 +177,7 @@ const CustomPre = (props: any) => {
 
   const codeContent = extractTextContent(props.children);
   // Obtener onAnalyzeCode del contexto (se pasa desde MarkdownRenderer)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const onAnalyzeCode = (props as any).onAnalyzeCode;
+  const onAnalyzeCode = (props as { onAnalyzeCode?: (code: string) => void }).onAnalyzeCode;
 
   return (
     <div className="relative group w-full">
@@ -262,10 +261,15 @@ const CustomTd = (props: any) => (
   </td>
 );
 
-export default function MarkdownRenderer({ content, className, onAnalyzeCode }: MarkdownRendererProps) {
-  // Crear un componente Pre personalizado que incluye onAnalyzeCode
+const createPreWithAnalyze = (onAnalyzeCode?: (code: string) => void) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const PreWithAnalyze = (props: any) => <CustomPre {...props} onAnalyzeCode={onAnalyzeCode} />;
+  const PreWithAnalyzeComponent = (props: any) => <CustomPre {...props} onAnalyzeCode={onAnalyzeCode} />;
+  PreWithAnalyzeComponent.displayName = 'PreWithAnalyze';
+  return PreWithAnalyzeComponent;
+};
+
+export default function MarkdownRenderer({ content, className, onAnalyzeCode }: MarkdownRendererProps) {
+  const PreWithAnalyze = createPreWithAnalyze(onAnalyzeCode);
 
   return (
     <div className={className}>
