@@ -161,16 +161,16 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
                 }
             else:
                 # Hay variabilidad, devolver todos los casos completos
-            response = {
-                "ok": True,
+                response = {
+                    "ok": True,
                     "has_case_variability": True,
-                "worst": result_worst,
-                "best": result_best
-            }
-            
-            # Incluir avg solo si fue exitoso
-            if result_avg:
-                response["avg"] = result_avg
+                    "worst": result_worst,
+                    "best": result_best
+                }
+                
+                # Incluir avg solo si fue exitoso
+                if result_avg:
+                    response["avg"] = result_avg
             
             return response
         else:

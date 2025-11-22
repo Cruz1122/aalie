@@ -457,8 +457,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     recurrence_form_corrected = f"T(n) = {' + '.join(terms_latex)}"
                 else:
                     recurrence_form_corrected = f"T(n) = {' + '.join(terms_latex)} + g(n)"
-        
-        recurrence = {
+                
+                recurrence = {
                     "type": "linear_shift",
                     "form": recurrence_form_corrected,
                     "order": max_offset,  # orden de la recurrencia (k)
@@ -473,6 +473,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             else:
                 # Fallback si no se puede obtener linear_info
                 recurrence = {
+                    "type": "linear_shift",
                     "form": recurrence_form,
                     "g(n)": f_n if f_n != "0" else None,
                     "n0": n0,
@@ -508,7 +509,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Solo agregar "Parámetros extraídos" si NO es ecuación característica
         # Para ecuación característica, estos parámetros (a, b, f) no son relevantes
         if method != "characteristic_equation":
-        self.proof_steps.append({"id": "extract", "text": f"\\text{{Parámetros extraídos: }} a={a}, b={b_display}, f(n)={f_n}, n_0={n0}"})
+            self.proof_steps.append({"id": "extract", "text": f"\\text{{Parámetros extraídos: }} a={a}, b={b_display}, f(n)={f_n}, n_0={n0}"})
         
         return {
             "success": True,

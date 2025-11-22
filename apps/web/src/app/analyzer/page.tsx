@@ -329,7 +329,10 @@ export default function AnalyzerPage() {
       let detectedMethod = "método recursivo";
       if (isRecursive && analyzeRes.worst?.totals?.recurrence) {
         const method = analyzeRes.worst.totals.recurrence.method || analyzeRes.best?.totals?.recurrence?.method;
-        if (method === "iteration") {
+        if (method === "characteristic_equation") {
+          detectedMethod = "Ecuación Característica";
+          setAnalysisMessage("Aplicando Método de Ecuación Característica...");
+        } else if (method === "iteration") {
           detectedMethod = "Método de Iteración";
           setAnalysisMessage("Aplicando Método de Iteración...");
         } else if (method === "recursion_tree") {
