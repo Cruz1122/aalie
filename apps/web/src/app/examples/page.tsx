@@ -13,7 +13,7 @@ import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 
-type ExampleCategory = "simple" | "iterative" | "recursive_iteration" | "recursive_master" | "recursive_tree";
+type ExampleCategory = "simple" | "iterative" | "recursive_iteration" | "recursive_master" | "recursive_tree" | "recursive_characteristic";
 
 interface Example {
   id: number;
@@ -23,6 +23,7 @@ interface Example {
   code: string;
   category: ExampleCategory;
   note?: string;
+  isHomogeneous?: boolean; // Solo para ejemplos de ecuación característica
 }
 
 const examples: Example[] = [
@@ -226,8 +227,8 @@ END`,
     id: 12,
     name: "Fibonacci Recursivo",
     description:
-      "Calcula el n-ésimo número de Fibonacci usando recursión directa. Analizado con el método de iteración (unrolling) porque no cumple las condiciones del Teorema Maestro ni del Árbol de Recursión.",
-    complexity: "O(2ⁿ) - Exponencial",
+      "Calcula el n-ésimo número de Fibonacci usando recursión directa. Ahora analizado con el método de Ecuación Característica porque T(n) = T(n-1) + T(n-2) es una recurrencia lineal con desplazamientos constantes. Detecta automáticamente que es un caso de Programación Dinámica lineal.",
+    complexity: "O(φⁿ) donde φ = (1+√5)/2 ≈ 1.618",
     code: `fibonacci(n) BEGIN
     IF (n <= 1) THEN BEGIN
         RETURN n;
@@ -236,14 +237,15 @@ END`,
         RETURN fibonacci(n - 1) + fibonacci(n - 2);
     END
 END`,
-    category: "recursive_iteration",
-    note: "Se analiza con método de iteración (desenrollado)",
+    category: "recursive_characteristic",
+    note: "Se analiza con Ecuación Característica (DP lineal detectada)",
+    isHomogeneous: true, // T(n) = T(n-1) + T(n-2) es homogénea
   },
   {
     id: 13,
     name: "Torres de Hanoi",
     description:
-      "Resuelve el problema clásico de las Torres de Hanoi usando recursión. Analizado con el método de iteración porque la recurrencia T(n) = 2T(n-1) + 1 no divide uniformemente.",
+      "Resuelve el problema clásico de las Torres de Hanoi usando recursión. Analizado con el método de Ecuación Característica porque T(n) = 2T(n-1) + 1 es una recurrencia lineal. Detecta automáticamente que es un caso de Programación Dinámica lineal.",
     complexity: "O(2ⁿ)",
     code: `hanoi(n, origen, destino, auxiliar) BEGIN
     IF (n = 1) THEN BEGIN
@@ -255,8 +257,9 @@ END`,
         CALL hanoi(n - 1, auxiliar, destino, origen);
     END
 END`,
-    category: "recursive_iteration",
-    note: "Se analiza con método de iteración (desenrollado)",
+    category: "recursive_characteristic",
+    note: "Se analiza con Ecuación Característica (DP lineal detectada)",
+    isHomogeneous: false, // T(n) = 2T(n-1) + 1 es no homogénea (tiene +1)
   },
   {
     id: 14,
@@ -429,6 +432,111 @@ END`,
 END`,
     category: "recursive_tree",
     note: "En el mejor caso se analiza con método de Árbol de Recursión (a=2, b=2)",
+  },
+  
+  // ========== Recursivos/Híbridos (Ecuación Característica) ==========
+  {
+    id: 20,
+    name: "N-Step Stairs (Subir Escaleras)",
+    description:
+      "Cuenta el número de formas de subir n escalones, pudiendo dar pasos de 1 o 2 escalones a la vez. Recurrencia lineal T(n) = T(n-1) + T(n-2). Analizado con Ecuación Característica y detecta DP lineal automáticamente.",
+    complexity: "O(φⁿ) donde φ = (1+√5)/2 ≈ 1.618",
+    code: `subirEscaleras(n) BEGIN
+    IF (n <= 1) THEN BEGIN
+        RETURN 1;
+    END
+    ELSE IF (n = 2) THEN BEGIN
+        RETURN 2;
+    END
+    ELSE BEGIN
+        RETURN subirEscaleras(n - 1) + subirEscaleras(n - 2);
+    END
+END`,
+    category: "recursive_characteristic",
+    note: "Se analiza con Ecuación Característica (DP lineal detectada)",
+    isHomogeneous: true, // T(n) = T(n-1) + T(n-2) es homogénea
+  },
+  {
+    id: 21,
+    name: "Formas de Decodificar",
+    description:
+      "Cuenta el número de formas de decodificar un mensaje numérico donde cada dígito o par de dígitos puede representar una letra. Recurrencia lineal T(n) = T(n-1) + T(n-2) con condiciones. Analizado con Ecuación Característica.",
+    complexity: "O(φⁿ) donde φ = (1+√5)/2 ≈ 1.618",
+    code: `formasDecodificar(mensaje, n) BEGIN
+    IF (n = 0 OR n = 1) THEN BEGIN
+        RETURN 1;
+    END
+    ELSE BEGIN
+        formas <- 0;
+        IF (mensaje[n] > 0) THEN BEGIN
+            formas <- formas + formasDecodificar(mensaje, n - 1);
+        END
+        IF (mensaje[n-1] = 1 OR (mensaje[n-1] = 2 AND mensaje[n] < 7)) THEN BEGIN
+            formas <- formas + formasDecodificar(mensaje, n - 2);
+        END
+        RETURN formas;
+    END
+END`,
+    category: "recursive_characteristic",
+    note: "Se analiza con Ecuación Característica (DP lineal detectada)",
+    isHomogeneous: true, // T(n) = T(n-1) + T(n-2) es homogénea
+  },
+  {
+    id: 22,
+    name: "Tiling 2xN (Mosaicos)",
+    description:
+      "Cuenta el número de formas de llenar un tablero de 2xN con fichas de dominó (2x1). Recurrencia lineal T(n) = T(n-1) + T(n-2). Analizado con Ecuación Característica y detecta DP lineal.",
+    complexity: "O(φⁿ) donde φ = (1+√5)/2 ≈ 1.618",
+    code: `tiling2xN(n) BEGIN
+    IF (n <= 2) THEN BEGIN
+        RETURN n;
+    END
+    ELSE BEGIN
+        RETURN tiling2xN(n - 1) + tiling2xN(n - 2);
+    END
+END`,
+    category: "recursive_characteristic",
+    note: "Se analiza con Ecuación Característica (DP lineal detectada)",
+    isHomogeneous: true, // T(n) = T(n-1) + T(n-2) es homogénea
+  },
+  {
+    id: 23,
+    name: "Tribonacci",
+    description:
+      "Calcula el n-ésimo número de Tribonacci (similar a Fibonacci pero suma los últimos 3 términos). Recurrencia lineal T(n) = T(n-1) + T(n-2) + T(n-3). Analizado con Ecuación Característica.",
+    complexity: "O(rⁿ) donde r es la raíz real mayor de la ecuación característica",
+    code: `tribonacci(n) BEGIN
+    IF (n <= 1) THEN BEGIN
+        RETURN 0;
+    END
+    ELSE IF (n = 2) THEN BEGIN
+        RETURN 1;
+    END
+    ELSE BEGIN
+        RETURN tribonacci(n - 1) + tribonacci(n - 2) + tribonacci(n - 3);
+    END
+END`,
+    category: "recursive_characteristic",
+    note: "Se analiza con Ecuación Característica (DP lineal detectada)",
+    isHomogeneous: true, // T(n) = T(n-1) + T(n-2) + T(n-3) es homogénea
+  },
+  {
+    id: 24,
+    name: "Pell Numbers",
+    description:
+      "Calcula el n-ésimo número de Pell usando la recurrencia P(n) = 2P(n-1) + P(n-2). Recurrencia lineal homogénea. Analizado con Ecuación Característica.",
+    complexity: "O((1+√2)ⁿ)",
+    code: `pell(n) BEGIN
+    IF (n <= 1) THEN BEGIN
+        RETURN n;
+    END
+    ELSE BEGIN
+        RETURN 2 * pell(n - 1) + pell(n - 2);
+    END
+END`,
+    category: "recursive_characteristic",
+    note: "Se analiza con Ecuación Característica (DP lineal detectada)",
+    isHomogeneous: true, // P(n) = 2P(n-1) + P(n-2) es homogénea (sin término constante)
   },
 ];
 
@@ -688,7 +796,7 @@ export default function ExamplesPage() {
               Índice de Contenido
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {(["simple", "iterative", "recursive_iteration", "recursive_master", "recursive_tree"] as ExampleCategory[]).map((category) => {
+              {(["simple", "iterative", "recursive_iteration", "recursive_master", "recursive_tree", "recursive_characteristic"] as ExampleCategory[]).map((category) => {
                 const categoryExamples = examples.filter((ex) => ex.category === category);
                 if (categoryExamples.length === 0) return null;
 
@@ -713,6 +821,10 @@ export default function ExamplesPage() {
                     label: "Recursivos (Árbol de Recursión)",
                     color: "bg-cyan-500/20 border-cyan-500/30 text-cyan-300",
                   },
+                  recursive_characteristic: {
+                    label: "Recursivos (Ecuación Característica)",
+                    color: "bg-indigo-500/20 border-indigo-500/30 text-indigo-300",
+                  },
                 };
 
                 const catInfo = categoryLabels[category];
@@ -732,7 +844,7 @@ export default function ExamplesPage() {
           </div>
 
           {/* Categorías */}
-          {(["simple", "iterative", "recursive_iteration", "recursive_master", "recursive_tree"] as ExampleCategory[]).map((category) => {
+          {(["simple", "iterative", "recursive_iteration", "recursive_master", "recursive_tree", "recursive_characteristic"] as ExampleCategory[]).map((category) => {
             const categoryExamples = examples.filter((ex) => ex.category === category);
             if (categoryExamples.length === 0) return null;
 
@@ -749,18 +861,23 @@ export default function ExamplesPage() {
               },
               recursive_iteration: {
                 label: "Recursivos/Híbridos (Método Iterativo)",
-                description: "Algoritmos recursivos analizados con el método de iteración (unrolling). Se usan cuando la recurrencia no cumple las condiciones del Teorema Maestro ni del Árbol de Recursión.",
+                description: "Algoritmos recursivos analizados con el método de iteración (unrolling). Se usan cuando la recurrencia no cumple las condiciones del Teorema Maestro, Árbol de Recursión ni Ecuación Característica.",
                 color: "bg-purple-500/20 border-purple-500/30 text-purple-300",
               },
               recursive_master: {
                 label: "Recursivos/Híbridos (Teorema Maestro)",
-                description: "Algoritmos recursivos analizados con el Teorema Maestro. Se usan cuando la recurrencia tiene la forma T(n) = aT(n/b) + f(n) con a < 2 o no cumple las condiciones del Árbol de Recursión.",
+                description: "Algoritmos recursivos analizados con el Teorema Maestro. Se usan cuando la recurrencia tiene la forma T(n) = aT(n/b) + f(n) con a < 2 o no cumple las condiciones del Árbol de Recursión ni Ecuación Característica.",
                 color: "bg-orange-500/20 border-orange-500/30 text-orange-300",
               },
               recursive_tree: {
                 label: "Recursivos/Híbridos (Árbol de Recursión)",
                 description: "Algoritmos recursivos analizados con el método de Árbol de Recursión. Se usan cuando a ≥ 2, divide uniformemente y es divide-and-conquer. Incluye visualización del árbol y tabla por niveles.",
                 color: "bg-cyan-500/20 border-cyan-500/30 text-cyan-300",
+              },
+              recursive_characteristic: {
+                label: "Recursivos/Híbridos (Ecuación Característica)",
+                description: "Algoritmos recursivos analizados con el método de Ecuación Característica. Se usan cuando la recurrencia es lineal con desplazamientos constantes T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n). Tiene PRIORIDAD sobre el método de iteración. Detecta automáticamente casos de Programación Dinámica lineal y genera versión DP.",
+                color: "bg-indigo-500/20 border-indigo-500/30 text-indigo-300",
               },
             };
 
@@ -790,6 +907,26 @@ export default function ExamplesPage() {
 
                       {/* Descripción */}
                       <p className="text-dark-text text-xs leading-relaxed line-clamp-3">{example.description}</p>
+
+                      {/* Badges para ecuación característica */}
+                      {example.category === "recursive_characteristic" && (
+                        <div className="flex flex-wrap gap-2">
+                          {example.isHomogeneous !== undefined && (
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
+                              example.isHomogeneous
+                                ? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+                                : 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
+                            }`}>
+                              <span className="material-symbols-outlined text-xs mr-1">functions</span>
+                              {example.isHomogeneous ? 'Homogénea' : 'No Homogénea'}
+                            </span>
+                          )}
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border bg-green-500/20 text-green-300 border-green-500/30">
+                            <span className="material-symbols-outlined text-xs mr-1">memory</span>
+                            DP Lineal
+                          </span>
+                        </div>
+                      )}
 
                       {example.note && (
                         <div className="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-[10px] text-yellow-300">
@@ -891,8 +1028,9 @@ export default function ExamplesPage() {
                   💡 Nota sobre métodos de análisis:
                 </p>
                 <ul className="space-y-1 text-[11px] text-blue-200 list-disc list-inside">
-                  <li><strong>Método de Iteración:</strong> Para recurrencias no uniformes como T(n) = T(n-1) + f(n) o T(n) = T(n-1) + T(n-2) + f(n)</li>
-                  <li><strong>Teorema Maestro:</strong> Para recurrencias T(n) = aT(n/b) + f(n) con a &lt; 2 o que no cumplen las condiciones del Árbol de Recursión</li>
+                  <li><strong>Ecuación Característica:</strong> Para recurrencias lineales T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n). Tiene PRIORIDAD sobre iteración. Detecta DP lineal automáticamente y genera versión DP.</li>
+                  <li><strong>Método de Iteración:</strong> Para recurrencias no uniformes como T(n) = T(n/2) + f(n) o T(n) = T(√n) + f(n) (solo si NO es lineal por desplazamientos constantes)</li>
+                  <li><strong>Teorema Maestro:</strong> Para recurrencias T(n) = aT(n/b) + f(n) con a &lt; 2 o que no cumplen las condiciones del Árbol de Recursión ni Ecuación Característica</li>
                   <li><strong>Árbol de Recursión:</strong> Para recurrencias con a ≥ 2, divide uniformemente, divide-and-conquer. Incluye visualización del árbol y tabla detallada por niveles</li>
                 </ul>
               </div>

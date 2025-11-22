@@ -8,6 +8,36 @@ import IterationProcedureModal from "./IterationProcedureModal";
 import RecursionTreeProcedureModal from "./RecursionTreeProcedureModal";
 import RecursionTreeStepsModal from "./RecursionTreeStepsModal";
 import RecursionTreeModal from "./RecursionTreeModal";
+import CharacteristicEquationModal from "./CharacteristicEquationModal";
+import DPVersionModal from "./DPVersionModal";
+
+/**
+ * Redondea los valores numéricos en una expresión LaTeX a 3 decimales.
+ * @param latex La expresión LaTeX que puede contener números
+ * @returns La expresión LaTeX con números redondeados a 3 decimales
+ */
+function roundLatexNumbers(latex: string): string {
+  if (!latex || latex === "N/A") return latex;
+  
+  // Patrón para encontrar números decimales (incluyendo negativos)
+  // Busca números como: 1.234, 0.123, -1.234, etc.
+  // Evita capturar números dentro de comandos LaTeX como \frac{1}{2}
+  return latex.replace(/([-]?\d+\.\d+)/g, (match) => {
+    const num = Number.parseFloat(match);
+    if (Number.isNaN(num)) return match;
+    
+    // Redondear a 3 decimales
+    const rounded = Math.round(num * 1000) / 1000;
+    
+    // Si es entero después de redondear, retornar sin decimales
+    if (rounded % 1 === 0) {
+      return rounded.toString();
+    }
+    
+    // Retornar con hasta 3 decimales (eliminar ceros al final)
+    return rounded.toFixed(3).replace(/\.?0+$/, '');
+  });
+}
 
 interface RecursiveAnalysisViewProps {
   data: {
@@ -28,19 +58,23 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
     const master = worstData?.totals?.master || bestData?.totals?.master || avgData?.totals?.master;
     const iteration = worstData?.totals?.iteration || bestData?.totals?.iteration || avgData?.totals?.iteration;
     const recursionTree = worstData?.totals?.recursion_tree || bestData?.totals?.recursion_tree || avgData?.totals?.recursion_tree;
+    const characteristicEquation = worstData?.totals?.characteristic_equation || bestData?.totals?.characteristic_equation || avgData?.totals?.characteristic_equation;
     const proof = worstData?.totals?.proof || bestData?.totals?.proof || avgData?.totals?.proof;
-    const theta = recursionTree?.theta || iteration?.theta || worstData?.totals?.master?.theta || bestData?.totals?.master?.theta || avgData?.totals?.master?.theta;
+    const theta = characteristicEquation?.theta || recursionTree?.theta || iteration?.theta || worstData?.totals?.master?.theta || bestData?.totals?.master?.theta || avgData?.totals?.master?.theta;
     const T_open = worstData?.totals?.T_open || bestData?.totals?.T_open || avgData?.totals?.T_open;
 
-    return { worstData, bestData, avgData, recurrence, master, iteration, recursionTree, proof, theta, T_open };
+    return { worstData, bestData, avgData, recurrence, master, iteration, recursionTree, characteristicEquation, proof, theta, T_open };
   }, [data]);
 
-  const { worstData, bestData, avgData, recurrence, master, iteration, recursionTree, proof, theta, T_open } = analysisData;
+  const { worstData, bestData, avgData, recurrence, master, iteration, recursionTree, characteristicEquation, proof, theta, T_open } = analysisData;
   const [showProcedureModal, setShowProcedureModal] = useState(false);
   const [showStepsModal, setShowStepsModal] = useState(false);
   const [showTreeModal, setShowTreeModal] = useState(false);
+  const [showCharacteristicModal, setShowCharacteristicModal] = useState(false);
+  const [showDPModal, setShowDPModal] = useState(false);
   
-  // Detectar método usado
+  // Detectar método usado (PRIORIDAD: characteristic_equation > iteration > recursion_tree > master)
+  const isCharacteristicMethod = recurrence?.method === "characteristic_equation";
   const isIterationMethod = recurrence?.method === "iteration";
   const isRecursionTreeMethod = recurrence?.method === "recursion_tree";
   
@@ -68,7 +102,7 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
     }
   }, [recurrence, master, iteration, recursionTree, proof, theta, T_open]);
 
-  if (!recurrence || (!master && !iteration && !recursionTree)) {
+  if (!recurrence || (!master && !iteration && !recursionTree && !characteristicEquation)) {
     return (
       <div className="flex-1 flex items-center justify-center text-slate-400">
         <div className="text-center">
@@ -94,35 +128,71 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
       {/* Card principal: Método y Parámetros */}
       <div className="glass-card p-6 rounded-lg">
         <div className="mb-4">
-          <h2 className="text-white font-semibold flex items-center gap-3 mb-3">
-            <span className={`material-symbols-outlined ${
-              isIterationMethod 
-                ? 'text-purple-400'
-                : isRecursionTreeMethod
-                ? 'text-cyan-400'
-                : 'text-orange-400'
-            }`}>
-              {isIterationMethod 
-                ? 'unfold_more' 
-                : isRecursionTreeMethod
-                ? 'account_tree'
-                : 'science'}
-            </span>
-            <span>Método de Análisis</span>
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide ${
-              isIterationMethod 
-                ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
-                : isRecursionTreeMethod
-                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
-                : 'bg-orange-500/20 text-orange-300 border-orange-500/30'
-            }`}>
-              {isIterationMethod 
-                ? 'Método de Iteración' 
-                : isRecursionTreeMethod
-                ? 'Árbol de Recursión'
-                : 'Teorema Maestro'}
-            </span>
-          </h2>
+          <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+            <h2 className="text-white font-semibold flex items-center gap-3">
+              <span className={`material-symbols-outlined ${
+                isCharacteristicMethod
+                  ? 'text-blue-400'
+                  : isIterationMethod 
+                  ? 'text-purple-400'
+                  : isRecursionTreeMethod
+                  ? 'text-cyan-400'
+                  : 'text-orange-400'
+              }`}>
+                {isCharacteristicMethod
+                  ? 'calculate'
+                  : isIterationMethod 
+                  ? 'unfold_more' 
+                  : isRecursionTreeMethod
+                  ? 'account_tree'
+                  : 'science'}
+              </span>
+              <span>Método de Análisis</span>
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide ${
+                isCharacteristicMethod
+                  ? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+                  : isIterationMethod 
+                  ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                  : isRecursionTreeMethod
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+                  : 'bg-orange-500/20 text-orange-300 border-orange-500/30'
+              }`}>
+                {isCharacteristicMethod
+                  ? 'Ecuación Característica'
+                  : isIterationMethod 
+                  ? 'Método de Iteración' 
+                  : isRecursionTreeMethod
+                  ? 'Árbol de Recursión'
+                  : 'Teorema Maestro'}
+              </span>
+            </h2>
+            
+            {/* Badges de información (solo para ecuación característica) */}
+            {isCharacteristicMethod && characteristicEquation && (
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Badge de Homogénea/No Homogénea */}
+                {characteristicEquation.particular_solution ? (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold border bg-yellow-500/20 text-yellow-300 border-yellow-500/30">
+                    <span className="material-symbols-outlined text-xs mr-1">functions</span>
+                    No Homogénea
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold border bg-blue-500/20 text-blue-300 border-blue-500/30">
+                    <span className="material-symbols-outlined text-xs mr-1">functions</span>
+                    Homogénea
+                  </span>
+                )}
+                
+                {/* Badge de DP si aplica */}
+                {characteristicEquation.is_dp_linear && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold border bg-green-500/20 text-green-300 border-green-500/30">
+                    <span className="material-symbols-outlined text-xs mr-1">memory</span>
+                    DP Lineal Detectada
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Parámetros de la recurrencia */}
@@ -148,10 +218,16 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
         </div>
 
         {/* Botones para ver detalles y pasos */}
-        <div className={`mb-4 ${isRecursionTreeMethod && proof && proof.length > 0 ? 'grid grid-cols-2 gap-3' : ''}`}>
+        <div className={`mb-4 ${(isRecursionTreeMethod && proof && proof.length > 0) || isCharacteristicMethod ? 'grid grid-cols-2 gap-3' : ''}`}>
           <button
-            onClick={() => setShowProcedureModal(true)}
-            className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-sky-500/20 transition-colors ${isRecursionTreeMethod && proof && proof.length > 0 ? '' : 'w-full'}`}
+            onClick={() => {
+              if (isCharacteristicMethod) {
+                setShowCharacteristicModal(true);
+              } else {
+                setShowProcedureModal(true);
+              }
+            }}
+            className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-sky-500/20 transition-colors ${(isRecursionTreeMethod && proof && proof.length > 0) || isCharacteristicMethod ? '' : 'w-full'}`}
           >
             <span className="material-symbols-outlined text-sm">info</span>
             <span>Ver Detalles</span>
@@ -165,7 +241,17 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
               <span>Ver Paso a Paso</span>
             </button>
           )}
+          {isCharacteristicMethod && characteristicEquation?.is_dp_linear && (
+            <button
+              onClick={() => setShowDPModal(true)}
+              className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-green-500/20 transition-colors"
+            >
+              <span className="material-symbols-outlined text-sm">memory</span>
+              <span>Ver Versión DP</span>
+            </button>
+          )}
         </div>
+        
 
         {/* Botón para árbol de recurrencia */}
         <div className="mb-4">
@@ -229,52 +315,52 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
                     </div>
                   </>
                 ) : (
-                  <Formula latex={`T(n) = ${theta || recursionTree.theta || worstT || "N/A"}`} display />
+                  <Formula latex={`T(n) = ${roundLatexNumbers(theta || recursionTree.theta || worstT || "N/A")}`} display />
                 )}
               </div>
             </div>
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(34,197,94,0.3)] hover:shadow-[0_12px_40px_0_rgba(34,197,94,0.4)]">
-            <div className="h-full flex flex-col items-center justify-center gap-2">
-              <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/30">
-                <div className="scale-110">
-                  <Formula latex={bestData?.totals?.T_open || bestData?.totals?.recursion_tree?.theta || bestData?.totals?.iteration?.theta || bestData?.totals?.master?.theta_best || bestData?.totals?.master?.theta || theta || "N/A"} />
+        <div className="glass-card p-6 rounded-lg shadow-[0_8px_32px_0_rgba(59,130,246,0.3)] hover:shadow-[0_12px_40px_0_rgba(59,130,246,0.4)] border border-blue-500/20">
+          <h3 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
+            <span className="material-symbols-outlined text-base text-blue-400">functions</span>
+            Ecuación de Eficiencia
+          </h3>
+          <div className="p-3 rounded-lg bg-slate-800/60 border border-blue-500/30 flex justify-center overflow-x-auto">
+            {hasDifferentComplexities ? (
+              <div className="flex flex-col gap-2 items-center">
+                <div className="text-center">
+                  <div className="text-xs text-green-300 mb-1">Mejor caso:</div>
+                  <Formula latex={`T(n) = ${roundLatexNumbers(bestT)}`} display />
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-yellow-300 mb-1">Caso promedio:</div>
+                  <Formula latex={`T(n) = ${roundLatexNumbers(avgT)}`} display />
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-red-300 mb-1">Peor caso:</div>
+                  <Formula latex={`T(n) = ${roundLatexNumbers(worstT)}`} display />
                 </div>
               </div>
-              <h3 className="font-semibold text-green-300 mb-1">Mejor caso</h3>
-              <p className="text-xs text-slate-400">En algoritmos recursivos divide-and-conquer, los casos suelen ser iguales</p>
-            </div>
-          </div>
-          <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(234,179,8,0.3)] hover:shadow-[0_12px_40px_0_rgba(234,179,8,0.4)]">
-            <div className="h-full flex flex-col items-center justify-center gap-2">
-              <div className="w-20 h-20 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30">
-                <div className="scale-110">
-                  <Formula latex={avgData?.totals?.T_open || avgData?.totals?.recursion_tree?.theta || avgData?.totals?.iteration?.theta || avgData?.totals?.master?.theta || theta || "N/A"} />
-                </div>
-              </div>
-              <h3 className="font-semibold text-yellow-300 mb-1">Caso promedio</h3>
-              <p className="text-xs text-slate-400">En algoritmos recursivos divide-and-conquer, los casos suelen ser iguales</p>
-            </div>
-          </div>
-          <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(239,68,68,0.3)] hover:shadow-[0_12px_40px_0_rgba(239,68,68,0.4)]">
-            <div className="h-full flex flex-col items-center justify-center gap-2">
-              <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30">
-                <div className="scale-110">
-                  <Formula latex={worstData?.totals?.T_open || worstData?.totals?.recursion_tree?.theta || worstData?.totals?.iteration?.theta || worstData?.totals?.master?.theta || theta || "N/A"} />
-                </div>
-              </div>
-              <h3 className="font-semibold text-red-300 mb-1">Peor caso</h3>
-              <p className="text-xs text-slate-400">En algoritmos recursivos divide-and-conquer, los casos suelen ser iguales</p>
-            </div>
+            ) : (
+              <Formula latex={`T(n) = ${roundLatexNumbers(theta || bestT || worstT || avgT || "N/A")}`} display />
+            )}
           </div>
         </div>
       )}
 
       {/* Modal de procedimiento completo */}
-      {isIterationMethod ? (
+      {isCharacteristicMethod ? (
+        <CharacteristicEquationModal
+          open={showCharacteristicModal}
+          onClose={() => setShowCharacteristicModal(false)}
+          recurrence={recurrence}
+          characteristicEquation={characteristicEquation}
+          proof={proof}
+          theta={theta || T_open}
+        />
+      ) : isIterationMethod ? (
         <IterationProcedureModal
           open={showProcedureModal}
           onClose={() => setShowProcedureModal(false)}
@@ -304,6 +390,15 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
         proof={proof}
         theta={theta || T_open}
       />
+      )}
+      
+      {/* Modal de versión DP */}
+      {isCharacteristicMethod && characteristicEquation?.is_dp_linear && (
+        <DPVersionModal
+          open={showDPModal}
+          onClose={() => setShowDPModal(false)}
+          characteristicEquation={characteristicEquation}
+        />
       )}
 
       {/* Modal del árbol de recursión */}

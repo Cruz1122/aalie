@@ -270,7 +270,27 @@ export interface AnalyzeOpenResponse {
       n0: number;                   // umbral base
       applicable: boolean;          // si es aplicable el método
       notes: string[];              // notas sobre redondeos, dominio, etc.
-      method?: "master" | "iteration" | "recursion_tree";  // método usado (Teorema Maestro, Método de Iteración o Árbol de Recursión)
+      method?: "master" | "iteration" | "recursion_tree" | "characteristic_equation";  // método usado (Teorema Maestro, Método de Iteración, Árbol de Recursión o Ecuación Característica)
+    };
+    characteristic_equation?: {              // resultado del Método de Ecuación Característica
+      method: "characteristic_equation";     // identificador del método
+      is_dp_linear: boolean;                 // si corresponde a Programación Dinámica lineal
+      equation: string;                      // ecuación característica en LaTeX
+      roots: Array<{                        // raíces de la ecuación característica
+        root: string;                       // raíz en LaTeX
+        multiplicity: number;             // multiplicidad de la raíz
+      }>;
+      homogeneous_solution: string;         // solución homogénea en LaTeX
+      particular_solution?: string;         // solución particular en LaTeX (si hay g(n))
+      closed_form: string;                  // forma cerrada simplificada en LaTeX
+      dp_version?: {                        // versión DP si aplica
+        code: string;                       // pseudocódigo DP
+        time_complexity: string;             // complejidad temporal DP (ej: "O(n)")
+        space_complexity: string;            // complejidad espacial DP (ej: "O(n)" o "O(1)")
+        recursive_complexity: string;        // complejidad versión recursiva (ej: "O(2^n)")
+      };
+      dp_equivalence: string;               // explicación de equivalencia entre ecuación característica y DP
+      theta: string;                        // resultado final Θ(...) en LaTeX
     };
     master?: {                      // resultado del Teorema Maestro
       case: 1 | 2 | 3 | null;      // caso aplicado (1, 2, 3) o null si no aplicable

@@ -1,6 +1,8 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 import math
-from sympy import Expr, latex, Integer, Symbol
+import re
+from sympy import Expr, latex, Integer, Symbol, sympify, simplify, solve, symbols, I, im, expand, factor
+from collections import Counter
 from .base import BaseAnalyzer
 
 
@@ -82,10 +84,20 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "errors": [{"message": f"No aplicable: {self.recurrence.get('notes', ['Razón desconocida'])[0]}", "line": None, "column": None}]
             }
         
-        # 4. Aplicar método apropiado (Iteración, Árbol de Recursión o Teorema Maestro)
+        # 4. Aplicar método apropiado (PRIORIDAD: Ecuación Característica > Iteración > Árbol > Maestro)
         method = self.recurrence.get("method", "master")
         
-        if method == "iteration":
+        if method == "characteristic_equation":
+            # Aplicar Método de Ecuación Característica (PRIORIDAD ALTA)
+            char_eq_result = self._apply_characteristic_equation_method()
+            if not char_eq_result["success"]:
+                return {
+                    "ok": False,
+                    "errors": [{"message": f"Error aplicando Método de Ecuación Característica: {char_eq_result['reason']}", "line": None, "column": None}]
+                }
+            
+            self.characteristic_equation = char_eq_result["characteristic_equation"]
+        elif method == "iteration":
             # Aplicar Método de Iteración
             iteration_result = self._apply_iteration_method()
             if not iteration_result["success"]:
@@ -349,20 +361,26 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # 5. Detectar caso base n0
         n0 = self._detect_base_case(proc_def)
         
-        # 6. Detectar si debe usar Método de Iteración, Árbol de Recursión o Teorema Maestro
-        use_iteration = self._detect_iteration_method(proc_def, recursive_calls)
+        # 6. Detectar método apropiado (PRIORIDAD: Ecuación Característica > Iteración > Árbol > Maestro)
+        use_characteristic = self._detect_characteristic_equation_method(proc_def, recursive_calls)
+        use_iteration = False
         use_recursion_tree = False
         
-        if not use_iteration:
-            # Solo considerar Árbol de Recursión si no aplica Iteración
-            use_recursion_tree = self._detect_recursion_tree_method(proc_def, recursive_calls, a, b)
+        if not use_characteristic:
+            # Solo considerar Iteración si NO aplica Ecuación Característica
+            use_iteration = self._detect_iteration_method(proc_def, recursive_calls)
+            
+            if not use_iteration:
+                # Solo considerar Árbol de Recursión si no aplica Ecuación Característica ni Iteración
+                use_recursion_tree = self._detect_recursion_tree_method(proc_def, recursive_calls, a, b)
         
         # 7. Construir recurrencia con método apropiado
         # Simplificar b para mostrar
         b_str = self._simplify_number_latex(b)
         
-        if use_iteration:
-            # Para método de iteración, construir la forma de la recurrencia
+        # Para ecuación característica e iteración, usar desplazamientos constantes (n-1, n-2, etc.)
+        if use_characteristic or use_iteration:
+            # Para método de iteración o ecuación característica, construir la forma de la recurrencia
             # Contar todas las llamadas recursivas por tamaño (puede haber múltiples del mismo tamaño)
             from collections import Counter
             term_counts = Counter()
@@ -394,10 +412,13 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 else:
                     recurrence_form = f"T(n) = T(n-1) + f(n)"
         else:
+            # Para divide-and-conquer (Teorema Maestro o Árbol de Recursión)
             recurrence_form = f"T(n) = {a} \\cdot T(n/{b_str}) + f(n)"
         
-        # Determinar método a usar
-        if use_iteration:
+        # Determinar método a usar (PRIORIDAD: characteristic_equation > iteration > recursion_tree > master)
+        if use_characteristic:
+            method = "characteristic_equation"
+        elif use_iteration:
             method = "iteration"
         elif use_recursion_tree:
             method = "recursion_tree"
@@ -418,6 +439,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Simplificar valores para mostrar en proof
         b_display = self._simplify_number_latex(b)
         method_names = {
+            "characteristic_equation": "Método de Ecuación Característica",
             "iteration": "Método de Iteración",
             "recursion_tree": "Método de Árbol de Recursión",
             "master": "Teorema Maestro"
@@ -1110,7 +1132,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             recursive_calls: Lista de llamadas recursivas para excluir
             
         Returns:
-            Expresión de complejidad en LaTeX (n, n^2, 1, etc.)
+            Expresión de complejidad en LaTeX (n, n^2, 1, 0, etc.)
         """
         if not isinstance(node, dict):
             return "1"
@@ -1133,6 +1155,27 @@ class RecursiveAnalyzer(BaseAnalyzer):
                         return aux_complexity
                     # Si no se encuentra la definición, asumir O(1) por defecto
                     return "1"
+        
+        # Detectar RETURN que solo contiene operaciones básicas con llamadas recursivas
+        # En ese caso, el trabajo es 0 (homogénea)
+        if node_type == "Return":
+            value = node.get("value", {})
+            if isinstance(value, dict):
+                value_type = value.get("type", "")
+                # Si el return es solo una suma/resta de llamadas recursivas, trabajo = 0
+                if value_type == "Binary" and value.get("op") in ["+", "-"]:
+                    left = value.get("left", {})
+                    right = value.get("right", {})
+                    # Verificar si ambos lados son llamadas recursivas
+                    left_is_recursive = (isinstance(left, dict) and 
+                                       left.get("type") == "Call" and
+                                       (left.get("name") or left.get("callee", "")).lower() == (self.procedure_name or "").lower())
+                    right_is_recursive = (isinstance(right, dict) and 
+                                        right.get("type") == "Call" and
+                                        (right.get("name") or right.get("callee", "")).lower() == (self.procedure_name or "").lower())
+                    if left_is_recursive and right_is_recursive:
+                        # Solo suma/resta de llamadas recursivas, trabajo = 0 (homogénea)
+                        return "0"
         
         max_complexity = "1"  # Por defecto, constante
         
@@ -2325,8 +2368,10 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Construir byLine básico (puede estar vacío para recursivos)
         by_line = []
         
-        # Determinar T_open según el método usado y el modo
-        if self.iteration:
+        # Determinar T_open según el método usado y el modo (PRIORIDAD: characteristic_equation > iteration > recursion_tree > master)
+        if self.characteristic_equation:
+            t_open = self.characteristic_equation.get("theta", "N/A")
+        elif self.iteration:
             t_open = self.iteration.get("theta", "N/A")
         elif self.recursion_tree:
             t_open = self.recursion_tree.get("theta", "N/A")
@@ -2351,8 +2396,10 @@ class RecursiveAnalyzer(BaseAnalyzer):
         if self.recurrence:
             totals["recurrence"] = self.recurrence
         
-        # Agregar resultado del método aplicado
-        if self.iteration:
+        # Agregar resultado del método aplicado (PRIORIDAD: characteristic_equation > iteration > recursion_tree > master)
+        if self.characteristic_equation:
+            totals["characteristic_equation"] = self.characteristic_equation
+        elif self.iteration:
             totals["iteration"] = self.iteration
         elif self.recursion_tree:
             totals["recursion_tree"] = self.recursion_tree
@@ -2399,6 +2446,550 @@ class RecursiveAnalyzer(BaseAnalyzer):
         self.proof_steps = []
         self.iteration = None
         self.recursion_tree = None
+        self.characteristic_equation = None
+    
+    # ============================================================================
+    # MÉTODO DE ECUACIÓN CARACTERÍSTICA (LINEAL CON DESPLAZAMIENTOS CONSTANTES)
+    # ============================================================================
+    
+    def _detect_linear_recurrence(self, proc_def: Dict[str, Any], recursive_calls: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        """
+        Detecta si la recurrencia es lineal con desplazamientos constantes.
+        
+        Forma: T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n)
+        
+        Args:
+            proc_def: Nodo ProcDef del procedimiento
+            recursive_calls: Lista de llamadas recursivas encontradas
+            
+        Returns:
+            Dict con información de la recurrencia lineal o None si no aplica
+            {
+                "is_linear": bool,
+                "coefficients": {offset: coefficient},  # ej: {1: 1, 2: 1} para T(n) = T(n-1) + T(n-2)
+                "max_offset": int,  # k (máximo desplazamiento)
+                "g_n": str  # término no homogéneo g(n) en LaTeX
+            }
+        """
+        if not recursive_calls:
+            return None
+        
+        # Analizar todos los subproblemas
+        subproblem_info_list = []
+        for call in recursive_calls:
+            subproblem_info = self._analyze_subproblem_type(call, proc_def)
+            if subproblem_info:
+                subproblem_info_list.append(subproblem_info)
+        
+        # Solo considerar si todos son de tipo "subtraction" (n-1, n-2, etc.)
+        if not all(info.get("type") == "subtraction" for info in subproblem_info_list if info):
+            return None
+        
+        # Extraer los desplazamientos (offsets)
+        # Ejemplo: n-1 -> offset=1, n-2 -> offset=2
+        coefficients = Counter()
+        for info in subproblem_info_list:
+            if info and info.get("type") == "subtraction":
+                pattern = info.get("pattern", "")
+                # Extraer el número del patrón "n-k"
+                if pattern.startswith("n-"):
+                    try:
+                        offset = int(pattern[2:])
+                        coefficients[offset] += 1
+                    except ValueError:
+                        # Si no es un número constante, no es lineal
+                        return None
+        
+        if not coefficients:
+            return None
+        
+        # Verificar que todos los offsets son constantes positivos
+        max_offset = max(coefficients.keys())
+        if max_offset <= 0:
+            return None
+        
+        # Obtener g(n) (término no homogéneo)
+        # Para ecuaciones características, g(n) = 0 si el trabajo no recursivo es solo
+        # operaciones básicas (suma, resta) entre llamadas recursivas
+        f_n = self._calculate_non_recursive_work(proc_def, recursive_calls)
+        
+        # Si f(n) ya es 0, ya es homogénea (correcto)
+        # Si f(n) es solo O(1) básico y no hay llamadas a funciones auxiliares, considerar g(n) = 0
+        f_n_clean = f_n.strip().lower() if f_n else ""
+        if f_n_clean != "0" and f_n_clean in ["1", "\\theta(1)", "theta(1)", "o(1)"]:
+            # Verificar si hay llamadas a funciones auxiliares (no recursivas)
+            has_aux_calls = self._has_auxiliary_function_calls(proc_def, recursive_calls)
+            if not has_aux_calls:
+                # Si no hay llamadas auxiliares y el trabajo es solo O(1) básico,
+                # considerar homogénea (g(n) = 0)
+                # Esto es porque las operaciones O(1) básicas (sumas, comparaciones)
+                # entre llamadas recursivas no cuentan como trabajo no homogéneo
+                f_n = "0"
+        
+        return {
+            "is_linear": True,
+            "coefficients": dict(coefficients),
+            "max_offset": max_offset,
+            "g_n": f_n
+        }
+    
+    def _detect_characteristic_equation_method(self, proc_def: Dict[str, Any], recursive_calls: List[Dict[str, Any]]) -> bool:
+        """
+        Detecta si debe usarse el Método de Ecuación Característica.
+        
+        Prioridad ALTA sobre Método de Iteración.
+        
+        Aplica cuando la recurrencia es lineal con desplazamientos constantes:
+        T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n)
+        
+        Args:
+            proc_def: Nodo ProcDef del procedimiento
+            recursive_calls: Lista de llamadas recursivas encontradas
+            
+        Returns:
+            True si debe usar Ecuación Característica
+        """
+        linear_info = self._detect_linear_recurrence(proc_def, recursive_calls)
+        return linear_info is not None and linear_info.get("is_linear", False)
+    
+    def _apply_characteristic_equation_method(self) -> Dict[str, Any]:
+        """
+        Aplica el Método de Ecuación Característica para resolver la recurrencia.
+        
+        Resuelve recurrencias lineales de la forma:
+        T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n)
+        
+        Returns:
+            {"success": bool, "characteristic_equation": dict, "reason": str}
+        """
+        if not self.recurrence:
+            return {
+                "success": False,
+                "reason": "No hay recurrencia extraída"
+            }
+        
+        # Obtener información de recurrencia lineal
+        linear_info = self._detect_linear_recurrence(self.proc_def, self._find_recursive_calls(self.proc_def))
+        if not linear_info or not linear_info.get("is_linear"):
+            return {
+                "success": False,
+                "reason": "No es una recurrencia lineal con desplazamientos constantes"
+            }
+        
+        self.proof_steps.append({"id": "characteristic_start", "text": "\\text{Aplicando Método de Ecuación Característica}"})
+        
+        coefficients = linear_info["coefficients"]
+        max_offset = linear_info["max_offset"]
+        g_n_str = linear_info["g_n"]
+        
+        # Construir la ecuación característica
+        # Para T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n)
+        # La ecuación característica es: r^k - c₁r^(k-1) - c₂r^(k-2) - ... - cₖ = 0
+        
+        # Construir ecuación característica en SymPy
+        r = Symbol('r', real=True, positive=True)
+        char_eq_terms = []
+        
+        # Término principal: r^k
+        char_eq_terms.append(r**max_offset)
+        
+        # Términos negativos: -cᵢr^(k-i)
+        for offset, coeff in coefficients.items():
+            power = max_offset - offset
+            if power >= 0:
+                char_eq_terms.append(-coeff * r**power)
+        
+        # Construir ecuación: r^k - c₁r^(k-1) - ... = 0
+        char_eq_expr = sum(char_eq_terms)
+        char_eq_latex = latex(char_eq_expr) + " = 0"
+        
+        # Construir paso con valores reemplazados
+        # Mostrar cómo se construye la ecuación desde la recurrencia
+        recurrence_terms = []
+        for offset, coeff in sorted(coefficients.items()):
+            if coeff == 1:
+                recurrence_terms.append(f"T(n-{offset})")
+            else:
+                recurrence_terms.append(f"{coeff} \\cdot T(n-{offset})")
+        
+        if g_n_str and g_n_str.strip() and g_n_str.strip() != "0":
+            recurrence_form_expanded = f"T(n) = {' + '.join(recurrence_terms)} + {g_n_str}"
+        else:
+            recurrence_form_expanded = f"T(n) = {' + '.join(recurrence_terms)}"
+        
+        # Mostrar construcción de ecuación característica
+        # NOTA: La ecuación característica NO incluye g(n), solo los términos recursivos
+        # Para T(n) = c₁T(n-1) + c₂T(n-2) + g(n), la ecuación característica es r^k - c₁r^(k-1) - c₂r^(k-2) - ... = 0
+        char_eq_construction = []
+        char_eq_construction.append(f"r^{{{max_offset}}}")
+        for offset, coeff in sorted(coefficients.items()):
+            power = max_offset - offset
+            if power >= 0:
+                if power == 0:
+                    char_eq_construction.append(f"-{coeff}")
+                elif power == 1:
+                    if coeff == 1:
+                        char_eq_construction.append("-r")
+                    else:
+                        char_eq_construction.append(f"-{coeff}r")
+                else:
+                    if coeff == 1:
+                        char_eq_construction.append(f"-r^{{{power}}}")
+                    else:
+                        char_eq_construction.append(f"-{coeff}r^{{{power}}}")
+        
+        char_eq_construction_latex = " + ".join(char_eq_construction) + " = 0"
+        
+        # Construir texto del paso
+        if g_n_str and g_n_str.strip() and g_n_str.strip() != "0":
+            step_text = f"\\text{{De }} {recurrence_form_expanded} \\text{{, para la ecuación característica homogénea asociada (ignorando }} g(n) = {g_n_str} \\text{{), reemplazando }} T(n) = r^n \\text{{: }} {char_eq_construction_latex} \\text{{, simplificando: }} {char_eq_latex}"
+        else:
+            step_text = f"\\text{{De }} {recurrence_form_expanded} \\text{{, reemplazando }} T(n) = r^n \\text{{: }} {char_eq_construction_latex} \\text{{, simplificando: }} {char_eq_latex}"
+        
+        self.proof_steps.append({
+            "id": "characteristic_eq",
+            "text": step_text
+        })
+        
+        # Resolver ecuación característica
+        try:
+            # Resolver r^k - c₁r^(k-1) - ... = 0
+            roots = solve(char_eq_expr, r)
+            
+            # Filtrar raíces reales (incluir todas las raíces reales, no solo positivas)
+            # Para ecuaciones cuadráticas como r^2 - r - 1 = 0, necesitamos ambas raíces
+            real_roots = []
+            for root in roots:
+                try:
+                    # Evaluar si es real
+                    root_val = root.evalf()
+                    if root_val.is_real:
+                        # Incluir todas las raíces reales (positivas y negativas)
+                        # Para complejidad asintótica, la mayor raíz positiva es la dominante
+                        real_roots.append(root_val)
+                except:
+                    # Si no se puede evaluar, intentar simplificar
+                    if root.is_real:
+                        real_roots.append(root)
+            
+            if not real_roots:
+                # Si no hay raíces reales, usar todas las raíces
+                real_roots = roots
+            
+            # Ordenar raíces por valor numérico (descendente), para que la mayor esté primero
+            try:
+                real_roots = sorted(real_roots, key=lambda r: abs(float(r.evalf())) if hasattr(r, 'evalf') else 0, reverse=True)
+            except:
+                pass
+            
+            # Procesar raíces con multiplicidad
+            roots_info = []
+            root_counts = Counter()
+            for root in real_roots:
+                try:
+                    # Simplificar la raíz
+                    root_simplified = simplify(root)
+                    root_str = str(root_simplified)
+                    root_counts[root_str] += 1
+                except:
+                    root_str = str(root)
+                    root_counts[root_str] += 1
+            
+            for root_str, mult in root_counts.items():
+                try:
+                    root_sympy = sympify(root_str)
+                    root_simplified = simplify(root_sympy)
+                    root_latex = latex(root_simplified)
+                except:
+                    root_latex = root_str
+                
+                roots_info.append({
+                    "root": root_latex,
+                    "multiplicity": mult
+                })
+            
+            # Determinar si es homogénea o no homogénea
+            # Una recurrencia es homogénea SI Y SOLO SI g(n) = 0
+            # Si g(n) = 1, \Theta(1), o cualquier constante distinta de 0, es NO homogénea
+            g_n_clean = g_n_str.strip().lower() if g_n_str else ""
+            
+            # Es homogénea solo si g(n) es explícitamente 0 o vacío
+            # Cualquier otra cosa (incluyendo "1", "\theta(1)", constantes, etc.) es NO homogénea
+            is_homogeneous = (g_n_clean == "0" or 
+                             g_n_clean == "\\theta(0)" or 
+                             g_n_clean == "theta(0)" or
+                             (g_n_clean == "" and (not g_n_str or len(g_n_str.strip()) == 0)))
+            
+            # Si g(n) no es 0, es NO homogénea (por defecto)
+            # Esto incluye "1", "\theta(1)", y cualquier otra constante distinta de 0
+            
+            # Construir solución general
+            if len(roots_info) == 1 and roots_info[0]["multiplicity"] == 1:
+                # Caso simple: una raíz única
+                r_val = roots_info[0]["root"]
+                if is_homogeneous:
+                    homogeneous_sol = f"A \\cdot {r_val}^n"
+                else:
+                    # Necesitamos solución particular
+                    homogeneous_sol = f"A \\cdot {r_val}^n"
+            elif len(roots_info) == 2 and all(r["multiplicity"] == 1 for r in roots_info):
+                # Dos raíces distintas (ej: Fibonacci)
+                r1 = roots_info[0]["root"]
+                r2 = roots_info[1]["root"]
+                homogeneous_sol = f"A_1 \\cdot {r1}^n + A_2 \\cdot {r2}^n"
+            else:
+                # Caso general con múltiples raíces
+                terms = []
+                for i, root_info in enumerate(roots_info):
+                    r_val = root_info["root"]
+                    mult = root_info["multiplicity"]
+                    if mult == 1:
+                        terms.append(f"A_{i+1} \\cdot {r_val}^n")
+                    else:
+                        # Raíz múltiple: agregar términos con potencias de n
+                        for j in range(mult):
+                            terms.append(f"A_{i+1}{j+1} \\cdot n^{j} \\cdot {r_val}^n")
+                homogeneous_sol = " + ".join(terms)
+            
+            # Solución particular (si no es homogénea)
+            particular_sol = None
+            if not is_homogeneous:
+                # Calcular solución particular real
+                # Para g(n) = constante C, asumir T_p(n) = K (constante)
+                # Sustituir en la recurrencia: K = c₁K + c₂K + ... + C
+                try:
+                    g_n_clean = g_n_str.strip().lower()
+                    
+                    # Extraer el valor numérico de g(n) si es una constante
+                    g_value = None
+                    if g_n_clean == "1":
+                        g_value = 1
+                    elif g_n_clean == "0":
+                        g_value = 0
+                    elif "theta(1)" in g_n_clean or "\\theta(1)" in g_n_clean:
+                        g_value = 1
+                    elif g_n_clean.isdigit():
+                        g_value = int(g_n_clean)
+                    else:
+                        # Intentar extraer número de expresiones como "\\Theta(1)"
+                        match = re.search(r'(\d+)', g_n_clean)
+                        if match:
+                            g_value = int(match.group(1))
+                    
+                    if g_value is not None and g_value != 0:
+                        # Calcular K = g_value / (1 - suma_coeficientes)
+                        # T_p(n) = K, entonces K = c₁K + c₂K + ... + g_value
+                        # K - (c₁ + c₂ + ...)K = g_value
+                        # K(1 - suma) = g_value
+                        # K = g_value / (1 - suma)
+                        sum_coeffs = sum(coefficients.values())
+                        denominator = 1 - sum_coeffs
+                        
+                        if abs(denominator) < 1e-6:
+                            # Si 1 - suma = 0, entonces no hay solución constante
+                            # Usar forma polinómica
+                            particular_sol = "P(n)"  # Polinomio de grado apropiado
+                        else:
+                            k_value = g_value / denominator
+                            # Simplificar k_value
+                            try:
+                                k_sympy = sympify(k_value)
+                                k_simplified = simplify(k_sympy)
+                                k_latex = latex(k_simplified)
+                                particular_sol = k_latex
+                            except:
+                                # Redondear a 3 decimales si es necesario
+                                if abs(k_value - round(k_value)) < 1e-6:
+                                    particular_sol = str(int(round(k_value)))
+                                else:
+                                    particular_sol = f"{k_value:.3f}".rstrip('0').rstrip('.')
+                    else:
+                        # Si no se puede extraer constante, usar forma genérica
+                        if "n" in g_n_str.lower():
+                            particular_sol = "P(n)"  # Polinomio
+                        else:
+                            particular_sol = "C"  # Constante genérica
+                except Exception as e:
+                    # En caso de error, usar forma genérica
+                    if "n" in g_n_str.lower():
+                        particular_sol = "P(n)"  # Polinomio
+                    else:
+                        particular_sol = "C"  # Constante genérica
+            
+            # Forma cerrada simplificada
+            # Para casos comunes, simplificar
+            if len(roots_info) == 1:
+                r_val = roots_info[0]["root"]
+                try:
+                    r_sympy = sympify(r_val)
+                    r_num = float(r_sympy.evalf())
+                    if abs(r_num - 1.0) < 1e-6:
+                        closed_form = "\\Theta(n)"
+                    elif r_num > 1:
+                        closed_form = f"\\Theta({r_val}^n)"
+                    else:
+                        closed_form = f"\\Theta({r_val}^n)"
+                except:
+                    closed_form = f"\\Theta({r_val}^n)"
+            elif len(roots_info) == 2:
+                # Dos raíces: usar la mayor
+                r1_val = roots_info[0]["root"]
+                r2_val = roots_info[1]["root"]
+                try:
+                    r1_sympy = sympify(r1_val)
+                    r2_sympy = sympify(r2_val)
+                    r1_num = float(r1_sympy.evalf())
+                    r2_num = float(r2_sympy.evalf())
+                    r_max_num = max(r1_num, r2_num)
+                    r_max_val = r1_val if r1_num >= r2_num else r2_val
+                    if r_max_num > 1:
+                        closed_form = f"\\Theta({r_max_val}^n)"
+                    else:
+                        closed_form = f"\\Theta({r_max_val}^n)"
+                except:
+                    closed_form = f"\\Theta(\\max({r1_val}, {r2_val})^n)"
+            else:
+                # Caso general: encontrar la raíz con mayor valor numérico
+                try:
+                    r_max = max(roots_info, key=lambda r: float(sympify(r["root"]).evalf()) if sympify(r["root"]).is_real else 0)
+                    closed_form = f"\\Theta({r_max['root']}^n)"
+                except:
+                    # Fallback: usar la primera raíz
+                    closed_form = f"\\Theta({roots_info[0]['root']}^n)"
+            
+            # Detectar si es caso de DP lineal
+            is_dp_linear = max_offset <= 3 and all(offset <= 3 for offset in coefficients.keys())
+            
+            # Generar versión DP si aplica
+            dp_version = None
+            dp_equivalence = ""
+            if is_dp_linear:
+                # Generar código DP
+                dp_code = self._generate_dp_code(coefficients, max_offset)
+                
+                # Calcular complejidades
+                recursive_complexity = self._calculate_recursive_complexity(coefficients, max_offset)
+                dp_time = "O(n)"
+                dp_space = "O(n)"  # Versión básica con tabla
+                
+                dp_version = {
+                    "code": dp_code,
+                    "time_complexity": dp_time,
+                    "space_complexity": dp_space,
+                    "recursive_complexity": recursive_complexity
+                }
+                
+                dp_equivalence = (
+                    "Las raíces de la ecuación característica corresponden a los valores propios "
+                    "de la transición lineal del sistema DP. La solución cerrada matemática "
+                    "equivale a la solución iterativa mediante programación dinámica."
+                )
+            
+            # Resultado final
+            theta_result = closed_form
+            
+            result = {
+                "method": "characteristic_equation",
+                "is_dp_linear": is_dp_linear,
+                "equation": char_eq_latex,
+                "roots": roots_info,
+                "homogeneous_solution": homogeneous_sol,
+                "particular_solution": particular_sol,
+                "closed_form": closed_form,
+                "dp_version": dp_version,
+                "dp_equivalence": dp_equivalence,
+                "theta": theta_result
+            }
+            
+            self.proof_steps.append({
+                "id": "characteristic_solution",
+                "text": f"\\text{{Solución: }} T(n) = {theta_result}"
+            })
+            
+            if is_dp_linear:
+                self.proof_steps.append({
+                    "id": "dp_detection",
+                    "text": "\\text{Esta recurrencia corresponde a un caso de Programación Dinámica Lineal}"
+                })
+            
+            return {
+                "success": True,
+                "characteristic_equation": result
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "reason": f"Error resolviendo ecuación característica: {str(e)}"
+            }
+    
+    def _generate_dp_code(self, coefficients: Dict[int, int], max_offset: int) -> str:
+        """
+        Genera código pseudocódigo para versión DP del algoritmo.
+        
+        Args:
+            coefficients: Diccionario {offset: coefficient}
+            max_offset: Máximo desplazamiento k
+            
+        Returns:
+            Código pseudocódigo en string
+        """
+        # Determinar casos base
+        base_cases = []
+        for i in range(max_offset):
+            base_cases.append(f"    dp[{i}] = T{i}  // Caso base")
+        
+        # Construir bucle principal
+        loop_body = "    dp[i] = "
+        terms = []
+        for offset, coeff in sorted(coefficients.items()):
+            if coeff == 1:
+                terms.append(f"dp[i-{offset}]")
+            else:
+                terms.append(f"{coeff} * dp[i-{offset}]")
+        
+        loop_body += " + ".join(terms)
+        
+        code = f"""FUNCIÓN dp_solve(n):
+    SI n <= {max_offset-1} ENTONCES
+        RETORNAR caso_base[n]
+    
+    // Inicializar tabla DP
+    dp[0..n] = 0
+    
+    // Casos base
+{chr(10).join(base_cases)}
+    
+    // Llenar tabla bottom-up
+    PARA i = {max_offset} HASTA n HACER
+{loop_body}
+    FIN PARA
+    
+    RETORNAR dp[n]
+FIN FUNCIÓN"""
+        
+        return code
+    
+    def _calculate_recursive_complexity(self, coefficients: Dict[int, int], max_offset: int) -> str:
+        """
+        Calcula la complejidad de la versión recursiva.
+        
+        Args:
+            coefficients: Diccionario {offset: coefficient}
+            max_offset: Máximo desplazamiento k
+            
+        Returns:
+            Complejidad en notación O
+        """
+        # Contar número total de llamadas recursivas
+        total_calls = sum(coefficients.values())
+        
+        if total_calls == 1:
+            return "O(n)"
+        elif total_calls == 2:
+            return "O(2^n)"
+        else:
+            return f"O({total_calls}^n)"
     
     # ============================================================================
     # MÉTODO DE ITERACIÓN (UNROLLING)

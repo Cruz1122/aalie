@@ -5,6 +5,26 @@ import React from "react";
 
 import Formula from "./Formula";
 
+/**
+ * Redondea los valores numéricos en una expresión LaTeX a 3 decimales.
+ */
+function roundLatexNumbers(latex: string): string {
+  if (!latex || latex === "N/A") return latex;
+  
+  return latex.replace(/([-]?\d+\.\d+)/g, (match) => {
+    const num = Number.parseFloat(match);
+    if (Number.isNaN(num)) return match;
+    
+    const rounded = Math.round(num * 1000) / 1000;
+    
+    if (rounded % 1 === 0) {
+      return rounded.toString();
+    }
+    
+    return rounded.toFixed(3).replace(/\.?0+$/, '');
+  });
+}
+
 interface IterationProcedureModalProps {
   open: boolean;
   onClose: () => void;
@@ -204,7 +224,7 @@ export default function IterationProcedureModal({
                   </h4>
                   <div className="bg-slate-900/50 p-4 rounded border border-purple-500/20 overflow-x-auto">
                     <div className="flex justify-center">
-                      <Formula latex={`T(n) = ${iteration.theta}`} display />
+                      <Formula latex={`T(n) = ${roundLatexNumbers(iteration.theta)}`} display />
                     </div>
                   </div>
                 </div>
