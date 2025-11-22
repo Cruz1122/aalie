@@ -1,17 +1,36 @@
 "use client";
 
+/**
+ * Modal para mostrar el procedimiento general de análisis.
+ * Muestra la ecuación de eficiencia T(n) o A(n), forma polinómica,
+ * notaciones asintóticas y pasos del procedimiento.
+ * 
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 import type { AnalyzeOpenResponse } from "@aa/types";
 import React, { useMemo } from "react";
 
 
 import Formula from "./Formula";
 
+/**
+ * Propiedades del componente GeneralProcedureModal.
+ */
 interface GeneralProcedureModalProps {
+  /** Indica si el modal está abierto */
   open: boolean;
+  /** Callback para cerrar el modal */
   onClose: () => void;
+  /** Datos del análisis a mostrar */
   data: AnalyzeOpenResponse | undefined;
 }
 
+/**
+ * Normaliza una expresión polinómica removiendo términos con "0 *".
+ * @param poly - Expresión polinómica a normalizar
+ * @returns Expresión polinómica normalizada
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const normalizePolynomial = (poly?: string): string => {
   if (!poly) return "";
   // Reemplazar \\cdot por espacio y limpiar espacios
@@ -22,6 +41,12 @@ const normalizePolynomial = (poly?: string): string => {
   return parts.join(" + ") || "0";
 };
 
+/**
+ * Deriva la notación Big-O a partir de una expresión base.
+ * @param base - Expresión base para derivar Big-O
+ * @returns Notación Big-O en formato LaTeX
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const deriveBigO = (base: string): string => {
   if (!base) return "O(1)";
   if (base.includes("n^3") || base.includes("n³")) return "O(n^3)";
@@ -31,6 +56,22 @@ const deriveBigO = (base: string): string => {
   return "O(1)";
 };
 
+/**
+ * Componente modal para mostrar el procedimiento general de análisis.
+ * 
+ * @param props - Propiedades del modal
+ * @returns Modal con procedimiento general o null si está cerrado
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * <GeneralProcedureModal
+ *   open={isOpen}
+ *   onClose={() => setIsOpen(false)}
+ *   data={analysisData}
+ * />
+ * ```
+ */
 export default function GeneralProcedureModal({ open, onClose, data }: Readonly<GeneralProcedureModalProps>) {
   // Detectar si es caso promedio
   const isAvgCase = data?.totals?.avg_model_info !== undefined;

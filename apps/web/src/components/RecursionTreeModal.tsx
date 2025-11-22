@@ -77,7 +77,14 @@ interface TreeNodeData {
   argument?: number; // valor del argumento (para árboles lineales)
 }
 
-// Nodo personalizado para el árbol - optimizado con React.memo
+/**
+ * Nodo personalizado para el árbol de recursión.
+ * Renderiza cada nodo con su tamaño, nivel y costo.
+ * 
+ * @param data - Datos del nodo del árbol
+ * @returns Componente React del nodo
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const TreeNode = React.memo(({ data }: { data: TreeNodeData & { sourcePosition?: string; targetPosition?: string } }) => {
   const { label, size, level, nodeCount, isBaseCase, duplicateCount, argument, sourcePosition, targetPosition } = data;
   
@@ -184,6 +191,26 @@ const edgeTypes = {
   default: CustomEdge,
 };
 
+/**
+ * Modal para visualizar el árbol de recursión de un algoritmo recursivo.
+ * Muestra una visualización interactiva usando React Flow con nodos y conexiones
+ * que representan las llamadas recursivas y sus subproblemas.
+ * 
+ * @param props - Propiedades del modal
+ * @returns Componente React del modal o null si está cerrado
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * <RecursionTreeModal
+ *   open={isOpen}
+ *   onClose={() => setIsOpen(false)}
+ *   recurrence={recurrence}
+ *   recursionTreeData={recursionTreeData}
+ *   characteristicEquation={characteristicEquation}
+ * />
+ * ```
+ */
 export default function RecursionTreeModal({
   open,
   onClose,

@@ -5,13 +5,23 @@ import React, { useEffect, useMemo, useCallback, useState, useRef } from "react"
 
 import Formula from "./Formula";
 
-// Helper para renderizar variables con KaTeX (memoizado)
+/**
+ * Helper para renderizar variables con KaTeX (memoizado).
+ * @param variable - Variable o expresión LaTeX a renderizar
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const RenderVariable = React.memo(({ variable }: { variable: string }) => {
   return <Formula latex={variable} />
 });
 RenderVariable.displayName = 'RenderVariable';
 
-// Componente de lista virtualizada simple para pasos del procedimiento
+/**
+ * Componente de lista virtualizada simple para pasos del procedimiento.
+ * Optimiza el renderizado de listas largas de pasos usando virtualización.
+ * 
+ * @param steps - Array de pasos del procedimiento (expresiones LaTeX)
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const VirtualizedStepsList = React.memo(({ steps }: { steps: string[] }) => {
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: Math.min(10, steps.length) });
   const containerRef = useRef<HTMLDivElement>(null);
@@ -60,13 +70,39 @@ const VirtualizedStepsList = React.memo(({ steps }: { steps: string[] }) => {
 });
 VirtualizedStepsList.displayName = 'VirtualizedStepsList';
 
+/**
+ * Propiedades del componente ProcedureModal.
+ */
 interface ProcedureModalProps {
+  /** Indica si el modal está abierto */
   open: boolean;
+  /** Callback para cerrar el modal */
   onClose: () => void;
+  /** Número de línea seleccionada (null para procedimiento completo) */
   selectedLine?: number | null;
+  /** Datos del análisis a mostrar */
   analysisData?: AnalyzeOpenResponse;
 }
 
+/**
+ * Modal para mostrar el procedimiento de análisis.
+ * Puede mostrar el procedimiento de una línea específica o el procedimiento completo.
+ * Soporta caso promedio con virtualización para listas largas de pasos.
+ * 
+ * @param props - Propiedades del modal
+ * @returns Modal con procedimiento o null si está cerrado
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * <ProcedureModal
+ *   open={isOpen}
+ *   onClose={() => setIsOpen(false)}
+ *   selectedLine={5}
+ *   analysisData={analysisData}
+ * />
+ * ```
+ */
 export default function ProcedureModal({
   open,
   onClose,
@@ -90,7 +126,12 @@ export default function ProcedureModal({
   }, [selectedLine, isAvgCase]);
 
 
-  // Función para extraer el patrón de un término (n+1, n, 1, etc.)
+  /**
+   * Función para extraer el patrón de un término (n+1, n, 1, etc.).
+   * @param count - Expresión de conteo a analizar
+   * @returns Patrón normalizado
+   * @author Juan Camilo Cruz Parra (@Cruz1122)
+   */
   const extractPattern = useCallback((count: string): string => {
     // Normalizar espacios y paréntesis
     const normalized = count.replaceAll(/\s+/g, '').replaceAll('(', '').replaceAll(')', '');

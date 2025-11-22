@@ -1,3 +1,8 @@
+"""
+Analizador dummy para pruebas y demostración.
+
+Author: Juan Camilo Cruz Parra (@Cruz1122)
+"""
 from .base import BaseAnalyzer
 
 
@@ -6,11 +11,25 @@ class DummyAnalyzer(BaseAnalyzer):
     Analizador dummy para probar la funcionalidad de BaseAnalyzer.
     
     Simula un análisis simple con algunas líneas de código.
+    Útil para pruebas, demostraciones y desarrollo.
+    
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
     def analyze(self):
         """
         Realiza un análisis dummy con líneas de ejemplo.
+        
+        Crea un análisis de ejemplo que incluye:
+        - Declaración de variables
+        - Asignaciones
+        - Bucle FOR con cuerpo
+        - Return
+        
+        Returns:
+            Diccionario con byLine, totals (T_open, procedure), symbols y notes
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Limpiar datos previos
         self.clear()
@@ -97,8 +116,12 @@ def create_dummy_analysis():
     """
     Función de conveniencia para crear un análisis dummy.
     
+    Crea una instancia de DummyAnalyzer y ejecuta el análisis.
+    
     Returns:
-        AnalyzeOpenResponse con datos de ejemplo
+        Diccionario con byLine, totals (T_open, procedure), symbols y notes
+        
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     analyzer = DummyAnalyzer()
     return analyzer.analyze()

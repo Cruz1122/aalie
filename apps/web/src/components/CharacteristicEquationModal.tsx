@@ -5,6 +5,9 @@ import Formula from "./Formula";
 
 /**
  * Redondea los valores numéricos en una expresión LaTeX a 3 decimales.
+ * @param latex - La expresión LaTeX que puede contener números
+ * @returns La expresión LaTeX con números redondeados a 3 decimales
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 function roundLatexNumbers(latex: string): string {
   if (!latex || latex === "N/A") return latex;
@@ -85,6 +88,26 @@ interface CharacteristicEquationModalProps {
   theta: string | null | undefined;
 }
 
+/**
+ * Modal para mostrar los detalles del método de ecuación característica.
+ * Incluye la ecuación, raíces, solución homogénea, particular (si aplica), forma cerrada y prueba.
+ * 
+ * @param props - Propiedades del modal
+ * @returns Componente React del modal o null si está cerrado
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * <CharacteristicEquationModal
+ *   open={isOpen}
+ *   onClose={() => setIsOpen(false)}
+ *   recurrence={recurrence}
+ *   characteristicEquation={characteristicEquation}
+ *   proof={proof}
+ *   theta={theta}
+ * />
+ * ```
+ */
 export default function CharacteristicEquationModal({
   open,
   onClose,

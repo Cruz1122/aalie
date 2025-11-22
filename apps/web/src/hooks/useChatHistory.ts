@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 
+/**
+ * Interfaz para mensajes del chat.
+ */
 interface Message {
   id: string;
   content: string;
@@ -11,6 +14,18 @@ interface Message {
 
 const STORAGE_KEY = "aa_chat_messages";
 
+/**
+ * Hook para gestionar el historial de mensajes del chat con persistencia en sessionStorage.
+ * Restaura el historial al montar y lo guarda automáticamente en cada cambio.
+ * 
+ * @returns Objeto con los mensajes y función para actualizarlos
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * const { messages, setMessages } = useChatHistory();
+ * ```
+ */
 export function useChatHistory() {
   const [messages, setMessages] = useState<Message[]>([]);
 

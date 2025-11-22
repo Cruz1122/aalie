@@ -13,9 +13,16 @@ class ComplexityClasses:
     - Funciones logarítmicas: log(n), n*log(n)
     - Funciones exponenciales: 2^n
     - Combinaciones de las anteriores
+    
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
     def __init__(self):
+        """
+        Inicializa una instancia de ComplexityClasses.
+        
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
         pass
     
     def extract_dominant_term(self, polynomial: str, variable: str = "n") -> str:
@@ -28,6 +35,8 @@ class ComplexityClasses:
             
         Returns:
             Término dominante en formato LaTeX
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if not polynomial or polynomial.strip() == "":
             return "1"
@@ -62,6 +71,8 @@ class ComplexityClasses:
             
         Returns:
             Clase Big-O en formato LaTeX (ej: "O(n^2)")
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         dominant = self.extract_dominant_term(polynomial, variable)
         return f"O({dominant})"
@@ -76,6 +87,8 @@ class ComplexityClasses:
             
         Returns:
             Clase Big-Omega en formato LaTeX (ej: "Ω(n^2)")
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         dominant = self.extract_dominant_term(polynomial, variable)
         return f"\\Omega({dominant})"
@@ -90,6 +103,8 @@ class ComplexityClasses:
             
         Returns:
             Clase Big-Theta en formato LaTeX (ej: "Θ(n^2)")
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         dominant = self.extract_dominant_term(polynomial, variable)
         return f"\\Theta({dominant})"
@@ -97,6 +112,15 @@ class ComplexityClasses:
     def _parse_polynomial(self, polynomial: str, variable: str = "n") -> 'Expr':
         """
         Parsea un polinomio desde string/LaTeX a SymPy.
+        
+        Args:
+            polynomial: Expresión polinómica en formato LaTeX o string
+            variable: Variable principal (por defecto "n")
+            
+        Returns:
+            Expresión SymPy
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         
         Args:
             polynomial: Expresión en formato string o LaTeX

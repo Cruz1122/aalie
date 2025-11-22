@@ -20,9 +20,16 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
     - Bucles WHILE y REPEAT con símbolos de iteración
     - Líneas simples (asignaciones, llamadas, returns)
     - Dispatcher unificado para todos los tipos de nodos
+    
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
     def __init__(self):
+        """
+        Inicializa una instancia de IterativeAnalyzer.
+        
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
         super().__init__()
         self.big_o: Optional[str] = None
         self.big_omega: Optional[str] = None
@@ -37,6 +44,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             
         Returns:
             String representando la expresión
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if expr is None:
             return ""
@@ -84,6 +93,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             
         Returns:
             String normalizado
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if not s:
             return s
@@ -107,6 +118,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             
         Returns:
             Resultado del análisis con byLine, T_open, procedure, etc.
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Limpiar estado previo
         self.clear()

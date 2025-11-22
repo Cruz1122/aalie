@@ -4,17 +4,43 @@ import type { LineCost } from "@aa/types";
 
 import Formula from "./Formula";
 
-// Helper para renderizar variables con KaTeX
+/**
+ * Helper para renderizar variables con KaTeX.
+ * @param variable - Variable o expresión a renderizar
+ * @returns Componente Formula con la variable renderizada
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 function renderVariable(variable: string) {
   // Renderizar todo con KaTeX para consistencia visual
   return <Formula latex={variable} />
 }
 
+/**
+ * Propiedades del componente CostsTable.
+ */
 interface CostsTableProps {
+  /** Filas de costos por línea */
   rows: LineCost[];
+  /** Callback opcional para ver el procedimiento de una línea */
   onViewProcedure?: (lineNo: number) => void;
 }
 
+/**
+ * Componente de tabla para mostrar costos por línea de código.
+ * Muestra el número de línea, tipo de instrucción, costo C_k y número de ejecuciones.
+ * 
+ * @param props - Propiedades de la tabla
+ * @returns Componente React de la tabla de costos
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * <CostsTable
+ *   rows={costRows}
+ *   onViewProcedure={(line) => handleViewProcedure(line)}
+ * />
+ * ```
+ */
 export default function CostsTable({ rows, onViewProcedure }: Readonly<CostsTableProps>) {
   return (
     <div className="overflow-x-auto rounded-lg border border-white/10 flex-1">

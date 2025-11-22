@@ -13,6 +13,8 @@ class ForVisitor:
     - Cuerpo del for: multiplicado por Σ_{v=a}^{b} 1 (worst case)
     - Best case con early return: cabecera = 2, multiplicador = 1 (solo primera iteración)
     - Procedimiento explicativo
+    
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
     def _expr_to_sympy(self, expr: Any) -> Expr:
@@ -24,6 +26,8 @@ class ForVisitor:
             
         Returns:
             Expresión SymPy
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Usar el método de BaseAnalyzer si está disponible
         if hasattr(self, 'expr_converter'):
@@ -43,6 +47,8 @@ class ForVisitor:
             
         Returns:
             Expresión SymPy
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         from sympy import sympify, Symbol, Integer
         
@@ -78,6 +84,8 @@ class ForVisitor:
             
         Returns:
             String legible representando la expresión
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if expr is None:
             return ""
@@ -244,6 +252,8 @@ class ForVisitor:
         Args:
             node: Nodo FOR del AST
             mode: Modo de análisis ("worst", "best", "avg")
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Extraer información del nodo FOR
         line = node.get("pos", {}).get("line", 0)

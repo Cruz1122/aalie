@@ -15,9 +15,16 @@ class BaseAnalyzer:
     - Construir la ecuación de eficiencia T_open = Σ C_{k}·count_{k}
     - Registrar el procedimiento (pasos) que llevaron a T_open
     - Memoización sencilla (PD) por nodo+contexto
+    
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
     def __init__(self):
+        """
+        Inicializa una instancia de BaseAnalyzer.
+        
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
         self.rows: List[LineCost] = []      # tabla por línea
         self.loop_stack: List[Expr] = []    # multiplicadores activos (expresiones SymPy)
         self.symbols: Dict[str, str] = {}   # ej: { "n": "length(A)" }
@@ -42,6 +49,8 @@ class BaseAnalyzer:
             ck: Costo individual de la línea (string KaTeX)
             count: Número de ejecuciones (puede ser string o Expr de SymPy)
             note: Nota opcional sobre la línea
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Convertir count a SymPy si es string
         if isinstance(count, str):
@@ -99,6 +108,8 @@ class BaseAnalyzer:
             
         Returns:
             Expresión SymPy con multiplicadores aplicados
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         from sympy import Symbol, preorder_traversal
         
@@ -160,6 +171,8 @@ class BaseAnalyzer:
             
         Returns:
             Expresión SymPy
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if not expr_str or expr_str.strip() == "":
             return Integer(1)
@@ -197,6 +210,8 @@ class BaseAnalyzer:
             
         Returns:
             Expresión SymPy
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         return self.expr_converter.ast_to_sympy(expr)
 
@@ -207,6 +222,8 @@ class BaseAnalyzer:
         
         Args:
             m: Multiplicador (puede ser string LaTeX o Expr de SymPy)
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if isinstance(m, str):
             # Convertir string LaTeX a SymPy
@@ -227,7 +244,11 @@ class BaseAnalyzer:
         self.loop_stack.append(m)
 
     def pop_multiplier(self):
-        """Desactiva el último multiplicador."""
+        """
+        Desactiva el último multiplicador.
+        
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
         if self.loop_stack:
             self.loop_stack.pop()
 
@@ -238,6 +259,8 @@ class BaseAnalyzer:
         
         Returns:
             String con la ecuación de eficiencia en formato KaTeX
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if not self.rows:
             return "0"
@@ -292,6 +315,8 @@ class BaseAnalyzer:
         
         Returns:
             Expresión SymPy simplificada o None si no hay términos
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if not self.rows:
             return None
@@ -344,6 +369,8 @@ class BaseAnalyzer:
         
         Returns:
             Diccionario que cumple el contrato AnalyzeOpenResponse
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Construir T_open (o A(n) para promedio)
         t_open_str = self.build_t_open()
@@ -456,6 +483,8 @@ class BaseAnalyzer:
             
         Returns:
             Clave única para el cache
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         nid = getattr(node, "id", None) or str(id(node))
         return f"{nid}|{mode}|{ctx_hash}"
@@ -469,6 +498,8 @@ class BaseAnalyzer:
             
         Returns:
             Lista de filas cacheadas o None si no existe
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         return self.memo.get(key)
 
@@ -479,6 +510,8 @@ class BaseAnalyzer:
         Args:
             key: Clave del cache
             rows: Lista de filas a cachear
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Guardar una copia superficial para evitar aliasing accidental
         self.memo[key] = [dict(r) for r in rows]
@@ -491,6 +524,8 @@ class BaseAnalyzer:
         Args:
             symbol: Símbolo matemático (ej: "n", "m", "k")
             description: Descripción del símbolo (ej: "length(A)", "number of iterations")
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self.symbols[symbol] = description
 
@@ -500,12 +535,18 @@ class BaseAnalyzer:
         
         Args:
             note: Nota descriptiva
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self.notes.append(note)
 
 
     def clear(self):
-        """Limpia todos los datos del analizador."""
+        """
+        Limpia todos los datos del analizador.
+        
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
         self.rows.clear()
         self.loop_stack.clear()
         self.symbols.clear()
@@ -520,6 +561,8 @@ class BaseAnalyzer:
         
         Returns:
             String hash del contexto
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Convertir expresiones SymPy a strings para el hash
         if not self.loop_stack:
@@ -533,6 +576,8 @@ class BaseAnalyzer:
         
         Returns:
             String con la siguiente constante (ej: "C_{1}", "C_{2}", etc.)
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self.counter += 1
         return f"C_{{{self.counter}}}"

@@ -17,6 +17,8 @@ class IfVisitor:
         * Si no hay ELSE y no hay early return: NO ejecutar THEN (condición falsa)
         * Si hay early return: ejecutar la rama con early return (termina temprano)
         * Si hay ELSE: elegir la rama con menor costo
+    
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
     def _expr_to_str(self, expr: Any) -> str:
@@ -28,6 +30,8 @@ class IfVisitor:
             
         Returns:
             String representando la expresión
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if expr is None:
             return ""
@@ -73,6 +77,8 @@ class IfVisitor:
         Args:
             node: Nodo IF del AST
             mode: Modo de análisis ("worst", "best", "avg")
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Extraer información del nodo IF
         line = node.get("pos", {}).get("line", 0)

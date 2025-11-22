@@ -1,5 +1,7 @@
 """
 Servicio de clasificación de algoritmos.
+
+Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 from typing import Dict, Any
 from .classifier import detect_algorithm_kind
@@ -15,7 +17,10 @@ def classify_algorithm(source: str = None, ast: Dict[str, Any] = None) -> Dict[s
         ast: AST ya parseado a clasificar (opcional)
         
     Returns:
-        Diccionario con ok, kind, method, errors
+        Diccionario con ok (bool), kind ("iterative"|"recursive"|"hybrid"|"unknown"), 
+        method ("ast") y errors (lista opcional)
+        
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     try:
         # Determinar si recibimos source o ast

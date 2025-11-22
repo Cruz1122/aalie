@@ -9,18 +9,32 @@ import { getBestAsymptoticNotation } from "@/lib/asymptotic-notation";
 
 type CaseType = "worst" | "best" | "average";
 
+/**
+ * Propiedades del componente IterativeAnalysisView.
+ */
 interface IterativeAnalysisViewProps {
+  /** Datos de análisis para worst, best y average case */
   data: {
     worst: AnalyzeOpenResponse | null;
     best: AnalyzeOpenResponse | null;
     avg: AnalyzeOpenResponse | null;
   } | null;
+  /** Caso actualmente seleccionado */
   selectedCase: CaseType;
+  /** Callback para cambiar el caso seleccionado */
   onCaseChange: (caseType: CaseType) => void;
+  /** Callback para ver el procedimiento de una línea específica */
   onViewLineProcedure: (line: number, caseType: CaseType) => void;
+  /** Callback para ver el procedimiento general */
   onViewGeneralProcedure: (caseType: CaseType) => void;
 }
 
+/**
+ * Obtiene la etiqueta en español para un tipo de caso.
+ * @param caseType - Tipo de caso (worst, best, average)
+ * @returns Etiqueta en español del caso
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const getCaseLabel = (caseType: CaseType): string => {
   switch (caseType) {
     case "worst":
@@ -32,6 +46,12 @@ const getCaseLabel = (caseType: CaseType): string => {
   }
 };
 
+/**
+ * Obtiene las clases CSS para el badge de un tipo de caso.
+ * @param caseType - Tipo de caso (worst, best, average)
+ * @returns String con las clases CSS para el badge
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const getCaseBadgeStyle = (caseType: CaseType): string => {
   switch (caseType) {
     case "worst":
@@ -43,6 +63,13 @@ const getCaseBadgeStyle = (caseType: CaseType): string => {
   }
 };
 
+/**
+ * Obtiene las clases CSS para el botón selector de caso.
+ * @param caseType - Tipo de caso (worst, best, average)
+ * @param isSelected - Indica si el caso está seleccionado
+ * @returns String con las clases CSS para el botón
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const getSelectorButtonStyle = (caseType: CaseType, isSelected: boolean): string => {
   const baseStyle = "transition-colors text-xs font-semibold";
   if (isSelected) {
@@ -58,6 +85,30 @@ const getSelectorButtonStyle = (caseType: CaseType, isSelected: boolean): string
   return `${baseStyle} text-slate-400 hover:text-slate-200`;
 };
 
+/**
+ * Componente principal para visualizar el análisis de algoritmos iterativos.
+ * Muestra la tabla de costos por línea y las ecuaciones de eficiencia para cada caso
+ * (worst, best, average), permitiendo cambiar entre casos y ver procedimientos detallados.
+ * 
+ * @param props - Propiedades del componente
+ * @returns Componente React con la visualización del análisis iterativo
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * <IterativeAnalysisView
+ *   data={{
+ *     worst: worstCaseData,
+ *     best: bestCaseData,
+ *     avg: avgCaseData
+ *   }}
+ *   selectedCase="worst"
+ *   onCaseChange={(caseType) => setSelectedCase(caseType)}
+ *   onViewLineProcedure={(line, caseType) => handleViewLine(line, caseType)}
+ *   onViewGeneralProcedure={(caseType) => handleViewGeneral(caseType)}
+ * />
+ * ```
+ */
 export default function IterativeAnalysisView({
   data,
   selectedCase,
@@ -65,6 +116,11 @@ export default function IterativeAnalysisView({
   onViewLineProcedure,
   onViewGeneralProcedure,
 }: IterativeAnalysisViewProps) {
+  /**
+   * Renderiza el contenido de la tabla de costos por línea.
+   * @returns Elemento React con la tabla de costos o estado vacío
+   * @author Juan Camilo Cruz Parra (@Cruz1122)
+   */
   const renderLineCostContent = () => {
     if (!data || (!data.worst && !data.best && !data.avg)) {
       return (

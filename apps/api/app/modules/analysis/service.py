@@ -1,5 +1,7 @@
 """
 Servicio de análisis de algoritmos.
+
+Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 from typing import Any, Dict, Optional
 from .analyzers.registry import AnalyzerRegistry
@@ -24,13 +26,20 @@ def analyze_algorithm(
     Args:
         source: Código fuente a analizar
         mode: Modo de análisis ("worst", "best", "avg", "all")
-        api_key: API Key de Gemini (opcional)
+        api_key: API Key de Gemini (opcional, mantenido por compatibilidad)
         avg_model: Modelo probabilístico para caso promedio
         algorithm_kind: Tipo de algoritmo (opcional, se detecta automáticamente)
         preferred_method: Método preferido para algoritmos recursivos
         
     Returns:
-        Resultado del análisis
+        Resultado del análisis con estructura AnalyzeOpenResponse o diccionario con worst/best/avg
+        
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
+    
+    Example:
+        >>> result = analyze_algorithm("factorial(n) BEGIN RETURN 1; END", mode="all")
+        >>> print(result["ok"])
+        True
     """
     try:
         # 1) Parsear el código fuente
@@ -174,11 +183,18 @@ def detect_methods(
     Detecta qué métodos de análisis son aplicables para un algoritmo recursivo.
     
     Args:
-        source: Código fuente
-        algorithm_kind: Tipo de algoritmo (opcional)
+        source: Código fuente a analizar
+        algorithm_kind: Tipo de algoritmo (opcional, se detecta automáticamente)
         
     Returns:
-        Diccionario con métodos aplicables
+        Diccionario con métodos aplicables, método por defecto e información de recurrencia
+        
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
+    
+    Example:
+        >>> result = detect_methods("mergesort(...) BEGIN ... END", algorithm_kind="recursive")
+        >>> print(result["applicable_methods"])
+        ['master', 'iteration', 'recursion_tree']
     """
     try:
         # 1) Parsear el código fuente

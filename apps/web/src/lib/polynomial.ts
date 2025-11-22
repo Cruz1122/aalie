@@ -1,9 +1,19 @@
 /**
- * Utilidades para manejo de polinomios y notación asintótica
+ * Utilidades para manejo de polinomios y notación asintótica.
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 
 /**
- * Calcula la notación asintótica Big-O a partir de una expresión polinómica
+ * Calcula la notación asintótica Big-O a partir de una expresión polinómica.
+ * @param polynomial - Expresión polinómica en formato LaTeX
+ * @returns Notación Big-O correspondiente (O(n³), O(n²), O(n), O(log n) o O(1))
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```ts
+ * calculateBigO("n^2 + 3n + 5"); // "O(n^2)"
+ * calculateBigO("n log(n)"); // "O(\\log n)"
+ * ```
  */
 export function calculateBigO(polynomial: string): string {
   if (!polynomial) return 'O(1)';
@@ -25,7 +35,16 @@ export function calculateBigO(polynomial: string): string {
 }
 
 /**
- * Normaliza un polinomio eliminando términos con coeficiente 0
+ * Normaliza un polinomio eliminando términos con coeficiente 0.
+ * @param poly - Polinomio en formato LaTeX (opcional)
+ * @returns Polinomio normalizado sin términos con coeficiente 0, o "0" si está vacío
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```ts
+ * normalizePolynomial("0 \\cdot n^2 + 3n + 0"); // "3n"
+ * normalizePolynomial("0 \\cdot n + 0"); // "0"
+ * ```
  */
 export function normalizePolynomial(poly?: string): string {
   if (!poly) return '';
@@ -41,7 +60,9 @@ export function normalizePolynomial(poly?: string): string {
 }
 
 /**
- * Obtiene el caso seleccionado desde sessionStorage
+ * Obtiene el caso seleccionado desde sessionStorage.
+ * @returns Caso guardado ('worst', 'average' o 'best'), o 'worst' por defecto
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export function getSavedCase(): 'worst' | 'average' | 'best' {
   if (typeof globalThis.window === 'undefined') return 'worst';
@@ -53,7 +74,9 @@ export function getSavedCase(): 'worst' | 'average' | 'best' {
 }
 
 /**
- * Guarda el caso seleccionado en sessionStorage
+ * Guarda el caso seleccionado en sessionStorage.
+ * @param caseType - Tipo de caso a guardar ('worst', 'average' o 'best')
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export function saveCase(caseType: 'worst' | 'average' | 'best'): void {
   if (typeof globalThis.window !== 'undefined') {

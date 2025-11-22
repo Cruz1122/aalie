@@ -11,10 +11,17 @@ class RecursiveAnalyzer(BaseAnalyzer):
     Analizador para algoritmos recursivos divide-and-conquer.
     
     Extrae recurrencias de la forma T(n) = a·T(n/b) + f(n)
-    y las resuelve mediante el Teorema Maestro.
+    y las resuelve mediante el Teorema Maestro, método de iteración o árbol de recursión.
+    
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
     def __init__(self):
+        """
+        Inicializa una instancia de RecursiveAnalyzer.
+        
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
         super().__init__()
         self.procedure_name: Optional[str] = None
         self.proc_def: Optional[Dict[str, Any]] = None
@@ -43,6 +50,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
             
         Returns:
             Resultado del análisis con recurrence, master, proof, etc.
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Limpiar estado previo
         self.clear()

@@ -16,8 +16,18 @@ export interface ParseResult {
 }
 
 /**
- * Hook para parsear código usando Web Worker
- * Incluye debounce de 150ms y cancelación automática de requests antiguos
+ * Hook para parsear código usando Web Worker.
+ * Incluye debounce de 150ms y cancelación automática de requests antiguos.
+ * 
+ * @param code - Código fuente a parsear
+ * @param debounceMs - Tiempo de debounce en milisegundos (por defecto 150ms)
+ * @returns Resultado del parseo con ok, ast, errors e isParsing
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * const { ok, ast, errors, isParsing } = useParseWorker(code, 200);
+ * ```
  */
 export function useParseWorker(code: string, debounceMs = 150): ParseResult {
   const [result, setResult] = useState<ParseResult>({
@@ -118,7 +128,18 @@ export function useParseWorker(code: string, debounceMs = 150): ParseResult {
 }
 
 /**
- * Hook alternativo para parsear bajo demanda (sin debounce automático)
+ * Hook alternativo para parsear bajo demanda (sin debounce automático).
+ * Permite control manual del momento en que se ejecuta el parseo.
+ * 
+ * @returns Objeto con result (ParseResult) y parse (función para ejecutar parseo)
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * const { result, parse } = useParseWorkerOnDemand();
+ * // ... más tarde
+ * parse(code);
+ * ```
  */
 export function useParseWorkerOnDemand() {
   const [result, setResult] = useState<ParseResult>({

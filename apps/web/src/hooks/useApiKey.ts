@@ -5,9 +5,10 @@ const API_KEY_STORAGE_KEY = 'gemini_api_key';
 const API_KEY_REGEX = /^AIza[0-9A-Za-z_-]{35,40}$/;
 
 /**
- * Valida el formato de una API_KEY de Gemini
+ * Valida el formato de una API_KEY de Gemini.
  * @param key - La API_KEY a validar
  * @returns true si el formato es válido, false en caso contrario
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export function validateApiKey(key: string): boolean {
   if (!key || typeof key !== 'string') {
@@ -17,8 +18,9 @@ export function validateApiKey(key: string): boolean {
 }
 
 /**
- * Obtiene la API_KEY del localStorage
+ * Obtiene la API_KEY del localStorage.
  * @returns La API_KEY si existe y es válida, null en caso contrario
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export function getApiKey(): string | null {
   if (typeof window === 'undefined') {
@@ -46,9 +48,10 @@ export function getApiKey(): string | null {
 }
 
 /**
- * Guarda la API_KEY en el localStorage
+ * Guarda la API_KEY en el localStorage.
  * @param key - La API_KEY a guardar
  * @returns true si se guardó correctamente, false si la clave es inválida
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export function setApiKey(key: string): boolean {
   if (typeof window === 'undefined') {
@@ -75,7 +78,8 @@ export function setApiKey(key: string): boolean {
 }
 
 /**
- * Elimina la API_KEY del localStorage
+ * Elimina la API_KEY del localStorage.
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export function removeApiKey(): void {
   if (typeof window === 'undefined') {
@@ -94,9 +98,10 @@ export function removeApiKey(): void {
 }
 
 /**
- * Verifica si hay una API_KEY válida disponible
+ * Verifica si hay una API_KEY válida disponible.
  * Prioridad: localStorage > variables de entorno (solo en servidor)
  * @returns true si hay una API_KEY válida disponible
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export function hasValidApiKey(): boolean {
   // En el cliente, verificar localStorage
@@ -112,8 +117,9 @@ export function hasValidApiKey(): boolean {
 }
 
 /**
- * Obtiene la API_KEY con prioridad: localStorage > variables de entorno
+ * Obtiene la API_KEY con prioridad: localStorage > variables de entorno.
  * @returns La API_KEY si está disponible, null en caso contrario
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export function getApiKeyWithFallback(): string | null {
   // Prioridad 1: localStorage (solo en cliente)
@@ -136,8 +142,9 @@ export function getApiKeyWithFallback(): string | null {
 }
 
 /**
- * Verifica si el servidor tiene API_KEY disponible en variables de entorno
+ * Verifica si el servidor tiene API_KEY disponible en variables de entorno.
  * @returns true si el servidor tiene API_KEY disponible, false en caso contrario
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export async function checkServerApiKey(): Promise<boolean> {
   if (typeof window === 'undefined') {
@@ -163,8 +170,9 @@ export async function checkServerApiKey(): Promise<boolean> {
 }
 
 /**
- * Obtiene el estado completo de API_KEY
+ * Obtiene el estado completo de API_KEY.
  * @returns Objeto con información sobre el estado de API_KEY en localStorage y servidor
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export async function getApiKeyStatus(): Promise<{
   hasLocalStorage: boolean;
@@ -182,7 +190,15 @@ export async function getApiKeyStatus(): Promise<{
 }
 
 /**
- * Hook de React para usar API_KEY en componentes
+ * Hook de React para usar API_KEY en componentes.
+ * Proporciona estado y funciones para gestionar la API_KEY de Gemini.
+ * @returns Objeto con estado y funciones para gestionar la API_KEY
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * const { apiKey, isValid, updateApiKey, clearApiKey } = useApiKey();
+ * ```
  */
 export function useApiKey() {
   const [apiKey, setApiKeyState] = React.useState<string | null>(null);

@@ -1,5 +1,7 @@
 """
 Servicio de parsing.
+
+Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 from typing import Dict, Any
 from .adapter import parse_to_ast_adapter, is_grammar_available
@@ -13,7 +15,9 @@ def parse_source(source: str) -> Dict[str, Any]:
         source: Código fuente a parsear
         
     Returns:
-        Diccionario con ok, ast, errors
+        Diccionario con ok (bool), ast (opcional) y errors (lista)
+        
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     if not is_grammar_available():
         return {

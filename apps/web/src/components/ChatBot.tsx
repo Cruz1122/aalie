@@ -7,6 +7,9 @@ import { getApiKey, getApiKeyStatus, setApiKey, validateApiKey } from "@/hooks/u
 
 import MarkdownRenderer from './MarkdownRenderer';
 
+/**
+ * Interfaz para mensajes del chat.
+ */
 interface Message {
   id: string;
   content: string;
@@ -16,6 +19,9 @@ interface Message {
   retryMessageId?: string; // ID del mensaje del usuario que se debe reintentar
 }
 
+/**
+ * Propiedades del componente ChatBot.
+ */
 interface ChatBotProps {
   isOpen: boolean;
   onClose: () => void;
@@ -27,7 +33,11 @@ interface ChatBotProps {
 // ============== FUNCIONES API ==============
 
 /**
- * Clasifica la intención del mensaje del usuario usando Gemini
+ * Clasifica la intención del mensaje del usuario usando Gemini.
+ * @param message - Mensaje del usuario a clasificar
+ * @param apiKey - API Key de Gemini (opcional, el backend usará la de variables de entorno si no se proporciona)
+ * @returns Tipo de intención: 'parser_assist' para ayuda con código o 'general' para consultas generales
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 async function classifyIntent(message: string, apiKey: string | null): Promise<'parser_assist' | 'general'> {
   try {
@@ -70,7 +80,13 @@ async function classifyIntent(message: string, apiKey: string | null): Promise<'
 }
 
 /**
- * Obtiene respuesta del LLM con el job apropiado
+ * Obtiene respuesta del LLM con el job apropiado según la intención clasificada.
+ * @param message - Mensaje del usuario
+ * @param job - Tipo de trabajo: 'parser_assist' para ayuda con código o 'general' para consultas generales
+ * @param chatHistory - Historial de mensajes (últimos 10 se envían al LLM)
+ * @param apiKey - API Key de Gemini (opcional, el backend usará la de variables de entorno si no se proporciona)
+ * @returns Respuesta del LLM como string
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 async function getLLMResponse(
   message: string, 

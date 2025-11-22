@@ -3,12 +3,22 @@ import type { LineCost } from "@aa/types";
 
 import Formula from "./Formula";
 
+/**
+ * Propiedades del componente LineTable.
+ */
 interface LineTableProps {
+  /** Filas de costos por línea */
   rows: LineCost[];
+  /** Callback opcional para ver el procedimiento de una línea */
   onViewProcedure?: (lineNo: number) => void;
 }
 
-// Componente Badge para mostrar el tipo de línea
+/**
+ * Componente Badge para mostrar el tipo de línea de código.
+ * @param kind - Tipo de línea de código
+ * @returns Componente React del badge
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 function Badge({ kind }: { readonly kind: LineCost["kind"] }) {
   const badgeStyles = {
     assign: "bg-blue-500/20 text-blue-300 border-blue-500/30",
@@ -45,6 +55,23 @@ function Badge({ kind }: { readonly kind: LineCost["kind"] }) {
   );
 }
 
+/**
+ * Componente de tabla para mostrar costos por línea de código.
+ * Similar a CostsTable pero con un diseño diferente y soporte para modo promedio
+ * (muestra E[# ejecuciones] en lugar de # ejecuciones).
+ * 
+ * @param props - Propiedades de la tabla
+ * @returns Componente React de la tabla de líneas
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * <LineTable
+ *   rows={costRows}
+ *   onViewProcedure={(line) => handleViewProcedure(line)}
+ * />
+ * ```
+ */
 export default function LineTable({ rows, onViewProcedure }: Readonly<LineTableProps>) {
   // Detectar si estamos en modo promedio (si alguna fila tiene expectedRuns)
   const isAvgMode = rows.some(row => row.expectedRuns !== undefined);

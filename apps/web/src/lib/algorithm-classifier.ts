@@ -12,8 +12,9 @@ export type AlgorithmKind = "iterative" | "recursive" | "hybrid" | "unknown";
  * por lo que se recomienda usar ese endpoint directamente.
  * 
  * @deprecated Usar el API route `/api/llm/classify` directamente
- * @param ast AST del programa parseado o null
+ * @param _ast - AST del programa parseado o null (no utilizado)
  * @returns "unknown" (siempre, para forzar uso del API route)
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export function heuristicKind(_ast: Program | null | unknown): AlgorithmKind {
   // Esta función está deprecada. El código debe usar el API route /api/llm/classify

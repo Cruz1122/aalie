@@ -3,7 +3,10 @@ import type { ParseError } from "@aa/types";
 import type * as Monaco from "monaco-editor";
 
 /**
- * Convierte errores del parser a markers de Monaco
+ * Convierte errores del parser a markers de Monaco.
+ * @param errors - Array de errores de parseo
+ * @returns Array de markers de Monaco para mostrar errores en el editor
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export function errorsToMarkers(errors: ParseError[]): Monaco.editor.IMarkerData[] {
   return errors.map((error) => ({
@@ -18,7 +21,10 @@ export function errorsToMarkers(errors: ParseError[]): Monaco.editor.IMarkerData
 }
 
 /**
- * Proveedor de hover para mostrar información de errores
+ * Crea un proveedor de hover para mostrar información de errores en el editor.
+ * @param errors - Array de errores de parseo
+ * @returns Proveedor de hover de Monaco
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export function createHoverProvider(
   errors: ParseError[]
@@ -48,7 +54,10 @@ export function createHoverProvider(
 }
 
 /**
- * Configuración del lenguaje para Monaco
+ * Registra el lenguaje pseudocódigo en Monaco Editor.
+ * Configura keywords, operadores, tokenizer y tema personalizado.
+ * @param monaco - Instancia de Monaco Editor
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export function registerPseudocodeLanguage(monaco: typeof Monaco): void {
   // Registrar lenguaje

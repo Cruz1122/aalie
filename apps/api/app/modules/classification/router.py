@@ -1,5 +1,7 @@
 """
 Router para el módulo de classification.
+
+Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 from fastapi import APIRouter, Body
 from typing import Any, Dict
@@ -17,13 +19,13 @@ def classify(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     - {"source": str}: Código fuente a parsear y clasificar
     - {"ast": Dict[str, Any]}: AST ya parseado a clasificar
     
+    Args:
+        payload: Diccionario con "source" o "ast" a clasificar
+        
     Returns:
-        {
-            "ok": bool,
-            "kind": "iterative" | "recursive" | "hybrid" | "unknown",
-            "method": "ast",
-            "errors"?: List[Dict]  # Solo si ok=False
-        }
+        Diccionario con ok, kind ("iterative"|"recursive"|"hybrid"|"unknown"), method y errors (opcional)
+        
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     source = payload.get("source")
     ast = payload.get("ast")

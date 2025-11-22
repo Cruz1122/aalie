@@ -3,6 +3,8 @@ Módulo para clasificación de algoritmos basado en AST.
 
 Este módulo es la fuente única de verdad para detectar si un algoritmo
 es iterative, recursive, hybrid o unknown.
+
+Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 from typing import Any, Dict, List, Optional
 
@@ -18,6 +20,8 @@ def detect_algorithm_kind(ast: Dict[str, Any]) -> str:
         
     Returns:
         "iterative", "recursive", "hybrid", o "unknown"
+        
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     # Buscar construcciones iterativas
     has_iterative = _has_iterative_constructs(ast)
@@ -51,6 +55,8 @@ def _has_iterative_constructs(ast: Dict[str, Any]) -> bool:
         
     Returns:
         True si encuentra construcciones iterativas
+        
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     return _find_node_type(ast, ["For", "While", "Repeat"])
 
@@ -65,6 +71,8 @@ def _find_node_type(node: Any, target_types: List[str]) -> bool:
         
     Returns:
         True si encuentra al menos uno de los tipos buscados
+        
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     if not isinstance(node, dict):
         return False
@@ -98,6 +106,10 @@ def _find_procedure_definition(ast: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         ast: AST del programa
         
     Returns:
+        Definición del procedimiento o None si no se encuentra
+        
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
+    """
         Nodo ProcDef del procedimiento principal o None si no se encuentra
     """
     body = ast.get("body", [])
@@ -121,6 +133,8 @@ def _has_recursive_calls(proc_def: Dict[str, Any], proc_name: str) -> bool:
         
     Returns:
         True si encuentra al menos una llamada recursiva
+        
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     # Obtener el cuerpo del procedimiento
     proc_body = (

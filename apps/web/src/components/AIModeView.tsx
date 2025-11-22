@@ -1,5 +1,8 @@
 import ChatBot from "./ChatBot";
 
+/**
+ * Interfaz para mensajes del chat.
+ */
 interface Message {
   id: string;
   content: string;
@@ -9,6 +12,9 @@ interface Message {
   retryMessageId?: string;
 }
 
+/**
+ * Propiedades del componente AIModeView.
+ */
 interface AIModeViewProps {
   readonly chatOpen: boolean;
   readonly isAnimating: boolean;
@@ -23,6 +29,32 @@ interface AIModeViewProps {
   readonly onAnalyzeCode?: (code: string) => void;
 }
 
+/**
+ * Componente principal para el modo de asistente con IA.
+ * Muestra la interfaz del chatbot cuando está abierto, o una pantalla de bienvenida
+ * con input y sugerencias cuando el chat está cerrado.
+ * 
+ * @param props - Propiedades del componente
+ * @returns Componente React con la vista del modo IA
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * <AIModeView
+ *   chatOpen={isChatOpen}
+ *   isAnimating={isAnimating}
+ *   inputMessage={inputMessage}
+ *   messages={messages}
+ *   setMessages={setMessages}
+ *   onInputChange={handleInputChange}
+ *   onKeyPress={handleKeyPress}
+ *   onSendMessage={handleSendMessage}
+ *   onSuggestionClick={handleSuggestionClick}
+ *   onClose={handleCloseChat}
+ *   onAnalyzeCode={handleAnalyzeCode}
+ * />
+ * ```
+ */
 export default function AIModeView({
   chatOpen,
   isAnimating,
@@ -121,6 +153,9 @@ export default function AIModeView({
   );
 }
 
+/**
+ * Propiedades del botón de sugerencia.
+ */
 interface SuggestionButtonProps {
   readonly icon: string;
   readonly iconColor: string;
@@ -129,6 +164,12 @@ interface SuggestionButtonProps {
   readonly disabled: boolean;
 }
 
+/**
+ * Componente de botón de sugerencia para el modo IA.
+ * @param props - Propiedades del botón de sugerencia
+ * @returns Elemento React del botón de sugerencia
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 function SuggestionButton({ icon, iconColor, text, onClick, disabled }: SuggestionButtonProps) {
   return (
     <button 

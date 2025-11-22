@@ -1,10 +1,15 @@
 /**
- * Generador del árbol de recursión para visualización con react-flow
+ * Generador del árbol de recursión para visualización con react-flow.
  * Soporta dos tipos:
  * 1. Divide-and-conquer (uniforme, niveles regulares)
  * 2. Linear shift (irregular, crecimiento exponencial, ej: Fibonacci)
+ * 
+ * Author: Juan Camilo Cruz Parra (@Cruz1122)
  */
 
+/**
+ * Datos de recurrencia para algoritmos divide-and-conquer.
+ */
 export interface RecurrenceData {
   a: number; // número de subproblemas
   b: number; // factor de reducción
@@ -12,6 +17,9 @@ export interface RecurrenceData {
   n0: number; // caso base
 }
 
+/**
+ * Datos de recurrencia para algoritmos con desplazamiento lineal.
+ */
 export interface LinearRecurrenceData {
   shifts: number[]; // desplazamientos [1, 2] para Fibonacci
   coefficients: number[]; // coeficientes [1, 1] para Fibonacci
@@ -60,7 +68,11 @@ export interface TreeLayout {
 }
 
 /**
- * Calcula la profundidad máxima hasta el caso base
+ * Calcula la profundidad máxima hasta el caso base.
+ * @param recurrence - Datos de la recurrencia divide-and-conquer
+ * @param initialN - Valor inicial de n (por defecto 30)
+ * @returns Profundidad máxima hasta llegar al caso base
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 function calculateBaseCaseDepth(recurrence: RecurrenceData, initialN: number = 30): number {
   let depth = 0;
@@ -75,7 +87,12 @@ function calculateBaseCaseDepth(recurrence: RecurrenceData, initialN: number = 3
 }
 
 /**
- * Genera todos los nodos del árbol de recursión
+ * Genera todos los nodos del árbol de recursión.
+ * @param recurrence - Datos de la recurrencia divide-and-conquer
+ * @param maxDepth - Profundidad máxima del árbol (null para calcular automáticamente)
+ * @param initialN - Valor inicial de n (por defecto 30)
+ * @returns Array de nodos del árbol
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 function generateTreeNodes(
   recurrence: RecurrenceData,
@@ -125,7 +142,11 @@ function generateTreeNodes(
 }
 
 /**
- * Genera las aristas (edges) del árbol con información del costo
+ * Genera las aristas (edges) del árbol con información del costo.
+ * @param nodes - Array de nodos del árbol
+ * @param recurrence - Datos de la recurrencia divide-and-conquer
+ * @returns Array de aristas del árbol
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 function generateTreeEdges(nodes: TreeNode[], recurrence: RecurrenceData): TreeEdge[] {
   const edges: TreeEdge[] = [];
@@ -645,6 +666,27 @@ function calculateLinearTreePositions(
 /**
  * Genera el árbol de recursión para recurrencias lineales (irregulares)
  * Ejemplo: Fibonacci T(n) = T(n-1) + T(n-2)
+ */
+/**
+ * Genera el layout completo del árbol de recursión para algoritmos con recurrencia lineal.
+ * Útil para visualizar recurrencias como Fibonacci (T(n) = T(n-1) + T(n-2)).
+ * 
+ * @param recurrence - Datos de la recurrencia lineal
+ * @param maxDepth - Profundidad máxima del árbol (null para calcular automáticamente)
+ * @param orientation - Orientación del árbol ('vertical' o 'horizontal')
+ * @param initialN - Valor inicial de n (por defecto 3)
+ * @returns Layout completo del árbol con nodos, aristas y metadatos
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```ts
+ * const layout = generateLinearRecursionTree(
+ *   { shifts: [1, 2], coefficients: [1, 1], n0: 1 },
+ *   null,
+ *   'vertical',
+ *   5
+ * );
+ * ```
  */
 export function generateLinearRecursionTree(
   recurrence: LinearRecurrenceData,

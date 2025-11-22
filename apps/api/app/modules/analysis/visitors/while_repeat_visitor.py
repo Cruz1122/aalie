@@ -13,6 +13,8 @@ class WhileRepeatVisitor:
     - WHILE: condición se evalúa (t_{while_L} + 1) veces, cuerpo se multiplica por t_{while_L}
     - REPEAT: cuerpo se multiplica por (1 + t_{repeat_L}), condición se evalúa (1 + t_{repeat_L}) veces
     - Análisis de cierre de WHILE: identifica variable de control, regla de cambio y calcula iteraciones
+    
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
     def iter_sym(self, kind: str, line: int) -> str:
@@ -25,6 +27,8 @@ class WhileRepeatVisitor:
             
         Returns:
             String con el símbolo de iteración (ej: "t_{while_5}", "t_{repeat_10}")
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         return rf"t_{{{kind}_{line}}}"
     
@@ -37,6 +41,8 @@ class WhileRepeatVisitor:
             
         Returns:
             String representando la expresión
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if expr is None:
             return ""
@@ -81,6 +87,8 @@ class WhileRepeatVisitor:
             
         Returns:
             Expresión SymPy
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if not expr_str or expr_str.strip() == "":
             return Integer(1)
@@ -113,6 +121,8 @@ class WhileRepeatVisitor:
             
         Returns:
             Diccionario con variable, límite y operador, o None si no se puede analizar
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if not isinstance(test, dict):
             return None
@@ -775,8 +785,10 @@ class WhileRepeatVisitor:
         
         Args:
             node: Nodo WHILE del AST
-            mode: Modo de análisis
+            mode: Modo de análisis ("worst", "best", "avg")
             parent_context: Contexto del bloque padre que contiene el while (opcional)
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         L = node.get("pos", {}).get("line", 0)
         t = self.iter_sym("while", L)
@@ -981,7 +993,9 @@ class WhileRepeatVisitor:
         
         Args:
             node: Nodo REPEAT del AST
-            mode: Modo de análisis
+            mode: Modo de análisis ("worst", "best", "avg")
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         L = node.get("pos", {}).get("line", 0)
         t = self.iter_sym("repeat", L)

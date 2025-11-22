@@ -12,6 +12,8 @@ class ExprConverter:
     - Operaciones binarias (+, -, *, /)
     - Operaciones unarias (-, +)
     - Expresiones indexadas (arrays)
+    
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
     def __init__(self, variable: str = "n"):
@@ -20,6 +22,8 @@ class ExprConverter:
         
         Args:
             variable: Variable principal del algoritmo (por defecto "n")
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self.variable = variable
         # Crear símbolos comunes con tipos apropiados
@@ -40,6 +44,8 @@ class ExprConverter:
             
         Returns:
             Expresión SymPy
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if expr is None:
             return Integer(0)

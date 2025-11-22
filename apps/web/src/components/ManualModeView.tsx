@@ -33,6 +33,9 @@ type Message = {
 
 type AlgorithmKind = "iterative" | "recursive" | "hybrid" | "unknown";
 
+/**
+ * Propiedades del componente ManualModeView.
+ */
 interface ManualModeViewProps {
   readonly messages: Message[];
   readonly setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
@@ -40,10 +43,19 @@ interface ManualModeViewProps {
   readonly onSwitchToAIMode: () => void;
 }
 
+/**
+ * Referencia imperativa para el componente ManualModeView.
+ */
 export interface ManualModeViewHandle {
   analyzeCode: (source: string) => Promise<void>;
 }
 
+/**
+ * Formatea la etiqueta del tipo de algoritmo en español.
+ * @param value - Tipo de algoritmo
+ * @returns Etiqueta en español del tipo de algoritmo
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const formatAlgorithmKindLabel = (value: AlgorithmKind): string => {
   switch (value) {
     case "iterative":
@@ -57,6 +69,12 @@ const formatAlgorithmKindLabel = (value: AlgorithmKind): string => {
   }
 };
 
+/**
+ * Formatea el mensaje para tipos de algoritmo no soportados.
+ * @param value - Tipo de algoritmo
+ * @returns Mensaje formateado indicando el tipo no soportado
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const formatUnsupportedKindMessage = (value: AlgorithmKind): string => {
   return value === "recursive" ? "recursivo" : "híbrido";
 };
@@ -79,6 +97,32 @@ const DEFAULT_CODE = `busquedaBinaria(A[n], x, inicio, fin) BEGIN
   END
 END`;
 
+/**
+ * Componente principal para el modo manual de análisis.
+ * Permite editar código, verificar sintaxis, analizar complejidad y visualizar el AST.
+ * Incluye integración con el asistente IA para ayuda con errores de sintaxis.
+ * 
+ * @param props - Propiedades del componente
+ * @param ref - Referencia imperativa para controlar el componente desde el exterior
+ * @returns Componente React con la vista del modo manual
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * const manualModeRef = useRef<ManualModeViewHandle>(null);
+ * 
+ * <ManualModeView
+ *   ref={manualModeRef}
+ *   messages={messages}
+ *   setMessages={setMessages}
+ *   onOpenChat={handleOpenChat}
+ *   onSwitchToAIMode={handleSwitchToAIMode}
+ * />
+ * 
+ * // Analizar código desde fuera del componente
+ * manualModeRef.current?.analyzeCode(sourceCode);
+ * ```
+ */
 const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(function ManualModeView({ messages, setMessages, onOpenChat, onSwitchToAIMode }, ref) {
   const router = useRouter();
   const { animateProgress } = useAnalysisProgress();

@@ -1,9 +1,33 @@
 "use client";
 
+/**
+ * Componente de loader de página con animación pulse.
+ * Se muestra durante la navegación entre páginas.
+ * 
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
+
+/**
+ * Propiedades del componente PageLoader.
+ */
 interface PageLoaderProps {
+  /** Indica si el loader debe mostrarse */
   readonly isLoading: boolean;
 }
 
+/**
+ * Componente de loader de página.
+ * Muestra una animación pulse centrada en pantalla cuando isLoading es true.
+ * 
+ * @param props - Propiedades del componente
+ * @returns Loader de página o null si isLoading es false
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * <PageLoader isLoading={isNavigating} />
+ * ```
+ */
 export default function PageLoader({ isLoading }: PageLoaderProps) {
   if (!isLoading) return null;
 

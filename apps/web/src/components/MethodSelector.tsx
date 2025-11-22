@@ -1,7 +1,16 @@
 "use client";
 
+/**
+ * Componente selector de métodos de análisis para algoritmos recursivos.
+ * Permite al usuario elegir entre diferentes métodos aplicables para resolver recurrencias.
+ * 
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 import React from "react";
 
+/**
+ * Tipos de métodos de análisis disponibles.
+ */
 export type MethodType = "characteristic_equation" | "iteration" | "recursion_tree" | "master";
 
 interface MethodInfo {
@@ -53,13 +62,38 @@ const methods: Record<MethodType, MethodInfo> = {
   }
 };
 
+/**
+ * Propiedades del componente MethodSelector.
+ */
 interface MethodSelectorProps {
+  /** Lista de métodos aplicables para el algoritmo */
   applicableMethods: MethodType[];
+  /** Método seleccionado por defecto */
   defaultMethod: MethodType;
+  /** Callback cuando se confirma la selección */
   onSelect: (method: MethodType) => void;
+  /** Callback opcional para cancelar la selección */
   onCancel?: () => void;
 }
 
+/**
+ * Componente selector de métodos de análisis.
+ * Muestra una lista de métodos aplicables y permite al usuario seleccionar uno.
+ * 
+ * @param props - Propiedades del componente
+ * @returns Modal con selector de métodos
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * <MethodSelector
+ *   applicableMethods={["master", "iteration", "recursion_tree"]}
+ *   defaultMethod="master"
+ *   onSelect={(method) => handleMethodSelect(method)}
+ *   onCancel={() => setShowSelector(false)}
+ * />
+ * ```
+ */
 export default function MethodSelector({
   applicableMethods,
   defaultMethod,

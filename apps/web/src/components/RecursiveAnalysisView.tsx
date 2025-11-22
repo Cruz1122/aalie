@@ -21,6 +21,12 @@ type ProofType = AnalyzeOpenResponse["totals"]["proof"];
 
 type CaseType = "worst" | "best" | "average";
 
+/**
+ * Obtiene la etiqueta en español para un tipo de caso.
+ * @param caseType - Tipo de caso (worst, best, average)
+ * @returns Etiqueta en español del caso
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const getCaseLabel = (caseType: CaseType): string => {
   switch (caseType) {
     case "worst":
@@ -32,6 +38,12 @@ const getCaseLabel = (caseType: CaseType): string => {
   }
 };
 
+/**
+ * Obtiene las clases CSS para el badge de un tipo de caso.
+ * @param caseType - Tipo de caso (worst, best, average)
+ * @returns String con las clases CSS para el badge
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const getCaseBadgeStyle = (caseType: CaseType): string => {
   switch (caseType) {
     case "worst":
@@ -43,6 +55,13 @@ const getCaseBadgeStyle = (caseType: CaseType): string => {
   }
 };
 
+/**
+ * Obtiene las clases CSS para el botón selector de caso.
+ * @param caseType - Tipo de caso (worst, best, average)
+ * @param isSelected - Indica si el caso está seleccionado
+ * @returns String con las clases CSS para el botón
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const getSelectorButtonStyle = (caseType: CaseType, isSelected: boolean): string => {
   const baseStyle = "transition-colors duration-150";
   if (isSelected) {
@@ -58,6 +77,14 @@ const getSelectorButtonStyle = (caseType: CaseType, isSelected: boolean): string
   return `${baseStyle} text-slate-400 hover:text-slate-200`;
 };
 
+/**
+ * Obtiene el color del icono según el método de análisis utilizado.
+ * @param isCharacteristicMethod - Indica si es método de ecuación característica
+ * @param isIterationMethod - Indica si es método de iteración
+ * @param isRecursionTreeMethod - Indica si es método de árbol de recursión
+ * @returns String con la clase CSS del color del icono
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const getMethodIconColor = (
   isCharacteristicMethod: boolean,
   isIterationMethod: boolean,
@@ -69,6 +96,14 @@ const getMethodIconColor = (
   return 'text-orange-400';
 };
 
+/**
+ * Obtiene el nombre del icono según el método de análisis utilizado.
+ * @param isCharacteristicMethod - Indica si es método de ecuación característica
+ * @param isIterationMethod - Indica si es método de iteración
+ * @param isRecursionTreeMethod - Indica si es método de árbol de recursión
+ * @returns String con el nombre del icono Material Symbols
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const getMethodIconName = (
   isCharacteristicMethod: boolean,
   isIterationMethod: boolean,
@@ -80,6 +115,14 @@ const getMethodIconName = (
   return 'science';
 };
 
+/**
+ * Obtiene las clases CSS para el badge del método de análisis.
+ * @param isCharacteristicMethod - Indica si es método de ecuación característica
+ * @param isIterationMethod - Indica si es método de iteración
+ * @param isRecursionTreeMethod - Indica si es método de árbol de recursión
+ * @returns String con las clases CSS para el badge
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const getMethodBadgeStyle = (
   isCharacteristicMethod: boolean,
   isIterationMethod: boolean,
@@ -91,6 +134,14 @@ const getMethodBadgeStyle = (
   return 'bg-orange-500/20 text-orange-300 border-orange-500/30';
 };
 
+/**
+ * Obtiene el texto del badge según el método de análisis utilizado.
+ * @param isCharacteristicMethod - Indica si es método de ecuación característica
+ * @param isIterationMethod - Indica si es método de iteración
+ * @param isRecursionTreeMethod - Indica si es método de árbol de recursión
+ * @returns String con el texto del badge en español
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const getMethodBadgeText = (
   isCharacteristicMethod: boolean,
   isIterationMethod: boolean,
@@ -102,6 +153,15 @@ const getMethodBadgeText = (
   return 'Teorema Maestro';
 };
 
+/**
+ * Obtiene los datos de análisis para el caso seleccionado.
+ * @param selectedCase - Tipo de caso seleccionado
+ * @param worstData - Datos del peor caso
+ * @param bestData - Datos del mejor caso
+ * @param avgData - Datos del caso promedio
+ * @returns Datos de análisis correspondientes al caso seleccionado, o fallback si no están disponibles
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const getDataForSelectedCase = (
   selectedCase: CaseType,
   worstData: AnalyzeOpenResponse | null | undefined,
@@ -113,6 +173,12 @@ const getDataForSelectedCase = (
   return avgData || worstData || bestData;
 };
 
+/**
+ * Extrae los parámetros de una recurrencia divide-and-conquer con método.
+ * @param recurrence - Recurrencia divide-and-conquer con método opcional
+ * @returns Objeto con los parámetros de la recurrencia y el método (iteration o master)
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const extractDivideConquerRecurrence = (
   recurrence: { type: "divide_conquer"; form: string; a: number; b: number; f: string; n0: number; applicable: boolean; notes: string[]; method?: "master" | "iteration" | "recursion_tree" }
 ): { form: string; a: number; b: number; f: string; n0: number; applicable: boolean; notes: string[]; method: "iteration" | "master" } => {
@@ -129,6 +195,12 @@ const extractDivideConquerRecurrence = (
   };
 };
 
+/**
+ * Extrae los parámetros de una recurrencia divide-and-conquer sin el método.
+ * @param recurrence - Recurrencia divide-and-conquer sin método
+ * @returns Objeto con los parámetros de la recurrencia (sin método)
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const extractDivideConquerRecurrenceWithoutMethod = (
   recurrence: { type: "divide_conquer"; form: string; a: number; b: number; f: string; n0: number; applicable: boolean; notes: string[] }
 ) => {
@@ -143,6 +215,18 @@ const extractDivideConquerRecurrenceWithoutMethod = (
   };
 };
 
+/**
+ * Renderiza la ecuación de eficiencia según el método y si hay diferentes complejidades.
+ * @param isMasterMethod - Indica si es método del teorema maestro
+ * @param hasDifferentComplexities - Indica si hay diferentes complejidades entre casos
+ * @param currentTheta - Theta del caso actual (para teorema maestro)
+ * @param bestT - Ecuación del mejor caso
+ * @param avgT - Ecuación del caso promedio
+ * @param worstT - Ecuación del peor caso
+ * @param theta - Theta general (fallback)
+ * @returns Elemento React con la(s) ecuación(es) de eficiencia renderizada(s)
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const renderEfficiencyEquation = (
   isMasterMethod: boolean,
   hasDifferentComplexities: boolean,
@@ -205,6 +289,12 @@ interface ProcedureModalProps {
   readonly currentTheta: string | null | undefined;
 }
 
+/**
+ * Renderiza el modal de ecuación característica.
+ * @param props - Propiedades del modal de procedimiento
+ * @returns Elemento React del modal de ecuación característica
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const renderCharacteristicModal = (props: ProcedureModalProps): React.JSX.Element => {
   return (
     <CharacteristicEquationModal
@@ -218,6 +308,12 @@ const renderCharacteristicModal = (props: ProcedureModalProps): React.JSX.Elemen
   );
 };
 
+/**
+ * Renderiza el modal de método de iteración.
+ * @param props - Propiedades del modal de procedimiento
+ * @returns Elemento React del modal de método de iteración
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const renderIterationModal = (props: ProcedureModalProps): React.JSX.Element => {
   const divideConquerRecurrence = props.recurrence?.type === "divide_conquer" 
     ? extractDivideConquerRecurrence(props.recurrence as { type: "divide_conquer"; form: string; a: number; b: number; f: string; n0: number; applicable: boolean; notes: string[]; method?: "master" | "iteration" | "recursion_tree" })
@@ -236,6 +332,12 @@ const renderIterationModal = (props: ProcedureModalProps): React.JSX.Element => 
   );
 };
 
+/**
+ * Renderiza el modal de árbol de recursión.
+ * @param props - Propiedades del modal de procedimiento
+ * @returns Elemento React del modal de árbol de recursión
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const renderRecursionTreeModal = (props: ProcedureModalProps): React.JSX.Element => {
   const divideConquerRecurrence = props.recurrence?.type === "divide_conquer"
     ? extractDivideConquerRecurrenceWithoutMethod(props.recurrence as { type: "divide_conquer"; form: string; a: number; b: number; f: string; n0: number; applicable: boolean; notes: string[] })
@@ -254,6 +356,12 @@ const renderRecursionTreeModal = (props: ProcedureModalProps): React.JSX.Element
   );
 };
 
+/**
+ * Renderiza el modal del teorema maestro.
+ * @param props - Propiedades del modal de procedimiento
+ * @returns Elemento React del modal del teorema maestro
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const renderMasterModal = (props: ProcedureModalProps): React.JSX.Element => {
   const divideConquerRecurrence = props.recurrence?.type === "divide_conquer"
     ? extractDivideConquerRecurrenceWithoutMethod(props.recurrence as { type: "divide_conquer"; form: string; a: number; b: number; f: string; n0: number; applicable: boolean; notes: string[] })
@@ -272,6 +380,12 @@ const renderMasterModal = (props: ProcedureModalProps): React.JSX.Element => {
   );
 };
 
+/**
+ * Renderiza el modal de procedimiento según el método de análisis utilizado.
+ * @param props - Propiedades del modal de procedimiento
+ * @returns Elemento React del modal correspondiente o null
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const renderProcedureModal = (props: ProcedureModalProps): React.JSX.Element | null => {
   if (props.isCharacteristicMethod) {
     return renderCharacteristicModal(props);
@@ -288,6 +402,12 @@ const renderProcedureModal = (props: ProcedureModalProps): React.JSX.Element | n
   return renderMasterModal(props);
 };
 
+/**
+ * Renderiza los badges informativos de la ecuación característica (homogénea/no homogénea, DP).
+ * @param characteristicEquation - Datos de la ecuación característica
+ * @returns Elemento React con los badges o null si no hay ecuación característica
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const renderCharacteristicBadges = (characteristicEquation: CharacteristicEquationType): React.JSX.Element | null => {
   if (!characteristicEquation) return null;
   
@@ -319,6 +439,12 @@ const renderCharacteristicBadges = (characteristicEquation: CharacteristicEquati
   );
 };
 
+/**
+ * Renderiza los parámetros de la recurrencia según su tipo (divide_conquer o linear_shift).
+ * @param recurrence - Datos de la recurrencia
+ * @returns Elemento React con los parámetros renderizados como fórmulas LaTeX
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const renderRecurrenceParameters = (recurrence: NonNullable<RecurrenceType>): React.JSX.Element => {
   if (recurrence.type === "divide_conquer") {
     return (
@@ -362,6 +488,12 @@ interface ActionButtonsProps {
   readonly characteristicEquation: CharacteristicEquationType;
 }
 
+/**
+ * Renderiza los botones de acción (Ver Detalles, Ver Paso a Paso, Ver Versión DP).
+ * @param props - Propiedades de los botones de acción
+ * @returns Elemento React con los botones de acción
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
   const showGrid = (props.isRecursionTreeMethod && props.proof && props.proof.length > 0) || props.isCharacteristicMethod;
   
@@ -404,6 +536,14 @@ const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
   );
 };
 
+/**
+ * Determina si se debe mostrar el botón de árbol de recurrencia.
+ * @param isRecursionTreeMethod - Indica si es método de árbol de recursión
+ * @param isCharacteristicMethod - Indica si es método de ecuación característica
+ * @param recurrence - Datos de la recurrencia
+ * @returns true si se debe mostrar el botón, false en caso contrario
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const shouldShowTreeButton = (
   isRecursionTreeMethod: boolean,
   isCharacteristicMethod: boolean,
@@ -424,6 +564,12 @@ interface EmptyStateProps {
   readonly avgData: AnalyzeOpenResponse | null | undefined;
 }
 
+/**
+ * Renderiza el estado vacío cuando no hay datos de análisis disponibles.
+ * @param props - Propiedades del estado vacío
+ * @returns Elemento React del estado vacío
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const renderEmptyState = (props: EmptyStateProps): React.JSX.Element => {
   return (
     <div className="flex-1 flex items-center justify-center text-slate-400">
@@ -454,7 +600,19 @@ interface RecursionTreeCardsProps {
   readonly theta: string | null | undefined;
 }
 
+/**
+ * Renderiza las tarjetas de información del método de árbol de recursión (nivel dominante y ecuación de eficiencia).
+ * @param props - Propiedades de las tarjetas de árbol de recursión
+ * @returns Elemento React con las tarjetas renderizadas
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const renderRecursionTreeCards = (props: RecursionTreeCardsProps): React.JSX.Element => {
+  /**
+   * Obtiene el texto descriptivo del nivel dominante en el árbol de recursión.
+   * @param level - Nivel dominante (leaves, root, all, o undefined)
+   * @returns Texto en español que describe el nivel dominante
+   * @author Juan Camilo Cruz Parra (@Cruz1122)
+   */
   const getDominatingLevelText = (level: string | number | undefined): string => {
     if (level === "leaves") return "Dominan las hojas";
     if (level === "root") return "Domina la raíz";
@@ -530,6 +688,12 @@ interface EfficiencyCardProps {
   readonly theta: string | null | undefined;
 }
 
+/**
+ * Renderiza la tarjeta de ecuación de eficiencia con selector de casos (para teorema maestro).
+ * @param props - Propiedades de la tarjeta de eficiencia
+ * @returns Elemento React con la tarjeta de eficiencia renderizada
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const renderEfficiencyCard = (props: EfficiencyCardProps): React.JSX.Element => {
   return (
     <div className="glass-card p-7 rounded-lg shadow-[0_8px_32px_0_rgba(59,130,246,0.3)] hover:shadow-[0_12px_40px_0_rgba(59,130,246,0.4)] border border-blue-500/20 flex-shrink-0">
@@ -582,8 +746,9 @@ const renderEfficiencyCard = (props: EfficiencyCardProps): React.JSX.Element => 
 
 /**
  * Redondea los valores numéricos en una expresión LaTeX a 3 decimales.
- * @param latex La expresión LaTeX que puede contener números
+ * @param latex - La expresión LaTeX que puede contener números
  * @returns La expresión LaTeX con números redondeados a 3 decimales
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 function roundLatexNumbers(latex: string): string {
   if (!latex || latex === "N/A") return latex;
@@ -616,6 +781,26 @@ interface RecursiveAnalysisViewProps {
   } | null;
 }
 
+/**
+ * Componente principal para visualizar el análisis de algoritmos recursivos.
+ * Muestra información sobre el método de análisis utilizado, parámetros de la recurrencia,
+ * ecuación de eficiencia y permite acceder a modales con detalles del procedimiento.
+ * 
+ * @param data - Datos de análisis para worst, best y average case
+ * @returns Componente React con la visualización del análisis recursivo
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * <RecursiveAnalysisView 
+ *   data={{
+ *     worst: worstCaseData,
+ *     best: bestCaseData,
+ *     avg: avgCaseData
+ *   }} 
+ * />
+ * ```
+ */
 export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewProps) {
   // Memoizar los datos para evitar recálculos innecesarios
   const analysisData = useMemo(() => {

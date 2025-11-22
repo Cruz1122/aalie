@@ -1,5 +1,7 @@
 """
 Router para el módulo de analysis.
+
+Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 from fastapi import APIRouter, Body
 from typing import Any, Dict
@@ -20,6 +22,14 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
     
     Si mode="all", devuelve todos los casos (worst, best y avg) en una sola respuesta.
     Si mode="avg", se requiere avgModel para el análisis de caso promedio.
+    
+    Args:
+        payload: Solicitud de análisis con código fuente, modo, y opciones
+        
+    Returns:
+        Resultado del análisis según el modo solicitado
+        
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     # Preparar avg_model
     avg_model = None
@@ -46,6 +56,14 @@ def detect_methods_endpoint(payload: AnalyzeRequest = Body(...)) -> Dict[str, An
     sin ejecutar el análisis completo.
     
     Retorna una lista de métodos aplicables: ["characteristic_equation", "iteration", "recursion_tree", "master"]
+    
+    Args:
+        payload: Solicitud con código fuente y tipo de algoritmo (opcional)
+        
+    Returns:
+        Diccionario con métodos aplicables, método por defecto e información de recurrencia
+        
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     return detect_methods(
         source=payload.source,
@@ -58,6 +76,11 @@ def analyze_dummy() -> Dict[str, Any]:
     """
     Endpoint de prueba para verificar la funcionalidad de BaseAnalyzer.
     Devuelve un análisis dummy con datos de ejemplo.
+    
+    Returns:
+        Resultado de análisis dummy para pruebas
+        
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     try:
         result = create_dummy_analysis()
@@ -80,6 +103,14 @@ def analyze_closed(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
     """
     Analiza un algoritmo y devuelve la forma cerrada (S4).
     Por ahora devuelve error ya que es funcionalidad futura.
+    
+    Args:
+        payload: Solicitud de análisis (no utilizado aún)
+        
+    Returns:
+        Error indicando que la funcionalidad no está implementada
+        
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     return {
         "ok": False,

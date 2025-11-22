@@ -1,3 +1,11 @@
+"""
+Punto de entrada principal de la aplicación FastAPI.
+
+Configura la aplicación FastAPI, middlewares (CORS en desarrollo),
+y registra los routers de los módulos principales.
+
+Author: Juan Felipe Henao (@Pipe-1z)
+"""
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -30,6 +38,14 @@ if get_dev_cors_enabled():
 # --- Rutas ---
 @app.get("/health")
 def health():
+    """
+    Endpoint de health check para verificar el estado del servidor.
+    
+    Returns:
+        JSONResponse con {"status": "ok"}
+        
+    Author: Juan Felipe Henao (@Pipe-1z)
+    """
     # Respeta tu forma actual (JSON con {"status":"ok"})
     return JSONResponse({"status": "ok"})
 

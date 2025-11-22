@@ -1,14 +1,27 @@
 "use client";
 
+/**
+ * Componente Header con navegación principal de la aplicación.
+ * Incluye navegación responsive con menú móvil.
+ * 
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import NavigationLink from "./NavigationLink";
 
+/**
+ * Interfaz para elementos de navegación.
+ */
 interface NavItem {
+  /** URL del enlace */
   href: string;
+  /** Etiqueta visible del enlace */
   label: string;
+  /** Nombre del ícono Material Symbols */
   icon: string;
+  /** Color del tema del enlace */
   color: string;
 }
 
@@ -53,6 +66,18 @@ const getColorClasses = (color: string, isActiveItem: boolean) => {
   }
 };
 
+/**
+ * Componente Header principal de la aplicación.
+ * Renderiza la navegación principal con soporte responsive.
+ * 
+ * @returns Elemento JSX del header
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * <Header />
+ * ```
+ */
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();

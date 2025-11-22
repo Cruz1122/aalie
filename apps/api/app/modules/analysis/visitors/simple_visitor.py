@@ -14,6 +14,8 @@ class SimpleVisitor:
     - Return (return expr)
     - Declaraciones (Decl/declVectorStmt)
     - Otras líneas simples
+    
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
     def _expr_to_str(self, expr: Any) -> str:
@@ -25,6 +27,8 @@ class SimpleVisitor:
             
         Returns:
             String representando la expresión
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if expr is None:
             return ""
@@ -73,7 +77,9 @@ class SimpleVisitor:
         
         Args:
             node: Nodo de asignación del AST
-            mode: Modo de análisis
+            _mode: Modo de análisis (no utilizado en asignaciones)
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         line = node.get("pos", {}).get("line", 0)
         ck_terms = []
@@ -96,7 +102,9 @@ class SimpleVisitor:
         
         Args:
             node: Nodo de llamada del AST
-            mode: Modo de análisis
+            _mode: Modo de análisis (no utilizado en llamadas)
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         line = node.get("pos", {}).get("line", 0)
         ck_terms = [self.C()]  # costo de la llamada
@@ -113,7 +121,9 @@ class SimpleVisitor:
         
         Args:
             node: Nodo de return del AST
-            mode: Modo de análisis
+            mode: Modo de análisis ("worst", "best", "avg")
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         line = node.get("pos", {}).get("line", 0)
         ck_terms = self._cost_of_expr(node.get("value"))

@@ -1,3 +1,12 @@
+/**
+ * Componente para renderizar contenido Markdown con soporte para:
+ * - Sintaxis resaltada (rehype-highlight)
+ * - Fórmulas matemáticas LaTeX (rehype-katex, remark-math)
+ * - Tablas GitHub Flavored Markdown (remark-gfm)
+ * - Botones para copiar y analizar código
+ * 
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
@@ -6,9 +15,15 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import '../styles/highlight.css';
 
+/**
+ * Propiedades del componente MarkdownRenderer.
+ */
 interface MarkdownRendererProps {
+  /** Contenido Markdown a renderizar */
   readonly content: string;
+  /** Clases CSS adicionales para el contenedor */
   readonly className?: string;
+  /** Callback opcional para analizar código cuando se detecta pseudocódigo */
   readonly onAnalyzeCode?: (code: string) => void;
 }
 
@@ -21,7 +36,12 @@ interface AnalyzeButtonProps {
   readonly onAnalyze?: (code: string) => void;
 }
 
-// Componente de botón de copia
+/**
+ * Componente de botón para copiar código al portapapeles.
+ * 
+ * @param code - Código a copiar
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const CopyButton = ({ code }: CopyButtonProps) => {
   const [copied, setCopied] = useState(false);
 
@@ -54,7 +74,14 @@ const CopyButton = ({ code }: CopyButtonProps) => {
   );
 };
 
-// Componente de botón de análisis
+/**
+ * Componente de botón para analizar código detectado como pseudocódigo.
+ * Solo se muestra si el código contiene palabras clave de pseudocódigo.
+ * 
+ * @param code - Código a analizar
+ * @param onAnalyze - Callback para ejecutar el análisis
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const AnalyzeButton = ({ code, onAnalyze }: AnalyzeButtonProps) => {
   if (!onAnalyze) return null;
 
@@ -268,6 +295,21 @@ const createPreWithAnalyze = (onAnalyzeCode?: (code: string) => void) => {
   return PreWithAnalyzeComponent;
 };
 
+/**
+ * Componente principal para renderizar Markdown con características avanzadas.
+ * 
+ * @param props - Propiedades del componente
+ * @returns Elemento JSX con el contenido Markdown renderizado
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * <MarkdownRenderer
+ *   content="# Título\n```python\nprint('Hello')\n```"
+ *   onAnalyzeCode={(code) => handleAnalyze(code)}
+ * />
+ * ```
+ */
 export default function MarkdownRenderer({ content, className, onAnalyzeCode }: MarkdownRendererProps) {
   const PreWithAnalyze = createPreWithAnalyze(onAnalyzeCode);
 

@@ -11,6 +11,8 @@ class AvgModel:
     - symbolic: probabilidades simbólicas (p, q, p(i), etc.)
     
     Permite definir predicados específicos con probabilidades explícitas.
+    
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
     def __init__(self, mode: str = "uniform", predicates: Optional[Dict[str, str]] = None):
@@ -21,6 +23,8 @@ class AvgModel:
             mode: "uniform" | "symbolic"
             predicates: Diccionario opcional de predicados a probabilidades
                        ej: {"A[j] > A[j+1]": "1/2", "A[i] < pivot": "p"}
+                       
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if mode not in ("uniform", "symbolic"):
             raise ValueError(f"mode debe ser 'uniform' o 'symbolic', recibido: {mode}")
@@ -39,6 +43,8 @@ class AvgModel:
         
         Returns:
             String con la probabilidad (ej: "1/2", "p", "p(i)")
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Buscar predicado exacto en el diccionario
         if predicate in self.predicates:
@@ -72,6 +78,8 @@ class AvgModel:
         
         Returns:
             "1/2" para uniform, "p" para symbolic
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if self.mode == "uniform":
             return "1/2"
@@ -88,6 +96,8 @@ class AvgModel:
         
         Returns:
             Expresión SymPy (Rational, Symbol, o función)
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         prob_str = self.get_probability(predicate, context)
         
@@ -135,6 +145,8 @@ class AvgModel:
         
         Returns:
             Diccionario con mode y note (badge del modelo)
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if self.mode == "uniform":
             if self.predicates:

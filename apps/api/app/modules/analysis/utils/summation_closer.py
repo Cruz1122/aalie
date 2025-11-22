@@ -13,9 +13,16 @@ class SummationCloser:
     - Sumatorias anidadas rectangulares: \\sum_{i=1}^{n} \\sum_{j=1}^{m} 1 → n \\cdot m
     - Sumatorias triangulares: \\sum_{i=1}^{n} \\sum_{j=1}^{i} 1 → \\frac{n(n+1)}{2}
     - Sumatorias con límites dependientes: \\sum_{i=1}^{n-1} \\sum_{j=i+1}^{n} 1 → \\frac{n(n-1)}{2}
+    
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
     def __init__(self):
+        """
+        Inicializa una instancia de SummationCloser.
+        
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
         pass
     
     def _has_iterative_symbols(self, expr: Expr) -> bool:
@@ -27,6 +34,8 @@ class SummationCloser:
             
         Returns:
             True si contiene símbolos iterativos, False en caso contrario
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         from sympy import preorder_traversal
         
@@ -59,6 +68,8 @@ class SummationCloser:
             
         Returns:
             True si contiene sumatorias, False en caso contrario
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         from sympy import preorder_traversal
         
@@ -78,6 +89,8 @@ class SummationCloser:
             
         Returns:
             Tupla (expresión_cerrada_latex, lista_de_pasos_en_latex)
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Si recibimos un objeto SymPy directamente, trabajar con él
         if isinstance(expr, Expr):
