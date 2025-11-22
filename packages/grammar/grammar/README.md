@@ -876,7 +876,7 @@ Desde el directorio `apps/api`:
 pip install -r requirements.txt
 
 # Iniciar el servidor
-uvicorn app.main:app --reload --port 8000
+python -m uvicorn app.main:app --reload --port 8000
 ```
 
 O usando Docker:

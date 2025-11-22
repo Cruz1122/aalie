@@ -91,6 +91,31 @@ curl -X POST http://localhost:8000/analyze/open \
 - **SymPy**: Biblioteca para manipulación matemática simbólica
 - **Pydantic**: Validación de datos y modelos
 
+## Testing y Cobertura
+
+El proyecto mantiene una estrategia de testing completa con tres niveles:
+
+### Estructura de Tests
+
+- **Tests Unitarios** (`tests/unit/`): Prueban componentes individuales de forma aislada
+- **Tests de Integración** (`tests/integration/`): Verifican la interacción entre componentes
+- **Tests de Sistema** (`tests/system/`): Prueban endpoints HTTP completos
+
+### Cobertura de Código
+
+El proyecto mantiene un **umbral mínimo de 80% de cobertura** para módulos críticos. Los reportes de cobertura se generan automáticamente en CI.
+
+**Comandos:**
+```bash
+# Ejecutar tests con cobertura
+pytest tests/ --cov=app --cov-report=term --cov-report=html
+
+# Ver reporte HTML
+# Abre htmlcov/index.html en tu navegador
+```
+
+Para más información sobre testing, ver [apps/api/tests/README.md](../../apps/api/tests/README.md).
+
 ## Más Información
 
 Para detalles específicos, consulta los documentos individuales en esta carpeta.

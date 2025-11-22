@@ -183,7 +183,7 @@ pnpm dev
 
 # Terminal 2: Backend (puerto 8000)
 cd apps/api
-uvicorn app.main:app --reload --port 8000
+python -m uvicorn app.main:app --reload --port 8000
 ```
 
 Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
@@ -285,12 +285,30 @@ Incluyen solo `apps/web` y `packages/*` para evitar mezclar Python con Node.
 ```bash
 # Tests del backend (Python)
 cd apps/api
-pytest tests/ -v
+python -m pytest tests/ -v
+
+# Tests con cobertura de código
+cd apps/api
+pytest tests/ --cov=app --cov-report=term --cov-report=html
+
+# Ver reporte HTML de cobertura
+# Abre apps/api/htmlcov/index.html en tu navegador
 
 # Tests de la gramática
 cd packages/grammar
 npm run verify
 ```
+
+### Cobertura de Código
+
+El proyecto mantiene un umbral mínimo de **80% de cobertura de código** para módulos críticos. Los reportes de cobertura se generan automáticamente en CI y están disponibles como artefactos.
+
+**Comandos útiles:**
+- `pytest tests/ --cov=app --cov-report=term` - Ver cobertura en terminal
+- `pytest tests/ --cov=app --cov-report=html` - Generar reporte HTML
+- `pytest tests/ --cov=app --cov-report=term-missing` - Ver líneas no cubiertas
+
+Para más información sobre cobertura, ver [apps/api/tests/README.md](apps/api/tests/README.md#cobertura-de-código).
 
 ### Cobertura de Tests
 

@@ -122,16 +122,35 @@ jobs:
             echo "⚠️  Grammar package not found, tests may fail"
           fi
 
-      - name: Run tests
+      - name: Run tests with coverage
         working-directory: apps/api
         run: |
-          echo "🧪 Running tests..."
-          pytest tests/ -v --tb=short
+          echo "🧪 Running tests with coverage..."
+          pytest tests/ -v --tb=short --cov=app --cov-report=xml --cov-report=term --cov-report=html
+
+      - name: Check coverage threshold
+        working-directory: apps/api
+        run: |
+          echo "📊 Checking coverage threshold..."
+          coverage report --fail-under=80 || {
+            echo "⚠️  Coverage is below 80% threshold"
+            coverage report
+            exit 1
+          }
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: apps/api/htmlcov/
+          retention-days: 30
 
       - name: Test summary
         if: always()
         run: |
           echo "✅ Tests completed"
+          echo "📊 Coverage report available in artifacts"
 
   # Job de calidad: Linting y formato (puede fallar sin detener deploy)
   quality:
