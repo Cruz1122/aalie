@@ -1,35 +1,158 @@
-# Analizador de Complejidades — Monorepo
+# Analizador de Complejidad Algorítmica
 
-Stack principal: **Next.js + TypeScript (frontend)** y **FastAPI + Python 3.11+ (backend)**.
-Este repositorio usa **pnpm workspaces** para gestionar paquetes de Node del frontend y utilidades compartidas.
+![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue?logo=typescript)
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104-009688?logo=fastapi&logoColor=white)
+![ANTLR4](https://img.shields.io/badge/ANTLR4-4.13.2-FF6C37?logo=antlr)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.0-38B2AC?logo=tailwind-css)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)
+
+> Herramienta educativa moderna para analizar la complejidad algorítmica de pseudocódigo con visualizaciones interactivas y cálculos automáticos.
+
+## 📋 Tabla de Contenidos
+
+- [Descripción](#-descripción)
+- [Características](#-características)
+- [Estado del Proyecto](#-estado-del-proyecto)
+- [Tecnologías](#-tecnologías)
+- [Requisitos](#-requisitos)
+- [Instalación](#-instalación)
+- [Uso](#-uso)
+- [Estructura del Proyecto](#-estructura-del-proyecto)
+- [Documentación](#-documentación)
+- [Testing](#-testing)
+- [Contribuir](#-contribuir)
+- [Licencia](#-licencia)
+
+## 📖 Descripción
+
+Analizador de complejidad algorítmica que permite escribir algoritmos en pseudocódigo y obtener automáticamente el análisis de su complejidad. El sistema utiliza un lenguaje de pseudocódigo estructurado con validación en tiempo real, análisis automático de casos (best/worst/average), y visualizaciones interactivas de resultados.
+
+**Stack principal:** Next.js + TypeScript (frontend) y FastAPI + Python 3.11+ (backend).  
+Este repositorio usa **pnpm workspaces** para gestionar paquetes de Node del frontend y utilidades compartidas.  
 El backend (Python) NO forma parte de los workspaces de pnpm.
 
-## Requisitos
-- Node.js 20 LTS (≥20 <23)
-- pnpm 9.x
-- Python 3.11+
-- Java ≥8 (para generación de parser Python con ANTLR)
-- Git
+## ✨ Características
 
-## Estructura
+### 🎯 Análisis Completo
+- ✅ Análisis de complejidad temporal (Big-O) automático
+- ✅ Soporte para algoritmos iterativos y recursivos
+- ✅ Análisis de best/worst/average case
+- ✅ Modelos probabilísticos para caso promedio
+- ✅ Aplicación del Teorema Maestro para recursión
+- ✅ Visualización de árboles de recursión
+
+### 💻 Editor Avanzado
+- ✅ Editor Monaco (VS Code en el navegador)
+- ✅ Syntax highlighting para pseudocódigo
+- ✅ Validación en tiempo real con Web Workers
+- ✅ Autocompletado y numeración de líneas
+- ✅ Múltiples operadores de asignación soportados
+
+### 🤖 Asistente IA
+- ✅ Chatbot integrado con modelos de lenguaje
+- ✅ Clasificación automática de algoritmos
+- ✅ Análisis directo desde bloques de código
+- ✅ Corrección automática de errores
+
+### 📊 Visualizaciones
+- ✅ Tablas de costos por línea
+- ✅ Fórmulas matemáticas renderizadas con KaTeX
+- ✅ Visualización de AST
+- ✅ Procedimientos detallados paso a paso
+- ✅ Gráficos de complejidad
+
+## 🚀 Estado del Proyecto
+
+### ✅ Completado
+
+**Frontend:**
+- [x] Editor Monaco con validación en tiempo real
+- [x] Sistema de análisis con loader de progreso
+- [x] Visualización de resultados (iterativos y recursivos)
+- [x] Chatbot integrado con IA
+- [x] Modo manual y modo AI
+- [x] Guía de usuario completa
+- [x] Documentación técnica
+
+**Backend:**
+- [x] Parser ANTLR4 completo
+- [x] Análisis iterativo (best/worst/average)
+- [x] Análisis recursivo con Teorema Maestro
+- [x] Detección automática de tipo de algoritmo
+- [x] Modelos probabilísticos para caso promedio
+- [x] Tests exhaustivos
+
+**Documentación:**
+- [x] Documentación de API (`docs/api/`)
+- [x] Documentación de aplicación web (`docs/app/`)
+- [x] Guía de usuario rediseñada
+- [x] README completo
+
+### 🔄 En Desarrollo
+
+- [ ] Visualización interactiva de árboles de recursión
+- [ ] Análisis de complejidad espacial
+- [ ] Exportación de resultados (PDF, LaTeX)
+- [ ] Más ejemplos de algoritmos
+
+## 🛠 Tecnologías
+
+### Frontend
+![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue?logo=typescript)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.0-38B2AC?logo=tailwind-css)
+![Monaco Editor](https://img.shields.io/badge/Monaco_Editor-0.44-0078D4?logo=visual-studio-code)
+![KaTeX](https://img.shields.io/badge/KaTeX-0.16-008080?logo=latex)
+
+- **Next.js 14** (App Router) - Framework React
+- **TypeScript 5.5** - Tipado estático
+- **Monaco Editor** - Editor de código
+- **KaTeX** - Renderizado de fórmulas matemáticas
+- **Tailwind CSS** - Framework CSS utility-first
+- **Material Symbols** - Iconografía
+
+### Backend
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104-009688?logo=fastapi&logoColor=white)
+![ANTLR4](https://img.shields.io/badge/ANTLR4-4.13.2-FF6C37?logo=antlr)
+![SymPy](https://img.shields.io/badge/SymPy-1.12-3B5526?logo=sympy)
+
+- **FastAPI** - Framework web moderno
+- **Python 3.11+** - Lenguaje de programación
+- **ANTLR4** (4.13.2) - Generación de parsers
+- **SymPy** - Matemáticas simbólicas
+- **Pydantic** - Validación de datos
+
+### Herramientas
+![pnpm](https://img.shields.io/badge/pnpm-9.x-F69220?logo=pnpm)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)
+![Git](https://img.shields.io/badge/Git-Latest-F05032?logo=git)
+
+- **pnpm 9.x** - Gestor de paquetes
+- **Docker Compose** - Containerización
+- **ANTLR4** - Generación de parsers TS/Py
+
+## 📦 Requisitos
+
+- **Node.js** 20 LTS (≥20 <23)
+- **pnpm** 9.x
+- **Python** 3.11+
+- **Java** ≥8 (para generación de parser Python con ANTLR)
+- **Git**
+
+## 🚀 Instalación
+
+### 1. Clonar el repositorio
+
+```bash
+git clone <repository-url>
+cd algorithmic-analysis
 ```
-algorithmic-analysis/
-├── apps/
-│   ├── web/           → Next.js frontend (App Router)
-│   └── api/           → FastAPI backend (Python)
-├── packages/
-│   ├── grammar/       → Gramática ANTLR4 y codegen (TS/Py)
-│   └── types/         → Tipos compartidos (TypeScript)
-├── infra/             → Docker Compose
-└── pnpm-workspace.yaml
-```
 
-## Workspaces pnpm
-Incluyen solo `apps/web` y `packages/*` para evitar mezclar Python con Node.
+### 2. Instalar dependencias
 
-## Comandos Rápidos
-
-### Instalación Inicial
 ```bash
 # Instalar dependencias de Node/pnpm
 pnpm install
@@ -39,18 +162,34 @@ cd apps/api
 pip install -r requirements.txt
 ```
 
-### Desarrollo
+### 3. Configurar variables de entorno (opcional)
+
 ```bash
-# Frontend (Next.js) - puerto 3000
+# Backend - apps/api/.env
+GEMINI_API_KEY=tu_api_key_here  # Opcional, para usar LLM
+
+# Frontend - apps/web/.env.local
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+```
+
+## 💻 Uso
+
+### Desarrollo
+
+```bash
+# Terminal 1: Frontend (puerto 3000)
 cd apps/web
 pnpm dev
 
-# Backend (FastAPI) - puerto 8000
+# Terminal 2: Backend (puerto 8000)
 cd apps/api
 uvicorn app.main:app --reload --port 8000
 ```
 
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
+
 ### Generación de Código (Codegen)
+
 ```bash
 # Generar parser TypeScript desde gramática ANTLR
 pnpm --filter @aa/grammar build
@@ -60,6 +199,7 @@ pnpm --filter @aa/grammar gen:py
 ```
 
 ### Build Producción
+
 ```bash
 # Build completo (frontend + tipos)
 pnpm -r build
@@ -70,154 +210,77 @@ pip install -r requirements.txt
 ```
 
 ### Docker
+
 ```bash
 cd infra
 docker-compose up
 ```
 
-## 📚 Documentación Detallada
+## 📁 Estructura del Proyecto
 
-- **[Gramática ANTLR y Sintaxis del Lenguaje](packages/grammar/grammar/README.md)** — Referencia completa de sintaxis, ejemplos y estructura del AST
-- **[Guía de Análisis de Algoritmos](apps/api/app/analysis/README.md)** — Documentación técnica del sistema de análisis, reglas, y flujo de trabajo
-- **[Análisis Iterativo Unificado](apps/api/app/analysis/README_ITERATIVE.md)** — Documentación completa del analizador iterativo con soporte para best/worst/average case
-- **Guía de Desarrollo** (en README de gramática):
-  - [Generación de código TS/Py](packages/grammar/grammar/README.md#generación-de-código-codegen)
-  - [Probar endpoint /parse](packages/grammar/grammar/README.md#probar-el-endpoint-parse)
-  - [Configurar KaTeX](packages/grammar/grammar/README.md#activar-katex-para-renderizado-de-fórmulas)
-  - [Contratos de tipos @aa/types](packages/grammar/grammar/README.md#contratos-de-tipos-en-aatypes)
+```
+algorithmic-analysis/
+├── apps/
+│   ├── web/              # Next.js frontend (App Router)
+│   │   ├── src/
+│   │   │   ├── app/      # Páginas y rutas
+│   │   │   ├── components/  # Componentes React
+│   │   │   ├── hooks/    # Hooks personalizados
+│   │   │   └── lib/      # Utilidades
+│   │   └── package.json
+│   └── api/              # FastAPI backend (Python)
+│       ├── app/
+│       │   ├── modules/  # Módulos (parsing, analysis, classification)
+│       │   └── routers/  # Endpoints REST
+│       └── requirements.txt
+├── packages/
+│   ├── grammar/          # Gramática ANTLR4 y codegen (TS/Py)
+│   │   ├── grammar/      # Archivos .g4
+│   │   └── src/          # Parsers generados
+│   └── types/            # Tipos compartidos (TypeScript)
+│       └── src/          # Definiciones de tipos
+├── docs/                 # Documentación técnica
+│   ├── api/              # Documentación de API
+│   └── app/              # Documentación de aplicación web
+├── infra/                # Docker Compose
+└── pnpm-workspace.yaml   # Configuración de workspaces
+```
 
-## 🚀 Guía de Usuario
+### Workspaces pnpm
 
-### Flujo de Análisis Completo
+Incluyen solo `apps/web` y `packages/*` para evitar mezclar Python con Node.
 
-1. **Ingresar código**: Escribe o pega tu algoritmo en pseudocódigo en el editor.
-2. **Verificar sintaxis**: El editor muestra errores en tiempo real. Usa "Verificar Parse" para validar.
-3. **Analizar complejidad**: Haz clic en "Analizar Complejidad" para iniciar el análisis completo.
-4. **Revisar resultados**:
-   - **Para algoritmos iterativos**:
-     - **Tabla de costos por línea**: Visualiza el costo elemental (Cₖ), número de ejecuciones y costo total por línea. Incluye selector de casos (Best/Avg/Worst) en la esquina superior derecha.
-     - **Tarjetas de resumen**: Tres tarjetas muestran la notación asintótica (Big-O) para cada caso, con el Big-O renderizado en LaTeX dentro del círculo del icono.
-     - **Análisis de casos**:
-       - **Best Case**: Muestra el mejor caso del algoritmo (complejidad mínima)
-       - **Worst Case**: Muestra el peor caso del algoritmo (complejidad máxima)
-       - **Average Case**: Muestra el caso promedio usando modelos probabilísticos (uniform o symbolic)
-     - **Procedimientos detallados**: 
-       - **Procedimiento general**: Haz clic en "Ver Procedimiento" en cualquier tarjeta para ver el procedimiento completo con ecuación de eficiencia, forma polinómica y notación asintótica.
-       - **Procedimiento por línea**: Haz clic en cualquier línea de la tabla para ver los pasos detallados de esa línea específica, desde la expresión original hasta la forma final con notación asintótica.
-   - **Para algoritmos recursivos e híbridos**:
-     - **Vista recursiva**: Muestra tarjetas con la ecuación de eficiencia T(n) = Θ(...) para cada caso (best/avg/worst)
-     - **Procedimiento completo del Teorema Maestro**: Haz clic en "Ver Procedimiento" para abrir un modal detallado con:
-       - Ecuación de recurrencia extraída T(n) = a·T(n/b) + f(n)
-       - Parámetros a, b, f(n) y n₀
-       - Cálculo de g(n) = n^(log_b a)
-       - Comparación de f(n) vs g(n) para determinar el caso
-       - Visualización de los 3 casos del Teorema Maestro con el caso aplicado resaltado
-       - Pasos de prueba completos en LaTeX
-       - Ecuación de eficiencia final T(n) = Θ(...)
-     - **Árbol de recursión**: Visualización interactiva del árbol de llamadas recursivas (próximamente)
+## 📚 Documentación
 
-### Características del Loader de Análisis
+### Documentación Técnica
 
-- **Progreso en tiempo real**: Muestra el porcentaje de avance durante cada etapa, sincronizado con las promesas del backend.
-- **Etapas visibles**: 
-  - **Algoritmos iterativos**: Parseo → Clasificación → Hallazgo de sumatorias → Simplificación → Finalización
-  - **Algoritmos recursivos**: Parseo → Clasificación → Verificación de condiciones → Extracción de recurrencia → Normalización → Aplicación del Teorema Maestro → Finalización
-- **Identificación de tipo**: Muestra el tipo de algoritmo detectado (iterativo, recursivo, híbrido, desconocido) con animación de "pop".
-- **Manejo de errores**: Si ocurre un error, se muestra un mensaje descriptivo y puedes cerrar el loader sin recargar la página.
-- **Reutilizable**: El mismo loader se usa tanto en el editor manual como en el chatbot, manteniendo consistencia visual.
+- **[Documentación de API](docs/api/README.md)** - Endpoints, modelos, arquitectura
+  - [Endpoints REST](docs/api/endpoints.md)
+  - [Modelos de Datos](docs/api/models.md)
+  - [Arquitectura del Backend](docs/api/architecture.md)
+  - [Manejo de Errores](docs/api/errors.md)
 
-### Operadores de Asignación Soportados
+- **[Documentación de Aplicación Web](docs/app/README.md)** - Frontend, componentes, routing
+  - [Arquitectura](docs/app/architecture.md)
+  - [Componentes](docs/app/components.md)
+  - [Sistema de Rutas](docs/app/routing.md)
+  - [Gestión de Estado](docs/app/state-management.md)
+  - [Sistema de Diseño](docs/app/styling.md)
+  - [Integración con API](docs/app/api-integration.md)
 
-El lenguaje acepta múltiples formas de asignación:
-- `<-` (estándar ASCII)
-- `:=` (estilo Pascal)
-- `🡨`, `←`, `⟵` (símbolos Unicode)
+### Documentación de Usuario
 
-**Nota**: El archivo de gramática debe guardarse en UTF-8 para reconocer correctamente los símbolos Unicode.
+- **[Guía de Usuario](apps/web/src/app/user-guide/page.tsx)** - Tutorial completo en la aplicación
+- **[Gramática y Sintaxis](packages/grammar/grammar/README.md)** - Referencia de sintaxis
 
-## Tecnologías Principales
+### Guía de Desarrollo
 
-### Frontend
-- **Next.js 14** (App Router)
-- **TypeScript 5.5**
-- **Monaco Editor** (editor de código)
-- **KaTeX** (renderizado de fórmulas matemáticas)
-- **Tailwind CSS**
+- [Generación de código TS/Py](packages/grammar/grammar/README.md#generación-de-código-codegen)
+- [Probar endpoint /parse](packages/grammar/grammar/README.md#probar-el-endpoint-parse)
+- [Configurar KaTeX](packages/grammar/grammar/README.md#activar-katex-para-renderizado-de-fórmulas)
+- [Contratos de tipos @aa/types](packages/grammar/grammar/README.md#contratos-de-tipos-en-aatypes)
 
-### Backend
-- **FastAPI**
-- **Python 3.11+**
-- **ANTLR4 Python Runtime** (4.13.2)
-
-### Gramática y Parsing
-- **ANTLR4** (generación de parsers TS/Py)
-- **antlr4ts** (runtime TypeScript)
-- **antlr4-python3-runtime** (runtime Python)
-
-## Paquetes del Monorepo
-
-### `@aa/grammar`
-Gramática ANTLR4 para pseudocódigo y generadores de parsers TypeScript y Python.
-
-**Scripts:**
-- `npm run build` — Genera parser TypeScript
-- `npm run gen:py` — Genera parser Python
-
-### `@aa/types`
-Tipos e interfaces TypeScript compartidos entre frontend y backend.
-
-**Incluye:**
-- Definiciones de nodos AST
-- Contratos de API (Parse, Analyze, LLM)
-- Type guards y utilidades
-
-### `apps/web`
-Aplicación Next.js con editor de código, análisis de complejidad y modo IA.
-
-**Características:**
-- Editor Monaco con syntax highlighting (incluye soporte para strings literales)
-- Renderizado de fórmulas con KaTeX
-- Visualización de AST
-- Chatbot integrado con análisis directo desde bloques de código
-- Loader de análisis a pantalla completa con etapas, porcentajes sincronizados y estado de error
-- Análisis desde dos puntos de entrada: editor manual y chatbot (mismo loader reutilizable)
-- Tarjetas por caso (mejor/promedio/peor) con selección persistente en `sessionStorage` y badges Big-O renderizados en LaTeX
-- Modal dedicado para el procedimiento general y vista detallada por línea con pasos normalizados
-- Sanitización automática de procedimientos LaTeX que maneja múltiples bloques `\text{}` intercalados con expresiones matemáticas
-- Soporte completo para sentencias `print()` con strings literales y múltiples argumentos 
-
-### `apps/api`
-API REST con FastAPI que expone endpoints de parsing y análisis.
-
-**Endpoints principales:**
-- `POST /grammar/parse` — Parsea pseudocódigo y devuelve AST
-- `POST /analyze/open` — Analiza complejidad temporal (método abierto S3)
-  - Soporta modos: `worst`, `best`, `avg`, `all`
-  - Modelos de caso promedio: `uniform`, `symbolic`
-  - Genera análisis completo con T_open, A_of_n, y procedimientos detallados
-  - Detección automática de algoritmos recursivos e híbridos
-  - Aplicación del Teorema Maestro para algoritmos recursivos
-- `POST /classify` — Clasifica algoritmo como iterative, recursive, hybrid o unknown
-- `GET /health` — Health check
-
-**Análisis Iterativo Completo:**
-- ✅ Análisis de best/worst/average case
-- ✅ Modelos probabilísticos para caso promedio
-- ✅ Soporte para bucles FOR, WHILE, REPEAT
-- ✅ Análisis de condicionales IF con selección de rama dominante
-- ✅ Cálculo de complejidad temporal con sumatorias y simplificación
-- ✅ Tests exhaustivos con casos comunes, intermedios y complejos
-
-**Análisis Recursivo con Teorema Maestro:**
-- ✅ Detección automática de algoritmos recursivos e híbridos
-- ✅ Extracción de recurrencias de la forma T(n) = a·T(n/b) + f(n)
-- ✅ Aplicación del Teorema Maestro con los 3 casos
-- ✅ Visualización del árbol de recursión
-- ✅ Procedimiento completo con pasos de prueba en LaTeX
-- ✅ Ecuación de eficiencia final T(n) = Θ(...)
-- ✅ Soporte para algoritmos divide-and-conquer
-
-## Testing
+## 🧪 Testing
 
 ```bash
 # Tests del backend (Python)
@@ -229,40 +292,51 @@ cd packages/grammar
 npm run verify
 ```
 
-**Tests Exhaustivos del Analizador Iterativo:**
-- Tests de casos comunes: búsqueda lineal, búsqueda binaria, factorial, suma/máximo de array
-- Tests de casos intermedios: selection sort, bubble sort, insertion sort, multiplicación de matrices
-- Tests de casos complejos: bucles anidados variables, WHILE complejos, IF anidados, REPEAT-UNTIL
-- Tests de caso promedio: verificación de modelos uniforme y simbólico
-- Todos los tests cubren best/worst/average case
+### Cobertura de Tests
 
-**Tests del Analizador Recursivo:**
-- Tests de extracción de recurrencias: merge sort, binary search, quick sort
-- Tests del Teorema Maestro: verificación de los 3 casos
-- Tests de estructura: validación de parámetros a, b, f(n), n₀
-- Tests de pasos de prueba: verificación de generación de pasos en LaTeX
-- Tests de algoritmos divide-and-conquer completos
+**Analizador Iterativo:**
+- ✅ Casos comunes: búsqueda lineal, búsqueda binaria, factorial
+- ✅ Casos intermedios: selection sort, bubble sort, insertion sort
+- ✅ Casos complejos: bucles anidados, WHILE complejos, IF anidados
+- ✅ Caso promedio: modelos uniforme y simbólico
+- ✅ Todos los tests cubren best/worst/average case
+
+**Analizador Recursivo:**
+- ✅ Extracción de recurrencias: merge sort, binary search, quick sort
+- ✅ Teorema Maestro: verificación de los 3 casos
+- ✅ Estructura: validación de parámetros a, b, f(n), n₀
+- ✅ Pasos de prueba: verificación de generación de pasos en LaTeX
 
 **Ubicación de Tests:**
-- `apps/api/tests/integration/test_iterative_analyzer.py` — Tests básicos y casos comunes
-- `apps/api/tests/integration/test_intermediate_algorithms.py` — Tests de algoritmos intermedios
-- `apps/api/tests/integration/test_complex_algorithms.py` — Tests de algoritmos complejos
-- `apps/api/tests/integration/test_avg_case.py` — Tests específicos de caso promedio
-- `apps/api/tests/integration/test_algorithms.py` — Tests de algoritmos completos
+- `apps/api/tests/integration/test_iterative_analyzer.py`
+- `apps/api/tests/integration/test_intermediate_algorithms.py`
+- `apps/api/tests/integration/test_complex_algorithms.py`
+- `apps/api/tests/integration/test_avg_case.py`
+- `apps/api/tests/integration/test_recursive_algorithms.py`
 
-## Contribuir
+## 🤝 Contribuir
 
-1. Crear rama desde `develop`
-2. Hacer cambios y commit
-3. Abrir Pull Request a `develop`
-4. Esperar revisión y aprobación
+Las contribuciones son bienvenidas. Por favor:
 
-**Convenciones:**
-- Commits en español
-- Seguir convenciones de código existentes
-- Añadir tests cuando corresponda
+1. **Fork** el repositorio
+2. Crear una **rama** desde `develop`
+3. Hacer **cambios** y commit
+4. Abrir un **Pull Request** a `develop`
+5. Esperar **revisión** y aprobación
 
-## Licencia
+### Convenciones
 
-Proyecto académico - Universidad del Norte (2025-2)
+- Seguir **convenciones de código** existentes
+- Añadir **tests** cuando corresponda
+- Actualizar **documentación** si es necesario
 
+
+Proyecto académico - Universidad de Caldas (2025-2)
+
+---
+
+<div align="center">
+
+[Documentación](./docs/) • [Guía de Usuario](./apps/web/src/app/user-guide/) • [Ejemplos](./apps/web/src/app/examples/)
+
+</div>
