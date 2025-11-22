@@ -131,42 +131,42 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
         <div className="mb-4">
           <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
             <h2 className="text-white font-semibold flex items-center gap-3">
-              <span className={`material-symbols-outlined ${
+            <span className={`material-symbols-outlined ${
                 isCharacteristicMethod
                   ? 'text-blue-400'
                   : isIterationMethod 
-                  ? 'text-purple-400'
-                  : isRecursionTreeMethod
-                  ? 'text-cyan-400'
-                  : 'text-orange-400'
-              }`}>
+                ? 'text-purple-400'
+                : isRecursionTreeMethod
+                ? 'text-cyan-400'
+                : 'text-orange-400'
+            }`}>
                 {isCharacteristicMethod
                   ? 'calculate'
                   : isIterationMethod 
-                  ? 'unfold_more' 
-                  : isRecursionTreeMethod
-                  ? 'account_tree'
-                  : 'science'}
-              </span>
-              <span>Método de Análisis</span>
-              <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide ${
+                ? 'unfold_more' 
+                : isRecursionTreeMethod
+                ? 'account_tree'
+                : 'science'}
+            </span>
+            <span>Método de Análisis</span>
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide ${
                 isCharacteristicMethod
                   ? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
                   : isIterationMethod 
-                  ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
-                  : isRecursionTreeMethod
-                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
-                  : 'bg-orange-500/20 text-orange-300 border-orange-500/30'
-              }`}>
+                ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                : isRecursionTreeMethod
+                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+                : 'bg-orange-500/20 text-orange-300 border-orange-500/30'
+            }`}>
                 {isCharacteristicMethod
                   ? 'Ecuación Característica'
                   : isIterationMethod 
-                  ? 'Método de Iteración' 
-                  : isRecursionTreeMethod
-                  ? 'Árbol de Recursión'
-                  : 'Teorema Maestro'}
-              </span>
-            </h2>
+                ? 'Método de Iteración' 
+                : isRecursionTreeMethod
+                ? 'Árbol de Recursión'
+                : 'Teorema Maestro'}
+            </span>
+          </h2>
             
             {/* Badges de información (solo para ecuación característica) */}
             {isCharacteristicMethod && characteristicEquation && (
@@ -202,12 +202,12 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
           <div className="flex flex-wrap items-center justify-center gap-1">
             {recurrence.type === "divide_conquer" && (
               <>
-                <Formula latex={`a = ${recurrence.a}`} />
-                <span className="text-slate-300">,</span>
-                <Formula latex={`b = ${recurrence.b}`} />
-                <span className="text-slate-300">,</span>
-                <Formula latex={`f(n) = ${recurrence.f}`} />
-                <span className="text-slate-300">,</span>
+            <Formula latex={`a = ${recurrence.a}`} />
+            <span className="text-slate-300">,</span>
+            <Formula latex={`b = ${recurrence.b}`} />
+            <span className="text-slate-300">,</span>
+            <Formula latex={`f(n) = ${recurrence.f}`} />
+            <span className="text-slate-300">,</span>
               </>
             )}
             {recurrence.type === "linear_shift" && (
@@ -270,20 +270,20 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
             </button>
           )}
         </div>
-        
+
 
         {/* Botón para árbol de recurrencia - para recursion_tree y characteristic_equation */}
         {((isRecursionTreeMethod && recurrence?.type === "divide_conquer") || 
           (isCharacteristicMethod && recurrence?.type === "linear_shift")) && (
-          <div className="mb-4">
-            <button
-              onClick={() => setShowTreeModal(true)}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors"
-            >
-              <span className="material-symbols-outlined text-sm">account_tree</span>
-              <span>Ver Árbol de Recurrencia</span>
-            </button>
-          </div>
+        <div className="mb-4">
+          <button
+            onClick={() => setShowTreeModal(true)}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors"
+          >
+            <span className="material-symbols-outlined text-sm">account_tree</span>
+            <span>Ver Árbol de Recurrencia</span>
+          </button>
+        </div>
         )}
       </div>
 
@@ -413,7 +413,7 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
         theta={theta || T_open}
       />
       )}
-      
+
       {/* Modal de versión DP */}
       {isCharacteristicMethod && characteristicEquation?.is_dp_linear && (
         <DPVersionModal
@@ -426,13 +426,13 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
       {/* Modal del árbol de recursión - para recursion_tree y characteristic_equation */}
       {((isRecursionTreeMethod && recurrence?.type === "divide_conquer") || 
         (isCharacteristicMethod && recurrence?.type === "linear_shift")) && (
-        <RecursionTreeModal
-          open={showTreeModal}
-          onClose={() => setShowTreeModal(false)}
-          recurrence={recurrence}
-          recursionTreeData={recursionTree}
+      <RecursionTreeModal
+        open={showTreeModal}
+        onClose={() => setShowTreeModal(false)}
+        recurrence={recurrence}
+        recursionTreeData={recursionTree}
           characteristicEquation={characteristicEquation}
-        />
+      />
       )}
 
       {/* Modal de pasos del método de Árbol de Recursión */}

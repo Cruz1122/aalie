@@ -32,10 +32,10 @@ interface RecursionTreeModalProps {
   recurrence: (
     | {
         type: "divide_conquer";
-        a: number;
-        b: number;
-        f: string;
-        n0: number;
+    a: number;
+    b: number;
+    f: string;
+    n0: number;
       }
     | {
         type: "linear_shift";
@@ -131,7 +131,7 @@ const TreeNode = React.memo(({ data }: { data: TreeNodeData & { sourcePosition?:
         {argument !== undefined ? (
           <div className="font-medium">n = {argument}</div>
         ) : (
-          <div className="font-medium">n ≈ {size.toFixed(1)}</div>
+        <div className="font-medium">n ≈ {size.toFixed(1)}</div>
         )}
         <div className="text-slate-400">Nivel {level}</div>
         {duplicateCount && duplicateCount > 1 ? (
@@ -139,9 +139,9 @@ const TreeNode = React.memo(({ data }: { data: TreeNodeData & { sourcePosition?:
             ⚠ Subproblema duplicado ({duplicateCount}x)
           </div>
         ) : (
-          <div className={`text-xs ${isBaseCase ? "text-green-400" : "text-slate-500"}`}>
-            {nodeCount} nodo{nodeCount !== 1 ? "s" : ""}
-          </div>
+        <div className={`text-xs ${isBaseCase ? "text-green-400" : "text-slate-500"}`}>
+          {nodeCount} nodo{nodeCount !== 1 ? "s" : ""}
+        </div>
         )}
         {isBaseCase && (
           <div className="text-green-300 font-semibold mt-1 pt-1 border-t border-green-500/30">
@@ -213,14 +213,14 @@ export default function RecursionTreeModal({
         setMaxDepth(depth);
       } else if (isDivideConquer) {
         // Para divide-and-conquer, calcular hasta caso base
-        let depth = 0;
-        let currentN = initialN;
-        while (currentN > recurrence.n0 && recurrence.b > 1) {
-          currentN = currentN / recurrence.b;
-          depth++;
-        }
-        setMaxDepth(depth);
+      let depth = 0;
+      let currentN = initialN;
+      while (currentN > recurrence.n0 && recurrence.b > 1) {
+        currentN = currentN / recurrence.b;
+        depth++;
       }
+      setMaxDepth(depth);
+    }
     }
   }, [recurrence, maxDepth, initialN, isLinearRecurrence, isDivideConquer]);
   
@@ -262,10 +262,10 @@ export default function RecursionTreeModal({
             g_n: recurrence["g(n)"],
             n0: recurrence.n0,
           } as LinearRecurrenceData,
-          maxDepth,
-          orientation,
-          initialN
-        );
+        maxDepth,
+        orientation,
+        initialN
+      );
       } else if (isDivideConquer) {
         // Generar árbol divide-and-conquer (uniforme)
         if (maxDepth === null) {
@@ -396,13 +396,13 @@ export default function RecursionTreeModal({
       return Math.min(initialN, 10);
     } else if (isDivideConquer) {
       // Para divide-and-conquer, calcular hasta caso base
-      let depth = 0;
-      let currentN = initialN;
-      while (currentN > recurrence.n0 && recurrence.b > 1) {
-        currentN = currentN / recurrence.b;
-        depth++;
-      }
-      return depth;
+    let depth = 0;
+    let currentN = initialN;
+    while (currentN > recurrence.n0 && recurrence.b > 1) {
+      currentN = currentN / recurrence.b;
+      depth++;
+    }
+    return depth;
     }
     
     return 0;
@@ -493,13 +493,13 @@ export default function RecursionTreeModal({
                         // Para árboles lineales, profundidad ≈ n
                         setMaxDepth(Math.min(newN, 10));
                       } else if (isDivideConquer) {
-                        let depth = 0;
-                        let currentN = newN;
-                        while (currentN > recurrence.n0 && recurrence.b > 1) {
-                          currentN = currentN / recurrence.b;
-                          depth++;
-                        }
-                        setMaxDepth(depth);
+                      let depth = 0;
+                      let currentN = newN;
+                      while (currentN > recurrence.n0 && recurrence.b > 1) {
+                        currentN = currentN / recurrence.b;
+                        depth++;
+                      }
+                      setMaxDepth(depth);
                       }
                     }
                   }}
@@ -560,11 +560,11 @@ export default function RecursionTreeModal({
                 </>
               ) : isDivideConquer ? (
                 <>
-                  <Formula latex={`a = ${recurrence.a}`} />
-                  <span>,</span>
-                  <Formula latex={`b = ${recurrence.b}`} />
-                  <span>,</span>
-                  <Formula latex={`f(n) = ${recurrence.f}`} />
+              <Formula latex={`a = ${recurrence.a}`} />
+              <span>,</span>
+              <Formula latex={`b = ${recurrence.b}`} />
+              <span>,</span>
+              <Formula latex={`f(n) = ${recurrence.f}`} />
                 </>
               ) : null}
             </div>

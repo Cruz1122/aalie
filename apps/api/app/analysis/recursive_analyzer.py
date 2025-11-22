@@ -369,10 +369,10 @@ class RecursiveAnalyzer(BaseAnalyzer):
         if not use_characteristic:
             # Solo considerar Iteración si NO aplica Ecuación Característica
             use_iteration = self._detect_iteration_method(proc_def, recursive_calls)
-            
-            if not use_iteration:
+        
+        if not use_iteration:
                 # Solo considerar Árbol de Recursión si no aplica Ecuación Característica ni Iteración
-                use_recursion_tree = self._detect_recursion_tree_method(proc_def, recursive_calls, a, b)
+            use_recursion_tree = self._detect_recursion_tree_method(proc_def, recursive_calls, a, b)
         
         # 7. Construir recurrencia con método apropiado
         # Simplificar b para mostrar
@@ -457,8 +457,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     recurrence_form_corrected = f"T(n) = {' + '.join(terms_latex)}"
                 else:
                     recurrence_form_corrected = f"T(n) = {' + '.join(terms_latex)} + g(n)"
-                
-                recurrence = {
+        
+        recurrence = {
                     "type": "linear_shift",
                     "form": recurrence_form_corrected,
                     "order": max_offset,  # orden de la recurrencia (k)
@@ -484,15 +484,15 @@ class RecursiveAnalyzer(BaseAnalyzer):
             # Para otros métodos (master, iteration, recursion_tree), usar a, b, f
             recurrence = {
                 "type": "divide_conquer",
-                "form": recurrence_form,
-                "a": a,
-                "b": float(b),
-                "f": f_n,
-                "n0": n0,
-                "applicable": True,
-                "notes": [],
-                "method": method
-            }
+            "form": recurrence_form,
+            "a": a,
+            "b": float(b),
+            "f": f_n,
+            "n0": n0,
+            "applicable": True,
+            "notes": [],
+            "method": method
+        }
         
         # Simplificar valores para mostrar en proof
         b_display = self._simplify_number_latex(b)
@@ -508,7 +508,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Solo agregar "Parámetros extraídos" si NO es ecuación característica
         # Para ecuación característica, estos parámetros (a, b, f) no son relevantes
         if method != "characteristic_equation":
-            self.proof_steps.append({"id": "extract", "text": f"\\text{{Parámetros extraídos: }} a={a}, b={b_display}, f(n)={f_n}, n_0={n0}"})
+        self.proof_steps.append({"id": "extract", "text": f"\\text{{Parámetros extraídos: }} a={a}, b={b_display}, f(n)={f_n}, n_0={n0}"})
         
         return {
             "success": True,
