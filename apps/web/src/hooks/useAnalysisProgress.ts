@@ -13,10 +13,6 @@ export function useAnalysisProgress() {
     onUpdate: (progress: number) => void,
     waitForPromise?: Promise<T>
   ): Promise<T | void> => {
-    // Si el final es menor que el inicio y ya estamos en 100%, no animar
-    // Esto previene retrocesos cuando ya se alcanzó el 100%
-    // Pero permitimos animaciones normales de avance
-    
     // Si no hay promesa, solo animar el progreso
     if (!waitForPromise) {
       return new Promise((resolve) => {
@@ -25,13 +21,14 @@ export function useAnalysisProgress() {
           const elapsed = Date.now() - startTime;
           const progress = Math.min(1, elapsed / duration);
           const currentProgress = start + (end - start) * progress;
-          // Asegurar que nunca retroceda
-          onUpdate(Math.max(start, Math.min(100, currentProgress)));
+          // Asegurar que nunca retroceda - usar función de actualización que previene retrocesos
+          // Si el progreso actual es mayor que el calculado, mantener el mayor
+          onUpdate((prev) => Math.max(prev, Math.min(100, currentProgress)));
           
           if (progress < 1) {
             requestAnimationFrame(animate);
           } else {
-            onUpdate(Math.min(100, end));
+            onUpdate((prev) => Math.max(prev, Math.min(100, end)));
             resolve();
           }
         };
@@ -64,13 +61,15 @@ export function useAnalysisProgress() {
         const currentProgress = start + (end - start) * progress;
         // Actualizar el porcentaje basándose en el tiempo, no en la promesa
         // Asegurar que nunca retroceda y no exceda 100%
-        onUpdate(Math.max(start, Math.min(100, currentProgress)));
+        // Usar función de actualización que previene retrocesos
+        // Si el progreso actual es mayor que el calculado, mantener el mayor
+        onUpdate((prev) => Math.max(prev, Math.min(100, currentProgress)));
         
         if (progress < 1) {
           animationId = requestAnimationFrame(animate);
         } else {
-          // Asegurar que llegue al final (sin exceder 100%)
-          onUpdate(Math.min(100, end));
+          // Asegurar que llegue al final (sin exceder 100%) pero nunca retroceda
+          onUpdate((prev) => Math.max(prev, Math.min(100, end)));
           resolve();
         }
       };
@@ -85,15 +84,15 @@ export function useAnalysisProgress() {
       if (animationId !== null) {
         cancelAnimationFrame(animationId);
       }
-      // Asegurar que el progreso esté en el final (sin exceder 100%)
-      onUpdate(Math.min(100, end));
+      // Asegurar que el progreso esté en el final (sin exceder 100%) pero nunca retroceda
+      onUpdate((prev) => Math.max(prev, Math.min(100, end)));
       return promiseResult;
     } catch (error) {
-      // Si hay error, asegurar que el progreso llegue al final (sin exceder 100%)
+      // Si hay error, asegurar que el progreso llegue al final (sin exceder 100%) pero nunca retroceda
       if (animationId !== null) {
         cancelAnimationFrame(animationId);
       }
-      onUpdate(Math.min(100, end));
+      onUpdate((prev) => Math.max(prev, Math.min(100, end)));
       throw promiseError || error;
     }
   }, []);

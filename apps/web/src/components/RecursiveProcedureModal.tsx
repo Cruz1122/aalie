@@ -132,21 +132,21 @@ export default function RecursiveProcedureModal({
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {/* Caso 1 */}
                     <div
-                      className={`p-3 rounded-lg border-2 transition-all ${
+                      className={`p-2 rounded-lg border-2 transition-all ${
                         master.case === 1
                           ? "bg-green-500/20 border-green-500/50 shadow-lg shadow-green-500/20"
                           : "bg-slate-900/50 border-white/10 opacity-60"
                       }`}
                     >
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-1">
                         <div
                           className={`w-3 h-3 rounded-full ${
                             master.case === 1 ? "bg-green-400" : "bg-slate-500"
                           }`}
                         />
-                        <h5 className="font-semibold text-white">Caso 1</h5>
+                        <h5 className="font-semibold text-white text-sm">Caso 1</h5>
                       </div>
-                      <div className="text-xs text-slate-300 mb-2 flex justify-center">
+                      <div className="text-xs text-slate-300 mb-1 flex justify-center">
                         <Formula latex="f(n) < g(n)" />
                       </div>
                       <div className="text-xs flex justify-center">
@@ -156,21 +156,21 @@ export default function RecursiveProcedureModal({
 
                     {/* Caso 2 */}
                     <div
-                      className={`p-3 rounded-lg border-2 transition-all ${
+                      className={`p-2 rounded-lg border-2 transition-all ${
                         master.case === 2
                           ? "bg-yellow-500/20 border-yellow-500/50 shadow-lg shadow-yellow-500/20"
                           : "bg-slate-900/50 border-white/10 opacity-60"
                       }`}
                     >
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-1">
                         <div
                           className={`w-3 h-3 rounded-full ${
                             master.case === 2 ? "bg-yellow-400" : "bg-slate-500"
                           }`}
                         />
-                        <h5 className="font-semibold text-white">Caso 2</h5>
+                        <h5 className="font-semibold text-white text-sm">Caso 2</h5>
                       </div>
-                      <div className="text-xs text-slate-300 mb-2 flex justify-center">
+                      <div className="text-xs text-slate-300 mb-1 flex justify-center">
                         <Formula latex="f(n) = g(n)" />
                       </div>
                       <div className="text-xs flex justify-center">
@@ -180,28 +180,28 @@ export default function RecursiveProcedureModal({
 
                     {/* Caso 3 */}
                     <div
-                      className={`p-3 rounded-lg border-2 transition-all ${
+                      className={`p-2 rounded-lg border-2 transition-all ${
                         master.case === 3
                           ? "bg-red-500/20 border-red-500/50 shadow-lg shadow-red-500/20"
                           : "bg-slate-900/50 border-white/10 opacity-60"
                       }`}
                     >
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-1">
                         <div
                           className={`w-3 h-3 rounded-full ${
                             master.case === 3 ? "bg-red-400" : "bg-slate-500"
                           }`}
                         />
-                        <h5 className="font-semibold text-white">Caso 3</h5>
+                        <h5 className="font-semibold text-white text-sm">Caso 3</h5>
                       </div>
-                      <div className="text-xs text-slate-300 mb-2 flex justify-center">
+                      <div className="text-xs text-slate-300 mb-1 flex justify-center">
                         <Formula latex="f(n) > g(n)" />
                       </div>
                       <div className="text-xs flex justify-center">
                         <Formula latex="T(n) = \Theta(f(n))" />
                       </div>
                       {master.case === 3 && master.regularity && (
-                        <div className="mt-2 pt-2 border-t border-white/10">
+                        <div className="mt-1.5 pt-1.5 border-t border-white/10">
                           <p className="text-xs text-slate-400">
                             Regularidad: {master.regularity.checked ? "✓ Verificada" : "⚠ Asumida"}
                             {master.regularity.note && ` - ${master.regularity.note}`}

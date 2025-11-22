@@ -4018,31 +4018,57 @@ FIN FUNCIÓN"""
         if not args:
             return None
         
+        # Estrategia 0: Detectar reducción de rango cuando los parámetros son inicio/fin
+        # Ejemplo: invertirArray(A, inicio, fin) con llamada (A, inicio + 1, fin - 1)
+        # El tamaño es fin - inicio + 1, y se reduce en 2 (inicio + 1, fin - 1)
+        range_reduction = self._detect_range_reduction(args, params)
+        if range_reduction:
+            return range_reduction
+        
         # Obtener el nombre del primer parámetro (usualmente el tamaño)
         first_param = params[0]
         if isinstance(first_param, dict):
-            param_name = first_param.get("name", "")
+            first_param_name = first_param.get("name", "")
+            # Verificar si el primer parámetro es un array (tiene corchetes en el nombre o es arrayParam)
+            first_param_is_array = "[" in first_param_name or first_param.get("type", "").lower() == "arrayparam"
         else:
-            param_name = str(first_param)
+            first_param_name = str(first_param)
+            first_param_is_array = "[" in first_param_name
         
-        # Analizar primer argumento (suele ser el tamaño)
-        first_arg = args[0]
+        # Si el primer parámetro es un array, buscar el tamaño en los siguientes parámetros
+        # Ejemplo: sumaArray(A[n], n) -> el tamaño es el segundo parámetro 'n'
+        size_param_index = 0
+        size_param_name = first_param_name
         
-        if isinstance(first_arg, dict):
-            arg_type = first_arg.get("type", "").lower()
+        if first_param_is_array and len(params) > 1:
+            # El tamaño probablemente está en el segundo parámetro
+            size_param = params[1]
+            if isinstance(size_param, dict):
+                size_param_name = size_param.get("name", "")
+            else:
+                size_param_name = str(size_param)
+            size_param_index = 1
+        
+        # Analizar argumentos buscando el que corresponde al tamaño
+        # Si el primer parámetro es array, buscar en args[1], sino en args[0]
+        size_arg_index = size_param_index if size_param_index < len(args) else 0
+        size_arg = args[size_arg_index] if size_arg_index < len(args) else None
+        
+        if size_arg and isinstance(size_arg, dict):
+            arg_type = size_arg.get("type", "").lower()
             
             # Caso: n - 1 o n - k (BinaryExpression con operador -)
             if arg_type == "binary":
-                op = first_arg.get("op", "")
+                op = size_arg.get("op", "")
                 
                 if op == "-":
-                    left = first_arg.get("left", {})
-                    right = first_arg.get("right", {})
+                    left = size_arg.get("left", {})
+                    right = size_arg.get("right", {})
                     
-                    # Verificar que left es el parámetro original
+                    # Verificar que left es el parámetro de tamaño
                     if isinstance(left, dict):
                         left_name = left.get("name", "") or left.get("id", "")
-                        if left_name == param_name:
+                        if left_name == size_param_name:
                             # Extraer el valor de resta
                             if isinstance(right, dict) and right.get("type", "").lower() == "literal":
                                 value = right.get("value", 1)
@@ -4061,12 +4087,12 @@ FIN FUNCIÓN"""
                 
                 # Caso: n / 2 o n / c (BinaryExpression con operador /)
                 elif op == "/":
-                    left = first_arg.get("left", {})
-                    right = first_arg.get("right", {})
+                    left = size_arg.get("left", {})
+                    right = size_arg.get("right", {})
                     
                     if isinstance(left, dict):
                         left_name = left.get("name", "") or left.get("id", "")
-                        if left_name == param_name:
+                        if left_name == size_param_name:
                             # Extraer el factor de división
                             if isinstance(right, dict) and right.get("type", "").lower() == "literal":
                                 value = right.get("value", 2)
@@ -4076,7 +4102,7 @@ FIN FUNCIÓN"""
                                     "factor": value
                                 }
                         # También verificar si left es una expresión (inicio + fin) / 2
-                        elif self._is_range_halving_pattern(first_arg, params):
+                        elif self._is_range_halving_pattern(size_arg, params):
                             return {
                                 "type": "range_halving",
                                 "pattern": "(inicio+fin)/2",
@@ -4085,8 +4111,8 @@ FIN FUNCIÓN"""
             
             # Caso: parámetro directo sin modificación (n)
             elif arg_type == "identifier":
-                arg_name = first_arg.get("name", "") or first_arg.get("id", "")
-                if arg_name == param_name:
+                arg_name = size_arg.get("name", "") or size_arg.get("id", "")
+                if arg_name == size_param_name:
                     # No es decrease-and-conquer, es recursión directa
                     return None
         
@@ -4119,6 +4145,117 @@ FIN FUNCIÓN"""
                         return True
         
         return False
+    
+    def _detect_range_reduction(self, args: List[Any], params: List[Any]) -> Optional[Dict[str, Any]]:
+        """
+        Detecta reducción de rango cuando los parámetros son inicio/fin.
+        
+        Ejemplo: invertirArray(A, inicio, fin) con llamada (A, inicio + 1, fin - 1)
+        El tamaño es fin - inicio + 1, y se reduce en 2.
+        
+        Args:
+            args: Argumentos de la llamada recursiva
+            params: Parámetros del procedimiento
+            
+        Returns:
+            {"type": "subtraction", "pattern": str, "factor": int} o None
+        """
+        if len(args) < 3 or len(params) < 3:
+            return None
+        
+        # Buscar parámetros que parezcan inicio/fin (ignorar el primero que suele ser el array)
+        param_info = []
+        for i, param in enumerate(params[1:], start=1):  # Saltar el primer parámetro (array)
+            if isinstance(param, dict):
+                param_name = param.get("name", "")
+            else:
+                param_name = str(param)
+            param_info.append({"index": i, "name": param_name, "name_lower": param_name.lower()})
+        
+        # Nombres comunes para inicio/fin
+        inicio_keywords = ["inicio", "izq", "left", "start", "begin", "low"]
+        fin_keywords = ["fin", "der", "right", "end", "high"]
+        
+        # Buscar si hay un par inicio/fin en los parámetros
+        inicio_param = None
+        fin_param = None
+        
+        for param in param_info:
+            name_lower = param["name_lower"]
+            if any(keyword in name_lower for keyword in inicio_keywords):
+                inicio_param = param
+            elif any(keyword in name_lower for keyword in fin_keywords):
+                fin_param = param
+        
+        if inicio_param is None or fin_param is None:
+            return None
+        
+        inicio_idx = inicio_param["index"]
+        fin_idx = fin_param["index"]
+        
+        # Verificar que los argumentos correspondientes son expresiones binarias
+        if inicio_idx >= len(args) or fin_idx >= len(args):
+            return None
+        
+        inicio_arg = args[inicio_idx]
+        fin_arg = args[fin_idx]
+        
+        # Verificar que inicio_arg es una suma (inicio + k)
+        if not isinstance(inicio_arg, dict) or inicio_arg.get("type", "").lower() != "binary":
+            return None
+        
+        inicio_op = inicio_arg.get("op", "")
+        if inicio_op != "+":
+            return None
+        
+        inicio_left = inicio_arg.get("left", {})
+        inicio_right = inicio_arg.get("right", {})
+        
+        # Verificar que left es el parámetro inicio
+        if isinstance(inicio_left, dict):
+            inicio_left_name = (inicio_left.get("name") or inicio_left.get("id", "")).lower()
+            if inicio_left_name != inicio_param["name_lower"]:
+                return None
+        
+        # Extraer el valor de k de inicio + k
+        if isinstance(inicio_right, dict) and inicio_right.get("type", "").lower() == "literal":
+            k_value = inicio_right.get("value", 0)
+        else:
+            return None
+        
+        # Verificar que fin_arg es una resta (fin - k)
+        if not isinstance(fin_arg, dict) or fin_arg.get("type", "").lower() != "binary":
+            return None
+        
+        fin_op = fin_arg.get("op", "")
+        if fin_op != "-":
+            return None
+        
+        fin_left = fin_arg.get("left", {})
+        fin_right = fin_arg.get("right", {})
+        
+        # Verificar que left es el parámetro fin
+        if isinstance(fin_left, dict):
+            fin_left_name = (fin_left.get("name") or fin_left.get("id", "")).lower()
+            if fin_left_name != fin_param["name_lower"]:
+                return None
+        
+        # Verificar que right es el mismo k
+        if isinstance(fin_right, dict) and fin_right.get("type", "").lower() == "literal":
+            fin_k_value = fin_right.get("value", 0)
+            if fin_k_value != k_value:
+                return None
+        else:
+            return None
+        
+        # El tamaño se reduce en 2k (inicio + k, fin - k)
+        reduction = 2 * k_value
+        
+        return {
+            "type": "subtraction",
+            "pattern": f"n-{reduction}",
+            "factor": reduction
+        }
     
     def _combines_multiple_results(self, proc_def: Dict[str, Any], recursive_calls: List[Dict[str, Any]]) -> bool:
         """

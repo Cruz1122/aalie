@@ -11,6 +11,45 @@ import RecursionTreeModal from "./RecursionTreeModal";
 import CharacteristicEquationModal from "./CharacteristicEquationModal";
 import DPVersionModal from "./DPVersionModal";
 
+type CaseType = "worst" | "best" | "average";
+
+const getCaseLabel = (caseType: CaseType): string => {
+  switch (caseType) {
+    case "worst":
+      return "Peor caso";
+    case "best":
+      return "Mejor caso";
+    case "average":
+      return "Caso promedio";
+  }
+};
+
+const getCaseBadgeStyle = (caseType: CaseType): string => {
+  switch (caseType) {
+    case "worst":
+      return "bg-red-500/20 text-red-300 border-red-500/30";
+    case "best":
+      return "bg-green-500/20 text-green-300 border-green-500/30";
+    case "average":
+      return "bg-yellow-500/20 text-yellow-300 border-yellow-500/30";
+  }
+};
+
+const getSelectorButtonStyle = (caseType: CaseType, isSelected: boolean): string => {
+  const baseStyle = "transition-colors duration-150";
+  if (isSelected) {
+    switch (caseType) {
+      case "worst":
+        return `${baseStyle} bg-red-500/30 text-red-200 border border-red-500/50`;
+      case "best":
+        return `${baseStyle} bg-green-500/30 text-green-200 border border-green-500/50`;
+      case "average":
+        return `${baseStyle} bg-yellow-500/30 text-yellow-200 border border-yellow-500/50`;
+    }
+  }
+  return `${baseStyle} text-slate-400 hover:text-slate-200`;
+};
+
 /**
  * Redondea los valores numéricos en una expresión LaTeX a 3 decimales.
  * @param latex La expresión LaTeX que puede contener números
@@ -73,15 +112,45 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
   const [showCharacteristicModal, setShowCharacteristicModal] = useState(false);
   const [showDPModal, setShowDPModal] = useState(false);
   
+  // Estado para el caso seleccionado (solo para teorema maestro)
+  const [selectedCase, setSelectedCase] = useState<CaseType>("worst");
+  
   // Detectar método usado (PRIORIDAD: characteristic_equation > iteration > recursion_tree > master)
   const isCharacteristicMethod = recurrence?.method === "characteristic_equation";
   const isIterationMethod = recurrence?.method === "iteration";
   const isRecursionTreeMethod = recurrence?.method === "recursion_tree";
+  const isMasterMethod = !isCharacteristicMethod && !isIterationMethod && !isRecursionTreeMethod && !!master;
   
   // Obtener T_open para cada caso
   const bestT = bestData?.totals?.T_open || bestData?.totals?.recursion_tree?.theta || bestData?.totals?.iteration?.theta || bestData?.totals?.master?.theta || theta || "N/A";
   const worstT = worstData?.totals?.T_open || worstData?.totals?.recursion_tree?.theta || worstData?.totals?.iteration?.theta || worstData?.totals?.master?.theta || theta || "N/A";
   const avgT = avgData?.totals?.T_open || avgData?.totals?.recursion_tree?.theta || avgData?.totals?.iteration?.theta || avgData?.totals?.master?.theta || theta || "N/A";
+  
+  // Obtener master según el caso seleccionado (solo para teorema maestro)
+  const currentMaster = useMemo(() => {
+    if (!isMasterMethod) return master;
+    switch (selectedCase) {
+      case "worst":
+        return worstData?.totals?.master || master;
+      case "best":
+        return bestData?.totals?.master || master;
+      case "average":
+        return avgData?.totals?.master || master;
+    }
+  }, [selectedCase, isMasterMethod, worstData, bestData, avgData, master]);
+  
+  // Obtener theta según el caso seleccionado (solo para teorema maestro)
+  const currentTheta = useMemo(() => {
+    if (!isMasterMethod) return theta || T_open;
+    switch (selectedCase) {
+      case "worst":
+        return worstT;
+      case "best":
+        return bestT;
+      case "average":
+        return avgT;
+    }
+  }, [selectedCase, isMasterMethod, worstT, bestT, avgT, theta, T_open]);
   
   // Detectar si hay diferencias entre los casos
   const hasDifferentComplexities = bestT !== worstT || bestT !== avgT || worstT !== avgT;
@@ -125,7 +194,7 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
 
   // Mostrar mensaje educativo si no hay variabilidad entre worst/best/avg
   return (
-    <div className="space-y-6">
+    <div className="h-full flex flex-col space-y-6">
       {/* Card principal: Método y Parámetros */}
       <div className="glass-card p-6 rounded-lg">
         <div className="mb-4">
@@ -344,13 +413,53 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
           </div>
         </div>
       ) : (
-        <div className="glass-card p-6 rounded-lg shadow-[0_8px_32px_0_rgba(59,130,246,0.3)] hover:shadow-[0_12px_40px_0_rgba(59,130,246,0.4)] border border-blue-500/20">
-          <h3 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
-            <span className="material-symbols-outlined text-base text-blue-400">functions</span>
-            Ecuación de Eficiencia
-          </h3>
-          <div className="p-3 rounded-lg bg-slate-800/60 border border-blue-500/30 flex justify-center overflow-x-auto">
-            {hasDifferentComplexities ? (
+        <div className="glass-card p-7 rounded-lg shadow-[0_8px_32px_0_rgba(59,130,246,0.3)] hover:shadow-[0_12px_40px_0_rgba(59,130,246,0.4)] border border-blue-500/20 flex-shrink-0">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-white font-semibold text-sm flex items-center gap-2">
+              <span className="material-symbols-outlined text-base text-blue-400">functions</span>
+              Ecuación de Eficiencia
+              {isMasterMethod && hasDifferentComplexities && (
+                <span
+                  className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide ${getCaseBadgeStyle(selectedCase)}`}
+                >
+                  {getCaseLabel(selectedCase)}
+                </span>
+              )}
+            </h3>
+            {/* Switch de casos (solo para teorema maestro con diferentes complejidades) */}
+            {isMasterMethod && hasDifferentComplexities && (
+              <div className="flex items-center gap-1 bg-slate-800/60 border border-white/10 rounded-lg p-1">
+                <button
+                  onClick={() => setSelectedCase("best")}
+                  className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle("best", selectedCase === "best")}`}
+                >
+                  Mejor
+                </button>
+                <button
+                  onClick={() => setSelectedCase("average")}
+                  className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle("average", selectedCase === "average")}`}
+                >
+                  Promedio
+                </button>
+                <button
+                  onClick={() => setSelectedCase("worst")}
+                  className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle("worst", selectedCase === "worst")}`}
+                >
+                  Peor
+                </button>
+              </div>
+            )}
+          </div>
+          <div className={`rounded-lg bg-slate-800/60 border border-blue-500/30 flex justify-center items-center overflow-x-auto ${
+            isIterationMethod 
+              ? "p-7 min-h-[140px]" 
+              : "p-6 min-h-[120px]"
+          }`}>
+            {isMasterMethod && hasDifferentComplexities ? (
+              // Para teorema maestro con diferentes complejidades, mostrar solo la ecuación del caso seleccionado
+              <Formula latex={`T(n) = ${roundLatexNumbers(currentTheta || "N/A")}`} display />
+            ) : hasDifferentComplexities ? (
+              // Para otros métodos con diferentes complejidades, mostrar todas
               <div className="flex flex-col gap-2 items-center">
                 <div className="text-center">
                   <div className="text-xs text-green-300 mb-1">Mejor caso:</div>
@@ -366,6 +475,7 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
                 </div>
               </div>
             ) : (
+              // Sin diferencias, mostrar una sola ecuación
               <Formula latex={`T(n) = ${roundLatexNumbers(theta || bestT || worstT || avgT || "N/A")}`} display />
             )}
           </div>
@@ -406,11 +516,11 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
       <RecursiveProcedureModal
         open={showProcedureModal}
         onClose={() => setShowProcedureModal(false)}
-        data={worstData || bestData || avgData}
+        data={selectedCase === "worst" ? worstData : selectedCase === "best" ? bestData : avgData || worstData || bestData}
         recurrence={recurrence}
-        master={master}
+        master={currentMaster || master}
         proof={proof}
-        theta={theta || T_open}
+        theta={currentTheta || theta || T_open}
       />
       )}
 

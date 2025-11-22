@@ -58,13 +58,23 @@ export default function AnalyzerPage() {
   // Efecto para mantener el progreso mínimo cuando el selector está visible
   useEffect(() => {
     if (showMethodSelector && minProgressRef.current > 0) {
-      // Establecer el progreso al mínimo inmediatamente
-      setAnalysisProgress(minProgressRef.current);
+      // Solo establecer el progreso al mínimo si es menor que el mínimo
+      // No forzar retroceso si el progreso ya es mayor
+      setAnalysisProgress((prev) => {
+        const minProgress = minProgressRef.current;
+        if (prev < minProgress) {
+          return minProgress;
+        }
+        return prev;
+      });
       
       // Usar un intervalo para mantener el progreso mientras el selector está visible
+      // Solo ajustar si el progreso es menor que el mínimo, nunca forzar retroceso
       const intervalId = setInterval(() => {
         setAnalysisProgress((prev) => {
           const minProgress = minProgressRef.current;
+          // Solo ajustar si el progreso es menor que el mínimo
+          // Nunca forzar retroceso si el progreso ya avanzó más
           if (prev < minProgress) {
             return minProgress;
           }

@@ -671,12 +671,12 @@ END`,
     complexity: "O(n)",
     code: `invertirArray(A[n], inicio, fin) BEGIN
     IF (inicio >= fin) THEN BEGIN
-        RETURN;
+        RETURN 0;
     END
     temp <- A[inicio];
     A[inicio] <- A[fin];
     A[fin] <- temp;
-    invertirArray(A, inicio + 1, fin - 1);
+    CALL invertirArray(A, inicio + 1, fin - 1);
 END`,
     category: "recursive_iteration",
     note: "Se analiza únicamente con método iterativo (T(n) = T(n-2) + O(1))",
