@@ -20,6 +20,7 @@ class AnalyzeRequest(BaseModel):
     api_key: Optional[str] = None  # API Key de Gemini (opcional)
     avgModel: Optional[AvgModelConfig] = None  # Modelo probabilístico para caso promedio
     algorithm_kind: Optional[str] = None  # "iterative" | "recursive" | "hybrid" | "unknown" - se detecta automáticamente si no se proporciona
+    preferred_method: Optional[str] = None  # "characteristic_equation" | "iteration" | "recursion_tree" | "master" - método preferido para algoritmos recursivos
 
 class LineCost(BaseModel):
     line: int
@@ -86,9 +87,13 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
             analyzer_best = analyzer_class()
             analyzer_avg = analyzer_class()
             
-            # Analizar worst y best
-            result_worst = analyzer_worst.analyze(ast, "worst")
-            result_best = analyzer_best.analyze(ast, "best")
+            # Analizar worst y best (pasar preferred_method solo si es RecursiveAnalyzer y existe)
+            if isinstance(analyzer_worst, RecursiveAnalyzer) and payload.preferred_method:
+                result_worst = analyzer_worst.analyze(ast, "worst", preferred_method=payload.preferred_method)
+                result_best = analyzer_best.analyze(ast, "best", preferred_method=payload.preferred_method)
+            else:
+                result_worst = analyzer_worst.analyze(ast, "worst")
+                result_best = analyzer_best.analyze(ast, "best")
             
             # Verificar que worst y best fueron exitosos
             if not result_worst.get("ok", False):
@@ -110,8 +115,11 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
                     "predicates": {}
                 }
             
-            # Analizar caso promedio
-            result_avg = analyzer_avg.analyze(ast, "avg", api_key=payload.api_key, avg_model=avg_model_dict)
+            # Analizar caso promedio (pasar preferred_method solo si es RecursiveAnalyzer y existe)
+            if isinstance(analyzer_avg, RecursiveAnalyzer) and payload.preferred_method:
+                result_avg = analyzer_avg.analyze(ast, "avg", api_key=payload.api_key, avg_model=avg_model_dict, preferred_method=payload.preferred_method)
+            else:
+                result_avg = analyzer_avg.analyze(ast, "avg", api_key=payload.api_key, avg_model=avg_model_dict)
             
             # Verificar que avg fue exitoso (si falla, continuar sin él o devolver error)
             # Por ahora, si falla, lo incluimos como None para que el frontend pueda manejarlo
@@ -191,7 +199,11 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
                     "predicates": {}
                 }
             
-            result = analyzer.analyze(ast, payload.mode, api_key=payload.api_key, avg_model=avg_model_dict)
+            # Pasar preferred_method solo si el analizador es recursivo y existe
+            if isinstance(analyzer, RecursiveAnalyzer) and payload.preferred_method:
+                result = analyzer.analyze(ast, payload.mode, api_key=payload.api_key, avg_model=avg_model_dict, preferred_method=payload.preferred_method)
+            else:
+                result = analyzer.analyze(ast, payload.mode, api_key=payload.api_key, avg_model=avg_model_dict)
             return result
         
     except Exception as e:
@@ -200,6 +212,68 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
             "errors": [
                 {
                     "message": f"Error en análisis: {str(e)}",
+                    "line": None,
+                    "column": None
+                }
+            ]
+        }
+
+@router.post("/detect-methods")
+def detect_methods(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
+    """
+    Detecta qué métodos de análisis son aplicables para un algoritmo recursivo
+    sin ejecutar el análisis completo.
+    
+    Retorna una lista de métodos aplicables: ["characteristic_equation", "iteration", "recursion_tree", "master"]
+    """
+    try:
+        # 1) Parsear el código fuente
+        parse_result = parse_source(payload.source)
+        if not parse_result.get("ok", False):
+            return {
+                "ok": False,
+                "errors": parse_result.get("errors", [])
+            }
+        
+        ast = parse_result.get("ast")
+        if not ast:
+            return {
+                "ok": False,
+                "errors": [{"message": "No se pudo obtener el AST del código", "line": None, "column": None}]
+            }
+        
+        # 2) Determinar el tipo de algoritmo
+        algorithm_kind = payload.algorithm_kind
+        if not algorithm_kind:
+            algorithm_kind = detect_algorithm_kind(ast)
+        
+        # Solo detectar métodos para algoritmos recursivos
+        if algorithm_kind not in ["recursive", "hybrid"]:
+            return {
+                "ok": False,
+                "errors": [{"message": "Este endpoint solo es para algoritmos recursivos", "line": None, "column": None}]
+            }
+        
+        # 3) Usar RecursiveAnalyzer para detectar métodos aplicables
+        analyzer = RecursiveAnalyzer()
+        applicable_methods = analyzer.detect_applicable_methods(ast)
+        
+        if not applicable_methods.get("ok", False):
+            return applicable_methods
+        
+        return {
+            "ok": True,
+            "applicable_methods": applicable_methods.get("applicable_methods", []),
+            "default_method": applicable_methods.get("default_method"),
+            "recurrence_info": applicable_methods.get("recurrence_info")
+        }
+        
+    except Exception as e:
+        return {
+            "ok": False,
+            "errors": [
+                {
+                    "message": f"Error detectando métodos: {str(e)}",
                     "line": None,
                     "column": None
                 }

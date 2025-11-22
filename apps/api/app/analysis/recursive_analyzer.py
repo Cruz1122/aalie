@@ -30,7 +30,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             from .expr_converter import ExprConverter
             self.expr_converter = ExprConverter()
     
-    def analyze(self, ast: Dict[str, Any], mode: str = "worst", api_key: Optional[str] = None, avg_model: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def analyze(self, ast: Dict[str, Any], mode: str = "worst", api_key: Optional[str] = None, avg_model: Optional[Dict[str, Any]] = None, preferred_method: Optional[str] = None) -> Dict[str, Any]:
         """
         Analiza un AST recursivo y retorna el resultado con recurrencia y Teorema Maestro.
         
@@ -39,6 +39,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             mode: Modo de análisis ("worst", "best", "avg")
             api_key: API Key (ignorado, mantenido por compatibilidad)
             avg_model: Modelo promedio (ignorado por ahora, recursivos normalmente tienen mismo costo)
+            preferred_method: Método preferido ("characteristic_equation", "iteration", "recursion_tree", "master")
             
         Returns:
             Resultado del análisis con recurrence, master, proof, etc.
@@ -67,8 +68,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "errors": [{"message": f"No aplicable: {validation_result['reason']}", "line": None, "column": None}]
             }
         
-        # 3. Extraer recurrencia
-        extraction_result = self._extract_recurrence(proc_def)
+        # 3. Extraer recurrencia (puede usar preferred_method si se proporciona)
+        extraction_result = self._extract_recurrence(proc_def, preferred_method=preferred_method)
         if not extraction_result["success"]:
             return {
                 "ok": False,
@@ -84,8 +85,19 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "errors": [{"message": f"No aplicable: {self.recurrence.get('notes', ['Razón desconocida'])[0]}", "line": None, "column": None}]
             }
         
-        # 4. Aplicar método apropiado (PRIORIDAD: Ecuación Característica > Iteración > Árbol > Maestro)
-        method = self.recurrence.get("method", "master")
+        # 4. Aplicar método apropiado
+        # Si se proporcionó preferred_method, usarlo directamente
+        if preferred_method:
+            method = preferred_method
+            # Validar que el método preferido es aplicable
+            if method not in ["characteristic_equation", "iteration", "recursion_tree", "master"]:
+                return {
+                    "ok": False,
+                    "errors": [{"message": f"Método preferido inválido: {preferred_method}", "line": None, "column": None}]
+                }
+        else:
+            # Usar la prioridad automática (PRIORIDAD: Ecuación Característica > Iteración > Árbol > Maestro)
+            method = self.recurrence.get("method", "master")
         
         if method == "characteristic_equation":
             # Aplicar Método de Ecuación Característica (PRIORIDAD ALTA)
@@ -130,6 +142,197 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         # 5. Generar resultado
         return self.result()
+    
+    def detect_applicable_methods(self, ast: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Detecta qué métodos de análisis son aplicables para un algoritmo recursivo
+        sin ejecutar el análisis completo.
+        
+        Args:
+            ast: AST del algoritmo a analizar
+            
+        Returns:
+            {
+                "ok": bool,
+                "applicable_methods": List[str],
+                "default_method": str,
+                "recurrence_info": dict
+            }
+        """
+        try:
+            # Limpiar estado previo
+            self.clear()
+            self.mode = "worst"  # Usar worst para detección
+            self.ast = ast
+            
+            # 1. Encontrar el procedimiento principal
+            proc_def = self._find_main_procedure(ast)
+            if not proc_def:
+                return {
+                    "ok": False,
+                    "errors": [{"message": "No se encontró un procedimiento principal", "line": None, "column": None}]
+                }
+            
+            self.proc_def = proc_def
+            self.procedure_name = proc_def.get("name")
+            
+            # 2. Validar condiciones iniciales
+            validation_result = self._validate_conditions(proc_def)
+            if not validation_result["valid"]:
+                return {
+                    "ok": False,
+                    "errors": [{"message": f"No aplicable: {validation_result['reason']}", "line": None, "column": None}]
+                }
+            
+            # 3. Extraer recurrencia sin método preferido (para detectar todos los métodos)
+            extraction_result = self._extract_recurrence(proc_def, preferred_method=None)
+            if not extraction_result["success"]:
+                return {
+                    "ok": False,
+                    "errors": [{"message": f"Error extrayendo recurrencia: {extraction_result['reason']}", "line": None, "column": None}]
+                }
+            
+            recurrence = extraction_result["recurrence"]
+            
+            if not recurrence.get("applicable", False):
+                return {
+                    "ok": False,
+                    "errors": [{"message": f"No aplicable: {recurrence.get('notes', ['Razón desconocida'])[0]}", "line": None, "column": None}]
+                }
+            
+            # 4. Detectar todos los métodos aplicables
+            # Obtener información necesaria para la detección
+            recursive_calls = self._find_recursive_calls(proc_def)
+            a = self._calculate_recursive_calls_count(proc_def, recursive_calls)
+            
+            # Calcular b (necesario para detect_recursion_tree_method)
+            subproblem_sizes = []
+            for call in recursive_calls:
+                subproblem_info = self._analyze_subproblem_type(call, proc_def)
+                if subproblem_info and subproblem_info["type"] not in ["subtraction"]:
+                    size_info = self._analyze_subproblem_size(call, proc_def)
+                    if size_info:
+                        subproblem_sizes.append(size_info)
+            
+            b = 2  # Valor por defecto
+            if subproblem_sizes:
+                b_values = [s["b"] for s in subproblem_sizes if s.get("b")]
+                if b_values and len(set(b_values)) == 1:
+                    b = b_values[0]
+            
+            # Detectar cada método INDEPENDIENTEMENTE (sin prioridad)
+            applicable_methods = []
+            
+            # Ecuación Característica
+            use_characteristic = self._detect_characteristic_equation_method(proc_def, recursive_calls)
+            if use_characteristic:
+                applicable_methods.append("characteristic_equation")
+            
+            # Método de Iteración (verificar independientemente, aunque típicamente se excluyen)
+            use_iteration = self._detect_iteration_method(proc_def, recursive_calls)
+            if use_iteration:
+                applicable_methods.append("iteration")
+            
+            # Árbol de Recursión
+            use_recursion_tree = self._detect_recursion_tree_method(proc_def, recursive_calls, a, b)
+            if use_recursion_tree:
+                applicable_methods.append("recursion_tree")
+            
+            # Teorema Maestro siempre está disponible (fallback)
+            applicable_methods.append("master")
+            
+            # Determinar método por defecto (prioridad)
+            default_method = recurrence.get("method", "master")
+            
+            # Preparar información básica de la recurrencia
+            recurrence_info = {
+                "type": recurrence.get("type"),
+                "form": recurrence.get("form"),
+                "applicable": recurrence.get("applicable")
+            }
+            
+            if recurrence.get("type") == "divide_conquer":
+                recurrence_info.update({
+                    "a": recurrence.get("a"),
+                    "b": recurrence.get("b"),
+                    "f": recurrence.get("f")
+                })
+            elif recurrence.get("type") == "linear_shift":
+                recurrence_info.update({
+                    "order": recurrence.get("order"),
+                    "shifts": recurrence.get("shifts"),
+                    "g(n)": recurrence.get("g(n)")
+                })
+            
+            return {
+                "ok": True,
+                "applicable_methods": applicable_methods,
+                "default_method": default_method,
+                "recurrence_info": recurrence_info
+            }
+            
+        except Exception as e:
+            return {
+                "ok": False,
+                "errors": [
+                    {
+                        "message": f"Error detectando métodos: {str(e)}",
+                        "line": None,
+                        "column": None
+                    }
+                ]
+            }
+    
+    def _has_object_field_access_in_recursive_calls(self, recursive_calls: List[Dict[str, Any]]) -> bool:
+        """
+        Detecta si las llamadas recursivas usan accesos a campos de objetos
+        (ej: raiz.izquierda, raiz.derecha) - típico de BST o árboles binarios.
+        
+        Args:
+            recursive_calls: Lista de llamadas recursivas
+            
+        Returns:
+            True si alguna llamada recursiva usa accesos a campos de objetos
+        """
+        for call in recursive_calls:
+            args = call.get("args", [])
+            for arg in args:
+                if self._has_field_access(arg):
+                    return True
+        return False
+    
+    def _has_field_access(self, node: Any) -> bool:
+        """
+        Verifica si un nodo contiene accesos a campos (field access).
+        
+        Args:
+            node: Nodo del AST
+            
+        Returns:
+            True si el nodo contiene accesos a campos
+        """
+        if not isinstance(node, dict):
+            return False
+        
+        node_type = node.get("type", "").lower()
+        
+        # Verificar si es un acceso a campo directo
+        if node_type == "field":
+            return True
+        
+        # Buscar recursivamente en hijos
+        for key, value in node.items():
+            if key in ["type", "pos"]:
+                continue
+            if isinstance(value, list):
+                for item in value:
+                    if self._has_field_access(item):
+                        return True
+            elif isinstance(value, dict):
+                if self._has_field_access(value):
+                    return True
+        
+        return False
     
     def _find_main_procedure(self, ast: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
@@ -248,12 +451,13 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         return False
     
-    def _extract_recurrence(self, proc_def: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_recurrence(self, proc_def: Dict[str, Any], preferred_method: Optional[str] = None) -> Dict[str, Any]:
         """
         Extrae la recurrencia T(n) = a·T(n/b) + f(n) del procedimiento.
         
         Args:
             proc_def: Nodo ProcDef del procedimiento
+            preferred_method: Método preferido (opcional)
             
         Returns:
             {"success": bool, "recurrence": dict, "reason": str}
@@ -294,11 +498,22 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 if size_info:
                     subproblem_sizes.append(size_info)
         
+        # Si no se pudieron determinar tamaños, verificar si es un caso con objetos (BST, árboles, etc.)
         if not subproblem_sizes:
-            return {
-                "success": False,
-                "reason": "No se pudieron determinar los tamaños de los subproblemas"
-            }
+            # Verificar si las llamadas recursivas usan accesos a campos de objetos
+            # (ej: raiz.izquierda, raiz.derecha) - típico de BST o árboles binarios
+            has_object_field_access = self._has_object_field_access_in_recursive_calls(recursive_calls)
+            
+            if has_object_field_access:
+                # Heurística: Para llamadas recursivas con objetos (BST, árboles),
+                # asumir divide-and-conquer binario: T(n) = T(n/2) + O(1)
+                # Solo se ejecuta una rama por llamada (a=1), y cada subproblema es ~n/2 (b=2)
+                subproblem_sizes = [{"b": 2, "offset": 0, "type": "division", "heuristic": "object_field_access"}]
+            else:
+                return {
+                    "success": False,
+                    "reason": "No se pudieron determinar los tamaños de los subproblemas"
+                }
         
         # 3. Verificar que todos los subproblemas tienen el mismo tamaño relativo
         # Distinguir entre decrease-and-conquer y divide-and-conquer
@@ -361,18 +576,44 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # 5. Detectar caso base n0
         n0 = self._detect_base_case(proc_def)
         
-        # 6. Detectar método apropiado (PRIORIDAD: Ecuación Característica > Iteración > Árbol > Maestro)
-        use_characteristic = self._detect_characteristic_equation_method(proc_def, recursive_calls)
-        use_iteration = False
-        use_recursion_tree = False
-        
-        if not use_characteristic:
-            # Solo considerar Iteración si NO aplica Ecuación Característica
-            use_iteration = self._detect_iteration_method(proc_def, recursive_calls)
-        
-        if not use_iteration:
+        # 6. Detectar método apropiado
+        # Si se proporciona preferred_method, usarlo directamente y detectar los demás para validación
+        if preferred_method:
+            # Detectar todos los métodos aplicables para validar que preferred_method es aplicable
+            use_characteristic = self._detect_characteristic_equation_method(proc_def, recursive_calls)
+            use_iteration = self._detect_iteration_method(proc_def, recursive_calls) if not use_characteristic else False
+            use_recursion_tree = self._detect_recursion_tree_method(proc_def, recursive_calls, a, b) if not use_iteration else False
+            
+            # Forzar el método preferido
+            if preferred_method == "characteristic_equation":
+                use_characteristic = True
+                use_iteration = False
+                use_recursion_tree = False
+            elif preferred_method == "iteration":
+                use_characteristic = False
+                use_iteration = True
+                use_recursion_tree = False
+            elif preferred_method == "recursion_tree":
+                use_characteristic = False
+                use_iteration = False
+                use_recursion_tree = True
+            elif preferred_method == "master":
+                use_characteristic = False
+                use_iteration = False
+                use_recursion_tree = False
+        else:
+            # Detectar método apropiado (PRIORIDAD: Ecuación Característica > Iteración > Árbol > Maestro)
+            use_characteristic = self._detect_characteristic_equation_method(proc_def, recursive_calls)
+            use_iteration = False
+            use_recursion_tree = False
+            
+            if not use_characteristic:
+                # Solo considerar Iteración si NO aplica Ecuación Característica
+                use_iteration = self._detect_iteration_method(proc_def, recursive_calls)
+            
+            if not use_iteration:
                 # Solo considerar Árbol de Recursión si no aplica Ecuación Característica ni Iteración
-            use_recursion_tree = self._detect_recursion_tree_method(proc_def, recursive_calls, a, b)
+                use_recursion_tree = self._detect_recursion_tree_method(proc_def, recursive_calls, a, b)
         
         # 7. Construir recurrencia con método apropiado
         # Simplificar b para mostrar

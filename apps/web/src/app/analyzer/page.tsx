@@ -15,6 +15,7 @@ import LineTable from "@/components/LineTable";
 import ProcedureModal from "@/components/ProcedureModal";
 import IterativeAnalysisView from "@/components/IterativeAnalysisView";
 import RecursiveAnalysisView from "@/components/RecursiveAnalysisView";
+import MethodSelector, { MethodType } from "@/components/MethodSelector";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
@@ -45,6 +46,35 @@ export default function AnalyzerPage() {
   const [algorithmType, setAlgorithmType] = useState<"iterative" | "recursive" | "hybrid" | "unknown" | undefined>(undefined);
   const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [showMethodSelector, setShowMethodSelector] = useState(false);
+  const [applicableMethods, setApplicableMethods] = useState<MethodType[]>([]);
+  const [defaultMethod, setDefaultMethod] = useState<MethodType>("master");
+  const methodSelectionPromiseRef = useRef<{
+    resolve: (method: MethodType) => void;
+    reject: () => void;
+  } | null>(null);
+  const minProgressRef = useRef<number>(0);
+  
+  // Efecto para mantener el progreso mínimo cuando el selector está visible
+  useEffect(() => {
+    if (showMethodSelector && minProgressRef.current > 0) {
+      // Establecer el progreso al mínimo inmediatamente
+      setAnalysisProgress(minProgressRef.current);
+      
+      // Usar un intervalo para mantener el progreso mientras el selector está visible
+      const intervalId = setInterval(() => {
+        setAnalysisProgress((prev) => {
+          const minProgress = minProgressRef.current;
+          if (prev < minProgress) {
+            return minProgress;
+          }
+          return prev;
+        });
+      }, 100); // Verificar cada 100ms
+      
+      return () => clearInterval(intervalId);
+    }
+  }, [showMethodSelector]);
   const [data, setData] = useState<{
     worst: AnalyzeOpenResponse | null;
     best: AnalyzeOpenResponse | null;
@@ -223,6 +253,7 @@ export default function AnalyzerPage() {
       const isRecursive = kind === "recursive" || kind === "hybrid";
       
       let progressBeforeAnalysis: number;
+      let selectedMethod: MethodType | undefined = undefined;
       
       if (isRecursive) {
         setAnalysisMessage("Verificando condiciones...");
@@ -233,9 +264,109 @@ export default function AnalyzerPage() {
         await animateProgress(65, 75, 300, setAnalysisProgress);
         setAnalysisMessage("Detectando método de análisis...");
         await animateProgress(75, 85, 500, setAnalysisProgress);
-        // Añadir transición suave antes de iniciar el análisis real
-        setAnalysisMessage("Iniciando análisis de complejidad...");
-        await animateProgress(85, 90, 400, setAnalysisProgress);
+        
+        // Guardar el progreso actual antes de detectar métodos
+        const progressBeforeMethodSelection = 85;
+        
+        // Detectar métodos aplicables
+        selectedMethod = "master";
+        try {
+          const detectMethodsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/detect-methods`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              source,
+              algorithm_kind: kind
+            }),
+          });
+          
+          const detectMethodsResult = await detectMethodsResponse.json() as {
+            ok: boolean;
+            applicable_methods?: MethodType[];
+            default_method?: MethodType;
+            errors?: Array<{ message: string }>;
+          };
+          
+          if (detectMethodsResult.ok && detectMethodsResult.applicable_methods) {
+            const methods = detectMethodsResult.applicable_methods;
+            const defaultMethodValue = (detectMethodsResult.default_method || "master") as MethodType;
+            
+            setApplicableMethods(methods);
+            setDefaultMethod(defaultMethodValue);
+            
+            // Si hay múltiples métodos aplicables, mostrar selector
+            if (methods.length > 1) {
+              console.log('[Analyzer] Múltiples métodos detectados:', methods);
+              console.log('[Analyzer] Método por defecto:', defaultMethodValue);
+              
+              // Actualizar mensaje para indicar que el usuario debe seleccionar
+              setAnalysisMessage("Selecciona el método de análisis...");
+              
+              // Guardar el progreso mínimo para evitar que baje
+              minProgressRef.current = progressBeforeMethodSelection;
+              
+              // Asegurar que el progreso se mantenga en el valor actual
+              setAnalysisProgress((prev) => Math.max(prev, progressBeforeMethodSelection));
+              
+              // Mostrar el selector primero
+              setShowMethodSelector(true);
+              console.log('[Analyzer] Selector de método mostrado');
+              
+              // Esperar un poco para que el selector se renderice completamente
+              await new Promise((resolve) => setTimeout(resolve, 200));
+              
+              // Crear un Promise que se resolverá cuando el usuario seleccione un método
+              console.log('[Analyzer] Esperando selección del usuario...');
+              selectedMethod = await new Promise<MethodType>((resolve, reject) => {
+                methodSelectionPromiseRef.current = { resolve, reject };
+                // Timeout de seguridad (no debería pasar, pero por si acaso)
+                setTimeout(() => {
+                  if (methodSelectionPromiseRef.current) {
+                    console.warn("Timeout en selección de método, usando método por defecto");
+                    methodSelectionPromiseRef.current.resolve(defaultMethodValue);
+                    methodSelectionPromiseRef.current = null;
+                  }
+                }, 60000); // 60 segundos timeout
+              }).catch(() => {
+                console.warn("Error en selección de método, usando método por defecto");
+                return defaultMethodValue;
+              });
+              
+              console.log('[Analyzer] Método seleccionado:', selectedMethod);
+              
+              // Ocultar selector después de la selección
+              setShowMethodSelector(false);
+              methodSelectionPromiseRef.current = null;
+              // Limpiar el progreso mínimo después de ocultar el selector
+              minProgressRef.current = 0;
+              
+              // Actualizar mensaje para continuar
+              setAnalysisMessage("Método seleccionado, continuando análisis...");
+              // Mantener el progreso y avanzar suavemente
+              await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
+            } else {
+              // Solo un método disponible, usarlo directamente
+              console.log('[Analyzer] Solo un método disponible:', defaultMethodValue);
+              selectedMethod = defaultMethodValue;
+              // Continuar con el progreso normalmente
+              setAnalysisMessage("Iniciando análisis de complejidad...");
+              await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
+            }
+          } else {
+            // Si falla la detección, usar método por defecto
+            selectedMethod = "master";
+            // Continuar con el progreso normalmente
+            setAnalysisMessage("Iniciando análisis de complejidad...");
+            await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
+          }
+        } catch (error) {
+          console.warn("Error detectando métodos, usando método por defecto:", error);
+          selectedMethod = "master";
+          // Continuar con el progreso normalmente
+          setAnalysisMessage("Iniciando análisis de complejidad...");
+          await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
+        }
+        
         progressBeforeAnalysis = 90;
       } else {
         setAnalysisMessage("Hallando sumatorias...");
@@ -255,6 +386,7 @@ export default function AnalyzerPage() {
         api_key?: string;
         avgModel?: { mode: string; predicates?: Record<string, string> };
         algorithm_kind?: string;
+        preferred_method?: MethodType;
       } = { 
         source, 
         mode: "all",
@@ -264,6 +396,11 @@ export default function AnalyzerPage() {
         },
         algorithm_kind: kind  // Enviar el tipo de algoritmo al backend
       };
+      
+      // Solo agregar preferred_method si es recursivo y hay un método seleccionado
+      if (isRecursive && selectedMethod) {
+        analyzeBody.preferred_method = selectedMethod;
+      }
       if (apiKey) {
         analyzeBody.api_key = apiKey;  // Mantener por compatibilidad, pero backend ya no lo usa para simplificación
       }
@@ -635,6 +772,27 @@ export default function AnalyzerPage() {
             setAlgorithmType(undefined);
             setIsAnalysisComplete(false);
             setAnalysisError(null);
+          }}
+        />
+      )}
+
+      {/* Selector de método - debe aparecer sobre el loader */}
+      {showMethodSelector && applicableMethods.length > 0 && analyzing && (
+        <MethodSelector
+          applicableMethods={applicableMethods}
+          defaultMethod={defaultMethod}
+          onSelect={(method) => {
+            console.log('[MethodSelector] Método seleccionado:', method);
+            if (methodSelectionPromiseRef.current) {
+              methodSelectionPromiseRef.current.resolve(method);
+            }
+          }}
+          onCancel={() => {
+            // Si cancela, usar método por defecto
+            console.log('[MethodSelector] Cancelado, usando método por defecto:', defaultMethod);
+            if (methodSelectionPromiseRef.current) {
+              methodSelectionPromiseRef.current.resolve(defaultMethod);
+            }
           }}
         />
       )}
