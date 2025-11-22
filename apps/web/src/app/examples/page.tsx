@@ -249,12 +249,13 @@ END`,
     complexity: "O(2ⁿ)",
     code: `hanoi(n, origen, destino, auxiliar) BEGIN
     IF (n = 1) THEN BEGIN
-        CALL moverDisco(origen, destino);
+        RETURN 1;
     END
     ELSE BEGIN
-        CALL hanoi(n - 1, origen, auxiliar, destino);
-        CALL moverDisco(origen, destino);
-        CALL hanoi(n - 1, auxiliar, destino, origen);
+        resultado <- hanoi(n - 1, origen, auxiliar, destino);
+        resultado <- resultado + 1;
+        resultado <- resultado + hanoi(n - 1, auxiliar, destino, origen);
+        RETURN resultado;
     END
 END`,
     category: "recursive_characteristic",
@@ -445,11 +446,13 @@ END`,
     IF (n <= 1) THEN BEGIN
         RETURN 1;
     END
-    ELSE IF (n = 2) THEN BEGIN
-        RETURN 2;
-    END
     ELSE BEGIN
-        RETURN subirEscaleras(n - 1) + subirEscaleras(n - 2);
+        IF (n = 2) THEN BEGIN
+            RETURN 2;
+        END
+        ELSE BEGIN
+            RETURN subirEscaleras(n - 1) + subirEscaleras(n - 2);
+        END
     END
 END`,
     category: "recursive_characteristic",
@@ -509,11 +512,13 @@ END`,
     IF (n <= 1) THEN BEGIN
         RETURN 0;
     END
-    ELSE IF (n = 2) THEN BEGIN
-        RETURN 1;
-    END
     ELSE BEGIN
-        RETURN tribonacci(n - 1) + tribonacci(n - 2) + tribonacci(n - 3);
+        IF (n = 2) THEN BEGIN
+            RETURN 1;
+        END
+        ELSE BEGIN
+            RETURN tribonacci(n - 1) + tribonacci(n - 2) + tribonacci(n - 3);
+        END
     END
 END`,
     category: "recursive_characteristic",
@@ -537,6 +542,143 @@ END`,
     category: "recursive_characteristic",
     note: "Se analiza con Ecuación Característica (DP lineal detectada)",
     isHomogeneous: true, // P(n) = 2P(n-1) + P(n-2) es homogénea (sin término constante)
+  },
+  
+  // ========== Recursivos (Únicamente Teorema Maestro) ==========
+  {
+    id: 25,
+    name: "QuickSort (Caso Promedio)",
+    description:
+      "Algoritmo de ordenamiento divide y conquista que funciona eligiendo un pivote y dividiendo el array en dos partes. En el caso promedio, T(n) = 2T(n/2) + O(n) pero el pivote no divide exactamente a la mitad. Analizado únicamente con Teorema Maestro porque a=1 no cumple las condiciones del Árbol de Recursión.",
+    complexity: "Best: O(n log n), Worst: O(n²), Avg: O(n log n)",
+    code: `quicksort(A[n], inicio, fin) BEGIN
+    IF (inicio < fin) THEN BEGIN
+        pivote <- particionar(A, inicio, fin);
+        quicksort(A, inicio, pivote - 1);
+        quicksort(A, pivote + 1, fin);
+    END
+END
+
+particionar(A[n], inicio, fin) BEGIN
+    pivote <- A[fin];
+    i <- inicio - 1;
+    FOR j <- inicio TO fin - 1 DO BEGIN
+        IF (A[j] <= pivote) THEN BEGIN
+            i <- i + 1;
+            temp <- A[i];
+            A[i] <- A[j];
+            A[j] <- temp;
+        END
+    END
+    temp <- A[i + 1];
+    A[i + 1] <- A[fin];
+    A[fin] <- temp;
+    RETURN i + 1;
+END`,
+    category: "recursive_master",
+    note: "Se analiza únicamente con Teorema Maestro (a=1, divide no uniforme)",
+  },
+  {
+    id: 26,
+    name: "Búsqueda en Árbol Binario de Búsqueda",
+    description:
+      "Busca un elemento en un BST. La recurrencia T(n) = T(n/2) + O(1) depende de la altura del árbol. Analizado únicamente con Teorema Maestro porque a=1, b=2 no cumple las condiciones del Árbol de Recursión.",
+    complexity: "Best: O(log n), Worst: O(n), Avg: O(log n)",
+    code: `buscarBST(raiz, valor) BEGIN
+    IF (raiz = null) THEN BEGIN
+        RETURN null;
+    END
+    IF (raiz.valor = valor) THEN BEGIN
+        RETURN raiz;
+    END
+    ELSE BEGIN
+        IF (valor < raiz.valor) THEN BEGIN
+            RETURN buscarBST(raiz.izquierda, valor);
+        END
+        ELSE BEGIN
+            RETURN buscarBST(raiz.derecha, valor);
+        END
+    END
+END`,
+    category: "recursive_master",
+    note: "Se analiza únicamente con Teorema Maestro (a=1, b=2, caso promedio)",
+  },
+  {
+    id: 27,
+    name: "Exponentiación Rápida Recursiva",
+    description:
+      "Calcula x^n de forma eficiente usando divide y conquista. T(n) = T(n/2) + O(1). Analizado únicamente con Teorema Maestro porque a=1, b=2.",
+    complexity: "O(log n)",
+    code: `exponenciacionRapida(x, n) BEGIN
+    IF (n = 0) THEN BEGIN
+        RETURN 1;
+    END
+    resultado <- exponenciacionRapida(x, n DIV 2);
+    resultado <- resultado * resultado;
+    IF (n MOD 2 = 1) THEN BEGIN
+        resultado <- resultado * x;
+    END
+    RETURN resultado;
+END`,
+    category: "recursive_master",
+    note: "Se analiza únicamente con Teorema Maestro (a=1, b=2)",
+  },
+  
+  // ========== Recursivos (Únicamente Método Iterativo) ==========
+  {
+    id: 28,
+    name: "Suma de Array Recursiva",
+    description:
+      "Suma los elementos de un array recursivamente procesando un elemento a la vez. Recurrencia T(n) = T(n-1) + O(1). Analizado únicamente con método iterativo porque no es lineal por desplazamientos constantes múltiples.",
+    complexity: "O(n)",
+    code: `sumaArray(A[n], n) BEGIN
+    IF (n = 0) THEN BEGIN
+        RETURN 0;
+    END
+    ELSE BEGIN
+        RETURN A[n] + sumaArray(A, n - 1);
+    END
+END`,
+    category: "recursive_iteration",
+    note: "Se analiza únicamente con método iterativo (T(n) = T(n-1) + O(1))",
+  },
+  {
+    id: 29,
+    name: "Búsqueda en Lista Enlazada",
+    description:
+      "Busca un elemento en una lista enlazada recursivamente. Recurrencia T(n) = T(n-1) + O(1). Analizado únicamente con método iterativo.",
+    complexity: "O(n)",
+    code: `buscarLista(nodo, valor) BEGIN
+    IF (nodo = null) THEN BEGIN
+        RETURN false;
+    END
+    IF (nodo.valor = valor) THEN BEGIN
+        RETURN true;
+    END
+    ELSE BEGIN
+        RETURN buscarLista(nodo.siguiente, valor);
+    END
+END`,
+    category: "recursive_iteration",
+    note: "Se analiza únicamente con método iterativo (T(n) = T(n-1) + O(1))",
+  },
+  {
+    id: 30,
+    name: "Invertir Array Recursivo",
+    description:
+      "Invierte un array recursivamente intercambiando elementos de los extremos. Recurrencia T(n) = T(n-2) + O(1). Analizado únicamente con método iterativo porque no cumple las condiciones de ecuación característica.",
+    complexity: "O(n)",
+    code: `invertirArray(A[n], inicio, fin) BEGIN
+    IF (inicio >= fin) THEN BEGIN
+        RETURN;
+    END
+    temp <- A[inicio];
+    A[inicio] <- A[fin];
+    A[fin] <- temp;
+    invertirArray(A, inicio + 1, fin - 1);
+END`,
+    category: "recursive_iteration",
+    note: "Se analiza únicamente con método iterativo (T(n) = T(n-2) + O(1))",
   },
 ];
 

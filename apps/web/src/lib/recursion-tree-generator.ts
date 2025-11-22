@@ -1,11 +1,21 @@
 /**
  * Generador del árbol de recursión para visualización con react-flow
+ * Soporta dos tipos:
+ * 1. Divide-and-conquer (uniforme, niveles regulares)
+ * 2. Linear shift (irregular, crecimiento exponencial, ej: Fibonacci)
  */
 
 export interface RecurrenceData {
   a: number; // número de subproblemas
   b: number; // factor de reducción
   f: string; // trabajo no recursivo f(n)
+  n0: number; // caso base
+}
+
+export interface LinearRecurrenceData {
+  shifts: number[]; // desplazamientos [1, 2] para Fibonacci
+  coefficients: number[]; // coeficientes [1, 1] para Fibonacci
+  g_n?: string; // término no homogéneo g(n), null si es homogénea
   n0: number; // caso base
 }
 
@@ -110,15 +120,6 @@ function generateTreeNodes(
     }
   }
   
-  // Debug: verificar nodos generados
-  console.log('[generateTreeNodes] Generated nodes:', {
-    total: nodes.length,
-    byLevel: nodes.reduce((acc, n) => {
-      acc[n.level] = (acc[n.level] || 0) + 1;
-      return acc;
-    }, {} as Record<number, number>),
-    sampleIds: nodes.slice(0, 5).map(n => n.id)
-  });
   
   return nodes;
 }
@@ -129,26 +130,56 @@ function generateTreeNodes(
 function generateTreeEdges(nodes: TreeNode[], recurrence: RecurrenceData): TreeEdge[] {
   const edges: TreeEdge[] = [];
   
-  // Crear un mapa de nodos por ID para verificación
+  // Crear un mapa de nodos por ID y por nivel-índice para búsqueda rápida
   const nodeMap = new Map<string, TreeNode>();
+  const nodesByLevel = new Map<number, TreeNode[]>();
+  
   for (const node of nodes) {
     nodeMap.set(node.id, node);
+    if (!nodesByLevel.has(node.level)) {
+      nodesByLevel.set(node.level, []);
+    }
+    nodesByLevel.get(node.level)!.push(node);
+  }
+  
+  // Ordenar nodos por nivel y por índice dentro de cada nivel
+  for (const levelNodes of nodesByLevel.values()) {
+    levelNodes.sort((a, b) => {
+      const aIndex = parseInt(a.id.split('-').pop() || '0');
+      const bIndex = parseInt(b.id.split('-').pop() || '0');
+      return aIndex - bIndex;
+    });
   }
   
   // Para cada nodo que no sea raíz, encontrar su padre
   for (const node of nodes) {
     if (node.level === 0) continue;
     
-    // Calcular el índice del padre
+    // Extraer el índice del nodo (último número del ID)
+    const idParts = node.id.split('-');
+    const nodeIndex = parseInt(idParts[idParts.length - 1] || '0');
+    
+    // El índice del padre en su nivel
     const parentLevel = node.level - 1;
-    const nodeIndex = parseInt(node.id.split('-')[2] || '0');
     const parentIndex = Math.floor(nodeIndex / recurrence.a);
     
-    const parentId = parentLevel === 0 ? 'root' : `node-${parentLevel}-${parentIndex}`;
+    // Determinar el ID del padre
+    let parentId: string;
+    if (parentLevel === 0) {
+      parentId = 'root';
+    } else {
+      // Buscar el nodo padre en el nivel correspondiente
+      const parentLevelNodes = nodesByLevel.get(parentLevel);
+      if (!parentLevelNodes || parentLevelNodes.length <= parentIndex) {
+        console.warn(`[generateTreeEdges] Parent at level ${parentLevel}, index ${parentIndex} not found for node ${node.id}`);
+        continue;
+      }
+      parentId = parentLevelNodes[parentIndex].id;
+    }
     
     // Verificar que el padre existe
     if (!nodeMap.has(parentId)) {
-      console.warn(`[generateTreeEdges] Parent node ${parentId} not found for node ${node.id}`);
+      console.warn(`[generateTreeEdges] Parent node ${parentId} not found for node ${node.id} (level ${node.level}, index ${nodeIndex})`);
       continue;
     }
     
@@ -156,13 +187,13 @@ function generateTreeEdges(nodes: TreeNode[], recurrence: RecurrenceData): TreeE
       id: `edge-${parentId}-${node.id}`,
       source: parentId,
       target: node.id,
-      // No especificar sourceHandle/targetHandle, usar los handles por defecto de los nodos
       style: {
         stroke: '#64748b',
         strokeWidth: 2,
       },
     });
   }
+  
   
   return edges;
 }
@@ -304,6 +335,377 @@ export function generateRecursionTree(
     totalNodes: treeNodes.length,
     totalLevels: Math.max(...treeNodes.map(n => n.level)) + 1,
     nodesPerLevel: Array.from(nodesPerLevel.values()),
+  };
+  
+  return {
+    nodes,
+    edges: treeEdges,
+    metadata,
+  };
+}
+
+/**
+ * Interfaz para nodos de árbol lineal (recurrencias por desplazamiento)
+ */
+export interface LinearTreeNode {
+  id: string;
+  label: string; // T(n), T(n-1), T(n-2), etc.
+  argument: number; // valor del argumento (n, n-1, n-2, etc.)
+  level: number; // nivel en el árbol (0 = raíz)
+  isBaseCase: boolean; // si es caso base
+  duplicateCount?: number; // número de veces que aparece este subproblema
+  parentId?: string; // ID del nodo padre (para múltiples padres)
+}
+
+/**
+ * Genera nodos del árbol para recurrencias lineales (irregulares)
+ * Para Fibonacci: T(n) -> T(n-1), T(n-2)
+ */
+function generateLinearTreeNodes(
+  recurrence: LinearRecurrenceData,
+  maxDepth: number | null,
+  initialN: number = 10
+): LinearTreeNode[] {
+  const nodes: LinearTreeNode[] = [];
+  const nodeMap = new Map<number, LinearTreeNode[]>(); // argument -> nodes[]
+  const visited = new Set<string>(); // para evitar duplicados de ID
+  
+  // Función auxiliar para calcular número de Fibonacci (aproximación)
+  const fibCount = (k: number): number => {
+    if (k <= 1) return 1;
+    const phi = (1 + Math.sqrt(5)) / 2;
+    return Math.round(Math.pow(phi, k) / Math.sqrt(5));
+  };
+  
+  // Cola para procesar nodos (BFS)
+  interface QueueItem {
+    argument: number;
+    level: number;
+    parentId: string | null;
+    childIndex: number;
+  }
+  
+  const queue: QueueItem[] = [
+    { argument: initialN, level: 0, parentId: null, childIndex: 0 }
+  ];
+  
+  let nodeCounter = 0;
+  const effectiveMaxDepth = maxDepth !== null ? maxDepth : initialN;
+  
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    
+    // Verificar límites
+    if (current.level > effectiveMaxDepth) continue;
+    if (current.argument <= recurrence.n0) {
+      // Es caso base
+      const baseCaseId = current.parentId 
+        ? `${current.parentId}-child-${current.childIndex}`
+        : 'root-base';
+      
+      if (!visited.has(baseCaseId)) {
+        nodes.push({
+          id: baseCaseId,
+          label: `T(${Math.max(0, current.argument)})`,
+          argument: Math.max(0, current.argument),
+          level: current.level,
+          isBaseCase: true,
+          parentId: current.parentId || undefined,
+        });
+        visited.add(baseCaseId);
+      }
+      continue;
+    }
+    
+    // Generar ID único para este nodo
+    const nodeId = current.parentId 
+      ? `${current.parentId}-child-${current.childIndex}`
+      : 'root';
+    
+    if (visited.has(nodeId)) continue;
+    visited.add(nodeId);
+    
+    // Crear nodo
+    const node: LinearTreeNode = {
+      id: nodeId,
+      label: `T(${current.argument})`,
+      argument: current.argument,
+      level: current.level,
+      isBaseCase: false,
+      parentId: current.parentId || undefined,
+    };
+    
+    nodes.push(node);
+    
+    // Guardar en mapa por argumento para contar duplicados
+    if (!nodeMap.has(current.argument)) {
+      nodeMap.set(current.argument, []);
+    }
+    nodeMap.get(current.argument)!.push(node);
+    
+    // Generar hijos según los desplazamientos
+    // Para Fibonacci: shifts=[1,2], entonces T(n) -> T(n-1), T(n-2)
+    for (let i = 0; i < recurrence.shifts.length; i++) {
+      const shift = recurrence.shifts[i];
+      const childArgument = current.argument - shift;
+      
+      if (childArgument >= 0) {
+        queue.push({
+          argument: childArgument,
+          level: current.level + 1,
+          parentId: nodeId,
+          childIndex: i,
+        });
+      }
+    }
+  }
+  
+  // Calcular conteo de duplicados
+  for (const [arg, argNodes] of nodeMap.entries()) {
+    if (argNodes.length > 1) {
+      // Múltiples nodos con el mismo argumento = subproblema duplicado
+      for (const node of argNodes) {
+        node.duplicateCount = argNodes.length;
+      }
+    }
+  }
+  
+  return nodes;
+}
+
+/**
+ * Genera edges para árbol lineal (irregular)
+ */
+function generateLinearTreeEdges(nodes: LinearTreeNode[]): TreeEdge[] {
+  const edges: TreeEdge[] = [];
+  const nodeMap = new Map<string, LinearTreeNode>();
+  
+  for (const node of nodes) {
+    nodeMap.set(node.id, node);
+  }
+  
+  // Para cada nodo que no sea raíz, crear edge desde su padre
+  for (const node of nodes) {
+    if (node.parentId && nodeMap.has(node.parentId)) {
+      edges.push({
+        id: `edge-${node.parentId}-${node.id}`,
+        source: node.parentId,
+        target: node.id,
+        style: {
+          stroke: '#64748b',
+          strokeWidth: 2,
+        },
+      });
+    }
+  }
+  
+  return edges;
+}
+
+/**
+ * Calcula posiciones para árbol lineal (irregular, layout tipo árbol binario expandido)
+ */
+function calculateLinearTreePositions(
+  nodes: LinearTreeNode[],
+  initialN: number,
+  orientation: 'vertical' | 'horizontal' = 'vertical',
+  nodeWidth: number = 160,
+  nodeHeight: number = 90,
+  horizontalSpacing: number = 200,
+  verticalSpacing: number = 150
+): Map<string, { x: number; y: number }> {
+  const positions = new Map<string, { x: number; y: number }>();
+  const nodeMap = new Map<string, LinearTreeNode>();
+  const childrenMap = new Map<string, LinearTreeNode[]>();
+  
+  // Construir mapas
+  for (const node of nodes) {
+    nodeMap.set(node.id, node);
+    if (node.parentId) {
+      if (!childrenMap.has(node.parentId)) {
+        childrenMap.set(node.parentId, []);
+      }
+      childrenMap.get(node.parentId)!.push(node);
+    }
+  }
+  
+  // Calcular posiciones recursivamente usando DFS
+  function calculatePosition(
+    nodeId: string,
+    level: number,
+    xOffset: number,
+    width: number
+  ): { x: number; y: number; usedWidth: number } {
+    const node = nodeMap.get(nodeId);
+    if (!node) return { x: 0, y: 0, usedWidth: 0 };
+    
+    const children = childrenMap.get(nodeId) || [];
+    const childrenCount = children.length;
+    
+    let y: number;
+    let x: number;
+    
+    if (orientation === 'vertical') {
+      y = level * verticalSpacing;
+      // Si no tiene hijos, está en el centro de su espacio asignado
+      if (childrenCount === 0) {
+        x = xOffset + width / 2;
+        return { x, y, usedWidth: width };
+      }
+      
+      // Distribuir hijos horizontalmente
+      const childWidth = width / childrenCount;
+      let currentX = xOffset;
+      let maxUsedWidth = 0;
+      
+      // Calcular posiciones de hijos primero
+      const childPositions: Array<{ x: number; y: number; usedWidth: number }> = [];
+      for (const child of children) {
+        const childPos = calculatePosition(child.id, level + 1, currentX, childWidth);
+        childPositions.push(childPos);
+        currentX += childPos.usedWidth;
+        maxUsedWidth = Math.max(maxUsedWidth, childPos.usedWidth);
+      }
+      
+      // Posicionar nodo actual en el centro de sus hijos
+      const childrenStartX = childPositions[0]?.x || xOffset;
+      const childrenEndX = childPositions[childPositions.length - 1]?.x || (xOffset + width);
+      x = (childrenStartX + childrenEndX) / 2;
+      
+      return { x, y, usedWidth: width };
+    } else {
+      // Horizontal layout
+      x = level * horizontalSpacing;
+      if (childrenCount === 0) {
+        y = xOffset + width / 2;
+        return { x, y, usedWidth: width };
+      }
+      
+      const childWidth = width / childrenCount;
+      let currentY = xOffset;
+      let maxUsedWidth = 0;
+      
+      const childPositions: Array<{ x: number; y: number; usedWidth: number }> = [];
+      for (const child of children) {
+        const childPos = calculatePosition(child.id, level + 1, currentY, childWidth);
+        childPositions.push(childPos);
+        currentY += childPos.usedWidth;
+        maxUsedWidth = Math.max(maxUsedWidth, childPos.usedWidth);
+      }
+      
+      const childrenStartY = childPositions[0]?.y || xOffset;
+      const childrenEndY = childPositions[childPositions.length - 1]?.y || (xOffset + width);
+      y = (childrenStartY + childrenEndY) / 2;
+      
+      return { x, y, usedWidth: width };
+    }
+  }
+  
+  // Encontrar raíz
+  const root = nodes.find(n => !n.parentId) || nodes[0];
+  if (!root) return positions;
+  
+  // Calcular ancho inicial aproximado basado en la profundidad máxima
+  const maxLevel = Math.max(...nodes.map(n => n.level));
+  const estimatedWidth = Math.pow(2, maxLevel) * horizontalSpacing * 2;
+  
+  // Calcular todas las posiciones
+  const visited = new Set<string>();
+  function setPosition(nodeId: string, level: number, xOffset: number, width: number) {
+    if (visited.has(nodeId)) return;
+    visited.add(nodeId);
+    
+    const pos = calculatePosition(nodeId, level, xOffset, width);
+    positions.set(nodeId, { x: pos.x, y: pos.y });
+    
+    const node = nodeMap.get(nodeId);
+    if (!node) return;
+    
+    const children = childrenMap.get(nodeId) || [];
+    if (children.length === 0) return;
+    
+    const childWidth = width / children.length;
+    let currentOffset = xOffset;
+    
+    for (const child of children) {
+      if (orientation === 'vertical') {
+        setPosition(child.id, level + 1, currentOffset, childWidth);
+      } else {
+        setPosition(child.id, level + 1, currentOffset, childWidth);
+      }
+      currentOffset += childWidth;
+    }
+  }
+  
+  setPosition(root.id, 0, -estimatedWidth / 2, estimatedWidth);
+  
+  return positions;
+}
+
+/**
+ * Genera el árbol de recursión para recurrencias lineales (irregulares)
+ * Ejemplo: Fibonacci T(n) = T(n-1) + T(n-2)
+ */
+export function generateLinearRecursionTree(
+  recurrence: LinearRecurrenceData,
+  maxDepth: number | null = null,
+  orientation: 'vertical' | 'horizontal' = 'vertical',
+  initialN: number = 3 // Por defecto n=3 (profundidad más baja)
+): TreeLayout {
+  // Generar nodos
+  const treeNodes = generateLinearTreeNodes(recurrence, maxDepth, initialN);
+  
+  // Generar edges
+  const treeEdges = generateLinearTreeEdges(treeNodes);
+  
+  // Calcular posiciones
+  const positionMap = calculateLinearTreePositions(
+    treeNodes,
+    initialN,
+    orientation
+  );
+  
+  // Convertir a formato react-flow
+  const sourcePos = orientation === 'vertical' ? 'bottom' : 'right';
+  const targetPos = orientation === 'vertical' ? 'top' : 'left';
+  
+  // Calcular número de nodos por nivel
+  const nodesByLevel = new Map<number, number>();
+  const nodesByArgument = new Map<number, number>();
+  
+  for (const node of treeNodes) {
+    nodesByLevel.set(node.level, (nodesByLevel.get(node.level) || 0) + 1);
+    nodesByArgument.set(node.argument, (nodesByArgument.get(node.argument) || 0) + 1);
+  }
+  
+  const nodes = treeNodes.map((node) => ({
+    id: node.id,
+    type: 'default',
+    data: {
+      label: node.label,
+      size: node.argument,
+      level: node.level,
+      nodeCount: nodesByLevel.get(node.level) || 1,
+      isBaseCase: node.isBaseCase,
+      duplicateCount: node.duplicateCount,
+      argument: node.argument,
+      sourcePosition: sourcePos,
+      targetPosition: targetPos,
+    },
+    position: positionMap.get(node.id) || { x: 0, y: 0 },
+  }));
+  
+  // Calcular número de nodos duplicados (subproblemas repetidos)
+  const duplicateNodes = Array.from(nodesByArgument.entries())
+    .filter(([_, count]) => count > 1)
+    .length;
+  
+  const metadata = {
+    totalNodes: treeNodes.length,
+    totalLevels: Math.max(...treeNodes.map(n => n.level)) + 1,
+    nodesPerLevel: Array.from(nodesByLevel.values()),
+    duplicateNodes, // número de argumentos que aparecen múltiples veces
+    growthType: 'exponential' as const, // Para recurrencias lineales siempre es exponencial
   };
   
   return {

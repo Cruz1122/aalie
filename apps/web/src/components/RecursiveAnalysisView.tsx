@@ -79,7 +79,7 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
   const isRecursionTreeMethod = recurrence?.method === "recursion_tree";
   
   // Obtener T_open para cada caso
-  const bestT = bestData?.totals?.T_open || bestData?.totals?.recursion_tree?.theta || bestData?.totals?.iteration?.theta || bestData?.totals?.master?.theta_best || bestData?.totals?.master?.theta || theta || "N/A";
+  const bestT = bestData?.totals?.T_open || bestData?.totals?.recursion_tree?.theta || bestData?.totals?.iteration?.theta || bestData?.totals?.master?.theta || theta || "N/A";
   const worstT = worstData?.totals?.T_open || worstData?.totals?.recursion_tree?.theta || worstData?.totals?.iteration?.theta || worstData?.totals?.master?.theta || theta || "N/A";
   const avgT = avgData?.totals?.T_open || avgData?.totals?.recursion_tree?.theta || avgData?.totals?.iteration?.theta || avgData?.totals?.master?.theta || theta || "N/A";
   
@@ -123,6 +123,7 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
     );
   }
 
+  // Mostrar mensaje educativo si no hay variabilidad entre worst/best/avg
   return (
     <div className="space-y-6">
       {/* Card principal: Método y Parámetros */}
@@ -199,12 +200,30 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
         <div className="mb-4">
           <h3 className="text-white font-semibold text-sm mb-3">Parámetros de la Recurrencia</h3>
           <div className="flex flex-wrap items-center justify-center gap-1">
-            <Formula latex={`a = ${recurrence.a}`} />
-            <span className="text-slate-300">,</span>
-            <Formula latex={`b = ${recurrence.b}`} />
-            <span className="text-slate-300">,</span>
-            <Formula latex={`f(n) = ${recurrence.f}`} />
-            <span className="text-slate-300">,</span>
+            {recurrence.type === "divide_conquer" && (
+              <>
+                <Formula latex={`a = ${recurrence.a}`} />
+                <span className="text-slate-300">,</span>
+                <Formula latex={`b = ${recurrence.b}`} />
+                <span className="text-slate-300">,</span>
+                <Formula latex={`f(n) = ${recurrence.f}`} />
+                <span className="text-slate-300">,</span>
+              </>
+            )}
+            {recurrence.type === "linear_shift" && (
+              <>
+                {recurrence["g(n)"] && (
+                  <>
+                    <Formula latex={`g(n) = ${recurrence["g(n)"]}`} />
+                    <span className="text-slate-300">,</span>
+                  </>
+                )}
+                <Formula latex={`orden = ${recurrence.order}`} />
+                <span className="text-slate-300">,</span>
+                <Formula latex={`desplazamientos = [${recurrence.shifts.join(", ")}]`} />
+                <span className="text-slate-300">,</span>
+              </>
+            )}
             <Formula latex={`n_0 = ${recurrence.n0}`} />
           </div>
         </div>
@@ -253,16 +272,19 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
         </div>
         
 
-        {/* Botón para árbol de recurrencia */}
-        <div className="mb-4">
-          <button
-            onClick={() => setShowTreeModal(true)}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors"
-          >
-            <span className="material-symbols-outlined text-sm">account_tree</span>
-            <span>Ver Árbol de Recurrencia</span>
-          </button>
-        </div>
+        {/* Botón para árbol de recurrencia - para recursion_tree y characteristic_equation */}
+        {((isRecursionTreeMethod && recurrence?.type === "divide_conquer") || 
+          (isCharacteristicMethod && recurrence?.type === "linear_shift")) && (
+          <div className="mb-4">
+            <button
+              onClick={() => setShowTreeModal(true)}
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors"
+            >
+              <span className="material-symbols-outlined text-sm">account_tree</span>
+              <span>Ver Árbol de Recurrencia</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Card de costos o información del método de Árbol de Recursión */}
@@ -401,13 +423,17 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
         />
       )}
 
-      {/* Modal del árbol de recursión */}
-      <RecursionTreeModal
-        open={showTreeModal}
-        onClose={() => setShowTreeModal(false)}
-        recurrence={recurrence}
-        recursionTreeData={recursionTree}
-      />
+      {/* Modal del árbol de recursión - para recursion_tree y characteristic_equation */}
+      {((isRecursionTreeMethod && recurrence?.type === "divide_conquer") || 
+        (isCharacteristicMethod && recurrence?.type === "linear_shift")) && (
+        <RecursionTreeModal
+          open={showTreeModal}
+          onClose={() => setShowTreeModal(false)}
+          recurrence={recurrence}
+          recursionTreeData={recursionTree}
+          characteristicEquation={characteristicEquation}
+        />
+      )}
 
       {/* Modal de pasos del método de Árbol de Recursión */}
       {isRecursionTreeMethod && (

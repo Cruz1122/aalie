@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from ..analysis import IterativeAnalyzer, AnalyzerRegistry
 from ..analysis.dummy_analyzer import create_dummy_analysis
 from ..analysis.algorithm_classifier import detect_algorithm_kind
+from ..analysis.recursive_analyzer import RecursiveAnalyzer
 from ..routers.parse import parse_source
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
@@ -119,16 +120,57 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
                 print(f"[analyze_open] Error en análisis promedio: {result_avg.get('errors', [])}")
                 result_avg = None
             
-            # Devolver todos los casos en una sola respuesta
-            response = {
-                "ok": True,
-                "worst": result_worst,
-                "best": result_best
-            }
+            # Verificar si worst/best/avg son idénticos (mismo algoritmo recursivo determinístico)
+            # Comparar resultados para detectar si hay variabilidad
+            has_variability = True
+            if result_worst.get("ok") and result_best.get("ok"):
+                # Comparar T_open de worst y best
+                worst_t_open = result_worst.get("totals", {}).get("T_open", "")
+                best_t_open = result_best.get("totals", {}).get("T_open", "")
+                
+                # Comparar recurrencias
+                worst_recurrence = result_worst.get("totals", {}).get("recurrence")
+                best_recurrence = result_best.get("totals", {}).get("recurrence")
+                
+                # Si T_open y recurrencias son idénticas, puede no haber variabilidad
+                if worst_t_open == best_t_open and worst_recurrence == best_recurrence:
+                    # Si hay avg, comparar también
+                    if result_avg and result_avg.get("ok"):
+                        avg_t_open = result_avg.get("totals", {}).get("T_open", "")
+                        avg_recurrence = result_avg.get("totals", {}).get("recurrence")
+                        
+                        if (avg_t_open == worst_t_open and avg_recurrence == worst_recurrence):
+                            # Todos son idénticos, usar el método del analizador para confirmar
+                            if isinstance(analyzer_worst, RecursiveAnalyzer):
+                                has_variability = analyzer_worst._has_case_variability()
+                    else:
+                        # Solo worst y best son idénticos, verificar con el analizador
+                        if isinstance(analyzer_worst, RecursiveAnalyzer):
+                            has_variability = analyzer_worst._has_case_variability()
             
-            # Incluir avg solo si fue exitoso
-            if result_avg:
-                response["avg"] = result_avg
+            # Devolver todos los casos en una sola respuesta
+            # Si no hay variabilidad, evitar duplicar worst/best/avg (solo incluir worst)
+            if not has_variability:
+                # Todos los casos son idénticos, solo devolver worst y marcar los demás como referencias
+                response = {
+                    "ok": True,
+                    "has_case_variability": False,
+                    "worst": result_worst,
+                    "best": "same_as_worst",
+                    "avg": "same_as_worst" if result_avg else None
+                }
+            else:
+                # Hay variabilidad, devolver todos los casos completos
+                response = {
+                    "ok": True,
+                    "has_case_variability": True,
+                    "worst": result_worst,
+                    "best": result_best
+                }
+                
+                # Incluir avg solo si fue exitoso
+                if result_avg:
+                    response["avg"] = result_avg
             
             return response
         else:

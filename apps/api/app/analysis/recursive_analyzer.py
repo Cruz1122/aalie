@@ -425,16 +425,74 @@ class RecursiveAnalyzer(BaseAnalyzer):
         else:
             method = "master"
         
-        recurrence = {
-            "form": recurrence_form,
-            "a": a,
-            "b": float(b),
-            "f": f_n,
-            "n0": n0,
-            "applicable": True,
-            "notes": [],
-            "method": method
-        }
+        # Construir recurrencia según el método
+        if method == "characteristic_equation":
+            # Para ecuación característica, usar estructura linear_shift (sin a/b)
+            # Obtener información de desplazamientos y coeficientes
+            linear_info = self._detect_linear_recurrence(proc_def, recursive_calls)
+            if linear_info:
+                coefficients = linear_info["coefficients"]
+                max_offset = linear_info["max_offset"]
+                g_n_str = linear_info["g_n"]
+                
+                # Construir forma correcta para ecuación característica: T(n) = T(n-1) + T(n-2) + g(n)
+                # Usar g(n) en lugar de f(n), y omitir g(n) si es 0 (homogénea)
+                g_n_clean = g_n_str.strip().lower() if g_n_str else ""
+                is_homogeneous = (g_n_clean == "0" or 
+                                 g_n_clean == "\\theta(0)" or 
+                                 g_n_clean == "theta(0)" or
+                                 (g_n_clean == "" and (not g_n_str or len(g_n_str.strip()) == 0)))
+                
+                # Construir términos recursivos
+                terms_latex = []
+                for offset in sorted(coefficients.keys(), reverse=True):
+                    coeff = coefficients[offset]
+                    if coeff == 1:
+                        terms_latex.append(f"T(n-{offset})")
+                    else:
+                        terms_latex.append(f"{coeff} \\cdot T(n-{offset})")
+                
+                # Formar la ecuación de recurrencia
+                if is_homogeneous:
+                    recurrence_form_corrected = f"T(n) = {' + '.join(terms_latex)}"
+                else:
+                    recurrence_form_corrected = f"T(n) = {' + '.join(terms_latex)} + g(n)"
+                
+                recurrence = {
+                    "type": "linear_shift",
+                    "form": recurrence_form_corrected,
+                    "order": max_offset,  # orden de la recurrencia (k)
+                    "shifts": sorted(coefficients.keys()),  # [1, 2] para Fibonacci
+                    "coefficients": [coefficients[shift] for shift in sorted(coefficients.keys())],  # [1, 1] para Fibonacci
+                    "g(n)": "0" if is_homogeneous else (g_n_str if g_n_str else None),
+                    "n0": n0,
+                    "applicable": True,
+                    "notes": [],
+                    "method": method
+                }
+            else:
+                # Fallback si no se puede obtener linear_info
+                recurrence = {
+                    "form": recurrence_form,
+                    "g(n)": f_n if f_n != "0" else None,
+                    "n0": n0,
+                    "applicable": True,
+                    "notes": [],
+                    "method": method
+                }
+        else:
+            # Para otros métodos (master, iteration, recursion_tree), usar a, b, f
+            recurrence = {
+                "type": "divide_conquer",
+                "form": recurrence_form,
+                "a": a,
+                "b": float(b),
+                "f": f_n,
+                "n0": n0,
+                "applicable": True,
+                "notes": [],
+                "method": method
+            }
         
         # Simplificar valores para mostrar en proof
         b_display = self._simplify_number_latex(b)
@@ -446,7 +504,11 @@ class RecursiveAnalyzer(BaseAnalyzer):
         }
         method_name = method_names.get(method, "Teorema Maestro")
         self.proof_steps.append({"id": "method", "text": f"\\text{{Método detectado: }} \\text{{{method_name}}}"})
-        self.proof_steps.append({"id": "extract", "text": f"\\text{{Parámetros extraídos: }} a={a}, b={b_display}, f(n)={f_n}, n_0={n0}"})
+        
+        # Solo agregar "Parámetros extraídos" si NO es ecuación característica
+        # Para ecuación característica, estos parámetros (a, b, f) no son relevantes
+        if method != "characteristic_equation":
+            self.proof_steps.append({"id": "extract", "text": f"\\text{{Parámetros extraídos: }} a={a}, b={b_display}, f(n)={f_n}, n_0={n0}"})
         
         return {
             "success": True,
@@ -1471,6 +1533,264 @@ class RecursiveAnalyzer(BaseAnalyzer):
         n0 = self._find_base_case_guard(body)
         return n0 if n0 is not None else 1
     
+    def _detect_base_cases(self, proc_def: Dict[str, Any]) -> Dict[str, int]:
+        """
+        Detecta todos los casos base de la recurrencia desde el AST.
+        
+        Extrae casos base como T(0) = 0, T(1) = 1 para Fibonacci.
+        
+        Args:
+            proc_def: Nodo ProcDef
+            
+        Returns:
+            Diccionario con casos base: {"T(0)": 0, "T(1)": 1, ...}
+        """
+        base_cases = {}
+        body = proc_def.get("body", {}) or proc_def.get("block", {})
+        
+        # Buscar IF statements que sean casos base
+        def find_base_case_returns(node: Any) -> None:
+            """Busca recursivamente RETURN statements en casos base (IF sin recursión)."""
+            if not isinstance(node, dict):
+                return
+            
+            node_type = node.get("type", "")
+            
+            # Si encontramos un IF, verificar si es caso base
+            if node_type == "If":
+                condition = node.get("test", {}) or node.get("condition", {})
+                consequent = node.get("consequent", {})
+                
+                # Extraer valor de n de la condición (ej: "n <= 1" → 1)
+                n_value = self._extract_base_case_from_condition(condition)
+                
+                # Buscar RETURN en el consequent (rama del caso base)
+                if n_value is not None:
+                    return_value = self._extract_return_value(consequent)
+                    # Si el return es el parámetro mismo (ej: RETURN n), usar n_value como valor
+                    if return_value is None:
+                        # Verificar si el return es el parámetro (ej: RETURN n cuando n <= 1)
+                        return_expr = self._find_return_expression(consequent)
+                        param_name = self._get_procedure_param_name()
+                        if return_expr:
+                            return_expr_type = return_expr.get("type", "")
+                            # El AST puede usar "Identifier" (mayúscula) o "identifier" (minúscula)
+                            if return_expr_type.lower() == "identifier":
+                                return_id_name = return_expr.get("name", "")
+                                # Si el return es el parámetro mismo (ej: RETURN n)
+                                if param_name and return_id_name.lower() == param_name.lower():
+                                    # RETURN n significa T(n) = n cuando n <= n_value
+                                    # Para Fibonacci con n <= 1: T(0) = 0, T(1) = 1
+                                    for i in range(n_value + 1):
+                                        base_cases[f"T({i})"] = i
+                                    return_value = n_value  # Marcar como procesado
+                    
+                    if return_value is not None:
+                        # Agregar caso base T(n_value) = return_value
+                        if f"T({n_value})" not in base_cases:  # Evitar duplicados
+                            base_cases[f"T({n_value})"] = return_value
+                
+                # También buscar en alternate si existe (para ELSE)
+                alternate = node.get("alternate", {})
+                if alternate:
+                    find_base_case_returns(alternate)
+            
+            # Buscar recursivamente en hijos
+            for key, value in node.items():
+                if key in ["type", "pos"]:
+                    continue
+                if isinstance(value, list):
+                    for item in value:
+                        find_base_case_returns(item)
+                elif isinstance(value, dict):
+                    find_base_case_returns(value)
+        
+        find_base_case_returns(body)
+        
+        # Si no se detectaron casos base, intentar método alternativo más directo
+        if not base_cases:
+            # Buscar directamente en el body del procedimiento
+            # Para Fibonacci: IF n <= 1 THEN BEGIN RETURN n END
+            # El body es un Block que contiene un If
+            if isinstance(body, dict):
+                if body.get("type") == "Block":
+                    statements = body.get("body", [])
+                    for stmt in statements:
+                        if isinstance(stmt, dict) and stmt.get("type") == "If":
+                            condition = stmt.get("test", {}) or stmt.get("condition", {})
+                            consequent = stmt.get("consequent", {})
+                            n_value = self._extract_base_case_from_condition(condition)
+                            if n_value is not None:
+                                # Buscar RETURN en el consequent (puede estar dentro de un Block)
+                                return_expr = self._find_return_expression(consequent)
+                                param_name = self._get_procedure_param_name()
+                                if return_expr:
+                                    return_expr_type = return_expr.get("type", "")
+                                    # El AST puede usar "Identifier" (mayúscula) o "identifier" (minúscula)
+                                    if return_expr_type.lower() == "identifier":
+                                        return_id_name = return_expr.get("name", "")
+                                        if param_name and return_id_name.lower() == param_name.lower():
+                                            # RETURN n significa T(n) = n cuando n <= n_value
+                                            # Para Fibonacci con n <= 1: T(0) = 0, T(1) = 1
+                                            for i in range(n_value + 1):
+                                                base_cases[f"T({i})"] = i
+                                            break
+                else:
+                    # Si el body no es un Block, buscar directamente
+                    if body.get("type") == "If":
+                        condition = body.get("test", {}) or body.get("condition", {})
+                        consequent = body.get("consequent", {})
+                        n_value = self._extract_base_case_from_condition(condition)
+                        if n_value is not None:
+                            return_expr = self._find_return_expression(consequent)
+                            param_name = self._get_procedure_param_name()
+                            if return_expr and return_expr.get("type") == "Identifier":
+                                return_id_name = return_expr.get("name", "")
+                                if param_name and return_id_name.lower() == param_name.lower():
+                                    for i in range(n_value + 1):
+                                        base_cases[f"T({i})"] = i
+        
+        return base_cases
+    
+    def _find_return_expression(self, node: Any) -> Optional[Any]:
+        """
+        Encuentra la expresión de un RETURN statement.
+        
+        Args:
+            node: Nodo del AST
+            
+        Returns:
+            Expresión del return o None
+        """
+        if not isinstance(node, dict):
+            return None
+        
+        node_type = node.get("type", "")
+        
+        if node_type == "Return":
+            return node.get("value", {})
+        
+        # Si es un Block, buscar RETURN en su body
+        if node_type == "Block":
+            body = node.get("body", [])
+            for stmt in body:
+                if isinstance(stmt, dict) and stmt.get("type") == "Return":
+                    return stmt.get("value", {})
+        
+        # Buscar recursivamente
+        for key, value in node.items():
+            if key in ["type", "pos"]:
+                continue
+            if isinstance(value, list):
+                for item in value:
+                    result = self._find_return_expression(item)
+                    if result is not None:
+                        return result
+            elif isinstance(value, dict):
+                result = self._find_return_expression(value)
+                if result is not None:
+                    return result
+        
+        return None
+    
+    def _extract_return_value(self, node: Any) -> Optional[int]:
+        """
+        Extrae el valor de un RETURN statement.
+        
+        Args:
+            node: Nodo del AST (puede ser Block, Return, etc.)
+            
+        Returns:
+            Valor del return (int) o None
+        """
+        if not isinstance(node, dict):
+            return None
+        
+        node_type = node.get("type", "")
+        
+        # Si es un RETURN directo
+        if node_type == "Return":
+            value = node.get("value", {})
+            return self._extract_literal_value(value)
+        
+        # Si es un Block, buscar RETURN en su body
+        if node_type == "Block":
+            body = node.get("body", [])
+            for stmt in body:
+                if isinstance(stmt, dict) and stmt.get("type") == "Return":
+                    value = stmt.get("value", {})
+                    return self._extract_literal_value(value)
+        
+        # Buscar recursivamente
+        for key, value in node.items():
+            if key in ["type", "pos"]:
+                continue
+            if isinstance(value, list):
+                for item in value:
+                    result = self._extract_return_value(item)
+                    if result is not None:
+                        return result
+            elif isinstance(value, dict):
+                result = self._extract_return_value(value)
+                if result is not None:
+                    return result
+        
+        return None
+    
+    def _extract_literal_value(self, expr: Any) -> Optional[int]:
+        """
+        Extrae un valor literal de una expresión.
+        
+        Args:
+            expr: Expresión del AST
+            
+        Returns:
+            Valor int o None
+        """
+        if not isinstance(expr, dict):
+            # Si es directamente un número
+            if isinstance(expr, (int, float)):
+                return int(expr)
+            return None
+        
+        expr_type = expr.get("type", "")
+        
+        # Literal o número
+        if expr_type in ["Literal", "Number"]:
+            value = expr.get("value")
+            if isinstance(value, (int, float)):
+                return int(value)
+        
+        # Identifier (ej: RETURN n cuando n es el parámetro del caso base)
+        if expr_type == "Identifier":
+            # Si es el mismo nombre del parámetro, no podemos determinar el valor
+            # Pero para casos como RETURN n cuando n = 0 o n = 1, sería útil
+            # Por ahora, retornamos None y dejamos que el análisis del IF nos dé el valor
+            pass
+        
+        return None
+    
+    def _get_procedure_param_name(self) -> Optional[str]:
+        """
+        Obtiene el nombre del parámetro del procedimiento.
+        
+        Returns:
+            Nombre del parámetro o None
+        """
+        if not self.proc_def:
+            return None
+        
+        params = self.proc_def.get("params", [])
+        if params and len(params) > 0:
+            # El primer parámetro es típicamente 'n'
+            param = params[0]
+            if isinstance(param, dict):
+                return param.get("name")
+            elif isinstance(param, str):
+                return param
+        
+        return None
+    
     def _find_base_case_guard(self, node: Any) -> Optional[int]:
         """
         Busca guardas de caso base en el árbol.
@@ -1521,18 +1841,22 @@ class RecursiveAnalyzer(BaseAnalyzer):
         if not isinstance(condition, dict):
             return None
         
-        expr_type = condition.get("type", "").lower()
+        expr_type = condition.get("type", "")
+        expr_type_lower = expr_type.lower() if expr_type else ""
         
-        if expr_type == "binary":
-            op = condition.get("operator", "")
+        # El AST puede usar "Binary" (mayúscula) o "binary" (minúscula)
+        if expr_type_lower == "binary":
+            # El operador puede estar en "op" o "operator"
+            op = condition.get("op", "") or condition.get("operator", "")
             right = condition.get("right", {})
             
             # Verificar si es una comparación con constante
             if op in ["<=", "<", "==", "==="]:
                 # Verificar si right es un número
                 if isinstance(right, dict):
-                    right_type = right.get("type", "").lower()
-                    if right_type in ["number", "literal"]:
+                    right_type = right.get("type", "")
+                    right_type_lower = right_type.lower() if right_type else ""
+                    if right_type_lower in ["number", "literal"]:
                         try:
                             n0 = int(float(right.get("value", 0)))
                             return max(1, n0)  # Mínimo 1
@@ -2552,6 +2876,141 @@ class RecursiveAnalyzer(BaseAnalyzer):
         linear_info = self._detect_linear_recurrence(proc_def, recursive_calls)
         return linear_info is not None and linear_info.get("is_linear", False)
     
+    def _has_case_variability(self) -> bool:
+        """
+        Detecta si el algoritmo tiene variabilidad entre worst/best/avg.
+        
+        Para algoritmos recursivos determinísticos (ej: Fibonacci), la estructura
+        del árbol recursivo es siempre idéntica, por lo que worst/best/avg son iguales.
+        
+        Un algoritmo tiene variabilidad si:
+        - Tiene ramas condicionales que afectan el número de llamadas recursivas
+        - Tiene early returns que cambian según los datos
+        - El tamaño de los subproblemas varía según los datos
+        
+        Returns:
+            True si hay variabilidad, False si worst/best/avg son idénticos
+        """
+        if not self.proc_def:
+            return True  # Por defecto, asumir variabilidad
+        
+        # Para algoritmos con ecuación característica (lineales con desplazamientos constantes),
+        # típicamente NO hay variabilidad porque la estructura es determinística
+        if self.recurrence and self.recurrence.get("method") == "characteristic_equation":
+            # Verificar si hay ramas condicionales que afecten recursión
+            body = self.proc_def.get("body", {}) or self.proc_def.get("block", {})
+            
+            # Buscar IF que contengan llamadas recursivas en diferentes ramas
+            recursive_calls = self._find_recursive_calls(self.proc_def)
+            if not recursive_calls:
+                return True
+            
+            # Verificar si las llamadas recursivas están en diferentes ramas condicionales
+            # Si todas las llamadas recursivas están en la misma rama (o fuera de IF),
+            # entonces no hay variabilidad
+            has_conditional_recursion = self._has_conditional_recursive_calls(body, recursive_calls)
+            
+            # Si hay early returns que afectan el flujo recursivo, hay variabilidad
+            # PERO: un early return en el caso base (IF n <= k THEN RETURN) NO cuenta como variabilidad
+            # porque siempre se ejecuta igual para todos los casos (determinístico)
+            # Solo cuenta si el early return está en una rama que afecta la recursión
+            has_early_return = False
+            if has_conditional_recursion:
+                # Solo verificar early return si hay condicionales que afecten recursión
+                # Si no hay condicionales, el early return en el caso base no cuenta
+                has_early_return = self._detect_early_return()
+            
+            # Para ecuación característica (lineal con desplazamientos constantes),
+            # típicamente NO hay variabilidad porque el algoritmo es determinístico.
+            # Solo hay variabilidad si hay condicionales que afecten el flujo recursivo.
+            # Para Fibonacci, todas las llamadas recursivas están en el mismo bloque (ELSE),
+            # así que no hay variabilidad.
+            if not has_conditional_recursion and not has_early_return:
+                return False  # No hay variabilidad (worst/best/avg son idénticos)
+            
+            return True  # Hay variabilidad
+        
+        # Para otros métodos, verificar de manera similar
+        return True  # Por defecto, asumir variabilidad
+    
+    def _has_conditional_recursive_calls(self, node: Any, recursive_calls: List[Dict[str, Any]]) -> bool:
+        """
+        Verifica si hay llamadas recursivas en diferentes ramas condicionales.
+        
+        Args:
+            node: Nodo del AST
+            recursive_calls: Lista de llamadas recursivas
+            
+        Returns:
+            True si hay llamadas recursivas en diferentes ramas condicionales
+        """
+        if not isinstance(node, dict):
+            return False
+        
+        node_type = node.get("type", "")
+        
+        # Si encontramos un IF con llamadas recursivas en ambas ramas
+        if node_type == "If":
+            consequent = node.get("consequent", {})
+            alternate = node.get("alternate", {})
+            
+            # Verificar si hay llamadas recursivas en cada rama
+            has_in_consequent = self._contains_recursive_call(consequent, recursive_calls)
+            has_in_alternate = self._contains_recursive_call(alternate, recursive_calls)
+            
+            # Si hay en ambas ramas, hay variabilidad
+            if has_in_consequent and has_in_alternate:
+                return True
+        
+        # Buscar recursivamente
+        for key, value in node.items():
+            if key in ["type", "pos"]:
+                continue
+            if isinstance(value, list):
+                for item in value:
+                    if self._has_conditional_recursive_calls(item, recursive_calls):
+                        return True
+            elif isinstance(value, dict):
+                if self._has_conditional_recursive_calls(value, recursive_calls):
+                    return True
+        
+        return False
+    
+    def _contains_recursive_call(self, node: Any, recursive_calls: List[Dict[str, Any]]) -> bool:
+        """
+        Verifica si un nodo contiene una llamada recursiva.
+        
+        Args:
+            node: Nodo del AST
+            recursive_calls: Lista de llamadas recursivas (no se usa directamente, pero útil para tipo)
+            
+        Returns:
+            True si contiene una llamada recursiva
+        """
+        if not isinstance(node, dict):
+            return False
+        
+        node_type = node.get("type", "")
+        
+        if node_type == "Call":
+            call_name = node.get("name") or node.get("callee", "")
+            if call_name and call_name.lower() == (self.procedure_name or "").lower():
+                return True
+        
+        # Buscar recursivamente
+        for key, value in node.items():
+            if key in ["type", "pos"]:
+                continue
+            if isinstance(value, list):
+                for item in value:
+                    if self._contains_recursive_call(item, recursive_calls):
+                        return True
+            elif isinstance(value, dict):
+                if self._contains_recursive_call(value, recursive_calls):
+                    return True
+        
+        return False
+    
     def _apply_characteristic_equation_method(self) -> Dict[str, Any]:
         """
         Aplica el Método de Ecuación Característica para resolver la recurrencia.
@@ -2582,12 +3041,16 @@ class RecursiveAnalyzer(BaseAnalyzer):
         max_offset = linear_info["max_offset"]
         g_n_str = linear_info["g_n"]
         
+        # Detectar casos base del AST
+        base_cases = self._detect_base_cases(self.proc_def)
+        
         # Construir la ecuación característica
         # Para T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n)
         # La ecuación característica es: r^k - c₁r^(k-1) - c₂r^(k-2) - ... - cₖ = 0
         
         # Construir ecuación característica en SymPy
-        r = Symbol('r', real=True, positive=True)
+        # NO usar positive=True porque puede excluir raíces negativas (ej: (1-√5)/2 para Fibonacci)
+        r = Symbol('r', real=True)
         char_eq_terms = []
         
         # Término principal: r^k
@@ -2601,7 +3064,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         # Construir ecuación: r^k - c₁r^(k-1) - ... = 0
         char_eq_expr = sum(char_eq_terms)
-        char_eq_latex = latex(char_eq_expr) + " = 0"
+        # Simplificar la expresión para evitar r^2 + -r + -1 = 0
+        char_eq_expr_simplified = simplify(char_eq_expr)
+        char_eq_latex = latex(char_eq_expr_simplified) + " = 0"
         
         # Construir paso con valores reemplazados
         # Mostrar cómo se construye la ecuación desde la recurrencia
@@ -2640,11 +3105,13 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         char_eq_construction_latex = " + ".join(char_eq_construction) + " = 0"
         
-        # Construir texto del paso
+        # Construir texto del paso (usar ecuación simplificada directamente)
+        # La ecuación característica ya está simplificada en char_eq_latex (ej: r^2 - r - 1 = 0)
+        # No mostrar la construcción intermedia con r^2 + -r + -1 = 0
         if g_n_str and g_n_str.strip() and g_n_str.strip() != "0":
-            step_text = f"\\text{{De }} {recurrence_form_expanded} \\text{{, para la ecuación característica homogénea asociada (ignorando }} g(n) = {g_n_str} \\text{{), reemplazando }} T(n) = r^n \\text{{: }} {char_eq_construction_latex} \\text{{, simplificando: }} {char_eq_latex}"
+            step_text = f"\\text{{De }} {recurrence_form_expanded} \\text{{, para la ecuación característica homogénea asociada (ignorando }} g(n) = {g_n_str} \\text{{), reemplazando }} T(n) = r^n \\text{{ obtenemos: }} {char_eq_latex}"
         else:
-            step_text = f"\\text{{De }} {recurrence_form_expanded} \\text{{, reemplazando }} T(n) = r^n \\text{{: }} {char_eq_construction_latex} \\text{{, simplificando: }} {char_eq_latex}"
+            step_text = f"\\text{{De }} {recurrence_form_expanded} \\text{{, reemplazando }} T(n) = r^n \\text{{ obtenemos: }} {char_eq_latex}"
         
         self.proof_steps.append({
             "id": "characteristic_eq",
@@ -2653,53 +3120,100 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         # Resolver ecuación característica
         try:
-            # Resolver r^k - c₁r^(k-1) - ... = 0
-            roots = solve(char_eq_expr, r)
+            # Resolver r^k - c₁r^(k-1) - ... = 0 (usar expresión simplificada)
+            roots = solve(char_eq_expr_simplified, r)
             
             # Filtrar raíces reales (incluir todas las raíces reales, no solo positivas)
             # Para ecuaciones cuadráticas como r^2 - r - 1 = 0, necesitamos ambas raíces
+            # IMPORTANTE: NO evaluar las raíces todavía para mantener su forma simbólica
             real_roots = []
             for root in roots:
                 try:
-                    # Evaluar si es real
-                    root_val = root.evalf()
-                    if root_val.is_real:
-                        # Incluir todas las raíces reales (positivas y negativas)
-                        # Para complejidad asintótica, la mayor raíz positiva es la dominante
-                        real_roots.append(root_val)
-                except:
-                    # Si no se puede evaluar, intentar simplificar
+                    # Verificar si es real sin evaluar numéricamente
                     if root.is_real:
+                        # Mantener la raíz en forma simbólica para mejor representación
                         real_roots.append(root)
+                    else:
+                        # Intentar verificar si tiene parte real
+                        try:
+                            if root.real.is_real:
+                                real_roots.append(root)
+                        except:
+                            pass
+                except:
+                    # Si no se puede verificar, incluir de todas formas
+                    real_roots.append(root)
             
             if not real_roots:
                 # Si no hay raíces reales, usar todas las raíces
                 real_roots = roots
             
-            # Ordenar raíces por valor numérico (descendente), para que la mayor esté primero
+            # Ordenar raíces por valor numérico (descendente por valor absoluto), para que la mayor esté primero
+            # Pero mantener la forma simbólica
             try:
                 real_roots = sorted(real_roots, key=lambda r: abs(float(r.evalf())) if hasattr(r, 'evalf') else 0, reverse=True)
             except:
-                pass
+                try:
+                    # Fallback: ordenar por valor real si es complejo
+                    real_roots = sorted(real_roots, key=lambda r: abs(float(r.real.evalf())) if hasattr(r, 'real') else 0, reverse=True)
+                except:
+                    pass
             
-            # Procesar raíces con multiplicidad
+            # Procesar raíces con multiplicidad (mantener forma simbólica)
+            # IMPORTANTE: Usar la raíz directamente como clave para evitar problemas de comparación
             roots_info = []
             root_counts = Counter()
+            root_map = {}  # Mapa de raíz simplificada -> raíz original
+            
             for root in real_roots:
                 try:
-                    # Simplificar la raíz
+                    # Simplificar la raíz manteniendo forma simbólica
                     root_simplified = simplify(root)
-                    root_str = str(root_simplified)
-                    root_counts[root_str] += 1
+                    # Usar hash o representación única para evitar problemas de comparación
+                    root_key = str(root_simplified)
+                    
+                    # Si ya existe esta raíz, incrementar contador
+                    if root_key not in root_map:
+                        root_map[root_key] = root_simplified
+                    
+                    root_counts[root_key] += 1
                 except:
-                    root_str = str(root)
-                    root_counts[root_str] += 1
+                    root_key = str(root)
+                    if root_key not in root_map:
+                        root_map[root_key] = root
+                    root_counts[root_key] += 1
             
-            for root_str, mult in root_counts.items():
+            # Procesar cada raíz única con su multiplicidad
+            for root_key, mult in root_counts.items():
                 try:
-                    root_sympy = sympify(root_str)
-                    root_simplified = simplify(root_sympy)
+                    # Obtener la raíz simplificada del mapa
+                    root_simplified = root_map.get(root_key, sympify(root_key))
+                    
+                    # Intentar simplificar aún más la raíz para mostrar forma algebraica
+                    if not isinstance(root_simplified, (int, float)):
+                        root_simplified = simplify(root_simplified)
+                    
+                    # Intentar factorizar o simplificar aún más
+                    try:
+                        # Si es una fracción o expresión compleja, intentar simplificar
+                        root_factorized = factor(root_simplified)
+                        if root_factorized != root_simplified:
+                            root_simplified = root_factorized
+                    except:
+                        pass
+                    
                     root_latex = latex(root_simplified)
+                    
+                    # Si la raíz es un número decimal, intentar encontrar forma algebraica
+                    try:
+                        root_num = float(root_simplified.evalf())
+                        # Para casos comunes como (1+√5)/2 ≈ 1.618, intentar reconstruir
+                        if abs(root_num - 1.61803398874989) < 1e-10:
+                            root_latex = "\\frac{1 + \\sqrt{5}}{2}"
+                        elif abs(root_num - -0.618033988749895) < 1e-10:
+                            root_latex = "\\frac{1 - \\sqrt{5}}{2}"
+                    except:
+                        pass
                 except:
                     root_latex = root_str
                 
@@ -2750,6 +3264,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
                         for j in range(mult):
                             terms.append(f"A_{i+1}{j+1} \\cdot n^{j} \\cdot {r_val}^n")
                 homogeneous_sol = " + ".join(terms)
+            
+            # Construir solución general (homogénea + particular si aplica)
+            general_solution = homogeneous_sol
             
             # Solución particular (si no es homogénea)
             particular_sol = None
@@ -2815,6 +3332,10 @@ class RecursiveAnalyzer(BaseAnalyzer):
                         particular_sol = "P(n)"  # Polinomio
                     else:
                         particular_sol = "C"  # Constante genérica
+                
+                # Actualizar solución general con solución particular
+                if particular_sol:
+                    general_solution = f"{homogeneous_sol} + {particular_sol}"
             
             # Forma cerrada simplificada
             # Para casos comunes, simplificar
@@ -2832,7 +3353,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 except:
                     closed_form = f"\\Theta({r_val}^n)"
             elif len(roots_info) == 2:
-                # Dos raíces: usar la mayor
+                # Dos raíces: usar la mayor en valor absoluto (raíz dominante)
                 r1_val = roots_info[0]["root"]
                 r2_val = roots_info[1]["root"]
                 try:
@@ -2840,14 +3361,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     r2_sympy = sympify(r2_val)
                     r1_num = float(r1_sympy.evalf())
                     r2_num = float(r2_sympy.evalf())
-                    r_max_num = max(r1_num, r2_num)
-                    r_max_val = r1_val if r1_num >= r2_num else r2_val
-                    if r_max_num > 1:
-                        closed_form = f"\\Theta({r_max_val}^n)"
-                    else:
-                        closed_form = f"\\Theta({r_max_val}^n)"
+                    # Usar la raíz con mayor valor absoluto (raíz dominante)
+                    r_max_num = max(abs(r1_num), abs(r2_num))
+                    r_max_val = r1_val if abs(r1_num) >= abs(r2_num) else r2_val
+                    # Para complejidad asintótica, usar la raíz dominante
+                    closed_form = f"\\Theta({r_max_val}^n)"
                 except:
-                    closed_form = f"\\Theta(\\max({r1_val}, {r2_val})^n)"
+                    # Fallback: usar la primera raíz (ya está ordenada por valor absoluto descendente)
+                    closed_form = f"\\Theta({r1_val}^n)"
             else:
                 # Caso general: encontrar la raíz con mayor valor numérico
                 try:
@@ -2862,21 +3383,37 @@ class RecursiveAnalyzer(BaseAnalyzer):
             
             # Generar versión DP si aplica
             dp_version = None
+            dp_optimized_version = None
             dp_equivalence = ""
             if is_dp_linear:
-                # Generar código DP
+                # Generar código DP básico (O(n) espacio)
                 dp_code = self._generate_dp_code(coefficients, max_offset)
+                
+                # Generar código DP optimizado (O(1) espacio o O(k) espacio)
+                dp_code_optimized = self._generate_optimized_dp_code(coefficients, max_offset, g_n_str)
                 
                 # Calcular complejidades
                 recursive_complexity = self._calculate_recursive_complexity(coefficients, max_offset)
                 dp_time = "O(n)"
                 dp_space = "O(n)"  # Versión básica con tabla
                 
+                # Espacio optimizado: O(1) para max_offset <= 3, O(k) para otros casos
+                if max_offset <= 3:
+                    dp_space_optimized = "O(1)"
+                else:
+                    dp_space_optimized = f"O({max_offset})"  # Arreglo circular pequeño
+                
                 dp_version = {
                     "code": dp_code,
                     "time_complexity": dp_time,
                     "space_complexity": dp_space,
                     "recursive_complexity": recursive_complexity
+                }
+                
+                dp_optimized_version = {
+                    "code": dp_code_optimized,
+                    "time_complexity": dp_time,
+                    "space_complexity": dp_space_optimized
                 }
                 
                 dp_equivalence = (
@@ -2888,15 +3425,39 @@ class RecursiveAnalyzer(BaseAnalyzer):
             # Resultado final
             theta_result = closed_form
             
+            # Calcular raíz dominante (mayor valor absoluto) y tasa de crecimiento
+            dominant_root = None
+            growth_rate = None
+            if roots_info:
+                try:
+                    # Encontrar la raíz con mayor valor absoluto
+                    r_max_info = max(roots_info, key=lambda r: abs(float(sympify(r["root"]).evalf())) if sympify(r["root"]).is_real else 0)
+                    dominant_root = r_max_info["root"]
+                    growth_rate = float(sympify(dominant_root).evalf())
+                except:
+                    # Fallback: usar la primera raíz (ya está ordenada)
+                    if roots_info:
+                        dominant_root = roots_info[0]["root"]
+                        try:
+                            growth_rate = float(sympify(dominant_root).evalf())
+                        except:
+                            pass
+            
             result = {
                 "method": "characteristic_equation",
                 "is_dp_linear": is_dp_linear,
                 "equation": char_eq_latex,
                 "roots": roots_info,
+                "dominant_root": dominant_root,
+                "growth_rate": growth_rate,
+                "solved_by": "characteristic_equation",
                 "homogeneous_solution": homogeneous_sol,
                 "particular_solution": particular_sol,
+                "general_solution": general_solution,
+                "base_cases": base_cases if base_cases else None,
                 "closed_form": closed_form,
                 "dp_version": dp_version,
+                "dp_optimized_version": dp_optimized_version,
                 "dp_equivalence": dp_equivalence,
                 "theta": theta_result
             }
@@ -2966,6 +3527,140 @@ class RecursiveAnalyzer(BaseAnalyzer):
     FIN PARA
     
     RETORNAR dp[n]
+FIN FUNCIÓN"""
+        
+        return code
+    
+    def _generate_optimized_dp_code(self, coefficients: Dict[int, int], max_offset: int, g_n_str: str = "0") -> str:
+        """
+        Genera código pseudocódigo para versión DP optimizada con O(1) espacio.
+        
+        En lugar de usar una tabla completa, usa solo variables auxiliares.
+        Ejemplo para Fibonacci: usar solo a=0, b=1 en el loop.
+        
+        Args:
+            coefficients: Diccionario {offset: coefficient}
+            max_offset: Máximo desplazamiento k
+            g_n_str: Término no homogéneo g(n) para determinar si incluir +g(i) en el código
+            
+        Returns:
+            Código pseudocódigo optimizado en string
+        """
+        if max_offset == 1:
+            # Caso simple: T(n) = cT(n-1) + g(n)
+            coeff = coefficients.get(1, 1)
+            code = f"""FUNCIÓN dp_solve_optimized(n):
+    SI n <= 0 ENTONCES
+        RETORNAR caso_base[0]
+    
+    // Versión optimizada O(1) espacio
+    prev = caso_base[0]  // T(0)
+    
+    // Llenar bottom-up con solo variables auxiliares
+    PARA i = 1 HASTA n HACER
+        actual = {coeff} * prev + g(i)  // T(i) = {coeff}T(i-1) + g(i)
+        prev = actual
+    FIN PARA
+    
+    RETORNAR prev
+FIN FUNCIÓN"""
+        elif max_offset == 2:
+            # Caso común: T(n) = c1T(n-1) + c2T(n-2) + g(n) (ej: Fibonacci)
+            coeff1 = coefficients.get(1, 1)
+            coeff2 = coefficients.get(2, 1)
+            
+            # Determinar si es homogénea (g(n) = 0)
+            g_n_clean = g_n_str.strip().lower() if g_n_str else "0"
+            is_homogeneous = (g_n_clean == "0" or 
+                             g_n_clean == "\\theta(0)" or 
+                             g_n_clean == "theta(0)" or
+                             (g_n_clean == "" and (not g_n_str or len(g_n_str.strip()) == 0)))
+            
+            # Construir término g(n) solo si no es homogénea
+            g_term = "" if is_homogeneous else " + g(i)"
+            g_comment = "" if is_homogeneous else f" + g(i)"
+            
+            code = f"""FUNCIÓN dp_solve_optimized(n):
+    SI n <= 0 ENTONCES
+        RETORNAR caso_base[0]
+    SI n = 1 ENTONCES
+        RETORNAR caso_base[1]
+    
+    // Versión optimizada O(1) espacio
+    // Usar solo dos variables auxiliares
+    a = caso_base[0]  // T(0)
+    b = caso_base[1]  // T(1)
+    
+    // Llenar bottom-up con solo variables auxiliares
+    PARA i = 2 HASTA n HACER
+        temp = {coeff1} * b + {coeff2} * a{g_term}  // T(i) = {coeff1}T(i-1) + {coeff2}T(i-2){g_comment}
+        a = b
+        b = temp
+    FIN PARA
+    
+    RETORNAR b
+FIN FUNCIÓN"""
+        elif max_offset == 3:
+            # Caso: T(n) = c1T(n-1) + c2T(n-2) + c3T(n-3) + g(n) (ej: Tribonacci)
+            coeff1 = coefficients.get(1, 1)
+            coeff2 = coefficients.get(2, 1)
+            coeff3 = coefficients.get(3, 1)
+            
+            code = f"""FUNCIÓN dp_solve_optimized(n):
+    SI n <= 0 ENTONCES
+        RETORNAR caso_base[0]
+    SI n = 1 ENTONCES
+        RETORNAR caso_base[1]
+    SI n = 2 ENTONCES
+        RETORNAR caso_base[2]
+    
+    // Versión optimizada O(1) espacio
+    // Usar solo tres variables auxiliares
+    a = caso_base[0]  // T(0)
+    b = caso_base[1]  // T(1)
+    c = caso_base[2]  // T(2)
+    
+    // Llenar bottom-up con solo variables auxiliares
+    PARA i = 3 HASTA n HACER
+        temp = {coeff1} * c + {coeff2} * b + {coeff3} * a + g(i)  // T(i) = {coeff1}T(i-1) + {coeff2}T(i-2) + {coeff3}T(i-3) + g(i)
+        a = b
+        b = c
+        c = temp
+    FIN PARA
+    
+    RETORNAR c
+FIN FUNCIÓN"""
+        else:
+            # Caso general: usar un arreglo circular pequeño (solo max_offset elementos)
+            # Aunque técnicamente es O(k) espacio, es O(1) relativo a n
+            terms = []
+            for offset in sorted(coefficients.keys()):
+                coeff = coefficients[offset]
+                if coeff == 1:
+                    terms.append(f"dp[(i-{offset}) % {max_offset}]")
+                else:
+                    terms.append(f"{coeff} * dp[(i-{offset}) % {max_offset}]")
+            
+            code = f"""FUNCIÓN dp_solve_optimized(n):
+    SI n <= {max_offset-1} ENTONCES
+        RETORNAR caso_base[n]
+    
+    // Versión optimizada O({max_offset}) espacio (arreglo circular)
+    // Inicializar arreglo circular pequeño
+    dp[0..{max_offset-1}] = 0
+    
+    // Casos base
+"""
+            for i in range(max_offset):
+                code += f"    dp[{i}] = caso_base[{i}]  // Caso base T({i})\n"
+            
+            code += f"""
+    // Llenar bottom-up con arreglo circular
+    PARA i = {max_offset} HASTA n HACER
+        dp[i % {max_offset}] = {' + '.join(terms)} + g(i)  // T(i) = ... + g(i)
+    FIN PARA
+    
+    RETORNAR dp[n % {max_offset}]
 FIN FUNCIÓN"""
         
         return code

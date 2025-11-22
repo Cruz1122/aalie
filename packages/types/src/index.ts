@@ -261,17 +261,32 @@ export interface AnalyzeOpenResponse {
       note: string;                 // badge del modelo, ej: "uniforme (p=1/2)"
     };
     hypotheses?: string[];          // hipótesis cuando hay símbolos probabilísticos
-    // Análisis recursivo (Teorema Maestro o Método de Iteración)
-    recurrence?: {                  // recurrencia extraída T(n) = a·T(n/b) + f(n) o T(n) = T(g(n)) + f(n)
-      form: string;                 // forma LaTeX: "T(n) = a T(n/b) + f(n)" o "T(n) = T(n-1) + f(n)"
-      a: number;                    // número de subproblemas
-      b: number;                    // factor de reducción (> 1)
-      f: string;                    // trabajo no recursivo f(n) (LaTeX)
-      n0: number;                   // umbral base
-      applicable: boolean;          // si es aplicable el método
-      notes: string[];              // notas sobre redondeos, dominio, etc.
-      method?: "master" | "iteration" | "recursion_tree" | "characteristic_equation";  // método usado (Teorema Maestro, Método de Iteración, Árbol de Recursión o Ecuación Característica)
-    };
+    // Análisis recursivo (Teorema Maestro, Método de Iteración, Árbol de Recursión o Ecuación Característica)
+    recurrence?: (
+      | {                      // Recurrencia divide-and-conquer: T(n) = a·T(n/b) + f(n)
+          type: "divide_conquer";
+          form: string;         // forma LaTeX: "T(n) = a T(n/b) + f(n)"
+          a: number;            // número de subproblemas
+          b: number;            // factor de reducción (> 1)
+          f: string;            // trabajo no recursivo f(n) (LaTeX)
+          n0: number;           // umbral base
+          applicable: boolean;
+          notes: string[];
+          method?: "master" | "iteration" | "recursion_tree";
+        }
+      | {                      // Recurrencia lineal por desplazamiento: T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n)
+          type: "linear_shift";
+          form: string;         // forma LaTeX: "T(n) = T(n-1) + T(n-2) + g(n)"
+          order: number;        // orden de la recurrencia (k)
+          shifts: number[];     // desplazamientos [1, 2] para Fibonacci
+          coefficients: number[]; // coeficientes [1, 1] para Fibonacci
+          "g(n)"?: string;      // término no homogéneo g(n) (LaTeX), None si es homogénea
+          n0: number;           // umbral base
+          applicable: boolean;
+          notes: string[];
+          method?: "characteristic_equation";
+        }
+    );
     characteristic_equation?: {              // resultado del Método de Ecuación Característica
       method: "characteristic_equation";     // identificador del método
       is_dp_linear: boolean;                 // si corresponde a Programación Dinámica lineal
@@ -280,14 +295,24 @@ export interface AnalyzeOpenResponse {
         root: string;                       // raíz en LaTeX
         multiplicity: number;             // multiplicidad de la raíz
       }>;
+      dominant_root?: string;                // raíz dominante (mayor valor absoluto) en LaTeX
+      growth_rate?: number;                  // tasa de crecimiento numérica (valor de la raíz dominante)
+      solved_by: "characteristic_equation";  // método usado para resolver
       homogeneous_solution: string;         // solución homogénea en LaTeX
       particular_solution?: string;         // solución particular en LaTeX (si hay g(n))
+      general_solution?: string;            // solución general completa (homogénea + particular) en LaTeX
+      base_cases?: Record<string, number>;  // casos base detectados (ej: {"T(0)": 0, "T(1)": 1})
       closed_form: string;                  // forma cerrada simplificada en LaTeX
-      dp_version?: {                        // versión DP si aplica
+      dp_version?: {                        // versión DP básica si aplica
         code: string;                       // pseudocódigo DP
         time_complexity: string;             // complejidad temporal DP (ej: "O(n)")
-        space_complexity: string;            // complejidad espacial DP (ej: "O(n)" o "O(1)")
+        space_complexity: string;            // complejidad espacial DP (ej: "O(n)")
         recursive_complexity: string;        // complejidad versión recursiva (ej: "O(2^n)")
+      };
+      dp_optimized_version?: {              // versión DP optimizada O(1) espacio si aplica
+        code: string;                       // pseudocódigo DP optimizado
+        time_complexity: string;             // complejidad temporal DP (ej: "O(n)")
+        space_complexity: string;            // complejidad espacial DP optimizada (ej: "O(1)" o "O(k)")
       };
       dp_equivalence: string;               // explicación de equivalencia entre ecuación característica y DP
       theta: string;                        // resultado final Θ(...) en LaTeX
@@ -362,6 +387,15 @@ export interface AnalyzeError {
 
 /** Union type para response de análisis */
 export type AnalyzeResponse = AnalyzeOpenResponse | AnalyzeError;
+
+/** Response con todos los casos (worst, best, avg) */
+export interface AnalyzeAllCasesResponse {
+  ok: true;
+  has_case_variability?: boolean;  // si worst/best/avg difieren (false si son idénticos)
+  worst: AnalyzeOpenResponse;
+  best: AnalyzeOpenResponse;
+  avg?: AnalyzeOpenResponse;
+}
 
 // Tipos legacy mantenidos para compatibilidad
 export type CaseMode = "best" | "avg" | "worst" | "all";

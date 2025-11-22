@@ -18,18 +18,33 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 
-import { generateRecursionTree, type RecurrenceData } from "@/lib/recursion-tree-generator";
+import { 
+  generateRecursionTree, 
+  generateLinearRecursionTree,
+  type RecurrenceData,
+  type LinearRecurrenceData
+} from "@/lib/recursion-tree-generator";
 import Formula from "./Formula";
 
 interface RecursionTreeModalProps {
   open: boolean;
   onClose: () => void;
-  recurrence: {
-    a: number;
-    b: number;
-    f: string;
-    n0: number;
-  } | null | undefined;
+  recurrence: (
+    | {
+        type: "divide_conquer";
+        a: number;
+        b: number;
+        f: string;
+        n0: number;
+      }
+    | {
+        type: "linear_shift";
+        shifts: number[];
+        coefficients: number[];
+        "g(n)"?: string;
+        n0: number;
+      }
+  ) | null | undefined;
   recursionTreeData?: {
     method: "recursion_tree";
     levels?: Array<{
@@ -43,6 +58,13 @@ interface RecursionTreeModalProps {
     height?: string;
     theta?: string;
   } | null | undefined;
+  characteristicEquation?: {
+    method: "characteristic_equation";
+    equation?: string;
+    roots?: Array<{ root: string; multiplicity: number }>;
+    growth_rate?: number;
+    theta?: string;
+  } | null | undefined;
 }
 
 interface TreeNodeData {
@@ -51,11 +73,13 @@ interface TreeNodeData {
   level: number;
   nodeCount: number;
   isBaseCase: boolean;
+  duplicateCount?: number; // número de veces que aparece este subproblema (para árboles lineales)
+  argument?: number; // valor del argumento (para árboles lineales)
 }
 
 // Nodo personalizado para el árbol - optimizado con React.memo
 const TreeNode = React.memo(({ data }: { data: TreeNodeData & { sourcePosition?: string; targetPosition?: string } }) => {
-  const { label, size, level, nodeCount, isBaseCase, sourcePosition, targetPosition } = data;
+  const { label, size, level, nodeCount, isBaseCase, duplicateCount, argument, sourcePosition, targetPosition } = data;
   
   // Convertir strings a Position enum
   const sourcePos = sourcePosition === 'bottom' ? Position.Bottom : 
@@ -104,11 +128,21 @@ const TreeNode = React.memo(({ data }: { data: TreeNodeData & { sourcePosition?:
       />
       <div className="text-white font-semibold text-sm mb-2 truncate">{label}</div>
       <div className="text-xs text-slate-300 space-y-0.5">
-        <div className="font-medium">n ≈ {size.toFixed(1)}</div>
+        {argument !== undefined ? (
+          <div className="font-medium">n = {argument}</div>
+        ) : (
+          <div className="font-medium">n ≈ {size.toFixed(1)}</div>
+        )}
         <div className="text-slate-400">Nivel {level}</div>
-        <div className={`text-xs ${isBaseCase ? "text-green-400" : "text-slate-500"}`}>
-          {nodeCount} nodo{nodeCount !== 1 ? "s" : ""}
-        </div>
+        {duplicateCount && duplicateCount > 1 ? (
+          <div className="text-orange-400 font-semibold text-[10px] bg-orange-500/20 px-1.5 py-0.5 rounded">
+            ⚠ Subproblema duplicado ({duplicateCount}x)
+          </div>
+        ) : (
+          <div className={`text-xs ${isBaseCase ? "text-green-400" : "text-slate-500"}`}>
+            {nodeCount} nodo{nodeCount !== 1 ? "s" : ""}
+          </div>
+        )}
         {isBaseCase && (
           <div className="text-green-300 font-semibold mt-1 pt-1 border-t border-green-500/30">
             Retorna
@@ -155,45 +189,116 @@ export default function RecursionTreeModal({
   onClose,
   recurrence,
   recursionTreeData,
+  characteristicEquation,
 }: Readonly<RecursionTreeModalProps>) {
   const [maxDepth, setMaxDepth] = useState<number | null>(null);
   const [orientation, setOrientation] = useState<"vertical" | "horizontal">("vertical");
-  const [initialN, setInitialN] = useState<number>(30);
+  const [initialN, setInitialN] = useState<number>(3); // Por defecto n=3 (profundidad más baja)
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   
-  // Debug: verificar edges en cada render
-  useEffect(() => {
-    if (edges.length > 0) {
-      console.log('[RecursionTreeModal] Current edges state:', edges.length, edges[0]);
-    }
-  }, [edges]);
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
+  
+  // Detectar tipo de recurrencia
+  const isLinearRecurrence = recurrence?.type === "linear_shift";
+  const isDivideConquer = recurrence?.type === "divide_conquer";
 
   // Calcular profundidad base si no está configurada
   useEffect(() => {
     if (recurrence && maxDepth === null) {
-      let depth = 0;
-      let currentN = initialN;
-      while (currentN > recurrence.n0 && recurrence.b > 1) {
-        currentN = currentN / recurrence.b;
-        depth++;
+      if (isLinearRecurrence) {
+        // Para recurrencias lineales, la profundidad es aproximadamente n
+        // Limitamos a un máximo razonable para evitar explosión
+        const depth = Math.min(initialN, 10); // Máximo 10 niveles para árboles lineales
+        setMaxDepth(depth);
+      } else if (isDivideConquer) {
+        // Para divide-and-conquer, calcular hasta caso base
+        let depth = 0;
+        let currentN = initialN;
+        while (currentN > recurrence.n0 && recurrence.b > 1) {
+          currentN = currentN / recurrence.b;
+          depth++;
+        }
+        setMaxDepth(depth);
       }
-      setMaxDepth(depth);
     }
-  }, [recurrence, maxDepth, initialN]);
+  }, [recurrence, maxDepth, initialN, isLinearRecurrence, isDivideConquer]);
+  
+  // Ajustar initialN por defecto según el tipo de recurrencia solo al cargar
+  useEffect(() => {
+    // No cambiar automáticamente si el usuario ya lo modificó
+    // Solo establecer valor por defecto inicial
+    if (initialN === 3) {
+      // Mantener n=3 como valor por defecto para ambos tipos
+      // El usuario puede cambiarlo si lo desea
+    }
+  }, [isLinearRecurrence, isDivideConquer, initialN]);
 
   // Generar árbol cuando cambian los parámetros
   useEffect(() => {
-    if (!recurrence || maxDepth === null) return;
+    if (!recurrence) {
+      setNodes([]);
+      setEdges([]);
+      return;
+    }
+
+    let fitViewTimeout: ReturnType<typeof setTimeout> | null = null;
 
     try {
-      const treeLayout = generateRecursionTree(
-        recurrence as RecurrenceData,
-        maxDepth,
-        orientation,
-        initialN
-      );
+      let treeLayout;
+      
+      if (isLinearRecurrence) {
+        // Generar árbol lineal (irregular) para ecuación característica
+        if (maxDepth === null) {
+          setNodes([]);
+          setEdges([]);
+          return;
+        }
+        
+        treeLayout = generateLinearRecursionTree(
+          {
+            shifts: recurrence.shifts,
+            coefficients: recurrence.coefficients,
+            g_n: recurrence["g(n)"],
+            n0: recurrence.n0,
+          } as LinearRecurrenceData,
+          maxDepth,
+          orientation,
+          initialN
+        );
+      } else if (isDivideConquer) {
+        // Generar árbol divide-and-conquer (uniforme)
+        if (maxDepth === null) {
+          setNodes([]);
+          setEdges([]);
+          return;
+        }
+        
+        // Validar que b > 1 para que sea una recurrencia divide-and-conquer válida
+        if (recurrence.b <= 1 || recurrence.a <= 0) {
+          console.warn('[RecursionTreeModal] Invalid recurrence parameters for divide-and-conquer tree:', recurrence);
+          setNodes([]);
+          setEdges([]);
+          return;
+        }
+        
+        treeLayout = generateRecursionTree(
+          {
+            a: recurrence.a,
+            b: recurrence.b,
+            f: recurrence.f,
+            n0: recurrence.n0,
+          } as RecurrenceData,
+          maxDepth,
+          orientation,
+          initialN
+        );
+      } else {
+        // Tipo de recurrencia no soportado
+        setNodes([]);
+        setEdges([]);
+        return;
+      }
 
       const formattedNodes = treeLayout.nodes as Node[];
       // Asegurar que las aristas tengan el formato mínimo requerido
@@ -208,55 +313,51 @@ export default function RecursionTreeModal({
         },
       }));
       
-      console.log('[RecursionTree] Setting nodes and edges:', {
-        nodesCount: formattedNodes.length,
-        edgesCount: formattedEdges.length,
-        sampleEdge: formattedEdges[0],
-        sampleEdgeLabel: formattedEdges[0]?.label,
-        allEdgeLabels: formattedEdges.map(e => ({ id: e.id, label: e.label }))
-      });
-      
-      setNodes(formattedNodes);
-      setEdges(formattedEdges);
-      
-      console.log('[RecursionTree] Generated:', {
-        nodes: formattedNodes.length,
-        edges: formattedEdges.length,
-        firstEdge: formattedEdges[0],
-        firstNode: formattedNodes[0],
-        nodeIds: formattedNodes.map(n => n.id),
-        edgeSources: formattedEdges.map(e => e.source),
-        edgeTargets: formattedEdges.map(e => e.target),
-      });
-      
       // Verificar que todos los source y target existen
       const nodeIdSet = new Set(formattedNodes.map(n => n.id));
       const invalidEdges = formattedEdges.filter(e => 
         !nodeIdSet.has(e.source) || !nodeIdSet.has(e.target)
       );
       if (invalidEdges.length > 0) {
-        console.error('[RecursionTree] Invalid edges:', invalidEdges);
+        console.error('[RecursionTree] Invalid edges detected:', invalidEdges);
+        // Filtrar edges inválidos
+        const validEdges = formattedEdges.filter(e => 
+          nodeIdSet.has(e.source) && nodeIdSet.has(e.target)
+        );
+        setNodes(formattedNodes);
+        setEdges(validEdges);
+      } else {
+        setNodes(formattedNodes);
+        setEdges(formattedEdges);
       }
       
-      // Verificar posiciones de nodos
-      const nodePositions = formattedNodes.map(n => ({
-        id: n.id,
-        x: n.position?.x || 0,
-        y: n.position?.y || 0
-      }));
-      console.log('[RecursionTree] Node positions:', nodePositions);
-      
-      setTimeout(() => {
-        if (reactFlowInstance.current) {
-          reactFlowInstance.current.fitView({ padding: 0.2, duration: 300 });
-          // Verificar que las aristas estén en el estado
-          console.log('[RecursionTree] After fitView, edges count:', formattedEdges.length);
+      // Ajustar vista después de que los nodos y edges se hayan renderizado
+      // Esperar a que React Flow esté completamente inicializado
+      fitViewTimeout = setTimeout(() => {
+        if (reactFlowInstance.current && formattedNodes.length > 0) {
+          try {
+            reactFlowInstance.current.fitView({ 
+              padding: 0.2, 
+              duration: 300,
+              maxZoom: 1,
+              minZoom: 0.1
+            });
+          } catch (error) {
+            console.warn('[RecursionTree] Error fitting view:', error);
+          }
         }
-      }, 100);
+      }, 250);
     } catch (error) {
       console.error("Error generando árbol:", error);
     }
-  }, [recurrence, maxDepth, orientation, initialN, setNodes, setEdges]);
+
+    // Retornar función de limpieza para el timeout
+    return () => {
+      if (fitViewTimeout) {
+        clearTimeout(fitViewTimeout);
+      }
+    };
+  }, [recurrence, maxDepth, orientation, initialN, setNodes, setEdges, isLinearRecurrence, isDivideConquer]);
 
   // Manejar tecla Escape
   useEffect(() => {
@@ -288,14 +389,24 @@ export default function RecursionTreeModal({
 
   const maxPossibleDepth = useMemo(() => {
     if (!recurrence) return 0;
-    let depth = 0;
-    let currentN = initialN;
-    while (currentN > recurrence.n0 && recurrence.b > 1) {
-      currentN = currentN / recurrence.b;
-      depth++;
+    
+    if (isLinearRecurrence) {
+      // Para recurrencias lineales, la profundidad máxima es aproximadamente n
+      // Limitamos a un máximo razonable para evitar explosión
+      return Math.min(initialN, 10);
+    } else if (isDivideConquer) {
+      // Para divide-and-conquer, calcular hasta caso base
+      let depth = 0;
+      let currentN = initialN;
+      while (currentN > recurrence.n0 && recurrence.b > 1) {
+        currentN = currentN / recurrence.b;
+        depth++;
+      }
+      return depth;
     }
-    return depth;
-  }, [recurrence, initialN]);
+    
+    return 0;
+  }, [recurrence, initialN, isLinearRecurrence, isDivideConquer]);
 
   const handleDepthChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value === "" ? null : parseInt(e.target.value);
@@ -312,7 +423,26 @@ export default function RecursionTreeModal({
     return node.data?.isBaseCase ? "#10b981" : "#64748b";
   }, []);
 
-  if (!open || !recurrence) return null;
+  // Solo mostrar el modal si la recurrencia es válida
+  if (!open || !recurrence) {
+    return null;
+  }
+  
+  // Validar tipo de recurrencia
+  if (isLinearRecurrence) {
+    // Para recurrencias lineales, validar que tenga shifts y coefficients
+    if (!recurrence.shifts || recurrence.shifts.length === 0 || !recurrence.coefficients || recurrence.coefficients.length === 0) {
+      return null;
+    }
+  } else if (isDivideConquer) {
+    // Para divide-and-conquer, validar que tenga a y b válidos
+    if (!('a' in recurrence) || !('b' in recurrence) || recurrence.b <= 1 || recurrence.a <= 0) {
+      return null;
+    }
+  } else {
+    // Tipo de recurrencia no soportado
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 z-50">
@@ -350,22 +480,27 @@ export default function RecursionTreeModal({
               <div className="flex items-center gap-2 flex-1">
                 <input
                   type="range"
-                  min="5"
-                  max="100"
-                  step="5"
+                  min="3"
+                  max={isLinearRecurrence ? "10" : "100"}
+                  step="1"
                   value={initialN}
                   onChange={(e) => {
                     const newN = parseInt(e.target.value);
                     setInitialN(newN);
                     // Recalcular profundidad cuando cambia n
                     if (recurrence) {
-                      let depth = 0;
-                      let currentN = newN;
-                      while (currentN > recurrence.n0 && recurrence.b > 1) {
-                        currentN = currentN / recurrence.b;
-                        depth++;
+                      if (isLinearRecurrence) {
+                        // Para árboles lineales, profundidad ≈ n
+                        setMaxDepth(Math.min(newN, 10));
+                      } else if (isDivideConquer) {
+                        let depth = 0;
+                        let currentN = newN;
+                        while (currentN > recurrence.n0 && recurrence.b > 1) {
+                          currentN = currentN / recurrence.b;
+                          depth++;
+                        }
+                        setMaxDepth(depth);
                       }
-                      setMaxDepth(depth);
                     }
                   }}
                   className="flex-1 h-2 bg-slate-700/60 rounded-lg appearance-none cursor-pointer accent-purple-500 hover:bg-slate-700/80 transition-colors"
@@ -409,11 +544,29 @@ export default function RecursionTreeModal({
             </div>
 
             <div className="ml-auto flex items-center gap-2 text-xs text-slate-400">
-              <Formula latex={`a = ${recurrence.a}`} />
-              <span>,</span>
-              <Formula latex={`b = ${recurrence.b}`} />
-              <span>,</span>
-              <Formula latex={`f(n) = ${recurrence.f}`} />
+              {isLinearRecurrence ? (
+                <>
+                  <span>Desplazamientos: [{recurrence.shifts.join(', ')}]</span>
+                  <span>,</span>
+                  <span>Coefs: [{recurrence.coefficients.join(', ')}]</span>
+                  {characteristicEquation?.growth_rate && (
+                    <>
+                      <span>,</span>
+                      <span className="text-orange-300">
+                        Crecimiento: ≈{characteristicEquation.growth_rate.toFixed(3)}ⁿ
+                      </span>
+                    </>
+                  )}
+                </>
+              ) : isDivideConquer ? (
+                <>
+                  <Formula latex={`a = ${recurrence.a}`} />
+                  <span>,</span>
+                  <Formula latex={`b = ${recurrence.b}`} />
+                  <span>,</span>
+                  <Formula latex={`f(n) = ${recurrence.f}`} />
+                </>
+              ) : null}
             </div>
           </div>
         </div>
@@ -428,7 +581,7 @@ export default function RecursionTreeModal({
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             onInit={onInit}
-            fitView
+            fitView={false}
             minZoom={0.1}
             maxZoom={2}
             defaultEdgeOptions={{
@@ -475,7 +628,7 @@ export default function RecursionTreeModal({
           <div className="border-t border-white/10 p-3 flex-shrink-0 bg-slate-800/50">
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between text-xs text-slate-400">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
                   <span>
                     Total de nodos: <span className="text-white font-semibold">{nodes.length}</span>
                   </span>
@@ -485,9 +638,29 @@ export default function RecursionTreeModal({
                       {Math.max(...nodes.map((n) => n.data?.level || 0)) + 1}
                     </span>
                   </span>
+                  {isLinearRecurrence && (
+                    <>
+                      <span>
+                        Subproblemas duplicados:{" "}
+                        <span className="text-orange-300 font-semibold">
+                          {nodes.filter(n => n.data?.duplicateCount && n.data.duplicateCount > 1).length}
+                        </span>
+                      </span>
+                      {characteristicEquation?.growth_rate && (
+                        <span className="text-orange-300">
+                          Crecimiento: Θ({characteristicEquation.growth_rate.toFixed(3)}ⁿ)
+                        </span>
+                      )}
+                    </>
+                  )}
                 </div>
-                <div className="text-slate-500">
-                  Usa el mouse para hacer zoom y arrastrar. Presiona Esc para cerrar.
+                <div className="text-slate-500 flex items-center gap-2">
+                  <span>Usa el mouse para hacer zoom y arrastrar. Presiona Esc para cerrar.</span>
+                  {isLinearRecurrence && (
+                    <span className="text-orange-400 text-[10px]">
+                      ⚠ Árbol irregular: los nodos se duplican
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

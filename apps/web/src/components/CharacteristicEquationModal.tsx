@@ -26,16 +26,31 @@ function roundLatexNumbers(latex: string): string {
 interface CharacteristicEquationModalProps {
   open: boolean;
   onClose: () => void;
-  recurrence: {
-    form: string;
-    a: number;
-    b: number;
-    f: string;
-    n0: number;
-    applicable: boolean;
-    notes: string[];
-    method?: "master" | "iteration" | "recursion_tree" | "characteristic_equation";
-  } | null | undefined;
+  recurrence: (
+    | {
+        type: "divide_conquer";
+        form: string;
+        a: number;
+        b: number;
+        f: string;
+        n0: number;
+        applicable: boolean;
+        notes: string[];
+        method?: "master" | "iteration" | "recursion_tree";
+      }
+    | {
+        type: "linear_shift";
+        form: string;
+        order: number;
+        shifts: number[];
+        coefficients: number[];
+        "g(n)"?: string;
+        n0: number;
+        applicable: boolean;
+        notes: string[];
+        method?: "characteristic_equation";
+      }
+  ) | null | undefined;
   characteristicEquation: {
     method: "characteristic_equation";
     is_dp_linear: boolean;
@@ -46,12 +61,19 @@ interface CharacteristicEquationModalProps {
     }>;
     homogeneous_solution: string;
     particular_solution?: string;
+    general_solution?: string;
+    base_cases?: Record<string, number>;
     closed_form: string;
     dp_version?: {
       code: string;
       time_complexity: string;
       space_complexity: string;
       recursive_complexity: string;
+    };
+    dp_optimized_version?: {
+      code: string;
+      time_complexity: string;
+      space_complexity: string;
     };
     dp_equivalence: string;
     theta: string;
@@ -110,8 +132,24 @@ export default function CharacteristicEquationModal({
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center justify-center gap-1 mt-2 text-xs">
-                    <Formula latex={`f(n) = ${recurrence.f}`} />
-                    <span className="text-slate-300">,</span>
+                    {recurrence.type === "linear_shift" ? (
+                      recurrence["g(n)"] !== undefined && recurrence["g(n)"] !== null ? (
+                        <>
+                          <Formula latex={`g(n) = ${recurrence["g(n)"]}`} />
+                          <span className="text-slate-300">,</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-slate-400 italic">g(n) = 0 (homogénea)</span>
+                          <span className="text-slate-300">,</span>
+                        </>
+                      )
+                    ) : (
+                      <>
+                        <Formula latex={`f(n) = ${recurrence.f}`} />
+                        <span className="text-slate-300">,</span>
+                      </>
+                    )}
                     <Formula latex={`n_0 = ${recurrence.n0}`} />
                   </div>
                 </div>
@@ -126,26 +164,29 @@ export default function CharacteristicEquationModal({
                       <Formula latex={characteristicEquation.equation} display />
                     </div>
                   </div>
-                </div>
-              )}
-
-              {/* Raíces */}
-              {characteristicEquation && characteristicEquation.roots && characteristicEquation.roots.length > 0 && (
-                <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                  <h4 className="text-white font-semibold text-sm mb-2">Raíces de la Ecuación Característica</h4>
-                  <div className="space-y-2">
-                    {characteristicEquation.roots.map((rootInfo, idx) => (
-                      <div key={idx} className="bg-slate-900/50 p-2 rounded border border-white/10">
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="text-blue-300 font-semibold">r{idx + 1} =</span>
-                          <Formula latex={rootInfo.root} />
-                          {rootInfo.multiplicity > 1 && (
-                            <span className="text-slate-400 text-xs">(multiplicidad: {rootInfo.multiplicity})</span>
-                          )}
-                        </div>
+                  
+                  {/* Raíces como badges */}
+                  {characteristicEquation.roots && characteristicEquation.roots.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-white/10">
+                      <h5 className="text-slate-400 text-xs font-semibold mb-2">Raíces:</h5>
+                      <div className="flex flex-wrap gap-2">
+                        {characteristicEquation.roots.map((rootInfo, idx) => (
+                          <div
+                            key={idx}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-500/20 border border-blue-500/30 text-xs"
+                          >
+                            <span className="text-blue-300 font-semibold">r{idx + 1} =</span>
+                            <div className="scale-90 origin-center">
+                              <Formula latex={rootInfo.root} />
+                            </div>
+                            {rootInfo.multiplicity > 1 && (
+                              <span className="text-blue-400/70 text-[10px]">(×{rootInfo.multiplicity})</span>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -176,17 +217,45 @@ export default function CharacteristicEquationModal({
                 </div>
               )}
 
-              {/* Solución General (solo si hay solución particular) */}
-              {characteristicEquation && characteristicEquation.particular_solution && (
+              {/* Solución General */}
+              {characteristicEquation && (characteristicEquation.general_solution || characteristicEquation.particular_solution) && (
                 <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
                   <h4 className="text-white font-semibold text-sm mb-2">Solución General</h4>
                   <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto flex justify-center">
                     <div className="scale-90">
-                      <Formula latex={`T(n) = T_h(n) + T_p(n) = ${characteristicEquation.homogeneous_solution} + ${characteristicEquation.particular_solution}`} display />
+                      {characteristicEquation.general_solution ? (
+                        <Formula latex={`T(n) = ${characteristicEquation.general_solution}`} display />
+                      ) : (
+                        <Formula latex={`T(n) = T_h(n) + T_p(n) = ${characteristicEquation.homogeneous_solution} + ${characteristicEquation.particular_solution}`} display />
+                      )}
                     </div>
                   </div>
                   <p className="text-slate-400 text-xs mt-2">
-                    La solución general es la suma de la solución homogénea y la solución particular.
+                    {characteristicEquation.particular_solution 
+                      ? "La solución general es la suma de la solución homogénea y la solución particular."
+                      : "La solución general para la recurrencia homogénea."}
+                  </p>
+                </div>
+              )}
+
+              {/* Casos Base */}
+              {characteristicEquation && characteristicEquation.base_cases && Object.keys(characteristicEquation.base_cases).length > 0 && (
+                <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+                  <h4 className="text-white font-semibold text-sm mb-2">Casos Base Detectados</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(characteristicEquation.base_cases).map(([key, value], idx) => (
+                      <div
+                        key={idx}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-500/20 border border-green-500/30 text-xs"
+                      >
+                        <span className="text-green-300 font-semibold">{key}</span>
+                        <span className="text-slate-400">=</span>
+                        <span className="text-white font-semibold">{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-slate-400 text-xs mt-2">
+                    Casos base extraídos del algoritmo original.
                   </p>
                 </div>
               )}

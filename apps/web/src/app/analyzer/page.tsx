@@ -49,7 +49,7 @@ export default function AnalyzerPage() {
     worst: AnalyzeOpenResponse | null;
     best: AnalyzeOpenResponse | null;
     avg?: AnalyzeOpenResponse | null;
-  }>(() => {
+  } | null>(() => {
     // Cargar resultados desde sessionStorage si vienen del editor manual o del chatbot
     if (globalThis.window !== undefined) {
       const savedResults = globalThis.window.sessionStorage.getItem('analyzerResults');
@@ -285,6 +285,7 @@ export default function AnalyzerPage() {
       // Para recursivos: 90 → 95, para iterativos: 55 → 95
       const analyzeRes = await animateProgress(progressBeforeAnalysis, 95, 2500, setAnalysisProgress, analyzePromise) as {
         ok: boolean;
+        has_case_variability?: boolean;
         worst?: AnalyzeOpenResponse;
         best?: AnalyzeOpenResponse;
         avg?: AnalyzeOpenResponse;
