@@ -86,7 +86,7 @@ Usuario → Componente → Hook/Context → Service → API Backend
 **Análisis:**
 - `AnalysisLoader.tsx`: Loader de progreso del análisis
 - `IterativeAnalysisView.tsx`: Vista para algoritmos iterativos
-- `RecursiveAnalysisView.tsx`: Vista para algoritmos recursivos
+- `RecursiveAnalysisView.tsx`: Vista para algoritmos recursivos (refactorizado con funciones auxiliares para reducir complejidad cognitiva)
 - `LineTable.tsx`: Tabla de costos por línea
 - `CostsTable.tsx`: Tabla de costos
 
@@ -229,9 +229,21 @@ const HeavyComponent = dynamic(() => import('./HeavyComponent'));
 
 Uso de `useMemo` y `useCallback` para evitar re-renders innecesarios.
 
+Las funciones auxiliares que dependen de hooks o estados se envuelven en `useCallback` para mantener referencias estables y evitar recreaciones innecesarias.
+
 ### Web Workers
 
 Parseo en background para no bloquear la UI.
+
+### Refactorización y Reducción de Complejidad
+
+Los componentes complejos se han refactorizado para reducir la complejidad cognitiva mediante:
+- Extracción de funciones auxiliares especializadas
+- Uso de objetos de props en lugar de múltiples parámetros
+- Agrupación lógica de funcionalidad relacionada
+- Envolvimiento de funciones auxiliares en `useCallback` cuando es necesario
+
+Ejemplo: `RecursiveAnalysisView` y `runChatAnalysis` en `page.tsx` utilizan funciones auxiliares para mantener la complejidad cognitiva dentro de límites aceptables.
 
 ## Estilos
 

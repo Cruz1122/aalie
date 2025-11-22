@@ -88,6 +88,21 @@ Vista de resultados para algoritmos recursivos.
 **Props:**
 - `data`: Análisis de worst/best/avg con información recursiva
 
+**Estructura:**
+El componente utiliza múltiples funciones auxiliares para reducir la complejidad cognitiva y mejorar la mantenibilidad:
+- Funciones de renderizado condicional (`renderCharacteristicBadges`, `renderRecurrenceParameters`, `renderActionButtons`)
+- Funciones de renderizado de modales (`renderProcedureModal` y sus variantes específicas)
+- Funciones de renderizado de cards (`renderRecursionTreeCards`, `renderEfficiencyCard`)
+- Funciones de utilidad (`getMethodIconColor`, `getMethodIconName`, `getMethodBadgeStyle`, `getMethodBadgeText`)
+
+Las funciones auxiliares usan objetos de props en lugar de múltiples parámetros individuales para mejorar la legibilidad y reducir la complejidad.
+
+**Características:**
+- Visualización de métodos de análisis (Master, Iteración, Árbol de Recursión, Ecuación Característica)
+- Parámetros de recurrencia (divide_conquer o linear_shift)
+- Modales de procedimiento según el método seleccionado
+- Visualización de eficiencia con soporte para diferentes casos (worst/best/average)
+
 ### LineTable
 
 Tabla de costos por línea.
@@ -245,3 +260,34 @@ Se evita cuando es posible usando Context API para estado global.
 
 Muchos componentes renderizan condicionalmente según el tipo de algoritmo o estado.
 
+### Extracción de Funciones Auxiliares
+
+Para reducir la complejidad cognitiva y mejorar la mantenibilidad, los componentes complejos utilizan funciones auxiliares:
+
+**Ejemplo: RecursiveAnalysisView**
+```tsx
+// Funciones auxiliares para renderizado condicional
+const renderCharacteristicBadges = (characteristicEquation: CharacteristicEquationType) => { ... };
+const renderRecurrenceParameters = (recurrence: RecurrenceType) => { ... };
+const renderActionButtons = (props: ActionButtonsProps) => { ... };
+
+// Uso de objetos de props en lugar de múltiples parámetros
+interface ProcedureModalProps {
+  readonly isCharacteristicMethod: boolean;
+  readonly isIterationMethod: boolean;
+  // ... más props agrupadas en un objeto
+}
+```
+
+**Ejemplo: page.tsx**
+```tsx
+// Funciones auxiliares envueltas en useCallback
+const handleMethodSelectionForRecursive = useCallback(async (...) => { ... }, [animateProgress]);
+const detectAndSelectMethodForRecursive = useCallback(async (...) => { ... }, [animateProgress, handleMethodSelectionForRecursive]);
+```
+
+Este patrón permite:
+- Reducir la complejidad cognitiva de funciones principales
+- Mejorar la testabilidad (cada función auxiliar puede probarse independientemente)
+- Facilitar el mantenimiento y la evolución del código
+- Cumplir con las limitaciones de linting (p. ej., máximo de parámetros por función)

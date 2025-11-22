@@ -37,6 +37,15 @@ Página principal con selector de modo (AI/Manual).
 - Chatbot (modo AI)
 - Análisis de código
 
+**Implementación:**
+La función `runChatAnalysis` utiliza funciones auxiliares envueltas en `useCallback` para reducir la complejidad cognitiva:
+- `handleMethodSelectionForRecursive`: Maneja la selección de método cuando hay múltiples opciones
+- `detectAndSelectMethodForRecursive`: Detecta y selecciona métodos aplicables para algoritmos recursivos
+- `prepareRecursiveAnalysisSteps`: Prepara los pasos de análisis para algoritmos recursivos
+- `prepareIterativeAnalysisSteps`: Prepara los pasos de análisis para algoritmos iterativos
+
+Estas funciones auxiliares mejoran la legibilidad y mantenibilidad del código.
+
 ### `/analyzer`
 
 Página de resultados del análisis.
