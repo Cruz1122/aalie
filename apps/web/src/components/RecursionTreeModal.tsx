@@ -360,20 +360,23 @@ export default function RecursionTreeModal({
       
       // Ajustar vista después de que los nodos y edges se hayan renderizado
       // Esperar a que React Flow esté completamente inicializado
-      fitViewTimeout = setTimeout(() => {
-        if (reactFlowInstance.current && formattedNodes.length > 0) {
-          try {
-            reactFlowInstance.current.fitView({ 
-              padding: 0.2, 
-              duration: 300,
-              maxZoom: 1,
-              minZoom: 0.1
-            });
-          } catch (error) {
-            console.warn('[RecursionTree] Error fitting view:', error);
+      // Solo centrar si el modal está abierto
+      if (open) {
+        fitViewTimeout = setTimeout(() => {
+          if (reactFlowInstance.current && formattedNodes.length > 0) {
+            try {
+              reactFlowInstance.current.fitView({ 
+                padding: 0.2, 
+                duration: 300,
+                maxZoom: 1,
+                minZoom: 0.1
+              });
+            } catch (error) {
+              console.warn('[RecursionTree] Error fitting view:', error);
+            }
           }
-        }
-      }, 250);
+        }, 300);
+      }
     } catch (error) {
       console.error("Error generando árbol:", error);
     }
@@ -384,7 +387,7 @@ export default function RecursionTreeModal({
         clearTimeout(fitViewTimeout);
       }
     };
-  }, [recurrence, maxDepth, orientation, initialN, setNodes, setEdges, isLinearRecurrence, isDivideConquer]);
+  }, [recurrence, maxDepth, orientation, initialN, setNodes, setEdges, isLinearRecurrence, isDivideConquer, open]);
 
   // Manejar tecla Escape
   useEffect(() => {
@@ -410,9 +413,49 @@ export default function RecursionTreeModal({
     }
   }, [open]);
 
+  // Centrar el árbol cuando se abre el modal (solo si ya hay nodos generados)
+  useEffect(() => {
+    if (!open || nodes.length === 0) return;
+    
+    // Esperar a que el modal esté completamente renderizado y React Flow esté listo
+    const fitViewTimeout = setTimeout(() => {
+      if (reactFlowInstance.current && nodes.length > 0) {
+        try {
+          reactFlowInstance.current.fitView({ 
+            padding: 0.2, 
+            duration: 300,
+            maxZoom: 1,
+            minZoom: 0.1
+          });
+        } catch (error) {
+          console.warn('[RecursionTree] Error fitting view on open:', error);
+        }
+      }
+    }, 400); // Delay para asegurar que el modal y React Flow estén completamente renderizados
+    
+    return () => {
+      clearTimeout(fitViewTimeout);
+    };
+  }, [open, nodes.length]);
+
   const onInit = useCallback((instance: ReactFlowInstance) => {
     reactFlowInstance.current = instance;
-  }, []);
+    // Si el modal está abierto y hay nodos, centrar inmediatamente después de inicializar
+    if (open && nodes.length > 0) {
+      setTimeout(() => {
+        try {
+          instance.fitView({ 
+            padding: 0.2, 
+            duration: 300,
+            maxZoom: 1,
+            minZoom: 0.1
+          });
+        } catch (error) {
+          console.warn('[RecursionTree] Error fitting view on init:', error);
+        }
+      }, 100);
+    }
+  }, [open, nodes.length]);
 
   const maxPossibleDepth = useMemo(() => {
     if (!recurrence) return 0;

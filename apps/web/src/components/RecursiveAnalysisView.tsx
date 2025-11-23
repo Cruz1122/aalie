@@ -540,6 +540,8 @@ const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
  * Determina si se debe mostrar el botón de árbol de recurrencia.
  * @param isRecursionTreeMethod - Indica si es método de árbol de recursión
  * @param isCharacteristicMethod - Indica si es método de ecuación característica
+ * @param isMasterMethod - Indica si es método del teorema maestro
+ * @param isIterationMethod - Indica si es método de iteración
  * @param recurrence - Datos de la recurrencia
  * @returns true si se debe mostrar el botón, false en caso contrario
  * @author Juan Camilo Cruz Parra (@Cruz1122)
@@ -547,10 +549,14 @@ const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
 const shouldShowTreeButton = (
   isRecursionTreeMethod: boolean,
   isCharacteristicMethod: boolean,
+  isMasterMethod: boolean,
+  isIterationMethod: boolean,
   recurrence: RecurrenceType
 ): boolean => {
   if (isRecursionTreeMethod && recurrence?.type === "divide_conquer") return true;
   if (isCharacteristicMethod && recurrence?.type === "linear_shift") return true;
+  if (isMasterMethod && recurrence?.type === "divide_conquer") return true;
+  if (isIterationMethod && recurrence?.type === "divide_conquer") return true;
   return false;
 };
 
@@ -928,30 +934,59 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
           </div>
         </div>
 
-        {/* Botones para ver detalles y pasos */}
-        {renderActionButtons({
-          isCharacteristicMethod,
-          isRecursionTreeMethod,
-          proof,
-          setShowCharacteristicModal,
-          setShowProcedureModal,
-          setShowStepsModal,
-          setShowDPModal,
-          characteristicEquation,
-        })}
-
-        {/* Botón para árbol de recurrencia - para recursion_tree y characteristic_equation */}
-        {shouldShowTreeButton(isRecursionTreeMethod, isCharacteristicMethod, recurrence) && (
-          <div className="mb-4">
-            <button
-              onClick={() => setShowTreeModal(true)}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors"
-            >
-              <span className="material-symbols-outlined text-sm">account_tree</span>
-              <span>Ver Árbol de Recurrencia</span>
-            </button>
-          </div>
-        )}
+        {/* Botones para ver detalles, pasos y árbol */}
+        {(() => {
+          const showTreeButton = shouldShowTreeButton(isRecursionTreeMethod, isCharacteristicMethod, isMasterMethod, isIterationMethod, recurrence);
+          
+          // Si hay botón de árbol y es método maestro o iteración, ponerlos en la misma línea
+          if (showTreeButton && (isMasterMethod || isIterationMethod)) {
+            return (
+              <div className="mb-4 grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setShowProcedureModal(true)}
+                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-sky-500/20 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-sm">info</span>
+                  <span>Ver Detalles</span>
+                </button>
+                <button
+                  onClick={() => setShowTreeModal(true)}
+                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-sm">account_tree</span>
+                  <span>Ver Árbol de Recurrencia</span>
+                </button>
+              </div>
+            );
+          }
+          
+          // Caso normal: botones de acción primero, luego botón de árbol si aplica
+          return (
+            <>
+              {renderActionButtons({
+                isCharacteristicMethod,
+                isRecursionTreeMethod,
+                proof,
+                setShowCharacteristicModal,
+                setShowProcedureModal,
+                setShowStepsModal,
+                setShowDPModal,
+                characteristicEquation,
+              })}
+              {showTreeButton && (
+                <div className="mb-4">
+                  <button
+                    onClick={() => setShowTreeModal(true)}
+                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-sm">account_tree</span>
+                    <span>Ver Árbol de Recurrencia</span>
+                  </button>
+                </div>
+              )}
+            </>
+          );
+        })()}
       </div>
 
       {/* Card de costos o información del método de Árbol de Recursión */}
@@ -1006,9 +1041,11 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
         />
       )}
 
-      {/* Modal del árbol de recursión - para recursion_tree y characteristic_equation */}
+      {/* Modal del árbol de recursión - para recursion_tree, characteristic_equation, master e iteration */}
       {((isRecursionTreeMethod && recurrence?.type === "divide_conquer") || 
-        (isCharacteristicMethod && recurrence?.type === "linear_shift")) && (
+        (isCharacteristicMethod && recurrence?.type === "linear_shift") ||
+        (isMasterMethod && recurrence?.type === "divide_conquer") ||
+        (isIterationMethod && recurrence?.type === "divide_conquer")) && (
       <RecursionTreeModal
         open={showTreeModal}
         onClose={() => setShowTreeModal(false)}
