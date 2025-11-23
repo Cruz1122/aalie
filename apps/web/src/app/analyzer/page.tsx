@@ -637,12 +637,9 @@ export default function AnalyzerPage() {
         isRecursive,
       };
 
-      // Incrementar progreso gradualmente con diferentes mensajes
-      setComparisonMessage("Enviando análisis propio...");
-      await animateProgress(0, 15, 300, setComparisonProgress);
-      
-      setComparisonMessage("Preparando datos de comparación...");
-      await animateProgress(15, 25, 200, setComparisonProgress);
+      // Preparación rápida inicial
+      setComparisonMessage("Preparando datos...");
+      await animateProgress(0, 5, 200, setComparisonProgress);
 
       const prompt = `Analiza el siguiente algoritmo y proporciona un análisis de complejidad detallado.
 
@@ -672,25 +669,70 @@ ${JSON.stringify(fullAnalysisData, null, 2)}
 - La nota debe ser una observación REAL comparando tu análisis con el proporcionado, no genérica
 - Devuelve SOLO un objeto JSON válido según el schema definido`;
 
-      setComparisonMessage("Enviando solicitud a Gemini 2.5 Pro...");
-      await animateProgress(25, 35, 300, setComparisonProgress);
-
       // Llamar al LLM
       const apiKey = getApiKey();
       
-      setComparisonMessage("Esperando respuesta del LLM...");
-      let lastProgress = 35;
+      setComparisonMessage("Enviando solicitud a Gemini 2.5 Pro...");
+      await animateProgress(5, 10, 200, setComparisonProgress);
+      
+      // Progreso variable durante la petición: más lento al inicio, más rápido en el medio, lento al final
+      // Va de 10% a 95% durante ~20 segundos
+      const targetProgress = 95;
+      const estimatedDuration = 20000; // ~20 segundos
+      const startTime = Date.now();
+      
+      // Mensajes que cambian durante la espera
+      const waitingMessages = [
+        "Esperando respuesta del LLM...",
+        "Analizando algoritmo...",
+        "Calculando complejidad...",
+        "Comparando análisis...",
+        "Generando observaciones...",
+        "Finalizando comparación..."
+      ];
+      
+      let messageIndex = 0;
+      const messageChangeInterval = 3000; // Cambiar mensaje cada 3 segundos
+      let lastMessageChange = Date.now();
+      
+      // Función para calcular progreso con curva más suave
+      const calculateProgress = (elapsed: number) => {
+        // Usar una curva ease-in-out más suave: lento al inicio, rápido en el medio, lento al final
+        const progress = elapsed / estimatedDuration;
+        // Aplicar curva ease-in-out más suave (usando seno para transición más gradual)
+        // Esto hace que el inicio sea más lento que la curva cúbica anterior
+        const easedProgress = progress < 0.5
+          ? 2 * progress * progress  // Ease-in: más lento al inicio
+          : 1 - Math.pow(-2 * progress + 2, 2) / 2; // Ease-out: más lento al final
+        return 10 + (targetProgress - 10) * Math.min(easedProgress, 0.99); // Cap at 99% of target
+      };
+      
       const progressInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const newProgress = calculateProgress(elapsed);
+        
+        // Cambiar mensaje periódicamente
+        if (Date.now() - lastMessageChange >= messageChangeInterval) {
+          messageIndex = (messageIndex + 1) % waitingMessages.length;
+          setComparisonMessage(waitingMessages[messageIndex]);
+          lastMessageChange = Date.now();
+        }
+        
         setComparisonProgress((prev) => {
-          if (prev < 85) {
-            // Incremento más lento y gradual: 0.3% cada 400ms
-            const newProgress = Math.min(85, prev + 0.7);
-            lastProgress = newProgress;
+          // Solo avanzar si el nuevo progreso es mayor
+          if (newProgress > prev && newProgress < targetProgress) {
             return newProgress;
+          }
+          // Si llegamos al límite, mantener en 95%
+          if (prev >= targetProgress - 0.5) {
+            return targetProgress;
           }
           return prev;
         });
-      }, 400); // Incrementar 0.3% cada 400ms hasta 85% (más lento y fluido)
+      }, 100); // Actualizar cada 100ms para suavidad
+      
+      // Establecer primer mensaje
+      setComparisonMessage(waitingMessages[0]);
 
       const response = await fetch('/api/llm', {
         method: 'POST',
@@ -709,8 +751,9 @@ ${JSON.stringify(fullAnalysisData, null, 2)}
         throw new Error(errorData?.error || `HTTP error! status: ${response.status}`);
       }
 
+      // Cuando recibimos la respuesta, ir de 95% a 100%
       setComparisonMessage("Procesando respuesta...");
-      setComparisonProgress(85);
+      await animateProgress(95, 100, 300, setComparisonProgress);
 
       const result = await response.json();
       
@@ -719,7 +762,6 @@ ${JSON.stringify(fullAnalysisData, null, 2)}
       }
 
       setComparisonMessage("Generando comparación...");
-      setComparisonProgress(90);
 
       // Extraer datos del LLM
       const llmResponseText = result.data?.candidates?.[0]?.content?.parts?.[0]?.text;
