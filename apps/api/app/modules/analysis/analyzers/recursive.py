@@ -3056,8 +3056,21 @@ class RecursiveAnalyzer(BaseAnalyzer):
             if subproblem_info:
                 subproblem_info_list.append(subproblem_info)
         
-        # Solo considerar si todos son de tipo "subtraction" (n-1, n-2, etc.)
-        if not all(info.get("type") == "subtraction" for info in subproblem_info_list if info):
+        # Verificar que al menos hay una llamada recursiva analizada
+        if not subproblem_info_list:
+            return None
+        
+        # Solo considerar si todos los subproblemas analizados son de tipo "subtraction" (n-1, n-2, etc.)
+        # Si alguna llamada recursiva no se pudo analizar (subproblem_info es None), no la incluimos
+        # pero si todas las que se analizaron son "subtraction", entonces es lineal
+        subtraction_count = sum(1 for info in subproblem_info_list if info.get("type") == "subtraction")
+        
+        # Si no todas las llamadas analizadas son de tipo "subtraction", no es lineal
+        if subtraction_count != len(subproblem_info_list):
+            return None
+        
+        # Si no hay ninguna llamada de tipo "subtraction", no es lineal
+        if subtraction_count == 0:
             return None
         
         # Extraer los desplazamientos (offsets)
@@ -3091,7 +3104,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Si f(n) ya es 0, ya es homogénea (correcto)
         # Si f(n) es solo O(1) básico y no hay llamadas a funciones auxiliares, considerar g(n) = 0
         f_n_clean = f_n.strip().lower() if f_n else ""
-        if f_n_clean != "0" and f_n_clean in ["1", "\\theta(1)", "theta(1)", "o(1)"]:
+        # Aceptar más variantes de O(1): "1", "theta(1)", "\\theta(1)", "o(1)", "O(1)", etc.
+        o1_variants = ["1", "\\theta(1)", "theta(1)", "o(1)", "o(1)", "O(1)", "\\Theta(1)", "Θ(1)"]
+        if f_n_clean != "0" and f_n_clean in o1_variants:
             # Verificar si hay llamadas a funciones auxiliares (no recursivas)
             has_aux_calls = self._has_auxiliary_function_calls(proc_def, recursive_calls)
             if not has_aux_calls:
@@ -4057,9 +4072,21 @@ FIN FUNCIÓN"""
             else:
                 size_param_name = str(size_param)
             size_param_index = 1
+        elif not first_param_is_array and len(params) > 1:
+            # Si el primer parámetro NO es un array pero hay dos parámetros,
+            # verificar si el segundo parámetro parece ser el tamaño
+            # (nombres comunes como 'n', 'size', 'length', etc.)
+            second_param = params[1]
+            if isinstance(second_param, dict):
+                second_param_name = second_param.get("name", "").lower()
+                # Si el segundo parámetro tiene un nombre común de tamaño, usarlo
+                if second_param_name in ["n", "size", "length", "len", "tam", "tamaño"]:
+                    size_param_name = second_param.get("name", "")
+                    size_param_index = 1
         
         # Analizar argumentos buscando el que corresponde al tamaño
         # Si el primer parámetro es array, buscar en args[1], sino en args[0]
+        # Pero si detectamos que el tamaño está en el segundo parámetro, buscar en args[1]
         size_arg_index = size_param_index if size_param_index < len(args) else 0
         size_arg = args[size_arg_index] if size_arg_index < len(args) else None
         

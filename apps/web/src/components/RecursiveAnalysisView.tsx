@@ -938,6 +938,38 @@ export default function RecursiveAnalysisView({ data }: RecursiveAnalysisViewPro
         {(() => {
           const showTreeButton = shouldShowTreeButton(isRecursionTreeMethod, isCharacteristicMethod, isMasterMethod, isIterationMethod, recurrence);
           
+          // Si es ecuación característica y hay botón de árbol, mostrar los tres botones en la misma línea
+          if (isCharacteristicMethod && showTreeButton) {
+            const hasDPButton = characteristicEquation?.is_dp_linear;
+            return (
+              <div className={`mb-4 grid gap-3 ${hasDPButton ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                <button
+                  onClick={() => setShowCharacteristicModal(true)}
+                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-sky-500/20 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-sm">info</span>
+                  <span>Ver Detalles</span>
+                </button>
+                {hasDPButton && (
+                  <button
+                    onClick={() => setShowDPModal(true)}
+                    className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-green-500/20 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-sm">memory</span>
+                    <span>Ver Versión DP</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowTreeModal(true)}
+                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-sm">account_tree</span>
+                  <span>Ver Árbol de Recurrencia</span>
+                </button>
+              </div>
+            );
+          }
+          
           // Si hay botón de árbol y es método maestro o iteración, ponerlos en la misma línea
           if (showTreeButton && (isMasterMethod || isIterationMethod)) {
             return (

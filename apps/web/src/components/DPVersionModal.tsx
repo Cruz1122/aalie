@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Formula from "./Formula";
 
 interface DPVersionModalProps {
   open: boolean;
@@ -48,7 +49,7 @@ export default function DPVersionModal({
         tabIndex={0}
         aria-label="Cerrar modal"
       />
-      <div className="absolute left-1/2 top-1/2 w-[min(95vw,900px)] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col">
+      <div className="absolute left-1/2 top-1/2 w-[min(95vw,900px)] max-h-[80vh] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col">
         <div className="flex items-center justify-between border-b border-white/10 p-4 flex-shrink-0">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
             <span className="material-symbols-outlined text-green-400">memory</span>
@@ -62,45 +63,64 @@ export default function DPVersionModal({
             ✕
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-custom">
-          <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto p-5 scrollbar-custom">
+          <div className="space-y-4">
             {/* Comparación de Complejidades */}
-            <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-              <h4 className="text-white font-semibold mb-4">Comparación de Complejidades</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+              <h4 className="text-white font-semibold mb-3 text-sm">Comparación de Complejidades</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-                  <div className="text-red-300 font-semibold text-sm mb-1">Versión Recursiva</div>
-                  <div className="text-red-200 text-lg font-bold">{dpVersion.recursive_complexity}</div>
+                  <div className="text-red-300 font-semibold text-xs mb-2">Versión Recursiva</div>
+                  <div className="text-red-200 mb-2 flex justify-center">
+                    <Formula latex={dpVersion.recursive_complexity} display />
+                  </div>
                   <div className="text-slate-400 text-xs mt-1">Complejidad exponencial</div>
                 </div>
                 <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
-                  <div className="text-green-300 font-semibold text-sm mb-1">Versión DP</div>
-                  <div className="text-green-200 text-lg font-bold">{dpVersion.time_complexity}</div>
-                  <div className="text-slate-400 text-xs mt-1">Tiempo: {dpVersion.time_complexity}, Espacio: {dpVersion.space_complexity}</div>
+                  <div className="text-green-300 font-semibold text-xs mb-2">Versión DP</div>
+                  <div className="text-green-200 mb-2 flex flex-col items-center gap-1">
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-slate-400">Tiempo:</span>
+                      <Formula latex={dpVersion.time_complexity} />
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-slate-400">Espacio:</span>
+                      <Formula latex={dpVersion.space_complexity} />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Código Pseudocódigo */}
-            <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-              <h4 className="text-white font-semibold mb-4">Código Pseudocódigo DP</h4>
-              <div className="bg-slate-900/80 p-4 rounded border border-white/10">
-                <pre className="text-slate-200 text-sm font-mono whitespace-pre-wrap overflow-x-auto">
+            <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+              <h4 className="text-white font-semibold mb-3 text-sm">Pseudocódigo de Programación Dinámica</h4>
+              <div className="bg-slate-900/80 p-3 rounded border border-white/10">
+                <pre className="text-slate-200 text-xs font-mono whitespace-pre-wrap overflow-x-auto">
                   {dpVersion.code}
                 </pre>
+              </div>
+              <div className="mt-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <p className="text-slate-300 text-xs leading-relaxed">
+                  <strong className="text-blue-300">Cambios principales:</strong> Esta versión DP reemplaza las llamadas recursivas por un enfoque iterativo bottom-up. 
+                  En lugar de calcular recursivamente los subproblemas (que pueden repetirse múltiples veces), se construye una tabla/matriz 
+                  que almacena los resultados de los subproblemas desde los casos base hasta el problema original. 
+                  Cada valor se calcula una sola vez y se reutiliza cuando es necesario, eliminando los recálculos redundantes 
+                  que causan la complejidad exponencial en la versión recursiva.
+                </p>
               </div>
             </div>
 
             {/* Explicación de Equivalencia */}
-            <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
-              <h4 className="text-blue-300 font-semibold mb-2">Equivalencia Matemática</h4>
-              <p className="text-slate-300 text-sm">{characteristicEquation.dp_equivalence}</p>
+            <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+              <h4 className="text-blue-300 font-semibold mb-2 text-sm">Equivalencia Matemática</h4>
+              <p className="text-slate-300 text-xs leading-relaxed">{characteristicEquation.dp_equivalence}</p>
             </div>
 
             {/* Ventajas de DP */}
-            <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
-              <h4 className="text-green-300 font-semibold mb-3">Ventajas de la Versión DP</h4>
-              <ul className="space-y-2 text-slate-300 text-sm">
+            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+              <h4 className="text-green-300 font-semibold mb-2 text-sm">Ventajas de la Versión DP</h4>
+              <ul className="space-y-1.5 text-slate-300 text-xs">
                 <li className="flex items-start gap-2">
                   <span className="material-symbols-outlined text-green-400 text-sm">check_circle</span>
                   <span><strong>Complejidad temporal mejorada:</strong> De {dpVersion.recursive_complexity} a {dpVersion.time_complexity}</span>
