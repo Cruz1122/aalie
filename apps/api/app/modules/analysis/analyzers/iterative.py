@@ -616,27 +616,179 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
     def _calculate_t_polynomial_fallback(self):
         """
         Método fallback para calcular T_polynomial agrupando términos similares.
+        Usa SymPy para construir la expresión completa y luego agrupar por potencias de n.
         """
-        # Agrupar términos similares
-        terms_by_count = {}
+        from sympy import Symbol, Add, Integer, latex, expand, simplify, collect, Poly
+        from ..utils.summation_closer import SummationCloser
+        import re
+        
+        n_sym = Symbol(self.variable, integer=True, positive=True)
+        
+        # Función auxiliar para parsear ck_str que puede contener múltiples C_k
+        def parse_ck_string(ck_str):
+            """Parsea un string como 'C_3 + C_4' en una lista de C_k individuales."""
+            ck_pattern = r'C_\{(\d+)\}'
+            ck_matches = re.findall(ck_pattern, ck_str)
+            return [f"C_{{{num}}}" for num in ck_matches]
+        
+        # Agrupar filas por count_expr expandido
+        # Estructura: {count_expr_expanded: [lista de ck_str]}
+        count_to_cks = {}
+        
         for row in self.rows:
-            ck = row.get("ck", "")
-            count = row.get("count", "1")
+            if row.get('ck') != "—" and row.get('count') != "—":
+                ck_str = row.get('ck', '')
+                count_expr = row.get('count_expr')
+                if count_expr is None:
+                    count_expr = row.get('count_raw_expr')
+                if count_expr is None:
+                    count_expr = self._str_to_sympy(row.get('count_raw', '1'))
+                
+                # Evaluar sumatorias y simplificar
+                closer = SummationCloser()
+                count_expr = closer._evaluate_all_sums_sympy(count_expr)
+                count_expr = expand(count_expr)
+                count_expr = simplify(count_expr)
+                
+                # Usar la expresión expandida como clave
+                count_key = str(count_expr)  # Usar string para comparación
+                
+                if count_key not in count_to_cks:
+                    count_to_cks[count_key] = {
+                        'expr': count_expr,
+                        'cks': []
+                    }
+                count_to_cks[count_key]['cks'].append(ck_str)
+        
+        if not count_to_cks:
+            self.t_polynomial = "0"
+            return
+        
+        # Agrupar por potencias de n usando SymPy
+        # Estructura: {coeff_of_n: [lista de C_k]}
+        n_terms_dict = {}  # {coeff_sympy: [C_k strings]}
+        const_terms_dict = {}  # {const_sympy: [C_k strings]}
+        
+        for count_key, data in count_to_cks.items():
+            count_expr = data['expr']
+            cks_list = data['cks']
             
-            if count not in terms_by_count:
-                terms_by_count[count] = []
-            terms_by_count[count].append(ck)
+            # Extraer coeficiente de n y término constante usando SymPy
+            coeff_of_n = count_expr.coeff(n_sym) if hasattr(count_expr, 'coeff') else Integer(0)
+            constant_part = count_expr.subs(n_sym, 0) if hasattr(count_expr, 'subs') else count_expr
+            
+            # Normalizar para comparación
+            coeff_of_n = simplify(coeff_of_n) if coeff_of_n != 0 else Integer(0)
+            constant_part = simplify(constant_part) if constant_part != 0 else Integer(0)
+            
+            # Agrupar términos con n
+            if coeff_of_n != 0:
+                coeff_key = str(coeff_of_n)  # Usar string para comparación
+                if coeff_key not in n_terms_dict:
+                    n_terms_dict[coeff_key] = {
+                        'coeff': coeff_of_n,
+                        'cks': []
+                    }
+                n_terms_dict[coeff_key]['cks'].extend(cks_list)
+            
+            # Agrupar términos constantes
+            if constant_part != 0:
+                const_key = str(constant_part)
+                if const_key not in const_terms_dict:
+                    const_terms_dict[const_key] = {
+                        'value': constant_part,
+                        'cks': []
+                    }
+                const_terms_dict[const_key]['cks'].extend(cks_list)
         
-        # Construir T_polynomial (o A(n) para promedio)
+        # Construir T_polynomial
         polynomial_terms = []
-        for count, cks in terms_by_count.items():
-            if len(cks) == 1:
-                polynomial_terms.append(f"({cks[0]}) \\cdot ({count})")
-            else:
-                ck_sum = " + ".join(cks)
-                polynomial_terms.append(f"({ck_sum}) \\cdot ({count})")
         
-        self.t_polynomial = " + ".join(polynomial_terms)
+        # Términos con n (ordenados por coeficiente, mayor a menor)
+        # Ordenar por el valor numérico del coeficiente si es posible
+        def get_coeff_value(coeff_str):
+            """Obtiene un valor numérico para ordenar coeficientes."""
+            try:
+                from sympy import sympify
+                coeff = sympify(coeff_str)
+                if coeff.is_number:
+                    return float(coeff)
+                return 0  # Si no es número, poner al final
+            except:
+                return 0
+        
+        sorted_n_terms = sorted(n_terms_dict.items(), key=lambda x: get_coeff_value(x[0]), reverse=True)
+        
+        for coeff_key, data in sorted_n_terms:
+            coeff = data['coeff']
+            cks_list = data['cks']
+            ck_combined = " + ".join(cks_list) if len(cks_list) > 1 else cks_list[0]
+            
+            if coeff == Integer(1):
+                polynomial_terms.append(f"({ck_combined}) \\cdot n")
+            elif coeff == Integer(-1):
+                polynomial_terms.append(f"-({ck_combined}) \\cdot n")
+            else:
+                coeff_latex = latex(coeff)
+                polynomial_terms.append(f"({ck_combined}) \\cdot {coeff_latex} \\cdot n")
+        
+        # Términos constantes: agrupar y distribuir signos
+        all_const_terms = []
+        
+        for const_key, data in const_terms_dict.items():
+            const_value = data['value']
+            cks_list = data['cks']
+            
+            # Parsear cada ck en caso de que contenga múltiples C_k
+            all_cks = []
+            for ck in cks_list:
+                parsed = parse_ck_string(ck)
+                all_cks.extend(parsed)
+            
+            if const_value == Integer(1):
+                # Términos positivos
+                all_const_terms.extend([(ck, Integer(1)) for ck in all_cks])
+            elif const_value == Integer(-1):
+                # Términos negativos
+                all_const_terms.extend([(ck, Integer(-1)) for ck in all_cks])
+            else:
+                # Multiplicador diferente
+                all_const_terms.extend([(ck, const_value) for ck in all_cks])
+        
+        # Agrupar términos constantes por signo y valor
+        pos_terms = []
+        neg_terms = []
+        
+        for ck, mult in all_const_terms:
+            if mult == Integer(1):
+                pos_terms.append(ck)
+            elif mult == Integer(-1):
+                neg_terms.append(ck)
+            elif mult < 0:
+                neg_terms.append(f"{ck} \\cdot {latex(-mult)}")
+            else:
+                pos_terms.append(f"{ck} \\cdot {latex(mult)}")
+        
+        # Construir expresión constante
+        const_parts = []
+        if pos_terms:
+            const_parts.extend(pos_terms)
+        if neg_terms:
+            # Agregar términos negativos con signo negativo
+            for term in neg_terms:
+                const_parts.append(f"-{term}")
+        
+        if const_parts:
+            const_expr = " + ".join(const_parts)
+            const_expr = const_expr.replace("+ -", "- ")
+            polynomial_terms.append(f"({const_expr})")
+        
+        if polynomial_terms:
+            result = " + ".join(polynomial_terms)
+            result = result.replace("+ -", "- ")
+            self.t_polynomial = result
+        else:
+            self.t_polynomial = "0"
     
     def _latex_to_sympy_expr(self, latex_str: str, variable: str = "n") -> Optional[Expr]:
         """

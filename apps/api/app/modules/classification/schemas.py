@@ -18,3 +18,4 @@ class ClassifyResponse(BaseModel):
     method: Optional[str] = None
     errors: Optional[list[Dict[str, Any]]] = None
 
+

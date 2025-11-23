@@ -256,9 +256,28 @@ class BaseAnalyzer:
     def build_t_open(self) -> str:
         """
         Construye la ecuación T_open = Σ C_{k}·count_{k} (o A(n) = Σ C_{k}·E[N_{k}] para promedio) en formato KaTeX.
+        Usa simplificación inteligente: preserva constantes cuando hay pocas operaciones, simplifica cuando hay muchas.
         
         Returns:
             String con la ecuación de eficiencia en formato KaTeX
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
+        if not self.rows:
+            return "0"
+        
+        # Decidir si preservar constantes o simplificar
+        if self._should_preserve_constants():
+            return self._build_t_open_with_constants()
+        else:
+            return self._build_t_open_simplified()
+    
+    def _build_t_open_simplified(self) -> str:
+        """
+        Construye T_open simplificado (versión original que suma directamente los count_expr).
+        
+        Returns:
+            String con la ecuación de eficiencia simplificada en formato KaTeX
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
@@ -308,6 +327,219 @@ class BaseAnalyzer:
         
         # Convertir a LaTeX
         return latex(total_expr)
+    
+    def _build_t_open_with_constants(self) -> str:
+        """
+        Construye T_open preservando las constantes C_k en la expresión.
+        Formato: "C_1 · count_1 + C_2 · count_2 + ..."
+        
+        Returns:
+            String con la ecuación de eficiencia preservando constantes en formato KaTeX
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
+        if not self.rows:
+            return "0"
+        
+        import re
+        from sympy import latex, Integer
+        
+        terms_latex = []
+        
+        for r in self.rows:
+            if r.get('ck') != "—" and r.get('count') != "—":
+                ck_str = r.get('ck', '')
+                count_str = r.get('count', '1')
+                
+                # Parsear ck para obtener todas las constantes C_k
+                # ck puede ser "C_{1}", "C_{1} + C_{2}", etc.
+                # IMPORTANTE: Cada C_k debe tener su propio término separado
+                ck_pattern = r'C_\{(\d+)\}'
+                ck_matches = re.findall(ck_pattern, ck_str)
+                
+                # Si no se encontraron matches, intentar sin llaves (formato alternativo)
+                if not ck_matches:
+                    ck_pattern_alt = r'C_(\d+)'
+                    ck_matches = re.findall(ck_pattern_alt, ck_str)
+                
+                # Obtener count_expr para simplificar sumatorias si es necesario
+                count_expr = r.get('count_expr')
+                if count_expr is None:
+                    count_expr = r.get('count_raw_expr')
+                if count_expr is None:
+                    count_expr = self._str_to_sympy(r.get('count_raw', '1'))
+                
+                # Simplificar count_expr (evaluar sumatorias) pero mantener como expresión
+                from sympy import simplify as sympy_simplify, expand
+                from ..utils.summation_closer import SummationCloser
+                
+                closer = SummationCloser()
+                count_expr_simplified = closer._evaluate_all_sums_sympy(count_expr)
+                try:
+                    count_expr_simplified = expand(count_expr_simplified)
+                    count_expr_simplified = sympy_simplify(count_expr_simplified)
+                except Exception:
+                    count_expr_simplified = sympy_simplify(count_expr_simplified)
+                
+                # Convertir count a LaTeX
+                count_latex = latex(count_expr_simplified)
+                
+                # Si count es 1, no mostrar "· 1"
+                if count_expr_simplified == Integer(1):
+                    count_latex = ""
+                    separator = ""
+                else:
+                    separator = " \\cdot "
+                    # Agregar paréntesis si la expresión no es un simple símbolo o número
+                    # Esto evita problemas como "C_3 \cdot n - 1" que debería ser "C_3 \cdot (n - 1)"
+                    from sympy import Symbol, Add, Mul, Pow
+                    # Verificar si necesita paréntesis
+                    needs_parens = False
+                    if isinstance(count_expr_simplified, Add):
+                        # Expresiones de suma/resta siempre necesitan paréntesis cuando se multiplican
+                        needs_parens = True
+                    elif isinstance(count_expr_simplified, Mul):
+                        # Multiplicaciones con más de un término también
+                        if len(count_expr_simplified.args) > 1:
+                            needs_parens = True
+                    elif not isinstance(count_expr_simplified, (Integer, Symbol, Pow)):
+                        # Cualquier otra expresión compuesta
+                        needs_parens = True
+                    
+                    if needs_parens:
+                        count_latex = f"({count_latex})"
+                
+                # Crear términos para cada C_k en esta fila
+                for ck_num in ck_matches:
+                    ck_latex = f"C_{{{ck_num}}}"
+                    if count_latex:
+                        term = f"{ck_latex}{separator}{count_latex}"
+                    else:
+                        term = ck_latex
+                    terms_latex.append(term)
+        
+        if not terms_latex:
+            return "0"
+        
+        # Verificar si todos los count son constantes (1) y no hay variables
+        # Si es así, simplificar a "C" en lugar de mostrar todas las constantes
+        all_counts_are_constant = True
+        has_variables = False
+        
+        from sympy import Symbol, preorder_traversal, simplify as sympy_simplify, expand
+        from ..utils.summation_closer import SummationCloser
+        
+        closer = SummationCloser()
+        
+        for r in self.rows:
+            if r.get('ck') != "—" and r.get('count') != "—":
+                count_expr = r.get('count_expr')
+                if count_expr is None:
+                    count_expr = r.get('count_raw_expr')
+                if count_expr is None:
+                    count_expr = self._str_to_sympy(r.get('count_raw', '1'))
+                
+                # Simplificar para verificar si es constante
+                count_expr_simplified = closer._evaluate_all_sums_sympy(count_expr)
+                try:
+                    count_expr_simplified = expand(count_expr_simplified)
+                    count_expr_simplified = sympy_simplify(count_expr_simplified)
+                except Exception:
+                    count_expr_simplified = sympy_simplify(count_expr_simplified)
+                
+                # Verificar si es constante (Integer) y si tiene variables
+                if not isinstance(count_expr_simplified, Integer):
+                    all_counts_are_constant = False
+                
+                # Verificar si hay variables (como n) en el count
+                for subexpr in preorder_traversal(count_expr):
+                    if isinstance(subexpr, Symbol) and subexpr.name not in ['i', 'j', 'k']:
+                        # Si el símbolo es 'n' o similar, hay variables
+                        has_variables = True
+                        break
+                
+                if not all_counts_are_constant or has_variables:
+                    break
+        
+        # Si todos los count son constantes (Integer) y no hay variables, simplificar a "C"
+        if all_counts_are_constant and not has_variables:
+            return "C"
+        
+        # Unir todos los términos con "+"
+        return " + ".join(terms_latex)
+    
+    def _should_preserve_constants(self) -> bool:
+        """
+        Decide si debería preservar las constantes C_k en T_open o simplificar.
+        
+        Criterios:
+        - Si hay ≤ 5 términos únicos de C_k → preservar
+        - Si hay > 5 términos → simplificar
+        - Si hay sumatorias anidadas complejas → simplificar
+        - Si todos los count son constantes simples (1, 2, n, n-1) → preservar
+        
+        Returns:
+            True si debería preservar constantes, False si debería simplificar
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
+        if not self.rows:
+            return False
+        
+        import re
+        from sympy import Symbol, Integer, preorder_traversal
+        
+        # Contar términos únicos de C_k
+        unique_ck_terms = set()
+        total_ck_count = 0
+        has_complex_summations = False
+        
+        for r in self.rows:
+            if r.get('ck') != "—" and r.get('count') != "—":
+                ck_str = r.get('ck', '')
+                
+                # Parsear todas las constantes C_k en esta fila
+                ck_pattern = r'C_\{(\d+)\}'
+                ck_matches = re.findall(ck_pattern, ck_str)
+                unique_ck_terms.update(ck_matches)
+                total_ck_count += len(ck_matches)
+                
+                # Verificar si hay sumatorias complejas en count_expr
+                count_expr = r.get('count_expr')
+                if count_expr is None:
+                    count_expr = r.get('count_raw_expr')
+                if count_expr is None:
+                    count_expr = self._str_to_sympy(r.get('count_raw', '1'))
+                
+                # Verificar complejidad: contar sumatorias anidadas
+                if count_expr is not None:
+                    from sympy import Sum
+                    summation_count = 0
+                    for subexpr in preorder_traversal(count_expr):
+                        if isinstance(subexpr, Sum):
+                            summation_count += 1
+                            # Si hay más de 2 sumatorias anidadas, considerar complejo
+                            if summation_count > 2:
+                                has_complex_summations = True
+                                break
+        
+        # Criterio 1: Si hay más de 5 términos únicos de C_k, simplificar
+        if len(unique_ck_terms) > 5:
+            return False
+        
+        # Criterio 2: Si hay más de 10 términos totales de C_k, simplificar
+        if total_ck_count > 10:
+            return False
+        
+        # Criterio 3: Si hay sumatorias complejas, simplificar
+        if has_complex_summations:
+            return False
+        
+        # Criterio 4: Si todos los count son constantes simples, preservar
+        # (esto se verifica implícitamente si no hay sumatorias complejas y hay pocos términos)
+        
+        # Si llegamos aquí, preservar constantes
+        return True
     
     def build_t_open_expr(self) -> Optional[Expr]:
         """

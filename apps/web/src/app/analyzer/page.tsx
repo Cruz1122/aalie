@@ -17,6 +17,9 @@ import IterativeAnalysisView from "@/components/IterativeAnalysisView";
 import RecursiveAnalysisView from "@/components/RecursiveAnalysisView";
 import MethodSelector, { MethodType } from "@/components/MethodSelector";
 import RepairModal from "@/components/RepairModal";
+import { ComparisonLoader } from "@/components/ComparisonLoader";
+import ComparisonModal from "@/components/ComparisonModal";
+import { extractCoreData, isRecursiveAnalysis, type CoreAnalysisData } from "@/lib/extract-core-data";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
@@ -142,6 +145,17 @@ export default function AnalyzerPage() {
   // Estado para modal de reparación
   const [showRepairModal, setShowRepairModal] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
+  // Estado para comparación con LLM
+  const [isComparing, setIsComparing] = useState(false);
+  const [comparisonProgress, setComparisonProgress] = useState(0);
+  const [comparisonMessage, setComparisonMessage] = useState("Contactando con LLM...");
+  const [showComparisonModal, setShowComparisonModal] = useState(false);
+  const [llmAnalysisData, setLlmAnalysisData] = useState<{
+    worst: CoreAnalysisData | null;
+    best: CoreAnalysisData | null;
+    avg: CoreAnalysisData | null;
+  } | null>(null);
+  const [llmNote, setLlmNote] = useState<string>("");
 
   // Refs para evitar memory leaks con timeouts
   const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -591,6 +605,491 @@ export default function AnalyzerPage() {
     }
   };
 
+  // Handler para comparar con LLM
+  const handleCompareWithLLM = async () => {
+    if (!data || !hasApiKey) return;
+
+    try {
+      setIsComparing(true);
+      setComparisonProgress(0);
+      setComparisonMessage("Contactando con LLM...");
+
+      // Determinar tipo de algoritmo y datos core
+      const isRecursive = isRecursiveAnalysis(data.worst || data.best || data.avg || null);
+      
+      // Extraer datos core de todos los casos para iterativo
+      const ownCoreDataWorst = extractCoreData(data.worst || null);
+      const ownCoreDataBest = extractCoreData(data.best || null);
+      const ownCoreDataAvg = extractCoreData(data.avg || null);
+      
+      // Para recursivo, usar worst como principal
+      const ownCoreData = isRecursive ? ownCoreDataWorst : ownCoreDataWorst;
+
+      if (!ownCoreData) {
+        throw new Error("No se pudieron extraer los datos core del análisis");
+      }
+
+      // Preparar todos los datos del análisis para enviar al LLM
+      const fullAnalysisData = {
+        worst: ownCoreDataWorst,
+        best: ownCoreDataBest,
+        avg: ownCoreDataAvg,
+        isRecursive,
+      };
+
+      // Incrementar progreso gradualmente con diferentes mensajes
+      setComparisonMessage("Enviando análisis propio...");
+      await animateProgress(0, 15, 300, setComparisonProgress);
+      
+      setComparisonMessage("Preparando datos de comparación...");
+      await animateProgress(15, 25, 200, setComparisonProgress);
+
+      const prompt = `Analiza el siguiente algoritmo y proporciona un análisis de complejidad detallado.
+
+**CÓDIGO DEL ALGORITMO:**
+\`\`\`pseudocode
+${source}
+\`\`\`
+
+**ANÁLISIS PROPIO COMPLETO (para que puedas dar una observación real):**
+${JSON.stringify(fullAnalysisData, null, 2)}
+
+**INSTRUCCIONES:**
+1. Analiza el algoritmo proporcionado
+2. Determina si es iterativo o recursivo
+3. Calcula la complejidad temporal y espacial
+4. Aplica los métodos apropiados (Teorema Maestro, Iteración, Árbol de Recursión, Ecuación Característica, etc.)
+5. Proporciona todos los datos core del análisis en formato JSON
+6. **IMPORTANTE**: Compara tu análisis con el análisis propio proporcionado y da una observación REAL y específica (máx. 150 caracteres) sobre:
+   - La precisión del análisis propio
+   - Si hay diferencias o coincidencias
+   - Si hay aspectos que podrían mejorarse
+   - Un adjetivo calificativo breve
+   La nota debe comenzar con un emoji de cara (😊, 😐, 😕, etc.) seguido de tu observación
+
+**IMPORTANTE:**
+- Usa formato LaTeX para todas las expresiones matemáticas
+- La nota debe ser una observación REAL comparando tu análisis con el proporcionado, no genérica
+- Devuelve SOLO un objeto JSON válido según el schema definido`;
+
+      setComparisonMessage("Enviando solicitud a Gemini 2.5 Pro...");
+      await animateProgress(25, 35, 300, setComparisonProgress);
+
+      // Llamar al LLM
+      const apiKey = getApiKey();
+      
+      setComparisonMessage("Esperando respuesta del LLM...");
+      let lastProgress = 35;
+      const progressInterval = setInterval(() => {
+        setComparisonProgress((prev) => {
+          if (prev < 85) {
+            // Incremento más lento y gradual: 0.3% cada 400ms
+            const newProgress = Math.min(85, prev + 0.7);
+            lastProgress = newProgress;
+            return newProgress;
+          }
+          return prev;
+        });
+      }, 400); // Incrementar 0.3% cada 400ms hasta 85% (más lento y fluido)
+
+      const response = await fetch('/api/llm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          job: 'compare',
+          prompt,
+          apiKey: apiKey || undefined,
+        }),
+      });
+
+      clearInterval(progressInterval);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.error || `HTTP error! status: ${response.status}`);
+      }
+
+      setComparisonMessage("Procesando respuesta...");
+      setComparisonProgress(85);
+
+      const result = await response.json();
+      
+      if (!result.ok) {
+        throw new Error(result.error || "Error al obtener respuesta del LLM");
+      }
+
+      setComparisonMessage("Generando comparación...");
+      setComparisonProgress(90);
+
+      // Extraer datos del LLM
+      const llmResponseText = result.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!llmResponseText) {
+        throw new Error("No se recibió respuesta del LLM");
+      }
+
+      // Parsear JSON de la respuesta
+      let llmResponse: { 
+        analysis?: Record<string, unknown>; 
+        time_complexity?: Record<string, unknown>;
+        note?: string; 
+        algorithm_type?: string;
+      };
+      try {
+        llmResponse = JSON.parse(llmResponseText);
+      } catch {
+        // Intentar extraer JSON si está dentro de un bloque de código
+        const jsonMatch = llmResponseText.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+        if (jsonMatch) {
+          llmResponse = JSON.parse(jsonMatch[1]);
+        } else {
+          throw new Error("No se pudo parsear la respuesta del LLM como JSON");
+        }
+      }
+
+      // Convertir datos del LLM al formato CoreAnalysisData
+      // El LLM puede devolver el análisis de diferentes formas:
+      // 1. { analysis: { worst: {...}, best: {...}, avg: {...} }, note: "..." }
+      // 2. { analysis: { worst: {...}, best: {...}, avg: {... } }, note: "..." }
+      // 3. { analysis: {...}, note: "..." } (un solo objeto)
+      // 4. { analysis: { time_complexity: {...}, space_complexity: {...} }, note: "..." } (estructura alternativa)
+      // 5. { time_complexity: { analysis: {...} }, note: "..." } (estructura directa)
+      
+      // Variable para rastrear si ya se procesaron los datos
+      let dataProcessed = false;
+      
+      // Primero verificar si time_complexity está directamente en llmResponse
+      if (llmResponse.time_complexity && typeof llmResponse.time_complexity === 'object') {
+        const timeComplexity = llmResponse.time_complexity as Record<string, unknown>;
+        
+        // Verificar si time_complexity tiene analysis
+        if (timeComplexity.analysis && typeof timeComplexity.analysis === 'object') {
+          const analysisData = timeComplexity.analysis as Record<string, unknown>;
+          const convertAnalysisData = (): CoreAnalysisData | null => {
+            const result: CoreAnalysisData = {};
+            
+            // T_open y T_polynomial
+            if (analysisData.T_open && typeof analysisData.T_open === 'string') result.T_open = analysisData.T_open;
+            if (analysisData.T_polynomial && typeof analysisData.T_polynomial === 'string') result.T_polynomial = analysisData.T_polynomial;
+            
+            // Notaciones asintóticas
+            if (analysisData.big_theta && typeof analysisData.big_theta === 'string') result.big_theta = analysisData.big_theta;
+            if (analysisData.big_o && typeof analysisData.big_o === 'string') result.big_o = analysisData.big_o;
+            if (analysisData.big_O && typeof analysisData.big_O === 'string') result.big_o = analysisData.big_O;
+            if (analysisData.big_omega && typeof analysisData.big_omega === 'string') result.big_omega = analysisData.big_omega;
+            if (analysisData.big_Omega && typeof analysisData.big_Omega === 'string') result.big_omega = analysisData.big_Omega;
+            
+            return Object.keys(result).length > 0 ? result : null;
+          };
+          
+          const analysisResult = convertAnalysisData();
+          
+          // Para iterativo, usar el mismo análisis para worst, best y avg
+          if (analysisResult) {
+            setLlmAnalysisData({
+              worst: analysisResult,
+              best: analysisResult,
+              avg: analysisResult,
+            });
+            dataProcessed = true; // Marcar que ya procesamos los datos
+          }
+        } else if (timeComplexity.worst || timeComplexity.best || timeComplexity.avg) {
+          // Si time_complexity tiene worst, best, avg directamente
+          const convertTimeComplexityCase = (caseData: unknown): CoreAnalysisData | null => {
+            if (!caseData || typeof caseData !== 'object') return null;
+            const data = caseData as Record<string, unknown>;
+            
+            const result: CoreAnalysisData = {};
+            if (data.T_open && typeof data.T_open === 'string') result.T_open = data.T_open;
+            if (data.T_polynomial && typeof data.T_polynomial === 'string') result.T_polynomial = data.T_polynomial;
+            if (data.big_theta && typeof data.big_theta === 'string') result.big_theta = data.big_theta;
+            if (data.big_o && typeof data.big_o === 'string') result.big_o = data.big_o;
+            if (data.big_O && typeof data.big_O === 'string') result.big_o = data.big_O;
+            if (data.big_omega && typeof data.big_omega === 'string') result.big_omega = data.big_omega;
+            if (data.big_Omega && typeof data.big_Omega === 'string') result.big_omega = data.big_Omega;
+            
+            return Object.keys(result).length > 0 ? result : null;
+          };
+          
+          setLlmAnalysisData({
+            worst: convertTimeComplexityCase(timeComplexity.worst),
+            best: convertTimeComplexityCase(timeComplexity.best),
+            avg: convertTimeComplexityCase(timeComplexity.avg),
+          });
+        }
+      }
+      
+      // Solo procesar llmResponse.analysis si no se procesó time_complexity.analysis
+      const llmAnalysis = llmResponse.analysis || {};
+      
+      // Si el análisis tiene worst, best, avg directamente, usarlos (solo si no se procesó antes)
+      if (!dataProcessed && (llmAnalysis.worst || llmAnalysis.best || llmAnalysis.avg)) {
+        setLlmAnalysisData({
+          worst: (llmAnalysis.worst || null) as CoreAnalysisData | null,
+          best: (llmAnalysis.best || null) as CoreAnalysisData | null,
+          avg: (llmAnalysis.avg || null) as CoreAnalysisData | null,
+        });
+      } else if (!dataProcessed && llmAnalysis.time_complexity && typeof llmAnalysis.time_complexity === 'object') {
+        // Estructura: { analysis: { time_complexity: { worst: {...}, best: {...}, avg: {...} } } }
+        const timeComplexity = llmAnalysis.time_complexity as Record<string, unknown>;
+        
+        // Verificar si time_complexity tiene worst, best, avg
+        if (timeComplexity.worst || timeComplexity.best || timeComplexity.avg) {
+          const convertTimeComplexityCase = (caseData: unknown): CoreAnalysisData | null => {
+            if (!caseData || typeof caseData !== 'object') return null;
+            const data = caseData as Record<string, unknown>;
+            
+            // Extraer datos, manejando posibles variaciones en los nombres
+            const result: CoreAnalysisData = {};
+            
+            // T_open y T_polynomial
+            if (data.T_open && typeof data.T_open === 'string') result.T_open = data.T_open;
+            if (data.T_polynomial && typeof data.T_polynomial === 'string') result.T_polynomial = data.T_polynomial;
+            
+            // Notaciones asintóticas (pueden venir con diferentes nombres)
+            if (data.big_theta && typeof data.big_theta === 'string') result.big_theta = data.big_theta;
+            if (data.big_o && typeof data.big_o === 'string') result.big_o = data.big_o;
+            if (data.big_O && typeof data.big_O === 'string') result.big_o = data.big_O; // Variante con mayúscula
+            if (data.big_omega && typeof data.big_omega === 'string') result.big_omega = data.big_omega;
+            if (data.big_Omega && typeof data.big_Omega === 'string') result.big_omega = data.big_Omega; // Variante con mayúscula
+            
+            return Object.keys(result).length > 0 ? result : null;
+          };
+          
+          const worstData = convertTimeComplexityCase(timeComplexity.worst);
+          const bestData = convertTimeComplexityCase(timeComplexity.best);
+          const avgData = convertTimeComplexityCase(timeComplexity.avg);
+          
+          setLlmAnalysisData({
+            worst: worstData,
+            best: bestData,
+            avg: avgData,
+          });
+        } else if (timeComplexity.analysis && typeof timeComplexity.analysis === 'object') {
+          // Estructura: { time_complexity: { analysis: {...} } } - un solo análisis para todos los casos
+          const analysisData = timeComplexity.analysis as Record<string, unknown>;
+          const convertAnalysisData = (): CoreAnalysisData | null => {
+            const result: CoreAnalysisData = {};
+            
+            // T_open y T_polynomial
+            if (analysisData.T_open && typeof analysisData.T_open === 'string') result.T_open = analysisData.T_open;
+            if (analysisData.T_polynomial && typeof analysisData.T_polynomial === 'string') result.T_polynomial = analysisData.T_polynomial;
+            
+            // Notaciones asintóticas
+            if (analysisData.big_theta && typeof analysisData.big_theta === 'string') result.big_theta = analysisData.big_theta;
+            if (analysisData.big_o && typeof analysisData.big_o === 'string') result.big_o = analysisData.big_o;
+            if (analysisData.big_O && typeof analysisData.big_O === 'string') result.big_o = analysisData.big_O;
+            if (analysisData.big_omega && typeof analysisData.big_omega === 'string') result.big_omega = analysisData.big_omega;
+            if (analysisData.big_Omega && typeof analysisData.big_Omega === 'string') result.big_omega = analysisData.big_Omega;
+            
+            return Object.keys(result).length > 0 ? result : null;
+          };
+          
+          const analysisResult = convertAnalysisData();
+          
+          // Para iterativo, usar el mismo análisis para worst, best y avg
+          setLlmAnalysisData({
+            worst: analysisResult,
+            best: analysisResult,
+            avg: analysisResult,
+          });
+        } else {
+          // Estructura antigua: time_complexity como objeto único
+          const convertedAnalysis: CoreAnalysisData = {
+            big_theta: (timeComplexity.big_theta as string) || (timeComplexity.big_O as string) || undefined,
+            big_o: (timeComplexity.big_O as string) || undefined,
+            big_omega: (timeComplexity.big_Omega as string) || undefined,
+          };
+          
+          // Si hay información de recurrencia
+          if (timeComplexity.recurrence_relation && typeof timeComplexity.recurrence_relation === 'object') {
+            const recurrence = timeComplexity.recurrence_relation as Record<string, unknown>;
+            if (recurrence.type === "linear_shift") {
+              convertedAnalysis.recurrence = {
+                type: "linear_shift",
+                form: (recurrence.equation as string) || (recurrence.form as string) || "",
+                method: (timeComplexity.method as string) || "iteration",
+              };
+            } else if (recurrence.type === "divide_conquer") {
+              convertedAnalysis.recurrence = {
+                type: "divide_conquer",
+                form: (recurrence.equation as string) || (recurrence.form as string) || "",
+                a: (recurrence.a as number) || 1,
+                b: (recurrence.b as number) || 2,
+                f: (recurrence.f as string) || "1",
+                method: (timeComplexity.method as string) || "master",
+              };
+            }
+          }
+          
+          // Si hay detalles del método de iteración
+          if (timeComplexity.method === "iteration" && timeComplexity.method_details && typeof timeComplexity.method_details === 'object') {
+            const details = timeComplexity.method_details as Record<string, unknown>;
+            convertedAnalysis.method = "iteration";
+            
+            // Manejar tanto 'expansions' como 'steps' (el LLM puede usar cualquiera)
+            const expansions = (details.expansions as string[]) || (details.steps as string[]) || [];
+            
+            convertedAnalysis.iteration = {
+              g_function: (details.general_form as string) || "n-1",
+              expansions: expansions,
+              general_form: (details.general_form as string) || "",
+              base_case: {
+                condition: (details.base_case_substitution as string) || "n = 0",
+                k: "n",
+              },
+              summation: {
+                expression: (details.solution as string) || "",
+                evaluated: (details.solution as string) || "",
+              },
+              theta: (timeComplexity.big_theta as string) || "\\Theta(n)",
+            };
+          }
+          
+          if (isRecursive) {
+            setLlmAnalysisData({
+              worst: convertedAnalysis,
+              best: null,
+              avg: null,
+            });
+          } else {
+            setLlmAnalysisData({
+              worst: convertedAnalysis,
+              best: convertedAnalysis,
+              avg: convertedAnalysis,
+            });
+          }
+        }
+      } else if (llmAnalysis.recurrence || llmAnalysis.iteration || llmAnalysis.method) {
+        // Estructura con recurrence/iteration directamente en analysis
+        const convertedAnalysis: CoreAnalysisData = {
+          big_theta: (llmAnalysis.big_theta as string) || undefined,
+          big_o: (llmAnalysis.big_o as string) || undefined,
+          big_omega: (llmAnalysis.big_omega as string) || undefined,
+        };
+        
+        // Extraer recurrence completo
+        if (llmAnalysis.recurrence && typeof llmAnalysis.recurrence === 'object') {
+          const recurrence = llmAnalysis.recurrence as Record<string, unknown>;
+          convertedAnalysis.recurrence = {
+            type: (recurrence.type as "divide_conquer" | "linear_shift") || "linear_shift",
+            form: (recurrence.form as string) || "",
+            a: (recurrence.a as number) || undefined,
+            b: (recurrence.b as number) || undefined,
+            f: (recurrence.f as string) || undefined,
+            order: (recurrence.order as number) || undefined,
+            shifts: (recurrence.shifts as number[]) || undefined,
+            coefficients: (recurrence.coefficients as number[]) || undefined,
+            "g(n)": (recurrence["g(n)"] as string) || undefined,
+            n0: (recurrence.n0 as number) || undefined,
+          };
+        }
+        
+        // Extraer method
+        if (llmAnalysis.method) {
+          convertedAnalysis.method = llmAnalysis.method as string;
+        }
+        
+        // Extraer iteration completo
+        if (llmAnalysis.iteration && typeof llmAnalysis.iteration === 'object') {
+          const iteration = llmAnalysis.iteration as Record<string, unknown>;
+          const baseCase = iteration.base_case as Record<string, unknown> | undefined;
+          const summation = iteration.summation as Record<string, unknown> | undefined;
+          
+          convertedAnalysis.iteration = {
+            g_function: (iteration.g_function as string) || "n-1",
+            expansions: (iteration.expansions as string[]) || [],
+            general_form: (iteration.general_form as string) || "",
+            base_case: {
+              condition: (baseCase?.condition as string) || "n = 0",
+              k: (baseCase?.k as string) || "n",
+            },
+            summation: {
+              expression: (summation?.expression as string) || "",
+              evaluated: (summation?.evaluated as string) || "",
+            },
+            theta: (iteration.theta as string) || convertedAnalysis.big_theta || "\\Theta(n)",
+          };
+        }
+        
+        // También verificar iteration_details como alternativa
+        if (llmAnalysis.iteration_details && typeof llmAnalysis.iteration_details === 'object' && !convertedAnalysis.iteration) {
+          const details = llmAnalysis.iteration_details as Record<string, unknown>;
+          convertedAnalysis.iteration = {
+            g_function: (details.general_form as string) || "n-1",
+            expansions: (details.expansions as string[]) || (details.steps as string[]) || [],
+            general_form: (details.general_form as string) || "",
+            base_case: {
+              condition: (details.base_case_substitution as string) || (details.base_case_condition as string) || "n = 0",
+              k: "n",
+            },
+            summation: {
+              expression: (details.final_equation as string) || (details.solution as string) || "",
+              evaluated: (details.result as string) || (details.solution as string) || "",
+            },
+            theta: convertedAnalysis.big_theta || "\\Theta(n)",
+          };
+        }
+        
+        if (isRecursive) {
+          setLlmAnalysisData({
+            worst: convertedAnalysis,
+            best: null,
+            avg: null,
+          });
+        } else {
+          setLlmAnalysisData({
+            worst: convertedAnalysis,
+            best: convertedAnalysis,
+            avg: convertedAnalysis,
+          });
+        }
+      } else if (!dataProcessed && isRecursive) {
+        // Para recursivo, usar el análisis directamente
+        setLlmAnalysisData({
+          worst: llmAnalysis as CoreAnalysisData,
+          best: null,
+          avg: null,
+        });
+      } else if (!dataProcessed) {
+        // Para iterativo sin separación de casos, usar el mismo para todos
+        setLlmAnalysisData({
+          worst: llmAnalysis as CoreAnalysisData,
+          best: llmAnalysis as CoreAnalysisData,
+          avg: llmAnalysis as CoreAnalysisData,
+        });
+      }
+      
+      setLlmNote(llmResponse.note || "😐 Sin observaciones");
+
+      setComparisonProgress(100);
+      setComparisonMessage("Comparación completada");
+      
+      // Esperar un momento antes de cerrar el loader y abrir el modal
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      
+      setIsComparing(false);
+      setShowComparisonModal(true);
+      
+      // Resetear estados después
+      setTimeout(() => {
+        setComparisonProgress(0);
+        setComparisonMessage("Contactando con LLM...");
+      }, 300);
+
+    } catch (error) {
+      console.error("[Comparison] Error:", error);
+      const errorMsg = error instanceof Error ? error.message : "Error inesperado durante la comparación";
+      setComparisonMessage(`Error: ${errorMsg}`);
+      setComparisonProgress(0);
+      
+      setTimeout(() => {
+        setIsComparing(false);
+        setComparisonProgress(0);
+        setComparisonMessage("Contactando con LLM...");
+      }, 3000);
+    }
+  };
+
   // Los datos ya están cargados desde sessionStorage en el estado inicial
   // Si hay datos guardados, se mostrarán directamente sin necesidad de re-analizar
 
@@ -910,6 +1409,20 @@ export default function AnalyzerPage() {
                         <span className="material-symbols-outlined text-sm">account_tree</span>
                         <span>Ver AST</span>
                       </button>
+                      <button
+                        onClick={handleCompareWithLLM}
+                        disabled={!hasApiKey || !data}
+                        className="flex items-center gap-2 py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
+                        title={!hasApiKey ? "Se requiere una API_KEY para usar esta función" : !data ? "Se requiere un análisis completado" : ""}
+                      >
+                        <span className="material-symbols-outlined text-sm">compare_arrows</span>
+                        <span>Comparar con LLM</span>
+                        {(!hasApiKey || !data) && (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                            {!hasApiKey ? "Se requiere una API_KEY" : "Se requiere un análisis completado"}
+                          </div>
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1100,6 +1613,31 @@ export default function AnalyzerPage() {
         }}
         originalCode={source}
         parseErrors={parseErrors}
+      />
+
+      {/* Loader de comparación con LLM */}
+      {isComparing && (
+        <ComparisonLoader
+          progress={comparisonProgress}
+          message={comparisonMessage}
+          isComplete={false}
+          error={comparisonMessage.startsWith("Error:") ? comparisonMessage : null}
+          onClose={() => setIsComparing(false)}
+        />
+      )}
+
+      {/* Modal de comparación con LLM */}
+      <ComparisonModal
+        open={showComparisonModal}
+        onClose={() => setShowComparisonModal(false)}
+        ownData={{
+          worst: extractCoreData(data?.worst || null),
+          best: extractCoreData(data?.best || null),
+          avg: extractCoreData(data?.avg || null),
+        }}
+        llmData={llmAnalysisData || { worst: null, best: null, avg: null }}
+        note={llmNote}
+        isRecursive={isRecursiveAnalysis(data?.worst || data?.best || data?.avg || null)}
       />
 
       <Footer />

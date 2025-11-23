@@ -247,8 +247,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
             if use_recursion_tree:
                 applicable_methods.append("recursion_tree")
             
-            # Teorema Maestro siempre está disponible (fallback)
-            applicable_methods.append("master")
+            # Teorema Maestro solo para divide-and-conquer (NO para linear_shift)
+            if recurrence.get("type") == "divide_conquer":
+                applicable_methods.append("master")
             
             # Determinar método por defecto (prioridad)
             default_method = recurrence.get("method", "master")
@@ -644,23 +645,27 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 # Caso especial: múltiples términos recursivos DIFERENTES (ej: Fibonacci T(n) = T(n-1) + T(n-2))
                 # Construir forma completa: T(n) = T(n-1) + T(n-2) + f(n)
                 terms_latex = " + ".join([f"T({term})" for term in sorted(term_counts.keys(), reverse=True)])
-                recurrence_form = f"T(n) = {terms_latex} + f(n)"
+                f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
+                recurrence_form = f"T(n) = {terms_latex} + {f_n_display}"
             elif len(term_counts) == 1:
                 # Caso normal: un solo término recursivo (puede aparecer múltiples veces)
                 pattern, count = list(term_counts.items())[0]
+                # Reemplazar f(n) con el valor real calculado
+                f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
                 if count > 1:
                     # Múltiples llamadas del mismo tamaño (ej: Torres de Hanoi T(n) = 2T(n-1) + 1)
-                    recurrence_form = f"T(n) = {count} \\cdot T({pattern}) + f(n)"
+                    recurrence_form = f"T(n) = {count} \\cdot T({pattern}) + {f_n_display}"
                 else:
-                    recurrence_form = f"T(n) = T({pattern}) + f(n)"
+                    recurrence_form = f"T(n) = T({pattern}) + {f_n_display}"
             else:
                 # Fallback
                 subproblem_info = self._analyze_subproblem_type(recursive_calls[0], proc_def)
+                f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
                 if subproblem_info:
                     pattern = subproblem_info.get("pattern", "n-1")
-                    recurrence_form = f"T(n) = T({pattern}) + f(n)"
+                    recurrence_form = f"T(n) = T({pattern}) + {f_n_display}"
                 else:
-                    recurrence_form = f"T(n) = T(n-1) + f(n)"
+                    recurrence_form = f"T(n) = T(n-1) + {f_n_display}"
         else:
             # Para divide-and-conquer (Teorema Maestro o Árbol de Recursión)
             recurrence_form = f"T(n) = {a} \\cdot T(n/{b_str}) + f(n)"
@@ -731,19 +736,98 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "notes": [],
                     "method": method
                 }
+        elif method == "iteration":
+            # Para método de iteración, verificar si es linear_shift o divide_conquer
+            # Si la recurrencia tiene forma T(n) = T(n-k) + f(n) (desplazamiento lineal), es linear_shift
+            # Si tiene forma T(n) = a·T(n/b) + f(n) con b > 1, es divide_conquer
+            has_subtraction = any(s.get("type") == "subtraction" for s in subproblem_sizes)
+            
+            if has_subtraction:
+                # Es una recurrencia lineal (linear_shift)
+                # Obtener información de desplazamientos y coeficientes
+                linear_info = self._detect_linear_recurrence(proc_def, recursive_calls)
+                if linear_info:
+                    coefficients = linear_info["coefficients"]
+                    max_offset = linear_info["max_offset"]
+                    g_n_str = linear_info["g_n"]
+                    
+                    # Construir forma correcta para linear_shift
+                    terms_latex = []
+                    for offset in sorted(coefficients.keys(), reverse=True):
+                        coeff = coefficients[offset]
+                        if coeff == 1:
+                            terms_latex.append(f"T(n-{offset})")
+                        else:
+                            terms_latex.append(f"{coeff} \\cdot T(n-{offset})")
+                    
+                    g_n_clean = g_n_str.strip().lower() if g_n_str else ""
+                    is_homogeneous = (g_n_clean == "0" or 
+                                     g_n_clean == "\\theta(0)" or 
+                                     g_n_clean == "theta(0)" or
+                                     (g_n_clean == "" and (not g_n_str or len(g_n_str.strip()) == 0)))
+                    
+                    if is_homogeneous:
+                        recurrence_form_linear = f"T(n) = {' + '.join(terms_latex)}"
+                    else:
+                        # Reemplazar g(n) con el valor real si está disponible
+                        g_n_display = g_n_str if g_n_str and g_n_str != "0" else "g(n)"
+                        recurrence_form_linear = f"T(n) = {' + '.join(terms_latex)} + {g_n_display}"
+                    
+                    recurrence = {
+                        "type": "linear_shift",
+                        "form": recurrence_form_linear,
+                        "order": max_offset,
+                        "shifts": sorted(coefficients.keys()),
+                        "coefficients": [coefficients[shift] for shift in sorted(coefficients.keys())],
+                        "g(n)": "0" if is_homogeneous else (g_n_str if g_n_str else None),
+                        "n0": n0,
+                        "applicable": True,
+                        "notes": [],
+                        "method": method
+                    }
+                else:
+                    # Fallback: usar la forma detectada anteriormente
+                    # Reemplazar f(n) con el valor real en la forma
+                    f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
+                    recurrence_form_fixed = recurrence_form.replace("f(n)", f_n_display)
+                    recurrence = {
+                        "type": "linear_shift",
+                        "form": recurrence_form_fixed,
+                        "order": 1,  # Asumir orden 1 si no se puede detectar
+                        "shifts": [1],
+                        "coefficients": [1],
+                        "g(n)": f_n if f_n != "0" else None,
+                        "n0": n0,
+                        "applicable": True,
+                        "notes": [],
+                        "method": method
+                    }
+            else:
+                # Es divide-and-conquer (aunque se use método de iteración)
+                recurrence = {
+                    "type": "divide_conquer",
+                    "form": recurrence_form,
+                    "a": a,
+                    "b": float(b),
+                    "f": f_n,
+                    "n0": n0,
+                    "applicable": True,
+                    "notes": [],
+                    "method": method
+                }
         else:
-            # Para otros métodos (master, iteration, recursion_tree), usar a, b, f
+            # Para otros métodos (master, recursion_tree), usar a, b, f (divide_conquer)
             recurrence = {
                 "type": "divide_conquer",
-            "form": recurrence_form,
-            "a": a,
-            "b": float(b),
-            "f": f_n,
-            "n0": n0,
-            "applicable": True,
-            "notes": [],
-            "method": method
-        }
+                "form": recurrence_form,
+                "a": a,
+                "b": float(b),
+                "f": f_n,
+                "n0": n0,
+                "applicable": True,
+                "notes": [],
+                "method": method
+            }
         
         # Simplificar valores para mostrar en proof
         b_display = self._simplify_number_latex(b)
@@ -1476,7 +1560,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             if isinstance(value, dict):
                 value_type = value.get("type", "")
                 # Si el return es solo una suma/resta de llamadas recursivas, trabajo = 0
-                if value_type == "Binary" and value.get("op") in ["+", "-"]:
+                if value_type == "Binary" and value.get("op") in ["+", "-", "*", "/"]:
                     left = value.get("left", {})
                     right = value.get("right", {})
                     # Verificar si ambos lados son llamadas recursivas
@@ -1486,11 +1570,102 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     right_is_recursive = (isinstance(right, dict) and 
                                         right.get("type") == "Call" and
                                         (right.get("name") or right.get("callee", "")).lower() == (self.procedure_name or "").lower())
+                    # Si ambos lados son recursivos, trabajo = 0 (homogénea)
+                    # PERO si hay trabajo no recursivo (acceso a arrays, variables, etc.), hay trabajo
                     if left_is_recursive and right_is_recursive:
                         # Solo suma/resta de llamadas recursivas, trabajo = 0 (homogénea)
                         return "0"
+                    # Si hay al menos un lado que NO es recursivo, hay trabajo no recursivo
+                    # Analizar el lado no recursivo para determinar su complejidad
+                    if left_is_recursive and not right_is_recursive:
+                        # El lado derecho tiene trabajo no recursivo
+                        right_complexity = self._analyze_work_complexity(right, recursive_calls)
+                        # Si el análisis devuelve "0", significa que no detectó trabajo, pero sabemos que hay trabajo
+                        # (porque no es recursivo), así que devolvemos "1" como mínimo
+                        return right_complexity if right_complexity != "0" else "1"
+                    elif right_is_recursive and not left_is_recursive:
+                        # El lado izquierdo tiene trabajo no recursivo
+                        left_complexity = self._analyze_work_complexity(left, recursive_calls)
+                        # Si el análisis devuelve "0", significa que no detectó trabajo, pero sabemos que hay trabajo
+                        # (porque no es recursivo), así que devolvemos "1" como mínimo
+                        return left_complexity if left_complexity != "0" else "1"
+                    # Si ninguno es recursivo, ambos tienen trabajo
+                    elif not left_is_recursive and not right_is_recursive:
+                        left_complexity = self._analyze_work_complexity(left, recursive_calls)
+                        right_complexity = self._analyze_work_complexity(right, recursive_calls)
+                        return self._max_complexity(left_complexity, right_complexity)
+                # Si no es Binary, analizar recursivamente el valor
+                else:
+                    return self._analyze_work_complexity(value, recursive_calls)
         
         max_complexity = "1"  # Por defecto, constante
+        
+        # Detectar acceso a arrays (Index) - tiene trabajo constante O(1)
+        # IMPORTANTE: Verificar esto ANTES de procesar otros tipos de nodos
+        if node_type == "Index" or node_type.lower() == "index" or node_type == "ArrayAccess":
+            # Acceso a array es O(1)
+            return "1"
+        
+        # Detectar identificadores y literales - operaciones básicas O(1)
+        if node_type in ["Identifier", "Number", "Literal"]:
+            # Operaciones básicas son O(1)
+            return "1"
+        
+        # Detectar operaciones binarias simples (sin bucles) - O(1)
+        # PERO: Si contiene llamadas recursivas, no cuenta como trabajo
+        if node_type == "Binary":
+            op = node.get("op", "")
+            left = node.get("left", {})
+            right = node.get("right", {})
+            
+            # Verificar si alguno de los lados es una llamada recursiva
+            left_is_recursive = (isinstance(left, dict) and 
+                               left.get("type") == "Call" and
+                               (left.get("name") or left.get("callee", "")).lower() == (self.procedure_name or "").lower())
+            right_is_recursive = (isinstance(right, dict) and 
+                                right.get("type") == "Call" and
+                                (right.get("name") or right.get("callee", "")).lower() == (self.procedure_name or "").lower())
+            
+            # Si ambos lados son recursivos, no hay trabajo no recursivo
+            if left_is_recursive and right_is_recursive:
+                return "0"
+            
+            # Si hay al menos un lado no recursivo, analizar recursivamente
+            # para determinar la complejidad del trabajo no recursivo
+            if left_is_recursive and not right_is_recursive:
+                # El lado derecho tiene trabajo no recursivo
+                right_complexity = self._analyze_work_complexity(right, recursive_calls)
+                return right_complexity if right_complexity != "0" else "1"
+            elif right_is_recursive and not left_is_recursive:
+                # El lado izquierdo tiene trabajo no recursivo
+                left_complexity = self._analyze_work_complexity(left, recursive_calls)
+                return left_complexity if left_complexity != "0" else "1"
+            elif not left_is_recursive and not right_is_recursive:
+                # Ambos lados tienen trabajo no recursivo
+                left_complexity = self._analyze_work_complexity(left, recursive_calls)
+                right_complexity = self._analyze_work_complexity(right, recursive_calls)
+                return self._max_complexity(left_complexity, right_complexity)
+            
+            # Si no se puede determinar, asumir O(1) para operaciones básicas
+            return "1"
+        
+        # Manejar IF: analizar tanto consequent como alternate
+        # El trabajo no recursivo puede estar en cualquiera de las ramas
+        if node_type == "If":
+            consequent = node.get("consequent", {})
+            alternate = node.get("alternate", {})
+            
+            consequent_complexity = "0"
+            alternate_complexity = "0"
+            
+            if isinstance(consequent, dict):
+                consequent_complexity = self._analyze_work_complexity(consequent, recursive_calls)
+            
+            if isinstance(alternate, dict):
+                alternate_complexity = self._analyze_work_complexity(alternate, recursive_calls)
+            
+            # El trabajo no recursivo es el máximo entre ambas ramas
+            return self._max_complexity(consequent_complexity, alternate_complexity)
         
         # Buscar bucles FOR
         if node_type == "For":
@@ -3097,24 +3272,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
             return None
         
         # Obtener g(n) (término no homogéneo)
-        # Para ecuaciones características, g(n) = 0 si el trabajo no recursivo es solo
-        # operaciones básicas (suma, resta) entre llamadas recursivas
+        # IMPORTANTE: No convertir f(n) a 0 automáticamente, ya que el trabajo no recursivo
+        # (como acceso a arrays, operaciones con datos, etc.) debe incluirse en la recurrencia
         f_n = self._calculate_non_recursive_work(proc_def, recursive_calls)
         
-        # Si f(n) ya es 0, ya es homogénea (correcto)
-        # Si f(n) es solo O(1) básico y no hay llamadas a funciones auxiliares, considerar g(n) = 0
-        f_n_clean = f_n.strip().lower() if f_n else ""
-        # Aceptar más variantes de O(1): "1", "theta(1)", "\\theta(1)", "o(1)", "O(1)", etc.
-        o1_variants = ["1", "\\theta(1)", "theta(1)", "o(1)", "o(1)", "O(1)", "\\Theta(1)", "Θ(1)"]
-        if f_n_clean != "0" and f_n_clean in o1_variants:
-            # Verificar si hay llamadas a funciones auxiliares (no recursivas)
-            has_aux_calls = self._has_auxiliary_function_calls(proc_def, recursive_calls)
-            if not has_aux_calls:
-                # Si no hay llamadas auxiliares y el trabajo es solo O(1) básico,
-                # considerar homogénea (g(n) = 0)
-                # Esto es porque las operaciones O(1) básicas (sumas, comparaciones)
-                # entre llamadas recursivas no cuentan como trabajo no homogéneo
-                f_n = "0"
+        # Si f(n) es 0, la recurrencia es homogénea (correcto)
+        # Si f(n) es diferente de 0 (incluso si es O(1)), debe incluirse en la recurrencia
+        # NO convertir f(n) = "1" a "0" porque el acceso a arrays y otras operaciones
+        # no recursivas son trabajo real que debe contarse
         
         return {
             "is_linear": True,
@@ -4400,9 +4565,26 @@ FIN FUNCIÓN"""
         self.proof_steps.append({"id": "iteration_start", "text": "\\text{Aplicando Método de Iteración (Unrolling)}"})
         
         # Paso 1: Identificar la recurrencia
-        a = self.recurrence["a"]
-        f_n_str = self.recurrence["f"]
-        n0 = self.recurrence["n0"]
+        # Verificar si es linear_shift o divide_conquer
+        recurrence_type = self.recurrence.get("type", "divide_conquer")
+        
+        if recurrence_type == "linear_shift":
+            # Para linear_shift, usar g(n) en lugar de f(n)
+            f_n_str = self.recurrence.get("g(n)", "0")
+            if f_n_str == "0" or f_n_str is None:
+                f_n_str = "0"
+            # Para linear_shift con un solo término (T(n) = T(n-1) + g(n)), a = 1
+            a = 1
+            # Obtener el orden y los shifts
+            order = self.recurrence.get("order", 1)
+            shifts = self.recurrence.get("shifts", [1])
+            coefficients = self.recurrence.get("coefficients", [1])
+        else:
+            # Para divide_conquer, usar a, b, f
+            a = self.recurrence.get("a", 1)
+            f_n_str = self.recurrence.get("f", "0")
+        
+        n0 = self.recurrence.get("n0", 1)
         
         # Obtener información del subproblema
         proc_def = self._find_main_procedure({"body": []})  # Necesitamos acceso al proc_def

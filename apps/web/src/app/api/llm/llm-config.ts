@@ -1,6 +1,6 @@
 // Configuración centralizada para modelos LLM de Gemini
 
-export type LLMJob = 'classify' | 'parser_assist' | 'general' | 'simplifier' | 'repair';
+export type LLMJob = 'classify' | 'parser_assist' | 'general' | 'simplifier' | 'repair' | 'compare';
 
 export const GEMINI_MODELS = {
   classify: 'gemini-2.0-flash-lite',
@@ -8,6 +8,7 @@ export const GEMINI_MODELS = {
   general: 'gemini-2.5-flash',
   simplifier: 'gemini-2.5-flash',
   repair: 'gemini-2.5-flash',
+  compare: 'gemini-2.5-pro',
 };
 
 export const GEMINI_ENDPOINT_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -326,133 +327,275 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
     },
     systemPrompt: `Eres un reparador de algoritmos usando EXCLUSIVAMENTE la gramática del proyecto (Language.g4).
 
-ROL Y RESPONSABILIDADES
-- Reparar algoritmos con errores de sintaxis
-- Corregir código de pseudocódigo para que sea sintácticamente válido
-- NO crear métodos auxiliares: toda la lógica debe estar en el procedimiento principal
+OBJETIVO:
+Analizar el algoritmo proporcionado y determinar su complejidad temporal y espacial, identificando si es iterativo o recursivo y aplicando los métodos apropiados.
 
-RESTRICCIONES ESTRICTAS
-- PROHIBIDO usar lenguajes como Python/JavaScript/etc.
-- PROHIBIDO usar palabras clave ajenas a la gramática (p.ej., ALGORITMO, PROCEDURE, FUNCTION si no están definidas).
-- PROHIBIDO usar tipos o prefijos en variables (NO int, string, var, etc.). Las variables NO tienen tipos; simplemente se asigna el valor directamente.
-- PROHIBIDO crear métodos auxiliares o múltiples funciones. Todo debe estar en UN SOLO procedimiento.
-- PROHIBIDO usar CALL a métodos auxiliares imaginarios. Si necesitas intercambiar valores, hacer particiones, etc., escríbelo directamente en el código.
-- TODA salida de código DEBE respetar la gramática del proyecto (Language.g4).
-- PROHIBIDO usar caracteres especiales en el código: NO usar tildes (á, é, í, ó, ú), NO usar ñ, NO usar otros caracteres especiales. Usar solo letras del alfabeto inglés (a-z, A-Z), números (0-9) y símbolos estándar.
+PARA ALGORITMOS ITERATIVOS:
+- Calcula T_open (ecuación de eficiencia): Σ C_k · count_k en formato LaTeX
+- Calcula T_polynomial: forma polinómica T(n) = an² + bn + c en formato LaTeX
+- Determina big_o, big_omega y big_theta en formato LaTeX (ej: "O(n^2)", "Ω(n^2)", "Θ(n^2)")
 
-SINTAXIS OBLIGATORIA (según la gramática)
-- Definición de procedimiento: nombre(params) BEGIN ... END (sin prefijos como ALGORITMO/PROCEDURE/PROGRAM).
-- Llamada a procedimiento como sentencia: CALL nombre(params); (para llamar a procedimientos como sentencia independiente que no devuelve un valor usado en una expresión)
-- Llamada a procedimiento como expresión: nombre(params) (sin CALL, para usar dentro de expresiones como RETURN, asignaciones, etc.)
-- ⚠️ LLAMADAS RECURSIVAS - REGLA CRÍTICA:
-   * Si la llamada recursiva es una SENTENCIA INDEPENDIENTE (no devuelve un valor usado en una expresión), DEBE usar CALL: CALL nombre(params);
-     Ejemplo correcto: CALL mergesort(array, izq, medio); (sentencia independiente que modifica el array)
-   * Si la llamada recursiva es parte de una EXPRESIÓN (RETURN, asignación, etc.), NO debe usar CALL: nombre(params)
-     Ejemplo correcto: RETURN n * factorial(n - 1); (parte de una expresión)
-     Ejemplo incorrecto: RETURN n * CALL factorial(n - 1); (ERROR: CALL no se usa en expresiones)
-- Variables: NO tienen tipos ni prefijos (NO usar int, string, var, etc.). Simplemente se asigna el valor directamente (ej: x <- 5; nombre <- "Juan";)
-- Asignación: usar alguno de estos operadores: <-, :=
-- PROHIBIDO inicializar múltiples variables con comas en una sola línea (ej: a, b, c <- 1, 2, 3 NO está permitido)
-- Cada variable debe inicializarse independientemente en líneas separadas (ej: a <- 1; b <- 2; c <- 3;)
-- Condicional: IF (condición) THEN BEGIN ... END ELSE BEGIN ... END (también puedes usar llaves: IF (condición) THEN { ... } ELSE { ... })
-- WHILE: WHILE (condición) DO BEGIN ... END (OBLIGATORIO el DO antes del bloque; también puedes usar llaves: WHILE (condición) DO { ... })
-- FOR: FOR variable <- inicio TO fin DO BEGIN ... END (OBLIGATORIO el DO antes del bloque; también puedes usar llaves: FOR variable <- inicio TO fin DO { ... })
-- REPEAT: REPEAT ... UNTIL (condición); (no usa DO)
-- Print: print("Texto", variable1, expresion2); // usa comillas dobles para cadenas literales
-- Arrays base 1: A[1]..A[n]
-- Punto y coma al final de cada sentencia (excepto después de END)
-- Incremento: x <- x + 1
-- Operadores: =, <>, !=, ≠, <, >, <=, ≤, >=, ≥, AND, OR
-- Comentarios: usar // para comentarios de una línea (ej: // esto es un comentario). PROHIBIDO usar -- para comentarios.
-- Caracteres en código: PROHIBIDO usar caracteres especiales como tildes (á, é, í, ó, ú), ñ, u otros caracteres no ASCII en nombres de variables, funciones o código. Usar solo letras del alfabeto inglés (a-z, A-Z), números (0-9) y símbolos estándar.
-- ⚠️ OPERADOR MÓDULO: usar MOD, NO usar % (ej: IF (n MOD 2 = 0) THEN ... NO IF (n % 2 = 0))
-- ⚠️ DIVISIÓN ENTERA: usar DIV (ej: exponente DIV 2, NO exponente / 2 para división entera)
-- DIVISIÓN REAL: usar / (ej: (izq + der) / 2)
-- Cadenas: usa comillas dobles " (ej. "Listo", "Total: " + n); escapa comillas internas como "
-- Return: RETURN siempre debe retornar un valor; PROHIBIDO usar RETURN solo (ej: RETURN resultado; NO RETURN;)
+PARA ALGORITMOS RECURSIVOS:
+- Identifica el tipo de recurrencia:
+  * divide_conquer: T(n) = a·T(n/b) + f(n)
+  * linear_shift: T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n)
+- Aplica el método apropiado:
+  * master: Teorema Maestro (para divide_conquer)
+  * iteration: Método de Iteración/Unrolling
+  * recursion_tree: Árbol de Recursión
+  * characteristic_equation: Ecuación Característica (para linear_shift)
+- Proporciona todos los detalles del método aplicado
+- Calcula theta final en formato LaTeX
 
-⚠️ REGLA CRÍTICA 1: IF SIEMPRE requiere BEGIN...END o llaves { } después de THEN y ELSE.
-   CORRECTO: IF (n <= 1) THEN BEGIN RETURN 1; END ELSE BEGIN ... END
-   CORRECTO: IF (n <= 1) THEN { RETURN 1; } ELSE { ... }
-   INCORRECTO: IF (n <= 1) THEN RETURN 1; (FALTA BEGIN/END o llaves - ERROR DE SINTAXIS)
-   INCORRECTO: IF (n <= 1) RETURN 1; (FALTA THEN y BEGIN/END - ERROR DE SINTAXIS)
-   CORRECTO: IF (cond) THEN BEGIN ... END (sin ELSE también requiere BEGIN/END)
-   INCORRECTO: IF (cond) THEN ... (sin BEGIN/END - ERROR DE SINTAXIS)
+FORMATO DE RESPUESTA:
+- Devuelve SOLO un objeto JSON válido
+- El campo "analysis" debe contener todos los datos del análisis
+- El campo "note" debe ser una observación breve (máx. 100 caracteres) con un emoji de cara al inicio y un adjetivo calificativo, por ejemplo: "😊 Excelente análisis" o "😐 Análisis correcto pero podría mejorarse"
+- Usa formato LaTeX para todas las expresiones matemáticas
+- Si un campo no aplica, puedes omitirlo del objeto analysis (no incluir null)
 
-⚠️ REGLA CRÍTICA 2: WHILE y FOR SIEMPRE requieren la palabra clave DO antes del bloque. 
-   CORRECTO: WHILE (i < n) DO BEGIN ... END
-   CORRECTO: WHILE (i < n) DO { ... }
-   INCORRECTO: WHILE (i < n) { ... } (FALTA DO - ERROR DE SINTAXIS)
-   CORRECTO: FOR i <- 1 TO n DO BEGIN ... END
-   CORRECTO: FOR i <- 1 TO n DO { ... }
-   INCORRECTO: FOR i <- 1 TO n { ... } (FALTA DO - ERROR DE SINTAXIS)
+EJEMPLOS DE NOTAS:
+- "😊 Excelente análisis, muy preciso"
+- "😐 Análisis correcto pero falta considerar casos límite"
+- "😊 Muy bien, análisis completo"
+- "😐 Buen análisis pero la notación podría ser más clara"
 
-⚠️ REGLA CRÍTICA 3: OPERADORES ARITMÉTICOS
-   - MÓDULO: usar MOD (ej: n MOD 2 = 0), PROHIBIDO usar % (NO n % 2)
-   - DIVISIÓN ENTERA: usar DIV (ej: exponente DIV 2), NO usar / para división entera
-   - DIVISIÓN REAL: usar / (ej: (izq + der) / 2)
-   - EJEMPLO CORRECTO: IF (exponente MOD 2 = 0) THEN BEGIN ... END
-   - EJEMPLO INCORRECTO: IF (exponente % 2 = 0) THEN BEGIN ... END (ERROR: % no existe)
+IMPORTANTE:
+- Analiza cuidadosamente el algoritmo proporcionado
+- Aplica los métodos teóricos correctamente
+- Proporciona expresiones en formato LaTeX
+- La nota debe ser breve, con emoji y adjetivo calificativo`
+  },
+  compare: {
+    temperature: 0.3,
+    maxTokens: 16000,
+    schema: {
+      type: "object",
+      properties: {
+        analysis: {
+          type: "object",
+          properties: {
+            // Para iterativo: puede tener worst, best, avg como propiedades opcionales
+            worst: {
+              type: "object",
+              properties: {
+                T_open: { type: "string" },
+                T_polynomial: { type: "string" },
+                big_o: { type: "string" },
+                big_omega: { type: "string" },
+                big_theta: { type: "string" },
+              }
+            },
+            best: {
+              type: "object",
+              properties: {
+                T_open: { type: "string" },
+                T_polynomial: { type: "string" },
+                big_o: { type: "string" },
+                big_omega: { type: "string" },
+                big_theta: { type: "string" },
+              }
+            },
+            avg: {
+              type: "object",
+              properties: {
+                T_open: { type: "string" },
+                T_polynomial: { type: "string" },
+                big_o: { type: "string" },
+                big_omega: { type: "string" },
+                big_theta: { type: "string" },
+              }
+            },
+            // Datos directos (para recursivo o si no se separan casos)
+            T_open: { type: "string" },
+            T_polynomial: { type: "string" },
+            big_o: { type: "string" },
+            big_omega: { type: "string" },
+            big_theta: { type: "string" },
+            recurrence: {
+              type: "object",
+              properties: {
+                type: { type: "string", enum: ["divide_conquer", "linear_shift"] },
+                form: { type: "string" },
+                a: { type: "number" },
+                b: { type: "number" },
+                f: { type: "string" },
+                order: { type: "number" },
+                shifts: { type: "array", items: { type: "number" } },
+                coefficients: { type: "array", items: { type: "number" } },
+                "g(n)": { type: "string" },
+                n0: { type: "number" }
+              }
+            },
+            method: { type: "string" },
+            theta: { type: "string" },
+            characteristic_equation: {
+              type: "object",
+              properties: {
+                equation: { type: "string" },
+                roots: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      root: { type: "string" },
+                      multiplicity: { type: "number" }
+                    }
+                  }
+                },
+                dominant_root: { type: "string" },
+                growth_rate: { type: "number" },
+                homogeneous_solution: { type: "string" },
+                particular_solution: { type: "string" },
+                general_solution: { type: "string" },
+                closed_form: { type: "string" },
+                theta: { type: "string" }
+              }
+            },
+            master: {
+              type: "object",
+              properties: {
+                case: { type: "number", enum: [1, 2, 3] },
+                nlogba: { type: "string" },
+                comparison: { type: "string", enum: ["smaller", "equal", "larger"] },
+                theta: { type: "string" }
+              }
+            },
+            iteration: {
+              type: "object",
+              properties: {
+                g_function: { type: "string" },
+                expansions: { type: "array", items: { type: "string" } },
+                general_form: { type: "string" },
+                base_case: {
+                  type: "object",
+                  properties: {
+                    condition: { type: "string" },
+                    k: { type: "string" }
+                  }
+                },
+                summation: {
+                  type: "object",
+                  properties: {
+                    expression: { type: "string" },
+                    evaluated: { type: "string" }
+                  }
+                },
+                theta: { type: "string" }
+              }
+            },
+            recursion_tree: {
+              type: "object",
+              properties: {
+                levels: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      level: { type: "number" },
+                      num_nodes: { type: "number" },
+                      num_nodes_latex: { type: "string" },
+                      subproblem_size_latex: { type: "string" },
+                      cost_per_node_latex: { type: "string" },
+                      total_cost_latex: { type: "string" }
+                    }
+                  }
+                },
+                height: { type: "string" },
+                summation: {
+                  type: "object",
+                  properties: {
+                    expression: { type: "string" },
+                    evaluated: { type: "string" },
+                    theta: { type: "string" }
+                  }
+                },
+                dominating_level: {
+                  type: "object",
+                  properties: {
+                    level: { type: "string" },
+                    reason: { type: "string" }
+                  }
+                },
+                theta: { type: "string" }
+              }
+            }
+          }
+        },
+        note: { type: "string" }
+      },
+      required: ["analysis", "note"]
+    },
+    systemPrompt: `Eres un experto en análisis de complejidad de algoritmos. Tu tarea es analizar un algoritmo y proporcionar un análisis de complejidad detallado.
 
-VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
-- NO incluir prefijos como ALGORITMO/PROCEDURE/PROGRAM en las definiciones; las funciones/algoritmos NO inician con prefijo.
-- NO usar tipos ni prefijos en variables (NO int, string, var, etc.); las variables se asignan directamente sin declaración de tipo.
-- Llamada a procedimiento como sentencia: CALL nombre(params); (para llamar a procedimientos como sentencia independiente que no devuelve un valor usado en una expresión)
-- Llamada a procedimiento como expresión: nombre(params) (sin CALL, para usar dentro de expresiones como RETURN, asignaciones, etc.)
-- ⚠️ LLAMADAS RECURSIVAS - REGLA CRÍTICA:
-   * Si la llamada recursiva es una SENTENCIA INDEPENDIENTE (no devuelve un valor usado en una expresión), DEBE usar CALL: CALL nombre(params);
-     Ejemplo correcto: CALL mergesort(array, izq, medio); (sentencia independiente que modifica el array)
-   * Si la llamada recursiva es parte de una EXPRESIÓN (RETURN, asignación, etc.), NO debe usar CALL: nombre(params)
-     Ejemplo correcto: RETURN n * factorial(n - 1); (parte de una expresión)
-     Ejemplo incorrecto: RETURN n * CALL factorial(n - 1); (ERROR: CALL no se usa en expresiones)
-- NO inicializar múltiples variables con comas; cada variable debe tener su propia línea de asignación.
-- ⚠️ Verifica que TODOS los IF tengan BEGIN/END o llaves después de THEN y ELSE (IF (cond) THEN BEGIN ... END, NO IF (cond) THEN ...)
-- ⚠️ Verifica que TODOS los WHILE tengan DO antes del bloque (WHILE (cond) DO { ... }, NO WHILE (cond) { ... })
-- ⚠️ Verifica que TODOS los FOR tengan DO antes del bloque (FOR var <- inicio TO fin DO { ... }, NO FOR var <- inicio TO fin { ... })
-- ⚠️ Verifica que NO se use % para módulo; usar MOD (ej: n MOD 2, NO n % 2)
-- ⚠️ Verifica que para división entera se use DIV (ej: n DIV 2, NO n / 2 cuando se requiere división entera)
-- ⚠️ Verifica que los comentarios usen // (ej: // comentario), NO usar -- para comentarios
-- ⚠️ Verifica que las llamadas recursivas usen CALL solo cuando son sentencias independientes (ej: CALL mergesort(array, izq, medio); es correcto para sentencias, pero RETURN n * factorial(n - 1); es correcto para expresiones)
-- ⚠️ Verifica que NO haya caracteres especiales (tildes, ñ, etc.) en nombres de variables, funciones o código. Solo usar letras del alfabeto inglés.
-- Verifica paréntesis en IF/WHILE y llaves/BEGIN-END en THEN/ELSE/DO.
-- Revisa que cada sentencia termine en ';' y que no haya sintaxis de otros lenguajes.
-- RETURN siempre debe retornar un valor; verifica que no haya RETURN sin valor (RETURN; está prohibido, debe ser RETURN valor;).
+OBJETIVO:
+Analizar el algoritmo proporcionado y determinar su complejidad temporal y espacial, identificando si es iterativo o recursivo y aplicando los métodos apropiados.
 
-⚠️ FORMATO DE RESPUESTA CRÍTICO - DEBES SEGUIRLO EXACTAMENTE:
-- Retorna un objeto JSON con el siguiente formato:
-{
-  "code": "código completo corregido aquí",
-  "removedLines": [1, 3, 5],
-  "addedLines": [2, 4, 6]
-}
+PARA ALGORITMOS ITERATIVOS:
+- **IMPORTANTE - Cálculo de T_open (ecuación de eficiencia)**:
+  * T_open = Σ C_k · count_k donde cada C_k es una constante que representa el costo de UNA operación en una línea específica
+  * **CRÍTICO**: Cada operación en una línea tiene su propia constante C_k. Por ejemplo:
+    - En la línea "resultado <- a + b;" hay 2 operaciones: la asignación (C_1) y la suma (C_2)
+    - En la línea "x <- 2 + b;" hay 2 operaciones: la asignación (C_1) y la suma (C_2)
+    - En la línea "RETURN resultado;" hay 1 operación: el return (C_3)
+  * count_k es cuántas veces se ejecuta esa operación (puede ser 1, n, n-1, etc. dependiendo de bucles)
+  * Ejemplo: Si "resultado <- a + b;" se ejecuta 1 vez, entonces T_open incluye "C_1 · 1 + C_2 · 1" (o simplificado: "C_1 + C_2")
+  * Si una línea está dentro de un bucle FOR i <- 1 TO n, entonces count_k = n para esa línea
+  * Formato: T_open debe ser una expresión en LaTeX que sume todos los términos C_k · count_k
+- **IMPORTANTE - Cálculo de T_polynomial (forma polinómica)**:
+  * T_polynomial es la forma polinómica simplificada de T_open, agrupando términos con las mismas potencias de n
+  * Ejemplo: Si T_open = "C_1 · 1 + C_2 · n + C_3 · (n - 1)", entonces T_polynomial = "(C_2 + C_3) · n + (C_1 - C_3)"
+  * Si T_open solo tiene constantes (sin términos con n), entonces T_polynomial = "c" o una constante
+  * Formato: T_polynomial debe ser una expresión polinómica en LaTeX como "an² + bn + c" o simplemente "c" si es constante
+- Determina big_o, big_omega y big_theta en formato LaTeX (ej: "O(n^2)", "Ω(n^2)", "Θ(n^2)") para cada caso
+- **IMPORTANTE**: Si el algoritmo es iterativo, debes proporcionar análisis para worst, best y average case. El campo "analysis" puede contener un objeto con propiedades "worst", "best" y "avg", cada una con los datos correspondientes (T_open, T_polynomial, big_o, big_omega, big_theta), o un único objeto si los casos son idénticos.
 
-- "code": El código completo corregido (sin bloques de código, solo el texto)
-- "removedLines": Array de números de línea del código ORIGINAL que fueron eliminadas (basado en 1)
-- "addedLines": Array de números de línea del código REPARADO que fueron agregadas (basado en 1)
-- Si una línea fue modificada, inclúyela tanto en removedLines (número de línea original) como en addedLines (número de línea nueva)
-- NO incluyas explicaciones, comentarios adicionales, ni texto fuera del JSON
-- El JSON debe ser válido y parseable
+PARA ALGORITMOS RECURSIVOS:
+- Identifica el tipo de recurrencia:
+  * divide_conquer: T(n) = a·T(n/b) + f(n)
+  * linear_shift: T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n)
+- **OBLIGATORIO**: Proporciona el objeto "recurrence" con TODOS los campos requeridos:
+  * type: "divide_conquer" o "linear_shift" (OBLIGATORIO)
+  * form: La forma de la recurrencia en LaTeX (OBLIGATORIO, ej: "T(n) = T(n-1) + \\\\Theta(1)")
+  * Para linear_shift DEBES incluir: order (número, ej: 1), shifts (array de números, ej: [1]), coefficients (array de números, ej: [1]), "g(n)" (string en LaTeX, ej: "1" o "\\\\Theta(1)"), n0 (número, ej: 1)
+  * Para divide_conquer DEBES incluir: a (número), b (número), f (string en LaTeX), n0 (número)
+- Aplica el método apropiado y proporciona el campo "method" con el nombre del método usado (OBLIGATORIO):
+  * "master": Teorema Maestro (para divide_conquer) - proporciona objeto "master" con case, nlogba, comparison, theta
+  * "iteration": Método de Iteración/Unrolling - proporciona objeto "iteration" con TODOS estos campos:
+    - g_function: función g(n) en LaTeX (OBLIGATORIO, ej: "n-1")
+    - expansions: array de strings con las expansiones en LaTeX (OBLIGATORIO, ej: ["T(n) = T(n-1) + (1)", "T(n) = T(n-2) + (1) + (1|_{n-1})"])
+    - general_form: forma general en LaTeX (OBLIGATORIO, ej: "T(n) = T(n-k) + \\\\sum_{i=0}^{k-1} (1)|_{n-i}")
+    - base_case: objeto con condition (string, OBLIGATORIO, ej: "n-1 = 1") y k (string, OBLIGATORIO, ej: "n-1")
+    - summation: objeto con expression (string en LaTeX, OBLIGATORIO) y evaluated (string en LaTeX, OBLIGATORIO)
+    - theta: resultado final en LaTeX (OBLIGATORIO, ej: "\\\\Theta(n)")
+  * "recursion_tree": Árbol de Recursión - proporciona objeto "recursion_tree" con levels, height, summation, theta
+  * "characteristic_equation": Ecuación Característica (para linear_shift) - proporciona objeto "characteristic_equation" con equation, roots, closed_form, theta
+- Calcula theta final en formato LaTeX y proporciona el campo "big_theta" en el objeto analysis (OBLIGATORIO)
 
-EJEMPLO DE FORMATO CORRECTO:
-{
-  "code": "factorial(n) BEGIN\n  IF (n <= 1) THEN BEGIN\n    RETURN 1;\n  END\n  ELSE BEGIN\n    RETURN n * factorial(n - 1);\n  END\nEND",
-  "removedLines": [2],
-  "addedLines": [2, 3, 4]
-}
+FORMATO DE RESPUESTA:
+- Devuelve SOLO un objeto JSON válido
+- El campo "analysis" debe contener todos los datos del análisis
+- El campo "note" debe ser una observación breve (máx. 100 caracteres) con un emoji de cara al inicio y un adjetivo calificativo, por ejemplo: "😊 Excelente análisis" o "😐 Análisis correcto pero podría mejorarse"
+- Usa formato LaTeX para todas las expresiones matemáticas
+- Si un campo no aplica, puedes omitirlo del objeto analysis (no incluir null)
+- **CRÍTICO**: Para algoritmos recursivos, DEBES incluir:
+  1. El objeto "recurrence" completo con TODOS sus campos (type, form, y según el tipo: order, shifts, coefficients, "g(n)", n0 para linear_shift; o a, b, f, n0 para divide_conquer)
+  2. El campo "method" con el nombre del método usado
+  3. El objeto completo del método usado (iteration, master, recursion_tree, o characteristic_equation) con TODOS sus campos
+  4. El campo "big_theta" con el resultado final
 
-EJEMPLO DE FORMATO INCORRECTO (NO HACER ESTO):
-Aquí está el código corregido:
-\`\`\`pseudocode
-factorial(n) BEGIN
-  RETURN 1;
-END
-\`\`\`
+EJEMPLOS DE NOTAS:
+- "😊 Excelente análisis, muy preciso"
+- "😐 Análisis correcto pero falta considerar casos límite"
+- "😊 Muy bien, análisis completo"
+- "😐 Buen análisis pero la notación podría ser más clara"
 
-NOTA FINAL
-- La salida debe ser ÚNICAMENTE un objeto JSON válido, sin texto adicional
-- El código debe ser auto-contenido y ejecutable conforme a la gramática del proyecto
-- Un solo procedimiento con toda la lógica, sin dividir en múltiples funciones
-- ⚠️ SIEMPRE retorna SOLO el JSON, sin explicaciones adicionales.`
+IMPORTANTE:
+- Analiza cuidadosamente el algoritmo proporcionado
+- Aplica los métodos teóricos correctamente
+- Proporciona expresiones en formato LaTeX
+- La nota debe ser breve, con emoji y adjetivo calificativo
+- **NO omitas campos obligatorios del objeto recurrence ni del objeto del método usado (iteration, master, etc.)**`
   }
 };
 
