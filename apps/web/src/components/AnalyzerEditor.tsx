@@ -1,5 +1,5 @@
 "use client";
-import type { Program } from "@aa/types";
+import type { ParseError, Program } from "@aa/types";
 import MonacoEditor, { Monaco as MonacoReact } from "@monaco-editor/react";
 import type * as Monaco from "monaco-editor";
 import { useEffect, useRef, useState } from "react";
@@ -18,6 +18,7 @@ interface AnalyzerEditorProps {
   readonly onChange?: (value: string) => void;
   readonly onAstChange?: (ast: Program) => void;
   readonly onParseStatusChange?: (ok: boolean, isParsing: boolean) => void;
+  readonly onErrorsChange?: (errors: ParseError[] | undefined) => void;
   readonly height?: string;
 }
 
@@ -37,6 +38,7 @@ interface AnalyzerEditorProps {
  *   onChange={(value) => setCode(value)}
  *   onAstChange={(ast) => setAst(ast)}
  *   onParseStatusChange={(ok, isParsing) => setParseOk(ok)}
+ *   onErrorsChange={(errors) => setErrors(errors)}
  *   height="420px"
  * />
  * ```
@@ -47,6 +49,7 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
     onChange,
     onAstChange,
     onParseStatusChange,
+    onErrorsChange,
     height,
   } = props;
   const [code, setCode] = useState(initialValue);
@@ -97,6 +100,13 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
       onParseStatusChange(parseResult.ok, parseResult.isParsing);
     }
   }, [parseResult.ok, parseResult.isParsing, onParseStatusChange]);
+
+  // Notificar cambios de errores
+  useEffect(() => {
+    if (onErrorsChange) {
+      onErrorsChange(parseResult.errors);
+    }
+  }, [parseResult.errors, onErrorsChange]);
 
   /**
    * Maneja el montaje del editor y configura el lenguaje pseudocódigo.

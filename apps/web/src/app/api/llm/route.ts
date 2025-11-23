@@ -90,7 +90,9 @@ export async function POST(req: NextRequest) {
     }
     messages.push({ role: 'user', content: userPrompt });
     
-    const data = await callGeminiLLM(config, messages, geminiApiKey, schema);
+    // Usar schema del job si está definido, o el schema del request
+    const finalSchema = config.schema || schema;
+    const data = await callGeminiLLM(config, messages, geminiApiKey, finalSchema);
     
     // Normalización para intent-classify: eliminar saltos y restringir valores
     let intent: string | undefined;

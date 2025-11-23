@@ -1,6 +1,6 @@
 "use client";
 
-import type { AnalyzeOpenResponse, ParseResponse, Program } from "@aa/types";
+import type { AnalyzeOpenResponse, ParseError, ParseResponse, Program } from "@aa/types";
 import { useEffect, useRef, useState } from "react";
 
 import { AnalysisLoader } from "@/components/AnalysisLoader";
@@ -16,8 +16,9 @@ import ProcedureModal from "@/components/ProcedureModal";
 import IterativeAnalysisView from "@/components/IterativeAnalysisView";
 import RecursiveAnalysisView from "@/components/RecursiveAnalysisView";
 import MethodSelector, { MethodType } from "@/components/MethodSelector";
+import RepairModal from "@/components/RepairModal";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
-import { getApiKey } from "@/hooks/useApiKey";
+import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 import { calculateBigO, getSavedCase, saveCase } from "@/lib/polynomial";
@@ -132,18 +133,44 @@ export default function AnalyzerPage() {
   const [ast, setAst] = useState<Program | null>(null);
   const [showAstModal, setShowAstModal] = useState(false);
   const [localParseOk, setLocalParseOk] = useState(false);
+  const [parseErrors, setParseErrors] = useState<ParseError[] | undefined>(undefined);
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'tree' | 'json'>('tree');
   // Estados del chat
   const { messages, setMessages } = useChatHistory();
   const [isChatOpen, setIsChatOpen] = useState(false);
+  // Estado para modal de reparación
+  const [showRepairModal, setShowRepairModal] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(false);
 
   // Refs para evitar memory leaks con timeouts
   const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Verificar API_KEY al montar y cuando cambie (incluyendo servidor)
+  useEffect(() => {
+    const checkApiKey = async () => {
+      const status = await getApiKeyStatus();
+      setHasApiKey(status.hasAny);
+    };
+    checkApiKey();
+    const handleApiKeyChange = async () => {
+      const status = await getApiKeyStatus();
+      setHasApiKey(status.hasAny);
+    };
+    window.addEventListener('apiKeyChanged', handleApiKeyChange);
+    return () => {
+      window.removeEventListener('apiKeyChanged', handleApiKeyChange);
+    };
+  }, []);
+
   // Manejar cambios en el estado de parsing local
   const handleParseStatusChange = (ok: boolean, _isParsing: boolean) => {
     setLocalParseOk(ok);
+  };
+
+  // Manejar cambios en los errores de parsing
+  const handleErrorsChange = (errors: ParseError[] | undefined) => {
+    setParseErrors(errors);
   };
 
   // Cleanup de timeouts al desmontar
@@ -843,6 +870,7 @@ export default function AnalyzerPage() {
                     onChange={setSource}
                     onAstChange={setAst}
                     onParseStatusChange={handleParseStatusChange}
+                    onErrorsChange={handleErrorsChange}
                     height="430px"
                   />
                 </div>
@@ -858,6 +886,22 @@ export default function AnalyzerPage() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
+                      {!localParseOk && (
+                        <button
+                          onClick={() => setShowRepairModal(true)}
+                          disabled={!hasApiKey}
+                          className="flex items-center gap-2 py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
+                          title={!hasApiKey ? "Se requiere una API_KEY para usar esta función" : ""}
+                        >
+                          <span className="material-symbols-outlined text-sm">auto_awesome</span>
+                          <span>Reparar con IA</span>
+                          {!hasApiKey && (
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                              Se requiere una API_KEY
+                            </div>
+                          )}
+                        </button>
+                      )}
                       <button
                         onClick={() => setShowAstModal(true)}
                         disabled={!localParseOk || !ast}
@@ -1044,6 +1088,18 @@ export default function AnalyzerPage() {
           // Recargar para que el código se cargue desde sessionStorage
           globalThis.window.location.reload();
         }}
+      />
+
+      {/* Modal de reparación */}
+      <RepairModal
+        open={showRepairModal}
+        onClose={() => setShowRepairModal(false)}
+        onAccept={(repairedCode) => {
+          setSource(repairedCode);
+          setShowRepairModal(false);
+        }}
+        originalCode={source}
+        parseErrors={parseErrors}
       />
 
       <Footer />

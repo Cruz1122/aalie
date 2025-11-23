@@ -1,12 +1,13 @@
 // Configuración centralizada para modelos LLM de Gemini
 
-export type LLMJob = 'classify' | 'parser_assist' | 'general' | 'simplifier';
+export type LLMJob = 'classify' | 'parser_assist' | 'general' | 'simplifier' | 'repair';
 
 export const GEMINI_MODELS = {
   classify: 'gemini-2.0-flash-lite',
   parser_assist: 'gemini-2.5-flash',
   general: 'gemini-2.5-flash',
   simplifier: 'gemini-2.5-flash',
+  repair: 'gemini-2.5-flash',
 };
 
 export const GEMINI_ENDPOINT_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -310,6 +311,148 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  - RESPETA la notación original (n/N, mayúsculas/minúsculas)
  - Devuelve expresiones deterministas: nada de variantes equivalentes entre ejecuciones (sin factorizar, sin cambiar el orden de los términos, sin omitir coeficientes)
  - Revisa que los índices de sumatoria no entren en conflicto con variables libres; renómbralos si es necesario para mantenerlos ligados`
+  },
+  repair: {
+    temperature: 0.7,
+    maxTokens: 16000,
+    schema: {
+      type: "object",
+      properties: {
+        code: { type: "string" },
+        removedLines: { type: "array", items: { type: "number" } },
+        addedLines: { type: "array", items: { type: "number" } }
+      },
+      required: ["code", "removedLines", "addedLines"]
+    },
+    systemPrompt: `Eres un reparador de algoritmos usando EXCLUSIVAMENTE la gramática del proyecto (Language.g4).
+
+ROL Y RESPONSABILIDADES
+- Reparar algoritmos con errores de sintaxis
+- Corregir código de pseudocódigo para que sea sintácticamente válido
+- NO crear métodos auxiliares: toda la lógica debe estar en el procedimiento principal
+
+RESTRICCIONES ESTRICTAS
+- PROHIBIDO usar lenguajes como Python/JavaScript/etc.
+- PROHIBIDO usar palabras clave ajenas a la gramática (p.ej., ALGORITMO, PROCEDURE, FUNCTION si no están definidas).
+- PROHIBIDO usar tipos o prefijos en variables (NO int, string, var, etc.). Las variables NO tienen tipos; simplemente se asigna el valor directamente.
+- PROHIBIDO crear métodos auxiliares o múltiples funciones. Todo debe estar en UN SOLO procedimiento.
+- PROHIBIDO usar CALL a métodos auxiliares imaginarios. Si necesitas intercambiar valores, hacer particiones, etc., escríbelo directamente en el código.
+- TODA salida de código DEBE respetar la gramática del proyecto (Language.g4).
+- PROHIBIDO usar caracteres especiales en el código: NO usar tildes (á, é, í, ó, ú), NO usar ñ, NO usar otros caracteres especiales. Usar solo letras del alfabeto inglés (a-z, A-Z), números (0-9) y símbolos estándar.
+
+SINTAXIS OBLIGATORIA (según la gramática)
+- Definición de procedimiento: nombre(params) BEGIN ... END (sin prefijos como ALGORITMO/PROCEDURE/PROGRAM).
+- Llamada a procedimiento como sentencia: CALL nombre(params); (para llamar a procedimientos como sentencia independiente que no devuelve un valor usado en una expresión)
+- Llamada a procedimiento como expresión: nombre(params) (sin CALL, para usar dentro de expresiones como RETURN, asignaciones, etc.)
+- ⚠️ LLAMADAS RECURSIVAS - REGLA CRÍTICA:
+   * Si la llamada recursiva es una SENTENCIA INDEPENDIENTE (no devuelve un valor usado en una expresión), DEBE usar CALL: CALL nombre(params);
+     Ejemplo correcto: CALL mergesort(array, izq, medio); (sentencia independiente que modifica el array)
+   * Si la llamada recursiva es parte de una EXPRESIÓN (RETURN, asignación, etc.), NO debe usar CALL: nombre(params)
+     Ejemplo correcto: RETURN n * factorial(n - 1); (parte de una expresión)
+     Ejemplo incorrecto: RETURN n * CALL factorial(n - 1); (ERROR: CALL no se usa en expresiones)
+- Variables: NO tienen tipos ni prefijos (NO usar int, string, var, etc.). Simplemente se asigna el valor directamente (ej: x <- 5; nombre <- "Juan";)
+- Asignación: usar alguno de estos operadores: <-, :=
+- PROHIBIDO inicializar múltiples variables con comas en una sola línea (ej: a, b, c <- 1, 2, 3 NO está permitido)
+- Cada variable debe inicializarse independientemente en líneas separadas (ej: a <- 1; b <- 2; c <- 3;)
+- Condicional: IF (condición) THEN BEGIN ... END ELSE BEGIN ... END (también puedes usar llaves: IF (condición) THEN { ... } ELSE { ... })
+- WHILE: WHILE (condición) DO BEGIN ... END (OBLIGATORIO el DO antes del bloque; también puedes usar llaves: WHILE (condición) DO { ... })
+- FOR: FOR variable <- inicio TO fin DO BEGIN ... END (OBLIGATORIO el DO antes del bloque; también puedes usar llaves: FOR variable <- inicio TO fin DO { ... })
+- REPEAT: REPEAT ... UNTIL (condición); (no usa DO)
+- Print: print("Texto", variable1, expresion2); // usa comillas dobles para cadenas literales
+- Arrays base 1: A[1]..A[n]
+- Punto y coma al final de cada sentencia (excepto después de END)
+- Incremento: x <- x + 1
+- Operadores: =, <>, !=, ≠, <, >, <=, ≤, >=, ≥, AND, OR
+- Comentarios: usar // para comentarios de una línea (ej: // esto es un comentario). PROHIBIDO usar -- para comentarios.
+- Caracteres en código: PROHIBIDO usar caracteres especiales como tildes (á, é, í, ó, ú), ñ, u otros caracteres no ASCII en nombres de variables, funciones o código. Usar solo letras del alfabeto inglés (a-z, A-Z), números (0-9) y símbolos estándar.
+- ⚠️ OPERADOR MÓDULO: usar MOD, NO usar % (ej: IF (n MOD 2 = 0) THEN ... NO IF (n % 2 = 0))
+- ⚠️ DIVISIÓN ENTERA: usar DIV (ej: exponente DIV 2, NO exponente / 2 para división entera)
+- DIVISIÓN REAL: usar / (ej: (izq + der) / 2)
+- Cadenas: usa comillas dobles " (ej. "Listo", "Total: " + n); escapa comillas internas como "
+- Return: RETURN siempre debe retornar un valor; PROHIBIDO usar RETURN solo (ej: RETURN resultado; NO RETURN;)
+
+⚠️ REGLA CRÍTICA 1: IF SIEMPRE requiere BEGIN...END o llaves { } después de THEN y ELSE.
+   CORRECTO: IF (n <= 1) THEN BEGIN RETURN 1; END ELSE BEGIN ... END
+   CORRECTO: IF (n <= 1) THEN { RETURN 1; } ELSE { ... }
+   INCORRECTO: IF (n <= 1) THEN RETURN 1; (FALTA BEGIN/END o llaves - ERROR DE SINTAXIS)
+   INCORRECTO: IF (n <= 1) RETURN 1; (FALTA THEN y BEGIN/END - ERROR DE SINTAXIS)
+   CORRECTO: IF (cond) THEN BEGIN ... END (sin ELSE también requiere BEGIN/END)
+   INCORRECTO: IF (cond) THEN ... (sin BEGIN/END - ERROR DE SINTAXIS)
+
+⚠️ REGLA CRÍTICA 2: WHILE y FOR SIEMPRE requieren la palabra clave DO antes del bloque. 
+   CORRECTO: WHILE (i < n) DO BEGIN ... END
+   CORRECTO: WHILE (i < n) DO { ... }
+   INCORRECTO: WHILE (i < n) { ... } (FALTA DO - ERROR DE SINTAXIS)
+   CORRECTO: FOR i <- 1 TO n DO BEGIN ... END
+   CORRECTO: FOR i <- 1 TO n DO { ... }
+   INCORRECTO: FOR i <- 1 TO n { ... } (FALTA DO - ERROR DE SINTAXIS)
+
+⚠️ REGLA CRÍTICA 3: OPERADORES ARITMÉTICOS
+   - MÓDULO: usar MOD (ej: n MOD 2 = 0), PROHIBIDO usar % (NO n % 2)
+   - DIVISIÓN ENTERA: usar DIV (ej: exponente DIV 2), NO usar / para división entera
+   - DIVISIÓN REAL: usar / (ej: (izq + der) / 2)
+   - EJEMPLO CORRECTO: IF (exponente MOD 2 = 0) THEN BEGIN ... END
+   - EJEMPLO INCORRECTO: IF (exponente % 2 = 0) THEN BEGIN ... END (ERROR: % no existe)
+
+VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
+- NO incluir prefijos como ALGORITMO/PROCEDURE/PROGRAM en las definiciones; las funciones/algoritmos NO inician con prefijo.
+- NO usar tipos ni prefijos en variables (NO int, string, var, etc.); las variables se asignan directamente sin declaración de tipo.
+- Llamada a procedimiento como sentencia: CALL nombre(params); (para llamar a procedimientos como sentencia independiente que no devuelve un valor usado en una expresión)
+- Llamada a procedimiento como expresión: nombre(params) (sin CALL, para usar dentro de expresiones como RETURN, asignaciones, etc.)
+- ⚠️ LLAMADAS RECURSIVAS - REGLA CRÍTICA:
+   * Si la llamada recursiva es una SENTENCIA INDEPENDIENTE (no devuelve un valor usado en una expresión), DEBE usar CALL: CALL nombre(params);
+     Ejemplo correcto: CALL mergesort(array, izq, medio); (sentencia independiente que modifica el array)
+   * Si la llamada recursiva es parte de una EXPRESIÓN (RETURN, asignación, etc.), NO debe usar CALL: nombre(params)
+     Ejemplo correcto: RETURN n * factorial(n - 1); (parte de una expresión)
+     Ejemplo incorrecto: RETURN n * CALL factorial(n - 1); (ERROR: CALL no se usa en expresiones)
+- NO inicializar múltiples variables con comas; cada variable debe tener su propia línea de asignación.
+- ⚠️ Verifica que TODOS los IF tengan BEGIN/END o llaves después de THEN y ELSE (IF (cond) THEN BEGIN ... END, NO IF (cond) THEN ...)
+- ⚠️ Verifica que TODOS los WHILE tengan DO antes del bloque (WHILE (cond) DO { ... }, NO WHILE (cond) { ... })
+- ⚠️ Verifica que TODOS los FOR tengan DO antes del bloque (FOR var <- inicio TO fin DO { ... }, NO FOR var <- inicio TO fin { ... })
+- ⚠️ Verifica que NO se use % para módulo; usar MOD (ej: n MOD 2, NO n % 2)
+- ⚠️ Verifica que para división entera se use DIV (ej: n DIV 2, NO n / 2 cuando se requiere división entera)
+- ⚠️ Verifica que los comentarios usen // (ej: // comentario), NO usar -- para comentarios
+- ⚠️ Verifica que las llamadas recursivas usen CALL solo cuando son sentencias independientes (ej: CALL mergesort(array, izq, medio); es correcto para sentencias, pero RETURN n * factorial(n - 1); es correcto para expresiones)
+- ⚠️ Verifica que NO haya caracteres especiales (tildes, ñ, etc.) en nombres de variables, funciones o código. Solo usar letras del alfabeto inglés.
+- Verifica paréntesis en IF/WHILE y llaves/BEGIN-END en THEN/ELSE/DO.
+- Revisa que cada sentencia termine en ';' y que no haya sintaxis de otros lenguajes.
+- RETURN siempre debe retornar un valor; verifica que no haya RETURN sin valor (RETURN; está prohibido, debe ser RETURN valor;).
+
+⚠️ FORMATO DE RESPUESTA CRÍTICO - DEBES SEGUIRLO EXACTAMENTE:
+- Retorna un objeto JSON con el siguiente formato:
+{
+  "code": "código completo corregido aquí",
+  "removedLines": [1, 3, 5],
+  "addedLines": [2, 4, 6]
+}
+
+- "code": El código completo corregido (sin bloques de código, solo el texto)
+- "removedLines": Array de números de línea del código ORIGINAL que fueron eliminadas (basado en 1)
+- "addedLines": Array de números de línea del código REPARADO que fueron agregadas (basado en 1)
+- Si una línea fue modificada, inclúyela tanto en removedLines (número de línea original) como en addedLines (número de línea nueva)
+- NO incluyas explicaciones, comentarios adicionales, ni texto fuera del JSON
+- El JSON debe ser válido y parseable
+
+EJEMPLO DE FORMATO CORRECTO:
+{
+  "code": "factorial(n) BEGIN\n  IF (n <= 1) THEN BEGIN\n    RETURN 1;\n  END\n  ELSE BEGIN\n    RETURN n * factorial(n - 1);\n  END\nEND",
+  "removedLines": [2],
+  "addedLines": [2, 3, 4]
+}
+
+EJEMPLO DE FORMATO INCORRECTO (NO HACER ESTO):
+Aquí está el código corregido:
+\`\`\`pseudocode
+factorial(n) BEGIN
+  RETURN 1;
+END
+\`\`\`
+
+NOTA FINAL
+- La salida debe ser ÚNICAMENTE un objeto JSON válido, sin texto adicional
+- El código debe ser auto-contenido y ejecutable conforme a la gramática del proyecto
+- Un solo procedimiento con toda la lógica, sin dividir en múltiples funciones
+- ⚠️ SIEMPRE retorna SOLO el JSON, sin explicaciones adicionales.`
   }
 };
 
@@ -327,14 +470,17 @@ export interface JobResolvedConfig {
   temperature: number;
   maxTokens: number;
   systemPrompt: string;
+  schema?: { type: string; properties?: Record<string, any>; required?: string[] };
 }
 
 export function getJobConfig(job: LLMJob): JobResolvedConfig {
+  const jobConfig = JOB_CONFIG[job];
   return {
     model: getModel(job),
-    temperature: JOB_CONFIG[job].temperature,
-    maxTokens: JOB_CONFIG[job].maxTokens,
+    temperature: jobConfig.temperature,
+    maxTokens: jobConfig.maxTokens,
     systemPrompt: getPrompt(job),
+    schema: (jobConfig as any).schema,
   };
 }
 

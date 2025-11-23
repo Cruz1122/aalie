@@ -767,9 +767,8 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
 
             {/* Botón de Ayuda con IA - aparece después de 3 segundos si hay error y hay API_KEY */}
             {showAIHelpButton && backendParseError && hasValidApiKey && (
-              <div className="flex flex-col items-center gap-2">
-                <button
-                  onClick={async () => {
+              <button
+                onClick={async () => {
                     // No verificar API_KEY del servidor (no hacer peticiones)
                     // El backend manejará la API_KEY automáticamente
                     // Permitir continuar incluso sin API_KEY del cliente
@@ -847,12 +846,11 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                       }, 150);
                     }, 100);
                   }}
-                  className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg text-white text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 border animate-[slideInUp_0.3s_ease-out] bg-gradient-to-br from-purple-500/20 to-purple-500/20 border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 animate-pulse-slow cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-base animate-shake">smart_toy</span>{' '}
-                  Ayuda con IA
-                </button>
-              </div>
+                className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg text-white text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 border animate-[slideInUp_0.3s_ease-out] bg-gradient-to-br from-purple-500/20 to-purple-500/20 border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 animate-pulse-slow cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-base animate-shake">smart_toy</span>{' '}
+                Ayuda con IA
+              </button>
             )}
           </div>
         </div>
