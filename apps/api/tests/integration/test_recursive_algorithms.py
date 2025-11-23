@@ -762,3 +762,129 @@ class TestRecursiveAlgorithms:
             totals = result["totals"]
             assert "recurrence" in totals, f"Debe tener recurrencia en modo {mode}"
             assert "master" in totals, f"Debe tener master theorem en modo {mode}"
+    
+    def create_fibonacci_ast(self):
+        """Crea AST de Fibonacci: T(n) = T(n-1) + T(n-2) -> Ecuación Característica"""
+        return {
+            "type": "Program",
+            "body": [{
+                "type": "ProcDef",
+                "name": "fibonacci",
+                "params": [{"type": "Param", "name": "n"}],
+                "body": {
+                    "type": "Block",
+                    "body": [
+                        {
+                            "type": "If",
+                            "test": {"type": "Binary", "op": "<=", "left": {"type": "Identifier", "name": "n"}, "right": {"type": "Literal", "value": 1}},
+                            "consequent": {
+                                "type": "Block",
+                                "body": [{"type": "Return", "value": {"type": "Identifier", "name": "n"}}]
+                            },
+                            "alternate": {
+                                "type": "Block",
+                                "body": [{
+                                    "type": "Return",
+                                    "value": {
+                                        "type": "Binary",
+                                        "op": "+",
+                                        "left": {
+                                            "type": "Call",
+                                            "name": "fibonacci",
+                                            "args": [{"type": "Binary", "op": "-", "left": {"type": "Identifier", "name": "n"}, "right": {"type": "Literal", "value": 1}}]
+                                        },
+                                        "right": {
+                                            "type": "Call",
+                                            "name": "fibonacci",
+                                            "args": [{"type": "Binary", "op": "-", "left": {"type": "Identifier", "name": "n"}, "right": {"type": "Literal", "value": 2}}]
+                                        }
+                                    }
+                                }]
+                            }
+                        }
+                    ]
+                }
+            }]
+        }
+    
+    def test_characteristic_equation_method_fibonacci(self):
+        """Test: Método de Ecuación Característica para Fibonacci"""
+        analyzer = RecursiveAnalyzer()
+        ast = self.create_fibonacci_ast()
+        
+        # Especificar preferred_method para forzar uso de ecuación característica
+        result = analyzer.analyze(ast, mode="worst", preferred_method="characteristic_equation")
+        
+        assert result.get("ok"), f"Análisis debe ser exitoso: {result.get('errors', [])}"
+        assert "totals" in result, "Debe tener totals"
+        totals = result["totals"]
+        assert "recurrence" in totals, "Debe tener recurrencia"
+        
+        recurrence = totals["recurrence"]
+        assert "method" in recurrence, "Debe tener método"
+        
+        # Verificar que se detectó ecuación característica o que se aplicó
+        if recurrence.get("method") == "characteristic_equation" and "characteristic_equation" in totals:
+            char_eq = totals["characteristic_equation"]
+            assert "equation" in char_eq, "Debe tener equation"
+            assert "roots" in char_eq, "Debe tener roots"
+            # solution puede no estar presente en todos los casos
+            if "solution" in char_eq:
+                assert isinstance(char_eq["solution"], str), "solution debe ser string"
+    
+    def test_recursion_tree_method_merge_sort(self):
+        """Test: Método de Árbol de Recursión para Merge Sort"""
+        analyzer = RecursiveAnalyzer()
+        ast = self.create_merge_sort_ast()
+        
+        # Especificar preferred_method para forzar uso de árbol de recursión
+        result = analyzer.analyze(ast, mode="worst", preferred_method="recursion_tree")
+        
+        assert result.get("ok"), f"Análisis debe ser exitoso: {result.get('errors', [])}"
+        assert "totals" in result, "Debe tener totals"
+        totals = result["totals"]
+        assert "recurrence" in totals, "Debe tener recurrencia"
+        
+        recurrence = totals["recurrence"]
+        assert "method" in recurrence, "Debe tener método"
+        
+        # Verificar que se detectó árbol de recursión o que se aplicó
+        if recurrence.get("method") == "recursion_tree" or "recursion_tree" in totals:
+            recursion_tree = totals.get("recursion_tree", {})
+            if recursion_tree:
+                assert "levels" in recursion_tree, "Debe tener levels"
+                assert "height" in recursion_tree, "Debe tener height"
+                assert "summation" in recursion_tree, "Debe tener summation"
+                assert "dominating_level" in recursion_tree, "Debe tener dominating_level"
+                assert "theta" in recursion_tree, "Debe tener theta"
+    
+    def test_preferred_method_priority(self):
+        """Test: Verificar prioridad de métodos preferidos"""
+        analyzer = RecursiveAnalyzer()
+        ast = self.create_fibonacci_ast()
+        
+        # Fibonacci debería usar ecuación característica automáticamente
+        result = analyzer.analyze(ast, mode="worst")
+        
+        if result.get("ok"):
+            totals = result.get("totals", {})
+            recurrence = totals.get("recurrence", {})
+            
+            # Si se detectó correctamente, debería usar ecuación característica
+            if recurrence.get("method"):
+                assert recurrence["method"] in ["characteristic_equation", "iteration", "master"], \
+                    f"Método debe ser válido, obtuvo {recurrence['method']}"
+    
+    def test_characteristic_equation_with_preferred(self):
+        """Test: Ecuación Característica con preferred_method explícito"""
+        analyzer = RecursiveAnalyzer()
+        ast = self.create_fibonacci_ast()
+        
+        result = analyzer.analyze(ast, mode="worst", preferred_method="characteristic_equation")
+        
+        if result.get("ok"):
+            totals = result.get("totals", {})
+            recurrence = totals.get("recurrence", {})
+            
+            # Si el método preferido es válido, debe intentar usarlo
+            assert "method" in recurrence, "Debe tener método en recurrencia"

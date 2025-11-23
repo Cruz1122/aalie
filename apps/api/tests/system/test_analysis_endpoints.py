@@ -93,3 +93,115 @@ class TestClosedEndpoint:
         response = client.post("/analyze/closed", json={"source": "test"})
         assert response.status_code == 200
 
+    def test_open_endpoint_invalid_payload(self):
+        """Test: Endpoint /open maneja payload inválido"""
+        response = client.post("/analyze/open", json={})
+        assert response.status_code == 422  # Validation error
+
+    def test_open_endpoint_with_avg_model(self):
+        """Test: Endpoint /open con avgModel configurado"""
+        source = """
+test(n) BEGIN
+    FOR i <- 1 TO n DO BEGIN
+        IF i > n/2 THEN BEGIN
+            RETURN 1;
+        END
+    END
+END
+"""
+        payload = {
+            "source": source,
+            "mode": "avg",
+            "avgModel": {
+                "mode": "uniform",
+                "predicates": {}
+            }
+        }
+        response = client.post("/analyze/open", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert "ok" in data
+
+    def test_open_endpoint_with_preferred_method(self):
+        """Test: Endpoint /open con preferred_method"""
+        source = """
+factorial(n) BEGIN
+    IF n <= 1 THEN BEGIN
+        RETURN 1;
+    END
+    RETURN n * factorial(n - 1);
+END
+"""
+        payload = {
+            "source": source,
+            "mode": "worst",
+            "preferred_method": "iteration"
+        }
+        response = client.post("/analyze/open", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert "ok" in data
+
+    def test_open_endpoint_with_algorithm_kind(self):
+        """Test: Endpoint /open con algorithm_kind"""
+        source = """
+test(n) BEGIN
+    FOR i <- 1 TO n DO BEGIN
+        x <- 1;
+    END
+END
+"""
+        payload = {
+            "source": source,
+            "mode": "worst",
+            "algorithm_kind": "iterative"
+        }
+        response = client.post("/analyze/open", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert "ok" in data
+
+    def test_open_endpoint_mode_all(self):
+        """Test: Endpoint /open con mode=all"""
+        source = """
+test(n) BEGIN
+    FOR i <- 1 TO n DO BEGIN
+        x <- 1;
+    END
+END
+"""
+        payload = {
+            "source": source,
+            "mode": "all"
+        }
+        response = client.post("/analyze/open", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert "ok" in data
+
+    def test_detect_methods_empty_source(self):
+        """Test: detect-methods con source vacío"""
+        response = client.post("/analyze/detect-methods", json={"source": ""})
+        assert response.status_code == 200
+        data = response.json()
+        assert "ok" in data
+
+    def test_detect_methods_with_algorithm_kind(self):
+        """Test: detect-methods con algorithm_kind"""
+        source = """
+factorial(n) BEGIN
+    IF n <= 1 THEN BEGIN
+        RETURN 1;
+    END
+    RETURN n * factorial(n - 1);
+END
+"""
+        payload = {
+            "source": source,
+            "algorithm_kind": "recursive"
+        }
+        response = client.post("/analyze/detect-methods", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert "ok" in data
+

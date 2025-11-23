@@ -217,6 +217,112 @@ class TestComplexityClasses(unittest.TestCase):
         self.assertIsNotNone(big_theta)
         self.assertTrue("\\Theta" in big_theta or "Theta" in big_theta)
 
+    def test_parse_polynomial_complex_expression(self):
+        """Test: _parse_polynomial parsea expresión compleja"""
+        poly = "n^3 + 2*n^2 + 5*n + 1"
+        result = self.complexity._parse_polynomial(poly)
+        self.assertIsNotNone(result)
+
+    def test_parse_polynomial_with_spaces(self):
+        """Test: _parse_polynomial maneja espacios en blanco"""
+        poly = "n ^ 2 + 3 * n + 5"
+        result = self.complexity._parse_polynomial(poly)
+        self.assertIsNotNone(result)
+
+    def test_parse_polynomial_exponential(self):
+        """Test: _parse_polynomial maneja expresiones exponenciales"""
+        poly = "2^n"
+        result = self.complexity._parse_polynomial(poly)
+        self.assertIsNotNone(result)
+
+    def test_extract_dominant_sympy_cubic(self):
+        """Test: _extract_dominant_sympy extrae término dominante cúbico"""
+        from sympy import Symbol
+        n = Symbol('n', integer=True, positive=True)
+        expr = n**3 + 2*n**2 + 5*n + 1
+        result = self.complexity._extract_dominant_sympy(expr)
+        self.assertIsNotNone(result)
+
+    def test_extract_dominant_sympy_exponential(self):
+        """Test: _extract_dominant_sympy maneja expresiones exponenciales"""
+        from sympy import Symbol, exp
+        n = Symbol('n', integer=True, positive=True)
+        expr = exp(n)
+        result = self.complexity._extract_dominant_sympy(expr)
+        self.assertIsNotNone(result)
+
+    def test_extract_dominant_sympy_mixed(self):
+        """Test: _extract_dominant_sympy maneja expresiones mixtas"""
+        from sympy import Symbol, log
+        n = Symbol('n', integer=True, positive=True)
+        expr = n**2 * log(n) + n**2
+        result = self.complexity._extract_dominant_sympy(expr)
+        self.assertIsNotNone(result)
+
+    def test_sympy_to_latex_with_log(self):
+        """Test: _sympy_to_latex convierte expresión con logaritmo"""
+        from sympy import Symbol, log
+        n = Symbol('n', integer=True, positive=True)
+        expr = log(n)
+        result = self.complexity._sympy_to_latex(expr)
+        self.assertIsInstance(result, str)
+        self.assertIn("log", result.lower())
+
+    def test_sympy_to_latex_with_exp(self):
+        """Test: _sympy_to_latex convierte expresión con exponencial"""
+        from sympy import Symbol, exp
+        n = Symbol('n', integer=True, positive=True)
+        expr = exp(n)
+        result = self.complexity._sympy_to_latex(expr)
+        self.assertIsInstance(result, str)
+
+    def test_extract_dominant_term_empty(self):
+        """Test: extract_dominant_term maneja string vacío"""
+        result = self.complexity.extract_dominant_term("")
+        self.assertEqual(result, "1")
+
+    def test_calculate_big_o_logarithmic(self):
+        """Test: calculate_big_o con complejidad logarítmica"""
+        poly = "\\log(n)"
+        big_o = self.complexity.calculate_big_o(poly)
+        self.assertIsNotNone(big_o)
+        self.assertTrue(big_o.startswith("O("))
+
+    def test_calculate_big_o_nlogn(self):
+        """Test: calculate_big_o con complejidad n log n"""
+        poly = "n \\log(n)"
+        big_o = self.complexity.calculate_big_o(poly)
+        self.assertIsNotNone(big_o)
+        self.assertTrue(big_o.startswith("O("))
+
+    def test_calculate_big_omega_linear(self):
+        """Test: calculate_big_omega con complejidad lineal"""
+        poly = "5n + 3"
+        big_omega = self.complexity.calculate_big_omega(poly)
+        self.assertIsNotNone(big_omega)
+        self.assertTrue("\\Omega" in big_omega or "Omega" in big_omega)
+
+    def test_calculate_big_omega_quadratic(self):
+        """Test: calculate_big_omega con complejidad cuadrática"""
+        poly = "n^2 + n"
+        big_omega = self.complexity.calculate_big_omega(poly)
+        self.assertIsNotNone(big_omega)
+        self.assertTrue("\\Omega" in big_omega or "Omega" in big_omega)
+
+    def test_calculate_big_theta_constant(self):
+        """Test: calculate_big_theta con constante"""
+        poly = "5"
+        big_theta = self.complexity.calculate_big_theta(poly)
+        self.assertIsNotNone(big_theta)
+        self.assertTrue("\\Theta" in big_theta or "Theta" in big_theta)
+
+    def test_calculate_big_theta_linear(self):
+        """Test: calculate_big_theta con complejidad lineal"""
+        poly = "5n + 3"
+        big_theta = self.complexity.calculate_big_theta(poly)
+        self.assertIsNotNone(big_theta)
+        self.assertTrue("\\Theta" in big_theta or "Theta" in big_theta)
+
 
 if __name__ == '__main__':
     unittest.main()

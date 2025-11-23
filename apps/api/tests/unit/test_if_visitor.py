@@ -155,3 +155,48 @@ class TestIfVisitor(unittest.TestCase):
         self.analyzer.visitIf(node, mode="worst")
         self.assertGreater(len(self.analyzer.rows), 0)
 
+    def test_visit_if_consequent_is_list(self):
+        """Test: visitIf con consequent como lista"""
+        node = {
+            "type": "If",
+            "pos": {"line": 2},
+            "test": {"type": "binary", "left": {"type": "identifier", "name": "x"}, "op": ">", "right": {"type": "number", "value": 0}},
+            "consequent": [
+                {"type": "Assign", "pos": {"line": 3}, "target": {"type": "identifier", "name": "y"}, "value": {"type": "number", "value": 1}}
+            ]
+        }
+        initial_rows = len(self.analyzer.rows)
+        self.analyzer.visitIf(node, mode="worst")
+        self.assertGreater(len(self.analyzer.rows), initial_rows)
+
+    def test_visit_if_alternate_is_list(self):
+        """Test: visitIf con alternate como lista"""
+        node = {
+            "type": "If",
+            "pos": {"line": 2},
+            "test": {"type": "binary", "left": {"type": "identifier", "name": "x"}, "op": ">", "right": {"type": "number", "value": 0}},
+            "consequent": {
+                "type": "Block",
+                "body": [
+                    {"type": "Assign", "pos": {"line": 3}, "target": {"type": "identifier", "name": "y"}, "value": {"type": "number", "value": 1}}
+                ]
+            },
+            "alternate": [
+                {"type": "Assign", "pos": {"line": 4}, "target": {"type": "identifier", "name": "y"}, "value": {"type": "number", "value": 0}}
+            ]
+        }
+        initial_rows = len(self.analyzer.rows)
+        self.analyzer.visitIf(node, mode="worst")
+        self.assertGreater(len(self.analyzer.rows), initial_rows)
+
+    def test_visit_if_no_consequent(self):
+        """Test: visitIf sin consequent"""
+        node = {
+            "type": "If",
+            "pos": {"line": 2},
+            "test": {"type": "binary", "left": {"type": "identifier", "name": "x"}, "op": ">", "right": {"type": "number", "value": 0}}
+        }
+        initial_rows = len(self.analyzer.rows)
+        self.analyzer.visitIf(node, mode="worst")
+        # Debe manejar el caso sin causar error
+

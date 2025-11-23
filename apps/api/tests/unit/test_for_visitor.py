@@ -201,3 +201,89 @@ class TestForVisitor(unittest.TestCase):
         self.assertIsInstance(result, str)
         self.assertGreater(len(result), 0)
 
+    def test_visit_for_with_return(self):
+        """Test: visitFor con return en cuerpo (best case)"""
+        node = {
+            "type": "For",
+            "pos": {"line": 2},
+            "variable": "i",
+            "start": {"type": "number", "value": 1},
+            "end": {"type": "identifier", "name": "n"},
+            "body": {
+                "type": "Block",
+                "body": [
+                    {"type": "Return", "value": {"type": "number", "value": 1}}
+                ]
+            }
+        }
+        initial_rows = len(self.analyzer.rows)
+        self.analyzer.visitFor(node, mode="best")
+        self.assertGreater(len(self.analyzer.rows), initial_rows)
+
+    def test_visit_for_avg_case_with_return(self):
+        """Test: visitFor en modo avg con return"""
+        node = {
+            "type": "For",
+            "pos": {"line": 2},
+            "variable": "i",
+            "start": {"type": "number", "value": 1},
+            "end": {"type": "identifier", "name": "n"},
+            "body": {
+                "type": "Block",
+                "body": [
+                    {"type": "Return", "value": {"type": "number", "value": 1}}
+                ]
+            }
+        }
+        initial_rows = len(self.analyzer.rows)
+        self.analyzer.visitFor(node, mode="avg")
+        self.assertGreater(len(self.analyzer.rows), initial_rows)
+
+    def test_visit_for_complex_start_end(self):
+        """Test: visitFor con expresiones complejas en start y end"""
+        node = {
+            "type": "For",
+            "pos": {"line": 2},
+            "variable": "i",
+            "start": {"type": "binary", "operator": "+", "left": {"type": "number", "value": 1}, "right": {"type": "number", "value": 1}},
+            "end": {"type": "binary", "operator": "-", "left": {"type": "identifier", "name": "n"}, "right": {"type": "number", "value": 1}},
+            "body": {
+                "type": "Block",
+                "body": [{"type": "Assign", "pos": {"line": 3}, "target": {"type": "identifier", "name": "x"}, "value": {"type": "number", "value": 1}}]
+            }
+        }
+        initial_rows = len(self.analyzer.rows)
+        self.analyzer.visitFor(node, mode="worst")
+        self.assertGreater(len(self.analyzer.rows), initial_rows)
+
+    def test_visit_for_no_body(self):
+        """Test: visitFor sin cuerpo"""
+        node = {
+            "type": "For",
+            "pos": {"line": 2},
+            "variable": "i",
+            "start": {"type": "number", "value": 1},
+            "end": {"type": "identifier", "name": "n"},
+            "body": None
+        }
+        initial_rows = len(self.analyzer.rows)
+        self.analyzer.visitFor(node, mode="worst")
+        # Debe agregar la cabecera del for
+        self.assertGreater(len(self.analyzer.rows), initial_rows)
+
+    def test_visit_for_body_is_list(self):
+        """Test: visitFor con body como lista"""
+        node = {
+            "type": "For",
+            "pos": {"line": 2},
+            "variable": "i",
+            "start": {"type": "number", "value": 1},
+            "end": {"type": "identifier", "name": "n"},
+            "body": [
+                {"type": "Assign", "pos": {"line": 3}, "target": {"type": "identifier", "name": "x"}, "value": {"type": "number", "value": 1}}
+            ]
+        }
+        initial_rows = len(self.analyzer.rows)
+        self.analyzer.visitFor(node, mode="worst")
+        self.assertGreater(len(self.analyzer.rows), initial_rows)
+

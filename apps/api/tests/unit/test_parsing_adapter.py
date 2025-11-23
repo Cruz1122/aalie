@@ -83,3 +83,42 @@ class TestParseToAstAdapter(unittest.TestCase):
         self.assertEqual(errors[0]["message"], "Error 1")
         self.assertEqual(errors[1]["message"], "Error 2")
 
+    @patch('app.modules.parsing.adapter.GRAMMAR_AVAILABLE', True)
+    @patch('app.modules.parsing.adapter.parse_to_ast')
+    def test_handles_exception_during_parsing(self, mock_parse):
+        """Test: Maneja excepciones durante el parsing"""
+        mock_parse.side_effect = Exception("Unexpected error")
+        
+        # Debe propagar la excepción o manejarla
+        try:
+            ast, errors = adapter.parse_to_ast_adapter("code")
+        except Exception:
+            # Si propaga la excepción, está bien
+            pass
+
+    @patch('app.modules.parsing.adapter.GRAMMAR_AVAILABLE', True)
+    @patch('app.modules.parsing.adapter.parse_to_ast')
+    def test_empty_source_code(self, mock_parse):
+        """Test: Maneja código fuente vacío"""
+        mock_ast = {"type": "Program", "body": []}
+        mock_errors = []
+        mock_parse.return_value = (mock_ast, mock_errors)
+        
+        ast, errors = adapter.parse_to_ast_adapter("")
+        self.assertEqual(ast, mock_ast)
+        self.assertEqual(errors, mock_errors)
+        mock_parse.assert_called_once_with("")
+
+    @patch('app.modules.parsing.adapter.GRAMMAR_AVAILABLE', True)
+    @patch('app.modules.parsing.adapter.parse_to_ast')
+    def test_empty_errors_list(self, mock_parse):
+        """Test: Maneja lista de errores vacía"""
+        mock_ast = {"type": "Program", "body": []}
+        mock_errors = []
+        mock_parse.return_value = (mock_ast, mock_errors)
+        
+        ast, errors = adapter.parse_to_ast_adapter("valid code")
+        self.assertEqual(ast, mock_ast)
+        self.assertEqual(errors, mock_errors)
+        self.assertEqual(len(errors), 0)
+

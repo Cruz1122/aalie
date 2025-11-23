@@ -244,6 +244,73 @@ class TestIterativeAnalyzer:
         # Debe agrupar C_1 y C_2 juntos
         assert "C_1" in analyzer.t_polynomial
         assert "C_2" in analyzer.t_polynomial
+    
+    def test_generate_avg_procedure_uniform(self):
+        """Test: _generate_avg_procedure genera procedimiento para modelo uniforme"""
+        from app.modules.analysis.models.avg_model import AvgModel
+        analyzer = IterativeAnalyzer()
+        analyzer.mode = "avg"
+        analyzer.avg_model = AvgModel(mode="uniform", predicates={})
+        analyzer.add_row(1, "for", "C_1", "n", "test")
+        analyzer._generate_avg_procedure()
+        assert analyzer.procedure_steps is not None
+        assert isinstance(analyzer.procedure_steps, list)
+        assert len(analyzer.procedure_steps) > 0
+    
+    def test_generate_avg_procedure_not_avg_mode(self):
+        """Test: _generate_avg_procedure no genera procedimiento si no es modo avg"""
+        analyzer = IterativeAnalyzer()
+        analyzer.mode = "worst"
+        analyzer.avg_model = None
+        analyzer.add_row(1, "for", "C_1", "n", "test")
+        analyzer._generate_avg_procedure()
+        # No debe generar procedimiento si no es modo avg
+        assert analyzer.procedure_steps is None or len(analyzer.procedure_steps) == 0
+    
+    def test_generate_avg_procedure_with_if(self):
+        """Test: _generate_avg_procedure incluye explicación de IF"""
+        from app.modules.analysis.models.avg_model import AvgModel
+        analyzer = IterativeAnalyzer()
+        analyzer.mode = "avg"
+        analyzer.avg_model = AvgModel(mode="uniform", predicates={})
+        analyzer.add_row(1, "if", "C_1", "1", "test")
+        analyzer._generate_avg_procedure()
+        assert analyzer.procedure_steps is not None
+        assert len(analyzer.procedure_steps) > 0
+    
+    def test_generate_avg_procedure_with_while(self):
+        """Test: _generate_avg_procedure incluye explicación de WHILE"""
+        from app.modules.analysis.models.avg_model import AvgModel
+        analyzer = IterativeAnalyzer()
+        analyzer.mode = "avg"
+        analyzer.avg_model = AvgModel(mode="uniform", predicates={})
+        analyzer.add_row(1, "while", "C_1", "t_while_5", "test")
+        analyzer._generate_avg_procedure()
+        assert analyzer.procedure_steps is not None
+        assert len(analyzer.procedure_steps) > 0
+    
+    def test_analyze_with_avg_model(self):
+        """Test: analyze con avg_model configurado"""
+        from app.modules.analysis.models.avg_model import AvgModel
+        analyzer = IterativeAnalyzer()
+        avg_model = AvgModel(mode="uniform", predicates={})
+        ast = {
+            "type": "Program",
+            "body": [
+                {
+                    "type": "For",
+                    "pos": {"line": 1},
+                    "variable": "i",
+                    "start": {"type": "number", "value": 1},
+                    "end": {"type": "identifier", "name": "n"},
+                    "body": [{"type": "Assign", "pos": {"line": 2}, "target": {"type": "identifier", "name": "x"}, "value": {"type": "number", "value": 1}}]
+                }
+            ]
+        }
+        result = analyzer.analyze(ast, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
+        assert result.get("ok", False)
+        assert "byLine" in result
+        assert "totals" in result
 
 
 class TestCommonAlgorithms:
