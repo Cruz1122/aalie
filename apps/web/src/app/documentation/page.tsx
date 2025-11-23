@@ -35,13 +35,6 @@ export default function DocumentationPage() {
             <span className="material-symbols-outlined mr-2">terminal</span> Ver Documentación
             Técnica
           </NavigationLink>
-          <div className="mt-4 pt-4 border-t border-white/10 w-full">
-            <p className="text-xs text-dark-text mb-2">Documentación completa:</p>
-            <div className="flex flex-col gap-1 text-xs">
-              <span className="text-cyan-300">docs/api/</span>
-              <span className="text-cyan-300">docs/app/</span>
-            </div>
-          </div>
         </div>
 
         {/* Card Documentación de Usuario */}
