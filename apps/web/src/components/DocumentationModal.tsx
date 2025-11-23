@@ -22,6 +22,9 @@ import {
   AnalyzerBreakpoint,
   AnalyzerModalType,
   AnalyzerComponentInfo,
+  AnalysisMode,
+  VisitorInfo,
+  AlgorithmCategory,
   GrammarContent,
   GrammarFeature,
   GrammarSyntaxSection,
@@ -833,16 +836,40 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
 
       <p className="text-sm text-slate-300 text-center mb-8">{section.description}</p>
 
-      {/* Interfaz 3 columnas */}
-      <section className="mb-8">
-        <h5 className="text-lg font-semibold text-cyan-300 text-center mb-6">
-          {content?.interface?.title}
-        </h5>
+      {/* Interfaz - puede ser 3 columnas o descripción simple */}
+      {content?.interface && (
+        <section className="mb-8">
+          <h5 className="text-lg font-semibold text-cyan-300 text-center mb-6">
+            {content.interface.title}
+          </h5>
 
-        <div className="p-4 rounded-lg bg-cyan-800/20 border border-cyan-500/20 mb-6">
-          <p className="text-xs text-cyan-300 mb-4 text-center">
-            {content?.interface?.layout?.description}
-          </p>
+          {content.interface.description && (
+            <div className="p-4 rounded-lg bg-cyan-800/20 border border-cyan-500/20 mb-6">
+              <p className="text-xs text-cyan-300 text-center">
+                {content.interface.description}
+              </p>
+            </div>
+          )}
+          
+          {content.interface.features && content.interface.features.length > 0 && !content.interface.layout && (
+            <div className="p-4 rounded-lg bg-cyan-800/20 border border-cyan-500/20 mb-6">
+              <p className="text-xs font-medium text-cyan-300 mb-2">Características:</p>
+              <ul className="space-y-1">
+                {content.interface.features.map((feature: string) => (
+                  <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
+                    <ArrowRight size={8} className="text-cyan-400 mt-0.5 flex-shrink-0" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {content.interface.layout && (
+            <div className="p-4 rounded-lg bg-cyan-800/20 border border-cyan-500/20 mb-6">
+              <p className="text-xs text-cyan-300 mb-4 text-center">
+                {content.interface.layout.description}
+              </p>
 
           <div className="grid md:grid-cols-3 gap-4">
             {content?.interface?.layout?.columns?.map((column: AnalyzerColumn) => (
@@ -850,38 +877,44 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
                 <h6 className="text-sm font-semibold text-cyan-200 mb-2">{column.name}</h6>
                 <p className="text-xs text-cyan-300 mb-2">{column.purpose}</p>
                 <p className="text-xs text-slate-400 mb-2">Componente: {column.component}</p>
-                <div>
-                  <p className="text-xs font-medium text-slate-300 mb-1">Características:</p>
-                  <ul className="space-y-1">
-                    {column.features?.map((feature: string) => (
-                      <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
-                        <ArrowRight size={8} className="text-cyan-400 mt-0.5 flex-shrink-0" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {column.features && column.features.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-slate-300 mb-1">Características:</p>
+                    <ul className="space-y-1">
+                      {column.features.map((feature: string) => (
+                        <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
+                          <ArrowRight size={8} className="text-cyan-400 mt-0.5 flex-shrink-0" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </div>
+          )}
 
-        {/* Responsiveness */}
-        <div className="p-4 rounded-lg bg-blue-800/20 border border-blue-500/20">
-          <h6 className="text-sm font-semibold text-blue-300 text-center mb-4">
-            {content?.interface?.responsiveness?.title}
-          </h6>
-          <div className="grid gap-3">
-            {content?.interface?.responsiveness?.breakpoints?.map((bp: AnalyzerBreakpoint) => (
-              <div key={bp.size} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                <p className="text-xs font-semibold text-blue-200">{bp.size}</p>
-                <p className="text-xs text-blue-300 mb-1">{bp.layout}</p>
-                <p className="text-xs text-slate-400">{bp.description}</p>
+          {/* Responsiveness */}
+          {content.interface.responsiveness && (
+            <div className="p-4 rounded-lg bg-blue-800/20 border border-blue-500/20">
+              <h6 className="text-sm font-semibold text-blue-300 text-center mb-4">
+                {content.interface.responsiveness.title}
+              </h6>
+              <div className="grid gap-3">
+                {content.interface.responsiveness.breakpoints?.map((bp: AnalyzerBreakpoint) => (
+                  <div key={bp.size} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+                    <p className="text-xs font-semibold text-blue-200">{bp.size}</p>
+                    <p className="text-xs text-blue-300 mb-1">{bp.layout}</p>
+                    <p className="text-xs text-slate-400">{bp.description}</p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Modal de procedimiento (documentación) */}
       <section className="mb-8">
@@ -918,31 +951,283 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
         </div>
       </section>
 
-      {/* Componentes */}
-      <section className="p-4 rounded-lg bg-green-800/20 border border-green-500/20">
-        <h5 className="text-lg font-semibold text-green-300 text-center mb-4">
-          {content?.components?.title}
-        </h5>
-        <div className="grid gap-4">
-          {content?.components?.list?.map((comp: AnalyzerComponentInfo) => (
-            <div key={comp.name} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-              <div className="mb-2">
-                <h6 className="text-sm font-semibold text-green-200">{comp.name}</h6>
-                <p className="text-xs text-slate-400">{comp.file}</p>
+      {/* Modos de Análisis */}
+      {content?.analysisModes && (
+        <section className="mb-8">
+          <h5 className="text-lg font-semibold text-yellow-300 text-center mb-6">
+            {content.analysisModes.title}
+          </h5>
+          <div className="grid md:grid-cols-3 gap-4">
+            {content.analysisModes.modes.map((mode: AnalysisMode) => (
+              <div key={mode.name} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+                <h6 className="text-sm font-semibold text-yellow-200 mb-2">{mode.name}</h6>
+                <p className="text-xs text-yellow-300 mb-2">{mode.description}</p>
+                <div>
+                  <p className="text-xs font-medium text-slate-300 mb-1">Características:</p>
+                  <ul className="space-y-1">
+                    {mode.features.map((feature: string) => (
+                      <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
+                        <ArrowRight size={8} className="text-yellow-400 mt-0.5 flex-shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
-              <p className="text-xs text-green-300 mb-2">{comp.purpose}</p>
-              <div>
-                <p className="text-xs font-medium text-slate-300 mb-1">Props:</p>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Implementación Técnica */}
+      {content?.implementation && (
+        <section className="mb-8">
+          <h5 className="text-lg font-semibold text-orange-300 text-center mb-6">
+            {content.implementation.title}
+          </h5>
+          <div className="p-4 rounded-lg bg-orange-800/20 border border-orange-500/20">
+            <p className="text-xs text-orange-300 mb-4 text-center">
+              {content.implementation.description}
+            </p>
+            <div>
+              <p className="text-xs font-medium text-slate-300 mb-2">Características:</p>
+              <ul className="space-y-1">
+                {content.implementation.features.map((feature: string) => (
+                  <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
+                    <ArrowRight size={8} className="text-orange-400 mt-0.5 flex-shrink-0" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Visitors Especializados */}
+      {content?.visitors && (
+        <section className="mb-8">
+          <h5 className="text-lg font-semibold text-indigo-300 text-center mb-6">
+            {content.visitors.title}
+          </h5>
+          <div className="grid md:grid-cols-2 gap-4">
+            {content.visitors.list.map((visitor: VisitorInfo) => (
+              <div key={visitor.name} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+                <h6 className="text-sm font-semibold text-indigo-200 mb-2">{visitor.name}</h6>
+                <p className="text-xs text-indigo-300 mb-2">{visitor.description}</p>
+                <div>
+                  <p className="text-xs font-medium text-slate-300 mb-1">Características:</p>
+                  <ul className="space-y-1">
+                    {visitor.features.map((feature: string) => (
+                      <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
+                        <ArrowRight size={8} className="text-indigo-400 mt-0.5 flex-shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Algoritmos Soportados */}
+      {content?.algorithms && (
+        <section className="mb-8">
+          <h5 className="text-lg font-semibold text-teal-300 text-center mb-6">
+            {content.algorithms.title}
+          </h5>
+          <div className="space-y-4">
+            {content.algorithms.categories.map((category: AlgorithmCategory) => (
+              <div key={category.name} className="p-4 rounded-lg bg-teal-800/20 border border-teal-500/20">
+                <h6 className="text-sm font-semibold text-teal-200 mb-3">{category.name}</h6>
                 <ul className="space-y-1">
-                  {comp.props?.map((prop: string) => (
-                    <li key={prop} className="text-xs text-slate-400 ml-2">• {prop}</li>
+                  {category.examples.map((example: string) => (
+                    <li key={example} className="text-xs text-slate-400 flex items-start gap-1">
+                      <ArrowRight size={8} className="text-teal-400 mt-0.5 flex-shrink-0" />
+                      <span>{example}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* API y Endpoints */}
+      {content?.api && (
+        <section className="mb-8">
+          <h5 className="text-lg font-semibold text-pink-300 text-center mb-6">
+            {content.api.title}
+          </h5>
+          <div className="p-4 rounded-lg bg-pink-800/20 border border-pink-500/20">
+            <div className="mb-4">
+              <h6 className="text-sm font-semibold text-pink-200 mb-2">{content.api.endpoint.name}</h6>
+              <p className="text-xs text-pink-300 mb-3">{content.api.endpoint.description}</p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+                <p className="text-xs font-medium text-slate-300 mb-2">Request:</p>
+                <pre className="text-xs text-slate-400 overflow-x-auto">
+                  {JSON.stringify(content.api.endpoint.request, null, 2)}
+                </pre>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+                <p className="text-xs font-medium text-slate-300 mb-2">Response:</p>
+                <pre className="text-xs text-slate-400 overflow-x-auto">
+                  {JSON.stringify(content.api.endpoint.response, null, 2)}
+                </pre>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Componentes */}
+      {content?.components && (
+        <section className="p-4 rounded-lg bg-green-800/20 border border-green-500/20 mb-8">
+          <h5 className="text-lg font-semibold text-green-300 text-center mb-4">
+            {content.components.title}
+          </h5>
+          <div className="grid gap-4">
+            {content.components.list?.map((comp: AnalyzerComponentInfo) => (
+              <div key={comp.name} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+                <div className="mb-2">
+                  <h6 className="text-sm font-semibold text-green-200">{comp.name}</h6>
+                  <p className="text-xs text-slate-400">{comp.file}</p>
+                </div>
+                <p className="text-xs text-green-300 mb-2">{comp.purpose}</p>
+                <div>
+                  <p className="text-xs font-medium text-slate-300 mb-1">Props:</p>
+                  <ul className="space-y-1">
+                    {comp.props?.map((prop: string) => (
+                      <li key={prop} className="text-xs text-slate-400 ml-2">• {prop}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Teorema Maestro (solo para analizador recursivo) */}
+      {content?.masterTheorem && (
+        <section className="mb-8">
+          <h5 className="text-lg font-semibold text-emerald-300 text-center mb-6">
+            {content.masterTheorem.title}
+          </h5>
+          <div className="p-4 rounded-lg bg-emerald-800/20 border border-emerald-500/20 mb-4">
+            <div className="text-xs text-emerald-300 mb-4 text-center space-y-2">
+              <p>El Teorema Maestro resuelve recurrencias de la forma</p>
+              <div className="flex justify-center">
+                <Formula latex="T(n) = a \\cdot T(n/b) + f(n)" display />
+              </div>
+              <p>donde <Formula latex="a \\geq 1" />, <Formula latex="b > 1" />, y <Formula latex="f(n)" /> es una función asintóticamente positiva.</p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-3">
+              {content.masterTheorem.cases.map((theoremCase) => (
+                <div key={theoremCase.case} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+                  <h6 className="text-sm font-semibold text-emerald-200 mb-2">Caso {theoremCase.case}</h6>
+                  <div className="text-xs text-emerald-300 mb-2 font-medium flex justify-center">
+                    <Formula latex={theoremCase.condition} />
+                  </div>
+                  <div className="text-xs text-slate-300 mb-2 flex justify-center">
+                    <Formula latex={theoremCase.result} />
+                  </div>
+                  <p className="text-xs text-slate-400 mb-2">{theoremCase.description}</p>
+                  <div className="text-xs text-slate-500 flex justify-center">
+                    <Formula latex={theoremCase.example} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Extracción de Recurrencias (solo para analizador recursivo) */}
+      {content?.recurrenceExtraction && (
+        <section className="mb-8">
+          <h5 className="text-lg font-semibold text-amber-300 text-center mb-6">
+            {content.recurrenceExtraction.title}
+          </h5>
+          <div className="p-4 rounded-lg bg-amber-800/20 border border-amber-500/20">
+            <p className="text-xs text-amber-300 mb-4 text-center">
+              {content.recurrenceExtraction.description}
+            </p>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs font-medium text-slate-300 mb-2">Proceso:</p>
+                <ol className="space-y-1">
+                  {content.recurrenceExtraction.process.map((step: string, idx: number) => (
+                    <li key={idx} className="text-xs text-slate-400 flex items-start gap-1">
+                      <span className="text-amber-400">{idx + 1}.</span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-slate-300 mb-2">Requisitos:</p>
+                <ul className="space-y-1">
+                  {content.recurrenceExtraction.requirements.map((req: string, idx: number) => (
+                    <li key={idx} className="text-xs text-slate-400 flex items-start gap-1">
+                      <ArrowRight size={8} className="text-amber-400 mt-0.5 flex-shrink-0" />
+                      <span>{req}</span>
+                    </li>
                   ))}
                 </ul>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
+
+      {/* Visualizaciones (solo para analizador recursivo) */}
+      {content?.visualization && (
+        <section className="mb-8">
+          <h5 className="text-lg font-semibold text-violet-300 text-center mb-6">
+            {content.visualization.title}
+          </h5>
+          <div className="grid md:grid-cols-2 gap-4">
+            {content.visualization.components.map((component) => (
+              <div key={component.name} className="p-4 rounded-lg bg-violet-800/20 border border-violet-500/20">
+                <h6 className="text-sm font-semibold text-violet-200 mb-2">{component.name}</h6>
+                <p className="text-xs text-violet-300 mb-3">{component.description}</p>
+                {component.features && component.features.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-slate-300 mb-1">Características:</p>
+                    <ul className="space-y-1">
+                      {component.features.map((feature: string) => (
+                        <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
+                          <ArrowRight size={8} className="text-violet-400 mt-0.5 flex-shrink-0" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {component.sections && component.sections.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs font-medium text-slate-300 mb-1">Secciones:</p>
+                    <ul className="space-y-1">
+                      {component.sections.map((section: string) => (
+                        <li key={section} className="text-xs text-slate-400 flex items-start gap-1">
+                          <ArrowRight size={8} className="text-violet-400 mt-0.5 flex-shrink-0" />
+                          <span>{section}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </article>
   );
 }

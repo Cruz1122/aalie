@@ -5,13 +5,23 @@ import React, { useEffect, useMemo, useCallback, useState, useRef } from "react"
 
 import Formula from "./Formula";
 
-// Helper para renderizar variables con KaTeX (memoizado)
+/**
+ * Helper para renderizar variables con KaTeX (memoizado).
+ * @param variable - Variable o expresión LaTeX a renderizar
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const RenderVariable = React.memo(({ variable }: { variable: string }) => {
   return <Formula latex={variable} />
 });
 RenderVariable.displayName = 'RenderVariable';
 
-// Componente de lista virtualizada simple para pasos del procedimiento
+/**
+ * Componente de lista virtualizada simple para pasos del procedimiento.
+ * Optimiza el renderizado de listas largas de pasos usando virtualización.
+ * 
+ * @param steps - Array de pasos del procedimiento (expresiones LaTeX)
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const VirtualizedStepsList = React.memo(({ steps }: { steps: string[] }) => {
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: Math.min(10, steps.length) });
   const containerRef = useRef<HTMLDivElement>(null);
@@ -60,13 +70,39 @@ const VirtualizedStepsList = React.memo(({ steps }: { steps: string[] }) => {
 });
 VirtualizedStepsList.displayName = 'VirtualizedStepsList';
 
+/**
+ * Propiedades del componente ProcedureModal.
+ */
 interface ProcedureModalProps {
+  /** Indica si el modal está abierto */
   open: boolean;
+  /** Callback para cerrar el modal */
   onClose: () => void;
+  /** Número de línea seleccionada (null para procedimiento completo) */
   selectedLine?: number | null;
+  /** Datos del análisis a mostrar */
   analysisData?: AnalyzeOpenResponse;
 }
 
+/**
+ * Modal para mostrar el procedimiento de análisis.
+ * Puede mostrar el procedimiento de una línea específica o el procedimiento completo.
+ * Soporta caso promedio con virtualización para listas largas de pasos.
+ * 
+ * @param props - Propiedades del modal
+ * @returns Modal con procedimiento o null si está cerrado
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * <ProcedureModal
+ *   open={isOpen}
+ *   onClose={() => setIsOpen(false)}
+ *   selectedLine={5}
+ *   analysisData={analysisData}
+ * />
+ * ```
+ */
 export default function ProcedureModal({
   open,
   onClose,
@@ -75,16 +111,27 @@ export default function ProcedureModal({
 }: Readonly<ProcedureModalProps>) {
   const [scrollDebounce, setScrollDebounce] = useState<NodeJS.Timeout | null>(null);
 
+  // Detectar si es caso promedio
+  const isAvgCase = useMemo(() => {
+    return analysisData?.totals?.avg_model_info !== undefined;
+  }, [analysisData?.totals?.avg_model_info]);
+
   // Memoizar el título del modal
   const modalTitle = useMemo(() => {
     const isLineProcedure = selectedLine !== null && selectedLine !== undefined;
+    const caseType = isAvgCase ? " (Caso Promedio)" : "";
     return isLineProcedure 
-      ? `Procedimiento - Línea ${selectedLine}`
-      : "Procedimiento Completo";
-  }, [selectedLine]);
+      ? `Procedimiento - Línea ${selectedLine}${caseType}`
+      : `Procedimiento Completo${caseType}`;
+  }, [selectedLine, isAvgCase]);
 
 
-  // Función para extraer el patrón de un término (n+1, n, 1, etc.)
+  /**
+   * Función para extraer el patrón de un término (n+1, n, 1, etc.).
+   * @param count - Expresión de conteo a analizar
+   * @returns Patrón normalizado
+   * @author Juan Camilo Cruz Parra (@Cruz1122)
+   */
   const extractPattern = useCallback((count: string): string => {
     // Normalizar espacios y paréntesis
     const normalized = count.replaceAll(/\s+/g, '').replaceAll('(', '').replaceAll(')', '');
@@ -253,6 +300,104 @@ export default function ProcedureModal({
   const derivationSteps = useMemo(() => {
     if (!analysisData?.byLine) return [];
     
+    // Para caso promedio, usar pasos específicos
+    if (isAvgCase) {
+      const totals = analysisData.totals as {
+        avg_model_info?: { mode: string; note: string };
+        hypotheses?: string[];
+        A_of_n?: string;
+        T_open?: string;
+      } | undefined;
+      
+      const steps: Array<{ title: string; equation: string; description: string }> = [];
+      
+      // Paso 1: Definición de caso promedio
+      steps.push({
+        title: "Definición de caso promedio",
+        equation: "A(n) = \\sum_{I \\in I_n} T(I) \\cdot p(I)",
+        description: "Costo promedio como esperanza sobre todas las instancias"
+      });
+      
+      // Paso 2: Modelo uniforme (si aplica)
+      if (totals?.avg_model_info?.mode === "uniform") {
+        steps.push({
+          title: "Modelo uniforme",
+          equation: "A(n) = \\frac{1}{|I_n|} \\sum_{I \\in I_n} T(I)",
+          description: "Distribución uniforme sobre todas las instancias"
+        });
+      }
+      
+      // Paso 3: Linealidad de la esperanza
+      steps.push({
+        title: "Linealidad de la esperanza",
+        equation: "A(n) = \\sum_{\\ell} C_{\\ell} \\cdot E[N_{\\ell}]",
+        description: "Descomposición línea a línea usando esperanzas"
+      });
+      
+      // Paso 4: Ecuación con E[N_ℓ]
+      const step4 = analysisData.byLine
+        .map(line => {
+          const count = line.expectedRuns || line.count;
+          return `${line.ck} \\cdot E[N_{${line.line}}] = ${line.ck} \\cdot (${count})`;
+        })
+        .join(' + ');
+      steps.push({
+        title: "Cálculo de E[N_ℓ] por línea",
+        equation: `A(n) = ${step4}`,
+        description: "Esperanza de ejecuciones para cada línea"
+      });
+      
+      // Paso 5: Simplificación
+      const step5 = analysisData.byLine
+        .map(line => `${line.ck} \\cdot (${line.count})`)
+        .join(' + ');
+      steps.push({
+        title: "Simplificación",
+        equation: `A(n) = ${step5}`,
+        description: "Expresión simplificada de A(n)"
+      });
+      
+      // Paso 6: Forma polinómica
+      const tPoly = analysisData.totals?.T_polynomial;
+      if (tPoly && typeof tPoly === 'string') {
+        steps.push({
+          title: "Forma polinómica",
+          equation: `A(n) = ${tPoly}`,
+          description: "Forma polinómica canónica"
+        });
+      }
+      
+      // Paso 7: Notación asintótica
+      const bigO = (analysisData.totals as any)?.big_o || "O(1)";
+      const bigOmega = (analysisData.totals as any)?.big_omega || "\\Omega(1)";
+      const bigTheta = (analysisData.totals as any)?.big_theta || "\\Theta(1)";
+      steps.push({
+        title: "Notación asintótica",
+        equation: `${bigO}, ${bigOmega}, ${bigTheta}`,
+        description: "Clases de complejidad temporal para caso promedio"
+      });
+      
+      // Paso 8: Modelo e hipótesis
+      if (totals?.avg_model_info) {
+        steps.push({
+          title: "Modelo usado",
+          equation: `\\text{Modelo: ${totals.avg_model_info.note}}`,
+          description: "Modelo probabilístico utilizado"
+        });
+      }
+      
+      if (totals?.hypotheses && totals.hypotheses.length > 0) {
+        steps.push({
+          title: "Hipótesis",
+          equation: totals.hypotheses.map(h => `\\text{${h}}`).join(', '),
+          description: "Supuestos del análisis"
+        });
+      }
+      
+      return steps;
+    }
+    
+    // Para worst/best case, usar pasos normales
     // Paso 1: Ecuación completa con count_raw (o count si count_raw no está disponible)
     const step1 = analysisData.byLine
       .map(line => `${line.ck} \\cdot (${line.count_raw ?? line.count})`)
@@ -270,8 +415,16 @@ export default function ProcedureModal({
     const tPoly = analysisData.totals?.T_polynomial;
     const step4 = createFinalSimplifiedForm(step3, typeof tPoly === 'string' ? tPoly : undefined);
     
-    // Paso 5: Notación asintótica a partir de la forma final
-    const bigO = calculateBigOFromExpression(step4);
+    // Paso 5: Notación asintótica desde el backend (calculada con SymPy)
+    const totals = analysisData?.totals as { 
+      big_o?: string;
+      big_omega?: string;
+      big_theta?: string;
+    } | undefined;
+    
+    const bigO = totals?.big_o || calculateBigOFromExpression(step4);
+    const bigOmega = totals?.big_omega || "\\Omega(1)";
+    const bigTheta = totals?.big_theta || "\\Theta(1)";
     
     // Crear array de pasos con sus ecuaciones
     const allSteps = [
@@ -279,7 +432,7 @@ export default function ProcedureModal({
       { title: "Simplificación de sumatorias", equation: step2, description: "Se resuelven las sumatorias y se simplifican los términos" },
       { title: "Agrupación de términos similares", equation: step3, description: "Se agrupan los términos por patrones similares (n+1, n, constantes)" },
       { title: "Forma final en términos de n", equation: step4, description: "Forma polinómica canónica en términos de n (a, b, c)" },
-      { title: "Notación asintótica", equation: bigO, description: "Clase de complejidad temporal Big-O derivada de la forma final" }
+      { title: "Notación asintótica", equation: `${bigO}, ${bigOmega}, ${bigTheta}`, description: "Clases de complejidad temporal (Big-O, Big-Omega, Big-Theta) calculadas con SymPy" }
     ];
     
     // Filtrar pasos que son diferentes al anterior
@@ -291,7 +444,7 @@ export default function ProcedureModal({
     });
     
     return filteredSteps;
-  }, [analysisData, groupSimilarTerms, createFinalSimplifiedForm, calculateBigOFromExpression]);
+  }, [analysisData, groupSimilarTerms, createFinalSimplifiedForm, calculateBigOFromExpression, isAvgCase]);
 
   // Memoizar los símbolos
   const symbols = useMemo(() => {
@@ -421,14 +574,19 @@ export default function ProcedureModal({
                         </p>
                       </div>
 
-                      {/* Número de ejecuciones */}
+                      {/* Número de ejecuciones (o E[#] para promedio) */}
                       <div className="mb-4">
-                        <span className="text-sm font-medium text-slate-400">Número de ejecuciones:</span>
+                        <span className="text-sm font-medium text-slate-400">
+                          {isAvgCase ? "Esperanza de ejecuciones:" : "Número de ejecuciones:"}
+                        </span>
                         <div className="mt-2 p-3 rounded bg-slate-900/50 border border-amber-500/20 overflow-x-auto scrollbar-custom">
-                          <Formula latex={lineData.count} display />
+                          <Formula latex={lineData.expectedRuns || lineData.count} display />
                         </div>
                         <p className="text-slate-300 mt-1 text-xs">
-                          Cuántas veces se ejecuta esta línea
+                          {isAvgCase 
+                            ? "Esperanza del número de veces que se ejecuta esta línea (E[N_ℓ])"
+                            : "Cuántas veces se ejecuta esta línea"
+                          }
                         </p>
                       </div>
 
@@ -444,12 +602,17 @@ export default function ProcedureModal({
 
                       {/* Fórmula de costo total */}
                       <div className="mb-4">
-                        <span className="text-sm font-medium text-slate-400">Costo total de la línea:</span>
+                        <span className="text-sm font-medium text-slate-400">
+                          {isAvgCase ? "Costo esperado de la línea:" : "Costo total de la línea:"}
+                        </span>
                         <div className="mt-2 p-3 rounded bg-slate-900/50 border border-purple-500/20 overflow-x-auto scrollbar-custom">
-                          <Formula latex={`${lineData.ck} \\cdot ${lineData.count}`} display />
+                          <Formula latex={`${lineData.ck} \\cdot ${lineData.expectedRuns || lineData.count}`} display />
                         </div>
                         <p className="text-slate-300 mt-1 text-xs">
-                          Producto del costo elemental por el número de ejecuciones
+                          {isAvgCase
+                            ? "Producto del costo elemental por la esperanza de ejecuciones (C_ℓ · E[N_ℓ])"
+                            : "Producto del costo elemental por el número de ejecuciones"
+                          }
                         </p>
                       </div>
                     </div>
@@ -460,10 +623,17 @@ export default function ProcedureModal({
                       
                       {/* Ecuación principal */}
                       <div className="mb-4">
-                        <span className="text-sm font-medium text-slate-400">Ecuación de eficiencia completa:</span>
+                        <span className="text-sm font-medium text-slate-400">
+                          {isAvgCase ? "Ecuación de eficiencia promedio A(n):" : "Ecuación de eficiencia completa:"}
+                        </span>
                         <div className="mt-2 p-3 rounded bg-slate-900/50 border border-white/10 overflow-x-auto scrollbar-custom">
-                          <Formula latex={analysisData.totals.T_open} display />
+                          <Formula latex={analysisData.totals.A_of_n || analysisData.totals.T_open} display />
                         </div>
+                        {isAvgCase && analysisData.totals.avg_model_info && (
+                          <p className="text-slate-300 mt-1 text-xs">
+                            Modelo: {analysisData.totals.avg_model_info.note}
+                          </p>
+                        )}
                       </div>
 
                       {/* Pasos del procedimiento específico de la línea */}
@@ -528,16 +698,25 @@ export default function ProcedureModal({
                 <div className="space-y-4">
                   {/* Ecuación principal */}
                   <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                    <h4 className="font-semibold text-white mb-3">Ecuación de Eficiencia</h4>
+                    <h4 className="font-semibold text-white mb-3">
+                      {isAvgCase ? "Ecuación de Eficiencia Promedio A(n)" : "Ecuación de Eficiencia"}
+                    </h4>
                     <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
-                      <Formula latex={analysisData.totals.T_open} display />
+                      <Formula latex={analysisData.totals.A_of_n || analysisData.totals.T_open} display />
                     </div>
+                    {isAvgCase && analysisData.totals.avg_model_info && (
+                      <p className="text-slate-300 mt-2 text-sm">
+                        Modelo: {analysisData.totals.avg_model_info.note}
+                      </p>
+                    )}
                   </div>
 
-                  {/* Forma polinómica T(n) si está disponible */}
+                  {/* Forma polinómica T(n) o A(n) si está disponible */}
                   {analysisData.totals.T_polynomial && (
                     <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                      <h4 className="font-semibold text-white mb-3">Forma polinómica T(n)</h4>
+                      <h4 className="font-semibold text-white mb-3">
+                        {isAvgCase ? "Forma polinómica A(n)" : "Forma polinómica T(n)"}
+                      </h4>
                       <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
                         <Formula latex={analysisData.totals.T_polynomial as unknown as string} display />
                       </div>
@@ -559,7 +738,9 @@ export default function ProcedureModal({
 
                   {/* Pasos de derivación de la ecuación */}
                   <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                    <h4 className="font-semibold text-white mb-3">Derivación de la Ecuación T(n)</h4>
+                    <h4 className="font-semibold text-white mb-3">
+                      {isAvgCase ? "Derivación de la Ecuación A(n)" : "Derivación de la Ecuación T(n)"}
+                    </h4>
                     <div className="space-y-4">
                       {derivationSteps.map((step, index) => {
                         const colors = [

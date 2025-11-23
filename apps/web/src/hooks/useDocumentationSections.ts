@@ -525,7 +525,7 @@ variable ⟵ expresion;`,
         id: "analyzer-interface",
         title: "Interfaz de Análisis de Complejidad",
         description:
-          "Analizador visual de complejidad algorítmica con interfaz de 3 columnas que muestra código numerado, tabla de costos por línea y visualizaciones matemáticas. Incluye modal de procedimiento detallado para Best, Average y Worst case con pasos en LaTeX.",
+          "Analizador visual de complejidad algorítmica con interfaz de 3 columnas que muestra código numerado, tabla de costos por línea y visualizaciones matemáticas. Incluye modal de procedimiento detallado para Best, Average y Worst case con pasos en LaTeX. Soporte completo para análisis iterativo con modelos probabilísticos.",
         content: {
           type: "analyzer",
           interface: {
@@ -552,6 +552,8 @@ variable ⟵ expresion;`,
                     "Costo unitario (C_k) por línea",
                     "Número de ejecuciones estimado",
                     "Costo total calculado",
+                    "Selector de casos (Best/Avg/Worst)",
+                    "ExpectedRuns para caso promedio",
                     "Botones individuales para ver procedimiento",
                     "Código truncado para mejor visualización",
                   ],
@@ -564,7 +566,9 @@ variable ⟵ expresion;`,
                     "Renderizado LaTeX de ecuaciones complejas",
                     "Scroll horizontal para ecuaciones largas",
                     "Fórmulas T(n) para Best/Avg/Worst case",
+                    "Fórmula A(n) para caso promedio",
                     "Notación Big O clara y legible",
+                    "Tarjetas de resumen por caso",
                   ],
                 },
               ],
@@ -590,6 +594,42 @@ variable ⟵ expresion;`,
               ],
             },
           },
+          analysisModes: {
+            title: "Modos de Análisis",
+            modes: [
+              {
+                name: "Best Case",
+                description: "Analiza el mejor caso del algoritmo",
+                features: [
+                  "Selecciona ramas de IF con menos líneas",
+                  "Considera mínimo número de iteraciones",
+                  "Genera cotas inferiores de complejidad",
+                  "Complejidad mínima esperada",
+                ],
+              },
+              {
+                name: "Worst Case",
+                description: "Analiza el peor caso del algoritmo",
+                features: [
+                  "Selecciona ramas de IF con más líneas",
+                  "Considera máximo número de iteraciones",
+                  "Genera cotas superiores de complejidad",
+                  "Complejidad máxima esperada",
+                ],
+              },
+              {
+                name: "Average Case",
+                description: "Analiza el caso promedio del algoritmo",
+                features: [
+                  "Utiliza modelos probabilísticos (uniform, symbolic)",
+                  "Aplica esperanzas matemáticas (expectedRuns)",
+                  "Genera complejidad promedio esperada",
+                  "Modelo uniforme: distribución uniforme de probabilidades",
+                  "Modelo simbólico: probabilidades expresadas simbólicamente",
+                ],
+              },
+            ],
+          },
           modal: {
             title: "Modal de Procedimiento Detallado",
             purpose: "Análisis paso a paso del cálculo de complejidad",
@@ -599,12 +639,13 @@ variable ⟵ expresion;`,
               "Scroll horizontal para ecuaciones largas",
               "Navegación por teclado (Escape para cerrar)",
               "Overlay semitransparente con backdrop blur",
+              "Información de modelo probabilístico para avg case",
             ],
             types: [
               {
                 name: "Procedimiento General",
                 description: "Análisis completo del algoritmo",
-                content: "Pasos generales de análisis de complejidad",
+                content: "Pasos generales de análisis de complejidad con T(n) o A(n)",
               },
               {
                 name: "Procedimiento por Línea",
@@ -646,6 +687,508 @@ variable ⟵ expresion;`,
             ],
           },
         }
+      },
+      {
+        id: "iterative-analyzer",
+        title: "Analizador Iterativo Unificado",
+        description:
+          "Sistema completo de análisis iterativo que soporta best/worst/average case con modelos probabilísticos. Analiza bucles FOR, WHILE, REPEAT, condicionales IF, y líneas simples con precisión matemática.",
+        content: {
+          type: "analyzer",
+          interface: {
+            title: "Diseño de 3 Columnas",
+            layout: {
+              description: "Distribución responsive optimizada para análisis completo",
+              columns: [
+                {
+                  name: "Código Numerado",
+                  purpose: "Visualización del pseudocódigo con números de línea",
+                  component: "CodePane",
+                  features: [
+                    "Numeración automática de líneas",
+                    "Fuente monoespaciada para legibilidad",
+                    "Alturas iguales con otras columnas",
+                    "Scroll vertical independiente",
+                  ],
+                },
+                {
+                  name: "Tabla de Costos",
+                  purpose: "Análisis de complejidad por línea de código",
+                  component: "CostsTable",
+                  features: [
+                    "Costo unitario (C_k) por línea",
+                    "Número de ejecuciones estimado",
+                    "Costo total calculado",
+                    "Selector de casos (Best/Avg/Worst)",
+                    "ExpectedRuns para caso promedio",
+                    "Botones individuales para ver procedimiento",
+                    "Código truncado para mejor visualización",
+                  ],
+                },
+                {
+                  name: "Visualizaciones",
+                  purpose: "Ecuaciones matemáticas y resultados finales",
+                  component: "Formula/FormulaBlock",
+                  features: [
+                    "Renderizado LaTeX de ecuaciones complejas",
+                    "Scroll horizontal para ecuaciones largas",
+                    "Fórmulas T(n) para Best/Avg/Worst case",
+                    "Fórmula A(n) para caso promedio",
+                    "Notación Big O clara y legible",
+                    "Tarjetas de resumen por caso",
+                  ],
+                },
+              ],
+            },
+            responsiveness: {
+              title: "Diseño Responsive",
+              breakpoints: [
+                {
+                  size: "lg (1024px+)",
+                  layout: "3 columnas iguales (4-4-4 grid)",
+                  description: "Vista completa en desktop",
+                },
+                {
+                  size: "xl (1280px+)",
+                  layout: "3-4-3 grid para mejor visibilidad de tabla",
+                  description: "Optimizado para tabla de costos",
+                },
+                {
+                  size: "md y menor",
+                  layout: "Columna única apilada verticalmente",
+                  description: "Vista móvil optimizada",
+                },
+              ],
+            },
+          },
+          analysisModes: {
+            title: "Modos de Análisis",
+            modes: [
+              {
+                name: "Best Case",
+                description: "Analiza el mejor caso del algoritmo",
+                features: [
+                  "Selecciona ramas de IF con menos líneas",
+                  "Considera mínimo número de iteraciones",
+                  "Genera cotas inferiores de complejidad",
+                  "Complejidad mínima esperada",
+                ],
+              },
+              {
+                name: "Worst Case",
+                description: "Analiza el peor caso del algoritmo",
+                features: [
+                  "Selecciona ramas de IF con más líneas",
+                  "Considera máximo número de iteraciones",
+                  "Genera cotas superiores de complejidad",
+                  "Complejidad máxima esperada",
+                ],
+              },
+              {
+                name: "Average Case",
+                description: "Analiza el caso promedio del algoritmo",
+                features: [
+                  "Utiliza modelos probabilísticos (uniform, symbolic)",
+                  "Aplica esperanzas matemáticas (expectedRuns)",
+                  "Genera complejidad promedio esperada",
+                  "Modelo uniforme: distribución uniforme de probabilidades",
+                  "Modelo simbólico: probabilidades expresadas simbólicamente",
+                ],
+              },
+            ],
+          },
+          modal: {
+            title: "Modal de Procedimiento Detallado",
+            purpose: "Análisis paso a paso del cálculo de complejidad",
+            features: [
+              "Soporte para Best, Average y Worst case",
+              "Pasos matemáticos detallados en LaTeX",
+              "Scroll horizontal para ecuaciones largas",
+              "Navegación por teclado (Escape para cerrar)",
+              "Overlay semitransparente con backdrop blur",
+              "Información de modelo probabilístico para avg case",
+            ],
+            types: [
+              {
+                name: "Procedimiento General",
+                description: "Análisis completo del algoritmo",
+                content: "Pasos generales de análisis de complejidad con T(n) o A(n)",
+              },
+              {
+                name: "Procedimiento por Línea",
+                description: "Análisis específico de una línea",
+                content: "Detalles del costo y ejecuciones de línea específica",
+              },
+            ],
+          },
+          implementation: {
+            title: "Implementación Técnica",
+            description: "Analizador iterativo unificado con soporte completo para múltiples modos de análisis",
+            features: [
+              "Herencia múltiple: BaseAnalyzer + todos los visitors",
+              "Dispatcher centralizado para todos los tipos de nodos AST",
+              "Análisis completo: FOR, IF, WHILE, REPEAT, ASSIGN, CALL, RETURN",
+              "Soporte para best/worst/average case",
+              "Modelos probabilísticos: uniform y symbolic",
+              "Cálculo de esperanzas matemáticas para caso promedio",
+              "Simplificación de sumatorias con SymPy",
+              "Generación de T_open y A_of_n",
+            ],
+          },
+          visitors: {
+            title: "Visitors Especializados",
+            list: [
+              {
+                name: "ForVisitor",
+                description: "Análisis de bucles FOR",
+                features: [
+                  "Cabecera del FOR: (b - a + 2) evaluaciones",
+                  "Multiplicador del cuerpo: Σ_{v=a}^{b} 1",
+                  "Soporte para límites variables",
+                  "Procedimiento explicativo",
+                ],
+              },
+              {
+                name: "IfVisitor",
+                description: "Análisis de condicionales IF",
+                features: [
+                  "Guardia: siempre se evalúa una vez",
+                  "Selección de rama dominante en worst case",
+                  "Selección de rama mínima en best case",
+                  "Aplicación de probabilidades en avg case",
+                  "Manejo completo de THEN/ELSE",
+                ],
+              },
+              {
+                name: "WhileRepeatVisitor",
+                description: "Análisis de bucles WHILE y REPEAT",
+                features: [
+                  "WHILE: condición (t_{while_L} + 1) veces, cuerpo por t_{while_L}",
+                  "REPEAT: cuerpo y condición (1 + t_{repeat_L}) veces",
+                  "Símbolos de iteración deterministas",
+                  "Análisis de condiciones complejas (AND/OR)",
+                ],
+              },
+              {
+                name: "SimpleVisitor",
+                description: "Análisis de líneas simples",
+                features: [
+                  "Asignaciones: descompone en accesos, aritmética, asignación",
+                  "Llamadas: costo de llamada + argumentos",
+                  "Returns: costo de expresión + return",
+                  "Expresiones: recursión sobre operadores binarios, unarios, indexación",
+                ],
+              },
+            ],
+          },
+          algorithms: {
+            title: "Algoritmos Soportados",
+            categories: [
+              {
+                name: "Algoritmos Comunes",
+                examples: [
+                  "Búsqueda lineal: Best O(1), Worst O(n), Avg O(n/2)",
+                  "Búsqueda binaria iterativa: Best O(1), Worst O(log n)",
+                  "Factorial iterativo: O(n)",
+                  "Suma de array: O(n)",
+                  "Máximo de array: O(n)",
+                ],
+              },
+              {
+                name: "Algoritmos Intermedios",
+                examples: [
+                  "Selection sort: O(n²)",
+                  "Bubble sort optimizado: Best O(n), Worst O(n²), Avg O(n²)",
+                  "Insertion sort: Best O(n), Worst O(n²), Avg O(n²)",
+                  "Multiplicación de matrices: O(n³)",
+                ],
+              },
+              {
+                name: "Algoritmos Complejos",
+                examples: [
+                  "Bucles anidados con límites variables",
+                  "WHILE con condiciones complejas (AND/OR)",
+                  "IF anidados dentro de FOR",
+                  "REPEAT-UNTIL con condiciones dependientes",
+                  "Arrays con indexación compleja (A[i+j], A[i*2])",
+                ],
+              },
+            ],
+          },
+          api: {
+            title: "API y Endpoints",
+            endpoint: {
+              name: "POST /analyze/open",
+              description: "Endpoint principal para análisis de complejidad",
+              request: {
+                source: "string - Código pseudocódigo",
+                mode: "worst | best | avg | all",
+                avgModel: {
+                  mode: "uniform | symbolic",
+                  predicates: "Record<string, string> - Predicados personalizados",
+                },
+              },
+              response: {
+                ok: "boolean",
+                byLine: "Array<LineCost> - Tabla de costos por línea",
+                totals: {
+                  T_open: "string - Ecuación de eficiencia",
+                  A_of_n: "string - Esperanza para caso promedio",
+                  avg_model_info: "Object - Información del modelo probabilístico",
+                  procedure: "Array<string> - Pasos del análisis",
+                  symbols: "Record<string, string> - Símbolos y descripciones",
+                },
+              },
+            },
+          },
+          components: {
+            title: "Componentes Principales",
+            list: [
+              {
+                name: "CodePane",
+                file: "components/CodePane.tsx",
+                purpose: "Mostrar código con numeración",
+                props: ["lines: string[]", "className?: string"],
+              },
+              {
+                name: "CostsTable", 
+                file: "components/CostsTable.tsx",
+                purpose: "Tabla interactiva de análisis de costos",
+                props: [
+                  "costs: CostAnalysis[]",
+                  "onProcedureClick: (line?: number) => void",
+                  "className?: string",
+                ],
+              },
+              {
+                name: "ProcedureModal",
+                file: "components/ProcedureModal.tsx", 
+                purpose: "Modal para mostrar análisis detallado",
+                props: [
+                  "isOpen: boolean",
+                  "onClose: () => void",
+                  "selectedLine?: number",
+                  "procedure: ProcedureData",
+                ],
+              },
+            ],
+          },
+        }
+      },
+      {
+        id: "recursive-analyzer",
+        title: "Analizador Recursivo y Teorema Maestro",
+        description:
+          "Sistema completo de análisis para algoritmos recursivos e híbridos que utiliza el Teorema Maestro para resolver recurrencias de la forma T(n) = a·T(n/b) + f(n). Incluye extracción automática de recurrencias, visualización del árbol de recursión, y procedimiento completo con pasos de prueba.",
+        content: {
+          type: "analyzer",
+          interface: {
+            title: "Análisis Recursivo",
+            description: "El sistema detecta automáticamente algoritmos recursivos e híbridos y aplica el Teorema Maestro para determinar su complejidad temporal.",
+            features: [
+              "Detección automática de llamadas recursivas",
+              "Extracción de parámetros a, b y f(n) de la recurrencia",
+              "Aplicación del Teorema Maestro con los 3 casos",
+              "Visualización del árbol de recursión",
+              "Procedimiento completo con pasos de prueba en LaTeX",
+              "Ecuación de eficiencia final T(n) = Θ(...)",
+            ],
+          },
+          masterTheorem: {
+            title: "Teorema Maestro",
+            description: "El Teorema Maestro resuelve recurrencias de la forma T(n) = a·T(n/b) + f(n) donde a ≥ 1, b > 1, y f(n) es una función asintóticamente positiva.",
+            cases: [
+              {
+                case: 1,
+                condition: "f(n) < n^{\\log_b a}",
+                result: "T(n) = \\Theta(n^{\\log_b a})",
+                description: "El trabajo no recursivo es menor que el trabajo en las hojas del árbol",
+                example: "\\text{Merge Sort: }T(n) = 2T(n/2) + n \\Rightarrow T(n) = \\Theta(n \\log n)",
+              },
+              {
+                case: 2,
+                condition: "f(n) = n^{\\log_b a}",
+                result: "T(n) = \\Theta(n^{\\log_b a} \\cdot \\log n)",
+                description: "El trabajo no recursivo es igual al trabajo en las hojas",
+                example: "\\text{Binary Search: }T(n) = T(n/2) + 1 \\Rightarrow T(n) = \\Theta(\\log n)",
+              },
+              {
+                case: 3,
+                condition: "f(n) > n^{\\log_b a} \\text{ y condición de regularidad}",
+                result: "T(n) = \\Theta(f(n))",
+                description: "El trabajo no recursivo domina sobre el trabajo en las hojas",
+                example: "\\text{QuickSort (peor caso): }T(n) = T(n-1) + n \\Rightarrow T(n) = \\Theta(n^2)",
+              },
+            ],
+          },
+          iterationMethod: {
+            title: "Método de Iteración (Unrolling)",
+            description: "El Método de Iteración resuelve recurrencias de la forma T(n) = T(g(n)) + f(n) mediante expansión simbólica, donde hay un solo llamado recursivo y el subproblema es decrease-and-conquer.",
+            criteria: [
+              "Un solo llamado recursivo (a = 1)",
+              "Subproblema decrease-and-conquer: n-1, n-k, n/c",
+              "No divide-and-conquer (no múltiples subproblemas)",
+              "Subproblema estrictamente más pequeño: g(n) < n",
+              "No combina múltiples resultados recursivos",
+            ],
+            steps: [
+              {
+                step: 1,
+                description: "Identificar la recurrencia T(n) = T(g(n)) + f(n)",
+              },
+              {
+                step: 2,
+                description: "Expandir una vez: T(n) = T(g(g(n))) + f(g(n)) + f(n)",
+              },
+              {
+                step: 3,
+                description: "Expandir k veces: T(n) = T(g^k(n)) + Σ f(g^i(n))",
+              },
+              {
+                step: 4,
+                description: "Determinar k del caso base: g^k(n) = n₀",
+              },
+              {
+                step: 5,
+                description: "Sustituir k en la sumatoria",
+              },
+              {
+                step: 6,
+                description: "Evaluar la sumatoria (aritmética, geométrica, constante)",
+              },
+              {
+                step: 7,
+                description: "Simplificar a notación Θ(·)",
+              },
+            ],
+            examples: [
+              {
+                name: "Factorial",
+                recurrence: "T(n) = T(n-1) + 1",
+                result: "T(n) = \\Theta(n)",
+              },
+              {
+                name: "Suma de arreglo",
+                recurrence: "T(n) = T(n-1) + n",
+                result: "T(n) = \\Theta(n^2)",
+              },
+            ],
+          },
+          recurrenceExtraction: {
+            title: "Extracción de Recurrencias",
+            description: "El sistema analiza el AST para identificar llamadas recursivas y extraer los parámetros de la recurrencia.",
+            process: [
+              "Identificación del procedimiento principal",
+              "Búsqueda de llamadas recursivas al mismo procedimiento",
+              "Análisis de los parámetros de las llamadas recursivas",
+              "Detección del tamaño del subproblema (n/b)",
+              "Conteo del número de llamadas recursivas (a)",
+              "Identificación del trabajo no recursivo f(n)",
+              "Normalización a la forma T(n) = a·T(n/b) + f(n)",
+            ],
+            requirements: [
+              "El algoritmo debe tener llamadas recursivas al mismo procedimiento",
+              "Los parámetros recursivos deben dividir el problema de forma constante (n/b)",
+              "El número de llamadas recursivas debe ser constante (a)",
+              "El trabajo no recursivo debe ser identificable",
+            ],
+          },
+          visualization: {
+            title: "Visualizaciones",
+            components: [
+              {
+                name: "Árbol de Recursión",
+                description: "Visualización interactiva del árbol de llamadas recursivas",
+                features: [
+                  "Nodos representan llamadas recursivas",
+                  "Etiquetas muestran el tamaño del problema en cada nivel",
+                  "Conexiones muestran la estructura de la recursión",
+                  "Colores indican diferentes niveles del árbol",
+                ],
+              },
+              {
+                name: "Procedimiento Completo",
+                description: "Modal detallado con todos los pasos del análisis",
+                features: [
+                  "Modal interactivo con scroll",
+                  "Renderizado LaTeX de ecuaciones",
+                  "Navegación por teclado (Escape para cerrar)",
+                  "Overlay semitransparente con backdrop blur",
+                ],
+                sections: [
+                  "Ecuación de recurrencia extraída",
+                  "Parámetros a, b, f(n) y n₀",
+                  "Cálculo de g(n) = n^(log_b a)",
+                  "Comparación de f(n) vs g(n)",
+                  "Aplicación del caso correspondiente",
+                  "Pasos de prueba en LaTeX",
+                  "Ecuación de eficiencia final T(n) = Θ(...)",
+                ],
+              },
+            ],
+          },
+          examples: {
+            title: "Algoritmos Soportados",
+            categories: [
+              {
+                name: "Divide and Conquer",
+                examples: [
+                  "Merge Sort: T(n) = 2T(n/2) + n → Θ(n log n)",
+                  "Binary Search: T(n) = T(n/2) + 1 → Θ(log n)",
+                  "Quick Sort (mejor caso): T(n) = 2T(n/2) + n → Θ(n log n)",
+                  "Strassen: T(n) = 7T(n/2) + n² → Θ(n^(log₂ 7))",
+                ],
+              },
+              {
+                name: "Recursión Simple",
+                examples: [
+                  "Factorial recursivo: T(n) = T(n-1) + 1 → Θ(n)",
+                  "Fibonacci recursivo: T(n) = T(n-1) + T(n-2) + 1 → Θ(2ⁿ)",
+                  "Torres de Hanoi: T(n) = 2T(n-1) + 1 → Θ(2ⁿ)",
+                ],
+              },
+            ],
+          },
+          api: {
+            title: "API y Endpoints",
+            endpoint: {
+              name: "POST /analyze/open",
+              description: "Endpoint principal que detecta y analiza algoritmos recursivos automáticamente",
+              request: {
+                source: "string - Código pseudocódigo",
+                mode: "worst | best | avg | all",
+                algorithm_kind: "string (opcional) - iterative | recursive | hybrid | unknown",
+              },
+              response: {
+                ok: "boolean",
+                worst: {
+                  totals: {
+                    recurrence: {
+                      form: "string - T(n) = a·T(n/b) + f(n)",
+                      a: "number - número de subproblemas",
+                      b: "number - factor de reducción",
+                      f: "string - trabajo no recursivo (LaTeX)",
+                      n0: "number - umbral base",
+                      applicable: "boolean",
+                    },
+                    master: {
+                      case: "1 | 2 | 3 - caso del Teorema Maestro",
+                      nlogba: "string - n^(log_b a) en LaTeX",
+                      comparison: "smaller | equal | larger",
+                      theta: "string - T(n) = Θ(...) en LaTeX",
+                      regularity: {
+                        checked: "boolean",
+                        note: "string",
+                      },
+                    },
+                    T_open: "string - Ecuación de eficiencia final",
+                    proof: "Array<{id: string, text: string}> - Pasos de prueba",
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     ],
     [],

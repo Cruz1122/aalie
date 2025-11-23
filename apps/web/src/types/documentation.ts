@@ -141,28 +141,102 @@ export interface AnalyzerModalType {
   content: string;
 }
 
+export interface AnalysisMode {
+  name: string;
+  description: string;
+  features: string[];
+}
+
+export interface AnalysisModes {
+  title: string;
+  modes: AnalysisMode[];
+}
+
+export interface VisitorInfo {
+  name: string;
+  description: string;
+  features: string[];
+}
+
+export interface AlgorithmCategory {
+  name: string;
+  examples: string[];
+}
+
 export interface AnalyzerContent {
   type: "analyzer";
   interface: {
     title: string;
-    layout: {
+    description?: string;
+    features?: string[];
+    layout?: {
       description: string;
       columns: AnalyzerColumn[];
     };
-    responsiveness: {
+    responsiveness?: {
       title: string;
       breakpoints: AnalyzerBreakpoint[];
     };
   };
-  modal: {
+  analysisModes?: AnalysisModes;
+  modal?: {
     title: string;
     purpose: string;
     features: string[];
     types: AnalyzerModalType[];
   };
-  components: {
+  components?: {
     title: string;
     list: AnalyzerComponentInfo[];
+  };
+  implementation?: {
+    title: string;
+    description: string;
+    features: string[];
+  };
+  visitors?: {
+    title: string;
+    list: VisitorInfo[];
+  };
+  algorithms?: {
+    title: string;
+    categories: AlgorithmCategory[];
+  };
+  api?: {
+    title: string;
+    endpoint: {
+      name: string;
+      description: string;
+      request: Record<string, unknown>;
+      response: Record<string, unknown>;
+    };
+  };
+  // Campos específicos para analizador recursivo
+  masterTheorem?: {
+    title: string;
+    description: string;
+    cases: Array<{
+      case: number;
+      condition: string;
+      result: string;
+      description: string;
+      example: string;
+    }>;
+  };
+  recurrenceExtraction?: {
+    title: string;
+    description: string;
+    process: string[];
+    requirements: string[];
+  };
+  visualization?: {
+    title: string;
+    components: Array<{
+      name: string;
+      description: string;
+      features: string[];
+      sections?: string[];
+    }>;
   };
 }
 

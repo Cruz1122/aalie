@@ -1,0 +1,39 @@
+Metadata-Version: 2.4
+Name: aa-grammar
+Version: 0.1.0
+Summary: ANTLR4 Python parser for Algorithmic Analysis
+Author: Algorithmic Analysis Team
+License: MIT
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: antlr4-python3-runtime==4.13.2
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: black>=22.0.0; extra == "dev"
+Requires-Dist: isort>=5.10.0; extra == "dev"
+
+# AA Grammar - Python Parser
+
+Paquete Python generado por ANTLR4 para el análisis de pseudocódigo y algoritmos.
+
+## Instalación
+
+```bash
+pip install -e .
+```
+
+## Uso
+
+```python
+from aa_grammar import parse_code, analyze_complexity
+
+# Parsear código
+ast = parse_code("for i in range(n): print(i)")
+
+# Analizar complejidad
+complexity = analyze_complexity(ast)
+```

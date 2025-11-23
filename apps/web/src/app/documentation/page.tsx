@@ -30,11 +30,18 @@ export default function DocumentationPage() {
           </p>
           <NavigationLink
             href="/documentation/technical"
-            className="glass-secondary flex items-center justify-center rounded-md h-10 px-4 text-white text-sm font-bold transition-colors"
+            className="glass-secondary flex items-center justify-center rounded-md h-10 px-4 text-white text-sm font-bold transition-colors hover:bg-white/20"
           >
             <span className="material-symbols-outlined mr-2">terminal</span> Ver Documentación
             Técnica
           </NavigationLink>
+          <div className="mt-4 pt-4 border-t border-white/10 w-full">
+            <p className="text-xs text-dark-text mb-2">Documentación completa:</p>
+            <div className="flex flex-col gap-1 text-xs">
+              <span className="text-cyan-300">docs/api/</span>
+              <span className="text-cyan-300">docs/app/</span>
+            </div>
+          </div>
         </div>
 
         {/* Card Documentación de Usuario */}
@@ -58,8 +65,8 @@ export default function DocumentationPage() {
           <span className="material-symbols-outlined text-6xl text-primary mb-4">code_blocks</span>
           <h2 className="text-xl font-bold mb-2">Ejemplos de Algoritmos</h2>
           <p className="text-sm text-dark-text mb-6">
-            Colección de 10 algoritmos clásicos listos para usar. Copia cualquier ejemplo y
-            analiza su complejidad en el analizador.
+            Colección de algoritmos clásicos organizados por métodos de análisis. Copia cualquier ejemplo y
+            analiza su complejidad con el método más apropiado (iteración, teorema maestro, o árbol de recursión).
           </p>
           <NavigationLink
             href="/examples"

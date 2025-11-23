@@ -6,6 +6,16 @@ import katex from "katex";
  * - throwOnError: false → nunca rompe la UI si hay un error de sintaxis.
  * - trust: false → no ejecuta nada "activo" embebido.
  * - strict: "ignore" → ignora warnings de LaTeX no estándar.
+ * 
+ * @param latex - Expresión LaTeX a renderizar
+ * @param opts - Opciones opcionales de KaTeX (displayMode, etc.)
+ * @returns String HTML con la expresión renderizada
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```ts
+ * const html = renderLatexToHtml("T(n) = O(n^2)", { displayMode: true });
+ * ```
  */
 export function renderLatexToHtml(
   latex: string,

@@ -26,7 +26,7 @@ export default function PrivacyPage() {
           <div className="flex items-center justify-center gap-2 mt-4">
             <span className="h-1 w-1 rounded-full bg-green-400"></span>
             <p className="text-sm text-green-400 font-medium">
-              Última actualización: Septiembre 2025
+              Última actualización: Enero 2025
             </p>
           </div>
         </div>
@@ -80,7 +80,7 @@ export default function PrivacyPage() {
               </li>
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary flex-shrink-0"></span> Backend
-                propio (FastAPI + SymPy)
+                propio (FastAPI + SymPy + ANTLR4)
               </li>
             </ul>
           </div>
@@ -105,8 +105,8 @@ export default function PrivacyPage() {
                 Eliminación automática post-análisis
               </li>
               <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-400 flex-shrink-0"></span> Sin IA
-                externa (por ahora)
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-400 flex-shrink-0"></span> IA externa
+                solo para chatbot (Azure AI/Gemini)
               </li>
             </ul>
           </div>
@@ -141,8 +141,27 @@ export default function PrivacyPage() {
                   ¿Usan servicios de IA externa?
                 </h3>
                 <p className="text-dark-text text-sm">
-                  Actualmente no. Todo el análisis se realiza con nuestro backend propio. Si esto
-                  cambia, te lo notificaremos.
+                  Sí, utilizamos servicios de IA externa (Azure AI y Google Gemini) exclusivamente
+                  para el chatbot de asistencia y clasificación de algoritmos. El análisis de
+                  complejidad se realiza completamente con nuestro backend propio sin uso de IA.
+                  Los datos enviados a estos servicios se procesan según sus políticas de
+                  privacidad respectivas.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-primary mb-2">
+                  ¿Cómo se maneja mi API Key?
+                </h3>
+                <p className="text-dark-text text-sm">
+                  Si el servidor tiene una API Key configurada en variables de entorno, se usará
+                  automáticamente y no necesitarás proporcionar una personal. Si proporcionas tu
+                  propia API Key, se almacena únicamente en tu navegador de forma local (localStorage).
+                  No se envían ni se almacenan en nuestros servidores ni en servidores externos. Sin
+                  embargo, es importante que tengas cuidado: las API keys se envían directamente a
+                  los servicios de IA (Azure AI/Gemini) cuando usas el chatbot, siguiendo sus
+                  políticas de seguridad. Te recomendamos usar API keys con permisos limitados y
+                  monitorear su uso.
                 </p>
               </div>
             </div>
@@ -153,8 +172,10 @@ export default function PrivacyPage() {
                   ¿Qué datos técnicos se registran?
                 </h3>
                 <p className="text-dark-text text-sm">
-                  Solo logs mínimos de servidor (IP, User-Agent) para diagnóstico. No se vinculan a
-                  identidades ni tienen uso comercial.
+                  Solo logs mínimos de servidor (IP, User-Agent) para diagnóstico y monitoreo del
+                  servicio. No se vinculan a identidades ni tienen uso comercial. Los mensajes del
+                  chatbot pueden ser procesados por servicios de IA externa (Azure AI/Gemini) según
+                  sus términos de servicio.
                 </p>
               </div>
 
@@ -163,8 +184,10 @@ export default function PrivacyPage() {
                   ¿Es seguro analizar código sensible?
                 </h3>
                 <p className="text-dark-text text-sm">
-                  El procesamiento es temporal y sin almacenamiento. Sin embargo, evita enviar
-                  información crítica por precaución.
+                  El análisis de complejidad se procesa temporalmente sin almacenamiento. Sin
+                  embargo, si usas el chatbot, tu código puede ser enviado a servicios de IA
+                  externa. Evita enviar información crítica, contraseñas o datos sensibles en
+                  cualquier caso.
                 </p>
               </div>
 

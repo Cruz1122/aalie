@@ -23,7 +23,6 @@ COPY packages/grammar/py /usr/src/app/packages/grammar/py
 RUN pip install -e /usr/src/app/packages/grammar/py
 
 WORKDIR /usr/src/app/apps/api
-COPY apps/api/ ./
 # Copiar el código fuente de la API
 COPY apps/api/ ./
 

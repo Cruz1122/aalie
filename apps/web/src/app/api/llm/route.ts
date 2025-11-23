@@ -2,67 +2,18 @@ import { NextRequest } from "next/server";
 
 import {
   getJobConfig,
-  LLMMode,
-  LOCAL_ENDPOINT,
-  LOCAL_API_KEY,
-  REMOTE_API_KEY,
-  REMOTE_ENDPOINT_BASE,
+  GEMINI_ENDPOINT_BASE,
   JobResolvedConfig
 } from "./llm-config";
 
 export const runtime = "nodejs";
 
-async function checkLMStudioConnectivity(): Promise<boolean> {
-  try {
-    const response = await fetch(`${LOCAL_ENDPOINT}/models`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${LOCAL_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      signal: AbortSignal.timeout(5000),
-    });
-    return response.ok;
-  } catch (error) {
-    console.log(`[LLM API] LM Studio no disponible: ${error}`);
-    return false;
-  }
-}
-
 type ChatMessage = { role: string; content: string };
 
-async function callLocalLLM(
+async function callGeminiLLM(
   config: JobResolvedConfig,
   messages: Array<ChatMessage>,
-  schema?: { type: string }
-) {
-  const requestBody = {
-    messages,
-    model: config.model,
-    temperature: config.temperature,
-    max_tokens: config.maxTokens,
-    stream: false,
-    ...(schema ? { response_format: { type: "json_object" } } : {}),
-  };
-  const response = await fetch(`${LOCAL_ENDPOINT}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${LOCAL_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestBody),
-  });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const errorMsg = errorData?.error?.message || `HTTP ${response.status}`;
-    throw new Error(`LM Studio Error ${response.status}: ${errorMsg}`);
-  }
-  return await response.json();
-}
-
-async function callRemoteLLM(
-  config: JobResolvedConfig,
-  messages: Array<ChatMessage>,
+  apiKey: string,
   schema?: { type: string }
 ) {
   const systemInstruction = {
@@ -82,7 +33,7 @@ async function callRemoteLLM(
     contents,
     generationConfig,
   };
-  const url = `${REMOTE_ENDPOINT_BASE}/${encodeURIComponent(config.model)}:generateContent?key=${encodeURIComponent(REMOTE_API_KEY)}`;
+  const url = `${GEMINI_ENDPOINT_BASE}/${encodeURIComponent(config.model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -98,11 +49,38 @@ async function callRemoteLLM(
   return await response.json();
 }
 
+// Validar formato de API_KEY de Gemini
+function validateApiKey(key: string | undefined): boolean {
+  if (!key || typeof key !== 'string') {
+    return false;
+  }
+  const API_KEY_REGEX = /^AIza[0-9A-Za-z_-]{35,40}$/;
+  return API_KEY_REGEX.test(key.trim());
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { job = 'general', prompt, schema, context, chatHistory } = await req.json();
-    const LLM_MODE: LLMMode = (process.env.LLM_MODE as LLMMode) || 'REMOTE';
-    const config = getJobConfig(job, LLM_MODE);
+    const { job = 'general', prompt, schema, context, chatHistory, apiKey } = await req.json();
+    
+    // Obtener API_KEY: prioridad a variables de entorno del servidor, luego al parámetro del request
+    // Si hay API_KEY en el servidor, no se requiere que el cliente la envíe
+    const serverApiKey = process.env.API_KEY;
+    const hasServerApiKey = validateApiKey(serverApiKey);
+    
+    // Usar API_KEY del servidor si está disponible, si no, usar la del cliente
+    const geminiApiKey = hasServerApiKey ? serverApiKey : (apiKey || null);
+    
+    if (!geminiApiKey) {
+      return new Response(JSON.stringify({ 
+        ok: false, 
+        error: "API_KEY no proporcionada. Por favor, configura tu API_KEY de Gemini o configura API_KEY en las variables de entorno del servidor.",
+      }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    
+    const config = getJobConfig(job);
     const userPrompt = context ? `Contexto adicional: ${context}\n\n${prompt}` : prompt;
     const messages = [
       { role: "system", content: config.systemPrompt },
@@ -111,27 +89,9 @@ export async function POST(req: NextRequest) {
       messages.push(...chatHistory.slice(-10));
     }
     messages.push({ role: 'user', content: userPrompt });
-    let data;
-    let actualMode = LLM_MODE;
-    if (LLM_MODE === 'LOCAL') {
-      const isLMStudioAvailable = await checkLMStudioConnectivity();
-      if (isLMStudioAvailable) {
-        try {
-          data = await callLocalLLM(config, messages, schema);
-        } catch (localError) {
-          const errorMessage = localError instanceof Error ? localError.message : String(localError);
-          console.warn(`[LLM API] Fallback a REMOTE: Error en LM Studio - ${errorMessage}`);
-          actualMode = 'REMOTE';
-          data = await callRemoteLLM(config, messages, schema);
-        }
-      } else {
-        console.warn(`[LLM API] Fallback a REMOTE: LM Studio no disponible en ${LOCAL_ENDPOINT}`);
-        actualMode = 'REMOTE';
-        data = await callRemoteLLM(config, messages, schema);
-      }
-    } else {
-      data = await callRemoteLLM(config, messages, schema);
-    }
+    
+    const data = await callGeminiLLM(config, messages, geminiApiKey, schema);
+    
     // Normalización para intent-classify: eliminar saltos y restringir valores
     let intent: string | undefined;
     if ((job as string) === 'classify') {
@@ -148,17 +108,14 @@ export async function POST(req: NextRequest) {
       ok: true,
       data,
       ...(intent ? { intent } : {}),
-      mode: LLM_MODE,
-      actualMode: actualMode,
       model: config.model,
-      fallbackUsed: actualMode !== LLM_MODE
     }), {
       status: 200,
       headers: { "content-type": "application/json" },
     });
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err));
-    console.error(`[LLM API] Error en modo:`, error);
+    console.error(`[LLM API] Error:`, error);
     return new Response(JSON.stringify({ 
       ok: false, 
       error: error.message,

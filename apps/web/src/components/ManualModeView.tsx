@@ -3,10 +3,12 @@ import { useRouter } from "next/navigation";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
+import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 import { GrammarApiService } from "@/services/grammar-api";
 
 import { AnalysisLoader } from "./AnalysisLoader";
+import MethodSelector, { MethodType } from "./MethodSelector";
 import { AnalyzerEditor } from "./AnalyzerEditor";
 import { ASTTreeView } from "./ASTTreeView";
 
@@ -25,10 +27,15 @@ type Message = {
   content: string;
   sender: 'user' | 'bot';
   timestamp: Date;
+  isError?: boolean;
+  retryMessageId?: string;
 };
 
 type AlgorithmKind = "iterative" | "recursive" | "hybrid" | "unknown";
 
+/**
+ * Propiedades del componente ManualModeView.
+ */
 interface ManualModeViewProps {
   readonly messages: Message[];
   readonly setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
@@ -36,10 +43,19 @@ interface ManualModeViewProps {
   readonly onSwitchToAIMode: () => void;
 }
 
+/**
+ * Referencia imperativa para el componente ManualModeView.
+ */
 export interface ManualModeViewHandle {
   analyzeCode: (source: string) => Promise<void>;
 }
 
+/**
+ * Formatea la etiqueta del tipo de algoritmo en español.
+ * @param value - Tipo de algoritmo
+ * @returns Etiqueta en español del tipo de algoritmo
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const formatAlgorithmKindLabel = (value: AlgorithmKind): string => {
   switch (value) {
     case "iterative":
@@ -53,6 +69,12 @@ const formatAlgorithmKindLabel = (value: AlgorithmKind): string => {
   }
 };
 
+/**
+ * Formatea el mensaje para tipos de algoritmo no soportados.
+ * @param value - Tipo de algoritmo
+ * @returns Mensaje formateado indicando el tipo no soportado
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const formatUnsupportedKindMessage = (value: AlgorithmKind): string => {
   return value === "recursive" ? "recursivo" : "híbrido";
 };
@@ -75,6 +97,32 @@ const DEFAULT_CODE = `busquedaBinaria(A[n], x, inicio, fin) BEGIN
   END
 END`;
 
+/**
+ * Componente principal para el modo manual de análisis.
+ * Permite editar código, verificar sintaxis, analizar complejidad y visualizar el AST.
+ * Incluye integración con el asistente IA para ayuda con errores de sintaxis.
+ * 
+ * @param props - Propiedades del componente
+ * @param ref - Referencia imperativa para controlar el componente desde el exterior
+ * @returns Componente React con la vista del modo manual
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * const manualModeRef = useRef<ManualModeViewHandle>(null);
+ * 
+ * <ManualModeView
+ *   ref={manualModeRef}
+ *   messages={messages}
+ *   setMessages={setMessages}
+ *   onOpenChat={handleOpenChat}
+ *   onSwitchToAIMode={handleSwitchToAIMode}
+ * />
+ * 
+ * // Analizar código desde fuera del componente
+ * manualModeRef.current?.analyzeCode(sourceCode);
+ * ```
+ */
 const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(function ManualModeView({ messages, setMessages, onOpenChat, onSwitchToAIMode }, ref) {
   const router = useRouter();
   const { animateProgress } = useAnalysisProgress();
@@ -97,6 +145,36 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
   const [analysisResult, setAnalysisResult] = useState<{ success: boolean; message: string } | null>(null);
   const [showAIHelpButton, setShowAIHelpButton] = useState(false);
   const [backendParseError, setBackendParseError] = useState<string | null>(null);
+  const [hasValidApiKey, setHasValidApiKey] = useState<boolean>(false);
+  const [showMethodSelector, setShowMethodSelector] = useState(false);
+  const [applicableMethods, setApplicableMethods] = useState<MethodType[]>([]);
+  const [defaultMethod, setDefaultMethod] = useState<MethodType>("master");
+  const methodSelectionPromiseRef = useRef<{
+    resolve: (method: MethodType) => void;
+    reject: () => void;
+  } | null>(null);
+  const minProgressRef = useRef<number>(0);
+  
+  // Efecto para mantener el progreso mínimo cuando el selector está visible
+  useEffect(() => {
+    if (showMethodSelector && minProgressRef.current > 0) {
+      // Establecer el progreso al mínimo inmediatamente
+      setAnalysisProgress(minProgressRef.current);
+      
+      // Usar un intervalo para mantener el progreso mientras el selector está visible
+      const intervalId = setInterval(() => {
+        setAnalysisProgress((prev) => {
+          const minProgress = minProgressRef.current;
+          if (prev < minProgress) {
+            return minProgress;
+          }
+          return prev;
+        });
+      }, 100); // Verificar cada 100ms
+      
+      return () => clearInterval(intervalId);
+    }
+  }, [showMethodSelector]);
   
   // Estados para el loader de análisis de complejidad
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -114,6 +192,53 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
   const handleParseStatusChange = (ok: boolean, _isParsing: boolean) => {
     setLocalParseOk(ok);
   };
+
+  // Verificar API_KEY al montar y cuando cambie (sin hacer requests innecesarios)
+  useEffect(() => {
+    const checkApiKey = () => {
+      // Verificar solo localStorage primero (sin hacer request al servidor)
+      const stored = getApiKey();
+      if (stored) {
+        setHasValidApiKey(true);
+        return;
+      }
+      
+      // Solo verificar servidor si no hay en localStorage
+      // Hacer esto de forma asíncrona pero sin bloquear
+      getApiKeyStatus().then((status) => {
+        setHasValidApiKey(status.hasAny);
+      }).catch((error) => {
+        console.error('[ManualModeView] Error verificando API_KEY:', error);
+        setHasValidApiKey(false);
+      });
+    };
+    
+    checkApiKey();
+    
+    // Escuchar cambios en la API_KEY (solo eventos, sin polling)
+    const handleApiKeyChange = () => {
+      // Verificar localStorage primero
+      const stored = getApiKey();
+      if (stored) {
+        setHasValidApiKey(true);
+      } else {
+        // Solo si no hay en localStorage, verificar servidor
+        getApiKeyStatus().then((status) => {
+          setHasValidApiKey(status.hasAny);
+        }).catch(() => {
+          setHasValidApiKey(false);
+        });
+      }
+    };
+    
+    window.addEventListener('apiKeyChanged', handleApiKeyChange);
+    window.addEventListener('storage', handleApiKeyChange);
+    
+    return () => {
+      window.removeEventListener('apiKeyChanged', handleApiKeyChange);
+      window.removeEventListener('storage', handleApiKeyChange);
+    };
+  }, []);
 
   // Cleanup de timeouts al desmontar
   useEffect(() => {
@@ -268,7 +393,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
         body: JSON.stringify({ source: sourceCode }),
       }).then(r => r.json());
 
-      const parseRes = await animateProgress(0, 20, 2000, setAnalysisProgress, parsePromise) as { ok: boolean; ast?: Program; errors?: Array<{ line: number; column: number; message: string }> };
+      const parseRes = await animateProgress(0, 20, 800, setAnalysisProgress, parsePromise) as { ok: boolean; ast?: Program; errors?: Array<{ line: number; column: number; message: string }> };
 
       if (!parseRes.ok) {
         const msg = parseRes.errors?.map((e: { line: number; column: number; message: string }) => `Línea ${e.line}:${e.column} ${e.message}`).join("\n") || "Error de parseo";
@@ -290,13 +415,21 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
       setAnalysisMessage("Clasificando algoritmo...");
       let kind: AlgorithmKind;
       try {
+        // Obtener API_KEY del localStorage (el backend usará la de variables de entorno si no hay)
+        const apiKey = getApiKey();
+        
+        const body: { source: string; mode: string; apiKey?: string } = { source: sourceCode, mode: "local" };
+        if (apiKey) {
+          body.apiKey = apiKey;
+        }
+        
         const clsPromise = fetch("/api/llm/classify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ source: sourceCode, mode: "auto" }),
+          body: JSON.stringify(body),
         });
 
-        const clsResponse = await animateProgress(20, 40, 3000, setAnalysisProgress, clsPromise) as Response;
+        const clsResponse = await animateProgress(20, 40, 1200, setAnalysisProgress, clsPromise) as Response;
 
         if (clsResponse.ok) {
           const cls = await clsResponse.json() as { kind: string; method?: string; mode?: string };
@@ -314,33 +447,156 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
         setAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKindLabel(kind)}`);
       }
 
-      if (kind === "recursive" || kind === "hybrid") {
-        setAnalysisError(`El algoritmo ${formatUnsupportedKindMessage(kind)} no está soportado en esta versión. Por favor, usa un algoritmo iterativo o básico, o cambia a S4 luego.`);
-        setTimeout(() => {
-          setIsAnalyzing(false);
-          setAnalysisProgress(0);
-          setAnalysisMessage("Iniciando análisis...");
-          setAlgorithmType(undefined);
-          setIsAnalysisComplete(false);
-          setAnalysisError(null);
-        }, 3000);
-        return;
+      // 3) Realizar el análisis de complejidad (40-80%)
+      const isRecursive = kind === "recursive" || kind === "hybrid";
+      
+      let selectedMethod: MethodType | undefined = undefined;
+      
+      if (isRecursive) {
+        setAnalysisMessage("Verificando condiciones...");
+        await animateProgress(40, 50, 300, setAnalysisProgress);
+        setAnalysisMessage("Extrayendo recurrencia...");
+        await animateProgress(50, 65, 400, setAnalysisProgress);
+        setAnalysisMessage("Normalizando recurrencia...");
+        await animateProgress(65, 75, 300, setAnalysisProgress);
+        setAnalysisMessage("Detectando método de análisis...");
+        await animateProgress(75, 85, 500, setAnalysisProgress);
+        
+        // Guardar el progreso actual antes de detectar métodos
+        const progressBeforeMethodSelection = 85;
+        
+        // Detectar métodos aplicables
+        selectedMethod = "master";
+        try {
+          const detectMethodsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/detect-methods`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              source: sourceCode,
+              algorithm_kind: kind
+            }),
+          });
+          
+          const detectMethodsResult = await detectMethodsResponse.json() as {
+            ok: boolean;
+            applicable_methods?: MethodType[];
+            default_method?: MethodType;
+            errors?: Array<{ message: string }>;
+          };
+          
+          if (detectMethodsResult.ok && detectMethodsResult.applicable_methods) {
+            const methods = detectMethodsResult.applicable_methods;
+            const defaultMethodValue = (detectMethodsResult.default_method || "master") as MethodType;
+            
+            setApplicableMethods(methods);
+            setDefaultMethod(defaultMethodValue);
+            
+            // Si hay múltiples métodos aplicables, mostrar selector
+            if (methods.length > 1) {
+              setAnalysisMessage("Selecciona el método de análisis...");
+              
+              // Guardar el progreso mínimo para evitar que baje
+              minProgressRef.current = progressBeforeMethodSelection;
+              
+              // Establecer el progreso directamente al valor guardado
+              setAnalysisProgress(progressBeforeMethodSelection);
+              
+              setShowMethodSelector(true);
+              
+              // Esperar un poco para que el selector se renderice completamente
+              await new Promise((resolve) => setTimeout(resolve, 200));
+              
+              // Crear un Promise que se resolverá cuando el usuario seleccione un método
+              selectedMethod = await new Promise<MethodType>((resolve, reject) => {
+                methodSelectionPromiseRef.current = { resolve, reject };
+                setTimeout(() => {
+                  if (methodSelectionPromiseRef.current) {
+                    methodSelectionPromiseRef.current.resolve(defaultMethodValue);
+                    methodSelectionPromiseRef.current = null;
+                  }
+                }, 60000);
+              }).catch(() => defaultMethodValue);
+              
+              setShowMethodSelector(false);
+              methodSelectionPromiseRef.current = null;
+              // Limpiar el progreso mínimo después de ocultar el selector
+              minProgressRef.current = 0;
+              
+              setAnalysisMessage("Método seleccionado, continuando análisis...");
+              // Mantener el progreso y avanzar suavemente
+              await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
+            } else {
+              selectedMethod = defaultMethodValue;
+              // Continuar con el progreso normalmente
+              setAnalysisMessage("Iniciando análisis de complejidad...");
+              await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
+            }
+          } else {
+            selectedMethod = "master";
+            // Continuar con el progreso normalmente
+            setAnalysisMessage("Iniciando análisis de complejidad...");
+            await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
+          }
+        } catch (error) {
+          console.warn("Error detectando métodos, usando método por defecto:", error);
+          selectedMethod = "master";
+          // Continuar con el progreso normalmente
+          setAnalysisMessage("Iniciando análisis de complejidad...");
+          await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
+        }
+      } else {
+        setAnalysisMessage("Hallando sumatorias...");
+        await animateProgress(40, 50, 200, setAnalysisProgress);
+        setAnalysisMessage("Cerrando sumatorias...");
+        await animateProgress(50, 55, 200, setAnalysisProgress);
       }
 
-      setAnalysisMessage("Hallando sumatorias...");
-      await animateProgress(40, 50, 500, setAnalysisProgress);
-
-      setAnalysisMessage("Simplificando expresiones matemáticas...");
+      // Obtener API key (solo necesitamos la key, no el status completo)
+      const apiKey = getApiKey();
+      
+      // Realizar una sola petición que trae todos los casos (worst, best y avg)
+      const analyzeBody: { 
+        source: string; 
+        mode: string; 
+        api_key?: string;
+        avgModel?: { mode: string; predicates?: Record<string, string> };
+        algorithm_kind?: string;
+        preferred_method?: MethodType;
+      } = { 
+        source: sourceCode, 
+        mode: "all",
+        avgModel: {
+          mode: "uniform",
+          predicates: {}
+        },
+        algorithm_kind: kind
+      };
+      
+      // Solo agregar preferred_method si es recursivo y hay un método seleccionado
+      if (isRecursive && selectedMethod) {
+        analyzeBody.preferred_method = selectedMethod;
+      }
+      if (apiKey) {
+        analyzeBody.api_key = apiKey;  // Mantener por compatibilidad, pero backend ya no lo usa para simplificación
+      }
+      
       const analyzePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: sourceCode, mode: "worst" }),
+        body: JSON.stringify(analyzeBody),
       }).then(r => r.json());
 
-      const analyzeRes = await animateProgress(50, 70, 5000, setAnalysisProgress, analyzePromise) as { ok: boolean; [key: string]: unknown };
+      const analyzeRes = await animateProgress(50, 70, 2000, setAnalysisProgress, analyzePromise) as { 
+        ok: boolean; 
+        worst?: unknown;
+        best?: unknown;
+        avg?: unknown;
+        errors?: Array<{ message: string; line?: number; column?: number }>;
+        [key: string]: unknown;
+      };
 
       setAnalysisMessage("Generando forma polinómica...");
-      await animateProgress(70, 80, 500, setAnalysisProgress);
+      await animateProgress(70, 80, 200, setAnalysisProgress);
 
       if (!analyzeRes.ok) {
         const errorMsg = (analyzeRes as { errors?: Array<{ message: string; line?: number; column?: number }> }).errors?.map((e: { message: string; line?: number; column?: number }) => 
@@ -359,7 +615,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
       }
 
       setAnalysisMessage("Finalizando análisis...");
-      await animateProgress(80, 100, 500, setAnalysisProgress);
+      await animateProgress(80, 100, 200, setAnalysisProgress);
 
       if (globalThis.window !== undefined) {
         sessionStorage.setItem('analyzerCode', sourceCode);
@@ -369,7 +625,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
       setAnalysisMessage("Análisis completo");
       setIsAnalysisComplete(true);
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
       router.push('/analyzer');
     } catch (error) {
@@ -385,7 +641,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
         setAnalysisError(null);
       }, 3000);
     }
-  }, [animateProgress, heuristicKind, isAnalyzing, router]);
+  }, [animateProgress, isAnalyzing, router]);
 
   const handleAnalyzeComplexity = () => {
     void runAnalysis(code);
@@ -423,6 +679,27 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
             setAlgorithmType(undefined);
             setIsAnalysisComplete(false);
             setAnalysisError(null);
+          }}
+        />
+      )}
+
+      {/* Selector de método - debe aparecer sobre el loader */}
+      {showMethodSelector && applicableMethods.length > 0 && isAnalyzing && (
+        <MethodSelector
+          applicableMethods={applicableMethods}
+          defaultMethod={defaultMethod}
+          onSelect={(method) => {
+            console.log('[MethodSelector] Método seleccionado:', method);
+            if (methodSelectionPromiseRef.current) {
+              methodSelectionPromiseRef.current.resolve(method);
+            }
+          }}
+          onCancel={() => {
+            // Si cancela, usar método por defecto
+            console.log('[MethodSelector] Cancelado, usando método por defecto:', defaultMethod);
+            if (methodSelectionPromiseRef.current) {
+              methodSelectionPromiseRef.current.resolve(defaultMethod);
+            }
           }}
         />
       )}
@@ -488,12 +765,18 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(fun
               Ver AST
             </button>
 
-            {/* Botón de Ayuda con IA - aparece después de 3 segundos si hay error */}
-            {showAIHelpButton && backendParseError && (
-              <button
-                onClick={() => {
-                  // Crear mensaje estructurado con el código y el error para el LLM
-                  const errorMessage = `Necesito ayuda con un error de sintaxis en mi código de pseudocódigo.
+            {/* Botón de Ayuda con IA - aparece después de 3 segundos si hay error y hay API_KEY */}
+            {showAIHelpButton && backendParseError && hasValidApiKey && (
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  onClick={async () => {
+                    // No verificar API_KEY del servidor (no hacer peticiones)
+                    // El backend manejará la API_KEY automáticamente
+                    // Permitir continuar incluso sin API_KEY del cliente
+                    // El backend intentará usar la de variables de entorno
+                    
+                    // Crear mensaje estructurado con el código y el error para el LLM
+                    const errorMessage = `Necesito ayuda con un error de sintaxis en mi código de pseudocódigo.
 
 **CÓDIGO ADJUNTO:**
 \`\`\`pseudocode
@@ -507,43 +790,69 @@ ${backendParseError}
 
 **SOLICITUD:**
 Por favor, analiza el código y el error, identifica la causa del problema y proporciona una solución corregida. Explica qué estaba mal y cómo solucionarlo.`;
-                  
-                  const newMessage: Message = {
-                    id: Date.now().toString(),
-                    content: errorMessage,
-                    sender: 'user',
-                    timestamp: new Date()
-                  };
-                  
-                  // Si no hay mensajes previos, agregar mensaje de bienvenida
-                  if (messages.length === 0) {
-                    const welcomeMessage: Message = {
-                      id: 'welcome',
-                      content: "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
-                      sender: 'bot',
+                    
+                    const newMessage: Message = {
+                      id: `user-help-${Date.now()}`,
+                      content: errorMessage,
+                      sender: 'user',
                       timestamp: new Date()
                     };
-                    setMessages([welcomeMessage, newMessage]);
-                  } else {
-                    setMessages(prev => [...prev, newMessage]);
-                  }
-                  
-                  // Cambiar al modo asistente y abrir el chat
-                  // El ChatBot real se encargará de generar la respuesta usando LLM
-                  setTimeout(() => {
-                    onSwitchToAIMode();
                     
-                    // Luego abrir el chat después de cambiar de modo
+                    // Verificar si ya existe un mensaje con exactamente el mismo código y error
+                    // Solo evitar duplicados si es el mismo código y el mismo error
+                    const codeHash = code.trim().slice(0, 100); // Usar más caracteres para mejor comparación
+                    const errorHash = backendParseError?.trim().slice(0, 50) || '';
+                    const messageExists = messages.some(
+                      msg => msg.sender === 'user' && 
+                      msg.content.includes('**CÓDIGO ADJUNTO:**') &&
+                      msg.content.includes(codeHash) &&
+                      msg.content.includes(errorHash)
+                    );
+                    
+                    // Si el mensaje ya existe exactamente igual, solo abrir el chat sin agregar duplicado
+                    if (messageExists) {
+                      onSwitchToAIMode();
+                      setTimeout(() => {
+                        onOpenChat();
+                      }, 100);
+                      return;
+                    }
+                    
+                    // Agregar mensaje de bienvenida solo si no hay mensajes previos
+                    // Usar una función de actualización para evitar problemas de estado
+                    setMessages(prev => {
+                      // Si ya hay mensajes, solo agregar el nuevo mensaje
+                      if (prev.length > 0) {
+                        return [...prev, newMessage];
+                      }
+                      
+                      // Si no hay mensajes, agregar bienvenida y el nuevo mensaje
+                      const welcomeMessage: Message = {
+                        id: 'welcome',
+                        content: "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+                        sender: 'bot',
+                        timestamp: new Date()
+                      };
+                      return [welcomeMessage, newMessage];
+                    });
+                    
+                    // Cambiar al modo asistente y abrir el chat después de que se actualice el estado
+                    // El ChatBot detectará el nuevo mensaje y generará la respuesta automáticamente
                     setTimeout(() => {
-                      onOpenChat();
+                      onSwitchToAIMode();
+                      
+                      // Luego abrir el chat después de cambiar de modo
+                      setTimeout(() => {
+                        onOpenChat();
+                      }, 150);
                     }, 100);
-                  }, 50);
-                }}
-                className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg text-white text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 animate-[slideInUp_0.3s_ease-out] animate-pulse-slow"
-              >
-                <span className="material-symbols-outlined text-base animate-shake">smart_toy</span>{' '}
-                Ayuda con IA
-              </button>
+                  }}
+                  className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg text-white text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 border animate-[slideInUp_0.3s_ease-out] bg-gradient-to-br from-purple-500/20 to-purple-500/20 border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 animate-pulse-slow cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-base animate-shake">smart_toy</span>{' '}
+                  Ayuda con IA
+                </button>
+              </div>
             )}
           </div>
         </div>

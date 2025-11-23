@@ -10,6 +10,9 @@ import {
   registerPseudocodeLanguage,
 } from "../lib/monaco-diagnostics";
 
+/**
+ * Propiedades del componente AnalyzerEditor.
+ */
 interface AnalyzerEditorProps {
   readonly initialValue?: string;
   readonly onChange?: (value: string) => void;
@@ -18,6 +21,26 @@ interface AnalyzerEditorProps {
   readonly height?: string;
 }
 
+/**
+ * Componente de editor de código basado en Monaco Editor.
+ * Proporciona un editor de código con syntax highlighting, validación en tiempo real
+ * mediante Web Workers, y notificaciones de cambios en el AST y estado de parsing.
+ * 
+ * @param props - Propiedades del editor
+ * @returns Componente React del editor de código
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * <AnalyzerEditor
+ *   initialValue="factorial(n) BEGIN RETURN 1; END"
+ *   onChange={(value) => setCode(value)}
+ *   onAstChange={(ast) => setAst(ast)}
+ *   onParseStatusChange={(ok, isParsing) => setParseOk(ok)}
+ *   height="420px"
+ * />
+ * ```
+ */
 export function AnalyzerEditor(props: AnalyzerEditorProps) {
   const {
     initialValue = "",
@@ -75,6 +98,12 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
     }
   }, [parseResult.ok, parseResult.isParsing, onParseStatusChange]);
 
+  /**
+   * Maneja el montaje del editor y configura el lenguaje pseudocódigo.
+   * @param editor - Instancia del editor de Monaco
+   * @param monaco - Instancia de Monaco
+   * @author Juan Camilo Cruz Parra (@Cruz1122)
+   */
   function handleEditorDidMount(
     editor: Monaco.editor.IStandaloneCodeEditor,
     monaco: MonacoReact
@@ -89,6 +118,11 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
     monaco.editor.setTheme("pseudocode-theme");
   }
 
+  /**
+   * Maneja los cambios en el contenido del editor.
+   * @param value - Nuevo valor del editor
+   * @author Juan Camilo Cruz Parra (@Cruz1122)
+   */
   function handleEditorChange(value = "") {
     setCode(value);
     if (onChange) {

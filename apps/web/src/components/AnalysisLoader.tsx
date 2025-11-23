@@ -1,16 +1,31 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 
+/**
+ * Propiedades del componente AnalysisLoader.
+ */
 interface AnalysisLoaderProps {
+  /** Progreso del análisis (0-100) */
   progress: number;
+  /** Mensaje a mostrar durante el análisis */
   message: string;
+  /** Tipo de algoritmo detectado */
   algorithmType?: "iterative" | "recursive" | "hybrid" | "unknown";
+  /** Indica si el análisis está completo */
   isComplete?: boolean;
+  /** Mensaje de error si ocurrió algún problema */
   error?: string | null;
+  /** Callback para cerrar el loader */
   onClose?: () => void;
 }
 
+/**
+ * Obtiene la etiqueta en español para un tipo de algoritmo.
+ * @param type - Tipo de algoritmo
+ * @returns Etiqueta en español del tipo de algoritmo
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const getAlgorithmTypeLabel = (type?: string): string => {
   switch (type) {
     case "iterative":
@@ -26,6 +41,12 @@ const getAlgorithmTypeLabel = (type?: string): string => {
   }
 };
 
+/**
+ * Obtiene las clases CSS para el badge de un tipo de algoritmo.
+ * @param type - Tipo de algoritmo
+ * @returns String con las clases CSS para el badge
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const getAlgorithmTypeColor = (type?: string): string => {
   switch (type) {
     case "iterative":
@@ -41,6 +62,27 @@ const getAlgorithmTypeColor = (type?: string): string => {
   }
 };
 
+/**
+ * Componente de loader para mostrar el progreso del análisis de complejidad.
+ * Muestra una barra de progreso, mensajes de estado, tipo de algoritmo detectado
+ * y maneja errores con animaciones de transición.
+ * 
+ * @param props - Propiedades del loader
+ * @returns Componente React del loader de análisis
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * <AnalysisLoader
+ *   progress={75}
+ *   message="Analizando complejidad..."
+ *   algorithmType="recursive"
+ *   isComplete={false}
+ *   error={null}
+ *   onClose={() => setIsAnalyzing(false)}
+ * />
+ * ```
+ */
 export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
   progress,
   message,
@@ -50,6 +92,18 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
   onClose,
 }) => {
   const hasError = !!error;
+  const [isClosing, setIsClosing] = useState(false);
+  
+  // Iniciar animación de cierre cuando se completa
+  useEffect(() => {
+    if (isComplete && !hasError) {
+      // Esperar un momento antes de iniciar el fade-out
+      const timer = setTimeout(() => {
+        setIsClosing(true);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isComplete, hasError]);
   
   const handleClose = () => {
     if (onClose) {
@@ -60,12 +114,12 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
   };
   
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center">
+    <div className={`fixed inset-0 z-[60] flex items-center justify-center transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`} style={{ pointerEvents: isComplete || error ? 'auto' : 'none' }}>
       {/* Overlay con efecto glass */}
-      <div className="absolute inset-0 glass-modal-overlay" />
+      <div className={`absolute inset-0 glass-modal-overlay transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`} style={{ pointerEvents: 'none' }} />
 
       {/* Contenedor del loader - tamaño fijo grande */}
-      <div className="relative z-10 glass-modal-container rounded-2xl p-8 w-[600px] h-[400px] mx-4 shadow-2xl modal-animate-in flex flex-col justify-center">
+      <div className={`relative z-10 glass-modal-container rounded-2xl p-8 w-[600px] h-[400px] mx-4 shadow-2xl flex flex-col justify-center transition-all duration-300 ${isClosing ? 'opacity-0 scale-95 translate-y-2' : 'opacity-100 scale-100 translate-y-0'}`}>
         {/* Icono de estado */}
         <div className="flex justify-center mb-6">
           {hasError ? (
@@ -134,9 +188,15 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
         {/* Indicador de etapas */}
         {!isComplete && !hasError && (
           <div className="text-center">
-            <p className="text-xs text-slate-400">
-              Por favor, espera mientras se completa el análisis...
-            </p>
+            {(algorithmType === "recursive" || algorithmType === "hybrid") ? (
+              <p className="text-xs text-slate-400">
+                Analizando recurrencia...
+              </p>
+            ) : (
+              <p className="text-xs text-slate-400">
+                Por favor, espera mientras se completa el análisis...
+              </p>
+            )}
           </div>
         )}
         

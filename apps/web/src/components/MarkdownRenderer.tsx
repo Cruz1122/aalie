@@ -1,12 +1,29 @@
+/**
+ * Componente para renderizar contenido Markdown con soporte para:
+ * - Sintaxis resaltada (rehype-highlight)
+ * - Fórmulas matemáticas LaTeX (rehype-katex, remark-math)
+ * - Tablas GitHub Flavored Markdown (remark-gfm)
+ * - Botones para copiar y analizar código
+ * 
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
+import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
 import '../styles/highlight.css';
 
+/**
+ * Propiedades del componente MarkdownRenderer.
+ */
 interface MarkdownRendererProps {
+  /** Contenido Markdown a renderizar */
   readonly content: string;
+  /** Clases CSS adicionales para el contenedor */
   readonly className?: string;
+  /** Callback opcional para analizar código cuando se detecta pseudocódigo */
   readonly onAnalyzeCode?: (code: string) => void;
 }
 
@@ -19,7 +36,12 @@ interface AnalyzeButtonProps {
   readonly onAnalyze?: (code: string) => void;
 }
 
-// Componente de botón de copia
+/**
+ * Componente de botón para copiar código al portapapeles.
+ * 
+ * @param code - Código a copiar
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const CopyButton = ({ code }: CopyButtonProps) => {
   const [copied, setCopied] = useState(false);
 
@@ -52,7 +74,14 @@ const CopyButton = ({ code }: CopyButtonProps) => {
   );
 };
 
-// Componente de botón de análisis
+/**
+ * Componente de botón para analizar código detectado como pseudocódigo.
+ * Solo se muestra si el código contiene palabras clave de pseudocódigo.
+ * 
+ * @param code - Código a analizar
+ * @param onAnalyze - Callback para ejecutar el análisis
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 const AnalyzeButton = ({ code, onAnalyze }: AnalyzeButtonProps) => {
   if (!onAnalyze) return null;
 
@@ -175,13 +204,12 @@ const CustomPre = (props: any) => {
 
   const codeContent = extractTextContent(props.children);
   // Obtener onAnalyzeCode del contexto (se pasa desde MarkdownRenderer)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const onAnalyzeCode = (props as any).onAnalyzeCode;
+  const onAnalyzeCode = (props as { onAnalyzeCode?: (code: string) => void }).onAnalyzeCode;
 
   return (
     <div className="relative group w-full">
-      <div className="bg-slate-800/70 border border-slate-600/40 rounded-md p-2.5 overflow-x-auto max-h-[300px] overflow-y-auto mb-1.5">
-        <pre className="text-slate-200 text-[10px] font-mono whitespace-pre leading-relaxed m-0">
+      <div className="bg-slate-800/70 border border-slate-600/40 rounded-md p-2.5 overflow-x-auto max-h-[300px] overflow-y-auto mb-1.5" style={{ maxWidth: '100%', width: '100%' }}>
+        <pre className="text-slate-200 text-[10px] font-mono whitespace-pre leading-relaxed m-0" style={{ maxWidth: '100%', wordBreak: 'break-word' }}>
           {codeContent}
         </pre>
       </div>
@@ -260,16 +288,36 @@ const CustomTd = (props: any) => (
   </td>
 );
 
-export default function MarkdownRenderer({ content, className, onAnalyzeCode }: MarkdownRendererProps) {
-  // Crear un componente Pre personalizado que incluye onAnalyzeCode
+const createPreWithAnalyze = (onAnalyzeCode?: (code: string) => void) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const PreWithAnalyze = (props: any) => <CustomPre {...props} onAnalyzeCode={onAnalyzeCode} />;
+  const PreWithAnalyzeComponent = (props: any) => <CustomPre {...props} onAnalyzeCode={onAnalyzeCode} />;
+  PreWithAnalyzeComponent.displayName = 'PreWithAnalyze';
+  return PreWithAnalyzeComponent;
+};
+
+/**
+ * Componente principal para renderizar Markdown con características avanzadas.
+ * 
+ * @param props - Propiedades del componente
+ * @returns Elemento JSX con el contenido Markdown renderizado
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * 
+ * @example
+ * ```tsx
+ * <MarkdownRenderer
+ *   content="# Título\n```python\nprint('Hello')\n```"
+ *   onAnalyzeCode={(code) => handleAnalyze(code)}
+ * />
+ * ```
+ */
+export default function MarkdownRenderer({ content, className, onAnalyzeCode }: MarkdownRendererProps) {
+  const PreWithAnalyze = createPreWithAnalyze(onAnalyzeCode);
 
   return (
     <div className={className}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight]}
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[rehypeHighlight, rehypeKatex]}
         components={{
           h1: CustomH1,
           h2: CustomH2,

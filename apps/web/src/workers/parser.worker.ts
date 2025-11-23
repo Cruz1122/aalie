@@ -1,3 +1,9 @@
+/**
+ * Web Worker para parsear código pseudocódigo en un hilo separado.
+ * Usa el parser de gramática (@aa/grammar) para parsear el código y generar el AST.
+ * 
+ * Author: Juan Camilo Cruz Parra (@Cruz1122)
+ */
 import {
   ASTBuilder,
   CharStreams,
@@ -8,18 +14,36 @@ import {
 } from "@aa/grammar";
 import type { ParseError, Program } from "@aa/types";
 
+/**
+ * Interfaz para las solicitudes al worker.
+ */
 export interface ParseWorkerRequest {
+  /** ID único de la solicitud para identificar respuestas */
   id: number;
+  /** Código fuente a parsear */
   code: string;
 }
 
+/**
+ * Interfaz para las respuestas del worker.
+ */
 export interface ParseWorkerResponse {
+  /** ID único de la solicitud correspondiente */
   id: number;
+  /** Indica si el parseo fue exitoso */
   ok: boolean;
+  /** AST parseado (solo si ok es true) */
   ast?: Program;
+  /** Lista de errores de parseo (solo si ok es false) */
   errors?: ParseError[];
 }
 
+/**
+ * Escucha mensajes del hilo principal para parsear código.
+ * 
+ * @param event - Evento de mensaje con ParseWorkerRequest
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ */
 self.addEventListener("message", (event: MessageEvent<ParseWorkerRequest>) => {
   const { id, code } = event.data;
 
