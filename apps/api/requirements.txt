@@ -7,4 +7,4 @@ sympy>=1.12,<2.0
 # aa_grammar - Paquete local para parsing de pseudocódigo
 # Instalar desde apps/api/ con: pip install -e ../../packages/grammar/py
 # O desde la raíz del proyecto: pip install -e packages/grammar/py
--e ../../packages/grammar/py
+# NOTA: En Docker, el paquete se instala en el Dockerfile después de copiarlo
