@@ -539,14 +539,32 @@ PARA ALGORITMOS ITERATIVOS:
     - En la línea "x <- 2 + b;" hay 2 operaciones: la asignación (C_1) y la suma (C_2)
     - En la línea "RETURN resultado;" hay 1 operación: el return (C_3)
   * count_k es cuántas veces se ejecuta esa operación (puede ser 1, n, n-1, etc. dependiendo de bucles)
-  * Ejemplo: Si "resultado <- a + b;" se ejecuta 1 vez, entonces T_open incluye "C_1 · 1 + C_2 · 1" (o simplificado: "C_1 + C_2")
+  * **FORMATOS DE T_open** (puede estar en cualquiera de estos dos formatos):
+    - **Formato con constantes C_k (PREFERIDO cuando hay ≤5 términos únicos de C_k)**: 
+      * Ejemplo: "C_1 · 1 + C_2 · (n-1) + C_3 · (n-1)(n+1) + C_4 · 1"
+      * Muestra explícitamente cada constante C_k multiplicada por su count_k
+    - **Formato simplificado (aceptable cuando hay >5 términos o expresiones complejas)**:
+      * Ejemplo: "2n² + 3n - 2"
+      * Expresión matemática simplificada sin mostrar las constantes C_k individuales
   * Si una línea está dentro de un bucle FOR i <- 1 TO n, entonces count_k = n para esa línea
-  * Formato: T_open debe ser una expresión en LaTeX que sume todos los términos C_k · count_k
+  * Formato: T_open debe ser una expresión en LaTeX que sume todos los términos C_k · count_k (o su equivalente simplificado)
 - **IMPORTANTE - Cálculo de T_polynomial (forma polinómica)**:
   * T_polynomial es la forma polinómica simplificada de T_open, agrupando términos con las mismas potencias de n
-  * Ejemplo: Si T_open = "C_1 · 1 + C_2 · n + C_3 · (n - 1)", entonces T_polynomial = "(C_2 + C_3) · n + (C_1 - C_3)"
-  * Si T_open solo tiene constantes (sin términos con n), entonces T_polynomial = "c" o una constante
-  * Formato: T_polynomial debe ser una expresión polinómica en LaTeX como "an² + bn + c" o simplemente "c" si es constante
+  * **CRÍTICO**: T_polynomial SIEMPRE debe preservar las constantes C_k. NUNCA reemplaces C_k con coeficientes genéricos como "a", "b", "c"
+  * **Formato correcto**: Agrupa términos con la misma potencia de n, pero mantén las constantes C_k visibles
+    - Ejemplo correcto: Si T_open = "C_1 · 1 + C_2 · n + C_3 · (n - 1)", entonces T_polynomial = "(C_2 + C_3) · n + (C_1 - C_3)"
+    - Ejemplo correcto (cuadrático): Si T_open = "C_1 · 1 + C_2 · (n-1) + C_3 · (n-1)(n+1) + C_4 · 1", entonces T_polynomial = "(C_3) · n² + (C_2 - C_3) · n + (C_1 - C_2 + C_3 + C_4)"
+  * **Formato incorrecto (NO USAR)**: "an² + bn + c" o "2n² + 3n - 2" (sin C_k)
+  * Si T_open solo tiene constantes (sin términos con n), entonces T_polynomial debe mostrar las constantes C_k agrupadas, no un "c" genérico
+  * **IMPORTANTE - ADVERTENCIAS**:
+    - ❌ NO reemplaces C_k con coeficientes genéricos (a, b, c) en T_polynomial
+    - ❌ NO simplifiques T_polynomial eliminando las constantes C_k
+    - ✅ T_polynomial debe mostrar qué constantes C_k contribuyen a cada potencia de n
+    - ✅ Agrupa términos con la misma potencia de n, pero preserva las constantes C_k
+  * **EJEMPLO COMPLETO** (mostrando T_open y T_polynomial para el mismo algoritmo):
+    - T_open (con constantes): "C_1 · 1 + C_2 · (n-1) + C_3 · (n-1)(n+1) + C_4 · 1"
+    - T_polynomial (correcto): "(C_3) · n² + (C_2 - C_3) · n + (C_1 - C_2 + C_3 + C_4)"
+    - Explicación: Los términos con n² se agrupan (solo C_3), los términos con n se agrupan (C_2 - C_3), y los términos constantes se agrupan (C_1 - C_2 + C_3 + C_4)
 - Determina big_o, big_omega y big_theta en formato LaTeX (ej: "O(n^2)", "Ω(n^2)", "Θ(n^2)") para cada caso
 - **IMPORTANTE**: Si el algoritmo es iterativo, debes proporcionar análisis para worst, best y average case. El campo "analysis" puede contener un objeto con propiedades "worst", "best" y "avg", cada una con los datos correspondientes (T_open, T_polynomial, big_o, big_omega, big_theta), o un único objeto si los casos son idénticos.
 

@@ -615,10 +615,17 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
     
     def _calculate_t_polynomial_fallback(self):
         """
-        Método fallback para calcular T_polynomial agrupando términos similares.
-        Usa SymPy para construir la expresión completa y luego agrupar por potencias de n.
+        Calcula T_polynomial de forma determinista usando SymPy Poly.
+        
+        Agrupa términos por potencias de n (n², n¹, n⁰) preservando las constantes C_k.
+        Usa Poly para extraer coeficientes de todas las potencias de n de forma determinista.
+        
+        Returns:
+            None (establece self.t_polynomial)
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        from sympy import Symbol, Add, Integer, latex, expand, simplify, collect, Poly
+        from sympy import Symbol, Integer, latex, expand, simplify, Poly
         from ..utils.summation_closer import SummationCloser
         import re
         
@@ -631,10 +638,14 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             ck_matches = re.findall(ck_pattern, ck_str)
             return [f"C_{{{num}}}" for num in ck_matches]
         
-        # Agrupar filas por count_expr expandido
-        # Estructura: {count_expr_expanded: [lista de ck_str]}
-        count_to_cks = {}
+        # Estructura para agrupar C_k por grado del polinomio
+        # {degree: {coeff_tuple: [lista de C_k strings]}}
+        # coeff_tuple es una tupla normalizada para comparación determinista
+        degree_to_coeffs = {}  # {degree: {coeff_tuple: [C_k strings]}}
         
+        closer = SummationCloser()
+        
+        # Procesar cada fila y extraer coeficientes polinomiales
         for row in self.rows:
             if row.get('ck') != "—" and row.get('count') != "—":
                 ck_str = row.get('ck', '')
@@ -645,143 +656,176 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     count_expr = self._str_to_sympy(row.get('count_raw', '1'))
                 
                 # Evaluar sumatorias y simplificar
-                closer = SummationCloser()
                 count_expr = closer._evaluate_all_sums_sympy(count_expr)
                 count_expr = expand(count_expr)
                 count_expr = simplify(count_expr)
                 
-                # Usar la expresión expandida como clave
-                count_key = str(count_expr)  # Usar string para comparación
-                
-                if count_key not in count_to_cks:
-                    count_to_cks[count_key] = {
-                        'expr': count_expr,
-                        'cks': []
-                    }
-                count_to_cks[count_key]['cks'].append(ck_str)
+                # Convertir a Poly para extraer coeficientes de todas las potencias
+                try:
+                    # Intentar crear Poly (puede fallar si hay símbolos no numéricos)
+                    poly = Poly(count_expr, n_sym)
+                    all_coeffs = poly.all_coeffs()  # Lista de coeficientes [coeff_n^max, ..., coeff_n^1, coeff_n^0]
+                    max_degree = poly.degree()
+                    
+                    # Procesar cada coeficiente (de mayor a menor grado)
+                    for degree in range(max_degree, -1, -1):
+                        coeff_idx = max_degree - degree
+                        if coeff_idx < len(all_coeffs):
+                            coeff = all_coeffs[coeff_idx]
+                            coeff = simplify(coeff)
+                            
+                            # Verificar si el coeficiente es cero (saltar términos nulos)
+                            try:
+                                if coeff.is_zero if hasattr(coeff, 'is_zero') else (coeff == 0 or coeff == Integer(0)):
+                                    continue
+                            except:
+                                # Si hay error, intentar simplificar y verificar de nuevo
+                                try:
+                                    coeff = simplify(expand(coeff))
+                                    if coeff.is_zero if hasattr(coeff, 'is_zero') else (coeff == 0 or coeff == Integer(0)):
+                                        continue
+                                except:
+                                    pass
+                            
+                            # Normalizar coeficiente para comparación determinista
+                            # Usar una representación canónica (expandida y simplificada)
+                            coeff_normalized = expand(coeff)
+                            coeff_normalized = simplify(coeff_normalized)
+                            
+                            # Verificar nuevamente después de normalizar (por si se simplificó a 0)
+                            try:
+                                if coeff_normalized.is_zero if hasattr(coeff_normalized, 'is_zero') else (coeff_normalized == 0 or coeff_normalized == Integer(0)):
+                                    continue
+                            except:
+                                pass
+                            
+                            # Crear tupla para comparación determinista
+                            # Convertir a string canónico para evitar problemas de comparación
+                            coeff_key = str(coeff_normalized)
+                            
+                            # Inicializar estructura si es necesario
+                            if degree not in degree_to_coeffs:
+                                degree_to_coeffs[degree] = {}
+                            
+                            if coeff_key not in degree_to_coeffs[degree]:
+                                degree_to_coeffs[degree][coeff_key] = {
+                                    'coeff': coeff_normalized,
+                                    'cks': []
+                                }
+                            
+                            # Agregar C_k a este coeficiente
+                            degree_to_coeffs[degree][coeff_key]['cks'].append(ck_str)
+                            
+                except (ValueError, TypeError, AttributeError):
+                    # Si Poly falla (p.ej., expresión no es polinómica), tratar como constante
+                    # Esto puede pasar con expresiones complejas, pero intentamos manejarlo
+                    try:
+                        # Intentar extraer como constante (grado 0)
+                        const_value = simplify(count_expr.subs(n_sym, 0))
+                        
+                        # Verificar si la constante es cero
+                        try:
+                            if const_value.is_zero if hasattr(const_value, 'is_zero') else (const_value == 0 or const_value == Integer(0)):
+                                continue
+                        except:
+                            pass
+                        
+                        const_key = str(const_value)
+                        
+                        if 0 not in degree_to_coeffs:
+                            degree_to_coeffs[0] = {}
+                        
+                        if const_key not in degree_to_coeffs[0]:
+                            degree_to_coeffs[0][const_key] = {
+                                'coeff': const_value,
+                                'cks': []
+                            }
+                        
+                        degree_to_coeffs[0][const_key]['cks'].append(ck_str)
+                    except:
+                        # Si todo falla, ignorar esta fila
+                        continue
         
-        if not count_to_cks:
+        if not degree_to_coeffs:
             self.t_polynomial = "0"
             return
         
-        # Agrupar por potencias de n usando SymPy
-        # Estructura: {coeff_of_n: [lista de C_k]}
-        n_terms_dict = {}  # {coeff_sympy: [C_k strings]}
-        const_terms_dict = {}  # {const_sympy: [C_k strings]}
-        
-        for count_key, data in count_to_cks.items():
-            count_expr = data['expr']
-            cks_list = data['cks']
-            
-            # Extraer coeficiente de n y término constante usando SymPy
-            coeff_of_n = count_expr.coeff(n_sym) if hasattr(count_expr, 'coeff') else Integer(0)
-            constant_part = count_expr.subs(n_sym, 0) if hasattr(count_expr, 'subs') else count_expr
-            
-            # Normalizar para comparación
-            coeff_of_n = simplify(coeff_of_n) if coeff_of_n != 0 else Integer(0)
-            constant_part = simplify(constant_part) if constant_part != 0 else Integer(0)
-            
-            # Agrupar términos con n
-            if coeff_of_n != 0:
-                coeff_key = str(coeff_of_n)  # Usar string para comparación
-                if coeff_key not in n_terms_dict:
-                    n_terms_dict[coeff_key] = {
-                        'coeff': coeff_of_n,
-                        'cks': []
-                    }
-                n_terms_dict[coeff_key]['cks'].extend(cks_list)
-            
-            # Agrupar términos constantes
-            if constant_part != 0:
-                const_key = str(constant_part)
-                if const_key not in const_terms_dict:
-                    const_terms_dict[const_key] = {
-                        'value': constant_part,
-                        'cks': []
-                    }
-                const_terms_dict[const_key]['cks'].extend(cks_list)
-        
-        # Construir T_polynomial
+        # Construir T_polynomial en orden descendente de grado (n², n¹, n⁰)
         polynomial_terms = []
         
-        # Términos con n (ordenados por coeficiente, mayor a menor)
-        # Ordenar por el valor numérico del coeficiente si es posible
-        def get_coeff_value(coeff_str):
-            """Obtiene un valor numérico para ordenar coeficientes."""
-            try:
-                from sympy import sympify
-                coeff = sympify(coeff_str)
-                if coeff.is_number:
-                    return float(coeff)
-                return 0  # Si no es número, poner al final
-            except:
-                return 0
+        # Ordenar grados de mayor a menor
+        sorted_degrees = sorted(degree_to_coeffs.keys(), reverse=True)
         
-        sorted_n_terms = sorted(n_terms_dict.items(), key=lambda x: get_coeff_value(x[0]), reverse=True)
-        
-        for coeff_key, data in sorted_n_terms:
-            coeff = data['coeff']
-            cks_list = data['cks']
-            ck_combined = " + ".join(cks_list) if len(cks_list) > 1 else cks_list[0]
+        for degree in sorted_degrees:
+            coeff_dict = degree_to_coeffs[degree]
             
-            if coeff == Integer(1):
-                polynomial_terms.append(f"({ck_combined}) \\cdot n")
-            elif coeff == Integer(-1):
-                polynomial_terms.append(f"-({ck_combined}) \\cdot n")
-            else:
-                coeff_latex = latex(coeff)
-                polynomial_terms.append(f"({ck_combined}) \\cdot {coeff_latex} \\cdot n")
-        
-        # Términos constantes: agrupar y distribuir signos
-        all_const_terms = []
-        
-        for const_key, data in const_terms_dict.items():
-            const_value = data['value']
-            cks_list = data['cks']
+            # Para cada coeficiente único en este grado, crear un término
+            # Ordenar coeficientes de forma determinista (por representación string)
+            sorted_coeffs = sorted(coeff_dict.items(), key=lambda x: str(x[0]))
             
-            # Parsear cada ck en caso de que contenga múltiples C_k
-            all_cks = []
-            for ck in cks_list:
-                parsed = parse_ck_string(ck)
-                all_cks.extend(parsed)
-            
-            if const_value == Integer(1):
-                # Términos positivos
-                all_const_terms.extend([(ck, Integer(1)) for ck in all_cks])
-            elif const_value == Integer(-1):
-                # Términos negativos
-                all_const_terms.extend([(ck, Integer(-1)) for ck in all_cks])
-            else:
-                # Multiplicador diferente
-                all_const_terms.extend([(ck, const_value) for ck in all_cks])
-        
-        # Agrupar términos constantes por signo y valor
-        pos_terms = []
-        neg_terms = []
-        
-        for ck, mult in all_const_terms:
-            if mult == Integer(1):
-                pos_terms.append(ck)
-            elif mult == Integer(-1):
-                neg_terms.append(ck)
-            elif mult < 0:
-                neg_terms.append(f"{ck} \\cdot {latex(-mult)}")
-            else:
-                pos_terms.append(f"{ck} \\cdot {latex(mult)}")
-        
-        # Construir expresión constante
-        const_parts = []
-        if pos_terms:
-            const_parts.extend(pos_terms)
-        if neg_terms:
-            # Agregar términos negativos con signo negativo
-            for term in neg_terms:
-                const_parts.append(f"-{term}")
-        
-        if const_parts:
-            const_expr = " + ".join(const_parts)
-            const_expr = const_expr.replace("+ -", "- ")
-            polynomial_terms.append(f"({const_expr})")
+            for coeff_key, data in sorted_coeffs:
+                coeff = data['coeff']
+                cks_list = data['cks']
+                
+                # Verificar si el coeficiente es cero (eliminar términos nulos)
+                try:
+                    if coeff.is_zero if hasattr(coeff, 'is_zero') else (coeff == 0 or coeff == Integer(0)):
+                        continue
+                except:
+                    # Si hay error al verificar, intentar simplificar y verificar de nuevo
+                    try:
+                        coeff_simplified = simplify(coeff)
+                        if coeff_simplified.is_zero if hasattr(coeff_simplified, 'is_zero') else (coeff_simplified == 0 or coeff_simplified == Integer(0)):
+                            continue
+                        coeff = coeff_simplified
+                    except:
+                        pass
+                
+                # Parsear y combinar todas las C_k
+                all_cks = []
+                for ck in cks_list:
+                    parsed = parse_ck_string(ck)
+                    all_cks.extend(parsed)
+                
+                # Ordenar C_k numéricamente para determinismo
+                def get_ck_number(ck_str):
+                    match = re.search(r'C_\{(\d+)\}', ck_str)
+                    return int(match.group(1)) if match else 0
+                
+                all_cks.sort(key=get_ck_number)
+                ck_combined = " + ".join(all_cks) if len(all_cks) > 1 else all_cks[0] if all_cks else ""
+                
+                if not ck_combined:
+                    continue
+                
+                # Formatear término según el grado y coeficiente
+                if degree == 0:
+                    # Término constante
+                    if coeff == Integer(1):
+                        polynomial_terms.append(f"({ck_combined})")
+                    elif coeff == Integer(-1):
+                        polynomial_terms.append(f"-({ck_combined})")
+                    else:
+                        coeff_latex = latex(coeff)
+                        polynomial_terms.append(f"({ck_combined}) \\cdot {coeff_latex}")
+                elif degree == 1:
+                    # Término lineal
+                    if coeff == Integer(1):
+                        polynomial_terms.append(f"({ck_combined}) \\cdot n")
+                    elif coeff == Integer(-1):
+                        polynomial_terms.append(f"-({ck_combined}) \\cdot n")
+                    else:
+                        coeff_latex = latex(coeff)
+                        polynomial_terms.append(f"({ck_combined}) \\cdot {coeff_latex} \\cdot n")
+                else:
+                    # Términos de grado superior (n², n³, etc.)
+                    if coeff == Integer(1):
+                        polynomial_terms.append(f"({ck_combined}) \\cdot n^{{{degree}}}")
+                    elif coeff == Integer(-1):
+                        polynomial_terms.append(f"-({ck_combined}) \\cdot n^{{{degree}}}")
+                    else:
+                        coeff_latex = latex(coeff)
+                        polynomial_terms.append(f"({ck_combined}) \\cdot {coeff_latex} \\cdot n^{{{degree}}}")
         
         if polynomial_terms:
             result = " + ".join(polynomial_terms)
