@@ -203,7 +203,7 @@ export default function HomePage() {
     const progressBeforeMethodSelection = 85;
     
     try {
-      const detectMethodsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/detect-methods`, {
+      const detectMethodsResponse = await fetch("/api/analyze/detect-methods", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source: sourceCode, algorithm_kind: kind }),
@@ -273,7 +273,7 @@ export default function HomePage() {
     try {
       // Parse source code
       setChatAnalysisMessage("Parseando código...");
-      const parsePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/grammar/parse`, {
+      const parsePromise = fetch("/api/grammar/parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source: sourceCode }),
@@ -352,7 +352,7 @@ export default function HomePage() {
         analyzeBody.api_key = apiKey;
       }
       
-      const analyzePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
+      const analyzePromise = fetch("/api/analyze/open", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(analyzeBody),

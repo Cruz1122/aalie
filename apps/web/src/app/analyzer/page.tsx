@@ -203,7 +203,7 @@ export default function AnalyzerPage() {
     try {
       // 1) Parsear el código (0-20%)
       setAnalysisMessage("Parseando código...");
-      const parsePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/grammar/parse`, {
+      const parsePromise = fetch("/api/grammar/parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source }),
@@ -281,7 +281,7 @@ export default function AnalyzerPage() {
         // Detectar métodos aplicables
         selectedMethod = "master";
         try {
-          const detectMethodsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/detect-methods`, {
+          const detectMethodsResponse = await fetch("/api/analyze/detect-methods", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -422,7 +422,7 @@ export default function AnalyzerPage() {
         setAnalysisMessage("Analizando complejidad...");
       }
       
-      const analyzePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
+      const analyzePromise = fetch("/api/analyze/open", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(analyzeBody),

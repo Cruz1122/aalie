@@ -31,9 +31,13 @@ type GeminiResponse = { candidates?: GeminiCandidate[] };
  */
 function getApiBase(): string {
   const a = process.env.API_INTERNAL_BASE_URL?.replace(/\/+$/, "");
-  if (a) return a;
+  if (a) {
+    return a.startsWith('http://') || a.startsWith('https://') ? a : `https://${a}`;
+  }
   const b = process.env.API_BASE_URL?.replace(/\/+$/, "");
-  if (b) return b;
+  if (b) {
+    return b.startsWith('http://') || b.startsWith('https://') ? b : `https://${b}`;
+  }
   return process.env.DOCKER ? "http://api:8000" : "http://localhost:8000";
 }
 
