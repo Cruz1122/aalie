@@ -18,6 +18,11 @@ RUN python -m pip install --upgrade pip && \
     pip install -r /tmp/requirements.txt && \
     pip install -r /tmp/requirements-dev.txt
 
+WORKDIR /usr/src/app
+COPY packages/grammar/py /usr/src/app/packages/grammar/py
+RUN pip install -e /usr/src/app/packages/grammar/py
+
+WORKDIR /usr/src/app/apps/api
 # Copiar el código fuente de la API
 COPY apps/api/ ./
 

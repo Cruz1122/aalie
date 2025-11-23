@@ -1,9 +1,11 @@
 import "./globals.css";
-
+import "katex/dist/katex.min.css"; // <-- estilos de KaTeX después de globals
 import { Noto_Sans, Spline_Sans } from "next/font/google";
 
 import { GlobalLoaderOverlay } from "@/components/GlobalLoaderOverlay";
+import NavigationLoadingWrapper from "@/components/NavigationLoadingWrapper";
 import { GlobalLoaderProvider } from "@/contexts/GlobalLoaderContext";
+import { NavigationProvider } from "@/contexts/NavigationContext";
 
 const notoSans = Noto_Sans({
   weight: ["400", "500", "700", "900"],
@@ -39,7 +41,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         style={{ fontFamily: "var(--font-spline-sans), var(--font-noto-sans), sans-serif" }}
       >
         <GlobalLoaderProvider>
-          {children}
+          <NavigationProvider>
+            <NavigationLoadingWrapper>
+              {children}
+            </NavigationLoadingWrapper>
+          </NavigationProvider>
           <GlobalLoaderOverlay />
         </GlobalLoaderProvider>
       </body>

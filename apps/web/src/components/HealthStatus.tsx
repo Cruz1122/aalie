@@ -37,7 +37,7 @@ export default function HealthStatus({ intervalMs = 20_000 }: Readonly<Props>) {
     return () => clearInterval(t);
   }, [intervalMs]);
 
-  const pillBase = "inline-flex items-center gap-2 rounded-lg px-3 py-1 text-sm";
+  const pillBase = "inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs";
 
   let style: string;
   let dot: string;
@@ -55,7 +55,7 @@ export default function HealthStatus({ intervalMs = 20_000 }: Readonly<Props>) {
 
   return (
     <span className={`${pillBase} ${style}`}>
-      <span className={`inline-block h-2.5 w-2.5 rounded-full ${dot}`} />
+      <span className={`inline-block h-1.5 w-1.5 rounded-full ${dot}`} />
       {msg}
     </span>
   );

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, ReactNode, useMemo } from "react";
+import React, { createContext, ReactNode, useCallback, useContext, useMemo, useState } from "react";
 
-import { LoaderConfig, GlobalLoaderContextType } from "@/types/loader";
+import { GlobalLoaderContextType, LoaderConfig } from "@/types/loader";
 
 const defaultConfig: LoaderConfig = {
   variant: "spinner",

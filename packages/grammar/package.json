@@ -19,6 +19,7 @@
     "verify": "node verify-ts.mjs"
   },
   "dependencies": {
+    "@aa/types": "workspace:^",
     "antlr4ts": "0.5.0-alpha.4"
   },
   "devDependencies": {

@@ -1,10 +1,38 @@
-// path: apps/web/src/app/debug/grammar/page.tsx
 "use client";
-
-import { parseExpr } from "@aa/grammar";
-import type { GrammarParseRequest } from "@aa/types";
+import {
+  CharStreams,
+  CommonTokenStream,
+  LanguageLexer,
+  LanguageParser,
+  CollectingErrorListener,
+} from "@aa/grammar";
 import { isGrammarParseResponse } from "@aa/types";
 import { useEffect, useState } from "react";
+
+import { GrammarApiService } from "@/services/grammar-api";
+
+// Helper function to parse expressions
+function parseExpr(input: string): boolean {
+  try {
+    const inputStream = CharStreams.fromString(input);
+    const lexer = new LanguageLexer(inputStream);
+    const errors = new CollectingErrorListener();
+    lexer.removeErrorListeners();
+    lexer.addErrorListener(errors);
+
+    const tokenStream = new CommonTokenStream(lexer);
+    const parser = new LanguageParser(tokenStream);
+    parser.removeErrorListeners();
+    parser.addErrorListener(errors);
+
+    parser.program(); // Parse as full program
+    
+    return errors.errors.length === 0;
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
+}
 
 export default function GrammarDebugPage() {
   const [input, setInput] = useState("(1+2)*3");
@@ -26,14 +54,10 @@ export default function GrammarDebugPage() {
     setErr(null);
     setApiOk(null);
     setApiAvail(null);
-    const req: GrammarParseRequest = { input };
+    
     try {
-      const res = await fetch("/api/grammar/parse", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(req),
-      });
-      const data: unknown = await res.json();
+      const data = await GrammarApiService.parseCode(input);
+      
       if (isGrammarParseResponse(data)) {
         setApiOk(data.ok);
         setApiAvail(data.available ?? null);
@@ -64,7 +88,7 @@ export default function GrammarDebugPage() {
       />
       <div style={{ marginBottom: 12 }}>
         <strong>Parse local (TS):</strong>{" "}
-        {localOk === null ? "—" : localOk ? "✅ válido" : "❌ inválido"}
+        {localOk === null ? "—" : localOk ? "Válido" : "Inválido"}
       </div>
       <button
         onClick={callApi}
@@ -80,7 +104,7 @@ export default function GrammarDebugPage() {
       </button>
       <div style={{ marginTop: 12 }}>
         <strong>Parse backend (Py):</strong>{" "}
-        {apiOk === null ? "—" : apiOk ? "✅ válido" : "❌ inválido"}
+        {apiOk === null ? "—" : apiOk ? "Válido" : "Inválido"}
         {apiAvail === false && (
           <span style={{ marginLeft: 8, color: "#fbbf24" }}>(aa_grammar no disponible)</span>
         )}

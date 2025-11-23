@@ -147,10 +147,134 @@ body {
   .documentation-grid {
     display: grid;
     gap: 1.5rem;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   }
 
-  @media (min-width: 768px) {
+  /* Animaciones para el chatbot */
+  .chat-bubble-enter {
+    animation: chatBubbleEnter 0.3s ease-out forwards;
+  }
+
+  @keyframes chatBubbleEnter {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .chat-message-slide-in {
+    animation: chatMessageSlideIn 0.4s ease-out forwards;
+  }
+
+  @keyframes chatMessageSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .chat-message-slide-in-reverse {
+    animation: chatMessageSlideInReverse 0.4s ease-out forwards;
+  }
+
+  @keyframes chatMessageSlideInReverse {
+    from {
+      opacity: 0;
+      transform: translateX(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Pulso suave para el typing indicator */
+  .typing-pulse {
+    animation: typingPulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes typingPulse {
+    0%, 100% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  /* Animación para puntos de escritura estilo WhatsApp */
+  .typing-dots {
+    animation: typingDots 1.4s ease-in-out infinite;
+  }
+
+  .typing-dots:nth-child(1) {
+    animation-delay: 0s;
+  }
+
+  .typing-dots:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  .typing-dots:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+
+  @keyframes typingDots {
+    0%, 60%, 100% {
+      transform: translateY(0);
+      opacity: 0.4;
+    }
+    30% {
+      transform: translateY(-8px);
+      opacity: 1;
+    }
+  }
+
+  /* Animaciones para entrada de componentes */
+  .animate-in {
+    animation-fill-mode: both;
+  }
+
+  .fade-in-0 {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  .slide-in-from-bottom-4 {
+    animation: slideInFromBottom 0.5s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInFromBottom {
+    from {
+      opacity: 0;
+      transform: translateY(1rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .duration-500 {
+    animation-duration: 0.5s;
+  }
+}  @media (min-width: 768px) {
     .documentation-grid {
       grid-template-columns: repeat(2, 1fr);
     }
@@ -162,9 +286,9 @@ body {
     }
   }
 
-  /* Altura mínima consistente para cards */
+  /* Altura fija para todas las cards - consistencia total */
   .documentation-card {
-    min-height: 320px;
+    height: 480px;
     display: flex;
     flex-direction: column;
   }
@@ -174,6 +298,21 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+  }
+
+  /* Line clamp utilities for text truncation */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-5 {
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   /* Animaciones para el modal */
@@ -205,6 +344,21 @@ body {
 
   .modal-animate-out {
     animation: modal-fade-out 0.15s ease-in forwards;
+  }
+
+  /* Animación pop para el badge de tipo de algoritmo */
+  @keyframes pop {
+    0% {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
   }
 
   /* Estilos para kbd elements */
@@ -240,6 +394,56 @@ body {
 
   .scrollbar-thumb-white\/20::-webkit-scrollbar-thumb:hover {
     background-color: rgba(255, 255, 255, 0.3);
+  }
+
+  /* Scrollbar oscuro personalizado para el modal */
+  .scrollbar-track-slate-800::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-track-slate-800::-webkit-scrollbar-track {
+    background: #1e293b; /* slate-800 */
+    border-radius: 4px;
+  }
+
+  .scrollbar-thumb-slate-600::-webkit-scrollbar-thumb {
+    background-color: #475569; /* slate-600 */
+    border-radius: 4px;
+  }
+
+  .scrollbar-thumb-slate-600::-webkit-scrollbar-thumb:hover {
+    background-color: #64748b; /* slate-500 */
+  }
+
+  /* Ocultar scrollbar por defecto en elementos con scroll personalizado */
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: #475569 #1e293b;
+    /* Optimizaciones de rendimiento */
+    will-change: scroll-position;
+    contain: layout style paint;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: #1e293b; /* slate-800 */
+    border-radius: 4px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: #475569; /* slate-600 */
+    border-radius: 4px;
+    /* Optimización de transiciones */
+    transition: background-color 0.1s ease;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background-color: #64748b; /* slate-500 */
   }
 
   /* Animaciones específicas para el loader global */
@@ -335,4 +539,258 @@ body {
     height: 100%;
     overflow: hidden;
   }
+
+/* Estilos específicos para KaTeX */
+.katex {
+  font-size: 1em !important;
+}
+
+.katex-display {
+  margin: 1em 0 !important;
+}
+
+.katex .katex-mathml {
+  position: absolute !important;
+  clip: rect(1px, 1px, 1px, 1px) !important;
+  padding: 0 !important;
+  border: 0 !important;
+  height: 1px !important;
+  width: 1px !important;
+  overflow: hidden !important;
+}
+
+/* Animation delays for page loader */
+.animation-delay-75 {
+  animation-delay: 0.075s;
+}
+
+.animation-delay-150 {
+  animation-delay: 0.15s;
+}
+
+/* Animación de pulso lento para botón de ayuda */
+.animate-pulse-slow {
+  animation: pulseSlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulseSlow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Animación de vibración sutil cada segundo para el ícono */
+.animate-wiggle {
+  animation: wiggle 1s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+  0%, 90%, 100% {
+    transform: rotate(0deg);
+  }
+  92% {
+    transform: rotate(-5deg);
+  }
+  94% {
+    transform: rotate(5deg);
+  }
+  96% {
+    transform: rotate(-5deg);
+  }
+  98% {
+    transform: rotate(5deg);
+  }
+}
+
+/* Animación de vibración suave constante para botón de ayuda con IA */
+.animate-shake {
+  animation: shake 2s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-1px);
+  }
+  75% {
+    transform: translateX(1px);
+  }
+}
+
+/* Animaciones de entrada y salida para botón de ayuda */
+@keyframes slideInUp {
+  from {
+    transform: translateY(20px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOutDown {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(20px);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Estilos para el árbol de recursión con ReactFlow */
+.recursion-tree-container .react-flow__node {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.recursion-tree-container .react-flow__node-default {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.recursion-tree-container .react-flow__edge {
+  z-index: 1 !important;
+  pointer-events: none !important;
+  opacity: 1 !important;
+  display: block !important;
+}
+
+.recursion-tree-container .react-flow__edge-path {
+  stroke: #64748b !important;
+  stroke-width: 3px !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+.recursion-tree-container path.react-flow__edge-path {
+  stroke: #64748b !important;
+  stroke-width: 3px !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.recursion-tree-container svg.react-flow__edges {
+  z-index: 1 !important;
+  pointer-events: none !important;
+  display: block !important;
+  overflow: visible !important;
+}
+
+.recursion-tree-container .react-flow__connectionline {
+  stroke: #64748b !important;
+  stroke-width: 2px !important;
+}
+
+.recursion-tree-container .react-flow__edge.selected .react-flow__edge-path {
+  stroke: #a855f7 !important;
+}
+
+.recursion-tree-container .react-flow__edge-text {
+  fill: #cbd5e1 !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+
+.recursion-tree-container .react-flow__edge-textbg {
+  fill: rgba(15, 23, 42, 0.85) !important;
+  fill-opacity: 0.95 !important;
+  stroke: rgba(100, 116, 139, 0.4) !important;
+  stroke-width: 1px !important;
+  rx: 4px !important;
+  ry: 4px !important;
+}
+
+.recursion-tree-container .react-flow__background {
+  background-color: transparent !important;
+}
+
+.recursion-tree-container .react-flow__pane {
+  cursor: grab;
+}
+
+.recursion-tree-container .react-flow__pane:active {
+  cursor: grabbing;
+}
+
+.recursion-tree-container .react-flow__controls {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 0.5rem !important;
+}
+
+.recursion-tree-container .react-flow__controls button {
+  background: rgba(51, 65, 85, 1) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+}
+
+.recursion-tree-container .react-flow__controls button:hover {
+  background: rgba(71, 85, 105, 1) !important;
+}
+
+.recursion-tree-container .react-flow__minimap {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 0.5rem !important;
+}
+
+/* Estilos para el slider de n inicial - diseño simple */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+input[type="range"]::-webkit-slider-track {
+  background: #475569;
+  height: 4px;
+  border-radius: 2px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: #a855f7;
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  background: #9333ea;
+}
+
+input[type="range"]::-moz-range-track {
+  background: #475569;
+  height: 4px;
+  border-radius: 2px;
+  border: none;
 }

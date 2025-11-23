@@ -30,46 +30,113 @@ import { LanguageVisitor } from "./LanguageVisitor";
 export class LanguageParser extends Parser {
 	public static readonly T__0 = 1;
 	public static readonly T__1 = 2;
-	public static readonly T__2 = 3;
-	public static readonly T__3 = 4;
-	public static readonly T__4 = 5;
-	public static readonly T__5 = 6;
-	public static readonly T__6 = 7;
-	public static readonly T__7 = 8;
-	public static readonly T__8 = 9;
-	public static readonly T__9 = 10;
-	public static readonly T__10 = 11;
-	public static readonly T__11 = 12;
-	public static readonly T__12 = 13;
-	public static readonly T__13 = 14;
-	public static readonly T__14 = 15;
-	public static readonly ArrayAccess = 16;
-	public static readonly Identifier = 17;
-	public static readonly Number = 18;
-	public static readonly WS = 19;
+	public static readonly LPAREN = 3;
+	public static readonly RPAREN = 4;
+	public static readonly LBRACE = 5;
+	public static readonly RBRACE = 6;
+	public static readonly LBRACK = 7;
+	public static readonly RBRACK = 8;
+	public static readonly RANGE = 9;
+	public static readonly SEMI = 10;
+	public static readonly ASSIGN = 11;
+	public static readonly PLUS = 12;
+	public static readonly MINUS = 13;
+	public static readonly MUL = 14;
+	public static readonly DIVOP = 15;
+	public static readonly EQ = 16;
+	public static readonly NEQ = 17;
+	public static readonly LE = 18;
+	public static readonly GE = 19;
+	public static readonly LT = 20;
+	public static readonly GT = 21;
+	public static readonly FOR_KW = 22;
+	public static readonly WHILE_KW = 23;
+	public static readonly IF_KW = 24;
+	public static readonly THEN_KW = 25;
+	public static readonly ELSE_KW = 26;
+	public static readonly BEGIN_KW = 27;
+	public static readonly END_KW = 28;
+	public static readonly TO_KW = 29;
+	public static readonly DO_KW = 30;
+	public static readonly CALL_KW = 31;
+	public static readonly AND_KW = 32;
+	public static readonly OR_KW = 33;
+	public static readonly NOT_KW = 34;
+	public static readonly TRUE_KW = 35;
+	public static readonly FALSE_KW = 36;
+	public static readonly NULL_KW = 37;
+	public static readonly LENGTH_KW = 38;
+	public static readonly DIV_KW = 39;
+	public static readonly MOD_KW = 40;
+	public static readonly STRING = 41;
+	public static readonly CLASS_KW = 42;
+	public static readonly RETURN_KW = 43;
+	public static readonly REPEAT_KW = 44;
+	public static readonly UNTIL_KW = 45;
+	public static readonly PRINT_KW = 46;
+	public static readonly ID = 47;
+	public static readonly INT = 48;
+	public static readonly WS = 49;
+	public static readonly LINE_COMMENT = 50;
+	public static readonly SL_COMMENT = 51;
 	public static readonly RULE_program = 0;
-	public static readonly RULE_functionDecl = 1;
-	public static readonly RULE_block = 2;
-	public static readonly RULE_statement = 3;
-	public static readonly RULE_variableDecl = 4;
-	public static readonly RULE_forStmt = 5;
-	public static readonly RULE_returnStmt = 6;
-	public static readonly RULE_assign = 7;
-	public static readonly RULE_expr = 8;
+	public static readonly RULE_classDef = 1;
+	public static readonly RULE_attrList = 2;
+	public static readonly RULE_procDef = 3;
+	public static readonly RULE_paramList = 4;
+	public static readonly RULE_param = 5;
+	public static readonly RULE_arrayParam = 6;
+	public static readonly RULE_arrayIndex = 7;
+	public static readonly RULE_arrayDim = 8;
+	public static readonly RULE_objectParam = 9;
+	public static readonly RULE_stmt = 10;
+	public static readonly RULE_block = 11;
+	public static readonly RULE_assignmentStmt = 12;
+	public static readonly RULE_declVectorStmt = 13;
+	public static readonly RULE_callStmt = 14;
+	public static readonly RULE_printStmt = 15;
+	public static readonly RULE_argList = 16;
+	public static readonly RULE_repeatStmt = 17;
+	public static readonly RULE_returnStmt = 18;
+	public static readonly RULE_ifStmt = 19;
+	public static readonly RULE_whileStmt = 20;
+	public static readonly RULE_forStmt = 21;
+	public static readonly RULE_lvalue = 22;
+	public static readonly RULE_fieldAccess = 23;
+	public static readonly RULE_indexSuffix = 24;
+	public static readonly RULE_expr = 25;
+	public static readonly RULE_orExpr = 26;
+	public static readonly RULE_andExpr = 27;
+	public static readonly RULE_relExpr = 28;
+	public static readonly RULE_addExpr = 29;
+	public static readonly RULE_mulExpr = 30;
+	public static readonly RULE_unaryExpr = 31;
+	public static readonly RULE_primary = 32;
+	public static readonly RULE_lengthCall = 33;
+	public static readonly RULE_callExpr = 34;
 	// tslint:disable:no-trailing-whitespace
 	public static readonly ruleNames: string[] = [
-		"program", "functionDecl", "block", "statement", "variableDecl", "forStmt", 
-		"returnStmt", "assign", "expr",
+		"program", "classDef", "attrList", "procDef", "paramList", "param", "arrayParam", 
+		"arrayIndex", "arrayDim", "objectParam", "stmt", "block", "assignmentStmt", 
+		"declVectorStmt", "callStmt", "printStmt", "argList", "repeatStmt", "returnStmt", 
+		"ifStmt", "whileStmt", "forStmt", "lvalue", "fieldAccess", "indexSuffix", 
+		"expr", "orExpr", "andExpr", "relExpr", "addExpr", "mulExpr", "unaryExpr", 
+		"primary", "lengthCall", "callExpr",
 	];
 
 	private static readonly _LITERAL_NAMES: Array<string | undefined> = [
-		undefined, "'function'", "'('", "','", "')'", "'{'", "'}'", "';'", "'let'", 
-		"'='", "'for'", "'return'", "'+'", "'-'", "'*'", "'/'",
+		undefined, "','", "'.'", "'('", "')'", "'{'", "'}'", "'['", "']'", "'..'", 
+		"';'", undefined, "'+'", "'-'", "'*'", "'/'", "'='", undefined, undefined, 
+		undefined, "'<'", "'>'",
 	];
 	private static readonly _SYMBOLIC_NAMES: Array<string | undefined> = [
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, undefined, undefined, undefined, undefined, undefined, 
-		undefined, undefined, "ArrayAccess", "Identifier", "Number", "WS",
+		undefined, undefined, undefined, "LPAREN", "RPAREN", "LBRACE", "RBRACE", 
+		"LBRACK", "RBRACK", "RANGE", "SEMI", "ASSIGN", "PLUS", "MINUS", "MUL", 
+		"DIVOP", "EQ", "NEQ", "LE", "GE", "LT", "GT", "FOR_KW", "WHILE_KW", "IF_KW", 
+		"THEN_KW", "ELSE_KW", "BEGIN_KW", "END_KW", "TO_KW", "DO_KW", "CALL_KW", 
+		"AND_KW", "OR_KW", "NOT_KW", "TRUE_KW", "FALSE_KW", "NULL_KW", "LENGTH_KW", 
+		"DIV_KW", "MOD_KW", "STRING", "CLASS_KW", "RETURN_KW", "REPEAT_KW", "UNTIL_KW", 
+		"PRINT_KW", "ID", "INT", "WS", "LINE_COMMENT", "SL_COMMENT",
 	];
 	public static readonly VOCABULARY: Vocabulary = new VocabularyImpl(LanguageParser._LITERAL_NAMES, LanguageParser._SYMBOLIC_NAMES, []);
 
@@ -105,21 +172,48 @@ export class LanguageParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 21;
+			this.state = 73;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			while (_la === LanguageParser.T__0) {
+			while (_la === LanguageParser.CLASS_KW) {
 				{
 				{
-				this.state = 18;
-				this.functionDecl();
+				this.state = 70;
+				this.classDef();
 				}
 				}
-				this.state = 23;
+				this.state = 75;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
-			this.state = 24;
+			this.state = 80;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			while ((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << LanguageParser.LBRACE) | (1 << LanguageParser.SEMI) | (1 << LanguageParser.FOR_KW) | (1 << LanguageParser.WHILE_KW) | (1 << LanguageParser.IF_KW) | (1 << LanguageParser.BEGIN_KW) | (1 << LanguageParser.CALL_KW))) !== 0) || ((((_la - 43)) & ~0x1F) === 0 && ((1 << (_la - 43)) & ((1 << (LanguageParser.RETURN_KW - 43)) | (1 << (LanguageParser.REPEAT_KW - 43)) | (1 << (LanguageParser.PRINT_KW - 43)) | (1 << (LanguageParser.ID - 43)))) !== 0)) {
+				{
+				this.state = 78;
+				this._errHandler.sync(this);
+				switch ( this.interpreter.adaptivePredict(this._input, 1, this._ctx) ) {
+				case 1:
+					{
+					this.state = 76;
+					this.procDef();
+					}
+					break;
+
+				case 2:
+					{
+					this.state = 77;
+					this.stmt();
+					}
+					break;
+				}
+				}
+				this.state = 82;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+			}
+			this.state = 83;
 			this.match(LanguageParser.EOF);
 			}
 		}
@@ -138,49 +232,462 @@ export class LanguageParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public functionDecl(): FunctionDeclContext {
-		let _localctx: FunctionDeclContext = new FunctionDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 2, LanguageParser.RULE_functionDecl);
+	public classDef(): ClassDefContext {
+		let _localctx: ClassDefContext = new ClassDefContext(this._ctx, this.state);
+		this.enterRule(_localctx, 2, LanguageParser.RULE_classDef);
 		let _la: number;
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 26;
-			this.match(LanguageParser.T__0);
-			this.state = 27;
-			this.match(LanguageParser.Identifier);
-			this.state = 28;
-			this.match(LanguageParser.T__1);
-			this.state = 37;
+			this.state = 85;
+			this.match(LanguageParser.CLASS_KW);
+			this.state = 86;
+			this.match(LanguageParser.ID);
+			this.state = 87;
+			this.match(LanguageParser.LBRACE);
+			this.state = 89;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === LanguageParser.Identifier) {
+			if (_la === LanguageParser.ID) {
 				{
-				this.state = 29;
-				this.match(LanguageParser.Identifier);
-				this.state = 34;
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
-				while (_la === LanguageParser.T__2) {
-					{
-					{
-					this.state = 30;
-					this.match(LanguageParser.T__2);
-					this.state = 31;
-					this.match(LanguageParser.Identifier);
-					}
-					}
-					this.state = 36;
-					this._errHandler.sync(this);
-					_la = this._input.LA(1);
-				}
+				this.state = 88;
+				this.attrList();
 				}
 			}
 
-			this.state = 39;
-			this.match(LanguageParser.T__3);
-			this.state = 40;
+			this.state = 91;
+			this.match(LanguageParser.RBRACE);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public attrList(): AttrListContext {
+		let _localctx: AttrListContext = new AttrListContext(this._ctx, this.state);
+		this.enterRule(_localctx, 4, LanguageParser.RULE_attrList);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 94;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			do {
+				{
+				{
+				this.state = 93;
+				this.match(LanguageParser.ID);
+				}
+				}
+				this.state = 96;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+			} while (_la === LanguageParser.ID);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public procDef(): ProcDefContext {
+		let _localctx: ProcDefContext = new ProcDefContext(this._ctx, this.state);
+		this.enterRule(_localctx, 6, LanguageParser.RULE_procDef);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 98;
+			this.match(LanguageParser.ID);
+			this.state = 99;
+			this.match(LanguageParser.LPAREN);
+			this.state = 101;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			if (_la === LanguageParser.ID) {
+				{
+				this.state = 100;
+				this.paramList();
+				}
+			}
+
+			this.state = 103;
+			this.match(LanguageParser.RPAREN);
+			this.state = 104;
 			this.block();
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public paramList(): ParamListContext {
+		let _localctx: ParamListContext = new ParamListContext(this._ctx, this.state);
+		this.enterRule(_localctx, 8, LanguageParser.RULE_paramList);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 106;
+			this.param();
+			this.state = 111;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			while (_la === LanguageParser.T__0) {
+				{
+				{
+				this.state = 107;
+				this.match(LanguageParser.T__0);
+				this.state = 108;
+				this.param();
+				}
+				}
+				this.state = 113;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+			}
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public param(): ParamContext {
+		let _localctx: ParamContext = new ParamContext(this._ctx, this.state);
+		this.enterRule(_localctx, 10, LanguageParser.RULE_param);
+		try {
+			this.state = 117;
+			this._errHandler.sync(this);
+			switch ( this.interpreter.adaptivePredict(this._input, 7, this._ctx) ) {
+			case 1:
+				this.enterOuterAlt(_localctx, 1);
+				{
+				this.state = 114;
+				this.arrayParam();
+				}
+				break;
+
+			case 2:
+				this.enterOuterAlt(_localctx, 2);
+				{
+				this.state = 115;
+				this.objectParam();
+				}
+				break;
+
+			case 3:
+				this.enterOuterAlt(_localctx, 3);
+				{
+				this.state = 116;
+				this.match(LanguageParser.ID);
+				}
+				break;
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public arrayParam(): ArrayParamContext {
+		let _localctx: ArrayParamContext = new ArrayParamContext(this._ctx, this.state);
+		this.enterRule(_localctx, 12, LanguageParser.RULE_arrayParam);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 119;
+			this.match(LanguageParser.ID);
+			this.state = 120;
+			this.match(LanguageParser.LBRACK);
+			this.state = 121;
+			this.arrayIndex();
+			this.state = 122;
+			this.match(LanguageParser.RBRACK);
+			this.state = 128;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			if (_la === LanguageParser.RANGE) {
+				{
+				this.state = 123;
+				this.match(LanguageParser.RANGE);
+				this.state = 124;
+				this.match(LanguageParser.LBRACK);
+				this.state = 125;
+				this.arrayIndex();
+				this.state = 126;
+				this.match(LanguageParser.RBRACK);
+				}
+			}
+
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public arrayIndex(): ArrayIndexContext {
+		let _localctx: ArrayIndexContext = new ArrayIndexContext(this._ctx, this.state);
+		this.enterRule(_localctx, 14, LanguageParser.RULE_arrayIndex);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 130;
+			_la = this._input.LA(1);
+			if (!(_la === LanguageParser.ID || _la === LanguageParser.INT)) {
+			this._errHandler.recoverInline(this);
+			} else {
+				if (this._input.LA(1) === Token.EOF) {
+					this.matchedEOF = true;
+				}
+
+				this._errHandler.reportMatch(this);
+				this.consume();
+			}
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public arrayDim(): ArrayDimContext {
+		let _localctx: ArrayDimContext = new ArrayDimContext(this._ctx, this.state);
+		this.enterRule(_localctx, 16, LanguageParser.RULE_arrayDim);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 132;
+			this.match(LanguageParser.LBRACK);
+			this.state = 133;
+			_la = this._input.LA(1);
+			if (!(_la === LanguageParser.ID || _la === LanguageParser.INT)) {
+			this._errHandler.recoverInline(this);
+			} else {
+				if (this._input.LA(1) === Token.EOF) {
+					this.matchedEOF = true;
+				}
+
+				this._errHandler.reportMatch(this);
+				this.consume();
+			}
+			this.state = 134;
+			this.match(LanguageParser.RBRACK);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public objectParam(): ObjectParamContext {
+		let _localctx: ObjectParamContext = new ObjectParamContext(this._ctx, this.state);
+		this.enterRule(_localctx, 18, LanguageParser.RULE_objectParam);
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 136;
+			this.match(LanguageParser.ID);
+			this.state = 137;
+			this.match(LanguageParser.ID);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public stmt(): StmtContext {
+		let _localctx: StmtContext = new StmtContext(this._ctx, this.state);
+		this.enterRule(_localctx, 20, LanguageParser.RULE_stmt);
+		try {
+			this.state = 150;
+			this._errHandler.sync(this);
+			switch ( this.interpreter.adaptivePredict(this._input, 9, this._ctx) ) {
+			case 1:
+				this.enterOuterAlt(_localctx, 1);
+				{
+				this.state = 139;
+				this.assignmentStmt();
+				}
+				break;
+
+			case 2:
+				this.enterOuterAlt(_localctx, 2);
+				{
+				this.state = 140;
+				this.callStmt();
+				}
+				break;
+
+			case 3:
+				this.enterOuterAlt(_localctx, 3);
+				{
+				this.state = 141;
+				this.printStmt();
+				}
+				break;
+
+			case 4:
+				this.enterOuterAlt(_localctx, 4);
+				{
+				this.state = 142;
+				this.ifStmt();
+				}
+				break;
+
+			case 5:
+				this.enterOuterAlt(_localctx, 5);
+				{
+				this.state = 143;
+				this.whileStmt();
+				}
+				break;
+
+			case 6:
+				this.enterOuterAlt(_localctx, 6);
+				{
+				this.state = 144;
+				this.repeatStmt();
+				}
+				break;
+
+			case 7:
+				this.enterOuterAlt(_localctx, 7);
+				{
+				this.state = 145;
+				this.forStmt();
+				}
+				break;
+
+			case 8:
+				this.enterOuterAlt(_localctx, 8);
+				{
+				this.state = 146;
+				this.returnStmt();
+				}
+				break;
+
+			case 9:
+				this.enterOuterAlt(_localctx, 9);
+				{
+				this.state = 147;
+				this.block();
+				}
+				break;
+
+			case 10:
+				this.enterOuterAlt(_localctx, 10);
+				{
+				this.state = 148;
+				this.declVectorStmt();
+				}
+				break;
+
+			case 11:
+				this.enterOuterAlt(_localctx, 11);
+				{
+				this.state = 149;
+				this.match(LanguageParser.SEMI);
+				}
+				break;
 			}
 		}
 		catch (re) {
@@ -200,76 +707,56 @@ export class LanguageParser extends Parser {
 	// @RuleVersion(0)
 	public block(): BlockContext {
 		let _localctx: BlockContext = new BlockContext(this._ctx, this.state);
-		this.enterRule(_localctx, 4, LanguageParser.RULE_block);
+		this.enterRule(_localctx, 22, LanguageParser.RULE_block);
 		let _la: number;
 		try {
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 42;
-			this.match(LanguageParser.T__4);
-			this.state = 46;
-			this._errHandler.sync(this);
-			_la = this._input.LA(1);
-			while ((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << LanguageParser.T__7) | (1 << LanguageParser.T__9) | (1 << LanguageParser.T__10))) !== 0)) {
-				{
-				{
-				this.state = 43;
-				this.statement();
-				}
-				}
-				this.state = 48;
-				this._errHandler.sync(this);
-				_la = this._input.LA(1);
-			}
-			this.state = 49;
-			this.match(LanguageParser.T__5);
-			}
-		}
-		catch (re) {
-			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
-				this._errHandler.reportError(this, re);
-				this._errHandler.recover(this, re);
-			} else {
-				throw re;
-			}
-		}
-		finally {
-			this.exitRule();
-		}
-		return _localctx;
-	}
-	// @RuleVersion(0)
-	public statement(): StatementContext {
-		let _localctx: StatementContext = new StatementContext(this._ctx, this.state);
-		this.enterRule(_localctx, 6, LanguageParser.RULE_statement);
-		try {
-			this.state = 58;
+			this.state = 168;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case LanguageParser.T__7:
+			case LanguageParser.LBRACE:
 				this.enterOuterAlt(_localctx, 1);
 				{
-				this.state = 51;
-				this.variableDecl();
-				this.state = 52;
-				this.match(LanguageParser.T__6);
+				this.state = 152;
+				this.match(LanguageParser.LBRACE);
+				this.state = 156;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+				while ((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << LanguageParser.LBRACE) | (1 << LanguageParser.SEMI) | (1 << LanguageParser.FOR_KW) | (1 << LanguageParser.WHILE_KW) | (1 << LanguageParser.IF_KW) | (1 << LanguageParser.BEGIN_KW) | (1 << LanguageParser.CALL_KW))) !== 0) || ((((_la - 43)) & ~0x1F) === 0 && ((1 << (_la - 43)) & ((1 << (LanguageParser.RETURN_KW - 43)) | (1 << (LanguageParser.REPEAT_KW - 43)) | (1 << (LanguageParser.PRINT_KW - 43)) | (1 << (LanguageParser.ID - 43)))) !== 0)) {
+					{
+					{
+					this.state = 153;
+					this.stmt();
+					}
+					}
+					this.state = 158;
+					this._errHandler.sync(this);
+					_la = this._input.LA(1);
+				}
+				this.state = 159;
+				this.match(LanguageParser.RBRACE);
 				}
 				break;
-			case LanguageParser.T__9:
+			case LanguageParser.BEGIN_KW:
 				this.enterOuterAlt(_localctx, 2);
 				{
-				this.state = 54;
-				this.forStmt();
+				this.state = 160;
+				this.match(LanguageParser.BEGIN_KW);
+				this.state = 164;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+				while ((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << LanguageParser.LBRACE) | (1 << LanguageParser.SEMI) | (1 << LanguageParser.FOR_KW) | (1 << LanguageParser.WHILE_KW) | (1 << LanguageParser.IF_KW) | (1 << LanguageParser.BEGIN_KW) | (1 << LanguageParser.CALL_KW))) !== 0) || ((((_la - 43)) & ~0x1F) === 0 && ((1 << (_la - 43)) & ((1 << (LanguageParser.RETURN_KW - 43)) | (1 << (LanguageParser.REPEAT_KW - 43)) | (1 << (LanguageParser.PRINT_KW - 43)) | (1 << (LanguageParser.ID - 43)))) !== 0)) {
+					{
+					{
+					this.state = 161;
+					this.stmt();
+					}
+					}
+					this.state = 166;
+					this._errHandler.sync(this);
+					_la = this._input.LA(1);
 				}
-				break;
-			case LanguageParser.T__10:
-				this.enterOuterAlt(_localctx, 3);
-				{
-				this.state = 55;
-				this.returnStmt();
-				this.state = 56;
-				this.match(LanguageParser.T__6);
+				this.state = 167;
+				this.match(LanguageParser.END_KW);
 				}
 				break;
 			default:
@@ -291,20 +778,28 @@ export class LanguageParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public variableDecl(): VariableDeclContext {
-		let _localctx: VariableDeclContext = new VariableDeclContext(this._ctx, this.state);
-		this.enterRule(_localctx, 8, LanguageParser.RULE_variableDecl);
+	public assignmentStmt(): AssignmentStmtContext {
+		let _localctx: AssignmentStmtContext = new AssignmentStmtContext(this._ctx, this.state);
+		this.enterRule(_localctx, 24, LanguageParser.RULE_assignmentStmt);
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 60;
-			this.match(LanguageParser.T__7);
-			this.state = 61;
-			this.match(LanguageParser.Identifier);
-			this.state = 62;
-			this.match(LanguageParser.T__8);
-			this.state = 63;
-			this.expr(0);
+			this.state = 170;
+			this.lvalue();
+			this.state = 171;
+			this.match(LanguageParser.ASSIGN);
+			this.state = 172;
+			this.expr();
+			this.state = 174;
+			this._errHandler.sync(this);
+			switch ( this.interpreter.adaptivePredict(this._input, 13, this._ctx) ) {
+			case 1:
+				{
+				this.state = 173;
+				this.match(LanguageParser.SEMI);
+				}
+				break;
+			}
 			}
 		}
 		catch (re) {
@@ -322,30 +817,241 @@ export class LanguageParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public forStmt(): ForStmtContext {
-		let _localctx: ForStmtContext = new ForStmtContext(this._ctx, this.state);
-		this.enterRule(_localctx, 10, LanguageParser.RULE_forStmt);
+	public declVectorStmt(): DeclVectorStmtContext {
+		let _localctx: DeclVectorStmtContext = new DeclVectorStmtContext(this._ctx, this.state);
+		this.enterRule(_localctx, 26, LanguageParser.RULE_declVectorStmt);
+		let _la: number;
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 65;
-			this.match(LanguageParser.T__9);
-			this.state = 66;
-			this.match(LanguageParser.T__1);
-			this.state = 67;
-			this.variableDecl();
-			this.state = 68;
-			this.match(LanguageParser.T__6);
-			this.state = 69;
-			this.expr(0);
-			this.state = 70;
-			this.match(LanguageParser.T__6);
-			this.state = 71;
-			this.assign();
-			this.state = 72;
-			this.match(LanguageParser.T__3);
-			this.state = 73;
-			this.block();
+			this.state = 176;
+			this.match(LanguageParser.ID);
+			this.state = 178;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			do {
+				{
+				{
+				this.state = 177;
+				this.indexSuffix();
+				}
+				}
+				this.state = 180;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+			} while (_la === LanguageParser.LBRACK);
+			this.state = 183;
+			this._errHandler.sync(this);
+			switch ( this.interpreter.adaptivePredict(this._input, 15, this._ctx) ) {
+			case 1:
+				{
+				this.state = 182;
+				this.match(LanguageParser.SEMI);
+				}
+				break;
+			}
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public callStmt(): CallStmtContext {
+		let _localctx: CallStmtContext = new CallStmtContext(this._ctx, this.state);
+		this.enterRule(_localctx, 28, LanguageParser.RULE_callStmt);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 185;
+			this.match(LanguageParser.CALL_KW);
+			this.state = 186;
+			this.match(LanguageParser.ID);
+			this.state = 187;
+			this.match(LanguageParser.LPAREN);
+			this.state = 189;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			if (_la === LanguageParser.LPAREN || _la === LanguageParser.MINUS || ((((_la - 34)) & ~0x1F) === 0 && ((1 << (_la - 34)) & ((1 << (LanguageParser.NOT_KW - 34)) | (1 << (LanguageParser.TRUE_KW - 34)) | (1 << (LanguageParser.FALSE_KW - 34)) | (1 << (LanguageParser.NULL_KW - 34)) | (1 << (LanguageParser.LENGTH_KW - 34)) | (1 << (LanguageParser.STRING - 34)) | (1 << (LanguageParser.ID - 34)) | (1 << (LanguageParser.INT - 34)))) !== 0)) {
+				{
+				this.state = 188;
+				this.argList();
+				}
+			}
+
+			this.state = 191;
+			this.match(LanguageParser.RPAREN);
+			this.state = 193;
+			this._errHandler.sync(this);
+			switch ( this.interpreter.adaptivePredict(this._input, 17, this._ctx) ) {
+			case 1:
+				{
+				this.state = 192;
+				this.match(LanguageParser.SEMI);
+				}
+				break;
+			}
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public printStmt(): PrintStmtContext {
+		let _localctx: PrintStmtContext = new PrintStmtContext(this._ctx, this.state);
+		this.enterRule(_localctx, 30, LanguageParser.RULE_printStmt);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 195;
+			this.match(LanguageParser.PRINT_KW);
+			this.state = 196;
+			this.match(LanguageParser.LPAREN);
+			this.state = 198;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			if (_la === LanguageParser.LPAREN || _la === LanguageParser.MINUS || ((((_la - 34)) & ~0x1F) === 0 && ((1 << (_la - 34)) & ((1 << (LanguageParser.NOT_KW - 34)) | (1 << (LanguageParser.TRUE_KW - 34)) | (1 << (LanguageParser.FALSE_KW - 34)) | (1 << (LanguageParser.NULL_KW - 34)) | (1 << (LanguageParser.LENGTH_KW - 34)) | (1 << (LanguageParser.STRING - 34)) | (1 << (LanguageParser.ID - 34)) | (1 << (LanguageParser.INT - 34)))) !== 0)) {
+				{
+				this.state = 197;
+				this.argList();
+				}
+			}
+
+			this.state = 200;
+			this.match(LanguageParser.RPAREN);
+			this.state = 202;
+			this._errHandler.sync(this);
+			switch ( this.interpreter.adaptivePredict(this._input, 19, this._ctx) ) {
+			case 1:
+				{
+				this.state = 201;
+				this.match(LanguageParser.SEMI);
+				}
+				break;
+			}
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public argList(): ArgListContext {
+		let _localctx: ArgListContext = new ArgListContext(this._ctx, this.state);
+		this.enterRule(_localctx, 32, LanguageParser.RULE_argList);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 204;
+			this.expr();
+			this.state = 209;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			while (_la === LanguageParser.T__0) {
+				{
+				{
+				this.state = 205;
+				this.match(LanguageParser.T__0);
+				this.state = 206;
+				this.expr();
+				}
+				}
+				this.state = 211;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+			}
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public repeatStmt(): RepeatStmtContext {
+		let _localctx: RepeatStmtContext = new RepeatStmtContext(this._ctx, this.state);
+		this.enterRule(_localctx, 34, LanguageParser.RULE_repeatStmt);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 212;
+			this.match(LanguageParser.REPEAT_KW);
+			this.state = 214;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			do {
+				{
+				{
+				this.state = 213;
+				this.stmt();
+				}
+				}
+				this.state = 216;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+			} while ((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << LanguageParser.LBRACE) | (1 << LanguageParser.SEMI) | (1 << LanguageParser.FOR_KW) | (1 << LanguageParser.WHILE_KW) | (1 << LanguageParser.IF_KW) | (1 << LanguageParser.BEGIN_KW) | (1 << LanguageParser.CALL_KW))) !== 0) || ((((_la - 43)) & ~0x1F) === 0 && ((1 << (_la - 43)) & ((1 << (LanguageParser.RETURN_KW - 43)) | (1 << (LanguageParser.REPEAT_KW - 43)) | (1 << (LanguageParser.PRINT_KW - 43)) | (1 << (LanguageParser.ID - 43)))) !== 0));
+			this.state = 218;
+			this.match(LanguageParser.UNTIL_KW);
+			this.state = 219;
+			this.match(LanguageParser.LPAREN);
+			this.state = 220;
+			this.expr();
+			this.state = 221;
+			this.match(LanguageParser.RPAREN);
+			this.state = 223;
+			this._errHandler.sync(this);
+			switch ( this.interpreter.adaptivePredict(this._input, 22, this._ctx) ) {
+			case 1:
+				{
+				this.state = 222;
+				this.match(LanguageParser.SEMI);
+				}
+				break;
+			}
 			}
 		}
 		catch (re) {
@@ -365,14 +1071,16 @@ export class LanguageParser extends Parser {
 	// @RuleVersion(0)
 	public returnStmt(): ReturnStmtContext {
 		let _localctx: ReturnStmtContext = new ReturnStmtContext(this._ctx, this.state);
-		this.enterRule(_localctx, 12, LanguageParser.RULE_returnStmt);
+		this.enterRule(_localctx, 36, LanguageParser.RULE_returnStmt);
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 75;
-			this.match(LanguageParser.T__10);
-			this.state = 76;
-			this.expr(0);
+			this.state = 225;
+			this.match(LanguageParser.RETURN_KW);
+			this.state = 226;
+			this.expr();
+			this.state = 227;
+			this.match(LanguageParser.SEMI);
 			}
 		}
 		catch (re) {
@@ -390,158 +1098,656 @@ export class LanguageParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public assign(): AssignContext {
-		let _localctx: AssignContext = new AssignContext(this._ctx, this.state);
-		this.enterRule(_localctx, 14, LanguageParser.RULE_assign);
-		try {
-			this.enterOuterAlt(_localctx, 1);
-			{
-			this.state = 78;
-			this.match(LanguageParser.Identifier);
-			this.state = 79;
-			this.match(LanguageParser.T__8);
-			this.state = 80;
-			this.expr(0);
-			}
-		}
-		catch (re) {
-			if (re instanceof RecognitionException) {
-				_localctx.exception = re;
-				this._errHandler.reportError(this, re);
-				this._errHandler.recover(this, re);
-			} else {
-				throw re;
-			}
-		}
-		finally {
-			this.exitRule();
-		}
-		return _localctx;
-	}
-
-	public expr(): ExprContext;
-	public expr(_p: number): ExprContext;
-	// @RuleVersion(0)
-	public expr(_p?: number): ExprContext {
-		if (_p === undefined) {
-			_p = 0;
-		}
-
-		let _parentctx: ParserRuleContext = this._ctx;
-		let _parentState: number = this.state;
-		let _localctx: ExprContext = new ExprContext(this._ctx, _parentState);
-		let _prevctx: ExprContext = _localctx;
-		let _startState: number = 16;
-		this.enterRecursionRule(_localctx, 16, LanguageParser.RULE_expr, _p);
+	public ifStmt(): IfStmtContext {
+		let _localctx: IfStmtContext = new IfStmtContext(this._ctx, this.state);
+		this.enterRule(_localctx, 38, LanguageParser.RULE_ifStmt);
 		let _la: number;
 		try {
-			let _alt: number;
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 90;
+			this.state = 229;
+			this.match(LanguageParser.IF_KW);
+			this.state = 230;
+			this.match(LanguageParser.LPAREN);
+			this.state = 231;
+			this.expr();
+			this.state = 232;
+			this.match(LanguageParser.RPAREN);
+			this.state = 233;
+			this.match(LanguageParser.THEN_KW);
+			this.state = 234;
+			this.block();
+			this.state = 237;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			if (_la === LanguageParser.ELSE_KW) {
+				{
+				this.state = 235;
+				this.match(LanguageParser.ELSE_KW);
+				this.state = 236;
+				this.block();
+				}
+			}
+
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public whileStmt(): WhileStmtContext {
+		let _localctx: WhileStmtContext = new WhileStmtContext(this._ctx, this.state);
+		this.enterRule(_localctx, 40, LanguageParser.RULE_whileStmt);
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 239;
+			this.match(LanguageParser.WHILE_KW);
+			this.state = 240;
+			this.match(LanguageParser.LPAREN);
+			this.state = 241;
+			this.expr();
+			this.state = 242;
+			this.match(LanguageParser.RPAREN);
+			this.state = 243;
+			this.match(LanguageParser.DO_KW);
+			this.state = 244;
+			this.block();
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public forStmt(): ForStmtContext {
+		let _localctx: ForStmtContext = new ForStmtContext(this._ctx, this.state);
+		this.enterRule(_localctx, 42, LanguageParser.RULE_forStmt);
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 246;
+			this.match(LanguageParser.FOR_KW);
+			this.state = 247;
+			this.match(LanguageParser.ID);
+			this.state = 248;
+			this.match(LanguageParser.ASSIGN);
+			this.state = 249;
+			this.expr();
+			this.state = 250;
+			this.match(LanguageParser.TO_KW);
+			this.state = 251;
+			this.expr();
+			this.state = 252;
+			this.match(LanguageParser.DO_KW);
+			this.state = 253;
+			this.block();
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public lvalue(): LvalueContext {
+		let _localctx: LvalueContext = new LvalueContext(this._ctx, this.state);
+		this.enterRule(_localctx, 44, LanguageParser.RULE_lvalue);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 255;
+			this.match(LanguageParser.ID);
+			this.state = 260;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			while (_la === LanguageParser.T__1 || _la === LanguageParser.LBRACK) {
+				{
+				this.state = 258;
+				this._errHandler.sync(this);
+				switch (this._input.LA(1)) {
+				case LanguageParser.T__1:
+					{
+					this.state = 256;
+					this.fieldAccess();
+					}
+					break;
+				case LanguageParser.LBRACK:
+					{
+					this.state = 257;
+					this.indexSuffix();
+					}
+					break;
+				default:
+					throw new NoViableAltException(this);
+				}
+				}
+				this.state = 262;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+			}
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public fieldAccess(): FieldAccessContext {
+		let _localctx: FieldAccessContext = new FieldAccessContext(this._ctx, this.state);
+		this.enterRule(_localctx, 46, LanguageParser.RULE_fieldAccess);
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 263;
+			this.match(LanguageParser.T__1);
+			this.state = 264;
+			this.match(LanguageParser.ID);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public indexSuffix(): IndexSuffixContext {
+		let _localctx: IndexSuffixContext = new IndexSuffixContext(this._ctx, this.state);
+		this.enterRule(_localctx, 48, LanguageParser.RULE_indexSuffix);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 266;
+			this.match(LanguageParser.LBRACK);
+			this.state = 267;
+			this.expr();
+			this.state = 270;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			if (_la === LanguageParser.RANGE) {
+				{
+				this.state = 268;
+				this.match(LanguageParser.RANGE);
+				this.state = 269;
+				this.expr();
+				}
+			}
+
+			this.state = 272;
+			this.match(LanguageParser.RBRACK);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public expr(): ExprContext {
+		let _localctx: ExprContext = new ExprContext(this._ctx, this.state);
+		this.enterRule(_localctx, 50, LanguageParser.RULE_expr);
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 274;
+			this.orExpr();
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public orExpr(): OrExprContext {
+		let _localctx: OrExprContext = new OrExprContext(this._ctx, this.state);
+		this.enterRule(_localctx, 52, LanguageParser.RULE_orExpr);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 276;
+			this.andExpr();
+			this.state = 281;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			while (_la === LanguageParser.OR_KW) {
+				{
+				{
+				this.state = 277;
+				this.match(LanguageParser.OR_KW);
+				this.state = 278;
+				this.andExpr();
+				}
+				}
+				this.state = 283;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+			}
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public andExpr(): AndExprContext {
+		let _localctx: AndExprContext = new AndExprContext(this._ctx, this.state);
+		this.enterRule(_localctx, 54, LanguageParser.RULE_andExpr);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 284;
+			this.relExpr();
+			this.state = 289;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			while (_la === LanguageParser.AND_KW) {
+				{
+				{
+				this.state = 285;
+				this.match(LanguageParser.AND_KW);
+				this.state = 286;
+				this.relExpr();
+				}
+				}
+				this.state = 291;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+			}
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public relExpr(): RelExprContext {
+		let _localctx: RelExprContext = new RelExprContext(this._ctx, this.state);
+		this.enterRule(_localctx, 56, LanguageParser.RULE_relExpr);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 292;
+			this.addExpr();
+			this.state = 297;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			while ((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << LanguageParser.EQ) | (1 << LanguageParser.NEQ) | (1 << LanguageParser.LE) | (1 << LanguageParser.GE) | (1 << LanguageParser.LT) | (1 << LanguageParser.GT))) !== 0)) {
+				{
+				{
+				this.state = 293;
+				_la = this._input.LA(1);
+				if (!((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << LanguageParser.EQ) | (1 << LanguageParser.NEQ) | (1 << LanguageParser.LE) | (1 << LanguageParser.GE) | (1 << LanguageParser.LT) | (1 << LanguageParser.GT))) !== 0))) {
+				this._errHandler.recoverInline(this);
+				} else {
+					if (this._input.LA(1) === Token.EOF) {
+						this.matchedEOF = true;
+					}
+
+					this._errHandler.reportMatch(this);
+					this.consume();
+				}
+				this.state = 294;
+				this.addExpr();
+				}
+				}
+				this.state = 299;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+			}
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public addExpr(): AddExprContext {
+		let _localctx: AddExprContext = new AddExprContext(this._ctx, this.state);
+		this.enterRule(_localctx, 58, LanguageParser.RULE_addExpr);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 300;
+			this.mulExpr();
+			this.state = 305;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			while (_la === LanguageParser.PLUS || _la === LanguageParser.MINUS) {
+				{
+				{
+				this.state = 301;
+				_la = this._input.LA(1);
+				if (!(_la === LanguageParser.PLUS || _la === LanguageParser.MINUS)) {
+				this._errHandler.recoverInline(this);
+				} else {
+					if (this._input.LA(1) === Token.EOF) {
+						this.matchedEOF = true;
+					}
+
+					this._errHandler.reportMatch(this);
+					this.consume();
+				}
+				this.state = 302;
+				this.mulExpr();
+				}
+				}
+				this.state = 307;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+			}
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public mulExpr(): MulExprContext {
+		let _localctx: MulExprContext = new MulExprContext(this._ctx, this.state);
+		this.enterRule(_localctx, 60, LanguageParser.RULE_mulExpr);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 308;
+			this.unaryExpr();
+			this.state = 313;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			while (((((_la - 14)) & ~0x1F) === 0 && ((1 << (_la - 14)) & ((1 << (LanguageParser.MUL - 14)) | (1 << (LanguageParser.DIVOP - 14)) | (1 << (LanguageParser.DIV_KW - 14)) | (1 << (LanguageParser.MOD_KW - 14)))) !== 0)) {
+				{
+				{
+				this.state = 309;
+				_la = this._input.LA(1);
+				if (!(((((_la - 14)) & ~0x1F) === 0 && ((1 << (_la - 14)) & ((1 << (LanguageParser.MUL - 14)) | (1 << (LanguageParser.DIVOP - 14)) | (1 << (LanguageParser.DIV_KW - 14)) | (1 << (LanguageParser.MOD_KW - 14)))) !== 0))) {
+				this._errHandler.recoverInline(this);
+				} else {
+					if (this._input.LA(1) === Token.EOF) {
+						this.matchedEOF = true;
+					}
+
+					this._errHandler.reportMatch(this);
+					this.consume();
+				}
+				this.state = 310;
+				this.unaryExpr();
+				}
+				}
+				this.state = 315;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+			}
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public unaryExpr(): UnaryExprContext {
+		let _localctx: UnaryExprContext = new UnaryExprContext(this._ctx, this.state);
+		this.enterRule(_localctx, 62, LanguageParser.RULE_unaryExpr);
+		try {
+			this.state = 321;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
-			case LanguageParser.Identifier:
+			case LanguageParser.NOT_KW:
+				this.enterOuterAlt(_localctx, 1);
 				{
-				this.state = 83;
-				this.match(LanguageParser.Identifier);
+				this.state = 316;
+				this.match(LanguageParser.NOT_KW);
+				this.state = 317;
+				this.unaryExpr();
 				}
 				break;
-			case LanguageParser.Number:
+			case LanguageParser.MINUS:
+				this.enterOuterAlt(_localctx, 2);
 				{
-				this.state = 84;
-				this.match(LanguageParser.Number);
+				this.state = 318;
+				this.match(LanguageParser.MINUS);
+				this.state = 319;
+				this.unaryExpr();
 				}
 				break;
-			case LanguageParser.ArrayAccess:
+			case LanguageParser.LPAREN:
+			case LanguageParser.TRUE_KW:
+			case LanguageParser.FALSE_KW:
+			case LanguageParser.NULL_KW:
+			case LanguageParser.LENGTH_KW:
+			case LanguageParser.STRING:
+			case LanguageParser.ID:
+			case LanguageParser.INT:
+				this.enterOuterAlt(_localctx, 3);
 				{
-				this.state = 85;
-				this.match(LanguageParser.ArrayAccess);
-				}
-				break;
-			case LanguageParser.T__1:
-				{
-				this.state = 86;
-				this.match(LanguageParser.T__1);
-				this.state = 87;
-				this.expr(0);
-				this.state = 88;
-				this.match(LanguageParser.T__3);
+				this.state = 320;
+				this.primary();
 				}
 				break;
 			default:
 				throw new NoViableAltException(this);
 			}
-			this._ctx._stop = this._input.tryLT(-1);
-			this.state = 100;
-			this._errHandler.sync(this);
-			_alt = this.interpreter.adaptivePredict(this._input, 7, this._ctx);
-			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
-				if (_alt === 1) {
-					if (this._parseListeners != null) {
-						this.triggerExitRuleEvent();
-					}
-					_prevctx = _localctx;
-					{
-					this.state = 98;
-					this._errHandler.sync(this);
-					switch ( this.interpreter.adaptivePredict(this._input, 6, this._ctx) ) {
-					case 1:
-						{
-						_localctx = new ExprContext(_parentctx, _parentState);
-						this.pushNewRecursionContext(_localctx, _startState, LanguageParser.RULE_expr);
-						this.state = 92;
-						if (!(this.precpred(this._ctx, 6))) {
-							throw this.createFailedPredicateException("this.precpred(this._ctx, 6)");
-						}
-						this.state = 93;
-						_la = this._input.LA(1);
-						if (!(_la === LanguageParser.T__11 || _la === LanguageParser.T__12)) {
-						this._errHandler.recoverInline(this);
-						} else {
-							if (this._input.LA(1) === Token.EOF) {
-								this.matchedEOF = true;
-							}
-
-							this._errHandler.reportMatch(this);
-							this.consume();
-						}
-						this.state = 94;
-						this.expr(7);
-						}
-						break;
-
-					case 2:
-						{
-						_localctx = new ExprContext(_parentctx, _parentState);
-						this.pushNewRecursionContext(_localctx, _startState, LanguageParser.RULE_expr);
-						this.state = 95;
-						if (!(this.precpred(this._ctx, 5))) {
-							throw this.createFailedPredicateException("this.precpred(this._ctx, 5)");
-						}
-						this.state = 96;
-						_la = this._input.LA(1);
-						if (!(_la === LanguageParser.T__13 || _la === LanguageParser.T__14)) {
-						this._errHandler.recoverInline(this);
-						} else {
-							if (this._input.LA(1) === Token.EOF) {
-								this.matchedEOF = true;
-							}
-
-							this._errHandler.reportMatch(this);
-							this.consume();
-						}
-						this.state = 97;
-						this.expr(6);
-						}
-						break;
-					}
-					}
-				}
-				this.state = 102;
-				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 7, this._ctx);
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
 			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public primary(): PrimaryContext {
+		let _localctx: PrimaryContext = new PrimaryContext(this._ctx, this.state);
+		this.enterRule(_localctx, 64, LanguageParser.RULE_primary);
+		try {
+			this.state = 335;
+			this._errHandler.sync(this);
+			switch ( this.interpreter.adaptivePredict(this._input, 33, this._ctx) ) {
+			case 1:
+				this.enterOuterAlt(_localctx, 1);
+				{
+				this.state = 323;
+				this.match(LanguageParser.INT);
+				}
+				break;
+
+			case 2:
+				this.enterOuterAlt(_localctx, 2);
+				{
+				this.state = 324;
+				this.match(LanguageParser.TRUE_KW);
+				}
+				break;
+
+			case 3:
+				this.enterOuterAlt(_localctx, 3);
+				{
+				this.state = 325;
+				this.match(LanguageParser.FALSE_KW);
+				}
+				break;
+
+			case 4:
+				this.enterOuterAlt(_localctx, 4);
+				{
+				this.state = 326;
+				this.match(LanguageParser.NULL_KW);
+				}
+				break;
+
+			case 5:
+				this.enterOuterAlt(_localctx, 5);
+				{
+				this.state = 327;
+				this.match(LanguageParser.STRING);
+				}
+				break;
+
+			case 6:
+				this.enterOuterAlt(_localctx, 6);
+				{
+				this.state = 328;
+				this.lengthCall();
+				}
+				break;
+
+			case 7:
+				this.enterOuterAlt(_localctx, 7);
+				{
+				this.state = 329;
+				this.callExpr();
+				}
+				break;
+
+			case 8:
+				this.enterOuterAlt(_localctx, 8);
+				{
+				this.state = 330;
+				this.lvalue();
+				}
+				break;
+
+			case 9:
+				this.enterOuterAlt(_localctx, 9);
+				{
+				this.state = 331;
+				this.match(LanguageParser.LPAREN);
+				this.state = 332;
+				this.expr();
+				this.state = 333;
+				this.match(LanguageParser.RPAREN);
+				}
+				break;
 			}
 		}
 		catch (re) {
@@ -554,72 +1760,246 @@ export class LanguageParser extends Parser {
 			}
 		}
 		finally {
-			this.unrollRecursionContexts(_parentctx);
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public lengthCall(): LengthCallContext {
+		let _localctx: LengthCallContext = new LengthCallContext(this._ctx, this.state);
+		this.enterRule(_localctx, 66, LanguageParser.RULE_lengthCall);
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 337;
+			this.match(LanguageParser.LENGTH_KW);
+			this.state = 338;
+			this.match(LanguageParser.LPAREN);
+			this.state = 339;
+			this.expr();
+			this.state = 340;
+			this.match(LanguageParser.RPAREN);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
+		}
+		return _localctx;
+	}
+	// @RuleVersion(0)
+	public callExpr(): CallExprContext {
+		let _localctx: CallExprContext = new CallExprContext(this._ctx, this.state);
+		this.enterRule(_localctx, 68, LanguageParser.RULE_callExpr);
+		let _la: number;
+		try {
+			this.enterOuterAlt(_localctx, 1);
+			{
+			this.state = 342;
+			this.match(LanguageParser.ID);
+			this.state = 343;
+			this.match(LanguageParser.LPAREN);
+			this.state = 345;
+			this._errHandler.sync(this);
+			_la = this._input.LA(1);
+			if (_la === LanguageParser.LPAREN || _la === LanguageParser.MINUS || ((((_la - 34)) & ~0x1F) === 0 && ((1 << (_la - 34)) & ((1 << (LanguageParser.NOT_KW - 34)) | (1 << (LanguageParser.TRUE_KW - 34)) | (1 << (LanguageParser.FALSE_KW - 34)) | (1 << (LanguageParser.NULL_KW - 34)) | (1 << (LanguageParser.LENGTH_KW - 34)) | (1 << (LanguageParser.STRING - 34)) | (1 << (LanguageParser.ID - 34)) | (1 << (LanguageParser.INT - 34)))) !== 0)) {
+				{
+				this.state = 344;
+				this.argList();
+				}
+			}
+
+			this.state = 347;
+			this.match(LanguageParser.RPAREN);
+			}
+		}
+		catch (re) {
+			if (re instanceof RecognitionException) {
+				_localctx.exception = re;
+				this._errHandler.reportError(this, re);
+				this._errHandler.recover(this, re);
+			} else {
+				throw re;
+			}
+		}
+		finally {
+			this.exitRule();
 		}
 		return _localctx;
 	}
 
-	public sempred(_localctx: RuleContext, ruleIndex: number, predIndex: number): boolean {
-		switch (ruleIndex) {
-		case 8:
-			return this.expr_sempred(_localctx as ExprContext, predIndex);
-		}
-		return true;
-	}
-	private expr_sempred(_localctx: ExprContext, predIndex: number): boolean {
-		switch (predIndex) {
-		case 0:
-			return this.precpred(this._ctx, 6);
-
-		case 1:
-			return this.precpred(this._ctx, 5);
-		}
-		return true;
-	}
-
 	public static readonly _serializedATN: string =
-		"\x03\uC91D\uCABA\u058D\uAFBA\u4F53\u0607\uEA8B\uC241\x03\x15j\x04\x02" +
+		"\x03\uC91D\uCABA\u058D\uAFBA\u4F53\u0607\uEA8B\uC241\x035\u0160\x04\x02" +
 		"\t\x02\x04\x03\t\x03\x04\x04\t\x04\x04\x05\t\x05\x04\x06\t\x06\x04\x07" +
-		"\t\x07\x04\b\t\b\x04\t\t\t\x04\n\t\n\x03\x02\x07\x02\x16\n\x02\f\x02\x0E" +
-		"\x02\x19\v\x02\x03\x02\x03\x02\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03" +
-		"\x03\x03\x07\x03#\n\x03\f\x03\x0E\x03&\v\x03\x05\x03(\n\x03\x03\x03\x03" +
-		"\x03\x03\x03\x03\x04\x03\x04\x07\x04/\n\x04\f\x04\x0E\x042\v\x04\x03\x04" +
-		"\x03\x04\x03\x05\x03\x05\x03\x05\x03\x05\x03\x05\x03\x05\x03\x05\x05\x05" +
-		"=\n\x05\x03\x06\x03\x06\x03\x06\x03\x06\x03\x06\x03\x07\x03\x07\x03\x07" +
-		"\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\b\x03\b\x03" +
-		"\b\x03\t\x03\t\x03\t\x03\t\x03\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03" +
-		"\n\x05\n]\n\n\x03\n\x03\n\x03\n\x03\n\x03\n\x03\n\x07\ne\n\n\f\n\x0E\n" +
-		"h\v\n\x03\n\x02\x02\x03\x12\v\x02\x02\x04\x02\x06\x02\b\x02\n\x02\f\x02" +
-		"\x0E\x02\x10\x02\x12\x02\x02\x04\x03\x02\x0E\x0F\x03\x02\x10\x11\x02k" +
-		"\x02\x17\x03\x02\x02\x02\x04\x1C\x03\x02\x02\x02\x06,\x03\x02\x02\x02" +
-		"\b<\x03\x02\x02\x02\n>\x03\x02\x02\x02\fC\x03\x02\x02\x02\x0EM\x03\x02" +
-		"\x02\x02\x10P\x03\x02\x02\x02\x12\\\x03\x02\x02\x02\x14\x16\x05\x04\x03" +
-		"\x02\x15\x14\x03\x02\x02\x02\x16\x19\x03\x02\x02\x02\x17\x15\x03\x02\x02" +
-		"\x02\x17\x18\x03\x02\x02\x02\x18\x1A\x03\x02\x02\x02\x19\x17\x03\x02\x02" +
-		"\x02\x1A\x1B\x07\x02\x02\x03\x1B\x03\x03\x02\x02\x02\x1C\x1D\x07\x03\x02" +
-		"\x02\x1D\x1E\x07\x13\x02\x02\x1E\'\x07\x04\x02\x02\x1F$\x07\x13\x02\x02" +
-		" !\x07\x05\x02\x02!#\x07\x13\x02\x02\" \x03\x02\x02\x02#&\x03\x02\x02" +
-		"\x02$\"\x03\x02\x02\x02$%\x03\x02\x02\x02%(\x03\x02\x02\x02&$\x03\x02" +
-		"\x02\x02\'\x1F\x03\x02\x02\x02\'(\x03\x02\x02\x02()\x03\x02\x02\x02)*" +
-		"\x07\x06\x02\x02*+\x05\x06\x04\x02+\x05\x03\x02\x02\x02,0\x07\x07\x02" +
-		"\x02-/\x05\b\x05\x02.-\x03\x02\x02\x02/2\x03\x02\x02\x020.\x03\x02\x02" +
-		"\x0201\x03\x02\x02\x0213\x03\x02\x02\x0220\x03\x02\x02\x0234\x07\b\x02" +
-		"\x024\x07\x03\x02\x02\x0256\x05\n\x06\x0267\x07\t\x02\x027=\x03\x02\x02" +
-		"\x028=\x05\f\x07\x029:\x05\x0E\b\x02:;\x07\t\x02\x02;=\x03\x02\x02\x02" +
-		"<5\x03\x02\x02\x02<8\x03\x02\x02\x02<9\x03\x02\x02\x02=\t\x03\x02\x02" +
-		"\x02>?\x07\n\x02\x02?@\x07\x13\x02\x02@A\x07\v\x02\x02AB\x05\x12\n\x02" +
-		"B\v\x03\x02\x02\x02CD\x07\f\x02\x02DE\x07\x04\x02\x02EF\x05\n\x06\x02" +
-		"FG\x07\t\x02\x02GH\x05\x12\n\x02HI\x07\t\x02\x02IJ\x05\x10\t\x02JK\x07" +
-		"\x06\x02\x02KL\x05\x06\x04\x02L\r\x03\x02\x02\x02MN\x07\r\x02\x02NO\x05" +
-		"\x12\n\x02O\x0F\x03\x02\x02\x02PQ\x07\x13\x02\x02QR\x07\v\x02\x02RS\x05" +
-		"\x12\n\x02S\x11\x03\x02\x02\x02TU\b\n\x01\x02U]\x07\x13\x02\x02V]\x07" +
-		"\x14\x02\x02W]\x07\x12\x02\x02XY\x07\x04\x02\x02YZ\x05\x12\n\x02Z[\x07" +
-		"\x06\x02\x02[]\x03\x02\x02\x02\\T\x03\x02\x02\x02\\V\x03\x02\x02\x02\\" +
-		"W\x03\x02\x02\x02\\X\x03\x02\x02\x02]f\x03\x02\x02\x02^_\f\b\x02\x02_" +
-		"`\t\x02\x02\x02`e\x05\x12\n\tab\f\x07\x02\x02bc\t\x03\x02\x02ce\x05\x12" +
-		"\n\bd^\x03\x02\x02\x02da\x03\x02\x02\x02eh\x03\x02\x02\x02fd\x03\x02\x02" +
-		"\x02fg\x03\x02\x02\x02g\x13\x03\x02\x02\x02hf\x03\x02\x02\x02\n\x17$\'" +
-		"0<\\df";
+		"\t\x07\x04\b\t\b\x04\t\t\t\x04\n\t\n\x04\v\t\v\x04\f\t\f\x04\r\t\r\x04" +
+		"\x0E\t\x0E\x04\x0F\t\x0F\x04\x10\t\x10\x04\x11\t\x11\x04\x12\t\x12\x04" +
+		"\x13\t\x13\x04\x14\t\x14\x04\x15\t\x15\x04\x16\t\x16\x04\x17\t\x17\x04" +
+		"\x18\t\x18\x04\x19\t\x19\x04\x1A\t\x1A\x04\x1B\t\x1B\x04\x1C\t\x1C\x04" +
+		"\x1D\t\x1D\x04\x1E\t\x1E\x04\x1F\t\x1F\x04 \t \x04!\t!\x04\"\t\"\x04#" +
+		"\t#\x04$\t$\x03\x02\x07\x02J\n\x02\f\x02\x0E\x02M\v\x02\x03\x02\x03\x02" +
+		"\x07\x02Q\n\x02\f\x02\x0E\x02T\v\x02\x03\x02\x03\x02\x03\x03\x03\x03\x03" +
+		"\x03\x03\x03\x05\x03\\\n\x03\x03\x03\x03\x03\x03\x04\x06\x04a\n\x04\r" +
+		"\x04\x0E\x04b\x03\x05\x03\x05\x03\x05\x05\x05h\n\x05\x03\x05\x03\x05\x03" +
+		"\x05\x03\x06\x03\x06\x03\x06\x07\x06p\n\x06\f\x06\x0E\x06s\v\x06\x03\x07" +
+		"\x03\x07\x03\x07\x05\x07x\n\x07\x03\b\x03\b\x03\b\x03\b\x03\b\x03\b\x03" +
+		"\b\x03\b\x03\b\x05\b\x83\n\b\x03\t\x03\t\x03\n\x03\n\x03\n\x03\n\x03\v" +
+		"\x03\v\x03\v\x03\f\x03\f\x03\f\x03\f\x03\f\x03\f\x03\f\x03\f\x03\f\x03" +
+		"\f\x03\f\x05\f\x99\n\f\x03\r\x03\r\x07\r\x9D\n\r\f\r\x0E\r\xA0\v\r\x03" +
+		"\r\x03\r\x03\r\x07\r\xA5\n\r\f\r\x0E\r\xA8\v\r\x03\r\x05\r\xAB\n\r\x03" +
+		"\x0E\x03\x0E\x03\x0E\x03\x0E\x05\x0E\xB1\n\x0E\x03\x0F\x03\x0F\x06\x0F" +
+		"\xB5\n\x0F\r\x0F\x0E\x0F\xB6\x03\x0F\x05\x0F\xBA\n\x0F\x03\x10\x03\x10" +
+		"\x03\x10\x03\x10\x05\x10\xC0\n\x10\x03\x10\x03\x10\x05\x10\xC4\n\x10\x03" +
+		"\x11\x03\x11\x03\x11\x05\x11\xC9\n\x11\x03\x11\x03\x11\x05\x11\xCD\n\x11" +
+		"\x03\x12\x03\x12\x03\x12\x07\x12\xD2\n\x12\f\x12\x0E\x12\xD5\v\x12\x03" +
+		"\x13\x03\x13\x06\x13\xD9\n\x13\r\x13\x0E\x13\xDA\x03\x13\x03\x13\x03\x13" +
+		"\x03\x13\x03\x13\x05\x13\xE2\n\x13\x03\x14\x03\x14\x03\x14\x03\x14\x03" +
+		"\x15\x03\x15\x03\x15\x03\x15\x03\x15\x03\x15\x03\x15\x03\x15\x05\x15\xF0" +
+		"\n\x15\x03\x16\x03\x16\x03\x16\x03\x16\x03\x16\x03\x16\x03\x16\x03\x17" +
+		"\x03\x17\x03\x17\x03\x17\x03\x17\x03\x17\x03\x17\x03\x17\x03\x17\x03\x18" +
+		"\x03\x18\x03\x18\x07\x18\u0105\n\x18\f\x18\x0E\x18\u0108\v\x18\x03\x19" +
+		"\x03\x19\x03\x19\x03\x1A\x03\x1A\x03\x1A\x03\x1A\x05\x1A\u0111\n\x1A\x03" +
+		"\x1A\x03\x1A\x03\x1B\x03\x1B\x03\x1C\x03\x1C\x03\x1C\x07\x1C\u011A\n\x1C" +
+		"\f\x1C\x0E\x1C\u011D\v\x1C\x03\x1D\x03\x1D\x03\x1D\x07\x1D\u0122\n\x1D" +
+		"\f\x1D\x0E\x1D\u0125\v\x1D\x03\x1E\x03\x1E\x03\x1E\x07\x1E\u012A\n\x1E" +
+		"\f\x1E\x0E\x1E\u012D\v\x1E\x03\x1F\x03\x1F\x03\x1F\x07\x1F\u0132\n\x1F" +
+		"\f\x1F\x0E\x1F\u0135\v\x1F\x03 \x03 \x03 \x07 \u013A\n \f \x0E \u013D" +
+		"\v \x03!\x03!\x03!\x03!\x03!\x05!\u0144\n!\x03\"\x03\"\x03\"\x03\"\x03" +
+		"\"\x03\"\x03\"\x03\"\x03\"\x03\"\x03\"\x03\"\x05\"\u0152\n\"\x03#\x03" +
+		"#\x03#\x03#\x03#\x03$\x03$\x03$\x05$\u015C\n$\x03$\x03$\x03$\x02\x02\x02" +
+		"%\x02\x02\x04\x02\x06\x02\b\x02\n\x02\f\x02\x0E\x02\x10\x02\x12\x02\x14" +
+		"\x02\x16\x02\x18\x02\x1A\x02\x1C\x02\x1E\x02 \x02\"\x02$\x02&\x02(\x02" +
+		"*\x02,\x02.\x020\x022\x024\x026\x028\x02:\x02<\x02>\x02@\x02B\x02D\x02" +
+		"F\x02\x02\x06\x03\x0212\x03\x02\x12\x17\x03\x02\x0E\x0F\x04\x02\x10\x11" +
+		")*\x02\u0171\x02K\x03\x02\x02\x02\x04W\x03\x02\x02\x02\x06`\x03\x02\x02" +
+		"\x02\bd\x03\x02\x02\x02\nl\x03\x02\x02\x02\fw\x03\x02\x02\x02\x0Ey\x03" +
+		"\x02\x02\x02\x10\x84\x03\x02\x02\x02\x12\x86\x03\x02\x02\x02\x14\x8A\x03" +
+		"\x02\x02\x02\x16\x98\x03\x02\x02\x02\x18\xAA\x03\x02\x02\x02\x1A\xAC\x03" +
+		"\x02\x02\x02\x1C\xB2\x03\x02\x02\x02\x1E\xBB\x03\x02\x02\x02 \xC5\x03" +
+		"\x02\x02\x02\"\xCE\x03\x02\x02\x02$\xD6\x03\x02\x02\x02&\xE3\x03\x02\x02" +
+		"\x02(\xE7\x03\x02\x02\x02*\xF1\x03\x02\x02\x02,\xF8\x03\x02\x02\x02.\u0101" +
+		"\x03\x02\x02\x020\u0109\x03\x02\x02\x022\u010C\x03\x02\x02\x024\u0114" +
+		"\x03\x02\x02\x026\u0116\x03\x02\x02\x028\u011E\x03\x02\x02\x02:\u0126" +
+		"\x03\x02\x02\x02<\u012E\x03\x02\x02\x02>\u0136\x03\x02\x02\x02@\u0143" +
+		"\x03\x02\x02\x02B\u0151\x03\x02\x02\x02D\u0153\x03\x02\x02\x02F\u0158" +
+		"\x03\x02\x02\x02HJ\x05\x04\x03\x02IH\x03\x02\x02\x02JM\x03\x02\x02\x02" +
+		"KI\x03\x02\x02\x02KL\x03\x02\x02\x02LR\x03\x02\x02\x02MK\x03\x02\x02\x02" +
+		"NQ\x05\b\x05\x02OQ\x05\x16\f\x02PN\x03\x02\x02\x02PO\x03\x02\x02\x02Q" +
+		"T\x03\x02\x02\x02RP\x03\x02\x02\x02RS\x03\x02\x02\x02SU\x03\x02\x02\x02" +
+		"TR\x03\x02\x02\x02UV\x07\x02\x02\x03V\x03\x03\x02\x02\x02WX\x07,\x02\x02" +
+		"XY\x071\x02\x02Y[\x07\x07\x02\x02Z\\\x05\x06\x04\x02[Z\x03\x02\x02\x02" +
+		"[\\\x03\x02\x02\x02\\]\x03\x02\x02\x02]^\x07\b\x02\x02^\x05\x03\x02\x02" +
+		"\x02_a\x071\x02\x02`_\x03\x02\x02\x02ab\x03\x02\x02\x02b`\x03\x02\x02" +
+		"\x02bc\x03\x02\x02\x02c\x07\x03\x02\x02\x02de\x071\x02\x02eg\x07\x05\x02" +
+		"\x02fh\x05\n\x06\x02gf\x03\x02\x02\x02gh\x03\x02\x02\x02hi\x03\x02\x02" +
+		"\x02ij\x07\x06\x02\x02jk\x05\x18\r\x02k\t\x03\x02\x02\x02lq\x05\f\x07" +
+		"\x02mn\x07\x03\x02\x02np\x05\f\x07\x02om\x03\x02\x02\x02ps\x03\x02\x02" +
+		"\x02qo\x03\x02\x02\x02qr\x03\x02\x02\x02r\v\x03\x02\x02\x02sq\x03\x02" +
+		"\x02\x02tx\x05\x0E\b\x02ux\x05\x14\v\x02vx\x071\x02\x02wt\x03\x02\x02" +
+		"\x02wu\x03\x02\x02\x02wv\x03\x02\x02\x02x\r\x03\x02\x02\x02yz\x071\x02" +
+		"\x02z{\x07\t\x02\x02{|\x05\x10\t\x02|\x82\x07\n\x02\x02}~\x07\v\x02\x02" +
+		"~\x7F\x07\t\x02\x02\x7F\x80\x05\x10\t\x02\x80\x81\x07\n\x02\x02\x81\x83" +
+		"\x03\x02\x02\x02\x82}\x03\x02\x02\x02\x82\x83\x03\x02\x02\x02\x83\x0F" +
+		"\x03\x02\x02\x02\x84\x85\t\x02\x02\x02\x85\x11\x03\x02\x02\x02\x86\x87" +
+		"\x07\t\x02\x02\x87\x88\t\x02\x02\x02\x88\x89\x07\n\x02\x02\x89\x13\x03" +
+		"\x02\x02\x02\x8A\x8B\x071\x02\x02\x8B\x8C\x071\x02\x02\x8C\x15\x03\x02" +
+		"\x02\x02\x8D\x99\x05\x1A\x0E\x02\x8E\x99\x05\x1E\x10\x02\x8F\x99\x05 " +
+		"\x11\x02\x90\x99\x05(\x15\x02\x91\x99\x05*\x16\x02\x92\x99\x05$\x13\x02" +
+		"\x93\x99\x05,\x17\x02\x94\x99\x05&\x14\x02\x95\x99\x05\x18\r\x02\x96\x99" +
+		"\x05\x1C\x0F\x02\x97\x99\x07\f\x02\x02\x98\x8D\x03\x02\x02\x02\x98\x8E" +
+		"\x03\x02\x02\x02\x98\x8F\x03\x02\x02\x02\x98\x90\x03\x02\x02\x02\x98\x91" +
+		"\x03\x02\x02\x02\x98\x92\x03\x02\x02\x02\x98\x93\x03\x02\x02\x02\x98\x94" +
+		"\x03\x02\x02\x02\x98\x95\x03\x02\x02\x02\x98\x96\x03\x02\x02\x02\x98\x97" +
+		"\x03\x02\x02\x02\x99\x17\x03\x02\x02\x02\x9A\x9E\x07\x07\x02\x02\x9B\x9D" +
+		"\x05\x16\f\x02\x9C\x9B\x03\x02\x02\x02\x9D\xA0\x03\x02\x02\x02\x9E\x9C" +
+		"\x03\x02\x02\x02\x9E\x9F\x03\x02\x02\x02\x9F\xA1\x03\x02\x02\x02\xA0\x9E" +
+		"\x03\x02\x02\x02\xA1\xAB\x07\b\x02\x02\xA2\xA6\x07\x1D\x02\x02\xA3\xA5" +
+		"\x05\x16\f\x02\xA4\xA3\x03\x02\x02\x02\xA5\xA8\x03\x02\x02\x02\xA6\xA4" +
+		"\x03\x02\x02\x02\xA6\xA7\x03\x02\x02\x02\xA7\xA9\x03\x02\x02\x02\xA8\xA6" +
+		"\x03\x02\x02\x02\xA9\xAB\x07\x1E\x02\x02\xAA\x9A\x03\x02\x02\x02\xAA\xA2" +
+		"\x03\x02\x02\x02\xAB\x19\x03\x02\x02\x02\xAC\xAD\x05.\x18\x02\xAD\xAE" +
+		"\x07\r\x02\x02\xAE\xB0\x054\x1B\x02\xAF\xB1\x07\f\x02\x02\xB0\xAF\x03" +
+		"\x02\x02\x02\xB0\xB1\x03\x02\x02\x02\xB1\x1B\x03\x02\x02\x02\xB2\xB4\x07" +
+		"1\x02\x02\xB3\xB5\x052\x1A\x02\xB4\xB3\x03\x02\x02\x02\xB5\xB6\x03\x02" +
+		"\x02\x02\xB6\xB4\x03\x02\x02\x02\xB6\xB7\x03\x02\x02\x02\xB7\xB9\x03\x02" +
+		"\x02\x02\xB8\xBA\x07\f\x02\x02\xB9\xB8\x03\x02\x02\x02\xB9\xBA\x03\x02" +
+		"\x02\x02\xBA\x1D\x03\x02\x02\x02\xBB\xBC\x07!\x02\x02\xBC\xBD\x071\x02" +
+		"\x02\xBD\xBF\x07\x05\x02\x02\xBE\xC0\x05\"\x12\x02\xBF\xBE\x03\x02\x02" +
+		"\x02\xBF\xC0\x03\x02\x02\x02\xC0\xC1\x03\x02\x02\x02\xC1\xC3\x07\x06\x02" +
+		"\x02\xC2\xC4\x07\f\x02\x02\xC3\xC2\x03\x02\x02\x02\xC3\xC4\x03\x02\x02" +
+		"\x02\xC4\x1F\x03\x02\x02\x02\xC5\xC6\x070\x02\x02\xC6\xC8\x07\x05\x02" +
+		"\x02\xC7\xC9\x05\"\x12\x02\xC8\xC7\x03\x02\x02\x02\xC8\xC9\x03\x02\x02" +
+		"\x02\xC9\xCA\x03\x02\x02\x02\xCA\xCC\x07\x06\x02\x02\xCB\xCD\x07\f\x02" +
+		"\x02\xCC\xCB\x03\x02\x02\x02\xCC\xCD\x03\x02\x02\x02\xCD!\x03\x02\x02" +
+		"\x02\xCE\xD3\x054\x1B\x02\xCF\xD0\x07\x03\x02\x02\xD0\xD2\x054\x1B\x02" +
+		"\xD1\xCF\x03\x02\x02\x02\xD2\xD5\x03\x02\x02\x02\xD3\xD1\x03\x02\x02\x02" +
+		"\xD3\xD4\x03\x02\x02\x02\xD4#\x03\x02\x02\x02\xD5\xD3\x03\x02\x02\x02" +
+		"\xD6\xD8\x07.\x02\x02\xD7\xD9\x05\x16\f\x02\xD8\xD7\x03\x02\x02\x02\xD9" +
+		"\xDA\x03\x02\x02\x02\xDA\xD8\x03\x02\x02\x02\xDA\xDB\x03\x02\x02\x02\xDB" +
+		"\xDC\x03\x02\x02\x02\xDC\xDD\x07/\x02\x02\xDD\xDE\x07\x05\x02\x02\xDE" +
+		"\xDF\x054\x1B\x02\xDF\xE1\x07\x06\x02\x02\xE0\xE2\x07\f\x02\x02\xE1\xE0" +
+		"\x03\x02\x02\x02\xE1\xE2\x03\x02\x02\x02\xE2%\x03\x02\x02\x02\xE3\xE4" +
+		"\x07-\x02\x02\xE4\xE5\x054\x1B\x02\xE5\xE6\x07\f\x02\x02\xE6\'\x03\x02" +
+		"\x02\x02\xE7\xE8\x07\x1A\x02\x02\xE8\xE9\x07\x05\x02\x02\xE9\xEA\x054" +
+		"\x1B\x02\xEA\xEB\x07\x06\x02\x02\xEB\xEC\x07\x1B\x02\x02\xEC\xEF\x05\x18" +
+		"\r\x02\xED\xEE\x07\x1C\x02\x02\xEE\xF0\x05\x18\r\x02\xEF\xED\x03\x02\x02" +
+		"\x02\xEF\xF0\x03\x02\x02\x02\xF0)\x03\x02\x02\x02\xF1\xF2\x07\x19\x02" +
+		"\x02\xF2\xF3\x07\x05\x02\x02\xF3\xF4\x054\x1B\x02\xF4\xF5\x07\x06\x02" +
+		"\x02\xF5\xF6\x07 \x02\x02\xF6\xF7\x05\x18\r\x02\xF7+\x03\x02\x02\x02\xF8" +
+		"\xF9\x07\x18\x02\x02\xF9\xFA\x071\x02\x02\xFA\xFB\x07\r\x02\x02\xFB\xFC" +
+		"\x054\x1B\x02\xFC\xFD\x07\x1F\x02\x02\xFD\xFE\x054\x1B\x02\xFE\xFF\x07" +
+		" \x02\x02\xFF\u0100\x05\x18\r\x02\u0100-\x03\x02\x02\x02\u0101\u0106\x07" +
+		"1\x02\x02\u0102\u0105\x050\x19\x02\u0103\u0105\x052\x1A\x02\u0104\u0102" +
+		"\x03\x02\x02\x02\u0104\u0103\x03\x02\x02\x02\u0105\u0108\x03\x02\x02\x02" +
+		"\u0106\u0104\x03\x02\x02\x02\u0106\u0107\x03\x02\x02\x02\u0107/\x03\x02" +
+		"\x02\x02\u0108\u0106\x03\x02\x02\x02\u0109\u010A\x07\x04\x02\x02\u010A" +
+		"\u010B\x071\x02\x02\u010B1\x03\x02\x02\x02\u010C\u010D\x07\t\x02\x02\u010D" +
+		"\u0110\x054\x1B\x02\u010E\u010F\x07\v\x02\x02\u010F\u0111\x054\x1B\x02" +
+		"\u0110\u010E\x03\x02\x02\x02\u0110\u0111\x03\x02\x02\x02\u0111\u0112\x03" +
+		"\x02\x02\x02\u0112\u0113\x07\n\x02\x02\u01133\x03\x02\x02\x02\u0114\u0115" +
+		"\x056\x1C\x02\u01155\x03\x02\x02\x02\u0116\u011B\x058\x1D\x02\u0117\u0118" +
+		"\x07#\x02\x02\u0118\u011A\x058\x1D\x02\u0119\u0117\x03\x02\x02\x02\u011A" +
+		"\u011D\x03\x02\x02\x02\u011B\u0119\x03\x02\x02\x02\u011B\u011C\x03\x02" +
+		"\x02\x02\u011C7\x03\x02\x02\x02\u011D\u011B\x03\x02\x02\x02\u011E\u0123" +
+		"\x05:\x1E\x02\u011F\u0120\x07\"\x02\x02\u0120\u0122\x05:\x1E\x02\u0121" +
+		"\u011F\x03\x02\x02\x02\u0122\u0125\x03\x02\x02\x02\u0123\u0121\x03\x02" +
+		"\x02\x02\u0123\u0124\x03\x02\x02\x02\u01249\x03\x02\x02\x02\u0125\u0123" +
+		"\x03\x02\x02\x02\u0126\u012B\x05<\x1F\x02\u0127\u0128\t\x03\x02\x02\u0128" +
+		"\u012A\x05<\x1F\x02\u0129\u0127\x03\x02\x02\x02\u012A\u012D\x03\x02\x02" +
+		"\x02\u012B\u0129\x03\x02\x02\x02\u012B\u012C\x03\x02\x02\x02\u012C;\x03" +
+		"\x02\x02\x02\u012D\u012B\x03\x02\x02\x02\u012E\u0133\x05> \x02\u012F\u0130" +
+		"\t\x04\x02\x02\u0130\u0132\x05> \x02\u0131\u012F\x03\x02\x02\x02\u0132" +
+		"\u0135\x03\x02\x02\x02\u0133\u0131\x03\x02\x02\x02\u0133\u0134\x03\x02" +
+		"\x02\x02\u0134=\x03\x02\x02\x02\u0135\u0133\x03\x02\x02\x02\u0136\u013B" +
+		"\x05@!\x02\u0137\u0138\t\x05\x02\x02\u0138\u013A\x05@!\x02\u0139\u0137" +
+		"\x03\x02\x02\x02\u013A\u013D\x03\x02\x02\x02\u013B\u0139\x03\x02\x02\x02" +
+		"\u013B\u013C\x03\x02\x02\x02\u013C?\x03\x02\x02\x02\u013D\u013B\x03\x02" +
+		"\x02\x02\u013E\u013F\x07$\x02\x02\u013F\u0144\x05@!\x02\u0140\u0141\x07" +
+		"\x0F\x02\x02\u0141\u0144\x05@!\x02\u0142\u0144\x05B\"\x02\u0143\u013E" +
+		"\x03\x02\x02\x02\u0143\u0140\x03\x02\x02\x02\u0143\u0142\x03\x02\x02\x02" +
+		"\u0144A\x03\x02\x02\x02\u0145\u0152\x072\x02\x02\u0146\u0152\x07%\x02" +
+		"\x02\u0147\u0152\x07&\x02\x02\u0148\u0152\x07\'\x02\x02\u0149\u0152\x07" +
+		"+\x02\x02\u014A\u0152\x05D#\x02\u014B\u0152\x05F$\x02\u014C\u0152\x05" +
+		".\x18\x02\u014D\u014E\x07\x05\x02\x02\u014E\u014F\x054\x1B\x02\u014F\u0150" +
+		"\x07\x06\x02\x02\u0150\u0152\x03\x02\x02\x02\u0151\u0145\x03\x02\x02\x02" +
+		"\u0151\u0146\x03\x02\x02\x02\u0151\u0147\x03\x02\x02\x02\u0151\u0148\x03" +
+		"\x02\x02\x02\u0151\u0149\x03\x02\x02\x02\u0151\u014A\x03\x02\x02\x02\u0151" +
+		"\u014B\x03\x02\x02\x02\u0151\u014C\x03\x02\x02\x02\u0151\u014D\x03\x02" +
+		"\x02\x02\u0152C\x03\x02\x02\x02\u0153\u0154\x07(\x02\x02\u0154\u0155\x07" +
+		"\x05\x02\x02\u0155\u0156\x054\x1B\x02\u0156\u0157\x07\x06\x02\x02\u0157" +
+		"E\x03\x02\x02\x02\u0158\u0159\x071\x02\x02\u0159\u015B\x07\x05\x02\x02" +
+		"\u015A\u015C\x05\"\x12\x02\u015B\u015A\x03\x02\x02\x02\u015B\u015C\x03" +
+		"\x02\x02\x02\u015C\u015D\x03\x02\x02\x02\u015D\u015E\x07\x06\x02\x02\u015E" +
+		"G\x03\x02\x02\x02%KPR[bgqw\x82\x98\x9E\xA6\xAA\xB0\xB6\xB9\xBF\xC3\xC8" +
+		"\xCC\xD3\xDA\xE1\xEF\u0104\u0106\u0110\u011B\u0123\u012B\u0133\u013B\u0143" +
+		"\u0151\u015B";
 	public static __ATN: ATN;
 	public static get _ATN(): ATN {
 		if (!LanguageParser.__ATN) {
@@ -633,13 +2013,31 @@ export class LanguageParser extends Parser {
 
 export class ProgramContext extends ParserRuleContext {
 	public EOF(): TerminalNode { return this.getToken(LanguageParser.EOF, 0); }
-	public functionDecl(): FunctionDeclContext[];
-	public functionDecl(i: number): FunctionDeclContext;
-	public functionDecl(i?: number): FunctionDeclContext | FunctionDeclContext[] {
+	public classDef(): ClassDefContext[];
+	public classDef(i: number): ClassDefContext;
+	public classDef(i?: number): ClassDefContext | ClassDefContext[] {
 		if (i === undefined) {
-			return this.getRuleContexts(FunctionDeclContext);
+			return this.getRuleContexts(ClassDefContext);
 		} else {
-			return this.getRuleContext(i, FunctionDeclContext);
+			return this.getRuleContext(i, ClassDefContext);
+		}
+	}
+	public procDef(): ProcDefContext[];
+	public procDef(i: number): ProcDefContext;
+	public procDef(i?: number): ProcDefContext | ProcDefContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(ProcDefContext);
+		} else {
+			return this.getRuleContext(i, ProcDefContext);
+		}
+	}
+	public stmt(): StmtContext[];
+	public stmt(i: number): StmtContext;
+	public stmt(i?: number): StmtContext | StmtContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(StmtContext);
+		} else {
+			return this.getRuleContext(i, StmtContext);
 		}
 	}
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
@@ -670,40 +2068,405 @@ export class ProgramContext extends ParserRuleContext {
 }
 
 
-export class FunctionDeclContext extends ParserRuleContext {
-	public Identifier(): TerminalNode[];
-	public Identifier(i: number): TerminalNode;
-	public Identifier(i?: number): TerminalNode | TerminalNode[] {
-		if (i === undefined) {
-			return this.getTokens(LanguageParser.Identifier);
-		} else {
-			return this.getToken(LanguageParser.Identifier, i);
-		}
-	}
-	public block(): BlockContext {
-		return this.getRuleContext(0, BlockContext);
+export class ClassDefContext extends ParserRuleContext {
+	public CLASS_KW(): TerminalNode { return this.getToken(LanguageParser.CLASS_KW, 0); }
+	public ID(): TerminalNode { return this.getToken(LanguageParser.ID, 0); }
+	public LBRACE(): TerminalNode { return this.getToken(LanguageParser.LBRACE, 0); }
+	public RBRACE(): TerminalNode { return this.getToken(LanguageParser.RBRACE, 0); }
+	public attrList(): AttrListContext | undefined {
+		return this.tryGetRuleContext(0, AttrListContext);
 	}
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
 	}
 	// @Override
-	public get ruleIndex(): number { return LanguageParser.RULE_functionDecl; }
+	public get ruleIndex(): number { return LanguageParser.RULE_classDef; }
 	// @Override
 	public enterRule(listener: LanguageListener): void {
-		if (listener.enterFunctionDecl) {
-			listener.enterFunctionDecl(this);
+		if (listener.enterClassDef) {
+			listener.enterClassDef(this);
 		}
 	}
 	// @Override
 	public exitRule(listener: LanguageListener): void {
-		if (listener.exitFunctionDecl) {
-			listener.exitFunctionDecl(this);
+		if (listener.exitClassDef) {
+			listener.exitClassDef(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
-		if (visitor.visitFunctionDecl) {
-			return visitor.visitFunctionDecl(this);
+		if (visitor.visitClassDef) {
+			return visitor.visitClassDef(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class AttrListContext extends ParserRuleContext {
+	public ID(): TerminalNode[];
+	public ID(i: number): TerminalNode;
+	public ID(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(LanguageParser.ID);
+		} else {
+			return this.getToken(LanguageParser.ID, i);
+		}
+	}
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_attrList; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterAttrList) {
+			listener.enterAttrList(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitAttrList) {
+			listener.exitAttrList(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitAttrList) {
+			return visitor.visitAttrList(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class ProcDefContext extends ParserRuleContext {
+	public ID(): TerminalNode { return this.getToken(LanguageParser.ID, 0); }
+	public LPAREN(): TerminalNode { return this.getToken(LanguageParser.LPAREN, 0); }
+	public RPAREN(): TerminalNode { return this.getToken(LanguageParser.RPAREN, 0); }
+	public block(): BlockContext {
+		return this.getRuleContext(0, BlockContext);
+	}
+	public paramList(): ParamListContext | undefined {
+		return this.tryGetRuleContext(0, ParamListContext);
+	}
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_procDef; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterProcDef) {
+			listener.enterProcDef(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitProcDef) {
+			listener.exitProcDef(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitProcDef) {
+			return visitor.visitProcDef(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class ParamListContext extends ParserRuleContext {
+	public param(): ParamContext[];
+	public param(i: number): ParamContext;
+	public param(i?: number): ParamContext | ParamContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(ParamContext);
+		} else {
+			return this.getRuleContext(i, ParamContext);
+		}
+	}
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_paramList; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterParamList) {
+			listener.enterParamList(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitParamList) {
+			listener.exitParamList(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitParamList) {
+			return visitor.visitParamList(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class ParamContext extends ParserRuleContext {
+	public arrayParam(): ArrayParamContext | undefined {
+		return this.tryGetRuleContext(0, ArrayParamContext);
+	}
+	public objectParam(): ObjectParamContext | undefined {
+		return this.tryGetRuleContext(0, ObjectParamContext);
+	}
+	public ID(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.ID, 0); }
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_param; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterParam) {
+			listener.enterParam(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitParam) {
+			listener.exitParam(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitParam) {
+			return visitor.visitParam(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class ArrayParamContext extends ParserRuleContext {
+	public ID(): TerminalNode { return this.getToken(LanguageParser.ID, 0); }
+	public LBRACK(): TerminalNode[];
+	public LBRACK(i: number): TerminalNode;
+	public LBRACK(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(LanguageParser.LBRACK);
+		} else {
+			return this.getToken(LanguageParser.LBRACK, i);
+		}
+	}
+	public arrayIndex(): ArrayIndexContext[];
+	public arrayIndex(i: number): ArrayIndexContext;
+	public arrayIndex(i?: number): ArrayIndexContext | ArrayIndexContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(ArrayIndexContext);
+		} else {
+			return this.getRuleContext(i, ArrayIndexContext);
+		}
+	}
+	public RBRACK(): TerminalNode[];
+	public RBRACK(i: number): TerminalNode;
+	public RBRACK(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(LanguageParser.RBRACK);
+		} else {
+			return this.getToken(LanguageParser.RBRACK, i);
+		}
+	}
+	public RANGE(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.RANGE, 0); }
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_arrayParam; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterArrayParam) {
+			listener.enterArrayParam(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitArrayParam) {
+			listener.exitArrayParam(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitArrayParam) {
+			return visitor.visitArrayParam(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class ArrayIndexContext extends ParserRuleContext {
+	public ID(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.ID, 0); }
+	public INT(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.INT, 0); }
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_arrayIndex; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterArrayIndex) {
+			listener.enterArrayIndex(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitArrayIndex) {
+			listener.exitArrayIndex(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitArrayIndex) {
+			return visitor.visitArrayIndex(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class ArrayDimContext extends ParserRuleContext {
+	public LBRACK(): TerminalNode { return this.getToken(LanguageParser.LBRACK, 0); }
+	public RBRACK(): TerminalNode { return this.getToken(LanguageParser.RBRACK, 0); }
+	public ID(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.ID, 0); }
+	public INT(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.INT, 0); }
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_arrayDim; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterArrayDim) {
+			listener.enterArrayDim(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitArrayDim) {
+			listener.exitArrayDim(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitArrayDim) {
+			return visitor.visitArrayDim(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class ObjectParamContext extends ParserRuleContext {
+	public ID(): TerminalNode[];
+	public ID(i: number): TerminalNode;
+	public ID(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(LanguageParser.ID);
+		} else {
+			return this.getToken(LanguageParser.ID, i);
+		}
+	}
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_objectParam; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterObjectParam) {
+			listener.enterObjectParam(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitObjectParam) {
+			listener.exitObjectParam(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitObjectParam) {
+			return visitor.visitObjectParam(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class StmtContext extends ParserRuleContext {
+	public assignmentStmt(): AssignmentStmtContext | undefined {
+		return this.tryGetRuleContext(0, AssignmentStmtContext);
+	}
+	public callStmt(): CallStmtContext | undefined {
+		return this.tryGetRuleContext(0, CallStmtContext);
+	}
+	public printStmt(): PrintStmtContext | undefined {
+		return this.tryGetRuleContext(0, PrintStmtContext);
+	}
+	public ifStmt(): IfStmtContext | undefined {
+		return this.tryGetRuleContext(0, IfStmtContext);
+	}
+	public whileStmt(): WhileStmtContext | undefined {
+		return this.tryGetRuleContext(0, WhileStmtContext);
+	}
+	public repeatStmt(): RepeatStmtContext | undefined {
+		return this.tryGetRuleContext(0, RepeatStmtContext);
+	}
+	public forStmt(): ForStmtContext | undefined {
+		return this.tryGetRuleContext(0, ForStmtContext);
+	}
+	public returnStmt(): ReturnStmtContext | undefined {
+		return this.tryGetRuleContext(0, ReturnStmtContext);
+	}
+	public block(): BlockContext | undefined {
+		return this.tryGetRuleContext(0, BlockContext);
+	}
+	public declVectorStmt(): DeclVectorStmtContext | undefined {
+		return this.tryGetRuleContext(0, DeclVectorStmtContext);
+	}
+	public SEMI(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.SEMI, 0); }
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_stmt; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterStmt) {
+			listener.enterStmt(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitStmt) {
+			listener.exitStmt(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitStmt) {
+			return visitor.visitStmt(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -712,15 +2475,19 @@ export class FunctionDeclContext extends ParserRuleContext {
 
 
 export class BlockContext extends ParserRuleContext {
-	public statement(): StatementContext[];
-	public statement(i: number): StatementContext;
-	public statement(i?: number): StatementContext | StatementContext[] {
+	public LBRACE(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.LBRACE, 0); }
+	public RBRACE(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.RBRACE, 0); }
+	public stmt(): StmtContext[];
+	public stmt(i: number): StmtContext;
+	public stmt(i?: number): StmtContext | StmtContext[] {
 		if (i === undefined) {
-			return this.getRuleContexts(StatementContext);
+			return this.getRuleContexts(StmtContext);
 		} else {
-			return this.getRuleContext(i, StatementContext);
+			return this.getRuleContext(i, StmtContext);
 		}
 	}
+	public BEGIN_KW(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.BEGIN_KW, 0); }
+	public END_KW(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.END_KW, 0); }
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
 	}
@@ -749,37 +2516,36 @@ export class BlockContext extends ParserRuleContext {
 }
 
 
-export class StatementContext extends ParserRuleContext {
-	public variableDecl(): VariableDeclContext | undefined {
-		return this.tryGetRuleContext(0, VariableDeclContext);
+export class AssignmentStmtContext extends ParserRuleContext {
+	public lvalue(): LvalueContext {
+		return this.getRuleContext(0, LvalueContext);
 	}
-	public forStmt(): ForStmtContext | undefined {
-		return this.tryGetRuleContext(0, ForStmtContext);
+	public ASSIGN(): TerminalNode { return this.getToken(LanguageParser.ASSIGN, 0); }
+	public expr(): ExprContext {
+		return this.getRuleContext(0, ExprContext);
 	}
-	public returnStmt(): ReturnStmtContext | undefined {
-		return this.tryGetRuleContext(0, ReturnStmtContext);
-	}
+	public SEMI(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.SEMI, 0); }
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
 	}
 	// @Override
-	public get ruleIndex(): number { return LanguageParser.RULE_statement; }
+	public get ruleIndex(): number { return LanguageParser.RULE_assignmentStmt; }
 	// @Override
 	public enterRule(listener: LanguageListener): void {
-		if (listener.enterStatement) {
-			listener.enterStatement(this);
+		if (listener.enterAssignmentStmt) {
+			listener.enterAssignmentStmt(this);
 		}
 	}
 	// @Override
 	public exitRule(listener: LanguageListener): void {
-		if (listener.exitStatement) {
-			listener.exitStatement(this);
+		if (listener.exitAssignmentStmt) {
+			listener.exitAssignmentStmt(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
-		if (visitor.visitStatement) {
-			return visitor.visitStatement(this);
+		if (visitor.visitAssignmentStmt) {
+			return visitor.visitAssignmentStmt(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -787,32 +2553,315 @@ export class StatementContext extends ParserRuleContext {
 }
 
 
-export class VariableDeclContext extends ParserRuleContext {
-	public Identifier(): TerminalNode { return this.getToken(LanguageParser.Identifier, 0); }
-	public expr(): ExprContext {
-		return this.getRuleContext(0, ExprContext);
+export class DeclVectorStmtContext extends ParserRuleContext {
+	public ID(): TerminalNode { return this.getToken(LanguageParser.ID, 0); }
+	public indexSuffix(): IndexSuffixContext[];
+	public indexSuffix(i: number): IndexSuffixContext;
+	public indexSuffix(i?: number): IndexSuffixContext | IndexSuffixContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(IndexSuffixContext);
+		} else {
+			return this.getRuleContext(i, IndexSuffixContext);
+		}
+	}
+	public SEMI(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.SEMI, 0); }
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_declVectorStmt; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterDeclVectorStmt) {
+			listener.enterDeclVectorStmt(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitDeclVectorStmt) {
+			listener.exitDeclVectorStmt(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitDeclVectorStmt) {
+			return visitor.visitDeclVectorStmt(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class CallStmtContext extends ParserRuleContext {
+	public CALL_KW(): TerminalNode { return this.getToken(LanguageParser.CALL_KW, 0); }
+	public ID(): TerminalNode { return this.getToken(LanguageParser.ID, 0); }
+	public LPAREN(): TerminalNode { return this.getToken(LanguageParser.LPAREN, 0); }
+	public RPAREN(): TerminalNode { return this.getToken(LanguageParser.RPAREN, 0); }
+	public argList(): ArgListContext | undefined {
+		return this.tryGetRuleContext(0, ArgListContext);
+	}
+	public SEMI(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.SEMI, 0); }
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_callStmt; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterCallStmt) {
+			listener.enterCallStmt(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitCallStmt) {
+			listener.exitCallStmt(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitCallStmt) {
+			return visitor.visitCallStmt(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class PrintStmtContext extends ParserRuleContext {
+	public PRINT_KW(): TerminalNode { return this.getToken(LanguageParser.PRINT_KW, 0); }
+	public LPAREN(): TerminalNode { return this.getToken(LanguageParser.LPAREN, 0); }
+	public RPAREN(): TerminalNode { return this.getToken(LanguageParser.RPAREN, 0); }
+	public argList(): ArgListContext | undefined {
+		return this.tryGetRuleContext(0, ArgListContext);
+	}
+	public SEMI(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.SEMI, 0); }
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_printStmt; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterPrintStmt) {
+			listener.enterPrintStmt(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitPrintStmt) {
+			listener.exitPrintStmt(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitPrintStmt) {
+			return visitor.visitPrintStmt(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class ArgListContext extends ParserRuleContext {
+	public expr(): ExprContext[];
+	public expr(i: number): ExprContext;
+	public expr(i?: number): ExprContext | ExprContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(ExprContext);
+		} else {
+			return this.getRuleContext(i, ExprContext);
+		}
 	}
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
 	}
 	// @Override
-	public get ruleIndex(): number { return LanguageParser.RULE_variableDecl; }
+	public get ruleIndex(): number { return LanguageParser.RULE_argList; }
 	// @Override
 	public enterRule(listener: LanguageListener): void {
-		if (listener.enterVariableDecl) {
-			listener.enterVariableDecl(this);
+		if (listener.enterArgList) {
+			listener.enterArgList(this);
 		}
 	}
 	// @Override
 	public exitRule(listener: LanguageListener): void {
-		if (listener.exitVariableDecl) {
-			listener.exitVariableDecl(this);
+		if (listener.exitArgList) {
+			listener.exitArgList(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
-		if (visitor.visitVariableDecl) {
-			return visitor.visitVariableDecl(this);
+		if (visitor.visitArgList) {
+			return visitor.visitArgList(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class RepeatStmtContext extends ParserRuleContext {
+	public REPEAT_KW(): TerminalNode { return this.getToken(LanguageParser.REPEAT_KW, 0); }
+	public UNTIL_KW(): TerminalNode { return this.getToken(LanguageParser.UNTIL_KW, 0); }
+	public LPAREN(): TerminalNode { return this.getToken(LanguageParser.LPAREN, 0); }
+	public expr(): ExprContext {
+		return this.getRuleContext(0, ExprContext);
+	}
+	public RPAREN(): TerminalNode { return this.getToken(LanguageParser.RPAREN, 0); }
+	public stmt(): StmtContext[];
+	public stmt(i: number): StmtContext;
+	public stmt(i?: number): StmtContext | StmtContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(StmtContext);
+		} else {
+			return this.getRuleContext(i, StmtContext);
+		}
+	}
+	public SEMI(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.SEMI, 0); }
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_repeatStmt; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterRepeatStmt) {
+			listener.enterRepeatStmt(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitRepeatStmt) {
+			listener.exitRepeatStmt(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitRepeatStmt) {
+			return visitor.visitRepeatStmt(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class ReturnStmtContext extends ParserRuleContext {
+	public RETURN_KW(): TerminalNode { return this.getToken(LanguageParser.RETURN_KW, 0); }
+	public expr(): ExprContext {
+		return this.getRuleContext(0, ExprContext);
+	}
+	public SEMI(): TerminalNode { return this.getToken(LanguageParser.SEMI, 0); }
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_returnStmt; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterReturnStmt) {
+			listener.enterReturnStmt(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitReturnStmt) {
+			listener.exitReturnStmt(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitReturnStmt) {
+			return visitor.visitReturnStmt(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class IfStmtContext extends ParserRuleContext {
+	public IF_KW(): TerminalNode { return this.getToken(LanguageParser.IF_KW, 0); }
+	public LPAREN(): TerminalNode { return this.getToken(LanguageParser.LPAREN, 0); }
+	public expr(): ExprContext {
+		return this.getRuleContext(0, ExprContext);
+	}
+	public RPAREN(): TerminalNode { return this.getToken(LanguageParser.RPAREN, 0); }
+	public THEN_KW(): TerminalNode { return this.getToken(LanguageParser.THEN_KW, 0); }
+	public block(): BlockContext[];
+	public block(i: number): BlockContext;
+	public block(i?: number): BlockContext | BlockContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(BlockContext);
+		} else {
+			return this.getRuleContext(i, BlockContext);
+		}
+	}
+	public ELSE_KW(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.ELSE_KW, 0); }
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_ifStmt; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterIfStmt) {
+			listener.enterIfStmt(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitIfStmt) {
+			listener.exitIfStmt(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitIfStmt) {
+			return visitor.visitIfStmt(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class WhileStmtContext extends ParserRuleContext {
+	public WHILE_KW(): TerminalNode { return this.getToken(LanguageParser.WHILE_KW, 0); }
+	public LPAREN(): TerminalNode { return this.getToken(LanguageParser.LPAREN, 0); }
+	public expr(): ExprContext {
+		return this.getRuleContext(0, ExprContext);
+	}
+	public RPAREN(): TerminalNode { return this.getToken(LanguageParser.RPAREN, 0); }
+	public DO_KW(): TerminalNode { return this.getToken(LanguageParser.DO_KW, 0); }
+	public block(): BlockContext {
+		return this.getRuleContext(0, BlockContext);
+	}
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_whileStmt; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterWhileStmt) {
+			listener.enterWhileStmt(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitWhileStmt) {
+			listener.exitWhileStmt(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitWhileStmt) {
+			return visitor.visitWhileStmt(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -821,15 +2870,20 @@ export class VariableDeclContext extends ParserRuleContext {
 
 
 export class ForStmtContext extends ParserRuleContext {
-	public variableDecl(): VariableDeclContext {
-		return this.getRuleContext(0, VariableDeclContext);
+	public FOR_KW(): TerminalNode { return this.getToken(LanguageParser.FOR_KW, 0); }
+	public ID(): TerminalNode { return this.getToken(LanguageParser.ID, 0); }
+	public ASSIGN(): TerminalNode { return this.getToken(LanguageParser.ASSIGN, 0); }
+	public expr(): ExprContext[];
+	public expr(i: number): ExprContext;
+	public expr(i?: number): ExprContext | ExprContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(ExprContext);
+		} else {
+			return this.getRuleContext(i, ExprContext);
+		}
 	}
-	public expr(): ExprContext {
-		return this.getRuleContext(0, ExprContext);
-	}
-	public assign(): AssignContext {
-		return this.getRuleContext(0, AssignContext);
-	}
+	public TO_KW(): TerminalNode { return this.getToken(LanguageParser.TO_KW, 0); }
+	public DO_KW(): TerminalNode { return this.getToken(LanguageParser.DO_KW, 0); }
 	public block(): BlockContext {
 		return this.getRuleContext(0, BlockContext);
 	}
@@ -861,31 +2915,47 @@ export class ForStmtContext extends ParserRuleContext {
 }
 
 
-export class ReturnStmtContext extends ParserRuleContext {
-	public expr(): ExprContext {
-		return this.getRuleContext(0, ExprContext);
+export class LvalueContext extends ParserRuleContext {
+	public ID(): TerminalNode { return this.getToken(LanguageParser.ID, 0); }
+	public fieldAccess(): FieldAccessContext[];
+	public fieldAccess(i: number): FieldAccessContext;
+	public fieldAccess(i?: number): FieldAccessContext | FieldAccessContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(FieldAccessContext);
+		} else {
+			return this.getRuleContext(i, FieldAccessContext);
+		}
+	}
+	public indexSuffix(): IndexSuffixContext[];
+	public indexSuffix(i: number): IndexSuffixContext;
+	public indexSuffix(i?: number): IndexSuffixContext | IndexSuffixContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(IndexSuffixContext);
+		} else {
+			return this.getRuleContext(i, IndexSuffixContext);
+		}
 	}
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
 	}
 	// @Override
-	public get ruleIndex(): number { return LanguageParser.RULE_returnStmt; }
+	public get ruleIndex(): number { return LanguageParser.RULE_lvalue; }
 	// @Override
 	public enterRule(listener: LanguageListener): void {
-		if (listener.enterReturnStmt) {
-			listener.enterReturnStmt(this);
+		if (listener.enterLvalue) {
+			listener.enterLvalue(this);
 		}
 	}
 	// @Override
 	public exitRule(listener: LanguageListener): void {
-		if (listener.exitReturnStmt) {
-			listener.exitReturnStmt(this);
+		if (listener.exitLvalue) {
+			listener.exitLvalue(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
-		if (visitor.visitReturnStmt) {
-			return visitor.visitReturnStmt(this);
+		if (visitor.visitLvalue) {
+			return visitor.visitLvalue(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -893,32 +2963,29 @@ export class ReturnStmtContext extends ParserRuleContext {
 }
 
 
-export class AssignContext extends ParserRuleContext {
-	public Identifier(): TerminalNode { return this.getToken(LanguageParser.Identifier, 0); }
-	public expr(): ExprContext {
-		return this.getRuleContext(0, ExprContext);
-	}
+export class FieldAccessContext extends ParserRuleContext {
+	public ID(): TerminalNode { return this.getToken(LanguageParser.ID, 0); }
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
 	}
 	// @Override
-	public get ruleIndex(): number { return LanguageParser.RULE_assign; }
+	public get ruleIndex(): number { return LanguageParser.RULE_fieldAccess; }
 	// @Override
 	public enterRule(listener: LanguageListener): void {
-		if (listener.enterAssign) {
-			listener.enterAssign(this);
+		if (listener.enterFieldAccess) {
+			listener.enterFieldAccess(this);
 		}
 	}
 	// @Override
 	public exitRule(listener: LanguageListener): void {
-		if (listener.exitAssign) {
-			listener.exitAssign(this);
+		if (listener.exitFieldAccess) {
+			listener.exitFieldAccess(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
-		if (visitor.visitAssign) {
-			return visitor.visitAssign(this);
+		if (visitor.visitFieldAccess) {
+			return visitor.visitFieldAccess(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -926,7 +2993,8 @@ export class AssignContext extends ParserRuleContext {
 }
 
 
-export class ExprContext extends ParserRuleContext {
+export class IndexSuffixContext extends ParserRuleContext {
+	public LBRACK(): TerminalNode { return this.getToken(LanguageParser.LBRACK, 0); }
 	public expr(): ExprContext[];
 	public expr(i: number): ExprContext;
 	public expr(i?: number): ExprContext | ExprContext[] {
@@ -936,9 +3004,40 @@ export class ExprContext extends ParserRuleContext {
 			return this.getRuleContext(i, ExprContext);
 		}
 	}
-	public Identifier(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.Identifier, 0); }
-	public Number(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.Number, 0); }
-	public ArrayAccess(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.ArrayAccess, 0); }
+	public RBRACK(): TerminalNode { return this.getToken(LanguageParser.RBRACK, 0); }
+	public RANGE(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.RANGE, 0); }
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_indexSuffix; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterIndexSuffix) {
+			listener.enterIndexSuffix(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitIndexSuffix) {
+			listener.exitIndexSuffix(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitIndexSuffix) {
+			return visitor.visitIndexSuffix(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class ExprContext extends ParserRuleContext {
+	public orExpr(): OrExprContext {
+		return this.getRuleContext(0, OrExprContext);
+	}
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
 	}
@@ -960,6 +3059,477 @@ export class ExprContext extends ParserRuleContext {
 	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
 		if (visitor.visitExpr) {
 			return visitor.visitExpr(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class OrExprContext extends ParserRuleContext {
+	public andExpr(): AndExprContext[];
+	public andExpr(i: number): AndExprContext;
+	public andExpr(i?: number): AndExprContext | AndExprContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(AndExprContext);
+		} else {
+			return this.getRuleContext(i, AndExprContext);
+		}
+	}
+	public OR_KW(): TerminalNode[];
+	public OR_KW(i: number): TerminalNode;
+	public OR_KW(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(LanguageParser.OR_KW);
+		} else {
+			return this.getToken(LanguageParser.OR_KW, i);
+		}
+	}
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_orExpr; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterOrExpr) {
+			listener.enterOrExpr(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitOrExpr) {
+			listener.exitOrExpr(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitOrExpr) {
+			return visitor.visitOrExpr(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class AndExprContext extends ParserRuleContext {
+	public relExpr(): RelExprContext[];
+	public relExpr(i: number): RelExprContext;
+	public relExpr(i?: number): RelExprContext | RelExprContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(RelExprContext);
+		} else {
+			return this.getRuleContext(i, RelExprContext);
+		}
+	}
+	public AND_KW(): TerminalNode[];
+	public AND_KW(i: number): TerminalNode;
+	public AND_KW(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(LanguageParser.AND_KW);
+		} else {
+			return this.getToken(LanguageParser.AND_KW, i);
+		}
+	}
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_andExpr; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterAndExpr) {
+			listener.enterAndExpr(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitAndExpr) {
+			listener.exitAndExpr(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitAndExpr) {
+			return visitor.visitAndExpr(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class RelExprContext extends ParserRuleContext {
+	public addExpr(): AddExprContext[];
+	public addExpr(i: number): AddExprContext;
+	public addExpr(i?: number): AddExprContext | AddExprContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(AddExprContext);
+		} else {
+			return this.getRuleContext(i, AddExprContext);
+		}
+	}
+	public EQ(): TerminalNode[];
+	public EQ(i: number): TerminalNode;
+	public EQ(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(LanguageParser.EQ);
+		} else {
+			return this.getToken(LanguageParser.EQ, i);
+		}
+	}
+	public NEQ(): TerminalNode[];
+	public NEQ(i: number): TerminalNode;
+	public NEQ(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(LanguageParser.NEQ);
+		} else {
+			return this.getToken(LanguageParser.NEQ, i);
+		}
+	}
+	public LT(): TerminalNode[];
+	public LT(i: number): TerminalNode;
+	public LT(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(LanguageParser.LT);
+		} else {
+			return this.getToken(LanguageParser.LT, i);
+		}
+	}
+	public LE(): TerminalNode[];
+	public LE(i: number): TerminalNode;
+	public LE(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(LanguageParser.LE);
+		} else {
+			return this.getToken(LanguageParser.LE, i);
+		}
+	}
+	public GT(): TerminalNode[];
+	public GT(i: number): TerminalNode;
+	public GT(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(LanguageParser.GT);
+		} else {
+			return this.getToken(LanguageParser.GT, i);
+		}
+	}
+	public GE(): TerminalNode[];
+	public GE(i: number): TerminalNode;
+	public GE(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(LanguageParser.GE);
+		} else {
+			return this.getToken(LanguageParser.GE, i);
+		}
+	}
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_relExpr; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterRelExpr) {
+			listener.enterRelExpr(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitRelExpr) {
+			listener.exitRelExpr(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitRelExpr) {
+			return visitor.visitRelExpr(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class AddExprContext extends ParserRuleContext {
+	public mulExpr(): MulExprContext[];
+	public mulExpr(i: number): MulExprContext;
+	public mulExpr(i?: number): MulExprContext | MulExprContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(MulExprContext);
+		} else {
+			return this.getRuleContext(i, MulExprContext);
+		}
+	}
+	public PLUS(): TerminalNode[];
+	public PLUS(i: number): TerminalNode;
+	public PLUS(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(LanguageParser.PLUS);
+		} else {
+			return this.getToken(LanguageParser.PLUS, i);
+		}
+	}
+	public MINUS(): TerminalNode[];
+	public MINUS(i: number): TerminalNode;
+	public MINUS(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(LanguageParser.MINUS);
+		} else {
+			return this.getToken(LanguageParser.MINUS, i);
+		}
+	}
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_addExpr; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterAddExpr) {
+			listener.enterAddExpr(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitAddExpr) {
+			listener.exitAddExpr(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitAddExpr) {
+			return visitor.visitAddExpr(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class MulExprContext extends ParserRuleContext {
+	public unaryExpr(): UnaryExprContext[];
+	public unaryExpr(i: number): UnaryExprContext;
+	public unaryExpr(i?: number): UnaryExprContext | UnaryExprContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(UnaryExprContext);
+		} else {
+			return this.getRuleContext(i, UnaryExprContext);
+		}
+	}
+	public MUL(): TerminalNode[];
+	public MUL(i: number): TerminalNode;
+	public MUL(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(LanguageParser.MUL);
+		} else {
+			return this.getToken(LanguageParser.MUL, i);
+		}
+	}
+	public DIV_KW(): TerminalNode[];
+	public DIV_KW(i: number): TerminalNode;
+	public DIV_KW(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(LanguageParser.DIV_KW);
+		} else {
+			return this.getToken(LanguageParser.DIV_KW, i);
+		}
+	}
+	public MOD_KW(): TerminalNode[];
+	public MOD_KW(i: number): TerminalNode;
+	public MOD_KW(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(LanguageParser.MOD_KW);
+		} else {
+			return this.getToken(LanguageParser.MOD_KW, i);
+		}
+	}
+	public DIVOP(): TerminalNode[];
+	public DIVOP(i: number): TerminalNode;
+	public DIVOP(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(LanguageParser.DIVOP);
+		} else {
+			return this.getToken(LanguageParser.DIVOP, i);
+		}
+	}
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_mulExpr; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterMulExpr) {
+			listener.enterMulExpr(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitMulExpr) {
+			listener.exitMulExpr(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitMulExpr) {
+			return visitor.visitMulExpr(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class UnaryExprContext extends ParserRuleContext {
+	public NOT_KW(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.NOT_KW, 0); }
+	public unaryExpr(): UnaryExprContext | undefined {
+		return this.tryGetRuleContext(0, UnaryExprContext);
+	}
+	public MINUS(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.MINUS, 0); }
+	public primary(): PrimaryContext | undefined {
+		return this.tryGetRuleContext(0, PrimaryContext);
+	}
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_unaryExpr; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterUnaryExpr) {
+			listener.enterUnaryExpr(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitUnaryExpr) {
+			listener.exitUnaryExpr(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitUnaryExpr) {
+			return visitor.visitUnaryExpr(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class PrimaryContext extends ParserRuleContext {
+	public INT(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.INT, 0); }
+	public TRUE_KW(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.TRUE_KW, 0); }
+	public FALSE_KW(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.FALSE_KW, 0); }
+	public NULL_KW(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.NULL_KW, 0); }
+	public STRING(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.STRING, 0); }
+	public lengthCall(): LengthCallContext | undefined {
+		return this.tryGetRuleContext(0, LengthCallContext);
+	}
+	public callExpr(): CallExprContext | undefined {
+		return this.tryGetRuleContext(0, CallExprContext);
+	}
+	public lvalue(): LvalueContext | undefined {
+		return this.tryGetRuleContext(0, LvalueContext);
+	}
+	public LPAREN(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.LPAREN, 0); }
+	public expr(): ExprContext | undefined {
+		return this.tryGetRuleContext(0, ExprContext);
+	}
+	public RPAREN(): TerminalNode | undefined { return this.tryGetToken(LanguageParser.RPAREN, 0); }
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_primary; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterPrimary) {
+			listener.enterPrimary(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitPrimary) {
+			listener.exitPrimary(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitPrimary) {
+			return visitor.visitPrimary(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class LengthCallContext extends ParserRuleContext {
+	public LENGTH_KW(): TerminalNode { return this.getToken(LanguageParser.LENGTH_KW, 0); }
+	public LPAREN(): TerminalNode { return this.getToken(LanguageParser.LPAREN, 0); }
+	public expr(): ExprContext {
+		return this.getRuleContext(0, ExprContext);
+	}
+	public RPAREN(): TerminalNode { return this.getToken(LanguageParser.RPAREN, 0); }
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_lengthCall; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterLengthCall) {
+			listener.enterLengthCall(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitLengthCall) {
+			listener.exitLengthCall(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitLengthCall) {
+			return visitor.visitLengthCall(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+
+
+export class CallExprContext extends ParserRuleContext {
+	public ID(): TerminalNode { return this.getToken(LanguageParser.ID, 0); }
+	public LPAREN(): TerminalNode { return this.getToken(LanguageParser.LPAREN, 0); }
+	public RPAREN(): TerminalNode { return this.getToken(LanguageParser.RPAREN, 0); }
+	public argList(): ArgListContext | undefined {
+		return this.tryGetRuleContext(0, ArgListContext);
+	}
+	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
+		super(parent, invokingState);
+	}
+	// @Override
+	public get ruleIndex(): number { return LanguageParser.RULE_callExpr; }
+	// @Override
+	public enterRule(listener: LanguageListener): void {
+		if (listener.enterCallExpr) {
+			listener.enterCallExpr(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: LanguageListener): void {
+		if (listener.exitCallExpr) {
+			listener.exitCallExpr(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: LanguageVisitor<Result>): Result {
+		if (visitor.visitCallExpr) {
+			return visitor.visitCallExpr(this);
 		} else {
 			return visitor.visitChildren(this);
 		}

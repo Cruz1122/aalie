@@ -1,4 +1,3 @@
-// path: apps/web/src/app/api/grammar/parse/route.ts
 import type { GrammarParseRequest, GrammarParseResponse } from "@aa/types";
 import { NextRequest, NextResponse } from "next/server";
 
