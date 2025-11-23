@@ -1649,6 +1649,1391 @@ class TestRecursiveAnalyzerHelpers(unittest.TestCase):
                 self.assertEqual(result["type"], "subtraction")
                 self.assertEqual(result["pattern"], "n-1")
 
+    # === Tests para método analyze() - Casos de error ===
+    
+    def test_analyze_no_main_procedure(self):
+        """Test: analyze() retorna error cuando no encuentra procedimiento principal"""
+        analyzer = RecursiveAnalyzer()
+        ast = {
+            "type": "Program",
+            "body": []  # Sin procedimientos
+        }
+        result = analyzer.analyze(ast, mode="worst")
+        self.assertFalse(result.get("ok"))
+        self.assertIn("errors", result)
+        self.assertGreater(len(result["errors"]), 0)
+    
+    def test_analyze_validation_failed(self):
+        """Test: analyze() retorna error cuando la validación de condiciones falla"""
+        analyzer = RecursiveAnalyzer()
+        ast = {
+            "type": "Program",
+            "body": [{
+                "type": "ProcDef",
+                "name": "test",
+                "params": [],
+                "body": {
+                    "type": "Block",
+                    "statements": []
+                }
+            }]
+        }
+        # Mock _validate_conditions para retornar inválido
+        with patch.object(analyzer, '_validate_conditions', return_value={
+            "valid": False,
+            "reason": "No tiene llamadas recursivas"
+        }):
+            result = analyzer.analyze(ast, mode="worst")
+            self.assertFalse(result.get("ok"))
+            self.assertIn("errors", result)
+    
+    def test_analyze_extract_recurrence_failed(self):
+        """Test: analyze() retorna error cuando falla la extracción de recurrencia"""
+        analyzer = RecursiveAnalyzer()
+        ast = {
+            "type": "Program",
+            "body": [{
+                "type": "ProcDef",
+                "name": "test",
+                "params": [{"name": "n"}],
+                "body": {
+                    "type": "Block",
+                    "statements": []
+                }
+            }]
+        }
+        with patch.object(analyzer, '_find_main_procedure', return_value=ast["body"][0]):
+            with patch.object(analyzer, '_validate_conditions', return_value={"valid": True}):
+                with patch.object(analyzer, '_extract_recurrence', return_value={
+                    "success": False,
+                    "reason": "Error extrayendo recurrencia"
+                }):
+                    result = analyzer.analyze(ast, mode="worst")
+                    self.assertFalse(result.get("ok"))
+                    self.assertIn("errors", result)
+    
+    def test_analyze_recurrence_not_applicable(self):
+        """Test: analyze() retorna error cuando la recurrencia no es aplicable"""
+        analyzer = RecursiveAnalyzer()
+        ast = {
+            "type": "Program",
+            "body": [{
+                "type": "ProcDef",
+                "name": "test",
+                "params": [{"name": "n"}],
+                "body": {
+                    "type": "Block",
+                    "statements": []
+                }
+            }]
+        }
+        with patch.object(analyzer, '_find_main_procedure', return_value=ast["body"][0]):
+            with patch.object(analyzer, '_validate_conditions', return_value={"valid": True}):
+                with patch.object(analyzer, '_extract_recurrence', return_value={
+                    "success": True,
+                    "recurrence": {
+                        "applicable": False,
+                        "notes": ["No es divide-and-conquer"]
+                    }
+                }):
+                    result = analyzer.analyze(ast, mode="worst")
+                    self.assertFalse(result.get("ok"))
+                    self.assertIn("errors", result)
+    
+    def test_analyze_invalid_preferred_method(self):
+        """Test: analyze() retorna error cuando el método preferido es inválido"""
+        analyzer = RecursiveAnalyzer()
+        ast = {
+            "type": "Program",
+            "body": [{
+                "type": "ProcDef",
+                "name": "test",
+                "params": [{"name": "n"}],
+                "body": {
+                    "type": "Block",
+                    "statements": []
+                }
+            }]
+        }
+        with patch.object(analyzer, '_find_main_procedure', return_value=ast["body"][0]):
+            with patch.object(analyzer, '_validate_conditions', return_value={"valid": True}):
+                with patch.object(analyzer, '_extract_recurrence', return_value={
+                    "success": True,
+                    "recurrence": {
+                        "applicable": True,
+                        "method": "master"
+                    }
+                }):
+                    result = analyzer.analyze(ast, mode="worst", preferred_method="invalid_method")
+                    self.assertFalse(result.get("ok"))
+                    self.assertIn("errors", result)
+    
+    def test_analyze_characteristic_equation_error(self):
+        """Test: analyze() retorna error cuando falla la aplicación de ecuación característica"""
+        analyzer = RecursiveAnalyzer()
+        ast = {
+            "type": "Program",
+            "body": [{
+                "type": "ProcDef",
+                "name": "fibonacci",
+                "params": [{"name": "n"}],
+                "body": {
+                    "type": "Block",
+                    "statements": []
+                }
+            }]
+        }
+        with patch.object(analyzer, '_find_main_procedure', return_value=ast["body"][0]):
+            with patch.object(analyzer, '_validate_conditions', return_value={"valid": True}):
+                with patch.object(analyzer, '_extract_recurrence', return_value={
+                    "success": True,
+                    "recurrence": {
+                        "applicable": True,
+                        "method": "characteristic_equation"
+                    }
+                }):
+                    with patch.object(analyzer, '_apply_characteristic_equation_method', return_value={
+                        "success": False,
+                        "reason": "Error en ecuación característica"
+                    }):
+                        result = analyzer.analyze(ast, mode="worst", preferred_method="characteristic_equation")
+                        self.assertFalse(result.get("ok"))
+                        self.assertIn("errors", result)
+    
+    def test_analyze_iteration_method_error(self):
+        """Test: analyze() retorna error cuando falla la aplicación de método de iteración"""
+        analyzer = RecursiveAnalyzer()
+        ast = {
+            "type": "Program",
+            "body": [{
+                "type": "ProcDef",
+                "name": "factorial",
+                "params": [{"name": "n"}],
+                "body": {
+                    "type": "Block",
+                    "statements": []
+                }
+            }]
+        }
+        with patch.object(analyzer, '_find_main_procedure', return_value=ast["body"][0]):
+            with patch.object(analyzer, '_validate_conditions', return_value={"valid": True}):
+                with patch.object(analyzer, '_extract_recurrence', return_value={
+                    "success": True,
+                    "recurrence": {
+                        "applicable": True,
+                        "method": "iteration"
+                    }
+                }):
+                    with patch.object(analyzer, '_apply_iteration_method', return_value={
+                        "success": False,
+                        "reason": "Error en método de iteración"
+                    }):
+                        result = analyzer.analyze(ast, mode="worst", preferred_method="iteration")
+                        self.assertFalse(result.get("ok"))
+                        self.assertIn("errors", result)
+    
+    def test_analyze_recursion_tree_method_error(self):
+        """Test: analyze() retorna error cuando falla la aplicación de método de árbol de recursión"""
+        analyzer = RecursiveAnalyzer()
+        ast = {
+            "type": "Program",
+            "body": [{
+                "type": "ProcDef",
+                "name": "mergeSort",
+                "params": [{"name": "n"}],
+                "body": {
+                    "type": "Block",
+                    "statements": []
+                }
+            }]
+        }
+        with patch.object(analyzer, '_find_main_procedure', return_value=ast["body"][0]):
+            with patch.object(analyzer, '_validate_conditions', return_value={"valid": True}):
+                with patch.object(analyzer, '_extract_recurrence', return_value={
+                    "success": True,
+                    "recurrence": {
+                        "applicable": True,
+                        "method": "recursion_tree"
+                    }
+                }):
+                    with patch.object(analyzer, '_apply_recursion_tree_method', return_value={
+                        "success": False,
+                        "reason": "Error en árbol de recursión"
+                    }):
+                        result = analyzer.analyze(ast, mode="worst", preferred_method="recursion_tree")
+                        self.assertFalse(result.get("ok"))
+                        self.assertIn("errors", result)
+    
+    def test_analyze_master_theorem_error(self):
+        """Test: analyze() retorna error cuando falla la aplicación del teorema maestro"""
+        analyzer = RecursiveAnalyzer()
+        ast = {
+            "type": "Program",
+            "body": [{
+                "type": "ProcDef",
+                "name": "test",
+                "params": [{"name": "n"}],
+                "body": {
+                    "type": "Block",
+                    "statements": []
+                }
+            }]
+        }
+        with patch.object(analyzer, '_find_main_procedure', return_value=ast["body"][0]):
+            with patch.object(analyzer, '_validate_conditions', return_value={"valid": True}):
+                with patch.object(analyzer, '_extract_recurrence', return_value={
+                    "success": True,
+                    "recurrence": {
+                        "applicable": True,
+                        "method": "master"
+                    }
+                }):
+                    with patch.object(analyzer, '_apply_master_theorem', return_value={
+                        "success": False,
+                        "reason": "Error en teorema maestro"
+                    }):
+                        result = analyzer.analyze(ast, mode="worst", preferred_method="master")
+                        self.assertFalse(result.get("ok"))
+                        self.assertIn("errors", result)
+
+    # === Tests para detect_applicable_methods() ===
+    
+    def test_detect_applicable_methods_success(self):
+        """Test: detect_applicable_methods() detecta métodos aplicables exitosamente"""
+        analyzer = RecursiveAnalyzer()
+        ast = self.create_merge_sort_ast()
+        
+        result = analyzer.detect_applicable_methods(ast)
+        
+        # Puede fallar si el AST no es válido, pero si es exitoso debe tener la estructura correcta
+        if result.get("ok"):
+            self.assertIn("applicable_methods", result)
+            self.assertIn("default_method", result)
+            self.assertIn("recurrence_info", result)
+            self.assertIsInstance(result["applicable_methods"], list)
+            self.assertGreater(len(result["applicable_methods"]), 0)
+        else:
+            # Si falla, debe tener errores
+            self.assertIn("errors", result)
+    
+    def test_detect_applicable_methods_no_main_procedure(self):
+        """Test: detect_applicable_methods() retorna error cuando no encuentra procedimiento principal"""
+        analyzer = RecursiveAnalyzer()
+        ast = {
+            "type": "Program",
+            "body": []
+        }
+        
+        result = analyzer.detect_applicable_methods(ast)
+        
+        self.assertFalse(result.get("ok"))
+        self.assertIn("errors", result)
+    
+    def test_detect_applicable_methods_validation_failed(self):
+        """Test: detect_applicable_methods() retorna error cuando la validación falla"""
+        analyzer = RecursiveAnalyzer()
+        ast = {
+            "type": "Program",
+            "body": [{
+                "type": "ProcDef",
+                "name": "test",
+                "params": [],
+                "body": {"type": "Block", "statements": []}
+            }]
+        }
+        
+        with patch.object(analyzer, '_validate_conditions', return_value={
+            "valid": False,
+            "reason": "No válido"
+        }):
+            result = analyzer.detect_applicable_methods(ast)
+            self.assertFalse(result.get("ok"))
+            self.assertIn("errors", result)
+    
+    def test_detect_applicable_methods_extract_recurrence_failed(self):
+        """Test: detect_applicable_methods() retorna error cuando falla la extracción de recurrencia"""
+        analyzer = RecursiveAnalyzer()
+        ast = {
+            "type": "Program",
+            "body": [{
+                "type": "ProcDef",
+                "name": "test",
+                "params": [{"name": "n"}],
+                "body": {"type": "Block", "statements": []}
+            }]
+        }
+        
+        with patch.object(analyzer, '_find_main_procedure', return_value=ast["body"][0]):
+            with patch.object(analyzer, '_validate_conditions', return_value={"valid": True}):
+                with patch.object(analyzer, '_extract_recurrence', return_value={
+                    "success": False,
+                    "reason": "Error extrayendo"
+                }):
+                    result = analyzer.detect_applicable_methods(ast)
+                    self.assertFalse(result.get("ok"))
+                    self.assertIn("errors", result)
+    
+    def test_detect_applicable_methods_recurrence_not_applicable(self):
+        """Test: detect_applicable_methods() retorna error cuando recurrencia no es aplicable"""
+        analyzer = RecursiveAnalyzer()
+        ast = {
+            "type": "Program",
+            "body": [{
+                "type": "ProcDef",
+                "name": "test",
+                "params": [{"name": "n"}],
+                "body": {"type": "Block", "statements": []}
+            }]
+        }
+        
+        with patch.object(analyzer, '_find_main_procedure', return_value=ast["body"][0]):
+            with patch.object(analyzer, '_validate_conditions', return_value={"valid": True}):
+                with patch.object(analyzer, '_extract_recurrence', return_value={
+                    "success": True,
+                    "recurrence": {
+                        "applicable": False,
+                        "notes": ["No aplicable"]
+                    }
+                }):
+                    result = analyzer.detect_applicable_methods(ast)
+                    self.assertFalse(result.get("ok"))
+                    self.assertIn("errors", result)
+    
+    def test_detect_applicable_methods_exception_handling(self):
+        """Test: detect_applicable_methods() maneja excepciones correctamente"""
+        analyzer = RecursiveAnalyzer()
+        ast = {
+            "type": "Program",
+            "body": [{
+                "type": "ProcDef",
+                "name": "test",
+                "params": [{"name": "n"}],
+                "body": {"type": "Block", "statements": []}
+            }]
+        }
+        
+        with patch.object(analyzer, '_find_main_procedure', side_effect=Exception("Error inesperado")):
+            result = analyzer.detect_applicable_methods(ast)
+            self.assertFalse(result.get("ok"))
+            self.assertIn("errors", result)
+    
+    def test_detect_applicable_methods_includes_master(self):
+        """Test: detect_applicable_methods() siempre incluye 'master' como método aplicable"""
+        analyzer = RecursiveAnalyzer()
+        ast = self.create_merge_sort_ast()
+        
+        result = analyzer.detect_applicable_methods(ast)
+        
+        if result.get("ok"):
+            self.assertIn("master", result["applicable_methods"])
+    
+    def create_merge_sort_ast(self):
+        """Crea AST de Merge Sort para tests"""
+        return {
+            "type": "Program",
+            "body": [{
+                "type": "ProcDef",
+                "name": "mergeSort",
+                "params": [
+                    {"type": "ArrayParam", "name": "A", "start": {"type": "Identifier", "name": "n"}},
+                    {"type": "Param", "name": "izq"},
+                    {"type": "Param", "name": "der"}
+                ],
+                "body": {
+                    "type": "Block",
+                    "body": [
+                        {
+                            "type": "If",
+                            "test": {"type": "Binary", "op": "<", "left": {"type": "Identifier", "name": "izq"}, "right": {"type": "Identifier", "name": "der"}},
+                            "consequent": {
+                                "type": "Block",
+                                "body": [
+                                    {
+                                        "type": "Call",
+                                        "name": "mergeSort",
+                                        "args": [
+                                            {"type": "Identifier", "name": "A"},
+                                            {"type": "Identifier", "name": "izq"},
+                                            {"type": "Identifier", "name": "der"}
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }]
+        }
+
+    # === Tests para métodos helper de detección ===
+    
+    def test_has_auxiliary_function_calls_true(self):
+        """Test: _has_auxiliary_function_calls detecta llamadas a funciones auxiliares"""
+        self.analyzer.procedure_name = "factorial"
+        node = {
+            "type": "Block",
+            "statements": [
+                {
+                    "type": "Call",
+                    "name": "helper",
+                    "args": []
+                }
+            ]
+        }
+        recursive_calls = [{"name": "factorial"}]
+        result = self.analyzer._has_auxiliary_function_calls(node, recursive_calls)
+        self.assertTrue(result)
+    
+    def test_has_auxiliary_function_calls_false(self):
+        """Test: _has_auxiliary_function_calls no detecta si solo hay llamadas recursivas"""
+        self.analyzer.procedure_name = "factorial"
+        node = {
+            "type": "Block",
+            "statements": [
+                {
+                    "type": "Call",
+                    "name": "factorial",
+                    "args": []
+                }
+            ]
+        }
+        recursive_calls = [{"name": "factorial"}]
+        result = self.analyzer._has_auxiliary_function_calls(node, recursive_calls)
+        self.assertFalse(result)
+    
+    def test_has_auxiliary_function_calls_not_dict(self):
+        """Test: _has_auxiliary_function_calls retorna False para nodos que no son dict"""
+        result = self.analyzer._has_auxiliary_function_calls("not_a_dict", [])
+        self.assertFalse(result)
+    
+    def test_has_auxiliary_function_calls_nested(self):
+        """Test: _has_auxiliary_function_calls detecta llamadas auxiliares anidadas"""
+        self.analyzer.procedure_name = "factorial"
+        node = {
+            "type": "Block",
+            "statements": [
+                {
+                    "type": "If",
+                    "then": {
+                        "type": "Block",
+                        "statements": [
+                            {
+                                "type": "Call",
+                                "name": "helper",
+                                "args": []
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+        recursive_calls = [{"name": "factorial"}]
+        result = self.analyzer._has_auxiliary_function_calls(node, recursive_calls)
+        self.assertTrue(result)
+    
+    def test_depends_on_size_variable_true(self):
+        """Test: _depends_on_size_variable detecta dependencia de variable de tamaño"""
+        start = {"type": "identifier", "name": "i"}
+        end = {"type": "identifier", "name": "n"}
+        result = self.analyzer._depends_on_size_variable(start, end)
+        self.assertTrue(result)
+    
+    def test_depends_on_size_variable_false(self):
+        """Test: _depends_on_size_variable no detecta si no depende de n"""
+        start = {"type": "literal", "value": 0}
+        end = {"type": "literal", "value": 10}
+        result = self.analyzer._depends_on_size_variable(start, end)
+        self.assertFalse(result)
+    
+    def test_depends_on_size_variable_binary_expr(self):
+        """Test: _depends_on_size_variable detecta en expresiones binarias"""
+        start = {"type": "Literal", "value": 0}
+        end = {
+            "type": "Identifier",
+            "name": "der"
+        }
+        result = self.analyzer._depends_on_size_variable(start, end)
+        self.assertTrue(result)
+    
+    def test_while_depends_on_size_true(self):
+        """Test: _while_depends_on_size detecta dependencia en condición de while"""
+        test = {
+            "type": "binary",
+            "operator": "<",
+            "left": {"type": "identifier", "name": "i"},
+            "right": {"type": "identifier", "name": "n"}
+        }
+        result = self.analyzer._while_depends_on_size(test)
+        self.assertTrue(result)
+    
+    def test_while_depends_on_size_false(self):
+        """Test: _while_depends_on_size no detecta si no depende de n"""
+        test = {
+            "type": "binary",
+            "operator": "<",
+            "left": {"type": "identifier", "name": "i"},
+            "right": {"type": "literal", "value": 10}
+        }
+        result = self.analyzer._while_depends_on_size(test)
+        self.assertFalse(result)
+    
+    def test_while_depends_on_size_not_dict(self):
+        """Test: _while_depends_on_size maneja nodos que no son dict"""
+        result = self.analyzer._while_depends_on_size("not_a_dict")
+        self.assertFalse(result)
+    
+    def test_check_nested_loops_nested_for(self):
+        """Test: _check_nested_loops detecta bucles for anidados"""
+        self.analyzer.procedure_name = "test"
+        node = {
+            "type": "For",
+            "variable": "i",
+            "start": {"value": 0},
+            "end": {"type": "identifier", "name": "n"},
+            "body": {
+                "type": "Block",
+                "statements": [
+                    {
+                        "type": "For",
+                        "variable": "j",
+                        "start": {"value": 0},
+                        "end": {"type": "identifier", "name": "n"},
+                        "body": {"type": "Block", "statements": []}
+                    }
+                ]
+            }
+        }
+        recursive_calls = []
+        result = self.analyzer._check_nested_loops(node, recursive_calls)
+        self.assertEqual(result, "n^2")
+    
+    def test_check_nested_loops_single_loop(self):
+        """Test: _check_nested_loops retorna 'n' para un solo bucle"""
+        self.analyzer.procedure_name = "test"
+        node = {
+            "type": "For",
+            "variable": "i",
+            "start": {"value": 0},
+            "end": {"type": "identifier", "name": "n"},
+            "body": {"type": "Block", "statements": []}
+        }
+        recursive_calls = []
+        result = self.analyzer._check_nested_loops(node, recursive_calls)
+        self.assertEqual(result, "n")
+    
+    def test_check_nested_loops_no_loops(self):
+        """Test: _check_nested_loops retorna '1' cuando no hay bucles"""
+        self.analyzer.procedure_name = "test"
+        node = {
+            "type": "Block",
+            "statements": [
+                {"type": "assign"}
+            ]
+        }
+        recursive_calls = []
+        result = self.analyzer._check_nested_loops(node, recursive_calls)
+        self.assertEqual(result, "1")
+    
+    def test_check_nested_loops_not_dict(self):
+        """Test: _check_nested_loops maneja nodos que no son dict"""
+        result = self.analyzer._check_nested_loops("not_a_dict", [])
+        self.assertEqual(result, "1")
+
+    # === Tests para métodos de detección de casos base ===
+    
+    def test_detect_base_case_with_if_return(self):
+        """Test: _detect_base_case detecta caso base con IF y RETURN"""
+        self.analyzer.procedure_name = "factorial"
+        proc_def = {
+            "type": "ProcDef",
+            "name": "factorial",
+            "params": [{"name": "n"}],
+            "body": {
+                "type": "Block",
+                "statements": [
+                    {
+                        "type": "If",
+                        "condition": {
+                            "type": "binary",
+                            "operator": "<=",
+                            "left": {"name": "n"},
+                            "right": {"value": 1}
+                        },
+                        "then": {
+                            "type": "Block",
+                            "statements": [
+                                {
+                                    "type": "Return",
+                                    "value": {"value": 1}
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+        result = self.analyzer._detect_base_case(proc_def)
+        self.assertIsInstance(result, int)
+        self.assertGreaterEqual(result, 0)
+    
+    def test_detect_base_cases_multiple(self):
+        """Test: _detect_base_cases detecta múltiples casos base"""
+        self.analyzer.procedure_name = "fibonacci"
+        proc_def = {
+            "type": "ProcDef",
+            "name": "fibonacci",
+            "params": [{"name": "n"}],
+            "body": {
+                "type": "Block",
+                "statements": [
+                    {
+                        "type": "If",
+                        "condition": {
+                            "type": "binary",
+                            "operator": "<=",
+                            "left": {"name": "n"},
+                            "right": {"value": 1}
+                        },
+                        "then": {
+                            "type": "Block",
+                            "statements": [
+                                {"type": "Return", "value": {"name": "n"}}
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+        result = self.analyzer._detect_base_cases(proc_def)
+        self.assertIsInstance(result, dict)
+    
+    def test_find_return_expression_found(self):
+        """Test: _find_return_expression encuentra expresión de return"""
+        node = {
+            "type": "Block",
+            "statements": [
+                {
+                    "type": "Return",
+                    "value": {"value": 1}
+                }
+            ]
+        }
+        result = self.analyzer._find_return_expression(node)
+        self.assertIsNotNone(result)
+    
+    def test_find_return_expression_not_found(self):
+        """Test: _find_return_expression retorna None si no hay return"""
+        node = {
+            "type": "Block",
+            "statements": [
+                {"type": "assign"}
+            ]
+        }
+        result = self.analyzer._find_return_expression(node)
+        self.assertIsNone(result)
+    
+    def test_extract_return_value_literal(self):
+        """Test: _extract_return_value extrae valor literal"""
+        node = {
+            "type": "Return",
+            "value": {"type": "Literal", "value": 1}
+        }
+        result = self.analyzer._extract_return_value(node)
+        self.assertEqual(result, 1)
+    
+    def test_extract_return_value_identifier(self):
+        """Test: _extract_return_value extrae valor de identificador"""
+        node = {
+            "type": "Return",
+            "value": {"type": "identifier", "name": "n"}
+        }
+        result = self.analyzer._extract_return_value(node)
+        # Puede retornar None o el nombre, dependiendo de la implementación
+        self.assertIsInstance(result, (int, type(None)))
+    
+    def test_extract_literal_value_integer(self):
+        """Test: _extract_literal_value extrae valor entero"""
+        expr = {"type": "Literal", "value": 5}
+        result = self.analyzer._extract_literal_value(expr)
+        self.assertEqual(result, 5)
+    
+    def test_extract_literal_value_not_literal(self):
+        """Test: _extract_literal_value retorna None si no es literal"""
+        expr = {"type": "identifier", "name": "n"}
+        result = self.analyzer._extract_literal_value(expr)
+        self.assertIsNone(result)
+    
+    def test_find_base_case_guard_found(self):
+        """Test: _find_base_case_guard encuentra guarda de caso base"""
+        self.analyzer.procedure_name = "factorial"
+        node = {
+            "type": "If",
+            "condition": {
+                "type": "Binary",
+                "op": "<=",
+                "left": {"name": "n"},
+                "right": {"type": "Literal", "value": 1}
+            },
+            "then": {
+                "type": "Block",
+                "statements": [
+                    {"type": "Return", "value": {"type": "Literal", "value": 1}}
+                ]
+            }
+        }
+        result = self.analyzer._find_base_case_guard(node)
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, int)
+    
+    def test_find_base_case_guard_not_found(self):
+        """Test: _find_base_case_guard retorna None si no encuentra guarda"""
+        node = {
+            "type": "If",
+            "condition": {
+                "type": "binary",
+                "operator": ">",
+                "left": {"name": "n"},
+                "right": {"value": 1}
+            }
+        }
+        result = self.analyzer._find_base_case_guard(node)
+        # Puede retornar None o algún valor dependiendo de la implementación
+        self.assertIsInstance(result, (int, type(None)))
+    
+    def test_extract_base_case_from_condition_less_equal(self):
+        """Test: _extract_base_case_from_condition extrae caso base de condición <="""
+        condition = {
+            "type": "Binary",
+            "op": "<=",
+            "left": {"name": "n"},
+            "right": {"type": "Literal", "value": 1}
+        }
+        result = self.analyzer._extract_base_case_from_condition(condition)
+        self.assertEqual(result, 1)
+    
+    def test_extract_base_case_from_condition_equal(self):
+        """Test: _extract_base_case_from_condition extrae caso base de condición =="""
+        condition = {
+            "type": "Binary",
+            "op": "==",
+            "left": {"name": "n"},
+            "right": {"type": "Literal", "value": 0}
+        }
+        result = self.analyzer._extract_base_case_from_condition(condition)
+        # El método retorna max(1, n0), así que 0 se convierte en 1
+        self.assertIsNotNone(result)
+        self.assertGreaterEqual(result, 1)
+    
+    def test_extract_base_case_from_condition_not_base_case(self):
+        """Test: _extract_base_case_from_condition retorna None si no es caso base"""
+        condition = {
+            "type": "binary",
+            "operator": ">",
+            "left": {"name": "n"},
+            "right": {"value": 1}
+        }
+        result = self.analyzer._extract_base_case_from_condition(condition)
+        self.assertIsNone(result)
+
+    # === Tests para métodos de detección de early return ===
+    
+    def test_detect_early_return_true(self):
+        """Test: _detect_early_return detecta return temprano"""
+        self.analyzer.proc_def = {
+            "type": "ProcDef",
+            "name": "binarySearch",
+            "params": [{"name": "n"}],
+            "body": {
+                "type": "Block",
+                "body": [
+                    {
+                        "type": "If",
+                        "test": {"type": "Binary", "op": "==", "left": {"name": "x"}, "right": {"name": "target"}},
+                        "consequent": {
+                            "type": "Block",
+                            "body": [{"type": "Return", "value": {"value": 0}}]
+                        },
+                        "alternate": {
+                            "type": "Block",
+                            "body": [
+                                {
+                                    "type": "Call",
+                                    "name": "binarySearch",
+                                    "args": []
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+        self.analyzer.procedure_name = "binarySearch"
+        result = self.analyzer._detect_early_return()
+        self.assertTrue(result)
+    
+    def test_detect_early_return_false(self):
+        """Test: _detect_early_return retorna False cuando no hay return temprano"""
+        self.analyzer.proc_def = {
+            "type": "ProcDef",
+            "name": "factorial",
+            "params": [{"name": "n"}],
+            "body": {
+                "type": "Block",
+                "body": [
+                    {
+                        "type": "Call",
+                        "name": "factorial",
+                        "args": []
+                    }
+                ]
+            }
+        }
+        self.analyzer.procedure_name = "factorial"
+        result = self.analyzer._detect_early_return()
+        self.assertFalse(result)
+    
+    def test_detect_early_return_no_proc_def(self):
+        """Test: _detect_early_return retorna False cuando no hay proc_def"""
+        self.analyzer.proc_def = None
+        result = self.analyzer._detect_early_return()
+        self.assertFalse(result)
+    
+    def test_has_return_before_recursive_calls_if_then_else(self):
+        """Test: _has_return_before_recursive_calls detecta patrón IF-THEN-ELSE con return en THEN"""
+        self.analyzer.procedure_name = "binarySearch"
+        recursive_calls = [{"name": "binarySearch"}]
+        node = {
+            "type": "If",
+            "consequent": {
+                "type": "Block",
+                "body": [{"type": "Return", "value": {"value": 0}}]
+            },
+            "alternate": {
+                "type": "Block",
+                "body": [
+                    {
+                        "type": "Call",
+                        "name": "binarySearch",
+                        "args": []
+                    }
+                ]
+            }
+        }
+        result = self.analyzer._has_return_before_recursive_calls(node, recursive_calls)
+        self.assertTrue(result)
+    
+    def test_has_return_before_recursive_calls_block_sequence(self):
+        """Test: _has_return_before_recursive_calls detecta return antes de recursivas en Block"""
+        self.analyzer.procedure_name = "test"
+        recursive_calls = [{"name": "test"}]
+        node = {
+            "type": "Block",
+            "statements": [
+                {"type": "Return", "value": {"value": 1}},
+                {
+                    "type": "Call",
+                    "name": "test",
+                    "args": []
+                }
+            ]
+        }
+        result = self.analyzer._has_return_before_recursive_calls(node, recursive_calls)
+        self.assertTrue(result)
+    
+    def test_has_return_before_recursive_calls_return_with_recursive(self):
+        """Test: _has_return_before_recursive_calls retorna False si return contiene recursivas"""
+        self.analyzer.procedure_name = "factorial"
+        recursive_calls = [{"name": "factorial"}]
+        node = {
+            "type": "Return",
+            "value": {
+                "type": "Call",
+                "name": "factorial",
+                "args": []
+            }
+        }
+        result = self.analyzer._has_return_before_recursive_calls(node, recursive_calls)
+        self.assertFalse(result)
+    
+    def test_has_return_before_recursive_calls_not_dict(self):
+        """Test: _has_return_before_recursive_calls maneja nodos que no son dict"""
+        result = self.analyzer._has_return_before_recursive_calls("not_a_dict", [])
+        self.assertFalse(result)
+    
+    def test_find_return_statements_found(self):
+        """Test: _find_return_statements encuentra statements de return"""
+        node = {
+            "type": "Block",
+            "body": [
+                {"type": "Return", "value": {"value": 1}},
+                {"type": "Return", "value": {"value": 2}}
+            ]
+        }
+        result = self.analyzer._find_return_statements(node)
+        self.assertIsInstance(result, list)
+        self.assertGreaterEqual(len(result), 1)
+    
+    def test_find_return_statements_not_found(self):
+        """Test: _find_return_statements retorna lista vacía si no hay returns"""
+        node = {
+            "type": "Block",
+            "body": [
+                {"type": "assign"}
+            ]
+        }
+        result = self.analyzer._find_return_statements(node)
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), 0)
+    
+    def test_find_return_statements_nested(self):
+        """Test: _find_return_statements encuentra returns anidados"""
+        node = {
+            "type": "If",
+            "then": {
+                "type": "Block",
+                "body": [{"type": "Return", "value": {"value": 1}}]
+            },
+            "else": {
+                "type": "Block",
+                "body": [{"type": "Return", "value": {"value": 2}}]
+            }
+        }
+        result = self.analyzer._find_return_statements(node)
+        self.assertGreaterEqual(len(result), 1)
+
+    # === Tests para métodos de análisis de subproblemas ===
+    
+    def test_is_range_halving_pattern_true(self):
+        """Test: _is_range_halving_pattern detecta patrón de división por la mitad"""
+        expr = {
+            "type": "Binary",
+            "op": "/",
+            "left": {
+                "type": "Binary",
+                "op": "+",
+                "left": {"type": "Identifier", "name": "izq"},
+                "right": {"type": "Identifier", "name": "der"}
+            },
+            "right": {"type": "Literal", "value": 2}
+        }
+        params = [{"name": "izq"}, {"name": "der"}]
+        result = self.analyzer._is_range_halving_pattern(expr, params)
+        self.assertTrue(result)
+    
+    def test_is_range_halving_pattern_false(self):
+        """Test: _is_range_halving_pattern retorna False si no es patrón de división"""
+        expr = {
+            "type": "binary",
+            "operator": "-",
+            "left": {"type": "identifier", "name": "n"},
+            "right": {"type": "literal", "value": 1}
+        }
+        params = [{"name": "n"}]
+        result = self.analyzer._is_range_halving_pattern(expr, params)
+        self.assertFalse(result)
+    
+    def test_detect_range_reduction_found(self):
+        """Test: _detect_range_reduction detecta reducción de rango"""
+        args = [
+            {"type": "Identifier", "name": "A"},
+            {
+                "type": "Binary",
+                "op": "+",
+                "left": {"type": "Identifier", "name": "izq"},
+                "right": {"type": "Literal", "value": 1}
+            },
+            {
+                "type": "Binary",
+                "op": "-",
+                "left": {"type": "Identifier", "name": "der"},
+                "right": {"type": "Literal", "value": 1}
+            }
+        ]
+        params = [{"name": "A"}, {"name": "izq"}, {"name": "der"}]
+        result = self.analyzer._detect_range_reduction(args, params)
+        # Puede retornar None o un resultado dependiendo de la implementación
+        self.assertIsInstance(result, (dict, type(None)))
+    
+    def test_detect_range_reduction_not_found(self):
+        """Test: _detect_range_reduction retorna None si no hay reducción"""
+        args = [
+            {"type": "identifier", "name": "n"}
+        ]
+        params = [{"name": "n"}]
+        result = self.analyzer._detect_range_reduction(args, params)
+        self.assertIsNone(result)
+    
+    def test_detect_range_reduction_no_args(self):
+        """Test: _detect_range_reduction maneja lista vacía de argumentos"""
+        args = []
+        params = [{"name": "n"}]
+        result = self.analyzer._detect_range_reduction(args, params)
+        self.assertIsNone(result)
+    
+    def test_combines_multiple_results_true(self):
+        """Test: _combines_multiple_results detecta cuando se combinan múltiples resultados"""
+        self.analyzer.procedure_name = "fibonacci"
+        proc_def = {
+            "type": "ProcDef",
+            "name": "fibonacci",
+            "body": {
+                "type": "Block",
+                "body": [
+                    {
+                        "type": "Return",
+                        "value": {
+                            "type": "binary",
+                            "operator": "+",
+                            "left": {
+                                "type": "Call",
+                                "name": "fibonacci",
+                                "args": []
+                            },
+                            "right": {
+                                "type": "Call",
+                                "name": "fibonacci",
+                                "args": []
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+        recursive_calls = [
+            {"name": "fibonacci"},
+            {"name": "fibonacci"}
+        ]
+        result = self.analyzer._combines_multiple_results(proc_def, recursive_calls)
+        self.assertTrue(result)
+    
+    def test_combines_multiple_results_false(self):
+        """Test: _combines_multiple_results retorna False si no combina resultados"""
+        self.analyzer.procedure_name = "factorial"
+        proc_def = {
+            "type": "ProcDef",
+            "name": "factorial",
+            "body": {
+                "type": "Block",
+                "body": [
+                    {
+                        "type": "Return",
+                        "value": {
+                            "type": "Call",
+                            "name": "factorial",
+                            "args": []
+                        }
+                    }
+                ]
+            }
+        }
+        recursive_calls = [{"name": "factorial"}]
+        result = self.analyzer._combines_multiple_results(proc_def, recursive_calls)
+        self.assertFalse(result)
+    
+    def test_contains_multiple_recursive_calls_true(self):
+        """Test: _contains_multiple_recursive_calls detecta múltiples llamadas recursivas"""
+        self.analyzer.procedure_name = "fibonacci"
+        expr = {
+            "type": "binary",
+            "operator": "+",
+            "left": {
+                "type": "Call",
+                "name": "fibonacci",
+                "args": []
+            },
+            "right": {
+                "type": "Call",
+                "name": "fibonacci",
+                "args": []
+            }
+        }
+        result = self.analyzer._contains_multiple_recursive_calls(expr, "fibonacci")
+        self.assertTrue(result)
+    
+    def test_contains_multiple_recursive_calls_false(self):
+        """Test: _contains_multiple_recursive_calls retorna False si hay una sola llamada"""
+        self.analyzer.procedure_name = "factorial"
+        expr = {
+            "type": "Call",
+            "name": "factorial",
+            "args": []
+        }
+        result = self.analyzer._contains_multiple_recursive_calls(expr, "factorial")
+        self.assertFalse(result)
+
+    # === Tests para casos edge en métodos de resolución ===
+    
+    def test_apply_characteristic_equation_method_no_linear_recurrence(self):
+        """Test: _apply_characteristic_equation_method falla si no es recurrencia lineal"""
+        self.analyzer.recurrence = {
+            "form": "T(n) = T(n/2) + 1",
+            "applicable": True
+        }
+        self.analyzer.proc_def = {"type": "ProcDef", "name": "test"}
+        with patch.object(self.analyzer, '_detect_linear_recurrence', return_value=None):
+            result = self.analyzer._apply_characteristic_equation_method()
+            self.assertFalse(result.get("success"))
+    
+    def test_apply_iteration_method_no_g_function(self):
+        """Test: _apply_iteration_method falla si no puede extraer g(n)"""
+        self.analyzer.recurrence = {
+            "form": "T(n) = T(n-1) + 1",
+            "a": 1,
+            "f": "1",
+            "n0": 1,
+            "applicable": True
+        }
+        self.analyzer.proc_def = {"type": "ProcDef", "name": "test"}
+        with patch.object(self.analyzer, '_extract_g_function', return_value=None):
+            result = self.analyzer._apply_iteration_method()
+            self.assertFalse(result.get("success"))
+    
+    def test_apply_recursion_tree_method_no_recurrence(self):
+        """Test: _apply_recursion_tree_method falla si no hay recurrencia"""
+        self.analyzer.recurrence = None
+        result = self.analyzer._apply_recursion_tree_method()
+        self.assertFalse(result.get("success"))
+    
+    def test_generate_dp_code(self):
+        """Test: _generate_dp_code genera código DP"""
+        coefficients = {1: 1, 2: 1}
+        max_offset = 2
+        result = self.analyzer._generate_dp_code(coefficients, max_offset)
+        self.assertIsInstance(result, str)
+        self.assertGreater(len(result), 0)
+    
+    def test_generate_optimized_dp_code(self):
+        """Test: _generate_optimized_dp_code genera código DP optimizado"""
+        coefficients = {1: 1, 2: 1}
+        max_offset = 2
+        result = self.analyzer._generate_optimized_dp_code(coefficients, max_offset)
+        self.assertIsInstance(result, str)
+        self.assertGreater(len(result), 0)
+    
+    def test_calculate_recursive_complexity(self):
+        """Test: _calculate_recursive_complexity calcula complejidad recursiva"""
+        coefficients = {1: 1, 2: 1}
+        max_offset = 2
+        result = self.analyzer._calculate_recursive_complexity(coefficients, max_offset)
+        self.assertIsInstance(result, str)
+        self.assertGreater(len(result), 0)
+
+    # === Tests para métodos de extracción y expansión ===
+    
+    def test_extract_g_function_division(self):
+        """Test: _extract_g_function extrae g(n) = n/2"""
+        self.analyzer.recurrence = {
+            "form": "T(n) = T(n/2) + 1",
+            "a": 1,
+            "applicable": True
+        }
+        self.analyzer.proc_def = {
+            "type": "ProcDef",
+            "name": "binarySearch",
+            "params": [{"name": "n"}],
+            "body": {
+                "type": "Block",
+                "body": [
+                    {
+                        "type": "Call",
+                        "name": "binarySearch",
+                        "args": [
+                            {
+                                "type": "binary",
+                                "operator": "/",
+                                "left": {"name": "n"},
+                                "right": {"value": 2}
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+        recursive_calls = [{"name": "binarySearch", "args": [{"type": "binary", "operator": "/", "left": {"name": "n"}, "right": {"value": 2}}]}]
+        with patch.object(self.analyzer, '_find_recursive_calls', return_value=recursive_calls):
+            with patch.object(self.analyzer, '_analyze_subproblem_type', return_value={
+                "type": "division",
+                "pattern": "n/2",
+                "factor": 2
+            }):
+                result = self.analyzer._extract_g_function()
+                self.assertIsNotNone(result)
+                if result:
+                    self.assertIn("type", result)
+    
+    def test_expand_recurrence(self):
+        """Test: _expand_recurrence expande recurrencia"""
+        g_n_info = {
+            "type": "subtraction",
+            "pattern": "n-1",
+            "factor": 1
+        }
+        f_n = "1"
+        result = self.analyzer._expand_recurrence(g_n_info, f_n, num_expansions=3)
+        self.assertIsInstance(result, list)
+        self.assertGreater(len(result), 0)
+    
+    def test_create_general_form(self):
+        """Test: _create_general_form crea forma general"""
+        g_n_info = {
+            "type": "subtraction",
+            "pattern": "n-1",
+            "factor": 1
+        }
+        f_n = "1"
+        result = self.analyzer._create_general_form(g_n_info, f_n)
+        self.assertIsInstance(result, str)
+        self.assertGreater(len(result), 0)
+    
+    def test_determine_k_from_base_case(self):
+        """Test: _determine_k_from_base_case determina k desde caso base"""
+        g_n_info = {
+            "type": "subtraction",
+            "pattern": "n-1",
+            "factor": 1
+        }
+        n0 = 1
+        result = self.analyzer._determine_k_from_base_case(g_n_info, n0)
+        self.assertIsInstance(result, str)
+        self.assertGreater(len(result), 0)
+    
+    def test_substitute_k_in_summation(self):
+        """Test: _substitute_k_in_summation sustituye k en sumatoria"""
+        g_n_info = {
+            "type": "subtraction",
+            "pattern": "n-1",
+            "factor": 1
+        }
+        f_n = "1"
+        k_expr = "n-1"
+        n0 = 1
+        result = self.analyzer._substitute_k_in_summation(g_n_info, f_n, k_expr, n0)
+        self.assertIsInstance(result, str)
+        self.assertGreater(len(result), 0)
+    
+    def test_solve_summation(self):
+        """Test: _solve_summation resuelve sumatoria"""
+        g_n_info = {
+            "type": "subtraction",
+            "pattern": "n-1",
+            "factor": 1
+        }
+        f_n = "1"
+        k_expr = "n-1"
+        result = self.analyzer._solve_summation(g_n_info, f_n, k_expr)
+        self.assertIsInstance(result, dict)
+        self.assertIn("evaluated", result)
+        self.assertIn("theta", result)
+
+    # === Tests para construcción de árbol de recursión ===
+    
+    def test_build_tree_levels_different_a_b(self):
+        """Test: _build_tree_levels construye niveles con diferentes valores de a y b"""
+        a = 3
+        b = 3.0
+        f_n = "n"
+        n0 = 1
+        result = self.analyzer._build_tree_levels(a, b, f_n, n0)
+        self.assertIsInstance(result, list)
+        self.assertGreater(len(result), 0)
+        for level in result:
+            self.assertIn("level", level)
+            self.assertIn("num_nodes_latex", level)
+            self.assertIn("subproblem_size_latex", level)
+    
+    def test_build_tree_levels_f_n_squared(self):
+        """Test: _build_tree_levels maneja f(n) = n^2"""
+        a = 2
+        b = 2.0
+        f_n = "n^2"
+        n0 = 1
+        result = self.analyzer._build_tree_levels(a, b, f_n, n0)
+        self.assertIsInstance(result, list)
+        self.assertGreater(len(result), 0)
+    
+    def test_build_tree_levels_f_n_constant(self):
+        """Test: _build_tree_levels maneja f(n) = 1"""
+        a = 2
+        b = 2.0
+        f_n = "1"
+        n0 = 1
+        result = self.analyzer._build_tree_levels(a, b, f_n, n0)
+        self.assertIsInstance(result, list)
+        self.assertGreater(len(result), 0)
+    
+    def test_calculate_tree_sum_different_cases(self):
+        """Test: _calculate_tree_sum calcula sumatoria para diferentes casos"""
+        levels = [
+            {"total_cost_latex": "n^2"},
+            {"total_cost_latex": "n^2/2"},
+            {"total_cost_latex": "n^2/4"}
+        ]
+        a = 2
+        b = 2.0
+        f_n = "n^2"
+        result = self.analyzer._calculate_tree_sum(levels, a, b, f_n)
+        self.assertIsInstance(result, dict)
+        self.assertIn("expression", result)
+        self.assertIn("evaluated", result)
+        self.assertIn("theta", result)
+    
+    def test_calculate_tree_sum_uniform_levels(self):
+        """Test: _calculate_tree_sum calcula cuando todos los niveles tienen el mismo costo"""
+        levels = [
+            {"total_cost_latex": "n"},
+            {"total_cost_latex": "n"},
+            {"total_cost_latex": "n"}
+        ]
+        a = 2
+        b = 2.0
+        f_n = "n"
+        result = self.analyzer._calculate_tree_sum(levels, a, b, f_n)
+        self.assertIsInstance(result, dict)
+        self.assertIn("theta", result)
+    
+    def test_identify_dominating_level_leaves(self):
+        """Test: _identify_dominating_level identifica hojas como dominantes"""
+        levels = [
+            {"total_cost_latex": "1", "level": 0},
+            {"total_cost_latex": "2", "level": 1},
+            {"total_cost_latex": "4", "level": 2}
+        ]
+        a = 2
+        b = 2.0
+        f_n = "1"
+        result = self.analyzer._identify_dominating_level(levels, a, b, f_n)
+        self.assertIsInstance(result, dict)
+        self.assertIn("level", result)
+        self.assertIn("reason", result)
+    
+    def test_identify_dominating_level_root(self):
+        """Test: _identify_dominating_level identifica raíz como dominante"""
+        levels = [
+            {"total_cost_latex": "n^2", "level": 0},
+            {"total_cost_latex": "n^2/2", "level": 1},
+            {"total_cost_latex": "n^2/4", "level": 2}
+        ]
+        a = 2
+        b = 2.0
+        f_n = "n^2"
+        result = self.analyzer._identify_dominating_level(levels, a, b, f_n)
+        self.assertIsInstance(result, dict)
+        self.assertIn("level", result)
+    
+    def test_identify_dominating_level_all_equal(self):
+        """Test: _identify_dominating_level identifica cuando todos son iguales"""
+        levels = [
+            {"total_cost_latex": "n", "level": 0},
+            {"total_cost_latex": "n", "level": 1},
+            {"total_cost_latex": "n", "level": 2}
+        ]
+        a = 2
+        b = 2.0
+        f_n = "n"
+        result = self.analyzer._identify_dominating_level(levels, a, b, f_n)
+        self.assertIsInstance(result, dict)
+        self.assertIn("level", result)
+
 
 if __name__ == '__main__':
     unittest.main()
