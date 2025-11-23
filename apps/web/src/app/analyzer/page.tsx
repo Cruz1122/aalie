@@ -637,9 +637,38 @@ export default function AnalyzerPage() {
         isRecursive,
       };
 
+      // Detectar el método usado en el análisis propio (si es recursivo)
+      let ownMethod: string | undefined = undefined;
+      if (isRecursive) {
+        // Intentar obtener el método desde ownCoreDataWorst
+        ownMethod = ownCoreDataWorst?.method;
+        
+        // Si no está en ownCoreDataWorst, intentar desde data.worst
+        if (!ownMethod && data.worst?.totals?.recurrence?.method) {
+          ownMethod = data.worst.totals.recurrence.method;
+        }
+      }
+
       // Preparación rápida inicial
       setComparisonMessage("Preparando datos...");
       await animateProgress(0, 5, 200, setComparisonProgress);
+
+      // Construir instrucción sobre el método a usar
+      let methodInstruction = "";
+      if (ownMethod && isRecursive) {
+        const methodNames: Record<string, string> = {
+          "characteristic_equation": "Ecuación Característica",
+          "iteration": "Método de Iteración",
+          "master": "Teorema Maestro",
+          "recursion_tree": "Árbol de Recursión"
+        };
+        const methodDisplayName = methodNames[ownMethod] || ownMethod;
+        methodInstruction = `\n**MÉTODO A USAR (CRÍTICO):**
+- El análisis propio utilizó el método "${methodDisplayName}" (${ownMethod})
+- **DEBES usar el MISMO método** en tu análisis para poder comparar correctamente
+- Si el análisis propio usó "${ownMethod}", tu análisis también debe usar "${ownMethod}" y proporcionar todos los campos requeridos para ese método
+- Solo si el método usado en el análisis propio no es aplicable o es incorrecto, puedes usar un método alternativo, pero debes justificarlo en tu nota`;
+      }
 
       const prompt = `Analiza el siguiente algoritmo y proporciona un análisis de complejidad detallado.
 
@@ -649,13 +678,13 @@ ${source}
 \`\`\`
 
 **ANÁLISIS PROPIO COMPLETO (para que puedas dar una observación real):**
-${JSON.stringify(fullAnalysisData, null, 2)}
+${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}
 
 **INSTRUCCIONES:**
 1. Analiza el algoritmo proporcionado
 2. Determina si es iterativo o recursivo
 3. Calcula la complejidad temporal y espacial
-4. Aplica los métodos apropiados (Teorema Maestro, Iteración, Árbol de Recursión, Ecuación Característica, etc.)
+4. ${ownMethod && isRecursive ? `**USA EL MISMO MÉTODO QUE EL ANÁLISIS PROPIO** (${ownMethod})` : 'Aplica los métodos apropiados (Teorema Maestro, Iteración, Árbol de Recursión, Ecuación Característica, etc.)'}
 5. Proporciona todos los datos core del análisis en formato JSON
 6. **IMPORTANTE**: Compara tu análisis con el análisis propio proporcionado y da una observación REAL y específica (máx. 150 caracteres) sobre:
    - La precisión del análisis propio
@@ -681,7 +710,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}
       const estimatedDuration = 20000; // ~20 segundos
       const startTime = Date.now();
       
-      // Mensajes que cambian durante la espera
+      // Mensajes que cambian secuencialmente durante la espera (no se repiten)
       const waitingMessages = [
         "Esperando respuesta del LLM...",
         "Analizando algoritmo...",
@@ -711,11 +740,14 @@ ${JSON.stringify(fullAnalysisData, null, 2)}
         const elapsed = Date.now() - startTime;
         const newProgress = calculateProgress(elapsed);
         
-        // Cambiar mensaje periódicamente
+        // Cambiar mensaje periódicamente de forma secuencial (no se repiten)
         if (Date.now() - lastMessageChange >= messageChangeInterval) {
-          messageIndex = (messageIndex + 1) % waitingMessages.length;
-          setComparisonMessage(waitingMessages[messageIndex]);
-          lastMessageChange = Date.now();
+          if (messageIndex < waitingMessages.length - 1) {
+            messageIndex = messageIndex + 1;
+            setComparisonMessage(waitingMessages[messageIndex]);
+            lastMessageChange = Date.now();
+          }
+          // Si ya llegamos al último mensaje, mantenerlo
         }
         
         setComparisonProgress((prev) => {
@@ -803,8 +835,119 @@ ${JSON.stringify(fullAnalysisData, null, 2)}
       if (llmResponse.time_complexity && typeof llmResponse.time_complexity === 'object') {
         const timeComplexity = llmResponse.time_complexity as Record<string, unknown>;
         
+        // Verificar si time_complexity tiene directamente recurrence, method, characteristic_equation, etc.
+        // (estructura para recursivos: { time_complexity: { recurrence, method, characteristic_equation/iteration/master, big_theta } })
+        if (timeComplexity.recurrence || timeComplexity.method || timeComplexity.characteristic_equation || timeComplexity.iteration || timeComplexity.master) {
+          const convertRecursiveAnalysis = (): CoreAnalysisData | null => {
+            const result: CoreAnalysisData = {};
+            
+            // Notaciones asintóticas
+            if (timeComplexity.big_theta && typeof timeComplexity.big_theta === 'string') result.big_theta = timeComplexity.big_theta;
+            if (timeComplexity.big_o && typeof timeComplexity.big_o === 'string') result.big_o = timeComplexity.big_o;
+            if (timeComplexity.big_O && typeof timeComplexity.big_O === 'string') result.big_o = timeComplexity.big_O;
+            if (timeComplexity.big_omega && typeof timeComplexity.big_omega === 'string') result.big_omega = timeComplexity.big_omega;
+            if (timeComplexity.big_Omega && typeof timeComplexity.big_Omega === 'string') result.big_omega = timeComplexity.big_Omega;
+            
+            // Extraer recurrence
+            if (timeComplexity.recurrence && typeof timeComplexity.recurrence === 'object') {
+              const recurrence = timeComplexity.recurrence as Record<string, unknown>;
+              result.recurrence = {
+                type: (recurrence.type as "divide_conquer" | "linear_shift") || "linear_shift",
+                form: (recurrence.form as string) || "",
+                a: (recurrence.a as number) || undefined,
+                b: (recurrence.b as number) || undefined,
+                f: (recurrence.f as string) || undefined,
+                order: (recurrence.order as number) || undefined,
+                shifts: (recurrence.shifts as number[]) || undefined,
+                coefficients: (recurrence.coefficients as number[]) || undefined,
+                "g(n)": (recurrence["g(n)"] as string) || undefined,
+                n0: (recurrence.n0 as number) || undefined,
+                method: (timeComplexity.method as string) || undefined,
+              };
+            }
+            
+            // Extraer method
+            if (timeComplexity.method && typeof timeComplexity.method === 'string') {
+              result.method = timeComplexity.method;
+            }
+            
+            // Extraer characteristic_equation (prioridad alta)
+            if (timeComplexity.characteristic_equation && typeof timeComplexity.characteristic_equation === 'object') {
+              const charEq = timeComplexity.characteristic_equation as Record<string, unknown>;
+              result.characteristic_equation = {
+                equation: (charEq.equation as string) || "",
+                roots: (charEq.roots as Array<{ root: string; multiplicity: number }>) || undefined,
+                dominant_root: (charEq.dominant_root as string) || undefined,
+                growth_rate: (charEq.growth_rate as number) || undefined,
+                homogeneous_solution: (charEq.homogeneous_solution as string) || "",
+                particular_solution: (charEq.particular_solution as string) || undefined,
+                general_solution: (charEq.general_solution as string) || undefined,
+                closed_form: (charEq.closed_form as string) || "",
+                theta: (charEq.theta as string) || result.big_theta || "",
+              };
+              // Usar theta de characteristic_equation si está disponible
+              if (result.characteristic_equation.theta) {
+                result.big_theta = result.characteristic_equation.theta;
+              }
+            }
+            
+            // Extraer iteration
+            if (timeComplexity.iteration && typeof timeComplexity.iteration === 'object') {
+              const iteration = timeComplexity.iteration as Record<string, unknown>;
+              const baseCase = iteration.base_case as Record<string, unknown> | undefined;
+              const summation = iteration.summation as Record<string, unknown> | undefined;
+              
+              result.iteration = {
+                g_function: (iteration.g_function as string) || "",
+                expansions: (iteration.expansions as string[]) || [],
+                general_form: (iteration.general_form as string) || "",
+                base_case: {
+                  condition: (baseCase?.condition as string) || "",
+                  k: (baseCase?.k as string) || "",
+                },
+                summation: {
+                  expression: (summation?.expression as string) || "",
+                  evaluated: (summation?.evaluated as string) || "",
+                },
+                theta: (iteration.theta as string) || result.big_theta || "",
+              };
+              // Usar theta de iteration si está disponible
+              if (result.iteration.theta) {
+                result.big_theta = result.iteration.theta;
+              }
+            }
+            
+            // Extraer master
+            if (timeComplexity.master && typeof timeComplexity.master === 'object') {
+              const master = timeComplexity.master as Record<string, unknown>;
+              result.master = {
+                case: (master.case as 1 | 2 | 3 | null) || null,
+                nlogba: (master.nlogba as string) || "",
+                comparison: (master.comparison as "smaller" | "equal" | "larger" | null) || null,
+                theta: (master.theta as string | null) || null,
+              };
+              // Usar theta de master si está disponible
+              if (result.master.theta) {
+                result.big_theta = result.master.theta;
+              }
+            }
+            
+            return Object.keys(result).length > 0 ? result : null;
+          };
+          
+          const recursiveResult = convertRecursiveAnalysis();
+          
+          if (recursiveResult) {
+            setLlmAnalysisData({
+              worst: recursiveResult,
+              best: null,
+              avg: null,
+            });
+            dataProcessed = true;
+          }
+        }
         // Verificar si time_complexity tiene analysis
-        if (timeComplexity.analysis && typeof timeComplexity.analysis === 'object') {
+        else if (timeComplexity.analysis && typeof timeComplexity.analysis === 'object') {
           const analysisData = timeComplexity.analysis as Record<string, unknown>;
           const convertAnalysisData = (): CoreAnalysisData | null => {
             const result: CoreAnalysisData = {};
@@ -872,10 +1015,122 @@ ${JSON.stringify(fullAnalysisData, null, 2)}
         });
       } else if (!dataProcessed && llmAnalysis.time_complexity && typeof llmAnalysis.time_complexity === 'object') {
         // Estructura: { analysis: { time_complexity: { worst: {...}, best: {...}, avg: {...} } } }
+        // O también: { analysis: { time_complexity: { recurrence, method, characteristic_equation, ... } } }
         const timeComplexity = llmAnalysis.time_complexity as Record<string, unknown>;
         
+        // Verificar si time_complexity tiene directamente recurrence, method, characteristic_equation, etc.
+        // (estructura para recursivos)
+        if (timeComplexity.recurrence || timeComplexity.method || timeComplexity.characteristic_equation || timeComplexity.iteration || timeComplexity.master) {
+          const convertRecursiveAnalysis = (): CoreAnalysisData | null => {
+            const result: CoreAnalysisData = {};
+            
+            // Notaciones asintóticas
+            if (timeComplexity.big_theta && typeof timeComplexity.big_theta === 'string') result.big_theta = timeComplexity.big_theta;
+            if (timeComplexity.big_o && typeof timeComplexity.big_o === 'string') result.big_o = timeComplexity.big_o;
+            if (timeComplexity.big_O && typeof timeComplexity.big_O === 'string') result.big_o = timeComplexity.big_O;
+            if (timeComplexity.big_omega && typeof timeComplexity.big_omega === 'string') result.big_omega = timeComplexity.big_omega;
+            if (timeComplexity.big_Omega && typeof timeComplexity.big_Omega === 'string') result.big_omega = timeComplexity.big_Omega;
+            
+            // Extraer recurrence
+            if (timeComplexity.recurrence && typeof timeComplexity.recurrence === 'object') {
+              const recurrence = timeComplexity.recurrence as Record<string, unknown>;
+              result.recurrence = {
+                type: (recurrence.type as "divide_conquer" | "linear_shift") || "linear_shift",
+                form: (recurrence.form as string) || "",
+                a: (recurrence.a as number) || undefined,
+                b: (recurrence.b as number) || undefined,
+                f: (recurrence.f as string) || undefined,
+                order: (recurrence.order as number) || undefined,
+                shifts: (recurrence.shifts as number[]) || undefined,
+                coefficients: (recurrence.coefficients as number[]) || undefined,
+                "g(n)": (recurrence["g(n)"] as string) || undefined,
+                n0: (recurrence.n0 as number) || undefined,
+                method: (timeComplexity.method as string) || undefined,
+              };
+            }
+            
+            // Extraer method
+            if (timeComplexity.method && typeof timeComplexity.method === 'string') {
+              result.method = timeComplexity.method;
+            }
+            
+            // Extraer characteristic_equation (prioridad alta)
+            if (timeComplexity.characteristic_equation && typeof timeComplexity.characteristic_equation === 'object') {
+              const charEq = timeComplexity.characteristic_equation as Record<string, unknown>;
+              result.characteristic_equation = {
+                equation: (charEq.equation as string) || "",
+                roots: (charEq.roots as Array<{ root: string; multiplicity: number }>) || undefined,
+                dominant_root: (charEq.dominant_root as string) || undefined,
+                growth_rate: (charEq.growth_rate as number) || undefined,
+                homogeneous_solution: (charEq.homogeneous_solution as string) || "",
+                particular_solution: (charEq.particular_solution as string) || undefined,
+                general_solution: (charEq.general_solution as string) || undefined,
+                closed_form: (charEq.closed_form as string) || "",
+                theta: (charEq.theta as string) || result.big_theta || "",
+              };
+              // Usar theta de characteristic_equation si está disponible
+              if (result.characteristic_equation.theta) {
+                result.big_theta = result.characteristic_equation.theta;
+              }
+            }
+            
+            // Extraer iteration
+            if (timeComplexity.iteration && typeof timeComplexity.iteration === 'object') {
+              const iteration = timeComplexity.iteration as Record<string, unknown>;
+              const baseCase = iteration.base_case as Record<string, unknown> | undefined;
+              const summation = iteration.summation as Record<string, unknown> | undefined;
+              
+              result.iteration = {
+                g_function: (iteration.g_function as string) || "",
+                expansions: (iteration.expansions as string[]) || [],
+                general_form: (iteration.general_form as string) || "",
+                base_case: {
+                  condition: (baseCase?.condition as string) || "",
+                  k: (baseCase?.k as string) || "",
+                },
+                summation: {
+                  expression: (summation?.expression as string) || "",
+                  evaluated: (summation?.evaluated as string) || "",
+                },
+                theta: (iteration.theta as string) || result.big_theta || "",
+              };
+              // Usar theta de iteration si está disponible
+              if (result.iteration.theta) {
+                result.big_theta = result.iteration.theta;
+              }
+            }
+            
+            // Extraer master
+            if (timeComplexity.master && typeof timeComplexity.master === 'object') {
+              const master = timeComplexity.master as Record<string, unknown>;
+              result.master = {
+                case: (master.case as 1 | 2 | 3 | null) || null,
+                nlogba: (master.nlogba as string) || "",
+                comparison: (master.comparison as "smaller" | "equal" | "larger" | null) || null,
+                theta: (master.theta as string | null) || null,
+              };
+              // Usar theta de master si está disponible
+              if (result.master.theta) {
+                result.big_theta = result.master.theta;
+              }
+            }
+            
+            return Object.keys(result).length > 0 ? result : null;
+          };
+          
+          const recursiveResult = convertRecursiveAnalysis();
+          
+          if (recursiveResult) {
+            setLlmAnalysisData({
+              worst: recursiveResult,
+              best: null,
+              avg: null,
+            });
+            dataProcessed = true;
+          }
+        }
         // Verificar si time_complexity tiene worst, best, avg
-        if (timeComplexity.worst || timeComplexity.best || timeComplexity.avg) {
+        else if (timeComplexity.worst || timeComplexity.best || timeComplexity.avg) {
           const convertTimeComplexityCase = (caseData: unknown): CoreAnalysisData | null => {
             if (!caseData || typeof caseData !== 'object') return null;
             const data = caseData as Record<string, unknown>;
@@ -934,6 +1189,117 @@ ${JSON.stringify(fullAnalysisData, null, 2)}
             best: analysisResult,
             avg: analysisResult,
           });
+        }
+        // Verificar si time_complexity tiene directamente recurrence, method, characteristic_equation, etc.
+        // (estructura para recursivos dentro de analysis.time_complexity)
+        else if (timeComplexity.recurrence || timeComplexity.method || timeComplexity.characteristic_equation || timeComplexity.iteration || timeComplexity.master) {
+          const convertRecursiveAnalysis = (): CoreAnalysisData | null => {
+            const result: CoreAnalysisData = {};
+            
+            // Notaciones asintóticas
+            if (timeComplexity.big_theta && typeof timeComplexity.big_theta === 'string') result.big_theta = timeComplexity.big_theta;
+            if (timeComplexity.big_o && typeof timeComplexity.big_o === 'string') result.big_o = timeComplexity.big_o;
+            if (timeComplexity.big_O && typeof timeComplexity.big_O === 'string') result.big_o = timeComplexity.big_O;
+            if (timeComplexity.big_omega && typeof timeComplexity.big_omega === 'string') result.big_omega = timeComplexity.big_omega;
+            if (timeComplexity.big_Omega && typeof timeComplexity.big_Omega === 'string') result.big_omega = timeComplexity.big_Omega;
+            
+            // Extraer recurrence
+            if (timeComplexity.recurrence && typeof timeComplexity.recurrence === 'object') {
+              const recurrence = timeComplexity.recurrence as Record<string, unknown>;
+              result.recurrence = {
+                type: (recurrence.type as "divide_conquer" | "linear_shift") || "linear_shift",
+                form: (recurrence.form as string) || "",
+                a: (recurrence.a as number) || undefined,
+                b: (recurrence.b as number) || undefined,
+                f: (recurrence.f as string) || undefined,
+                order: (recurrence.order as number) || undefined,
+                shifts: (recurrence.shifts as number[]) || undefined,
+                coefficients: (recurrence.coefficients as number[]) || undefined,
+                "g(n)": (recurrence["g(n)"] as string) || undefined,
+                n0: (recurrence.n0 as number) || undefined,
+                method: (timeComplexity.method as string) || undefined,
+              };
+            }
+            
+            // Extraer method
+            if (timeComplexity.method && typeof timeComplexity.method === 'string') {
+              result.method = timeComplexity.method;
+            }
+            
+            // Extraer characteristic_equation (prioridad alta)
+            if (timeComplexity.characteristic_equation && typeof timeComplexity.characteristic_equation === 'object') {
+              const charEq = timeComplexity.characteristic_equation as Record<string, unknown>;
+              result.characteristic_equation = {
+                equation: (charEq.equation as string) || "",
+                roots: (charEq.roots as Array<{ root: string; multiplicity: number }>) || undefined,
+                dominant_root: (charEq.dominant_root as string) || undefined,
+                growth_rate: (charEq.growth_rate as number) || undefined,
+                homogeneous_solution: (charEq.homogeneous_solution as string) || "",
+                particular_solution: (charEq.particular_solution as string) || undefined,
+                general_solution: (charEq.general_solution as string) || undefined,
+                closed_form: (charEq.closed_form as string) || "",
+                theta: (charEq.theta as string) || result.big_theta || "",
+              };
+              // Usar theta de characteristic_equation si está disponible
+              if (result.characteristic_equation.theta) {
+                result.big_theta = result.characteristic_equation.theta;
+              }
+            }
+            
+            // Extraer iteration
+            if (timeComplexity.iteration && typeof timeComplexity.iteration === 'object') {
+              const iteration = timeComplexity.iteration as Record<string, unknown>;
+              const baseCase = iteration.base_case as Record<string, unknown> | undefined;
+              const summation = iteration.summation as Record<string, unknown> | undefined;
+              
+              result.iteration = {
+                g_function: (iteration.g_function as string) || "",
+                expansions: (iteration.expansions as string[]) || [],
+                general_form: (iteration.general_form as string) || "",
+                base_case: {
+                  condition: (baseCase?.condition as string) || "",
+                  k: (baseCase?.k as string) || "",
+                },
+                summation: {
+                  expression: (summation?.expression as string) || "",
+                  evaluated: (summation?.evaluated as string) || "",
+                },
+                theta: (iteration.theta as string) || result.big_theta || "",
+              };
+              // Usar theta de iteration si está disponible
+              if (result.iteration.theta) {
+                result.big_theta = result.iteration.theta;
+              }
+            }
+            
+            // Extraer master
+            if (timeComplexity.master && typeof timeComplexity.master === 'object') {
+              const master = timeComplexity.master as Record<string, unknown>;
+              result.master = {
+                case: (master.case as 1 | 2 | 3 | null) || null,
+                nlogba: (master.nlogba as string) || "",
+                comparison: (master.comparison as "smaller" | "equal" | "larger" | null) || null,
+                theta: (master.theta as string | null) || null,
+              };
+              // Usar theta de master si está disponible
+              if (result.master.theta) {
+                result.big_theta = result.master.theta;
+              }
+            }
+            
+            return Object.keys(result).length > 0 ? result : null;
+          };
+          
+          const recursiveResult = convertRecursiveAnalysis();
+          
+          if (recursiveResult) {
+            setLlmAnalysisData({
+              worst: recursiveResult,
+              best: null,
+              avg: null,
+            });
+            dataProcessed = true;
+          }
         } else {
           // Estructura antigua: time_complexity como objeto único
           const convertedAnalysis: CoreAnalysisData = {
@@ -1001,8 +1367,8 @@ ${JSON.stringify(fullAnalysisData, null, 2)}
             });
           }
         }
-      } else if (llmAnalysis.recurrence || llmAnalysis.iteration || llmAnalysis.method) {
-        // Estructura con recurrence/iteration directamente en analysis
+      } else if (llmAnalysis.recurrence || llmAnalysis.iteration || llmAnalysis.method || llmAnalysis.characteristic_equation || llmAnalysis.master) {
+        // Estructura con recurrence/iteration/characteristic_equation/master directamente en analysis
         const convertedAnalysis: CoreAnalysisData = {
           big_theta: (llmAnalysis.big_theta as string) || undefined,
           big_o: (llmAnalysis.big_o as string) || undefined,
@@ -1029,6 +1395,41 @@ ${JSON.stringify(fullAnalysisData, null, 2)}
         // Extraer method
         if (llmAnalysis.method) {
           convertedAnalysis.method = llmAnalysis.method as string;
+        }
+        
+        // Extraer characteristic_equation (prioridad alta)
+        if (llmAnalysis.characteristic_equation && typeof llmAnalysis.characteristic_equation === 'object') {
+          const charEq = llmAnalysis.characteristic_equation as Record<string, unknown>;
+          convertedAnalysis.characteristic_equation = {
+            equation: (charEq.equation as string) || "",
+            roots: (charEq.roots as Array<{ root: string; multiplicity: number }>) || undefined,
+            dominant_root: (charEq.dominant_root as string) || undefined,
+            growth_rate: (charEq.growth_rate as number) || undefined,
+            homogeneous_solution: (charEq.homogeneous_solution as string) || "",
+            particular_solution: (charEq.particular_solution as string) || undefined,
+            general_solution: (charEq.general_solution as string) || undefined,
+            closed_form: (charEq.closed_form as string) || "",
+            theta: (charEq.theta as string) || convertedAnalysis.big_theta || "",
+          };
+          // Usar theta de characteristic_equation si está disponible
+          if (convertedAnalysis.characteristic_equation.theta) {
+            convertedAnalysis.big_theta = convertedAnalysis.characteristic_equation.theta;
+          }
+        }
+        
+        // Extraer master
+        if (llmAnalysis.master && typeof llmAnalysis.master === 'object') {
+          const master = llmAnalysis.master as Record<string, unknown>;
+          convertedAnalysis.master = {
+            case: (master.case as 1 | 2 | 3 | null) || null,
+            nlogba: (master.nlogba as string) || "",
+            comparison: (master.comparison as "smaller" | "equal" | "larger" | null) || null,
+            theta: (master.theta as string | null) || null,
+          };
+          // Usar theta de master si está disponible
+          if (convertedAnalysis.master.theta) {
+            convertedAnalysis.big_theta = convertedAnalysis.master.theta;
+          }
         }
         
         // Extraer iteration completo

@@ -587,7 +587,16 @@ PARA ALGORITMOS RECURSIVOS:
     - summation: objeto con expression (string en LaTeX, OBLIGATORIO) y evaluated (string en LaTeX, OBLIGATORIO)
     - theta: resultado final en LaTeX (OBLIGATORIO, ej: "\\\\Theta(n)")
   * "recursion_tree": Árbol de Recursión - proporciona objeto "recursion_tree" con levels, height, summation, theta
-  * "characteristic_equation": Ecuación Característica (para linear_shift) - proporciona objeto "characteristic_equation" con equation, roots, closed_form, theta
+  * "characteristic_equation": Ecuación Característica (para linear_shift) - proporciona objeto "characteristic_equation" con TODOS estos campos:
+    - equation: ecuación característica en LaTeX (OBLIGATORIO, ej: "r - 1 = 0")
+    - roots: array de objetos con root (string en LaTeX) y multiplicity (número) (OBLIGATORIO)
+    - dominant_root: raíz dominante en LaTeX (OBLIGATORIO si hay múltiples raíces)
+    - growth_rate: tasa de crecimiento numérica (número, OBLIGATORIO si es aplicable)
+    - homogeneous_solution: solución homogénea en LaTeX (OBLIGATORIO)
+    - particular_solution: solución particular en LaTeX (OBLIGATORIO si hay g(n) no constante)
+    - general_solution: solución general completa en LaTeX (OBLIGATORIO)
+    - closed_form: forma cerrada simplificada en LaTeX (OBLIGATORIO)
+    - theta: resultado final en LaTeX (OBLIGATORIO, ej: "\\\\Theta(n)")
 - Calcula theta final en formato LaTeX y proporciona el campo "big_theta" en el objeto analysis (OBLIGATORIO)
 
 FORMATO DE RESPUESTA:
