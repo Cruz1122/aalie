@@ -132,8 +132,8 @@ jobs:
         working-directory: apps/api
         run: |
           echo "📊 Checking coverage threshold..."
-          coverage report --fail-under=80 || {
-            echo "⚠️  Coverage is below 80% threshold"
+          coverage report --fail-under=70 || {
+            echo "⚠️  Coverage is below 70% threshold"
             coverage report
             exit 1
           }

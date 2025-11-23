@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 /**
  * Hook para animar el progreso de análisis
@@ -10,7 +11,7 @@ export function useAnalysisProgress() {
     start: number,
     end: number,
     duration: number,
-    onUpdate: (progress: number) => void,
+    onUpdate: Dispatch<SetStateAction<number>>,
     waitForPromise?: Promise<T>
   ): Promise<T | void> => {
     // Si no hay promesa, solo animar el progreso
