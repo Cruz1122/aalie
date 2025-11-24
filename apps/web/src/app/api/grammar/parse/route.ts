@@ -4,11 +4,15 @@ import { NextRequest, NextResponse } from "next/server";
 function getApiBase(): string {
   const a = process.env.API_INTERNAL_BASE_URL?.replace(/\/+$/, "");
   if (a) {
-    return a.startsWith('http://') || a.startsWith('https://') ? a : `https://${a}`;
+    return a.startsWith("http://") || a.startsWith("https://")
+      ? a
+      : `https://${a}`;
   }
   const b = process.env.API_BASE_URL?.replace(/\/+$/, "");
   if (b) {
-    return b.startsWith('http://') || b.startsWith('https://') ? b : `https://${b}`;
+    return b.startsWith("http://") || b.startsWith("https://")
+      ? b
+      : `https://${b}`;
   }
   return process.env.DOCKER ? "http://api:8000" : "http://localhost:8000";
 }
@@ -35,7 +39,9 @@ export async function POST(req: NextRequest) {
     });
 
     // Intentar parsear JSON del backend
-    const data = (await r.json().catch(() => null)) as GrammarParseResponse | null;
+    const data = (await r
+      .json()
+      .catch(() => null)) as GrammarParseResponse | null;
 
     if (data && typeof data.ok === "boolean" && data.runtime === "python") {
       // Passthrough del contrato tipado del backend (conservando status)

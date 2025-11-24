@@ -61,7 +61,7 @@ const ICON_CONFIG: Record<string, IconConfig> = {
   },
   "monorepo-packages": {
     icon: Package,
-    color: "text-indigo-400", 
+    color: "text-indigo-400",
     bgColor: "bg-indigo-500/20 border-indigo-500/30",
   },
   "code-quality": {
@@ -124,7 +124,11 @@ export const DocumentationIcon = ({
         height: size + 24,
       }}
     >
-      <IconComponent size={size} className={`${config.color} drop-shadow-sm`} strokeWidth={1.5} />
+      <IconComponent
+        size={size}
+        className={`${config.color} drop-shadow-sm`}
+        strokeWidth={1.5}
+      />
     </div>
   );
 };

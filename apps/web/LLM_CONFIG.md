@@ -25,12 +25,14 @@ LM_STUDIO_API_KEY=lm-studio
 ## Modos Disponibles
 
 ### 1. Modo LOCAL (LM Studio)
+
 - **Uso**: Para desarrollo local con modelos ejecutándose en tu máquina
 - **Modelo**: gpt-oss-20b
 - **Ventajas**: Más rápido, sin dependencia de internet, privacidad total
 - **Desventajas**: Requiere recursos locales, configuración inicial
 
 **Configuración:**
+
 1. Instalar LM Studio
 2. Descargar el modelo `openai/gpt-oss-20b`
 3. Cargar el modelo en LM Studio
@@ -39,6 +41,7 @@ LM_STUDIO_API_KEY=lm-studio
 6. Verificar que el endpoint esté en `http://localhost:1234/v1`
 
 **Curl de prueba:**
+
 ```bash
 curl http://localhost:1234/v1/chat/completions \
   -H "Content-Type: application/json" \
@@ -55,12 +58,14 @@ curl http://localhost:1234/v1/chat/completions \
 ```
 
 ### 2. Modo REMOTE (GitHub Models)
+
 - **Uso**: Para producción y cuando no tienes recursos locales
 - **Modelos**: gpt-5-nano, grok-3-mini
 - **Ventajas**: Confiable, sin configuración local, modelos potentes
 - **Desventajas**: Depende de internet, requiere token de GitHub
 
 **Configuración:**
+
 1. Obtener token de GitHub
 2. Establecer `LLM_MODE=REMOTE`
 3. Configurar `GITHUB_TOKEN`
@@ -68,11 +73,13 @@ curl http://localhost:1234/v1/chat/completions \
 ## Configuración de Modelos por Modo
 
 ### Modo LOCAL
+
 - **Clasificación**: lmstudio-community/Llama-3.2-1B-Instruct-GGUF (temp: 0.1)
 - **Parser Assist**: lmstudio-community/Llama-3.2-1B-Instruct-GGUF (temp: 0.7)
 - **General**: lmstudio-community/Llama-3.2-1B-Instruct-GGUF (temp: 0.7)
 
 ### Modo REMOTE
+
 - **Clasificación**: grok-3-mini (temp: 0)
 - **Parser Assist**: gpt-5-nano (temp: 1)
 - **General**: gpt-5-nano (temp: 1)
@@ -96,17 +103,20 @@ Reinicia el servidor después de cambiar el modo.
 ### Modo LOCAL
 
 #### Problema: "ECONNREFUSED 127.0.0.1:1234"
+
 **Causa**: Docker no puede acceder a LM Studio en el host.
 
 **Soluciones**:
 
 1. **Para Docker Compose** (Recomendado):
+
    ```bash
    # En tu .env.local o docker-compose.yml
    LM_STUDIO_ENDPOINT=http://host.docker.internal:1234/v1
    ```
 
 2. **Para Docker run**:
+
    ```bash
    # Usar host.docker.internal en lugar de localhost
    docker run -e LM_STUDIO_ENDPOINT=http://host.docker.internal:1234/v1 ...
@@ -123,6 +133,7 @@ Reinicia el servidor después de cambiar el modo.
    - Muestra warnings en los logs
 
 #### Verificación Manual:
+
 ```bash
 # Desde el contenedor Docker
 curl http://host.docker.internal:1234/v1/models
@@ -132,12 +143,15 @@ curl http://localhost:1234/v1/models
 ```
 
 ### Modo REMOTE
+
 - Verificar que el token de GitHub sea válido
 - Comprobar conectividad a internet
 - Revisar límites de API de GitHub
 
 ### Fallback Automático
+
 El sistema incluye un mecanismo de fallback automático:
+
 - Si `LLM_MODE=LOCAL` pero LM Studio no está disponible
 - Automáticamente cambia a modo REMOTE
 - Registra el fallback en los logs
@@ -146,6 +160,7 @@ El sistema incluye un mecanismo de fallback automático:
 ## Logs
 
 El sistema registra en consola:
+
 - Modo actual (`LOCAL` o `REMOTE`)
 - Tipo de trabajo (`classify`, `parser_assist`, `general`)
 - Modelo utilizado

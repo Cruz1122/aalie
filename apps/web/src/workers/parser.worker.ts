@@ -1,7 +1,7 @@
 /**
  * Web Worker para parsear código pseudocódigo en un hilo separado.
  * Usa el parser de gramática (@aa/grammar) para parsear el código y generar el AST.
- * 
+ *
  * Author: Juan Camilo Cruz Parra (@Cruz1122)
  */
 import {
@@ -40,7 +40,7 @@ export interface ParseWorkerResponse {
 
 /**
  * Escucha mensajes del hilo principal para parsear código.
- * 
+ *
  * @param event - Evento de mensaje con ParseWorkerRequest
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
@@ -68,7 +68,7 @@ self.addEventListener("message", (event: MessageEvent<ParseWorkerRequest>) => {
 
     // Parse
     const tree = parser.program();
-    
+
     // Collect all errors
     const allErrors = [...lexerErrors.errors, ...parserErrors.errors];
 
@@ -114,4 +114,3 @@ self.addEventListener("message", (event: MessageEvent<ParseWorkerRequest>) => {
 
 // Export empty object to make TypeScript happy
 export {};
-

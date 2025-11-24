@@ -8,7 +8,9 @@ import type * as Monaco from "monaco-editor";
  * @returns Array de markers de Monaco para mostrar errores en el editor
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
-export function errorsToMarkers(errors: ParseError[]): Monaco.editor.IMarkerData[] {
+export function errorsToMarkers(
+  errors: ParseError[],
+): Monaco.editor.IMarkerData[] {
   return errors.map((error) => ({
     severity: 8, // MarkerSeverity.Error
     startLineNumber: error.line,
@@ -27,7 +29,7 @@ export function errorsToMarkers(errors: ParseError[]): Monaco.editor.IMarkerData
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export function createHoverProvider(
-  errors: ParseError[]
+  errors: ParseError[],
 ): Monaco.languages.HoverProvider {
   return {
     provideHover: (model, position) => {
@@ -36,7 +38,7 @@ export function createHoverProvider(
         (e) =>
           e.line === position.lineNumber &&
           e.column >= position.column - 1 &&
-          e.column <= position.column + 1
+          e.column <= position.column + 1,
       );
 
       if (error) {
@@ -120,7 +122,10 @@ export function registerPseudocodeLanguage(monaco: typeof Monaco): void {
         [/"/, { token: "string.quote", next: "@stringState" }],
 
         // Keywords
-        [/\b(BEGIN|END|IF|THEN|ELSE|FOR|TO|DO|WHILE|REPEAT|UNTIL|RETURN|CALL|PRINT|AND|OR|NOT|DIV|MOD|TRUE|FALSE|NULL|length)\b/i, "keyword"],
+        [
+          /\b(BEGIN|END|IF|THEN|ELSE|FOR|TO|DO|WHILE|REPEAT|UNTIL|RETURN|CALL|PRINT|AND|OR|NOT|DIV|MOD|TRUE|FALSE|NULL|length)\b/i,
+          "keyword",
+        ],
 
         // Numbers
         [/\d+/, "number"],
@@ -167,32 +172,32 @@ export function registerPseudocodeLanguage(monaco: typeof Monaco): void {
       "editor.foreground": "#e2e8f0",
       "editor.background": "#0f172a", // Slate-900
       "editor.lineHighlightBackground": "#1e293b", // Slate-800
-      
+
       // Selección con tono azul suave
       "editor.selectionBackground": "#3b82f630",
       "editor.inactiveSelectionBackground": "#3b82f620",
       "editor.selectionHighlightBackground": "#3b82f615",
-      
+
       // Números de línea más suaves
       "editorLineNumber.foreground": "#475569", // Slate-600
       "editorLineNumber.activeForeground": "#60a5fa", // Blue-400
-      
+
       // Cursor azul para combinar
       "editorCursor.foreground": "#60a5fa",
-      
+
       // Brackets matching suave
       "editorBracketMatch.background": "#3b82f620",
       "editorBracketMatch.border": "#60a5fa60",
-      
+
       // Scrollbar suave
       "scrollbarSlider.background": "#ffffff15",
       "scrollbarSlider.hoverBackground": "#ffffff20",
       "scrollbarSlider.activeBackground": "#ffffff25",
-      
+
       // Indentación suave
       "editorIndentGuide.background": "#ffffff08",
       "editorIndentGuide.activeBackground": "#3b82f630",
-      
+
       // Otros colores para consistencia
       "editorWidget.background": "#1e293b",
       "editorWidget.border": "#ffffff10",
@@ -203,4 +208,3 @@ export function registerPseudocodeLanguage(monaco: typeof Monaco): void {
     },
   });
 }
-

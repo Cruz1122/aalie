@@ -26,7 +26,7 @@ function parseExpr(input: string): boolean {
     parser.addErrorListener(errors);
 
     parser.program(); // Parse as full program
-    
+
     return errors.errors.length === 0;
   } catch (e) {
     console.error(e);
@@ -54,10 +54,10 @@ export default function GrammarDebugPage() {
     setErr(null);
     setApiOk(null);
     setApiAvail(null);
-    
+
     try {
       const data = await GrammarApiService.parseCode(input);
-      
+
       if (isGrammarParseResponse(data)) {
         setApiOk(data.ok);
         setApiAvail(data.available ?? null);
@@ -106,7 +106,9 @@ export default function GrammarDebugPage() {
         <strong>Parse backend (Py):</strong>{" "}
         {apiOk === null ? "—" : apiOk ? "Válido" : "Inválido"}
         {apiAvail === false && (
-          <span style={{ marginLeft: 8, color: "#fbbf24" }}>(aa_grammar no disponible)</span>
+          <span style={{ marginLeft: 8, color: "#fbbf24" }}>
+            (aa_grammar no disponible)
+          </span>
         )}
       </div>
       {err && <p style={{ marginTop: 12, color: "#f87171" }}>Error: {err}</p>}

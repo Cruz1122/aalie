@@ -10,18 +10,18 @@ import Formula from "./Formula";
  */
 function roundLatexNumbers(latex: string): string {
   if (!latex || latex === "N/A") return latex;
-  
+
   return latex.replace(/([-]?\d+\.\d+)/g, (match) => {
     const num = Number.parseFloat(match);
     if (Number.isNaN(num)) return match;
-    
+
     const rounded = Math.round(num * 1000) / 1000;
-    
+
     if (rounded % 1 === 0) {
       return rounded.toString();
     }
-    
-    return rounded.toFixed(3).replace(/\.?0+$/, '');
+
+    return rounded.toFixed(3).replace(/\.?0+$/, "");
   });
 }
 
@@ -29,29 +29,38 @@ interface RecursiveProcedureModalProps {
   open: boolean;
   onClose: () => void;
   data: AnalyzeOpenResponse | null | undefined;
-  recurrence: {
-    form: string;
-    a: number;
-    b: number;
-    f: string;
-    n0: number;
-    applicable: boolean;
-    notes: string[];
-  } | null | undefined;
-  master: {
-    case: 1 | 2 | 3 | null;
-    nlogba: string;
-    comparison: "smaller" | "equal" | "larger" | null;
-    regularity: {
-      checked: boolean;
-      note: string;
-    };
-    theta: string | null;
-  } | null | undefined;
-  proof: Array<{
-    id: string;
-    text: string;
-  }> | null | undefined;
+  recurrence:
+    | {
+        form: string;
+        a: number;
+        b: number;
+        f: string;
+        n0: number;
+        applicable: boolean;
+        notes: string[];
+      }
+    | null
+    | undefined;
+  master:
+    | {
+        case: 1 | 2 | 3 | null;
+        nlogba: string;
+        comparison: "smaller" | "equal" | "larger" | null;
+        regularity: {
+          checked: boolean;
+          note: string;
+        };
+        theta: string | null;
+      }
+    | null
+    | undefined;
+  proof:
+    | Array<{
+        id: string;
+        text: string;
+      }>
+    | null
+    | undefined;
   theta: string | null | undefined;
 }
 
@@ -70,8 +79,8 @@ export default function RecursiveProcedureModal({
 
   return (
     <div className="fixed inset-0 z-50">
-      <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
         onKeyDown={(e) => {
           if (e.key === "Escape") onClose();
@@ -82,7 +91,9 @@ export default function RecursiveProcedureModal({
       />
       <div className="absolute left-1/2 top-1/2 w-[min(95vw,1400px)] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col">
         <div className="flex items-center justify-between border-b border-white/10 p-4 flex-shrink-0">
-          <h3 className="text-lg font-semibold text-white">Procedimiento Completo - Teorema Maestro</h3>
+          <h3 className="text-lg font-semibold text-white">
+            Procedimiento Completo - Teorema Maestro
+          </h3>
           <button
             onClick={onClose}
             className="text-slate-300 hover:text-white transition-colors p-1 hover:bg-white/10 rounded"
@@ -98,7 +109,9 @@ export default function RecursiveProcedureModal({
               {/* Ecuación de Recurrencia */}
               {recurrence && (
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                  <h4 className="text-white font-semibold mb-3">Ecuación de Recurrencia</h4>
+                  <h4 className="text-white font-semibold mb-3">
+                    Ecuación de Recurrencia
+                  </h4>
                   <div className="bg-slate-900/50 p-4 rounded border border-white/10 overflow-x-auto flex justify-center">
                     <Formula latex={recurrence.form} display />
                   </div>
@@ -117,13 +130,17 @@ export default function RecursiveProcedureModal({
               {/* Casos del Teorema Maestro */}
               {master && (
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                  <h4 className="text-white font-semibold mb-4">Casos del Teorema Maestro</h4>
-                  
+                  <h4 className="text-white font-semibold mb-4">
+                    Casos del Teorema Maestro
+                  </h4>
+
                   {/* Mostrar g(n) */}
                   {master.nlogba && (
                     <div className="mb-4 p-3 rounded-lg bg-slate-900/50 border border-white/10 flex items-center justify-center">
                       <div className="text-sm">
-                        <Formula latex={`g(n) = n^{\\log_b a} = ${master.nlogba}`} />
+                        <Formula
+                          latex={`g(n) = n^{\\log_b a} = ${master.nlogba}`}
+                        />
                       </div>
                     </div>
                   )}
@@ -144,7 +161,9 @@ export default function RecursiveProcedureModal({
                             master.case === 1 ? "bg-green-400" : "bg-slate-500"
                           }`}
                         />
-                        <h5 className="font-semibold text-white text-sm">Caso 1</h5>
+                        <h5 className="font-semibold text-white text-sm">
+                          Caso 1
+                        </h5>
                       </div>
                       <div className="text-xs text-slate-300 mb-1 flex justify-center">
                         <Formula latex="f(n) < g(n)" />
@@ -168,7 +187,9 @@ export default function RecursiveProcedureModal({
                             master.case === 2 ? "bg-yellow-400" : "bg-slate-500"
                           }`}
                         />
-                        <h5 className="font-semibold text-white text-sm">Caso 2</h5>
+                        <h5 className="font-semibold text-white text-sm">
+                          Caso 2
+                        </h5>
                       </div>
                       <div className="text-xs text-slate-300 mb-1 flex justify-center">
                         <Formula latex="f(n) = g(n)" />
@@ -192,7 +213,9 @@ export default function RecursiveProcedureModal({
                             master.case === 3 ? "bg-red-400" : "bg-slate-500"
                           }`}
                         />
-                        <h5 className="font-semibold text-white text-sm">Caso 3</h5>
+                        <h5 className="font-semibold text-white text-sm">
+                          Caso 3
+                        </h5>
                       </div>
                       <div className="text-xs text-slate-300 mb-1 flex justify-center">
                         <Formula latex="f(n) > g(n)" />
@@ -203,8 +226,12 @@ export default function RecursiveProcedureModal({
                       {master.case === 3 && master.regularity && (
                         <div className="mt-1.5 pt-1.5 border-t border-white/10">
                           <p className="text-xs text-slate-400">
-                            Regularidad: {master.regularity.checked ? "✓ Verificada" : "⚠ Asumida"}
-                            {master.regularity.note && ` - ${master.regularity.note}`}
+                            Regularidad:{" "}
+                            {master.regularity.checked
+                              ? "✓ Verificada"
+                              : "⚠ Asumida"}
+                            {master.regularity.note &&
+                              ` - ${master.regularity.note}`}
                           </p>
                         </div>
                       )}
@@ -220,11 +247,18 @@ export default function RecursiveProcedureModal({
               {proof && proof.length > 0 && (
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
                   <h4 className="text-white font-semibold mb-4 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-purple-400">description</span>
+                    <span className="material-symbols-outlined text-purple-400">
+                      description
+                    </span>
                     <span>Pasos de Prueba</span>
                   </h4>
-                  <div className="space-y-2 max-h-[calc(90vh-435px)] overflow-y-auto scrollbar-custom w-full">                   {proof.map((step, idx) => (
-                      <div key={idx} className="p-3 rounded-lg bg-slate-900/50 border border-white/10 w-full">
+                  <div className="space-y-2 max-h-[calc(90vh-435px)] overflow-y-auto scrollbar-custom w-full">
+                    {" "}
+                    {proof.map((step, idx) => (
+                      <div
+                        key={idx}
+                        className="p-3 rounded-lg bg-slate-900/50 border border-white/10 w-full"
+                      >
                         <div className="text-sm text-slate-200 w-full overflow-x-auto">
                           <div className="w-full">
                             <Formula latex={step.text} display />
@@ -239,9 +273,14 @@ export default function RecursiveProcedureModal({
               {/* Ecuación de eficiencia */}
               {theta && (
                 <div className="p-4 rounded-lg bg-green-500/20 border border-green-500/30">
-                  <h5 className="text-green-300 font-semibold mb-2 text-sm">Ecuación de eficiencia</h5>
+                  <h5 className="text-green-300 font-semibold mb-2 text-sm">
+                    Ecuación de eficiencia
+                  </h5>
                   <div className="text-lg flex justify-center">
-                    <Formula latex={`T(n) = ${roundLatexNumbers(theta)}`} display />
+                    <Formula
+                      latex={`T(n) = ${roundLatexNumbers(theta)}`}
+                      display
+                    />
                   </div>
                 </div>
               )}
@@ -252,4 +291,3 @@ export default function RecursiveProcedureModal({
     </div>
   );
 }
-

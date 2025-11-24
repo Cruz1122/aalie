@@ -21,11 +21,11 @@ interface ComparisonLoaderProps {
 /**
  * Componente de loader para mostrar el progreso de la comparación con LLM.
  * Muestra una barra de progreso y mensajes de estado específicos para la comparación.
- * 
+ *
  * @param props - Propiedades del loader
  * @returns Componente React del loader de comparación
  * @author Juan Camilo Cruz Parra (@Cruz1122)
- * 
+ *
  * @example
  * ```tsx
  * <ComparisonLoader
@@ -46,7 +46,7 @@ export const ComparisonLoader: React.FC<ComparisonLoaderProps> = ({
 }) => {
   const hasError = !!error;
   const [isClosing, setIsClosing] = useState(false);
-  
+
   // Iniciar animación de cierre cuando se completa
   useEffect(() => {
     if (isComplete && !hasError) {
@@ -57,22 +57,30 @@ export const ComparisonLoader: React.FC<ComparisonLoaderProps> = ({
       return () => clearTimeout(timer);
     }
   }, [isComplete, hasError]);
-  
+
   const handleClose = () => {
     if (onClose) {
       onClose();
     } else {
-      window.location.reload();
+      globalThis.window.location.reload();
     }
   };
-  
+
   return (
-    <div className={`fixed inset-0 z-[60] flex items-center justify-center transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`} style={{ pointerEvents: isComplete || error ? 'auto' : 'none' }}>
+    <div
+      className={`fixed inset-0 z-[60] flex items-center justify-center transition-opacity duration-300 ${isClosing ? "opacity-0" : "opacity-100"}`}
+      style={{ pointerEvents: isComplete || error ? "auto" : "none" }}
+    >
       {/* Overlay con efecto glass */}
-      <div className={`absolute inset-0 glass-modal-overlay transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`} style={{ pointerEvents: 'none' }} />
+      <div
+        className={`absolute inset-0 glass-modal-overlay transition-opacity duration-300 ${isClosing ? "opacity-0" : "opacity-100"}`}
+        style={{ pointerEvents: "none" }}
+      />
 
       {/* Contenedor del loader - tamaño fijo grande */}
-      <div className={`relative z-10 glass-modal-container rounded-2xl p-8 w-[600px] h-[400px] mx-4 shadow-2xl flex flex-col justify-center transition-all duration-300 ${isClosing ? 'opacity-0 scale-95 translate-y-2' : 'opacity-100 scale-100 translate-y-0'}`}>
+      <div
+        className={`relative z-10 glass-modal-container rounded-2xl p-8 w-[600px] h-[400px] mx-4 shadow-2xl flex flex-col justify-center transition-all duration-300 ${isClosing ? "opacity-0 scale-95 translate-y-2" : "opacity-100 scale-100 translate-y-0"}`}
+      >
         {/* Icono de estado */}
         <div className="flex justify-center mb-6">
           {hasError ? (
@@ -98,17 +106,21 @@ export const ComparisonLoader: React.FC<ComparisonLoaderProps> = ({
 
         {/* Mensaje principal */}
         <div className="text-center mb-6">
-          <h3 className={`text-xl font-semibold mb-2 ${hasError ? 'text-red-300' : 'text-white'}`}>
+          <h3
+            className={`text-xl font-semibold mb-2 ${hasError ? "text-red-300" : "text-white"}`}
+          >
             {hasError ? "Error en la comparación" : message}
           </h3>
-          
+
           {/* Mensaje de error */}
           {hasError && (
             <div className="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-              <p className="text-sm text-red-300 whitespace-pre-wrap">{error}</p>
+              <p className="text-sm text-red-300 whitespace-pre-wrap">
+                {error}
+              </p>
             </div>
           )}
-          
+
           {/* Badge de comparación */}
           {!hasError && (
             <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium bg-purple-500/20 text-purple-400 border-purple-500/30 animate-[pop_0.5s_ease-out]">
@@ -125,13 +137,15 @@ export const ComparisonLoader: React.FC<ComparisonLoaderProps> = ({
           <div className="mb-4">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-slate-300">Progreso</span>
-              <span className="text-sm font-semibold text-white">{Math.round(progress)}%</span>
+              <span className="text-sm font-semibold text-white">
+                {Math.round(progress)}%
+              </span>
             </div>
             <div className="w-full h-3 bg-slate-700/50 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all duration-300 ease-out"
-                style={{ 
-                  width: `${Math.min(100, Math.max(0, progress))}%`
+                style={{
+                  width: `${Math.min(100, Math.max(0, progress))}%`,
                 }}
               />
             </div>
@@ -146,7 +160,7 @@ export const ComparisonLoader: React.FC<ComparisonLoaderProps> = ({
             </p>
           </div>
         )}
-        
+
         {/* Botón para cerrar en caso de error */}
         {hasError && (
           <div className="text-center mt-4">
@@ -162,4 +176,3 @@ export const ComparisonLoader: React.FC<ComparisonLoaderProps> = ({
     </div>
   );
 };
-

@@ -1,6 +1,14 @@
 "use client";
 
-import { Zap, Package, Settings, Calculator, BarChart3, ArrowRight, Code2 } from "lucide-react";
+import {
+  Zap,
+  Package,
+  Settings,
+  Calculator,
+  BarChart3,
+  ArrowRight,
+  Code2,
+} from "lucide-react";
 import Image from "next/image";
 import { useEffect } from "react";
 
@@ -54,8 +62,8 @@ export default function DocumentationModal({
       // Guardar el valor actual de overflow
       const originalOverflow = document.body.style.overflow;
       // Bloquear scroll
-      document.body.style.overflow = 'hidden';
-      
+      document.body.style.overflow = "hidden";
+
       return () => {
         // Restaurar overflow original cuando se cierre el modal
         document.body.style.overflow = originalOverflow;
@@ -88,9 +96,7 @@ export default function DocumentationModal({
         )}
 
         {/* Render detallado por tipo */}
-        <div className="mt-6 space-y-6">
-          {renderSectionDetail(section)}
-        </div>
+        <div className="mt-6 space-y-6">{renderSectionDetail(section)}</div>
       </div>
     </div>
   );
@@ -135,9 +141,11 @@ function renderSectionDetail(section: DocumentationSection) {
 }
 
 /* -------- Render: UI Showcase -------- */
-function UIShowcaseDetail({ section }: Readonly<{ section: DocumentationSection }>) {
+function UIShowcaseDetail({
+  section,
+}: Readonly<{ section: DocumentationSection }>) {
   const content = section.content as UIShowcaseContent;
-  
+
   return (
     <article className="p-4 rounded-lg bg-gradient-to-b from-slate-800/50 to-slate-800/30 border border-purple-500/20">
       <header className="space-y-4 mb-6">
@@ -146,7 +154,9 @@ function UIShowcaseDetail({ section }: Readonly<{ section: DocumentationSection 
             <Zap size={56} className="text-purple-400" />
           </div>
         </div>
-        <h4 className="text-lg font-semibold text-white text-center">{section.title}</h4>
+        <h4 className="text-lg font-semibold text-white text-center">
+          {section.title}
+        </h4>
       </header>
 
       <p className="text-sm text-slate-300 text-center mb-6">
@@ -156,10 +166,15 @@ function UIShowcaseDetail({ section }: Readonly<{ section: DocumentationSection 
       {/* Lista de características */}
       {content?.implementation?.features && (
         <div className="mb-6">
-          <h5 className="text-sm font-semibold text-purple-300 mb-3">Componentes Disponibles:</h5>
+          <h5 className="text-sm font-semibold text-purple-300 mb-3">
+            Componentes Disponibles:
+          </h5>
           <div className="grid grid-cols-1 gap-2">
             {content.implementation.features.map((feature, index) => (
-              <div key={index} className="flex items-center gap-2 text-xs text-slate-300">
+              <div
+                key={index}
+                className="flex items-center gap-2 text-xs text-slate-300"
+              >
                 <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
                 {feature}
               </div>
@@ -171,7 +186,7 @@ function UIShowcaseDetail({ section }: Readonly<{ section: DocumentationSection 
       {/* Botón de redirección */}
       {content?.implementation?.testRoute && (
         <div className="text-center">
-          <NavigationLink 
+          <NavigationLink
             href={content.implementation.testRoute}
             className="inline-flex items-center gap-2 glass-button px-6 py-3 rounded-lg text-white font-semibold transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400/50"
           >
@@ -185,7 +200,9 @@ function UIShowcaseDetail({ section }: Readonly<{ section: DocumentationSection 
 }
 
 /* -------- Render: Packages -------- */
-function PackagesDetail({ section }: Readonly<{ section: DocumentationSection }>) {
+function PackagesDetail({
+  section,
+}: Readonly<{ section: DocumentationSection }>) {
   const content = section.content as PackageContent;
   return (
     <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
@@ -193,32 +210,53 @@ function PackagesDetail({ section }: Readonly<{ section: DocumentationSection }>
         <div className="flex justify-center">
           <Package size={56} className="text-purple-400" />
         </div>
-        <h4 className="text-lg font-semibold text-white text-center">{section.title}</h4>
+        <h4 className="text-lg font-semibold text-white text-center">
+          {section.title}
+        </h4>
       </header>
 
-      <p className="text-sm text-slate-300 text-center mb-6">{section.description}</p>
+      <p className="text-sm text-slate-300 text-center mb-6">
+        {section.description}
+      </p>
 
       <div className="grid md:grid-cols-2 gap-6 mb-2 max-w-4xl mx-auto">
         {content?.packages?.map((pkg: PackageInfo) => (
-          <div key={pkg.name} className="space-y-4 p-4 rounded-lg bg-slate-800/50 border border-white/10">
+          <div
+            key={pkg.name}
+            className="space-y-4 p-4 rounded-lg bg-slate-800/50 border border-white/10"
+          >
             <div>
-              <h5 className="text-base font-semibold text-white mb-1">{pkg.name}</h5>
-              <p className="text-sm font-medium text-purple-300 mb-2">{pkg.purpose}</p>
+              <h5 className="text-base font-semibold text-white mb-1">
+                {pkg.name}
+              </h5>
+              <p className="text-sm font-medium text-purple-300 mb-2">
+                {pkg.purpose}
+              </p>
               <p className="text-xs text-slate-400">{pkg.description}</p>
             </div>
 
             <div className="space-y-3">
               <div>
-                <h6 className="text-xs font-semibold text-blue-300 mb-1">Entrada</h6>
+                <h6 className="text-xs font-semibold text-blue-300 mb-1">
+                  Entrada
+                </h6>
                 <p className="text-xs text-slate-300">{pkg.io?.input}</p>
               </div>
 
               <div>
-                <h6 className="text-xs font-semibold text-emerald-300 mb-1">Salidas</h6>
+                <h6 className="text-xs font-semibold text-emerald-300 mb-1">
+                  Salidas
+                </h6>
                 <ul className="space-y-1">
                   {pkg.io?.outputs?.map((output: string) => (
-                    <li key={output} className="text-xs text-slate-300 flex items-start gap-1">
-                      <ArrowRight size={10} className="text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <li
+                      key={output}
+                      className="text-xs text-slate-300 flex items-start gap-1"
+                    >
+                      <ArrowRight
+                        size={10}
+                        className="text-emerald-400 mt-0.5 flex-shrink-0"
+                      />
                       <span>{output}</span>
                     </li>
                   ))}
@@ -226,10 +264,14 @@ function PackagesDetail({ section }: Readonly<{ section: DocumentationSection }>
               </div>
 
               <div>
-                <h6 className="text-xs font-semibold text-amber-300 mb-1">Usado por</h6>
+                <h6 className="text-xs font-semibold text-amber-300 mb-1">
+                  Usado por
+                </h6>
                 <ul className="space-y-1">
                   {pkg.usedBy?.map((user: string) => (
-                    <li key={user} className="text-xs text-slate-300">{user}</li>
+                    <li key={user} className="text-xs text-slate-300">
+                      {user}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -251,10 +293,14 @@ function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
         <div className="flex justify-center">
           <Settings size={56} className="text-green-400" />
         </div>
-        <h4 className="text-lg font-semibold text-white text-center">{section.title}</h4>
+        <h4 className="text-lg font-semibold text-white text-center">
+          {section.title}
+        </h4>
       </header>
 
-      <p className="text-sm text-slate-300 text-center mb-8">{section.description}</p>
+      <p className="text-sm text-slate-300 text-center mb-8">
+        {section.description}
+      </p>
 
       <div className="grid md:grid-cols-2 gap-8 mb-8">
         {/* Frontend */}
@@ -264,18 +310,35 @@ function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
           </h5>
           <div className="space-y-4">
             {content?.frontend?.tools?.map((tool: ToolInfo) => (
-              <div key={tool.name} className="p-4 rounded-lg bg-blue-800/20 border border-blue-500/20">
+              <div
+                key={tool.name}
+                className="p-4 rounded-lg bg-blue-800/20 border border-blue-500/20"
+              >
                 <div className="mb-3">
-                  <h6 className="text-sm font-semibold text-blue-200 mb-1">{tool.name}</h6>
+                  <h6 className="text-sm font-semibold text-blue-200 mb-1">
+                    {tool.name}
+                  </h6>
                   <p className="text-xs text-blue-300 mb-2">{tool.purpose}</p>
-                  {tool.config && <p className="text-xs text-slate-400">Config: {tool.config}</p>}
+                  {tool.config && (
+                    <p className="text-xs text-slate-400">
+                      Config: {tool.config}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <h6 className="text-xs font-semibold text-slate-300 mb-1">Características</h6>
+                  <h6 className="text-xs font-semibold text-slate-300 mb-1">
+                    Características
+                  </h6>
                   <ul className="space-y-1">
                     {tool.features?.map((feature: string, idx: number) => (
-                      <li key={idx} className="text-xs text-slate-400 flex items-start gap-1">
-                        <ArrowRight size={8} className="text-blue-400 mt-0.5 flex-shrink-0" />
+                      <li
+                        key={idx}
+                        className="text-xs text-slate-400 flex items-start gap-1"
+                      >
+                        <ArrowRight
+                          size={8}
+                          className="text-blue-400 mt-0.5 flex-shrink-0"
+                        />
                         <span>{feature}</span>
                       </li>
                     ))}
@@ -293,18 +356,35 @@ function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
           </h5>
           <div className="space-y-4">
             {content?.backend?.tools?.map((tool: ToolInfo) => (
-              <div key={tool.name} className="p-4 rounded-lg bg-green-800/20 border border-green-500/20">
+              <div
+                key={tool.name}
+                className="p-4 rounded-lg bg-green-800/20 border border-green-500/20"
+              >
                 <div className="mb-3">
-                  <h6 className="text-sm font-semibold text-green-200 mb-1">{tool.name}</h6>
+                  <h6 className="text-sm font-semibold text-green-200 mb-1">
+                    {tool.name}
+                  </h6>
                   <p className="text-xs text-green-300 mb-2">{tool.purpose}</p>
-                  {tool.config && <p className="text-xs text-slate-400">Config: {tool.config}</p>}
+                  {tool.config && (
+                    <p className="text-xs text-slate-400">
+                      Config: {tool.config}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <h6 className="text-xs font-semibold text-slate-300 mb-1">Características</h6>
+                  <h6 className="text-xs font-semibold text-slate-300 mb-1">
+                    Características
+                  </h6>
                   <ul className="space-y-1">
                     {tool.features?.map((feature: string, idx: number) => (
-                      <li key={idx} className="text-xs text-slate-400 flex items-start gap-1">
-                        <ArrowRight size={8} className="text-green-400 mt-0.5 flex-shrink-0" />
+                      <li
+                        key={idx}
+                        className="text-xs text-slate-400 flex items-start gap-1"
+                      >
+                        <ArrowRight
+                          size={8}
+                          className="text-green-400 mt-0.5 flex-shrink-0"
+                        />
                         <span>{feature}</span>
                       </li>
                     ))}
@@ -322,19 +402,30 @@ function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
           {content?.automation?.title}
         </h5>
         <div className="grid gap-3">
-          {content?.automation?.commands?.map((cmd: CommandInfo, idx: number) => (
-            <div key={idx} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-              <div className="flex items-start gap-3">
-                <code className="text-xs font-mono text-purple-300 bg-purple-900/30 px-2 py-1 rounded flex-shrink-0">
-                  {cmd.command}
-                </code>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-slate-300 mb-1">{cmd.description}</p>
-                  {cmd.result && <p className="text-xs text-emerald-300 font-medium">{cmd.result}</p>}
+          {content?.automation?.commands?.map(
+            (cmd: CommandInfo, idx: number) => (
+              <div
+                key={idx}
+                className="p-3 rounded-lg bg-slate-800/50 border border-white/10"
+              >
+                <div className="flex items-start gap-3">
+                  <code className="text-xs font-mono text-purple-300 bg-purple-900/30 px-2 py-1 rounded flex-shrink-0">
+                    {cmd.command}
+                  </code>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-slate-300 mb-1">
+                      {cmd.description}
+                    </p>
+                    {cmd.result && (
+                      <p className="text-xs text-emerald-300 font-medium">
+                        {cmd.result}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ),
+          )}
         </div>
       </div>
     </article>
@@ -351,10 +442,14 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
         <div className="flex justify-center">
           <Calculator size={56} className="text-emerald-400" />
         </div>
-        <h4 className="text-lg font-semibold text-white text-center">{section.title}</h4>
+        <h4 className="text-lg font-semibold text-white text-center">
+          {section.title}
+        </h4>
       </header>
 
-      <p className="text-sm text-slate-300 text-center mb-8">{section.description}</p>
+      <p className="text-sm text-slate-300 text-center mb-8">
+        {section.description}
+      </p>
 
       {/* Implementación Técnica */}
       <section className="mb-8">
@@ -370,14 +465,24 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
           <p className="text-xs text-emerald-300 mb-3">
             {content?.implementation?.library?.purpose}
           </p>
-          <h6 className="text-xs font-semibold text-slate-300 mb-2">Características</h6>
+          <h6 className="text-xs font-semibold text-slate-300 mb-2">
+            Características
+          </h6>
           <ul className="space-y-1">
-            {content?.implementation?.library?.features?.map((f: string, idx: number) => (
-              <li key={idx} className="text-xs text-slate-400 flex items-start gap-1">
-                <ArrowRight size={8} className="text-emerald-400 mt-0.5 flex-shrink-0" />
-                <span>{f}</span>
-              </li>
-            ))}
+            {content?.implementation?.library?.features?.map(
+              (f: string, idx: number) => (
+                <li
+                  key={idx}
+                  className="text-xs text-slate-400 flex items-start gap-1"
+                >
+                  <ArrowRight
+                    size={8}
+                    className="text-emerald-400 mt-0.5 flex-shrink-0"
+                  />
+                  <span>{f}</span>
+                </li>
+              ),
+            )}
           </ul>
         </div>
 
@@ -385,49 +490,79 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           {/* Componentes */}
           <div className="space-y-4">
-            <h6 className="text-sm font-semibold text-blue-300 text-center">Componentes React</h6>
-            {content?.implementation?.components?.map((component: KaTeXComponent) => (
-              <div key={component.name} className="p-3 rounded-lg bg-blue-800/20 border border-blue-500/20">
-                <h6 className="text-xs font-semibold text-blue-200 mb-1">{component.name}</h6>
-                <p className="text-xs text-blue-300 mb-2">{component.purpose}</p>
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-slate-300">Props:</p>
-                  <ul className="space-y-1">
-                    {component.props?.map((prop: string, idx: number) => (
-                      <li key={idx} className="text-xs text-slate-400 ml-2">• {prop}</li>
-                    ))}
-                  </ul>
+            <h6 className="text-sm font-semibold text-blue-300 text-center">
+              Componentes React
+            </h6>
+            {content?.implementation?.components?.map(
+              (component: KaTeXComponent) => (
+                <div
+                  key={component.name}
+                  className="p-3 rounded-lg bg-blue-800/20 border border-blue-500/20"
+                >
+                  <h6 className="text-xs font-semibold text-blue-200 mb-1">
+                    {component.name}
+                  </h6>
+                  <p className="text-xs text-blue-300 mb-2">
+                    {component.purpose}
+                  </p>
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-slate-300">Props:</p>
+                    <ul className="space-y-1">
+                      {component.props?.map((prop: string, idx: number) => (
+                        <li key={idx} className="text-xs text-slate-400 ml-2">
+                          • {prop}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <p className="text-xs text-slate-300 mt-2">
+                    {component.usage}
+                  </p>
                 </div>
-                <p className="text-xs text-slate-300 mt-2">{component.usage}</p>
-              </div>
-            ))}
+              ),
+            )}
           </div>
 
           {/* Utilidades */}
           <div className="space-y-4">
-            <h6 className="text-sm font-semibold text-purple-300 text-center">Utilidades</h6>
-            {content?.implementation?.utilities?.map((utility: KaTeXUtility) => (
-              <div key={utility.function} className="p-3 rounded-lg bg-purple-800/20 border border-purple-500/20">
-                <div className="mb-2">
-                  <h6 className="text-xs font-semibold text-purple-200">{utility.function}</h6>
-                  <p className="text-xs text-slate-400">en {utility.file}</p>
-                </div>
-                <p className="text-xs text-purple-300 mb-2">{utility.purpose}</p>
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-slate-300">Configuración:</p>
-                  <div className="text-xs text-slate-400 bg-slate-900/50 p-2 rounded font-mono">
-                    {Object.entries(utility.config || {}).map(([k, v]) => (
-                      <div key={k}>
-                        {k}: {typeof v === "string" ? `"${v}"` : String(v)}
-                      </div>
-                    ))}
+            <h6 className="text-sm font-semibold text-purple-300 text-center">
+              Utilidades
+            </h6>
+            {content?.implementation?.utilities?.map(
+              (utility: KaTeXUtility) => (
+                <div
+                  key={utility.function}
+                  className="p-3 rounded-lg bg-purple-800/20 border border-purple-500/20"
+                >
+                  <div className="mb-2">
+                    <h6 className="text-xs font-semibold text-purple-200">
+                      {utility.function}
+                    </h6>
+                    <p className="text-xs text-slate-400">en {utility.file}</p>
                   </div>
+                  <p className="text-xs text-purple-300 mb-2">
+                    {utility.purpose}
+                  </p>
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-slate-300">
+                      Configuración:
+                    </p>
+                    <div className="text-xs text-slate-400 bg-slate-900/50 p-2 rounded font-mono">
+                      {Object.entries(utility.config || {}).map(([k, v]) => (
+                        <div key={k}>
+                          {k}: {typeof v === "string" ? `"${v}"` : String(v)}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {utility.security && (
+                    <p className="text-xs text-emerald-300 mt-2 font-medium">
+                      {utility.security}
+                    </p>
+                  )}
                 </div>
-                {utility.security && (
-                  <p className="text-xs text-emerald-300 mt-2 font-medium">{utility.security}</p>
-                )}
-              </div>
-            ))}
+              ),
+            )}
           </div>
         </div>
       </section>
@@ -440,8 +575,12 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
 
         {/* Inline */}
         <div className="p-4 rounded-lg bg-amber-800/20 border border-amber-500/20 mb-4">
-          <h6 className="text-sm font-semibold text-amber-200 mb-2">Matemáticas Inline</h6>
-          <p className="text-xs text-amber-300 mb-3">{content?.examples?.inline?.description}</p>
+          <h6 className="text-sm font-semibold text-amber-200 mb-2">
+            Matemáticas Inline
+          </h6>
+          <p className="text-xs text-amber-300 mb-3">
+            {content?.examples?.inline?.description}
+          </p>
           <div className="space-y-3">
             <div>
               <p className="text-xs font-medium text-slate-300 mb-1">Código:</p>
@@ -450,7 +589,9 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
               </code>
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-300 mb-1">Resultado:</p>
+              <p className="text-xs font-medium text-slate-300 mb-1">
+                Resultado:
+              </p>
               <div className="p-2 rounded bg-slate-900/50 text-center">
                 <Formula latex="E = mc^2" />
               </div>
@@ -460,8 +601,12 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
 
         {/* Block */}
         <div className="p-4 rounded-lg bg-amber-800/20 border border-amber-500/20 mb-4">
-          <h6 className="text-sm font-semibold text-amber-200 mb-2">Ecuaciones en Bloque</h6>
-          <p className="text-xs text-amber-300 mb-3">{content?.examples?.block?.description}</p>
+          <h6 className="text-sm font-semibold text-amber-200 mb-2">
+            Ecuaciones en Bloque
+          </h6>
+          <p className="text-xs text-amber-300 mb-3">
+            {content?.examples?.block?.description}
+          </p>
           <div className="space-y-3">
             <div>
               <p className="text-xs font-medium text-slate-300 mb-1">Código:</p>
@@ -470,7 +615,9 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
               </code>
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-300 mb-1">Resultado:</p>
+              <p className="text-xs font-medium text-slate-300 mb-1">
+                Resultado:
+              </p>
               <div className="p-3 rounded bg-slate-900/50 text-center">
                 <Formula latex="\sum_{i=1}^{n} i = \frac{n(n+1)}{2}" display />
               </div>
@@ -480,8 +627,12 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
 
         {/* Complex */}
         <div className="p-4 rounded-lg bg-amber-800/20 border border-amber-500/20">
-          <h6 className="text-sm font-semibold text-amber-200 mb-2">Ecuaciones Complejas</h6>
-          <p className="text-xs text-amber-300 mb-3">{content?.examples?.complex?.description}</p>
+          <h6 className="text-sm font-semibold text-amber-200 mb-2">
+            Ecuaciones Complejas
+          </h6>
+          <p className="text-xs text-amber-300 mb-3">
+            {content?.examples?.complex?.description}
+          </p>
           <div className="space-y-3">
             <div>
               <p className="text-xs font-medium text-slate-300 mb-1">Código:</p>
@@ -490,10 +641,15 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
               </code>
             </div>
             <div>
-              <p className="text-xs font-medium text-slate-300 mb-1">Resultado:</p>
+              <p className="text-xs font-medium text-slate-300 mb-1">
+                Resultado:
+              </p>
               <div className="p-3 rounded bg-slate-900/50 overflow-x-auto">
                 <div className="space-y-2">
-                  <Formula latex="T(n) = \sum_{i=1}^{n} \sum_{j=1}^{i} O(1)" display />
+                  <Formula
+                    latex="T(n) = \sum_{i=1}^{n} \sum_{j=1}^{i} O(1)"
+                    display
+                  />
                   <Formula latex="= \sum_{i=1}^{n} i" display />
                   <Formula latex="= \frac{n(n+1)}{2}" display />
                 </div>
@@ -517,7 +673,9 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
                 {content?.styling?.css?.import}
               </li>
               <li className="text-xs text-slate-400">
-                <span className="font-medium text-slate-300">Personalización:</span>{" "}
+                <span className="font-medium text-slate-300">
+                  Personalización:
+                </span>{" "}
                 {content?.styling?.css?.customization}
               </li>
               <li className="text-xs text-slate-400">
@@ -546,7 +704,9 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
 }
 
 /* -------- Render: Grammar -------- */
-function GrammarDetail({ section }: Readonly<{ section: DocumentationSection }>) {
+function GrammarDetail({
+  section,
+}: Readonly<{ section: DocumentationSection }>) {
   const content = section.content as GrammarContent;
 
   return (
@@ -555,17 +715,23 @@ function GrammarDetail({ section }: Readonly<{ section: DocumentationSection }>)
         <div className="flex justify-center">
           <Code2 size={56} className="text-green-400" />
         </div>
-        <h4 className="text-lg font-semibold text-white text-center">{section.title}</h4>
+        <h4 className="text-lg font-semibold text-white text-center">
+          {section.title}
+        </h4>
       </header>
 
-      <p className="text-sm text-slate-300 text-center mb-8">{section.description}</p>
+      <p className="text-sm text-slate-300 text-center mb-8">
+        {section.description}
+      </p>
 
       {/* Overview */}
       <section className="mb-8 p-4 rounded-lg bg-green-800/20 border border-green-500/20">
         <h5 className="text-lg font-semibold text-green-300 text-center mb-4">
           {content?.overview?.title}
         </h5>
-        <p className="text-sm text-slate-300 text-center mb-4">{content?.overview?.description}</p>
+        <p className="text-sm text-slate-300 text-center mb-4">
+          {content?.overview?.description}
+        </p>
         <div className="grid md:grid-cols-2 gap-4">
           <div className="text-xs">
             <p className="text-slate-400">
@@ -576,16 +742,26 @@ function GrammarDetail({ section }: Readonly<{ section: DocumentationSection }>)
           <div className="text-xs">
             <p className="text-slate-400">
               <span className="font-semibold text-green-300">Ubicación:</span>{" "}
-              <code className="bg-slate-900/50 px-1 rounded">{content?.overview?.location}</code>
+              <code className="bg-slate-900/50 px-1 rounded">
+                {content?.overview?.location}
+              </code>
             </p>
           </div>
         </div>
         <div className="mt-4">
-          <p className="text-xs font-semibold text-green-300 mb-2">Generadores:</p>
+          <p className="text-xs font-semibold text-green-300 mb-2">
+            Generadores:
+          </p>
           <ul className="space-y-1">
             {content?.overview?.generators?.map((gen: string, idx: number) => (
-              <li key={idx} className="text-xs text-slate-400 flex items-start gap-1">
-                <ArrowRight size={8} className="text-green-400 mt-0.5 flex-shrink-0" />
+              <li
+                key={idx}
+                className="text-xs text-slate-400 flex items-start gap-1"
+              >
+                <ArrowRight
+                  size={8}
+                  className="text-green-400 mt-0.5 flex-shrink-0"
+                />
                 <span>{gen}</span>
               </li>
             ))}
@@ -599,15 +775,26 @@ function GrammarDetail({ section }: Readonly<{ section: DocumentationSection }>)
           {content?.features?.title}
         </h5>
         <div className="grid gap-4">
-          {content?.features?.items?.map((feature: GrammarFeature, idx: number) => (
-            <div key={idx} className="p-4 rounded-lg bg-blue-800/20 border border-blue-500/20">
-              <h6 className="text-sm font-semibold text-blue-200 mb-2">{feature.name}</h6>
-              <p className="text-xs text-blue-300 mb-2">{feature.description}</p>
-              <div className="bg-slate-900/50 p-2 rounded">
-                <code className="text-xs font-mono text-green-300">{feature.example}</code>
+          {content?.features?.items?.map(
+            (feature: GrammarFeature, idx: number) => (
+              <div
+                key={idx}
+                className="p-4 rounded-lg bg-blue-800/20 border border-blue-500/20"
+              >
+                <h6 className="text-sm font-semibold text-blue-200 mb-2">
+                  {feature.name}
+                </h6>
+                <p className="text-xs text-blue-300 mb-2">
+                  {feature.description}
+                </p>
+                <div className="bg-slate-900/50 p-2 rounded">
+                  <code className="text-xs font-mono text-green-300">
+                    {feature.example}
+                  </code>
+                </div>
               </div>
-            </div>
-          ))}
+            ),
+          )}
         </div>
       </section>
 
@@ -617,29 +804,46 @@ function GrammarDetail({ section }: Readonly<{ section: DocumentationSection }>)
           {content?.syntax?.title}
         </h5>
         <div className="grid gap-4">
-          {content?.syntax?.sections?.map((syntaxSection: GrammarSyntaxSection, idx: number) => (
-            <div key={idx} className="p-4 rounded-lg bg-purple-800/20 border border-purple-500/20">
-              <h6 className="text-sm font-semibold text-purple-200 mb-3">{syntaxSection.name}</h6>
-              <div className="bg-slate-900/50 p-3 rounded mb-3 overflow-x-auto">
-                <pre className="text-xs font-mono text-green-300 whitespace-pre">
-                  {syntaxSection.code}
-                </pre>
-              </div>
-              {syntaxSection.notes && syntaxSection.notes.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-slate-300 mb-1">Notas:</p>
-                  <ul className="space-y-1">
-                    {syntaxSection.notes.map((note: string, noteIdx: number) => (
-                      <li key={noteIdx} className="text-xs text-slate-400 flex items-start gap-1">
-                        <ArrowRight size={8} className="text-purple-400 mt-0.5 flex-shrink-0" />
-                        <span>{note}</span>
-                      </li>
-                    ))}
-                  </ul>
+          {content?.syntax?.sections?.map(
+            (syntaxSection: GrammarSyntaxSection, idx: number) => (
+              <div
+                key={idx}
+                className="p-4 rounded-lg bg-purple-800/20 border border-purple-500/20"
+              >
+                <h6 className="text-sm font-semibold text-purple-200 mb-3">
+                  {syntaxSection.name}
+                </h6>
+                <div className="bg-slate-900/50 p-3 rounded mb-3 overflow-x-auto">
+                  <pre className="text-xs font-mono text-green-300 whitespace-pre">
+                    {syntaxSection.code}
+                  </pre>
                 </div>
-              )}
-            </div>
-          ))}
+                {syntaxSection.notes && syntaxSection.notes.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-slate-300 mb-1">
+                      Notas:
+                    </p>
+                    <ul className="space-y-1">
+                      {syntaxSection.notes.map(
+                        (note: string, noteIdx: number) => (
+                          <li
+                            key={noteIdx}
+                            className="text-xs text-slate-400 flex items-start gap-1"
+                          >
+                            <ArrowRight
+                              size={8}
+                              className="text-purple-400 mt-0.5 flex-shrink-0"
+                            />
+                            <span>{note}</span>
+                          </li>
+                        ),
+                      )}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ),
+          )}
         </div>
       </section>
 
@@ -649,28 +853,39 @@ function GrammarDetail({ section }: Readonly<{ section: DocumentationSection }>)
           {content?.operators?.title}
         </h5>
         <div className="grid md:grid-cols-3 gap-4">
-          {content?.operators?.categories?.map((category: GrammarOperatorCategory, idx: number) => (
-            <div key={idx} className="p-4 rounded-lg bg-amber-800/20 border border-amber-500/20">
-              <h6 className="text-sm font-semibold text-amber-200 mb-2">{category.name}</h6>
-              <div className="mb-2">
-                <p className="text-xs font-semibold text-slate-300 mb-1">Operadores:</p>
-                <div className="flex flex-wrap gap-1">
-                  {category.operators?.map((op: string, opIdx: number) => (
-                    <code
-                      key={opIdx}
-                      className="text-xs font-mono text-amber-300 bg-slate-900/50 px-2 py-0.5 rounded"
-                    >
-                      {op}
-                    </code>
-                  ))}
+          {content?.operators?.categories?.map(
+            (category: GrammarOperatorCategory, idx: number) => (
+              <div
+                key={idx}
+                className="p-4 rounded-lg bg-amber-800/20 border border-amber-500/20"
+              >
+                <h6 className="text-sm font-semibold text-amber-200 mb-2">
+                  {category.name}
+                </h6>
+                <div className="mb-2">
+                  <p className="text-xs font-semibold text-slate-300 mb-1">
+                    Operadores:
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {category.operators?.map((op: string, opIdx: number) => (
+                      <code
+                        key={opIdx}
+                        className="text-xs font-mono text-amber-300 bg-slate-900/50 px-2 py-0.5 rounded"
+                      >
+                        {op}
+                      </code>
+                    ))}
+                  </div>
                 </div>
+                <p className="text-xs text-slate-400">
+                  <span className="font-semibold text-slate-300">
+                    Precedencia:
+                  </span>{" "}
+                  {category.precedence}
+                </p>
               </div>
-              <p className="text-xs text-slate-400">
-                <span className="font-semibold text-slate-300">Precedencia:</span>{" "}
-                {category.precedence}
-              </p>
-            </div>
-          ))}
+            ),
+          )}
         </div>
       </section>
 
@@ -679,14 +894,24 @@ function GrammarDetail({ section }: Readonly<{ section: DocumentationSection }>)
         <h5 className="text-lg font-semibold text-cyan-300 text-center mb-4">
           {content?.ast?.title}
         </h5>
-        <p className="text-sm text-slate-300 text-center mb-4">{content?.ast?.description}</p>
-        
+        <p className="text-sm text-slate-300 text-center mb-4">
+          {content?.ast?.description}
+        </p>
+
         <div className="mb-4">
-          <p className="text-xs font-semibold text-cyan-300 mb-2">Tipos de Nodos:</p>
+          <p className="text-xs font-semibold text-cyan-300 mb-2">
+            Tipos de Nodos:
+          </p>
           <div className="grid md:grid-cols-2 gap-2">
             {content?.ast?.nodeTypes?.map((nodeType: string, idx: number) => (
-              <div key={idx} className="text-xs text-slate-400 flex items-start gap-1">
-                <ArrowRight size={8} className="text-cyan-400 mt-0.5 flex-shrink-0" />
+              <div
+                key={idx}
+                className="text-xs text-slate-400 flex items-start gap-1"
+              >
+                <ArrowRight
+                  size={8}
+                  className="text-cyan-400 mt-0.5 flex-shrink-0"
+                />
                 <code className="text-cyan-300">{nodeType}</code>
               </div>
             ))}
@@ -724,7 +949,9 @@ function GrammarDetail({ section }: Readonly<{ section: DocumentationSection }>)
         <div className="grid md:grid-cols-2 gap-4">
           {/* Cliente */}
           <div className="p-4 rounded-lg bg-emerald-800/20 border border-emerald-500/20">
-            <h6 className="text-sm font-semibold text-emerald-200 mb-3">Cliente (TypeScript)</h6>
+            <h6 className="text-sm font-semibold text-emerald-200 mb-3">
+              Cliente (TypeScript)
+            </h6>
             <p className="text-xs text-emerald-300 mb-2">
               <span className="font-semibold">Tecnología:</span>{" "}
               {content?.validation?.client?.technology}
@@ -734,21 +961,33 @@ function GrammarDetail({ section }: Readonly<{ section: DocumentationSection }>)
               {content?.validation?.client?.purpose}
             </p>
             <div>
-              <p className="text-xs font-semibold text-slate-300 mb-1">Características:</p>
+              <p className="text-xs font-semibold text-slate-300 mb-1">
+                Características:
+              </p>
               <ul className="space-y-1">
-                {content?.validation?.client?.features?.map((feature: string, idx: number) => (
-                  <li key={idx} className="text-xs text-slate-400 flex items-start gap-1">
-                    <ArrowRight size={8} className="text-emerald-400 mt-0.5 flex-shrink-0" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
+                {content?.validation?.client?.features?.map(
+                  (feature: string, idx: number) => (
+                    <li
+                      key={idx}
+                      className="text-xs text-slate-400 flex items-start gap-1"
+                    >
+                      <ArrowRight
+                        size={8}
+                        className="text-emerald-400 mt-0.5 flex-shrink-0"
+                      />
+                      <span>{feature}</span>
+                    </li>
+                  ),
+                )}
               </ul>
             </div>
           </div>
 
           {/* Servidor */}
           <div className="p-4 rounded-lg bg-blue-800/20 border border-blue-500/20">
-            <h6 className="text-sm font-semibold text-blue-200 mb-3">Servidor (Python)</h6>
+            <h6 className="text-sm font-semibold text-blue-200 mb-3">
+              Servidor (Python)
+            </h6>
             <p className="text-xs text-blue-300 mb-2">
               <span className="font-semibold">Tecnología:</span>{" "}
               {content?.validation?.server?.technology}
@@ -764,14 +1003,24 @@ function GrammarDetail({ section }: Readonly<{ section: DocumentationSection }>)
               {content?.validation?.server?.purpose}
             </p>
             <div>
-              <p className="text-xs font-semibold text-slate-300 mb-1">Características:</p>
+              <p className="text-xs font-semibold text-slate-300 mb-1">
+                Características:
+              </p>
               <ul className="space-y-1">
-                {content?.validation?.server?.features?.map((feature: string, idx: number) => (
-                  <li key={idx} className="text-xs text-slate-400 flex items-start gap-1">
-                    <ArrowRight size={8} className="text-blue-400 mt-0.5 flex-shrink-0" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
+                {content?.validation?.server?.features?.map(
+                  (feature: string, idx: number) => (
+                    <li
+                      key={idx}
+                      className="text-xs text-slate-400 flex items-start gap-1"
+                    >
+                      <ArrowRight
+                        size={8}
+                        className="text-blue-400 mt-0.5 flex-shrink-0"
+                      />
+                      <span>{feature}</span>
+                    </li>
+                  ),
+                )}
               </ul>
             </div>
           </div>
@@ -784,25 +1033,45 @@ function GrammarDetail({ section }: Readonly<{ section: DocumentationSection }>)
           {content?.errorHandling?.title}
         </h5>
         <div className="mb-4">
-          <p className="text-xs font-semibold text-slate-300 mb-2">Características:</p>
+          <p className="text-xs font-semibold text-slate-300 mb-2">
+            Características:
+          </p>
           <ul className="space-y-1">
-            {content?.errorHandling?.features?.map((feature: string, idx: number) => (
-              <li key={idx} className="text-xs text-slate-400 flex items-start gap-1">
-                <ArrowRight size={8} className="text-red-400 mt-0.5 flex-shrink-0" />
-                <span>{feature}</span>
-              </li>
-            ))}
+            {content?.errorHandling?.features?.map(
+              (feature: string, idx: number) => (
+                <li
+                  key={idx}
+                  className="text-xs text-slate-400 flex items-start gap-1"
+                >
+                  <ArrowRight
+                    size={8}
+                    className="text-red-400 mt-0.5 flex-shrink-0"
+                  />
+                  <span>{feature}</span>
+                </li>
+              ),
+            )}
           </ul>
         </div>
         <div>
-          <p className="text-xs font-semibold text-slate-300 mb-2">Tipos de Errores:</p>
+          <p className="text-xs font-semibold text-slate-300 mb-2">
+            Tipos de Errores:
+          </p>
           <ul className="space-y-1">
-            {content?.errorHandling?.errorTypes?.map((errorType: string, idx: number) => (
-              <li key={idx} className="text-xs text-slate-400 flex items-start gap-1">
-                <ArrowRight size={8} className="text-red-400 mt-0.5 flex-shrink-0" />
-                <span>{errorType}</span>
-              </li>
-            ))}
+            {content?.errorHandling?.errorTypes?.map(
+              (errorType: string, idx: number) => (
+                <li
+                  key={idx}
+                  className="text-xs text-slate-400 flex items-start gap-1"
+                >
+                  <ArrowRight
+                    size={8}
+                    className="text-red-400 mt-0.5 flex-shrink-0"
+                  />
+                  <span>{errorType}</span>
+                </li>
+              ),
+            )}
           </ul>
         </div>
       </section>
@@ -822,7 +1091,9 @@ function GrammarDetail({ section }: Readonly<{ section: DocumentationSection }>)
 }
 
 /* -------- Render: Analyzer -------- */
-function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>) {
+function AnalyzerDetail({
+  section,
+}: Readonly<{ section: DocumentationSection }>) {
   const content = section.content as AnalyzerContent;
 
   return (
@@ -831,10 +1102,14 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
         <div className="flex justify-center">
           <BarChart3 size={56} className="text-cyan-400" />
         </div>
-        <h4 className="text-lg font-semibold text-white text-center">{section.title}</h4>
+        <h4 className="text-lg font-semibold text-white text-center">
+          {section.title}
+        </h4>
       </header>
 
-      <p className="text-sm text-slate-300 text-center mb-8">{section.description}</p>
+      <p className="text-sm text-slate-300 text-center mb-8">
+        {section.description}
+      </p>
 
       {/* Interfaz - puede ser 3 columnas o descripción simple */}
       {content?.interface && (
@@ -850,20 +1125,30 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
               </p>
             </div>
           )}
-          
-          {content.interface.features && content.interface.features.length > 0 && !content.interface.layout && (
-            <div className="p-4 rounded-lg bg-cyan-800/20 border border-cyan-500/20 mb-6">
-              <p className="text-xs font-medium text-cyan-300 mb-2">Características:</p>
-              <ul className="space-y-1">
-                {content.interface.features.map((feature: string) => (
-                  <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
-                    <ArrowRight size={8} className="text-cyan-400 mt-0.5 flex-shrink-0" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+
+          {content.interface.features &&
+            content.interface.features.length > 0 &&
+            !content.interface.layout && (
+              <div className="p-4 rounded-lg bg-cyan-800/20 border border-cyan-500/20 mb-6">
+                <p className="text-xs font-medium text-cyan-300 mb-2">
+                  Características:
+                </p>
+                <ul className="space-y-1">
+                  {content.interface.features.map((feature: string) => (
+                    <li
+                      key={feature}
+                      className="text-xs text-slate-400 flex items-start gap-1"
+                    >
+                      <ArrowRight
+                        size={8}
+                        className="text-cyan-400 mt-0.5 flex-shrink-0"
+                      />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
           {content.interface.layout && (
             <div className="p-4 rounded-lg bg-cyan-800/20 border border-cyan-500/20 mb-6">
@@ -871,29 +1156,48 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
                 {content.interface.layout.description}
               </p>
 
-          <div className="grid md:grid-cols-3 gap-4">
-            {content?.interface?.layout?.columns?.map((column: AnalyzerColumn) => (
-              <div key={column.name} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                <h6 className="text-sm font-semibold text-cyan-200 mb-2">{column.name}</h6>
-                <p className="text-xs text-cyan-300 mb-2">{column.purpose}</p>
-                <p className="text-xs text-slate-400 mb-2">Componente: {column.component}</p>
-                {column.features && column.features.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-slate-300 mb-1">Características:</p>
-                    <ul className="space-y-1">
-                      {column.features.map((feature: string) => (
-                        <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
-                          <ArrowRight size={8} className="text-cyan-400 mt-0.5 flex-shrink-0" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+              <div className="grid md:grid-cols-3 gap-4">
+                {content?.interface?.layout?.columns?.map(
+                  (column: AnalyzerColumn) => (
+                    <div
+                      key={column.name}
+                      className="p-3 rounded-lg bg-slate-800/50 border border-white/10"
+                    >
+                      <h6 className="text-sm font-semibold text-cyan-200 mb-2">
+                        {column.name}
+                      </h6>
+                      <p className="text-xs text-cyan-300 mb-2">
+                        {column.purpose}
+                      </p>
+                      <p className="text-xs text-slate-400 mb-2">
+                        Componente: {column.component}
+                      </p>
+                      {column.features && column.features.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-slate-300 mb-1">
+                            Características:
+                          </p>
+                          <ul className="space-y-1">
+                            {column.features.map((feature: string) => (
+                              <li
+                                key={feature}
+                                className="text-xs text-slate-400 flex items-start gap-1"
+                              >
+                                <ArrowRight
+                                  size={8}
+                                  className="text-cyan-400 mt-0.5 flex-shrink-0"
+                                />
+                                <span>{feature}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  ),
                 )}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
           )}
 
           {/* Responsiveness */}
@@ -903,13 +1207,20 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
                 {content.interface.responsiveness.title}
               </h6>
               <div className="grid gap-3">
-                {content.interface.responsiveness.breakpoints?.map((bp: AnalyzerBreakpoint) => (
-                  <div key={bp.size} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                    <p className="text-xs font-semibold text-blue-200">{bp.size}</p>
-                    <p className="text-xs text-blue-300 mb-1">{bp.layout}</p>
-                    <p className="text-xs text-slate-400">{bp.description}</p>
-                  </div>
-                ))}
+                {content.interface.responsiveness.breakpoints?.map(
+                  (bp: AnalyzerBreakpoint) => (
+                    <div
+                      key={bp.size}
+                      className="p-3 rounded-lg bg-slate-800/50 border border-white/10"
+                    >
+                      <p className="text-xs font-semibold text-blue-200">
+                        {bp.size}
+                      </p>
+                      <p className="text-xs text-blue-300 mb-1">{bp.layout}</p>
+                      <p className="text-xs text-slate-400">{bp.description}</p>
+                    </div>
+                  ),
+                )}
               </div>
             </div>
           )}
@@ -928,11 +1239,19 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
           </p>
 
           <div className="space-y-3 mb-4">
-            <p className="text-xs font-medium text-slate-300">Características:</p>
+            <p className="text-xs font-medium text-slate-300">
+              Características:
+            </p>
             <ul className="space-y-1">
               {content?.modal?.features?.map((feature: string) => (
-                <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
-                  <ArrowRight size={8} className="text-purple-400 mt-0.5 flex-shrink-0" />
+                <li
+                  key={feature}
+                  className="text-xs text-slate-400 flex items-start gap-1"
+                >
+                  <ArrowRight
+                    size={8}
+                    className="text-purple-400 mt-0.5 flex-shrink-0"
+                  />
                   <span>{feature}</span>
                 </li>
               ))}
@@ -941,9 +1260,16 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
 
           <div className="grid md:grid-cols-2 gap-3">
             {content?.modal?.types?.map((type: AnalyzerModalType) => (
-              <div key={type.name} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                <h6 className="text-xs font-semibold text-purple-200 mb-1">{type.name}</h6>
-                <p className="text-xs text-purple-300 mb-2">{type.description}</p>
+              <div
+                key={type.name}
+                className="p-3 rounded-lg bg-slate-800/50 border border-white/10"
+              >
+                <h6 className="text-xs font-semibold text-purple-200 mb-1">
+                  {type.name}
+                </h6>
+                <p className="text-xs text-purple-300 mb-2">
+                  {type.description}
+                </p>
                 <p className="text-xs text-slate-400">{type.content}</p>
               </div>
             ))}
@@ -959,15 +1285,30 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
           </h5>
           <div className="grid md:grid-cols-3 gap-4">
             {content.analysisModes.modes.map((mode: AnalysisMode) => (
-              <div key={mode.name} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                <h6 className="text-sm font-semibold text-yellow-200 mb-2">{mode.name}</h6>
-                <p className="text-xs text-yellow-300 mb-2">{mode.description}</p>
+              <div
+                key={mode.name}
+                className="p-3 rounded-lg bg-slate-800/50 border border-white/10"
+              >
+                <h6 className="text-sm font-semibold text-yellow-200 mb-2">
+                  {mode.name}
+                </h6>
+                <p className="text-xs text-yellow-300 mb-2">
+                  {mode.description}
+                </p>
                 <div>
-                  <p className="text-xs font-medium text-slate-300 mb-1">Características:</p>
+                  <p className="text-xs font-medium text-slate-300 mb-1">
+                    Características:
+                  </p>
                   <ul className="space-y-1">
                     {mode.features.map((feature: string) => (
-                      <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
-                        <ArrowRight size={8} className="text-yellow-400 mt-0.5 flex-shrink-0" />
+                      <li
+                        key={feature}
+                        className="text-xs text-slate-400 flex items-start gap-1"
+                      >
+                        <ArrowRight
+                          size={8}
+                          className="text-yellow-400 mt-0.5 flex-shrink-0"
+                        />
                         <span>{feature}</span>
                       </li>
                     ))}
@@ -990,11 +1331,19 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
               {content.implementation.description}
             </p>
             <div>
-              <p className="text-xs font-medium text-slate-300 mb-2">Características:</p>
+              <p className="text-xs font-medium text-slate-300 mb-2">
+                Características:
+              </p>
               <ul className="space-y-1">
                 {content.implementation.features.map((feature: string) => (
-                  <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
-                    <ArrowRight size={8} className="text-orange-400 mt-0.5 flex-shrink-0" />
+                  <li
+                    key={feature}
+                    className="text-xs text-slate-400 flex items-start gap-1"
+                  >
+                    <ArrowRight
+                      size={8}
+                      className="text-orange-400 mt-0.5 flex-shrink-0"
+                    />
                     <span>{feature}</span>
                   </li>
                 ))}
@@ -1012,15 +1361,30 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
           </h5>
           <div className="grid md:grid-cols-2 gap-4">
             {content.visitors.list.map((visitor: VisitorInfo) => (
-              <div key={visitor.name} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                <h6 className="text-sm font-semibold text-indigo-200 mb-2">{visitor.name}</h6>
-                <p className="text-xs text-indigo-300 mb-2">{visitor.description}</p>
+              <div
+                key={visitor.name}
+                className="p-3 rounded-lg bg-slate-800/50 border border-white/10"
+              >
+                <h6 className="text-sm font-semibold text-indigo-200 mb-2">
+                  {visitor.name}
+                </h6>
+                <p className="text-xs text-indigo-300 mb-2">
+                  {visitor.description}
+                </p>
                 <div>
-                  <p className="text-xs font-medium text-slate-300 mb-1">Características:</p>
+                  <p className="text-xs font-medium text-slate-300 mb-1">
+                    Características:
+                  </p>
                   <ul className="space-y-1">
                     {visitor.features.map((feature: string) => (
-                      <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
-                        <ArrowRight size={8} className="text-indigo-400 mt-0.5 flex-shrink-0" />
+                      <li
+                        key={feature}
+                        className="text-xs text-slate-400 flex items-start gap-1"
+                      >
+                        <ArrowRight
+                          size={8}
+                          className="text-indigo-400 mt-0.5 flex-shrink-0"
+                        />
                         <span>{feature}</span>
                       </li>
                     ))}
@@ -1039,19 +1403,32 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
             {content.algorithms.title}
           </h5>
           <div className="space-y-4">
-            {content.algorithms.categories.map((category: AlgorithmCategory) => (
-              <div key={category.name} className="p-4 rounded-lg bg-teal-800/20 border border-teal-500/20">
-                <h6 className="text-sm font-semibold text-teal-200 mb-3">{category.name}</h6>
-                <ul className="space-y-1">
-                  {category.examples.map((example: string) => (
-                    <li key={example} className="text-xs text-slate-400 flex items-start gap-1">
-                      <ArrowRight size={8} className="text-teal-400 mt-0.5 flex-shrink-0" />
-                      <span>{example}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+            {content.algorithms.categories.map(
+              (category: AlgorithmCategory) => (
+                <div
+                  key={category.name}
+                  className="p-4 rounded-lg bg-teal-800/20 border border-teal-500/20"
+                >
+                  <h6 className="text-sm font-semibold text-teal-200 mb-3">
+                    {category.name}
+                  </h6>
+                  <ul className="space-y-1">
+                    {category.examples.map((example: string) => (
+                      <li
+                        key={example}
+                        className="text-xs text-slate-400 flex items-start gap-1"
+                      >
+                        <ArrowRight
+                          size={8}
+                          className="text-teal-400 mt-0.5 flex-shrink-0"
+                        />
+                        <span>{example}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ),
+            )}
           </div>
         </section>
       )}
@@ -1064,18 +1441,26 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
           </h5>
           <div className="p-4 rounded-lg bg-pink-800/20 border border-pink-500/20">
             <div className="mb-4">
-              <h6 className="text-sm font-semibold text-pink-200 mb-2">{content.api.endpoint.name}</h6>
-              <p className="text-xs text-pink-300 mb-3">{content.api.endpoint.description}</p>
+              <h6 className="text-sm font-semibold text-pink-200 mb-2">
+                {content.api.endpoint.name}
+              </h6>
+              <p className="text-xs text-pink-300 mb-3">
+                {content.api.endpoint.description}
+              </p>
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                <p className="text-xs font-medium text-slate-300 mb-2">Request:</p>
+                <p className="text-xs font-medium text-slate-300 mb-2">
+                  Request:
+                </p>
                 <pre className="text-xs text-slate-400 overflow-x-auto">
                   {JSON.stringify(content.api.endpoint.request, null, 2)}
                 </pre>
               </div>
               <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                <p className="text-xs font-medium text-slate-300 mb-2">Response:</p>
+                <p className="text-xs font-medium text-slate-300 mb-2">
+                  Response:
+                </p>
                 <pre className="text-xs text-slate-400 overflow-x-auto">
                   {JSON.stringify(content.api.endpoint.response, null, 2)}
                 </pre>
@@ -1093,17 +1478,26 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
           </h5>
           <div className="grid gap-4">
             {content.components.list?.map((comp: AnalyzerComponentInfo) => (
-              <div key={comp.name} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+              <div
+                key={comp.name}
+                className="p-3 rounded-lg bg-slate-800/50 border border-white/10"
+              >
                 <div className="mb-2">
-                  <h6 className="text-sm font-semibold text-green-200">{comp.name}</h6>
+                  <h6 className="text-sm font-semibold text-green-200">
+                    {comp.name}
+                  </h6>
                   <p className="text-xs text-slate-400">{comp.file}</p>
                 </div>
                 <p className="text-xs text-green-300 mb-2">{comp.purpose}</p>
                 <div>
-                  <p className="text-xs font-medium text-slate-300 mb-1">Props:</p>
+                  <p className="text-xs font-medium text-slate-300 mb-1">
+                    Props:
+                  </p>
                   <ul className="space-y-1">
                     {comp.props?.map((prop: string) => (
-                      <li key={prop} className="text-xs text-slate-400 ml-2">• {prop}</li>
+                      <li key={prop} className="text-xs text-slate-400 ml-2">
+                        • {prop}
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -1125,19 +1519,30 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
               <div className="flex justify-center">
                 <Formula latex="T(n) = a \\cdot T(n/b) + f(n)" display />
               </div>
-              <p>donde <Formula latex="a \\geq 1" />, <Formula latex="b > 1" />, y <Formula latex="f(n)" /> es una función asintóticamente positiva.</p>
+              <p>
+                donde <Formula latex="a \\geq 1" />, <Formula latex="b > 1" />,
+                y <Formula latex="f(n)" /> es una función asintóticamente
+                positiva.
+              </p>
             </div>
             <div className="grid md:grid-cols-3 gap-3">
               {content.masterTheorem.cases.map((theoremCase) => (
-                <div key={theoremCase.case} className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                  <h6 className="text-sm font-semibold text-emerald-200 mb-2">Caso {theoremCase.case}</h6>
+                <div
+                  key={theoremCase.case}
+                  className="p-3 rounded-lg bg-slate-800/50 border border-white/10"
+                >
+                  <h6 className="text-sm font-semibold text-emerald-200 mb-2">
+                    Caso {theoremCase.case}
+                  </h6>
                   <div className="text-xs text-emerald-300 mb-2 font-medium flex justify-center">
                     <Formula latex={theoremCase.condition} />
                   </div>
                   <div className="text-xs text-slate-300 mb-2 flex justify-center">
                     <Formula latex={theoremCase.result} />
                   </div>
-                  <p className="text-xs text-slate-400 mb-2">{theoremCase.description}</p>
+                  <p className="text-xs text-slate-400 mb-2">
+                    {theoremCase.description}
+                  </p>
                   <div className="text-xs text-slate-500 flex justify-center">
                     <Formula latex={theoremCase.example} />
                   </div>
@@ -1160,25 +1565,42 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
             </p>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <p className="text-xs font-medium text-slate-300 mb-2">Proceso:</p>
+                <p className="text-xs font-medium text-slate-300 mb-2">
+                  Proceso:
+                </p>
                 <ol className="space-y-1">
-                  {content.recurrenceExtraction.process.map((step: string, idx: number) => (
-                    <li key={idx} className="text-xs text-slate-400 flex items-start gap-1">
-                      <span className="text-amber-400">{idx + 1}.</span>
-                      <span>{step}</span>
-                    </li>
-                  ))}
+                  {content.recurrenceExtraction.process.map(
+                    (step: string, idx: number) => (
+                      <li
+                        key={idx}
+                        className="text-xs text-slate-400 flex items-start gap-1"
+                      >
+                        <span className="text-amber-400">{idx + 1}.</span>
+                        <span>{step}</span>
+                      </li>
+                    ),
+                  )}
                 </ol>
               </div>
               <div>
-                <p className="text-xs font-medium text-slate-300 mb-2">Requisitos:</p>
+                <p className="text-xs font-medium text-slate-300 mb-2">
+                  Requisitos:
+                </p>
                 <ul className="space-y-1">
-                  {content.recurrenceExtraction.requirements.map((req: string, idx: number) => (
-                    <li key={idx} className="text-xs text-slate-400 flex items-start gap-1">
-                      <ArrowRight size={8} className="text-amber-400 mt-0.5 flex-shrink-0" />
-                      <span>{req}</span>
-                    </li>
-                  ))}
+                  {content.recurrenceExtraction.requirements.map(
+                    (req: string, idx: number) => (
+                      <li
+                        key={idx}
+                        className="text-xs text-slate-400 flex items-start gap-1"
+                      >
+                        <ArrowRight
+                          size={8}
+                          className="text-amber-400 mt-0.5 flex-shrink-0"
+                        />
+                        <span>{req}</span>
+                      </li>
+                    ),
+                  )}
                 </ul>
               </div>
             </div>
@@ -1194,16 +1616,31 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
           </h5>
           <div className="grid md:grid-cols-2 gap-4">
             {content.visualization.components.map((component) => (
-              <div key={component.name} className="p-4 rounded-lg bg-violet-800/20 border border-violet-500/20">
-                <h6 className="text-sm font-semibold text-violet-200 mb-2">{component.name}</h6>
-                <p className="text-xs text-violet-300 mb-3">{component.description}</p>
+              <div
+                key={component.name}
+                className="p-4 rounded-lg bg-violet-800/20 border border-violet-500/20"
+              >
+                <h6 className="text-sm font-semibold text-violet-200 mb-2">
+                  {component.name}
+                </h6>
+                <p className="text-xs text-violet-300 mb-3">
+                  {component.description}
+                </p>
                 {component.features && component.features.length > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-slate-300 mb-1">Características:</p>
+                    <p className="text-xs font-medium text-slate-300 mb-1">
+                      Características:
+                    </p>
                     <ul className="space-y-1">
                       {component.features.map((feature: string) => (
-                        <li key={feature} className="text-xs text-slate-400 flex items-start gap-1">
-                          <ArrowRight size={8} className="text-violet-400 mt-0.5 flex-shrink-0" />
+                        <li
+                          key={feature}
+                          className="text-xs text-slate-400 flex items-start gap-1"
+                        >
+                          <ArrowRight
+                            size={8}
+                            className="text-violet-400 mt-0.5 flex-shrink-0"
+                          />
                           <span>{feature}</span>
                         </li>
                       ))}
@@ -1212,11 +1649,19 @@ function AnalyzerDetail({ section }: Readonly<{ section: DocumentationSection }>
                 )}
                 {component.sections && component.sections.length > 0 && (
                   <div className="mt-3">
-                    <p className="text-xs font-medium text-slate-300 mb-1">Secciones:</p>
+                    <p className="text-xs font-medium text-slate-300 mb-1">
+                      Secciones:
+                    </p>
                     <ul className="space-y-1">
                       {component.sections.map((section: string) => (
-                        <li key={section} className="text-xs text-slate-400 flex items-start gap-1">
-                          <ArrowRight size={8} className="text-violet-400 mt-0.5 flex-shrink-0" />
+                        <li
+                          key={section}
+                          className="text-xs text-slate-400 flex items-start gap-1"
+                        >
+                          <ArrowRight
+                            size={8}
+                            className="text-violet-400 mt-0.5 flex-shrink-0"
+                          />
                           <span>{section}</span>
                         </li>
                       ))}

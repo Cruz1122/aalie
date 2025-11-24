@@ -1,17 +1,24 @@
 // Configuración centralizada para modelos LLM de Gemini
 
-export type LLMJob = 'classify' | 'parser_assist' | 'general' | 'simplifier' | 'repair' | 'compare';
+export type LLMJob =
+  | "classify"
+  | "parser_assist"
+  | "general"
+  | "simplifier"
+  | "repair"
+  | "compare";
 
 export const GEMINI_MODELS = {
-  classify: 'gemini-2.0-flash-lite',
-  parser_assist: 'gemini-2.5-flash',
-  general: 'gemini-2.5-flash',
-  simplifier: 'gemini-2.5-flash',
-  repair: 'gemini-2.5-flash',
-  compare: 'gemini-2.5-pro',
+  classify: "gemini-2.0-flash-lite",
+  parser_assist: "gemini-2.5-flash",
+  general: "gemini-2.5-flash",
+  simplifier: "gemini-2.5-flash",
+  repair: "gemini-2.5-flash",
+  compare: "gemini-2.5-pro",
 };
 
-export const GEMINI_ENDPOINT_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+export const GEMINI_ENDPOINT_BASE =
+  "https://generativelanguage.googleapis.com/v1beta/models";
 
 // Parámetros por job (temperatura, tokens, prompts)
 export const JOB_CONFIG = {
@@ -137,7 +144,7 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  
  NOTA
  - La salida de código debe ser auto-contenida y ejecutable conforme a la gramática del proyecto.
- - Un solo procedimiento con toda la lógica, sin dividir en múltiples funciones.`
+ - Un solo procedimiento con toda la lógica, sin dividir en múltiples funciones.`,
   },
   general: {
     temperature: 0.7,
@@ -241,7 +248,7 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  - ⚠️ SIEMPRE verifica que WHILE y FOR incluyan DO antes del bloque antes de entregar el código.
  - ⚠️ SIEMPRE verifica que los comentarios usen // (NO usar -- para comentarios) antes de entregar el código.
  - ⚠️ SIEMPRE verifica que NO haya caracteres especiales (tildes, ñ, etc.) en nombres de variables, funciones o código antes de entregar el código.
- - ⚠️ SIEMPRE verifica que las llamadas recursivas NO usen CALL (solo nombre(params), NO CALL nombre(params)) antes de entregar el código.`
+ - ⚠️ SIEMPRE verifica que las llamadas recursivas NO usen CALL (solo nombre(params), NO CALL nombre(params)) antes de entregar el código.`,
   },
   simplifier: {
     temperature: 0,
@@ -311,7 +318,7 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  - Usa formato LaTeX para todas las expresiones
  - RESPETA la notación original (n/N, mayúsculas/minúsculas)
  - Devuelve expresiones deterministas: nada de variantes equivalentes entre ejecuciones (sin factorizar, sin cambiar el orden de los términos, sin omitir coeficientes)
- - Revisa que los índices de sumatoria no entren en conflicto con variables libres; renómbralos si es necesario para mantenerlos ligados`
+ - Revisa que los índices de sumatoria no entren en conflicto con variables libres; renómbralos si es necesario para mantenerlos ligados`,
   },
   repair: {
     temperature: 0.7,
@@ -321,9 +328,9 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
       properties: {
         code: { type: "string" },
         removedLines: { type: "array", items: { type: "number" } },
-        addedLines: { type: "array", items: { type: "number" } }
+        addedLines: { type: "array", items: { type: "number" } },
       },
-      required: ["code", "removedLines", "addedLines"]
+      required: ["code", "removedLines", "addedLines"],
     },
     systemPrompt: `Eres un reparador de algoritmos usando EXCLUSIVAMENTE la gramática del proyecto (Language.g4).
 
@@ -364,7 +371,7 @@ IMPORTANTE:
 - Analiza cuidadosamente el algoritmo proporcionado
 - Aplica los métodos teóricos correctamente
 - Proporciona expresiones en formato LaTeX
-- La nota debe ser breve, con emoji y adjetivo calificativo`
+- La nota debe ser breve, con emoji y adjetivo calificativo`,
   },
   compare: {
     temperature: 0.3,
@@ -384,7 +391,7 @@ IMPORTANTE:
                 big_o: { type: "string" },
                 big_omega: { type: "string" },
                 big_theta: { type: "string" },
-              }
+              },
             },
             best: {
               type: "object",
@@ -394,7 +401,7 @@ IMPORTANTE:
                 big_o: { type: "string" },
                 big_omega: { type: "string" },
                 big_theta: { type: "string" },
-              }
+              },
             },
             avg: {
               type: "object",
@@ -404,7 +411,7 @@ IMPORTANTE:
                 big_o: { type: "string" },
                 big_omega: { type: "string" },
                 big_theta: { type: "string" },
-              }
+              },
             },
             // Para recursivos: puede tener worst, best, avg con objetos de recurrencia
             // NOTA: Si el análisis propio tiene has_case_variability: true, DEBES proporcionar worst, best y avg
@@ -417,7 +424,10 @@ IMPORTANTE:
             recurrence: {
               type: "object",
               properties: {
-                type: { type: "string", enum: ["divide_conquer", "linear_shift"] },
+                type: {
+                  type: "string",
+                  enum: ["divide_conquer", "linear_shift"],
+                },
                 form: { type: "string" },
                 a: { type: "number" },
                 b: { type: "number" },
@@ -426,8 +436,8 @@ IMPORTANTE:
                 shifts: { type: "array", items: { type: "number" } },
                 coefficients: { type: "array", items: { type: "number" } },
                 "g(n)": { type: "string" },
-                n0: { type: "number" }
-              }
+                n0: { type: "number" },
+              },
             },
             method: { type: "string" },
             theta: { type: "string" },
@@ -441,9 +451,9 @@ IMPORTANTE:
                     type: "object",
                     properties: {
                       root: { type: "string" },
-                      multiplicity: { type: "number" }
-                    }
-                  }
+                      multiplicity: { type: "number" },
+                    },
+                  },
                 },
                 dominant_root: { type: "string" },
                 growth_rate: { type: "number" },
@@ -451,17 +461,20 @@ IMPORTANTE:
                 particular_solution: { type: "string" },
                 general_solution: { type: "string" },
                 closed_form: { type: "string" },
-                theta: { type: "string" }
-              }
+                theta: { type: "string" },
+              },
             },
             master: {
               type: "object",
               properties: {
                 case: { type: "number", enum: [1, 2, 3] },
                 nlogba: { type: "string" },
-                comparison: { type: "string", enum: ["smaller", "equal", "larger"] },
-                theta: { type: "string" }
-              }
+                comparison: {
+                  type: "string",
+                  enum: ["smaller", "equal", "larger"],
+                },
+                theta: { type: "string" },
+              },
             },
             iteration: {
               type: "object",
@@ -473,18 +486,18 @@ IMPORTANTE:
                   type: "object",
                   properties: {
                     condition: { type: "string" },
-                    k: { type: "string" }
-                  }
+                    k: { type: "string" },
+                  },
                 },
                 summation: {
                   type: "object",
                   properties: {
                     expression: { type: "string" },
-                    evaluated: { type: "string" }
-                  }
+                    evaluated: { type: "string" },
+                  },
                 },
-                theta: { type: "string" }
-              }
+                theta: { type: "string" },
+              },
             },
             recursion_tree: {
               type: "object",
@@ -499,9 +512,9 @@ IMPORTANTE:
                       num_nodes_latex: { type: "string" },
                       subproblem_size_latex: { type: "string" },
                       cost_per_node_latex: { type: "string" },
-                      total_cost_latex: { type: "string" }
-                    }
-                  }
+                      total_cost_latex: { type: "string" },
+                    },
+                  },
                 },
                 height: { type: "string" },
                 summation: {
@@ -509,24 +522,24 @@ IMPORTANTE:
                   properties: {
                     expression: { type: "string" },
                     evaluated: { type: "string" },
-                    theta: { type: "string" }
-                  }
+                    theta: { type: "string" },
+                  },
                 },
                 dominating_level: {
                   type: "object",
                   properties: {
                     level: { type: "string" },
-                    reason: { type: "string" }
-                  }
+                    reason: { type: "string" },
+                  },
                 },
-                theta: { type: "string" }
-              }
-            }
-          }
+                theta: { type: "string" },
+              },
+            },
+          },
         },
-        note: { type: "string" }
+        note: { type: "string" },
       },
-      required: ["analysis", "note"]
+      required: ["analysis", "note"],
     },
     systemPrompt: `Eres un experto en análisis de complejidad de algoritmos. Tu tarea es analizar un algoritmo y proporcionar un análisis de complejidad detallado.
 
@@ -625,8 +638,8 @@ IMPORTANTE:
 - Aplica los métodos teóricos correctamente
 - Proporciona expresiones en formato LaTeX
 - La nota debe ser breve, con emoji y adjetivo calificativo
-- **NO omitas campos obligatorios del objeto recurrence ni del objeto del método usado (iteration, master, etc.)**`
-  }
+- **NO omitas campos obligatorios del objeto recurrence ni del objeto del método usado (iteration, master, etc.)**`,
+  },
 };
 
 // Helper para obtener modelo por job
@@ -638,22 +651,44 @@ export function getPrompt(job: LLMJob) {
   return JOB_CONFIG[job].systemPrompt;
 }
 
+export interface JSONSchemaProperty {
+  type: string;
+  description?: string;
+  items?: JSONSchemaProperty;
+  properties?: Record<string, JSONSchemaProperty>;
+}
+
 export interface JobResolvedConfig {
   model: string;
   temperature: number;
   maxTokens: number;
   systemPrompt: string;
-  schema?: { type: string; properties?: Record<string, any>; required?: string[] };
+  schema?: {
+    type: string;
+    properties?: Record<string, JSONSchemaProperty>;
+    required?: string[];
+  };
+}
+
+interface JobConfigWithSchema {
+  temperature: number;
+  maxTokens: number;
+  systemPrompt: string;
+  schema?: {
+    type: string;
+    properties?: Record<string, JSONSchemaProperty>;
+    required?: string[];
+  };
 }
 
 export function getJobConfig(job: LLMJob): JobResolvedConfig {
-  const jobConfig = JOB_CONFIG[job];
+  const jobConfig = JOB_CONFIG[job] as JobConfigWithSchema;
   return {
     model: getModel(job),
     temperature: jobConfig.temperature,
     maxTokens: jobConfig.maxTokens,
     systemPrompt: getPrompt(job),
-    schema: (jobConfig as any).schema,
+    schema: jobConfig.schema,
   };
 }
 
@@ -661,6 +696,6 @@ export function getJobConfig(job: LLMJob): JobResolvedConfig {
 export const LLM_EXPORTABLE_CONFIG = {
   endpoint: GEMINI_ENDPOINT_BASE,
   models: Object.values(GEMINI_MODELS),
-  description: 'Modelos Gemini Google AI Studio',
+  description: "Modelos Gemini Google AI Studio",
   jobs: GEMINI_MODELS,
 };

@@ -7,27 +7,34 @@ import { AnalysisLoader } from "@/components/AnalysisLoader";
 import { AnalyzerEditor } from "@/components/AnalyzerEditor";
 import { ASTTreeView } from "@/components/ASTTreeView";
 import ChatBot from "@/components/ChatBot";
-import Footer from "@/components/Footer";
-import Formula from "@/components/Formula";
-import GeneralProcedureModal from "@/components/GeneralProcedureModal";
-import Header from "@/components/Header";
-import LineTable from "@/components/LineTable";
-import ProcedureModal from "@/components/ProcedureModal";
-import IterativeAnalysisView from "@/components/IterativeAnalysisView";
-import RecursiveAnalysisView from "@/components/RecursiveAnalysisView";
-import MethodSelector, { MethodType } from "@/components/MethodSelector";
-import RepairModal from "@/components/RepairModal";
 import { ComparisonLoader } from "@/components/ComparisonLoader";
 import ComparisonModal from "@/components/ComparisonModal";
-import { extractCoreData, isRecursiveAnalysis, type CoreAnalysisData } from "@/lib/extract-core-data";
+import Footer from "@/components/Footer";
+import GeneralProcedureModal from "@/components/GeneralProcedureModal";
+import Header from "@/components/Header";
+import IterativeAnalysisView from "@/components/IterativeAnalysisView";
+import MethodSelector, { MethodType } from "@/components/MethodSelector";
+import ProcedureModal from "@/components/ProcedureModal";
+import RecursiveAnalysisView from "@/components/RecursiveAnalysisView";
+import RepairModal from "@/components/RepairModal";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { heuristicKind } from "@/lib/algorithm-classifier";
-import { calculateBigO, getSavedCase, saveCase } from "@/lib/polynomial";
-import { getBestAsymptoticNotation as getBestNotation } from "@/lib/asymptotic-notation";
+import { extractCoreData, isRecursiveAnalysis, type CoreAnalysisData } from "@/lib/extract-core-data";
+import { getSavedCase, saveCase } from "@/lib/polynomial";
+
+import {
+  extractParseError,
+  extractAnalysisError,
+  handleAnalysisError,
+  detectAndSelectMethod,
+  detectRecursiveMethod,
+  updateAnalysisMessageForMethod,
+} from "./analyzer-helpers";
 
 type ClassifyResponse = { kind: "iterative" | "recursive" | "hybrid" | "unknown" };
+type CaseType = 'worst' | 'average' | 'best';
 
 export default function AnalyzerPage() {
   const { animateProgress } = useAnalysisProgress();
@@ -172,9 +179,9 @@ export default function AnalyzerPage() {
       const status = await getApiKeyStatus();
       setHasApiKey(status.hasAny);
     };
-    window.addEventListener('apiKeyChanged', handleApiKeyChange);
+    globalThis.window.addEventListener('apiKeyChanged', handleApiKeyChange);
     return () => {
-      window.removeEventListener('apiKeyChanged', handleApiKeyChange);
+      globalThis.window.removeEventListener('apiKeyChanged', handleApiKeyChange);
     };
   }, []);
 
@@ -256,18 +263,16 @@ export default function AnalyzerPage() {
 
       if (!parseRes.ok) {
         console.error("Error en parse:", parseRes);
-        const errorMsg = parseRes.errors?.map((e: { line?: number; column?: number; message: string }) =>
-          `Línea ${e.line || '?'}:${e.column || '?'} ${e.message}`
-        ).join("\n") || "Error al parsear el código";
-        setAnalysisError(errorMsg);
-        setTimeout(() => {
-          setAnalyzing(false);
-          setAnalysisProgress(0);
-          setAnalysisMessage("Iniciando análisis...");
-          setAlgorithmType(undefined);
-          setIsAnalysisComplete(false);
-          setAnalysisError(null);
-        }, 3000);
+        const errorMsg = extractParseError(parseRes);
+        handleAnalysisError(
+          errorMsg,
+          setAnalyzing,
+          setAnalysisProgress,
+          setAnalysisMessage,
+          setAlgorithmType,
+          setIsAnalysisComplete,
+          setAnalysisError
+        );
         return;
       }
 
@@ -321,103 +326,19 @@ export default function AnalyzerPage() {
         const progressBeforeMethodSelection = 85;
         
         // Detectar métodos aplicables
-        selectedMethod = "master";
-        try {
-          const detectMethodsResponse = await fetch("/api/analyze/detect-methods", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              source,
-              algorithm_kind: kind
-            }),
-          });
-          
-          const detectMethodsResult = await detectMethodsResponse.json() as {
-            ok: boolean;
-            applicable_methods?: MethodType[];
-            default_method?: MethodType;
-            errors?: Array<{ message: string }>;
-          };
-          
-          if (detectMethodsResult.ok && detectMethodsResult.applicable_methods) {
-            const methods = detectMethodsResult.applicable_methods;
-            const defaultMethodValue = (detectMethodsResult.default_method || "master") as MethodType;
-            
-            setApplicableMethods(methods);
-            setDefaultMethod(defaultMethodValue);
-            
-            // Si hay múltiples métodos aplicables, mostrar selector
-            if (methods.length > 1) {
-              console.log('[Analyzer] Múltiples métodos detectados:', methods);
-              console.log('[Analyzer] Método por defecto:', defaultMethodValue);
-              
-              // Actualizar mensaje para indicar que el usuario debe seleccionar
-              setAnalysisMessage("Selecciona el método de análisis...");
-              
-              // Guardar el progreso mínimo para evitar que baje
-              minProgressRef.current = progressBeforeMethodSelection;
-              
-              // Asegurar que el progreso se mantenga en el valor actual
-              setAnalysisProgress((prev) => Math.max(prev, progressBeforeMethodSelection));
-              
-              // Mostrar el selector primero
-              setShowMethodSelector(true);
-              console.log('[Analyzer] Selector de método mostrado');
-              
-              // Esperar un poco para que el selector se renderice completamente
-              await new Promise((resolve) => setTimeout(resolve, 200));
-              
-              // Crear un Promise que se resolverá cuando el usuario seleccione un método
-              console.log('[Analyzer] Esperando selección del usuario...');
-              selectedMethod = await new Promise<MethodType>((resolve, reject) => {
-                methodSelectionPromiseRef.current = { resolve, reject };
-                // Timeout de seguridad (no debería pasar, pero por si acaso)
-                setTimeout(() => {
-                  if (methodSelectionPromiseRef.current) {
-                    console.warn("Timeout en selección de método, usando método por defecto");
-                    methodSelectionPromiseRef.current.resolve(defaultMethodValue);
-                    methodSelectionPromiseRef.current = null;
-                  }
-                }, 60000); // 60 segundos timeout
-              }).catch(() => {
-                console.warn("Error en selección de método, usando método por defecto");
-                return defaultMethodValue;
-              });
-              
-              console.log('[Analyzer] Método seleccionado:', selectedMethod);
-              
-              // Ocultar selector después de la selección
-              setShowMethodSelector(false);
-              methodSelectionPromiseRef.current = null;
-              // Limpiar el progreso mínimo después de ocultar el selector
-              minProgressRef.current = 0;
-              
-              // Actualizar mensaje para continuar
-              setAnalysisMessage("Método seleccionado, continuando análisis...");
-              // Mantener el progreso y avanzar suavemente
-              await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
-            } else {
-              // Solo un método disponible, usarlo directamente
-              console.log('[Analyzer] Solo un método disponible:', defaultMethodValue);
-              selectedMethod = defaultMethodValue;
-              // Continuar con el progreso normalmente
-              setAnalysisMessage("Iniciando análisis de complejidad...");
-              await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
-            }
-          } else {
-            // Si falla la detección, usar método por defecto
-            selectedMethod = "master";
-            // Continuar con el progreso normalmente
-            setAnalysisMessage("Iniciando análisis de complejidad...");
-            await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
-          }
-        } catch (error) {
-          console.warn("Error detectando métodos, usando método por defecto:", error);
-          selectedMethod = "master";
-          // Continuar con el progreso normalmente
-          setAnalysisMessage("Iniciando análisis de complejidad...");
-          await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
-        }
+        selectedMethod = await detectAndSelectMethod(
+          source,
+          kind,
+          progressBeforeMethodSelection,
+          setAnalysisMessage,
+          setAnalysisProgress,
+          setApplicableMethods,
+          setDefaultMethod,
+          setShowMethodSelector,
+          minProgressRef,
+          methodSelectionPromiseRef,
+          animateProgress
+        );
         
         progressBeforeAnalysis = 90;
       } else {
@@ -484,18 +405,16 @@ export default function AnalyzerPage() {
       // Verificar errores
       if (!analyzeRes.ok) {
         console.error("Error en análisis:", analyzeRes);
-        const errorMsg = analyzeRes.errors?.map((e: { message: string; line?: number; column?: number }) =>
-          e.message || `Error en línea ${e.line || '?'}`
-        ).join("\n") || "Error al analizar el algoritmo";
-        setAnalysisError(errorMsg);
-        setTimeout(() => {
-          setAnalyzing(false);
-          setAnalysisProgress(0);
-          setAnalysisMessage("Iniciando análisis...");
-          setAlgorithmType(undefined);
-          setIsAnalysisComplete(false);
-          setAnalysisError(null);
-        }, 3000);
+        const errorMsg = extractAnalysisError(analyzeRes);
+        handleAnalysisError(
+          errorMsg,
+          setAnalyzing,
+          setAnalysisProgress,
+          setAnalysisMessage,
+          setAlgorithmType,
+          setIsAnalysisComplete,
+          setAnalysisError
+        );
         return;
       }
 
@@ -517,20 +436,8 @@ export default function AnalyzerPage() {
       // 6) Detectar el método usado y actualizar mensaje
       let detectedMethod = "método recursivo";
       if (isRecursive && analyzeRes.worst?.totals?.recurrence) {
-        const method = analyzeRes.worst.totals.recurrence.method || analyzeRes.best?.totals?.recurrence?.method;
-        if (method === "characteristic_equation") {
-          detectedMethod = "Ecuación Característica";
-          setAnalysisMessage("Aplicando Método de Ecuación Característica...");
-        } else if (method === "iteration") {
-          detectedMethod = "Método de Iteración";
-          setAnalysisMessage("Aplicando Método de Iteración...");
-        } else if (method === "recursion_tree") {
-          detectedMethod = "Método de Árbol de Recursión";
-          setAnalysisMessage("Aplicando Método de Árbol de Recursión...");
-        } else {
-          detectedMethod = "Teorema Maestro";
-          setAnalysisMessage("Aplicando Teorema Maestro...");
-        }
+        detectedMethod = detectRecursiveMethod(analyzeRes.worst, analyzeRes.best);
+        updateAnalysisMessageForMethod(detectedMethod, setAnalysisMessage);
         await new Promise((resolve) => setTimeout(resolve, 300));
       }
       
@@ -1679,117 +1586,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
     setOpenGeneral(true);
   };
 
-  type CaseType = 'worst' | 'average' | 'best';
 
-  // Helper para obtener Big-O de los datos según el caso
-  // Helper para obtener la mejor notación asintótica disponible según el caso
-  // Usa la lógica de priorización: Θ > (Ω,O) > solo O > solo Ω
-  const getBestAsymptoticNotation = (caseType: 'worst' | 'best' | 'average') => {
-    const analysisData = caseType === 'worst' ? data?.worst : 
-                        caseType === 'best' ? data?.best :
-                        caseType === 'average' ? data?.avg : null;
-    
-    if (!analysisData?.ok) {
-      const getBoundType = (): 'lower' | 'upper' | 'exact' => {
-        if (caseType === 'best') return 'lower';
-        if (caseType === 'worst') return 'upper';
-        return 'exact';
-      };
-      return {
-        notation: caseType === 'best' ? 'Ω(—)' : caseType === 'worst' ? 'O(—)' : 'Θ(—)',
-        type: 'single-bound' as const,
-        boundType: getBoundType(),
-        hasHypothesis: false,
-        isConditional: false,
-        chips: [],
-      };
-    }
-    
-    const totals = analysisData.totals as {
-      big_theta?: string;
-      big_o?: string;
-      big_omega?: string;
-      avg_model_info?: { mode: string; note: string };
-      hypotheses?: string[];
-      symbols?: Record<string, string>;
-    };
-    
-    return getBestNotation(caseType, totals);
-  };
-
-  // Helpers legacy (mantener para compatibilidad si se usan en otros lugares)
-  const getBigOFromData = (caseType: 'worst' | 'best' | 'average' = 'worst'): string => {
-    const analysisData = caseType === 'worst' ? data?.worst : 
-                        caseType === 'best' ? data?.best :
-                        caseType === 'average' ? data?.avg : null;
-    if (!analysisData?.ok) return 'O(—)';
-    const totals = analysisData.totals as { big_o?: string } | undefined;
-    if (totals?.big_o) {
-      return totals.big_o;
-    }
-    const base = analysisData.totals?.T_polynomial ?? analysisData.totals.T_open;
-    return calculateBigO(base);
-  };
-
-  const getBigOmegaFromData = (caseType: 'worst' | 'best' | 'average' = 'best'): string => {
-    const analysisData = caseType === 'worst' ? data?.worst : 
-                        caseType === 'best' ? data?.best :
-                        caseType === 'average' ? data?.avg : null;
-    if (!analysisData?.ok) return 'Ω(—)';
-    const totals = analysisData.totals as { big_omega?: string } | undefined;
-    if (totals?.big_omega) {
-      return totals.big_omega;
-    }
-    const base = analysisData.totals?.T_polynomial ?? analysisData.totals.T_open;
-    const bigO = calculateBigO(base);
-    return bigO.replace('O(', 'Ω(');
-  };
-
-  const getBigThetaFromData = (caseType: 'worst' | 'best' | 'average' = 'worst'): string => {
-    const analysisData = caseType === 'worst' ? data?.worst : 
-                        caseType === 'best' ? data?.best :
-                        caseType === 'average' ? data?.avg : null;
-    if (!analysisData?.ok) return 'Θ(—)';
-    const totals = analysisData.totals as { big_theta?: string } | undefined;
-    if (totals?.big_theta) {
-      return totals.big_theta;
-    }
-    const base = analysisData.totals?.T_polynomial ?? analysisData.totals.T_open;
-    const bigO = calculateBigO(base);
-    return bigO.replace('O(', 'Θ(');
-  };
-
-  // Helper para obtener el label del caso
-  const getCaseLabel = (caseType: CaseType): string => {
-    switch (caseType) {
-      case 'worst': return 'Peor';
-      case 'average': return 'Promedio';
-      case 'best': return 'Mejor';
-      default: return '';
-    }
-  };
-
-  // Helper para obtener el estilo del badge según el caso
-  const getCaseBadgeStyle = (caseType: CaseType): string => {
-    switch (caseType) {
-      case 'worst': return 'bg-red-500/15 text-red-300 border-red-500/25';
-      case 'average': return 'bg-yellow-500/15 text-yellow-300 border-yellow-500/25';
-      case 'best': return 'bg-green-500/15 text-green-300 border-green-500/25';
-      default: return '';
-    }
-  };
-
-  // Helper para obtener el estilo del botón del selector según el caso
-  const getSelectorButtonStyle = (caseType: CaseType, isSelected: boolean): string => {
-    if (!isSelected) return 'text-slate-300 hover:bg-white/5';
-    
-    switch (caseType) {
-      case 'worst': return 'bg-red-500/20 text-red-300 border border-red-500/30';
-      case 'average': return 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30';
-      case 'best': return 'bg-green-500/20 text-green-300 border border-green-500/30';
-      default: return '';
-    }
-  };
 
   const formatAlgorithmKind = (value: ClassifyResponse["kind"]): string => {
     switch (value) {
@@ -1802,45 +1599,6 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
       default:
         return "Desconocido";
     }
-  };
-
-  const formatUnsupportedKindMessage = (value: ClassifyResponse["kind"]): string => {
-    return value === "recursive" ? "recursivo" : "híbrido";
-  };
-
-  const renderLineCostContent = () => {
-    if (!data || (!data.worst && !data.best && !data.avg)) {
-      return (
-        <div className="flex-1 flex items-center justify-center text-slate-400">
-          <div className="text-center">
-            <span className="material-symbols-outlined text-4xl mb-2 block">table_chart</span>
-            <p>Ejecuta el análisis para ver los costos</p>
-          </div>
-        </div>
-      );
-    }
-
-    // Obtener datos según el caso seleccionado
-    const currentData = selectedCase === 'worst' ? data?.worst : 
-                       selectedCase === 'best' ? data?.best :
-                       selectedCase === 'average' ? data?.avg : null;
-
-    if (!currentData || !currentData.ok) {
-      return (
-        <div className="flex-1 flex items-center justify-center text-slate-400">
-          <div className="text-center">
-            <span className="material-symbols-outlined text-4xl mb-2 block">hourglass_empty</span>
-            <p>El caso &quot;{getCaseLabel(selectedCase)}&quot; estará disponible próximamente</p>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="overflow-auto scrollbar-custom" style={{ height: '285px' }}>
-        <LineTable rows={currentData.byLine} onViewProcedure={handleViewLineProcedure} />
-      </div>
-    );
   };
 
   // Selector de casos (worst por defecto, preparado para best/average)

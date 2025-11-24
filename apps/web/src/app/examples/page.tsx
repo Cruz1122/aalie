@@ -5,16 +5,22 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AnalysisLoader } from "@/components/AnalysisLoader";
-import MethodSelector, { MethodType } from "@/components/MethodSelector";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import MethodSelector, { MethodType } from "@/components/MethodSelector";
 import NavigationLink from "@/components/NavigationLink";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 
-type ExampleCategory = "simple" | "iterative" | "recursive_iteration" | "recursive_master" | "recursive_tree" | "recursive_characteristic";
+type ExampleCategory =
+  | "simple"
+  | "iterative"
+  | "recursive_iteration"
+  | "recursive_master"
+  | "recursive_tree"
+  | "recursive_characteristic";
 
 interface Example {
   id: number;
@@ -55,7 +61,7 @@ END`,
     category: "simple",
     note: "Se clasificará como 'unknown' en el análisis",
   },
-  
+
   // ========== Iterativos ==========
   {
     id: 3,
@@ -222,7 +228,7 @@ END`,
 END`,
     category: "iterative",
   },
-  
+
   // ========== Recursivos/Híbridos (Método Iterativo) ==========
   {
     id: 12,
@@ -280,7 +286,7 @@ END`,
     category: "recursive_iteration",
     note: "Se analiza con método de iteración (desenrollado)",
   },
-  
+
   // ========== Recursivos/Híbridos (Teorema Maestro) ==========
   {
     id: 15,
@@ -308,7 +314,7 @@ END`,
     category: "recursive_master",
     note: "Se analiza con Teorema Maestro (a=1, b=2)",
   },
-  
+
   // ========== Recursivos/Híbridos (Árbol de Recursión) ==========
   {
     id: 16,
@@ -435,7 +441,7 @@ END`,
     category: "recursive_tree",
     note: "En el mejor caso se analiza con método de Árbol de Recursión (a=2, b=2)",
   },
-  
+
   // ========== Recursivos/Híbridos (Ecuación Característica) ==========
   {
     id: 20,
@@ -508,7 +514,8 @@ END`,
     name: "Tribonacci",
     description:
       "Calcula el n-ésimo número de Tribonacci (similar a Fibonacci pero suma los últimos 3 términos). Recurrencia lineal T(n) = T(n-1) + T(n-2) + T(n-3). Analizado con Ecuación Característica.",
-    complexity: "O(rⁿ) donde r es la raíz real mayor de la ecuación característica",
+    complexity:
+      "O(rⁿ) donde r es la raíz real mayor de la ecuación característica",
     code: `tribonacci(n) BEGIN
     IF (n <= 1) THEN BEGIN
         RETURN 0;
@@ -544,7 +551,7 @@ END`,
     note: "Se analiza con Ecuación Característica (DP lineal detectada)",
     isHomogeneous: true, // P(n) = 2P(n-1) + P(n-2) es homogénea (sin término constante)
   },
-  
+
   // ========== Recursivos (Únicamente Teorema Maestro) ==========
   {
     id: 25,
@@ -624,7 +631,7 @@ END`,
     category: "recursive_master",
     note: "Se analiza únicamente con Teorema Maestro (a=1, b=2)",
   },
-  
+
   // ========== Recursivos (Únicamente Método Iterativo) ==========
   {
     id: 28,
@@ -698,22 +705,24 @@ const formatAlgorithmKindLabel = (value: AlgorithmKind): string => {
   }
 };
 
-const formatUnsupportedKindMessage = (value: AlgorithmKind): string => {
-  return value === "recursive" ? "recursivo" : "híbrido";
-};
-
 export default function ExamplesPage() {
   const router = useRouter();
   const { animateProgress } = useAnalysisProgress();
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [viewingCodeId, setViewingCodeId] = useState<number | null>(null);
   const { finishNavigation } = useNavigation();
-  
+
   // Estados para el loader de análisis
-  const [analyzingExampleId, setAnalyzingExampleId] = useState<number | null>(null); // Estado individual por ejemplo
+  const [analyzingExampleId, setAnalyzingExampleId] = useState<number | null>(
+    null,
+  ); // Estado individual por ejemplo
   const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [analysisMessage, setAnalysisMessage] = useState("Iniciando análisis...");
-  const [algorithmType, setAlgorithmType] = useState<AlgorithmKind | undefined>(undefined);
+  const [analysisMessage, setAnalysisMessage] = useState(
+    "Iniciando análisis...",
+  );
+  const [algorithmType, setAlgorithmType] = useState<AlgorithmKind | undefined>(
+    undefined,
+  );
   const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [showMethodSelector, setShowMethodSelector] = useState(false);
@@ -724,13 +733,13 @@ export default function ExamplesPage() {
     reject: () => void;
   } | null>(null);
   const minProgressRef = useRef<number>(0);
-  
+
   // Efecto para mantener el progreso mínimo cuando el selector está visible
   useEffect(() => {
     if (showMethodSelector && minProgressRef.current > 0) {
       // Establecer el progreso al mínimo inmediatamente
       setAnalysisProgress(minProgressRef.current);
-      
+
       // Usar un intervalo para mantener el progreso mientras el selector está visible
       const intervalId = setInterval(() => {
         setAnalysisProgress((prev) => {
@@ -741,7 +750,7 @@ export default function ExamplesPage() {
           return prev;
         });
       }, 100); // Verificar cada 100ms
-      
+
       return () => clearInterval(intervalId);
     }
   }, [showMethodSelector]);
@@ -761,233 +770,422 @@ export default function ExamplesPage() {
     }
   };
 
-  const runAnalysis = useCallback(async (sourceCode: string, exampleId: number) => {
-    if (!sourceCode.trim()) return;
-    if (analyzingExampleId !== null) return;
+  const runAnalysis = useCallback(
+    async (sourceCode: string, exampleId: number) => {
+      if (!sourceCode.trim()) return;
+      if (analyzingExampleId !== null) return;
 
-    setAnalyzingExampleId(exampleId);
-    setAnalysisProgress(0);
-    setAnalysisMessage("Iniciando análisis...");
-    setAlgorithmType(undefined);
-    setIsAnalysisComplete(false);
-    setAnalysisError(null);
+      setAnalyzingExampleId(exampleId);
+      setAnalysisProgress(0);
+      setAnalysisMessage("Iniciando análisis...");
+      setAlgorithmType(undefined);
+      setIsAnalysisComplete(false);
+      setAnalysisError(null);
 
-    try {
-      setAnalysisMessage("Parseando código...");
-      const parsePromise = fetch("/api/grammar/parse", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: sourceCode }),
-      }).then(r => r.json());
-
-      const parseRes = await animateProgress(0, 20, 800, setAnalysisProgress, parsePromise) as { ok: boolean; ast?: Program; errors?: Array<{ line: number; column: number; message: string }> };
-
-      if (!parseRes.ok) {
-        const msg = parseRes.errors?.map((e: { line: number; column: number; message: string }) => `Línea ${e.line}:${e.column} ${e.message}`).join("\n") || "Error de parseo";
-        setAnalysisError(`Errores de sintaxis:\n${msg}`);
-        setTimeout(() => {
-          setAnalyzingExampleId(null);
-          setAnalysisProgress(0);
-          setAnalysisMessage("Iniciando análisis...");
-          setAlgorithmType(undefined);
-          setIsAnalysisComplete(false);
-          setAnalysisError(null);
-        }, 3000);
-        return;
-      }
-
-      setAnalysisMessage("Clasificando algoritmo...");
-      let kind: AlgorithmKind;
       try {
-        const apiKey = getApiKey();
-        const clsPromise = fetch("/api/llm/classify", {
+        setAnalysisMessage("Parseando código...");
+        const parsePromise = fetch("/api/grammar/parse", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ source: sourceCode, mode: "local", apiKey: apiKey || undefined }),
-        });
+          body: JSON.stringify({ source: sourceCode }),
+        }).then((r) => r.json());
 
-        const clsResponse = await animateProgress(20, 40, 1200, setAnalysisProgress, clsPromise) as Response;
+        const parseRes = (await animateProgress(
+          0,
+          20,
+          800,
+          setAnalysisProgress,
+          parsePromise,
+        )) as {
+          ok: boolean;
+          ast?: Program;
+          errors?: Array<{ line: number; column: number; message: string }>;
+        };
 
-        if (clsResponse.ok) {
-          const cls = await clsResponse.json() as { kind: string; method?: string; mode?: string };
-          kind = cls.kind as AlgorithmKind;
-          setAlgorithmType(kind);
-          setAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKindLabel(kind)}`);
-        } else {
-          throw new Error(`HTTP ${clsResponse.status}`);
+        if (!parseRes.ok) {
+          const msg =
+            parseRes.errors
+              ?.map(
+                (e: { line: number; column: number; message: string }) =>
+                  `Línea ${e.line}:${e.column} ${e.message}`,
+              )
+              .join("\n") || "Error de parseo";
+          setAnalysisError(`Errores de sintaxis:\n${msg}`);
+          setTimeout(() => {
+            setAnalyzingExampleId(null);
+            setAnalysisProgress(0);
+            setAnalysisMessage("Iniciando análisis...");
+            setAlgorithmType(undefined);
+            setIsAnalysisComplete(false);
+            setAnalysisError(null);
+          }, 3000);
+          return;
         }
-      } catch (error) {
-        console.warn(`[Examples] Error en clasificación, usando heurística:`, error);
-        kind = heuristicKind(parseRes.ast || null);
-        setAlgorithmType(kind);
-        setAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKindLabel(kind)}`);
-      }
 
-      // 3) Realizar el análisis de complejidad (40-80%)
-      const isRecursive = kind === "recursive" || kind === "hybrid";
-      
-      let selectedMethod: MethodType | undefined = undefined;
-      
-      if (isRecursive) {
-        setAnalysisMessage("Verificando condiciones...");
-        await animateProgress(40, 50, 300, setAnalysisProgress);
-        setAnalysisMessage("Extrayendo recurrencia...");
-        await animateProgress(50, 65, 400, setAnalysisProgress);
-        setAnalysisMessage("Normalizando recurrencia...");
-        await animateProgress(65, 75, 300, setAnalysisProgress);
-        setAnalysisMessage("Detectando método de análisis...");
-        await animateProgress(75, 85, 500, setAnalysisProgress);
-        
-        // Guardar el progreso actual antes de detectar métodos
-        const progressBeforeMethodSelection = 85;
-        
-        // Detectar métodos aplicables
-        selectedMethod = "master";
+        setAnalysisMessage("Clasificando algoritmo...");
+        let kind: AlgorithmKind;
         try {
-          const detectMethodsResponse = await fetch("/api/analyze/detect-methods", {
+          const apiKey = getApiKey();
+          const clsPromise = fetch("/api/llm/classify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               source: sourceCode,
-              algorithm_kind: kind
+              mode: "local",
+              apiKey: apiKey || undefined,
             }),
           });
-          
-          const detectMethodsResult = await detectMethodsResponse.json() as {
-            ok: boolean;
-            applicable_methods?: MethodType[];
-            default_method?: MethodType;
-            errors?: Array<{ message: string }>;
-          };
-          
-          if (detectMethodsResult.ok && detectMethodsResult.applicable_methods) {
-            const methods = detectMethodsResult.applicable_methods;
-            const defaultMethodValue = (detectMethodsResult.default_method || "master") as MethodType;
-            
-            setApplicableMethods(methods);
-            setDefaultMethod(defaultMethodValue);
-            
-            // Si hay múltiples métodos aplicables, mostrar selector
-            if (methods.length > 1) {
-              setAnalysisMessage("Selecciona el método de análisis...");
-              
-              // Guardar el progreso mínimo para evitar que baje
-              minProgressRef.current = progressBeforeMethodSelection;
-              
-              // Establecer el progreso directamente al valor guardado
-              setAnalysisProgress(progressBeforeMethodSelection);
-              
-              setShowMethodSelector(true);
-              
-              // Esperar un poco para que el selector se renderice completamente
-              await new Promise((resolve) => setTimeout(resolve, 200));
-              
-              // Crear un Promise que se resolverá cuando el usuario seleccione un método
-              selectedMethod = await new Promise<MethodType>((resolve, reject) => {
-                methodSelectionPromiseRef.current = { resolve, reject };
-                setTimeout(() => {
-                  if (methodSelectionPromiseRef.current) {
-                    methodSelectionPromiseRef.current.resolve(defaultMethodValue);
-                    methodSelectionPromiseRef.current = null;
-                  }
-                }, 60000);
-              }).catch(() => defaultMethodValue);
-              
-              setShowMethodSelector(false);
-              methodSelectionPromiseRef.current = null;
-              // Limpiar el progreso mínimo después de ocultar el selector
-              minProgressRef.current = 0;
-              
-              setAnalysisMessage("Método seleccionado, continuando análisis...");
-              // Mantener el progreso y avanzar suavemente
-              await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
+
+          const clsResponse = (await animateProgress(
+            20,
+            40,
+            1200,
+            setAnalysisProgress,
+            clsPromise,
+          )) as Response;
+
+          if (clsResponse.ok) {
+            const cls = (await clsResponse.json()) as {
+              kind: string;
+              method?: string;
+              mode?: string;
+            };
+            kind = cls.kind as AlgorithmKind;
+            setAlgorithmType(kind);
+            setAnalysisMessage(
+              `Algoritmo identificado: ${formatAlgorithmKindLabel(kind)}`,
+            );
+          } else {
+            throw new Error(`HTTP ${clsResponse.status}`);
+          }
+        } catch (error) {
+          console.warn(
+            `[Examples] Error en clasificación, usando heurística:`,
+            error,
+          );
+          kind = heuristicKind(parseRes.ast || null);
+          setAlgorithmType(kind);
+          setAnalysisMessage(
+            `Algoritmo identificado: ${formatAlgorithmKindLabel(kind)}`,
+          );
+        }
+
+        // 3) Realizar el análisis de complejidad (40-80%)
+        const isRecursive = kind === "recursive" || kind === "hybrid";
+
+        let selectedMethod: MethodType | undefined = undefined;
+
+        if (isRecursive) {
+          setAnalysisMessage("Verificando condiciones...");
+          await animateProgress(40, 50, 300, setAnalysisProgress);
+          setAnalysisMessage("Extrayendo recurrencia...");
+          await animateProgress(50, 65, 400, setAnalysisProgress);
+          setAnalysisMessage("Normalizando recurrencia...");
+          await animateProgress(65, 75, 300, setAnalysisProgress);
+          setAnalysisMessage("Detectando método de análisis...");
+          await animateProgress(75, 85, 500, setAnalysisProgress);
+
+          // Guardar el progreso actual antes de detectar métodos
+          const progressBeforeMethodSelection = 85;
+
+          // Detectar métodos aplicables
+          selectedMethod = "master";
+          try {
+            const detectMethodsResponse = await fetch(
+              "/api/analyze/detect-methods",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  source: sourceCode,
+                  algorithm_kind: kind,
+                }),
+              },
+            );
+
+            const detectMethodsResult =
+              (await detectMethodsResponse.json()) as {
+                ok: boolean;
+                applicable_methods?: MethodType[];
+                default_method?: MethodType;
+                errors?: Array<{ message: string }>;
+              };
+
+            if (
+              detectMethodsResult.ok &&
+              detectMethodsResult.applicable_methods
+            ) {
+              const methods = detectMethodsResult.applicable_methods;
+              const defaultMethodValue = (detectMethodsResult.default_method ||
+                "master") as MethodType;
+
+              setApplicableMethods(methods);
+              setDefaultMethod(defaultMethodValue);
+
+              // Si hay múltiples métodos aplicables, mostrar selector
+              if (methods.length > 1) {
+                setAnalysisMessage("Selecciona el método de análisis...");
+
+                // Guardar el progreso mínimo para evitar que baje
+                minProgressRef.current = progressBeforeMethodSelection;
+
+                // Establecer el progreso directamente al valor guardado
+                setAnalysisProgress(progressBeforeMethodSelection);
+
+                setShowMethodSelector(true);
+
+                // Esperar un poco para que el selector se renderice completamente
+                await new Promise((resolve) => setTimeout(resolve, 200));
+
+                // Crear un Promise que se resolverá cuando el usuario seleccione un método
+                selectedMethod = await new Promise<MethodType>(
+                  (resolve, reject) => {
+                    methodSelectionPromiseRef.current = { resolve, reject };
+                    setTimeout(() => {
+                      if (methodSelectionPromiseRef.current) {
+                        methodSelectionPromiseRef.current.resolve(
+                          defaultMethodValue,
+                        );
+                        methodSelectionPromiseRef.current = null;
+                      }
+                    }, 60000);
+                  },
+                ).catch(() => defaultMethodValue);
+
+                setShowMethodSelector(false);
+                methodSelectionPromiseRef.current = null;
+                // Limpiar el progreso mínimo después de ocultar el selector
+                minProgressRef.current = 0;
+
+                setAnalysisMessage(
+                  "Método seleccionado, continuando análisis...",
+                );
+                // Mantener el progreso y avanzar suavemente
+                await animateProgress(
+                  progressBeforeMethodSelection,
+                  90,
+                  400,
+                  setAnalysisProgress,
+                );
+              } else {
+                selectedMethod = defaultMethodValue;
+                // Continuar con el progreso normalmente
+                setAnalysisMessage("Iniciando análisis de complejidad...");
+                await animateProgress(
+                  progressBeforeMethodSelection,
+                  90,
+                  400,
+                  setAnalysisProgress,
+                );
+              }
             } else {
-              selectedMethod = defaultMethodValue;
+              selectedMethod = "master";
               // Continuar con el progreso normalmente
               setAnalysisMessage("Iniciando análisis de complejidad...");
-              await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
+              await animateProgress(
+                progressBeforeMethodSelection,
+                90,
+                400,
+                setAnalysisProgress,
+              );
             }
-          } else {
+          } catch (error) {
+            console.warn(
+              "Error detectando métodos, usando método por defecto:",
+              error,
+            );
             selectedMethod = "master";
             // Continuar con el progreso normalmente
             setAnalysisMessage("Iniciando análisis de complejidad...");
-            await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
+            await animateProgress(
+              progressBeforeMethodSelection,
+              90,
+              400,
+              setAnalysisProgress,
+            );
           }
-        } catch (error) {
-          console.warn("Error detectando métodos, usando método por defecto:", error);
-          selectedMethod = "master";
-          // Continuar con el progreso normalmente
-          setAnalysisMessage("Iniciando análisis de complejidad...");
-          await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
+        } else {
+          setAnalysisMessage("Hallando sumatorias...");
+          await animateProgress(40, 50, 200, setAnalysisProgress);
+          setAnalysisMessage("Cerrando sumatorias...");
+          await animateProgress(50, 55, 200, setAnalysisProgress);
         }
-      } else {
-        setAnalysisMessage("Hallando sumatorias...");
-        await animateProgress(40, 50, 200, setAnalysisProgress);
-        setAnalysisMessage("Cerrando sumatorias...");
-        await animateProgress(50, 55, 200, setAnalysisProgress);
-      }
 
-      // Verificar estado de API_KEY
-      const apiKeyStatus = await getApiKeyStatus();
-      const apiKey = getApiKey();
-      const hasApiKey = apiKeyStatus.hasAny;
-      
-      // Mostrar mensaje según disponibilidad de API_KEY
-      if (hasApiKey) {
-        setAnalysisMessage("Simplificando expresiones matemáticas...");
-      } else {
-        setAnalysisMessage("Analizando (sin simplificación LLM)...");
-      }
-      
-      // Realizar una sola petición que trae todos los casos (worst, best y avg)
-      const analyzeBody: { 
-        source: string; 
-        mode: string; 
-        api_key?: string;
-        avgModel?: { mode: string; predicates?: Record<string, string> };
-        algorithm_kind?: string;
-        preferred_method?: MethodType;
-      } = { 
-        source: sourceCode, 
-        mode: "all",
-        avgModel: {
-          mode: "uniform",
-          predicates: {}
-        },
-        algorithm_kind: kind
-      };
-      
-      // Solo agregar preferred_method si es recursivo y hay un método seleccionado
-      if (isRecursive && selectedMethod) {
-        analyzeBody.preferred_method = selectedMethod;
-      }
-      if (apiKey) {
-        analyzeBody.api_key = apiKey;
-      }
-      // Si no hay apiKey en localStorage, el backend intentará usar la de variables de entorno
-      
-      const analyzePromise = fetch("/api/analyze/open", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(analyzeBody),
-      }).then(r => r.json());
+        // Verificar estado de API_KEY
+        const apiKeyStatus = await getApiKeyStatus();
+        const apiKey = getApiKey();
+        const hasApiKey = apiKeyStatus.hasAny;
 
-      const analyzeRes = await animateProgress(50, 70, 2000, setAnalysisProgress, analyzePromise) as { 
-        ok: boolean; 
-        worst?: unknown;
-        best?: unknown;
-        avg?: unknown;
-        errors?: Array<{ message: string; line?: number; column?: number }>;
-        [key: string]: unknown;
-      };
+        // Mostrar mensaje según disponibilidad de API_KEY
+        if (hasApiKey) {
+          setAnalysisMessage("Simplificando expresiones matemáticas...");
+        } else {
+          setAnalysisMessage("Analizando (sin simplificación LLM)...");
+        }
 
-      setAnalysisMessage("Generando forma polinómica...");
-      await animateProgress(70, 80, 200, setAnalysisProgress);
+        // Realizar una sola petición que trae todos los casos (worst, best y avg)
+        const analyzeBody: {
+          source: string;
+          mode: string;
+          api_key?: string;
+          avgModel?: { mode: string; predicates?: Record<string, string> };
+          algorithm_kind?: string;
+          preferred_method?: MethodType;
+        } = {
+          source: sourceCode,
+          mode: "all",
+          avgModel: {
+            mode: "uniform",
+            predicates: {},
+          },
+          algorithm_kind: kind,
+        };
 
-      if (!analyzeRes.ok) {
-        const errorMsg = (analyzeRes as { errors?: Array<{ message: string; line?: number; column?: number }> }).errors?.map((e: { message: string; line?: number; column?: number }) => 
-          e.message || `Error en línea ${e.line || '?'}`
-        ).join("\n") || "No se pudo analizar el algoritmo";
+        // Solo agregar preferred_method si es recursivo y hay un método seleccionado
+        if (isRecursive && selectedMethod) {
+          analyzeBody.preferred_method = selectedMethod;
+        }
+        if (apiKey) {
+          analyzeBody.api_key = apiKey;
+        }
+        // Si no hay apiKey en localStorage, el backend intentará usar la de variables de entorno
+
+        const analyzePromise = fetch("/api/analyze/open", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(analyzeBody),
+        }).then((r) => r.json());
+
+        const analyzeRes = (await animateProgress(
+          50,
+          70,
+          2000,
+          setAnalysisProgress,
+          analyzePromise,
+        )) as {
+          ok: boolean;
+          worst?: unknown;
+          best?: unknown;
+          avg?: unknown;
+          errors?: Array<{ message: string; line?: number; column?: number }>;
+          [key: string]: unknown;
+        };
+
+        setAnalysisMessage("Generando forma polinómica...");
+        await animateProgress(70, 80, 200, setAnalysisProgress);
+
+        if (!analyzeRes.ok) {
+          const errorMsg =
+            (
+              analyzeRes as {
+                errors?: Array<{
+                  message: string;
+                  line?: number;
+                  column?: number;
+                }>;
+              }
+            ).errors
+              ?.map(
+                (e: { message: string; line?: number; column?: number }) =>
+                  e.message || `Error en línea ${e.line || "?"}`,
+              )
+              .join("\n") || "No se pudo analizar el algoritmo";
+          setAnalysisError(errorMsg);
+          setTimeout(() => {
+            setAnalyzingExampleId(null);
+            setAnalysisProgress(0);
+            setAnalysisMessage("Iniciando análisis...");
+            setAlgorithmType(undefined);
+            setIsAnalysisComplete(false);
+            setAnalysisError(null);
+          }, 3000);
+          return;
+        }
+
+        // Detectar método utilizado para mostrar mensaje correcto
+        // Detectar método usado (información para debugging futuro)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const _detectedMethod = (() => {
+          if (
+            typeof analyzeRes.worst === "object" &&
+            analyzeRes.worst !== null
+          ) {
+            const worstData = analyzeRes.worst as {
+              totals?: {
+                recurrence?: { method?: string };
+                characteristic_equation?: unknown;
+              };
+            };
+            if (worstData.totals?.characteristic_equation) {
+              return "Ecuación Característica";
+            } else if (
+              worstData.totals?.recurrence?.method === "characteristic_equation"
+            ) {
+              return "Ecuación Característica";
+            } else if (worstData.totals?.recurrence?.method === "iteration") {
+              return "Método de Iteración";
+            } else if (
+              worstData.totals?.recurrence?.method === "recursion_tree"
+            ) {
+              return "Método de Árbol de Recursión";
+            } else if (worstData.totals?.recurrence?.method === "master") {
+              return "Teorema Maestro";
+            }
+          }
+          return "análisis";
+        })();
+
+        if (typeof analyzeRes.worst === "object" && analyzeRes.worst !== null) {
+          const worstData = analyzeRes.worst as {
+            totals?: {
+              recurrence?: { method?: string };
+              characteristic_equation?: unknown;
+            };
+          };
+          if (worstData.totals?.characteristic_equation) {
+            setAnalysisMessage(
+              "Aplicando Método de Ecuación Característica...",
+            );
+          } else if (worstData.totals?.recurrence) {
+            const method = worstData.totals.recurrence.method;
+            if (method === "characteristic_equation") {
+              setAnalysisMessage(
+                "Aplicando Método de Ecuación Característica...",
+              );
+            } else if (method === "iteration") {
+              setAnalysisMessage("Aplicando Método de Iteración...");
+            } else if (method === "recursion_tree") {
+              setAnalysisMessage("Aplicando Método de Árbol de Recursión...");
+            } else if (method === "master") {
+              setAnalysisMessage("Aplicando Teorema Maestro...");
+            }
+          }
+        }
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        setAnalysisMessage("Finalizando análisis...");
+        await animateProgress(80, 100, 200, setAnalysisProgress);
+
+        // Guardar código y resultados en sessionStorage (igual que ManualModeView y chatbot)
+        if (globalThis.window !== undefined) {
+          sessionStorage.setItem("analyzerCode", sourceCode);
+          sessionStorage.setItem("analyzerResults", JSON.stringify(analyzeRes));
+        }
+
+        setAnalysisMessage("Análisis completo");
+        setIsAnalysisComplete(true);
+
+        // Esperar antes de navegar
+        await new Promise((resolve) => setTimeout(resolve, 800));
+
+        // Navegar a /analyzer con los datos (el loader se ocultará automáticamente al desmontarse)
+        router.push("/analyzer");
+      } catch (error) {
+        console.error("[Examples] Error inesperado:", error);
+        const errorMsg =
+          error instanceof Error
+            ? error.message
+            : "Error inesperado durante el análisis";
         setAnalysisError(errorMsg);
         setTimeout(() => {
           setAnalyzingExampleId(null);
@@ -997,66 +1195,10 @@ export default function ExamplesPage() {
           setIsAnalysisComplete(false);
           setAnalysisError(null);
         }, 3000);
-        return;
       }
-
-      // Detectar método utilizado para mostrar mensaje correcto
-      let detectedMethod = "análisis";
-      if (typeof analyzeRes.worst === 'object' && analyzeRes.worst !== null) {
-        const worstData = analyzeRes.worst as { totals?: { recurrence?: { method?: string }; characteristic_equation?: unknown } };
-        if (worstData.totals?.characteristic_equation) {
-          detectedMethod = "Ecuación Característica";
-          setAnalysisMessage("Aplicando Método de Ecuación Característica...");
-        } else if (worstData.totals?.recurrence) {
-          const method = worstData.totals.recurrence.method;
-          if (method === "characteristic_equation") {
-            detectedMethod = "Ecuación Característica";
-            setAnalysisMessage("Aplicando Método de Ecuación Característica...");
-          } else if (method === "iteration") {
-            detectedMethod = "Método de Iteración";
-            setAnalysisMessage("Aplicando Método de Iteración...");
-          } else if (method === "recursion_tree") {
-            detectedMethod = "Método de Árbol de Recursión";
-            setAnalysisMessage("Aplicando Método de Árbol de Recursión...");
-          } else if (method === "master") {
-            detectedMethod = "Teorema Maestro";
-            setAnalysisMessage("Aplicando Teorema Maestro...");
-          }
-        }
-      }
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      setAnalysisMessage("Finalizando análisis...");
-      await animateProgress(80, 100, 200, setAnalysisProgress);
-
-      // Guardar código y resultados en sessionStorage (igual que ManualModeView y chatbot)
-      if (globalThis.window !== undefined) {
-        sessionStorage.setItem('analyzerCode', sourceCode);
-        sessionStorage.setItem('analyzerResults', JSON.stringify(analyzeRes));
-      }
-
-      setAnalysisMessage("Análisis completo");
-      setIsAnalysisComplete(true);
-
-      // Esperar antes de navegar
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // Navegar a /analyzer con los datos (el loader se ocultará automáticamente al desmontarse)
-      router.push('/analyzer');
-    } catch (error) {
-      console.error("[Examples] Error inesperado:", error);
-      const errorMsg = error instanceof Error ? error.message : "Error inesperado durante el análisis";
-      setAnalysisError(errorMsg);
-      setTimeout(() => {
-        setAnalyzingExampleId(null);
-        setAnalysisProgress(0);
-        setAnalysisMessage("Iniciando análisis...");
-        setAlgorithmType(undefined);
-        setIsAnalysisComplete(false);
-        setAnalysisError(null);
-      }, 3000);
-    }
-  }, [animateProgress, analyzingExampleId, router]);
+    },
+    [animateProgress, analyzingExampleId, router],
+  );
 
   const handleAnalyze = (code: string, exampleId: number) => {
     void runAnalysis(code, exampleId);
@@ -1086,25 +1228,30 @@ export default function ExamplesPage() {
       )}
 
       {/* Selector de método - debe aparecer sobre el loader */}
-      {showMethodSelector && applicableMethods.length > 0 && analyzingExampleId !== null && (
-        <MethodSelector
-          applicableMethods={applicableMethods}
-          defaultMethod={defaultMethod}
-          onSelect={(method) => {
-            console.log('[MethodSelector] Método seleccionado:', method);
-            if (methodSelectionPromiseRef.current) {
-              methodSelectionPromiseRef.current.resolve(method);
-            }
-          }}
-          onCancel={() => {
-            // Si cancela, usar método por defecto
-            console.log('[MethodSelector] Cancelado, usando método por defecto:', defaultMethod);
-            if (methodSelectionPromiseRef.current) {
-              methodSelectionPromiseRef.current.resolve(defaultMethod);
-            }
-          }}
-        />
-      )}
+      {showMethodSelector &&
+        applicableMethods.length > 0 &&
+        analyzingExampleId !== null && (
+          <MethodSelector
+            applicableMethods={applicableMethods}
+            defaultMethod={defaultMethod}
+            onSelect={(method) => {
+              console.log("[MethodSelector] Método seleccionado:", method);
+              if (methodSelectionPromiseRef.current) {
+                methodSelectionPromiseRef.current.resolve(method);
+              }
+            }}
+            onCancel={() => {
+              // Si cancela, usar método por defecto
+              console.log(
+                "[MethodSelector] Cancelado, usando método por defecto:",
+                defaultMethod,
+              );
+              if (methodSelectionPromiseRef.current) {
+                methodSelectionPromiseRef.current.resolve(defaultMethod);
+              }
+            }}
+          />
+        )}
 
       <main className="flex-1 z-10 p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto space-y-4 lg:space-y-6">
@@ -1113,7 +1260,10 @@ export default function ExamplesPage() {
               Ejemplos de Algoritmos
             </h1>
             <p className="text-dark-text text-xs sm:text-sm lg:text-base leading-relaxed max-w-4xl mx-auto lg:mx-0">
-              Colección de algoritmos clásicos organizados por métodos de análisis. Los ejemplos están agrupados por: algoritmos básicos (unknown), iterativos, y recursivos clasificados según el método utilizado (iteración, teorema maestro, o árbol de recursión).
+              Colección de algoritmos clásicos organizados por métodos de
+              análisis. Los ejemplos están agrupados por: algoritmos básicos
+              (unknown), iterativos, y recursivos clasificados según el método
+              utilizado (iteración, teorema maestro, o árbol de recursión).
             </p>
           </header>
 
@@ -1124,11 +1274,25 @@ export default function ExamplesPage() {
               Índice de Contenido
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {(["simple", "iterative", "recursive_iteration", "recursive_master", "recursive_tree", "recursive_characteristic"] as ExampleCategory[]).map((category) => {
-                const categoryExamples = examples.filter((ex) => ex.category === category);
+              {(
+                [
+                  "simple",
+                  "iterative",
+                  "recursive_iteration",
+                  "recursive_master",
+                  "recursive_tree",
+                  "recursive_characteristic",
+                ] as ExampleCategory[]
+              ).map((category) => {
+                const categoryExamples = examples.filter(
+                  (ex) => ex.category === category,
+                );
                 if (categoryExamples.length === 0) return null;
 
-                const categoryLabels: Record<ExampleCategory, { label: string; color: string }> = {
+                const categoryLabels: Record<
+                  ExampleCategory,
+                  { label: string; color: string }
+                > = {
                   simple: {
                     label: "Algoritmos Unknown/Básicos",
                     color: "bg-gray-500/20 border-gray-500/30 text-gray-300",
@@ -1139,11 +1303,13 @@ export default function ExamplesPage() {
                   },
                   recursive_iteration: {
                     label: "Recursivos (Método Iterativo)",
-                    color: "bg-purple-500/20 border-purple-500/30 text-purple-300",
+                    color:
+                      "bg-purple-500/20 border-purple-500/30 text-purple-300",
                   },
                   recursive_master: {
                     label: "Recursivos (Teorema Maestro)",
-                    color: "bg-orange-500/20 border-orange-500/30 text-orange-300",
+                    color:
+                      "bg-orange-500/20 border-orange-500/30 text-orange-300",
                   },
                   recursive_tree: {
                     label: "Recursivos (Árbol de Recursión)",
@@ -1151,7 +1317,8 @@ export default function ExamplesPage() {
                   },
                   recursive_characteristic: {
                     label: "Recursivos (Ecuación Característica)",
-                    color: "bg-indigo-500/20 border-indigo-500/30 text-indigo-300",
+                    color:
+                      "bg-indigo-500/20 border-indigo-500/30 text-indigo-300",
                   },
                 };
 
@@ -1164,7 +1331,10 @@ export default function ExamplesPage() {
                     className={`p-3 rounded border ${catInfo.color} hover:opacity-80 transition-opacity text-xs font-medium`}
                   >
                     <div className="font-semibold mb-1">{catInfo.label}</div>
-                    <div className="text-xs opacity-75">{categoryExamples.length} ejemplo{categoryExamples.length !== 1 ? 's' : ''}</div>
+                    <div className="text-xs opacity-75">
+                      {categoryExamples.length} ejemplo
+                      {categoryExamples.length !== 1 ? "s" : ""}
+                    </div>
                   </a>
                 );
               })}
@@ -1172,39 +1342,59 @@ export default function ExamplesPage() {
           </div>
 
           {/* Categorías */}
-          {(["simple", "iterative", "recursive_iteration", "recursive_master", "recursive_tree", "recursive_characteristic"] as ExampleCategory[]).map((category) => {
-            const categoryExamples = examples.filter((ex) => ex.category === category);
+          {(
+            [
+              "simple",
+              "iterative",
+              "recursive_iteration",
+              "recursive_master",
+              "recursive_tree",
+              "recursive_characteristic",
+            ] as ExampleCategory[]
+          ).map((category) => {
+            const categoryExamples = examples.filter(
+              (ex) => ex.category === category,
+            );
             if (categoryExamples.length === 0) return null;
 
-            const categoryLabels: Record<ExampleCategory, { label: string; description: string; color: string }> = {
+            const categoryLabels: Record<
+              ExampleCategory,
+              { label: string; description: string; color: string }
+            > = {
               simple: {
                 label: "Algoritmos Unknown/Básicos",
-                description: "Algoritmos básicos sin bucles complejos. Se clasificarán como 'unknown' en el análisis.",
+                description:
+                  "Algoritmos básicos sin bucles complejos. Se clasificarán como 'unknown' en el análisis.",
                 color: "bg-gray-500/20 border-gray-500/30 text-gray-300",
               },
               iterative: {
                 label: "Iterativos",
-                description: "Algoritmos con bucles FOR/WHILE. Totalmente soportados por el analizador iterativo.",
+                description:
+                  "Algoritmos con bucles FOR/WHILE. Totalmente soportados por el analizador iterativo.",
                 color: "bg-blue-500/20 border-blue-500/30 text-blue-300",
               },
               recursive_iteration: {
                 label: "Recursivos/Híbridos (Método Iterativo)",
-                description: "Algoritmos recursivos analizados con el método de iteración (unrolling). Se usan cuando la recurrencia no cumple las condiciones del Teorema Maestro, Árbol de Recursión ni Ecuación Característica.",
+                description:
+                  "Algoritmos recursivos analizados con el método de iteración (unrolling). Se usan cuando la recurrencia no cumple las condiciones del Teorema Maestro, Árbol de Recursión ni Ecuación Característica.",
                 color: "bg-purple-500/20 border-purple-500/30 text-purple-300",
               },
               recursive_master: {
                 label: "Recursivos/Híbridos (Teorema Maestro)",
-                description: "Algoritmos recursivos analizados con el Teorema Maestro. Se usan cuando la recurrencia tiene la forma T(n) = aT(n/b) + f(n) con a < 2 o no cumple las condiciones del Árbol de Recursión ni Ecuación Característica.",
+                description:
+                  "Algoritmos recursivos analizados con el Teorema Maestro. Se usan cuando la recurrencia tiene la forma T(n) = aT(n/b) + f(n) con a < 2 o no cumple las condiciones del Árbol de Recursión ni Ecuación Característica.",
                 color: "bg-orange-500/20 border-orange-500/30 text-orange-300",
               },
               recursive_tree: {
                 label: "Recursivos/Híbridos (Árbol de Recursión)",
-                description: "Algoritmos recursivos analizados con el método de Árbol de Recursión. Se usan cuando a ≥ 2, divide uniformemente y es divide-and-conquer. Incluye visualización del árbol y tabla por niveles.",
+                description:
+                  "Algoritmos recursivos analizados con el método de Árbol de Recursión. Se usan cuando a ≥ 2, divide uniformemente y es divide-and-conquer. Incluye visualización del árbol y tabla por niveles.",
                 color: "bg-cyan-500/20 border-cyan-500/30 text-cyan-300",
               },
               recursive_characteristic: {
                 label: "Recursivos/Híbridos (Ecuación Característica)",
-                description: "Algoritmos recursivos analizados con el método de Ecuación Característica. Se usan cuando la recurrencia es lineal con desplazamientos constantes T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n). Tiene PRIORIDAD sobre el método de iteración. Detecta automáticamente casos de Programación Dinámica lineal y genera versión DP.",
+                description:
+                  "Algoritmos recursivos analizados con el método de Ecuación Característica. Se usan cuando la recurrencia es lineal con desplazamientos constantes T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n). Tiene PRIORIDAD sobre el método de iteración. Detecta automáticamente casos de Programación Dinámica lineal y genera versión DP.",
                 color: "bg-indigo-500/20 border-indigo-500/30 text-indigo-300",
               },
             };
@@ -1212,10 +1402,18 @@ export default function ExamplesPage() {
             const catInfo = categoryLabels[category];
 
             return (
-              <div key={category} id={`category-${category}`} className="space-y-3 scroll-mt-20">
+              <div
+                key={category}
+                id={`category-${category}`}
+                className="space-y-3 scroll-mt-20"
+              >
                 <div className="glass-card p-3">
-                  <h2 className="text-base font-bold text-white mb-1">{catInfo.label}</h2>
-                  <p className="text-xs text-dark-text">{catInfo.description}</p>
+                  <h2 className="text-base font-bold text-white mb-1">
+                    {catInfo.label}
+                  </h2>
+                  <p className="text-xs text-dark-text">
+                    {catInfo.description}
+                  </p>
                 </div>
 
                 {/* Grid de ejemplos de esta categoría */}
@@ -1228,29 +1426,43 @@ export default function ExamplesPage() {
                       {/* Header del ejemplo */}
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-semibold text-white mb-1 truncate">{example.name}</h3>
-                          <p className="text-[10px] text-slate-400 font-mono break-words">{example.complexity}</p>
+                          <h3 className="text-sm font-semibold text-white mb-1 truncate">
+                            {example.name}
+                          </h3>
+                          <p className="text-[10px] text-slate-400 font-mono break-words">
+                            {example.complexity}
+                          </p>
                         </div>
                       </div>
 
                       {/* Descripción */}
-                      <p className="text-dark-text text-xs leading-relaxed line-clamp-3">{example.description}</p>
+                      <p className="text-dark-text text-xs leading-relaxed line-clamp-3">
+                        {example.description}
+                      </p>
 
                       {/* Badges para ecuación característica */}
                       {example.category === "recursive_characteristic" && (
                         <div className="flex flex-wrap gap-2">
                           {example.isHomogeneous !== undefined && (
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
-                              example.isHomogeneous
-                                ? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
-                                : 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
-                            }`}>
-                              <span className="material-symbols-outlined text-xs mr-1">functions</span>
-                              {example.isHomogeneous ? 'Homogénea' : 'No Homogénea'}
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
+                                example.isHomogeneous
+                                  ? "bg-blue-500/20 text-blue-300 border-blue-500/30"
+                                  : "bg-yellow-500/20 text-yellow-300 border-yellow-500/30"
+                              }`}
+                            >
+                              <span className="material-symbols-outlined text-xs mr-1">
+                                functions
+                              </span>
+                              {example.isHomogeneous
+                                ? "Homogénea"
+                                : "No Homogénea"}
                             </span>
                           )}
                           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border bg-green-500/20 text-green-300 border-green-500/30">
-                            <span className="material-symbols-outlined text-xs mr-1">memory</span>
+                            <span className="material-symbols-outlined text-xs mr-1">
+                              memory
+                            </span>
                             DP Lineal
                           </span>
                         </div>
@@ -1264,17 +1476,25 @@ export default function ExamplesPage() {
 
                       {/* Botones de acción */}
                       <div className="flex flex-col gap-2 pt-1">
-                          <button
-                            onClick={() => setViewingCodeId(viewingCodeId === example.id ? null : example.id)}
-                            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded text-xs font-medium transition-colors border border-white/10 hover:bg-white/5 hover:border-white/20 text-slate-300"
-                            disabled={analyzingExampleId !== null}
-                          >
+                        <button
+                          onClick={() =>
+                            setViewingCodeId(
+                              viewingCodeId === example.id ? null : example.id,
+                            )
+                          }
+                          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded text-xs font-medium transition-colors border border-white/10 hover:bg-white/5 hover:border-white/20 text-slate-300"
+                          disabled={analyzingExampleId !== null}
+                        >
                           <span className="material-symbols-outlined text-sm">
-                            {viewingCodeId === example.id ? 'visibility_off' : 'visibility'}
+                            {viewingCodeId === example.id
+                              ? "visibility_off"
+                              : "visibility"}
                           </span>
-                          {viewingCodeId === example.id ? 'Ocultar Código' : 'Ver Código'}
+                          {viewingCodeId === example.id
+                            ? "Ocultar Código"
+                            : "Ver Código"}
                         </button>
-                        
+
                         {viewingCodeId === example.id && (
                           <div className="bg-slate-900/50 border border-white/10 rounded p-2 overflow-x-auto scrollbar-custom max-h-64">
                             <pre className="text-green-300 font-mono text-[10px] leading-relaxed whitespace-pre">
@@ -1292,30 +1512,46 @@ export default function ExamplesPage() {
                           >
                             {copiedId === example.id ? (
                               <>
-                                <span className="material-symbols-outlined text-xs">check</span>
-                                <span className="hidden sm:inline">Copiado</span>
+                                <span className="material-symbols-outlined text-xs">
+                                  check
+                                </span>
+                                <span className="hidden sm:inline">
+                                  Copiado
+                                </span>
                               </>
                             ) : (
                               <>
-                                <span className="material-symbols-outlined text-xs">content_copy</span>
+                                <span className="material-symbols-outlined text-xs">
+                                  content_copy
+                                </span>
                                 <span className="hidden sm:inline">Copiar</span>
                               </>
                             )}
                           </button>
                           <button
-                            onClick={() => handleAnalyze(example.code, example.id)}
+                            onClick={() =>
+                              handleAnalyze(example.code, example.id)
+                            }
                             disabled={analyzingExampleId !== null}
                             className="flex items-center justify-center gap-1 py-1.5 px-2 rounded text-white text-xs font-medium transition-colors bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             {analyzingExampleId === example.id ? (
                               <>
-                                <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span>
-                                <span className="hidden sm:inline">Analizando...</span>
+                                <span className="material-symbols-outlined text-xs animate-spin">
+                                  progress_activity
+                                </span>
+                                <span className="hidden sm:inline">
+                                  Analizando...
+                                </span>
                               </>
                             ) : (
                               <>
-                                <span className="material-symbols-outlined text-xs">functions</span>
-                                <span className="hidden sm:inline">Analizar</span>
+                                <span className="material-symbols-outlined text-xs">
+                                  functions
+                                </span>
+                                <span className="hidden sm:inline">
+                                  Analizar
+                                </span>
                               </>
                             )}
                           </button>
@@ -1330,36 +1566,63 @@ export default function ExamplesPage() {
 
           {/* Información adicional */}
           <div className="glass-card p-4">
-            <h2 className="text-base font-bold text-white mb-3">Cómo usar estos ejemplos</h2>
+            <h2 className="text-base font-bold text-white mb-3">
+              Cómo usar estos ejemplos
+            </h2>
             <div className="space-y-2 text-dark-text text-xs">
               <p>
-                1. <strong className="text-white">Ver Código:</strong> Haz clic en el botón &quot;Ver Código&quot; para
-                ver el código completo del algoritmo.
+                1. <strong className="text-white">Ver Código:</strong> Haz clic
+                en el botón &quot;Ver Código&quot; para ver el código completo
+                del algoritmo.
               </p>
               <p>
-                2. <strong className="text-white">Copiar:</strong> Haz clic en el botón &quot;Copiar&quot; para copiar el código al portapapeles.
+                2. <strong className="text-white">Copiar:</strong> Haz clic en
+                el botón &quot;Copiar&quot; para copiar el código al
+                portapapeles.
               </p>
               <p>
-                3. <strong className="text-white">Analizar:</strong> Haz clic en el botón &quot;Analizar&quot; para
-                analizar el algoritmo directamente desde esta página, o ve al{" "}
-                <NavigationLink href="/analyzer" className="text-blue-400 hover:text-blue-300 underline">
+                3. <strong className="text-white">Analizar:</strong> Haz clic en
+                el botón &quot;Analizar&quot; para analizar el algoritmo
+                directamente desde esta página, o ve al{" "}
+                <NavigationLink
+                  href="/analyzer"
+                  className="text-blue-400 hover:text-blue-300 underline"
+                >
                   analizador
                 </NavigationLink>{" "}
                 y pega el código en el editor.
               </p>
               <p>
-                4. <strong className="text-white">Explorar:</strong> El sistema calculará
-                automáticamente la complejidad temporal para best/worst/average case mostrando el análisis detallado.
+                4. <strong className="text-white">Explorar:</strong> El sistema
+                calculará automáticamente la complejidad temporal para
+                best/worst/average case mostrando el análisis detallado.
               </p>
               <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
                 <p className="text-blue-300 text-xs font-semibold mb-2">
                   💡 Nota sobre métodos de análisis:
                 </p>
                 <ul className="space-y-1 text-[11px] text-blue-200 list-disc list-inside">
-                  <li><strong>Ecuación Característica:</strong> Para recurrencias lineales T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n). Tiene PRIORIDAD sobre iteración. Detecta DP lineal automáticamente y genera versión DP.</li>
-                  <li><strong>Método de Iteración:</strong> Para recurrencias no uniformes como T(n) = T(n/2) + f(n) o T(n) = T(√n) + f(n) (solo si NO es lineal por desplazamientos constantes)</li>
-                  <li><strong>Teorema Maestro:</strong> Para recurrencias T(n) = aT(n/b) + f(n) con a &lt; 2 o que no cumplen las condiciones del Árbol de Recursión ni Ecuación Característica</li>
-                  <li><strong>Árbol de Recursión:</strong> Para recurrencias con a ≥ 2, divide uniformemente, divide-and-conquer. Incluye visualización del árbol y tabla detallada por niveles</li>
+                  <li>
+                    <strong>Ecuación Característica:</strong> Para recurrencias
+                    lineales T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n).
+                    Tiene PRIORIDAD sobre iteración. Detecta DP lineal
+                    automáticamente y genera versión DP.
+                  </li>
+                  <li>
+                    <strong>Método de Iteración:</strong> Para recurrencias no
+                    uniformes como T(n) = T(n/2) + f(n) o T(n) = T(√n) + f(n)
+                    (solo si NO es lineal por desplazamientos constantes)
+                  </li>
+                  <li>
+                    <strong>Teorema Maestro:</strong> Para recurrencias T(n) =
+                    aT(n/b) + f(n) con a &lt; 2 o que no cumplen las condiciones
+                    del Árbol de Recursión ni Ecuación Característica
+                  </li>
+                  <li>
+                    <strong>Árbol de Recursión:</strong> Para recurrencias con a
+                    ≥ 2, divide uniformemente, divide-and-conquer. Incluye
+                    visualización del árbol y tabla detallada por niveles
+                  </li>
                 </ul>
               </div>
             </div>
@@ -1389,4 +1652,3 @@ export default function ExamplesPage() {
     </div>
   );
 }
-

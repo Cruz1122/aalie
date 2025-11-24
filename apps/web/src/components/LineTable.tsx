@@ -59,11 +59,11 @@ function Badge({ kind }: { readonly kind: LineCost["kind"] }) {
  * Componente de tabla para mostrar costos por línea de código.
  * Similar a CostsTable pero con un diseño diferente y soporte para modo promedio
  * (muestra E[# ejecuciones] en lugar de # ejecuciones).
- * 
+ *
  * @param props - Propiedades de la tabla
  * @returns Componente React de la tabla de líneas
  * @author Juan Camilo Cruz Parra (@Cruz1122)
- * 
+ *
  * @example
  * ```tsx
  * <LineTable
@@ -72,18 +72,25 @@ function Badge({ kind }: { readonly kind: LineCost["kind"] }) {
  * />
  * ```
  */
-export default function LineTable({ rows, onViewProcedure }: Readonly<LineTableProps>) {
+export default function LineTable({
+  rows,
+  onViewProcedure,
+}: Readonly<LineTableProps>) {
   // Detectar si estamos en modo promedio (si alguna fila tiene expectedRuns)
-  const isAvgMode = rows.some(row => row.expectedRuns !== undefined);
-  
+  const isAvgMode = rows.some((row) => row.expectedRuns !== undefined);
+
   return (
     <div className="overflow-auto">
       <table className="w-full text-sm">
         <thead className="sticky top-0 bg-white/5 backdrop-blur-sm">
           <tr>
             <th className="text-center p-2 font-semibold text-slate-300">#</th>
-            <th className="text-center p-2 font-semibold text-slate-300">Tipo</th>
-            <th className="text-center p-2 font-semibold text-slate-300">C<sub>k</sub></th>
+            <th className="text-center p-2 font-semibold text-slate-300">
+              Tipo
+            </th>
+            <th className="text-center p-2 font-semibold text-slate-300">
+              C<sub>k</sub>
+            </th>
             <th className="text-center p-2 font-semibold text-slate-300">
               {isAvgMode ? (
                 <Formula latex="E[\# \text{ ejecuciones}]" />
@@ -92,14 +99,21 @@ export default function LineTable({ rows, onViewProcedure }: Readonly<LineTableP
               )}
             </th>
             {onViewProcedure && (
-              <th className="text-center p-2 font-semibold text-slate-300">Acción</th>
+              <th className="text-center p-2 font-semibold text-slate-300">
+                Acción
+              </th>
             )}
           </tr>
         </thead>
         <tbody>
           {rows.map((row, idx) => (
-            <tr key={idx} className="border-t border-white/10 hover:bg-white/5 transition-colors">
-              <td className="p-2 text-center text-slate-200 font-mono">{row.line}</td>
+            <tr
+              key={idx}
+              className="border-t border-white/10 hover:bg-white/5 transition-colors"
+            >
+              <td className="p-2 text-center text-slate-200 font-mono">
+                {row.line}
+              </td>
               <td className="p-2 text-center">
                 <Badge kind={row.kind} />
               </td>

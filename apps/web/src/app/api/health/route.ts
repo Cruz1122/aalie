@@ -5,11 +5,15 @@ import { NextResponse } from "next/server";
 function getApiBase(): string {
   const a = process.env.API_INTERNAL_BASE_URL?.replace(/\/+$/, "");
   if (a) {
-    return a.startsWith('http://') || a.startsWith('https://') ? a : `https://${a}`;
+    return a.startsWith("http://") || a.startsWith("https://")
+      ? a
+      : `https://${a}`;
   }
   const b = process.env.API_BASE_URL?.replace(/\/+$/, "");
   if (b) {
-    return b.startsWith('http://') || b.startsWith('https://') ? b : `https://${b}`;
+    return b.startsWith("http://") || b.startsWith("https://")
+      ? b
+      : `https://${b}`;
   }
   return process.env.DOCKER ? "http://api:8000" : "http://localhost:8000";
 }
@@ -32,7 +36,10 @@ export async function GET() {
         // Aceptamos varios “OK” convencionales
         const status = (data.status || "").toString().toLowerCase();
         ok = Boolean(
-          data.ok === true || status === "ok" || status === "healthy" || status === "up",
+          data.ok === true ||
+            status === "ok" ||
+            status === "healthy" ||
+            status === "up",
         );
       } else {
         const text = (await res.text()).trim().toLowerCase();
@@ -48,7 +55,8 @@ export async function GET() {
         : {
             ok: false,
             error:
-              parseErr ?? `Upstream ${API_BASE}/health responded ${res.status} ${res.statusText}`,
+              parseErr ??
+              `Upstream ${API_BASE}/health responded ${res.status} ${res.statusText}`,
           };
 
     return NextResponse.json(body, { status: body.ok ? 200 : 502 });

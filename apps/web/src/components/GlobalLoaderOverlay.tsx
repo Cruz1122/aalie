@@ -32,7 +32,9 @@ export const GlobalLoaderOverlay: React.FC = () => {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center">
       {/* Overlay con efecto glass si está habilitado */}
-      {config.overlay && <div className="absolute inset-0 glass-modal-overlay" />}
+      {config.overlay && (
+        <div className="absolute inset-0 glass-modal-overlay" />
+      )}
 
       {/* Contenedor del loader */}
       <div className="relative z-10 glass-modal-container rounded-2xl p-8 max-w-sm mx-4 shadow-2xl modal-animate-in">
@@ -48,8 +50,10 @@ export const GlobalLoaderOverlay: React.FC = () => {
           <div className="mt-6 text-center">
             <p className="text-xs text-slate-400">
               Presiona{" "}
-              <kbd className="bg-white/10 px-2 py-1 rounded text-white font-medium">Esc</kbd> para
-              cancelar
+              <kbd className="bg-white/10 px-2 py-1 rounded text-white font-medium">
+                Esc
+              </kbd>{" "}
+              para cancelar
             </p>
           </div>
         )}

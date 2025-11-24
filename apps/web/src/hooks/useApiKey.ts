@@ -1,7 +1,7 @@
 // Hook para manejar API_KEY de Gemini en localStorage
-import React from 'react';
+import React from "react";
 
-const API_KEY_STORAGE_KEY = 'gemini_api_key';
+const API_KEY_STORAGE_KEY = "gemini_api_key";
 const API_KEY_REGEX = /^AIza[0-9A-Za-z_-]{35,40}$/;
 
 /**
@@ -11,7 +11,7 @@ const API_KEY_REGEX = /^AIza[0-9A-Za-z_-]{35,40}$/;
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export function validateApiKey(key: string): boolean {
-  if (!key || typeof key !== 'string') {
+  if (!key || typeof key !== "string") {
     return false;
   }
   return API_KEY_REGEX.test(key.trim());
@@ -23,26 +23,29 @@ export function validateApiKey(key: string): boolean {
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export function getApiKey(): string | null {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return null;
   }
-  
+
   try {
     const stored = localStorage.getItem(API_KEY_STORAGE_KEY);
     if (!stored) {
       return null;
     }
-    
+
     // Validar formato antes de retornar
     if (validateApiKey(stored)) {
       return stored.trim();
     }
-    
+
     // Si no es válida, eliminarla del localStorage
     localStorage.removeItem(API_KEY_STORAGE_KEY);
     return null;
   } catch (error) {
-    console.error('[useApiKey] Error obteniendo API_KEY del localStorage:', error);
+    console.error(
+      "[useApiKey] Error obteniendo API_KEY del localStorage:",
+      error,
+    );
     return null;
   }
 }
@@ -54,25 +57,28 @@ export function getApiKey(): string | null {
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export function setApiKey(key: string): boolean {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return false;
   }
-  
+
   const trimmed = key.trim();
-  
+
   if (!validateApiKey(trimmed)) {
     return false;
   }
-  
+
   try {
     localStorage.setItem(API_KEY_STORAGE_KEY, trimmed);
     // Disparar evento personalizado para notificar a otros componentes (misma ventana)
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('apiKeyChanged'));
+    if (typeof window !== "undefined") {
+      globalThis.window.dispatchEvent(new Event("apiKeyChanged"));
     }
     return true;
   } catch (error) {
-    console.error('[useApiKey] Error guardando API_KEY en localStorage:', error);
+    console.error(
+      "[useApiKey] Error guardando API_KEY en localStorage:",
+      error,
+    );
     return false;
   }
 }
@@ -82,18 +88,21 @@ export function setApiKey(key: string): boolean {
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export function removeApiKey(): void {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return;
   }
-  
+
   try {
     localStorage.removeItem(API_KEY_STORAGE_KEY);
     // Disparar evento personalizado para notificar a otros componentes (misma ventana)
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('apiKeyChanged'));
+    if (typeof window !== "undefined") {
+      globalThis.window.dispatchEvent(new Event("apiKeyChanged"));
     }
   } catch (error) {
-    console.error('[useApiKey] Error eliminando API_KEY del localStorage:', error);
+    console.error(
+      "[useApiKey] Error eliminando API_KEY del localStorage:",
+      error,
+    );
   }
 }
 
@@ -105,11 +114,11 @@ export function removeApiKey(): void {
  */
 export function hasValidApiKey(): boolean {
   // En el cliente, verificar localStorage
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     const stored = getApiKey();
     return stored !== null;
   }
-  
+
   // En el servidor, verificar variables de entorno
   // Nota: esto solo funciona en el servidor, no en el cliente
   const envKey = process.env.API_KEY;
@@ -123,13 +132,13 @@ export function hasValidApiKey(): boolean {
  */
 export function getApiKeyWithFallback(): string | null {
   // Prioridad 1: localStorage (solo en cliente)
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     const stored = getApiKey();
     if (stored) {
       return stored;
     }
   }
-  
+
   // Prioridad 2: variables de entorno (solo en servidor)
   // Nota: en el cliente, process.env solo tiene variables públicas
   // Las variables privadas solo están disponibles en el servidor
@@ -137,7 +146,7 @@ export function getApiKeyWithFallback(): string | null {
   if (envKey && validateApiKey(envKey)) {
     return envKey;
   }
-  
+
   return null;
 }
 
@@ -147,24 +156,24 @@ export function getApiKeyWithFallback(): string | null {
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 export async function checkServerApiKey(): Promise<boolean> {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return false;
   }
-  
+
   try {
-    const response = await fetch('/api/llm/status', {
-      method: 'GET',
-      cache: 'no-store',
+    const response = await fetch("/api/llm/status", {
+      method: "GET",
+      cache: "no-store",
     });
-    
+
     if (!response.ok) {
       return false;
     }
-    
+
     const data = await response.json();
     return data?.ok === true && data?.status?.apiKey?.serverAvailable === true;
   } catch (error) {
-    console.error('[useApiKey] Error verificando API_KEY del servidor:', error);
+    console.error("[useApiKey] Error verificando API_KEY del servidor:", error);
     return false;
   }
 }
@@ -181,7 +190,7 @@ export async function getApiKeyStatus(): Promise<{
 }> {
   const hasLocalStorage = getApiKey() !== null;
   const hasServer = await checkServerApiKey();
-  
+
   return {
     hasLocalStorage,
     hasServer,
@@ -194,7 +203,7 @@ export async function getApiKeyStatus(): Promise<{
  * Proporciona estado y funciones para gestionar la API_KEY de Gemini.
  * @returns Objeto con estado y funciones para gestionar la API_KEY
  * @author Juan Camilo Cruz Parra (@Cruz1122)
- * 
+ *
  * @example
  * ```tsx
  * const { apiKey, isValid, updateApiKey, clearApiKey } = useApiKey();
@@ -205,12 +214,12 @@ export function useApiKey() {
   const [isValid, setIsValid] = React.useState<boolean>(false);
   const [hasServerApiKey, setHasServerApiKey] = React.useState<boolean>(false);
   const [isCheckingServer, setIsCheckingServer] = React.useState<boolean>(true);
-  
+
   React.useEffect(() => {
     const key = getApiKey();
     setApiKeyState(key);
     setIsValid(key !== null);
-    
+
     // Verificar API_KEY del servidor
     setIsCheckingServer(true);
     checkServerApiKey()
@@ -218,14 +227,14 @@ export function useApiKey() {
         setHasServerApiKey(hasServer);
       })
       .catch((error) => {
-        console.error('[useApiKey] Error verificando servidor:', error);
+        console.error("[useApiKey] Error verificando servidor:", error);
         setHasServerApiKey(false);
       })
       .finally(() => {
         setIsCheckingServer(false);
       });
   }, []);
-  
+
   const updateApiKey = React.useCallback((key: string) => {
     const success = setApiKey(key);
     if (success) {
@@ -237,26 +246,29 @@ export function useApiKey() {
     }
     return success;
   }, []);
-  
+
   const clearApiKey = React.useCallback(() => {
     removeApiKey();
     setApiKeyState(null);
     setIsValid(false);
   }, []);
-  
+
   const refreshServerStatus = React.useCallback(async () => {
     setIsCheckingServer(true);
     try {
       const hasServer = await checkServerApiKey();
       setHasServerApiKey(hasServer);
     } catch (error) {
-      console.error('[useApiKey] Error refrescando estado del servidor:', error);
+      console.error(
+        "[useApiKey] Error refrescando estado del servidor:",
+        error,
+      );
       setHasServerApiKey(false);
     } finally {
       setIsCheckingServer(false);
     }
   }, []);
-  
+
   return {
     apiKey,
     isValid,
@@ -268,4 +280,3 @@ export function useApiKey() {
     validateApiKey: validateApiKey,
   };
 }
-

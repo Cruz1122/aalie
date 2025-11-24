@@ -10,7 +10,7 @@ export interface CoreAnalysisData {
   big_o?: string;
   big_omega?: string;
   big_theta?: string;
-  
+
   // Datos específicos de recursivo
   recurrence?: {
     type: "divide_conquer" | "linear_shift";
@@ -78,7 +78,7 @@ export interface CoreAnalysisData {
     };
     theta: string;
   };
-  
+
   // Resumen de tabla de costos (solo para iterativo)
   lineCostsSummary?: {
     totalLines: number;
@@ -88,12 +88,14 @@ export interface CoreAnalysisData {
 
 /**
  * Extrae los datos core de un análisis para comparación con LLM.
- * 
+ *
  * @param data - Datos del análisis (AnalyzeOpenResponse)
  * @returns Datos core extraídos del análisis
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
-export function extractCoreData(data: AnalyzeOpenResponse | null): CoreAnalysisData | null {
+export function extractCoreData(
+  data: AnalyzeOpenResponse | null,
+): CoreAnalysisData | null {
   if (!data || !data.ok || !data.totals) {
     return null;
   }
@@ -153,7 +155,8 @@ export function extractCoreData(data: AnalyzeOpenResponse | null): CoreAnalysisD
         roots: totals.characteristic_equation.roots,
         dominant_root: totals.characteristic_equation.dominant_root,
         growth_rate: totals.characteristic_equation.growth_rate,
-        homogeneous_solution: totals.characteristic_equation.homogeneous_solution,
+        homogeneous_solution:
+          totals.characteristic_equation.homogeneous_solution,
         particular_solution: totals.characteristic_equation.particular_solution,
         general_solution: totals.characteristic_equation.general_solution,
         closed_form: totals.characteristic_equation.closed_form,
@@ -196,7 +199,7 @@ export function extractCoreData(data: AnalyzeOpenResponse | null): CoreAnalysisD
     } else if (totals.recursion_tree) {
       coreData.method = "recursion_tree";
       coreData.recursion_tree = {
-        levels: totals.recursion_tree.levels.map(level => ({
+        levels: totals.recursion_tree.levels.map((level) => ({
           level: level.level,
           num_nodes: level.num_nodes,
           num_nodes_latex: level.num_nodes_latex,
@@ -225,7 +228,9 @@ export function extractCoreData(data: AnalyzeOpenResponse | null): CoreAnalysisD
     if (data.byLine && data.byLine.length > 0) {
       coreData.lineCostsSummary = {
         totalLines: data.byLine.length,
-        linesWithCost: data.byLine.filter(line => line.count && line.count !== "0" && line.count !== "").length,
+        linesWithCost: data.byLine.filter(
+          (line) => line.count && line.count !== "0" && line.count !== "",
+        ).length,
       };
     }
   }
@@ -235,7 +240,7 @@ export function extractCoreData(data: AnalyzeOpenResponse | null): CoreAnalysisD
 
 /**
  * Determina si un análisis es recursivo basado en los datos.
- * 
+ *
  * @param data - Datos del análisis
  * @returns true si es recursivo, false si es iterativo
  */
@@ -245,4 +250,3 @@ export function isRecursiveAnalysis(data: AnalyzeOpenResponse | null): boolean {
   }
   return !!data.totals.recurrence;
 }
-

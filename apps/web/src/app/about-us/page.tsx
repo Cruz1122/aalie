@@ -1,4 +1,3 @@
-
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import NavigationLink from "@/components/NavigationLink";
@@ -19,12 +18,17 @@ export default function AboutPage() {
         {/* Hero Section */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-3 mb-4">
-            <span className="material-symbols-outlined text-4xl text-primary">info</span>
-            <h1 className="text-4xl font-bold text-white">Acerca del Proyecto</h1>
+            <span className="material-symbols-outlined text-4xl text-primary">
+              info
+            </span>
+            <h1 className="text-4xl font-bold text-white">
+              Acerca del Proyecto
+            </h1>
           </div>
           <p className="text-lg text-dark-text max-w-3xl mx-auto leading-relaxed">
-            Una herramienta educativa moderna para analizar la complejidad algorítmica de
-            pseudocódigo con visualizaciones interactivas y cálculos automáticos.
+            Una herramienta educativa moderna para analizar la complejidad
+            algorítmica de pseudocódigo con visualizaciones interactivas y
+            cálculos automáticos.
           </p>
         </div>
 
@@ -33,15 +37,20 @@ export default function AboutPage() {
           <div className="flex items-start gap-6">
             <div className="flex-shrink-0">
               <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center">
-                <span className="material-symbols-outlined text-primary text-3xl">calculate</span>
+                <span className="material-symbols-outlined text-primary text-3xl">
+                  calculate
+                </span>
               </div>
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white mb-4">¿Qué hace este analizador?</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">
+                ¿Qué hace este analizador?
+              </h2>
               <p className="text-dark-text leading-relaxed mb-4">
-                Toma tu pseudocódigo, construye su estructura con una gramática formal y calcula
-                automáticamente el costo computacional línea por línea. Genera fórmulas T(n) para
-                mejor y peor caso con visualizaciones del flujo de control.
+                Toma tu pseudocódigo, construye su estructura con una gramática
+                formal y calcula automáticamente el costo computacional línea
+                por línea. Genera fórmulas T(n) para mejor y peor caso con
+                visualizaciones del flujo de control.
               </p>
               <div className="flex flex-wrap gap-3">
                 <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium">
@@ -71,27 +80,39 @@ export default function AboutPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                <span className="text-dark-text text-sm">Editor Monaco con syntax highlighting</span>
+                <span className="text-dark-text text-sm">
+                  Editor Monaco con syntax highlighting
+                </span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                <span className="text-dark-text text-sm">Parsing completo con ANTLR4</span>
+                <span className="text-dark-text text-sm">
+                  Parsing completo con ANTLR4
+                </span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                <span className="text-dark-text text-sm">Análisis de complejidad temporal (método S3)</span>
+                <span className="text-dark-text text-sm">
+                  Análisis de complejidad temporal (método S3)
+                </span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                <span className="text-dark-text text-sm">Chatbot integrado con IA</span>
+                <span className="text-dark-text text-sm">
+                  Chatbot integrado con IA
+                </span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                <span className="text-dark-text text-sm">Visualizaciones AST y tablas de costos</span>
+                <span className="text-dark-text text-sm">
+                  Visualizaciones AST y tablas de costos
+                </span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                <span className="text-dark-text text-sm">Soporte para mejor/promedio/peor caso</span>
+                <span className="text-dark-text text-sm">
+                  Soporte para mejor/promedio/peor caso
+                </span>
               </div>
             </div>
           </div>
@@ -99,12 +120,16 @@ export default function AboutPage() {
           {/* Stack Tecnológico */}
           <div className="glass-card p-6 rounded-xl">
             <div className="flex items-center gap-3 mb-6">
-              <span className="material-symbols-outlined text-blue-400 text-2xl">code</span>
+              <span className="material-symbols-outlined text-blue-400 text-2xl">
+                code
+              </span>
               <h3 className="text-xl font-bold text-white">Tecnologías</h3>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <h4 className="text-white font-medium mb-2 text-sm">Frontend</h4>
+                <h4 className="text-white font-medium mb-2 text-sm">
+                  Frontend
+                </h4>
                 <ul className="text-dark-text text-xs space-y-1">
                   <li>Next.js + TypeScript</li>
                   <li>Tailwind CSS</li>
@@ -128,17 +153,22 @@ export default function AboutPage() {
 
         {/* Características Implementadas */}
         <div className="glass-card p-8 rounded-xl mb-12">
-          <h2 className="text-2xl font-bold text-white mb-8 text-center">Características Implementadas</h2>
+          <h2 className="text-2xl font-bold text-white mb-8 text-center">
+            Características Implementadas
+          </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="relative">
               <div className="glass-secondary p-4 rounded-lg border-l-4 border-green-400">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                  <h3 className="text-white font-semibold text-sm">Análisis Completo</h3>
+                  <h3 className="text-white font-semibold text-sm">
+                    Análisis Completo
+                  </h3>
                 </div>
                 <p className="text-dark-text text-sm">
-                  Análisis de complejidad temporal (método S3) con soporte para bucles FOR, WHILE, condicionales IF y recursión
+                  Análisis de complejidad temporal (método S3) con soporte para
+                  bucles FOR, WHILE, condicionales IF y recursión
                 </p>
               </div>
             </div>
@@ -147,10 +177,13 @@ export default function AboutPage() {
               <div className="glass-secondary p-4 rounded-lg border-l-4 border-green-400">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                  <h3 className="text-white font-semibold text-sm">Editor Avanzado</h3>
+                  <h3 className="text-white font-semibold text-sm">
+                    Editor Avanzado
+                  </h3>
                 </div>
                 <p className="text-dark-text text-sm">
-                  Editor Monaco con validación en tiempo real, syntax highlighting y soporte para múltiples operadores de asignación
+                  Editor Monaco con validación en tiempo real, syntax
+                  highlighting y soporte para múltiples operadores de asignación
                 </p>
               </div>
             </div>
@@ -159,10 +192,13 @@ export default function AboutPage() {
               <div className="glass-secondary p-4 rounded-lg border-l-4 border-green-400">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                  <h3 className="text-white font-semibold text-sm">Asistente IA</h3>
+                  <h3 className="text-white font-semibold text-sm">
+                    Asistente IA
+                  </h3>
                 </div>
                 <p className="text-dark-text text-sm">
-                  Chatbot integrado con modelos de lenguaje (Azure AI/Gemini) para asistencia y clasificación de algoritmos
+                  Chatbot integrado con modelos de lenguaje (Azure AI/Gemini)
+                  para asistencia y clasificación de algoritmos
                 </p>
               </div>
             </div>
@@ -171,10 +207,13 @@ export default function AboutPage() {
               <div className="glass-secondary p-4 rounded-lg border-l-4 border-green-400">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                  <h3 className="text-white font-semibold text-sm">Visualizaciones</h3>
+                  <h3 className="text-white font-semibold text-sm">
+                    Visualizaciones
+                  </h3>
                 </div>
                 <p className="text-dark-text text-sm">
-                  Visualización de AST, tablas de costos por línea y gráficos de flujo de control
+                  Visualización de AST, tablas de costos por línea y gráficos de
+                  flujo de control
                 </p>
               </div>
             </div>
@@ -183,10 +222,13 @@ export default function AboutPage() {
               <div className="glass-secondary p-4 rounded-lg border-l-4 border-green-400">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                  <h3 className="text-white font-semibold text-sm">Fórmulas LaTeX</h3>
+                  <h3 className="text-white font-semibold text-sm">
+                    Fórmulas LaTeX
+                  </h3>
                 </div>
                 <p className="text-dark-text text-sm">
-                  Renderizado de fórmulas matemáticas con KaTeX, incluyendo ecuaciones de eficiencia y notación Big-O
+                  Renderizado de fórmulas matemáticas con KaTeX, incluyendo
+                  ecuaciones de eficiencia y notación Big-O
                 </p>
               </div>
             </div>
@@ -195,10 +237,13 @@ export default function AboutPage() {
               <div className="glass-secondary p-4 rounded-lg border-l-4 border-green-400">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                  <h3 className="text-white font-semibold text-sm">Procedimientos Detallados</h3>
+                  <h3 className="text-white font-semibold text-sm">
+                    Procedimientos Detallados
+                  </h3>
                 </div>
                 <p className="text-dark-text text-sm">
-                  Explicaciones paso a paso del análisis, procedimientos generales y por línea con normalización automática
+                  Explicaciones paso a paso del análisis, procedimientos
+                  generales y por línea con normalización automática
                 </p>
               </div>
             </div>
@@ -209,7 +254,9 @@ export default function AboutPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <div className="glass-card p-6 rounded-xl text-center hover:scale-105 transition-transform duration-300">
             <div className="w-16 h-16 bg-green-500/20 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <span className="material-symbols-outlined text-green-400 text-2xl">privacy_tip</span>
+              <span className="material-symbols-outlined text-green-400 text-2xl">
+                privacy_tip
+              </span>
             </div>
             <h3 className="text-white font-bold mb-2">Sin Registro</h3>
             <p className="text-dark-text text-sm">
@@ -219,56 +266,82 @@ export default function AboutPage() {
 
           <div className="glass-card p-6 rounded-xl text-center hover:scale-105 transition-transform duration-300">
             <div className="w-16 h-16 bg-primary/20 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary text-2xl">school</span>
+              <span className="material-symbols-outlined text-primary text-2xl">
+                school
+              </span>
             </div>
             <h3 className="text-white font-bold mb-2">Educativo</h3>
-            <p className="text-dark-text text-sm">Diseñado para aprender análisis de algoritmos</p>
+            <p className="text-dark-text text-sm">
+              Diseñado para aprender análisis de algoritmos
+            </p>
           </div>
 
           <div className="glass-card p-6 rounded-xl text-center hover:scale-105 transition-transform duration-300">
             <div className="w-16 h-16 bg-blue-500/20 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <span className="material-symbols-outlined text-blue-400 text-2xl">speed</span>
+              <span className="material-symbols-outlined text-blue-400 text-2xl">
+                speed
+              </span>
             </div>
             <h3 className="text-white font-bold mb-2">Tiempo Real</h3>
-            <p className="text-dark-text text-sm">Análisis instantáneo con feedback inmediato</p>
+            <p className="text-dark-text text-sm">
+              Análisis instantáneo con feedback inmediato
+            </p>
           </div>
         </div>
 
         {/* Cómo Funciona */}
         <div className="glass-card p-8 rounded-xl mb-12">
-          <h2 className="text-2xl font-bold text-white mb-8 text-center">¿Cómo Funciona?</h2>
+          <h2 className="text-2xl font-bold text-white mb-8 text-center">
+            ¿Cómo Funciona?
+          </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="text-center">
               <div className="w-12 h-12 bg-primary/20 rounded-full mx-auto mb-3 flex items-center justify-center">
                 <span className="text-primary font-bold">1</span>
               </div>
-              <h3 className="text-white font-semibold mb-2 text-sm">Escribe Código</h3>
-              <p className="text-dark-text text-xs">Ingresa tu pseudocódigo en el editor</p>
+              <h3 className="text-white font-semibold mb-2 text-sm">
+                Escribe Código
+              </h3>
+              <p className="text-dark-text text-xs">
+                Ingresa tu pseudocódigo en el editor
+              </p>
             </div>
 
             <div className="text-center">
               <div className="w-12 h-12 bg-primary/20 rounded-full mx-auto mb-3 flex items-center justify-center">
                 <span className="text-primary font-bold">2</span>
               </div>
-              <h3 className="text-white font-semibold mb-2 text-sm">Análisis AST</h3>
-              <p className="text-dark-text text-xs">Construimos el árbol sintáctico</p>
+              <h3 className="text-white font-semibold mb-2 text-sm">
+                Análisis AST
+              </h3>
+              <p className="text-dark-text text-xs">
+                Construimos el árbol sintáctico
+              </p>
             </div>
 
             <div className="text-center">
               <div className="w-12 h-12 bg-primary/20 rounded-full mx-auto mb-3 flex items-center justify-center">
                 <span className="text-primary font-bold">3</span>
               </div>
-              <h3 className="text-white font-semibold mb-2 text-sm">Cálculo T(n)</h3>
-              <p className="text-dark-text text-xs">Generamos las fórmulas de complejidad</p>
+              <h3 className="text-white font-semibold mb-2 text-sm">
+                Cálculo T(n)
+              </h3>
+              <p className="text-dark-text text-xs">
+                Generamos las fórmulas de complejidad
+              </p>
             </div>
 
             <div className="text-center">
               <div className="w-12 h-12 bg-primary/20 rounded-full mx-auto mb-3 flex items-center justify-center">
                 <span className="text-primary font-bold">4</span>
               </div>
-              <h3 className="text-white font-semibold mb-2 text-sm">Visualización</h3>
-              <p className="text-dark-text text-xs">Mostramos gráficos y resultados</p>
+              <h3 className="text-white font-semibold mb-2 text-sm">
+                Visualización
+              </h3>
+              <p className="text-dark-text text-xs">
+                Mostramos gráficos y resultados
+              </p>
             </div>
           </div>
         </div>
@@ -281,13 +354,15 @@ export default function AboutPage() {
               href="/"
               className="glass-button inline-flex items-center justify-center px-6 py-3 rounded-lg text-white font-medium transition-all hover:scale-105"
             >
-              <span className="material-symbols-outlined mr-2">home</span> Ir al Analizador
+              <span className="material-symbols-outlined mr-2">home</span> Ir al
+              Analizador
             </NavigationLink>
             <a
               href="/privacy"
               className="glass-secondary inline-flex items-center justify-center px-6 py-3 rounded-lg text-white font-medium transition-all hover:scale-105"
             >
-              <span className="material-symbols-outlined mr-2">shield</span> Política de Privacidad
+              <span className="material-symbols-outlined mr-2">shield</span>{" "}
+              Política de Privacidad
             </a>
             <a
               href="/api/health"
@@ -295,7 +370,8 @@ export default function AboutPage() {
               rel="noreferrer"
               className="glass-secondary inline-flex items-center justify-center px-6 py-3 rounded-lg text-white font-medium transition-all hover:scale-105"
             >
-              <span className="material-symbols-outlined mr-2">api</span> Estado de la API
+              <span className="material-symbols-outlined mr-2">api</span> Estado
+              de la API
             </a>
           </div>
           <p className="text-xs text-dark-text mt-6">

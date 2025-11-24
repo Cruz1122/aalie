@@ -26,7 +26,7 @@ export const DocumentationCard = memo<DocumentationCardProps>(
     const iconConfig = getIconConfig(section.id);
     const shortDescription = useMemo(
       () => truncate(section.description || "", maxDescriptionChars),
-      [section.description, maxDescriptionChars]
+      [section.description, maxDescriptionChars],
     );
 
     const handlePrimaryClick = () => {
@@ -61,9 +61,7 @@ export const DocumentationCard = memo<DocumentationCardProps>(
               className="text-xl font-bold text-white leading-tight text-center min-h-[3rem] flex items-center justify-center"
               title={section.title}
             >
-              <span className="line-clamp-2">
-                {section.title}
-              </span>
+              <span className="line-clamp-2">{section.title}</span>
             </h2>
           </header>
 
@@ -120,7 +118,9 @@ export const DocumentationCard = memo<DocumentationCardProps>(
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span className="flex items-center gap-2">
                 <DocumentationIcon sectionId={section.id} size={14} />
-                <span className="capitalize">{section.id.replace('-', ' ')}</span>
+                <span className="capitalize">
+                  {section.id.replace("-", " ")}
+                </span>
               </span>
               {section.image ? (
                 <span className="text-emerald-400">• Con diagrama</span>
@@ -137,7 +137,7 @@ export const DocumentationCard = memo<DocumentationCardProps>(
         </div>
       </article>
     );
-  }
+  },
 );
 
 DocumentationCard.displayName = "DocumentationCard";

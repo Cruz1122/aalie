@@ -66,11 +66,11 @@ const getAlgorithmTypeColor = (type?: string): string => {
  * Componente de loader para mostrar el progreso del análisis de complejidad.
  * Muestra una barra de progreso, mensajes de estado, tipo de algoritmo detectado
  * y maneja errores con animaciones de transición.
- * 
+ *
  * @param props - Propiedades del loader
  * @returns Componente React del loader de análisis
  * @author Juan Camilo Cruz Parra (@Cruz1122)
- * 
+ *
  * @example
  * ```tsx
  * <AnalysisLoader
@@ -93,7 +93,7 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
 }) => {
   const hasError = !!error;
   const [isClosing, setIsClosing] = useState(false);
-  
+
   // Iniciar animación de cierre cuando se completa
   useEffect(() => {
     if (isComplete && !hasError) {
@@ -104,22 +104,30 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
       return () => clearTimeout(timer);
     }
   }, [isComplete, hasError]);
-  
+
   const handleClose = () => {
     if (onClose) {
       onClose();
     } else {
-      window.location.reload();
+      globalThis.window.location.reload();
     }
   };
-  
+
   return (
-    <div className={`fixed inset-0 z-[60] flex items-center justify-center transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`} style={{ pointerEvents: isComplete || error ? 'auto' : 'none' }}>
+    <div
+      className={`fixed inset-0 z-[60] flex items-center justify-center transition-opacity duration-300 ${isClosing ? "opacity-0" : "opacity-100"}`}
+      style={{ pointerEvents: isComplete || error ? "auto" : "none" }}
+    >
       {/* Overlay con efecto glass */}
-      <div className={`absolute inset-0 glass-modal-overlay transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`} style={{ pointerEvents: 'none' }} />
+      <div
+        className={`absolute inset-0 glass-modal-overlay transition-opacity duration-300 ${isClosing ? "opacity-0" : "opacity-100"}`}
+        style={{ pointerEvents: "none" }}
+      />
 
       {/* Contenedor del loader - tamaño fijo grande */}
-      <div className={`relative z-10 glass-modal-container rounded-2xl p-8 w-[600px] h-[400px] mx-4 shadow-2xl flex flex-col justify-center transition-all duration-300 ${isClosing ? 'opacity-0 scale-95 translate-y-2' : 'opacity-100 scale-100 translate-y-0'}`}>
+      <div
+        className={`relative z-10 glass-modal-container rounded-2xl p-8 w-[600px] h-[400px] mx-4 shadow-2xl flex flex-col justify-center transition-all duration-300 ${isClosing ? "opacity-0 scale-95 translate-y-2" : "opacity-100 scale-100 translate-y-0"}`}
+      >
         {/* Icono de estado */}
         <div className="flex justify-center mb-6">
           {hasError ? (
@@ -145,20 +153,26 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
 
         {/* Mensaje principal */}
         <div className="text-center mb-6">
-          <h3 className={`text-xl font-semibold mb-2 ${hasError ? 'text-red-300' : 'text-white'}`}>
+          <h3
+            className={`text-xl font-semibold mb-2 ${hasError ? "text-red-300" : "text-white"}`}
+          >
             {hasError ? "Error en el análisis" : message}
           </h3>
-          
+
           {/* Mensaje de error */}
           {hasError && (
             <div className="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-              <p className="text-sm text-red-300 whitespace-pre-wrap">{error}</p>
+              <p className="text-sm text-red-300 whitespace-pre-wrap">
+                {error}
+              </p>
             </div>
           )}
-          
+
           {/* Badge del tipo de algoritmo con animación pop */}
           {algorithmType && !hasError && (
-            <div className={`mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium ${getAlgorithmTypeColor(algorithmType)} animate-[pop_0.5s_ease-out]`}>
+            <div
+              className={`mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium ${getAlgorithmTypeColor(algorithmType)} animate-[pop_0.5s_ease-out]`}
+            >
               <span className="material-symbols-outlined text-base">
                 category
               </span>
@@ -172,13 +186,15 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
           <div className="mb-4">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-slate-300">Progreso</span>
-              <span className="text-sm font-semibold text-white">{Math.round(progress)}%</span>
+              <span className="text-sm font-semibold text-white">
+                {Math.round(progress)}%
+              </span>
             </div>
             <div className="w-full h-3 bg-slate-700/50 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full"
-                style={{ 
-                  width: `${Math.min(100, Math.max(0, progress))}%`
+                style={{
+                  width: `${Math.min(100, Math.max(0, progress))}%`,
                 }}
               />
             </div>
@@ -188,7 +204,7 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
         {/* Indicador de etapas */}
         {!isComplete && !hasError && (
           <div className="text-center">
-            {(algorithmType === "recursive" || algorithmType === "hybrid") ? (
+            {algorithmType === "recursive" || algorithmType === "hybrid" ? (
               <p className="text-xs text-slate-400">
                 Analizando recurrencia...
               </p>
@@ -199,7 +215,7 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
             )}
           </div>
         )}
-        
+
         {/* Botón para cerrar en caso de error */}
         {hasError && (
           <div className="text-center mt-4">
@@ -215,4 +231,3 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
     </div>
   );
 };
-

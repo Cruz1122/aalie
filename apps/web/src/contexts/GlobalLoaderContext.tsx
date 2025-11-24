@@ -1,6 +1,13 @@
 "use client";
 
-import React, { createContext, ReactNode, useCallback, useContext, useMemo, useState } from "react";
+import React, {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 
 import { GlobalLoaderContextType, LoaderConfig } from "@/types/loader";
 
@@ -13,13 +20,17 @@ const defaultConfig: LoaderConfig = {
   persistent: false,
 };
 
-const GlobalLoaderContext = createContext<GlobalLoaderContextType | undefined>(undefined);
+const GlobalLoaderContext = createContext<GlobalLoaderContextType | undefined>(
+  undefined,
+);
 
 interface GlobalLoaderProviderProps {
   children: ReactNode;
 }
 
-export const GlobalLoaderProvider: React.FC<GlobalLoaderProviderProps> = ({ children }) => {
+export const GlobalLoaderProvider: React.FC<GlobalLoaderProviderProps> = ({
+  children,
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [config, setConfig] = useState<LoaderConfig>(defaultConfig);
 
@@ -33,7 +44,10 @@ export const GlobalLoaderProvider: React.FC<GlobalLoaderProviderProps> = ({ chil
   }, []);
 
   const updateProgress = useCallback((progress: number) => {
-    setConfig((prev) => ({ ...prev, progress: Math.min(100, Math.max(0, progress)) }));
+    setConfig((prev) => ({
+      ...prev,
+      progress: Math.min(100, Math.max(0, progress)),
+    }));
   }, []);
 
   const updateMessage = useCallback((message: string) => {
@@ -52,13 +66,19 @@ export const GlobalLoaderProvider: React.FC<GlobalLoaderProviderProps> = ({ chil
     [isLoading, config, show, hide, updateProgress, updateMessage],
   );
 
-  return <GlobalLoaderContext.Provider value={value}>{children}</GlobalLoaderContext.Provider>;
+  return (
+    <GlobalLoaderContext.Provider value={value}>
+      {children}
+    </GlobalLoaderContext.Provider>
+  );
 };
 
 export const useGlobalLoader = (): GlobalLoaderContextType => {
   const context = useContext(GlobalLoaderContext);
   if (!context) {
-    throw new Error("useGlobalLoader must be used within a GlobalLoaderProvider");
+    throw new Error(
+      "useGlobalLoader must be used within a GlobalLoaderProvider",
+    );
   }
   return context;
 };

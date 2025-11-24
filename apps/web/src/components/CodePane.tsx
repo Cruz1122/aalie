@@ -8,8 +8,12 @@ export default function CodePane({ code }: Readonly<{ code: string }>) {
         <tbody>
           {lines.map((ln, i) => (
             <tr key={i} className="align-top">
-              <td className="pr-3 text-right text-slate-400 select-none w-8 py-1">{i + 1}</td>
-              <td className="font-mono text-[12px] text-slate-100 whitespace-pre py-1">{ln || " "}</td>
+              <td className="pr-3 text-right text-slate-400 select-none w-8 py-1">
+                {i + 1}
+              </td>
+              <td className="font-mono text-[12px] text-slate-100 whitespace-pre py-1">
+                {ln || " "}
+              </td>
             </tr>
           ))}
         </tbody>
