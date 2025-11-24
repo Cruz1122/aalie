@@ -2388,7 +2388,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     if right_type_lower in ["number", "literal"]:
                         try:
                             # Intentar obtener el valor, puede estar en "value" o "val"
-                            n0_value = right.get("value") or right.get("val")
+                            # Usar get con default None y verificar explícitamente para manejar 0
+                            n0_value = right.get("value") if "value" in right else right.get("val")
                             if n0_value is not None:
                                 n0 = int(float(n0_value))
                                 # Verificar que left sea una expresión relacionada con el tamaño del problema

@@ -2371,7 +2371,7 @@ class TestRecursiveAnalyzerHelpers(unittest.TestCase):
             "condition": {
                 "type": "Binary",
                 "op": "<=",
-                "left": {"name": "n"},
+                "left": {"type": "Identifier", "name": "n"},
                 "right": {"type": "Literal", "value": 1}
             },
             "then": {
@@ -2405,7 +2405,7 @@ class TestRecursiveAnalyzerHelpers(unittest.TestCase):
         condition = {
             "type": "Binary",
             "op": "<=",
-            "left": {"name": "n"},
+            "left": {"type": "Identifier", "name": "n"},
             "right": {"type": "Literal", "value": 1}
         }
         result = self.analyzer._extract_base_case_from_condition(condition)
@@ -2416,7 +2416,7 @@ class TestRecursiveAnalyzerHelpers(unittest.TestCase):
         condition = {
             "type": "Binary",
             "op": "==",
-            "left": {"name": "n"},
+            "left": {"type": "Identifier", "name": "n"},
             "right": {"type": "Literal", "value": 0}
         }
         result = self.analyzer._extract_base_case_from_condition(condition)
