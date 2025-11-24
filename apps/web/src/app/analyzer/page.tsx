@@ -93,6 +93,7 @@ export default function AnalyzerPage() {
     worst: AnalyzeOpenResponse | null;
     best: AnalyzeOpenResponse | null;
     avg?: AnalyzeOpenResponse | null;
+    has_case_variability?: boolean;
   } | null>(() => {
     // Cargar resultados desde sessionStorage si vienen del editor manual o del chatbot
     if (globalThis.window !== undefined) {
@@ -537,7 +538,8 @@ export default function AnalyzerPage() {
       setData({ 
         worst: analyzeRes.worst, 
         best: analyzeRes.best,
-        avg: analyzeRes.avg  // Puede ser undefined si falló, pero el frontend lo maneja
+        avg: analyzeRes.avg,  // Puede ser undefined si falló, pero el frontend lo maneja
+        has_case_variability: analyzeRes.has_case_variability  // Incluir variabilidad de casos
       });
       
       // Asegurar que algorithmType se mantenga usando la variable local 'kind'
@@ -635,6 +637,7 @@ export default function AnalyzerPage() {
         best: ownCoreDataBest,
         avg: ownCoreDataAvg,
         isRecursive,
+        has_case_variability: data.has_case_variability || false,
       };
 
       // Detectar el método usado en el análisis propio (si es recursivo)
@@ -678,7 +681,32 @@ ${source}
 \`\`\`
 
 **ANÁLISIS PROPIO COMPLETO (para que puedas dar una observación real):**
-${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}
+${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
+        // Detectar si hay variabilidad de casos en el análisis propio
+        const hasVariability = fullAnalysisData.has_case_variability === true;
+        const hasBestCase = data.best !== null && data.best !== undefined;
+        const hasAvgCase = data.avg !== null && data.avg !== undefined;
+        
+        if (hasVariability && (hasBestCase || hasAvgCase)) {
+          return `\n\n**⚠️ CRÍTICO - VARIABILIDAD DE CASOS (LEE ESTO CON ATENCIÓN):**
+- El análisis propio tiene variabilidad entre worst, best y average case (has_case_variability: true)
+- **OBLIGATORIO: DEBES proporcionar los 3 casos (worst, best, avg) en tu respuesta**, NO solo worst
+- **ESTRUCTURA REQUERIDA**: Tu respuesta DEBE tener esta estructura:
+  {
+    "analysis": {
+      "worst": { ... todos los campos del análisis del peor caso ... },
+      "best": { ... todos los campos del análisis del mejor caso ... },
+      "avg": { ... todos los campos del análisis del caso promedio ... }
+    },
+    "note": "..."
+  }
+- Si el análisis propio muestra diferentes complejidades para worst/best/avg, tu análisis también debe mostrar los 3 casos
+- El campo "analysis" DEBE contener objetos separados para "worst", "best" y "avg" cuando hay variabilidad
+- NO omitas los casos best y avg cuando el análisis propio los tiene
+- Si el análisis propio tiene worst, best y avg, tu respuesta DEBE tener worst, best y avg también`;
+        }
+        return "";
+      })()}
 
 **INSTRUCCIONES:**
 1. Analiza el algoritmo proporcionado
@@ -1006,13 +1034,116 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}
       // Solo procesar llmResponse.analysis si no se procesó time_complexity.analysis
       const llmAnalysis = llmResponse.analysis || {};
       
-      // Si el análisis tiene worst, best, avg directamente, usarlos (solo si no se procesó antes)
+      // Si el análisis tiene worst, best, avg directamente, convertirlos correctamente
       if (!dataProcessed && (llmAnalysis.worst || llmAnalysis.best || llmAnalysis.avg)) {
+        // Función para convertir un caso del LLM a CoreAnalysisData
+        const convertLLMCase = (caseData: unknown): CoreAnalysisData | null => {
+          if (!caseData || typeof caseData !== 'object') return null;
+          const data = caseData as Record<string, unknown>;
+          
+          const result: CoreAnalysisData = {};
+          
+          // T_open y T_polynomial
+          if (data.T_open && typeof data.T_open === 'string') result.T_open = data.T_open;
+          if (data.T_polynomial && typeof data.T_polynomial === 'string') result.T_polynomial = data.T_polynomial;
+          
+          // Notaciones asintóticas
+          if (data.big_theta && typeof data.big_theta === 'string') result.big_theta = data.big_theta;
+          if (data.big_o && typeof data.big_o === 'string') result.big_o = data.big_o;
+          if (data.big_O && typeof data.big_O === 'string') result.big_o = data.big_O;
+          if (data.big_omega && typeof data.big_omega === 'string') result.big_omega = data.big_omega;
+          if (data.big_Omega && typeof data.big_Omega === 'string') result.big_omega = data.big_Omega;
+          
+          // Recurrence
+          if (data.recurrence && typeof data.recurrence === 'object') {
+            const recurrence = data.recurrence as Record<string, unknown>;
+            result.recurrence = {
+              type: (recurrence.type as "divide_conquer" | "linear_shift") || "linear_shift",
+              form: (recurrence.form as string) || "",
+              a: (recurrence.a as number) || undefined,
+              b: (recurrence.b as number) || undefined,
+              f: (recurrence.f as string) || undefined,
+              order: (recurrence.order as number) || undefined,
+              shifts: (recurrence.shifts as number[]) || undefined,
+              coefficients: (recurrence.coefficients as number[]) || undefined,
+              "g(n)": (recurrence["g(n)"] as string) || undefined,
+              n0: (recurrence.n0 as number) || undefined,
+              method: (recurrence.method as string) || undefined,
+            };
+          }
+          
+          // Method
+          if (data.method && typeof data.method === 'string') {
+            result.method = data.method;
+          }
+          
+          // Characteristic equation
+          if (data.characteristic_equation && typeof data.characteristic_equation === 'object') {
+            const charEq = data.characteristic_equation as Record<string, unknown>;
+            result.characteristic_equation = {
+              equation: (charEq.equation as string) || "",
+              roots: (charEq.roots as Array<{ root: string; multiplicity: number }>) || undefined,
+              dominant_root: (charEq.dominant_root as string) || undefined,
+              growth_rate: (charEq.growth_rate as number) || undefined,
+              homogeneous_solution: (charEq.homogeneous_solution as string) || "",
+              particular_solution: (charEq.particular_solution as string) || undefined,
+              general_solution: (charEq.general_solution as string) || undefined,
+              closed_form: (charEq.closed_form as string) || "",
+              theta: (charEq.theta as string) || result.big_theta || "",
+            };
+            if (result.characteristic_equation.theta) {
+              result.big_theta = result.characteristic_equation.theta;
+            }
+          }
+          
+          // Iteration
+          if (data.iteration && typeof data.iteration === 'object') {
+            const iteration = data.iteration as Record<string, unknown>;
+            const baseCase = iteration.base_case as Record<string, unknown> | undefined;
+            const summation = iteration.summation as Record<string, unknown> | undefined;
+            
+            result.iteration = {
+              g_function: (iteration.g_function as string) || "",
+              expansions: (iteration.expansions as string[]) || [],
+              general_form: (iteration.general_form as string) || "",
+              base_case: {
+                condition: (baseCase?.condition as string) || "",
+                k: (baseCase?.k as string) || "",
+              },
+              summation: {
+                expression: (summation?.expression as string) || "",
+                evaluated: (summation?.evaluated as string) || "",
+              },
+              theta: (iteration.theta as string) || result.big_theta || "",
+            };
+            if (result.iteration.theta) {
+              result.big_theta = result.iteration.theta;
+            }
+          }
+          
+          // Master
+          if (data.master && typeof data.master === 'object') {
+            const master = data.master as Record<string, unknown>;
+            result.master = {
+              case: (master.case as 1 | 2 | 3 | null) || null,
+              nlogba: (master.nlogba as string) || "",
+              comparison: (master.comparison as "smaller" | "equal" | "larger" | null) || null,
+              theta: (master.theta as string | null) || null,
+            };
+            if (result.master.theta) {
+              result.big_theta = result.master.theta;
+            }
+          }
+          
+          return Object.keys(result).length > 0 ? result : null;
+        };
+        
         setLlmAnalysisData({
-          worst: (llmAnalysis.worst || null) as CoreAnalysisData | null,
-          best: (llmAnalysis.best || null) as CoreAnalysisData | null,
-          avg: (llmAnalysis.avg || null) as CoreAnalysisData | null,
+          worst: convertLLMCase(llmAnalysis.worst),
+          best: convertLLMCase(llmAnalysis.best),
+          avg: convertLLMCase(llmAnalysis.avg),
         });
+        dataProcessed = true;
       } else if (!dataProcessed && llmAnalysis.time_complexity && typeof llmAnalysis.time_complexity === 'object') {
         // Estructura: { analysis: { time_complexity: { worst: {...}, best: {...}, avg: {...} } } }
         // O también: { analysis: { time_complexity: { recurrence, method, characteristic_equation, ... } } }

@@ -230,7 +230,15 @@ function renderIterativeData(
 /**
  * Renderiza los datos core de un análisis recursivo.
  */
-function renderRecursiveData(data: CoreAnalysisData | null, label: string, isOwn: boolean) {
+function renderRecursiveData(
+  worstData: CoreAnalysisData | null,
+  bestData: CoreAnalysisData | null,
+  avgData: CoreAnalysisData | null,
+  label: string,
+  isOwn: boolean
+) {
+  // Usar worst como fallback si no hay datos específicos
+  const data = worstData || bestData || avgData || null;
   const cardColor = isOwn 
     ? "bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-orange-500/30" 
     : "bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/30";
@@ -260,9 +268,9 @@ function renderRecursiveData(data: CoreAnalysisData | null, label: string, isOwn
         {label}
       </h3>
       
-      <div className="space-y-4 flex-1">
+      <div className="space-y-4 flex-1 flex flex-col">
         {data.recurrence && (
-          <div className="glass-card p-3 rounded-lg">
+          <div className="glass-card p-3 rounded-lg flex-shrink-0">
             <div className="text-sm text-slate-300 mb-1">Recurrencia:</div>
             <div className="text-white overflow-x-auto scrollbar-custom">
               <Formula latex={data.recurrence.form} display />
@@ -281,48 +289,219 @@ function renderRecursiveData(data: CoreAnalysisData | null, label: string, isOwn
         )}
         
         {data.method && (
-          <div className="glass-card p-3 rounded-lg">
+          <div className="glass-card p-3 rounded-lg flex-shrink-0">
             <div className="text-sm text-slate-300 mb-1">Método usado:</div>
             <div className="text-white font-semibold capitalize">{data.method.replace("_", " ")}</div>
           </div>
         )}
         
         {data.characteristic_equation && (
-          <div className="glass-card p-3 rounded-lg space-y-2">
-            <div>
-              <div className="text-sm text-slate-300 mb-1">Ecuación característica:</div>
-              <div className="text-white overflow-x-auto scrollbar-custom">
-                <Formula latex={data.characteristic_equation.equation} display />
+          <div className="space-y-3 flex-1 flex flex-col">
+            {/* Ecuación Característica */}
+            <div className="glass-card p-3 rounded-lg border border-white/10">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="material-symbols-outlined text-sm text-slate-400">calculate</span>
+                <div className="text-sm font-semibold text-slate-300">Ecuación característica:</div>
+              </div>
+              <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
+                <div className="scale-90">
+                  <Formula latex={data.characteristic_equation.equation} display />
+                </div>
               </div>
             </div>
+
+            {/* Raíces como badges */}
             {data.characteristic_equation.roots && data.characteristic_equation.roots.length > 0 && (
-              <div>
-                <div className="text-sm text-slate-300 mb-1">Raíces:</div>
-                <div className="text-white text-sm">
+              <div className="glass-card p-3 rounded-lg border border-white/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-sm text-slate-400">functions</span>
+                  <div className="text-sm font-semibold text-slate-300">Raíces:</div>
+                </div>
+                <div className="flex flex-wrap gap-2">
                   {data.characteristic_equation.roots.map((root, idx) => (
-                    <div key={idx} className="mb-1 overflow-x-auto scrollbar-custom">
-                      <Formula latex={root.root} /> (multiplicidad: {root.multiplicity})
+                    <div
+                      key={idx}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-500/20 border border-blue-500/30 text-xs"
+                    >
+                      <span className="text-blue-300 font-semibold">r{idx + 1} =</span>
+                      <div className="scale-90 origin-center">
+                        <Formula latex={root.root} />
+                      </div>
+                      {root.multiplicity > 1 && (
+                        <span className="text-blue-400/70 text-[10px]">(×{root.multiplicity})</span>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Solución Homogénea */}
+            {data.characteristic_equation.homogeneous_solution && (
+              <div className="glass-card p-3 rounded-lg border border-white/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-sm text-slate-400">integration_instructions</span>
+                  <div className="text-sm font-semibold text-slate-300">Solución homogénea:</div>
+                </div>
+                <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
+                  <div className="scale-90">
+                    <Formula latex={data.characteristic_equation.homogeneous_solution} display />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Solución Particular */}
+            {data.characteristic_equation.particular_solution && (
+              <div className="glass-card p-3 rounded-lg border border-white/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-sm text-slate-400">add_circle</span>
+                  <div className="text-sm font-semibold text-slate-300">Solución particular:</div>
+                </div>
+                <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
+                  <div className="scale-90">
+                    <Formula latex={data.characteristic_equation.particular_solution} display />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Solución General */}
+            {data.characteristic_equation.general_solution && (
+              <div className="glass-card p-3 rounded-lg border border-white/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-sm text-slate-400">functions</span>
+                  <div className="text-sm font-semibold text-slate-300">Solución general:</div>
+                </div>
+                <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
+                  <div className="scale-90">
+                    <Formula latex={data.characteristic_equation.general_solution} display />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Forma Cerrada */}
             {data.characteristic_equation.closed_form && (
-              <div>
-                <div className="text-sm text-slate-300 mb-1">Forma cerrada:</div>
-                <div className="text-white overflow-x-auto scrollbar-custom">
-                  <Formula latex={data.characteristic_equation.closed_form} display />
+              <div className="glass-card p-3 rounded-lg border border-white/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-sm text-slate-400">code</span>
+                  <div className="text-sm font-semibold text-slate-300">Forma cerrada:</div>
+                </div>
+                <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
+                  <div className="scale-90">
+                    <Formula latex={data.characteristic_equation.closed_form} display />
+                  </div>
                 </div>
               </div>
             )}
-            {data.characteristic_equation.theta && (
-              <div>
-                <div className="text-sm text-slate-300 mb-1">Θ:</div>
-                <div className="text-white font-semibold overflow-x-auto scrollbar-custom">
-                  <Formula latex={data.characteristic_equation.theta} />
-                </div>
-              </div>
-            )}
+
+            {/* Theta Final - Mostrar los 3 casos si hay variabilidad */}
+            {(() => {
+              // Obtener theta de cada caso (puede venir de characteristic_equation o de T_open si no hay recurrencia calculada)
+              const worstTheta = worstData?.characteristic_equation?.theta || worstData?.T_open;
+              const bestTheta = bestData?.characteristic_equation?.theta || bestData?.T_open;
+              const avgTheta = avgData?.characteristic_equation?.theta || avgData?.T_open;
+              
+              // Verificar si hay variabilidad (diferentes valores de theta)
+              // También considerar cuando best case es O(1) y los otros son diferentes
+              const hasVariability = (worstTheta && bestTheta && avgTheta && 
+                (worstTheta !== bestTheta || worstTheta !== avgTheta || bestTheta !== avgTheta)) ||
+                (bestTheta && worstTheta && bestTheta !== worstTheta) ||
+                (bestTheta && avgTheta && bestTheta !== avgTheta);
+              
+              if (hasVariability) {
+                // Mostrar los 3 casos en la misma línea
+                return (
+                  <div className="glass-card p-3 rounded-lg border border-purple-500/30 bg-purple-500/10">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="material-symbols-outlined text-sm text-purple-400">speed</span>
+                      <div className="text-sm font-semibold text-purple-300">Θ:</div>
+                    </div>
+                    <div className="bg-slate-900/50 p-3 rounded border border-purple-500/20 overflow-x-auto scrollbar-custom">
+                      <div className="flex flex-row gap-4 items-center justify-center flex-wrap">
+                        {bestTheta && (
+                          <div className="text-center">
+                            <div className="text-xs text-green-300 mb-1">Mejor caso:</div>
+                            <div className="scale-90">
+                              <Formula latex={bestTheta} display />
+                            </div>
+                          </div>
+                        )}
+                        {avgTheta && (
+                          <div className="text-center">
+                            <div className="text-xs text-yellow-300 mb-1">Caso promedio:</div>
+                            <div className="scale-90">
+                              <Formula latex={avgTheta} display />
+                            </div>
+                          </div>
+                        )}
+                        {worstTheta && (
+                          <div className="text-center">
+                            <div className="text-xs text-red-300 mb-1">Peor caso:</div>
+                            <div className="scale-90">
+                              <Formula latex={worstTheta} display />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              } else if (data.characteristic_equation.theta) {
+                // Sin variabilidad completa, pero verificar si best case es diferente
+                const bestTheta = bestData?.characteristic_equation?.theta || bestData?.T_open;
+                const worstTheta = worstData?.characteristic_equation?.theta || worstData?.T_open;
+                
+                // Si best case es diferente, mostrarlo también
+                if (bestTheta && worstTheta && bestTheta !== worstTheta) {
+                  return (
+                    <div className="glass-card p-3 rounded-lg border border-purple-500/30 bg-purple-500/10 flex-shrink-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="material-symbols-outlined text-sm text-purple-400">speed</span>
+                        <div className="text-sm font-semibold text-purple-300">Θ:</div>
+                      </div>
+                      <div className="bg-slate-900/50 p-3 rounded border border-purple-500/20 overflow-x-auto scrollbar-custom">
+                        <div className="flex flex-row gap-4 items-center justify-center flex-wrap">
+                          {bestTheta && (
+                            <div className="text-center">
+                              <div className="text-xs text-green-300 mb-1">Mejor caso:</div>
+                              <div className="scale-90">
+                                <Formula latex={bestTheta} display />
+                              </div>
+                            </div>
+                          )}
+                          {worstTheta && (
+                            <div className="text-center">
+                              <div className="text-xs text-red-300 mb-1">Peor caso:</div>
+                              <div className="scale-90">
+                                <Formula latex={worstTheta} display />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                // Sin variabilidad, mostrar solo uno
+                return (
+                  <div className="glass-card p-3 rounded-lg border border-purple-500/30 bg-purple-500/10 flex-shrink-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="material-symbols-outlined text-sm text-purple-400">speed</span>
+                      <div className="text-sm font-semibold text-purple-300">Θ:</div>
+                    </div>
+                    <div className="bg-slate-900/50 p-3 rounded border border-purple-500/20 overflow-x-auto scrollbar-custom flex justify-center">
+                      <div className="scale-90">
+                        <Formula latex={data.characteristic_equation.theta} display />
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
         )}
         
@@ -354,21 +533,184 @@ function renderRecursiveData(data: CoreAnalysisData | null, label: string, isOwn
         )}
         
         {data.iteration && (
-          <div className="glass-card p-3 rounded-lg space-y-2">
-            <div>
-              <div className="text-sm text-slate-300 mb-1">Método de Iteración:</div>
-              <div className="text-white text-sm">
-                g(n) = <span className="overflow-x-auto scrollbar-custom inline-block"><Formula latex={data.iteration.g_function} /></span>
-              </div>
-            </div>
-            {data.iteration.theta && (
-              <div>
-                <div className="text-sm text-slate-300 mb-1">Θ:</div>
-                <div className="text-white font-semibold overflow-x-auto scrollbar-custom">
-                  <Formula latex={data.iteration.theta} />
+          <div className="space-y-3 flex-1 flex flex-col">
+            {/* Función g(n) */}
+            {data.iteration.g_function && (
+              <div className="glass-card p-3 rounded-lg border border-white/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-sm text-slate-400">functions</span>
+                  <div className="text-sm font-semibold text-slate-300">Función g(n):</div>
+                </div>
+                <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
+                  <div className="scale-90">
+                    <Formula latex={data.iteration.g_function} display />
+                  </div>
                 </div>
               </div>
             )}
+
+            {/* Expansiones */}
+            {data.iteration.expansions && data.iteration.expansions.length > 0 && (
+              <div className="glass-card p-3 rounded-lg border border-white/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-sm text-slate-400">unfold_more</span>
+                  <div className="text-sm font-semibold text-slate-300">Expansiones:</div>
+                </div>
+                <div className="space-y-2">
+                  {data.iteration.expansions.map((expansion: string, idx: number) => (
+                    <div key={idx} className="bg-slate-900/50 p-2 rounded border border-white/10 overflow-x-auto scrollbar-custom">
+                      <div className="scale-90">
+                        <Formula latex={expansion} display />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Forma General */}
+            {data.iteration.general_form && (
+              <div className="glass-card p-3 rounded-lg border border-white/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-sm text-slate-400">code</span>
+                  <div className="text-sm font-semibold text-slate-300">Forma general:</div>
+                </div>
+                <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
+                  <div className="scale-90">
+                    <Formula latex={data.iteration.general_form} display />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Sumatoria */}
+            {data.iteration.summation && (
+              <div className="glass-card p-3 rounded-lg border border-white/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-sm text-slate-400">functions</span>
+                  <div className="text-sm font-semibold text-slate-300">Sumatoria:</div>
+                </div>
+                {data.iteration.summation.expression && (
+                  <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center mb-2">
+                    <div className="scale-90">
+                      <Formula latex={data.iteration.summation.expression} display />
+                    </div>
+                  </div>
+                )}
+                {data.iteration.summation.evaluated && (
+                  <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
+                    <div className="scale-90">
+                      <Formula latex={data.iteration.summation.evaluated} display />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Theta Final - Mostrar los 3 casos si hay variabilidad */}
+            {(() => {
+              const worstTheta = worstData?.iteration?.theta || worstData?.T_open;
+              const bestTheta = bestData?.iteration?.theta || bestData?.T_open;
+              const avgTheta = avgData?.iteration?.theta || avgData?.T_open;
+              
+              // Verificar si hay variabilidad (diferentes valores de theta)
+              const hasVariability = (worstTheta && bestTheta && avgTheta && 
+                (worstTheta !== bestTheta || worstTheta !== avgTheta || bestTheta !== avgTheta)) ||
+                (bestTheta && worstTheta && bestTheta !== worstTheta) ||
+                (bestTheta && avgTheta && bestTheta !== avgTheta);
+              
+              if (hasVariability) {
+                // Mostrar los 3 casos en la misma línea
+                return (
+                  <div className="glass-card p-3 rounded-lg border border-purple-500/30 bg-purple-500/10">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="material-symbols-outlined text-sm text-purple-400">speed</span>
+                      <div className="text-sm font-semibold text-purple-300">Θ:</div>
+                    </div>
+                    <div className="bg-slate-900/50 p-3 rounded border border-purple-500/20 overflow-x-auto scrollbar-custom">
+                      <div className="flex flex-row gap-4 items-center justify-center flex-wrap">
+                        {bestTheta && (
+                          <div className="text-center">
+                            <div className="text-xs text-green-300 mb-1">Mejor caso:</div>
+                            <div className="scale-90">
+                              <Formula latex={bestTheta} display />
+                            </div>
+                          </div>
+                        )}
+                        {avgTheta && (
+                          <div className="text-center">
+                            <div className="text-xs text-yellow-300 mb-1">Caso promedio:</div>
+                            <div className="scale-90">
+                              <Formula latex={avgTheta} display />
+                            </div>
+                          </div>
+                        )}
+                        {worstTheta && (
+                          <div className="text-center">
+                            <div className="text-xs text-red-300 mb-1">Peor caso:</div>
+                            <div className="scale-90">
+                              <Formula latex={worstTheta} display />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              } else if (data.iteration.theta) {
+                // Sin variabilidad completa, pero verificar si best case es diferente
+                const bestTheta = bestData?.iteration?.theta || bestData?.T_open;
+                const worstTheta = worstData?.iteration?.theta || worstData?.T_open;
+                
+                // Si best case es diferente, mostrarlo también
+                if (bestTheta && worstTheta && bestTheta !== worstTheta) {
+                  return (
+                    <div className="glass-card p-3 rounded-lg border border-purple-500/30 bg-purple-500/10 flex-shrink-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="material-symbols-outlined text-sm text-purple-400">speed</span>
+                        <div className="text-sm font-semibold text-purple-300">Θ:</div>
+                      </div>
+                      <div className="bg-slate-900/50 p-3 rounded border border-purple-500/20 overflow-x-auto scrollbar-custom">
+                        <div className="flex flex-row gap-4 items-center justify-center flex-wrap">
+                          {bestTheta && (
+                            <div className="text-center">
+                              <div className="text-xs text-green-300 mb-1">Mejor caso:</div>
+                              <div className="scale-90">
+                                <Formula latex={bestTheta} display />
+                              </div>
+                            </div>
+                          )}
+                          {worstTheta && (
+                            <div className="text-center">
+                              <div className="text-xs text-red-300 mb-1">Peor caso:</div>
+                              <div className="scale-90">
+                                <Formula latex={worstTheta} display />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                // Sin variabilidad, mostrar solo uno
+                return (
+                  <div className="glass-card p-3 rounded-lg border border-purple-500/30 bg-purple-500/10 flex-shrink-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="material-symbols-outlined text-sm text-purple-400">speed</span>
+                      <div className="text-sm font-semibold text-purple-300">Θ:</div>
+                    </div>
+                    <div className="bg-slate-900/50 p-3 rounded border border-purple-500/20 overflow-x-auto scrollbar-custom flex justify-center">
+                      <div className="scale-90">
+                        <Formula latex={data.iteration.theta} display />
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
         )}
         
@@ -453,7 +795,7 @@ export default function ComparisonModal({
           {/* Columna izquierda: Análisis propio */}
           <div className="flex flex-col">
             {isRecursive 
-              ? renderRecursiveData(ownData.worst || ownData.best || ownData.avg || null, "Análisis Propio", true)
+              ? renderRecursiveData(ownData.worst, ownData.best, ownData.avg, "Análisis Propio", true)
               : renderIterativeData(ownData, llmData, true)
             }
           </div>
@@ -461,7 +803,7 @@ export default function ComparisonModal({
           {/* Columna derecha: Análisis LLM */}
           <div className="flex flex-col">
             {isRecursive 
-              ? renderRecursiveData(llmData.worst || llmData.best || llmData.avg || null, "Análisis LLM", false)
+              ? renderRecursiveData(llmData.worst, llmData.best, llmData.avg, "Análisis LLM", false)
               : renderIterativeData(ownData, llmData, false)
             }
           </div>

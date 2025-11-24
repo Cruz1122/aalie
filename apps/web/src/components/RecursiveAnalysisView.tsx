@@ -242,9 +242,9 @@ const renderEfficiencyEquation = (
   }
   
   if (hasDifferentComplexities) {
-    // Para otros métodos con diferentes complejidades, mostrar todas
+    // Para otros métodos con diferentes complejidades, mostrar todas en la misma línea
     return (
-      <div className="flex flex-col gap-2 items-center">
+      <div className="flex flex-row gap-4 items-center justify-center flex-wrap">
         <div className="text-center">
           <div className="text-xs text-green-300 mb-1">Mejor caso:</div>
           <Formula latex={`T(n) = ${roundLatexNumbers(bestT)}`} display />
@@ -657,7 +657,7 @@ const renderRecursionTreeCards = (props: RecursionTreeCardsProps): React.JSX.Ele
           </h3>
           <div className="bg-slate-800/60 p-3 rounded border border-white/10 flex flex-col items-center justify-center gap-3 overflow-x-auto flex-1 min-h-[120px]">
             {props.hasDifferentComplexities ? (
-              <>
+              <div className="flex flex-row gap-4 items-center justify-center flex-wrap">
                 <div className="text-center">
                   <div className="text-xs text-green-300 mb-1">Mejor caso:</div>
                   <Formula latex={`T(n) = ${props.bestT}`} display />
@@ -670,7 +670,7 @@ const renderRecursionTreeCards = (props: RecursionTreeCardsProps): React.JSX.Ele
                   <div className="text-xs text-red-300 mb-1">Peor caso:</div>
                   <Formula latex={`T(n) = ${props.worstT}`} display />
                 </div>
-              </>
+              </div>
             ) : (
               <Formula latex={`T(n) = ${roundLatexNumbers(props.theta || props.recursionTree?.theta || props.worstT || "N/A")}`} display />
             )}

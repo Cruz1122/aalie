@@ -105,23 +105,31 @@ def analyze_algorithm(
                 result_avg = None
             
             # Verificar variabilidad
-            has_variability = True
+            # Comparar directamente worst, best y avg - si todos tienen la misma T_open y recurrence, no hay variabilidad
+            has_variability = False  # Inicializar como False, solo True si hay diferencias
             if result_worst.get("ok") and result_best.get("ok"):
                 worst_t_open = result_worst.get("totals", {}).get("T_open", "")
                 best_t_open = result_best.get("totals", {}).get("T_open", "")
                 worst_recurrence = result_worst.get("totals", {}).get("recurrence")
                 best_recurrence = result_best.get("totals", {}).get("recurrence")
                 
-                if worst_t_open == best_t_open and worst_recurrence == best_recurrence:
+                # Si T_open o recurrence son diferentes entre worst y best, hay variabilidad
+                if worst_t_open != best_t_open or worst_recurrence != best_recurrence:
+                    has_variability = True
+                else:
+                    # Worst y best son iguales, verificar avg si existe
                     if result_avg and result_avg.get("ok"):
                         avg_t_open = result_avg.get("totals", {}).get("T_open", "")
                         avg_recurrence = result_avg.get("totals", {}).get("recurrence")
-                        if (avg_t_open == worst_t_open and avg_recurrence == worst_recurrence):
-                            if isinstance(analyzer_worst, RecursiveAnalyzer):
-                                has_variability = analyzer_worst._has_case_variability()
+                        # Si avg es diferente de worst/best, hay variabilidad
+                        if (avg_t_open != worst_t_open or avg_recurrence != worst_recurrence):
+                            has_variability = True
+                        # Si avg también es igual, NO hay variabilidad (todos los casos son iguales)
+                        else:
+                            has_variability = False
                     else:
-                        if isinstance(analyzer_worst, RecursiveAnalyzer):
-                            has_variability = analyzer_worst._has_case_variability()
+                        # No hay avg, worst y best son iguales - NO hay variabilidad
+                        has_variability = False
             
             # Construir respuesta
             if not has_variability:

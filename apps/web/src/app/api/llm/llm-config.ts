@@ -406,6 +406,8 @@ IMPORTANTE:
                 big_theta: { type: "string" },
               }
             },
+            // Para recursivos: puede tener worst, best, avg con objetos de recurrencia
+            // NOTA: Si el análisis propio tiene has_case_variability: true, DEBES proporcionar worst, best y avg
             // Datos directos (para recursivo o si no se separan casos)
             T_open: { type: "string" },
             T_polynomial: { type: "string" },
@@ -567,6 +569,7 @@ PARA ALGORITMOS ITERATIVOS:
     - Explicación: Los términos con n² se agrupan (solo C_3), los términos con n se agrupan (C_2 - C_3), y los términos constantes se agrupan (C_1 - C_2 + C_3 + C_4)
 - Determina big_o, big_omega y big_theta en formato LaTeX (ej: "O(n^2)", "Ω(n^2)", "Θ(n^2)") para cada caso
 - **IMPORTANTE**: Si el algoritmo es iterativo, debes proporcionar análisis para worst, best y average case. El campo "analysis" puede contener un objeto con propiedades "worst", "best" y "avg", cada una con los datos correspondientes (T_open, T_polynomial, big_o, big_omega, big_theta), o un único objeto si los casos son idénticos.
+- **CRÍTICO - VARIABILIDAD DE CASOS**: Si el análisis propio tiene "has_case_variability": true, DEBES proporcionar los 3 casos (worst, best, avg) en tu respuesta. NO omitas best ni avg cuando el análisis propio los tiene.
 
 PARA ALGORITMOS RECURSIVOS:
 - Identifica el tipo de recurrencia:

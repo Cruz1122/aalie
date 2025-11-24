@@ -77,6 +77,28 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "errors": [{"message": f"No aplicable: {validation_result['reason']}", "line": None, "column": None}]
             }
         
+        # 2.5. Si estamos en modo "best" y hay early return, saltarse toda la recurrencia
+        # El early return evita la recursión completamente, así que el mejor caso es O(1)
+        if mode == "best":
+            has_early_return = self._detect_early_return()
+            if has_early_return:
+                # Retornar directamente O(1) sin calcular recurrencia
+                self.proof_steps.append({
+                    "id": "best_case_early_return",
+                    "text": "\\text{Mejor caso: } O(1) \\text{ (return temprano detectado, no se ejecuta recursión)}"
+                })
+                # Construir resultado mínimo con O(1)
+                return {
+                    "ok": True,
+                    "byLine": [],
+                    "totals": {
+                        "T_open": "O(1)",
+                        "symbols": None,
+                        "notes": None,
+                        "proof": self.proof_steps.copy()
+                    }
+                }
+        
         # 3. Extraer recurrencia (puede usar preferred_method si se proporciona)
         extraction_result = self._extract_recurrence(proc_def, preferred_method=preferred_method)
         if not extraction_result["success"]:
@@ -252,7 +274,27 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 applicable_methods.append("master")
             
             # Determinar método por defecto (prioridad)
-            default_method = recurrence.get("method", "master")
+            # Si es linear_shift, NO usar master como default (master solo es para divide_conquer)
+            if recurrence.get("type") == "linear_shift":
+                # Para linear_shift, prioridad: characteristic_equation > iteration > recursion_tree
+                if "characteristic_equation" in applicable_methods:
+                    default_method = "characteristic_equation"
+                elif "iteration" in applicable_methods:
+                    default_method = "iteration"
+                elif "recursion_tree" in applicable_methods:
+                    default_method = "recursion_tree"
+                else:
+                    default_method = recurrence.get("method", "iteration")
+            else:
+                # Para divide_conquer, prioridad: master > recursion_tree > iteration
+                if "master" in applicable_methods:
+                    default_method = "master"
+                elif "recursion_tree" in applicable_methods:
+                    default_method = "recursion_tree"
+                elif "iteration" in applicable_methods:
+                    default_method = "iteration"
+                else:
+                    default_method = recurrence.get("method", "master")
             
             # Preparar información básica de la recurrencia
             recurrence_info = {
@@ -343,6 +385,43 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     return True
         
         return False
+    
+    def _extract_field_name(self, node: Any) -> Optional[str]:
+        """
+        Extrae el nombre del campo de un nodo field access.
+        
+        Args:
+            node: Nodo del AST
+            
+        Returns:
+            Nombre del campo o None si no es un field access
+        """
+        if not isinstance(node, dict):
+            return None
+        
+        node_type = node.get("type", "").lower()
+        
+        # Si es un acceso a campo directo
+        if node_type == "field":
+            field_name = node.get("field", "") or node.get("name", "")
+            if field_name:
+                return str(field_name).lower()
+        
+        # Buscar recursivamente en hijos
+        for key, value in node.items():
+            if key in ["type", "pos"]:
+                continue
+            if isinstance(value, list):
+                for item in value:
+                    field_name = self._extract_field_name(item)
+                    if field_name:
+                        return field_name
+            elif isinstance(value, dict):
+                field_name = self._extract_field_name(value)
+                if field_name:
+                    return field_name
+        
+        return None
     
     def _find_main_procedure(self, ast: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
@@ -508,17 +587,33 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 if size_info:
                     subproblem_sizes.append(size_info)
         
-        # Si no se pudieron determinar tamaños, verificar si es un caso con objetos (BST, árboles, etc.)
+        # Si no se pudieron determinar tamaños, verificar si es un caso con objetos (BST, árboles, listas enlazadas, etc.)
         if not subproblem_sizes:
             # Verificar si las llamadas recursivas usan accesos a campos de objetos
-            # (ej: raiz.izquierda, raiz.derecha) - típico de BST o árboles binarios
             has_object_field_access = self._has_object_field_access_in_recursive_calls(recursive_calls)
             
             if has_object_field_access:
-                # Heurística: Para llamadas recursivas con objetos (BST, árboles),
-                # asumir divide-and-conquer binario: T(n) = T(n/2) + O(1)
-                # Solo se ejecuta una rama por llamada (a=1), y cada subproblema es ~n/2 (b=2)
-                subproblem_sizes = [{"b": 2, "offset": 0, "type": "division", "heuristic": "object_field_access"}]
+                # Distinguir entre árboles binarios (divide_conquer) y listas enlazadas (linear_shift)
+                # - Árboles: múltiples llamadas con diferentes campos (izquierda/derecha) → divide_conquer
+                # - Listas: una sola llamada con un campo (siguiente) → linear_shift (n-1)
+                
+                # Contar cuántas llamadas recursivas hay y qué campos usan
+                field_names = set()
+                for call in recursive_calls:
+                    args = call.get("args", [])
+                    for arg in args:
+                        field_name = self._extract_field_name(arg)
+                        if field_name:
+                            field_names.add(field_name)
+                
+                # Si hay múltiples campos diferentes (ej: izquierda, derecha) → divide_conquer
+                # Si hay un solo campo o campos similares (ej: siguiente) → linear_shift
+                if len(field_names) > 1 or len(recursive_calls) > 1:
+                    # Múltiples campos o múltiples llamadas → probablemente árbol binario (divide_conquer)
+                    subproblem_sizes = [{"b": 2, "offset": 0, "type": "division", "heuristic": "object_field_access_tree"}]
+                else:
+                    # Un solo campo, una sola llamada → lista enlazada (linear_shift, n-1)
+                    subproblem_sizes = [{"type": "subtraction", "pattern": "n-1", "factor": 1, "heuristic": "object_field_access_list"}]
             else:
                 return {
                     "success": False,
@@ -2256,7 +2351,13 @@ class RecursiveAnalyzer(BaseAnalyzer):
     
     def _extract_base_case_from_condition(self, condition: Any) -> Optional[int]:
         """
-        Extrae n0 de una condición como "n <= 1" o "n == 0".
+        Extrae n0 de una condición como "n <= 1", "n == 0", o "fin - inicio <= 1".
+        
+        Una condición de caso base es aquella que compara el tamaño del problema con una constante.
+        Ejemplos:
+        - n <= 1
+        - fin - inicio <= 1
+        - n == 0
         
         Args:
             condition: Expresión de condición
@@ -2274,6 +2375,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         if expr_type_lower == "binary":
             # El operador puede estar en "op" o "operator"
             op = condition.get("op", "") or condition.get("operator", "")
+            left = condition.get("left", {})
             right = condition.get("right", {})
             
             # Verificar si es una comparación con constante
@@ -2282,11 +2384,39 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 if isinstance(right, dict):
                     right_type = right.get("type", "")
                     right_type_lower = right_type.lower() if right_type else ""
+                    # Aceptar "number", "literal", o "Number", "Literal" (case-insensitive)
                     if right_type_lower in ["number", "literal"]:
                         try:
-                            n0 = int(float(right.get("value", 0)))
-                            return max(1, n0)  # Mínimo 1
-                        except Exception:
+                            # Intentar obtener el valor, puede estar en "value" o "val"
+                            n0_value = right.get("value") or right.get("val")
+                            if n0_value is not None:
+                                n0 = int(float(n0_value))
+                                # Verificar que left sea una expresión relacionada con el tamaño del problema
+                                # Puede ser: n, fin - inicio, n - 1, etc.
+                                if isinstance(left, dict):
+                                    left_type = left.get("type", "").lower()
+                                    
+                                    # Si left es un identificador (n, fin, inicio, etc.)
+                                    if left_type == "identifier":
+                                        return max(1, n0)  # Mínimo 1
+                                    
+                                    # Si left es una expresión binaria, verificar si es una resta/suma
+                                    # que representa el tamaño del problema (fin - inicio, n - 1, etc.)
+                                    if left_type == "binary":
+                                        left_op = left.get("op", "") or left.get("operator", "")
+                                        # Resta o suma que representa el tamaño del problema
+                                        if left_op in ["-", "+"]:
+                                            # Verificar que ambos lados sean identificadores o números
+                                            # (representa tamaño: fin - inicio, n - 1, etc.)
+                                            left_left = left.get("left", {})
+                                            left_right = left.get("right", {})
+                                            if isinstance(left_left, dict) and isinstance(left_right, dict):
+                                                left_left_type = left_left.get("type", "").lower()
+                                                left_right_type = left_right.get("type", "").lower()
+                                                # Al menos uno debe ser un identificador (variable)
+                                                if left_left_type == "identifier" or left_right_type == "identifier":
+                                                    return max(1, n0)  # Mínimo 1
+                        except (ValueError, TypeError, AttributeError):
                             pass
         
         return None
@@ -2439,8 +2569,24 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         # Si es un If, verificar patrón común: return en THEN, recursivas en ELSE
         if node_type == "If" or node_type == "Conditional":
-            then_body = node.get("then", {}) or node.get("thenBody", {}) or node.get("consequent", {})
-            else_body = node.get("else", {}) or node.get("elseBody", {}) or node.get("alternate", {})
+            condition = node.get("test") or node.get("condition")
+            then_body = node.get("then") or node.get("thenBody") or node.get("consequent")
+            else_body = node.get("else") or node.get("elseBody") or node.get("alternate")
+            
+            # IMPORTANTE: Verificar si esta condición es un caso base (sobre el tamaño del problema)
+            # Si es un caso base, NO es un early return - es parte de la estructura recursiva normal
+            # Verificar que condition no sea None ni un diccionario vacío
+            is_base_case = False
+            if condition and isinstance(condition, dict) and condition.get("type"):
+                base_case_value = self._extract_base_case_from_condition(condition)
+                is_base_case = base_case_value is not None
+            
+            # Si es un caso base, no es un early return
+            # Un caso base es parte de la estructura recursiva normal, NO es un early return
+            if is_base_case:
+                # NO buscar early returns en el ELSE porque el caso base es parte de la recursión normal
+                # Retornar False directamente - un caso base no es un early return
+                return False
             
             # Verificar si en THEN hay return sin recursivas Y en ELSE hay recursivas
             if then_body and else_body:
@@ -2460,6 +2606,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 has_recursive_in_else = self._has_recursive_calls_in_node(else_body)
                 
                 # Patrón clásico: return temprano en THEN, recursivas en ELSE (directas o anidadas)
+                # Solo si NO es un caso base
                 if has_early_return_in_then and has_recursive_in_else:
                     return True
         
@@ -2480,7 +2627,22 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     
                     # Si es un IF, verificar si tiene el patrón return en THEN, recursivas en ELSE
                     if stmt.get("type") == "If" or stmt.get("type") == "Conditional":
-                        # Buscar recursivamente en este IF
+                        # IMPORTANTE: Verificar primero si es un caso base antes de buscar early returns
+                        condition = stmt.get("test") or stmt.get("condition")
+                        is_base_case = False
+                        # Verificar que condition no sea None ni un diccionario vacío
+                        if condition and isinstance(condition, dict) and condition.get("type"):
+                            base_case_value = self._extract_base_case_from_condition(condition)
+                            is_base_case = base_case_value is not None
+                        
+                        # Si es un caso base, NO es un early return - continuar buscando
+                        # Un caso base es parte de la estructura recursiva normal, NO es un early return
+                        if is_base_case:
+                            # NO buscar early returns en el ELSE porque el caso base es parte de la recursión normal
+                            # Continuar con el siguiente statement sin marcar como early return
+                            continue
+                        
+                        # Si NO es caso base, buscar recursivamente en este IF
                         if self._has_return_before_recursive_calls(stmt, recursive_calls):
                             return True
                     
@@ -3120,7 +3282,13 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         # Determinar T_open según el método usado y el modo (PRIORIDAD: characteristic_equation > iteration > recursion_tree > master)
         if self.characteristic_equation:
-            t_open = self.characteristic_equation.get("theta", "N/A")
+            # Para characteristic_equation, si hay early return y estamos en modo best, usar O(1)
+            # El theta ya debería estar ajustado en _apply_characteristic_equation_method, pero verificamos por seguridad
+            if (self.mode == "best" and 
+                self.characteristic_equation.get("has_early_return", False)):
+                t_open = "O(1)"
+            else:
+                t_open = self.characteristic_equation.get("theta", "N/A")
         elif self.iteration:
             t_open = self.iteration.get("theta", "N/A")
         elif self.recursion_tree:
@@ -3341,21 +3509,19 @@ class RecursiveAnalyzer(BaseAnalyzer):
             # entonces no hay variabilidad
             has_conditional_recursion = self._has_conditional_recursive_calls(body, recursive_calls)
             
-            # Si hay early returns que afectan el flujo recursivo, hay variabilidad
-            # PERO: un early return en el caso base (IF n <= k THEN RETURN) NO cuenta como variabilidad
-            # porque siempre se ejecuta igual para todos los casos (determinístico)
-            # Solo cuenta si el early return está en una rama que afecta la recursión
-            has_early_return = False
-            if has_conditional_recursion:
-                # Solo verificar early return si hay condicionales que afecten recursión
-                # Si no hay condicionales, el early return en el caso base no cuenta
-                has_early_return = self._detect_early_return()
+            # SIEMPRE verificar early returns que afectan el flujo recursivo
+            # Un early return que evita la recursión (ej: IF condición THEN RETURN; ELSE recursivas)
+            # crea variabilidad porque el mejor caso puede terminar antes
+            # Ejemplo: buscarLista - si encuentra el valor, retorna O(1); si no, hace recursión O(n)
+            has_early_return = self._detect_early_return()
             
             # Para ecuación característica (lineal con desplazamientos constantes),
             # típicamente NO hay variabilidad porque el algoritmo es determinístico.
-            # Solo hay variabilidad si hay condicionales que afecten el flujo recursivo.
+            # Solo hay variabilidad si:
+            # 1. Hay condicionales que afecten el flujo recursivo (recursivas en ambas ramas)
+            # 2. Hay early returns que eviten la recursión (mejor caso termina antes)
             # Para Fibonacci, todas las llamadas recursivas están en el mismo bloque (ELSE),
-            # así que no hay variabilidad.
+            # y no hay early returns que eviten recursión, así que no hay variabilidad.
             if not has_conditional_recursion and not has_early_return:
                 return False  # No hay variabilidad (worst/best/avg son idénticos)
             
@@ -3725,32 +3891,53 @@ class RecursiveAnalyzer(BaseAnalyzer):
                             g_value = int(match.group(1))
                     
                     if g_value is not None and g_value != 0:
-                        # Calcular K = g_value / (1 - suma_coeficientes)
-                        # T_p(n) = K, entonces K = c₁K + c₂K + ... + g_value
-                        # K - (c₁ + c₂ + ...)K = g_value
-                        # K(1 - suma) = g_value
-                        # K = g_value / (1 - suma)
+                        # Calcular solución particular según el caso
                         sum_coeffs = sum(coefficients.values())
                         denominator = 1 - sum_coeffs
                         
+                        # Verificar si r=1 es raíz (cuando suma_coeficientes = 1)
                         if abs(denominator) < 1e-6:
-                            # Si 1 - suma = 0, entonces no hay solución constante
-                            # Usar forma polinómica
-                            particular_sol = "P(n)"  # Polinomio de grado apropiado
+                            # Si 1 - suma = 0, entonces r=1 es raíz
+                            # En este caso, la solución particular debe ser T_p(n) = A_2 * n (lineal)
+                            # Para T(n) = T(n-1) + g(n) con r=1, T_p(n) = A_2 * n
+                            # Sustituyendo: A_2 * n = A_2 * (n-1) + g_value
+                            # A_2 * n = A_2 * n - A_2 + g_value
+                            # A_2 = g_value
+                            if abs(g_value - 1) < 1e-6:
+                                particular_sol = "A_2 \\cdot n"
+                            else:
+                                # Si g_value != 1, mostrar el coeficiente
+                                try:
+                                    g_sympy = sympify(g_value)
+                                    g_latex = latex(g_sympy)
+                                    particular_sol = f"{g_latex} \\cdot n"
+                                except:
+                                    particular_sol = f"{g_value} \\cdot n"
                         else:
+                            # Si r != 1, usar solución constante T_p(n) = K
+                            # K = g_value / (1 - suma)
                             k_value = g_value / denominator
                             # Simplificar k_value
                             try:
                                 k_sympy = sympify(k_value)
                                 k_simplified = simplify(k_sympy)
                                 k_latex = latex(k_simplified)
-                                particular_sol = k_latex
+                                # Usar A_2 en lugar de solo el valor
+                                if abs(k_value - 1) < 1e-6:
+                                    particular_sol = "A_2"
+                                else:
+                                    particular_sol = f"A_2 \\cdot {k_latex}" if abs(k_value) != 1 else "A_2"
                             except:
                                 # Redondear a 3 decimales si es necesario
                                 if abs(k_value - round(k_value)) < 1e-6:
-                                    particular_sol = str(int(round(k_value)))
+                                    k_int = int(round(k_value))
+                                    if k_int == 1:
+                                        particular_sol = "A_2"
+                                    else:
+                                        particular_sol = f"A_2 \\cdot {k_int}"
                                 else:
-                                    particular_sol = f"{k_value:.3f}".rstrip('0').rstrip('.')
+                                    k_str = f"{k_value:.3f}".rstrip('0').rstrip('.')
+                                    particular_sol = f"A_2 \\cdot {k_str}"
                     else:
                         # Si no se puede extraer constante, usar forma genérica
                         if "n" in g_n_str.lower():
@@ -3768,23 +3955,34 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 if particular_sol:
                     general_solution = f"{homogeneous_sol} + {particular_sol}"
             
-            # Forma cerrada simplificada
-            # Para casos comunes, simplificar
+            # Forma cerrada simplificada (con constantes, NO notación asintótica)
+            # Debe mostrar la forma cerrada con constantes c_1, c_2, etc., no \Theta(...)
             if len(roots_info) == 1:
                 r_val = roots_info[0]["root"]
                 try:
                     r_sympy = sympify(r_val)
                     r_num = float(r_sympy.evalf())
                     if abs(r_num - 1.0) < 1e-6:
-                        closed_form = "\\Theta(n)"
-                    elif r_num > 1:
-                        closed_form = f"\\Theta({r_val}^n)"
+                        # Caso r = 1: T(n) = c_1 + c_2 * n (o similar según solución particular)
+                        if not is_homogeneous and particular_sol:
+                            # Si hay solución particular, la forma cerrada incluye ambos términos
+                            # Solución general: A_1 + A_2 * n (o similar)
+                            if "n" in particular_sol:
+                                # Solución particular es lineal: c_1 + c_2 * n
+                                closed_form = "c_1 + c_2 \\cdot n"
+                            else:
+                                # Solución particular es constante: c_1 + c_2
+                                closed_form = "c_1 + c_2"
+                        else:
+                            # Homogénea: solo c_1
+                            closed_form = "c_1"
                     else:
-                        closed_form = f"\\Theta({r_val}^n)"
+                        # Caso r != 1: T(n) = c_1 * r^n
+                        closed_form = f"c_1 \\cdot {r_val}^n"
                 except:
-                    closed_form = f"\\Theta({r_val}^n)"
+                    closed_form = f"c_1 \\cdot {r_val}^n"
             elif len(roots_info) == 2:
-                # Dos raíces: usar la mayor en valor absoluto (raíz dominante)
+                # Dos raíces distintas: T(n) = c_1 * r1^n + c_2 * r2^n
                 r1_val = roots_info[0]["root"]
                 r2_val = roots_info[1]["root"]
                 try:
@@ -3792,22 +3990,40 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     r2_sympy = sympify(r2_val)
                     r1_num = float(r1_sympy.evalf())
                     r2_num = float(r2_sympy.evalf())
-                    # Usar la raíz con mayor valor absoluto (raíz dominante)
-                    r_max_num = max(abs(r1_num), abs(r2_num))
-                    r_max_val = r1_val if abs(r1_num) >= abs(r2_num) else r2_val
-                    # Para complejidad asintótica, usar la raíz dominante
-                    closed_form = f"\\Theta({r_max_val}^n)"
+                    
+                    # Construir forma cerrada con ambas raíces
+                    if not is_homogeneous and particular_sol:
+                        # Incluir solución particular
+                        if "n" in particular_sol:
+                            closed_form = f"c_1 \\cdot {r1_val}^n + c_2 \\cdot {r2_val}^n + c_3 \\cdot n"
+                        else:
+                            closed_form = f"c_1 \\cdot {r1_val}^n + c_2 \\cdot {r2_val}^n + c_3"
+                    else:
+                        closed_form = f"c_1 \\cdot {r1_val}^n + c_2 \\cdot {r2_val}^n"
                 except:
-                    # Fallback: usar la primera raíz (ya está ordenada por valor absoluto descendente)
-                    closed_form = f"\\Theta({r1_val}^n)"
+                    # Fallback: usar ambas raíces
+                    closed_form = f"c_1 \\cdot {r1_val}^n + c_2 \\cdot {r2_val}^n"
             else:
-                # Caso general: encontrar la raíz con mayor valor numérico
-                try:
-                    r_max = max(roots_info, key=lambda r: float(sympify(r["root"]).evalf()) if sympify(r["root"]).is_real else 0)
-                    closed_form = f"\\Theta({r_max['root']}^n)"
-                except:
-                    # Fallback: usar la primera raíz
-                    closed_form = f"\\Theta({roots_info[0]['root']}^n)"
+                # Caso general: múltiples raíces
+                terms = []
+                for i, root_info in enumerate(roots_info):
+                    r_val = root_info["root"]
+                    mult = root_info["multiplicity"]
+                    if mult == 1:
+                        terms.append(f"c_{i+1} \\cdot {r_val}^n")
+                    else:
+                        # Raíz múltiple: agregar términos con potencias de n
+                        for j in range(mult):
+                            terms.append(f"c_{i+1}{j+1} \\cdot n^{j} \\cdot {r_val}^n")
+                
+                if not is_homogeneous and particular_sol:
+                    # Agregar solución particular
+                    if "n" in particular_sol:
+                        terms.append("c_p \\cdot n")
+                    else:
+                        terms.append("c_p")
+                
+                closed_form = " + ".join(terms) if terms else "c_1"
             
             # Detectar si es caso de DP lineal
             is_dp_linear = max_offset <= 3 and all(offset <= 3 for offset in coefficients.keys())
@@ -3853,8 +4069,60 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "equivale a la solución iterativa mediante programación dinámica."
                 )
             
-            # Resultado final
-            theta_result = closed_form
+            # Calcular notación asintótica (theta) basándose en la forma cerrada
+            # theta debe ser notación asintótica (\Theta(...)), NO la forma cerrada con constantes
+            theta_result = None
+            if len(roots_info) == 1:
+                r_val = roots_info[0]["root"]
+                try:
+                    r_sympy = sympify(r_val)
+                    r_num = float(r_sympy.evalf())
+                    if abs(r_num - 1.0) < 1e-6:
+                        # Caso r = 1: la forma cerrada es c_1 + c_2*n (o similar)
+                        # La notación asintótica depende del término dominante
+                        if not is_homogeneous and particular_sol and "n" in particular_sol:
+                            # Si hay solución particular lineal, el término dominante es n
+                            theta_result = "\\Theta(n)"
+                        else:
+                            # Si es homogénea o solución particular constante, es constante
+                            theta_result = "\\Theta(1)"
+                    elif r_num > 1:
+                        # Caso r > 1: exponencial creciente
+                        theta_result = f"\\Theta({r_val}^n)"
+                    else:
+                        # Caso r < 1: exponencial decreciente
+                        theta_result = f"\\Theta({r_val}^n)"
+                except:
+                    # Fallback: usar r^n
+                    theta_result = f"\\Theta({r_val}^n)"
+            elif len(roots_info) == 2:
+                # Dos raíces: usar la raíz dominante (mayor valor absoluto)
+                r1_val = roots_info[0]["root"]
+                r2_val = roots_info[1]["root"]
+                try:
+                    r1_sympy = sympify(r1_val)
+                    r2_sympy = sympify(r2_val)
+                    r1_num = float(r1_sympy.evalf())
+                    r2_num = float(r2_sympy.evalf())
+                    # Usar la raíz con mayor valor absoluto (raíz dominante)
+                    r_max_num = max(abs(r1_num), abs(r2_num))
+                    r_max_val = r1_val if abs(r1_num) >= abs(r2_num) else r2_val
+                    theta_result = f"\\Theta({r_max_val}^n)"
+                except:
+                    # Fallback: usar la primera raíz
+                    theta_result = f"\\Theta({r1_val}^n)"
+            else:
+                # Caso general: encontrar la raíz con mayor valor absoluto
+                try:
+                    r_max = max(roots_info, key=lambda r: abs(float(sympify(r["root"]).evalf())) if sympify(r["root"]).is_real else 0)
+                    theta_result = f"\\Theta({r_max['root']}^n)"
+                except:
+                    # Fallback: usar la primera raíz
+                    theta_result = f"\\Theta({roots_info[0]['root']}^n)"
+            
+            # Si no se pudo calcular theta, usar fallback
+            if not theta_result:
+                theta_result = "\\Theta(1)"
             
             # Calcular raíz dominante (mayor valor absoluto) y tasa de crecimiento
             dominant_root = None
@@ -3874,6 +4142,25 @@ class RecursiveAnalyzer(BaseAnalyzer):
                         except:
                             pass
             
+            # Detectar early returns para manejar mejor caso
+            has_early_return = self._detect_early_return()
+            
+            # Calcular theta para worst/average y best case
+            # Si hay early return y estamos en modo best, el mejor caso es O(1)
+            if has_early_return and self.mode == "best":
+                theta_best = "O(1)"
+                self.proof_steps.append({
+                    "id": "best_case",
+                    "text": "\\text{Mejor caso: } O(1) \\text{ (return temprano detectado)}"
+                })
+                # Para best case con early return, usar O(1) en lugar del theta calculado
+                theta_result = theta_best
+            else:
+                # Para worst/average case, usar el theta calculado normalmente
+                # Si hay early return pero no estamos en modo best, mantener el theta normal
+                # (el early return solo afecta el mejor caso, no el peor)
+                pass
+            
             result = {
                 "method": "characteristic_equation",
                 "is_dp_linear": is_dp_linear,
@@ -3890,7 +4177,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "dp_version": dp_version,
                 "dp_optimized_version": dp_optimized_version,
                 "dp_equivalence": dp_equivalence,
-                "theta": theta_result
+                "theta": theta_result,
+                "has_early_return": has_early_return
             }
             
             self.proof_steps.append({
@@ -4258,8 +4546,33 @@ FIN FUNCIÓN"""
         if size_arg and isinstance(size_arg, dict):
             arg_type = size_arg.get("type", "").lower()
             
+            # Caso: field access (ej: nodo.siguiente) - para listas enlazadas, esto es n-1
+            if arg_type == "field":
+                # Verificar si el target del field access es el parámetro original
+                target = size_arg.get("target", {})
+                if isinstance(target, dict):
+                    target_name = target.get("name", "") or target.get("id", "")
+                    # Si el target es el primer parámetro (el objeto/nodo), es probablemente una lista enlazada
+                    if target_name == first_param_name:
+                        field_name = size_arg.get("name", "") or size_arg.get("field", "")
+                        field_name_lower = str(field_name).lower()
+                        # Campos comunes de listas enlazadas (siguiente, next, etc.) → n-1
+                        if field_name_lower in ["siguiente", "next", "proximo", "prox"]:
+                            return {
+                                "type": "subtraction",
+                                "pattern": "n-1",
+                                "factor": 1
+                            }
+                        # Campos de árboles binarios (izquierda, derecha, left, right) → n/2
+                        elif field_name_lower in ["izquierda", "derecha", "left", "right", "izq", "der"]:
+                            return {
+                                "type": "division",
+                                "pattern": "n/2",
+                                "factor": 2
+                            }
+            
             # Caso: n - 1 o n - k (BinaryExpression con operador -)
-            if arg_type == "binary":
+            elif arg_type == "binary":
                 op = size_arg.get("op", "")
                 
                 if op == "-":
@@ -4774,7 +5087,9 @@ FIN FUNCIÓN"""
             
             # Paso 4: Determinar k en el caso base
             k_expr = self._determine_k_from_base_case(g_n_info, n0)
-            self.proof_steps.append({"id": "step4", "text": f"\\text{{Paso 4: Caso base }} {g_pattern} = {n0} \\Rightarrow k = {k_expr}"})
+            # La condición del caso base es n-k = n0 (no g_pattern = n0)
+            base_condition = f"n-k = {n0}" if g_n_info["type"] == "subtraction" else f"{g_pattern} = {n0}"
+            self.proof_steps.append({"id": "step4", "text": f"\\text{{Paso 4: Caso base }} {base_condition} \\Rightarrow k = {k_expr}"})
             
             # Paso 5: Sustituir k en la suma
             substituted_form = self._substitute_k_in_summation(g_n_info, f_n_str, k_expr, n0)
@@ -4817,7 +5132,7 @@ FIN FUNCIÓN"""
                 "expansions": expansions,
                 "general_form": general_form,
                 "base_case": {
-                    "condition": f"{g_pattern} = {n0}",
+                    "condition": f"n-k = {n0}" if g_n_info["type"] == "subtraction" else f"{g_pattern} = {n0}",
                     "k": k_expr
                 },
                 "summation": {
@@ -4894,7 +5209,7 @@ FIN FUNCIÓN"""
     
     def _expand_recurrence(self, g_n_info: Dict[str, Any], f_n: str, num_expansions: int = 3) -> List[str]:
         """
-        Genera expansiones simbólicas de la recurrencia.
+        Genera expansiones simbólicas de la recurrencia usando sympy para simplificar.
         
         Args:
             g_n_info: Información de la función g(n)
@@ -4902,13 +5217,28 @@ FIN FUNCIÓN"""
             num_expansions: Número de expansiones a generar
             
         Returns:
-            Lista de strings LaTeX con las expansiones
+            Lista de strings LaTeX con las expansiones simplificadas
         """
         g_type = g_n_info["type"]
         g_pattern = g_n_info["pattern"]
         factor = g_n_info["factor"]
         
         expansions = []
+        n_sym = Symbol('n')
+        
+        # Simplificar f(n) usando sympy si es posible
+        try:
+            # Intentar parsear f_n como expresión sympy
+            if f_n.strip() in ["1", "c", "C"]:
+                f_n_expr = Integer(1)
+            elif f_n.strip().isdigit():
+                f_n_expr = Integer(int(f_n.strip()))
+            else:
+                # Intentar parsear como expresión
+                f_n_expr = sympify(f_n.replace("\\", "").replace("theta", "").replace("Theta", "").replace("(", "").replace(")", "").strip(), evaluate=False)
+        except:
+            # Si falla, usar como string
+            f_n_expr = None
         
         if g_type == "subtraction":
             # T(n) = T(n-1) + f(n)
@@ -4922,12 +5252,29 @@ FIN FUNCIÓN"""
                 f_terms = []
                 for j in range(i):
                     if j == 0:
-                        f_terms.append(f"({f_n})")
+                        if f_n_expr is not None and isinstance(f_n_expr, Integer):
+                            # Si f(n) es constante, simplificar
+                            f_terms.append(f"{f_n_expr}")
+                        else:
+                            f_terms.append(f"({f_n})")
                     else:
                         f_terms.append(f"({f_n}|_{{n-{j}}})")
-                terms.append(" + ".join(f_terms))
                 
-                expansion = f"T(n) = {' + '.join(terms)}"
+                # Si f(n) es constante, simplificar la suma usando sympy
+                if f_n_expr is not None and isinstance(f_n_expr, Integer):
+                    # Suma de i términos constantes = i * constante
+                    sum_value = i * f_n_expr
+                    # Simplificar usando sympy
+                    sum_simplified = simplify(sum_value)
+                    sum_latex = latex(sum_simplified)
+                    expansion = f"T(n) = T(n-{i}) + {sum_latex}"
+                else:
+                    # Si hay múltiples términos iguales, intentar agrupar
+                    if len(f_terms) > 1 and all(term == f_terms[0] for term in f_terms):
+                        # Todos los términos son iguales
+                        expansion = f"T(n) = T(n-{i}) + {len(f_terms)} \\cdot {f_terms[0]}"
+                    else:
+                        expansion = f"T(n) = T(n-{i}) + {' + '.join(f_terms)}"
                 expansions.append(expansion)
         
         elif g_type == "division":
@@ -4941,7 +5288,10 @@ FIN FUNCIÓN"""
                 f_terms = []
                 for j in range(i):
                     if j == 0:
-                        f_terms.append(f"({f_n})")
+                        if f_n_expr is not None and isinstance(f_n_expr, Integer):
+                            f_terms.append(f"{f_n_expr}")
+                        else:
+                            f_terms.append(f"({f_n})")
                     else:
                         denom_j = factor ** j
                         f_terms.append(f"({f_n}|_{{n/{denom_j}}})")
@@ -5040,14 +5390,33 @@ FIN FUNCIÓN"""
         g_type = g_n_info["type"]
         factor = g_n_info["factor"]
         
-        # Simplificar f(n) para análisis
+        # Simplificar f(n) para análisis usando sympy
         f_simplified = f_n.strip().lower()
         
+        # Intentar parsear f(n) como expresión sympy
+        try:
+            if f_simplified in ["1", "c", "C"]:
+                f_n_expr = Integer(1)
+            elif f_simplified.isdigit():
+                f_n_expr = Integer(int(f_simplified))
+            else:
+                f_n_expr = None
+        except:
+            f_n_expr = None
+        
         # Detectar el tipo de sumatoria
-        if f_simplified == "1" or f_simplified == "c":
+        if f_simplified == "1" or f_simplified == "c" or (f_n_expr is not None and isinstance(f_n_expr, Integer) and f_n_expr == 1):
             # Sumatoria constante: Σ c = c * k
             if g_type == "subtraction":
-                evaluated = f"\\Theta(n)"
+                # Para k = n-1, la suma va de i=0 a i=n-1, que son n términos (0, 1, 2, ..., n-1)
+                # Suma de n términos de 1 = n * 1 = n
+                # Usar sympy para simplificar
+                n_sym = Symbol('n')
+                # La suma de i=0 a n-1 de 1 es n (n términos)
+                sum_expr = n_sym * 1  # n términos de 1
+                sum_simplified = simplify(sum_expr)
+                sum_latex = latex(sum_simplified)
+                evaluated = f"\\sum_{{i=0}}^{{n-1}} 1 = {sum_latex} = \\Theta(n)"
                 theta = "n"
             else:  # division
                 evaluated = f"\\Theta(\\log n)"
