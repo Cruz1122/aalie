@@ -844,7 +844,26 @@ class WhileRepeatVisitor:
                     
                     body = node.get("body")
                     if body:
-                        self.visit(body, mode)
+                        # Aplicar memoización si el cuerpo es un bloque cacheable
+                        if self._should_memoize(body):
+                            ctx_hash = self.get_context_hash()
+                            memo_key = self.memo_key(body, mode, ctx_hash)
+                            
+                            # Intentar obtener del cache
+                            cached_rows = self.memo_get(memo_key)
+                            if cached_rows is not None:
+                                # Usar resultados cacheados
+                                self.rows.extend(cached_rows)
+                            else:
+                                # Analizar y cachear
+                                rows_before = len(self.rows)
+                                self.visit(body, mode)
+                                rows_added = self.rows[rows_before:]
+                                if rows_added:
+                                    self.memo_set(memo_key, rows_added)
+                        else:
+                            # No es cacheable, visitar normalmente
+                            self.visit(body, mode)
                     
                     self.pop_multiplier()
                     return
@@ -940,10 +959,29 @@ class WhileRepeatVisitor:
             else:
                 self.push_multiplier(mult_expr)
             
-            # Visitar el cuerpo del bucle
+            # Visitar el cuerpo del bucle (con memoización si es un bloque)
             body = node.get("body")
             if body:
-                self.visit(body, mode)
+                # Aplicar memoización si el cuerpo es un bloque cacheable
+                if self._should_memoize(body):
+                    ctx_hash = self.get_context_hash()
+                    memo_key = self.memo_key(body, mode, ctx_hash)
+                    
+                    # Intentar obtener del cache
+                    cached_rows = self.memo_get(memo_key)
+                    if cached_rows is not None:
+                        # Usar resultados cacheados
+                        self.rows.extend(cached_rows)
+                    else:
+                        # Analizar y cachear
+                        rows_before = len(self.rows)
+                        self.visit(body, mode)
+                        rows_added = self.rows[rows_before:]
+                        if rows_added:
+                            self.memo_set(memo_key, rows_added)
+                else:
+                    # No es cacheable, visitar normalmente
+                    self.visit(body, mode)
             
             self.pop_multiplier()
         else:
@@ -980,10 +1018,29 @@ class WhileRepeatVisitor:
             # 2) Cuerpo: se ejecuta t veces
             self.push_multiplier(t_sym)
             
-            # Visitar el cuerpo del bucle
+            # Visitar el cuerpo del bucle (con memoización si es un bloque)
             body = node.get("body")
             if body:
-                self.visit(body, mode)
+                # Aplicar memoización si el cuerpo es un bloque cacheable
+                if self._should_memoize(body):
+                    ctx_hash = self.get_context_hash()
+                    memo_key = self.memo_key(body, mode, ctx_hash)
+                    
+                    # Intentar obtener del cache
+                    cached_rows = self.memo_get(memo_key)
+                    if cached_rows is not None:
+                        # Usar resultados cacheados
+                        self.rows.extend(cached_rows)
+                    else:
+                        # Analizar y cachear
+                        rows_before = len(self.rows)
+                        self.visit(body, mode)
+                        rows_added = self.rows[rows_before:]
+                        if rows_added:
+                            self.memo_set(memo_key, rows_added)
+                else:
+                    # No es cacheable, visitar normalmente
+                    self.visit(body, mode)
             
             self.pop_multiplier()
     
@@ -1005,10 +1062,29 @@ class WhileRepeatVisitor:
         mult_expr = Integer(1) + t_sym
         self.push_multiplier(mult_expr)
         
-        # Visitar el cuerpo del bucle
+        # Visitar el cuerpo del bucle (con memoización si es un bloque)
         body = node.get("body")
         if body:
-            self.visit(body, mode)
+            # Aplicar memoización si el cuerpo es un bloque cacheable
+            if self._should_memoize(body):
+                ctx_hash = self.get_context_hash()
+                memo_key = self.memo_key(body, mode, ctx_hash)
+                
+                # Intentar obtener del cache
+                cached_rows = self.memo_get(memo_key)
+                if cached_rows is not None:
+                    # Usar resultados cacheados
+                    self.rows.extend(cached_rows)
+                else:
+                    # Analizar y cachear
+                    rows_before = len(self.rows)
+                    self.visit(body, mode)
+                    rows_added = self.rows[rows_before:]
+                    if rows_added:
+                        self.memo_set(memo_key, rows_added)
+            else:
+                # No es cacheable, visitar normalmente
+                self.visit(body, mode)
         
         self.pop_multiplier()
         

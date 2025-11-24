@@ -1,5 +1,7 @@
 from typing import List, Dict, Any, Optional, Union
 from sympy import Symbol, Sum, Integer, Expr, latex, sympify
+import json
+import hashlib
 from ..utils.expr_converter import ExprConverter
 from ..models.avg_model import AvgModel
 from ...shared.types import LineCost, AnalyzeOpenResponse
@@ -14,7 +16,22 @@ class BaseAnalyzer:
     - Aplicar multiplicadores de bucles (stack)
     - Construir la ecuación de eficiencia T_open = Σ C_{k}·count_{k}
     - Registrar el procedimiento (pasos) que llevaron a T_open
-    - Memoización sencilla (PD) por nodo+contexto
+    - Memoización (Programación Dinámica) por nodo+contexto para optimización
+    
+    **Memoización (PD):**
+    La clase incluye un sistema de memoización que cachea resultados de análisis
+    de nodos AST para evitar trabajo repetido. Esto es especialmente útil cuando:
+    - El mismo bloque de código aparece múltiples veces
+    - Hay bucles anidados que analizan estructuras similares
+    - Se analizan múltiples casos (worst/best/avg) del mismo algoritmo
+    
+    La memoización se activa automáticamente en nodos que se benefician de ella
+    (Block, For, If, While, etc.) y usa una clave compuesta por:
+    - Identificador estable del nodo (posición o hash)
+    - Modo de análisis (worst/best/avg)
+    - Contexto actual (hash del loop_stack)
+    
+    El cache se limpia automáticamente cuando se llama a clear().
     
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
@@ -704,32 +721,137 @@ class BaseAnalyzer:
         }
 
     # --- util 5: memoización (PD) ---
+    def _get_node_id(self, node: Any) -> str:
+        """
+        Obtiene un identificador estable para un nodo del AST.
+        
+        Prioridad:
+        1. Posición (línea, columna) si está disponible
+        2. Hash del contenido del nodo (tipo + estructura)
+        3. ID del objeto como fallback
+        
+        Args:
+            node: Nodo del AST
+            
+        Returns:
+            String identificador estable del nodo
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
+        if node is None:
+            return "null"
+        
+        # Intentar usar posición si está disponible
+        if isinstance(node, dict):
+            pos = node.get("pos", {})
+            if pos and isinstance(pos, dict):
+                line = pos.get("line")
+                column = pos.get("column")
+                if line is not None:
+                    # Usar posición como identificador
+                    node_type = node.get("type", "unknown")
+                    if column is not None:
+                        return f"{node_type}:{line}:{column}"
+                    return f"{node_type}:{line}"
+            
+            # Si no hay posición, usar hash del contenido
+            try:
+                # Crear una representación estable del nodo (sin objetos no serializables)
+                node_repr = {
+                    "type": node.get("type"),
+                    "name": node.get("name"),
+                    "body": "..." if "body" in node else None,  # Solo indicar presencia, no contenido
+                }
+                node_str = json.dumps(node_repr, sort_keys=True)
+                node_hash = hashlib.md5(node_str.encode()).hexdigest()[:8]
+                return f"{node.get('type', 'unknown')}:{node_hash}"
+            except Exception:
+                pass
+        
+        # Fallback: usar ID del objeto
+        return str(id(node))
+    
+    def _should_memoize(self, node: Any) -> bool:
+        """
+        Determina si un nodo debe ser cacheado usando memoización.
+        
+        Estrategia:
+        - Cachear nodos que pueden aparecer múltiples veces (Block, For, If, While, etc.)
+        - No cachear nodos simples (Assign, Return, etc.) que son únicos por línea
+        - No cachear si el nodo es None o no tiene estructura
+        
+        Args:
+            node: Nodo del AST a evaluar
+            
+        Returns:
+            True si el nodo debe ser cacheado, False en caso contrario
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
+        if node is None:
+            return False
+        
+        if not isinstance(node, dict):
+            return False
+        
+        node_type = node.get("type", "").lower()
+        
+        # Nodos que se benefician de memoización (estructuras que pueden repetirse)
+        memoizable_types = {
+            "block", "for", "while", "repeat", "if", "procdef", "program"
+        }
+        
+        return node_type in memoizable_types
+    
     def memo_key(self, node: Any, mode: str, ctx_hash: str) -> str:
         """
         Genera clave estable para cachear filas de un subárbol bajo un contexto.
         
+        La clave combina:
+        - Identificador estable del nodo (posición o hash)
+        - Modo de análisis (worst/best/avg)
+        - Hash del contexto actual (loop_stack)
+        
         Args:
             node: Nodo del AST
-            mode: Modo de análisis (ej: "recursive", "iterative")
-            ctx_hash: Hash del contexto actual
+            mode: Modo de análisis ("worst", "best", "avg")
+            ctx_hash: Hash del contexto actual (obtenido con get_context_hash())
             
         Returns:
-            Clave única para el cache
+            Clave única para el cache en formato: "{node_id}|{mode}|{ctx_hash}"
+            
+        Example:
+            >>> analyzer = BaseAnalyzer()
+            >>> node = {"type": "Block", "pos": {"line": 5, "column": 10}}
+            >>> ctx_hash = analyzer.get_context_hash()
+            >>> key = analyzer.memo_key(node, "worst", ctx_hash)
+            >>> cached = analyzer.memo_get(key)
+            >>> if cached is None:
+            ...     # Analizar nodo...
+            ...     analyzer.memo_set(key, rows)
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        nid = getattr(node, "id", None) or str(id(node))
+        nid = self._get_node_id(node)
         return f"{nid}|{mode}|{ctx_hash}"
 
     def memo_get(self, key: str) -> Optional[List[LineCost]]:
         """
-        Obtiene filas del cache.
+        Obtiene filas del cache usando la clave proporcionada.
         
         Args:
-            key: Clave del cache
+            key: Clave del cache (generada con memo_key())
             
         Returns:
-            Lista de filas cacheadas o None si no existe
+            Lista de filas cacheadas o None si no existe en el cache
+            
+        Example:
+            >>> analyzer = BaseAnalyzer()
+            >>> key = analyzer.memo_key(node, "worst", analyzer.get_context_hash())
+            >>> cached_rows = analyzer.memo_get(key)
+            >>> if cached_rows:
+            ...     analyzer.rows.extend(cached_rows)
+            ...     return  # Usar resultados cacheados
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
@@ -737,11 +859,22 @@ class BaseAnalyzer:
 
     def memo_set(self, key: str, rows: List[LineCost]):
         """
-        Guarda filas en el cache.
+        Guarda filas en el cache para reutilización posterior.
+        
+        Crea una copia superficial de las filas para evitar aliasing accidental
+        y asegurar que los cambios posteriores no afecten el cache.
         
         Args:
-            key: Clave del cache
-            rows: Lista de filas a cachear
+            key: Clave del cache (generada con memo_key())
+            rows: Lista de filas a cachear (LineCost)
+            
+        Example:
+            >>> analyzer = BaseAnalyzer()
+            >>> rows_before = len(analyzer.rows)
+            >>> # ... analizar nodo ...
+            >>> rows_added = analyzer.rows[rows_before:]
+            >>> key = analyzer.memo_key(node, "worst", analyzer.get_context_hash())
+            >>> analyzer.memo_set(key, rows_added)
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """

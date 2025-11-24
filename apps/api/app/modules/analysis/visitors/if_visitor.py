@@ -95,13 +95,33 @@ class IfVisitor:
             note="Evaluación de la condición"
         )
         
-        # Helper para ejecutar un bloque y extraer solo las filas nuevas
+        # Helper para ejecutar un bloque y extraer solo las filas nuevas (con memoización)
         def run_block_to_buffer(block_node):
             # Guardar estado de rows para extraer solo lo nuevo
             start = len(self.rows)
+            
             # Visitar el bloque sobre el mismo contexto (loop_stack se respeta)
             if block_node:
-                self.visit(block_node, mode)
+                # Aplicar memoización si el bloque es cacheable
+                if self._should_memoize(block_node):
+                    ctx_hash = self.get_context_hash()
+                    memo_key = self.memo_key(block_node, mode, ctx_hash)
+                    
+                    # Intentar obtener del cache
+                    cached_rows = self.memo_get(memo_key)
+                    if cached_rows is not None:
+                        # Usar resultados cacheados
+                        self.rows.extend(cached_rows)
+                    else:
+                        # Analizar y cachear
+                        self.visit(block_node, mode)
+                        rows_added = self.rows[start:]
+                        if rows_added:
+                            self.memo_set(memo_key, rows_added)
+                else:
+                    # No es cacheable, visitar normalmente
+                    self.visit(block_node, mode)
+            
             # Extraer lo recién agregado
             new_rows = self.rows[start:]
             # Removerlos de rows para decidir luego qué rama se queda

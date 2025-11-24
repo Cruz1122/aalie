@@ -934,15 +934,34 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
     
     def visitBlock(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """
-        Visita un bloque de código.
+        Visita un bloque de código con memoización para optimización.
+        
+        Si el bloque ya fue analizado en el mismo contexto, reutiliza los resultados
+        del cache en lugar de analizar nuevamente.
         
         Args:
             node: Nodo Block del AST
             mode: Modo de análisis
         """
+        # Verificar si este nodo debe ser cacheado
+        if self._should_memoize(node):
+            # Generar clave de memoización
+            ctx_hash = self.get_context_hash()
+            memo_key = self.memo_key(node, mode, ctx_hash)
+            
+            # Intentar obtener del cache
+            cached_rows = self.memo_get(memo_key)
+            if cached_rows is not None:
+                # Usar resultados cacheados
+                self.rows.extend(cached_rows)
+                return
+        
+        # Si no está en cache, analizar normalmente
+        rows_before = len(self.rows)
+        
         for stmt in node.get("body", []):
             # Guardar el número de rows antes de visitar el statement
-            rows_before = len(self.rows)
+            stmt_rows_before = len(self.rows)
             
             # Si el statement es un While, pasar el bloque actual como contexto padre
             if isinstance(stmt, dict) and stmt.get("type") == "While":
@@ -969,7 +988,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     # El for terminó (loop_stack está vacío ahora)
                     # Buscar si hay un return reciente con nota "early-exit"
                     # que se agregó durante la visita del for
-                    for row in self.rows[rows_before:]:
+                    for row in self.rows[stmt_rows_before:]:
                         if (row.get("kind") == "return" and 
                             row.get("note") and 
                             "early-exit" in row.get("note", "").lower()):
@@ -980,6 +999,14 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 # Si debemos detener, salir del bucle
                 if should_stop:
                     break
+        
+        # Guardar resultados en cache si corresponde
+        if self._should_memoize(node):
+            rows_added = self.rows[rows_before:]
+            if rows_added:  # Solo cachear si se agregaron filas
+                ctx_hash = self.get_context_hash()
+                memo_key = self.memo_key(node, mode, ctx_hash)
+                self.memo_set(memo_key, rows_added)
     
     def visitProcDef(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """

@@ -141,6 +141,55 @@ Responsable de identificar el tipo de algoritmo.
 - Clasificación heurística basada en AST
 - Soporte para clasificación con LLM (opcional)
 
+## Optimizaciones
+
+### Memoización (Programación Dinámica)
+
+El sistema de análisis utiliza **memoización** (programación dinámica) para optimizar el análisis de algoritmos con estructuras repetitivas.
+
+#### ¿Cuándo se activa?
+
+La memoización se activa automáticamente cuando se analizan nodos del AST que pueden aparecer múltiples veces:
+
+- **Bloques de código** (`Block`): Se cachean resultados de análisis de bloques completos
+- **Bucles** (`For`, `While`, `Repeat`): Se cachean análisis de cuerpos de bucles
+- **Condicionales** (`If`): Se cachean análisis de ramas THEN y ELSE por separado
+
+#### Estrategia de Cache
+
+La clave de cache combina tres componentes:
+
+1. **Identificador del nodo**: Posición (línea, columna) o hash del contenido
+2. **Modo de análisis**: `worst`, `best`, o `avg`
+3. **Contexto actual**: Hash del `loop_stack` (bucles anidados activos)
+
+Formato de clave: `"{node_id}|{mode}|{context_hash}"`
+
+#### Beneficios
+
+- **Rendimiento**: Evita re-analizar bloques idénticos en el mismo contexto
+- **Consistencia**: Garantiza resultados idénticos para análisis repetidos
+- **Escalabilidad**: Mejora el rendimiento en algoritmos con bucles anidados profundos
+
+#### Ejemplo de Uso
+
+```python
+# El analizador automáticamente cachea resultados
+analyzer = IterativeAnalyzer()
+
+# Primera visita: analiza y cachea
+analyzer.visitBlock(block_node, "worst")
+
+# Segunda visita (mismo nodo, mismo contexto): usa cache
+analyzer.visitBlock(block_node, "worst")  # Más rápido
+```
+
+#### Gestión del Cache
+
+- El cache se limpia automáticamente cuando se llama a `clear()`
+- Cada instancia de analizador tiene su propio cache aislado
+- No hay límite de tamaño (se limpia al finalizar el análisis)
+
 ## Dependencias Externas
 
 ### Paquetes Python

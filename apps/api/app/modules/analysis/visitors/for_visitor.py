@@ -352,9 +352,28 @@ class ForVisitor:
         
         self.push_multiplier(mult)
         
-        # 3) Visitar el cuerpo del bucle
+        # 3) Visitar el cuerpo del bucle (con memoización si es un bloque)
         if body:
-            self.visit(body, mode)
+            # Aplicar memoización si el cuerpo es un bloque cacheable
+            if self._should_memoize(body):
+                ctx_hash = self.get_context_hash()
+                memo_key = self.memo_key(body, mode, ctx_hash)
+                
+                # Intentar obtener del cache
+                cached_rows = self.memo_get(memo_key)
+                if cached_rows is not None:
+                    # Usar resultados cacheados
+                    self.rows.extend(cached_rows)
+                else:
+                    # Analizar y cachear
+                    rows_before = len(self.rows)
+                    self.visit(body, mode)
+                    rows_added = self.rows[rows_before:]
+                    if rows_added:
+                        self.memo_set(memo_key, rows_added)
+            else:
+                # No es cacheable, visitar normalmente
+                self.visit(body, mode)
         
         # 4) Salir del contexto del bucle
         self.pop_multiplier()
