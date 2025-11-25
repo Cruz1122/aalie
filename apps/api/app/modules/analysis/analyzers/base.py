@@ -574,12 +574,14 @@ class BaseAnalyzer:
                                 has_complex_summations = True
                                 break
         
-        # Criterio 1: Si hay más de 5 términos únicos de C_k, simplificar
-        if len(unique_ck_terms) > 5:
+        # Criterio 1: Si hay más de 8 términos únicos de C_k, simplificar
+        # Aumentado de 5 a 8 para acomodar algoritmos con asignaciones compuestas
+        if len(unique_ck_terms) > 8:
             return False
         
-        # Criterio 2: Si hay más de 10 términos totales de C_k, simplificar
-        if total_ck_count > 10:
+        # Criterio 2: Si hay más de 15 términos totales de C_k, simplificar
+        # Aumentado de 10 a 15 para dar más flexibilidad
+        if total_ck_count > 15:
             return False
         
         # Criterio 3: Si hay sumatorias complejas, simplificar

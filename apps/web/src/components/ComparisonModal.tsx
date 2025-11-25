@@ -170,46 +170,46 @@ function renderIterativeCaseData(
       </div>
 
       <div className="flex-1 flex flex-col space-y-2 min-h-0">
-        {data.T_polynomial && (
+        {resolvedData.T_polynomial && (
           <div className="glass-card p-2 rounded-lg flex-shrink-0">
             <div className="text-xs text-slate-400 mb-1">T_polynomial:</div>
             <div className="text-white overflow-x-auto scrollbar-custom">
-              <Formula latex={data.T_polynomial} display />
+              <Formula latex={resolvedData.T_polynomial} display />
             </div>
           </div>
         )}
 
-        {data.T_open && (
+        {resolvedData.T_open && (
           <div className="glass-card p-2 rounded-lg flex-shrink-0">
             <div className="text-xs text-slate-400 mb-1">T_open:</div>
             <div className="text-white overflow-x-auto scrollbar-custom">
-              <Formula latex={data.T_open} display />
+              <Formula latex={resolvedData.T_open} display />
             </div>
           </div>
         )}
 
         <div className="grid grid-cols-3 gap-2 flex-shrink-0">
-          {data.big_o && (
+          {resolvedData.big_o && (
             <div className="glass-card p-2 rounded-lg text-center">
               <div className="text-[10px] text-slate-400 mb-1">Big-O</div>
               <div className="text-white font-semibold text-xs overflow-x-auto scrollbar-custom">
-                <Formula latex={data.big_o} />
+                <Formula latex={resolvedData.big_o} />
               </div>
             </div>
           )}
-          {data.big_omega && (
+          {resolvedData.big_omega && (
             <div className="glass-card p-2 rounded-lg text-center">
               <div className="text-[10px] text-slate-400 mb-1">Big-Ω</div>
               <div className="text-white font-semibold text-xs overflow-x-auto scrollbar-custom">
-                <Formula latex={data.big_omega} />
+                <Formula latex={resolvedData.big_omega} />
               </div>
             </div>
           )}
-          {data.big_theta && (
+          {resolvedData.big_theta && (
             <div className="glass-card p-2 rounded-lg text-center">
               <div className="text-[10px] text-slate-400 mb-1">Big-Θ</div>
               <div className="text-white font-semibold text-xs overflow-x-auto scrollbar-custom">
-                <Formula latex={data.big_theta} />
+                <Formula latex={resolvedData.big_theta} />
               </div>
             </div>
           )}
@@ -253,13 +253,13 @@ function renderIterativeCaseData(
 function renderIterativeData(
   ownData: {
     worst: CoreAnalysisData | null;
-    best: CoreAnalysisData | null;
-    avg: CoreAnalysisData | null;
+    best: CoreAnalysisData | "same_as_worst" | null;
+    avg: CoreAnalysisData | "same_as_worst" | null;
   },
   llmData: {
     worst: CoreAnalysisData | null;
-    best: CoreAnalysisData | null;
-    avg: CoreAnalysisData | null;
+    best: CoreAnalysisData | "same_as_worst" | null;
+    avg: CoreAnalysisData | "same_as_worst" | null;
   },
   isOwn: boolean,
 ) {
@@ -1048,7 +1048,7 @@ export default function ComparisonModal({
         </div>
 
         {/* Contenido: dos columnas */}
-        <div className="flex-1 grid grid-cols-2 gap-6 overflow-y-auto pr-2 scrollbar-custom items-stretch">
+        <div className="flex-1 grid grid-cols-2 gap-6 overflow-y-auto pr-2 scrollbar-custom items-stretch pt-2">
           {/* Columna izquierda: Análisis propio */}
           <div className="flex flex-col">
             {isRecursive

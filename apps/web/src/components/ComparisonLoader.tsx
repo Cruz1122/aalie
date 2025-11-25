@@ -79,7 +79,7 @@ export const ComparisonLoader: React.FC<ComparisonLoaderProps> = ({
 
       {/* Contenedor del loader - tamaño fijo grande */}
       <div
-        className={`relative z-10 glass-modal-container rounded-2xl p-8 w-[600px] h-[400px] mx-4 shadow-2xl flex flex-col justify-center transition-all duration-300 ${isClosing ? "opacity-0 scale-95 translate-y-2" : "opacity-100 scale-100 translate-y-0"}`}
+        className={`relative z-10 glass-modal-container rounded-2xl p-8 w-[600px] h-[400px] mx-4 shadow-[0_0_60px_-15px_rgba(168,85,247,0.4)] flex flex-col justify-center transition-all duration-300 ${isClosing ? "opacity-0 scale-95 translate-y-2" : "opacity-100 scale-100 translate-y-0"}`}
       >
         {/* Icono de estado */}
         <div className="flex justify-center mb-6">
