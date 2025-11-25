@@ -314,7 +314,13 @@ export interface DocumentationSection {
   title: string;
   description: string;
   image?: ImageData;
-  content?: PackageContent | UIShowcaseContent | ToolsContent | KaTeXContent | AnalyzerContent | GrammarContent;
+  content?:
+    | PackageContent
+    | UIShowcaseContent
+    | ToolsContent
+    | KaTeXContent
+    | AnalyzerContent
+    | GrammarContent;
 }
 
 export interface ModalImageData {

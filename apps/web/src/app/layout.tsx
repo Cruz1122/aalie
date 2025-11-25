@@ -26,7 +26,9 @@ export const metadata = {
   description: "Análisis avanzado de complejidad algorítmica",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" className={`${notoSans.variable} ${splineSans.variable}`}>
       <head>
@@ -38,13 +40,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body
         className="min-h-screen bg-[#101a23] text-white antialiased"
-        style={{ fontFamily: "var(--font-spline-sans), var(--font-noto-sans), sans-serif" }}
+        style={{
+          fontFamily:
+            "var(--font-spline-sans), var(--font-noto-sans), sans-serif",
+        }}
       >
         <GlobalLoaderProvider>
           <NavigationProvider>
-            <NavigationLoadingWrapper>
-              {children}
-            </NavigationLoadingWrapper>
+            <NavigationLoadingWrapper>{children}</NavigationLoadingWrapper>
           </NavigationProvider>
           <GlobalLoaderOverlay />
         </GlobalLoaderProvider>

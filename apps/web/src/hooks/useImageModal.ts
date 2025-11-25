@@ -3,7 +3,9 @@ import { useState, useCallback, useEffect } from "react";
 import { ModalImageData } from "@/types/documentation";
 
 export const useImageModal = () => {
-  const [selectedImage, setSelectedImage] = useState<ModalImageData | null>(null);
+  const [selectedImage, setSelectedImage] = useState<ModalImageData | null>(
+    null,
+  );
 
   const openModal = useCallback((imageData: ModalImageData) => {
     setSelectedImage(imageData);

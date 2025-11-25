@@ -17,7 +17,8 @@ import { DocumentationSection } from "@/types/documentation";
 
 export default function TechnicalDocsPage() {
   const { selectedImage, openModal, closeModal, isModalOpen } = useImageModal();
-  const [selectedSection, setSelectedSection] = useState<DocumentationSection | null>(null);
+  const [selectedSection, setSelectedSection] =
+    useState<DocumentationSection | null>(null);
   const [isDocModalOpen, setIsDocModalOpen] = useState(false);
   const sections = useDocumentationSections();
   const { finishNavigation } = useNavigation();
@@ -27,7 +28,7 @@ export default function TechnicalDocsPage() {
     finishNavigation();
   }, [finishNavigation]);
 
-  const handleSectionClick = (sectionId: string) => {
+  const handleSectionClick = (_sectionId: string) => {
     // El scroll se maneja en el componente DocumentationIndex
   };
 
@@ -52,21 +53,25 @@ export default function TechnicalDocsPage() {
               Documentación Técnica
             </h1>
             <p className="text-dark-text text-sm sm:text-base lg:text-lg leading-relaxed max-w-4xl mx-auto lg:mx-0">
-              Visión general del flujo, arquitectura del monorepo y contratos iniciales de API. Este
-              documento es un borrador inicial y se actualizará conforme evolucione el proyecto.
+              Visión general del flujo, arquitectura del monorepo y contratos
+              iniciales de API. Este documento es un borrador inicial y se
+              actualizará conforme evolucione el proyecto.
             </p>
           </header>
 
           {/* Índice de navegación */}
-          <DocumentationIndex sections={sections} onSectionClick={handleSectionClick} />
+          <DocumentationIndex
+            sections={sections}
+            onSectionClick={handleSectionClick}
+          />
 
           {/* Grid de documentación */}
           <section aria-label="Secciones de documentación técnica">
             <div className="documentation-grid">
               {sections.map((section) => (
                 <div key={section.id} id={section.id} className="scroll-mt-24">
-                  <DocumentationCard 
-                    section={section} 
+                  <DocumentationCard
+                    section={section}
                     onImageClick={openModal}
                     onOpenSection={openDocumentationModal}
                   />
@@ -88,43 +93,89 @@ export default function TechnicalDocsPage() {
             <div className="glass-card p-6 lg:p-8 rounded-xl">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
-                  <span className="material-symbols-outlined text-primary text-2xl">description</span>
+                  <span className="material-symbols-outlined text-primary text-2xl">
+                    description
+                  </span>
                 </div>
-                <h2 className="text-2xl font-bold text-white">Documentación Técnica Completa</h2>
+                <h2 className="text-2xl font-bold text-white">
+                  Documentación Técnica Completa
+                </h2>
               </div>
               <p className="text-dark-text mb-6 text-base leading-relaxed">
-                Para documentación técnica detallada, consulta los siguientes recursos en el repositorio:
+                Para documentación técnica detallada, consulta los siguientes
+                recursos en el repositorio:
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Documentación de API */}
                 <div className="glass-secondary p-6 rounded-lg">
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="material-symbols-outlined text-primary text-xl">api</span>
-                    <h3 className="text-xl font-semibold text-white">Documentación de API</h3>
+                    <span className="material-symbols-outlined text-primary text-xl">
+                      api
+                    </span>
+                    <h3 className="text-xl font-semibold text-white">
+                      Documentación de API
+                    </h3>
                   </div>
                   <p className="text-dark-text text-sm mb-4">
-                    Documentación completa de la API backend, incluyendo endpoints, modelos de datos, arquitectura y manejo de errores.
+                    Documentación completa de la API backend, incluyendo
+                    endpoints, modelos de datos, arquitectura y manejo de
+                    errores.
                   </p>
                   <ul className="list-none space-y-2 text-sm text-dark-text">
                     <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">check_circle</span>
-                      <span><code className="text-cyan-300">docs/api/README.md</code> - Índice general</span>
+                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        check_circle
+                      </span>
+                      <span>
+                        <code className="text-cyan-300">
+                          docs/api/README.md
+                        </code>{" "}
+                        - Índice general
+                      </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">check_circle</span>
-                      <span><code className="text-cyan-300">docs/api/endpoints.md</code> - Endpoints REST</span>
+                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        check_circle
+                      </span>
+                      <span>
+                        <code className="text-cyan-300">
+                          docs/api/endpoints.md
+                        </code>{" "}
+                        - Endpoints REST
+                      </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">check_circle</span>
-                      <span><code className="text-cyan-300">docs/api/models.md</code> - Modelos de datos</span>
+                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        check_circle
+                      </span>
+                      <span>
+                        <code className="text-cyan-300">
+                          docs/api/models.md
+                        </code>{" "}
+                        - Modelos de datos
+                      </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">check_circle</span>
-                      <span><code className="text-cyan-300">docs/api/architecture.md</code> - Arquitectura</span>
+                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        check_circle
+                      </span>
+                      <span>
+                        <code className="text-cyan-300">
+                          docs/api/architecture.md
+                        </code>{" "}
+                        - Arquitectura
+                      </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">check_circle</span>
-                      <span><code className="text-cyan-300">docs/api/errors.md</code> - Manejo de errores</span>
+                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        check_circle
+                      </span>
+                      <span>
+                        <code className="text-cyan-300">
+                          docs/api/errors.md
+                        </code>{" "}
+                        - Manejo de errores
+                      </span>
                     </li>
                   </ul>
                 </div>
@@ -132,51 +183,118 @@ export default function TechnicalDocsPage() {
                 {/* Documentación de Aplicación Web */}
                 <div className="glass-secondary p-6 rounded-lg">
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="material-symbols-outlined text-primary text-xl">web</span>
-                    <h3 className="text-xl font-semibold text-white">Documentación de App</h3>
+                    <span className="material-symbols-outlined text-primary text-xl">
+                      web
+                    </span>
+                    <h3 className="text-xl font-semibold text-white">
+                      Documentación de App
+                    </h3>
                   </div>
                   <p className="text-dark-text text-sm mb-4">
-                    Documentación completa del frontend, incluyendo componentes, routing, gestión de estado, estilos e integración con API.
+                    Documentación completa del frontend, incluyendo componentes,
+                    routing, gestión de estado, estilos e integración con API.
                   </p>
                   <ul className="list-none space-y-2 text-sm text-dark-text">
                     <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">check_circle</span>
-                      <span><code className="text-cyan-300">docs/app/README.md</code> - Índice general</span>
+                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        check_circle
+                      </span>
+                      <span>
+                        <code className="text-cyan-300">
+                          docs/app/README.md
+                        </code>{" "}
+                        - Índice general
+                      </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">check_circle</span>
-                      <span><code className="text-cyan-300">docs/app/architecture.md</code> - Arquitectura</span>
+                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        check_circle
+                      </span>
+                      <span>
+                        <code className="text-cyan-300">
+                          docs/app/architecture.md
+                        </code>{" "}
+                        - Arquitectura
+                      </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">check_circle</span>
-                      <span><code className="text-cyan-300">docs/app/components.md</code> - Componentes</span>
+                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        check_circle
+                      </span>
+                      <span>
+                        <code className="text-cyan-300">
+                          docs/app/components.md
+                        </code>{" "}
+                        - Componentes
+                      </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">check_circle</span>
-                      <span><code className="text-cyan-300">docs/app/routing.md</code> - Sistema de rutas</span>
+                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        check_circle
+                      </span>
+                      <span>
+                        <code className="text-cyan-300">
+                          docs/app/routing.md
+                        </code>{" "}
+                        - Sistema de rutas
+                      </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">check_circle</span>
-                      <span><code className="text-cyan-300">docs/app/state-management.md</code> - Estado</span>
+                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        check_circle
+                      </span>
+                      <span>
+                        <code className="text-cyan-300">
+                          docs/app/state-management.md
+                        </code>{" "}
+                        - Estado
+                      </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">check_circle</span>
-                      <span><code className="text-cyan-300">docs/app/styling.md</code> - Estilos</span>
+                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        check_circle
+                      </span>
+                      <span>
+                        <code className="text-cyan-300">
+                          docs/app/styling.md
+                        </code>{" "}
+                        - Estilos
+                      </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">check_circle</span>
-                      <span><code className="text-cyan-300">docs/app/api-integration.md</code> - Integración API</span>
+                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        check_circle
+                      </span>
+                      <span>
+                        <code className="text-cyan-300">
+                          docs/app/api-integration.md
+                        </code>{" "}
+                        - Integración API
+                      </span>
                     </li>
                   </ul>
                 </div>
               </div>
               <div className="mt-6 bg-blue-500/10 border-l-4 border-blue-500/50 rounded-r-lg p-4">
                 <div className="flex items-start gap-3">
-                  <span className="material-symbols-outlined text-blue-400 text-xl">info</span>
+                  <span className="material-symbols-outlined text-blue-400 text-xl">
+                    info
+                  </span>
                   <div>
-                    <p className="text-blue-300 text-sm font-semibold mb-1">Nota</p>
+                    <p className="text-blue-300 text-sm font-semibold mb-1">
+                      Nota
+                    </p>
                     <p className="text-blue-200 text-sm">
-                      Esta documentación está disponible en el repositorio del proyecto en las carpetas <code className="text-blue-100 bg-slate-800/50 px-1.5 py-0.5 rounded">docs/api/</code> y <code className="text-blue-100 bg-slate-800/50 px-1.5 py-0.5 rounded">docs/app/</code>.
+                      Esta documentación está disponible en el repositorio del
+                      proyecto en las carpetas{" "}
+                      <code className="text-blue-100 bg-slate-800/50 px-1.5 py-0.5 rounded">
+                        docs/api/
+                      </code>{" "}
+                      y{" "}
+                      <code className="text-blue-100 bg-slate-800/50 px-1.5 py-0.5 rounded">
+                        docs/app/
+                      </code>
+                      .
                     </p>
                   </div>
                 </div>
@@ -200,13 +318,17 @@ export default function TechnicalDocsPage() {
       </main>
 
       {/* Modal de imagen */}
-      <ImageModal image={selectedImage} isOpen={isModalOpen} onClose={closeModal} />
-      
+      <ImageModal
+        image={selectedImage}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
+
       {/* Modal de documentación */}
-      <DocumentationModal 
-        open={isDocModalOpen} 
-        onClose={closeDocumentationModal} 
-        section={selectedSection} 
+      <DocumentationModal
+        open={isDocModalOpen}
+        onClose={closeDocumentationModal}
+        section={selectedSection}
       />
 
       <Footer />

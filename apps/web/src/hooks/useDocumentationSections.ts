@@ -130,9 +130,14 @@ export const useDocumentationSections = (): DocumentationSection[] => {
                 "Funciona como la fuente central de verdad para todos los tipos y contratos del sistema. Contiene las interfaces TypeScript compartidas que definen la estructura de requests, responses, modelos de interfaz de usuario y estructuras de costes. Su importancia radica en prevenir desajustes entre el frontend y backend, asegurando comunicación perfecta.",
               io: {
                 input: "Definiciones TypeScript en src/",
-                outputs: ["dist/index.{js,d.ts} consumible por cualquier paquete"],
+                outputs: [
+                  "dist/index.{js,d.ts} consumible por cualquier paquete",
+                ],
               },
-              usedBy: ["Web (tipado de llamadas/render)", "API (contratos y validación)"],
+              usedBy: [
+                "Web (tipado de llamadas/render)",
+                "API (contratos y validación)",
+              ],
               notes: [
                 "Source of truth de contratos",
                 "Cambios requieren versionar y alinear web/API",
@@ -226,7 +231,7 @@ export const useDocumentationSections = (): DocumentationSection[] => {
               },
             ],
           },
-        }
+        },
       },
       {
         id: "ui-showcase",
@@ -237,7 +242,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
           type: "ui-showcase" as const,
           implementation: {
             title: "Componentes Interactivos",
-            description: "Accede a la demostración completa de todos los componentes de la interfaz de usuario.",
+            description:
+              "Accede a la demostración completa de todos los componentes de la interfaz de usuario.",
             testRoute: "/ui-test",
             features: [
               "Botones con efectos glassmorphism",
@@ -246,9 +252,9 @@ export const useDocumentationSections = (): DocumentationSection[] => {
               "Componentes LaTeX integrados",
               "Sistema de loaders avanzado",
               "Formularios con validación",
-            ]
-          }
-        }
+            ],
+          },
+        },
       },
       {
         id: "katex-integration",
@@ -279,7 +285,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
                   "displayMode?: boolean - Modo bloque (centrado) vs inline",
                   "className?: string - Clases CSS adicionales",
                 ],
-                usage: "Renderizado básico de expresiones matemáticas individuales",
+                usage:
+                  "Renderizado básico de expresiones matemáticas individuales",
               },
               {
                 name: "FormulaBlock.tsx",
@@ -301,7 +308,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
                   trust: false,
                   strict: "warn",
                 },
-                security: "Configurado para prevenir XSS y ejecutar de forma segura",
+                security:
+                  "Configurado para prevenir XSS y ejecutar de forma segura",
               },
             ],
           },
@@ -326,8 +334,10 @@ export const useDocumentationSections = (): DocumentationSection[] => {
           styling: {
             title: "Estilos y Configuración",
             css: {
-              import: "Importación automática de katex/dist/katex.min.css en layout.tsx",
-              customization: "Estilos personalizados para tema oscuro y spacing",
+              import:
+                "Importación automática de katex/dist/katex.min.css en layout.tsx",
+              customization:
+                "Estilos personalizados para tema oscuro y spacing",
               responsive: "Contenedores con overflow-x-auto para móviles",
             },
             themes: {
@@ -335,7 +345,7 @@ export const useDocumentationSections = (): DocumentationSection[] => {
               responsive: "Adaptativo a diferentes tamaños de pantalla",
             },
           },
-        }
+        },
       },
       {
         id: "grammar-parser",
@@ -346,7 +356,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
           type: "grammar",
           overview: {
             title: "Visión General",
-            description: "La gramática define un lenguaje de pseudocódigo estructurado para análisis algorítmico, con soporte completo para procedimientos, estructuras de control y expresiones matemáticas.",
+            description:
+              "La gramática define un lenguaje de pseudocódigo estructurado para análisis algorítmico, con soporte completo para procedimientos, estructuras de control y expresiones matemáticas.",
             technology: "ANTLR 4.13.2",
             location: "packages/grammar/grammar/Language.g4",
             generators: [
@@ -359,27 +370,32 @@ export const useDocumentationSections = (): DocumentationSection[] => {
             items: [
               {
                 name: "Procedimientos con Parámetros Tipados",
-                description: "Define funciones con parámetros escalares, arrays con rangos (A[1]..[n]) y objetos tipados.",
+                description:
+                  "Define funciones con parámetros escalares, arrays con rangos (A[1]..[n]) y objetos tipados.",
                 example: "factorial(n) BEGIN ... END",
               },
               {
                 name: "Estructuras de Control",
-                description: "Soporte completo para IF-THEN-ELSE, FOR, WHILE y REPEAT-UNTIL con bloques obligatorios.",
+                description:
+                  "Soporte completo para IF-THEN-ELSE, FOR, WHILE y REPEAT-UNTIL con bloques obligatorios.",
                 example: "FOR i <- 1 TO n DO BEGIN ... END",
               },
               {
                 name: "Operadores Normalizados",
-                description: "Conjunto cerrado de operadores aritméticos, relacionales y lógicos con precedencia estándar.",
+                description:
+                  "Conjunto cerrado de operadores aritméticos, relacionales y lógicos con precedencia estándar.",
                 example: "resultado <- (a + b) * c DIV 2",
               },
               {
                 name: "Arrays Multidimensionales",
-                description: "Soporte para declaración y acceso a arrays con múltiples dimensiones.",
+                description:
+                  "Soporte para declaración y acceso a arrays con múltiples dimensiones.",
                 example: "matriz[i][j] <- valor",
               },
               {
                 name: "Sentencias PRINT",
-                description: "Permite mostrar valores en consola con soporte para strings literales, variables y expresiones.",
+                description:
+                  "Permite mostrar valores en consola con soporte para strings literales, variables y expresiones.",
                 example: 'print("Total: ", resultado);',
               },
             ],
@@ -435,7 +451,7 @@ variable ⟵ expresion;`,
                 notes: [
                   "Soporta múltiples argumentos separados por coma",
                   "Strings literales entre comillas dobles",
-                  "Escapar comillas internas con \\\"",
+                  'Escapar comillas internas con \\"',
                   "Puede incluir variables y expresiones",
                 ],
               },
@@ -451,7 +467,18 @@ variable ⟵ expresion;`,
               },
               {
                 name: "Relacionales",
-                operators: ["=", "!=", "<>", "≠", "<", ">", "<=", "≤", ">=", "≥"],
+                operators: [
+                  "=",
+                  "!=",
+                  "<>",
+                  "≠",
+                  "<",
+                  ">",
+                  "<=",
+                  "≤",
+                  ">=",
+                  "≥",
+                ],
                 precedence: "Menor que operadores lógicos",
               },
               {
@@ -463,7 +490,8 @@ variable ⟵ expresion;`,
           },
           ast: {
             title: "Estructura del AST",
-            description: "El AST generado es canónico e idéntico entre TypeScript y Python, garantizando consistencia entre cliente y servidor.",
+            description:
+              "El AST generado es canónico e idéntico entre TypeScript y Python, garantizando consistencia entre cliente y servidor.",
             nodeTypes: [
               "Program: Nodo raíz con array de procedimientos",
               "ProcDef: Definición de procedimiento con nombre, parámetros y cuerpo",
@@ -477,8 +505,10 @@ variable ⟵ expresion;`,
               "Identifier/Literal: Valores y referencias (incluye strings)",
             ],
             example: {
-              input: "factorial(n) BEGIN\n  resultado <- 1;\n  RETURN resultado;\nEND",
-              astFragment: '{\n  "type": "ProcDef",\n  "name": "factorial",\n  "params": [{"type": "Param", "name": "n"}],\n  "body": {"type": "Block", "body": [...]},\n  "pos": {"line": 1, "column": 0}\n}',
+              input:
+                "factorial(n) BEGIN\n  resultado <- 1;\n  RETURN resultado;\nEND",
+              astFragment:
+                '{\n  "type": "ProcDef",\n  "name": "factorial",\n  "params": [{"type": "Param", "name": "n"}],\n  "body": {"type": "Block", "body": [...]},\n  "pos": {"line": 1, "column": 0}\n}',
             },
           },
           validation: {
@@ -531,11 +561,13 @@ variable ⟵ expresion;`,
           interface: {
             title: "Diseño de 3 Columnas",
             layout: {
-              description: "Distribución responsive optimizada para análisis completo",
+              description:
+                "Distribución responsive optimizada para análisis completo",
               columns: [
                 {
                   name: "Código Numerado",
-                  purpose: "Visualización del pseudocódigo con números de línea",
+                  purpose:
+                    "Visualización del pseudocódigo con números de línea",
                   component: "CodePane",
                   features: [
                     "Numeración automática de líneas",
@@ -645,7 +677,8 @@ variable ⟵ expresion;`,
               {
                 name: "Procedimiento General",
                 description: "Análisis completo del algoritmo",
-                content: "Pasos generales de análisis de complejidad con T(n) o A(n)",
+                content:
+                  "Pasos generales de análisis de complejidad con T(n) o A(n)",
               },
               {
                 name: "Procedimiento por Línea",
@@ -664,7 +697,7 @@ variable ⟵ expresion;`,
                 props: ["lines: string[]", "className?: string"],
               },
               {
-                name: "CostsTable", 
+                name: "CostsTable",
                 file: "components/CostsTable.tsx",
                 purpose: "Tabla interactiva de análisis de costos",
                 props: [
@@ -675,7 +708,7 @@ variable ⟵ expresion;`,
               },
               {
                 name: "ProcedureModal",
-                file: "components/ProcedureModal.tsx", 
+                file: "components/ProcedureModal.tsx",
                 purpose: "Modal para mostrar análisis detallado",
                 props: [
                   "isOpen: boolean",
@@ -686,7 +719,7 @@ variable ⟵ expresion;`,
               },
             ],
           },
-        }
+        },
       },
       {
         id: "iterative-analyzer",
@@ -698,11 +731,13 @@ variable ⟵ expresion;`,
           interface: {
             title: "Diseño de 3 Columnas",
             layout: {
-              description: "Distribución responsive optimizada para análisis completo",
+              description:
+                "Distribución responsive optimizada para análisis completo",
               columns: [
                 {
                   name: "Código Numerado",
-                  purpose: "Visualización del pseudocódigo con números de línea",
+                  purpose:
+                    "Visualización del pseudocódigo con números de línea",
                   component: "CodePane",
                   features: [
                     "Numeración automática de líneas",
@@ -812,7 +847,8 @@ variable ⟵ expresion;`,
               {
                 name: "Procedimiento General",
                 description: "Análisis completo del algoritmo",
-                content: "Pasos generales de análisis de complejidad con T(n) o A(n)",
+                content:
+                  "Pasos generales de análisis de complejidad con T(n) o A(n)",
               },
               {
                 name: "Procedimiento por Línea",
@@ -823,7 +859,8 @@ variable ⟵ expresion;`,
           },
           implementation: {
             title: "Implementación Técnica",
-            description: "Analizador iterativo unificado con soporte completo para múltiples modos de análisis",
+            description:
+              "Analizador iterativo unificado con soporte completo para múltiples modos de análisis",
             features: [
               "Herencia múltiple: BaseAnalyzer + todos los visitors",
               "Dispatcher centralizado para todos los tipos de nodos AST",
@@ -925,7 +962,8 @@ variable ⟵ expresion;`,
                 mode: "worst | best | avg | all",
                 avgModel: {
                   mode: "uniform | symbolic",
-                  predicates: "Record<string, string> - Predicados personalizados",
+                  predicates:
+                    "Record<string, string> - Predicados personalizados",
                 },
               },
               response: {
@@ -934,7 +972,8 @@ variable ⟵ expresion;`,
                 totals: {
                   T_open: "string - Ecuación de eficiencia",
                   A_of_n: "string - Esperanza para caso promedio",
-                  avg_model_info: "Object - Información del modelo probabilístico",
+                  avg_model_info:
+                    "Object - Información del modelo probabilístico",
                   procedure: "Array<string> - Pasos del análisis",
                   symbols: "Record<string, string> - Símbolos y descripciones",
                 },
@@ -951,7 +990,7 @@ variable ⟵ expresion;`,
                 props: ["lines: string[]", "className?: string"],
               },
               {
-                name: "CostsTable", 
+                name: "CostsTable",
                 file: "components/CostsTable.tsx",
                 purpose: "Tabla interactiva de análisis de costos",
                 props: [
@@ -962,7 +1001,7 @@ variable ⟵ expresion;`,
               },
               {
                 name: "ProcedureModal",
-                file: "components/ProcedureModal.tsx", 
+                file: "components/ProcedureModal.tsx",
                 purpose: "Modal para mostrar análisis detallado",
                 props: [
                   "isOpen: boolean",
@@ -973,7 +1012,7 @@ variable ⟵ expresion;`,
               },
             ],
           },
-        }
+        },
       },
       {
         id: "recursive-analyzer",
@@ -984,7 +1023,8 @@ variable ⟵ expresion;`,
           type: "analyzer",
           interface: {
             title: "Análisis Recursivo",
-            description: "El sistema detecta automáticamente algoritmos recursivos e híbridos y aplica el Teorema Maestro para determinar su complejidad temporal.",
+            description:
+              "El sistema detecta automáticamente algoritmos recursivos e híbridos y aplica el Teorema Maestro para determinar su complejidad temporal.",
             features: [
               "Detección automática de llamadas recursivas",
               "Extracción de parámetros a, b y f(n) de la recurrencia",
@@ -996,34 +1036,43 @@ variable ⟵ expresion;`,
           },
           masterTheorem: {
             title: "Teorema Maestro",
-            description: "El Teorema Maestro resuelve recurrencias de la forma T(n) = a·T(n/b) + f(n) donde a ≥ 1, b > 1, y f(n) es una función asintóticamente positiva.",
+            description:
+              "El Teorema Maestro resuelve recurrencias de la forma T(n) = a·T(n/b) + f(n) donde a ≥ 1, b > 1, y f(n) es una función asintóticamente positiva.",
             cases: [
               {
                 case: 1,
                 condition: "f(n) < n^{\\log_b a}",
                 result: "T(n) = \\Theta(n^{\\log_b a})",
-                description: "El trabajo no recursivo es menor que el trabajo en las hojas del árbol",
-                example: "\\text{Merge Sort: }T(n) = 2T(n/2) + n \\Rightarrow T(n) = \\Theta(n \\log n)",
+                description:
+                  "El trabajo no recursivo es menor que el trabajo en las hojas del árbol",
+                example:
+                  "\\text{Merge Sort: }T(n) = 2T(n/2) + n \\Rightarrow T(n) = \\Theta(n \\log n)",
               },
               {
                 case: 2,
                 condition: "f(n) = n^{\\log_b a}",
                 result: "T(n) = \\Theta(n^{\\log_b a} \\cdot \\log n)",
-                description: "El trabajo no recursivo es igual al trabajo en las hojas",
-                example: "\\text{Binary Search: }T(n) = T(n/2) + 1 \\Rightarrow T(n) = \\Theta(\\log n)",
+                description:
+                  "El trabajo no recursivo es igual al trabajo en las hojas",
+                example:
+                  "\\text{Binary Search: }T(n) = T(n/2) + 1 \\Rightarrow T(n) = \\Theta(\\log n)",
               },
               {
                 case: 3,
-                condition: "f(n) > n^{\\log_b a} \\text{ y condición de regularidad}",
+                condition:
+                  "f(n) > n^{\\log_b a} \\text{ y condición de regularidad}",
                 result: "T(n) = \\Theta(f(n))",
-                description: "El trabajo no recursivo domina sobre el trabajo en las hojas",
-                example: "\\text{QuickSort (peor caso): }T(n) = T(n-1) + n \\Rightarrow T(n) = \\Theta(n^2)",
+                description:
+                  "El trabajo no recursivo domina sobre el trabajo en las hojas",
+                example:
+                  "\\text{QuickSort (peor caso): }T(n) = T(n-1) + n \\Rightarrow T(n) = \\Theta(n^2)",
               },
             ],
           },
           iterationMethod: {
             title: "Método de Iteración (Unrolling)",
-            description: "El Método de Iteración resuelve recurrencias de la forma T(n) = T(g(n)) + f(n) mediante expansión simbólica, donde hay un solo llamado recursivo y el subproblema es decrease-and-conquer.",
+            description:
+              "El Método de Iteración resuelve recurrencias de la forma T(n) = T(g(n)) + f(n) mediante expansión simbólica, donde hay un solo llamado recursivo y el subproblema es decrease-and-conquer.",
             criteria: [
               "Un solo llamado recursivo (a = 1)",
               "Subproblema decrease-and-conquer: n-1, n-k, n/c",
@@ -1038,7 +1087,8 @@ variable ⟵ expresion;`,
               },
               {
                 step: 2,
-                description: "Expandir una vez: T(n) = T(g(g(n))) + f(g(n)) + f(n)",
+                description:
+                  "Expandir una vez: T(n) = T(g(g(n))) + f(g(n)) + f(n)",
               },
               {
                 step: 3,
@@ -1054,7 +1104,8 @@ variable ⟵ expresion;`,
               },
               {
                 step: 6,
-                description: "Evaluar la sumatoria (aritmética, geométrica, constante)",
+                description:
+                  "Evaluar la sumatoria (aritmética, geométrica, constante)",
               },
               {
                 step: 7,
@@ -1076,7 +1127,8 @@ variable ⟵ expresion;`,
           },
           recurrenceExtraction: {
             title: "Extracción de Recurrencias",
-            description: "El sistema analiza el AST para identificar llamadas recursivas y extraer los parámetros de la recurrencia.",
+            description:
+              "El sistema analiza el AST para identificar llamadas recursivas y extraer los parámetros de la recurrencia.",
             process: [
               "Identificación del procedimiento principal",
               "Búsqueda de llamadas recursivas al mismo procedimiento",
@@ -1098,7 +1150,8 @@ variable ⟵ expresion;`,
             components: [
               {
                 name: "Árbol de Recursión",
-                description: "Visualización interactiva del árbol de llamadas recursivas",
+                description:
+                  "Visualización interactiva del árbol de llamadas recursivas",
                 features: [
                   "Nodos representan llamadas recursivas",
                   "Etiquetas muestran el tamaño del problema en cada nivel",
@@ -1153,11 +1206,13 @@ variable ⟵ expresion;`,
             title: "API y Endpoints",
             endpoint: {
               name: "POST /analyze/open",
-              description: "Endpoint principal que detecta y analiza algoritmos recursivos automáticamente",
+              description:
+                "Endpoint principal que detecta y analiza algoritmos recursivos automáticamente",
               request: {
                 source: "string - Código pseudocódigo",
                 mode: "worst | best | avg | all",
-                algorithm_kind: "string (opcional) - iterative | recursive | hybrid | unknown",
+                algorithm_kind:
+                  "string (opcional) - iterative | recursive | hybrid | unknown",
               },
               response: {
                 ok: "boolean",
@@ -1182,7 +1237,8 @@ variable ⟵ expresion;`,
                       },
                     },
                     T_open: "string - Ecuación de eficiencia final",
-                    proof: "Array<{id: string, text: string}> - Pasos de prueba",
+                    proof:
+                      "Array<{id: string, text: string}> - Pasos de prueba",
                   },
                 },
               },

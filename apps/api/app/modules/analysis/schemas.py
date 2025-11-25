@@ -38,3 +38,4 @@ class AnalyzeError(BaseModel):
     ok: bool = False
     errors: List[Dict[str, Any]]
 
+

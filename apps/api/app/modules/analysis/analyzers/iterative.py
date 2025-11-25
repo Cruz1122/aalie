@@ -105,6 +105,88 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         
         return s
     
+    def _sanitize_expression(self, expr: Expr) -> Expr:
+        """
+        Elimina variables de iteración (i, j, k) de una expresión SymPy.
+        
+        Si después de simplificar quedan variables de iteración, las sustituye
+        por su valor máximo (típicamente n) o las elimina según el contexto.
+        
+        Args:
+            expr: Expresión SymPy a limpiar
+            
+        Returns:
+            Expresión SymPy sin variables de iteración
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
+        from sympy import Symbol, simplify, expand, preorder_traversal
+        
+        if expr is None:
+            return expr
+        
+        # Lista de variables de iteración a eliminar
+        iteration_vars = ['i', 'j', 'k']
+        
+        # Expandir y simplificar primero
+        try:
+            expr = expand(expr)
+            expr = simplify(expr)
+        except Exception:
+            pass
+        
+        # Verificar si quedan variables de iteración
+        free_vars = expr.free_symbols
+        has_iteration_vars = False
+        
+        for var_name in iteration_vars:
+            var_symbol = Symbol(var_name, integer=True)
+            for free_var in free_vars:
+                if free_var.name == var_name:
+                    has_iteration_vars = True
+                    break
+            if has_iteration_vars:
+                break
+        
+        if not has_iteration_vars:
+            return expr
+        
+        # Intentar simplificar más agresivamente
+        from ..utils.summation_closer import SummationCloser
+        closer = SummationCloser()
+        
+        # Evaluar todas las sumatorias
+        expr = closer._evaluate_all_sums_sympy(expr)
+        expr = expand(expr)
+        expr = simplify(expr)
+        
+        # Verificar de nuevo
+        free_vars = expr.free_symbols
+        has_iteration_vars = False
+        iteration_var_found = None
+        
+        for var_name in iteration_vars:
+            for free_var in free_vars:
+                if free_var.name == var_name:
+                    has_iteration_vars = True
+                    iteration_var_found = var_name
+                    break
+            if has_iteration_vars:
+                break
+        
+        if has_iteration_vars:
+            # Si aún quedan variables de iteración, sustituir por n
+            n_sym = Symbol(self.variable, integer=True, positive=True)
+            for var_name in iteration_vars:
+                var_symbol = Symbol(var_name, integer=True)
+                expr = expr.subs(var_symbol, n_sym)
+            
+            expr = simplify(expr)
+            
+            print(f"[IterativeAnalyzer] Advertencia: Variable de iteración {iteration_var_found} detectada en expresión final, sustituida por {self.variable}")
+        
+        return expr
+    
     def analyze(self, ast: Dict[str, Any], mode: str = "worst", api_key: Optional[str] = None, avg_model: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Analiza un AST completo y retorna el resultado.
@@ -326,6 +408,10 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Obtener expresión SymPy de T_open directamente (más robusto que parsear LaTeX)
         t_open_expr = self.build_t_open_expr()
         
+        # PASO 2: Limpiar variables de iteración de t_open_expr
+        if t_open_expr is not None:
+            t_open_expr = self._sanitize_expression(t_open_expr)
+        
         # Calcular T_polynomial: agrupar términos con C_k (para mostrar estructura)
         self._calculate_t_polynomial_fallback()
         
@@ -365,33 +451,74 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                         dominant_term = None
                         
                         for term in terms:
-                            # Calcular el grado de este término respecto a n
+                            # Calcular el grado/complejidad de este término respecto a n
                             # Método directo: buscar potencias de n en el término
                             term_degree = 0
+                            term_has_log = False
                             
-                            # Buscar todas las potencias de n en el término
+                            # Buscar todas las potencias de n y funciones log(n) en el término
                             # No confiar en has() ya que puede fallar en algunos casos
-                            from sympy import preorder_traversal, Pow
+                            from sympy import preorder_traversal, Pow, log as sym_log
                             
-                            # Recorrer todos los subexpresiones buscando n y n^k
-                            for subexpr in preorder_traversal(term):
-                                # Comparar por nombre del símbolo, no por identidad (pueden tener diferentes propiedades)
-                                if isinstance(subexpr, Symbol) and subexpr.name == n_sym.name:
-                                    # Encontramos n directamente
-                                    term_degree = max(term_degree, 1)
-                                elif isinstance(subexpr, Pow):
-                                    # Verificar si es una potencia de n (comparar por nombre)
-                                    try:
-                                        if isinstance(subexpr.base, Symbol) and subexpr.base.name == n_sym.name:
-                                            exp_val = subexpr.exp
-                                            if exp_val.is_number:
-                                                exp_int = int(float(exp_val))
-                                                term_degree = max(term_degree, exp_int)
-                                    except Exception:
-                                        pass
+                            # Primero verificar si el término tiene log(n)
+                            # Usar has() para verificar rápidamente
+                            from sympy import log as sym_log
+                            if term.has(sym_log):
+                                # Verificar si el log contiene n
+                                for subexpr in preorder_traversal(term):
+                                    if hasattr(subexpr, 'func') and subexpr.func == sym_log:
+                                        if any(isinstance(s, Symbol) and s.name == n_sym.name for s in subexpr.free_symbols):
+                                            term_has_log = True
+                                            break
                             
-                            if term_degree > max_degree:
-                                max_degree = term_degree
+                            # Ahora buscar potencias de n FUERA de log
+                            # Si hay log(n), solo buscar n que esté multiplicando al log
+                            if term_has_log:
+                                # Verificar si es n * log(n) o n^k * log(n)
+                                # Dividir por log para ver qué queda
+                                try:
+                                    # Buscar si hay un n multiplicando
+                                    from sympy import collect
+                                    # Si el término es algo como n * log(n) o 5*n*log(n), detectarlo
+                                    if term.has(n_sym * sym_log(n_sym)):
+                                        term_degree = 1
+                                    elif term.has(n_sym**2 * sym_log(n_sym)):
+                                        term_degree = 2
+                                    # Agregar más casos si es necesario
+                                except Exception:
+                                    pass
+                            else:
+                                # No hay log, buscar potencias de n normalmente
+                                for subexpr in preorder_traversal(term):
+                                    if isinstance(subexpr, Symbol) and subexpr.name == n_sym.name:
+                                        # Encontramos n directamente
+                                        term_degree = max(term_degree, 1)
+                                    elif isinstance(subexpr, Pow):
+                                        # Verificar si es una potencia de n
+                                        try:
+                                            if isinstance(subexpr.base, Symbol) and subexpr.base.name == n_sym.name:
+                                                exp_val = subexpr.exp
+                                                if exp_val.is_number:
+                                                    exp_int = int(float(exp_val))
+                                                    term_degree = max(term_degree, exp_int)
+                                        except Exception:
+                                            pass
+                            
+                            # Determinar complejidad del término
+                            # log(n) < n < n*log(n) < n^2 < n^2*log(n) < ...
+                            # Usar números decimales para ordenar: log(n) = 0.5, n = 1, n*log(n) = 1.5, n^2 = 2, ...
+                            if term_has_log and term_degree == 0:
+                                # Solo log(n), sin n^k
+                                term_complexity = 0.5
+                            elif term_has_log and term_degree > 0:
+                                # n^k * log(n)
+                                term_complexity = term_degree + 0.5
+                            else:
+                                # n^k sin log
+                                term_complexity = float(term_degree)
+                            
+                            if term_complexity > max_degree:
+                                max_degree = term_complexity
                                 dominant_term = term
                         
                         if dominant_term is not None and max_degree >= 0:
@@ -399,15 +526,34 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                             dominant_term = simplify(dominant_term)
                             
                             # Para notación asintótica, simplificar el coeficiente: O(5n²/2) -> O(n²)
-                            # Extraer solo la potencia de n sin el coeficiente
-                            if max_degree > 0:
-                                # Crear solo n^max_degree para la notación asintótica
-                                from sympy import Symbol as SymSymbol
+                            # Extraer solo la forma asintótica sin coeficientes
+                            if max_degree == 0.5:
+                                # Solo log(n)
+                                from sympy import log as sym_log, Symbol as SymSymbol
                                 n_for_notation = SymSymbol(variable, integer=True, positive=True)
-                                if max_degree == 1:
+                                dominant_latex = sympy_latex(sym_log(n_for_notation))
+                            elif max_degree > 0 and max_degree < 1:
+                                # Caso edge: constante, no debería llegar aquí
+                                dominant_latex = "1"
+                            elif max_degree >= 1:
+                                # n^k (posiblemente con log)
+                                from sympy import Symbol as SymSymbol, log as sym_log
+                                n_for_notation = SymSymbol(variable, integer=True, positive=True)
+                                degree_int = int(max_degree)
+                                has_log_component = (max_degree - degree_int) >= 0.5
+                                
+                                if degree_int == 1 and not has_log_component:
+                                    # Solo n
                                     dominant_latex = sympy_latex(n_for_notation)
+                                elif degree_int == 1 and has_log_component:
+                                    # n * log(n)
+                                    dominant_latex = sympy_latex(n_for_notation * sym_log(n_for_notation))
+                                elif degree_int > 1 and not has_log_component:
+                                    # n^k
+                                    dominant_latex = sympy_latex(n_for_notation**degree_int)
                                 else:
-                                    dominant_latex = sympy_latex(n_for_notation**max_degree)
+                                    # n^k * log(n)
+                                    dominant_latex = sympy_latex((n_for_notation**degree_int) * sym_log(n_for_notation))
                             else:
                                 # Si es constante (grado 0), mostrar como "1" en notación asintótica
                                 # En notación asintótica, todas las constantes son equivalentes a 1
@@ -615,28 +761,247 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
     
     def _calculate_t_polynomial_fallback(self):
         """
-        Método fallback para calcular T_polynomial agrupando términos similares.
-        """
-        # Agrupar términos similares
-        terms_by_count = {}
-        for row in self.rows:
-            ck = row.get("ck", "")
-            count = row.get("count", "1")
+        Calcula T_polynomial de forma determinista usando SymPy Poly.
+        
+        Agrupa términos por potencias de n (n², n¹, n⁰) preservando las constantes C_k.
+        Usa Poly para extraer coeficientes de todas las potencias de n de forma determinista.
+        
+        Returns:
+            None (establece self.t_polynomial)
             
-            if count not in terms_by_count:
-                terms_by_count[count] = []
-            terms_by_count[count].append(ck)
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
+        from sympy import Symbol, Integer, latex, expand, simplify, Poly
+        from ..utils.summation_closer import SummationCloser
+        import re
         
-        # Construir T_polynomial (o A(n) para promedio)
+        n_sym = Symbol(self.variable, integer=True, positive=True)
+        
+        # Función auxiliar para parsear ck_str que puede contener múltiples C_k
+        def parse_ck_string(ck_str):
+            """Parsea un string como 'C_3 + C_4' en una lista de C_k individuales."""
+            ck_pattern = r'C_\{(\d+)\}'
+            ck_matches = re.findall(ck_pattern, ck_str)
+            return [f"C_{{{num}}}" for num in ck_matches]
+        
+        # Estructura para agrupar C_k por grado del polinomio
+        # {degree: {coeff_tuple: [lista de C_k strings]}}
+        # coeff_tuple es una tupla normalizada para comparación determinista
+        degree_to_coeffs = {}  # {degree: {coeff_tuple: [C_k strings]}}
+        
+        closer = SummationCloser()
+        
+        # Procesar cada fila y extraer coeficientes polinomiales
+        for row in self.rows:
+            if row.get('ck') != "—" and row.get('count') != "—":
+                ck_str = row.get('ck', '')
+                count_expr = row.get('count_expr')
+                if count_expr is None:
+                    count_expr = row.get('count_raw_expr')
+                if count_expr is None:
+                    count_expr = self._str_to_sympy(row.get('count_raw', '1'))
+                
+                # Evaluar sumatorias y simplificar
+                count_expr = closer._evaluate_all_sums_sympy(count_expr)
+                count_expr = expand(count_expr)
+                count_expr = simplify(count_expr)
+                
+                # Convertir a Poly para extraer coeficientes de todas las potencias
+                try:
+                    # Intentar crear Poly (puede fallar si hay símbolos no numéricos)
+                    poly = Poly(count_expr, n_sym)
+                    all_coeffs = poly.all_coeffs()  # Lista de coeficientes [coeff_n^max, ..., coeff_n^1, coeff_n^0]
+                    max_degree = poly.degree()
+                    
+                    # Procesar cada coeficiente (de mayor a menor grado)
+                    for degree in range(max_degree, -1, -1):
+                        coeff_idx = max_degree - degree
+                        if coeff_idx < len(all_coeffs):
+                            coeff = all_coeffs[coeff_idx]
+                            coeff = simplify(coeff)
+                            
+                            # Verificar si el coeficiente es cero (saltar términos nulos)
+                            try:
+                                if coeff.is_zero if hasattr(coeff, 'is_zero') else (coeff == 0 or coeff == Integer(0)):
+                                    continue
+                            except:
+                                # Si hay error, intentar simplificar y verificar de nuevo
+                                try:
+                                    coeff = simplify(expand(coeff))
+                                    if coeff.is_zero if hasattr(coeff, 'is_zero') else (coeff == 0 or coeff == Integer(0)):
+                                        continue
+                                except:
+                                    pass
+                            
+                            # Normalizar coeficiente para comparación determinista
+                            # Usar una representación canónica (expandida y simplificada)
+                            coeff_normalized = expand(coeff)
+                            coeff_normalized = simplify(coeff_normalized)
+                            
+                            # Verificar nuevamente después de normalizar (por si se simplificó a 0)
+                            try:
+                                if coeff_normalized.is_zero if hasattr(coeff_normalized, 'is_zero') else (coeff_normalized == 0 or coeff_normalized == Integer(0)):
+                                    continue
+                            except:
+                                pass
+                            
+                            # Crear tupla para comparación determinista
+                            # Convertir a string canónico para evitar problemas de comparación
+                            coeff_key = str(coeff_normalized)
+                            
+                            # Inicializar estructura si es necesario
+                            if degree not in degree_to_coeffs:
+                                degree_to_coeffs[degree] = {}
+                            
+                            if coeff_key not in degree_to_coeffs[degree]:
+                                degree_to_coeffs[degree][coeff_key] = {
+                                    'coeff': coeff_normalized,
+                                    'cks': []
+                                }
+                            
+                            # Agregar C_k a este coeficiente
+                            degree_to_coeffs[degree][coeff_key]['cks'].append(ck_str)
+                            
+                except (ValueError, TypeError, AttributeError):
+                    # Si Poly falla (p.ej., expresión no es polinómica), tratar como constante
+                    # Esto puede pasar con expresiones complejas, pero intentamos manejarlo
+                    try:
+                        # Intentar extraer como constante (grado 0)
+                        const_value = simplify(count_expr.subs(n_sym, 0))
+                        
+                        # Verificar si la constante es cero
+                        try:
+                            if const_value.is_zero if hasattr(const_value, 'is_zero') else (const_value == 0 or const_value == Integer(0)):
+                                continue
+                        except:
+                            pass
+                        
+                        const_key = str(const_value)
+                        
+                        if 0 not in degree_to_coeffs:
+                            degree_to_coeffs[0] = {}
+                        
+                        if const_key not in degree_to_coeffs[0]:
+                            degree_to_coeffs[0][const_key] = {
+                                'coeff': const_value,
+                                'cks': []
+                            }
+                        
+                        degree_to_coeffs[0][const_key]['cks'].append(ck_str)
+                    except:
+                        # Si todo falla, ignorar esta fila
+                        continue
+        
+        if not degree_to_coeffs:
+            self.t_polynomial = "0"
+            return
+        
+        # Construir T_polynomial en orden descendente de grado (n², n¹, n⁰)
         polynomial_terms = []
-        for count, cks in terms_by_count.items():
-            if len(cks) == 1:
-                polynomial_terms.append(f"({cks[0]}) \\cdot ({count})")
-            else:
-                ck_sum = " + ".join(cks)
-                polynomial_terms.append(f"({ck_sum}) \\cdot ({count})")
         
-        self.t_polynomial = " + ".join(polynomial_terms)
+        # Ordenar grados de mayor a menor
+        sorted_degrees = sorted(degree_to_coeffs.keys(), reverse=True)
+        
+        for degree in sorted_degrees:
+            coeff_dict = degree_to_coeffs[degree]
+            
+            # Para cada coeficiente único en este grado, crear un término
+            # Ordenar coeficientes de forma determinista (por representación string)
+            sorted_coeffs = sorted(coeff_dict.items(), key=lambda x: str(x[0]))
+            
+            for coeff_key, data in sorted_coeffs:
+                coeff = data['coeff']
+                cks_list = data['cks']
+                
+                # Verificar si el coeficiente es cero (eliminar términos nulos)
+                try:
+                    if coeff.is_zero if hasattr(coeff, 'is_zero') else (coeff == 0 or coeff == Integer(0)):
+                        continue
+                except:
+                    # Si hay error al verificar, intentar simplificar y verificar de nuevo
+                    try:
+                        coeff_simplified = simplify(coeff)
+                        if coeff_simplified.is_zero if hasattr(coeff_simplified, 'is_zero') else (coeff_simplified == 0 or coeff_simplified == Integer(0)):
+                            continue
+                        coeff = coeff_simplified
+                    except:
+                        pass
+                
+                # Parsear y combinar todas las C_k
+                all_cks = []
+                for ck in cks_list:
+                    parsed = parse_ck_string(ck)
+                    all_cks.extend(parsed)
+                
+                # Ordenar C_k numéricamente para determinismo
+                def get_ck_number(ck_str):
+                    match = re.search(r'C_\{(\d+)\}', ck_str)
+                    return int(match.group(1)) if match else 0
+                
+                all_cks.sort(key=get_ck_number)
+                ck_combined = " + ".join(all_cks) if len(all_cks) > 1 else all_cks[0] if all_cks else ""
+                
+                if not ck_combined:
+                    continue
+                
+                # Formatear término según el grado y coeficiente
+                if degree == 0:
+                    # Término constante
+                    if coeff == Integer(1):
+                        polynomial_terms.append(f"({ck_combined})")
+                    elif coeff == Integer(-1):
+                        polynomial_terms.append(f"-({ck_combined})")
+                    else:
+                        coeff_latex = latex(coeff)
+                        polynomial_terms.append(f"({ck_combined}) \\cdot {coeff_latex}")
+                elif degree == 1:
+                    # Término lineal
+                    if coeff == Integer(1):
+                        polynomial_terms.append(f"({ck_combined}) \\cdot n")
+                    elif coeff == Integer(-1):
+                        polynomial_terms.append(f"-({ck_combined}) \\cdot n")
+                    else:
+                        coeff_latex = latex(coeff)
+                        polynomial_terms.append(f"({ck_combined}) \\cdot {coeff_latex} \\cdot n")
+                else:
+                    # Términos de grado superior (n², n³, etc.)
+                    if coeff == Integer(1):
+                        polynomial_terms.append(f"({ck_combined}) \\cdot n^{{{degree}}}")
+                    elif coeff == Integer(-1):
+                        polynomial_terms.append(f"-({ck_combined}) \\cdot n^{{{degree}}}")
+                    else:
+                        coeff_latex = latex(coeff)
+                        polynomial_terms.append(f"({ck_combined}) \\cdot {coeff_latex} \\cdot n^{{{degree}}}")
+        
+        if polynomial_terms:
+            result = " + ".join(polynomial_terms)
+            result = result.replace("+ -", "- ")
+            self.t_polynomial = result
+            
+            # VALIDACIÓN: Verificar que t_polynomial solo contenga n y C_k
+            # Parsear todos los símbolos que aparecen en la expresión LaTeX
+            import re
+            # Buscar todos los identificadores (letras seguidas de opcional subscript)
+            symbol_pattern = r'\b([a-zA-Z_]\w*(?:_\{[^}]+\})?)\b'
+            found_symbols = re.findall(symbol_pattern, result)
+            
+            invalid_symbols = []
+            for sym in found_symbols:
+                # Permitir: n, C_{k}, operadores matemáticos (cdot, etc.)
+                clean_sym = sym.replace('_{', '').replace('}', '')
+                if not (clean_sym == 'n' or clean_sym.startswith('C_') or 
+                       clean_sym in ['cdot', 'text', 'times'] or clean_sym.startswith('t_')):
+                    invalid_symbols.append(sym)
+            
+            if invalid_symbols:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(
+                    f"T_polynomial contiene símbolos no permitidos: {invalid_symbols}. "
+                    f"Solo se permiten 'n' y constantes C_k. Expresión: {result}"
+                )
+        else:
+            self.t_polynomial = "0"
     
     def _latex_to_sympy_expr(self, latex_str: str, variable: str = "n") -> Optional[Expr]:
         """
@@ -738,15 +1103,34 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
     
     def visitBlock(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """
-        Visita un bloque de código.
+        Visita un bloque de código con memoización para optimización.
+        
+        Si el bloque ya fue analizado en el mismo contexto, reutiliza los resultados
+        del cache en lugar de analizar nuevamente.
         
         Args:
             node: Nodo Block del AST
             mode: Modo de análisis
         """
+        # Verificar si este nodo debe ser cacheado
+        if self._should_memoize(node):
+            # Generar clave de memoización
+            ctx_hash = self.get_context_hash()
+            memo_key = self.memo_key(node, mode, ctx_hash)
+            
+            # Intentar obtener del cache
+            cached_rows = self.memo_get(memo_key)
+            if cached_rows is not None:
+                # Usar resultados cacheados
+                self.rows.extend(cached_rows)
+                return
+        
+        # Si no está en cache, analizar normalmente
+        rows_before = len(self.rows)
+        
         for stmt in node.get("body", []):
             # Guardar el número de rows antes de visitar el statement
-            rows_before = len(self.rows)
+            stmt_rows_before = len(self.rows)
             
             # Si el statement es un While, pasar el bloque actual como contexto padre
             if isinstance(stmt, dict) and stmt.get("type") == "While":
@@ -773,7 +1157,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     # El for terminó (loop_stack está vacío ahora)
                     # Buscar si hay un return reciente con nota "early-exit"
                     # que se agregó durante la visita del for
-                    for row in self.rows[rows_before:]:
+                    for row in self.rows[stmt_rows_before:]:
                         if (row.get("kind") == "return" and 
                             row.get("note") and 
                             "early-exit" in row.get("note", "").lower()):
@@ -784,6 +1168,14 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 # Si debemos detener, salir del bucle
                 if should_stop:
                     break
+        
+        # Guardar resultados en cache si corresponde
+        if self._should_memoize(node):
+            rows_added = self.rows[rows_before:]
+            if rows_added:  # Solo cachear si se agregaron filas
+                ctx_hash = self.get_context_hash()
+                memo_key = self.memo_key(node, mode, ctx_hash)
+                self.memo_set(memo_key, rows_added)
     
     def visitProcDef(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """

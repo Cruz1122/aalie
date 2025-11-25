@@ -315,7 +315,7 @@ npm run verify
 
 ### Cobertura de Código
 
-El proyecto mantiene un umbral mínimo de **70% de cobertura de código** para módulos críticos. Los reportes de cobertura se generan automáticamente en CI y están disponibles como artefactos.
+El proyecto mantiene un umbral mínimo de **70% de cobertura de código** para módulos críticos. La cobertura actual del proyecto es del **71.48\%** (4,473 de 6,258 declaraciones cubiertas). Los reportes de cobertura se generan automáticamente en CI y están disponibles como artefactos.
 
 **Comandos útiles:**
 - `pytest tests/ --cov=app --cov-report=term` - Ver cobertura en terminal

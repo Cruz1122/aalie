@@ -281,9 +281,10 @@ class ForVisitor:
         
         if mode == "best" and has_return:
             # En best case con early return: solo se evalúa la condición inicial y una vez más (2 evaluaciones)
-            # Evaluación inicial + 1 evaluación de condición = 2
+            # Evaluación inicial: i=1, condición verdadera, ejecuta cuerpo (encuentra y retorna)
+            # Evaluación final: i=2, condición verdadera pero no ejecuta cuerpo (early return previo)
             header_count = Integer(2)
-            header_note = f"Cabecera del bucle for {var}={a_str}..{b_str} (best: early return en primera iteración)"
+            header_note = f"Cabecera del bucle for {var}={a_str}..{b_str} (best: early return en primera iteración, cabecera evalúa 2 veces)"
         elif mode == "avg" and has_return:
             # En caso promedio con early return: E[iter] = (n+1)/2
             # Cabecera: E[iter] + 1 = (n+1)/2 + 1 = (n+3)/2
@@ -352,9 +353,28 @@ class ForVisitor:
         
         self.push_multiplier(mult)
         
-        # 3) Visitar el cuerpo del bucle
+        # 3) Visitar el cuerpo del bucle (con memoización si es un bloque)
         if body:
-            self.visit(body, mode)
+            # Aplicar memoización si el cuerpo es un bloque cacheable
+            if self._should_memoize(body):
+                ctx_hash = self.get_context_hash()
+                memo_key = self.memo_key(body, mode, ctx_hash)
+                
+                # Intentar obtener del cache
+                cached_rows = self.memo_get(memo_key)
+                if cached_rows is not None:
+                    # Usar resultados cacheados
+                    self.rows.extend(cached_rows)
+                else:
+                    # Analizar y cachear
+                    rows_before = len(self.rows)
+                    self.visit(body, mode)
+                    rows_added = self.rows[rows_before:]
+                    if rows_added:
+                        self.memo_set(memo_key, rows_added)
+            else:
+                # No es cacheable, visitar normalmente
+                self.visit(body, mode)
         
         # 4) Salir del contexto del bucle
         self.pop_multiplier()

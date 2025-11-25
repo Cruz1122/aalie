@@ -14,7 +14,9 @@ export default function HealthStatus({ intervalMs = 20_000 }: Readonly<Props>) {
     try {
       const res = await fetch("/api/health", { cache: "no-store" });
       // Aunque el proxy responda 502/503, intentamos leer el JSON
-      const data = (await res.json().catch(() => ({}))) as Partial<HealthResponse> & {
+      const data = (await res
+        .json()
+        .catch(() => ({}))) as Partial<HealthResponse> & {
         status?: string;
       };
 
@@ -37,7 +39,8 @@ export default function HealthStatus({ intervalMs = 20_000 }: Readonly<Props>) {
     return () => clearInterval(t);
   }, [intervalMs]);
 
-  const pillBase = "inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs";
+  const pillBase =
+    "inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs";
 
   let style: string;
   let dot: string;

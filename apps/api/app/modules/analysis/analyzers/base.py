@@ -1,5 +1,7 @@
 from typing import List, Dict, Any, Optional, Union
 from sympy import Symbol, Sum, Integer, Expr, latex, sympify
+import json
+import hashlib
 from ..utils.expr_converter import ExprConverter
 from ..models.avg_model import AvgModel
 from ...shared.types import LineCost, AnalyzeOpenResponse
@@ -14,7 +16,22 @@ class BaseAnalyzer:
     - Aplicar multiplicadores de bucles (stack)
     - Construir la ecuación de eficiencia T_open = Σ C_{k}·count_{k}
     - Registrar el procedimiento (pasos) que llevaron a T_open
-    - Memoización sencilla (PD) por nodo+contexto
+    - Memoización (Programación Dinámica) por nodo+contexto para optimización
+    
+    **Memoización (PD):**
+    La clase incluye un sistema de memoización que cachea resultados de análisis
+    de nodos AST para evitar trabajo repetido. Esto es especialmente útil cuando:
+    - El mismo bloque de código aparece múltiples veces
+    - Hay bucles anidados que analizan estructuras similares
+    - Se analizan múltiples casos (worst/best/avg) del mismo algoritmo
+    
+    La memoización se activa automáticamente en nodos que se benefician de ella
+    (Block, For, If, While, etc.) y usa una clave compuesta por:
+    - Identificador estable del nodo (posición o hash)
+    - Modo de análisis (worst/best/avg)
+    - Contexto actual (hash del loop_stack)
+    
+    El cache se limpia automáticamente cuando se llama a clear().
     
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
@@ -256,9 +273,28 @@ class BaseAnalyzer:
     def build_t_open(self) -> str:
         """
         Construye la ecuación T_open = Σ C_{k}·count_{k} (o A(n) = Σ C_{k}·E[N_{k}] para promedio) en formato KaTeX.
+        Usa simplificación inteligente: preserva constantes cuando hay pocas operaciones, simplifica cuando hay muchas.
         
         Returns:
             String con la ecuación de eficiencia en formato KaTeX
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
+        if not self.rows:
+            return "0"
+        
+        # Decidir si preservar constantes o simplificar
+        if self._should_preserve_constants():
+            return self._build_t_open_with_constants()
+        else:
+            return self._build_t_open_simplified()
+    
+    def _build_t_open_simplified(self) -> str:
+        """
+        Construye T_open simplificado (versión original que suma directamente los count_expr).
+        
+        Returns:
+            String con la ecuación de eficiencia simplificada en formato KaTeX
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
@@ -279,6 +315,11 @@ class BaseAnalyzer:
                 if count_expr is None:
                     # Fallback: convertir desde LaTeX
                     count_expr = self._str_to_sympy(r.get('count_raw', '1'))
+                
+                # MEJORA: Si count es 0 (línea nunca ejecutada), saltar esta fila
+                # Esto evita términos que no contribuyen a la complejidad
+                if count_expr == Integer(0):
+                    continue
                 
                 # Crear término: C_k * count_expr
                 # C_k es solo un símbolo para mostrar, no afecta la expresión SymPy
@@ -306,8 +347,252 @@ class BaseAnalyzer:
         except Exception:
             total_expr = sympy_simplify(total_expr)
         
+        # VALIDACIÓN: Verificar que solo contenga n y constantes C_k
+        # Se permiten: n, C_k (con cualquier k), números, operadores básicos
+        from sympy import Symbol
+        free_symbols = total_expr.free_symbols
+        n_symbol = Symbol('n')
+        
+        # Filtrar símbolos no permitidos (no son n, ni constantes C_k)
+        invalid_symbols = []
+        for sym in free_symbols:
+            sym_name = str(sym)
+            # Permitir: n, C_k (donde k es un número), t_for, t_while, t_if, t_repeat, t_block
+            if sym_name not in ['n'] and not sym_name.startswith('C_') and not sym_name.startswith('t_'):
+                invalid_symbols.append(sym_name)
+        
+        if invalid_symbols:
+            # Log de advertencia: la expresión contiene variables no permitidas
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(
+                f"T_open contiene variables no permitidas: {invalid_symbols}. "
+                f"Solo se permiten 'n' y constantes C_k. Expresión: {total_expr}"
+            )
+        
         # Convertir a LaTeX
         return latex(total_expr)
+    
+    def _build_t_open_with_constants(self) -> str:
+        """
+        Construye T_open preservando las constantes C_k en la expresión.
+        Formato: "C_1 · count_1 + C_2 · count_2 + ..."
+        
+        Returns:
+            String con la ecuación de eficiencia preservando constantes en formato KaTeX
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
+        if not self.rows:
+            return "0"
+        
+        import re
+        from sympy import latex, Integer
+        
+        terms_latex = []
+        
+        for r in self.rows:
+            if r.get('ck') != "—" and r.get('count') != "—":
+                ck_str = r.get('ck', '')
+                count_str = r.get('count', '1')
+                
+                # Parsear ck para obtener todas las constantes C_k
+                # ck puede ser "C_{1}", "C_{1} + C_{2}", etc.
+                # IMPORTANTE: Cada C_k debe tener su propio término separado
+                ck_pattern = r'C_\{(\d+)\}'
+                ck_matches = re.findall(ck_pattern, ck_str)
+                
+                # Si no se encontraron matches, intentar sin llaves (formato alternativo)
+                if not ck_matches:
+                    ck_pattern_alt = r'C_(\d+)'
+                    ck_matches = re.findall(ck_pattern_alt, ck_str)
+                
+                # Obtener count_expr para simplificar sumatorias si es necesario
+                count_expr = r.get('count_expr')
+                if count_expr is None:
+                    count_expr = r.get('count_raw_expr')
+                if count_expr is None:
+                    count_expr = self._str_to_sympy(r.get('count_raw', '1'))
+                
+                # Simplificar count_expr (evaluar sumatorias) pero mantener como expresión
+                from sympy import simplify as sympy_simplify, expand
+                from ..utils.summation_closer import SummationCloser
+                
+                closer = SummationCloser()
+                count_expr_simplified = closer._evaluate_all_sums_sympy(count_expr)
+                try:
+                    count_expr_simplified = expand(count_expr_simplified)
+                    count_expr_simplified = sympy_simplify(count_expr_simplified)
+                except Exception:
+                    count_expr_simplified = sympy_simplify(count_expr_simplified)
+                
+                # MEJORA: Si count es 0 (línea nunca ejecutada), saltar esta fila
+                # Esto evita términos como "C_4 · 0" en T_open que no aportan información
+                if count_expr_simplified == Integer(0):
+                    continue
+                
+                # Convertir count a LaTeX
+                count_latex = latex(count_expr_simplified)
+                
+                # Si count es 1, no mostrar "· 1"
+                if count_expr_simplified == Integer(1):
+                    count_latex = ""
+                    separator = ""
+                else:
+                    separator = " \\cdot "
+                    # Agregar paréntesis si la expresión no es un simple símbolo o número
+                    # Esto evita problemas como "C_3 \cdot n - 1" que debería ser "C_3 \cdot (n - 1)"
+                    from sympy import Symbol, Add, Mul, Pow
+                    # Verificar si necesita paréntesis
+                    needs_parens = False
+                    if isinstance(count_expr_simplified, Add):
+                        # Expresiones de suma/resta siempre necesitan paréntesis cuando se multiplican
+                        needs_parens = True
+                    elif isinstance(count_expr_simplified, Mul):
+                        # Multiplicaciones con más de un término también
+                        if len(count_expr_simplified.args) > 1:
+                            needs_parens = True
+                    elif not isinstance(count_expr_simplified, (Integer, Symbol, Pow)):
+                        # Cualquier otra expresión compuesta
+                        needs_parens = True
+                    
+                    if needs_parens:
+                        count_latex = f"({count_latex})"
+                
+                # Crear términos para cada C_k en esta fila
+                for ck_num in ck_matches:
+                    ck_latex = f"C_{{{ck_num}}}"
+                    if count_latex:
+                        term = f"{ck_latex}{separator}{count_latex}"
+                    else:
+                        term = ck_latex
+                    terms_latex.append(term)
+        
+        if not terms_latex:
+            return "0"
+        
+        # Verificar si todos los count son constantes (1) y no hay variables
+        # Si es así, simplificar a "C" en lugar de mostrar todas las constantes
+        all_counts_are_constant = True
+        has_variables = False
+        
+        from sympy import Symbol, preorder_traversal, simplify as sympy_simplify, expand
+        from ..utils.summation_closer import SummationCloser
+        
+        closer = SummationCloser()
+        
+        for r in self.rows:
+            if r.get('ck') != "—" and r.get('count') != "—":
+                count_expr = r.get('count_expr')
+                if count_expr is None:
+                    count_expr = r.get('count_raw_expr')
+                if count_expr is None:
+                    count_expr = self._str_to_sympy(r.get('count_raw', '1'))
+                
+                # Simplificar para verificar si es constante
+                count_expr_simplified = closer._evaluate_all_sums_sympy(count_expr)
+                try:
+                    count_expr_simplified = expand(count_expr_simplified)
+                    count_expr_simplified = sympy_simplify(count_expr_simplified)
+                except Exception:
+                    count_expr_simplified = sympy_simplify(count_expr_simplified)
+                
+                # Verificar si es constante (Integer) y si tiene variables
+                if not isinstance(count_expr_simplified, Integer):
+                    all_counts_are_constant = False
+                
+                # Verificar si hay variables (como n) en el count
+                for subexpr in preorder_traversal(count_expr):
+                    if isinstance(subexpr, Symbol) and subexpr.name not in ['i', 'j', 'k']:
+                        # Si el símbolo es 'n' o similar, hay variables
+                        has_variables = True
+                        break
+                
+                if not all_counts_are_constant or has_variables:
+                    break
+        
+        # CAMBIO: Ya no simplificar a "C" incluso si todos son constantes
+        # Siempre mostrar la expresión completa con las constantes individuales
+        # Esto da más información al usuario sobre la estructura del algoritmo
+        # Ejemplo: "2 \cdot C_1 + C_2 + C_3" en lugar de solo "C"
+        
+        # Unir todos los términos con "+"
+        return " + ".join(terms_latex)
+    
+    def _should_preserve_constants(self) -> bool:
+        """
+        Decide si debería preservar las constantes C_k en T_open o simplificar.
+        
+        Criterios:
+        - Si hay ≤ 5 términos únicos de C_k → preservar
+        - Si hay > 5 términos → simplificar
+        - Si hay sumatorias anidadas complejas → simplificar
+        - Si todos los count son constantes simples (1, 2, n, n-1) → preservar
+        
+        Returns:
+            True si debería preservar constantes, False si debería simplificar
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
+        if not self.rows:
+            return False
+        
+        import re
+        from sympy import Symbol, Integer, preorder_traversal
+        
+        # Contar términos únicos de C_k
+        unique_ck_terms = set()
+        total_ck_count = 0
+        has_complex_summations = False
+        
+        for r in self.rows:
+            if r.get('ck') != "—" and r.get('count') != "—":
+                ck_str = r.get('ck', '')
+                
+                # Parsear todas las constantes C_k en esta fila
+                ck_pattern = r'C_\{(\d+)\}'
+                ck_matches = re.findall(ck_pattern, ck_str)
+                unique_ck_terms.update(ck_matches)
+                total_ck_count += len(ck_matches)
+                
+                # Verificar si hay sumatorias complejas en count_expr
+                count_expr = r.get('count_expr')
+                if count_expr is None:
+                    count_expr = r.get('count_raw_expr')
+                if count_expr is None:
+                    count_expr = self._str_to_sympy(r.get('count_raw', '1'))
+                
+                # Verificar complejidad: contar sumatorias anidadas
+                if count_expr is not None:
+                    from sympy import Sum
+                    summation_count = 0
+                    for subexpr in preorder_traversal(count_expr):
+                        if isinstance(subexpr, Sum):
+                            summation_count += 1
+                            # Si hay más de 2 sumatorias anidadas, considerar complejo
+                            if summation_count > 2:
+                                has_complex_summations = True
+                                break
+        
+        # Criterio 1: Si hay más de 8 términos únicos de C_k, simplificar
+        # Aumentado de 5 a 8 para acomodar algoritmos con asignaciones compuestas
+        if len(unique_ck_terms) > 8:
+            return False
+        
+        # Criterio 2: Si hay más de 15 términos totales de C_k, simplificar
+        # Aumentado de 10 a 15 para dar más flexibilidad
+        if total_ck_count > 15:
+            return False
+        
+        # Criterio 3: Si hay sumatorias complejas, simplificar
+        if has_complex_summations:
+            return False
+        
+        # Criterio 4: Si todos los count son constantes simples, preservar
+        # (esto se verifica implícitamente si no hay sumatorias complejas y hay pocos términos)
+        
+        # Si llegamos aquí, preservar constantes
+        return True
     
     def build_t_open_expr(self) -> Optional[Expr]:
         """
@@ -333,6 +618,11 @@ class BaseAnalyzer:
                     # Fallback: parsear desde count (LaTeX evaluado)
                     count_latex = r.get('count', '1')
                     count_expr = self._str_to_sympy(count_latex)
+                
+                # MEJORA: Si count es 0 (línea nunca ejecutada), saltar esta fila
+                # Esto evita términos que no contribuyen a la complejidad
+                if count_expr == Integer(0):
+                    continue
                 
                 # Crear término: C_k * count_expr
                 # C_k es solo un símbolo para mostrar, no afecta la expresión SymPy
@@ -472,32 +762,137 @@ class BaseAnalyzer:
         }
 
     # --- util 5: memoización (PD) ---
+    def _get_node_id(self, node: Any) -> str:
+        """
+        Obtiene un identificador estable para un nodo del AST.
+        
+        Prioridad:
+        1. Posición (línea, columna) si está disponible
+        2. Hash del contenido del nodo (tipo + estructura)
+        3. ID del objeto como fallback
+        
+        Args:
+            node: Nodo del AST
+            
+        Returns:
+            String identificador estable del nodo
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
+        if node is None:
+            return "null"
+        
+        # Intentar usar posición si está disponible
+        if isinstance(node, dict):
+            pos = node.get("pos", {})
+            if pos and isinstance(pos, dict):
+                line = pos.get("line")
+                column = pos.get("column")
+                if line is not None:
+                    # Usar posición como identificador
+                    node_type = node.get("type", "unknown")
+                    if column is not None:
+                        return f"{node_type}:{line}:{column}"
+                    return f"{node_type}:{line}"
+            
+            # Si no hay posición, usar hash del contenido
+            try:
+                # Crear una representación estable del nodo (sin objetos no serializables)
+                node_repr = {
+                    "type": node.get("type"),
+                    "name": node.get("name"),
+                    "body": "..." if "body" in node else None,  # Solo indicar presencia, no contenido
+                }
+                node_str = json.dumps(node_repr, sort_keys=True)
+                node_hash = hashlib.md5(node_str.encode()).hexdigest()[:8]
+                return f"{node.get('type', 'unknown')}:{node_hash}"
+            except Exception:
+                pass
+        
+        # Fallback: usar ID del objeto
+        return str(id(node))
+    
+    def _should_memoize(self, node: Any) -> bool:
+        """
+        Determina si un nodo debe ser cacheado usando memoización.
+        
+        Estrategia:
+        - Cachear nodos que pueden aparecer múltiples veces (Block, For, If, While, etc.)
+        - No cachear nodos simples (Assign, Return, etc.) que son únicos por línea
+        - No cachear si el nodo es None o no tiene estructura
+        
+        Args:
+            node: Nodo del AST a evaluar
+            
+        Returns:
+            True si el nodo debe ser cacheado, False en caso contrario
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
+        if node is None:
+            return False
+        
+        if not isinstance(node, dict):
+            return False
+        
+        node_type = node.get("type", "").lower()
+        
+        # Nodos que se benefician de memoización (estructuras que pueden repetirse)
+        memoizable_types = {
+            "block", "for", "while", "repeat", "if", "procdef", "program"
+        }
+        
+        return node_type in memoizable_types
+    
     def memo_key(self, node: Any, mode: str, ctx_hash: str) -> str:
         """
         Genera clave estable para cachear filas de un subárbol bajo un contexto.
         
+        La clave combina:
+        - Identificador estable del nodo (posición o hash)
+        - Modo de análisis (worst/best/avg)
+        - Hash del contexto actual (loop_stack)
+        
         Args:
             node: Nodo del AST
-            mode: Modo de análisis (ej: "recursive", "iterative")
-            ctx_hash: Hash del contexto actual
+            mode: Modo de análisis ("worst", "best", "avg")
+            ctx_hash: Hash del contexto actual (obtenido con get_context_hash())
             
         Returns:
-            Clave única para el cache
+            Clave única para el cache en formato: "{node_id}|{mode}|{ctx_hash}"
+            
+        Example:
+            >>> analyzer = BaseAnalyzer()
+            >>> node = {"type": "Block", "pos": {"line": 5, "column": 10}}
+            >>> ctx_hash = analyzer.get_context_hash()
+            >>> key = analyzer.memo_key(node, "worst", ctx_hash)
+            >>> cached = analyzer.memo_get(key)
+            >>> if cached is None:
+            ...     # Analizar nodo...
+            ...     analyzer.memo_set(key, rows)
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        nid = getattr(node, "id", None) or str(id(node))
+        nid = self._get_node_id(node)
         return f"{nid}|{mode}|{ctx_hash}"
 
     def memo_get(self, key: str) -> Optional[List[LineCost]]:
         """
-        Obtiene filas del cache.
+        Obtiene filas del cache usando la clave proporcionada.
         
         Args:
-            key: Clave del cache
+            key: Clave del cache (generada con memo_key())
             
         Returns:
-            Lista de filas cacheadas o None si no existe
+            Lista de filas cacheadas o None si no existe en el cache
+            
+        Example:
+            >>> analyzer = BaseAnalyzer()
+            >>> key = analyzer.memo_key(node, "worst", analyzer.get_context_hash())
+            >>> cached_rows = analyzer.memo_get(key)
+            >>> if cached_rows:
+            ...     analyzer.rows.extend(cached_rows)
+            ...     return  # Usar resultados cacheados
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
@@ -505,11 +900,22 @@ class BaseAnalyzer:
 
     def memo_set(self, key: str, rows: List[LineCost]):
         """
-        Guarda filas en el cache.
+        Guarda filas en el cache para reutilización posterior.
+        
+        Crea una copia superficial de las filas para evitar aliasing accidental
+        y asegurar que los cambios posteriores no afecten el cache.
         
         Args:
-            key: Clave del cache
-            rows: Lista de filas a cachear
+            key: Clave del cache (generada con memo_key())
+            rows: Lista de filas a cachear (LineCost)
+            
+        Example:
+            >>> analyzer = BaseAnalyzer()
+            >>> rows_before = len(analyzer.rows)
+            >>> # ... analizar nodo ...
+            >>> rows_added = analyzer.rows[rows_before:]
+            >>> key = analyzer.memo_key(node, "worst", analyzer.get_context_hash())
+            >>> analyzer.memo_set(key, rows_added)
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """

@@ -38,7 +38,10 @@ const DotsLoader: React.FC<{ size: LoaderSize }> = ({ size }) => (
   </div>
 );
 
-const ProgressLoader: React.FC<{ progress: number; size: LoaderSize }> = ({ progress, size }) => {
+const ProgressLoader: React.FC<{ progress: number; size: LoaderSize }> = ({
+  progress,
+  size,
+}) => {
   const progressConfig = {
     sm: { width: "w-32", height: "h-1" },
     md: { width: "w-48", height: "h-2" },
@@ -62,12 +65,16 @@ const ProgressLoader: React.FC<{ progress: number; size: LoaderSize }> = ({ prog
 
 const PulseLoader: React.FC<{ size: LoaderSize }> = ({ size }) => (
   <div className="flex items-center justify-center">
-    <div className={`${sizeConfig[size].spinner} bg-blue-500/20 rounded-full animate-ping`} />
+    <div
+      className={`${sizeConfig[size].spinner} bg-blue-500/20 rounded-full animate-ping`}
+    />
     <div
       className={`${sizeConfig[size].spinner} bg-blue-500/40 rounded-full animate-ping absolute`}
       style={{ animationDelay: "0.5s" }}
     />
-    <div className={`${sizeConfig[size].dot} bg-blue-500 rounded-full absolute`} />
+    <div
+      className={`${sizeConfig[size].dot} bg-blue-500 rounded-full absolute`}
+    />
   </div>
 );
 
@@ -94,7 +101,9 @@ export const GlobalLoader: React.FC<GlobalLoaderProps> = ({
   };
 
   return (
-    <div className={`flex flex-col items-center justify-center gap-3 ${className}`}>
+    <div
+      className={`flex flex-col items-center justify-center gap-3 ${className}`}
+    >
       {renderLoader()}
       {message && (
         <p

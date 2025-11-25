@@ -1,7 +1,16 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 interface NavigationContextType {
   isLoading: boolean;
@@ -10,13 +19,17 @@ interface NavigationContextType {
   finishNavigation: () => void;
 }
 
-const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
+const NavigationContext = createContext<NavigationContextType | undefined>(
+  undefined,
+);
 
 interface NavigationProviderProps {
   children: ReactNode;
 }
 
-export function NavigationProvider({ children }: Readonly<NavigationProviderProps>) {
+export function NavigationProvider({
+  children,
+}: Readonly<NavigationProviderProps>) {
   const [isLoading, setIsLoading] = useState(false);
   const pathname = usePathname();
   const prevPathname = useRef(pathname);
@@ -65,12 +78,15 @@ export function NavigationProvider({ children }: Readonly<NavigationProviderProp
     }
   }, []);
 
-  const contextValue = useMemo(() => ({
-    isLoading,
-    setLoading,
-    startNavigation,
-    finishNavigation
-  }), [isLoading, setLoading, startNavigation, finishNavigation]);
+  const contextValue = useMemo(
+    () => ({
+      isLoading,
+      setLoading,
+      startNavigation,
+      finishNavigation,
+    }),
+    [isLoading, setLoading, startNavigation, finishNavigation],
+  );
 
   return (
     <NavigationContext.Provider value={contextValue}>
@@ -82,7 +98,7 @@ export function NavigationProvider({ children }: Readonly<NavigationProviderProp
 export function useNavigation() {
   const context = useContext(NavigationContext);
   if (context === undefined) {
-    throw new Error('useNavigation must be used within a NavigationProvider');
+    throw new Error("useNavigation must be used within a NavigationProvider");
   }
   return context;
 }

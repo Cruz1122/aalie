@@ -221,6 +221,177 @@ class TestBaseAnalyzer(unittest.TestCase):
             if row.get("count") == "0":
                 # En modo avg, expectedRuns también debe ser "0" si count es "0"
                 pass
+    
+    # --- Tests de memoización (PD) ---
+    
+    def test_get_node_id_with_position(self):
+        """Test: _get_node_id usa posición si está disponible"""
+        node = {
+            "type": "Block",
+            "pos": {"line": 5, "column": 10}
+        }
+        node_id = self.analyzer._get_node_id(node)
+        self.assertIn("Block", node_id)
+        self.assertIn("5", node_id)
+        self.assertIn("10", node_id)
+    
+    def test_get_node_id_without_position(self):
+        """Test: _get_node_id usa hash del contenido si no hay posición"""
+        node = {
+            "type": "Block",
+            "name": "test_block"
+        }
+        node_id = self.analyzer._get_node_id(node)
+        self.assertIsInstance(node_id, str)
+        self.assertGreater(len(node_id), 0)
+    
+    def test_should_memoize_block(self):
+        """Test: _should_memoize retorna True para nodos cacheables"""
+        block_node = {"type": "Block"}
+        self.assertTrue(self.analyzer._should_memoize(block_node))
+        
+        for_node = {"type": "For"}
+        self.assertTrue(self.analyzer._should_memoize(for_node))
+        
+        if_node = {"type": "If"}
+        self.assertTrue(self.analyzer._should_memoize(if_node))
+    
+    def test_should_memoize_simple_nodes(self):
+        """Test: _should_memoize retorna False para nodos simples"""
+        assign_node = {"type": "Assign"}
+        self.assertFalse(self.analyzer._should_memoize(assign_node))
+        
+        return_node = {"type": "Return"}
+        self.assertFalse(self.analyzer._should_memoize(return_node))
+    
+    def test_memoization_caches_results(self):
+        """Test: memo_set y memo_get cachean y recuperan resultados"""
+        # Crear algunas filas de prueba
+        test_rows = [
+            {"line": 1, "kind": "assign", "ck": "C_1", "count": "1"},
+            {"line": 2, "kind": "assign", "ck": "C_2", "count": "2"}
+        ]
+        
+        node = {"type": "Block", "pos": {"line": 5}}
+        ctx_hash = self.analyzer.get_context_hash()
+        key = self.analyzer.memo_key(node, "worst", ctx_hash)
+        
+        # Guardar en cache
+        self.analyzer.memo_set(key, test_rows)
+        
+        # Verificar que está en cache
+        self.assertIn(key, self.analyzer.memo)
+        
+        # Recuperar del cache
+        cached = self.analyzer.memo_get(key)
+        self.assertIsNotNone(cached)
+        self.assertEqual(len(cached), 2)
+        self.assertEqual(cached[0]["line"], 1)
+        self.assertEqual(cached[1]["line"], 2)
+    
+    def test_memoization_reuses_cache(self):
+        """Test: memo_get reutiliza resultados cacheados"""
+        test_rows = [
+            {"line": 1, "kind": "assign", "ck": "C_1", "count": "1"}
+        ]
+        
+        node = {"type": "Block", "pos": {"line": 5}}
+        ctx_hash = self.analyzer.get_context_hash()
+        key = self.analyzer.memo_key(node, "worst", ctx_hash)
+        
+        # Guardar en cache
+        self.analyzer.memo_set(key, test_rows)
+        
+        # Recuperar múltiples veces
+        cached1 = self.analyzer.memo_get(key)
+        cached2 = self.analyzer.memo_get(key)
+        
+        # Deben ser el mismo contenido (aunque objetos diferentes por la copia)
+        self.assertEqual(len(cached1), len(cached2))
+        self.assertEqual(cached1[0]["line"], cached2[0]["line"])
+    
+    def test_memoization_different_contexts(self):
+        """Test: contextos diferentes no comparten cache"""
+        test_rows = [{"line": 1, "kind": "assign", "ck": "C_1", "count": "1"}]
+        
+        node = {"type": "Block", "pos": {"line": 5}}
+        
+        # Contexto 1
+        self.analyzer.push_multiplier(Integer(5))
+        ctx_hash1 = self.analyzer.get_context_hash()
+        key1 = self.analyzer.memo_key(node, "worst", ctx_hash1)
+        self.analyzer.memo_set(key1, test_rows)
+        self.analyzer.pop_multiplier()
+        
+        # Contexto 2 (diferente)
+        self.analyzer.push_multiplier(Integer(10))
+        ctx_hash2 = self.analyzer.get_context_hash()
+        key2 = self.analyzer.memo_key(node, "worst", ctx_hash2)
+        
+        # Las claves deben ser diferentes
+        self.assertNotEqual(key1, key2)
+        
+        # El segundo contexto no debe tener cache
+        cached2 = self.analyzer.memo_get(key2)
+        self.assertIsNone(cached2)
+        
+        # El primer contexto debe tener cache
+        cached1 = self.analyzer.memo_get(key1)
+        self.assertIsNotNone(cached1)
+    
+    def test_memoization_different_modes(self):
+        """Test: modos diferentes no comparten cache"""
+        test_rows = [{"line": 1, "kind": "assign", "ck": "C_1", "count": "1"}]
+        
+        node = {"type": "Block", "pos": {"line": 5}}
+        ctx_hash = self.analyzer.get_context_hash()
+        
+        key_worst = self.analyzer.memo_key(node, "worst", ctx_hash)
+        key_best = self.analyzer.memo_key(node, "best", ctx_hash)
+        key_avg = self.analyzer.memo_key(node, "avg", ctx_hash)
+        
+        # Las claves deben ser diferentes
+        self.assertNotEqual(key_worst, key_best)
+        self.assertNotEqual(key_worst, key_avg)
+        self.assertNotEqual(key_best, key_avg)
+        
+        # Guardar solo en worst
+        self.analyzer.memo_set(key_worst, test_rows)
+        
+        # Verificar que solo worst tiene cache
+        self.assertIsNotNone(self.analyzer.memo_get(key_worst))
+        self.assertIsNone(self.analyzer.memo_get(key_best))
+        self.assertIsNone(self.analyzer.memo_get(key_avg))
+    
+    def test_memoization_clears_on_clear(self):
+        """Test: clear() limpia el cache de memoización"""
+        test_rows = [{"line": 1, "kind": "assign", "ck": "C_1", "count": "1"}]
+        
+        node = {"type": "Block", "pos": {"line": 5}}
+        ctx_hash = self.analyzer.get_context_hash()
+        key = self.analyzer.memo_key(node, "worst", ctx_hash)
+        
+        # Guardar en cache
+        self.analyzer.memo_set(key, test_rows)
+        self.assertIn(key, self.analyzer.memo)
+        
+        # Limpiar
+        self.analyzer.clear()
+        
+        # Verificar que el cache está vacío
+        self.assertEqual(len(self.analyzer.memo), 0)
+        self.assertIsNone(self.analyzer.memo_get(key))
+    
+    def test_memo_key_stable_identifier(self):
+        """Test: memo_key genera claves estables para el mismo nodo"""
+        node = {"type": "Block", "pos": {"line": 5, "column": 10}}
+        ctx_hash = self.analyzer.get_context_hash()
+        
+        key1 = self.analyzer.memo_key(node, "worst", ctx_hash)
+        key2 = self.analyzer.memo_key(node, "worst", ctx_hash)
+        
+        # Las claves deben ser idénticas para el mismo nodo, modo y contexto
+        self.assertEqual(key1, key2)
 
 
 if __name__ == '__main__':

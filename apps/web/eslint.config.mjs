@@ -22,12 +22,20 @@ const eslintConfig = [
       "import/order": [
         "warn",
         {
-          groups: ["builtin", "external", "internal", ["parent", "sibling", "index"]],
+          groups: [
+            "builtin",
+            "external",
+            "internal",
+            ["parent", "sibling", "index"],
+          ],
           "newlines-between": "always",
           alphabetize: { order: "asc", caseInsensitive: true },
         },
       ],
-      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_" },
+      ],
     },
   },
   {

@@ -91,6 +91,12 @@ curl -X POST http://localhost:8000/analyze/open \
 - **SymPy**: Biblioteca para manipulación matemática simbólica
 - **Pydantic**: Validación de datos y modelos
 
+## Optimizaciones
+
+El sistema incluye optimizaciones para mejorar el rendimiento del análisis:
+
+- **Memoización (PD)**: Cachea resultados de análisis de nodos AST repetidos, reduciendo trabajo redundante en algoritmos con estructuras repetitivas o bucles anidados. Ver [architecture.md](./architecture.md#optimizaciones) para más detalles.
+
 ## Testing y Cobertura
 
 El proyecto mantiene una estrategia de testing completa con tres niveles:

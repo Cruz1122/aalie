@@ -1,5 +1,5 @@
 "use client";
-import type { Program } from "@aa/types";
+import type { ParseError, Program } from "@aa/types";
 import MonacoEditor, { Monaco as MonacoReact } from "@monaco-editor/react";
 import type * as Monaco from "monaco-editor";
 import { useEffect, useRef, useState } from "react";
@@ -18,6 +18,7 @@ interface AnalyzerEditorProps {
   readonly onChange?: (value: string) => void;
   readonly onAstChange?: (ast: Program) => void;
   readonly onParseStatusChange?: (ok: boolean, isParsing: boolean) => void;
+  readonly onErrorsChange?: (errors: ParseError[] | undefined) => void;
   readonly height?: string;
 }
 
@@ -25,11 +26,11 @@ interface AnalyzerEditorProps {
  * Componente de editor de código basado en Monaco Editor.
  * Proporciona un editor de código con syntax highlighting, validación en tiempo real
  * mediante Web Workers, y notificaciones de cambios en el AST y estado de parsing.
- * 
+ *
  * @param props - Propiedades del editor
  * @returns Componente React del editor de código
  * @author Juan Camilo Cruz Parra (@Cruz1122)
- * 
+ *
  * @example
  * ```tsx
  * <AnalyzerEditor
@@ -37,6 +38,7 @@ interface AnalyzerEditorProps {
  *   onChange={(value) => setCode(value)}
  *   onAstChange={(ast) => setAst(ast)}
  *   onParseStatusChange={(ok, isParsing) => setParseOk(ok)}
+ *   onErrorsChange={(errors) => setErrors(errors)}
  *   height="420px"
  * />
  * ```
@@ -47,13 +49,12 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
     onChange,
     onAstChange,
     onParseStatusChange,
+    onErrorsChange,
     height,
   } = props;
   const [code, setCode] = useState(initialValue);
   const [showAstModal, setShowAstModal] = useState(false);
-  const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(
-    null
-  );
+  const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<MonacoReact | null>(null);
 
   // Sincronizar cambios externos del código
@@ -98,6 +99,13 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
     }
   }, [parseResult.ok, parseResult.isParsing, onParseStatusChange]);
 
+  // Notificar cambios de errores
+  useEffect(() => {
+    if (onErrorsChange) {
+      onErrorsChange(parseResult.errors);
+    }
+  }, [parseResult.errors, onErrorsChange]);
+
   /**
    * Maneja el montaje del editor y configura el lenguaje pseudocódigo.
    * @param editor - Instancia del editor de Monaco
@@ -106,7 +114,7 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
    */
   function handleEditorDidMount(
     editor: Monaco.editor.IStandaloneCodeEditor,
-    monaco: MonacoReact
+    monaco: MonacoReact,
   ) {
     editorRef.current = editor;
     monacoRef.current = monaco;
@@ -144,18 +152,30 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
             <div className="flex items-center justify-center h-full">
               <div className="flex flex-col items-center gap-3">
                 <div className="flex gap-2">
-                  <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <span
+                    className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "0ms" }}
+                  />
+                  <span
+                    className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "150ms" }}
+                  />
+                  <span
+                    className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "300ms" }}
+                  />
                 </div>
-                <span className="text-sm text-slate-300 font-medium">Cargando editor...</span>
+                <span className="text-sm text-slate-300 font-medium">
+                  Cargando editor...
+                </span>
               </div>
             </div>
           }
           options={{
             minimap: { enabled: false },
             fontSize: 14,
-            fontFamily: "'Spline Sans', 'Noto Sans', 'Monaco', 'Menlo', 'Consolas', monospace",
+            fontFamily:
+              "'Spline Sans', 'Noto Sans', 'Monaco', 'Menlo', 'Consolas', monospace",
             fontLigatures: true,
             lineNumbers: "on",
             lineNumbersMinChars: 3,
@@ -213,7 +233,7 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(
-                    JSON.stringify(parseResult.ast, null, 2)
+                    JSON.stringify(parseResult.ast, null, 2),
                   );
                 }}
                 className="glass-secondary px-5 py-2.5 text-sm font-semibold text-slate-200 rounded-lg transition-all hover:scale-105"
@@ -233,4 +253,3 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
     </div>
   );
 }
-

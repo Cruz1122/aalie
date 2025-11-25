@@ -3,7 +3,7 @@
 /**
  * Componente Header con navegación principal de la aplicación.
  * Incluye navegación responsive con menú móvil.
- * 
+ *
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 import { usePathname } from "next/navigation";
@@ -27,9 +27,24 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { href: "/", label: "Inicio", icon: "home", color: "purple" },
-  { href: "/analyzer", label: "Analizador", icon: "analytics", color: "orange" },
-  { href: "/documentation", label: "Documentación", icon: "menu_book", color: "blue" },
-  { href: "/examples", label: "Ejemplos", icon: "code_blocks", color: "emerald" },
+  {
+    href: "/analyzer",
+    label: "Analizador",
+    icon: "analytics",
+    color: "orange",
+  },
+  {
+    href: "/documentation",
+    label: "Documentación",
+    icon: "menu_book",
+    color: "blue",
+  },
+  {
+    href: "/examples",
+    label: "Ejemplos",
+    icon: "code_blocks",
+    color: "emerald",
+  },
   { href: "/about-us", label: "Acerca de", icon: "info", color: "cyan" },
 ];
 
@@ -69,10 +84,10 @@ const getColorClasses = (color: string, isActiveItem: boolean) => {
 /**
  * Componente Header principal de la aplicación.
  * Renderiza la navegación principal con soporte responsive.
- * 
+ *
  * @returns Elemento JSX del header
  * @author Juan Camilo Cruz Parra (@Cruz1122)
- * 
+ *
  * @example
  * ```tsx
  * <Header />
@@ -108,7 +123,9 @@ export default function Header() {
                   href={item.href}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${getColorClasses(item.color, active)}`}
                 >
-                  <span className="material-symbols-outlined text-base">{item.icon}</span>
+                  <span className="material-symbols-outlined text-base">
+                    {item.icon}
+                  </span>
                   <span>{item.label}</span>
                 </NavigationLink>
               );
@@ -122,7 +139,9 @@ export default function Header() {
           onClick={toggleMenu}
           aria-label="Abrir menú"
         >
-          <span className="material-symbols-outlined text-lg text-slate-300">{isMenuOpen ? "close" : "menu"}</span>
+          <span className="material-symbols-outlined text-lg text-slate-300">
+            {isMenuOpen ? "close" : "menu"}
+          </span>
         </button>
       </div>
 
@@ -140,7 +159,9 @@ export default function Header() {
                   className={`flex items-center gap-2 py-1.5 px-2 rounded-lg text-sm font-medium transition-all ${getColorClasses(item.color, active)}`}
                   onClick={toggleMenu}
                 >
-                  <span className="material-symbols-outlined text-base">{item.icon}</span>
+                  <span className="material-symbols-outlined text-base">
+                    {item.icon}
+                  </span>
                   <span>{item.label}</span>
                 </NavigationLink>
               );

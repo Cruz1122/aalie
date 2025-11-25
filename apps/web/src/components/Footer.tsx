@@ -3,7 +3,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-import { getApiKey, setApiKey, validateApiKey, removeApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
+import {
+  getApiKey,
+  setApiKey,
+  validateApiKey,
+  removeApiKey,
+  getApiKeyStatus,
+} from "@/hooks/useApiKey";
 
 import HealthStatus from "./HealthStatus";
 
@@ -24,11 +30,11 @@ export default function Footer() {
     const stored = getApiKey();
     const hasLocal = stored !== null;
     setHasLocalApiKey(hasLocal);
-    
+
     if (stored) {
       setApiKeyValue(stored);
     }
-    
+
     // Solo verificar servidor si no hay en localStorage
     setIsCheckingStatus(true);
     try {
@@ -36,14 +42,14 @@ export default function Footer() {
         // Solo hacer request si no hay en localStorage
         const status = await getApiKeyStatus();
         setHasServerApiKey(status.hasServer);
-        
+
         // Determinar el estado principal (solo si no se está editando)
-        setStatus(prevStatus => {
+        setStatus((prevStatus) => {
           // No actualizar si se está editando o mostrando el input
           if (isEditing || showInput) {
             return prevStatus;
           }
-          
+
           if (status.hasServer) {
             return "server";
           } else {
@@ -53,7 +59,7 @@ export default function Footer() {
       } else {
         // Si hay en localStorage, no hacer request al servidor
         setHasServerApiKey(false);
-        setStatus(prevStatus => {
+        setStatus((prevStatus) => {
           if (isEditing || showInput) {
             return prevStatus;
           }
@@ -82,7 +88,7 @@ export default function Footer() {
     // Usar una función estable que no cause re-renders innecesarios
     const handleStorageChange = (e: StorageEvent) => {
       // Verificar si el cambio es en la API_KEY
-      if (e.key === 'gemini_api_key' || e.key === null) {
+      if (e.key === "gemini_api_key" || e.key === null) {
         // Solo actualizar si no se está editando
         if (!isEditing && !showInput) {
           updateApiKeyStatus();
@@ -91,7 +97,7 @@ export default function Footer() {
     };
 
     // Escuchar evento storage (funciona entre tabs/ventanas)
-    window.addEventListener('storage', handleStorageChange);
+    globalThis.window.addEventListener("storage", handleStorageChange);
 
     // También escuchar cambios en la misma ventana usando un evento personalizado
     const handleApiKeyChange = () => {
@@ -100,13 +106,16 @@ export default function Footer() {
         updateApiKeyStatus();
       }
     };
-    
+
     // Crear un evento personalizado para cambios en la misma ventana
-    window.addEventListener('apiKeyChanged', handleApiKeyChange);
+    globalThis.window.addEventListener("apiKeyChanged", handleApiKeyChange);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('apiKeyChanged', handleApiKeyChange);
+      globalThis.window.removeEventListener("storage", handleStorageChange);
+      globalThis.window.removeEventListener(
+        "apiKeyChanged",
+        handleApiKeyChange,
+      );
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Sin dependencias para evitar re-crear listeners
@@ -122,7 +131,7 @@ export default function Footer() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showInput]); // Solo cuando showInput cambia
-  
+
   // Validar en tiempo real mientras se escribe
   useEffect(() => {
     if (isEditing && showInput) {
@@ -130,7 +139,7 @@ export default function Footer() {
         setStatus("none");
         return;
       }
-      
+
       if (validateApiKey(apiKey)) {
         setStatus("valid");
       } else {
@@ -178,15 +187,15 @@ export default function Footer() {
     if (isCheckingStatus) {
       return "Verificando API Key...";
     }
-    
+
     if (hasServerApiKey) {
       return "API Key en variables de entorno";
     }
-    
+
     if (hasLocalApiKey) {
       return "API Key en el almacenamiento local";
     }
-    
+
     switch (status) {
       case "none":
         return "API Key no configurada";
@@ -203,15 +212,15 @@ export default function Footer() {
     if (isCheckingStatus) {
       return "bg-blue-900/40 text-blue-300";
     }
-    
+
     if (hasServerApiKey) {
       return "bg-green-900/40 text-green-300";
     }
-    
+
     if (hasLocalApiKey) {
       return "bg-green-900/40 text-green-300";
     }
-    
+
     switch (status) {
       case "none":
         return "bg-slate-900/40 text-slate-300";
@@ -228,11 +237,11 @@ export default function Footer() {
     if (isCheckingStatus) {
       return "bg-blue-400";
     }
-    
+
     if (hasServerApiKey || hasLocalApiKey) {
       return "bg-green-400";
     }
-    
+
     switch (status) {
       case "none":
         return "bg-slate-400";
@@ -260,14 +269,14 @@ export default function Footer() {
                 status === "invalid"
                   ? "border-red-500/50 focus:border-red-500"
                   : status === "valid"
-                  ? "border-green-500/50 focus:border-green-500"
-                  : "border-slate-600/50 focus:border-slate-500"
+                    ? "border-green-500/50 focus:border-green-500"
+                    : "border-slate-600/50 focus:border-slate-500"
               } text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-1 ${
                 status === "invalid"
                   ? "focus:ring-red-500/50"
                   : status === "valid"
-                  ? "focus:ring-green-500/50"
-                  : "focus:ring-slate-500/50"
+                    ? "focus:ring-green-500/50"
+                    : "focus:ring-slate-500/50"
               } transition-all flex-1 min-w-[180px] h-6`}
               autoFocus
             />
@@ -306,12 +315,12 @@ export default function Footer() {
           )}
           {!hasServerApiKey && !hasLocalApiKey && (
             <p className="text-slate-400 text-[10px] text-center max-w-xl leading-tight mt-0.5">
-              Ingresa tu API Key de Gemini para habilitar la simplificación de expresiones matemáticas.
-              Puedes obtenerla en{" "}
-              <a 
-                href="https://aistudio.google.com/apikey" 
-                target="_blank" 
-                rel="noopener noreferrer" 
+              Ingresa tu API Key de Gemini para habilitar la simplificación de
+              expresiones matemáticas. Puedes obtenerla en{" "}
+              <a
+                href="https://aistudio.google.com/apikey"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-blue-400 hover:text-blue-300 underline"
               >
                 Google AI Studio
@@ -330,7 +339,10 @@ export default function Footer() {
             Universidad de Caldas - 2025
           </a>
           <span className="text-slate-600">•</span>
-          <a className="text-dark-text hover:text-white transition-colors" href="/privacy">
+          <a
+            className="text-dark-text hover:text-white transition-colors"
+            href="/privacy"
+          >
             Política de Privacidad
           </a>
           <span className="text-slate-600">•</span>
@@ -338,7 +350,9 @@ export default function Footer() {
             onClick={() => setShowInput(true)}
             className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs cursor-pointer hover:opacity-80 transition-opacity ${getStatusStyle()}`}
           >
-            <span className={`inline-block h-1.5 w-1.5 rounded-full ${getStatusDot()}`} />
+            <span
+              className={`inline-block h-1.5 w-1.5 rounded-full ${getStatusDot()}`}
+            />
             {getStatusText()}
           </button>
           <span className="text-slate-600">•</span>

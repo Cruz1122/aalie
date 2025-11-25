@@ -18,12 +18,12 @@ export interface ParseResult {
 /**
  * Hook para parsear código usando Web Worker.
  * Incluye debounce de 150ms y cancelación automática de requests antiguos.
- * 
+ *
  * @param code - Código fuente a parsear
  * @param debounceMs - Tiempo de debounce en milisegundos (por defecto 150ms)
  * @returns Resultado del parseo con ok, ast, errors e isParsing
  * @author Juan Camilo Cruz Parra (@Cruz1122)
- * 
+ *
  * @example
  * ```tsx
  * const { ok, ast, errors, isParsing } = useParseWorker(code, 200);
@@ -44,15 +44,15 @@ export function useParseWorker(code: string, debounceMs = 150): ParseResult {
     // Crear worker
     workerRef.current = new Worker(
       new URL("../workers/parser.worker.ts", import.meta.url),
-      { type: "module" }
+      { type: "module" },
     );
 
     // Escuchar respuestas
     workerRef.current.onmessage = (
-      event: MessageEvent<ParseWorkerResponse>
+      event: MessageEvent<ParseWorkerResponse>,
     ) => {
       const response = event.data;
-      
+
       // Solo procesar si es la versión más reciente
       if (response.id === requestIdRef.current) {
         setResult({
@@ -130,10 +130,10 @@ export function useParseWorker(code: string, debounceMs = 150): ParseResult {
 /**
  * Hook alternativo para parsear bajo demanda (sin debounce automático).
  * Permite control manual del momento en que se ejecuta el parseo.
- * 
+ *
  * @returns Objeto con result (ParseResult) y parse (función para ejecutar parseo)
  * @author Juan Camilo Cruz Parra (@Cruz1122)
- * 
+ *
  * @example
  * ```tsx
  * const { result, parse } = useParseWorkerOnDemand();
@@ -154,14 +154,14 @@ export function useParseWorkerOnDemand() {
   useEffect(() => {
     workerRef.current = new Worker(
       new URL("../workers/parser.worker.ts", import.meta.url),
-      { type: "module" }
+      { type: "module" },
     );
 
     workerRef.current.onmessage = (
-      event: MessageEvent<ParseWorkerResponse>
+      event: MessageEvent<ParseWorkerResponse>,
     ) => {
       const response = event.data;
-      
+
       if (response.id === requestIdRef.current) {
         setResult({
           ok: response.ok,
@@ -205,4 +205,3 @@ export function useParseWorkerOnDemand() {
 
   return { result, parse };
 }
-

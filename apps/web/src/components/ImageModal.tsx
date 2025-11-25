@@ -106,8 +106,12 @@ export const ImageModal = ({ image, isOpen, onClose }: ImageModalProps) => {
           ) : (
             <div className="glass-modal-container p-6 sm:p-8 rounded-xl text-center max-w-md mx-auto pointer-events-auto">
               <div className="text-red-400 text-4xl mb-4">⚠️</div>
-              <h3 className="text-lg font-medium text-white mb-2">Error al cargar la imagen</h3>
-              <p className="text-sm text-slate-400">No se pudo cargar {image.alt}</p>
+              <h3 className="text-lg font-medium text-white mb-2">
+                Error al cargar la imagen
+              </h3>
+              <p className="text-sm text-slate-400">
+                No se pudo cargar {image.alt}
+              </p>
             </div>
           )}
         </div>
@@ -115,8 +119,10 @@ export const ImageModal = ({ image, isOpen, onClose }: ImageModalProps) => {
         {/* Indicación de cierre fija en la parte inferior */}
         <div className="absolute bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 glass-secondary text-white/90 text-xs sm:text-sm px-3 py-2 rounded-full whitespace-nowrap pointer-events-auto">
           Presiona{" "}
-          <kbd className="bg-white/20 px-2 py-1 rounded text-white font-medium mx-1">Esc</kbd> o haz
-          clic en el fondo para cerrar
+          <kbd className="bg-white/20 px-2 py-1 rounded text-white font-medium mx-1">
+            Esc
+          </kbd>{" "}
+          o haz clic en el fondo para cerrar
         </div>
       </div>
     </dialog>

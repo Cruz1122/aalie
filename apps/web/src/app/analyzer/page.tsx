@@ -1,29 +1,40 @@
 "use client";
 
-import type { AnalyzeOpenResponse, ParseResponse, Program } from "@aa/types";
-import { useEffect, useRef, useState } from "react";
+import type { AnalyzeOpenResponse, ParseError, ParseResponse, Program } from "@aa/types";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { AnalysisLoader } from "@/components/AnalysisLoader";
 import { AnalyzerEditor } from "@/components/AnalyzerEditor";
 import { ASTTreeView } from "@/components/ASTTreeView";
 import ChatBot from "@/components/ChatBot";
+import { ComparisonLoader } from "@/components/ComparisonLoader";
+import ComparisonModal from "@/components/ComparisonModal";
 import Footer from "@/components/Footer";
-import Formula from "@/components/Formula";
 import GeneralProcedureModal from "@/components/GeneralProcedureModal";
 import Header from "@/components/Header";
-import LineTable from "@/components/LineTable";
-import ProcedureModal from "@/components/ProcedureModal";
 import IterativeAnalysisView from "@/components/IterativeAnalysisView";
-import RecursiveAnalysisView from "@/components/RecursiveAnalysisView";
 import MethodSelector, { MethodType } from "@/components/MethodSelector";
+import ProcedureModal from "@/components/ProcedureModal";
+import RecursiveAnalysisView from "@/components/RecursiveAnalysisView";
+import RepairModal from "@/components/RepairModal";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
-import { getApiKey } from "@/hooks/useApiKey";
+import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { heuristicKind } from "@/lib/algorithm-classifier";
-import { calculateBigO, getSavedCase, saveCase } from "@/lib/polynomial";
-import { getBestAsymptoticNotation as getBestNotation } from "@/lib/asymptotic-notation";
+import { extractCoreData, isRecursiveAnalysis, type CoreAnalysisData } from "@/lib/extract-core-data";
+import { getSavedCase, saveCase } from "@/lib/polynomial";
+
+import {
+  extractParseError,
+  extractAnalysisError,
+  handleAnalysisError,
+  detectAndSelectMethod,
+  detectRecursiveMethod,
+  updateAnalysisMessageForMethod,
+} from "./analyzer-helpers";
 
 type ClassifyResponse = { kind: "iterative" | "recursive" | "hybrid" | "unknown" };
+type CaseType = 'worst' | 'average' | 'best';
 
 export default function AnalyzerPage() {
   const { animateProgress } = useAnalysisProgress();
@@ -87,8 +98,9 @@ export default function AnalyzerPage() {
   }, [showMethodSelector]);
   const [data, setData] = useState<{
     worst: AnalyzeOpenResponse | null;
-    best: AnalyzeOpenResponse | null;
-    avg?: AnalyzeOpenResponse | null;
+    best: AnalyzeOpenResponse | "same_as_worst" | null;
+    avg?: AnalyzeOpenResponse | "same_as_worst" | null;
+    has_case_variability?: boolean;
   } | null>(() => {
     // Cargar resultados desde sessionStorage si vienen del editor manual o del chatbot
     if (globalThis.window !== undefined) {
@@ -124,6 +136,16 @@ export default function AnalyzerPage() {
     return { worst: null, best: null, avg: null };
   });
 
+  const hasComparableData = useMemo(() => {
+    if (!data) {
+      return false;
+    }
+    const worstCore = extractCoreData(data.worst || null);
+    const bestCore = data.best === "same_as_worst" ? null : extractCoreData(data.best || null);
+    const avgCore = data.avg === "same_as_worst" ? null : extractCoreData(data.avg || null);
+    return Boolean(worstCore || bestCore || avgCore);
+  }, [data]);
+
   // Estados para el modal
   const [open, setOpen] = useState(false);
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
@@ -132,18 +154,55 @@ export default function AnalyzerPage() {
   const [ast, setAst] = useState<Program | null>(null);
   const [showAstModal, setShowAstModal] = useState(false);
   const [localParseOk, setLocalParseOk] = useState(false);
+  const [parseErrors, setParseErrors] = useState<ParseError[] | undefined>(undefined);
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'tree' | 'json'>('tree');
   // Estados del chat
   const { messages, setMessages } = useChatHistory();
   const [isChatOpen, setIsChatOpen] = useState(false);
+  // Estado para modal de reparación
+  const [showRepairModal, setShowRepairModal] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(false);
+  // Estado para comparación con LLM
+  const [isComparing, setIsComparing] = useState(false);
+  const [comparisonProgress, setComparisonProgress] = useState(0);
+  const [comparisonMessage, setComparisonMessage] = useState("Contactando con LLM...");
+  const [showComparisonModal, setShowComparisonModal] = useState(false);
+  const [llmAnalysisData, setLlmAnalysisData] = useState<{
+    worst: CoreAnalysisData | null;
+    best: CoreAnalysisData | null;
+    avg: CoreAnalysisData | null;
+  } | null>(null);
+  const [llmNote, setLlmNote] = useState<string>("");
 
   // Refs para evitar memory leaks con timeouts
   const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Verificar API_KEY al montar y cuando cambie (incluyendo servidor)
+  useEffect(() => {
+    const checkApiKey = async () => {
+      const status = await getApiKeyStatus();
+      setHasApiKey(status.hasAny);
+    };
+    checkApiKey();
+    const handleApiKeyChange = async () => {
+      const status = await getApiKeyStatus();
+      setHasApiKey(status.hasAny);
+    };
+    globalThis.window.addEventListener('apiKeyChanged', handleApiKeyChange);
+    return () => {
+      globalThis.window.removeEventListener('apiKeyChanged', handleApiKeyChange);
+    };
+  }, []);
+
   // Manejar cambios en el estado de parsing local
   const handleParseStatusChange = (ok: boolean, _isParsing: boolean) => {
     setLocalParseOk(ok);
+  };
+
+  // Manejar cambios en los errores de parsing
+  const handleErrorsChange = (errors: ParseError[] | undefined) => {
+    setParseErrors(errors);
   };
 
   // Cleanup de timeouts al desmontar
@@ -203,7 +262,7 @@ export default function AnalyzerPage() {
     try {
       // 1) Parsear el código (0-20%)
       setAnalysisMessage("Parseando código...");
-      const parsePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/grammar/parse`, {
+      const parsePromise = fetch("/api/grammar/parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source }),
@@ -214,18 +273,16 @@ export default function AnalyzerPage() {
 
       if (!parseRes.ok) {
         console.error("Error en parse:", parseRes);
-        const errorMsg = parseRes.errors?.map((e: { line?: number; column?: number; message: string }) =>
-          `Línea ${e.line || '?'}:${e.column || '?'} ${e.message}`
-        ).join("\n") || "Error al parsear el código";
-        setAnalysisError(errorMsg);
-        setTimeout(() => {
-          setAnalyzing(false);
-          setAnalysisProgress(0);
-          setAnalysisMessage("Iniciando análisis...");
-          setAlgorithmType(undefined);
-          setIsAnalysisComplete(false);
-          setAnalysisError(null);
-        }, 3000);
+        const errorMsg = extractParseError(parseRes);
+        handleAnalysisError(
+          errorMsg,
+          setAnalyzing,
+          setAnalysisProgress,
+          setAnalysisMessage,
+          setAlgorithmType,
+          setIsAnalysisComplete,
+          setAnalysisError
+        );
         return;
       }
 
@@ -279,103 +336,19 @@ export default function AnalyzerPage() {
         const progressBeforeMethodSelection = 85;
         
         // Detectar métodos aplicables
-        selectedMethod = "master";
-        try {
-          const detectMethodsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/detect-methods`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              source,
-              algorithm_kind: kind
-            }),
-          });
-          
-          const detectMethodsResult = await detectMethodsResponse.json() as {
-            ok: boolean;
-            applicable_methods?: MethodType[];
-            default_method?: MethodType;
-            errors?: Array<{ message: string }>;
-          };
-          
-          if (detectMethodsResult.ok && detectMethodsResult.applicable_methods) {
-            const methods = detectMethodsResult.applicable_methods;
-            const defaultMethodValue = (detectMethodsResult.default_method || "master") as MethodType;
-            
-            setApplicableMethods(methods);
-            setDefaultMethod(defaultMethodValue);
-            
-            // Si hay múltiples métodos aplicables, mostrar selector
-            if (methods.length > 1) {
-              console.log('[Analyzer] Múltiples métodos detectados:', methods);
-              console.log('[Analyzer] Método por defecto:', defaultMethodValue);
-              
-              // Actualizar mensaje para indicar que el usuario debe seleccionar
-              setAnalysisMessage("Selecciona el método de análisis...");
-              
-              // Guardar el progreso mínimo para evitar que baje
-              minProgressRef.current = progressBeforeMethodSelection;
-              
-              // Asegurar que el progreso se mantenga en el valor actual
-              setAnalysisProgress((prev) => Math.max(prev, progressBeforeMethodSelection));
-              
-              // Mostrar el selector primero
-              setShowMethodSelector(true);
-              console.log('[Analyzer] Selector de método mostrado');
-              
-              // Esperar un poco para que el selector se renderice completamente
-              await new Promise((resolve) => setTimeout(resolve, 200));
-              
-              // Crear un Promise que se resolverá cuando el usuario seleccione un método
-              console.log('[Analyzer] Esperando selección del usuario...');
-              selectedMethod = await new Promise<MethodType>((resolve, reject) => {
-                methodSelectionPromiseRef.current = { resolve, reject };
-                // Timeout de seguridad (no debería pasar, pero por si acaso)
-                setTimeout(() => {
-                  if (methodSelectionPromiseRef.current) {
-                    console.warn("Timeout en selección de método, usando método por defecto");
-                    methodSelectionPromiseRef.current.resolve(defaultMethodValue);
-                    methodSelectionPromiseRef.current = null;
-                  }
-                }, 60000); // 60 segundos timeout
-              }).catch(() => {
-                console.warn("Error en selección de método, usando método por defecto");
-                return defaultMethodValue;
-              });
-              
-              console.log('[Analyzer] Método seleccionado:', selectedMethod);
-              
-              // Ocultar selector después de la selección
-              setShowMethodSelector(false);
-              methodSelectionPromiseRef.current = null;
-              // Limpiar el progreso mínimo después de ocultar el selector
-              minProgressRef.current = 0;
-              
-              // Actualizar mensaje para continuar
-              setAnalysisMessage("Método seleccionado, continuando análisis...");
-              // Mantener el progreso y avanzar suavemente
-              await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
-            } else {
-              // Solo un método disponible, usarlo directamente
-              console.log('[Analyzer] Solo un método disponible:', defaultMethodValue);
-              selectedMethod = defaultMethodValue;
-              // Continuar con el progreso normalmente
-              setAnalysisMessage("Iniciando análisis de complejidad...");
-              await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
-            }
-          } else {
-            // Si falla la detección, usar método por defecto
-            selectedMethod = "master";
-            // Continuar con el progreso normalmente
-            setAnalysisMessage("Iniciando análisis de complejidad...");
-            await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
-          }
-        } catch (error) {
-          console.warn("Error detectando métodos, usando método por defecto:", error);
-          selectedMethod = "master";
-          // Continuar con el progreso normalmente
-          setAnalysisMessage("Iniciando análisis de complejidad...");
-          await animateProgress(progressBeforeMethodSelection, 90, 400, setAnalysisProgress);
-        }
+        selectedMethod = await detectAndSelectMethod(
+          source,
+          kind,
+          progressBeforeMethodSelection,
+          setAnalysisMessage,
+          setAnalysisProgress,
+          setApplicableMethods,
+          setDefaultMethod,
+          setShowMethodSelector,
+          minProgressRef,
+          methodSelectionPromiseRef,
+          animateProgress
+        );
         
         progressBeforeAnalysis = 90;
       } else {
@@ -422,7 +395,7 @@ export default function AnalyzerPage() {
         setAnalysisMessage("Analizando complejidad...");
       }
       
-      const analyzePromise = fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/analyze/open`, {
+      const analyzePromise = fetch("/api/analyze/open", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(analyzeBody),
@@ -434,26 +407,24 @@ export default function AnalyzerPage() {
         ok: boolean;
         has_case_variability?: boolean;
         worst?: AnalyzeOpenResponse;
-        best?: AnalyzeOpenResponse;
-        avg?: AnalyzeOpenResponse;
+        best?: AnalyzeOpenResponse | "same_as_worst";
+        avg?: AnalyzeOpenResponse | "same_as_worst";
         errors?: Array<{ message: string; line?: number; column?: number }>;
       };
 
       // Verificar errores
       if (!analyzeRes.ok) {
         console.error("Error en análisis:", analyzeRes);
-        const errorMsg = analyzeRes.errors?.map((e: { message: string; line?: number; column?: number }) =>
-          e.message || `Error en línea ${e.line || '?'}`
-        ).join("\n") || "Error al analizar el algoritmo";
-        setAnalysisError(errorMsg);
-        setTimeout(() => {
-          setAnalyzing(false);
-          setAnalysisProgress(0);
-          setAnalysisMessage("Iniciando análisis...");
-          setAlgorithmType(undefined);
-          setIsAnalysisComplete(false);
-          setAnalysisError(null);
-        }, 3000);
+        const errorMsg = extractAnalysisError(analyzeRes);
+        handleAnalysisError(
+          errorMsg,
+          setAnalyzing,
+          setAnalysisProgress,
+          setAnalysisMessage,
+          setAlgorithmType,
+          setIsAnalysisComplete,
+          setAnalysisError
+        );
         return;
       }
 
@@ -475,20 +446,9 @@ export default function AnalyzerPage() {
       // 6) Detectar el método usado y actualizar mensaje
       let detectedMethod = "método recursivo";
       if (isRecursive && analyzeRes.worst?.totals?.recurrence) {
-        const method = analyzeRes.worst.totals.recurrence.method || analyzeRes.best?.totals?.recurrence?.method;
-        if (method === "characteristic_equation") {
-          detectedMethod = "Ecuación Característica";
-          setAnalysisMessage("Aplicando Método de Ecuación Característica...");
-        } else if (method === "iteration") {
-          detectedMethod = "Método de Iteración";
-          setAnalysisMessage("Aplicando Método de Iteración...");
-        } else if (method === "recursion_tree") {
-          detectedMethod = "Método de Árbol de Recursión";
-          setAnalysisMessage("Aplicando Método de Árbol de Recursión...");
-        } else {
-          detectedMethod = "Teorema Maestro";
-          setAnalysisMessage("Aplicando Teorema Maestro...");
-        }
+        const bestForDetection = analyzeRes.best === "same_as_worst" ? null : analyzeRes.best;
+        detectedMethod = detectRecursiveMethod(analyzeRes.worst, bestForDetection);
+        updateAnalysisMessageForMethod(detectedMethod, setAnalysisMessage);
         await new Promise((resolve) => setTimeout(resolve, 300));
       }
       
@@ -496,7 +456,8 @@ export default function AnalyzerPage() {
       setData({ 
         worst: analyzeRes.worst, 
         best: analyzeRes.best,
-        avg: analyzeRes.avg  // Puede ser undefined si falló, pero el frontend lo maneja
+        avg: analyzeRes.avg,  // Puede ser undefined si falló, pero el frontend lo maneja
+        has_case_variability: analyzeRes.has_case_variability  // Incluir variabilidad de casos
       });
       
       // Asegurar que algorithmType se mantenga usando la variable local 'kind'
@@ -506,7 +467,7 @@ export default function AnalyzerPage() {
         // Usar el tipo que ya fue clasificado (puede ser "hybrid", "recursive", etc.)
         setAlgorithmType(kind);
         console.log(`[Analyzer] algorithmType establecido desde clasificación: ${kind}`);
-      } else if (analyzeRes.worst?.totals?.recurrence || analyzeRes.best?.totals?.recurrence) {
+      } else if (analyzeRes.worst?.totals?.recurrence || (analyzeRes.best !== "same_as_worst" && analyzeRes.best?.totals?.recurrence)) {
         // Fallback: si no hay kind pero hay recurrencia, asumir recursive
         // (esto no debería pasar normalmente, pero es un fallback de seguridad)
         setAlgorithmType("recursive");
@@ -564,6 +525,1065 @@ export default function AnalyzerPage() {
     }
   };
 
+  // Handler para comparar con LLM
+  const handleCompareWithLLM = async () => {
+    if (!data || !hasApiKey || !hasComparableData) return;
+
+    try {
+      setIsComparing(true);
+      setComparisonProgress(0);
+      setComparisonMessage("Contactando con LLM...");
+
+      // Determinar tipo de algoritmo y datos core
+      const bestForAnalysis = data.best === "same_as_worst" ? null : data.best;
+      const avgForAnalysis = data.avg === "same_as_worst" ? null : data.avg;
+      const isRecursive = isRecursiveAnalysis(data.worst || bestForAnalysis || avgForAnalysis || null);
+      
+      // Extraer datos core de todos los casos para iterativo
+      const ownCoreDataWorst = extractCoreData(data.worst || null);
+      const ownCoreDataBest = data.best === "same_as_worst" ? null : extractCoreData(data.best || null);
+      const ownCoreDataAvg = data.avg === "same_as_worst" ? null : extractCoreData(data.avg || null);
+      
+      // Para recursivo, usar worst como principal
+      const ownCoreData = isRecursive ? ownCoreDataWorst : ownCoreDataWorst;
+
+      if (!ownCoreData) {
+        throw new Error("No se pudieron extraer los datos core del análisis");
+      }
+
+      // Preparar todos los datos del análisis para enviar al LLM
+      const fullAnalysisData = {
+        worst: ownCoreDataWorst,
+        best: ownCoreDataBest,
+        avg: ownCoreDataAvg,
+        isRecursive,
+        has_case_variability: data.has_case_variability || false,
+      };
+
+      // Detectar el método usado en el análisis propio (si es recursivo)
+      let ownMethod: string | undefined = undefined;
+      if (isRecursive) {
+        // Intentar obtener el método desde ownCoreDataWorst
+        ownMethod = ownCoreDataWorst?.method;
+        
+        // Si no está en ownCoreDataWorst, intentar desde data.worst
+        if (!ownMethod && data.worst?.totals?.recurrence?.method) {
+          ownMethod = data.worst.totals.recurrence.method;
+        }
+      }
+
+      // Preparación rápida inicial
+      setComparisonMessage("Preparando datos...");
+      await animateProgress(0, 5, 200, setComparisonProgress);
+
+      // Construir instrucción sobre el método a usar
+      let methodInstruction = "";
+      if (ownMethod && isRecursive) {
+        const methodNames: Record<string, string> = {
+          "characteristic_equation": "Ecuación Característica",
+          "iteration": "Método de Iteración",
+          "master": "Teorema Maestro",
+          "recursion_tree": "Árbol de Recursión"
+        };
+        const methodDisplayName = methodNames[ownMethod] || ownMethod;
+        methodInstruction = `\n**MÉTODO A USAR (CRÍTICO):**
+- El análisis propio utilizó el método "${methodDisplayName}" (${ownMethod})
+- **DEBES usar el MISMO método** en tu análisis para poder comparar correctamente
+- Si el análisis propio usó "${ownMethod}", tu análisis también debe usar "${ownMethod}" y proporcionar todos los campos requeridos para ese método
+- Solo si el método usado en el análisis propio no es aplicable o es incorrecto, puedes usar un método alternativo, pero debes justificarlo en tu nota`;
+      }
+
+      const prompt = `Analiza el siguiente algoritmo y proporciona un análisis de complejidad detallado.
+
+**CÓDIGO DEL ALGORITMO:**
+\`\`\`pseudocode
+${source}
+\`\`\`
+
+**ANÁLISIS PROPIO COMPLETO (para que puedas dar una observación real):**
+${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
+        // Detectar si hay variabilidad de casos en el análisis propio
+        const hasVariability = fullAnalysisData.has_case_variability === true;
+        const hasBestCase = data.best !== null && data.best !== undefined;
+        const hasAvgCase = data.avg !== null && data.avg !== undefined;
+        
+        if (hasVariability && (hasBestCase || hasAvgCase)) {
+          return `\n\n**⚠️ CRÍTICO - VARIABILIDAD DE CASOS (LEE ESTO CON ATENCIÓN):**
+- El análisis propio tiene variabilidad entre worst, best y average case (has_case_variability: true)
+- **OBLIGATORIO: DEBES proporcionar los 3 casos (worst, best, avg) en tu respuesta**, NO solo worst
+- **ESTRUCTURA REQUERIDA**: Tu respuesta DEBE tener esta estructura:
+  {
+    "analysis": {
+      "worst": { ... todos los campos del análisis del peor caso ... },
+      "best": { ... todos los campos del análisis del mejor caso ... },
+      "avg": { ... todos los campos del análisis del caso promedio ... }
+    },
+    "note": "..."
+  }
+- Si el análisis propio muestra diferentes complejidades para worst/best/avg, tu análisis también debe mostrar los 3 casos
+- El campo "analysis" DEBE contener objetos separados para "worst", "best" y "avg" cuando hay variabilidad
+- NO omitas los casos best y avg cuando el análisis propio los tiene
+- Si el análisis propio tiene worst, best y avg, tu respuesta DEBE tener worst, best y avg también`;
+        }
+        return "";
+      })()}
+
+**INSTRUCCIONES:**
+1. Analiza el algoritmo proporcionado
+2. Determina si es iterativo o recursivo
+3. Calcula la complejidad temporal y espacial
+4. ${ownMethod && isRecursive ? `**USA EL MISMO MÉTODO QUE EL ANÁLISIS PROPIO** (${ownMethod})` : 'Aplica los métodos apropiados (Teorema Maestro, Iteración, Árbol de Recursión, Ecuación Característica, etc.)'}
+5. Proporciona todos los datos core del análisis en formato JSON
+6. **IMPORTANTE**: Compara tu análisis con el análisis propio proporcionado y da una observación REAL y específica (máx. 150 caracteres) sobre:
+   - La precisión del análisis propio
+   - Si hay diferencias o coincidencias
+   - Si hay aspectos que podrían mejorarse
+   - Un adjetivo calificativo breve
+   La nota debe comenzar con un emoji de cara (😊, 😐, 😕, etc.) seguido de tu observación
+
+**IMPORTANTE:**
+- Usa formato LaTeX para todas las expresiones matemáticas
+- La nota debe ser una observación REAL comparando tu análisis con el proporcionado, no genérica
+- Devuelve SOLO un objeto JSON válido según el schema definido`;
+
+      // Llamar al LLM
+      const apiKey = getApiKey();
+      
+      setComparisonMessage("Enviando solicitud a Gemini 2.5 Pro...");
+      await animateProgress(5, 10, 200, setComparisonProgress);
+      
+      // Progreso variable durante la petición: más lento al inicio, más rápido en el medio, lento al final
+      // Va de 10% a 95% durante ~20 segundos
+      const targetProgress = 95;
+      const estimatedDuration = 20000; // ~20 segundos
+      const startTime = Date.now();
+      
+      // Mensajes que cambian secuencialmente durante la espera (no se repiten)
+      const waitingMessages = [
+        "Esperando respuesta del LLM...",
+        "Analizando algoritmo...",
+        "Calculando complejidad...",
+        "Comparando análisis...",
+        "Generando observaciones...",
+        "Finalizando comparación..."
+      ];
+      
+      let messageIndex = 0;
+      const messageChangeInterval = 3000; // Cambiar mensaje cada 3 segundos
+      let lastMessageChange = Date.now();
+      
+      // Función para calcular progreso con curva más suave
+      const calculateProgress = (elapsed: number) => {
+        // Usar una curva ease-in-out más suave: lento al inicio, rápido en el medio, lento al final
+        const progress = elapsed / estimatedDuration;
+        // Aplicar curva ease-in-out más suave (usando seno para transición más gradual)
+        // Esto hace que el inicio sea más lento que la curva cúbica anterior
+        const easedProgress = progress < 0.5
+          ? 2 * progress * progress  // Ease-in: más lento al inicio
+          : 1 - Math.pow(-2 * progress + 2, 2) / 2; // Ease-out: más lento al final
+        return 10 + (targetProgress - 10) * Math.min(easedProgress, 0.99); // Cap at 99% of target
+      };
+      
+      const progressInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const newProgress = calculateProgress(elapsed);
+        
+        // Cambiar mensaje periódicamente de forma secuencial (no se repiten)
+        if (Date.now() - lastMessageChange >= messageChangeInterval) {
+          if (messageIndex < waitingMessages.length - 1) {
+            messageIndex = messageIndex + 1;
+            setComparisonMessage(waitingMessages[messageIndex]);
+            lastMessageChange = Date.now();
+          }
+          // Si ya llegamos al último mensaje, mantenerlo
+        }
+        
+        setComparisonProgress((prev) => {
+          // Solo avanzar si el nuevo progreso es mayor
+          if (newProgress > prev && newProgress < targetProgress) {
+            return newProgress;
+          }
+          // Si llegamos al límite, mantener en 95%
+          if (prev >= targetProgress - 0.5) {
+            return targetProgress;
+          }
+          return prev;
+        });
+      }, 100); // Actualizar cada 100ms para suavidad
+      
+      // Establecer primer mensaje
+      setComparisonMessage(waitingMessages[0]);
+
+      const response = await fetch('/api/llm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          job: 'compare',
+          prompt,
+          apiKey: apiKey || undefined,
+        }),
+      });
+
+      clearInterval(progressInterval);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.error || `HTTP error! status: ${response.status}`);
+      }
+
+      // Cuando recibimos la respuesta, ir de 95% a 100%
+      setComparisonMessage("Procesando respuesta...");
+      await animateProgress(95, 100, 300, setComparisonProgress);
+
+      const result = await response.json();
+      
+      if (!result.ok) {
+        throw new Error(result.error || "Error al obtener respuesta del LLM");
+      }
+
+      setComparisonMessage("Generando comparación...");
+
+      // Extraer datos del LLM
+      const llmResponseText = result.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!llmResponseText) {
+        throw new Error("No se recibió respuesta del LLM");
+      }
+
+      // Parsear JSON de la respuesta
+      let llmResponse: { 
+        analysis?: Record<string, unknown>; 
+        time_complexity?: Record<string, unknown>;
+        note?: string; 
+        algorithm_type?: string;
+      };
+      try {
+        llmResponse = JSON.parse(llmResponseText);
+      } catch {
+        // Intentar extraer JSON si está dentro de un bloque de código
+        const jsonMatch = llmResponseText.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+        if (jsonMatch) {
+          llmResponse = JSON.parse(jsonMatch[1]);
+        } else {
+          throw new Error("No se pudo parsear la respuesta del LLM como JSON");
+        }
+      }
+
+      // Convertir datos del LLM al formato CoreAnalysisData
+      // El LLM puede devolver el análisis de diferentes formas:
+      // 1. { analysis: { worst: {...}, best: {...}, avg: {...} }, note: "..." }
+      // 2. { analysis: { worst: {...}, best: {...}, avg: {... } }, note: "..." }
+      // 3. { analysis: {...}, note: "..." } (un solo objeto)
+      // 4. { analysis: { time_complexity: {...}, space_complexity: {...} }, note: "..." } (estructura alternativa)
+      // 5. { time_complexity: { analysis: {...} }, note: "..." } (estructura directa)
+      
+      // Variable para rastrear si ya se procesaron los datos
+      let dataProcessed = false;
+      
+      // Primero verificar si time_complexity está directamente en llmResponse
+      if (llmResponse.time_complexity && typeof llmResponse.time_complexity === 'object') {
+        const timeComplexity = llmResponse.time_complexity as Record<string, unknown>;
+        
+        // Verificar si time_complexity tiene directamente recurrence, method, characteristic_equation, etc.
+        // (estructura para recursivos: { time_complexity: { recurrence, method, characteristic_equation/iteration/master, big_theta } })
+        if (timeComplexity.recurrence || timeComplexity.method || timeComplexity.characteristic_equation || timeComplexity.iteration || timeComplexity.master) {
+          const convertRecursiveAnalysis = (): CoreAnalysisData | null => {
+            const result: CoreAnalysisData = {};
+            
+            // Notaciones asintóticas
+            if (timeComplexity.big_theta && typeof timeComplexity.big_theta === 'string') result.big_theta = timeComplexity.big_theta;
+            if (timeComplexity.big_o && typeof timeComplexity.big_o === 'string') result.big_o = timeComplexity.big_o;
+            if (timeComplexity.big_O && typeof timeComplexity.big_O === 'string') result.big_o = timeComplexity.big_O;
+            if (timeComplexity.big_omega && typeof timeComplexity.big_omega === 'string') result.big_omega = timeComplexity.big_omega;
+            if (timeComplexity.big_Omega && typeof timeComplexity.big_Omega === 'string') result.big_omega = timeComplexity.big_Omega;
+            
+            // Extraer recurrence
+            if (timeComplexity.recurrence && typeof timeComplexity.recurrence === 'object') {
+              const recurrence = timeComplexity.recurrence as Record<string, unknown>;
+              result.recurrence = {
+                type: (recurrence.type as "divide_conquer" | "linear_shift") || "linear_shift",
+                form: (recurrence.form as string) || "",
+                a: (recurrence.a as number) || undefined,
+                b: (recurrence.b as number) || undefined,
+                f: (recurrence.f as string) || undefined,
+                order: (recurrence.order as number) || undefined,
+                shifts: (recurrence.shifts as number[]) || undefined,
+                coefficients: (recurrence.coefficients as number[]) || undefined,
+                "g(n)": (recurrence["g(n)"] as string) || undefined,
+                n0: (recurrence.n0 as number) || undefined,
+                method: (timeComplexity.method as string) || undefined,
+              };
+            }
+            
+            // Extraer method
+            if (timeComplexity.method && typeof timeComplexity.method === 'string') {
+              result.method = timeComplexity.method;
+            }
+            
+            // Extraer characteristic_equation (prioridad alta)
+            if (timeComplexity.characteristic_equation && typeof timeComplexity.characteristic_equation === 'object') {
+              const charEq = timeComplexity.characteristic_equation as Record<string, unknown>;
+              result.characteristic_equation = {
+                equation: (charEq.equation as string) || "",
+                roots: (charEq.roots as Array<{ root: string; multiplicity: number }>) || undefined,
+                dominant_root: (charEq.dominant_root as string) || undefined,
+                growth_rate: (charEq.growth_rate as number) || undefined,
+                homogeneous_solution: (charEq.homogeneous_solution as string) || "",
+                particular_solution: (charEq.particular_solution as string) || undefined,
+                general_solution: (charEq.general_solution as string) || undefined,
+                closed_form: (charEq.closed_form as string) || "",
+                theta: (charEq.theta as string) || result.big_theta || "",
+              };
+              // Usar theta de characteristic_equation si está disponible
+              if (result.characteristic_equation.theta) {
+                result.big_theta = result.characteristic_equation.theta;
+              }
+            }
+            
+            // Extraer iteration
+            if (timeComplexity.iteration && typeof timeComplexity.iteration === 'object') {
+              const iteration = timeComplexity.iteration as Record<string, unknown>;
+              const baseCase = iteration.base_case as Record<string, unknown> | undefined;
+              const summation = iteration.summation as Record<string, unknown> | undefined;
+              
+              result.iteration = {
+                g_function: (iteration.g_function as string) || "",
+                expansions: (iteration.expansions as string[]) || [],
+                general_form: (iteration.general_form as string) || "",
+                base_case: {
+                  condition: (baseCase?.condition as string) || "",
+                  k: (baseCase?.k as string) || "",
+                },
+                summation: {
+                  expression: (summation?.expression as string) || "",
+                  evaluated: (summation?.evaluated as string) || "",
+                },
+                theta: (iteration.theta as string) || result.big_theta || "",
+              };
+              // Usar theta de iteration si está disponible
+              if (result.iteration.theta) {
+                result.big_theta = result.iteration.theta;
+              }
+            }
+            
+            // Extraer master
+            if (timeComplexity.master && typeof timeComplexity.master === 'object') {
+              const master = timeComplexity.master as Record<string, unknown>;
+              result.master = {
+                case: (master.case as 1 | 2 | 3 | null) || null,
+                nlogba: (master.nlogba as string) || "",
+                comparison: (master.comparison as "smaller" | "equal" | "larger" | null) || null,
+                theta: (master.theta as string | null) || null,
+              };
+              // Usar theta de master si está disponible
+              if (result.master.theta) {
+                result.big_theta = result.master.theta;
+              }
+            }
+            
+            return Object.keys(result).length > 0 ? result : null;
+          };
+          
+          const recursiveResult = convertRecursiveAnalysis();
+          
+          if (recursiveResult) {
+            setLlmAnalysisData({
+              worst: recursiveResult,
+              best: null,
+              avg: null,
+            });
+            dataProcessed = true;
+          }
+        }
+        // Verificar si time_complexity tiene analysis
+        else if (timeComplexity.analysis && typeof timeComplexity.analysis === 'object') {
+          const analysisData = timeComplexity.analysis as Record<string, unknown>;
+          const convertAnalysisData = (): CoreAnalysisData | null => {
+            const result: CoreAnalysisData = {};
+            
+            // T_open y T_polynomial
+            if (analysisData.T_open && typeof analysisData.T_open === 'string') result.T_open = analysisData.T_open;
+            if (analysisData.T_polynomial && typeof analysisData.T_polynomial === 'string') result.T_polynomial = analysisData.T_polynomial;
+            
+            // Notaciones asintóticas
+            if (analysisData.big_theta && typeof analysisData.big_theta === 'string') result.big_theta = analysisData.big_theta;
+            if (analysisData.big_o && typeof analysisData.big_o === 'string') result.big_o = analysisData.big_o;
+            if (analysisData.big_O && typeof analysisData.big_O === 'string') result.big_o = analysisData.big_O;
+            if (analysisData.big_omega && typeof analysisData.big_omega === 'string') result.big_omega = analysisData.big_omega;
+            if (analysisData.big_Omega && typeof analysisData.big_Omega === 'string') result.big_omega = analysisData.big_Omega;
+            
+            return Object.keys(result).length > 0 ? result : null;
+          };
+          
+          const analysisResult = convertAnalysisData();
+          
+          // Para iterativo, usar el mismo análisis para worst, best y avg
+          if (analysisResult) {
+            setLlmAnalysisData({
+              worst: analysisResult,
+              best: analysisResult,
+              avg: analysisResult,
+            });
+            dataProcessed = true; // Marcar que ya procesamos los datos
+          }
+        } else if (timeComplexity.worst || timeComplexity.best || timeComplexity.avg) {
+          // Si time_complexity tiene worst, best, avg directamente
+          const convertTimeComplexityCase = (caseData: unknown): CoreAnalysisData | null => {
+            if (!caseData || typeof caseData !== 'object') return null;
+            const data = caseData as Record<string, unknown>;
+            
+            const result: CoreAnalysisData = {};
+            if (data.T_open && typeof data.T_open === 'string') result.T_open = data.T_open;
+            if (data.T_polynomial && typeof data.T_polynomial === 'string') result.T_polynomial = data.T_polynomial;
+            if (data.big_theta && typeof data.big_theta === 'string') result.big_theta = data.big_theta;
+            if (data.big_o && typeof data.big_o === 'string') result.big_o = data.big_o;
+            if (data.big_O && typeof data.big_O === 'string') result.big_o = data.big_O;
+            if (data.big_omega && typeof data.big_omega === 'string') result.big_omega = data.big_omega;
+            if (data.big_Omega && typeof data.big_Omega === 'string') result.big_omega = data.big_Omega;
+            
+            return Object.keys(result).length > 0 ? result : null;
+          };
+          
+          setLlmAnalysisData({
+            worst: convertTimeComplexityCase(timeComplexity.worst),
+            best: convertTimeComplexityCase(timeComplexity.best),
+            avg: convertTimeComplexityCase(timeComplexity.avg),
+          });
+        }
+      }
+      
+      // Solo procesar llmResponse.analysis si no se procesó time_complexity.analysis
+      const llmAnalysis = llmResponse.analysis || {};
+      
+      // Si el análisis tiene worst, best, avg directamente, convertirlos correctamente
+      if (!dataProcessed && (llmAnalysis.worst || llmAnalysis.best || llmAnalysis.avg)) {
+        // Función para convertir un caso del LLM a CoreAnalysisData
+        const convertLLMCase = (caseData: unknown): CoreAnalysisData | null => {
+          if (!caseData || typeof caseData !== 'object') return null;
+          const data = caseData as Record<string, unknown>;
+          
+          const result: CoreAnalysisData = {};
+          
+          // T_open y T_polynomial
+          if (data.T_open && typeof data.T_open === 'string') result.T_open = data.T_open;
+          if (data.T_polynomial && typeof data.T_polynomial === 'string') result.T_polynomial = data.T_polynomial;
+          
+          // Notaciones asintóticas
+          if (data.big_theta && typeof data.big_theta === 'string') result.big_theta = data.big_theta;
+          if (data.big_o && typeof data.big_o === 'string') result.big_o = data.big_o;
+          if (data.big_O && typeof data.big_O === 'string') result.big_o = data.big_O;
+          if (data.big_omega && typeof data.big_omega === 'string') result.big_omega = data.big_omega;
+          if (data.big_Omega && typeof data.big_Omega === 'string') result.big_omega = data.big_Omega;
+          
+          // Recurrence
+          if (data.recurrence && typeof data.recurrence === 'object') {
+            const recurrence = data.recurrence as Record<string, unknown>;
+            result.recurrence = {
+              type: (recurrence.type as "divide_conquer" | "linear_shift") || "linear_shift",
+              form: (recurrence.form as string) || "",
+              a: (recurrence.a as number) || undefined,
+              b: (recurrence.b as number) || undefined,
+              f: (recurrence.f as string) || undefined,
+              order: (recurrence.order as number) || undefined,
+              shifts: (recurrence.shifts as number[]) || undefined,
+              coefficients: (recurrence.coefficients as number[]) || undefined,
+              "g(n)": (recurrence["g(n)"] as string) || undefined,
+              n0: (recurrence.n0 as number) || undefined,
+              method: (recurrence.method as string) || undefined,
+            };
+          }
+          
+          // Method
+          if (data.method && typeof data.method === 'string') {
+            result.method = data.method;
+          }
+          
+          // Characteristic equation
+          if (data.characteristic_equation && typeof data.characteristic_equation === 'object') {
+            const charEq = data.characteristic_equation as Record<string, unknown>;
+            result.characteristic_equation = {
+              equation: (charEq.equation as string) || "",
+              roots: (charEq.roots as Array<{ root: string; multiplicity: number }>) || undefined,
+              dominant_root: (charEq.dominant_root as string) || undefined,
+              growth_rate: (charEq.growth_rate as number) || undefined,
+              homogeneous_solution: (charEq.homogeneous_solution as string) || "",
+              particular_solution: (charEq.particular_solution as string) || undefined,
+              general_solution: (charEq.general_solution as string) || undefined,
+              closed_form: (charEq.closed_form as string) || "",
+              theta: (charEq.theta as string) || result.big_theta || "",
+            };
+            if (result.characteristic_equation.theta) {
+              result.big_theta = result.characteristic_equation.theta;
+            }
+          }
+          
+          // Iteration
+          if (data.iteration && typeof data.iteration === 'object') {
+            const iteration = data.iteration as Record<string, unknown>;
+            const baseCase = iteration.base_case as Record<string, unknown> | undefined;
+            const summation = iteration.summation as Record<string, unknown> | undefined;
+            
+            result.iteration = {
+              g_function: (iteration.g_function as string) || "",
+              expansions: (iteration.expansions as string[]) || [],
+              general_form: (iteration.general_form as string) || "",
+              base_case: {
+                condition: (baseCase?.condition as string) || "",
+                k: (baseCase?.k as string) || "",
+              },
+              summation: {
+                expression: (summation?.expression as string) || "",
+                evaluated: (summation?.evaluated as string) || "",
+              },
+              theta: (iteration.theta as string) || result.big_theta || "",
+            };
+            if (result.iteration.theta) {
+              result.big_theta = result.iteration.theta;
+            }
+          }
+          
+          // Master
+          if (data.master && typeof data.master === 'object') {
+            const master = data.master as Record<string, unknown>;
+            result.master = {
+              case: (master.case as 1 | 2 | 3 | null) || null,
+              nlogba: (master.nlogba as string) || "",
+              comparison: (master.comparison as "smaller" | "equal" | "larger" | null) || null,
+              theta: (master.theta as string | null) || null,
+            };
+            if (result.master.theta) {
+              result.big_theta = result.master.theta;
+            }
+          }
+          
+          return Object.keys(result).length > 0 ? result : null;
+        };
+        
+        setLlmAnalysisData({
+          worst: convertLLMCase(llmAnalysis.worst),
+          best: convertLLMCase(llmAnalysis.best),
+          avg: convertLLMCase(llmAnalysis.avg),
+        });
+        dataProcessed = true;
+      } else if (!dataProcessed && llmAnalysis.time_complexity && typeof llmAnalysis.time_complexity === 'object') {
+        // Estructura: { analysis: { time_complexity: { worst: {...}, best: {...}, avg: {...} } } }
+        // O también: { analysis: { time_complexity: { recurrence, method, characteristic_equation, ... } } }
+        const timeComplexity = llmAnalysis.time_complexity as Record<string, unknown>;
+        
+        // Verificar si time_complexity tiene directamente recurrence, method, characteristic_equation, etc.
+        // (estructura para recursivos)
+        if (timeComplexity.recurrence || timeComplexity.method || timeComplexity.characteristic_equation || timeComplexity.iteration || timeComplexity.master) {
+          const convertRecursiveAnalysis = (): CoreAnalysisData | null => {
+            const result: CoreAnalysisData = {};
+            
+            // Notaciones asintóticas
+            if (timeComplexity.big_theta && typeof timeComplexity.big_theta === 'string') result.big_theta = timeComplexity.big_theta;
+            if (timeComplexity.big_o && typeof timeComplexity.big_o === 'string') result.big_o = timeComplexity.big_o;
+            if (timeComplexity.big_O && typeof timeComplexity.big_O === 'string') result.big_o = timeComplexity.big_O;
+            if (timeComplexity.big_omega && typeof timeComplexity.big_omega === 'string') result.big_omega = timeComplexity.big_omega;
+            if (timeComplexity.big_Omega && typeof timeComplexity.big_Omega === 'string') result.big_omega = timeComplexity.big_Omega;
+            
+            // Extraer recurrence
+            if (timeComplexity.recurrence && typeof timeComplexity.recurrence === 'object') {
+              const recurrence = timeComplexity.recurrence as Record<string, unknown>;
+              result.recurrence = {
+                type: (recurrence.type as "divide_conquer" | "linear_shift") || "linear_shift",
+                form: (recurrence.form as string) || "",
+                a: (recurrence.a as number) || undefined,
+                b: (recurrence.b as number) || undefined,
+                f: (recurrence.f as string) || undefined,
+                order: (recurrence.order as number) || undefined,
+                shifts: (recurrence.shifts as number[]) || undefined,
+                coefficients: (recurrence.coefficients as number[]) || undefined,
+                "g(n)": (recurrence["g(n)"] as string) || undefined,
+                n0: (recurrence.n0 as number) || undefined,
+                method: (timeComplexity.method as string) || undefined,
+              };
+            }
+            
+            // Extraer method
+            if (timeComplexity.method && typeof timeComplexity.method === 'string') {
+              result.method = timeComplexity.method;
+            }
+            
+            // Extraer characteristic_equation (prioridad alta)
+            if (timeComplexity.characteristic_equation && typeof timeComplexity.characteristic_equation === 'object') {
+              const charEq = timeComplexity.characteristic_equation as Record<string, unknown>;
+              result.characteristic_equation = {
+                equation: (charEq.equation as string) || "",
+                roots: (charEq.roots as Array<{ root: string; multiplicity: number }>) || undefined,
+                dominant_root: (charEq.dominant_root as string) || undefined,
+                growth_rate: (charEq.growth_rate as number) || undefined,
+                homogeneous_solution: (charEq.homogeneous_solution as string) || "",
+                particular_solution: (charEq.particular_solution as string) || undefined,
+                general_solution: (charEq.general_solution as string) || undefined,
+                closed_form: (charEq.closed_form as string) || "",
+                theta: (charEq.theta as string) || result.big_theta || "",
+              };
+              // Usar theta de characteristic_equation si está disponible
+              if (result.characteristic_equation.theta) {
+                result.big_theta = result.characteristic_equation.theta;
+              }
+            }
+            
+            // Extraer iteration
+            if (timeComplexity.iteration && typeof timeComplexity.iteration === 'object') {
+              const iteration = timeComplexity.iteration as Record<string, unknown>;
+              const baseCase = iteration.base_case as Record<string, unknown> | undefined;
+              const summation = iteration.summation as Record<string, unknown> | undefined;
+              
+              result.iteration = {
+                g_function: (iteration.g_function as string) || "",
+                expansions: (iteration.expansions as string[]) || [],
+                general_form: (iteration.general_form as string) || "",
+                base_case: {
+                  condition: (baseCase?.condition as string) || "",
+                  k: (baseCase?.k as string) || "",
+                },
+                summation: {
+                  expression: (summation?.expression as string) || "",
+                  evaluated: (summation?.evaluated as string) || "",
+                },
+                theta: (iteration.theta as string) || result.big_theta || "",
+              };
+              // Usar theta de iteration si está disponible
+              if (result.iteration.theta) {
+                result.big_theta = result.iteration.theta;
+              }
+            }
+            
+            // Extraer master
+            if (timeComplexity.master && typeof timeComplexity.master === 'object') {
+              const master = timeComplexity.master as Record<string, unknown>;
+              result.master = {
+                case: (master.case as 1 | 2 | 3 | null) || null,
+                nlogba: (master.nlogba as string) || "",
+                comparison: (master.comparison as "smaller" | "equal" | "larger" | null) || null,
+                theta: (master.theta as string | null) || null,
+              };
+              // Usar theta de master si está disponible
+              if (result.master.theta) {
+                result.big_theta = result.master.theta;
+              }
+            }
+            
+            return Object.keys(result).length > 0 ? result : null;
+          };
+          
+          const recursiveResult = convertRecursiveAnalysis();
+          
+          if (recursiveResult) {
+            setLlmAnalysisData({
+              worst: recursiveResult,
+              best: null,
+              avg: null,
+            });
+            dataProcessed = true;
+          }
+        }
+        // Verificar si time_complexity tiene worst, best, avg
+        else if (timeComplexity.worst || timeComplexity.best || timeComplexity.avg) {
+          const convertTimeComplexityCase = (caseData: unknown): CoreAnalysisData | null => {
+            if (!caseData || typeof caseData !== 'object') return null;
+            const data = caseData as Record<string, unknown>;
+            
+            // Extraer datos, manejando posibles variaciones en los nombres
+            const result: CoreAnalysisData = {};
+            
+            // T_open y T_polynomial
+            if (data.T_open && typeof data.T_open === 'string') result.T_open = data.T_open;
+            if (data.T_polynomial && typeof data.T_polynomial === 'string') result.T_polynomial = data.T_polynomial;
+            
+            // Notaciones asintóticas (pueden venir con diferentes nombres)
+            if (data.big_theta && typeof data.big_theta === 'string') result.big_theta = data.big_theta;
+            if (data.big_o && typeof data.big_o === 'string') result.big_o = data.big_o;
+            if (data.big_O && typeof data.big_O === 'string') result.big_o = data.big_O; // Variante con mayúscula
+            if (data.big_omega && typeof data.big_omega === 'string') result.big_omega = data.big_omega;
+            if (data.big_Omega && typeof data.big_Omega === 'string') result.big_omega = data.big_Omega; // Variante con mayúscula
+            
+            return Object.keys(result).length > 0 ? result : null;
+          };
+          
+          const worstData = convertTimeComplexityCase(timeComplexity.worst);
+          const bestData = convertTimeComplexityCase(timeComplexity.best);
+          const avgData = convertTimeComplexityCase(timeComplexity.avg);
+          
+          setLlmAnalysisData({
+            worst: worstData,
+            best: bestData,
+            avg: avgData,
+          });
+        } else if (timeComplexity.analysis && typeof timeComplexity.analysis === 'object') {
+          // Estructura: { time_complexity: { analysis: {...} } } - un solo análisis para todos los casos
+          const analysisData = timeComplexity.analysis as Record<string, unknown>;
+          const convertAnalysisData = (): CoreAnalysisData | null => {
+            const result: CoreAnalysisData = {};
+            
+            // T_open y T_polynomial
+            if (analysisData.T_open && typeof analysisData.T_open === 'string') result.T_open = analysisData.T_open;
+            if (analysisData.T_polynomial && typeof analysisData.T_polynomial === 'string') result.T_polynomial = analysisData.T_polynomial;
+            
+            // Notaciones asintóticas
+            if (analysisData.big_theta && typeof analysisData.big_theta === 'string') result.big_theta = analysisData.big_theta;
+            if (analysisData.big_o && typeof analysisData.big_o === 'string') result.big_o = analysisData.big_o;
+            if (analysisData.big_O && typeof analysisData.big_O === 'string') result.big_o = analysisData.big_O;
+            if (analysisData.big_omega && typeof analysisData.big_omega === 'string') result.big_omega = analysisData.big_omega;
+            if (analysisData.big_Omega && typeof analysisData.big_Omega === 'string') result.big_omega = analysisData.big_Omega;
+            
+            return Object.keys(result).length > 0 ? result : null;
+          };
+          
+          const analysisResult = convertAnalysisData();
+          
+          // Para iterativo, usar el mismo análisis para worst, best y avg
+          setLlmAnalysisData({
+            worst: analysisResult,
+            best: analysisResult,
+            avg: analysisResult,
+          });
+        }
+        // Verificar si time_complexity tiene directamente recurrence, method, characteristic_equation, etc.
+        // (estructura para recursivos dentro de analysis.time_complexity)
+        else if (timeComplexity.recurrence || timeComplexity.method || timeComplexity.characteristic_equation || timeComplexity.iteration || timeComplexity.master) {
+          const convertRecursiveAnalysis = (): CoreAnalysisData | null => {
+            const result: CoreAnalysisData = {};
+            
+            // Notaciones asintóticas
+            if (timeComplexity.big_theta && typeof timeComplexity.big_theta === 'string') result.big_theta = timeComplexity.big_theta;
+            if (timeComplexity.big_o && typeof timeComplexity.big_o === 'string') result.big_o = timeComplexity.big_o;
+            if (timeComplexity.big_O && typeof timeComplexity.big_O === 'string') result.big_o = timeComplexity.big_O;
+            if (timeComplexity.big_omega && typeof timeComplexity.big_omega === 'string') result.big_omega = timeComplexity.big_omega;
+            if (timeComplexity.big_Omega && typeof timeComplexity.big_Omega === 'string') result.big_omega = timeComplexity.big_Omega;
+            
+            // Extraer recurrence
+            if (timeComplexity.recurrence && typeof timeComplexity.recurrence === 'object') {
+              const recurrence = timeComplexity.recurrence as Record<string, unknown>;
+              result.recurrence = {
+                type: (recurrence.type as "divide_conquer" | "linear_shift") || "linear_shift",
+                form: (recurrence.form as string) || "",
+                a: (recurrence.a as number) || undefined,
+                b: (recurrence.b as number) || undefined,
+                f: (recurrence.f as string) || undefined,
+                order: (recurrence.order as number) || undefined,
+                shifts: (recurrence.shifts as number[]) || undefined,
+                coefficients: (recurrence.coefficients as number[]) || undefined,
+                "g(n)": (recurrence["g(n)"] as string) || undefined,
+                n0: (recurrence.n0 as number) || undefined,
+                method: (timeComplexity.method as string) || undefined,
+              };
+            }
+            
+            // Extraer method
+            if (timeComplexity.method && typeof timeComplexity.method === 'string') {
+              result.method = timeComplexity.method;
+            }
+            
+            // Extraer characteristic_equation (prioridad alta)
+            if (timeComplexity.characteristic_equation && typeof timeComplexity.characteristic_equation === 'object') {
+              const charEq = timeComplexity.characteristic_equation as Record<string, unknown>;
+              result.characteristic_equation = {
+                equation: (charEq.equation as string) || "",
+                roots: (charEq.roots as Array<{ root: string; multiplicity: number }>) || undefined,
+                dominant_root: (charEq.dominant_root as string) || undefined,
+                growth_rate: (charEq.growth_rate as number) || undefined,
+                homogeneous_solution: (charEq.homogeneous_solution as string) || "",
+                particular_solution: (charEq.particular_solution as string) || undefined,
+                general_solution: (charEq.general_solution as string) || undefined,
+                closed_form: (charEq.closed_form as string) || "",
+                theta: (charEq.theta as string) || result.big_theta || "",
+              };
+              // Usar theta de characteristic_equation si está disponible
+              if (result.characteristic_equation.theta) {
+                result.big_theta = result.characteristic_equation.theta;
+              }
+            }
+            
+            // Extraer iteration
+            if (timeComplexity.iteration && typeof timeComplexity.iteration === 'object') {
+              const iteration = timeComplexity.iteration as Record<string, unknown>;
+              const baseCase = iteration.base_case as Record<string, unknown> | undefined;
+              const summation = iteration.summation as Record<string, unknown> | undefined;
+              
+              result.iteration = {
+                g_function: (iteration.g_function as string) || "",
+                expansions: (iteration.expansions as string[]) || [],
+                general_form: (iteration.general_form as string) || "",
+                base_case: {
+                  condition: (baseCase?.condition as string) || "",
+                  k: (baseCase?.k as string) || "",
+                },
+                summation: {
+                  expression: (summation?.expression as string) || "",
+                  evaluated: (summation?.evaluated as string) || "",
+                },
+                theta: (iteration.theta as string) || result.big_theta || "",
+              };
+              // Usar theta de iteration si está disponible
+              if (result.iteration.theta) {
+                result.big_theta = result.iteration.theta;
+              }
+            }
+            
+            // Extraer master
+            if (timeComplexity.master && typeof timeComplexity.master === 'object') {
+              const master = timeComplexity.master as Record<string, unknown>;
+              result.master = {
+                case: (master.case as 1 | 2 | 3 | null) || null,
+                nlogba: (master.nlogba as string) || "",
+                comparison: (master.comparison as "smaller" | "equal" | "larger" | null) || null,
+                theta: (master.theta as string | null) || null,
+              };
+              // Usar theta de master si está disponible
+              if (result.master.theta) {
+                result.big_theta = result.master.theta;
+              }
+            }
+            
+            return Object.keys(result).length > 0 ? result : null;
+          };
+          
+          const recursiveResult = convertRecursiveAnalysis();
+          
+          if (recursiveResult) {
+            setLlmAnalysisData({
+              worst: recursiveResult,
+              best: null,
+              avg: null,
+            });
+            dataProcessed = true;
+          }
+        } else {
+          // Estructura antigua: time_complexity como objeto único
+          const convertedAnalysis: CoreAnalysisData = {
+            big_theta: (timeComplexity.big_theta as string) || (timeComplexity.big_O as string) || undefined,
+            big_o: (timeComplexity.big_O as string) || undefined,
+            big_omega: (timeComplexity.big_Omega as string) || undefined,
+          };
+          
+          // Si hay información de recurrencia
+          if (timeComplexity.recurrence_relation && typeof timeComplexity.recurrence_relation === 'object') {
+            const recurrence = timeComplexity.recurrence_relation as Record<string, unknown>;
+            if (recurrence.type === "linear_shift") {
+              convertedAnalysis.recurrence = {
+                type: "linear_shift",
+                form: (recurrence.equation as string) || (recurrence.form as string) || "",
+                method: (timeComplexity.method as string) || "iteration",
+              };
+            } else if (recurrence.type === "divide_conquer") {
+              convertedAnalysis.recurrence = {
+                type: "divide_conquer",
+                form: (recurrence.equation as string) || (recurrence.form as string) || "",
+                a: (recurrence.a as number) || 1,
+                b: (recurrence.b as number) || 2,
+                f: (recurrence.f as string) || "1",
+                method: (timeComplexity.method as string) || "master",
+              };
+            }
+          }
+          
+          // Si hay detalles del método de iteración
+          if (timeComplexity.method === "iteration" && timeComplexity.method_details && typeof timeComplexity.method_details === 'object') {
+            const details = timeComplexity.method_details as Record<string, unknown>;
+            convertedAnalysis.method = "iteration";
+            
+            // Manejar tanto 'expansions' como 'steps' (el LLM puede usar cualquiera)
+            const expansions = (details.expansions as string[]) || (details.steps as string[]) || [];
+            
+            convertedAnalysis.iteration = {
+              g_function: (details.general_form as string) || "n-1",
+              expansions: expansions,
+              general_form: (details.general_form as string) || "",
+              base_case: {
+                condition: (details.base_case_substitution as string) || "n = 0",
+                k: "n",
+              },
+              summation: {
+                expression: (details.solution as string) || "",
+                evaluated: (details.solution as string) || "",
+              },
+              theta: (timeComplexity.big_theta as string) || "\\Theta(n)",
+            };
+          }
+          
+          if (isRecursive) {
+            setLlmAnalysisData({
+              worst: convertedAnalysis,
+              best: null,
+              avg: null,
+            });
+          } else {
+            setLlmAnalysisData({
+              worst: convertedAnalysis,
+              best: convertedAnalysis,
+              avg: convertedAnalysis,
+            });
+          }
+        }
+      } else if (llmAnalysis.recurrence || llmAnalysis.iteration || llmAnalysis.method || llmAnalysis.characteristic_equation || llmAnalysis.master) {
+        // Estructura con recurrence/iteration/characteristic_equation/master directamente en analysis
+        const convertedAnalysis: CoreAnalysisData = {
+          big_theta: (llmAnalysis.big_theta as string) || undefined,
+          big_o: (llmAnalysis.big_o as string) || undefined,
+          big_omega: (llmAnalysis.big_omega as string) || undefined,
+        };
+        
+        // Extraer recurrence completo
+        if (llmAnalysis.recurrence && typeof llmAnalysis.recurrence === 'object') {
+          const recurrence = llmAnalysis.recurrence as Record<string, unknown>;
+          convertedAnalysis.recurrence = {
+            type: (recurrence.type as "divide_conquer" | "linear_shift") || "linear_shift",
+            form: (recurrence.form as string) || "",
+            a: (recurrence.a as number) || undefined,
+            b: (recurrence.b as number) || undefined,
+            f: (recurrence.f as string) || undefined,
+            order: (recurrence.order as number) || undefined,
+            shifts: (recurrence.shifts as number[]) || undefined,
+            coefficients: (recurrence.coefficients as number[]) || undefined,
+            "g(n)": (recurrence["g(n)"] as string) || undefined,
+            n0: (recurrence.n0 as number) || undefined,
+          };
+        }
+        
+        // Extraer method
+        if (llmAnalysis.method) {
+          convertedAnalysis.method = llmAnalysis.method as string;
+        }
+        
+        // Extraer characteristic_equation (prioridad alta)
+        if (llmAnalysis.characteristic_equation && typeof llmAnalysis.characteristic_equation === 'object') {
+          const charEq = llmAnalysis.characteristic_equation as Record<string, unknown>;
+          convertedAnalysis.characteristic_equation = {
+            equation: (charEq.equation as string) || "",
+            roots: (charEq.roots as Array<{ root: string; multiplicity: number }>) || undefined,
+            dominant_root: (charEq.dominant_root as string) || undefined,
+            growth_rate: (charEq.growth_rate as number) || undefined,
+            homogeneous_solution: (charEq.homogeneous_solution as string) || "",
+            particular_solution: (charEq.particular_solution as string) || undefined,
+            general_solution: (charEq.general_solution as string) || undefined,
+            closed_form: (charEq.closed_form as string) || "",
+            theta: (charEq.theta as string) || convertedAnalysis.big_theta || "",
+          };
+          // Usar theta de characteristic_equation si está disponible
+          if (convertedAnalysis.characteristic_equation.theta) {
+            convertedAnalysis.big_theta = convertedAnalysis.characteristic_equation.theta;
+          }
+        }
+        
+        // Extraer master
+        if (llmAnalysis.master && typeof llmAnalysis.master === 'object') {
+          const master = llmAnalysis.master as Record<string, unknown>;
+          convertedAnalysis.master = {
+            case: (master.case as 1 | 2 | 3 | null) || null,
+            nlogba: (master.nlogba as string) || "",
+            comparison: (master.comparison as "smaller" | "equal" | "larger" | null) || null,
+            theta: (master.theta as string | null) || null,
+          };
+          // Usar theta de master si está disponible
+          if (convertedAnalysis.master.theta) {
+            convertedAnalysis.big_theta = convertedAnalysis.master.theta;
+          }
+        }
+        
+        // Extraer iteration completo
+        if (llmAnalysis.iteration && typeof llmAnalysis.iteration === 'object') {
+          const iteration = llmAnalysis.iteration as Record<string, unknown>;
+          const baseCase = iteration.base_case as Record<string, unknown> | undefined;
+          const summation = iteration.summation as Record<string, unknown> | undefined;
+          
+          convertedAnalysis.iteration = {
+            g_function: (iteration.g_function as string) || "n-1",
+            expansions: (iteration.expansions as string[]) || [],
+            general_form: (iteration.general_form as string) || "",
+            base_case: {
+              condition: (baseCase?.condition as string) || "n = 0",
+              k: (baseCase?.k as string) || "n",
+            },
+            summation: {
+              expression: (summation?.expression as string) || "",
+              evaluated: (summation?.evaluated as string) || "",
+            },
+            theta: (iteration.theta as string) || convertedAnalysis.big_theta || "\\Theta(n)",
+          };
+        }
+        
+        // También verificar iteration_details como alternativa
+        if (llmAnalysis.iteration_details && typeof llmAnalysis.iteration_details === 'object' && !convertedAnalysis.iteration) {
+          const details = llmAnalysis.iteration_details as Record<string, unknown>;
+          convertedAnalysis.iteration = {
+            g_function: (details.general_form as string) || "n-1",
+            expansions: (details.expansions as string[]) || (details.steps as string[]) || [],
+            general_form: (details.general_form as string) || "",
+            base_case: {
+              condition: (details.base_case_substitution as string) || (details.base_case_condition as string) || "n = 0",
+              k: "n",
+            },
+            summation: {
+              expression: (details.final_equation as string) || (details.solution as string) || "",
+              evaluated: (details.result as string) || (details.solution as string) || "",
+            },
+            theta: convertedAnalysis.big_theta || "\\Theta(n)",
+          };
+        }
+        
+        if (isRecursive) {
+          setLlmAnalysisData({
+            worst: convertedAnalysis,
+            best: null,
+            avg: null,
+          });
+        } else {
+          setLlmAnalysisData({
+            worst: convertedAnalysis,
+            best: convertedAnalysis,
+            avg: convertedAnalysis,
+          });
+        }
+      } else if (!dataProcessed && isRecursive) {
+        // Para recursivo, usar el análisis directamente
+        setLlmAnalysisData({
+          worst: llmAnalysis as CoreAnalysisData,
+          best: null,
+          avg: null,
+        });
+      } else if (!dataProcessed) {
+        // Para iterativo sin separación de casos, usar el mismo para todos
+        setLlmAnalysisData({
+          worst: llmAnalysis as CoreAnalysisData,
+          best: llmAnalysis as CoreAnalysisData,
+          avg: llmAnalysis as CoreAnalysisData,
+        });
+      }
+      
+      setLlmNote(llmResponse.note || "😐 Sin observaciones");
+
+      setComparisonProgress(100);
+      setComparisonMessage("Comparación completada");
+      
+      // Esperar un momento antes de cerrar el loader y abrir el modal
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      
+      setIsComparing(false);
+      setShowComparisonModal(true);
+      
+      // Resetear estados después
+      setTimeout(() => {
+        setComparisonProgress(0);
+        setComparisonMessage("Contactando con LLM...");
+      }, 300);
+
+    } catch (error) {
+      console.error("[Comparison] Error:", error);
+      const errorMsg = error instanceof Error ? error.message : "Error inesperado durante la comparación";
+      setComparisonMessage(`Error: ${errorMsg}`);
+      setComparisonProgress(0);
+      
+      setTimeout(() => {
+        setIsComparing(false);
+        setComparisonProgress(0);
+        setComparisonMessage("Contactando con LLM...");
+      }, 3000);
+    }
+  };
+
   // Los datos ya están cargados desde sessionStorage en el estado inicial
   // Si hay datos guardados, se mostrarán directamente sin necesidad de re-analizar
 
@@ -579,117 +1599,7 @@ export default function AnalyzerPage() {
     setOpenGeneral(true);
   };
 
-  type CaseType = 'worst' | 'average' | 'best';
 
-  // Helper para obtener Big-O de los datos según el caso
-  // Helper para obtener la mejor notación asintótica disponible según el caso
-  // Usa la lógica de priorización: Θ > (Ω,O) > solo O > solo Ω
-  const getBestAsymptoticNotation = (caseType: 'worst' | 'best' | 'average') => {
-    const analysisData = caseType === 'worst' ? data?.worst : 
-                        caseType === 'best' ? data?.best :
-                        caseType === 'average' ? data?.avg : null;
-    
-    if (!analysisData?.ok) {
-      const getBoundType = (): 'lower' | 'upper' | 'exact' => {
-        if (caseType === 'best') return 'lower';
-        if (caseType === 'worst') return 'upper';
-        return 'exact';
-      };
-      return {
-        notation: caseType === 'best' ? 'Ω(—)' : caseType === 'worst' ? 'O(—)' : 'Θ(—)',
-        type: 'single-bound' as const,
-        boundType: getBoundType(),
-        hasHypothesis: false,
-        isConditional: false,
-        chips: [],
-      };
-    }
-    
-    const totals = analysisData.totals as {
-      big_theta?: string;
-      big_o?: string;
-      big_omega?: string;
-      avg_model_info?: { mode: string; note: string };
-      hypotheses?: string[];
-      symbols?: Record<string, string>;
-    };
-    
-    return getBestNotation(caseType, totals);
-  };
-
-  // Helpers legacy (mantener para compatibilidad si se usan en otros lugares)
-  const getBigOFromData = (caseType: 'worst' | 'best' | 'average' = 'worst'): string => {
-    const analysisData = caseType === 'worst' ? data?.worst : 
-                        caseType === 'best' ? data?.best :
-                        caseType === 'average' ? data?.avg : null;
-    if (!analysisData?.ok) return 'O(—)';
-    const totals = analysisData.totals as { big_o?: string } | undefined;
-    if (totals?.big_o) {
-      return totals.big_o;
-    }
-    const base = analysisData.totals?.T_polynomial ?? analysisData.totals.T_open;
-    return calculateBigO(base);
-  };
-
-  const getBigOmegaFromData = (caseType: 'worst' | 'best' | 'average' = 'best'): string => {
-    const analysisData = caseType === 'worst' ? data?.worst : 
-                        caseType === 'best' ? data?.best :
-                        caseType === 'average' ? data?.avg : null;
-    if (!analysisData?.ok) return 'Ω(—)';
-    const totals = analysisData.totals as { big_omega?: string } | undefined;
-    if (totals?.big_omega) {
-      return totals.big_omega;
-    }
-    const base = analysisData.totals?.T_polynomial ?? analysisData.totals.T_open;
-    const bigO = calculateBigO(base);
-    return bigO.replace('O(', 'Ω(');
-  };
-
-  const getBigThetaFromData = (caseType: 'worst' | 'best' | 'average' = 'worst'): string => {
-    const analysisData = caseType === 'worst' ? data?.worst : 
-                        caseType === 'best' ? data?.best :
-                        caseType === 'average' ? data?.avg : null;
-    if (!analysisData?.ok) return 'Θ(—)';
-    const totals = analysisData.totals as { big_theta?: string } | undefined;
-    if (totals?.big_theta) {
-      return totals.big_theta;
-    }
-    const base = analysisData.totals?.T_polynomial ?? analysisData.totals.T_open;
-    const bigO = calculateBigO(base);
-    return bigO.replace('O(', 'Θ(');
-  };
-
-  // Helper para obtener el label del caso
-  const getCaseLabel = (caseType: CaseType): string => {
-    switch (caseType) {
-      case 'worst': return 'Peor';
-      case 'average': return 'Promedio';
-      case 'best': return 'Mejor';
-      default: return '';
-    }
-  };
-
-  // Helper para obtener el estilo del badge según el caso
-  const getCaseBadgeStyle = (caseType: CaseType): string => {
-    switch (caseType) {
-      case 'worst': return 'bg-red-500/15 text-red-300 border-red-500/25';
-      case 'average': return 'bg-yellow-500/15 text-yellow-300 border-yellow-500/25';
-      case 'best': return 'bg-green-500/15 text-green-300 border-green-500/25';
-      default: return '';
-    }
-  };
-
-  // Helper para obtener el estilo del botón del selector según el caso
-  const getSelectorButtonStyle = (caseType: CaseType, isSelected: boolean): string => {
-    if (!isSelected) return 'text-slate-300 hover:bg-white/5';
-    
-    switch (caseType) {
-      case 'worst': return 'bg-red-500/20 text-red-300 border border-red-500/30';
-      case 'average': return 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30';
-      case 'best': return 'bg-green-500/20 text-green-300 border border-green-500/30';
-      default: return '';
-    }
-  };
 
   const formatAlgorithmKind = (value: ClassifyResponse["kind"]): string => {
     switch (value) {
@@ -702,45 +1612,6 @@ export default function AnalyzerPage() {
       default:
         return "Desconocido";
     }
-  };
-
-  const formatUnsupportedKindMessage = (value: ClassifyResponse["kind"]): string => {
-    return value === "recursive" ? "recursivo" : "híbrido";
-  };
-
-  const renderLineCostContent = () => {
-    if (!data || (!data.worst && !data.best && !data.avg)) {
-      return (
-        <div className="flex-1 flex items-center justify-center text-slate-400">
-          <div className="text-center">
-            <span className="material-symbols-outlined text-4xl mb-2 block">table_chart</span>
-            <p>Ejecuta el análisis para ver los costos</p>
-          </div>
-        </div>
-      );
-    }
-
-    // Obtener datos según el caso seleccionado
-    const currentData = selectedCase === 'worst' ? data?.worst : 
-                       selectedCase === 'best' ? data?.best :
-                       selectedCase === 'average' ? data?.avg : null;
-
-    if (!currentData || !currentData.ok) {
-      return (
-        <div className="flex-1 flex items-center justify-center text-slate-400">
-          <div className="text-center">
-            <span className="material-symbols-outlined text-4xl mb-2 block">hourglass_empty</span>
-            <p>El caso &quot;{getCaseLabel(selectedCase)}&quot; estará disponible próximamente</p>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="overflow-auto scrollbar-custom" style={{ height: '285px' }}>
-        <LineTable rows={currentData.byLine} onViewProcedure={handleViewLineProcedure} />
-      </div>
-    );
   };
 
   // Selector de casos (worst por defecto, preparado para best/average)
@@ -843,6 +1714,7 @@ export default function AnalyzerPage() {
                     onChange={setSource}
                     onAstChange={setAst}
                     onParseStatusChange={handleParseStatusChange}
+                    onErrorsChange={handleErrorsChange}
                     height="430px"
                   />
                 </div>
@@ -850,21 +1722,51 @@ export default function AnalyzerPage() {
                 {/* Estado de parsing y botones */}
                 <div className="mt-4 space-y-3">
                   {/* Estado de parsing */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${localParseOk ? 'bg-green-400' : 'bg-red-400'}`}></div>
-                      <span className="text-sm text-slate-300">
-                        {localParseOk ? 'Sin errores' : 'Con errores'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center">
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      {!localParseOk && (
+                        <button
+                          onClick={() => setShowRepairModal(true)}
+                          disabled={!hasApiKey}
+                          className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
+                        >
+                          <span className="material-symbols-outlined text-sm">auto_awesome</span>
+                          {!hasApiKey ? (
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                              Se requiere una API_KEY
+                            </div>
+                          ) : (
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                              Reparar con IA
+                            </div>
+                          )}
+                        </button>
+                      )}
                       <button
                         onClick={() => setShowAstModal(true)}
                         disabled={!localParseOk || !ast}
-                        className="flex items-center gap-2 py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-yellow-400/50 bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 hover:from-yellow-500/30 hover:to-amber-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+                        className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-yellow-400/50 bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 hover:from-yellow-500/30 hover:to-amber-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
                       >
                         <span className="material-symbols-outlined text-sm">account_tree</span>
-                        <span>Ver AST</span>
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                          Ver AST
+                        </div>
+                      </button>
+                      <button
+                        onClick={handleCompareWithLLM}
+                        disabled={!hasApiKey || !hasComparableData}
+                        className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
+                      >
+                        <span className="material-symbols-outlined text-sm">compare_arrows</span>
+                        {(!hasApiKey || !hasComparableData) ? (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                            {!hasApiKey ? "Se requiere una API_KEY" : "No hay información para comparar"}
+                          </div>
+                        ) : (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                            Comparar con LLM
+                          </div>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -880,14 +1782,16 @@ export default function AnalyzerPage() {
                   const isRecursive = 
                     algorithmType === "recursive" || 
                     algorithmType === "hybrid" ||
-                    (data?.worst?.totals?.recurrence || data?.best?.totals?.recurrence || data?.avg?.totals?.recurrence);
+                    (data?.worst?.totals?.recurrence || 
+                     (typeof data?.best !== "string" && data?.best?.totals?.recurrence) || 
+                     (typeof data?.avg !== "string" && data?.avg?.totals?.recurrence));
                   
                   if (isRecursive) {
                     // Asegurar que avg esté definido (null en lugar de undefined)
                     const dataWithAvg: {
                       worst: AnalyzeOpenResponse | null;
-                      best: AnalyzeOpenResponse | null;
-                      avg: AnalyzeOpenResponse | null;
+                      best: AnalyzeOpenResponse | "same_as_worst" | null;
+                      avg: AnalyzeOpenResponse | "same_as_worst" | null;
                     } | null = data ? {
                       worst: data.worst ?? null,
                       best: data.best ?? null,
@@ -898,8 +1802,8 @@ export default function AnalyzerPage() {
                     // Asegurar que avg esté definido (null en lugar de undefined)
                     const dataWithAvg: {
                       worst: AnalyzeOpenResponse | null;
-                      best: AnalyzeOpenResponse | null;
-                      avg: AnalyzeOpenResponse | null;
+                      best: AnalyzeOpenResponse | "same_as_worst" | null;
+                      avg: AnalyzeOpenResponse | "same_as_worst" | null;
                     } | null = data ? {
                       worst: data.worst ?? null,
                       best: data.best ?? null,
@@ -928,16 +1832,16 @@ export default function AnalyzerPage() {
         onClose={() => setOpen(false)}
         selectedLine={selectedLine}
         analysisData={selectedCase === 'worst' ? (data?.worst || undefined) : 
-                      selectedCase === 'best' ? (data?.best || undefined) :
-                      selectedCase === 'average' ? (data?.avg || undefined) : undefined}
+                      selectedCase === 'best' ? (data?.best === "same_as_worst" ? data?.worst : data?.best) || undefined :
+                      selectedCase === 'average' ? (data?.avg === "same_as_worst" ? data?.worst : data?.avg) || undefined : undefined}
       />
       {/* Modal de procedimiento general */}
       <GeneralProcedureModal
         open={openGeneral}
         onClose={() => setOpenGeneral(false)}
         data={generalProcedureCase === 'worst' ? (data?.worst || undefined) : 
-              generalProcedureCase === 'best' ? (data?.best || undefined) :
-              generalProcedureCase === 'average' ? (data?.avg || undefined) : undefined}
+              generalProcedureCase === 'best' ? (data?.best === "same_as_worst" ? data?.worst : data?.best) || undefined :
+              generalProcedureCase === 'average' ? (data?.avg === "same_as_worst" ? data?.worst : data?.avg) || undefined : undefined}
       />
 
       {/* Modal AST */}
@@ -1044,6 +1948,48 @@ export default function AnalyzerPage() {
           // Recargar para que el código se cargue desde sessionStorage
           globalThis.window.location.reload();
         }}
+      />
+
+      {/* Modal de reparación */}
+      <RepairModal
+        open={showRepairModal}
+        onClose={() => setShowRepairModal(false)}
+        onAccept={(repairedCode) => {
+          setSource(repairedCode);
+          setShowRepairModal(false);
+        }}
+        originalCode={source}
+        parseErrors={parseErrors}
+      />
+
+      {/* Loader de comparación con LLM */}
+      {isComparing && (
+        <ComparisonLoader
+          progress={comparisonProgress}
+          message={comparisonMessage}
+          isComplete={false}
+          error={comparisonMessage.startsWith("Error:") ? comparisonMessage : null}
+          onClose={() => setIsComparing(false)}
+        />
+      )}
+
+      {/* Modal de comparación con LLM */}
+      <ComparisonModal
+        open={showComparisonModal}
+        onClose={() => setShowComparisonModal(false)}
+        ownData={{
+          worst: extractCoreData(data?.worst || null),
+          best: data?.best === "same_as_worst" ? "same_as_worst" : extractCoreData(data?.best || null),
+          avg: data?.avg === "same_as_worst" ? "same_as_worst" : extractCoreData(data?.avg || null),
+        }}
+        llmData={llmAnalysisData || { worst: null, best: null, avg: null }}
+        note={llmNote}
+        isRecursive={isRecursiveAnalysis(
+          data?.worst || 
+          (data?.best === "same_as_worst" ? null : data?.best) || 
+          (data?.avg === "same_as_worst" ? null : data?.avg) || 
+          null
+        )}
       />
 
       <Footer />

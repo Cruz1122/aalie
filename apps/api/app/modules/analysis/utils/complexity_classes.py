@@ -56,7 +56,8 @@ class ComplexityClasses:
             dominant = self._extract_dominant_sympy(expr, variable)
             
             # Convertir a LaTeX
-            return self._sympy_to_latex(dominant)
+            result = self._sympy_to_latex(dominant)
+            return result
         except Exception as e:
             print(f"[ComplexityClasses] Error extrayendo término dominante de {polynomial}: {e}")
             return polynomial
@@ -164,9 +165,11 @@ class ComplexityClasses:
         expr_str = re.sub(r'(\w+)\^(\d+)', r'\1**\2', expr_str)
         expr_str = re.sub(r'(\w+)\^\{(\d+)\}', r'\1**\2', expr_str)
         
-        # Reemplazar logaritmos: \log(n) -> log(n)
-        expr_str = re.sub(r'\\log\((\w+)\)', r'log(\1)', expr_str)
-        expr_str = re.sub(r'\\log\{(\w+)\}', r'log(\1)', expr_str)
+        # Reemplazar logaritmos: \log(n) -> log(n), \log{\left(n\right)} -> log(n)
+        # Primero remover \left y \right dentro de logaritmos
+        expr_str = re.sub(r'\\log\{\\left\(([^)]+)\\right\)\}', r'log(\1)', expr_str)
+        expr_str = re.sub(r'\\log\(([^)]+)\)', r'log(\1)', expr_str)
+        expr_str = re.sub(r'\\log\{([^}]+)\}', r'log(\1)', expr_str)
         
         # Si la expresión contiene C_k o constantes no numéricas, no podemos parsearla
         # Esto indica que es T_polynomial con constantes, no T_open simplificado
@@ -278,37 +281,62 @@ class ComplexityClasses:
         # NO usar term.has(var_symbol) porque los símbolos pueden ser objetos diferentes
         if expr_expanded.is_Add:
             terms = expr_expanded.args
-            max_power = -1
+            max_complexity_level = -1  # -1: constante, 0: log(n), 1: n, 2: n*log(n), 3+: n^k
             max_term = None
             
             for term in terms:
                 # Verificar si el término contiene la variable por nombre
                 term_symbol_names = [s.name for s in term.free_symbols]
                 if variable not in term_symbol_names:
+                    # Término constante
+                    if max_complexity_level < 0:
+                        max_complexity_level = -1
+                        max_term = term
                     continue
                 
-                # Usar as_coeff_exponent para obtener la potencia
+                # Calcular nivel de complejidad del término
+                term_level = -1
+                term_power = 0
+                
+                # Verificar si tiene log
+                from sympy import log
+                has_log = term.has(log)
+                
                 # Buscar el símbolo con el nombre de la variable en el término
                 for sym in term.free_symbols:
                     if sym.name == variable:
                         try:
                             # Obtener coeficiente y exponente para este símbolo
-                            coeff, exponent = term.as_coeff_exponent(sym)
+                            _, exponent = term.as_coeff_exponent(sym)
                             if exponent.is_number:
-                                power = float(exponent)
-                                if power > max_power:
-                                    max_power = power
-                                    max_term = term
-                                break
+                                term_power = float(exponent)
+                            break
                         except Exception:
                             # Si falla, podría ser que el término sea directamente el símbolo
                             if term == sym:
-                                if 1 > max_power:
-                                    max_power = 1
-                                    max_term = term
+                                term_power = 1
                             break
+                
+                # Determinar nivel de complejidad
+                if has_log and term_power == 0:
+                    # Solo log(n), sin n^k
+                    term_level = 0
+                elif has_log and term_power > 0:
+                    # n^k * log(n)
+                    term_level = term_power + 0.5  # n*log(n) está entre n y n^2
+                elif term_power > 0:
+                    # n^k sin log
+                    term_level = term_power
+                else:
+                    # Constante
+                    term_level = -1
+                
+                # Actualizar máximo
+                if term_level > max_complexity_level:
+                    max_complexity_level = term_level
+                    max_term = term
             
-            # Retornar el término de mayor potencia
+            # Retornar el término de mayor complejidad
             if max_term is not None:
                 return max_term
         
