@@ -1078,7 +1078,7 @@ export default function ComparisonModal({
 
         {/* Nota del LLM */}
         <div className={`mt-4 p-3 rounded-lg border ${bgColor} ${borderColor}`}>
-          <div className="flex items-start gap-2">
+          <div className="flex items-center gap-2">
             <span className={`material-symbols-outlined text-lg ${color}`}>
               {icon}
             </span>
