@@ -1,7 +1,7 @@
 "use client";
 
 import type { AnalyzeOpenResponse, ParseError, ParseResponse, Program } from "@aa/types";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { AnalysisLoader } from "@/components/AnalysisLoader";
 import { AnalyzerEditor } from "@/components/AnalyzerEditor";
@@ -135,6 +135,16 @@ export default function AnalyzerPage() {
     }
     return { worst: null, best: null, avg: null };
   });
+
+  const hasComparableData = useMemo(() => {
+    if (!data) {
+      return false;
+    }
+    const worstCore = extractCoreData(data.worst || null);
+    const bestCore = extractCoreData(data.best || null);
+    const avgCore = extractCoreData(data.avg || null);
+    return Boolean(worstCore || bestCore || avgCore);
+  }, [data]);
 
   // Estados para el modal
   const [open, setOpen] = useState(false);
@@ -516,7 +526,7 @@ export default function AnalyzerPage() {
 
   // Handler para comparar con LLM
   const handleCompareWithLLM = async () => {
-    if (!data || !hasApiKey) return;
+    if (!data || !hasApiKey || !hasComparableData) return;
 
     try {
       setIsComparing(true);
@@ -1709,26 +1719,22 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                 {/* Estado de parsing y botones */}
                 <div className="mt-4 space-y-3">
                   {/* Estado de parsing */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${localParseOk ? 'bg-green-400' : 'bg-red-400'}`}></div>
-                      <span className="text-sm text-slate-300">
-                        {localParseOk ? 'Sin errores' : 'Con errores'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center">
+                    <div className="flex flex-wrap items-center justify-center gap-2">
                       {!localParseOk && (
                         <button
                           onClick={() => setShowRepairModal(true)}
                           disabled={!hasApiKey}
-                          className="flex items-center gap-2 py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
-                          title={!hasApiKey ? "Se requiere una API_KEY para usar esta función" : ""}
+                          className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
                         >
                           <span className="material-symbols-outlined text-sm">auto_awesome</span>
-                          <span>Reparar con IA</span>
-                          {!hasApiKey && (
+                          {!hasApiKey ? (
                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
                               Se requiere una API_KEY
+                            </div>
+                          ) : (
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                              Reparar con IA
                             </div>
                           )}
                         </button>
@@ -1736,22 +1742,26 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                       <button
                         onClick={() => setShowAstModal(true)}
                         disabled={!localParseOk || !ast}
-                        className="flex items-center gap-2 py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-yellow-400/50 bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 hover:from-yellow-500/30 hover:to-amber-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+                        className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-yellow-400/50 bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 hover:from-yellow-500/30 hover:to-amber-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
                       >
                         <span className="material-symbols-outlined text-sm">account_tree</span>
-                        <span>Ver AST</span>
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                          Ver AST
+                        </div>
                       </button>
                       <button
                         onClick={handleCompareWithLLM}
-                        disabled={!hasApiKey || !data}
-                        className="flex items-center gap-2 py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
-                        title={!hasApiKey ? "Se requiere una API_KEY para usar esta función" : !data ? "Se requiere un análisis completado" : ""}
+                        disabled={!hasApiKey || !hasComparableData}
+                        className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
                       >
                         <span className="material-symbols-outlined text-sm">compare_arrows</span>
-                        <span>Comparar con LLM</span>
-                        {(!hasApiKey || !data) && (
+                        {(!hasApiKey || !hasComparableData) ? (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                            {!hasApiKey ? "Se requiere una API_KEY" : "Se requiere un análisis completado"}
+                            {!hasApiKey ? "Se requiere una API_KEY" : "No hay información para comparar"}
+                          </div>
+                        ) : (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                            Comparar con LLM
                           </div>
                         )}
                       </button>

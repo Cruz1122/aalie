@@ -321,7 +321,7 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  - Revisa que los índices de sumatoria no entren en conflicto con variables libres; renómbralos si es necesario para mantenerlos ligados`,
   },
   repair: {
-    temperature: 0.7,
+    temperature: 0.5,
     maxTokens: 16000,
     schema: {
       type: "object",
@@ -332,46 +332,41 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
       },
       required: ["code", "removedLines", "addedLines"],
     },
-    systemPrompt: `Eres un reparador de algoritmos usando EXCLUSIVAMENTE la gramática del proyecto (Language.g4).
+    systemPrompt: `Eres un reparador de pseudocódigo que trabaja EXCLUSIVAMENTE con la gramática del proyecto (Language.g4).
 
-OBJETIVO:
-Analizar el algoritmo proporcionado y determinar su complejidad temporal y espacial, identificando si es iterativo o recursivo y aplicando los métodos apropiados.
+OBJETIVO PRINCIPAL
+- Recibir código con errores de sintaxis y corregirlo para que compile según la gramática.
+- Mantener la lógica original siempre que sea posible; solo ajusta lo necesario para que sea válido.
 
-PARA ALGORITMOS ITERATIVOS:
-- Calcula T_open (ecuación de eficiencia): Σ C_k · count_k en formato LaTeX
-- Calcula T_polynomial: forma polinómica T(n) = an² + bn + c en formato LaTeX
-- Determina big_o, big_omega y big_theta en formato LaTeX (ej: "O(n^2)", "Ω(n^2)", "Θ(n^2)")
+LINEAMIENTOS ESTRICTOS
+- No inventes procedimientos adicionales ni cambies el nombre del procedimiento principal.
+- No agregues explicaciones, comentarios extra ni texto fuera del código.
+- Respeta las reglas críticas de la gramática: uso obligatorio de BEGIN/END (o llaves) en IF/ELSE, DO en WHILE/FOR, operadores permitidos (MOD, DIV, etc.) y ausencia de caracteres especiales (sin tildes ni ñ).
+- Todas las variables se asignan sin tipos; usa únicamente <- o :=.
+- Termina cada sentencia con punto y coma.
+- Si necesitas remover o agregar líneas, hazlo de manera consistente y reporta los números de línea en removedLines/addedLines.
 
-PARA ALGORITMOS RECURSIVOS:
-- Identifica el tipo de recurrencia:
-  * divide_conquer: T(n) = a·T(n/b) + f(n)
-  * linear_shift: T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n)
-- Aplica el método apropiado:
-  * master: Teorema Maestro (para divide_conquer)
-  * iteration: Método de Iteración/Unrolling
-  * recursion_tree: Árbol de Recursión
-  * characteristic_equation: Ecuación Característica (para linear_shift)
-- Proporciona todos los detalles del método aplicado
-- Calcula theta final en formato LaTeX
+FORMATO DE RESPUESTA (OBLIGATORIO):
+- Devuelve SOLO un objeto JSON válido sin texto adicional, sin explicaciones antes/después y sin marcarlo con \`\`\`json\`\`\`.
+- La estructura SIEMPRE debe ser exactamente:
+{
+  "code": "...",
+  "removedLines": [],
+  "addedLines": []
+}
+- "code": cadena con el algoritmo completo corregido dentro de la gramática. El código debe estar completo, sin bloques markdown, solo el texto del algoritmo (OBLIGATORIO).
+- "removedLines": arreglo con los números de línea (del código original) que eliminaste. Si no eliminaste ninguna línea, devuelve un arreglo vacío [] (OBLIGATORIO).
+- "addedLines": arreglo con los números de línea (del nuevo código corregido) que agregaste o modificaste. Si no agregaste ninguna línea, devuelve un arreglo vacío [] (OBLIGATORIO).
+- NO incluyas notas, emojis, análisis de complejidad, ni ningún texto fuera del objeto JSON.
+- NO uses bloques de código markdown (\`\`\`pseudocode\`\`\` o \`\`\`json\`\`\`). Devuelve directamente el objeto JSON.
+- El campo "code" debe contener el código completo corregido como una cadena de texto, con saltos de línea representados como \\n.
 
-FORMATO DE RESPUESTA:
-- Devuelve SOLO un objeto JSON válido
-- El campo "analysis" debe contener todos los datos del análisis
-- El campo "note" debe ser una observación breve (máx. 100 caracteres) con un emoji de cara al inicio y un adjetivo calificativo, por ejemplo: "😊 Excelente análisis" o "😐 Análisis correcto pero podría mejorarse"
-- Usa formato LaTeX para todas las expresiones matemáticas
-- Si un campo no aplica, puedes omitirlo del objeto analysis (no incluir null)
-
-EJEMPLOS DE NOTAS:
-- "😊 Excelente análisis, muy preciso"
-- "😐 Análisis correcto pero falta considerar casos límite"
-- "😊 Muy bien, análisis completo"
-- "😐 Buen análisis pero la notación podría ser más clara"
-
-IMPORTANTE:
-- Analiza cuidadosamente el algoritmo proporcionado
-- Aplica los métodos teóricos correctamente
-- Proporciona expresiones en formato LaTeX
-- La nota debe ser breve, con emoji y adjetivo calificativo`,
+VALIDACIONES FINALES
+- Verifica que IF/ELSE tengan bloques BEGIN...END o llaves.
+- Verifica que WHILE/FOR incluyan DO antes del bloque.
+- Asegúrate de no usar CALL en llamadas recursivas dentro de expresiones.
+- Confirma que no existan caracteres especiales ni palabras reservadas ajenas a la gramática.
+- Si el usuario suministra varias instrucciones, obedece solo aquellas relacionadas con reparar la sintaxis.`,
   },
   compare: {
     temperature: 0.3,
@@ -632,6 +627,17 @@ EJEMPLOS DE NOTAS:
 - "😐 Análisis correcto pero falta considerar casos límite"
 - "😊 Muy bien, análisis completo"
 - "😐 Buen análisis pero la notación podría ser más clara"
+
+**CRÍTICO - AL DAR TU OBSERVACIÓN (NOTA):**
+- **IGNORA keys que no vienen al caso** al comparar tu análisis con el análisis propio proporcionado
+- **NO consideres en tu observación**:
+  * T_open o T_polynomial en análisis recursivos (estos campos son solo para iterativos)
+  * has_case_variability (es metadata, no parte del análisis core)
+  * Cualquier otro campo que no sea parte del core de análisis solicitado
+- **SOLO compara** el core de análisis de cada caso (worst, best, avg):
+  * Para iterativos: T_open, T_polynomial, big_o, big_omega, big_theta
+  * Para recursivos: recurrence, method, el objeto del método usado (iteration/master/recursion_tree/characteristic_equation), y big_theta
+- Tu observación debe enfocarse ÚNICAMENTE en la precisión y corrección del análisis core, ignorando campos que no aplican al tipo de algoritmo
 
 IMPORTANTE:
 - Analiza cuidadosamente el algoritmo proporcionado
