@@ -316,6 +316,11 @@ class BaseAnalyzer:
                     # Fallback: convertir desde LaTeX
                     count_expr = self._str_to_sympy(r.get('count_raw', '1'))
                 
+                # MEJORA: Si count es 0 (línea nunca ejecutada), saltar esta fila
+                # Esto evita términos que no contribuyen a la complejidad
+                if count_expr == Integer(0):
+                    continue
+                
                 # Crear término: C_k * count_expr
                 # C_k es solo un símbolo para mostrar, no afecta la expresión SymPy
                 # Multiplicamos directamente
@@ -341,6 +346,29 @@ class BaseAnalyzer:
             total_expr = sympy_simplify(total_expr)
         except Exception:
             total_expr = sympy_simplify(total_expr)
+        
+        # VALIDACIÓN: Verificar que solo contenga n y constantes C_k
+        # Se permiten: n, C_k (con cualquier k), números, operadores básicos
+        from sympy import Symbol
+        free_symbols = total_expr.free_symbols
+        n_symbol = Symbol('n')
+        
+        # Filtrar símbolos no permitidos (no son n, ni constantes C_k)
+        invalid_symbols = []
+        for sym in free_symbols:
+            sym_name = str(sym)
+            # Permitir: n, C_k (donde k es un número), t_for, t_while, t_if, t_repeat, t_block
+            if sym_name not in ['n'] and not sym_name.startswith('C_') and not sym_name.startswith('t_'):
+                invalid_symbols.append(sym_name)
+        
+        if invalid_symbols:
+            # Log de advertencia: la expresión contiene variables no permitidas
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(
+                f"T_open contiene variables no permitidas: {invalid_symbols}. "
+                f"Solo se permiten 'n' y constantes C_k. Expresión: {total_expr}"
+            )
         
         # Convertir a LaTeX
         return latex(total_expr)
@@ -397,6 +425,11 @@ class BaseAnalyzer:
                     count_expr_simplified = sympy_simplify(count_expr_simplified)
                 except Exception:
                     count_expr_simplified = sympy_simplify(count_expr_simplified)
+                
+                # MEJORA: Si count es 0 (línea nunca ejecutada), saltar esta fila
+                # Esto evita términos como "C_4 · 0" en T_open que no aportan información
+                if count_expr_simplified == Integer(0):
+                    continue
                 
                 # Convertir count a LaTeX
                 count_latex = latex(count_expr_simplified)
@@ -478,9 +511,10 @@ class BaseAnalyzer:
                 if not all_counts_are_constant or has_variables:
                     break
         
-        # Si todos los count son constantes (Integer) y no hay variables, simplificar a "C"
-        if all_counts_are_constant and not has_variables:
-            return "C"
+        # CAMBIO: Ya no simplificar a "C" incluso si todos son constantes
+        # Siempre mostrar la expresión completa con las constantes individuales
+        # Esto da más información al usuario sobre la estructura del algoritmo
+        # Ejemplo: "2 \cdot C_1 + C_2 + C_3" en lugar de solo "C"
         
         # Unir todos los términos con "+"
         return " + ".join(terms_latex)
@@ -582,6 +616,11 @@ class BaseAnalyzer:
                     # Fallback: parsear desde count (LaTeX evaluado)
                     count_latex = r.get('count', '1')
                     count_expr = self._str_to_sympy(count_latex)
+                
+                # MEJORA: Si count es 0 (línea nunca ejecutada), saltar esta fila
+                # Esto evita términos que no contribuyen a la complejidad
+                if count_expr == Integer(0):
+                    continue
                 
                 # Crear término: C_k * count_expr
                 # C_k es solo un símbolo para mostrar, no afecta la expresión SymPy

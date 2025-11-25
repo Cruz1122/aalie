@@ -98,8 +98,8 @@ export default function AnalyzerPage() {
   }, [showMethodSelector]);
   const [data, setData] = useState<{
     worst: AnalyzeOpenResponse | null;
-    best: AnalyzeOpenResponse | null;
-    avg?: AnalyzeOpenResponse | null;
+    best: AnalyzeOpenResponse | "same_as_worst" | null;
+    avg?: AnalyzeOpenResponse | "same_as_worst" | null;
     has_case_variability?: boolean;
   } | null>(() => {
     // Cargar resultados desde sessionStorage si vienen del editor manual o del chatbot
@@ -407,8 +407,8 @@ export default function AnalyzerPage() {
         ok: boolean;
         has_case_variability?: boolean;
         worst?: AnalyzeOpenResponse;
-        best?: AnalyzeOpenResponse;
-        avg?: AnalyzeOpenResponse;
+        best?: AnalyzeOpenResponse | "same_as_worst";
+        avg?: AnalyzeOpenResponse | "same_as_worst";
         errors?: Array<{ message: string; line?: number; column?: number }>;
       };
 
@@ -1779,14 +1779,16 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                   const isRecursive = 
                     algorithmType === "recursive" || 
                     algorithmType === "hybrid" ||
-                    (data?.worst?.totals?.recurrence || data?.best?.totals?.recurrence || data?.avg?.totals?.recurrence);
+                    (data?.worst?.totals?.recurrence || 
+                     (typeof data?.best !== "string" && data?.best?.totals?.recurrence) || 
+                     (typeof data?.avg !== "string" && data?.avg?.totals?.recurrence));
                   
                   if (isRecursive) {
                     // Asegurar que avg esté definido (null en lugar de undefined)
                     const dataWithAvg: {
                       worst: AnalyzeOpenResponse | null;
-                      best: AnalyzeOpenResponse | null;
-                      avg: AnalyzeOpenResponse | null;
+                      best: AnalyzeOpenResponse | "same_as_worst" | null;
+                      avg: AnalyzeOpenResponse | "same_as_worst" | null;
                     } | null = data ? {
                       worst: data.worst ?? null,
                       best: data.best ?? null,
@@ -1797,8 +1799,8 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                     // Asegurar que avg esté definido (null en lugar de undefined)
                     const dataWithAvg: {
                       worst: AnalyzeOpenResponse | null;
-                      best: AnalyzeOpenResponse | null;
-                      avg: AnalyzeOpenResponse | null;
+                      best: AnalyzeOpenResponse | "same_as_worst" | null;
+                      avg: AnalyzeOpenResponse | "same_as_worst" | null;
                     } | null = data ? {
                       worst: data.worst ?? null,
                       best: data.best ?? null,
@@ -1827,16 +1829,16 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         onClose={() => setOpen(false)}
         selectedLine={selectedLine}
         analysisData={selectedCase === 'worst' ? (data?.worst || undefined) : 
-                      selectedCase === 'best' ? (data?.best || undefined) :
-                      selectedCase === 'average' ? (data?.avg || undefined) : undefined}
+                      selectedCase === 'best' ? (data?.best === "same_as_worst" ? data?.worst : data?.best) || undefined :
+                      selectedCase === 'average' ? (data?.avg === "same_as_worst" ? data?.worst : data?.avg) || undefined : undefined}
       />
       {/* Modal de procedimiento general */}
       <GeneralProcedureModal
         open={openGeneral}
         onClose={() => setOpenGeneral(false)}
         data={generalProcedureCase === 'worst' ? (data?.worst || undefined) : 
-              generalProcedureCase === 'best' ? (data?.best || undefined) :
-              generalProcedureCase === 'average' ? (data?.avg || undefined) : undefined}
+              generalProcedureCase === 'best' ? (data?.best === "same_as_worst" ? data?.worst : data?.best) || undefined :
+              generalProcedureCase === 'average' ? (data?.avg === "same_as_worst" ? data?.worst : data?.avg) || undefined : undefined}
       />
 
       {/* Modal AST */}
@@ -1974,8 +1976,8 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         onClose={() => setShowComparisonModal(false)}
         ownData={{
           worst: extractCoreData(data?.worst || null),
-          best: extractCoreData(data?.best || null),
-          avg: extractCoreData(data?.avg || null),
+          best: data?.best === "same_as_worst" ? "same_as_worst" : extractCoreData(data?.best || null),
+          avg: data?.avg === "same_as_worst" ? "same_as_worst" : extractCoreData(data?.avg || null),
         }}
         llmData={llmAnalysisData || { worst: null, best: null, avg: null }}
         note={llmNote}

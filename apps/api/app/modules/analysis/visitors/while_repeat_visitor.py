@@ -116,11 +116,16 @@ class WhileRepeatVisitor:
         """
         Extrae información de la condición del WHILE.
         
+        Ahora soporta:
+        - Condiciones simples: i < n
+        - Condiciones de convergencia: izq <= der
+        - Condiciones compuestas: (i < n) AND (A[i] > 0)
+        
         Args:
             test: Nodo de la condición del WHILE
             
         Returns:
-            Diccionario con variable, límite y operador, o None si no se puede analizar
+            Diccionario con variable(s), límite y operador, o None si no se puede analizar
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
@@ -140,6 +145,8 @@ class WhileRepeatVisitor:
             if isinstance(left, dict):
                 left_info = self._extract_condition_info(left)
                 if left_info:
+                    # Marcar que es parte de una condición compuesta
+                    left_info["compound"] = True
                     return left_info
             
             # Si left no funciona, intentar right
@@ -147,6 +154,7 @@ class WhileRepeatVisitor:
             if isinstance(right, dict):
                 right_info = self._extract_condition_info(right)
                 if right_info:
+                    right_info["compound"] = True
                     return right_info
             
             # Si ninguna parte es analizable, fallback
@@ -185,8 +193,19 @@ class WhileRepeatVisitor:
             op_map = {">": "<", ">=": "<=", "<": ">", "<=": ">=", "=": "=", "==": "=", "<>": "<>", "!=": "<>"}
             op = op_map.get(op, op)
             variable_side = "right"
+        elif left_is_var and right_is_var:
+            # Ambos son variables: posible patrón de convergencia (izq <= der)
+            # Retornar información de ambas variables para análisis de patrón
+            return {
+                "variable": left.get("name", ""),
+                "variable2": right.get("name", ""),
+                "limit": right.get("name", ""),  # usar variable2 como límite
+                "operator": op,
+                "variable_side": "left",
+                "two_variables": True
+            }
         else:
-            # Ambos son variables o ninguno es variable simple
+            # Ninguno es variable simple
             return None
         
         if not var_name:
@@ -454,6 +473,98 @@ class WhileRepeatVisitor:
         except (ValueError, TypeError):
             return False
     
+    def _detect_convergence_pattern(self, node: Dict[str, Any], var_name: str, body: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Detecta patrones de convergencia conocidos como búsqueda binaria.
+        
+        Patrones detectados:
+        - Búsqueda binaria: izq <= der, mitad = (izq + der) / 2
+        
+        Args:
+            node: Nodo WHILE completo
+            var_name: Variable de control detectada
+            body: Cuerpo del WHILE
+            
+        Returns:
+            Diccionario con patrón detectado y complejidad, o None
+        """
+        test = node.get("test", {})
+        test_str = self._expr_to_str(test)
+        
+        # Patrón búsqueda binaria:
+        # - Condición: izq <= der (o left <= right, low <= high, etc.)
+        # - Actualización: mitad = (izq + der) / 2, luego izq = mitad +/- 1 o der = mitad -/+ 1
+        
+        # Buscar variables en la condición (debería haber 2 variables para convergencia)
+        condition_vars = []
+        if isinstance(test, dict):
+            left = test.get("left", {})
+            right = test.get("right", {})
+            
+            if isinstance(left, dict) and left.get("type", "").lower() == "identifier":
+                condition_vars.append(left.get("name", ""))
+            if isinstance(right, dict) and right.get("type", "").lower() == "identifier":
+                condition_vars.append(right.get("name", ""))
+        
+        # Si hay exactamente 2 variables, puede ser convergencia
+        if len(condition_vars) == 2:
+            var1, var2 = condition_vars
+            
+            # Buscar asignación de mitad en el cuerpo
+            # Patrón: mitad <- (var1 + var2) / 2 o (var1 + var2) // 2
+            has_midpoint = False
+            midpoint_var = None
+            
+            # Buscar asignaciones en el cuerpo
+            if isinstance(body, dict) and body.get("type", "").lower() == "block":
+                for stmt in body.get("body", []):
+                    if isinstance(stmt, dict) and stmt.get("type", "").lower() == "assign":
+                        target = stmt.get("target", {})
+                        value = stmt.get("value", {})
+                        
+                        if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
+                            target_name = target.get("name", "")
+                            
+                            # Verificar si es mitad = (var1 + var2) / 2 o // 2
+                            # Verificar estructura del nodo directamente
+                            if isinstance(value, dict) and value.get("type", "").lower() == "binary":
+                                op = value.get("op", "")
+                                if op in ("/", "//"):
+                                    left_part = value.get("left", {})
+                                    right_part = value.get("right", {})
+                                    
+                                    # Verificar que right_part sea 2 (o algún entero)
+                                    if isinstance(right_part, dict) and right_part.get("type", "").lower() == "literal":
+                                        divisor = right_part.get("value")
+                                        if divisor == 2 or divisor == "2":
+                                            # Verificar que left_part sea (var1 + var2)
+                                            if isinstance(left_part, dict) and left_part.get("type", "").lower() == "binary":
+                                                inner_op = left_part.get("op", "")
+                                                if inner_op == "+":
+                                                    inner_left = left_part.get("left", {})
+                                                    inner_right = left_part.get("right", {})
+                                                    
+                                                    # Verificar que ambos sean var1 y var2
+                                                    left_name = inner_left.get("name", "") if isinstance(inner_left, dict) else ""
+                                                    right_name = inner_right.get("name", "") if isinstance(inner_right, dict) else ""
+                                                    
+                                                    if {left_name, right_name} == {var1, var2}:
+                                                        has_midpoint = True
+                                                        midpoint_var = target_name
+                                                        break
+            
+            # Si encontramos el patrón de mitad, es búsqueda binaria
+            if has_midpoint and midpoint_var:
+                return {
+                    "pattern": "binary_search",
+                    "complexity": "log(n)",
+                    "variables": [var1, var2],
+                    "midpoint_var": midpoint_var,
+                    "note": f"Patrón de búsqueda binaria detectado: {var1} <= {var2}, {midpoint_var} = ({var1} + {var2}) / 2"
+                }
+        
+        return None
+    
     def _has_early_exit_condition(self, test: Dict[str, Any], var_name: str) -> bool:
         """
         Detecta si la condición del WHILE puede ser falsa desde el inicio en best case.
@@ -634,6 +745,12 @@ class WhileRepeatVisitor:
         """
         Analiza el cierre de un bucle WHILE.
         
+        Estrategia mejorada:
+        1. Verificar best case (early exit)
+        2. Intentar análisis simple (variable de control)
+        3. Intentar detectar patrones de convergencia (búsqueda binaria, etc.)
+        4. Fallback a símbolo iterativo
+        
         Args:
             node: Nodo WHILE del AST
             parent_context: Contexto del bloque padre que contiene el while (opcional)
@@ -703,9 +820,68 @@ class WhileRepeatVisitor:
         limit = condition_info["limit"]
         operator = condition_info["operator"]
         
+        # 1.5) Si hay dos variables, intentar detectar patrón directamente
+        if condition_info.get("two_variables"):
+            pattern_info = self._detect_convergence_pattern(node, var_name, body)
+            if pattern_info and pattern_info["pattern"] == "binary_search":
+                # Búsqueda binaria
+                # Best case: encuentra el elemento en la primera iteración (mitad del arreglo)
+                # Worst/Avg case: O(log n) iteraciones
+                var2 = condition_info.get("variable2")
+                var2_initial = self._find_initial_value_of_var(var2, L, parent_context)
+                actual_limit = var2_initial if var2_initial else limit
+                
+                if mode == "best":
+                    # Best case: 1 iteración (encuentra en el medio)
+                    iterations = "1"
+                else:
+                    # Worst/Avg case: log_2(n) iteraciones
+                    iterations = f"\\log_{{2}}({actual_limit})"
+                
+                return {
+                    "variable": var_name,
+                    "initial_value": None,
+                    "change_rule": {"operator": "/", "constant": "2"},
+                    "limit": actual_limit,
+                    "operator": operator,
+                    "iterations": iterations,
+                    "success": True,
+                    "mode": mode,
+                    "pattern": pattern_info["pattern"],
+                    "pattern_note": pattern_info.get("note", "")
+                }
+            # Si no se detecta patrón, retornar None
+            return None
+        
         # 2) Analizar el cuerpo para encontrar cambios a la variable
         body_info = self._analyze_body_for_variable_change(body, var_name)
         if not body_info:
+            # El análisis simple falló, intentar detectar patrones de convergencia
+            pattern_info = self._detect_convergence_pattern(node, var_name, body)
+            if pattern_info:
+                # Patrón detectado (ej: búsqueda binaria)
+                # Retornar información especial para que visitWhile use la complejidad conocida
+                if pattern_info["pattern"] == "binary_search":
+                    # Búsqueda binaria
+                    # Best case: encuentra el elemento en la primera iteración
+                    # Worst/Avg case: O(log n) iteraciones
+                    if mode == "best":
+                        iterations = "1"
+                    else:
+                        iterations = f"\\log_{{2}}({limit})"
+                    
+                    return {
+                        "variable": var_name,
+                        "initial_value": None,
+                        "change_rule": {"operator": "/", "constant": "2"},
+                        "limit": limit,
+                        "operator": operator,
+                        "iterations": iterations,
+                        "success": True,
+                        "mode": mode,
+                        "pattern": pattern_info["pattern"],
+                        "pattern_note": pattern_info.get("note", "")
+                    }
             return None
         
         change_rule = body_info["change_rule"]
@@ -799,77 +975,87 @@ class WhileRepeatVisitor:
         # 3. Si ambos fallan, usar símbolo iterativo con nota mejorada
         
         # Paso 1: Intentar probabilidad en modo promedio
+        # PERO: primero verificar si es un patrón conocido (como búsqueda binaria)
+        # que tiene complejidad determinística incluso en average case
         if mode == "avg":
-            exit_prob = self._get_while_exit_probability(node)
-            if exit_prob:
-                p_sympy, p_str = exit_prob
-                # E[#iteraciones] = 1/p para proceso geométrico
-                from sympy import Pow
-                try:
-                    # Calcular 1/p
-                    if isinstance(p_sympy, Rational):
-                        # Si p es una fracción, calcular 1/p directamente
-                        iterations_expr = Rational(1) / p_sympy
-                    else:
-                        # Si p es un símbolo, usar 1/p simbólico
-                        iterations_expr = Pow(p_sympy, -1)
-                    
-                    # Multiplicador para el cuerpo
-                    mult_expr = iterations_expr
-                    
-                    # Si hay multiplicadores externos, integrar
-                    if hasattr(self, 'loop_stack') and self.loop_stack:
-                        outer_mult = self.loop_stack[-1]
-                        if isinstance(outer_mult, Sum):
-                            var_sym = outer_mult.args[1][0]
-                            start_expr = outer_mult.args[1][1]
-                            end_expr = outer_mult.args[1][2]
-                            mult_expr = Sum(iterations_expr, (var_sym, start_expr, end_expr))
+            # Verificar si hay un patrón detectado primero
+            closure_info_pattern = self._analyze_while_closure(node, parent_context, mode)
+            if closure_info_pattern and closure_info_pattern.get("pattern"):
+                # Hay un patrón detectado (ej: búsqueda binaria), usar ese en lugar de probabilidad
+                # No hacer el análisis probabilístico, saltar directamente al paso 2
+                pass
+            else:
+                # No hay patrón, intentar análisis probabilístico
+                exit_prob = self._get_while_exit_probability(node)
+                if exit_prob:
+                    p_sympy, p_str = exit_prob
+                    # E[#iteraciones] = 1/p para proceso geométrico
+                    from sympy import Pow
+                    try:
+                        # Calcular 1/p
+                        if isinstance(p_sympy, Rational):
+                            # Si p es una fracción, calcular 1/p directamente
+                            iterations_expr = Rational(1) / p_sympy
                         else:
-                            mult_expr = iterations_expr * outer_mult
-                    
-                    # Condición: se evalúa (iterations + 1) veces
-                    ck_cond = self.C()
-                    cond_count = iterations_expr + Integer(1)
-                    self.add_row(
-                        line=L,
-                        kind="while",
-                        ck=ck_cond,
-                        count=cond_count,
-                        note=f"Condición del bucle while en línea {L} (avg: E[#iteraciones] = 1/p, p={p_str})"
-                    )
-                    
-                    # Cuerpo: se ejecuta E[#iteraciones] veces
-                    self.push_multiplier(mult_expr)
-                    
-                    body = node.get("body")
-                    if body:
-                        # Aplicar memoización si el cuerpo es un bloque cacheable
-                        if self._should_memoize(body):
-                            ctx_hash = self.get_context_hash()
-                            memo_key = self.memo_key(body, mode, ctx_hash)
-                            
-                            # Intentar obtener del cache
-                            cached_rows = self.memo_get(memo_key)
-                            if cached_rows is not None:
-                                # Usar resultados cacheados
-                                self.rows.extend(cached_rows)
+                            # Si p es un símbolo, usar 1/p simbólico
+                            iterations_expr = Pow(p_sympy, -1)
+                        
+                        # Multiplicador para el cuerpo
+                        mult_expr = iterations_expr
+                        
+                        # Si hay multiplicadores externos, integrar
+                        if hasattr(self, 'loop_stack') and self.loop_stack:
+                            outer_mult = self.loop_stack[-1]
+                            if isinstance(outer_mult, Sum):
+                                var_sym = outer_mult.args[1][0]
+                                start_expr = outer_mult.args[1][1]
+                                end_expr = outer_mult.args[1][2]
+                                mult_expr = Sum(iterations_expr, (var_sym, start_expr, end_expr))
                             else:
-                                # Analizar y cachear
-                                rows_before = len(self.rows)
+                                mult_expr = iterations_expr * outer_mult
+                        
+                        # Condición: se evalúa (iterations + 1) veces
+                        ck_cond = self.C()
+                        cond_count = iterations_expr + Integer(1)
+                        self.add_row(
+                            line=L,
+                            kind="while",
+                            ck=ck_cond,
+                            count=cond_count,
+                            note=f"Condición del bucle while en línea {L} (avg: E[#iteraciones] = 1/p, p={p_str})"
+                        )
+                        
+                        # Cuerpo: se ejecuta E[#iteraciones] veces
+                        self.push_multiplier(mult_expr)
+                        
+                        body = node.get("body")
+                        if body:
+                            # Aplicar memoización si el cuerpo es un bloque cacheable
+                            if self._should_memoize(body):
+                                ctx_hash = self.get_context_hash()
+                                memo_key = self.memo_key(body, mode, ctx_hash)
+                                
+                                # Intentar obtener del cache
+                                cached_rows = self.memo_get(memo_key)
+                                if cached_rows is not None:
+                                    # Usar resultados cacheados
+                                    self.rows.extend(cached_rows)
+                                else:
+                                    # Analizar y cachear
+                                    rows_before = len(self.rows)
+                                    self.visit(body, mode)
+                                    rows_added = self.rows[rows_before:]
+                                    if rows_added:
+                                        self.memo_set(memo_key, rows_added)
+                            else:
+                                # No es cacheable, visitar normalmente
                                 self.visit(body, mode)
-                                rows_added = self.rows[rows_before:]
-                                if rows_added:
-                                    self.memo_set(memo_key, rows_added)
-                        else:
-                            # No es cacheable, visitar normalmente
-                            self.visit(body, mode)
-                    
-                    self.pop_multiplier()
-                    return
-                except Exception as e:
-                    print(f"[WhileRepeatVisitor] Error calculando E[#iteraciones] = 1/p: {e}")
-                    # Continuar con análisis de cierre como fallback
+                        
+                        self.pop_multiplier()
+                        return
+                    except Exception as e:
+                        print(f"[WhileRepeatVisitor] Error calculando E[#iteraciones] = 1/p: {e}")
+                        # Continuar con análisis de cierre como fallback
         
         # Paso 2: Intentar análisis de cierre (para todos los modos, incluyendo avg como fallback)
         closure_info = self._analyze_while_closure(node, parent_context, mode)
@@ -882,13 +1068,34 @@ class WhileRepeatVisitor:
             limit = closure_info["limit"]
             operator = closure_info["operator"]
             initial_value = closure_info.get("initial_value")
+            pattern = closure_info.get("pattern")
             
             # Convertir iteraciones (string) a SymPy
-            try:
-                iterations_expr = sympify(iterations)
-            except Exception:
-                # Fallback: usar string y convertir después
-                iterations_expr = self._str_to_sympy(iterations)
+            # La variable iterations ya viene diferenciada por modo desde _analyze_while_closure
+            # Para binary search: "1" en best case, "\\log_{2}(n)" en worst/avg
+            if pattern == "binary_search":
+                # Para búsqueda binaria: ya viene el valor correcto en iterations
+                from sympy import log, sympify as sp_sympify, ceiling, Symbol as Sym
+                try:
+                    # Si iterations es "1", usar directamente
+                    if iterations == "1":
+                        iterations_expr = Integer(1)
+                    else:
+                        # Es una expresión log en LaTeX, convertir a SymPy
+                        # Ejemplo: "\\log_{2}(n)" -> log(n, 2)
+                        limit_expr = sp_sympify(limit) if isinstance(limit, str) else limit
+                        iterations_expr = log(limit_expr, 2)
+                except Exception as e:
+                    print(f"[WhileRepeatVisitor] Error convirtiendo log expression: {e}")
+                    # Fallback: usar ceil(log(n))
+                    n_sym = Sym('n')
+                    iterations_expr = ceiling(log(n_sym, 2))
+            else:
+                try:
+                    iterations_expr = sympify(iterations)
+                except Exception:
+                    # Fallback: usar string y convertir después
+                    iterations_expr = self._str_to_sympy(iterations)
             
             mult_expr = iterations_expr
             
@@ -920,9 +1127,13 @@ class WhileRepeatVisitor:
             change_op = change_rule.get("operator", "")
             change_const = change_rule.get("constant", "1")
             mode_info = closure_info.get("mode", mode)
+            pattern_note = closure_info.get("pattern_note", "")
             
             # Agregar información del modo si es best case y hay 0 iteraciones
-            if mode_info == "best" and iterations == "0":
+            if pattern == "binary_search":
+                # Nota especial para búsqueda binaria
+                note_text = f"Condición del bucle while en línea {L} ({mode_info} case: búsqueda binaria detectada, O(log n) iteraciones)"
+            elif mode_info == "best" and iterations == "0":
                 if initial_value:
                     note_text = f"Condición del bucle while en línea {L} (best case: condición falsa desde el inicio, variable {var_name} inicializada en {initial_value})"
                 else:

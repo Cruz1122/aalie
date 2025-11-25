@@ -12,13 +12,13 @@ interface ComparisonModalProps {
   onClose: () => void;
   ownData: {
     worst: CoreAnalysisData | null;
-    best: CoreAnalysisData | null;
-    avg: CoreAnalysisData | null;
+    best: CoreAnalysisData | "same_as_worst" | null;
+    avg: CoreAnalysisData | "same_as_worst" | null;
   };
   llmData: {
     worst: CoreAnalysisData | null;
-    best: CoreAnalysisData | null;
-    avg: CoreAnalysisData | null;
+    best: CoreAnalysisData | "same_as_worst" | null;
+    avg: CoreAnalysisData | "same_as_worst" | null;
   };
   note: string;
   isRecursive: boolean;
@@ -114,11 +114,15 @@ function parseNote(note: string): {
  * Renderiza los datos core de un análisis iterativo para un caso específico.
  */
 function renderIterativeCaseData(
-  data: CoreAnalysisData | null,
+  data: CoreAnalysisData | "same_as_worst" | null,
   caseType: "worst" | "best" | "average",
   _isOwn: boolean,
+  worstData?: CoreAnalysisData | null,
 ) {
-  if (!data) {
+  // Resolver data: si es "same_as_worst", usar worstData
+  const resolvedData = data === "same_as_worst" ? worstData : data;
+  
+  if (!resolvedData) {
     return (
       <div className="text-center text-slate-400 py-4">
         <span className="material-symbols-outlined text-2xl mb-1 block">
@@ -140,9 +144,9 @@ function renderIterativeCaseData(
 
   // Obtener la cota adecuada según el caso
   const totals = {
-    big_theta: data.big_theta,
-    big_o: data.big_o,
-    big_omega: data.big_omega,
+    big_theta: resolvedData.big_theta,
+    big_o: resolvedData.big_o,
+    big_omega: resolvedData.big_omega,
   };
   const notation = getBestAsymptoticNotation(caseType, totals);
 
@@ -294,6 +298,7 @@ function renderIterativeData(
             isOwn ? ownData.best : llmData.best,
             "best",
             isOwn,
+            isOwn ? ownData.worst : llmData.worst,
           )}
         </div>
 
@@ -303,6 +308,7 @@ function renderIterativeData(
             isOwn ? ownData.avg : llmData.avg,
             "average",
             isOwn,
+            isOwn ? ownData.worst : llmData.worst,
           )}
         </div>
       </div>

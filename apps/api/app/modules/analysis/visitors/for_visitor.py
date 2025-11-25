@@ -281,9 +281,10 @@ class ForVisitor:
         
         if mode == "best" and has_return:
             # En best case con early return: solo se evalúa la condición inicial y una vez más (2 evaluaciones)
-            # Evaluación inicial + 1 evaluación de condición = 2
+            # Evaluación inicial: i=1, condición verdadera, ejecuta cuerpo (encuentra y retorna)
+            # Evaluación final: i=2, condición verdadera pero no ejecuta cuerpo (early return previo)
             header_count = Integer(2)
-            header_note = f"Cabecera del bucle for {var}={a_str}..{b_str} (best: early return en primera iteración)"
+            header_note = f"Cabecera del bucle for {var}={a_str}..{b_str} (best: early return en primera iteración, cabecera evalúa 2 veces)"
         elif mode == "avg" and has_return:
             # En caso promedio con early return: E[iter] = (n+1)/2
             # Cabecera: E[iter] + 1 = (n+1)/2 + 1 = (n+3)/2

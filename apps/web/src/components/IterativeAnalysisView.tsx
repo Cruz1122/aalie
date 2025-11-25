@@ -17,8 +17,8 @@ interface IterativeAnalysisViewProps {
   /** Datos de análisis para worst, best y average case */
   data: {
     worst: AnalyzeOpenResponse | null;
-    best: AnalyzeOpenResponse | null;
-    avg: AnalyzeOpenResponse | null;
+    best: AnalyzeOpenResponse | "same_as_worst" | null;
+    avg: AnalyzeOpenResponse | "same_as_worst" | null;
   } | null;
   /** Caso actualmente seleccionado */
   selectedCase: CaseType;
@@ -139,14 +139,17 @@ export default function IterativeAnalysisView({
       );
     }
 
-    const currentData =
-      selectedCase === "worst"
-        ? data?.worst
-        : selectedCase === "best"
-          ? data?.best
-          : selectedCase === "average"
-            ? data?.avg
-            : null;
+    // Resolver currentData: si best/avg es "same_as_worst", usar worst
+    let currentData: AnalyzeOpenResponse | null = null;
+    if (selectedCase === "worst") {
+      currentData = data?.worst ?? null;
+    } else if (selectedCase === "best") {
+      const bestData = data?.best;
+      currentData = bestData === "same_as_worst" ? data?.worst ?? null : (bestData ?? null);
+    } else if (selectedCase === "average") {
+      const avgData = data?.avg;
+      currentData = avgData === "same_as_worst" ? data?.worst ?? null : (avgData ?? null);
+    }
 
     if (!currentData || !currentData.ok) {
       return (
@@ -227,19 +230,27 @@ export default function IterativeAnalysisView({
               <div className="scale-110">
                 <Formula
                   latex={
-                    getBestAsymptoticNotation("best", data?.best?.totals || {})
-                      .notation
+                    getBestAsymptoticNotation("best", 
+                      data?.best === "same_as_worst" 
+                        ? data?.worst?.totals || {} 
+                        : data?.best?.totals || {}
+                    ).notation
                   }
                 />
               </div>
             </div>
             <h3 className="font-semibold text-green-300 mb-1">Mejor caso</h3>
-            {getBestAsymptoticNotation("best", data?.best?.totals || {}).chips
-              .length > 0 && (
+            {getBestAsymptoticNotation("best", 
+              data?.best === "same_as_worst" 
+                ? data?.worst?.totals || {} 
+                : data?.best?.totals || {}
+            ).chips.length > 0 && (
               <div className="flex flex-wrap gap-1 justify-center mt-1">
                 {getBestAsymptoticNotation(
                   "best",
-                  data?.best?.totals || {},
+                  data?.best === "same_as_worst" 
+                    ? data?.worst?.totals || {} 
+                    : data?.best?.totals || {},
                 ).chips.map((chip, idx) => (
                   <span
                     key={idx}
@@ -263,14 +274,14 @@ export default function IterativeAnalysisView({
             )}
             <button
               onClick={() => onViewGeneralProcedure("best")}
-              disabled={!data?.best?.ok}
+              disabled={!(data?.best === "same_as_worst" ? data?.worst?.ok : data?.best?.ok)}
               className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors ${
-                data?.best?.ok
+                (data?.best === "same_as_worst" ? data?.worst?.ok : data?.best?.ok)
                   ? "text-white glass-secondary hover:bg-sky-500/20"
                   : "text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60"
               }`}
               title={
-                data?.best?.ok
+                (data?.best === "same_as_worst" ? data?.worst?.ok : data?.best?.ok)
                   ? "Ver procedimiento general (mejor caso)"
                   : "Ejecuta el análisis para ver el procedimiento"
               }
@@ -283,7 +294,7 @@ export default function IterativeAnalysisView({
           </div>
         </div>
         <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(234,179,8,0.3)] hover:shadow-[0_12px_40px_0_rgba(234,179,8,0.4)] relative">
-          {data?.avg?.totals?.avg_model_info && (
+          {data?.avg && typeof data.avg !== "string" && data.avg.totals?.avg_model_info && (
             <div className="absolute top-2 right-2 group">
               <button
                 className="w-5 h-5 rounded-full bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/30 flex items-center justify-center text-xs font-semibold transition-colors"
@@ -308,7 +319,9 @@ export default function IterativeAnalysisView({
                   latex={
                     getBestAsymptoticNotation(
                       "average",
-                      data?.avg?.totals || {},
+                      data?.avg === "same_as_worst" 
+                        ? data?.worst?.totals || {} 
+                        : data?.avg?.totals || {},
                     ).notation
                   }
                 />
@@ -319,14 +332,14 @@ export default function IterativeAnalysisView({
             </h3>
             <button
               onClick={() => onViewGeneralProcedure("average")}
-              disabled={!data?.avg?.ok}
+              disabled={!(data?.avg === "same_as_worst" ? data?.worst?.ok : data?.avg?.ok)}
               className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors ${
-                data?.avg?.ok
+                (data?.avg === "same_as_worst" ? data?.worst?.ok : data?.avg?.ok)
                   ? "text-white glass-secondary hover:bg-sky-500/20"
                   : "text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60"
               }`}
               title={
-                data?.avg?.ok
+                (data?.avg === "same_as_worst" ? data?.worst?.ok : data?.avg?.ok)
                   ? "Ver procedimiento general (caso promedio)"
                   : "Ejecuta el análisis para ver el procedimiento"
               }
