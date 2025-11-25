@@ -141,8 +141,8 @@ export default function AnalyzerPage() {
       return false;
     }
     const worstCore = extractCoreData(data.worst || null);
-    const bestCore = extractCoreData(data.best || null);
-    const avgCore = extractCoreData(data.avg || null);
+    const bestCore = data.best === "same_as_worst" ? null : extractCoreData(data.best || null);
+    const avgCore = data.avg === "same_as_worst" ? null : extractCoreData(data.avg || null);
     return Boolean(worstCore || bestCore || avgCore);
   }, [data]);
 
@@ -446,7 +446,8 @@ export default function AnalyzerPage() {
       // 6) Detectar el método usado y actualizar mensaje
       let detectedMethod = "método recursivo";
       if (isRecursive && analyzeRes.worst?.totals?.recurrence) {
-        detectedMethod = detectRecursiveMethod(analyzeRes.worst, analyzeRes.best);
+        const bestForDetection = analyzeRes.best === "same_as_worst" ? null : analyzeRes.best;
+        detectedMethod = detectRecursiveMethod(analyzeRes.worst, bestForDetection);
         updateAnalysisMessageForMethod(detectedMethod, setAnalysisMessage);
         await new Promise((resolve) => setTimeout(resolve, 300));
       }
@@ -466,7 +467,7 @@ export default function AnalyzerPage() {
         // Usar el tipo que ya fue clasificado (puede ser "hybrid", "recursive", etc.)
         setAlgorithmType(kind);
         console.log(`[Analyzer] algorithmType establecido desde clasificación: ${kind}`);
-      } else if (analyzeRes.worst?.totals?.recurrence || analyzeRes.best?.totals?.recurrence) {
+      } else if (analyzeRes.worst?.totals?.recurrence || (analyzeRes.best !== "same_as_worst" && analyzeRes.best?.totals?.recurrence)) {
         // Fallback: si no hay kind pero hay recurrencia, asumir recursive
         // (esto no debería pasar normalmente, pero es un fallback de seguridad)
         setAlgorithmType("recursive");
@@ -534,12 +535,14 @@ export default function AnalyzerPage() {
       setComparisonMessage("Contactando con LLM...");
 
       // Determinar tipo de algoritmo y datos core
-      const isRecursive = isRecursiveAnalysis(data.worst || data.best || data.avg || null);
+      const bestForAnalysis = data.best === "same_as_worst" ? null : data.best;
+      const avgForAnalysis = data.avg === "same_as_worst" ? null : data.avg;
+      const isRecursive = isRecursiveAnalysis(data.worst || bestForAnalysis || avgForAnalysis || null);
       
       // Extraer datos core de todos los casos para iterativo
       const ownCoreDataWorst = extractCoreData(data.worst || null);
-      const ownCoreDataBest = extractCoreData(data.best || null);
-      const ownCoreDataAvg = extractCoreData(data.avg || null);
+      const ownCoreDataBest = data.best === "same_as_worst" ? null : extractCoreData(data.best || null);
+      const ownCoreDataAvg = data.avg === "same_as_worst" ? null : extractCoreData(data.avg || null);
       
       // Para recursivo, usar worst como principal
       const ownCoreData = isRecursive ? ownCoreDataWorst : ownCoreDataWorst;
@@ -1981,7 +1984,12 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         }}
         llmData={llmAnalysisData || { worst: null, best: null, avg: null }}
         note={llmNote}
-        isRecursive={isRecursiveAnalysis(data?.worst || data?.best || data?.avg || null)}
+        isRecursive={isRecursiveAnalysis(
+          data?.worst || 
+          (data?.best === "same_as_worst" ? null : data?.best) || 
+          (data?.avg === "same_as_worst" ? null : data?.avg) || 
+          null
+        )}
       />
 
       <Footer />

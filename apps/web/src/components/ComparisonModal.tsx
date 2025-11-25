@@ -321,13 +321,17 @@ function renderIterativeData(
  */
 function renderRecursiveData(
   worstData: CoreAnalysisData | null,
-  bestData: CoreAnalysisData | null,
-  avgData: CoreAnalysisData | null,
+  bestData: CoreAnalysisData | "same_as_worst" | null,
+  avgData: CoreAnalysisData | "same_as_worst" | null,
   label: string,
   isOwn: boolean,
 ) {
+  // Resolver "same_as_worst" a worstData
+  const resolvedBest = bestData === "same_as_worst" ? worstData : bestData;
+  const resolvedAvg = avgData === "same_as_worst" ? worstData : avgData;
+  
   // Usar worst como fallback si no hay datos específicos
-  const data = worstData || bestData || avgData || null;
+  const data = worstData || resolvedBest || resolvedAvg || null;
   const cardColor = isOwn
     ? "bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-orange-500/30"
     : "bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/30";
@@ -555,9 +559,9 @@ function renderRecursiveData(
               const worstTheta =
                 worstData?.characteristic_equation?.theta || worstData?.T_open;
               const bestTheta =
-                bestData?.characteristic_equation?.theta || bestData?.T_open;
+                resolvedBest?.characteristic_equation?.theta || resolvedBest?.T_open;
               const avgTheta =
-                avgData?.characteristic_equation?.theta || avgData?.T_open;
+                resolvedAvg?.characteristic_equation?.theta || resolvedAvg?.T_open;
 
               // Verificar si hay variabilidad (diferentes valores de theta)
               // También considerar cuando best case es O(1) y los otros son diferentes
@@ -622,7 +626,7 @@ function renderRecursiveData(
               } else if (data.characteristic_equation.theta) {
                 // Sin variabilidad completa, pero verificar si best case es diferente
                 const bestTheta =
-                  bestData?.characteristic_equation?.theta || bestData?.T_open;
+                  resolvedBest?.characteristic_equation?.theta || resolvedBest?.T_open;
                 const worstTheta =
                   worstData?.characteristic_equation?.theta ||
                   worstData?.T_open;
@@ -830,8 +834,8 @@ function renderRecursiveData(
             {(() => {
               const worstTheta =
                 worstData?.iteration?.theta || worstData?.T_open;
-              const bestTheta = bestData?.iteration?.theta || bestData?.T_open;
-              const avgTheta = avgData?.iteration?.theta || avgData?.T_open;
+              const bestTheta = resolvedBest?.iteration?.theta || resolvedBest?.T_open;
+              const avgTheta = resolvedAvg?.iteration?.theta || resolvedAvg?.T_open;
 
               // Verificar si hay variabilidad (diferentes valores de theta)
               const hasVariability =
@@ -895,7 +899,7 @@ function renderRecursiveData(
               } else if (data.iteration.theta) {
                 // Sin variabilidad completa, pero verificar si best case es diferente
                 const bestTheta =
-                  bestData?.iteration?.theta || bestData?.T_open;
+                  resolvedBest?.iteration?.theta || resolvedBest?.T_open;
                 const worstTheta =
                   worstData?.iteration?.theta || worstData?.T_open;
 

@@ -924,8 +924,8 @@ function roundLatexNumbers(latex: string): string {
 interface RecursiveAnalysisViewProps {
   readonly data: {
     worst: AnalyzeOpenResponse | null;
-    best: AnalyzeOpenResponse | null;
-    avg: AnalyzeOpenResponse | null;
+    best: AnalyzeOpenResponse | "same_as_worst" | null;
+    avg: AnalyzeOpenResponse | "same_as_worst" | null;
   } | null;
 }
 
@@ -955,8 +955,8 @@ export default function RecursiveAnalysisView({
   // Memoizar los datos para evitar recálculos innecesarios
   const analysisData = useMemo(() => {
     const worstData = data?.worst;
-    const bestData = data?.best;
-    const avgData = data?.avg;
+    const bestData = data?.best === "same_as_worst" ? data?.worst : data?.best;
+    const avgData = data?.avg === "same_as_worst" ? data?.worst : data?.avg;
 
     const recurrence =
       worstData?.totals?.recurrence ||
