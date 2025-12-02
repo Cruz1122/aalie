@@ -43,6 +43,7 @@ class TraceRequest(BaseModel):
     source: str
     case: str = "worst"  # "worst" | "best" | "avg"
     input_size: Optional[int] = None  # Tamaño de entrada concreto (ej: n=4)
+    initial_variables: Optional[Dict[str, Any]] = None  # Variables iniciales (ej: arrays)
 
 
 class TraceResponse(BaseModel):

@@ -17,7 +17,7 @@ class CodeExecutor:
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
-    def __init__(self, ast: Dict[str, Any], input_size: Optional[int] = None, case: str = "worst"):
+    def __init__(self, ast: Dict[str, Any], input_size: Optional[int] = None, case: str = "worst", initial_variables: Optional[Dict[str, Any]] = None):
         """
         Inicializa el ejecutor.
         
@@ -25,6 +25,7 @@ class CodeExecutor:
             ast: AST del código a ejecutar
             input_size: Tamaño de entrada concreto (ej: n=4)
             case: Caso a ejecutar ("worst", "best", "avg")
+            initial_variables: Variables iniciales para el environment
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
@@ -32,6 +33,12 @@ class CodeExecutor:
         self.input_size = input_size
         self.case = case
         self.environment = ExecutionEnvironment(input_size)
+        
+        # Cargar variables iniciales si existen
+        if initial_variables:
+            for name, value in initial_variables.items():
+                self.environment.set_variable(name, value)
+                
         self.trace_builder = TraceBuilder()
         self.current_line = 0
         # Flag para detener la ejecución cuando se alcanza un RETURN
@@ -165,23 +172,103 @@ class CodeExecutor:
         # Evaluar el valor
         value = self.environment.evaluate_expression(value_expr)
         
-        # Obtener nombre de variable
+        # Obtener nombre de variable y manejar asignación a array
         var_name = None
+        description_suffix = ""
+        
         if isinstance(target, dict):
             if target.get("type") == "Identifier":
                 var_name = target.get("name")
+                self.environment.set_variable(var_name, value)
+                
             elif target.get("type") == "Index":
-                # Array access - por ahora solo registramos
-                var_name = target.get("target", {}).get("name", "array")
-        
+                # Asignación a elemento de array: A[i] = val
+                array_node = target.get("target", {})
+                index_node = target.get("index")
+                
+                if array_node.get("type") == "Identifier":
+                    array_name = array_node.get("name")
+                    index_val = self.environment.evaluate_expression(index_node)
+                    
+                    # Obtener array actual
+                    current_array = self.environment.get_variable(array_name)
+                    
+                    # Si no existe, intentar crear uno nuevo si el índice es pequeño
+                    if current_array is None and isinstance(index_val, int) and 0 <= index_val < 20:
+                        current_array = [0] * (index_val + 1)
+                    
+                    if isinstance(current_array, list) and isinstance(index_val, int):
+                        # Asegurar tamaño
+                        if index_val >= len(current_array):
+                            # Extender array si es necesario (comportamiento dinámico para pseudocódigo)
+                            current_array.extend([0] * (index_val - len(current_array) + 1))
+                        
+                        # Actualizar valor
+                        current_array[index_val] = value
+                        self.environment.set_variable(array_name, current_array)
+                        
+                        var_name = f"{array_name}[{index_val}]"
+                    else:
+                        # Fallback simbólico
+                        var_name = f"{array_name}[{self.environment.evaluate_to_string(index_node)}]"
+                
+                # Soporte para matrices A[i][j] = val
+                elif array_node.get("type") == "Index":
+                    # array_node es A[i], index_node es j
+                    matrix_node = array_node.get("target", {}) # A
+                    row_index_node = array_node.get("index")   # i
+                    col_index_node = index_node                # j
+                    
+                    if matrix_node.get("type") == "Identifier":
+                        matrix_name = matrix_node.get("name")
+                        row_val = self.environment.evaluate_expression(row_index_node)
+                        col_val = self.environment.evaluate_expression(col_index_node)
+                        
+                        current_matrix = self.environment.get_variable(matrix_name)
+                        
+                        if isinstance(current_matrix, list) and isinstance(row_val, int) and isinstance(col_val, int):
+                            # Asegurar filas
+                            if row_val >= len(current_matrix):
+                                current_matrix.extend([[] for _ in range(row_val - len(current_matrix) + 1)])
+                            
+                            row_list = current_matrix[row_val]
+                            if not isinstance(row_list, list):
+                                row_list = []
+                                current_matrix[row_val] = row_list
+                            
+                            # Asegurar columnas
+                            if col_val >= len(row_list):
+                                row_list.extend([0] * (col_val - len(row_list) + 1))
+                            
+                            row_list[col_val] = value
+                            self.environment.set_variable(matrix_name, current_matrix)
+                            
+                            var_name = f"{matrix_name}[{row_val}][{col_val}]"
+                        else:
+                            var_name = f"{matrix_name}[{self.environment.evaluate_to_string(row_index_node)}][{self.environment.evaluate_to_string(col_index_node)}]"
+
+        # Mejorar descripción: a = j = 5
+        description_parts = []
         if var_name:
-            self.environment.set_variable(var_name, value)
+            description_parts.append(var_name)
+        
+        # Si el valor proviene de otra variable, incluirla
+        if isinstance(value_expr, dict) and value_expr.get("type") == "Identifier":
+            source_var = value_expr.get("name")
+            if source_var != var_name:
+                description_parts.append(source_var)
+        
+        # Valor final (usar el valor calculado para evitar re-evaluación con variables actualizadas)
+        val_str = self.environment.evaluate_to_string(value)
+        description_parts.append(val_str)
+        
+        description = f"Asignación: {' = '.join(description_parts)}"
         
         self.trace_builder.add_step(
             line=node.get("pos", {}).get("line", 0),
             kind="assign",
             variables=self.environment.get_variables_snapshot(),
-            description=f"Asignación: {var_name} = {self.environment.evaluate_to_string(value_expr)}"
+            description=description
         )
     
     def _execute_for(self, node: Dict[str, Any]) -> None:

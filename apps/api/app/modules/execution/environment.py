@@ -3,7 +3,7 @@ Gestión del environment de variables durante la ejecución.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, List
 from sympy import Symbol, Integer, Expr, sympify
 from ..analysis.utils.expr_converter import ExprConverter
 
@@ -28,7 +28,7 @@ class ExecutionEnvironment:
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        self.variables: Dict[str, Union[int, float, str, Expr]] = {}
+        self.variables: Dict[str, Union[int, float, str, Expr, List[Any]]] = {}
         self.input_size = input_size
         self.variable_name = variable_name
         self.expr_converter = ExprConverter(variable_name)
@@ -37,7 +37,7 @@ class ExecutionEnvironment:
         if input_size is not None:
             self.variables[variable_name] = input_size
     
-    def set_variable(self, name: str, value: Union[int, float, str, Expr, Any]) -> None:
+    def set_variable(self, name: str, value: Union[int, float, str, Expr, List[Any], Any]) -> None:
         """
         Establece el valor de una variable.
         
@@ -59,6 +59,9 @@ class ExecutionEnvironment:
                 self.variables[name] = value
         elif isinstance(value, Expr):
             self.variables[name] = value
+        elif isinstance(value, list):
+            # Almacenar listas (arrays/matrices) directamente
+            self.variables[name] = value
         else:
             # Intentar convertir usando expr_converter
             try:
@@ -66,7 +69,7 @@ class ExecutionEnvironment:
             except Exception:
                 self.variables[name] = str(value)
     
-    def get_variable(self, name: str) -> Union[int, float, str, Expr, None]:
+    def get_variable(self, name: str) -> Union[int, float, str, Expr, List[Any], None]:
         """
         Obtiene el valor de una variable.
         
@@ -94,7 +97,71 @@ class ExecutionEnvironment:
         """
         return name in self.variables
     
-    def evaluate_expression(self, expr: Any) -> Union[int, float, str, Expr]:
+    def _resolve_indices(self, expr: Any) -> Any:
+        """
+        Resuelve recursivamente los accesos a arrays en el AST,
+        reemplazándolos por sus valores concretos.
+        """
+        if isinstance(expr, dict):
+            node_type = expr.get("type", "")
+            
+            if node_type == "Index":
+                # Resolver array[index] -> valor
+                target_node = expr.get("target")
+                index_node = expr.get("index")
+                
+                # Caso matriz: A[i][j]
+                if target_node.get("type") == "Index":
+                    matrix_node = target_node.get("target")
+                    row_node = target_node.get("index")
+                    col_node = index_node
+                    
+                    matrix_name = matrix_node.get("name")
+                    # Evaluar índices (usando evaluate_expression para manejar expresiones complejas)
+                    row_val = self.evaluate_expression(row_node)
+                    col_val = self.evaluate_expression(col_node)
+                    
+                    matrix = self.get_variable(matrix_name)
+                    if isinstance(matrix, list) and isinstance(row_val, int) and isinstance(col_val, int):
+                        try:
+                            if row_val > 0 and col_val > 0:
+                                val = matrix[row_val - 1][col_val - 1]
+                                return {"type": "Literal", "value": val}
+                            # Si está fuera de límites, retornar 0 (comportamiento seguro para sumas)
+                            return {"type": "Literal", "value": 0}
+                        except IndexError:
+                            return {"type": "Literal", "value": 0}
+                
+                # Caso array: A[i]
+                elif target_node.get("type") == "Identifier":
+                    array_name = target_node.get("name")
+                    index_val = self.evaluate_expression(index_node)
+                    
+                    array = self.get_variable(array_name)
+                    if isinstance(array, list) and isinstance(index_val, int):
+                        try:
+                            # Ajuste para índices base 1 (pseudocódigo)
+                            if index_val > 0:
+                                val = array[index_val - 1]
+                                return {"type": "Literal", "value": val}
+                            # Si está fuera de límites, retornar 0
+                            return {"type": "Literal", "value": 0}
+                        except IndexError:
+                            return {"type": "Literal", "value": 0}
+            
+            # Recursión para otros tipos de nodos
+            new_expr = expr.copy()
+            for key, value in expr.items():
+                if key == "type": continue
+                new_expr[key] = self._resolve_indices(value)
+            return new_expr
+            
+        elif isinstance(expr, list):
+            return [self._resolve_indices(item) for item in expr]
+            
+        return expr
+
+    def evaluate_expression(self, expr: Any) -> Union[int, float, str, Expr, List[Any]]:
         """
         Evalúa una expresión del AST.
         
@@ -109,21 +176,24 @@ class ExecutionEnvironment:
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        # Convertir a SymPy primero
-        sympy_expr = self.expr_converter.ast_to_sympy(expr)
+        # Resolver índices primero
+        resolved_expr = self._resolve_indices(expr)
+
+        # Convertir a SymPy
+        sympy_expr = self.expr_converter.ast_to_sympy(resolved_expr)
         
         # Si tenemos input_size concreto, intentar evaluar
         if self.input_size is not None:
             try:
                 # Sustituir símbolos conocidos
                 evaluated = sympy_expr.subs({
-                    Symbol(self.variable_name): self.input_size
+                    self.expr_converter.get_symbol(self.variable_name): self.input_size
                 })
                 
                 # Sustituir variables del environment
                 for var_name, var_value in self.variables.items():
                     if isinstance(var_value, (int, float)):
-                        evaluated = evaluated.subs(Symbol(var_name), var_value)
+                        evaluated = evaluated.subs(self.expr_converter.get_symbol(var_name), var_value)
                 
                 # Intentar evaluar numéricamente
                 if evaluated.is_number:
@@ -137,6 +207,22 @@ class ExecutionEnvironment:
         
         # Sin input_size, retornar expresión simbólica
         return sympy_expr
+    
+    def _format_list(self, lst: List[Any]) -> str:
+        """Helper para formatear listas recursivamente."""
+        elements = []
+        for item in lst:
+            if isinstance(item, list):
+                elements.append(self._format_list(item))
+            elif isinstance(item, Expr):
+                try:
+                    from sympy import latex
+                    elements.append(latex(item))
+                except Exception:
+                    elements.append(str(item))
+            else:
+                elements.append(str(item))
+        return f"[{', '.join(elements)}]"
     
     def evaluate_to_string(self, expr: Any) -> str:
         """
@@ -163,6 +249,8 @@ class ExecutionEnvironment:
                 return latex(value)
             except Exception:
                 return str(value)
+        elif isinstance(value, list):
+            return self._format_list(value)
         else:
             return str(value)
     
@@ -186,6 +274,9 @@ class ExecutionEnvironment:
                     snapshot[name] = latex(value)
                 except Exception:
                     snapshot[name] = str(value)
+                    snapshot[name] = str(value)
+            elif isinstance(value, list):
+                snapshot[name] = self._format_list(value)
             else:
                 snapshot[name] = str(value)
         return snapshot

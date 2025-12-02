@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { source, case: caseType, input_size } = body;
-
+    const { source, case: caseType, input_size, initial_variables } = body;
+    
     if (!source) {
       return NextResponse.json(
         {
@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
         source,
         case: caseType || "worst",
         input_size: input_size || null,
+        initial_variables: initial_variables || null,
       }),
       cache: "no-store",
     });

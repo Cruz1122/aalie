@@ -46,6 +46,10 @@ export default function ExecutionTraceModal({
   const [expandedDescription, setExpandedDescription] = useState(false);
   const [expandedIteration, setExpandedIteration] = useState(false);
 
+  // Estado para array inicial
+  const [arrayName, setArrayName] = useState("A");
+  const [initialArray, setInitialArray] = useState<number[]>([1, 2, 3, 4]);
+
   // Debounce input size changes
   useEffect(() => {
     if (debounceTimerRef.current) {
@@ -116,6 +120,9 @@ export default function ExecutionTraceModal({
           source,
           case: caseType,
           input_size: inputSize,
+          initial_variables: {
+            [arrayName]: initialArray
+          }
         }),
       });
 
@@ -336,6 +343,71 @@ export default function ExecutionTraceModal({
               <span className="text-sm text-white font-semibold min-w-[35px] text-right bg-slate-700/50 px-2 py-1 rounded border border-white/10">
                 {inputSize}
               </span>
+            </div>
+          </div>
+
+          {/* Array Input */}
+          <div className="flex items-center gap-3 min-w-[300px] max-w-[800px] overflow-x-auto scrollbar-custom">
+            <label className="text-sm text-slate-300 whitespace-nowrap flex-shrink-0">Array Inicial:</label>
+            <div className="flex items-center gap-2 bg-slate-800/60 border border-white/10 rounded-lg p-1">
+              <input
+                type="text"
+                value={arrayName}
+                onChange={(e) => setArrayName(e.target.value)}
+                className="w-8 bg-transparent text-center text-xs font-mono text-blue-300 border-r border-white/10 focus:outline-none"
+                title="Nombre del array"
+              />
+              <div className="flex items-center gap-1 px-1">
+                <span className="text-slate-400 text-xs">[</span>
+                {initialArray.map((val, idx) => (
+                  <div key={idx} className="relative group flex items-center gap-0.5">
+                    <input
+                      type="number"
+                      value={val}
+                      onChange={(e) => {
+                        const newArray = [...initialArray];
+                        newArray[idx] = Number(e.target.value);
+                        setInitialArray(newArray);
+                      }}
+                      className="w-10 bg-slate-900/60 rounded text-center text-xs text-white border border-slate-700/50 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-all [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:bg-slate-800/50 [&::-webkit-inner-spin-button]:hover:bg-slate-700/50 [&::-webkit-outer-spin-button]:bg-slate-800/50 [&::-webkit-outer-spin-button]:hover:bg-slate-700/50"
+                      style={{
+                        MozAppearance: 'textfield'
+                      }}
+                    />
+                    <style jsx>{`
+                      input[type="number"]::-webkit-inner-spin-button,
+                      input[type="number"]::-webkit-outer-spin-button {
+                        opacity: 1;
+                        background: rgba(30, 41, 59, 0.5);
+                        border-radius: 2px;
+                        cursor: pointer;
+                      }
+                      input[type="number"]::-webkit-inner-spin-button:hover,
+                      input[type="number"]::-webkit-outer-spin-button:hover {
+                        background: rgba(51, 65, 85, 0.6);
+                      }
+                    `}</style>
+                    <button
+                      onClick={() => {
+                        const newArray = initialArray.filter((_, i) => i !== idx);
+                        setInitialArray(newArray);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center rounded bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 transition-all text-xs font-bold text-red-400"
+                      title="Eliminar"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={() => setInitialArray([...initialArray, 0])}
+                  className="w-5 h-5 flex items-center justify-center rounded bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 transition-colors text-xs"
+                  title="Agregar elemento"
+                >
+                  +
+                </button>
+                <span className="text-slate-400 text-xs">]</span>
+              </div>
             </div>
           </div>
           {/* Reload Button - Icon Only */}
@@ -592,19 +664,29 @@ export default function ExecutionTraceModal({
                     </div>
                   )}
 
-                  {/* Variables with colorful styling and responsive grid */}
+                  {/* Variables with colorful styling and flex-wrap layout */}
                   <div className="glass-card p-3 rounded-lg bg-gradient-to-br from-cyan-500/10 to-purple-500/10 border border-cyan-500/20">
                     <div className="text-xs text-cyan-300 mb-2 font-semibold">Variables:</div>
-                    <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))" }}>
+                    <div className="flex flex-wrap gap-2">
                       {Object.entries(currentStepData.variables).map(
-                        ([key, value]) => (
-                          <div key={key} className="flex items-center justify-between bg-slate-800/40 rounded px-2 py-1.5 border border-white/5">
-                            <span className="text-cyan-200 text-sm font-medium">{key}:</span>
-                            <span className="text-white text-sm font-mono">
-                              <Formula latex={String(value)} />
-                            </span>
-                          </div>
-                        )
+                        ([key, value]) => {
+                          const strValue = String(value);
+                          const isLarge = strValue.length > 20 || strValue.includes('[');
+
+                          return (
+                            <div
+                              key={key}
+                              className={`bg-slate-800/40 rounded px-2 py-1.5 border border-white/5 flex items-center gap-2 ${isLarge ? "w-full" : "flex-shrink-0"
+                                }`}
+                            >
+                              <span className="text-cyan-200 text-sm font-medium flex-shrink-0">{key}:</span>
+                              <div className={`text-white text-sm font-mono ${isLarge ? "flex-1 overflow-x-auto scrollbar-thin" : ""
+                                }`}>
+                                <Formula latex={strValue} />
+                              </div>
+                            </div>
+                          );
+                        }
                       )}
                     </div>
                   </div>

@@ -130,7 +130,12 @@ def analyze_trace(payload: TraceRequest = Body(...)) -> Dict[str, Any]:
             }
         
         # 2) Ejecutar y generar rastro
-        executor = CodeExecutor(ast, payload.input_size, payload.case)
+        executor = CodeExecutor(
+            ast, 
+            payload.input_size, 
+            payload.case,
+            initial_variables=payload.initial_variables
+        )
         trace = executor.execute()
         
         return {
