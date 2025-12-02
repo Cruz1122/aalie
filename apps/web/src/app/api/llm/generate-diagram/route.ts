@@ -206,6 +206,12 @@ EXPLICACIÓN
 - En explanation, describe brevemente:
   - Cómo fluye el algoritmo en el caso dado (best/worst/avg).
 - Puedes usar expresiones completas como A[i] == x sin restricciones aquí (no afecta al parser de React Flow).
+- IMPORTANTE: Usa formato Markdown en la explicación para destacar términos clave:
+  - Usa **negrita** para conceptos importantes o nombres de variables clave
+  - Usa \`código inline\` para valores, expresiones o nombres de variables (ej: \`i\`, \`A[i]\`, \`n\`)
+  - Usa *cursiva* para énfasis suave
+  - Mantén la explicación clara y estructurada
+  - NO modifiques la estructura JSON, solo formatea el CONTENIDO del string "explanation"
 
 RESTRICCIONES FINALES
 - Devuelve SIEMPRE JSON puro, sin bloques de código, sin comentarios, sin texto narrativo fuera del JSON.
@@ -249,13 +255,65 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la estructura { "graph": { "node
       };
     }
 
-    const safeGraph =
+    // Normalizar y validar el grafo devuelto por el modelo
+    const rawGraph =
       result &&
       typeof result === "object" &&
       (result as { graph?: unknown }).graph &&
       typeof (result as { graph: unknown }).graph === "object"
-        ? (result as { graph: unknown }).graph
+        ? ((result as { graph: unknown }).graph as {
+            nodes?: Array<{
+              id: string;
+              type?: string;
+              position?: { x: number; y: number };
+              data?: { label?: string };
+              parentId?: string;
+            }>;
+            edges?: Array<{
+              id: string;
+              source?: string;
+              target?: string;
+              label?: string;
+              type?: string;
+            }>;
+          })
         : { nodes: [], edges: [] };
+
+    const nodes = Array.isArray(rawGraph.nodes) ? rawGraph.nodes : [];
+    const nodeIdSet = new Set(nodes.map((n) => n.id));
+
+    // Filtrar edges inválidos y asegurar label string
+    const rawEdges = Array.isArray(rawGraph.edges) ? rawGraph.edges : [];
+    const safeEdges = rawEdges
+      .filter(
+        (e) =>
+          e &&
+          typeof e.id === "string" &&
+          typeof e.source === "string" &&
+          typeof e.target === "string" &&
+          nodeIdSet.has(e.source) &&
+          nodeIdSet.has(e.target),
+      )
+      .map((e) => ({
+        ...e,
+        label:
+          typeof e.label === "string"
+            ? e.label
+            : // Forzar string aunque el modelo no lo haya mandado
+              "",
+        type: e.type ?? "default",
+      }));
+
+    const safeGraph = {
+      nodes: nodes.map((n) => ({
+        ...n,
+        type: n.type ?? "default",
+        data: {
+          label: n.data?.label ?? "",
+        },
+      })),
+      edges: safeEdges,
+    };
 
     const safeExplanation =
       result &&

@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import type { Program } from "@aa/types";
 import TraceFlowDiagram from "./TraceFlowDiagram";
+import MarkdownRenderer from "./MarkdownRenderer";
 import type {
   CaseType,
   DiagramGraphResponse,
@@ -76,7 +77,7 @@ export default function ExecutionTraceModal({
     setLoading(true);
     setCurrentStep(0);
     setIsPlaying(false);
-    
+
     try {
       const response = await fetch("/api/analyze/trace", {
         method: "POST",
@@ -264,11 +265,10 @@ export default function ExecutionTraceModal({
                   return (
                     <div
                       key={idx}
-                      className={`px-2 py-1 ${
-                        isCurrentLine
-                          ? "bg-blue-500/30 border-l-2 border-blue-400"
-                          : ""
-                      }`}
+                      className={`px-2 py-1 ${isCurrentLine
+                        ? "bg-blue-500/30 border-l-2 border-blue-400"
+                        : ""
+                        }`}
                     >
                       <span className="text-slate-500 mr-2">
                         {lineNum.toString().padStart(3, " ")}
@@ -521,9 +521,7 @@ export default function ExecutionTraceModal({
                       <div className="text-xs text-slate-400 mb-2">
                         Explicación:
                       </div>
-                      <div className="text-white text-sm whitespace-pre-wrap">
-                        {explanation}
-                      </div>
+                      <MarkdownRenderer content={explanation} />
                     </div>
                   )}
                 </>
@@ -545,7 +543,7 @@ export default function ExecutionTraceModal({
               tabIndex={0}
               aria-label="Cerrar diagrama expandido"
             />
-            <div className="relative z-10 w-[min(95vw,1200px)] h-[min(80vh,700px)] rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col p-4 gap-3">
+            <div className="relative z-10 w-[98vw] max-w-[1600px] h-[90vh] rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col p-4 gap-3">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
                   <span className="material-symbols-outlined text-sky-400 text-base">

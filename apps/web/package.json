@@ -23,6 +23,7 @@
     "@azure/core-auth": "^1.10.1",
     "@azure/core-sse": "^2.3.0",
     "@monaco-editor/react": "^4.7.0",
+    "dagre": "^0.8.5",
     "katex": "0.16.10",
     "lucide-react": "^0.544.0",
     "mermaid": "^11.12.1",

@@ -688,7 +688,7 @@ dialog::backdrop {
 }
 
 .recursion-tree-container .react-flow__edge-path {
-  stroke: #64748b !important;
+  stroke: #38bdf8 !important; /* azul cian muy visible */
   stroke-width: 3px !important;
   fill: none !important;
   opacity: 1 !important;
@@ -697,7 +697,7 @@ dialog::backdrop {
 }
 
 .recursion-tree-container path.react-flow__edge-path {
-  stroke: #64748b !important;
+  stroke: #38bdf8 !important; /* mantener mismo color para cualquier path */
   stroke-width: 3px !important;
   fill: none !important;
   opacity: 1 !important;
