@@ -30,7 +30,7 @@ async function callGeminiLLM(
   };
   
   // Usar el modelo general
-  const model = "gemini-2.0-flash-lite";
+  const model = "gemini-2.0-flash";
   const url = `${GEMINI_ENDPOINT_BASE}/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
   
   const response = await fetch(url, {

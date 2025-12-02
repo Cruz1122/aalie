@@ -83,7 +83,7 @@ export default function ExecutionTraceModal({
 
   // Bloquear scroll del body mientras el modal esté abierto
   useEffect(() => {
-    if (!open) return;
+    if (!open && !isDiagramExpanded) return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -91,7 +91,7 @@ export default function ExecutionTraceModal({
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [open]);
+  }, [open, isDiagramExpanded]);
 
   // Cargar diagrama solo una vez por rastro (independiente del caso)
   useEffect(() => {
@@ -105,6 +105,8 @@ export default function ExecutionTraceModal({
     setLoading(true);
     setCurrentStep(0);
     setIsPlaying(false);
+    setGraph(null);
+    setExplanation("");
 
     try {
       const response = await fetch("/api/analyze/trace", {
@@ -608,10 +610,17 @@ export default function ExecutionTraceModal({
                   </div>
                 </div>
               ) : (
-                <div className="text-center text-slate-400 py-8">
-                  {trace?.errors
-                    ? trace.errors[0]?.message || "Error al cargar el rastro"
-                    : "No hay datos de seguimiento"}
+                <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-3">
+                  <div className="w-12 h-12 rounded-full bg-slate-800/50 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-2xl opacity-50">
+                      data_object
+                    </span>
+                  </div>
+                  <div className="text-sm font-medium">
+                    {trace?.errors
+                      ? trace.errors[0]?.message || "Error al cargar el rastro"
+                      : "No hay datos de seguimiento disponibles"}
+                  </div>
                 </div>
               )}
             </div>
@@ -663,7 +672,7 @@ export default function ExecutionTraceModal({
                       </div>
                     </div>
                     {/* Diagram content */}
-                    <div className="p-3">
+                    <div className="p-3 h-[300px]">
                       <TraceFlowDiagram graph={graph} />
                     </div>
                   </div>
@@ -677,8 +686,29 @@ export default function ExecutionTraceModal({
                   )}
                 </>
               ) : (
-                <div className="text-center text-slate-400 py-8">
-                  No hay diagrama disponible
+                <div className="h-full flex flex-col items-center justify-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-slate-800/50 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-2xl text-slate-500/50">
+                      schema
+                    </span>
+                  </div>
+                  <div className="text-sm font-medium text-slate-400 text-center px-4">
+                    {explanation || "El diagrama se generará al cargar el rastro"}
+                  </div>
+                  {/* Show retry button ONLY if there is an error explanation or if we have trace data but no graph */}
+                  {(explanation || (trace?.ok && !graph)) && (
+                    <button
+                      type="button"
+                      onClick={loadDiagram}
+                      disabled={loadingDiagram}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-300 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                    >
+                      <span className="material-symbols-outlined text-sm">
+                        refresh
+                      </span>
+                      Intentar de nuevo
+                    </button>
+                  )}
                 </div>
               )}
             </div>

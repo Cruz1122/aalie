@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import ReactFlow, {
   Background,
   Controls,
@@ -8,6 +8,8 @@ import ReactFlow, {
   Position,
   type Edge,
   type Node,
+  useNodesState,
+  useEdgesState,
 } from "reactflow";
 import "reactflow/dist/style.css";
 
@@ -18,114 +20,70 @@ interface TraceFlowDiagramProps {
   readonly graph: TraceGraph;
 }
 
-const TraceNode = ({ data }: { data: { label: string; isReturn?: boolean } }) => {
+const TraceNode = ({ data }: { data: { label: string; isReturn?: boolean; type?: string } }) => {
   const isReturn = data.isReturn || false;
-  const borderColor = isReturn ? "border-green-500/70" : "border-slate-600/70";
-  const bgColor = isReturn ? "bg-green-900/30" : "bg-slate-800/80";
-  const shadowColor = isReturn ? "shadow-green-500/20" : "shadow-sky-500/10";
+  const type = data.type || "default";
+
+  let borderColor = "border-slate-600/70";
+  let bgColor = "bg-slate-800/80";
+  let shadowColor = "shadow-sky-500/10";
+
+  if (type === "input") {
+    // Blue/Greenish for input
+    borderColor = "border-blue-500/70";
+    bgColor = "bg-blue-900/30";
+    shadowColor = "shadow-blue-500/20";
+  } else if (type === "output") {
+    // Red/Grayish for output
+    borderColor = "border-red-500/70";
+    bgColor = "bg-red-900/30";
+    shadowColor = "shadow-red-500/20";
+  } else if (isReturn) {
+    // Green for return statements
+    borderColor = "border-green-500/70";
+    bgColor = "bg-green-900/30";
+    shadowColor = "shadow-green-500/20";
+  }
+
+  const handleStyle = {
+    background: "#ffffff",
+    width: 8,
+    height: 8,
+    border: "2px solid #0f172a",
+  };
 
   return (
     <div className={`relative rounded-lg border ${borderColor} ${bgColor} text-slate-50 text-xs px-3 py-2 shadow-md ${shadowColor} backdrop-blur-sm max-w-[220px]`}>
       {/* Handles de entrada (target) en los cuatro lados */}
-      <Handle
-        id="top"
-        type="target"
-        position={Position.Top}
-        style={{
-          background: "#38bdf8",
-          width: 8,
-          height: 8,
-          border: "2px solid #0f172a",
-        }}
-      />
-      <Handle
-        id="bottom"
-        type="target"
-        position={Position.Bottom}
-        style={{
-          background: "#38bdf8",
-          width: 8,
-          height: 8,
-          border: "2px solid #0f172a",
-        }}
-      />
-      <Handle
-        id="left"
-        type="target"
-        position={Position.Left}
-        style={{
-          background: "#38bdf8",
-          width: 8,
-          height: 8,
-          border: "2px solid #0f172a",
-        }}
-      />
-      <Handle
-        id="right"
-        type="target"
-        position={Position.Right}
-        style={{
-          background: "#38bdf8",
-          width: 8,
-          height: 8,
-          border: "2px solid #0f172a",
-        }}
-      />
+      {type !== "input" && (
+        <>
+          <Handle id="top" type="target" position={Position.Top} style={handleStyle} />
+          <Handle id="bottom" type="target" position={Position.Bottom} style={handleStyle} />
+          <Handle id="left" type="target" position={Position.Left} style={handleStyle} />
+          <Handle id="right" type="target" position={Position.Right} style={handleStyle} />
+        </>
+      )}
 
       {/* Contenido */}
-      <span className="block truncate text-center px-1">{data.label}</span>
+      <span className="block truncate text-center px-1 font-medium">{data.label}</span>
 
       {/* Handles de salida (source) en los cuatro lados */}
-      <Handle
-        id="top"
-        type="source"
-        position={Position.Top}
-        style={{
-          background: "#38bdf8",
-          width: 8,
-          height: 8,
-          border: "2px solid #0f172a",
-        }}
-      />
-      <Handle
-        id="bottom"
-        type="source"
-        position={Position.Bottom}
-        style={{
-          background: "#38bdf8",
-          width: 8,
-          height: 8,
-          border: "2px solid #0f172a",
-        }}
-      />
-      <Handle
-        id="left"
-        type="source"
-        position={Position.Left}
-        style={{
-          background: "#38bdf8",
-          width: 8,
-          height: 8,
-          border: "2px solid #0f172a",
-        }}
-      />
-      <Handle
-        id="right"
-        type="source"
-        position={Position.Right}
-        style={{
-          background: "#38bdf8",
-          width: 8,
-          height: 8,
-          border: "2px solid #0f172a",
-        }}
-      />
+      {type !== "output" && (
+        <>
+          <Handle id="top" type="source" position={Position.Top} style={handleStyle} />
+          <Handle id="bottom" type="source" position={Position.Bottom} style={handleStyle} />
+          <Handle id="left" type="source" position={Position.Left} style={handleStyle} />
+          <Handle id="right" type="source" position={Position.Right} style={handleStyle} />
+        </>
+      )}
     </div>
   );
 };
 
 const nodeTypes = {
   default: TraceNode,
+  input: TraceNode,
+  output: TraceNode,
 };
 
 function mapNodes(nodes: GraphNode[]): Node[] {
@@ -137,7 +95,7 @@ function mapNodes(nodes: GraphNode[]): Node[] {
       id: n.id,
       type: n.type || "default",
       position: n.position,
-      data: { label, isReturn },
+      data: { label, isReturn, type: n.type || "default" },
       parentNode: n.parentId,
     };
   });
@@ -236,14 +194,25 @@ export default function TraceFlowDiagram({ graph }: TraceFlowDiagramProps) {
     [layoutedGraph.nodes],
   );
 
-  const nodes = useMemo(
+  const initialNodes = useMemo(
     () => mapNodes(layoutedGraph.nodes ?? []),
     [layoutedGraph.nodes],
   );
-  const edges = useMemo(
+
+  const initialEdges = useMemo(
     () => mapEdges(layoutedGraph.edges ?? [], nodeIndex),
     [layoutedGraph.edges, nodeIndex],
   );
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  // Sync state when graph changes
+  useEffect(() => {
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+  }, [initialNodes, initialEdges, setNodes, setEdges]);
+
   const hasEdges = edges.length > 0;
 
   if (!layoutedGraph || !layoutedGraph.nodes || layoutedGraph.nodes.length === 0) {
@@ -259,6 +228,8 @@ export default function TraceFlowDiagram({ graph }: TraceFlowDiagramProps) {
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
         fitView
         fitViewOptions={{ padding: 0.25 }}
         proOptions={{ hideAttribution: true }}
@@ -276,9 +247,9 @@ export default function TraceFlowDiagram({ graph }: TraceFlowDiagramProps) {
             fontWeight: 500,
           },
         }}
-        nodesDraggable={false}
+        nodesDraggable={true}
         nodesConnectable={false}
-        elementsSelectable={false}
+        elementsSelectable={true}
         edgesUpdatable={false}
         panOnDrag
         panOnScroll
