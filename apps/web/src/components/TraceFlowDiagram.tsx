@@ -255,7 +255,7 @@ export default function TraceFlowDiagram({ graph }: TraceFlowDiagramProps) {
   }
 
   return (
-    <div className="w-full h-[360px] bg-slate-950 recursion-tree-container overflow-hidden rounded-lg border border-slate-800/70">
+    <div className="w-full h-full bg-slate-950 recursion-tree-container overflow-hidden rounded-lg border border-slate-800/70">
       <ReactFlow
         nodes={nodes}
         edges={edges}

@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import type { Program } from "@aa/types";
 import TraceFlowDiagram from "./TraceFlowDiagram";
 import MarkdownRenderer from "./MarkdownRenderer";
+import Formula from "./Formula";
 import type {
   CaseType,
   DiagramGraphResponse,
@@ -29,6 +30,7 @@ export default function ExecutionTraceModal({
   onCaseChange,
 }: ExecutionTraceModalProps) {
   const [inputSize, setInputSize] = useState<number>(4);
+  const [debouncedInputSize, setDebouncedInputSize] = useState<number>(4);
   const [trace, setTrace] = useState<TraceApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -38,10 +40,36 @@ export default function ExecutionTraceModal({
   const [explanation, setExplanation] = useState<string>("");
   const [loadingDiagram, setLoadingDiagram] = useState(false);
   const playIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const codeLines = source.split("\n");
   const [isDiagramExpanded, setIsDiagramExpanded] = useState(false);
+  const [expandedDescription, setExpandedDescription] = useState(false);
+  const [expandedIteration, setExpandedIteration] = useState(false);
 
-  // Cargar rastro cuando cambia el caso o tamaño de entrada
+  // Debounce input size changes
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedInputSize(inputSize);
+    }, 500); // 500ms debounce
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [inputSize]);
+
+  // Reset expanded states when step changes
+  useEffect(() => {
+    setExpandedDescription(false);
+    setExpandedIteration(false);
+  }, [currentStep]);
+
+  // Cargar rastro cuando cambia el caso o tamaño de entrada (debounced)
   useEffect(() => {
     if (open && source) {
       loadTrace();
@@ -51,7 +79,7 @@ export default function ExecutionTraceModal({
         clearInterval(playIntervalRef.current);
       }
     };
-  }, [open, caseType, inputSize, source]);
+  }, [open, caseType, debouncedInputSize, source]);
 
   // Bloquear scroll del body mientras el modal esté abierto
   useEffect(() => {
@@ -187,6 +215,47 @@ export default function ExecutionTraceModal({
     : null;
   const currentLine = currentStepData?.line || 0;
 
+  // Helper function to format accumulated cost with abbreviation for long expressions
+  const formatAccumulatedCost = (cost: string): string => {
+    // Check if it's a sum expression (contains +)
+    if (!cost.includes('+')) return cost;
+
+    // Split by + and trim whitespace
+    const terms = cost.split('+').map(t => t.trim());
+
+    // If 4 or more terms, abbreviate
+    if (terms.length >= 4) {
+      // Extract c_x values and format with proper subscript notation
+      const formatTerm = (term: string) => {
+        // Match c_number or C_number pattern
+        const match = term.match(/[cC]_(\d+)/);
+        if (match) {
+          const num = match[1];
+          // Use curly braces for multi-digit subscripts
+          return num.length > 1 ? `c_{${num}}` : `c_${num}`;
+        }
+        return term;
+      };
+
+      const first = formatTerm(terms[0]);
+      const second = formatTerm(terms[1]);
+      const third = formatTerm(terms[2]);
+      const last = formatTerm(terms[terms.length - 1]);
+
+      return `${first} + ${second} + ${third} + \\ldots + ${last}`;
+    }
+
+    // For less than 4 terms, format each term properly
+    return terms.map(term => {
+      const match = term.match(/[cC]_(\d+)/);
+      if (match) {
+        const num = match[1];
+        return num.length > 1 ? `c_{${num}}` : `c_${num}`;
+      }
+      return term;
+    }).join(' + ');
+  };
+
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center">
       {/* Overlay */}
@@ -216,42 +285,72 @@ export default function ExecutionTraceModal({
 
         {/* Controles superiores */}
         <div className="flex items-center gap-4 mb-4 flex-shrink-0">
+          {/* Case Switcher */}
           <div className="flex items-center gap-2">
             <label className="text-sm text-slate-300">Caso:</label>
-            <select
-              value={caseType}
-              onChange={(e) => onCaseChange(e.target.value as CaseType)}
-              className="px-3 py-1 rounded-lg bg-slate-800 text-white text-sm border border-slate-600"
-            >
-              <option value="worst">Peor caso</option>
-              <option value="best">Mejor caso</option>
-              <option value="avg">Caso promedio</option>
-            </select>
+            <div className="flex items-center gap-1 bg-slate-800/60 border border-white/10 rounded-lg p-1">
+              <button
+                onClick={() => onCaseChange("best")}
+                className={`px-2 py-1 text-xs rounded-md transition-colors font-semibold ${caseType === "best"
+                  ? "bg-green-500/30 text-green-200 border border-green-500/50"
+                  : "text-slate-400 hover:text-slate-200"
+                  }`}
+              >
+                Mejor
+              </button>
+              <button
+                onClick={() => onCaseChange("avg")}
+                className={`px-2 py-1 text-xs rounded-md transition-colors font-semibold ${caseType === "avg"
+                  ? "bg-yellow-500/30 text-yellow-200 border border-yellow-500/50"
+                  : "text-slate-400 hover:text-slate-200"
+                  }`}
+              >
+                Promedio
+              </button>
+              <button
+                onClick={() => onCaseChange("worst")}
+                className={`px-2 py-1 text-xs rounded-md transition-colors font-semibold ${caseType === "worst"
+                  ? "bg-red-500/30 text-red-200 border border-red-500/50"
+                  : "text-slate-400 hover:text-slate-200"
+                  }`}
+              >
+                Peor
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-slate-300">Tamaño (n):</label>
-            <input
-              type="number"
-              value={inputSize}
-              onChange={(e) =>
-                setInputSize(Number.parseInt(e.target.value, 10) || 4)
-              }
-              min="1"
-              max="20"
-              className="w-20 px-3 py-1 rounded-lg bg-slate-800 text-white text-sm border border-slate-600"
-            />
+          {/* Size Slider */}
+          <div className="flex items-center gap-3 min-w-[220px]">
+            <label className="text-sm text-slate-300 whitespace-nowrap">Tamaño (n):</label>
+            <div className="flex items-center gap-2 flex-1">
+              <input
+                type="range"
+                min="1"
+                max="20"
+                step="1"
+                value={inputSize}
+                onChange={(e) => setInputSize(Number.parseInt(e.target.value, 10))}
+                className="flex-1 h-2 bg-slate-700/60 rounded-lg appearance-none cursor-pointer accent-blue-500 hover:bg-slate-700/80 transition-colors"
+              />
+              <span className="text-sm text-white font-semibold min-w-[35px] text-right bg-slate-700/50 px-2 py-1 rounded border border-white/10">
+                {inputSize}
+              </span>
+            </div>
           </div>
+          {/* Reload Button - Icon Only */}
           <button
             onClick={loadTrace}
             disabled={loading}
-            className="px-3 py-1 rounded-lg bg-blue-500/20 text-blue-300 text-sm border border-blue-500/30 hover:bg-blue-500/30 disabled:opacity-40"
+            className="w-9 h-9 flex items-center justify-center rounded-lg bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 disabled:opacity-40 transition-colors"
+            title={loading ? "Cargando..." : "Recargar rastro"}
           >
-            {loading ? "Cargando..." : "Recargar"}
+            <span className="material-symbols-outlined text-base leading-none">
+              {loading ? "progress_activity" : "refresh"}
+            </span>
           </button>
         </div>
 
-        {/* Contenido: 3 columnas */}
-        <div className="flex-1 grid grid-cols-3 gap-4 overflow-hidden">
+        {/* Contenido: 3 columnas con proporciones ajustadas */}
+        <div className="flex-1 grid gap-4 overflow-hidden" style={{ gridTemplateColumns: "0.8fr 1.8fr 1.4fr" }}>
           {/* Columna izquierda: Pseudocódigo */}
           <div className="flex flex-col border-r border-slate-700 pr-4 overflow-hidden">
             <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0">
@@ -288,65 +387,75 @@ export default function ExecutionTraceModal({
             </h3>
 
             {/* Controles de reproducción */}
-            <div className="flex items-center gap-2 mb-4 flex-shrink-0">
-              <button
-                onClick={handleReset}
-                className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition-colors"
-                title="Reiniciar"
-              >
-                <span className="material-symbols-outlined text-sm text-white">
-                  restart_alt
+            <div className="flex flex-col items-center gap-3 mb-4 flex-shrink-0">
+              {/* Step Counter */}
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-700/50 border border-slate-600">
+                <span className="material-symbols-outlined text-xs text-blue-400">info</span>
+                <span className="text-xs text-slate-300 font-semibold">
+                  Paso {currentStep + 1} / {trace?.ok ? trace.trace?.steps.length || 0 : 0}
                 </span>
-              </button>
-              <button
-                onClick={handlePrevious}
-                disabled={currentStep === 0}
-                className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition-colors disabled:opacity-40"
-                title="Paso anterior"
-              >
-                <span className="material-symbols-outlined text-sm text-white">
-                  skip_previous
-                </span>
-              </button>
-              {isPlaying ? (
+              </div>
+
+              {/* Buttons */}
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={handlePause}
-                  className="p-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 transition-colors"
-                  title="Pausar"
+                  onClick={handleReset}
+                  disabled={loading}
+                  className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-700 hover:bg-slate-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Reiniciar"
                 >
-                  <span className="material-symbols-outlined text-sm text-red-300">
-                    pause
+                  <span className="material-symbols-outlined text-base text-white leading-none">
+                    restart_alt
                   </span>
                 </button>
-              ) : (
                 <button
-                  onClick={handlePlay}
-                  disabled={!trace?.ok || currentStep >= (trace.trace?.steps.length || 0) - 1}
-                  className="p-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 transition-colors disabled:opacity-40"
-                  title="Reproducir"
+                  onClick={handlePrevious}
+                  disabled={currentStep === 0 || loading}
+                  className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-700 hover:bg-slate-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Paso anterior"
                 >
-                  <span className="material-symbols-outlined text-sm text-green-300">
-                    play_arrow
+                  <span className="material-symbols-outlined text-base text-white leading-none">
+                    skip_previous
                   </span>
                 </button>
-              )}
-              <button
-                onClick={handleNext}
-                disabled={
-                  !trace?.ok ||
-                  currentStep >= (trace.trace?.steps.length || 0) - 1
-                }
-                className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition-colors disabled:opacity-40"
-                title="Siguiente paso"
-              >
-                <span className="material-symbols-outlined text-sm text-white">
-                  skip_next
-                </span>
-              </button>
-              <div className="flex-1" />
-              <span className="text-xs text-slate-400">
-                Paso {currentStep + 1} / {trace?.ok ? trace.trace?.steps.length || 0 : 0}
-              </span>
+                {isPlaying ? (
+                  <button
+                    onClick={handlePause}
+                    disabled={loading}
+                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    title="Pausar"
+                  >
+                    <span className="material-symbols-outlined text-base text-red-300 leading-none">
+                      pause
+                    </span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handlePlay}
+                    disabled={loading || !trace?.ok || currentStep >= (trace.trace?.steps.length || 0) - 1}
+                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    title="Reproducir"
+                  >
+                    <span className="material-symbols-outlined text-base text-green-300 leading-none">
+                      play_arrow
+                    </span>
+                  </button>
+                )}
+                <button
+                  onClick={handleNext}
+                  disabled={
+                    loading ||
+                    !trace?.ok ||
+                    currentStep >= (trace.trace?.steps.length || 0) - 1
+                  }
+                  className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-700 hover:bg-slate-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Siguiente paso"
+                >
+                  <span className="material-symbols-outlined text-base text-white leading-none">
+                    skip_next
+                  </span>
+                </button>
+              </div>
             </div>
 
             {/* Información del paso actual */}
@@ -362,52 +471,103 @@ export default function ExecutionTraceModal({
                   </p>
                 </div>
               ) : trace?.ok && currentStepData ? (
-                <div className="space-y-3">
-                  <div className="glass-card p-3 rounded-lg">
-                    <div className="text-xs text-slate-400 mb-1">Línea:</div>
-                    <div className="text-white font-semibold">
-                      {currentStepData.line}
+                <div className="space-y-3 animate-fade-in" key={currentStep}>
+                  {/* Grid for Line, Type, Cost */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="glass-card p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 flex flex-col">
+                      <div className="text-xs text-blue-300 mb-2 font-bold text-center">Línea</div>
+                      <div className="flex-1 flex items-center justify-center">
+                        <div className="text-white font-semibold text-sm">
+                          {currentStepData.line}
+                        </div>
+                      </div>
                     </div>
+
+                    <div className="glass-card p-2 rounded-lg bg-purple-500/10 border border-purple-500/20 flex flex-col">
+                      <div className="text-xs text-purple-300 mb-2 font-bold text-center">Tipo</div>
+                      <div className="flex-1 flex items-center justify-center">
+                        <div className="text-white font-semibold capitalize text-sm">
+                          {currentStepData.kind}
+                        </div>
+                      </div>
+                    </div>
+
+                    {currentStepData.cost && (
+                      <div className="glass-card p-2 rounded-lg bg-orange-500/10 border border-orange-500/20 flex flex-col">
+                        <div className="text-xs text-orange-300 mb-2 font-bold text-center">Coste</div>
+                        <div className="flex-1 flex items-center justify-center">
+                          <div className="text-white text-sm text-center">
+                            <Formula latex={currentStepData.cost} />
+                            {currentStepData.accumulated_cost && (
+                              <div className="text-slate-400 text-xs mt-1">
+                                Acum: <Formula latex={formatAccumulatedCost(currentStepData.accumulated_cost)} />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="glass-card p-3 rounded-lg">
-                    <div className="text-xs text-slate-400 mb-1">Tipo:</div>
-                    <div className="text-white font-semibold capitalize">
-                      {currentStepData.kind}
-                    </div>
-                  </div>
-
-                  {currentStepData.description && (
-                    <div className="glass-card p-3 rounded-lg">
-                      <div className="text-xs text-slate-400 mb-1">
-                        Descripción:
-                      </div>
-                      <div className="text-white text-sm">
-                        {currentStepData.description}
-                      </div>
-                    </div>
-                  )}
-
-                  {currentStepData.iteration && (
-                    <div className="glass-card p-3 rounded-lg">
-                      <div className="text-xs text-slate-400 mb-1">
-                        Iteración:
-                      </div>
-                      <div className="text-white text-sm">
-                        {currentStepData.iteration.loopVar && (
-                          <div>
-                            {currentStepData.iteration.loopVar} ={" "}
-                            {currentStepData.iteration.currentValue}
-                            {currentStepData.iteration.maxValue &&
-                              ` / ${currentStepData.iteration.maxValue}`}
-                          </div>
+                  {/* Expandable badges for Description and Iteration */}
+                  {(currentStepData.description || currentStepData.iteration) && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-center gap-2 flex-wrap">
+                        {currentStepData.description && (
+                          <button
+                            onClick={() => {
+                              setExpandedDescription(!expandedDescription);
+                              if (!expandedDescription) setExpandedIteration(false);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-700/50 hover:bg-slate-700/70 border border-slate-600/50 transition-all text-xs font-semibold text-slate-300 hover:text-white"
+                          >
+                            <span className="material-symbols-outlined text-sm">
+                              {expandedDescription ? "expand_less" : "expand_more"}
+                            </span>
+                            Descripción
+                          </button>
                         )}
-                        {currentStepData.iteration.iteration && (
-                          <div>
-                            Iteración #{currentStepData.iteration.iteration}
-                          </div>
+
+                        {currentStepData.iteration && (
+                          <button
+                            onClick={() => {
+                              setExpandedIteration(!expandedIteration);
+                              if (!expandedIteration) setExpandedDescription(false);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/40 transition-all text-xs font-semibold text-indigo-300 hover:text-indigo-200"
+                          >
+                            <span className="material-symbols-outlined text-sm">
+                              {expandedIteration ? "expand_less" : "expand_more"}
+                            </span>
+                            Iteración{currentStepData.iteration.iteration ? ` #${currentStepData.iteration.iteration}` : ""}
+                          </button>
                         )}
                       </div>
+
+                      {/* Expanded content area */}
+                      {expandedDescription && currentStepData.description && (
+                        <div className="glass-card p-3 rounded-lg animate-fade-in min-h-[80px]">
+                          <div className="bg-slate-800/40 rounded px-3 py-2 border border-white/5">
+                            <div className="text-xs text-slate-400 mb-1">Descripción del paso</div>
+                            <div className="text-white text-sm font-medium">
+                              {currentStepData.description}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {expandedIteration && currentStepData.iteration && (
+                        <div className="glass-card p-3 rounded-lg bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 animate-fade-in min-h-[80px]">
+                          {currentStepData.iteration.loopVar && (
+                            <div className="bg-slate-800/40 rounded px-3 py-2 border border-white/5">
+                              <div className="text-xs text-slate-400 mb-1">Variable de iteración</div>
+                              <div className="text-white text-sm font-medium">
+                                <Formula latex={`${currentStepData.iteration.loopVar} = ${currentStepData.iteration.currentValue}${currentStepData.iteration.maxValue ? ` / ${currentStepData.iteration.maxValue}` : ""}`} />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -430,35 +590,22 @@ export default function ExecutionTraceModal({
                     </div>
                   )}
 
-                  <div className="glass-card p-3 rounded-lg">
-                    <div className="text-xs text-slate-400 mb-2">Variables:</div>
-                    <div className="space-y-1">
+                  {/* Variables with colorful styling and responsive grid */}
+                  <div className="glass-card p-3 rounded-lg bg-gradient-to-br from-cyan-500/10 to-purple-500/10 border border-cyan-500/20">
+                    <div className="text-xs text-cyan-300 mb-2 font-semibold">Variables:</div>
+                    <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))" }}>
                       {Object.entries(currentStepData.variables).map(
                         ([key, value]) => (
-                          <div key={key} className="flex justify-between">
-                            <span className="text-slate-300 text-sm">{key}:</span>
+                          <div key={key} className="flex items-center justify-between bg-slate-800/40 rounded px-2 py-1.5 border border-white/5">
+                            <span className="text-cyan-200 text-sm font-medium">{key}:</span>
                             <span className="text-white text-sm font-mono">
-                              {String(value)}
+                              <Formula latex={String(value)} />
                             </span>
                           </div>
                         )
                       )}
                     </div>
                   </div>
-
-                  {currentStepData.cost && (
-                    <div className="glass-card p-3 rounded-lg">
-                      <div className="text-xs text-slate-400 mb-1">Coste:</div>
-                      <div className="text-white text-sm">
-                        {currentStepData.cost}
-                        {currentStepData.accumulated_cost && (
-                          <div className="text-slate-400 text-xs mt-1">
-                            Acumulado: {currentStepData.accumulated_cost}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="text-center text-slate-400 py-8">
@@ -488,33 +635,37 @@ export default function ExecutionTraceModal({
                 </div>
               ) : graph ? (
                 <>
-                  <div className="glass-card p-3 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="text-xs text-slate-400">Diagrama:</div>
-                      <button
-                        type="button"
-                        onClick={loadDiagram}
-                        className="inline-flex items-center justify-center rounded-md px-2 py-1 text-[10px] font-semibold text-slate-200 bg-slate-800/70 hover:bg-slate-700/80 border border-slate-600/60 transition-colors"
-                        title="Regenerar diagrama"
-                      >
-                        <span className="material-symbols-outlined text-xs mr-1">
-                          refresh
-                        </span>
-                        Recargar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setIsDiagramExpanded(true)}
-                        className="inline-flex items-center justify-center rounded-md px-2 py-1 text-[10px] font-semibold text-slate-200 bg-slate-800/70 hover:bg-slate-700/80 border border-slate-600/60 transition-colors ml-2"
-                        title="Expandir diagrama"
-                      >
-                        <span className="material-symbols-outlined text-xs mr-1">
-                          fullscreen
-                        </span>
-                        Expandir
-                      </button>
+                  <div className="glass-card rounded-lg overflow-hidden">
+                    {/* Header with title and actions */}
+                    <div className="flex items-center justify-between p-3 border-b border-white/5 bg-slate-800/30">
+                      <div className="text-sm font-semibold text-slate-300">Diagrama de flujo</div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={loadDiagram}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/70 hover:bg-slate-600/80 border border-slate-600/60 transition-colors"
+                          title="Regenerar diagrama"
+                        >
+                          <span className="material-symbols-outlined text-sm text-slate-200 leading-none">
+                            refresh
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsDiagramExpanded(true)}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/70 hover:bg-slate-600/80 border border-slate-600/60 transition-colors"
+                          title="Expandir diagrama"
+                        >
+                          <span className="material-symbols-outlined text-sm text-slate-200 leading-none">
+                            fullscreen
+                          </span>
+                        </button>
+                      </div>
                     </div>
-                    <TraceFlowDiagram graph={graph} />
+                    {/* Diagram content */}
+                    <div className="p-3">
+                      <TraceFlowDiagram graph={graph} />
+                    </div>
                   </div>
                   {explanation && (
                     <div className="glass-card p-3 rounded-lg">
@@ -537,31 +688,32 @@ export default function ExecutionTraceModal({
         {isDiagramExpanded && graph && (
           <div className="fixed inset-0 z-[80] flex items-center justify-center">
             <div
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
               onClick={() => setIsDiagramExpanded(false)}
               role="button"
               tabIndex={0}
               aria-label="Cerrar diagrama expandido"
             />
-            <div className="relative z-10 w-[98vw] max-w-[1600px] h-[90vh] rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col p-4 gap-3">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-sky-400 text-base">
+            <div className="relative z-10 w-[98vw] h-[98vh] rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col p-4 gap-3">
+              <div className="flex items-center justify-between flex-shrink-0">
+                <h3 className="text-base font-semibold text-slate-100 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sky-400 text-lg">
                     schema
                   </span>
                   <span>Diagrama de flujo del seguimiento</span>
                 </h3>
                 <button
+                  type="button"
                   onClick={() => setIsDiagramExpanded(false)}
-                  className="p-1.5 rounded-lg hover:bg-white/10 text-slate-200 transition-colors"
-                  aria-label="Cerrar diagrama expandido"
+                  className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-800/70 hover:bg-slate-700/80 border border-slate-600/60 transition-colors"
+                  title="Cerrar"
                 >
-                  <span className="material-symbols-outlined text-base">
+                  <span className="material-symbols-outlined text-lg text-slate-200 leading-none">
                     close
                   </span>
                 </button>
               </div>
-              <div className="flex-1">
+              <div className="flex-1 glass-card rounded-lg overflow-hidden">
                 <TraceFlowDiagram graph={graph} />
               </div>
             </div>
