@@ -7,7 +7,9 @@ from fastapi import APIRouter, Body
 from typing import Any, Dict
 from .service import analyze_algorithm, detect_methods
 from .analyzers.dummy import create_dummy_analysis
-from .schemas import AnalyzeRequest
+from .schemas import AnalyzeRequest, TraceRequest, TraceResponse
+from ..parsing.service import parse_source
+from ..execution import CodeExecutor
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
@@ -91,6 +93,57 @@ def analyze_dummy() -> Dict[str, Any]:
             "errors": [
                 {
                     "message": f"Error en análisis dummy: {str(e)}",
+                    "line": None,
+                    "column": None
+                }
+            ]
+        }
+
+
+@router.post("/trace")
+def analyze_trace(payload: TraceRequest = Body(...)) -> Dict[str, Any]:
+    """
+    Genera un rastro de ejecución paso a paso del pseudocódigo.
+    
+    Args:
+        payload: Solicitud con código fuente, caso y tamaño de entrada
+        
+    Returns:
+        Rastro de ejecución con pasos detallados
+        
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
+    """
+    try:
+        # 1) Parsear el código fuente
+        parse_result = parse_source(payload.source)
+        if not parse_result.get("ok", False):
+            return {
+                "ok": False,
+                "errors": parse_result.get("errors", [])
+            }
+        
+        ast = parse_result.get("ast")
+        if not ast:
+            return {
+                "ok": False,
+                "errors": [{"message": "No se pudo obtener el AST del código", "line": None, "column": None}]
+            }
+        
+        # 2) Ejecutar y generar rastro
+        executor = CodeExecutor(ast, payload.input_size, payload.case)
+        trace = executor.execute()
+        
+        return {
+            "ok": True,
+            "trace": trace
+        }
+        
+    except Exception as e:
+        return {
+            "ok": False,
+            "errors": [
+                {
+                    "message": f"Error generando rastro: {str(e)}",
                     "line": None,
                     "column": None
                 }

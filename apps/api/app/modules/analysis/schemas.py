@@ -39,3 +39,14 @@ class AnalyzeError(BaseModel):
     errors: List[Dict[str, Any]]
 
 
+class TraceRequest(BaseModel):
+    source: str
+    case: str = "worst"  # "worst" | "best" | "avg"
+    input_size: Optional[int] = None  # Tamaño de entrada concreto (ej: n=4)
+
+
+class TraceResponse(BaseModel):
+    ok: bool = True
+    trace: Dict[str, Any]  # Rastro de ejecución completo
+
+
