@@ -33,9 +33,29 @@ class ExecutionEnvironment:
         self.variable_name = variable_name
         self.expr_converter = ExprConverter(variable_name)
         
+        # Stack de scopes para manejar llamadas recursivas
+        self.scope_stack: List[Dict[str, Union[int, float, str, Expr, List[Any]]]] = []
+        
         # Si hay tamaño de entrada concreto, inicializar la variable principal
         if input_size is not None:
             self.variables[variable_name] = input_size
+    
+    def push_scope(self) -> None:
+        """
+        Guarda el scope actual y crea uno nuevo para una llamada recursiva.
+        
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
+        self.scope_stack.append(dict(self.variables))
+    
+    def pop_scope(self) -> None:
+        """
+        Restaura el scope anterior después de una llamada recursiva.
+        
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
+        if self.scope_stack:
+            self.variables = self.scope_stack.pop()
     
     def set_variable(self, name: str, value: Union[int, float, str, Expr, List[Any], Any]) -> None:
         """

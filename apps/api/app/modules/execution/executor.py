@@ -8,6 +8,11 @@ from .environment import ExecutionEnvironment
 from .trace_builder import TraceBuilder
 
 
+class MaxRecursionDepthExceeded(Exception):
+    """Excepción lanzada cuando se excede el límite de profundidad recursiva."""
+    pass
+
+
 class CodeExecutor:
     """
     Ejecutor que simula la ejecución del pseudocódigo paso a paso.
@@ -17,7 +22,7 @@ class CodeExecutor:
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
-    def __init__(self, ast: Dict[str, Any], input_size: Optional[int] = None, case: str = "worst", initial_variables: Optional[Dict[str, Any]] = None):
+    def __init__(self, ast: Dict[str, Any], input_size: Optional[int] = None, case: str = "worst", initial_variables: Optional[Dict[str, Any]] = None, max_recursion_depth: int = 100):
         """
         Inicializa el ejecutor.
         
@@ -26,6 +31,7 @@ class CodeExecutor:
             input_size: Tamaño de entrada concreto (ej: n=4)
             case: Caso a ejecutar ("worst", "best", "avg")
             initial_variables: Variables iniciales para el environment
+            max_recursion_depth: Límite de profundidad recursiva (default: 100)
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
@@ -43,43 +49,63 @@ class CodeExecutor:
         self.current_line = 0
         # Flag para detener la ejecución cuando se alcanza un RETURN
         self.terminated = False
+        
+        # Control de profundidad recursiva
+        self.max_recursion_depth = max_recursion_depth
+        self.recursion_depth = 0
+        self.recursion_truncated = False
+        self.call_stack: List[Dict[str, Any]] = []  # Pila de frames de llamadas
     
     def execute(self) -> Dict[str, Any]:
         """
         Ejecuta el código y genera el rastro.
         
         Returns:
-            Rastro de ejecución completo
+            Rastro de ejecución completo con metadatos de recursión
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        # Encontrar el procedimiento principal o ejecutar el programa
-        if self.ast.get("type") == "Program":
-            # Buscar procedimiento principal o ejecutar statements
-            body = self.ast.get("body", [])
-            
-            # Si hay procedimientos, encontrar el principal
-            proc_defs = [item for item in body if isinstance(item, dict) and item.get("type") == "ProcDef"]
-            if proc_defs:
-                # Ejecutar el primer procedimiento (asumimos que es el principal)
-                main_proc = proc_defs[0]
-                self._execute_procedure(main_proc, {})
-            else:
-                # Ejecutar statements directamente
-                for stmt in body:
-                    self._execute_statement(stmt)
-        elif self.ast.get("type") == "ProcDef":
-            self._execute_procedure(self.ast, {})
+        try:
+            # Encontrar el procedimiento principal o ejecutar el programa
+            if self.ast.get("type") == "Program":
+                # Buscar procedimiento principal o ejecutar statements
+                body = self.ast.get("body", [])
+                
+                # Si hay procedimientos, encontrar el principal
+                proc_defs = [item for item in body if isinstance(item, dict) and item.get("type") == "ProcDef"]
+                if proc_defs:
+                    # Ejecutar el primer procedimiento (asumimos que es el principal)
+                    main_proc = proc_defs[0]
+                    self._execute_procedure(main_proc, {})
+                else:
+                    # Ejecutar statements directamente
+                    for stmt in body:
+                        self._execute_statement(stmt)
+            elif self.ast.get("type") == "ProcDef":
+                self._execute_procedure(self.ast, {})
+        except MaxRecursionDepthExceeded:
+            self.recursion_truncated = True
         
-        return self.trace_builder.build()
+        result = self.trace_builder.build()
+        
+        # Añadir metadatos de recursión
+        if self.recursion_truncated:
+            result["recursion_truncated"] = True
+            result["max_depth_reached"] = self.max_recursion_depth
+        
+        return result
     
-    def _execute_procedure(self, proc_def: Dict[str, Any], params: Dict[str, Any]) -> None:
+    def _execute_procedure(self, proc_def: Dict[str, Any], params: Dict[str, Any], return_value: Optional[Any] = None) -> Any:
         """
-        Ejecuta un procedimiento.
+        Ejecuta un procedimiento con soporte robusto para recursión.
         
         Args:
             proc_def: Nodo ProcDef del AST
             params: Parámetros del procedimiento
+            return_value: Valor de retorno (usado internamente)
+            
+        Returns:
+            Valor de retorno del procedimiento
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
@@ -90,9 +116,26 @@ class CodeExecutor:
         is_recursive = self._is_recursive_procedure(proc_def)
         
         if is_recursive:
+            # Verificar límite de profundidad
+            if self.recursion_depth >= self.max_recursion_depth:
+                raise MaxRecursionDepthExceeded(f"Profundidad máxima de recursión ({self.max_recursion_depth}) excedida")
+            
+            # Incrementar profundidad
+            self.recursion_depth += 1
+            
             # Generar ID de llamada
             call_id = self.trace_builder.generate_call_id()
-            depth = len(self.trace_builder.recursion_stack)
+            depth = self.recursion_depth
+            
+            # Crear nuevo frame para la llamada
+            frame = {
+                "call_id": call_id,
+                "proc_name": proc_name,
+                "params": params.copy(),
+                "depth": depth,
+                "return_value": None
+            }
+            self.call_stack.append(frame)
             
             # Registrar entrada a recursión
             self.trace_builder.enter_recursion(call_id, depth, params)
@@ -119,9 +162,22 @@ class CodeExecutor:
         else:
             self._execute_statement(body)
         
-        if is_recursive:
+        # Obtener valor de retorno del frame actual si existe
+        result = None
+        if is_recursive and self.call_stack:
+            current_frame = self.call_stack[-1]
+            result = current_frame.get("return_value")
+            
             # Registrar salida de recursión
             self.trace_builder.exit_recursion()
+            
+            # Pop del frame
+            self.call_stack.pop()
+            
+            # Decrementar profundidad
+            self.recursion_depth -= 1
+        
+        return result
     
     def _execute_statement(self, stmt: Dict[str, Any]) -> None:
         """
@@ -493,7 +549,12 @@ class CodeExecutor:
     def _execute_return(self, node: Dict[str, Any]) -> None:
         """Ejecuta un RETURN y marca la ejecución como terminada."""
         value_expr = node.get("value")
-        value_str = self.environment.evaluate_to_string(value_expr)
+        value = self.environment.evaluate_expression(value_expr) if value_expr else None
+        value_str = self.environment.evaluate_to_string(value_expr) if value_expr else "None"
+        
+        # Guardar valor de retorno en el frame actual si estamos en recursión
+        if self.call_stack:
+            self.call_stack[-1]["return_value"] = value
         
         self.trace_builder.add_step(
             line=node.get("pos", {}).get("line", 0),
@@ -504,23 +565,64 @@ class CodeExecutor:
         # Marcar como terminado para no ejecutar más sentencias después del return
         self.terminated = True
     
-    def _execute_call(self, node: Dict[str, Any]) -> None:
-        """Ejecuta una llamada a procedimiento."""
+    def _execute_call(self, node: Dict[str, Any]) -> Any:
+        """Ejecuta una llamada a procedimiento con soporte recursivo."""
         proc_name = node.get("name", "unknown")
         args = node.get("args", [])
         
         # Evaluar argumentos
         arg_values = {}
+        evaluated_args = []
         for i, arg in enumerate(args):
             arg_val = self.environment.evaluate_expression(arg)
-            arg_values[f"arg_{i}"] = self.environment.evaluate_to_string(arg)
+            evaluated_args.append(arg_val)
+            arg_values[f"arg_{i}"] = arg_val
         
-        self.trace_builder.add_step(
-            line=node.get("pos", {}).get("line", 0),
-            kind="call",
-            variables=self.environment.get_variables_snapshot(),
-            description=f"Llamada a {proc_name}"
-        )
+        # Buscar el procedimiento en el AST
+        proc_def = None
+        if self.ast.get("type") == "Program":
+            body = self.ast.get("body", [])
+            proc_defs = [item for item in body if isinstance(item, dict) and item.get("type") == "ProcDef"]
+            for p in proc_defs:
+                if p.get("name") == proc_name:
+                    proc_def = p
+                    break
+        
+        # Si encontramos el procedimiento, ejecutarlo recursivamente
+        if proc_def:
+            # Preparar parámetros formales con valores actuales
+            formal_params = proc_def.get("params", [])
+            params_map = {}
+            for i, param in enumerate(formal_params):
+                param_name = param.get("name") if isinstance(param, dict) else param
+                if i < len(evaluated_args):
+                    params_map[param_name] = evaluated_args[i]
+            
+            # Guardar estado del environment actual
+            saved_terminated = self.terminated
+            self.terminated = False
+            
+            # Crear un nuevo environment para la llamada (simulación simple)
+            # En una implementación completa, aquí crearíamos un nuevo scope
+            for param_name, param_value in params_map.items():
+                self.environment.set_variable(param_name, param_value)
+            
+            # Ejecutar el procedimiento
+            return_value = self._execute_procedure(proc_def, params_map)
+            
+            # Restaurar estado
+            self.terminated = saved_terminated
+            
+            return return_value
+        else:
+            # Si no encontramos la definición, solo registrar la llamada
+            self.trace_builder.add_step(
+                line=node.get("pos", {}).get("line", 0),
+                kind="call",
+                variables=self.environment.get_variables_snapshot(),
+                description=f"Llamada a {proc_name}"
+            )
+            return None
     
     def _execute_print(self, node: Dict[str, Any]) -> None:
         """Ejecuta un PRINT."""

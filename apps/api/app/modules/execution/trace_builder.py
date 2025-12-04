@@ -40,12 +40,16 @@ class TraceBuilder:
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
-    def __init__(self):
+    def __init__(self, build_detailed_trace: bool = True):
         """
         Inicializa el constructor de rastro.
         
+        Args:
+            build_detailed_trace: Si False, no construye trace detallado (para recursivos/híbridos)
+        
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
+        self.build_detailed_trace = build_detailed_trace
         self.steps: List[ExecutionStep] = []
         self.recursion_calls: Dict[str, RecursionCall] = {}
         self.recursion_stack: List[str] = []  # Stack de IDs de llamadas recursivas
@@ -78,6 +82,10 @@ class TraceBuilder:
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
+        # Si build_detailed_trace es False, no construir pasos detallados
+        if not self.build_detailed_trace:
+            return
+        
         self.step_counter += 1
         
         # Generar coste si no se proporciona

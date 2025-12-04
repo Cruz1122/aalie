@@ -199,8 +199,26 @@ LAYOUT Y POSICIONES
 USO DEL RASTRO (trace)
 - Usa steps para decidir qué nodos crear:
   - Puedes agrupar múltiples asignaciones secuenciales en un solo nodo si eso simplifica el diagrama.
-  - Para recursión, puedes usar la información de recursionTree para mostrar un árbol simple de llamadas (nodos por llamada, aristas padre→hijo con labels como "subproblema").
 - No inventes pasos que no estén justificados por el rastro.
+
+MANEJO ESPECIAL PARA ALGORITMOS RECURSIVOS
+- Si trace.recursionTree existe con datos:
+  - Genera un ÁRBOL DE LLAMADAS RECURSIVAS en lugar de un diagrama de flujo secuencial
+  - Para cada llamada en recursionTree.calls, crea un nodo que represente esa llamada
+  - Usa la estructura:
+    * Nodo id: usa el call.id (ej: "call_1", "call_2")
+    * Nodo label: incluye el nombre del procedimiento y parámetros (ej: "factorial(5)", "fib(3)")
+    * Si call.return_value existe, agrégalo al label (ej: "factorial(5) → 120")
+    * Si call.is_base_case es true, marca el nodo de alguna forma (ej: agregar "(base)" al label)
+  - Para las aristas:
+    * Usa call.children para crear aristas del padre a cada hijo
+    * Labels como "llamada recursiva", "f(n-1)", "f(n-2)" son apropiados
+  - Layout en forma de árbol:
+    * Profundidad 0 en la parte superior (x=400, y=50)
+    * Cada nivel de profundidad incrementa Y (ej: depth * 150)
+    * Distribuye horizontalmente los hijos para evitar solapamiento
+- Si hay recursionTree, IGNORA los steps individuales para el diagrama principal
+- La explicación debe describir el patrón recursivo, casos base, y cómo se combinan las soluciones
 
 EXPLICACIÓN
 - En explanation, describe brevemente:

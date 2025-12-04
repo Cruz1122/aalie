@@ -1758,13 +1758,15 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                       </button>
                       <button
                         onClick={() => setShowExecutionTraceModal(true)}
-                        disabled={!hasComparableData}
+                        disabled={!hasComparableData || !hasApiKey}
                         className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-400/50 bg-gradient-to-br from-blue-500/20 to-blue-500/20 border border-blue-500/30 hover:from-blue-500/30 hover:to-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
                       >
                         <span className="material-symbols-outlined text-sm">play_circle</span>
-                        {!hasComparableData ? (
+                        {(!hasComparableData || !hasApiKey) ? (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                            No hay análisis completo
+                            {!hasComparableData
+                              ? "No hay análisis completo"
+                              : "Se requiere una API_KEY para el seguimiento"}
                           </div>
                         ) : (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">

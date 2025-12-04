@@ -720,6 +720,12 @@ dialog::backdrop {
   visibility: visible !important;
 }
 
+/* Aristas de retorno en verde - DEBE IR AL FINAL para mayor especificidad */
+.recursion-tree-container .react-flow__edge.return-edge path.react-flow__edge-path {
+  stroke: #10b981 !important; /* verde para retornos */
+  stroke-width: 2.5px !important;
+}
+
 .recursion-tree-container svg.react-flow__edges {
   z-index: 1 !important;
   pointer-events: none !important;

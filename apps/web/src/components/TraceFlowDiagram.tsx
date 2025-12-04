@@ -23,6 +23,8 @@ interface TraceFlowDiagramProps {
 const TraceNode = ({ data }: { data: { label: string; isReturn?: boolean; type?: string } }) => {
   const isReturn = data.isReturn || false;
   const type = data.type || "default";
+  const firstLine = (data.label || "").split("\n")[0]?.trim();
+  const isFin = firstLine ? /^FIN$/i.test(firstLine) : false;
 
   let borderColor = "border-slate-600/70";
   let bgColor = "bg-slate-800/80";
@@ -33,11 +35,11 @@ const TraceNode = ({ data }: { data: { label: string; isReturn?: boolean; type?:
     borderColor = "border-blue-500/70";
     bgColor = "bg-blue-900/30";
     shadowColor = "shadow-blue-500/20";
-  } else if (type === "output") {
-    // Red/Grayish for output
-    borderColor = "border-red-500/70";
-    bgColor = "bg-red-900/30";
-    shadowColor = "shadow-red-500/20";
+  } else if (type === "output" || isFin) {
+    // Green for output/FIN
+    borderColor = "border-green-500/70";
+    bgColor = "bg-green-900/30";
+    shadowColor = "shadow-green-500/20";
   } else if (isReturn) {
     // Green for return statements
     borderColor = "border-green-500/70";
@@ -53,7 +55,7 @@ const TraceNode = ({ data }: { data: { label: string; isReturn?: boolean; type?:
   };
 
   return (
-    <div className={`relative rounded-lg border ${borderColor} ${bgColor} text-slate-50 text-xs px-3 py-2 shadow-md ${shadowColor} backdrop-blur-sm max-w-[220px]`}>
+    <div className={`relative rounded-lg border ${borderColor} ${bgColor} text-slate-50 text-base px-6 py-4 shadow-md ${shadowColor} backdrop-blur-sm min-w-[280px] max-w-[600px]`}>
       {/* Handles de entrada (target) en los cuatro lados */}
       {type !== "input" && (
         <>
@@ -65,7 +67,9 @@ const TraceNode = ({ data }: { data: { label: string; isReturn?: boolean; type?:
       )}
 
       {/* Contenido */}
-      <span className="block truncate text-center px-1 font-medium">{data.label}</span>
+      <div className="text-center px-1 font-medium whitespace-pre-line leading-snug">
+        {data.label}
+      </div>
 
       {/* Handles de salida (source) en los cuatro lados */}
       {type !== "output" && (
@@ -136,16 +140,16 @@ function mapEdges(
         const toRight = dx >= 0;
 
         if (count === 0) {
-          // Primera arista: derecha -> izquierda
+          // Primera arista: sale por el lado hacia el target, entra por el lado opuesto
           sourceHandle = toRight ? "right" : "left";
           targetHandle = toRight ? "left" : "right";
         } else if (count === 1) {
-          // Segunda arista: abajo -> arriba
-          sourceHandle = "bottom";
+          // Segunda arista: vertical superior
+          sourceHandle = "top";
           targetHandle = "top";
         } else {
-          // Resto: arriba -> abajo
-          sourceHandle = "top";
+          // Resto: vertical inferior
+          sourceHandle = "bottom";
           targetHandle = "bottom";
         }
       } else {
@@ -153,29 +157,51 @@ function mapEdges(
         const toBottom = dy >= 0;
 
         if (count === 0) {
-          // Primera arista: abajo -> arriba
+          // Primera arista: sale por arriba/abajo hacia el target, entra por el lado opuesto
           sourceHandle = toBottom ? "bottom" : "top";
           targetHandle = toBottom ? "top" : "bottom";
         } else if (count === 1) {
-          // Segunda arista: derecha -> izquierda
+          // Segunda arista: horizontal derecha
           sourceHandle = "right";
-          targetHandle = "left";
-        } else {
-          // Resto: izquierda -> derecha
-          sourceHandle = "left";
           targetHandle = "right";
+        } else {
+          // Resto: horizontal izquierda
+          sourceHandle = "left";
+          targetHandle = "left";
         }
       }
     }
+
+    // Detectar si es una arista de retorno por el label
+    const isReturnEdge = e.label && (/return/i.test(e.label) || /→/i.test(e.label) || /retorna/i.test(e.label));
+    
+    console.log(`Edge ${e.id}: label="${e.label}", isReturn=${isReturnEdge}`);
+
+    const edgeStyle = {
+      stroke: isReturnEdge ? "#10b981" : "#94a3b8",
+      strokeWidth: isReturnEdge ? "2.5px" : "1.5px",
+    };
 
     return {
       id: e.id,
       source: e.source,
       target: e.target,
       label: e.label,
+      type: "default",
       sourceHandle,
       targetHandle,
-      // El tipo se hereda de defaultEdgeOptions (smoothstep)
+      // Estilo específico para aristas de retorno
+      style: edgeStyle as any,
+      labelStyle: {
+        fill: isReturnEdge ? "#6ee7b7" : "#e5e7eb",
+        fontSize: isReturnEdge ? 12 : 11,
+        fontWeight: isReturnEdge ? 600 : 500,
+      },
+      markerEnd: {
+        type: "arrowclosed" as const,
+        color: isReturnEdge ? "#10b981" : "#94a3b8",
+      },
+      className: isReturnEdge ? "return-edge" : "",
     };
   });
 }
@@ -234,19 +260,6 @@ export default function TraceFlowDiagram({ graph }: TraceFlowDiagramProps) {
         fitViewOptions={{ padding: 0.25 }}
         proOptions={{ hideAttribution: true }}
         nodeTypes={nodeTypes}
-        defaultEdgeOptions={{
-          // Usar bezier para mejor enrutamiento automático
-          type: "default",
-          style: {
-            stroke: "#94a3b8",
-            strokeWidth: 1.5,
-          },
-          labelStyle: {
-            fill: "#e5e7eb",
-            fontSize: 11,
-            fontWeight: 500,
-          },
-        }}
         nodesDraggable={true}
         nodesConnectable={false}
         elementsSelectable={true}
