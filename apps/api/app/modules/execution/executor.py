@@ -602,13 +602,18 @@ class CodeExecutor:
             saved_terminated = self.terminated
             self.terminated = False
             
-            # Crear un nuevo environment para la llamada (simulación simple)
-            # En una implementación completa, aquí crearíamos un nuevo scope
+            # Crear un nuevo scope para la llamada (importante para recursión)
+            self.environment.push_scope()
+            
+            # Establecer variables de parámetros en el nuevo scope
             for param_name, param_value in params_map.items():
                 self.environment.set_variable(param_name, param_value)
             
             # Ejecutar el procedimiento
             return_value = self._execute_procedure(proc_def, params_map)
+            
+            # Restaurar el scope anterior (importante para recursión)
+            self.environment.pop_scope()
             
             # Restaurar estado
             self.terminated = saved_terminated

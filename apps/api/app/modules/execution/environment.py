@@ -294,7 +294,6 @@ class ExecutionEnvironment:
                     snapshot[name] = latex(value)
                 except Exception:
                     snapshot[name] = str(value)
-                    snapshot[name] = str(value)
             elif isinstance(value, list):
                 snapshot[name] = self._format_list(value)
             else:
