@@ -32,7 +32,7 @@ param
 
 // A[n]..[m] con soporte multi-dim por repetición de corchetes
 arrayParam
-  : ID LBRACK arrayIndex RBRACK (RANGE LBRACK arrayIndex RBRACK)?   // p.ej. A[1]..[n] o A[n]
+  : ID arrayDim+ (RANGE arrayDim+)?   // p.ej. A[n][m] o A[1]..[n] o A[n][n]..[m]
   ;
 
 arrayIndex

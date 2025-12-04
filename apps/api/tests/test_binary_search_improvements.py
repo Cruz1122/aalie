@@ -10,8 +10,37 @@ Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 
 import pytest
+import re
 from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
 from app.modules.parsing.service import parse_source
+
+
+def contains_iteration_variable(text: str, var: str) -> bool:
+    """
+    Verifica si un texto contiene una variable de iteración como símbolo independiente.
+    
+    Busca la variable como un símbolo independiente, no como parte de otras palabras.
+    Por ejemplo, busca 'i' pero no 'i' dentro de 'left', 'right', 'integer', etc.
+    
+    Args:
+        text: Texto a verificar
+        var: Nombre de la variable (ej: 'i', 'j', 'k')
+        
+    Returns:
+        True si la variable aparece como símbolo independiente, False en caso contrario
+    """
+    if not text or not var:
+        return False
+    
+    text_lower = text.lower()
+    var_lower = var.lower()
+    
+    # Patrón regex para buscar la variable como símbolo independiente
+    # Busca 'i' que no esté precedida ni seguida por letras o números
+    # Permite espacios, operadores matemáticos, llaves, paréntesis, etc. alrededor
+    pattern = r'(?<![a-zA-Z0-9_])' + re.escape(var_lower) + r'(?![a-zA-Z0-9_])'
+    
+    return bool(re.search(pattern, text_lower))
 
 
 def test_binary_search_detects_log_complexity():
@@ -110,16 +139,16 @@ END
     t_open = totals.get("T_open", "")
     t_polynomial = totals.get("T_polynomial", "")
     
-    # Verificar que no contienen i, j, k
+    # Verificar que no contienen i, j, k como variables de iteración independientes
     assert t_open != "", "T_open no debe estar vacío"
-    assert "i" not in t_open.lower() or "integer" in t_open.lower(), f"T_open no debe contener 'i': {t_open}"
-    assert "j" not in t_open.lower(), f"T_open no debe contener 'j': {t_open}"
-    assert "k" not in t_open.lower(), f"T_open no debe contener 'k': {t_open}"
+    assert not contains_iteration_variable(t_open, "i"), f"T_open no debe contener variable de iteración 'i': {t_open}"
+    assert not contains_iteration_variable(t_open, "j"), f"T_open no debe contener variable de iteración 'j': {t_open}"
+    assert not contains_iteration_variable(t_open, "k"), f"T_open no debe contener variable de iteración 'k': {t_open}"
     
     if t_polynomial:
-        assert "i" not in t_polynomial.lower() or "integer" in t_polynomial.lower(), f"T_polynomial no debe contener 'i': {t_polynomial}"
-        assert "j" not in t_polynomial.lower(), f"T_polynomial no debe contener 'j': {t_polynomial}"
-        assert "k" not in t_polynomial.lower(), f"T_polynomial no debe contener 'k': {t_polynomial}"
+        assert not contains_iteration_variable(t_polynomial, "i"), f"T_polynomial no debe contener variable de iteración 'i': {t_polynomial}"
+        assert not contains_iteration_variable(t_polynomial, "j"), f"T_polynomial no debe contener variable de iteración 'j': {t_polynomial}"
+        assert not contains_iteration_variable(t_polynomial, "k"), f"T_polynomial no debe contener variable de iteración 'k': {t_polynomial}"
     
     # Verificar que es O(n²) - bucles anidados
     assert "n^{2}" in t_open or "n^2" in t_open or "n \\cdot n" in t_open, \
@@ -241,9 +270,9 @@ END
     
     assert t_open != "", "T_open no debe estar vacío"
     
-    # Verificar que no contiene variables de iteración
-    assert "i" not in t_open.lower() or "integer" in t_open.lower(), f"T_open no debe contener 'i': {t_open}"
-    assert "j" not in t_open.lower(), f"T_open no debe contener 'j': {t_open}"
+    # Verificar que no contiene variables de iteración como símbolos independientes
+    assert not contains_iteration_variable(t_open, "i"), f"T_open no debe contener variable de iteración 'i': {t_open}"
+    assert not contains_iteration_variable(t_open, "j"), f"T_open no debe contener variable de iteración 'j': {t_open}"
     
     # Verificar que no contiene t_while sin resolver
     assert "t_while" not in t_open.lower(), f"T_open no debe contener t_while: {t_open}"

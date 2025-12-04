@@ -317,7 +317,7 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la estructura { "graph": { "node
               id: string;
               type?: string;
               position?: { x: number; y: number };
-              data?: { label?: string };
+              data?: { label?: string; microseconds?: number; tokens?: number };
               parentId?: string;
             }>;
             edges?: Array<{

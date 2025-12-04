@@ -236,9 +236,9 @@ function mapEdges(
         fontWeight: isReturnEdge ? 600 : 500,
       },
       markerEnd: {
-        type: "arrowclosed" as const,
+        type: "arrowclosed" as any,
         color: isReturnEdge ? "#10b981" : "#94a3b8",
-      },
+      } as any,
       className: isReturnEdge ? "return-edge" : "",
     };
   });

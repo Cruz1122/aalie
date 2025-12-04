@@ -346,6 +346,7 @@ class ComplexityClasses:
             return expr
         
         # Verificar si tiene logaritmos
+        from sympy import log
         if expr.has(log) and var_symbol is not None:
             try:
                 log_term = expr.subs(var_symbol, oo)

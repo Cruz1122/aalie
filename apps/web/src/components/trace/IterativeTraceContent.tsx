@@ -68,7 +68,13 @@ export default function IterativeTraceContent({
 }: IterativeTraceContentProps) {
   const playIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const inputSizeDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const currentStepRef = useRef<number>(currentStep);
   const [stepsWithCosts, setStepsWithCosts] = useState<ExecutionStep[]>([]);
+  
+  // Sincronizar currentStepRef con currentStep
+  useEffect(() => {
+    currentStepRef.current = currentStep;
+  }, [currentStep]);
 
   // Debounce input size changes
   useEffect(() => {
@@ -175,17 +181,16 @@ export default function IterativeTraceContent({
 
     setIsPlaying(true);
     playIntervalRef.current = setInterval(() => {
-      setCurrentStep((prev) => {
-        const maxSteps = stepsToUse.length;
-        if (prev >= maxSteps - 1) {
-          setIsPlaying(false);
-          if (playIntervalRef.current) {
-            clearInterval(playIntervalRef.current);
-          }
-          return prev;
+      const maxSteps = stepsToUse.length;
+      const current = currentStepRef.current;
+      if (current >= maxSteps - 1) {
+        setIsPlaying(false);
+        if (playIntervalRef.current) {
+          clearInterval(playIntervalRef.current);
         }
-        return prev + 1;
-      });
+      } else {
+        setCurrentStep(current + 1);
+      }
     }, playSpeed);
   };
 
