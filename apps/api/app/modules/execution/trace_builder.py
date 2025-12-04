@@ -20,6 +20,8 @@ class ExecutionStep:
     cost: Optional[str] = None  # "C1", "C2", etc.
     accumulated_cost: Optional[str] = None  # Expresión acumulada
     description: Optional[str] = None  # Descripción del paso
+    microseconds: Optional[float] = None  # Tiempo estimado en microsegundos
+    tokens: Optional[int] = None  # Número de operaciones elementales (tokens)
 
 
 @dataclass

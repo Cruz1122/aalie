@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import type { CaseType, TraceApiResponse, TraceGraph, TraceConfig, DiagramGraphResponse } from "@/types/trace";
+import { useState, useRef, useEffect, useMemo } from "react";
+import type { CaseType, TraceApiResponse, TraceGraph, TraceConfig, DiagramGraphResponse, ExecutionStep } from "@/types/trace";
 import PseudocodeViewer from "./PseudocodeViewer";
 import StepControls from "./StepControls";
 import StepInfo from "./StepInfo";
@@ -68,6 +68,7 @@ export default function IterativeTraceContent({
 }: IterativeTraceContentProps) {
   const playIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const inputSizeDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const [stepsWithCosts, setStepsWithCosts] = useState<ExecutionStep[]>([]);
 
   // Debounce input size changes
   useEffect(() => {
@@ -114,9 +115,31 @@ export default function IterativeTraceContent({
       if (data.ok && data.graph) {
         setGraph(data.graph);
         setExplanation(data.explanation || "");
+        
+        // Mapear stepCosts a los steps del trace
+        if (data.stepCosts && trace?.ok && trace.trace) {
+          const updatedSteps = trace.trace.steps.map((step) => {
+            const stepCost = data.stepCosts?.[step.step_number.toString()];
+            if (stepCost) {
+              return {
+                ...step,
+                microseconds: stepCost.microseconds,
+                tokens: stepCost.tokens,
+              };
+            }
+            return step;
+          });
+          setStepsWithCosts(updatedSteps);
+        } else if (trace?.ok && trace.trace) {
+          // Si no hay stepCosts, usar los steps originales
+          setStepsWithCosts(trace.trace.steps);
+        }
       } else {
         setGraph(null);
         setExplanation(data.error || data.explanation || "");
+        if (trace?.ok && trace.trace) {
+          setStepsWithCosts(trace.trace.steps);
+        }
       }
     } catch (error) {
       console.error("Error loading diagram:", error);
@@ -133,13 +156,27 @@ export default function IterativeTraceContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trace, graph]);
 
+  // Inicializar stepsWithCosts cuando cambia el trace
+  useEffect(() => {
+    if (trace?.ok && trace.trace) {
+      setStepsWithCosts(trace.trace.steps);
+    } else {
+      setStepsWithCosts([]);
+    }
+  }, [trace]);
+
+  // Usar stepsWithCosts si están disponibles, sino usar los steps originales
+  const stepsToUse = useMemo(() => {
+    return stepsWithCosts.length > 0 ? stepsWithCosts : (trace?.ok && trace.trace ? trace.trace.steps : []);
+  }, [stepsWithCosts, trace]);
+
   const handlePlay = () => {
-    if (!trace?.ok || !trace.trace) return;
+    if (stepsToUse.length === 0) return;
 
     setIsPlaying(true);
     playIntervalRef.current = setInterval(() => {
       setCurrentStep((prev) => {
-        const maxSteps = trace.trace!.steps.length;
+        const maxSteps = stepsToUse.length;
         if (prev >= maxSteps - 1) {
           setIsPlaying(false);
           if (playIntervalRef.current) {
@@ -160,8 +197,8 @@ export default function IterativeTraceContent({
   };
 
   const handleNext = () => {
-    if (!trace?.ok || !trace.trace) return;
-    const maxSteps = trace.trace.steps.length;
+    if (stepsToUse.length === 0) return;
+    const maxSteps = stepsToUse.length;
     if (currentStep < maxSteps - 1) {
       setCurrentStep(currentStep + 1);
     }
@@ -181,25 +218,22 @@ export default function IterativeTraceContent({
     }
   };
 
-  const currentStepData = trace?.ok && trace.trace
-    ? trace.trace.steps[currentStep]
-    : null;
+  const currentStepData = useMemo(() => {
+    return stepsToUse.length > 0 && currentStep < stepsToUse.length
+      ? stepsToUse[currentStep]
+      : null;
+  }, [stepsToUse, currentStep]);
+  
   const currentLine = currentStepData?.line || 0;
 
-  // Get initial variables and final return
-  const initialVariables = trace?.ok && trace.trace
-    ? trace.trace.steps[0]?.variables || {}
+  // Get initial variables and final variables
+  const initialVariables = stepsToUse.length > 0
+    ? stepsToUse[0]?.variables || {}
     : {};
   
-  const finalReturn = trace?.ok && trace.trace
-    ? (() => {
-        const steps = trace.trace.steps;
-        const lastReturn = [...steps]
-          .reverse()
-          .find((s) => s.kind === "return");
-        return lastReturn?.description || undefined;
-      })()
-    : undefined;
+  const finalVariables = stepsToUse.length > 0
+    ? stepsToUse[stepsToUse.length - 1]?.variables || {}
+    : {};
 
   return (
     <>
@@ -275,7 +309,7 @@ export default function IterativeTraceContent({
 
           <StepControls
             currentStep={currentStep}
-            totalSteps={trace?.ok ? trace.trace?.steps.length || 0 : 0}
+            totalSteps={stepsToUse.length}
             isPlaying={isPlaying}
             loading={loading}
             onPlay={handlePlay}
@@ -290,6 +324,7 @@ export default function IterativeTraceContent({
             loading={loading}
             trace={trace}
             currentStep={currentStep}
+            loadingDiagram={loadingDiagram}
           />
         </div>
 
@@ -312,7 +347,7 @@ export default function IterativeTraceContent({
           <VariablesPanel
             mode="iterative"
             initialVariables={initialVariables}
-            finalReturn={finalReturn}
+            finalVariables={Object.keys(finalVariables).length > 0 ? finalVariables : undefined}
           />
 
           <DiagramSection

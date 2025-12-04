@@ -20,11 +20,12 @@ interface TraceFlowDiagramProps {
   readonly graph: TraceGraph;
 }
 
-const TraceNode = ({ data }: { data: { label: string; isReturn?: boolean; type?: string } }) => {
+const TraceNode = ({ data }: { data: { label: string; isReturn?: boolean; type?: string; microseconds?: number; tokens?: number } }) => {
   const isReturn = data.isReturn || false;
   const type = data.type || "default";
   const firstLine = (data.label || "").split("\n")[0]?.trim();
   const isFin = firstLine ? /^FIN$/i.test(firstLine) : false;
+  const hasCosts = data.microseconds !== undefined || data.tokens !== undefined;
 
   let borderColor = "border-slate-600/70";
   let bgColor = "bg-slate-800/80";
@@ -54,6 +55,19 @@ const TraceNode = ({ data }: { data: { label: string; isReturn?: boolean; type?:
     border: "2px solid #0f172a",
   };
 
+  // Helper function to format microseconds
+  const formatMicroseconds = (microseconds: number): string => {
+    if (microseconds < 1) {
+      return `${(microseconds * 1000).toFixed(2)} ns`;
+    } else if (microseconds < 1000) {
+      return `${microseconds.toFixed(2)} μs`;
+    } else if (microseconds < 1000000) {
+      return `${(microseconds / 1000).toFixed(2)} ms`;
+    } else {
+      return `${(microseconds / 1000000).toFixed(2)} s`;
+    }
+  };
+
   return (
     <div className={`relative rounded-lg border ${borderColor} ${bgColor} text-slate-50 text-base px-6 py-4 shadow-md ${shadowColor} backdrop-blur-sm min-w-[280px] max-w-[600px]`}>
       {/* Handles de entrada (target) en los cuatro lados */}
@@ -70,6 +84,24 @@ const TraceNode = ({ data }: { data: { label: string; isReturn?: boolean; type?:
       <div className="text-center px-1 font-medium whitespace-pre-line leading-snug">
         {data.label}
       </div>
+
+      {/* Costes (microsegundos y tokens) */}
+      {hasCosts && (
+        <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-center gap-3 text-xs">
+          {data.microseconds !== undefined && (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-green-500/20 border border-green-500/40">
+              <span className="material-symbols-outlined text-green-300 text-sm leading-none">schedule</span>
+              <span className="text-green-200 font-medium">{formatMicroseconds(data.microseconds)}</span>
+            </div>
+          )}
+          {data.tokens !== undefined && (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-cyan-500/20 border border-cyan-500/40">
+              <span className="material-symbols-outlined text-cyan-300 text-sm leading-none">calculate</span>
+              <span className="text-cyan-200 font-medium">{data.tokens}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Handles de salida (source) en los cuatro lados */}
       {type !== "output" && (
@@ -99,7 +131,13 @@ function mapNodes(nodes: GraphNode[]): Node[] {
       id: n.id,
       type: n.type || "default",
       position: n.position,
-      data: { label, isReturn, type: n.type || "default" },
+      data: { 
+        label, 
+        isReturn, 
+        type: n.type || "default",
+        microseconds: n.data?.microseconds,
+        tokens: n.data?.tokens,
+      },
       parentNode: n.parentId,
     };
   });

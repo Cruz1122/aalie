@@ -543,7 +543,7 @@ export default function GPUCPUModal({
             >
               ?
             </button>
-            <div className="absolute right-0 top-6 w-64 p-2 bg-slate-800 border border-slate-500/30 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-xs text-left">
+            <div className="absolute right-0 bottom-full mb-2 w-64 p-2 bg-slate-800 border border-slate-500/30 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-xs text-left">
               <div className="text-slate-300">
                 Este análisis es cualitativo y basado únicamente en la estructura
                 del algoritmo (su AST). No se promete que GPU sea siempre más rápida

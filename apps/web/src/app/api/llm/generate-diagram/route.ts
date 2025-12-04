@@ -147,7 +147,9 @@ Estructura exacta de la respuesta:
         "type": "default",
         "position": { "x": number, "y": number },
         "data": {
-          "label": "texto corto que aparecerá en el nodo"
+          "label": "texto corto que aparecerá en el nodo",
+          "microseconds": number (opcional, tiempo estimado en microsegundos),
+          "tokens": number (opcional, número de operaciones elementales)
         },
         "parentId": "string opcional para agrupar"
       }
@@ -161,6 +163,12 @@ Estructura exacta de la respuesta:
         "type": "default"
       }
     ]
+  },
+  "stepCosts": {
+    "step_number": {
+      "microseconds": number,
+      "tokens": number
+    }
   },
   "explanation": "explicación en lenguaje natural (máx. 200 palabras) sobre el comportamiento del algoritmo en el caso dado"
 }
@@ -200,6 +208,29 @@ USO DEL RASTRO (trace)
 - Usa steps para decidir qué nodos crear:
   - Puedes agrupar múltiples asignaciones secuenciales en un solo nodo si eso simplifica el diagrama.
 - No inventes pasos que no estén justificados por el rastro.
+
+ESTIMACIÓN DE COSTES (MICROSEGUNDOS Y TOKENS)
+- Para cada paso en trace.steps, debes estimar:
+  - **microseconds**: Tiempo estimado de ejecución en microsegundos basado en:
+    * Asignaciones simples: 0.1-0.5 μs
+    * Operaciones aritméticas: 0.2-1 μs
+    * Comparaciones: 0.1-0.5 μs
+    * Accesos a arrays: 0.3-1 μs
+    * Condicionales (IF): 0.2-0.8 μs (solo evaluación de condición)
+    * Bucles: tiempo de condición + cuerpo (multiplicado por iteraciones)
+    * Llamadas a funciones: 1-5 μs base + tiempo de ejecución
+    * Returns: 0.1-0.3 μs
+  - **tokens**: Número de operaciones elementales (tokens computacionales):
+    * Asignación: 1 token
+    * Operación aritmética (+, -, *, /): 1-2 tokens según complejidad
+    * Comparación (<, >, ==, !=): 1 token
+    * Acceso a array: 1 token
+    * Condicional (IF): 1 token (evaluación) + tokens del cuerpo ejecutado
+    * Bucle: tokens de condición + tokens del cuerpo (por iteración)
+    * Llamada a función: tokens de evaluación de argumentos + tokens de ejecución
+    * Return: 1 token
+- Incluye estos valores en el objeto "stepCosts" mapeando step_number a {microseconds, tokens}
+- También puedes incluir microseconds y tokens en data de los nodos del grafo si corresponde
 
 MANEJO ESPECIAL PARA ALGORITMOS RECURSIVOS
 - Si trace.recursionTree existe con datos:
@@ -251,7 +282,9 @@ ${caseType}
 3) RASTRO DE EJECUCIÓN (trace):
 ${JSON.stringify(trace, null, 2)}
 
-Devuelve ÚNICAMENTE un objeto JSON válido con la estructura { "graph": { "nodes": [...], "edges": [...] }, "explanation": "..." }.`;
+IMPORTANTE: Para cada paso en trace.steps, estima microsegundos y tokens según el tipo de instrucción y su complejidad. Incluye estos valores en el objeto "stepCosts" mapeando step_number a {microseconds, tokens}.
+
+Devuelve ÚNICAMENTE un objeto JSON válido con la estructura { "graph": { "nodes": [...], "edges": [...] }, "stepCosts": { "step_number": { "microseconds": number, "tokens": number } }, "explanation": "..." }.`;
 
     const response = await callGeminiLLM(systemPrompt, userPrompt, geminiApiKey);
 
@@ -328,6 +361,8 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la estructura { "graph": { "node
         type: n.type ?? "default",
         data: {
           label: n.data?.label ?? "",
+          microseconds: typeof n.data?.microseconds === "number" ? n.data.microseconds : undefined,
+          tokens: typeof n.data?.tokens === "number" ? n.data.tokens : undefined,
         },
       })),
       edges: safeEdges,
@@ -340,10 +375,20 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la estructura { "graph": { "node
         ? (result as { explanation: string }).explanation
         : "";
 
+    // Extraer stepCosts si existe
+    const stepCosts =
+      result &&
+      typeof result === "object" &&
+      (result as { stepCosts?: unknown }).stepCosts &&
+      typeof (result as { stepCosts: unknown }).stepCosts === "object"
+        ? (result as { stepCosts: Record<string, { microseconds?: number; tokens?: number }> }).stepCosts
+        : undefined;
+
     return NextResponse.json({
       ok: true,
       graph: safeGraph,
       explanation: safeExplanation,
+      stepCosts: stepCosts,
     });
   } catch (error) {
     console.error("[Generate Diagram API] Error:", error);

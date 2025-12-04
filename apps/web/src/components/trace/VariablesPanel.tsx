@@ -10,14 +10,14 @@ interface RecursionDiagram {
 interface VariablesPanelProps {
   mode: "iterative" | "recursive";
   initialVariables?: Record<string, unknown>;
-  finalReturn?: string;
+  finalVariables?: Record<string, unknown>;
   recursionDiagram?: RecursionDiagram | null;
 }
 
 export default function VariablesPanel({
   mode,
   initialVariables,
-  finalReturn,
+  finalVariables,
   recursionDiagram,
 }: VariablesPanelProps) {
   if (mode === "recursive") {
@@ -66,7 +66,7 @@ export default function VariablesPanel({
         {endNode ? (
           <div className="glass-card p-2 rounded-lg bg-slate-800/60 border border-white/10">
             <div className="text-[11px] text-slate-400 mb-1 font-semibold">
-              Retorno final
+              Variables finales
             </div>
             <p className="text-[11px] text-slate-200 font-mono whitespace-pre-wrap">
               {endNode.data?.label}
@@ -75,7 +75,7 @@ export default function VariablesPanel({
         ) : (
           <div className="glass-card p-2 rounded-lg bg-slate-800/60 border border-white/10">
             <div className="text-[11px] text-slate-400 mb-1 font-semibold">
-              Retorno final
+              Variables finales
             </div>
             <p className="text-[11px] text-slate-400">
               No se pudo identificar un nodo de resultado final en el diagrama.
@@ -87,7 +87,7 @@ export default function VariablesPanel({
   }
 
   // Modo iterativo
-  if (!initialVariables && !finalReturn) {
+  if (!initialVariables && !finalVariables) {
     return null;
   }
 
@@ -118,15 +118,29 @@ export default function VariablesPanel({
           </div>
         </div>
       )}
-      {/* Retorno final */}
-      {finalReturn && (
+      {/* Variables finales */}
+      {finalVariables && Object.keys(finalVariables).length > 0 && (
         <div className="glass-card p-2 rounded-lg bg-slate-800/60 border border-white/10">
           <div className="text-[11px] text-slate-400 mb-1 font-semibold">
-            Retorno final
+            Variables finales
           </div>
-          <p className="text-[11px] text-slate-200 font-mono">
-            {finalReturn}
-          </p>
+          <div className="flex flex-wrap gap-1">
+            {Object.entries(finalVariables)
+              .slice(0, 6)
+              .map(([key, value]) => (
+                <span
+                  key={key}
+                  className="text-[11px] text-slate-200 font-mono bg-slate-900/60 px-1.5 py-0.5 rounded border border-slate-700/60"
+                >
+                  {key} = {String(value)}
+                </span>
+              ))}
+            {Object.keys(finalVariables).length > 6 && (
+              <span className="text-[11px] text-slate-400">
+                + más variables
+              </span>
+            )}
+          </div>
         </div>
       )}
     </div>

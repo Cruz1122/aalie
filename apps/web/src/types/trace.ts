@@ -58,6 +58,8 @@ export interface ExecutionStep {
   cost?: string;
   accumulated_cost?: string;
   description?: string;
+  microseconds?: number;
+  tokens?: number;
 }
 
 export interface RecursionTreeCall {
@@ -87,6 +89,8 @@ export interface TraceApiResponse {
 
 export interface GraphNodeData {
   label: string;
+  microseconds?: number;
+  tokens?: number;
 }
 
 export interface GraphNode {
@@ -115,4 +119,5 @@ export interface DiagramGraphResponse {
   graph?: TraceGraph;
   explanation?: string;
   error?: string;
+  stepCosts?: Record<string, { microseconds: number; tokens: number }>;
 }

@@ -9,7 +9,21 @@ interface StepInfoProps {
   loading: boolean;
   trace: TraceApiResponse | null;
   currentStep: number;
+  loadingDiagram?: boolean;
 }
+
+// Helper function to format microseconds with appropriate units
+const formatMicroseconds = (microseconds: number): string => {
+  if (microseconds < 1) {
+    return `${(microseconds * 1000).toFixed(2)} ns`;
+  } else if (microseconds < 1000) {
+    return `${microseconds.toFixed(2)} μs`;
+  } else if (microseconds < 1000000) {
+    return `${(microseconds / 1000).toFixed(2)} ms`;
+  } else {
+    return `${(microseconds / 1000000).toFixed(2)} s`;
+  }
+};
 
 // Helper function to format accumulated cost with abbreviation for long expressions
 const formatAccumulatedCost = (cost: string): string => {
@@ -57,6 +71,7 @@ export default function StepInfo({
   loading,
   trace,
   currentStep,
+  loadingDiagram = false,
 }: StepInfoProps) {
   const [expandedDescription, setExpandedDescription] = useState(false);
   const [expandedIteration, setExpandedIteration] = useState(false);
@@ -81,8 +96,8 @@ export default function StepInfo({
         </div>
       ) : trace?.ok && stepData ? (
         <div className="space-y-3 animate-fade-in" key={currentStep}>
-          {/* Grid for Line, Type, Cost */}
-          <div className="grid grid-cols-3 gap-2">
+          {/* Grid for Line, Type, Cost, Microseconds, Tokens */}
+          <div className={`grid gap-2 ${stepData.cost ? 'grid-cols-5' : 'grid-cols-4'}`}>
             <div className="glass-card p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 flex flex-col">
               <div className="text-xs text-blue-300 mb-2 font-bold text-center">Línea</div>
               <div className="flex-1 flex items-center justify-center">
@@ -116,6 +131,38 @@ export default function StepInfo({
                 </div>
               </div>
             )}
+
+            {/* Microsegundos - mostrar siempre, con loader si está cargando */}
+            <div className="glass-card p-2 rounded-lg bg-green-500/10 border border-green-500/20 flex flex-col">
+              <div className="text-xs text-green-300 mb-2 font-bold text-center">Microsegundos</div>
+              <div className="flex-1 flex items-center justify-center">
+                {loadingDiagram && stepData?.microseconds === undefined ? (
+                  <div className="w-4 h-4 border-2 border-green-300/50 border-t-green-300 rounded-full animate-spin" />
+                ) : stepData?.microseconds !== undefined ? (
+                  <div className="text-white font-semibold text-sm">
+                    {formatMicroseconds(stepData.microseconds)}
+                  </div>
+                ) : (
+                  <div className="text-slate-500 text-xs">-</div>
+                )}
+              </div>
+            </div>
+
+            {/* Tokens - mostrar siempre, con loader si está cargando */}
+            <div className="glass-card p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex flex-col">
+              <div className="text-xs text-cyan-300 mb-2 font-bold text-center">Tokens</div>
+              <div className="flex-1 flex items-center justify-center">
+                {loadingDiagram && stepData?.tokens === undefined ? (
+                  <div className="w-4 h-4 border-2 border-cyan-300/50 border-t-cyan-300 rounded-full animate-spin" />
+                ) : stepData?.tokens !== undefined ? (
+                  <div className="text-white font-semibold text-sm">
+                    {stepData.tokens}
+                  </div>
+                ) : (
+                  <div className="text-slate-500 text-xs">-</div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Expandable badges for Description and Iteration */}

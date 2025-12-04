@@ -60,7 +60,9 @@ Estructura exacta:
         "type": "default",
         "position": { "x": number, "y": number },
         "data": {
-          "label": "nombre_funcion(params) → valor_retorno"
+          "label": "nombre_funcion(params) → valor_retorno",
+          "microseconds": number (opcional, tiempo estimado en microsegundos para esta llamada),
+          "tokens": number (opcional, número de operaciones elementales para esta llamada)
         }
       }
     ],
@@ -121,6 +123,20 @@ LAYOUT EN ÁRBOL
   * NO lo coloques muy lejos, debe estar cerca y fácilmente visible
   * El retorno final (desde el nodo raíz) debe conectarse directamente a este nodo FIN
   * Esta arista debe tener label con "return" o "→" para que se coloree en verde
+
+ESTIMACIÓN DE COSTES (MICROSEGUNDOS Y TOKENS)
+- Para cada nodo (llamada recursiva), debes estimar:
+  - **microseconds**: Tiempo estimado de ejecución en microsegundos basado en:
+    * Casos base: 0.5-2 μs (operaciones simples)
+    * Llamadas recursivas: 1-10 μs base + tiempo de evaluación de parámetros
+    * Operaciones dentro de la llamada: suma según tipo (asignaciones, comparaciones, etc.)
+    * Considera la profundidad: llamadas más profundas pueden tener overhead adicional
+  - **tokens**: Número de operaciones elementales (tokens computacionales):
+    * Casos base: 1-3 tokens (operaciones simples)
+    * Llamadas recursivas: 2-5 tokens base + tokens de evaluación de parámetros
+    * Operaciones dentro de la llamada: suma según tipo
+    * Cada llamada recursiva cuenta como 1 token adicional
+- Incluye estos valores en data.microseconds y data.tokens de cada nodo
 
 EXPLICACIÓN (Markdown)
 - Describe el patrón recursivo del algoritmo
@@ -285,9 +301,28 @@ Devuelve SOLO el JSON con la estructura especificada.`;
       );
     }
 
+    // Preservar microseconds y tokens de los nodos si existen
+    const processedGraph = {
+      ...result.graph,
+      nodes: Array.isArray(result.graph.nodes)
+        ? result.graph.nodes.map((node: any) => ({
+            ...node,
+            data: {
+              label: node.data?.label || "",
+              microseconds:
+                typeof node.data?.microseconds === "number"
+                  ? node.data.microseconds
+                  : undefined,
+              tokens:
+                typeof node.data?.tokens === "number" ? node.data.tokens : undefined,
+            },
+          }))
+        : [],
+    };
+
     return NextResponse.json({
       ok: true,
-      graph: result.graph,
+      graph: processedGraph,
       explanation: result.explanation || "",
     });
   } catch (error) {
