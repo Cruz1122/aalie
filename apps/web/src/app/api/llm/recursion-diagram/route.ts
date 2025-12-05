@@ -76,7 +76,7 @@ Estructura exacta:
       }
     ]
   },
-  "explanation": "Explicación en Markdown sobre el proceso recursivo (máx. 200 palabras)"
+  "explanation": "Explicación en ESPAÑOL y Markdown sobre el proceso recursivo (máx. 200 palabras)"
 }
 
 REGLAS PARA NODOS (CRÍTICO)
@@ -139,6 +139,7 @@ ESTIMACIÓN DE COSTES (MICROSEGUNDOS Y TOKENS)
 - Incluye estos valores en data.microseconds y data.tokens de cada nodo
 
 EXPLICACIÓN (Markdown)
+- ⚠️ CRÍTICO: La explicación DEBE estar SIEMPRE en ESPAÑOL. NO uses inglés ni otros idiomas.
 - Describe el patrón recursivo del algoritmo
 - Identifica caso(s) base claramente
 - Explica cómo se combinan las soluciones

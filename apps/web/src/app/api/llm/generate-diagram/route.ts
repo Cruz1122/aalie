@@ -170,7 +170,7 @@ Estructura exacta de la respuesta:
       "tokens": number
     }
   },
-  "explanation": "explicación en lenguaje natural (máx. 200 palabras) sobre el comportamiento del algoritmo en el caso dado"
+  "explanation": "explicación en ESPAÑOL y lenguaje natural (máx. 200 palabras) sobre el comportamiento del algoritmo en el caso dado"
 }
 
 REGLAS PARA NODOS
@@ -252,6 +252,7 @@ MANEJO ESPECIAL PARA ALGORITMOS RECURSIVOS
 - La explicación debe describir el patrón recursivo, casos base, y cómo se combinan las soluciones
 
 EXPLICACIÓN
+- ⚠️ CRÍTICO: La explicación DEBE estar SIEMPRE en ESPAÑOL. NO uses inglés ni otros idiomas.
 - En explanation, describe brevemente:
   - Cómo fluye el algoritmo en el caso dado (best/worst/avg).
 - Puedes usar expresiones completas como A[i] == x sin restricciones aquí (no afecta al parser de React Flow).
