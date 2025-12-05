@@ -32,7 +32,7 @@ export default function PrivacyPage() {
           <div className="flex items-center justify-center gap-2 mt-4">
             <span className="h-1 w-1 rounded-full bg-green-400"></span>
             <p className="text-sm text-green-400 font-medium">
-              Última actualización: Diciembre 2024
+              Última actualización: Diciembre 2025
             </p>
           </div>
         </div>

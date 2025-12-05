@@ -287,7 +287,7 @@ function GPUCard({
           }}
         >
           {/* Label arriba del icono */}
-          <h3 className="text-xl font-semibold mb-3 text-white/90">
+          <h3 className="text-lg font-semibold mb-2 text-white/90">
             {label}
           </h3>
 
@@ -296,7 +296,7 @@ function GPUCard({
             <span
               className={`material-symbols-outlined ${style.iconColor}`}
               style={{ 
-                fontSize: 'clamp(4rem, 15vw, 10rem)', 
+                fontSize: 'clamp(3rem, 10vw, 6rem)', 
                 lineHeight: '1',
                 display: 'block'
               }}
@@ -306,7 +306,7 @@ function GPUCard({
             {/* Flecha zig-zag en esquina inferior derecha del icono */}
             <div className="absolute bottom-0 right-0">
               <span
-                className={`material-symbols-outlined text-2xl ${style.arrowColor} bg-slate-900/80 rounded-full p-0.5`}
+                className={`material-symbols-outlined text-xl ${style.arrowColor} bg-slate-900/80 rounded-full p-0.5`}
               >
                 {style.arrowIcon}
               </span>
@@ -367,7 +367,7 @@ function GPUCPUContent({
     <>
       {/* Cards - se ocultan cuando está expandido */}
       {!isExpanded && (
-        <div className="flex-1 grid grid-cols-2 gap-6 mb-4 min-h-0">
+        <div className="flex-1 grid grid-cols-2 gap-4 mb-4 min-h-0">
           {/* Card GPU */}
           <GPUCard 
             score={gpuScore} 
@@ -509,7 +509,7 @@ export default function GPUCPUModal({
       />
 
       {/* Modal */}
-      <div className="relative z-10 glass-modal-container rounded-2xl p-6 w-[90vw] max-w-5xl h-[85vh] mx-4 shadow-2xl flex flex-col">
+      <div className="relative z-10 glass-modal-container rounded-2xl p-6 w-[85vw] max-w-4xl h-[80vh] mx-4 shadow-2xl flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">

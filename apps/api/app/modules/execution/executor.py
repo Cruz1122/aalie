@@ -68,19 +68,11 @@ class CodeExecutor:
         try:
             # Encontrar el procedimiento principal o ejecutar el programa
             if self.ast.get("type") == "Program":
-                # Buscar procedimiento principal o ejecutar statements
+                # Ejecutar todos los statements del programa
+                # Esto incluye tanto ProcDefs (que solo se registran) como Calls (que ejecutan)
                 body = self.ast.get("body", [])
-                
-                # Si hay procedimientos, encontrar el principal
-                proc_defs = [item for item in body if isinstance(item, dict) and item.get("type") == "ProcDef"]
-                if proc_defs:
-                    # Ejecutar el primer procedimiento (asumimos que es el principal)
-                    main_proc = proc_defs[0]
-                    self._execute_procedure(main_proc, {})
-                else:
-                    # Ejecutar statements directamente
-                    for stmt in body:
-                        self._execute_statement(stmt)
+                for stmt in body:
+                    self._execute_statement(stmt)
             elif self.ast.get("type") == "ProcDef":
                 self._execute_procedure(self.ast, {})
         except MaxRecursionDepthExceeded:
@@ -120,12 +112,14 @@ class CodeExecutor:
             if self.recursion_depth >= self.max_recursion_depth:
                 raise MaxRecursionDepthExceeded(f"Profundidad máxima de recursión ({self.max_recursion_depth}) excedida")
             
-            # Incrementar profundidad
-            self.recursion_depth += 1
+            # Capturar profundidad actual antes de incrementar
+            depth = self.recursion_depth
             
             # Generar ID de llamada
             call_id = self.trace_builder.generate_call_id()
-            depth = self.recursion_depth
+            
+            # Incrementar profundidad para llamadas subsecuentes
+            self.recursion_depth += 1
             
             # Crear nuevo frame para la llamada
             frame = {
@@ -219,6 +213,9 @@ class CodeExecutor:
             self._execute_block(stmt)
         elif stmt_type == "decl":
             self._execute_decl(stmt)
+        elif stmt_type == "procdef":
+            # Las definiciones de procedimientos no se ejecutan, solo se registran
+            pass
     
     def _execute_assign(self, node: Dict[str, Any]) -> None:
         """Ejecuta una asignación."""
