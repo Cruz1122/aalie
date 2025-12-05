@@ -4643,12 +4643,43 @@ FIN FUNCIÓN"""
                 if second_param_name in ["n", "size", "length", "len", "tam", "tamaño"]:
                     size_param_name = second_param.get("name", "")
                     size_param_index = 1
+                # También verificar si el segundo argumento en la llamada recursiva está modificado
+                # (es una expresión binaria con -, /, etc.) mientras que el primero no
+                elif len(args) > 1:
+                    first_arg = args[0] if len(args) > 0 else None
+                    second_arg = args[1] if len(args) > 1 else None
+                    # Si el segundo argumento es una expresión (modificado) y el primero es un identificador simple
+                    if (isinstance(second_arg, dict) and 
+                        second_arg.get("type", "").lower() in ["binary", "unary"] and
+                        isinstance(first_arg, dict) and
+                        first_arg.get("type", "").lower() == "identifier"):
+                        # El segundo parámetro es probablemente el tamaño
+                        size_param_name = second_param.get("name", "")
+                        size_param_index = 1
         
         # Analizar argumentos buscando el que corresponde al tamaño
         # Si el primer parámetro es array, buscar en args[1], sino en args[0]
         # Pero si detectamos que el tamaño está en el segundo parámetro, buscar en args[1]
         size_arg_index = size_param_index if size_param_index < len(args) else 0
         size_arg = args[size_arg_index] if size_arg_index < len(args) else None
+        
+        # Si hay dos parámetros y no detectamos automáticamente cuál es el tamaño,
+        # probar ambos argumentos para ver cuál está siendo modificado
+        if not first_param_is_array and len(params) == 2 and len(args) == 2:
+            first_arg = args[0] if len(args) > 0 else None
+            second_arg = args[1] if len(args) > 1 else None
+            
+            # Verificar si el segundo argumento está modificado y el primero no
+            second_arg_modified = (isinstance(second_arg, dict) and 
+                                  second_arg.get("type", "").lower() in ["binary", "unary"])
+            first_arg_simple = (isinstance(first_arg, dict) and 
+                               first_arg.get("type", "").lower() == "identifier")
+            
+            if second_arg_modified and first_arg_simple:
+                # El segundo parámetro es probablemente el tamaño
+                size_param_name = params[1].get("name", "") if isinstance(params[1], dict) else str(params[1])
+                size_arg_index = 1
+                size_arg = second_arg
         
         if size_arg and isinstance(size_arg, dict):
             arg_type = size_arg.get("type", "").lower()
@@ -4729,6 +4760,46 @@ FIN FUNCIÓN"""
                                 "pattern": "(inicio+fin)/2",
                                 "factor": 2
                             }
+        
+        # Fallback: Si no se detectó nada y hay dos parámetros, probar con el segundo argumento
+        if not first_param_is_array and len(params) == 2 and len(args) == 2:
+            # Si el primer argumento no dio resultado, probar con el segundo
+            if size_arg_index == 0:
+                second_arg = args[1] if len(args) > 1 else None
+                if isinstance(second_arg, dict):
+                    second_arg_type = second_arg.get("type", "").lower()
+                    if second_arg_type == "binary":
+                        op = second_arg.get("op", "")
+                        if op == "-":
+                            left = second_arg.get("left", {})
+                            right = second_arg.get("right", {})
+                            if isinstance(left, dict):
+                                left_name = left.get("name", "") or left.get("id", "")
+                                second_param = params[1]
+                                second_param_name = second_param.get("name", "") if isinstance(second_param, dict) else str(second_param)
+                                if left_name == second_param_name:
+                                    if isinstance(right, dict) and right.get("type", "").lower() == "literal":
+                                        value = right.get("value", 1)
+                                        return {
+                                            "type": "subtraction",
+                                            "pattern": f"n-{value}",
+                                            "factor": value
+                                        }
+                        elif op == "/":
+                            left = second_arg.get("left", {})
+                            right = second_arg.get("right", {})
+                            if isinstance(left, dict):
+                                left_name = left.get("name", "") or left.get("id", "")
+                                second_param = params[1]
+                                second_param_name = second_param.get("name", "") if isinstance(second_param, dict) else str(second_param)
+                                if left_name == second_param_name:
+                                    if isinstance(right, dict) and right.get("type", "").lower() == "literal":
+                                        value = right.get("value", 2)
+                                        return {
+                                            "type": "division",
+                                            "pattern": f"n/{value}",
+                                            "factor": value
+                                        }
             
             # Caso: parámetro directo sin modificación (n)
             elif arg_type == "identifier":
