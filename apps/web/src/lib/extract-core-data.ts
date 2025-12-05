@@ -41,6 +41,10 @@ export interface CoreAnalysisData {
     case: 1 | 2 | 3 | null;
     nlogba: string;
     comparison: "smaller" | "equal" | "larger" | null;
+    regularity?: {
+      checked: boolean;
+      note: string;
+    };
     theta: string | null;
   };
   iteration?: {
@@ -174,6 +178,12 @@ export function extractCoreData(
         comparison: totals.master.comparison,
         theta: totals.master.theta,
       };
+      if (totals.master.regularity) {
+        coreData.master.regularity = {
+          checked: totals.master.regularity.checked,
+          note: totals.master.regularity.note,
+        };
+      }
       if (totals.master.theta) {
         coreData.big_theta = totals.master.theta;
       }

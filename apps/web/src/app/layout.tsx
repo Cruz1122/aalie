@@ -33,6 +33,7 @@ export default function RootLayout({
     <html lang="es" className={`${notoSans.variable} ${splineSans.variable}`}>
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&display=swap"
           rel="stylesheet"

@@ -325,6 +325,7 @@ interface ProcedureModalProps {
   readonly master: MasterType;
   readonly currentMaster: MasterType;
   readonly proof: ProofType;
+  readonly currentProof: ProofType;
   readonly theta: string | null | undefined;
   readonly T_open: string | null | undefined;
   readonly selectedCase: CaseType;
@@ -464,7 +465,7 @@ const renderMasterModal = (props: ProcedureModalProps): React.JSX.Element => {
       )}
       recurrence={divideConquerRecurrence}
       master={props.currentMaster || props.master}
-      proof={props.proof}
+      proof={props.currentProof ?? props.proof}
       theta={props.currentTheta || props.theta || props.T_open}
     />
   );
@@ -1078,6 +1079,19 @@ export default function RecursiveAnalysisView({
     }
   }, [selectedCase, isMasterMethod, worstData, bestData, avgData, master]);
 
+  const currentProof = useMemo(() => {
+    switch (selectedCase) {
+      case "worst":
+        return worstData?.totals?.proof || undefined;
+      case "best":
+        return bestData?.totals?.proof || undefined;
+      case "average":
+        return avgData?.totals?.proof || undefined;
+      default:
+        return worstData?.totals?.proof || bestData?.totals?.proof || avgData?.totals?.proof || undefined;
+    }
+  }, [selectedCase, worstData, bestData, avgData]);
+
   // Obtener theta según el caso seleccionado (solo para teorema maestro)
   const currentTheta = useMemo(() => {
     if (!isMasterMethod) return theta || T_open;
@@ -1330,6 +1344,7 @@ export default function RecursiveAnalysisView({
         master,
         currentMaster,
         proof,
+        currentProof,
         theta,
         T_open,
         selectedCase,

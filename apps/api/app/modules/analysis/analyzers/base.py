@@ -1,10 +1,12 @@
-from typing import List, Dict, Any, Optional, Union
-from sympy import Symbol, Sum, Integer, Expr, latex, sympify
-import json
 import hashlib
-from ..utils.expr_converter import ExprConverter
+import json
+from typing import Any, Dict, List, Optional, Union
+
+from sympy import Expr, Integer, Symbol, Sum, latex, sympify
+
+from ...shared.types import AnalyzeOpenResponse, LineCost
 from ..models.avg_model import AvgModel
-from ...shared.types import LineCost, AnalyzeOpenResponse
+from ..utils.expr_converter import ExprConverter
 
 
 class BaseAnalyzer:
@@ -333,7 +335,8 @@ class BaseAnalyzer:
         total_expr = Add(*terms) if len(terms) > 1 else terms[0]
         
         # Simplificar completamente: evaluar todas las sumatorias
-        from sympy import simplify as sympy_simplify, expand
+        from sympy import expand, simplify as sympy_simplify
+
         from ..utils.summation_closer import SummationCloser
         
         # Usar SummationCloser para evaluar todas las sumatorias correctamente

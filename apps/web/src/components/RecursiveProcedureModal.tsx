@@ -76,6 +76,17 @@ export default function RecursiveProcedureModal({
   if (!open) return null;
 
   // Los pasos de prueba ya vienen con el formato correcto desde el backend
+  
+  // Debug: verificar que proof esté llegando
+  if (process.env.NODE_ENV === "development") {
+    console.log("[RecursiveProcedureModal] proof recibido:", {
+      proof,
+      hasProof: !!proof,
+      proofLength: proof?.length,
+      proofType: typeof proof,
+      isArray: Array.isArray(proof),
+    });
+  }
 
   return (
     <div className="fixed inset-0 z-50">
@@ -244,29 +255,99 @@ export default function RecursiveProcedureModal({
             {/* Columna derecha: Pasos de Prueba */}
             <div className="space-y-6 lg:col-span-2">
               {/* Pasos de Prueba */}
-              {proof && proof.length > 0 && (
+              {proof && Array.isArray(proof) && proof.length > 0 ? (
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
                   <h4 className="text-white font-semibold mb-4 flex items-center gap-2">
                     <span className="material-symbols-outlined text-purple-400">
                       description
                     </span>
                     <span>Pasos de Prueba</span>
+                    <span className="text-xs text-slate-400 ml-auto">
+                      ({proof.length} pasos)
+                    </span>
                   </h4>
-                  <div className="space-y-2 max-h-[calc(90vh-435px)] overflow-y-auto scrollbar-custom w-full">
-                    {" "}
-                    {proof.map((step, idx) => (
-                      <div
-                        key={idx}
-                        className="p-3 rounded-lg bg-slate-900/50 border border-white/10 w-full"
-                      >
-                        <div className="text-sm text-slate-200 w-full overflow-x-auto">
-                          <div className="w-full">
-                            <Formula latex={step.text} display />
-                          </div>
-                        </div>
+                  <div 
+                    className="space-y-2 max-h-[calc(90vh-435px)] overflow-y-auto scrollbar-custom w-full"
+                    style={{ minHeight: "200px" }}
+                  >
+                    {proof.length === 0 ? (
+                      <div className="p-3 rounded-lg bg-yellow-900/20 border border-yellow-500/30">
+                        <p className="text-yellow-400 text-sm">
+                          No hay pasos disponibles
+                        </p>
                       </div>
-                    ))}
+                    ) : (
+                      proof.map((step, idx) => {
+                        // Debug: verificar estructura del paso
+                        if (process.env.NODE_ENV === "development" && idx === 0) {
+                          console.log("[RecursiveProcedureModal] Primer paso:", {
+                            step,
+                            hasText: !!step.text,
+                            text: step.text,
+                            stepKeys: Object.keys(step),
+                          });
+                        }
+                        
+                        if (!step) {
+                          console.warn(`[RecursiveProcedureModal] Paso ${idx} es null/undefined`);
+                          return (
+                            <div
+                              key={`proof-step-${idx}`}
+                              className="p-3 rounded-lg bg-red-900/20 border border-red-500/30 w-full"
+                            >
+                              <p className="text-red-400 text-xs">
+                                Paso {idx + 1}: null/undefined
+                              </p>
+                            </div>
+                          );
+                        }
+                        
+                        const stepText = step.text || String(step);
+                        
+                        if (!stepText) {
+                          console.warn(`[RecursiveProcedureModal] Paso ${idx} sin texto:`, step);
+                          return (
+                            <div
+                              key={`proof-step-${idx}`}
+                              className="p-3 rounded-lg bg-red-900/20 border border-red-500/30 w-full"
+                            >
+                              <p className="text-red-400 text-xs">
+                                Paso {idx + 1}: Sin contenido (debug)
+                              </p>
+                            </div>
+                          );
+                        }
+                        
+                        return (
+                          <div
+                            key={`proof-step-${idx}`}
+                            className="p-3 rounded-lg bg-slate-900/50 border border-white/10 w-full min-h-[3rem]"
+                            style={{ display: "block", visibility: "visible", opacity: 1 }}
+                          >
+                            <div className="text-sm text-slate-200 w-full overflow-x-auto">
+                              <div className="w-full" style={{ minHeight: "1.5rem" }}>
+                                {stepText ? (
+                                  <Formula latex={stepText} display />
+                                ) : (
+                                  <span className="text-red-400">
+                                    Error: No se pudo renderizar el paso {idx + 1}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
+                </div>
+              ) : (
+                <div className="p-4 rounded-lg bg-slate-800/50 border border-yellow-500/30">
+                  <p className="text-yellow-400 text-sm">
+                    {process.env.NODE_ENV === "development" 
+                      ? `Debug: No hay pasos de prueba disponibles. proof = ${JSON.stringify(proof)}`
+                      : "No hay pasos de prueba disponibles para este caso."}
+                  </p>
                 </div>
               )}
 
