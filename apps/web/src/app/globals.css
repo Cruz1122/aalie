@@ -277,6 +277,22 @@ body {
   .duration-500 {
     animation-duration: 0.5s;
   }
+
+  /* Animación suave para cambios de paso en el modal de seguimiento */
+  .animate-fade-in {
+    animation: fadeInStep 0.3s ease-out;
+  }
+
+  @keyframes fadeInStep {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
 @media (min-width: 768px) {
   .documentation-grid {
@@ -688,7 +704,7 @@ dialog::backdrop {
 }
 
 .recursion-tree-container .react-flow__edge-path {
-  stroke: #64748b !important;
+  stroke: #38bdf8 !important; /* azul cian muy visible */
   stroke-width: 3px !important;
   fill: none !important;
   opacity: 1 !important;
@@ -697,11 +713,17 @@ dialog::backdrop {
 }
 
 .recursion-tree-container path.react-flow__edge-path {
-  stroke: #64748b !important;
+  stroke: #38bdf8 !important; /* mantener mismo color para cualquier path */
   stroke-width: 3px !important;
   fill: none !important;
   opacity: 1 !important;
   visibility: visible !important;
+}
+
+/* Aristas de retorno en verde - DEBE IR AL FINAL para mayor especificidad */
+.recursion-tree-container .react-flow__edge.return-edge path.react-flow__edge-path {
+  stroke: #10b981 !important; /* verde para retornos */
+  stroke-width: 2.5px !important;
 }
 
 .recursion-tree-container svg.react-flow__edges {
@@ -786,7 +808,7 @@ input[type="range"]::-webkit-slider-track {
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  background: #a855f7;
+  background: #60a5fa;
   height: 14px;
   width: 14px;
   border-radius: 50%;
@@ -794,7 +816,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 input[type="range"]::-webkit-slider-thumb:hover {
-  background: #9333ea;
+  background: #3b82f6;
 }
 
 input[type="range"]::-moz-range-track {

@@ -9,8 +9,10 @@ import { ASTTreeView } from "@/components/ASTTreeView";
 import ChatBot from "@/components/ChatBot";
 import { ComparisonLoader } from "@/components/ComparisonLoader";
 import ComparisonModal from "@/components/ComparisonModal";
+import ExecutionTraceModal from "@/components/ExecutionTraceModal";
 import Footer from "@/components/Footer";
 import GeneralProcedureModal from "@/components/GeneralProcedureModal";
+import GPUCPUModal from "@/components/GPUCPUModal";
 import Header from "@/components/Header";
 import IterativeAnalysisView from "@/components/IterativeAnalysisView";
 import MethodSelector, { MethodType } from "@/components/MethodSelector";
@@ -22,7 +24,9 @@ import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 import { extractCoreData, isRecursiveAnalysis, type CoreAnalysisData } from "@/lib/extract-core-data";
+import { analyzeASTForGPUCPU } from "@/lib/gpu-cpu-analyzer";
 import { getSavedCase, saveCase } from "@/lib/polynomial";
+import type { GPUCPUAnalysisResult } from "@/types/gpu-cpu";
 
 import {
   extractParseError,
@@ -174,6 +178,12 @@ export default function AnalyzerPage() {
     avg: CoreAnalysisData | null;
   } | null>(null);
   const [llmNote, setLlmNote] = useState<string>("");
+  // Estado para seguimiento de ejecución
+  const [showExecutionTraceModal, setShowExecutionTraceModal] = useState(false);
+  const [executionTraceCase, setExecutionTraceCase] = useState<"worst" | "best" | "avg">("worst");
+  // Estado para análisis GPU vs CPU
+  const [showGPUCPUModal, setShowGPUCPUModal] = useState(false);
+  const [gpuCpuAnalysis, setGpuCpuAnalysis] = useState<GPUCPUAnalysisResult | null>(null);
 
   // Refs para evitar memory leaks con timeouts
   const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -541,8 +551,13 @@ export default function AnalyzerPage() {
       
       // Extraer datos core de todos los casos para iterativo
       const ownCoreDataWorst = extractCoreData(data.worst || null);
-      const ownCoreDataBest = data.best === "same_as_worst" ? null : extractCoreData(data.best || null);
-      const ownCoreDataAvg = data.avg === "same_as_worst" ? null : extractCoreData(data.avg || null);
+      // Si best o avg es "same_as_worst", usar los datos del worst (son iguales)
+      const ownCoreDataBest = data.best === "same_as_worst" 
+        ? ownCoreDataWorst 
+        : extractCoreData(data.best || null);
+      const ownCoreDataAvg = data.avg === "same_as_worst" 
+        ? ownCoreDataWorst 
+        : extractCoreData(data.avg || null);
       
       // Para recursivo, usar worst como principal
       const ownCoreData = isRecursive ? ownCoreDataWorst : ownCoreDataWorst;
@@ -1753,6 +1768,24 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                         </div>
                       </button>
                       <button
+                        onClick={() => setShowExecutionTraceModal(true)}
+                        disabled={!hasComparableData || !hasApiKey}
+                        className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-400/50 bg-gradient-to-br from-blue-500/20 to-blue-500/20 border border-blue-500/30 hover:from-blue-500/30 hover:to-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
+                      >
+                        <span className="material-symbols-outlined text-sm">play_circle</span>
+                        {(!hasComparableData || !hasApiKey) ? (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                            {!hasComparableData
+                              ? "No hay análisis completo"
+                              : "Se requiere una API_KEY para el seguimiento"}
+                          </div>
+                        ) : (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                            Ver seguimiento de ejecución
+                          </div>
+                        )}
+                      </button>
+                      <button
                         onClick={handleCompareWithLLM}
                         disabled={!hasApiKey || !hasComparableData}
                         className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
@@ -1765,6 +1798,27 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                         ) : (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
                             Comparar con LLM
+                          </div>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!ast) return;
+                          const analysis = analyzeASTForGPUCPU(ast);
+                          setGpuCpuAnalysis(analysis);
+                          setShowGPUCPUModal(true);
+                        }}
+                        disabled={!ast || !hasComparableData}
+                        className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-400/50 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30 hover:from-blue-500/30 hover:to-cyan-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
+                      >
+                        <span className="material-symbols-outlined text-sm">speed</span>
+                        {(!ast || !hasComparableData) ? (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                            {!ast ? "No hay AST disponible" : "Ejecuta un análisis primero"}
+                          </div>
+                        ) : (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                            Análisis GPU vs CPU
                           </div>
                         )}
                       </button>
@@ -1973,6 +2027,16 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         />
       )}
 
+      {/* Modal de seguimiento de ejecución */}
+      <ExecutionTraceModal
+        open={showExecutionTraceModal}
+        onClose={() => setShowExecutionTraceModal(false)}
+        source={source}
+        ast={ast}
+        caseType={executionTraceCase}
+        onCaseChange={setExecutionTraceCase}
+      />
+
       {/* Modal de comparación con LLM */}
       <ComparisonModal
         open={showComparisonModal}
@@ -1990,6 +2054,13 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
           (data?.avg === "same_as_worst" ? null : data?.avg) || 
           null
         )}
+      />
+
+      {/* Modal de análisis GPU vs CPU */}
+      <GPUCPUModal
+        open={showGPUCPUModal}
+        onClose={() => setShowGPUCPUModal(false)}
+        analysis={gpuCpuAnalysis}
       />
 
       <Footer />

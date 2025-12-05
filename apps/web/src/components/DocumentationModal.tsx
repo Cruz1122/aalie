@@ -37,6 +37,8 @@ import {
   GrammarFeature,
   GrammarSyntaxSection,
   GrammarOperatorCategory,
+  TextContent,
+  TextSection,
 } from "@/types/documentation";
 
 export default function DocumentationModal({
@@ -119,6 +121,8 @@ function renderSectionDetail(section: DocumentationSection) {
       return <AnalyzerDetail section={section} />;
     case "grammar":
       return <GrammarDetail section={section} />;
+    case "text":
+      return <TextDetail section={section} />;
     default:
       // Por defecto solo muestra el diagrama si existe
       return (
@@ -1673,6 +1677,136 @@ function AnalyzerDetail({
           </div>
         </section>
       )}
+    </article>
+  );
+}
+
+/* -------- Render: Text -------- */
+function TextDetail({ section }: Readonly<{ section: DocumentationSection }>) {
+  const content = section.content as TextContent;
+
+  // Helper function to render text with LaTeX support
+  const renderContent = (text: string) => {
+    // Split text by LaTeX delimiters (inline: $...$ or display: $$...$$)
+    const parts = text.split(/(\$\$[\s\S]+?\$\$|\$[^$]+?\$)/g);
+
+    return parts.map((part, idx) => {
+      // Display math ($$...$$)
+      if (part.startsWith('$$') && part.endsWith('$$')) {
+        const latex = part.slice(2, -2).trim();
+        return <Formula key={idx} latex={latex} display />;
+      }
+      // Inline math ($...$)
+      if (part.startsWith('$') && part.endsWith('$')) {
+        const latex = part.slice(1, -1).trim();
+        return <Formula key={idx} latex={latex} />;
+      }
+      // Regular text - preserve line breaks
+      return (
+        <span key={idx} className="whitespace-pre-line">
+          {part}
+        </span>
+      );
+    });
+  };
+
+  // Get icon and color based on section ID
+  const getSectionStyle = (sectionId: string) => {
+    const styles: Record<string, { icon: JSX.Element; bgColor: string; borderColor: string; iconColor: string }> = {
+      'memoization': {
+        icon: <BarChart3 size={20} />,
+        bgColor: 'bg-blue-800/20',
+        borderColor: 'border-blue-500/30',
+        iconColor: 'text-blue-400'
+      },
+      'llm-jobs-models': {
+        icon: <Zap size={20} />,
+        bgColor: 'bg-purple-800/20',
+        borderColor: 'border-purple-500/30',
+        iconColor: 'text-purple-400'
+      },
+      'recursive-methods': {
+        icon: <Calculator size={20} />,
+        bgColor: 'bg-emerald-800/20',
+        borderColor: 'border-emerald-500/30',
+        iconColor: 'text-emerald-400'
+      },
+      'request-flow': {
+        icon: <ArrowRight size={20} />,
+        bgColor: 'bg-cyan-800/20',
+        borderColor: 'border-cyan-500/30',
+        iconColor: 'text-cyan-400'
+      },
+      'react-flow': {
+        icon: <Code2 size={20} />,
+        bgColor: 'bg-violet-800/20',
+        borderColor: 'border-violet-500/30',
+        iconColor: 'text-violet-400'
+      },
+      'gpu-cpu': {
+        icon: <Settings size={20} />,
+        bgColor: 'bg-orange-800/20',
+        borderColor: 'border-orange-500/30',
+        iconColor: 'text-orange-400'
+      },
+      'trace-env': {
+        icon: <Package size={20} />,
+        bgColor: 'bg-pink-800/20',
+        borderColor: 'border-pink-500/30',
+        iconColor: 'text-pink-400'
+      },
+      'trace-environment': {
+        icon: <Package size={20} />,
+        bgColor: 'bg-pink-800/20',
+        borderColor: 'border-pink-500/30',
+        iconColor: 'text-pink-400'
+      }
+    };
+
+    return styles[sectionId] || {
+      icon: <ArrowRight size={20} />,
+      bgColor: 'bg-slate-700/30',
+      borderColor: 'border-white/10',
+      iconColor: 'text-slate-400'
+    };
+  };
+
+  const style = getSectionStyle(section.id);
+
+  return (
+    <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+      {/* Header with icon */}
+      <header className="flex items-center gap-3 mb-6">
+        <div className={`p-2 rounded-lg ${style.bgColor} border ${style.borderColor}`}>
+          <div className={style.iconColor}>
+            {style.icon}
+          </div>
+        </div>
+        <div>
+          <h4 className="text-lg font-semibold text-white">{section.title}</h4>
+          <p className="text-xs text-slate-400">{section.description}</p>
+        </div>
+      </header>
+
+      {/* Content sections */}
+      <div className="space-y-4">
+        {content?.sections?.map((textSection: TextSection, idx: number) => (
+          <div
+            key={idx}
+            className={`p-4 rounded-lg ${style.bgColor} border ${style.borderColor} transition-all hover:border-opacity-50`}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-white/60"></div>
+              <h5 className="text-sm font-semibold text-white">
+                {textSection.title}
+              </h5>
+            </div>
+            <div className="text-sm text-slate-300 leading-relaxed">
+              {renderContent(textSection.content)}
+            </div>
+          </div>
+        ))}
+      </div>
     </article>
   );
 }

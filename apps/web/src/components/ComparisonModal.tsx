@@ -699,31 +699,241 @@ function renderRecursiveData(
         )}
 
         {data.master && (
-          <div className="glass-card p-3 rounded-lg space-y-2">
-            <div>
-              <div className="text-sm text-slate-300 mb-1">
-                Teorema Maestro:
-              </div>
-              <div className="text-white text-sm">
-                Caso {data.master.case || "N/A"}
+          <div className="space-y-3 flex-1 flex flex-col">
+            {/* Encabezado del Teorema Maestro */}
+            <div className="glass-card p-3 rounded-lg border border-orange-500/30 bg-orange-500/10 flex-shrink-0">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="material-symbols-outlined text-sm text-orange-400">
+                  calculate
+                </span>
+                <div className="text-sm font-semibold text-orange-300">
+                  Teorema Maestro
+                </div>
+                {data.master.case && (
+                  <span className="ml-auto inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-orange-500/30 text-orange-200 border border-orange-500/50">
+                    Caso {data.master.case}
+                  </span>
+                )}
               </div>
             </div>
+
+            {/* Parámetros de la recurrencia */}
+            {data.recurrence && data.recurrence.type === "divide_conquer" && (
+              <div className="glass-card p-3 rounded-lg border border-white/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-sm text-slate-400">
+                    settings
+                  </span>
+                  <div className="text-sm font-semibold text-slate-300">
+                    Parámetros:
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-slate-900/50 p-2 rounded border border-white/10 text-center">
+                    <div className="text-[10px] text-slate-400 mb-1">a</div>
+                    <div className="text-white font-semibold text-sm">
+                      {data.recurrence.a}
+                    </div>
+                  </div>
+                  <div className="bg-slate-900/50 p-2 rounded border border-white/10 text-center">
+                    <div className="text-[10px] text-slate-400 mb-1">b</div>
+                    <div className="text-white font-semibold text-sm">
+                      {data.recurrence.b}
+                    </div>
+                  </div>
+                  <div className="bg-slate-900/50 p-2 rounded border border-white/10 text-center col-span-3">
+                    <div className="text-[10px] text-slate-400 mb-1">f(n)</div>
+                    <div className="text-white overflow-x-auto scrollbar-custom">
+                      <Formula latex={data.recurrence.f || ""} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Cálculo de n^(log_b a) */}
             {data.master.nlogba && (
-              <div>
-                <div className="text-sm text-slate-300 mb-1">n^(log_b a):</div>
-                <div className="text-white overflow-x-auto scrollbar-custom">
-                  <Formula latex={data.master.nlogba} />
+              <div className="glass-card p-3 rounded-lg border border-white/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-sm text-slate-400">
+                    functions
+                  </span>
+                  <div className="text-sm font-semibold text-slate-300">
+                    Cálculo de g(n) = n<sup>log<sub>b</sub> a</sup>:
+                  </div>
+                </div>
+                <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
+                  <div className="scale-90">
+                    <Formula latex={data.master.nlogba} display />
+                  </div>
                 </div>
               </div>
             )}
-            {data.master.theta && (
-              <div>
-                <div className="text-sm text-slate-300 mb-1">Θ:</div>
-                <div className="text-white font-semibold overflow-x-auto scrollbar-custom">
-                  <Formula latex={data.master.theta} />
+
+            {/* Comparación f(n) vs g(n) */}
+            {data.master.comparison && data.master.nlogba && data.recurrence && (
+              <div className="glass-card p-3 rounded-lg border border-blue-500/30 bg-blue-500/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-sm text-blue-400">
+                    compare_arrows
+                  </span>
+                  <div className="text-sm font-semibold text-blue-300">
+                    Comparación:
+                  </div>
+                </div>
+                <div className="bg-slate-900/50 p-3 rounded border border-blue-500/20 overflow-x-auto scrollbar-custom">
+                  <div className="flex flex-col gap-2 items-center">
+                    <div className="text-center">
+                      <div className="text-xs text-slate-400 mb-1">f(n)</div>
+                      <div className="scale-90">
+                        <Formula latex={data.recurrence.f || ""} display />
+                      </div>
+                    </div>
+                    <div className="text-blue-400 text-lg font-bold">
+                      {data.master.comparison === "smaller" && " < "}
+                      {data.master.comparison === "equal" && " = "}
+                      {data.master.comparison === "larger" && " > "}
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-slate-400 mb-1">g(n) = n<sup>log<sub>b</sub> a</sup></div>
+                      <div className="scale-90">
+                        <Formula latex={data.master.nlogba} display />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {data.master.case && (
+                  <div className="mt-2 text-xs text-blue-300 text-center">
+                    {data.master.case === 1 && "→ Caso 1: f(n) es polinomialmente menor que g(n)"}
+                    {data.master.case === 2 && "→ Caso 2: f(n) es igual a g(n)"}
+                    {data.master.case === 3 && "→ Caso 3: f(n) es polinomialmente mayor que g(n)"}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Condición de regularidad (solo para Caso 3) */}
+            {data.master.case === 3 && data.master.regularity && (
+              <div className="glass-card p-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-sm text-yellow-400">
+                    verified
+                  </span>
+                  <div className="text-sm font-semibold text-yellow-300">
+                    Condición de Regularidad:
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {data.master.regularity.checked ? (
+                    <span className="material-symbols-outlined text-green-400 text-sm">
+                      check_circle
+                    </span>
+                  ) : (
+                    <span className="material-symbols-outlined text-yellow-400 text-sm">
+                      warning
+                    </span>
+                  )}
+                  <div className="text-xs text-yellow-200 flex-1">
+                    {data.master.regularity.note || 
+                      (data.master.regularity.checked 
+                        ? "Verificada: ∃c < 1, ∃n₀: a·f(n/b) ≤ c·f(n) para n ≥ n₀"
+                        : "Asumida: Se asume que se cumple la condición de regularidad")}
+                  </div>
                 </div>
               </div>
             )}
+
+            {/* Theta Final - Mostrar los 3 casos si hay variabilidad */}
+            {(() => {
+              // Obtener theta de cada caso
+              const worstTheta =
+                worstData?.master?.theta || worstData?.T_open;
+              const bestTheta =
+                resolvedBest?.master?.theta || resolvedBest?.T_open;
+              const avgTheta =
+                resolvedAvg?.master?.theta || resolvedAvg?.T_open;
+
+              // Verificar si hay variabilidad (diferentes valores de theta)
+              const hasVariability =
+                (worstTheta &&
+                  bestTheta &&
+                  avgTheta &&
+                  (worstTheta !== bestTheta ||
+                    worstTheta !== avgTheta ||
+                    bestTheta !== avgTheta)) ||
+                (bestTheta && worstTheta && bestTheta !== worstTheta) ||
+                (bestTheta && avgTheta && bestTheta !== avgTheta);
+
+              if (hasVariability) {
+                // Mostrar los 3 casos en la misma línea
+                return (
+                  <div className="glass-card p-3 rounded-lg border border-purple-500/30 bg-purple-500/10 flex-shrink-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="material-symbols-outlined text-sm text-purple-400">
+                        speed
+                      </span>
+                      <div className="text-sm font-semibold text-purple-300">
+                        Θ (Resultado Final):
+                      </div>
+                    </div>
+                    <div className="bg-slate-900/50 p-3 rounded border border-purple-500/20 overflow-x-auto scrollbar-custom">
+                      <div className="flex flex-row gap-4 items-center justify-center flex-wrap">
+                        {bestTheta && (
+                          <div className="text-center">
+                            <div className="text-xs text-green-300 mb-1">
+                              Mejor caso:
+                            </div>
+                            <div className="scale-90">
+                              <Formula latex={bestTheta} display />
+                            </div>
+                          </div>
+                        )}
+                        {avgTheta && (
+                          <div className="text-center">
+                            <div className="text-xs text-yellow-300 mb-1">
+                              Caso promedio:
+                            </div>
+                            <div className="scale-90">
+                              <Formula latex={avgTheta} display />
+                            </div>
+                          </div>
+                        )}
+                        {worstTheta && (
+                          <div className="text-center">
+                            <div className="text-xs text-red-300 mb-1">
+                              Peor caso:
+                            </div>
+                            <div className="scale-90">
+                              <Formula latex={worstTheta} display />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              } else if (data.master.theta) {
+                // Sin variabilidad, mostrar solo uno
+                return (
+                  <div className="glass-card p-3 rounded-lg border border-purple-500/30 bg-purple-500/10 flex-shrink-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="material-symbols-outlined text-sm text-purple-400">
+                        speed
+                      </span>
+                      <div className="text-sm font-semibold text-purple-300">
+                        Θ (Resultado Final):
+                      </div>
+                    </div>
+                    <div className="bg-slate-900/50 p-3 rounded border border-purple-500/20 overflow-x-auto scrollbar-custom flex justify-center">
+                      <div className="scale-90">
+                        <Formula latex={data.master.theta} display />
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
         )}
 
@@ -968,26 +1178,209 @@ function renderRecursiveData(
         )}
 
         {data.recursion_tree && (
-          <div className="glass-card p-3 rounded-lg space-y-2">
-            <div>
-              <div className="text-sm text-slate-300 mb-1">
-                Árbol de Recursión:
-              </div>
-              <div className="text-white text-sm">
-                Altura:{" "}
-                <span className="overflow-x-auto scrollbar-custom inline-block">
-                  <Formula latex={data.recursion_tree.height} />
+          <div className="space-y-3 flex-1 flex flex-col">
+            {/* Encabezado del Árbol de Recursión */}
+            <div className="glass-card p-3 rounded-lg border border-green-500/30 bg-green-500/10 flex-shrink-0">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="material-symbols-outlined text-sm text-green-400">
+                  account_tree
                 </span>
+                <div className="text-sm font-semibold text-green-300">
+                  Árbol de Recursión
+                </div>
               </div>
             </div>
-            {data.recursion_tree.theta && (
-              <div>
-                <div className="text-sm text-slate-300 mb-1">Θ:</div>
-                <div className="text-white font-semibold overflow-x-auto scrollbar-custom">
-                  <Formula latex={data.recursion_tree.theta} />
+
+            {/* Altura del árbol */}
+            {data.recursion_tree.height && (
+              <div className="glass-card p-3 rounded-lg border border-white/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-sm text-slate-400">
+                    height
+                  </span>
+                  <div className="text-sm font-semibold text-slate-300">
+                    Altura del árbol:
+                  </div>
+                </div>
+                <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
+                  <div className="scale-90">
+                    <Formula latex={`h = ${data.recursion_tree.height}`} display />
+                  </div>
                 </div>
               </div>
             )}
+
+            {/* Sumatoria */}
+            {data.recursion_tree.summation && (
+              <div className="glass-card p-3 rounded-lg border border-white/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-sm text-slate-400">
+                    functions
+                  </span>
+                  <div className="text-sm font-semibold text-slate-300">
+                    Sumatoria:
+                  </div>
+                </div>
+                {data.recursion_tree.summation.expression && (
+                  <div className="mb-2">
+                    <div className="text-xs text-slate-400 mb-1">Expresión:</div>
+                    <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
+                      <div className="scale-90">
+                        <Formula
+                          latex={data.recursion_tree.summation.expression}
+                          display
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {data.recursion_tree.summation.evaluated && (
+                  <div>
+                    <div className="text-xs text-slate-400 mb-1">Evaluada:</div>
+                    <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
+                      <div className="scale-90">
+                        <Formula
+                          latex={data.recursion_tree.summation.evaluated}
+                          display
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Nivel Dominante */}
+            {data.recursion_tree.dominating_level && (
+              <div className="glass-card p-3 rounded-lg border border-blue-500/30 bg-blue-500/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="material-symbols-outlined text-sm text-blue-400">
+                    trending_up
+                  </span>
+                  <div className="text-sm font-semibold text-blue-300">
+                    Nivel Dominante:
+                  </div>
+                </div>
+                <div className="bg-slate-900/50 p-3 rounded border border-blue-500/20 overflow-x-auto scrollbar-custom">
+                  <div className="text-xs text-blue-200">
+                    {data.recursion_tree.dominating_level.level === "leaves" && (
+                      <span className="font-semibold">Hojas (último nivel)</span>
+                    )}
+                    {data.recursion_tree.dominating_level.level === "root" && (
+                      <span className="font-semibold">Raíz (primer nivel)</span>
+                    )}
+                    {data.recursion_tree.dominating_level.level !== "leaves" &&
+                      data.recursion_tree.dominating_level.level !== "root" && (
+                        <span className="font-semibold">
+                          Nivel {data.recursion_tree.dominating_level.level}
+                        </span>
+                      )}
+                  </div>
+                  {data.recursion_tree.dominating_level.reason && (
+                    <div className="mt-2 text-xs text-blue-200/80">
+                      <div className="scale-90 origin-top-left">
+                        <Formula
+                          latex={data.recursion_tree.dominating_level.reason}
+                          display
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Theta Final - Mostrar los 3 casos si hay variabilidad */}
+            {(() => {
+              // Obtener theta de cada caso
+              const worstTheta =
+                worstData?.recursion_tree?.theta || worstData?.T_open;
+              const bestTheta =
+                resolvedBest?.recursion_tree?.theta || resolvedBest?.T_open;
+              const avgTheta =
+                resolvedAvg?.recursion_tree?.theta || resolvedAvg?.T_open;
+
+              // Verificar si hay variabilidad (diferentes valores de theta)
+              const hasVariability =
+                (worstTheta &&
+                  bestTheta &&
+                  avgTheta &&
+                  (worstTheta !== bestTheta ||
+                    worstTheta !== avgTheta ||
+                    bestTheta !== avgTheta)) ||
+                (bestTheta && worstTheta && bestTheta !== worstTheta) ||
+                (bestTheta && avgTheta && bestTheta !== avgTheta);
+
+              if (hasVariability) {
+                // Mostrar los 3 casos en la misma línea
+                return (
+                  <div className="glass-card p-3 rounded-lg border border-purple-500/30 bg-purple-500/10 flex-shrink-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="material-symbols-outlined text-sm text-purple-400">
+                        speed
+                      </span>
+                      <div className="text-sm font-semibold text-purple-300">
+                        Θ (Resultado Final):
+                      </div>
+                    </div>
+                    <div className="bg-slate-900/50 p-3 rounded border border-purple-500/20 overflow-x-auto scrollbar-custom">
+                      <div className="flex flex-row gap-4 items-center justify-center flex-wrap">
+                        {bestTheta && (
+                          <div className="text-center">
+                            <div className="text-xs text-green-300 mb-1">
+                              Mejor caso:
+                            </div>
+                            <div className="scale-90">
+                              <Formula latex={bestTheta} display />
+                            </div>
+                          </div>
+                        )}
+                        {avgTheta && (
+                          <div className="text-center">
+                            <div className="text-xs text-yellow-300 mb-1">
+                              Caso promedio:
+                            </div>
+                            <div className="scale-90">
+                              <Formula latex={avgTheta} display />
+                            </div>
+                          </div>
+                        )}
+                        {worstTheta && (
+                          <div className="text-center">
+                            <div className="text-xs text-red-300 mb-1">
+                              Peor caso:
+                            </div>
+                            <div className="scale-90">
+                              <Formula latex={worstTheta} display />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              } else if (data.recursion_tree.theta) {
+                // Sin variabilidad, mostrar solo uno
+                return (
+                  <div className="glass-card p-3 rounded-lg border border-purple-500/30 bg-purple-500/10 flex-shrink-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="material-symbols-outlined text-sm text-purple-400">
+                        speed
+                      </span>
+                      <div className="text-sm font-semibold text-purple-300">
+                        Θ (Resultado Final):
+                      </div>
+                    </div>
+                    <div className="bg-slate-900/50 p-3 rounded border border-purple-500/20 overflow-x-auto scrollbar-custom flex justify-center">
+                      <div className="scale-90">
+                        <Formula latex={data.recursion_tree.theta} display />
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
         )}
 

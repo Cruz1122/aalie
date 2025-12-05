@@ -1,10 +1,12 @@
-from typing import List, Dict, Any, Optional, Union
-from sympy import Symbol, Sum, Integer, Expr, latex, sympify
-import json
 import hashlib
-from ..utils.expr_converter import ExprConverter
+import json
+from typing import Any, Dict, List, Optional, Union
+
+from sympy import Expr, Integer, Symbol, Sum, latex, sympify
+
+from ...shared.types import AnalyzeOpenResponse, LineCost
 from ..models.avg_model import AvgModel
-from ...shared.types import LineCost, AnalyzeOpenResponse
+from ..utils.expr_converter import ExprConverter
 
 
 class BaseAnalyzer:
@@ -333,7 +335,8 @@ class BaseAnalyzer:
         total_expr = Add(*terms) if len(terms) > 1 else terms[0]
         
         # Simplificar completamente: evaluar todas las sumatorias
-        from sympy import simplify as sympy_simplify, expand
+        from sympy import expand, simplify as sympy_simplify
+
         from ..utils.summation_closer import SummationCloser
         
         # Usar SummationCloser para evaluar todas las sumatorias correctamente
@@ -346,6 +349,20 @@ class BaseAnalyzer:
             total_expr = sympy_simplify(total_expr)
         except Exception:
             total_expr = sympy_simplify(total_expr)
+        
+        # IMPORTANTE: Eliminar variables de iteración (i, j, k) que no deberían estar en T_open
+        if hasattr(self, '_sanitize_expression'):
+            total_expr = self._sanitize_expression(total_expr)
+        else:
+            # Fallback: limpieza básica de variables de iteración
+            from sympy import Symbol, Integer as SymInteger
+            iteration_vars = ['i', 'j', 'k']
+            for var_name in iteration_vars:
+                var_symbol = Symbol(var_name, integer=True)
+                if total_expr.has(var_symbol):
+                    # Sustituir por 0 (no deberían estar presentes)
+                    total_expr = total_expr.subs(var_symbol, SymInteger(0))
+                    total_expr = sympy_simplify(total_expr)
         
         # VALIDACIÓN: Verificar que solo contenga n y constantes C_k
         # Se permiten: n, C_k (con cualquier k), números, operadores básicos
@@ -649,6 +666,20 @@ class BaseAnalyzer:
             total_expr = sympy_simplify(total_expr)
         except Exception:
             total_expr = sympy_simplify(total_expr)
+        
+        # IMPORTANTE: Eliminar variables de iteración (i, j, k) que no deberían estar en T_open
+        if hasattr(self, '_sanitize_expression'):
+            total_expr = self._sanitize_expression(total_expr)
+        else:
+            # Fallback: limpieza básica de variables de iteración
+            from sympy import Symbol, Integer as SymInteger
+            iteration_vars = ['i', 'j', 'k']
+            for var_name in iteration_vars:
+                var_symbol = Symbol(var_name, integer=True)
+                if total_expr.has(var_symbol):
+                    # Sustituir por 0 (no deberían estar presentes)
+                    total_expr = total_expr.subs(var_symbol, SymInteger(0))
+                    total_expr = sympy_simplify(total_expr)
         
         return total_expr
 

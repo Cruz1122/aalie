@@ -1,11 +1,11 @@
 # Módulo de analysis
-from .router import router
-from .analyzers.registry import AnalyzerRegistry
+# Avoid circular import: router imports from execution which imports from analysis.utils
+# So we don't eagerly import router here
 from .analyzers.iterative import IterativeAnalyzer
 from .analyzers.recursive import RecursiveAnalyzer
+from .analyzers.registry import AnalyzerRegistry
 
 __all__ = [
-    "router",
     "AnalyzerRegistry",
     "IterativeAnalyzer",
     "RecursiveAnalyzer"

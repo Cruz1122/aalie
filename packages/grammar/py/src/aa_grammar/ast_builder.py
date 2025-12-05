@@ -114,9 +114,47 @@ class ASTBuilder(LanguageVisitor):
     
     def visitArrayParam(self, ctx: LanguageParser.ArrayParamContext):
         name = ctx.ID().getText()
-        start = self.visit(ctx.arrayIndex(0))
-        end = self.visit(ctx.arrayIndex(1)) if ctx.arrayIndex(1) else None
+        # Obtener todas las dimensiones
+        all_dims = list(ctx.arrayDim()) if ctx.arrayDim() else []
+        
+        # Si hay un RANGE, dividir las dimensiones en iniciales y de rango
+        has_range = ctx.RANGE() is not None
+        if has_range:
+            # Contar dimensiones antes del RANGE iterando sobre los hijos
+            dim_count_before = 0
+            for child in ctx.children:
+                if isinstance(child, LanguageParser.ArrayDimContext):
+                    dim_count_before += 1
+                elif hasattr(child, 'symbol') and child.symbol:
+                    # Verificar si es el token RANGE
+                    try:
+                        from .generated.LanguageParser import LanguageParser
+                        if child.symbol.type == LanguageParser.RANGE:
+                            break
+                    except:
+                        pass
+            
+            # Dividir dimensiones
+            start_dims = all_dims[:dim_count_before] if dim_count_before > 0 else []
+            end_dims = all_dims[dim_count_before:] if dim_count_before < len(all_dims) else []
+            start = self.visit(start_dims[0]) if start_dims else None
+            end = self.visit(end_dims[0]) if end_dims else None
+        else:
+            # Sin rango: usar la primera dimensión como start
+            start = self.visit(all_dims[0]) if all_dims else None
+            end = None
+        
         return {"type": "ArrayParam", "name": name, "start": start, "end": end, "pos": get_pos(ctx)}
+    
+    def visitArrayDim(self, ctx: LanguageParser.ArrayDimContext):
+        """Extrae el valor de una dimensión de array (ID o INT dentro de [])"""
+        if ctx.ID():
+            return ident(ctx.ID().getText(), ctx.ID())
+        elif ctx.INT():
+            return lit(int(ctx.INT().getText()), ctx.INT())
+        else:
+            # Fallback
+            return lit(0, ctx)
     
     def visitArrayIndex(self, ctx: LanguageParser.ArrayIndexContext):
         if ctx.ID():

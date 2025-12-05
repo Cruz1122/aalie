@@ -7,7 +7,10 @@ from fastapi import APIRouter, Body
 from typing import Any, Dict
 from .service import analyze_algorithm, detect_methods
 from .analyzers.dummy import create_dummy_analysis
-from .schemas import AnalyzeRequest
+from .schemas import AnalyzeRequest, TraceRequest, TraceResponse
+from ..parsing.service import parse_source
+from ..classification.service import classify_algorithm as classify_algo
+from ..execution.executor import CodeExecutor
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
@@ -91,6 +94,88 @@ def analyze_dummy() -> Dict[str, Any]:
             "errors": [
                 {
                     "message": f"Error en análisis dummy: {str(e)}",
+                    "line": None,
+                    "column": None
+                }
+            ]
+        }
+
+
+@router.post("/trace")
+def analyze_trace(payload: TraceRequest = Body(...)) -> Dict[str, Any]:
+    """
+    Genera un rastro de ejecución paso a paso del pseudocódigo.
+    Para algoritmos iterativos: devuelve trace completo con pasos.
+    Para algoritmos recursivos/híbridos: devuelve metadatos mínimos sin trace detallado.
+    
+    Args:
+        payload: Solicitud con código fuente, caso y tamaño de entrada
+        
+    Returns:
+        Rastro de ejecución con pasos detallados (iterativos) o metadatos (recursivos/híbridos)
+        
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
+    """
+    try:
+        # 1) Parsear el código fuente
+        parse_result = parse_source(payload.source)
+        if not parse_result.get("ok", False):
+            return {
+                "ok": False,
+                "errors": parse_result.get("errors", [])
+            }
+        
+        ast = parse_result.get("ast")
+        if not ast:
+            return {
+                "ok": False,
+                "errors": [{"message": "No se pudo obtener el AST del código", "line": None, "column": None}]
+            }
+        
+        # 2) Clasificar el algoritmo
+        classification_result = classify_algo(ast=ast)
+        algorithm_kind = classification_result.get("kind", "unknown")
+        
+        # 3) Determinar si construir trace detallado
+        is_recursive_or_hybrid = algorithm_kind in ["recursive", "hybrid"]
+        
+        # 4) Ejecutar y generar rastro
+        if is_recursive_or_hybrid:
+            # Para recursivos/híbridos: no construir trace detallado
+            # Solo devolver metadatos básicos
+            return {
+                "ok": True,
+                "algorithmKind": algorithm_kind,
+                "trace": None,
+                "metadata": {
+                    "pseudocode": payload.source,
+                    "inputSize": payload.input_size,
+                    "case": payload.case,
+                    "message": "Para algoritmos recursivos e híbridos, el diagrama se genera en el frontend mediante LLM"
+                }
+            }
+        else:
+            # Para iterativos: trace completo como siempre
+            executor = CodeExecutor(
+                ast, 
+                payload.input_size, 
+                payload.case,
+                initial_variables=payload.initial_variables
+            )
+            trace = executor.execute()
+            
+            return {
+                "ok": True,
+                "trace": trace,
+                "algorithmKind": algorithm_kind
+            }
+        
+    except Exception as e:
+        return {
+            "ok": False,
+            "errors": [
+                {
+                    "message": f"Error generando rastro: {str(e)}",
                     "line": None,
                     "column": None
                 }

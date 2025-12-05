@@ -48,6 +48,7 @@ import type {
   AddExprContext,
   MulExprContext,
 } from "./LanguageParser";
+import { LanguageParser, ArrayDimContext } from "./LanguageParser";
 import { ParserRuleContext, Token } from "antlr4ts";
 
 // Helper para extraer posición de un contexto o token
@@ -189,17 +190,56 @@ export class ASTBuilder extends AbstractParseTreeVisitor<AstNode> implements Lan
 
   private _visitArrayParam(ctx: ArrayParamContext): ArrayParam {
     const name = ctx.ID().text;
-    const indices = ctx.arrayIndex();
-    const start = this._visitArrayIndex(indices[0]);
-    const end = indices.length > 1 ? this._visitArrayIndex(indices[1]) : undefined;
+    // Obtener todas las dimensiones
+    const allDims = ctx.arrayDim();
+    
+    // Si hay un RANGE, dividir las dimensiones en iniciales y de rango
+    const hasRange = ctx.RANGE() !== undefined;
+    let start: Identifier | Literal | undefined;
+    let end: Identifier | Literal | undefined;
+    
+    if (hasRange) {
+      // Contar dimensiones antes del RANGE iterando sobre los hijos
+      let dimCountBefore = 0;
+      if (ctx.children) {
+        for (const child of ctx.children) {
+          if (child instanceof ArrayDimContext) {
+            dimCountBefore++;
+          } else if ((child as any).symbol && (child as any).symbol.type === LanguageParser.RANGE) {
+            break;
+          }
+        }
+      }
+      
+      // Dividir dimensiones
+      const startDims = allDims.slice(0, dimCountBefore);
+      const endDims = allDims.slice(dimCountBefore);
+      start = startDims.length > 0 ? this._visitArrayDim(startDims[0]) : undefined;
+      end = endDims.length > 0 ? this._visitArrayDim(endDims[0]) : undefined;
+    } else {
+      // Sin rango: usar la primera dimensión como start
+      start = allDims.length > 0 ? this._visitArrayDim(allDims[0]) : undefined;
+      end = undefined;
+    }
     
     return {
       type: "ArrayParam",
       name,
-      start,
+      start: start!,
       end,
       pos: getPos(ctx),
     };
+  }
+
+  private _visitArrayDim(ctx: ArrayDimContext): Identifier | Literal {
+    if (ctx.ID()) {
+      return ident(ctx.ID()!.text, ctx.ID()!.symbol);
+    } else if (ctx.INT()) {
+      return lit(parseInt(ctx.INT()!.text, 10), ctx.INT()!.symbol);
+    } else {
+      // Fallback
+      return lit(0, ctx);
+    }
   }
 
   private _visitArrayIndex(ctx: ArrayIndexContext): Identifier | Literal {

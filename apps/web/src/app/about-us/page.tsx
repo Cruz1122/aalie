@@ -81,37 +81,49 @@ export default function AboutPage() {
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                 <span className="text-dark-text text-sm">
-                  Editor Monaco con syntax highlighting
+                  Editor Monaco con syntax highlighting y validación en tiempo real
                 </span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                 <span className="text-dark-text text-sm">
-                  Parsing completo con ANTLR4
+                  Parsing completo con ANTLR4 y generación de AST
                 </span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                 <span className="text-dark-text text-sm">
-                  Análisis de complejidad temporal (método S3)
+                  Análisis iterativo y recursivo (Teorema Maestro, Iteración, Árbol, Ecuación Característica)
                 </span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                 <span className="text-dark-text text-sm">
-                  Chatbot integrado con IA
+                  Seguimiento de ejecución paso a paso con React Flow
                 </span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                 <span className="text-dark-text text-sm">
-                  Visualizaciones AST y tablas de costos
+                  Comparación con LLM (Gemini 2.5 Pro) para validación
                 </span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                 <span className="text-dark-text text-sm">
-                  Soporte para mejor/promedio/peor caso
+                  Análisis GPU vs CPU con sistema de scoring
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                <span className="text-dark-text text-sm">
+                  Visualizaciones interactivas con diagramas de recursión
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                <span className="text-dark-text text-sm">
+                  Soporte para mejor/promedio/peor caso con modelos probabilísticos
                 </span>
               </div>
             </div>
@@ -131,10 +143,12 @@ export default function AboutPage() {
                   Frontend
                 </h4>
                 <ul className="text-dark-text text-xs space-y-1">
-                  <li>Next.js + TypeScript</li>
-                  <li>Tailwind CSS</li>
+                  <li>Next.js 14 + TypeScript</li>
+                  <li>Tailwind CSS + Framer Motion</li>
                   <li>Monaco Editor</li>
-                  <li>KaTeX & Cytoscape.js</li>
+                  <li>React Flow (Diagramas)</li>
+                  <li>KaTeX (Ecuaciones)</li>
+                  <li>Zustand (Estado)</li>
                 </ul>
               </div>
               <div>
@@ -143,7 +157,8 @@ export default function AboutPage() {
                   <li>FastAPI (Python 3.11+)</li>
                   <li>ANTLR4 Parser</li>
                   <li>SymPy (Matemáticas)</li>
-                  <li>Azure AI / Gemini (LLM)</li>
+                  <li>Gemini 2.5 Pro/Flash (LLM)</li>
+                  <li>Dagre (Layout de grafos)</li>
                   <li>Docker Compose</li>
                 </ul>
               </div>
@@ -159,91 +174,91 @@ export default function AboutPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="relative">
-              <div className="glass-secondary p-4 rounded-lg border-l-4 border-green-400">
+              <div className="glass-secondary p-4 rounded-lg border-l-4 border-emerald-400">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                  <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
                   <h3 className="text-white font-semibold text-sm">
-                    Análisis Completo
+                    Análisis Recursivo Avanzado
                   </h3>
                 </div>
                 <p className="text-dark-text text-sm">
-                  Análisis de complejidad temporal (método S3) con soporte para
-                  bucles FOR, WHILE, condicionales IF y recursión
+                  Teorema Maestro, Método de Iteración, Árbol de Recursión y
+                  Ecuación Característica con detección automática
                 </p>
               </div>
             </div>
 
             <div className="relative">
-              <div className="glass-secondary p-4 rounded-lg border-l-4 border-green-400">
+              <div className="glass-secondary p-4 rounded-lg border-l-4 border-blue-400">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                  <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
                   <h3 className="text-white font-semibold text-sm">
-                    Editor Avanzado
+                    Seguimiento de Ejecución
                   </h3>
                 </div>
                 <p className="text-dark-text text-sm">
-                  Editor Monaco con validación en tiempo real, syntax
-                  highlighting y soporte para múltiples operadores de asignación
+                  Visualización paso a paso con React Flow para algoritmos
+                  iterativos y diagramas de árbol para recursivos
                 </p>
               </div>
             </div>
 
             <div className="relative">
-              <div className="glass-secondary p-4 rounded-lg border-l-4 border-green-400">
+              <div className="glass-secondary p-4 rounded-lg border-l-4 border-purple-400">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                  <span className="w-2 h-2 bg-purple-400 rounded-full"></span>
                   <h3 className="text-white font-semibold text-sm">
-                    Asistente IA
+                    Comparación con LLM
                   </h3>
                 </div>
                 <p className="text-dark-text text-sm">
-                  Chatbot integrado con modelos de lenguaje (Azure AI/Gemini)
-                  para asistencia y clasificación de algoritmos
+                  Validación de análisis con Gemini 2.5 Pro, comparación
+                  independiente y detección de discrepancias
                 </p>
               </div>
             </div>
 
             <div className="relative">
-              <div className="glass-secondary p-4 rounded-lg border-l-4 border-green-400">
+              <div className="glass-secondary p-4 rounded-lg border-l-4 border-orange-400">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                  <span className="w-2 h-2 bg-orange-400 rounded-full"></span>
                   <h3 className="text-white font-semibold text-sm">
-                    Visualizaciones
+                    Análisis GPU vs CPU
                   </h3>
                 </div>
                 <p className="text-dark-text text-sm">
-                  Visualización de AST, tablas de costos por línea y gráficos de
-                  flujo de control
+                  Sistema de scoring (0-100) que determina la idoneidad del
+                  algoritmo para GPU o CPU según paralelismo y patrones de acceso
                 </p>
               </div>
             </div>
 
             <div className="relative">
-              <div className="glass-secondary p-4 rounded-lg border-l-4 border-green-400">
+              <div className="glass-secondary p-4 rounded-lg border-l-4 border-cyan-400">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                  <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>
                   <h3 className="text-white font-semibold text-sm">
-                    Fórmulas LaTeX
+                    Visualizaciones Interactivas
                   </h3>
                 </div>
                 <p className="text-dark-text text-sm">
-                  Renderizado de fórmulas matemáticas con KaTeX, incluyendo
-                  ecuaciones de eficiencia y notación Big-O
+                  Diagramas de flujo con React Flow, árboles de recursión, AST
+                  interactivo y tablas de costos detalladas
                 </p>
               </div>
             </div>
 
             <div className="relative">
-              <div className="glass-secondary p-4 rounded-lg border-l-4 border-green-400">
+              <div className="glass-secondary p-4 rounded-lg border-l-4 border-pink-400">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                  <span className="w-2 h-2 bg-pink-400 rounded-full"></span>
                   <h3 className="text-white font-semibold text-sm">
-                    Procedimientos Detallados
+                    Memoización y Optimización
                   </h3>
                 </div>
                 <p className="text-dark-text text-sm">
-                  Explicaciones paso a paso del análisis, procedimientos
-                  generales y por línea con normalización automática
+                  Cache inteligente de análisis AST, optimización de bucles
+                  anidados y reducción de complejidad computacional
                 </p>
               </div>
             </div>
@@ -343,6 +358,65 @@ export default function AboutPage() {
                 Mostramos gráficos y resultados
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* Sección de Contacto */}
+        <div className="glass-card p-8 rounded-xl mb-12">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/20 rounded-full mb-4">
+              <span className="material-symbols-outlined text-primary text-3xl">
+                contact_mail
+              </span>
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">Contacto</h2>
+            <p className="text-dark-text text-sm max-w-2xl mx-auto">
+              ¿Tienes preguntas, sugerencias o encontraste algún problema? No dudes en contactarnos
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            {/* Email */}
+            <a
+              href="mailto:juan.cruz37552@ucaldas.edu.co"
+              className="glass-secondary p-6 rounded-lg hover:scale-105 transition-all duration-300 border border-white/10 hover:border-primary/50"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-blue-400 text-2xl">
+                    email
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-white font-semibold mb-1">Email</h3>
+                  <p className="text-dark-text text-sm truncate">
+                    juan.cruz37552@ucaldas.edu.co
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">Camilo Cruz</p>
+                </div>
+              </div>
+            </a>
+
+            {/* GitHub */}
+            <a
+              href="https://github.com/Cruz1122"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="glass-secondary p-6 rounded-lg hover:scale-105 transition-all duration-300 border border-white/10 hover:border-primary/50"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-purple-400 text-2xl">
+                    code
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-white font-semibold mb-1">GitHub</h3>
+                  <p className="text-dark-text text-sm">@Cruz1122</p>
+                  <p className="text-xs text-slate-400 mt-1">Repositorio y Issues</p>
+                </div>
+              </div>
+            </a>
           </div>
         </div>
 

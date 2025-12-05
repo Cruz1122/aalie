@@ -7,6 +7,7 @@ pnpm-debug.log*
 dist/
 .next/
 out/
+*.tsbuildinfo
 # Excepción: incluir parsers Python generados para evitar dependencia de Java
 !packages/grammar/out/
 
@@ -28,10 +29,13 @@ __pycache__/
 .venv/
 .env
 .env.*
+**/*.egg-info/
 
 # Coverage
 coverage/
 *.coverage
+htmlcov/
+coverage.xml
 
 # Docker (local data)
 docker-data/
@@ -43,6 +47,9 @@ apps/api/.mypy_cache/
 
 # Stackdump files
 *.stackdump
+
+# Test result files
+test_result.json
 
 # Bloquear lockfiles ajenos\ n**/package-lock.json
 **/yarn.lock

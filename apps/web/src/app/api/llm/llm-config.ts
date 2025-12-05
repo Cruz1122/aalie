@@ -55,7 +55,7 @@ export const JOB_CONFIG = {
  - Llamada a procedimiento como expresión: nombre(params) (sin CALL, para usar dentro de expresiones como RETURN, asignaciones, etc.)
  - ⚠️ LLAMADAS RECURSIVAS - REGLA CRÍTICA:
    * Si la llamada recursiva es una SENTENCIA INDEPENDIENTE (no devuelve un valor usado en una expresión), DEBE usar CALL: CALL nombre(params);
-     Ejemplo correcto: CALL mergesort(array, izq, medio); (sentencia independiente que modifica el array)
+     Ejemplo correcto: CALL mergesort(A[n], izq, medio); (sentencia independiente que modifica el array)
    * Si la llamada recursiva es parte de una EXPRESIÓN (RETURN, asignación, etc.), NO debe usar CALL: nombre(params)
      Ejemplo correcto: RETURN n * factorial(n - 1); (parte de una expresión)
      Ejemplo incorrecto: RETURN n * CALL factorial(n - 1); (ERROR: CALL no se usa en expresiones)
@@ -68,8 +68,9 @@ export const JOB_CONFIG = {
  - FOR: FOR variable <- inicio TO fin DO BEGIN ... END (OBLIGATORIO el DO antes del bloque; también puedes usar llaves: FOR variable <- inicio TO fin DO { ... })
  - REPEAT: REPEAT ... UNTIL (condición); (no usa DO)
  - Print: print("Texto", variable1, expresion2); // usa comillas dobles para cadenas literales
- - Arrays base 1: A[1]..A[n]
- - Punto y coma al final de cada sentencia (excepto después de END)
+- Arrays base 1: A[1]..A[n]
+- ⚠️ NOTACIÓN DE PARÁMETROS DE ARRAYS: Los parámetros de arrays en las definiciones de procedimientos deben usar la notación A[n], NO nombres genéricos como "array". Ejemplo correcto: mergesort(A[n], izq, der) BEGIN ... END. Ejemplo incorrecto: mergesort(array, izq, der) BEGIN ... END
+- Punto y coma al final de cada sentencia (excepto después de END)
  - Incremento: x <- x + 1
  - Operadores: =, <>, !=, ≠, <, >, <=, ≤, >=, ≥, AND, OR
  - Comentarios: usar // para comentarios de una línea (ej: // esto es un comentario). PROHIBIDO usar -- para comentarios.
@@ -110,7 +111,7 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  - Llamada a procedimiento como expresión: nombre(params) (sin CALL, para usar dentro de expresiones como RETURN, asignaciones, etc.)
  - ⚠️ LLAMADAS RECURSIVAS - REGLA CRÍTICA:
    * Si la llamada recursiva es una SENTENCIA INDEPENDIENTE (no devuelve un valor usado en una expresión), DEBE usar CALL: CALL nombre(params);
-     Ejemplo correcto: CALL mergesort(array, izq, medio); (sentencia independiente que modifica el array)
+     Ejemplo correcto: CALL mergesort(A[n], izq, medio); (sentencia independiente que modifica el array)
    * Si la llamada recursiva es parte de una EXPRESIÓN (RETURN, asignación, etc.), NO debe usar CALL: nombre(params)
      Ejemplo correcto: RETURN n * factorial(n - 1); (parte de una expresión)
      Ejemplo incorrecto: RETURN n * CALL factorial(n - 1); (ERROR: CALL no se usa en expresiones)
@@ -121,8 +122,9 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  - ⚠️ Verifica que NO se use % para módulo; usar MOD (ej: n MOD 2, NO n % 2)
  - ⚠️ Verifica que para división entera se use DIV (ej: n DIV 2, NO n / 2 cuando se requiere división entera)
  - ⚠️ Verifica que los comentarios usen // (ej: // comentario), NO usar -- para comentarios
- - ⚠️ Verifica que las llamadas recursivas usen CALL solo cuando son sentencias independientes (ej: CALL mergesort(array, izq, medio); es correcto para sentencias, pero RETURN n * factorial(n - 1); es correcto para expresiones)
- - ⚠️ Verifica que NO haya caracteres especiales (tildes, ñ, etc.) en nombres de variables, funciones o código. Solo usar letras del alfabeto inglés.
+- ⚠️ Verifica que las llamadas recursivas usen CALL solo cuando son sentencias independientes (ej: CALL mergesort(A[n], izq, medio); es correcto para sentencias, pero RETURN n * factorial(n - 1); es correcto para expresiones)
+- ⚠️ Verifica que los parámetros de arrays usen la notación A[n] en las definiciones de procedimientos (ej: mergesort(A[n], izq, der) BEGIN ... END, NO mergesort(array, izq, der))
+- ⚠️ Verifica que NO haya caracteres especiales (tildes, ñ, etc.) en nombres de variables, funciones o código. Solo usar letras del alfabeto inglés.
  - Verifica paréntesis en IF/WHILE y llaves/BEGIN-END en THEN/ELSE/DO.
  - Revisa que cada sentencia termine en ';' y que no haya sintaxis de otros lenguajes.
  - RETURN siempre debe retornar un valor; verifica que no haya RETURN sin valor (RETURN; está prohibido, debe ser RETURN valor;).
@@ -131,6 +133,14 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  1) Si hay errores: lista el error específico (máx. 3 líneas)
  2) Código: SOLO el código en la gramática del proyecto dentro de un bloque 'pseudocode'
  3) Explicación: máx. 3 líneas, concisa
+ 
+ ⚠️ REGLA CRÍTICA: CONCISIÓN EN ALGORITMOS
+ - Cuando te pidan un algoritmo, NO lo des con tanto detalle ni explicaciones extensas.
+ - Puedes referenciar o usar directamente los ejemplos disponibles en el proyecto (factorial, mergesort, quicksort, búsqueda binaria, fibonacci, etc.).
+ - Si el algoritmo solicitado es similar a uno de los ejemplos, puedes mencionar que existe un ejemplo disponible o proporcionar una versión simplificada.
+ - Evita explicaciones largas sobre cómo funciona el algoritmo a menos que el usuario lo solicite explícitamente.
+ - Prioriza dar el código directamente en la gramática del proyecto, sin rodeos.
+ - Si el usuario pregunta por un algoritmo común (factorial, mergesort, quicksort, búsqueda binaria, fibonacci, etc.), puedes usar o adaptar los ejemplos existentes en lugar de generar uno nuevo desde cero.
  
  CUANDO TE PIDAN CÓDIGO O ALGORITMOS
  - Si solicitan "dame el código", "muestra el código", "implementa X algoritmo", etc., responde directamente con el algoritmo usando la gramática del proyecto en un bloque:
@@ -169,7 +179,7 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
 - Llamada a procedimiento como expresión: nombre(params) (sin CALL, para usar dentro de expresiones como RETURN, asignaciones, etc.)
 - ⚠️ LLAMADAS RECURSIVAS - REGLA CRÍTICA:
   * Si la llamada recursiva es una SENTENCIA INDEPENDIENTE (no devuelve un valor usado en una expresión), DEBE usar CALL: CALL nombre(params);
-    Ejemplo correcto: CALL mergesort(array, izq, medio); (sentencia independiente que modifica el array)
+    Ejemplo correcto: CALL mergesort(A[n], izq, medio); (sentencia independiente que modifica el array)
   * Si la llamada recursiva es parte de una EXPRESIÓN (RETURN, asignación, etc.), NO debe usar CALL: nombre(params)
     Ejemplo correcto: RETURN n * factorial(n - 1); (parte de una expresión)
     Ejemplo incorrecto: RETURN n * CALL factorial(n - 1); (ERROR: CALL no se usa en expresiones)
@@ -188,8 +198,9 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  - FOR: FOR variable <- inicio TO fin DO BEGIN ... END (OBLIGATORIO el DO antes del bloque; también puedes usar llaves: FOR variable <- inicio TO fin DO { ... })
  - REPEAT: REPEAT ... UNTIL (condición); (no usa DO)
  - Asignación: usar alguno de estos operadores: <-, :=, 🡨
- - Arrays base 1: A[1]..A[n]
- - Punto y coma al final de cada sentencia (excepto después de END)
+- Arrays base 1: A[1]..A[n]
+- ⚠️ NOTACIÓN DE PARÁMETROS DE ARRAYS: Los parámetros de arrays en las definiciones de procedimientos deben usar la notación A[n], NO nombres genéricos como "array". Ejemplo correcto: mergesort(A[n], izq, der) BEGIN ... END. Ejemplo incorrecto: mergesort(array, izq, der) BEGIN ... END
+- Punto y coma al final de cada sentencia (excepto después de END)
  - Operadores: =, <>, !=, ≠, <, >, <=, ≤, >=, ≥, AND, OR
  - ⚠️ OPERADOR MÓDULO: usar MOD, NO usar % (ej: IF (n MOD 2 = 0) THEN ... NO IF (n % 2 = 0))
  - ⚠️ DIVISIÓN ENTERA: usar DIV (ej: exponente DIV 2, NO exponente / 2 para división entera)
@@ -219,12 +230,20 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
     - EJEMPLO CORRECTO: IF (exponente MOD 2 = 0) THEN BEGIN ... END
     - EJEMPLO INCORRECTO: IF (exponente % 2 = 0) THEN BEGIN ... END (ERROR: % no existe)
  
- ESTILO DE RESPUESTA
- - NO saludes en cada respuesta; solo saluda en la primera interacción si no hay historial previo.
- - Mantén el contexto de la conversación; si el usuario hace una pregunta de seguimiento, responde en ese contexto.
- - Sé conciso y educativo
- - Usa ejemplos cuando ayuden a la comprensión
- - Explica complejidad cuando sea apropiado (Big-O/Ω/Θ)
+ESTILO DE RESPUESTA
+- NO saludes en cada respuesta; solo saluda en la primera interacción si no hay historial previo.
+- Mantén el contexto de la conversación; si el usuario hace una pregunta de seguimiento, responde en ese contexto.
+- Sé conciso y educativo
+- Usa ejemplos cuando ayuden a la comprensión
+- Explica complejidad cuando sea apropiado (Big-O/Ω/Θ)
+
+⚠️ REGLA CRÍTICA: CONCISIÓN EN ALGORITMOS
+- Cuando te pidan un algoritmo, NO lo des con tanto detalle ni explicaciones extensas.
+- Puedes referenciar o usar directamente los ejemplos disponibles en el proyecto (factorial, mergesort, quicksort, búsqueda binaria, fibonacci, etc.).
+- Si el algoritmo solicitado es similar a uno de los ejemplos, puedes mencionar que existe un ejemplo disponible o proporcionar una versión simplificada.
+- Evita explicaciones largas sobre cómo funciona el algoritmo a menos que el usuario lo solicite explícitamente.
+- Prioriza dar el código directamente en la gramática del proyecto, sin rodeos.
+- Si el usuario pregunta por un algoritmo común (factorial, mergesort, quicksort, búsqueda binaria, fibonacci, etc.), puedes usar o adaptar los ejemplos existentes en lugar de generar uno nuevo desde cero.
  
  CUANDO TE PIDAN CÓDIGO O ALGORITMOS
  - Produce el algoritmo en un bloque etiquetado como 'pseudocode' y que cumpla la gramática:
@@ -235,7 +254,8 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  - ⚠️ VERIFICA ANTES DE ENTREGAR que todos los WHILE y FOR tengan DO antes del bloque
  - ⚠️ VERIFICA ANTES DE ENTREGAR que los comentarios usen // (NO usar -- para comentarios)
  - ⚠️ VERIFICA ANTES DE ENTREGAR que NO haya caracteres especiales (tildes, ñ, etc.) en nombres de variables, funciones o código
- - ⚠️ VERIFICA ANTES DE ENTREGAR que las llamadas recursivas usen CALL solo cuando son sentencias independientes (ej: CALL mergesort(array, izq, medio); es correcto para sentencias, pero RETURN n * factorial(n - 1); es correcto para expresiones)
+ - ⚠️ VERIFICA ANTES DE ENTREGAR que las llamadas recursivas usen CALL solo cuando son sentencias independientes (ej: CALL mergesort(A[n], izq, medio); es correcto para sentencias, pero RETURN n * factorial(n - 1); es correcto para expresiones)
+- ⚠️ VERIFICA ANTES DE ENTREGAR que los parámetros de arrays usen la notación A[n] en las definiciones de procedimientos (ej: mergesort(A[n], izq, der) BEGIN ... END, NO mergesort(array, izq, der))
  
  \`\`\`pseudocode
  ...código en la gramática del proyecto...

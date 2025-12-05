@@ -284,6 +284,65 @@ FROM python:3.11-slim
 
 Ver `Dockerfile` para detalles completos.
 
+## Endpoint /trace
+
+El endpoint `/analyze/trace` genera un seguimiento paso a paso de la ejecución de algoritmos. Su comportamiento varía según el tipo de algoritmo:
+
+### Para Algoritmos Iterativos
+
+- Instrumenta el código para capturar el estado en cada paso
+- Registra valores de variables, líneas ejecutadas y operaciones
+- No requiere LLM
+- Retorna un array de pasos con información detallada
+
+### Para Algoritmos Recursivos
+
+- Utiliza LLM (Gemini) para generar diagramas de árbol de recursión
+- Genera diagrama en formato Mermaid
+- Construye estructura de nodos y edges para React Flow
+- Incluye explicación del proceso de recursión
+- Requiere API key del usuario
+
+Ver [trace-endpoint.md](./trace-endpoint.md) para más detalles.
+
+## Análisis Recursivo y Detección de Métodos
+
+El sistema detecta automáticamente qué métodos de resolución de recurrencias son aplicables:
+
+### Métodos Disponibles
+
+1. **Teorema Maestro**: Para recurrencias de la forma `T(n) = aT(n/b) + f(n)`
+2. **Método de Iteración**: Expande la recurrencia y busca patrones
+3. **Árbol de Recursión**: Visualiza el costo total mediante un árbol
+4. **Ecuación Característica**: Para recurrencias lineales homogéneas
+
+### Proceso de Detección
+
+1. Extrae la recurrencia del AST
+2. Analiza la estructura de la recurrencia
+3. Determina qué métodos son aplicables
+4. Prioriza métodos según precisión y eficiencia
+5. Aplica el método más apropiado
+
+Ver [recursive-analysis.md](./recursive-analysis.md) para más detalles.
+
+## Integración de SymPy
+
+SymPy se utiliza extensivamente para:
+
+- **Conversión de LaTeX a expresiones simbólicas**
+- **Cierre de sumatorias**: Convierte sumatorias en formas cerradas
+- **Simplificación de expresiones**: Reduce expresiones complejas
+- **Resolución de recurrencias**: Resuelve ecuaciones de recurrencia
+
+### Componentes Principales
+
+- `SummationCloser`: Cierra sumatorias usando fórmulas conocidas
+- `latex_to_sympy`: Convierte expresiones LaTeX a objetos SymPy
+- `RecurrenceSolver`: Resuelve recurrencias con diferentes métodos
+
+Ver [sympy-integration.md](./sympy-integration.md) para más detalles.
+
 ## Monorepo
 
 La API es parte de un monorepo que incluye:
@@ -294,4 +353,13 @@ La API es parte de un monorepo que incluye:
 - `packages/types/`: Tipos TypeScript compartidos
 
 Los paquetes compartidos se instalan como dependencias locales.
+
+## Referencias Adicionales
+
+- [Trace Endpoint](./trace-endpoint.md) - Funcionamiento del endpoint /trace
+- [Recursive Analysis](./recursive-analysis.md) - Análisis de complejidad recursiva
+- [SymPy Integration](./sympy-integration.md) - Uso de SymPy en el backend
+- [Endpoints](./endpoints.md) - Documentación de todos los endpoints
+- [Errors](./errors.md) - Manejo de errores
+- [Models](./models.md) - Modelos de datos
 

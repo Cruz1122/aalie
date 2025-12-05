@@ -69,6 +69,21 @@ const tableOfContents: TableOfContentsItem[] = [
         title: "Interpretando Resultados",
         icon: "insights",
       },
+      {
+        id: "analisis-llm",
+        title: "Comparación con LLM",
+        icon: "compare_arrows",
+      },
+      {
+        id: "analisis-gpu-cpu",
+        title: "Análisis GPU vs CPU",
+        icon: "memory",
+      },
+      {
+        id: "analisis-trace",
+        title: "Seguimiento de Pseudocódigo",
+        icon: "route",
+      },
     ],
   },
   { id: "ejemplos", title: "Ejemplos Rápidos", icon: "lightbulb" },
@@ -126,11 +141,10 @@ export default function UserGuidePage() {
                     <div key={item.id}>
                       <a
                         href={`#${item.id}`}
-                        className={`flex items-center gap-2 text-sm py-2 px-3 rounded-lg transition-all ${
-                          activeSection === item.id
-                            ? "text-white bg-primary/20 border border-primary/30"
-                            : "text-dark-text hover:text-white hover:bg-white/5"
-                        }`}
+                        className={`flex items-center gap-2 text-sm py-2 px-3 rounded-lg transition-all ${activeSection === item.id
+                          ? "text-white bg-primary/20 border border-primary/30"
+                          : "text-dark-text hover:text-white hover:bg-white/5"
+                          }`}
                         onClick={() => setActiveSection(item.id)}
                       >
                         <span className="material-symbols-outlined text-base">
@@ -144,11 +158,10 @@ export default function UserGuidePage() {
                             <a
                               key={sub.id}
                               href={`#${sub.id}`}
-                              className={`flex items-center gap-2 text-xs py-1.5 px-2 rounded transition-all ${
-                                activeSection === sub.id
-                                  ? "text-primary bg-white/10"
-                                  : "text-dark-text hover:text-white hover:bg-white/5"
-                              }`}
+                              className={`flex items-center gap-2 text-xs py-1.5 px-2 rounded transition-all ${activeSection === sub.id
+                                ? "text-primary bg-white/10"
+                                : "text-dark-text hover:text-white hover:bg-white/5"
+                                }`}
                               onClick={() => setActiveSection(sub.id)}
                             >
                               {sub.icon && (
@@ -1323,6 +1336,274 @@ print("Dijo \"hola\" y salió");`}
                             promedio, se muestra A(n) en lugar de T(n).
                           </p>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Comparación con LLM */}
+              <section
+                id="analisis-llm"
+                className="glass-card p-6 lg:p-8 rounded-xl scroll-mt-24"
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary text-2xl">
+                      compare_arrows
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-white">
+                    Comparación con LLM
+                  </h2>
+                </div>
+                <div className="space-y-4 text-dark-text">
+                  <p className="text-base leading-relaxed">
+                    El sistema permite comparar el análisis automático con un análisis
+                    independiente generado por un LLM (Gemini 2.5 Pro):
+                  </p>
+                  <ul className="list-none space-y-2 ml-2">
+                    <li className="flex items-start gap-2">
+                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        check_circle
+                      </span>
+                      <span>
+                        <strong className="text-white">Análisis Independiente:</strong>{" "}
+                        El LLM analiza el código sin conocer el resultado del sistema
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        check_circle
+                      </span>
+                      <span>
+                        <strong className="text-white">Validación:</strong> Compara
+                        ambos análisis y detecta discrepancias
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        check_circle
+                      </span>
+                      <span>
+                        <strong className="text-white">Nota de Validación:</strong>{" "}
+                        Genera una nota breve (≤100 caracteres) indicando si el
+                        análisis es correcto
+                      </span>
+                    </li>
+                  </ul>
+                  <div className="bg-blue-500/10 border-l-4 border-blue-500/50 rounded-r-lg p-4 mt-4">
+                    <div className="flex items-start gap-3">
+                      <span className="material-symbols-outlined text-blue-400 text-xl">
+                        info
+                      </span>
+                      <div>
+                        <p className="text-blue-300 text-sm font-semibold mb-1">
+                          Nota
+                        </p>
+                        <p className="text-blue-200 text-sm">
+                          La comparación con LLM requiere una API key de Gemini. Puedes
+                          configurarla en el footer de la aplicación.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Análisis GPU vs CPU */}
+              <section
+                id="analisis-gpu-cpu"
+                className="glass-card p-6 lg:p-8 rounded-xl scroll-mt-24"
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary text-2xl">
+                      memory
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-white">
+                    Análisis GPU vs CPU
+                  </h2>
+                </div>
+                <div className="space-y-4 text-dark-text">
+                  <p className="text-base leading-relaxed">
+                    El sistema analiza si tu algoritmo es más adecuado para GPU o CPU
+                    mediante un sistema de scoring (0-100):
+                  </p>
+                  <div className="space-y-4 mt-4">
+                    <div className="bg-purple-500/10 border-l-4 border-purple-500/50 rounded-r-lg p-4">
+                      <h3 className="font-semibold text-purple-300 mb-2 text-lg">
+                        Métricas Analizadas
+                      </h3>
+                      <ul className="list-none ml-2 text-sm space-y-2">
+                        <li className="flex items-start gap-2">
+                          <span className="text-purple-400 text-xs mt-1">•</span>
+                          <span>
+                            <strong>Recursión:</strong> Penaliza GPU (difícil de
+                            paralelizar)
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-purple-400 text-xs mt-1">•</span>
+                          <span>
+                            <strong>Branching:</strong> Penaliza GPU (divergencia de
+                            warps)
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-purple-400 text-xs mt-1">•</span>
+                          <span>
+                            <strong>Loops:</strong> Favorece GPU si son independientes
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-purple-400 text-xs mt-1">•</span>
+                          <span>
+                            <strong>Arrays:</strong> Favorece GPU (acceso paralelo)
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-purple-400 text-xs mt-1">•</span>
+                          <span>
+                            <strong>Operaciones matemáticas:</strong> Favorece GPU
+                            (ALUs especializadas)
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="bg-cyan-500/10 border-l-4 border-cyan-500/50 rounded-r-lg p-4">
+                      <h3 className="font-semibold text-cyan-300 mb-2 text-lg">
+                        Recomendaciones
+                      </h3>
+                      <ul className="list-none ml-2 text-sm space-y-2">
+                        <li className="flex items-start gap-2">
+                          <span className="text-cyan-400 text-xs mt-1">•</span>
+                          <span>
+                            <strong>GPU:</strong> Score GPU {">"}60 (altamente
+                            paralelizable)
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-cyan-400 text-xs mt-1">•</span>
+                          <span>
+                            <strong>CPU:</strong> Score CPU {">"}60 (secuencial o
+                            complejo)
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-cyan-400 text-xs mt-1">•</span>
+                          <span>
+                            <strong>Mixto:</strong> Ambos scores 40-60 (híbrido)
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Seguimiento de Pseudocódigo */}
+              <section
+                id="analisis-trace"
+                className="glass-card p-6 lg:p-8 rounded-xl scroll-mt-24"
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
+                    <span className="material-symbols-outlined text-primary text-2xl">
+                      route
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-white">
+                    Seguimiento de Pseudocódigo
+                  </h2>
+                </div>
+                <div className="space-y-4 text-dark-text">
+                  <p className="text-base leading-relaxed">
+                    El sistema permite visualizar la ejecución paso a paso de tu
+                    algoritmo con valores de entrada específicos:
+                  </p>
+                  <div className="space-y-4 mt-4">
+                    <div className="bg-green-500/10 border-l-4 border-green-500/50 rounded-r-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="material-symbols-outlined text-green-400">
+                          code
+                        </span>
+                        <h3 className="font-semibold text-green-300 text-lg">
+                          Algoritmos Iterativos
+                        </h3>
+                      </div>
+                      <ul className="list-none ml-2 text-sm space-y-2">
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-400 text-xs mt-1">•</span>
+                          <span>
+                            Instrumenta el código para capturar el estado en cada paso
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-400 text-xs mt-1">•</span>
+                          <span>Muestra valores de variables en cada iteración</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-400 text-xs mt-1">•</span>
+                          <span>Visualiza el flujo de ejecución con React Flow</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-400 text-xs mt-1">•</span>
+                          <span>
+                            Permite ingresar valores de entrada personalizados
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="bg-orange-500/10 border-l-4 border-orange-500/50 rounded-r-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="material-symbols-outlined text-orange-400">
+                          account_tree
+                        </span>
+                        <h3 className="font-semibold text-orange-300 text-lg">
+                          Algoritmos Recursivos
+                        </h3>
+                      </div>
+                      <ul className="list-none ml-2 text-sm space-y-2">
+                        <li className="flex items-start gap-2">
+                          <span className="text-orange-400 text-xs mt-1">•</span>
+                          <span>
+                            Genera diagrama de árbol de recursión con LLM (Gemini 2.0
+                            Flash)
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-orange-400 text-xs mt-1">•</span>
+                          <span>
+                            Muestra llamadas recursivas con valores de entrada/salida
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-orange-400 text-xs mt-1">•</span>
+                          <span>Visualiza el árbol completo con React Flow</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-orange-400 text-xs mt-1">•</span>
+                          <span>Incluye explicación del proceso de recursión</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="bg-yellow-500/10 border-l-4 border-yellow-500/50 rounded-r-lg p-4 mt-4">
+                    <div className="flex items-start gap-3">
+                      <span className="material-symbols-outlined text-yellow-400 text-xl">
+                        info
+                      </span>
+                      <div>
+                        <p className="text-yellow-300 text-sm font-semibold mb-1">
+                          Nota
+                        </p>
+                        <p className="text-yellow-200 text-sm">
+                          El seguimiento de algoritmos recursivos requiere una API key
+                          de Gemini para generar los diagramas. El seguimiento
+                          iterativo no requiere API key.
+                        </p>
                       </div>
                     </div>
                   </div>

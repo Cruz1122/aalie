@@ -94,6 +94,41 @@ const ICON_CONFIG: Record<string, IconConfig> = {
     color: "text-green-400",
     bgColor: "bg-green-500/20 border-green-500/30",
   },
+  memoization: {
+    icon: BarChart3,
+    color: "text-blue-400",
+    bgColor: "bg-blue-500/20 border-blue-500/30",
+  },
+  "llm-jobs-models": {
+    icon: Zap,
+    color: "text-purple-400",
+    bgColor: "bg-purple-500/20 border-purple-500/30",
+  },
+  "recursive-methods": {
+    icon: Calculator,
+    color: "text-emerald-400",
+    bgColor: "bg-emerald-500/20 border-emerald-500/30",
+  },
+  "request-flow": {
+    icon: Workflow,
+    color: "text-cyan-400",
+    bgColor: "bg-cyan-500/20 border-cyan-500/30",
+  },
+  "react-flow": {
+    icon: GitBranch,
+    color: "text-violet-400",
+    bgColor: "bg-violet-500/20 border-violet-500/30",
+  },
+  "gpu-cpu": {
+    icon: Cpu,
+    color: "text-orange-400",
+    bgColor: "bg-orange-500/20 border-orange-500/30",
+  },
+  "trace-environment": {
+    icon: Server,
+    color: "text-pink-400",
+    bgColor: "bg-pink-500/20 border-pink-500/30",
+  },
 };
 
 interface DocumentationIconProps {

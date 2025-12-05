@@ -2574,21 +2574,6 @@ class RecursiveAnalyzer(BaseAnalyzer):
             then_body = node.get("then") or node.get("thenBody") or node.get("consequent")
             else_body = node.get("else") or node.get("elseBody") or node.get("alternate")
             
-            # IMPORTANTE: Verificar si esta condición es un caso base (sobre el tamaño del problema)
-            # Si es un caso base, NO es un early return - es parte de la estructura recursiva normal
-            # Verificar que condition no sea None ni un diccionario vacío
-            is_base_case = False
-            if condition and isinstance(condition, dict) and condition.get("type"):
-                base_case_value = self._extract_base_case_from_condition(condition)
-                is_base_case = base_case_value is not None
-            
-            # Si es un caso base, no es un early return
-            # Un caso base es parte de la estructura recursiva normal, NO es un early return
-            if is_base_case:
-                # NO buscar early returns en el ELSE porque el caso base es parte de la recursión normal
-                # Retornar False directamente - un caso base no es un early return
-                return False
-            
             # Verificar si en THEN hay return sin recursivas Y en ELSE hay recursivas
             if then_body and else_body:
                 # Buscar todos los returns en THEN (pueden estar dentro de Blocks)
@@ -2607,9 +2592,27 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 has_recursive_in_else = self._has_recursive_calls_in_node(else_body)
                 
                 # Patrón clásico: return temprano en THEN, recursivas en ELSE (directas o anidadas)
-                # Solo si NO es un caso base
                 if has_early_return_in_then and has_recursive_in_else:
-                    return True
+                    # Verificar si es un caso base que retorna inmediatamente una constante simple
+                    # En ese caso, es un early return válido para el mejor caso
+                    is_base_case = False
+                    if condition and isinstance(condition, dict) and condition.get("type"):
+                        base_case_value = self._extract_base_case_from_condition(condition)
+                        is_base_case = base_case_value is not None
+                    
+                    # Si es un caso base, verificar que retorne una constante simple
+                    if is_base_case:
+                        for ret in returns_in_then:
+                            if not self._contains_recursive_call(ret, recursive_calls):
+                                ret_value = ret.get("value") or ret.get("argument")
+                                # Si retorna una constante simple, es early return válido
+                                if self._is_simple_constant_return(ret_value):
+                                    return True
+                        # Si no retorna constante simple, no es early return
+                        # (el caso base es parte de la recursión normal)
+                    else:
+                        # Si NO es caso base, cualquier return sin recursivas es early return
+                        return True
         
         # Si es un Block o Begin, buscar secuencialmente
         if node_type == "Block" or node_type == "Begin":
@@ -2636,11 +2639,24 @@ class RecursiveAnalyzer(BaseAnalyzer):
                             base_case_value = self._extract_base_case_from_condition(condition)
                             is_base_case = base_case_value is not None
                         
-                        # Si es un caso base, NO es un early return - continuar buscando
-                        # Un caso base es parte de la estructura recursiva normal, NO es un early return
+                        # Si es un caso base, verificar si es un early return (retorna inmediatamente)
                         if is_base_case:
-                            # NO buscar early returns en el ELSE porque el caso base es parte de la recursión normal
-                            # Continuar con el siguiente statement sin marcar como early return
+                            then_body = stmt.get("then") or stmt.get("thenBody") or stmt.get("consequent")
+                            else_body = stmt.get("else") or stmt.get("elseBody") or stmt.get("alternate")
+                            if then_body and else_body:
+                                returns_in_then = self._find_return_statements(then_body)
+                                has_simple_return = any(
+                                    ret for ret in returns_in_then 
+                                    if not self._contains_recursive_call(ret, recursive_calls)
+                                )
+                                has_recursive_in_else = self._has_recursive_calls_in_node(else_body)
+                                if has_simple_return and has_recursive_in_else:
+                                    for ret in returns_in_then:
+                                        if not self._contains_recursive_call(ret, recursive_calls):
+                                            ret_value = ret.get("value") or ret.get("argument")
+                                            if self._is_simple_constant_return(ret_value):
+                                                return True
+                            # Si no es un early return claro, continuar buscando
                             continue
                         
                         # Si NO es caso base, buscar recursivamente en este IF
@@ -2687,6 +2703,39 @@ class RecursiveAnalyzer(BaseAnalyzer):
             elif isinstance(value, dict):
                 if self._has_return_before_recursive_calls(value, recursive_calls):
                     return True
+        
+        return False
+    
+    def _is_simple_constant_return(self, ret_value: Any) -> bool:
+        """
+        Verifica si un return retorna una constante simple (TRUE, FALSE, 1, 0, etc.).
+        
+        Args:
+            ret_value: Valor del return
+            
+        Returns:
+            True si es una constante simple
+        """
+        if ret_value is None:
+            return True  # Return sin valor es simple
+        
+        if isinstance(ret_value, dict):
+            ret_type = ret_value.get("type", "").lower()
+            # Literales y booleanos son constantes simples
+            if ret_type in ["literal", "number", "boolean", "bool"]:
+                return True
+            # Identificadores como TRUE, FALSE también son simples
+            if ret_type == "identifier":
+                name = (ret_value.get("name", "") or ret_value.get("id", "")).upper()
+                if name in ["TRUE", "FALSE", "TRUE", "FALSE"]:
+                    return True
+        elif isinstance(ret_value, (bool, int, float)):
+            return True
+        elif isinstance(ret_value, str):
+            # Strings como "TRUE", "FALSE", "1", "0" son simples
+            ret_upper = ret_value.upper()
+            if ret_upper in ["TRUE", "FALSE", "1", "0"]:
+                return True
         
         return False
     
@@ -2849,7 +2898,55 @@ class RecursiveAnalyzer(BaseAnalyzer):
             {"case": int, "comparison": str}
         """
         try:
-            from sympy import limit, oo, simplify
+            from sympy import limit, oo, simplify, Integer
+            
+            # Caso especial: si g(n) = 1 (log_b_a = 0) y f(n) = n, es Caso 3
+            if abs(log_b_a) < 1e-10:
+                # g(n) = n^0 = 1
+                # Si f(n) tiene n como factor, entonces f(n) > g(n) → Caso 3
+                if f_n_expr.has(n_sym):
+                    # Verificar si f(n) es polinomial en n con exponente > 0
+                    f_exponent = self._extract_exponent_from_expr(f_n_expr)
+                    if f_exponent is not None and f_exponent > 0:
+                        return {
+                            "case": 3,
+                            "comparison": "larger"
+                        }
+                    # Si tiene n pero no es polinomial simple, verificar con límite
+                    ratio = simplify(f_n_expr / g_n_expr)
+                    lim = limit(ratio, n_sym, oo)
+                    if lim == oo or (hasattr(lim, 'is_infinite') and lim.is_infinite):
+                        return {
+                            "case": 3,
+                            "comparison": "larger"
+                        }
+                    # Si f(n) = 1, entonces f(n) = g(n) → Caso 2
+                    if f_exponent == 0 or (isinstance(f_n_expr, Integer) and f_n_expr == 1):
+                        return {
+                            "case": 2,
+                            "comparison": "equal"
+                        }
+            
+            # Caso especial: si g(n) = n (log_b_a = 1) y f(n) = n, es Caso 2
+            if abs(log_b_a - 1.0) < 1e-10:
+                # g(n) = n^1 = n
+                # Si f(n) = n, entonces f(n) = g(n) → Caso 2
+                f_exponent = self._extract_exponent_from_expr(f_n_expr)
+                if f_exponent is not None and abs(f_exponent - 1.0) < 1e-10:
+                    return {
+                        "case": 2,
+                        "comparison": "equal"
+                    }
+                # Si f(n) tiene n pero con exponente diferente, verificar con límite
+                if f_n_expr.has(n_sym):
+                    ratio = simplify(f_n_expr / g_n_expr)
+                    lim = limit(ratio, n_sym, oo)
+                    # Si el límite es constante positiva (1), es Caso 2
+                    if hasattr(lim, 'is_number') and lim.is_number and lim > 0:
+                        return {
+                            "case": 2,
+                            "comparison": "equal"
+                        }
             
             # Calcular límite de f(n) / g(n) cuando n → ∞
             ratio = simplify(f_n_expr / g_n_expr)
@@ -2863,14 +2960,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 }
             
             # Si el límite es constante positiva → f(n) = Θ(g(n)) → Caso 2
-            if lim.is_number and lim > 0:
+            if hasattr(lim, 'is_number') and lim.is_number and lim > 0:
                 return {
                     "case": 2,
                     "comparison": "equal"
                 }
             
             # Si el límite es ∞ → f(n) = ω(g(n)) → Caso 3 (necesita verificar regularidad)
-            if lim == oo or (isinstance(lim, (int, float)) and lim > 1e10):
+            if lim == oo or (hasattr(lim, 'is_infinite') and lim.is_infinite) or (isinstance(lim, (int, float)) and lim > 1e10):
                 return {
                     "case": 3,
                     "comparison": "larger"
@@ -2902,6 +2999,40 @@ class RecursiveAnalyzer(BaseAnalyzer):
         Returns:
             {"case": int, "comparison": str}
         """
+        from sympy import Symbol, Integer
+        
+        n_sym = Symbol("n", integer=True, positive=True)
+        
+        # Caso especial: si log_b_a = 0, entonces g(n) = 1
+        if abs(log_b_a) < 1e-10:
+            # g(n) = n^0 = 1
+            # Si f(n) tiene n como factor, entonces f(n) > g(n) → Caso 3
+            if f_n_expr.has(n_sym):
+                f_exponent = self._extract_exponent_from_expr(f_n_expr)
+                if f_exponent is not None and f_exponent > 0:
+                    return {"case": 3, "comparison": "larger"}
+                # Si tiene n pero no es polinomial simple, asumir Caso 3
+                return {"case": 3, "comparison": "larger"}
+            # Si f(n) = 1 (constante), entonces f(n) = g(n) → Caso 2
+            if isinstance(f_n_expr, Integer) or (hasattr(f_n_expr, 'is_number') and f_n_expr.is_number):
+                return {"case": 2, "comparison": "equal"}
+        
+        # Caso especial: si log_b_a = 1, entonces g(n) = n
+        if abs(log_b_a - 1.0) < 1e-10:
+            # g(n) = n^1 = n
+            # Si f(n) = n, entonces f(n) = g(n) → Caso 2
+            f_exponent = self._extract_exponent_from_expr(f_n_expr)
+            if f_exponent is not None and abs(f_exponent - 1.0) < 1e-10:
+                return {"case": 2, "comparison": "equal"}
+            # Si f(n) tiene n pero con exponente diferente, verificar
+            if f_n_expr.has(n_sym):
+                # Si el exponente es menor que 1, es Caso 1
+                if f_exponent is not None and f_exponent < 1.0 - 1e-10:
+                    return {"case": 1, "comparison": "smaller"}
+                # Si el exponente es mayor que 1, es Caso 3
+                if f_exponent is not None and f_exponent > 1.0 + 1e-10:
+                    return {"case": 3, "comparison": "larger"}
+        
         # Extraer exponente de f(n) si es n^k
         f_exponent = self._extract_exponent_from_expr(f_n_expr)
         
@@ -2957,6 +3088,30 @@ class RecursiveAnalyzer(BaseAnalyzer):
         Returns:
             {"case": int, "comparison": str}
         """
+        # Caso especial: si log_b_a = 0, entonces g(n) = 1
+        if abs(log_b_a) < 1e-10:
+            # g(n) = n^0 = 1
+            # Si f(n) = "n", entonces f(n) > g(n) → Caso 3
+            if f_n_str.strip().lower() == "n":
+                return {"case": 3, "comparison": "larger"}
+            # Si f(n) = "1", entonces f(n) = g(n) → Caso 2
+            if f_n_str.strip() == "1" or f_n_str.strip() == "0":
+                return {"case": 2, "comparison": "equal"}
+            # Si f(n) tiene n como factor (contiene "n"), asumir Caso 3
+            if "n" in f_n_str.lower():
+                return {"case": 3, "comparison": "larger"}
+        
+        # Caso especial: si log_b_a = 1, entonces g(n) = n
+        if abs(log_b_a - 1.0) < 1e-10:
+            # g(n) = n^1 = n
+            # Si f(n) = "n", entonces f(n) = g(n) → Caso 2
+            if f_n_str.strip().lower() == "n":
+                return {"case": 2, "comparison": "equal"}
+            # Si f(n) tiene n con exponente 1, es Caso 2
+            f_exponent = self._extract_exponent(f_n_str)
+            if f_exponent is not None and abs(f_exponent - 1.0) < 1e-10:
+                return {"case": 2, "comparison": "equal"}
+        
         # Extraer exponente de f(n)
         f_exponent = self._extract_exponent(f_n_str)
         
@@ -4537,12 +4692,43 @@ FIN FUNCIÓN"""
                 if second_param_name in ["n", "size", "length", "len", "tam", "tamaño"]:
                     size_param_name = second_param.get("name", "")
                     size_param_index = 1
+                # También verificar si el segundo argumento en la llamada recursiva está modificado
+                # (es una expresión binaria con -, /, etc.) mientras que el primero no
+                elif len(args) > 1:
+                    first_arg = args[0] if len(args) > 0 else None
+                    second_arg = args[1] if len(args) > 1 else None
+                    # Si el segundo argumento es una expresión (modificado) y el primero es un identificador simple
+                    if (isinstance(second_arg, dict) and 
+                        second_arg.get("type", "").lower() in ["binary", "unary"] and
+                        isinstance(first_arg, dict) and
+                        first_arg.get("type", "").lower() == "identifier"):
+                        # El segundo parámetro es probablemente el tamaño
+                        size_param_name = second_param.get("name", "")
+                        size_param_index = 1
         
         # Analizar argumentos buscando el que corresponde al tamaño
         # Si el primer parámetro es array, buscar en args[1], sino en args[0]
         # Pero si detectamos que el tamaño está en el segundo parámetro, buscar en args[1]
         size_arg_index = size_param_index if size_param_index < len(args) else 0
         size_arg = args[size_arg_index] if size_arg_index < len(args) else None
+        
+        # Si hay dos parámetros y no detectamos automáticamente cuál es el tamaño,
+        # probar ambos argumentos para ver cuál está siendo modificado
+        if not first_param_is_array and len(params) == 2 and len(args) == 2:
+            first_arg = args[0] if len(args) > 0 else None
+            second_arg = args[1] if len(args) > 1 else None
+            
+            # Verificar si el segundo argumento está modificado y el primero no
+            second_arg_modified = (isinstance(second_arg, dict) and 
+                                  second_arg.get("type", "").lower() in ["binary", "unary"])
+            first_arg_simple = (isinstance(first_arg, dict) and 
+                               first_arg.get("type", "").lower() == "identifier")
+            
+            if second_arg_modified and first_arg_simple:
+                # El segundo parámetro es probablemente el tamaño
+                size_param_name = params[1].get("name", "") if isinstance(params[1], dict) else str(params[1])
+                size_arg_index = 1
+                size_arg = second_arg
         
         if size_arg and isinstance(size_arg, dict):
             arg_type = size_arg.get("type", "").lower()
@@ -4623,6 +4809,46 @@ FIN FUNCIÓN"""
                                 "pattern": "(inicio+fin)/2",
                                 "factor": 2
                             }
+        
+        # Fallback: Si no se detectó nada y hay dos parámetros, probar con el segundo argumento
+        if not first_param_is_array and len(params) == 2 and len(args) == 2:
+            # Si el primer argumento no dio resultado, probar con el segundo
+            if size_arg_index == 0:
+                second_arg = args[1] if len(args) > 1 else None
+                if isinstance(second_arg, dict):
+                    second_arg_type = second_arg.get("type", "").lower()
+                    if second_arg_type == "binary":
+                        op = second_arg.get("op", "")
+                        if op == "-":
+                            left = second_arg.get("left", {})
+                            right = second_arg.get("right", {})
+                            if isinstance(left, dict):
+                                left_name = left.get("name", "") or left.get("id", "")
+                                second_param = params[1]
+                                second_param_name = second_param.get("name", "") if isinstance(second_param, dict) else str(second_param)
+                                if left_name == second_param_name:
+                                    if isinstance(right, dict) and right.get("type", "").lower() == "literal":
+                                        value = right.get("value", 1)
+                                        return {
+                                            "type": "subtraction",
+                                            "pattern": f"n-{value}",
+                                            "factor": value
+                                        }
+                        elif op == "/":
+                            left = second_arg.get("left", {})
+                            right = second_arg.get("right", {})
+                            if isinstance(left, dict):
+                                left_name = left.get("name", "") or left.get("id", "")
+                                second_param = params[1]
+                                second_param_name = second_param.get("name", "") if isinstance(second_param, dict) else str(second_param)
+                                if left_name == second_param_name:
+                                    if isinstance(right, dict) and right.get("type", "").lower() == "literal":
+                                        value = right.get("value", 2)
+                                        return {
+                                            "type": "division",
+                                            "pattern": f"n/{value}",
+                                            "factor": value
+                                        }
             
             # Caso: parámetro directo sin modificación (n)
             elif arg_type == "identifier":

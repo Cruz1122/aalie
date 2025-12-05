@@ -1246,6 +1246,203 @@ variable ⟵ expresion;`,
           },
         },
       },
+      {
+        id: "memoization",
+        title: "Memoización (Programación Dinámica)",
+        description:
+          "Optimización del análisis mediante cacheo de resultados para nodos AST repetitivos",
+        content: {
+          type: "text",
+          sections: [
+            {
+              title: "¿Cuándo se activa?",
+              content:
+                "La memoización se activa automáticamente cuando se analizan nodos del AST que pueden aparecer múltiples veces:\n\n• Bloques de código (Block)\n• Bucles (For, While, Repeat)\n• Condicionales (If) con ramas THEN y ELSE\n\nEsto evita re-analizar bloques idénticos en el mismo contexto, reduciendo significativamente el tiempo de análisis.",
+            },
+            {
+              title: "Estrategia de Cache",
+              content:
+                "La clave de cache combina tres componentes críticos:\n\n1. Identificador del nodo (posición o hash del contenido)\n2. Modo de análisis (worst, best, avg)\n3. Contexto actual (hash del loop_stack)\n\nFormato de clave: $\\text{key} = \\text{node\\_id} | \\text{mode} | \\text{context\\_hash}$\n\nEsto garantiza que solo se reutilicen resultados cuando el contexto es idéntico.",
+            },
+            {
+              title: "Beneficios de Rendimiento",
+              content:
+                "La memoización proporciona mejoras significativas:\n\n✓ Rendimiento: Evita re-analizar bloques idénticos\n✓ Consistencia: Garantiza resultados deterministas\n✓ Escalabilidad: Mejora exponencial en bucles anidados\n\nPara un algoritmo con $k$ bucles anidados, la complejidad de análisis se reduce de $O(n^k)$ a $O(n \\cdot k)$ en el mejor caso.",
+            },
+          ],
+        },
+      },
+      {
+        id: "llm-jobs-models",
+        title: "LLM: Jobs y Modelos",
+        description:
+          "Configuración centralizada de LLM (Gemini) con diferentes jobs especializados. Cada job usa un modelo específico optimizado para su tarea. IMPORTANTE: El job 'classify' está DEPRECADO - la clasificación se hace por heurística en /classify (backend Python), NO usa LLM.",
+        content: {
+          type: "text",
+          sections: [
+            {
+              title: "Jobs Activos",
+              content:
+                "parser_assist (Gemini 2.5 Flash): Generación de código y corrección de sintaxis. general (Gemini 2.5 Flash): Chatbot general para explicaciones. simplifier (Gemini 2.5 Flash): Simplificación matemática. repair (Gemini 2.5 Flash): Reparación de código con errores. compare (Gemini 2.5 Pro): Comparación de análisis del sistema con LLM.",
+            },
+            {
+              title: "Jobs Legacy (NO SE USAN)",
+              content:
+                "classify (Gemini 2.0 Flash Lite): DEPRECADO. La clasificación de algoritmos se hace por HEURÍSTICA en el endpoint /classify del backend Python, NO usa LLM. Es 100% determinista basada en análisis del AST.",
+            },
+            {
+              title: "Modelos Usados",
+              content:
+                "Gemini 2.5 Flash: Usado para parser_assist, general, simplifier, repair. Rápido y eficiente. Gemini 2.5 Pro: Usado para compare. Más potente y preciso para análisis matemático complejo. Gemini 2.0 Flash: Usado para recursion-diagram (endpoint específico).",
+            },
+          ],
+        },
+      },
+      {
+        id: "recursive-methods",
+        title: "Métodos de Análisis Recursivo",
+        description:
+          "Detección automática y aplicación de métodos de resolución de recurrencias",
+        content: {
+          type: "text",
+          sections: [
+            {
+              title: "Proceso de Detección Automática",
+              content:
+                "El sistema sigue un proceso sistemático:\n\n1. Extrae la recurrencia del AST\n2. Analiza la estructura matemática\n3. Determina métodos aplicables\n4. Prioriza según precisión y eficiencia\n5. Aplica el método óptimo\n\nLa prioridad es: Teorema Maestro > Ecuación Característica > Árbol de Recursión > Método de Iteración.",
+            },
+            {
+              title: "Teorema Maestro",
+              content:
+                "Para recurrencias de la forma:\n\n$$T(n) = aT(n/b) + f(n)$$\n\nDonde $a \\geq 1$, $b > 1$, y $f(n)$ es asintóticamente positiva.\n\nTres casos según la comparación de $f(n)$ con $n^{\\log_b a}$:\n\n• Caso 1: Si $f(n) = O(n^{\\log_b a - \\epsilon})$ → $T(n) = \\Theta(n^{\\log_b a})$\n• Caso 2: Si $f(n) = \\Theta(n^{\\log_b a})$ → $T(n) = \\Theta(n^{\\log_b a} \\log n)$\n• Caso 3: Si $f(n) = \\Omega(n^{\\log_b a + \\epsilon})$ → $T(n) = \\Theta(f(n))$\n\nAplicable a algoritmos divide y conquista como Merge Sort, Quick Sort, Binary Search.",
+            },
+            {
+              title: "Método de Iteración",
+              content:
+                "Expande la recurrencia iterativamente hasta encontrar un patrón:\n\n$$T(n) = T(n-1) + n$$\n$$T(n) = T(n-2) + (n-1) + n$$\n$$T(n) = T(n-3) + (n-2) + (n-1) + n$$\n$$\\vdots$$\n$$T(n) = T(0) + 1 + 2 + \\cdots + n = \\frac{n(n+1)}{2}$$\n\nSiempre aplicable. Útil cuando otros métodos no funcionan.",
+            },
+            {
+              title: "Árbol de Recursión",
+              content:
+                "Visualiza el costo total mediante un árbol de llamadas recursivas.\n\nCada nivel $i$ del árbol tiene:\n• Número de nodos: $a^i$\n• Tamaño de subproblema: $n/b^i$\n• Costo por nodo: $f(n/b^i)$\n\nCosto total: $$T(n) = \\sum_{i=0}^{\\log_b n} a^i \\cdot f(n/b^i)$$\n\nAplicable cuando hay múltiples llamadas recursivas. Útil para entender la estructura del problema.",
+            },
+            {
+              title: "Ecuación Característica",
+              content:
+                "Para recurrencias lineales homogéneas:\n\n$$T(n) = c_1 T(n-1) + c_2 T(n-2) + \\cdots + c_k T(n-k)$$\n\nSe resuelve la ecuación característica:\n\n$$x^k = c_1 x^{k-1} + c_2 x^{k-2} + \\cdots + c_k$$\n\nLas raíces $r_1, r_2, \\ldots, r_k$ determinan la solución:\n\n$$T(n) = A_1 r_1^n + A_2 r_2^n + \\cdots + A_k r_k^n$$\n\nEjemplo: Fibonacci → $T(n) = T(n-1) + T(n-2)$ → $T(n) = \\Theta(\\phi^n)$ donde $\\phi = \\frac{1+\\sqrt{5}}{2}$",
+            },
+          ],
+        },
+      },
+      {
+        id: "request-flow",
+        title: "Flujo de Peticiones",
+        description:
+          "Flujo completo y preciso de peticiones desde el frontend hasta el backend. Incluye diagramas Mermaid de arquitectura, flujos de análisis iterativo/recursivo, y diagramas de secuencia. Next.js SOLO hace proxy para /api/llm/*, los endpoints principales van directo al backend Python.",
+        content: {
+          type: "text",
+          sections: [
+            {
+              title: "Flujo Iterativo",
+              content:
+                "1. POST /grammar/parse → Parsea código y genera AST. 2. POST /classify → Clasifica por HEURÍSTICA (NO LLM). 3. POST /analyze/open → Usa IterativeAnalyzer, calcula worst/best/avg.",
+            },
+            {
+              title: "Flujo Recursivo",
+              content:
+                "1. POST /grammar/parse → Parsea código. 2. POST /classify → Clasifica por HEURÍSTICA. 3. POST /analyze/detect-methods → Detecta métodos aplicables. 4. POST /analyze/open (con method) → Usa RecursiveAnalyzer, aplica método seleccionado.",
+            },
+            {
+              title: "Proxies Next.js",
+              content:
+                "Next.js SOLO actúa como BFF para /api/llm/* (proteger API key). Los endpoints principales (/grammar/parse, /classify, /analyze/*) van DIRECTO al backend Python sin proxy.",
+            },
+          ],
+        },
+      },
+      {
+        id: "react-flow",
+        title: "React Flow para Visualización",
+        description:
+          "Sistema de visualización de diagramas interactivos usando React Flow. Soporta árboles de recursión, grafos de ejecución, y diagramas de flujo de trace. Incluye layout automático con Dagre, nodos/edges personalizados, y optimizaciones de rendimiento.",
+        content: {
+          type: "text",
+          sections: [
+            {
+              title: "Componentes Principales",
+              content:
+                "TraceFlowDiagram: Diagrama de flujo con React Flow. RecursionTreeModal: Modal con árbol de recursión interactivo. RecursiveTraceContent: Contenido de trace recursivo con diagrama LLM.",
+            },
+            {
+              title: "Generación de Grafos",
+              content:
+                "Desde trace data: Convierte pasos de ejecución en nodos y edges. Desde recursion tree: Construye árbol jerárquico de llamadas recursivas. Layout automático: Usa Dagre para posicionar nodos automáticamente.",
+            },
+            {
+              title: "Interactividad",
+              content:
+                "Zoom y pan: Navegación fluida del diagrama. Selección de nodos: Click para ver detalles. Highlight de paths: Resalta caminos de ejecución. Tooltips: Información adicional al hover.",
+            },
+            {
+              title: "Optimizaciones",
+              content:
+                "Virtualización: Solo renderiza nodos visibles. Memoización: Evita re-renders innecesarios. Lazy loading: Carga diagramas bajo demanda. Debouncing: Optimiza eventos de interacción.",
+            },
+          ],
+        },
+      },
+      {
+        id: "gpu-cpu",
+        title: "Análisis GPU vs CPU",
+        description:
+          "Sistema de scoring que determina la idoneidad de un algoritmo para GPU o CPU",
+        content: {
+          type: "text",
+          sections: [
+            {
+              title: "Métricas Analizadas",
+              content:
+                "El sistema evalúa múltiples características del algoritmo:\n\n❌ Recursión: Penaliza GPU (difícil de paralelizar en hardware)\n❌ Branching: Penaliza GPU (divergencia de warps reduce eficiencia)\n✓ Loops independientes: Favorece GPU (paralelización masiva)\n✓ Arrays: Favorece GPU (acceso paralelo a memoria)\n✓ Operaciones matemáticas: Favorece GPU (ALUs especializadas)\n❌ Acceso irregular a memoria: Penaliza GPU (coalescencia)\n\nCada métrica contribuye al score final con un peso específico.",
+            },
+            {
+              title: "Sistema de Scoring",
+              content:
+                "Scores calculados en rango [0, 100]:\n\n$$\\text{GPU Score} = \\sum_{i} w_i \\cdot m_i^{\\text{GPU}}$$\n$$\\text{CPU Score} = \\sum_{i} w_i \\cdot m_i^{\\text{CPU}}$$\n\nDonde $w_i$ son pesos y $m_i$ son métricas normalizadas.\n\nRecomendaciones:\n• GPU: Score GPU > 60 (altamente paralelizable)\n• CPU: Score CPU > 60 (secuencial o complejo)\n• Mixto: Ambos scores 40-60 (híbrido)\n\nEl sistema también considera el tamaño del problema $n$ para determinar si la sobrecarga de GPU se justifica.",
+            },
+            {
+              title: "Visualización (GPUCPUModal)",
+              content:
+                "El modal muestra:\n\n✓ Barras de progreso para scores GPU y CPU\n✓ Desglose de métricas individuales\n✓ Recomendación clara con justificación\n✓ Explicación detallada de cada factor\n\nLos colores indican la recomendación:\n• Verde: GPU recomendado\n• Azul: CPU recomendado\n• Amarillo: Perfil mixto",
+            },
+          ],
+        },
+      },
+      {
+        id: "trace-environment",
+        title: "Environment y Trace Endpoint",
+        description:
+          "Configuración de variables de entorno y metadata del endpoint de seguimiento de ejecución",
+        content: {
+          type: "text",
+          sections: [
+            {
+              title: "Variables de Entorno (Backend)",
+              content:
+                "El backend Python utiliza las siguientes variables de entorno:\n\n• $\\text{CODE\\_EXECUTION\\_TIMEOUT}$: Timeout para ejecución de código\n  Default: 5000ms\n\n• $\\text{SYMPY\\_TIMEOUT}$: Timeout para operaciones SymPy\n  Default: 5000ms\n\n• $\\text{LLM\\_TIMEOUT}$: Timeout para llamadas a LLM\n  Default: 30000ms\n\n• $\\text{ENABLE\\_CACHE}$: Habilitar cache de resultados\n  Default: true\n\nEstas variables controlan los límites de tiempo para evitar bloqueos en operaciones costosas.",
+            },
+            {
+              title: "Variables de Entorno (Frontend)",
+              content:
+                "El frontend Next.js utiliza:\n\n• $\\text{NEXT\\_PUBLIC\\_GEMINI\\_API\\_KEY}$\n  API key de Gemini (fallback si usuario no proporciona)\n\n• $\\text{NEXT\\_PUBLIC\\_API\\_URL}$\n  URL del backend\n  Default: http://localhost:8000\n\nLa API key puede ser proporcionada por el usuario en el footer de la aplicación, sobrescribiendo la variable de entorno.",
+            },
+            {
+              title: "Metadata del Trace",
+              content:
+                "El endpoint /analyze/trace retorna metadata adicional:\n\n• $\\text{execution\\_time}$: Tiempo de ejecución en milisegundos\n• $\\text{tokens\\_used}$: Tokens consumidos por LLM (solo recursivos)\n• $\\text{cost}$: Costo estimado de la llamada LLM en USD\n• $\\text{model}$: Modelo usado (gemini-2.0-flash para diagramas)\n\nEsta información permite monitorear el uso de recursos y costos asociados al análisis.",
+            },
+          ],
+        },
+      },
     ],
     [],
   );

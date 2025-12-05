@@ -93,8 +93,16 @@ Usuario → Componente → Hook/Context → Service → API Backend
 **Modales:**
 - `ProcedureModal.tsx`: Modal de procedimiento general
 - `GeneralProcedureModal.tsx`: Modal de procedimiento detallado
-- `RecursionTreeModal.tsx`: Modal de árbol de recursión
+- `RecursionTreeModal.tsx`: Modal de árbol de recursión (React Flow)
 - `CharacteristicEquationModal.tsx`: Modal de ecuación característica
+- `ExecutionTraceModal.tsx`: Modal de trace de ejecución (iterativo y recursivo)
+- `ComparisonModal.tsx`: Modal de comparación con LLM
+- `GPUCPUModal.tsx`: Modal de análisis GPU vs CPU
+
+**Visualización:**
+- `TraceFlowDiagram.tsx`: Diagrama de flujo con React Flow
+- `IterativeTraceContent.tsx`: Contenido de trace iterativo
+- `RecursiveTraceContent.tsx`: Contenido de trace recursivo con diagrama LLM
 
 **Chatbot:**
 - `AIModeView.tsx`: Vista del modo AI con chatbot
@@ -282,4 +290,52 @@ pnpm start
 ### Docker
 
 La aplicación se puede containerizar con Docker (ver `Dockerfile`).
+
+## Nuevas Funcionalidades
+
+### React Flow para Visualización
+
+El sistema utiliza React Flow para visualizar:
+- Árboles de recursión interactivos
+- Grafos de ejecución de algoritmos
+- Diagramas de flujo de trace
+
+Ver [react-flow.md](./react-flow.md) para más detalles.
+
+### Análisis GPU vs CPU
+
+Sistema de scoring que determina si un algoritmo es más adecuado para GPU o CPU basándose en:
+- Paralelismo
+- Patrones de acceso a memoria
+- Complejidad de control de flujo
+- Operaciones matemáticas
+
+Ver [gpu-cpu-comparison.md](./gpu-cpu-comparison.md) para más detalles.
+
+### Comparación con LLM
+
+Permite comparar el análisis del sistema con el análisis de Gemini LLM:
+- Detección de diferencias
+- Explicaciones de discrepancias
+- Nivel de confianza
+
+Ver [llm-comparison.md](./llm-comparison.md) para más detalles.
+
+### Seguimiento de Pseudocódigo
+
+Generación de trace paso a paso:
+- **Iterativos**: Instrumentación de código y captura de estado
+- **Recursivos**: Generación de diagramas con LLM
+
+Ver [pseudocode-tracking.md](./pseudocode-tracking.md) para más detalles.
+
+## Referencias Adicionales
+
+- [React Flow](./react-flow.md) - Visualización de diagramas interactivos
+- [GPU vs CPU Comparison](./gpu-cpu-comparison.md) - Sistema de análisis GPU/CPU
+- [LLM Comparison](./llm-comparison.md) - Comparación con análisis de LLM
+- [Pseudocode Tracking](./pseudocode-tracking.md) - Seguimiento de ejecución
+- [API Key Configuration](./api-key-configuration.md) - Configuración de API key
+- [API Integration](./api-integration.md) - Integración con el backend
+- [Styling](./styling.md) - Sistema de diseño
 
