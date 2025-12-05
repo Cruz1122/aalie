@@ -2574,21 +2574,6 @@ class RecursiveAnalyzer(BaseAnalyzer):
             then_body = node.get("then") or node.get("thenBody") or node.get("consequent")
             else_body = node.get("else") or node.get("elseBody") or node.get("alternate")
             
-            # IMPORTANTE: Verificar si esta condición es un caso base (sobre el tamaño del problema)
-            # Si es un caso base, NO es un early return - es parte de la estructura recursiva normal
-            # Verificar que condition no sea None ni un diccionario vacío
-            is_base_case = False
-            if condition and isinstance(condition, dict) and condition.get("type"):
-                base_case_value = self._extract_base_case_from_condition(condition)
-                is_base_case = base_case_value is not None
-            
-            # Si es un caso base, no es un early return
-            # Un caso base es parte de la estructura recursiva normal, NO es un early return
-            if is_base_case:
-                # NO buscar early returns en el ELSE porque el caso base es parte de la recursión normal
-                # Retornar False directamente - un caso base no es un early return
-                return False
-            
             # Verificar si en THEN hay return sin recursivas Y en ELSE hay recursivas
             if then_body and else_body:
                 # Buscar todos los returns en THEN (pueden estar dentro de Blocks)
@@ -2607,9 +2592,27 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 has_recursive_in_else = self._has_recursive_calls_in_node(else_body)
                 
                 # Patrón clásico: return temprano en THEN, recursivas en ELSE (directas o anidadas)
-                # Solo si NO es un caso base
                 if has_early_return_in_then and has_recursive_in_else:
-                    return True
+                    # Verificar si es un caso base que retorna inmediatamente una constante simple
+                    # En ese caso, es un early return válido para el mejor caso
+                    is_base_case = False
+                    if condition and isinstance(condition, dict) and condition.get("type"):
+                        base_case_value = self._extract_base_case_from_condition(condition)
+                        is_base_case = base_case_value is not None
+                    
+                    # Si es un caso base, verificar que retorne una constante simple
+                    if is_base_case:
+                        for ret in returns_in_then:
+                            if not self._contains_recursive_call(ret, recursive_calls):
+                                ret_value = ret.get("value") or ret.get("argument")
+                                # Si retorna una constante simple, es early return válido
+                                if self._is_simple_constant_return(ret_value):
+                                    return True
+                        # Si no retorna constante simple, no es early return
+                        # (el caso base es parte de la recursión normal)
+                    else:
+                        # Si NO es caso base, cualquier return sin recursivas es early return
+                        return True
         
         # Si es un Block o Begin, buscar secuencialmente
         if node_type == "Block" or node_type == "Begin":
@@ -2636,11 +2639,24 @@ class RecursiveAnalyzer(BaseAnalyzer):
                             base_case_value = self._extract_base_case_from_condition(condition)
                             is_base_case = base_case_value is not None
                         
-                        # Si es un caso base, NO es un early return - continuar buscando
-                        # Un caso base es parte de la estructura recursiva normal, NO es un early return
+                        # Si es un caso base, verificar si es un early return (retorna inmediatamente)
                         if is_base_case:
-                            # NO buscar early returns en el ELSE porque el caso base es parte de la recursión normal
-                            # Continuar con el siguiente statement sin marcar como early return
+                            then_body = stmt.get("then") or stmt.get("thenBody") or stmt.get("consequent")
+                            else_body = stmt.get("else") or stmt.get("elseBody") or stmt.get("alternate")
+                            if then_body and else_body:
+                                returns_in_then = self._find_return_statements(then_body)
+                                has_simple_return = any(
+                                    ret for ret in returns_in_then 
+                                    if not self._contains_recursive_call(ret, recursive_calls)
+                                )
+                                has_recursive_in_else = self._has_recursive_calls_in_node(else_body)
+                                if has_simple_return and has_recursive_in_else:
+                                    for ret in returns_in_then:
+                                        if not self._contains_recursive_call(ret, recursive_calls):
+                                            ret_value = ret.get("value") or ret.get("argument")
+                                            if self._is_simple_constant_return(ret_value):
+                                                return True
+                            # Si no es un early return claro, continuar buscando
                             continue
                         
                         # Si NO es caso base, buscar recursivamente en este IF
@@ -2687,6 +2703,39 @@ class RecursiveAnalyzer(BaseAnalyzer):
             elif isinstance(value, dict):
                 if self._has_return_before_recursive_calls(value, recursive_calls):
                     return True
+        
+        return False
+    
+    def _is_simple_constant_return(self, ret_value: Any) -> bool:
+        """
+        Verifica si un return retorna una constante simple (TRUE, FALSE, 1, 0, etc.).
+        
+        Args:
+            ret_value: Valor del return
+            
+        Returns:
+            True si es una constante simple
+        """
+        if ret_value is None:
+            return True  # Return sin valor es simple
+        
+        if isinstance(ret_value, dict):
+            ret_type = ret_value.get("type", "").lower()
+            # Literales y booleanos son constantes simples
+            if ret_type in ["literal", "number", "boolean", "bool"]:
+                return True
+            # Identificadores como TRUE, FALSE también son simples
+            if ret_type == "identifier":
+                name = (ret_value.get("name", "") or ret_value.get("id", "")).upper()
+                if name in ["TRUE", "FALSE", "TRUE", "FALSE"]:
+                    return True
+        elif isinstance(ret_value, (bool, int, float)):
+            return True
+        elif isinstance(ret_value, str):
+            # Strings como "TRUE", "FALSE", "1", "0" son simples
+            ret_upper = ret_value.upper()
+            if ret_upper in ["TRUE", "FALSE", "1", "0"]:
+                return True
         
         return False
     
