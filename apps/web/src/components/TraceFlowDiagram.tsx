@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useMemo, useEffect } from "react";
-import ReactFlow, {
+import {
+  ReactFlow,
   Background,
   Controls,
   Handle,
@@ -13,8 +14,8 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 
-import type { TraceGraph, GraphNode, GraphEdge } from "@/types/trace";
 import { getLayoutedGraph } from "@/lib/layout/traceGraphLayout";
+import type { TraceGraph, GraphNode, GraphEdge } from "@/types/trace";
 
 interface TraceFlowDiagramProps {
   readonly graph: TraceGraph;
@@ -131,9 +132,9 @@ function mapNodes(nodes: GraphNode[]): Node[] {
       id: n.id,
       type: n.type || "default",
       position: n.position,
-      data: { 
-        label, 
-        isReturn, 
+      data: {
+        label,
+        isReturn,
         type: n.type || "default",
         microseconds: n.data?.microseconds,
         tokens: n.data?.tokens,
@@ -212,7 +213,7 @@ function mapEdges(
 
     // Detectar si es una arista de retorno por el label
     const isReturnEdge = e.label && (/return/i.test(e.label) || /→/i.test(e.label) || /retorna/i.test(e.label));
-    
+
     console.log(`Edge ${e.id}: label="${e.label}", isReturn=${isReturnEdge}`);
 
     const edgeStyle = {
@@ -229,18 +230,18 @@ function mapEdges(
       sourceHandle,
       targetHandle,
       // Estilo específico para aristas de retorno
-      style: edgeStyle as any,
+      style: edgeStyle,
       labelStyle: {
         fill: isReturnEdge ? "#6ee7b7" : "#e5e7eb",
         fontSize: isReturnEdge ? 12 : 11,
         fontWeight: isReturnEdge ? 600 : 500,
       },
       markerEnd: {
-        type: "arrowclosed" as any,
+        type: "arrow" as const,
         color: isReturnEdge ? "#10b981" : "#94a3b8",
-      } as any,
+      },
       className: isReturnEdge ? "return-edge" : "",
-    };
+    } as Edge;
   });
 }
 

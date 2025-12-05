@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Formula from "../Formula";
+
 import type { ExecutionStep, TraceApiResponse } from "@/types/trace";
+
+import Formula from "../Formula";
 
 interface StepInfoProps {
   stepData: ExecutionStep | null;

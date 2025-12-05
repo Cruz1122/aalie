@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
 import type { Program } from "@aa/types";
-import TraceFlowDiagram from "./TraceFlowDiagram";
-import IterativeTraceContent from "./trace/IterativeTraceContent";
-import RecursiveTraceContent from "./trace/RecursiveTraceContent";
+import { useEffect, useState, useMemo, useCallback } from "react";
+
 import type {
   CaseType,
   TraceApiResponse,
@@ -12,6 +10,11 @@ import type {
   TraceConfig,
   InternalInput,
 } from "@/types/trace";
+
+import IterativeTraceContent from "./trace/IterativeTraceContent";
+import RecursiveTraceContent from "./trace/RecursiveTraceContent";
+import TraceFlowDiagram from "./TraceFlowDiagram";
+
 
 interface ExecutionTraceModalProps {
   open: boolean;
@@ -26,7 +29,7 @@ export default function ExecutionTraceModal({
   open,
   onClose,
   source,
-  ast,
+  ast: _ast,
   caseType,
   onCaseChange,
 }: ExecutionTraceModalProps) {
@@ -116,30 +119,10 @@ export default function ExecutionTraceModal({
       },
       inputGenerator: generators,
     };
-  }, [algorithmKind]);
+  }, [algorithmKind, source]);
 
   // Cargar rastro cuando cambia el caso o tamaño de entrada (debounced)
-  useEffect(() => {
-    if (open && source) {
-      // Reset algorithm kind to force re-detection
-      setAlgorithmKind(null);
-      loadTrace();
-    }
-  }, [open, caseType, debouncedInputSize, source]);
-
-  // Bloquear scroll del body mientras el modal esté abierto
-  useEffect(() => {
-    if (!open && !isDiagramExpanded) return;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [open, isDiagramExpanded]);
-
-  const loadTrace = async () => {
+  const loadTrace = useCallback(async () => {
     setLoading(true);
     setCurrentStep(0);
     setIsPlaying(false);
@@ -157,8 +140,8 @@ export default function ExecutionTraceModal({
         (scenario === "best"
           ? traceConfig.inputGenerator.best
           : scenario === "avg"
-          ? traceConfig.inputGenerator.avg
-          : traceConfig.inputGenerator.worst) || traceConfig.inputGenerator.worst;
+            ? traceConfig.inputGenerator.avg
+            : traceConfig.inputGenerator.worst) || traceConfig.inputGenerator.worst;
 
       if (generator) {
         const internalInput = generator(n);
@@ -191,12 +174,12 @@ export default function ExecutionTraceModal({
       });
 
       const data: TraceApiResponse = await response.json();
-      
+
       // Store algorithm kind FIRST before setting trace
       if (data.algorithmKind) {
         setAlgorithmKind(data.algorithmKind);
       }
-      
+
       // Then set the trace data
       setTrace(data);
     } catch (error) {
@@ -208,7 +191,27 @@ export default function ExecutionTraceModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [caseType, debouncedInputSize, inputSize, source, traceConfig]);
+
+  useEffect(() => {
+    if (open && source) {
+      // Reset algorithm kind to force re-detection
+      setAlgorithmKind(null);
+      loadTrace();
+    }
+  }, [open, caseType, debouncedInputSize, source, loadTrace]);
+
+  // Bloquear scroll del body mientras el modal esté abierto
+  useEffect(() => {
+    if (!open && !isDiagramExpanded) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open, isDiagramExpanded]);
 
   const isRecursiveOrHybrid =
     algorithmKind === "recursive" || algorithmKind === "hybrid";
@@ -247,19 +250,18 @@ export default function ExecutionTraceModal({
                 </h2>
                 {trace?.algorithmKind && (
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      trace.algorithmKind === "recursive"
-                        ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
-                        : trace.algorithmKind === "hybrid"
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${trace.algorithmKind === "recursive"
+                      ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
+                      : trace.algorithmKind === "hybrid"
                         ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/40"
                         : "bg-blue-500/20 text-blue-300 border border-blue-500/40"
-                    }`}
+                      }`}
                   >
                     {trace.algorithmKind === "recursive"
                       ? "Recursivo"
                       : trace.algorithmKind === "hybrid"
-                      ? "Híbrido"
-                      : "Iterativo"}
+                        ? "Híbrido"
+                        : "Iterativo"}
                   </span>
                 )}
               </div>

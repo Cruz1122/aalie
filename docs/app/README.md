@@ -4,12 +4,22 @@ Esta carpeta contiene la documentación técnica completa del frontend del anali
 
 ## Índice
 
+### Documentación Principal
+
 - [Arquitectura](./architecture.md) - Arquitectura del frontend, estructura y organización
 - [Componentes](./components.md) - Documentación de componentes principales y sus props
 - [Sistema de Rutas](./routing.md) - Sistema de rutas y navegación
 - [Gestión de Estado](./state-management.md) - Hooks personalizados y contextos
 - [Sistema de Diseño](./styling.md) - Tailwind CSS, glassmorphism y estilos
 - [Integración con API](./api-integration.md) - Cómo se integra con el backend
+
+### Documentación Técnica Detallada
+
+- [React Flow](./react-flow.md) - Visualización de diagramas interactivos con React Flow
+- [GPU vs CPU Comparison](./gpu-cpu-comparison.md) - Sistema de análisis y scoring GPU/CPU
+- [LLM Comparison](./llm-comparison.md) - Comparación de análisis con LLM
+- [Pseudocode Tracking](./pseudocode-tracking.md) - Seguimiento de ejecución paso a paso
+- [API Key Configuration](./api-key-configuration.md) - Configuración de API key de Gemini
 
 ## Descripción General
 
@@ -21,7 +31,10 @@ La aplicación web está construida con **Next.js 14** (App Router) y **TypeScri
 - **Análisis Interactivo**: Visualización de resultados con tablas, gráficos y fórmulas LaTeX
 - **Chatbot con IA**: Asistente integrado para ayuda y análisis
 - **Modo Manual y AI**: Dos modos de interacción
-- **Visualizaciones**: AST, árboles de recursión, procedimientos detallados
+- **Visualizaciones**: AST, árboles de recursión con React Flow, procedimientos detallados
+- **Trace de Ejecución**: Seguimiento paso a paso para algoritmos iterativos y recursivos
+- **Comparación con LLM**: Contrasta análisis del sistema con Gemini
+- **Análisis GPU vs CPU**: Determina si un algoritmo es más adecuado para GPU o CPU
 
 ## Tecnologías
 

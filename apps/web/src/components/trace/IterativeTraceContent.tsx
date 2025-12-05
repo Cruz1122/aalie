@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+
 import type { CaseType, TraceApiResponse, TraceGraph, TraceConfig, DiagramGraphResponse, ExecutionStep } from "@/types/trace";
+
+import DiagramSection from "./DiagramSection";
+import InputSizeControl from "./InputSizeControl";
 import PseudocodeViewer from "./PseudocodeViewer";
 import StepControls from "./StepControls";
 import StepInfo from "./StepInfo";
-import InputSizeControl from "./InputSizeControl";
 import VariablesPanel from "./VariablesPanel";
-import DiagramSection from "./DiagramSection";
 
 interface IterativeTraceContentProps {
   source: string;
@@ -45,7 +47,7 @@ export default function IterativeTraceContent({
   traceConfig,
   inputSize,
   setInputSize,
-  debouncedInputSize,
+  debouncedInputSize: _debouncedInputSize,
   setDebouncedInputSize,
   trace,
   loading,
@@ -60,9 +62,9 @@ export default function IterativeTraceContent({
   setExplanation,
   loadingDiagram,
   setLoadingDiagram,
-  exampleArray,
-  setExampleArray,
-  isDiagramExpanded,
+  exampleArray: _exampleArray,
+  setExampleArray: _setExampleArray,
+  isDiagramExpanded: _isDiagramExpanded,
   setIsDiagramExpanded,
   onLoadTrace,
 }: IterativeTraceContentProps) {
@@ -70,7 +72,7 @@ export default function IterativeTraceContent({
   const inputSizeDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const currentStepRef = useRef<number>(currentStep);
   const [stepsWithCosts, setStepsWithCosts] = useState<ExecutionStep[]>([]);
-  
+
   // Sincronizar currentStepRef con currentStep
   useEffect(() => {
     currentStepRef.current = currentStep;
@@ -121,7 +123,7 @@ export default function IterativeTraceContent({
       if (data.ok && data.graph) {
         setGraph(data.graph);
         setExplanation(data.explanation || "");
-        
+
         // Mapear stepCosts a los steps del trace
         if (data.stepCosts && trace?.ok && trace.trace) {
           const updatedSteps = trace.trace.steps.map((step) => {
@@ -228,14 +230,14 @@ export default function IterativeTraceContent({
       ? stepsToUse[currentStep]
       : null;
   }, [stepsToUse, currentStep]);
-  
+
   const currentLine = currentStepData?.line || 0;
 
   // Get initial variables and final variables
   const initialVariables = stepsToUse.length > 0
     ? stepsToUse[0]?.variables || {}
     : {};
-  
+
   const finalVariables = stepsToUse.length > 0
     ? stepsToUse[stepsToUse.length - 1]?.variables || {}
     : {};
@@ -251,31 +253,28 @@ export default function IterativeTraceContent({
             <div className="flex items-center gap-1 bg-slate-800/60 border border-white/10 rounded-lg p-1">
               <button
                 onClick={() => onCaseChange("best")}
-                className={`px-2 py-1 text-xs rounded-md transition-colors font-semibold ${
-                  caseType === "best"
+                className={`px-2 py-1 text-xs rounded-md transition-colors font-semibold ${caseType === "best"
                     ? "bg-green-500/30 text-green-200 border border-green-500/50"
                     : "text-slate-400 hover:text-slate-200"
-                }`}
+                  }`}
               >
                 Mejor
               </button>
               <button
                 onClick={() => onCaseChange("avg")}
-                className={`px-2 py-1 text-xs rounded-md transition-colors font-semibold ${
-                  caseType === "avg"
+                className={`px-2 py-1 text-xs rounded-md transition-colors font-semibold ${caseType === "avg"
                     ? "bg-yellow-500/30 text-yellow-200 border border-yellow-500/50"
                     : "text-slate-400 hover:text-slate-200"
-                }`}
+                  }`}
               >
                 Promedio
               </button>
               <button
                 onClick={() => onCaseChange("worst")}
-                className={`px-2 py-1 text-xs rounded-md transition-colors font-semibold ${
-                  caseType === "worst"
+                className={`px-2 py-1 text-xs rounded-md transition-colors font-semibold ${caseType === "worst"
                     ? "bg-red-500/30 text-red-200 border border-red-500/50"
                     : "text-slate-400 hover:text-slate-200"
-                }`}
+                  }`}
               >
                 Peor
               </button>
@@ -338,7 +337,7 @@ export default function IterativeTraceContent({
           <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0">
             Diagrama de Flujo
           </h3>
-          
+
           <InputSizeControl
             value={inputSize}
             min={1}

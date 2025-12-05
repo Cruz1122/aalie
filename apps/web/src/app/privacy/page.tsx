@@ -32,7 +32,7 @@ export default function PrivacyPage() {
           <div className="flex items-center justify-center gap-2 mt-4">
             <span className="h-1 w-1 rounded-full bg-green-400"></span>
             <p className="text-sm text-green-400 font-medium">
-              Última actualización: Enero 2025
+              Última actualización: Diciembre 2024
             </p>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function PrivacyPage() {
               </li>
               <li className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-400 flex-shrink-0"></span>{" "}
-                IA externa solo para chatbot (Azure AI/Gemini)
+                IA externa para chatbot, comparación y diagramas (Gemini)
               </li>
             </ul>
           </div>
@@ -157,31 +157,27 @@ export default function PrivacyPage() {
                   ¿Usan servicios de IA externa?
                 </h3>
                 <p className="text-dark-text text-sm">
-                  Sí, utilizamos servicios de IA externa (Azure AI y Google
-                  Gemini) exclusivamente para el chatbot de asistencia y
-                  clasificación de algoritmos. El análisis de complejidad se
-                  realiza completamente con nuestro backend propio sin uso de
-                  IA. Los datos enviados a estos servicios se procesan según sus
-                  políticas de privacidad respectivas.
+                  Sí, utilizamos Google Gemini para tres funcionalidades específicas:
+                  (1) Chatbot de asistencia general, (2) Comparación de análisis con LLM (Gemini 2.5 Pro),
+                  y (3) Generación de diagramas para algoritmos recursivos (Gemini 2.0 Flash).
+                  El análisis de complejidad principal se realiza completamente con nuestro
+                  backend propio (FastAPI + ANTLR4 + SymPy) sin uso de IA. Los datos enviados
+                  a Gemini se procesan según la política de privacidad de Google.
                 </p>
               </div>
 
               <div>
                 <h3 className="text-lg font-semibold text-primary mb-2">
-                  ¿Cómo se maneja mi API Key?
+                  ¿Cómo se maneja mi API Key de Gemini?
                 </h3>
                 <p className="text-dark-text text-sm">
-                  Si el servidor tiene una API Key configurada en variables de
-                  entorno, se usará automáticamente y no necesitarás
-                  proporcionar una personal. Si proporcionas tu propia API Key,
-                  se almacena únicamente en tu navegador de forma local
-                  (localStorage). No se envían ni se almacenan en nuestros
-                  servidores ni en servidores externos. Sin embargo, es
-                  importante que tengas cuidado: las API keys se envían
-                  directamente a los servicios de IA (Azure AI/Gemini) cuando
-                  usas el chatbot, siguiendo sus políticas de seguridad. Te
-                  recomendamos usar API keys con permisos limitados y monitorear
-                  su uso.
+                  Si proporcionas tu propia API Key de Gemini, se almacena únicamente
+                  en tu navegador de forma local (localStorage). No se envía ni almacena
+                  en nuestros servidores. La API key se usa directamente desde tu navegador
+                  para llamadas a Gemini API (chatbot, comparación LLM, diagramas recursivos).
+                  Te recomendamos usar API keys con permisos limitados y monitorear su uso
+                  en Google Cloud Console. Puedes eliminar tu API key en cualquier momento
+                  desde el footer de la aplicación.
                 </p>
               </div>
             </div>
@@ -192,11 +188,12 @@ export default function PrivacyPage() {
                   ¿Qué datos técnicos se registran?
                 </h3>
                 <p className="text-dark-text text-sm">
-                  Solo logs mínimos de servidor (IP, User-Agent) para
-                  diagnóstico y monitoreo del servicio. No se vinculan a
-                  identidades ni tienen uso comercial. Los mensajes del chatbot
-                  pueden ser procesados por servicios de IA externa (Azure
-                  AI/Gemini) según sus términos de servicio.
+                  Solo logs mínimos de servidor (IP, User-Agent, timestamps) para
+                  diagnóstico y monitoreo del servicio. No se vinculan a identidades
+                  ni tienen uso comercial. Los mensajes del chatbot y código enviado
+                  para comparación/diagramas pueden ser procesados por Gemini API
+                  según los términos de servicio de Google. No almacenamos historial
+                  de análisis ni código procesado.
                 </p>
               </div>
 
@@ -205,11 +202,12 @@ export default function PrivacyPage() {
                   ¿Es seguro analizar código sensible?
                 </h3>
                 <p className="text-dark-text text-sm">
-                  El análisis de complejidad se procesa temporalmente sin
-                  almacenamiento. Sin embargo, si usas el chatbot, tu código
-                  puede ser enviado a servicios de IA externa. Evita enviar
-                  información crítica, contraseñas o datos sensibles en
-                  cualquier caso.
+                  El análisis de complejidad principal se procesa temporalmente sin
+                  almacenamiento. Sin embargo, si usas funcionalidades con LLM (chatbot,
+                  comparación, diagramas recursivos), tu código puede ser enviado a
+                  Gemini API. Evita enviar información crítica, contraseñas, secretos
+                  o datos sensibles. Para código confidencial, usa solo el análisis
+                  básico sin funcionalidades de IA.
                 </p>
               </div>
 
@@ -217,10 +215,37 @@ export default function PrivacyPage() {
                 <h3 className="text-lg font-semibold text-primary mb-2">
                   ¿Cómo contactar para dudas?
                 </h3>
-                <p className="text-dark-text text-sm">
-                  Puedes contactarnos a través de la Universidad de Caldas para
-                  cualquier consulta sobre privacidad.
+                <p className="text-dark-text text-sm mb-3">
+                  Para cualquier consulta sobre privacidad, sugerencias o problemas,
+                  puedes contactarnos:
                 </p>
+                <ul className="space-y-2 text-dark-text text-sm">
+                  <li className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-blue-400 text-sm">
+                      email
+                    </span>
+                    <a
+                      href="mailto:juan.cruz37552@ucaldas.edu.co"
+                      className="text-blue-400 hover:text-blue-300 underline"
+                    >
+                      juan.cruz37552@ucaldas.edu.co
+                    </a>
+                    <span className="text-xs text-slate-500">(Camilo Cruz)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-purple-400 text-sm">
+                      code
+                    </span>
+                    <a
+                      href="https://github.com/Cruz1122"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-purple-400 hover:text-purple-300 underline"
+                    >
+                      GitHub @Cruz1122
+                    </a>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>

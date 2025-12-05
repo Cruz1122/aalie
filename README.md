@@ -67,6 +67,36 @@ El backend (Python) NO forma parte de los workspaces de pnpm.
 - ✅ Visualización de AST
 - ✅ Procedimientos detallados paso a paso
 - ✅ Gráficos de complejidad
+- ✅ **Árboles de recursión interactivos con React Flow**
+- ✅ **Trace de ejecución paso a paso** (iterativos y recursivos)
+- ✅ **Diagramas de flujo generados con LLM** (para algoritmos recursivos)
+
+### 🆕 Nuevas Funcionalidades
+
+#### 🔍 Seguimiento de Pseudocódigo
+- ✅ **Trace iterativo**: Instrumentación de código y captura de estado en cada paso
+- ✅ **Trace recursivo**: Generación automática de diagramas de árbol con LLM (Gemini)
+- ✅ Visualización paso a paso de variables y operaciones
+- ✅ Diagramas Mermaid interactivos
+
+#### 🤖 Comparación con LLM
+- ✅ Contrasta el análisis del sistema con análisis de Gemini
+- ✅ Detección automática de diferencias
+- ✅ Explicaciones de discrepancias
+- ✅ Nivel de confianza del análisis
+
+#### 🎮 Análisis GPU vs CPU
+- ✅ Sistema de scoring (0-100) para GPU y CPU
+- ✅ Análisis de paralelismo y patrones de acceso a memoria
+- ✅ Evaluación de complejidad de control de flujo
+- ✅ Recomendaciones de ejecución (GPU/CPU/Mixto)
+- ✅ Métricas detalladas: recursión, branching, loops, arrays, operaciones matemáticas
+
+#### 🔑 Configuración de API Key
+- ✅ Gestión de API key de Gemini en el frontend
+- ✅ Almacenamiento seguro en localStorage
+- ✅ Validación de formato y autenticidad
+- ✅ Prioridad: localStorage > variables de entorno
 
 ## 🚀 Estado del Proyecto
 
@@ -273,6 +303,10 @@ Incluyen solo `apps/web` y `packages/*` para evitar mezclar Python con Node.
   - [Modelos de Datos](docs/api/models.md)
   - [Arquitectura del Backend](docs/api/architecture.md)
   - [Manejo de Errores](docs/api/errors.md)
+  - **Nuevos documentos técnicos:**
+    - [Trace Endpoint](docs/api/trace-endpoint.md) - Funcionamiento del endpoint `/trace`
+    - [Análisis Recursivo](docs/api/recursive-analysis.md) - Detección de métodos y análisis
+    - [Integración de SymPy](docs/api/sympy-integration.md) - Uso de SymPy para matemáticas simbólicas
 
 - **[Documentación de Aplicación Web](docs/app/README.md)** - Frontend, componentes, routing
   - [Arquitectura](docs/app/architecture.md)
@@ -281,6 +315,22 @@ Incluyen solo `apps/web` y `packages/*` para evitar mezclar Python con Node.
   - [Gestión de Estado](docs/app/state-management.md)
   - [Sistema de Diseño](docs/app/styling.md)
   - [Integración con API](docs/app/api-integration.md)
+  - **Nuevos documentos técnicos:**
+    - [React Flow](docs/app/react-flow.md) - Visualización de diagramas interactivos
+    - [GPU vs CPU Comparison](docs/app/gpu-cpu-comparison.md) - Sistema de análisis GPU/CPU
+    - [LLM Comparison](docs/app/llm-comparison.md) - Comparación con análisis de LLM
+    - [Pseudocode Tracking](docs/app/pseudocode-tracking.md) - Seguimiento de ejecución
+    - [API Key Configuration](docs/app/api-key-configuration.md) - Configuración de API key
+
+- **[Documentación de LLM](docs/llm/usage-and-models.md)** - Uso de modelos de lenguaje
+  - Jobs disponibles y modelos usados
+  - Configuración centralizada
+  - Endpoints de LLM
+
+- **[Documentación de Desarrollo](docs/development/request-flow.md)** - Flujo de peticiones
+  - Flujo completo desde frontend hasta backend
+  - Proxies de Next.js API routes
+  - Manejo de errores y estados de carga
 
 ### Documentación de Usuario
 

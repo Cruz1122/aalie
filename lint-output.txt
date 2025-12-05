@@ -1,0 +1,4 @@
+
+> web@0.1.0 lint C:\Users\juanc\OneDrive\Documentos\2025-2\Análisis de Algoritmos\Proyecto\algorithmic-analysis\apps\web
+> eslint "src/**/*.{ts,tsx}"
+

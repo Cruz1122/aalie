@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+
 import { getApiKey } from "@/hooks/useApiKey";
+
 import { GEMINI_ENDPOINT_BASE } from "../llm-config";
 
 export const runtime = "nodejs";
@@ -305,7 +307,7 @@ Devuelve SOLO el JSON con la estructura especificada.`;
     const processedGraph = {
       ...result.graph,
       nodes: Array.isArray(result.graph.nodes)
-        ? result.graph.nodes.map((node: any) => ({
+        ? result.graph.nodes.map((node: { data?: { label?: string; microseconds?: number; tokens?: number }; [key: string]: unknown }) => ({
             ...node,
             data: {
               label: node.data?.label || "",

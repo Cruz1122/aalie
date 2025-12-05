@@ -1,9 +1,11 @@
 "use client";
 
-import TraceFlowDiagram from "../TraceFlowDiagram";
+import type { TraceGraph } from "@/types/trace";
+
 import MarkdownRenderer from "../MarkdownRenderer";
 import RecursionTreeView from "../RecursionTreeView";
-import type { TraceGraph } from "@/types/trace";
+import TraceFlowDiagram from "../TraceFlowDiagram";
+
 
 interface RecursionDiagram {
   graph: TraceGraph;
@@ -199,4 +201,5 @@ export default function DiagramSection({
     </div>
   );
 }
+
 

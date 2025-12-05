@@ -309,6 +309,16 @@ export interface GrammarContent {
   };
 }
 
+export interface TextSection {
+  title: string;
+  content: string;
+}
+
+export interface TextContent {
+  type: "text";
+  sections: TextSection[];
+}
+
 export interface DocumentationSection {
   id: string;
   title: string;
@@ -320,7 +330,8 @@ export interface DocumentationSection {
     | ToolsContent
     | KaTeXContent
     | AnalyzerContent
-    | GrammarContent;
+    | GrammarContent
+    | TextContent;
 }
 
 export interface ModalImageData {

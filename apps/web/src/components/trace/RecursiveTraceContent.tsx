@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import MarkdownRenderer from "../MarkdownRenderer";
-import PseudocodeViewer from "./PseudocodeViewer";
-import InputSizeControl from "./InputSizeControl";
-import VariablesPanel from "./VariablesPanel";
-import DiagramSection from "./DiagramSection";
+import { useRef, useEffect } from "react";
+
 import type { TraceGraph } from "@/types/trace";
+
+import MarkdownRenderer from "../MarkdownRenderer";
+import DiagramSection from "./DiagramSection";
+import InputSizeControl from "./InputSizeControl";
+import PseudocodeViewer from "./PseudocodeViewer";
+import VariablesPanel from "./VariablesPanel";
 
 interface RecursionDiagram {
   graph: TraceGraph;
@@ -33,12 +35,12 @@ export default function RecursiveTraceContent({
   algorithmKind,
   inputSize,
   setInputSize,
-  debouncedInputSize,
+  debouncedInputSize: _debouncedInputSize,
   setDebouncedInputSize,
   recursionDiagram,
   setRecursionDiagram,
   loading,
-  isDiagramExpanded,
+  isDiagramExpanded: _isDiagramExpanded,
   setIsDiagramExpanded,
   onLoadTrace,
 }: RecursiveTraceContentProps) {

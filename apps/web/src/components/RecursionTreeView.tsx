@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import MarkdownRenderer from "./MarkdownRenderer";
-import TraceFlowDiagram from "./TraceFlowDiagram";
+
 import type { TraceGraph } from "@/types/trace";
+
+import TraceFlowDiagram from "./TraceFlowDiagram";
 
 interface RecursionCall {
   id: string;
   depth: number;
-  params: Record<string, any>;
+  params: Record<string, unknown>;
   children: string[];
 }
 
@@ -29,11 +30,11 @@ interface RecursionDiagram {
 
 export default function RecursionTreeView({
   calls,
-  rootCalls,
+  rootCalls: _rootCalls,
   pseudocode,
   algorithmKind,
   inputSize,
-  onRegenerate,
+  onRegenerate: _onRegenerate,
   onDiagramGenerated,
 }: RecursionTreeViewProps) {
   const [diagram, setDiagram] = useState<RecursionDiagram | null>(null);
@@ -83,7 +84,7 @@ export default function RecursionTreeView({
           explanation: data.explanation || "",
         };
         setDiagram(newDiagram);
-        
+
         // Notificar al padre que se generó el diagrama
         if (onDiagramGenerated) {
           onDiagramGenerated(newDiagram);

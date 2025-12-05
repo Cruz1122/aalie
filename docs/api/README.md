@@ -4,10 +4,18 @@ Esta carpeta contiene la documentación técnica completa de la API backend del 
 
 ## Índice
 
+### Documentación Principal
+
+- [Arquitectura](./architecture.md) - Arquitectura del backend, estructura y flujo de datos
 - [Endpoints](./endpoints.md) - Documentación completa de todos los endpoints REST
 - [Modelos de Datos](./models.md) - Especificación de modelos Pydantic y tipos TypeScript
-- [Arquitectura](./architecture.md) - Arquitectura del backend, estructura y flujo de datos
 - [Manejo de Errores](./errors.md) - Códigos de error, formatos y estrategias de manejo
+
+### Documentación Técnica Detallada
+
+- [Trace Endpoint](./trace-endpoint.md) - Funcionamiento del endpoint `/trace` y variables de entorno
+- [Análisis Recursivo](./recursive-analysis.md) - Detección de métodos y análisis de complejidad recursiva
+- [Integración de SymPy](./sympy-integration.md) - Uso de SymPy para manipulación matemática simbólica
 
 ## Descripción General
 

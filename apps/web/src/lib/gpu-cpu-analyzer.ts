@@ -1,4 +1,5 @@
 import type { Program, AstNode, ProcDef, Block, For, While, Repeat, If, Call, Index, Assign, Binary, Unary, Return, Print } from "@aa/types";
+
 import type { GPUCPUMetrics, GPUCPUAnalysisResult, GPUCPUProfile } from "@/types/gpu-cpu";
 
 /**
@@ -276,7 +277,7 @@ function determineProfile(gpuScore: number, cpuScore: number): GPUCPUProfile {
 /**
  * Genera el resumen breve del análisis
  */
-function generateSummary(profile: GPUCPUProfile, metrics: GPUCPUMetrics): string {
+function generateSummary(profile: GPUCPUProfile, _metrics: GPUCPUMetrics): string {
   if (profile === "GPU") {
     return "Por la cantidad de bucles y la poca lógica condicional dentro de ellos, este algoritmo presenta un patrón de ejecución bastante regular y repetitivo, típico de tareas que se pueden paralelizar sobre muchos datos.";
   } else if (profile === "CPU") {
