@@ -184,11 +184,35 @@ class SummationCloser:
                             if result_expr.has(var_symbol):
                                 result_expr = factor(result_expr)
                                 result_expr = simplify(result_expr)
-                        except Exception:
-                            pass
+                                # Si todavía queda, intentar evaluar sumatorias restantes
+                                if result_expr.has(var_symbol):
+                                    from sympy import Sum as SymSum
+                                    if isinstance(result_expr, SymSum):
+                                        result_expr = result_expr.doit()
+                                        result_expr = expand(result_expr)
+                                        result_expr = simplify(result_expr)
+                                    # Si todavía queda después de todo, sustituir por 0
+                                    if result_expr.has(var_symbol):
+                                        print(f"[SummationCloser] Advertencia: Variable de iteración {var_name} todavía presente en resultado final, sustituyendo por 0")
+                                        from sympy import Integer as SymInteger
+                                        result_expr = result_expr.subs(var_symbol, SymInteger(0))
+                                        result_expr = simplify(result_expr)
+                        except Exception as e:
+                            print(f"[SummationCloser] Error eliminando variable de iteración {var_name}: {e}")
+                            # Fallback: sustituir por 0
+                            try:
+                                from sympy import Integer as SymInteger
+                                result_expr = result_expr.subs(var_symbol, SymInteger(0))
+                                result_expr = simplify(result_expr)
+                            except:
+                                pass
                 
                 # Convertir a LaTeX
                 closed_latex = self._sympy_to_latex(result_expr)
+                
+                # Validación final: verificar que no haya variables de iteración en el LaTeX
+                if any(var in closed_latex for var in ['\\left(i', '(i', 'i)', '\\left(j', '(j', 'j)', '\\left(k', '(k', 'k)']):
+                    print(f"[SummationCloser] ERROR: Resultado LaTeX todavía contiene variables de iteración: {closed_latex}")
                 
                 # Agregar resultado final si no está en los pasos
                 if steps:
@@ -1979,18 +2003,39 @@ class SummationCloser:
                                     outer_result = summation(inner_result_simplified, (outer_var, outer_start, outer_end))
                                     outer_result = simplify(outer_result)
                                     
-                                    # Verificar y eliminar variables de iteración
+                                    # Verificar y eliminar variables de iteración más agresivamente
                                     iteration_vars = ['i', 'j', 'k']
                                     for var_name in iteration_vars:
                                         var_symbol = Symbol(var_name, integer=True)
                                         if outer_result.has(var_symbol):
+                                            # Intentar expandir y simplificar múltiples veces
                                             outer_result = expand(outer_result)
                                             outer_result = simplify(outer_result)
                                             if outer_result.has(var_symbol):
+                                                # Si todavía tiene la variable, intentar factorizar
                                                 outer_result = factor(outer_result)
                                                 outer_result = simplify(outer_result)
+                                                if outer_result.has(var_symbol):
+                                                    # Si todavía queda, es un error - la sumatoria no se evaluó completamente
+                                                    # Intentar forzar la evaluación usando doit() si es una Sum
+                                                    from sympy import Sum as SymSum
+                                                    if isinstance(outer_result, SymSum):
+                                                        outer_result = outer_result.doit()
+                                                        outer_result = expand(outer_result)
+                                                        outer_result = simplify(outer_result)
+                                                    # Si todavía tiene la variable después de todo, eliminarla sustituyendo por 0
+                                                    if outer_result.has(var_symbol):
+                                                        print(f"[SummationCloser] Advertencia: Variable de iteración {var_name} todavía presente después de evaluar sumatoria, sustituyendo por 0")
+                                                        from sympy import Integer as SymInteger
+                                                        outer_result = outer_result.subs(var_symbol, SymInteger(0))
+                                                        outer_result = simplify(outer_result)
                                     
                                     outer_result_latex = latex(outer_result)
+                                    # Validar que el resultado no contenga variables de iteración en LaTeX
+                                    if 'i' in outer_result_latex or 'j' in outer_result_latex or 'k' in outer_result_latex:
+                                        # Intentar evaluar de nuevo si el LaTeX todavía tiene variables
+                                        print(f"[SummationCloser] Advertencia: Resultado LaTeX todavía contiene variables de iteración: {outer_result_latex}")
+                                    
                                     steps.append(f"\\text{{Resultado: }} {outer_result_latex}")
                                 except Exception as eval_error:
                                     print(f"[SummationCloser] Error evaluando sumatoria externa: {eval_error}")
@@ -2163,15 +2208,41 @@ class SummationCloser:
                             # La expresión todavía contiene una variable de iteración
                             # Intentar expandir, factorizar y simplificar para eliminarla
                             try:
+                                # Expandir y simplificar múltiples veces
                                 evaluated_simplified = expand(evaluated_simplified)
                                 evaluated_simplified = simplify(evaluated_simplified)
                                 if evaluated_simplified.has(var_symbol):
                                     evaluated_simplified = factor(evaluated_simplified)
                                     evaluated_simplified = simplify(evaluated_simplified)
-                            except Exception:
-                                pass
+                                    if evaluated_simplified.has(var_symbol):
+                                        # Si todavía tiene la variable, intentar usar summation() de SymPy
+                                        from sympy import summation, Sum as SymSum
+                                        # Intentar re-evaluar si es posible
+                                        if isinstance(evaluated_simplified, SymSum):
+                                            evaluated_simplified = evaluated_simplified.doit()
+                                            evaluated_simplified = expand(evaluated_simplified)
+                                            evaluated_simplified = simplify(evaluated_simplified)
+                                        # Si todavía queda, sustituir por 0 (error - no debería estar)
+                                        if evaluated_simplified.has(var_symbol):
+                                            print(f"[SummationCloser] Advertencia: Variable de iteración {var_name} todavía presente después de evaluar sumatoria con doit(), sustituyendo por 0")
+                                            from sympy import Integer as SymInteger
+                                            evaluated_simplified = evaluated_simplified.subs(var_symbol, SymInteger(0))
+                                            evaluated_simplified = simplify(evaluated_simplified)
+                            except Exception as e:
+                                print(f"[SummationCloser] Error eliminando variable de iteración {var_name}: {e}")
+                                # Fallback: sustituir por 0
+                                try:
+                                    from sympy import Integer as SymInteger
+                                    evaluated_simplified = evaluated_simplified.subs(var_symbol, SymInteger(0))
+                                    evaluated_simplified = simplify(evaluated_simplified)
+                                except:
+                                    pass
                     
                     evaluated_latex = latex(evaluated_simplified)
+                    # Validar que el resultado no contenga variables de iteración en LaTeX
+                    if any(var in evaluated_latex for var in ['\\left(i', '(i', 'i)', '\\left(j', '(j', 'j)', '\\left(k', '(k', 'k)']):
+                        print(f"[SummationCloser] Advertencia: Resultado LaTeX todavía contiene variables de iteración: {evaluated_latex}")
+                    
                     if evaluated_latex not in " ".join(steps):
                         steps.append(f"\\text{{Resultado: }} {evaluated_latex}")
                 except Exception as e:

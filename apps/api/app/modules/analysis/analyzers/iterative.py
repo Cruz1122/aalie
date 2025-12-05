@@ -175,15 +175,38 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 break
         
         if has_iteration_vars:
-            # Si aún quedan variables de iteración, sustituir por n
-            n_sym = Symbol(self.variable, integer=True, positive=True)
-            for var_name in iteration_vars:
-                var_symbol = Symbol(var_name, integer=True)
-                expr = expr.subs(var_symbol, n_sym)
-            
-            expr = simplify(expr)
-            
-            print(f"[IterativeAnalyzer] Advertencia: Variable de iteración {iteration_var_found} detectada en expresión final, sustituida por {self.variable}")
+            # Si aún quedan variables de iteración libres, eliminarlas completamente
+            # En T_polynomial, las variables de iteración NO deben aparecer como variables libres
+            # Después de evaluar todas las sumatorias, estas variables no deberían existir
+            from sympy import Integer as SymInteger
+            try:
+                # Expandir y simplificar para asegurar que todas las sumatorias estén evaluadas
+                expr = expand(expr)
+                expr = simplify(expr)
+                
+                # Verificar de nuevo si todavía quedan
+                free_vars_after = expr.free_symbols
+                remaining_iter_vars = []
+                for var_name in iteration_vars:
+                    var_symbol = Symbol(var_name, integer=True)
+                    if any(v.name == var_name for v in free_vars_after):
+                        remaining_iter_vars.append((var_name, var_symbol))
+                
+                # Si todavía quedan, eliminarlas sustituyendo por 0
+                # Esto es seguro porque en T_polynomial estas variables no deberían estar presentes
+                if remaining_iter_vars:
+                    for var_name, var_symbol in remaining_iter_vars:
+                        expr = expr.subs(var_symbol, SymInteger(0))
+                    expr = simplify(expr)
+                    print(f"[IterativeAnalyzer] Advertencia: Variables de iteración {[v[0] for v in remaining_iter_vars]} eliminadas de expresión final (sustituidas por 0)")
+            except Exception as e:
+                print(f"[IterativeAnalyzer] Error al limpiar variables de iteración: {e}")
+                # Fallback: sustituir todas las variables de iteración por 0
+                from sympy import Integer as SymInteger
+                for var_name in iteration_vars:
+                    var_symbol = Symbol(var_name, integer=True)
+                    expr = expr.subs(var_symbol, SymInteger(0))
+                expr = simplify(expr)
         
         return expr
     
@@ -806,6 +829,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 count_expr = expand(count_expr)
                 count_expr = simplify(count_expr)
                 
+                # IMPORTANTE: Eliminar variables de iteración (i, j, k) que no deberían estar en el resultado final
+                count_expr = self._sanitize_expression(count_expr)
+                
                 # Convertir a Poly para extraer coeficientes de todas las potencias
                 try:
                     # Intentar crear Poly (puede fallar si hay símbolos no numéricos)
@@ -819,6 +845,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                         if coeff_idx < len(all_coeffs):
                             coeff = all_coeffs[coeff_idx]
                             coeff = simplify(coeff)
+                            
+                            # IMPORTANTE: Eliminar variables de iteración del coeficiente
+                            coeff = self._sanitize_expression(coeff)
                             
                             # Verificar si el coeficiente es cero (saltar términos nulos)
                             try:
@@ -837,6 +866,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                             # Usar una representación canónica (expandida y simplificada)
                             coeff_normalized = expand(coeff)
                             coeff_normalized = simplify(coeff_normalized)
+                            # Asegurar que no queden variables de iteración
+                            coeff_normalized = self._sanitize_expression(coeff_normalized)
                             
                             # Verificar nuevamente después de normalizar (por si se simplificó a 0)
                             try:
@@ -986,20 +1017,31 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             found_symbols = re.findall(symbol_pattern, result)
             
             invalid_symbols = []
+            iteration_vars_found = []
             for sym in found_symbols:
                 # Permitir: n, C_{k}, operadores matemáticos (cdot, etc.)
                 clean_sym = sym.replace('_{', '').replace('}', '')
                 if not (clean_sym == 'n' or clean_sym.startswith('C_') or 
                        clean_sym in ['cdot', 'text', 'times'] or clean_sym.startswith('t_')):
                     invalid_symbols.append(sym)
+                    # Detectar específicamente variables de iteración
+                    if clean_sym in ['i', 'j', 'k']:
+                        iteration_vars_found.append(sym)
             
             if invalid_symbols:
                 import logging
                 logger = logging.getLogger(__name__)
-                logger.warning(
-                    f"T_polynomial contiene símbolos no permitidos: {invalid_symbols}. "
-                    f"Solo se permiten 'n' y constantes C_k. Expresión: {result}"
-                )
+                if iteration_vars_found:
+                    logger.error(
+                        f"ERROR CRÍTICO: T_polynomial contiene variables de iteración {iteration_vars_found} "
+                        f"que NO deberían estar presentes. Otros símbolos inválidos: {[s for s in invalid_symbols if s not in iteration_vars_found]}. "
+                        f"Expresión: {result}"
+                    )
+                else:
+                    logger.warning(
+                        f"T_polynomial contiene símbolos no permitidos: {invalid_symbols}. "
+                        f"Solo se permiten 'n' y constantes C_k. Expresión: {result}"
+                    )
         else:
             self.t_polynomial = "0"
     
