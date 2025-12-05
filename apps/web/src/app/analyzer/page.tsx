@@ -551,8 +551,13 @@ export default function AnalyzerPage() {
       
       // Extraer datos core de todos los casos para iterativo
       const ownCoreDataWorst = extractCoreData(data.worst || null);
-      const ownCoreDataBest = data.best === "same_as_worst" ? null : extractCoreData(data.best || null);
-      const ownCoreDataAvg = data.avg === "same_as_worst" ? null : extractCoreData(data.avg || null);
+      // Si best o avg es "same_as_worst", usar los datos del worst (son iguales)
+      const ownCoreDataBest = data.best === "same_as_worst" 
+        ? ownCoreDataWorst 
+        : extractCoreData(data.best || null);
+      const ownCoreDataAvg = data.avg === "same_as_worst" 
+        ? ownCoreDataWorst 
+        : extractCoreData(data.avg || null);
       
       // Para recursivo, usar worst como principal
       const ownCoreData = isRecursive ? ownCoreDataWorst : ownCoreDataWorst;
