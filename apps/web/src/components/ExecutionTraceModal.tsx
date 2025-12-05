@@ -126,7 +126,7 @@ export default function ExecutionTraceModal({
     setLoading(true);
     setCurrentStep(0);
     setIsPlaying(false);
-    setGraph(null);
+    // No resetear graph aquí para evitar parpadeo - se reseteará cuando realmente cambie el trace
     setExplanation("");
     setRecursionDiagram(null);
 
@@ -180,6 +180,9 @@ export default function ExecutionTraceModal({
         setAlgorithmKind(data.algorithmKind);
       }
 
+      // Resetear graph cuando el trace realmente cambia
+      setGraph(null);
+      
       // Then set the trace data
       setTrace(data);
     } catch (error) {

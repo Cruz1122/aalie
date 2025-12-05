@@ -71,6 +71,7 @@ export default function IterativeTraceContent({
   const playIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const inputSizeDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const currentStepRef = useRef<number>(currentStep);
+  const loadedTraceIdRef = useRef<string | null>(null);
   const [stepsWithCosts, setStepsWithCosts] = useState<ExecutionStep[]>([]);
 
   // Sincronizar currentStepRef con currentStep
@@ -107,8 +108,29 @@ export default function IterativeTraceContent({
   const loadDiagram = async () => {
     if (!trace?.ok || !trace.trace) return;
 
+    // Crear un ID único para este trace basado en su contenido
+    const traceId = JSON.stringify({
+      steps: trace.trace.steps?.length || 0,
+      case: caseType,
+      source: source.substring(0, 50), // Solo primeros 50 caracteres para el ID
+    });
+
+    // Si ya se cargó el diagrama para este trace y el graph existe, no volver a cargar
+    if (loadedTraceIdRef.current === traceId && graph) {
+      return;
+    }
+
+    // Si el trace cambió, resetear la referencia
+    if (loadedTraceIdRef.current !== traceId) {
+      loadedTraceIdRef.current = null;
+    }
+
     setLoadingDiagram(true);
     try {
+      // Obtener API_KEY del localStorage
+      const { getApiKey } = await import("@/hooks/useApiKey");
+      const apiKey = getApiKey();
+
       const response = await fetch("/api/llm/generate-diagram", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -116,6 +138,7 @@ export default function IterativeTraceContent({
           trace: trace.trace,
           source,
           case: caseType,
+          apiKey: apiKey || undefined, // Enviar API_KEY si está disponible
         }),
       });
 
@@ -123,6 +146,7 @@ export default function IterativeTraceContent({
       if (data.ok && data.graph) {
         setGraph(data.graph);
         setExplanation(data.explanation || "");
+        loadedTraceIdRef.current = traceId; // Marcar como cargado
 
         // Mapear stepCosts a los steps del trace
         if (data.stepCosts && trace?.ok && trace.trace) {
@@ -156,13 +180,13 @@ export default function IterativeTraceContent({
     }
   };
 
-  // Load diagram when trace is available
+  // Load diagram when trace is available (solo una vez por trace)
   useEffect(() => {
-    if (trace?.ok && trace.trace && !graph) {
+    if (trace?.ok && trace.trace && !graph && !loadingDiagram) {
       loadDiagram();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trace, graph]);
+  }, [trace?.ok, trace?.trace?.steps?.length, caseType]);
 
   // Inicializar stepsWithCosts cuando cambia el trace
   useEffect(() => {

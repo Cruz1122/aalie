@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getApiKey } from "@/hooks/useApiKey";
-
 import { GEMINI_ENDPOINT_BASE } from "../llm-config";
 
 export const runtime = "nodejs";
@@ -63,7 +61,7 @@ function validateApiKey(key: string | undefined): boolean {
 
 export async function POST(req: NextRequest) {
   try {
-    const { trace, source, case: caseType } = await req.json();
+    const { trace, source, case: caseType, apiKey: clientApiKeyFromBody } = await req.json();
 
     if (!trace || !source) {
       return NextResponse.json(
@@ -75,11 +73,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Obtener API_KEY
+    // Obtener API_KEY: prioridad a variables de entorno del servidor, luego al parámetro del request
     const serverApiKey = process.env.API_KEY;
     const hasServerApiKey = validateApiKey(serverApiKey);
-    const clientApiKey = getApiKey();
-    const geminiApiKey = hasServerApiKey ? serverApiKey : clientApiKey || null;
+    // En el servidor, getApiKey() siempre retorna null, así que usamos el parámetro del body
+    const geminiApiKey = hasServerApiKey ? serverApiKey : (clientApiKeyFromBody || null);
 
     if (!geminiApiKey) {
       return NextResponse.json(

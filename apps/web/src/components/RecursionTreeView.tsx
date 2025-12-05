@@ -61,6 +61,10 @@ export default function RecursionTreeView({
     setError("");
 
     try {
+      // Obtener API_KEY del localStorage
+      const { getApiKey } = await import("@/hooks/useApiKey");
+      const apiKey = getApiKey();
+
       const response = await fetch("/api/llm/recursion-diagram", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -73,6 +77,7 @@ export default function RecursionTreeView({
             // Extraer parámetros de las llamadas si existen
             params: calls.length > 0 ? Object.keys(calls[0].params) : [],
           },
+          apiKey: apiKey || undefined, // Enviar API_KEY si está disponible
         }),
       });
 
