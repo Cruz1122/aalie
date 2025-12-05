@@ -68,13 +68,33 @@ class CodeExecutor:
         try:
             # Encontrar el procedimiento principal o ejecutar el programa
             if self.ast.get("type") == "Program":
-                # Ejecutar todos los statements del programa
-                # Esto incluye tanto ProcDefs (que solo se registran) como Calls (que ejecutan)
                 body = self.ast.get("body", [])
-                for stmt in body:
-                    self._execute_statement(stmt)
+                
+                # Separar ProcDefs de statements ejecutables
+                proc_defs = [stmt for stmt in body if isinstance(stmt, dict) and stmt.get("type") == "ProcDef"]
+                executable_stmts = [stmt for stmt in body if not (isinstance(stmt, dict) and stmt.get("type") == "ProcDef")]
+                
+                # Si hay statements ejecutables, ejecutarlos normalmente
+                if executable_stmts:
+                    for stmt in body:
+                        self._execute_statement(stmt)
+                # Si solo hay definiciones de procedimientos y no hay statements ejecutables
+                elif proc_defs:
+                    # Si hay un solo procedimiento, ejecutarlo automáticamente
+                    if len(proc_defs) == 1:
+                        proc_def = proc_defs[0]
+                        # Mapear parámetros del procedimiento usando initial_variables
+                        params = self._map_procedure_params(proc_def)
+                        self._execute_procedure(proc_def, params)
+                    else:
+                        # Si hay múltiples procedimientos, no ejecutar automáticamente
+                        # Solo registrar las definiciones
+                        pass
             elif self.ast.get("type") == "ProcDef":
-                self._execute_procedure(self.ast, {})
+                # Si el AST es directamente un ProcDef, ejecutarlo con parámetros vacíos
+                # pero intentar mapear desde initial_variables si están disponibles
+                params = self._map_procedure_params(self.ast)
+                self._execute_procedure(self.ast, params)
         except MaxRecursionDepthExceeded:
             self.recursion_truncated = True
         
@@ -86,6 +106,46 @@ class CodeExecutor:
             result["max_depth_reached"] = self.max_recursion_depth
         
         return result
+    
+    def _map_procedure_params(self, proc_def: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Mapea los parámetros del procedimiento usando las variables iniciales disponibles.
+        
+        Args:
+            proc_def: Nodo ProcDef del AST
+            
+        Returns:
+            Diccionario con los parámetros mapeados
+            
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
+        params_map = {}
+        formal_params = proc_def.get("params", [])
+        
+        for param in formal_params:
+            param_name = None
+            
+            # Extraer el nombre del parámetro según su tipo
+            if isinstance(param, dict):
+                if param.get("type") == "Param":
+                    param_name = param.get("name")
+                elif param.get("type") == "ArrayParam":
+                    param_name = param.get("name")
+                elif param.get("type") == "ObjectParam":
+                    param_name = param.get("name")
+                else:
+                    # Intentar obtener el nombre directamente
+                    param_name = param.get("name")
+            elif isinstance(param, str):
+                param_name = param
+            
+            # Si encontramos un nombre de parámetro, buscar su valor en las variables iniciales
+            if param_name:
+                value = self.environment.get_variable(param_name)
+                if value is not None:
+                    params_map[param_name] = value
+        
+        return params_map
     
     def _execute_procedure(self, proc_def: Dict[str, Any], params: Dict[str, Any], return_value: Optional[Any] = None) -> Any:
         """
@@ -150,6 +210,16 @@ class CodeExecutor:
                 description=f"Llamada recursiva a {proc_name} (profundidad {depth})"
             )
         
+        # Si no es recursivo, aún necesitamos establecer los parámetros en el environment
+        # Crear scope nuevo solo si no es recursivo (para recursivos, el scope ya se maneja en _execute_call)
+        created_scope = False
+        if not is_recursive and params:
+            self.environment.push_scope()
+            created_scope = True
+            # Establecer variables de parámetros en el nuevo scope
+            for param_name, param_value in params.items():
+                self.environment.set_variable(param_name, param_value)
+        
         # Ejecutar el cuerpo
         if body.get("type") == "Block":
             self._execute_block(body)
@@ -170,6 +240,10 @@ class CodeExecutor:
             
             # Decrementar profundidad
             self.recursion_depth -= 1
+        
+        # Restaurar scope si lo creamos
+        if created_scope:
+            self.environment.pop_scope()
         
         return result
     

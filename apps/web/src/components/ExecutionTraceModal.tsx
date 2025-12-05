@@ -202,7 +202,8 @@ export default function ExecutionTraceModal({
       setAlgorithmKind(null);
       loadTrace();
     }
-  }, [open, caseType, debouncedInputSize, source, loadTrace]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, caseType, debouncedInputSize, source]);
 
   // Bloquear scroll del body mientras el modal esté abierto
   useEffect(() => {

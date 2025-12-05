@@ -107,6 +107,11 @@ export default function IterativeTraceContent({
 
   const loadDiagram = async () => {
     if (!trace?.ok || !trace.trace) return;
+    
+    // No cargar diagrama si no hay steps
+    if (!trace.trace.steps || trace.trace.steps.length === 0) {
+      return;
+    }
 
     // Crear un ID único para este trace basado en su contenido
     const traceId = JSON.stringify({
@@ -182,7 +187,14 @@ export default function IterativeTraceContent({
 
   // Load diagram when trace is available (solo una vez por trace)
   useEffect(() => {
-    if (trace?.ok && trace.trace && !graph && !loadingDiagram) {
+    if (
+      trace?.ok && 
+      trace.trace && 
+      trace.trace.steps && 
+      trace.trace.steps.length > 0 &&
+      !graph && 
+      !loadingDiagram
+    ) {
       loadDiagram();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
