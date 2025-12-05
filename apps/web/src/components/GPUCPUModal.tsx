@@ -263,7 +263,7 @@ function GPUCard({
 
   return (
     <div
-      className="relative h-full min-h-[300px] cursor-pointer"
+      className="relative h-full min-h-[200px] cursor-pointer"
       onClick={onFlip}
       style={{ perspective: "1000px" }}
     >
@@ -296,7 +296,7 @@ function GPUCard({
             <span
               className={`material-symbols-outlined ${style.iconColor}`}
               style={{ 
-                fontSize: 'clamp(3rem, 10vw, 6rem)', 
+                fontSize: 'clamp(9rem, 12vw, 18rem)', 
                 lineHeight: '1',
                 display: 'block'
               }}
@@ -306,7 +306,7 @@ function GPUCard({
             {/* Flecha zig-zag en esquina inferior derecha del icono */}
             <div className="absolute bottom-0 right-0">
               <span
-                className={`material-symbols-outlined text-xl ${style.arrowColor} bg-slate-900/80 rounded-full p-0.5`}
+                className={`material-symbols-outlined text-sm ${style.arrowColor} bg-slate-900/80 rounded-full p-0.5`}
               >
                 {style.arrowIcon}
               </span>
@@ -316,17 +316,17 @@ function GPUCard({
 
         {/* Reverso de la card */}
         <div
-          className={`rounded-lg border ${flippedBgColor} ${style.borderColor} ${style.shadowColor} absolute inset-0 flex flex-col items-center justify-center p-6`}
+          className={`rounded-lg border ${flippedBgColor} ${style.borderColor} ${style.shadowColor} absolute inset-0 flex flex-col items-center justify-center p-4`}
           style={{
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
           }}
         >
-          <h3 className="text-xl font-semibold mb-4 text-white/90">
+          <h3 className="text-base font-semibold mb-2 text-white/90">
             {label} - Razones
           </h3>
-          <div className="space-y-2 text-sm text-white/80 text-center">
+          <div className="space-y-1 text-xs text-white/80 text-center">
             {reasons.map((reason, idx) => (
               <div key={idx}>{reason}</div>
             ))}
