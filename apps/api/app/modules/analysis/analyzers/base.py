@@ -347,6 +347,20 @@ class BaseAnalyzer:
         except Exception:
             total_expr = sympy_simplify(total_expr)
         
+        # IMPORTANTE: Eliminar variables de iteración (i, j, k) que no deberían estar en T_open
+        if hasattr(self, '_sanitize_expression'):
+            total_expr = self._sanitize_expression(total_expr)
+        else:
+            # Fallback: limpieza básica de variables de iteración
+            from sympy import Symbol, Integer as SymInteger
+            iteration_vars = ['i', 'j', 'k']
+            for var_name in iteration_vars:
+                var_symbol = Symbol(var_name, integer=True)
+                if total_expr.has(var_symbol):
+                    # Sustituir por 0 (no deberían estar presentes)
+                    total_expr = total_expr.subs(var_symbol, SymInteger(0))
+                    total_expr = sympy_simplify(total_expr)
+        
         # VALIDACIÓN: Verificar que solo contenga n y constantes C_k
         # Se permiten: n, C_k (con cualquier k), números, operadores básicos
         from sympy import Symbol
@@ -649,6 +663,20 @@ class BaseAnalyzer:
             total_expr = sympy_simplify(total_expr)
         except Exception:
             total_expr = sympy_simplify(total_expr)
+        
+        # IMPORTANTE: Eliminar variables de iteración (i, j, k) que no deberían estar en T_open
+        if hasattr(self, '_sanitize_expression'):
+            total_expr = self._sanitize_expression(total_expr)
+        else:
+            # Fallback: limpieza básica de variables de iteración
+            from sympy import Symbol, Integer as SymInteger
+            iteration_vars = ['i', 'j', 'k']
+            for var_name in iteration_vars:
+                var_symbol = Symbol(var_name, integer=True)
+                if total_expr.has(var_symbol):
+                    # Sustituir por 0 (no deberían estar presentes)
+                    total_expr = total_expr.subs(var_symbol, SymInteger(0))
+                    total_expr = sympy_simplify(total_expr)
         
         return total_expr
 

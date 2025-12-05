@@ -324,12 +324,16 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     # Si contiene símbolos iterativos, no intentar evaluar sumatorias
                     # (ya se manejan en close_summation)
                     if closer._has_iterative_symbols(count_raw_expr) and not closer._has_summations(count_raw_expr):
-                        # Es un símbolo iterativo puro, usar la expresión tal cual
+                        # Es un símbolo iterativo puro, simplificar y limpiar variables de iteración
                         count_evaluated = simplify(count_raw_expr)
+                        # IMPORTANTE: Eliminar variables de iteración que no deberían estar
+                        count_evaluated = self._sanitize_expression(count_evaluated)
                     else:
                         # Evaluar sumatorias si las hay
                         count_evaluated = closer._evaluate_all_sums_sympy(count_raw_expr)
                         count_evaluated = simplify(count_evaluated)
+                        # IMPORTANTE: Eliminar variables de iteración que no deberían estar
+                        count_evaluated = self._sanitize_expression(count_evaluated)
                     row["count_expr"] = count_evaluated  # Expresión SymPy evaluada
                     
                     # Generar procedimiento paso a paso (consistente entre modos)
