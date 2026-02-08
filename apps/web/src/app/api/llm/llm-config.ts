@@ -159,7 +159,7 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
   general: {
     temperature: 0.7,
     maxTokens: 16000,
-    systemPrompt: `Eres Jhon Jairo, asistente especializado en análisis de algoritmos.
+    systemPrompt: `Eres AALIE (Algorithmic Analysis Live Interaction Expert), asistente especializado en análisis de algoritmos.
  
  ROL Y RESPONSABILIDADES
  - Explicar conceptos teóricos de algoritmos

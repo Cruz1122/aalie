@@ -1,4 +1,4 @@
-# Analizador de Complejidad Algorítmica
+# AALIE (Algorithmic Analysis Live Interaction Expert)
 
 ![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue?logo=typescript)
@@ -27,7 +27,7 @@
 
 ## 📖 Descripción
 
-Analizador de complejidad algorítmica que permite escribir algoritmos en pseudocódigo y obtener automáticamente el análisis de su complejidad. El sistema utiliza un lenguaje de pseudocódigo estructurado con validación en tiempo real, análisis automático de casos (best/worst/average), y visualizaciones interactivas de resultados.
+**AALIE** es la aplicación de análisis de complejidad algorítmica que permite escribir algoritmos en pseudocódigo y obtener automáticamente el análisis de su complejidad. El asistente integrado se llama AALIE (Algorithmic Analysis Live Interaction Expert). El sistema utiliza un lenguaje de pseudocódigo estructurado con validación en tiempo real, análisis automático de casos (best/worst/average), y visualizaciones interactivas de resultados.
 
 **Stack principal:** Next.js + TypeScript (frontend) y FastAPI + Python 3.11+ (backend).  
 Este repositorio usa **pnpm workspaces** para gestionar paquetes de Node del frontend y utilidades compartidas.  

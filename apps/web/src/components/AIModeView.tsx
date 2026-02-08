@@ -107,7 +107,7 @@ export default function AIModeView({
       <h4
         className={`text-lg lg:text-xl font-semibold text-purple-400 ${fadeClass()}`}
       >
-        Hola, soy Jhon Jairo.
+        Hola, soy AALIE.
       </h4>
       <h2
         className={`text-2xl lg:text-3xl font-semibold text-white mb-8 ${fadeClass("delay-75")}`}

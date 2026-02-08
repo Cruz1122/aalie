@@ -2,7 +2,7 @@
   "name": "web",
   "version": "0.1.0",
   "private": true,
-  "description": "Frontend Next.js (App Router) para Analizador de Complejidades",
+  "description": "Frontend Next.js (App Router) para AALIE - Analizador de Complejidades",
   "engines": {
     "node": ">=20 <23"
   },

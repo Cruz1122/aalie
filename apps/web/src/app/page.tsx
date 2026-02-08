@@ -105,7 +105,7 @@ export default function HomePage() {
             {
               id: "welcome",
               content:
-                "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+                "¡Hola! Soy AALIE (Algorithmic Analysis Live Interaction Expert), tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
               sender: "bot",
               timestamp: new Date(),
             } as Message,
@@ -136,7 +136,7 @@ export default function HomePage() {
             {
               id: "welcome",
               content:
-                "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+                "¡Hola! Soy AALIE (Algorithmic Analysis Live Interaction Expert), tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
               sender: "bot",
               timestamp: new Date(),
             } as Message,

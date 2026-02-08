@@ -2,9 +2,9 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 
 export const metadata = {
-  title: "Política de Privacidad - Analizador de Complejidad",
+  title: "Política de Privacidad - AALIE",
   description:
-    "Política de privacidad del Analizador de Complejidad Algorítmica",
+    "Política de privacidad de AALIE (Algorithmic Analysis Live Interaction Expert)",
 };
 
 export default function PrivacyPage() {

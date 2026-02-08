@@ -1641,7 +1641,7 @@ export default function ExamplesPage() {
                 href="/analyzer"
                 className="text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors"
               >
-                Ir al Analizador →
+                Ir a AALIE →
               </NavigationLink>
             </div>
           </footer>

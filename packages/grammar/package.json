@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Gramática ANTLR para el Analizador de Complejidad (TS y Python)",
+  "description": "Gramática ANTLR para AALIE (TS y Python)",
   "main": "index.ts",
   "types": "index.ts",
   "exports": {

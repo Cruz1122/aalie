@@ -22,8 +22,9 @@ const splineSans = Spline_Sans({
 });
 
 export const metadata = {
-  title: "Analizador de Complejidad",
-  description: "Análisis avanzado de complejidad algorítmica",
+  title: "AALIE",
+  description:
+    "AALIE: análisis de complejidad algorítmica en vivo con asistente experto (Algorithmic Analysis Live Interaction Expert)",
 };
 
 export default function RootLayout({

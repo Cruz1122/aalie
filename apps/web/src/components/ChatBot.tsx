@@ -455,7 +455,7 @@ export default function ChatBot({
         const welcomeMessage: Message = {
           id: `welcome-${Date.now()}`,
           content:
-            "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+            "¡Hola! Soy AALIE (Algorithmic Analysis Live Interaction Expert), tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
           sender: "bot",
           timestamp: new Date(),
         };
@@ -471,7 +471,7 @@ export default function ChatBot({
     const welcomeMessage: Message = {
       id: `welcome-${Date.now()}`,
       content:
-        "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+        "¡Hola! Soy AALIE (Algorithmic Analysis Live Interaction Expert), tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
       sender: "bot",
       timestamp: new Date(),
     };
@@ -506,7 +506,7 @@ export default function ChatBot({
               </span>
             </div>
             <div className="flex flex-col min-w-0">
-              <h3 className="text-white font-semibold text-xs">Jhon Jairo</h3>
+              <h3 className="text-white font-semibold text-xs">AALIE</h3>
               <p className="text-slate-400 text-[10px] truncate">
                 Asistente de análisis de algoritmos
               </p>

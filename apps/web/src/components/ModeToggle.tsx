@@ -22,7 +22,7 @@ export default function ModeToggle({
           disabled={isSwitching}
         >
           <span className="material-symbols-outlined text-base">smart_toy</span>{" "}
-          Jhon Jairo
+          AALIE
         </button>
         <button
           onClick={() => onModeSwitch("manual")}

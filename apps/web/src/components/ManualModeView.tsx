@@ -967,7 +967,7 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                       const welcomeMessage: Message = {
                         id: "welcome",
                         content:
-                          "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+                          "¡Hola! Soy AALIE (Algorithmic Analysis Live Interaction Expert), tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
                         sender: "bot",
                         timestamp: new Date(),
                       };

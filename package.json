@@ -2,7 +2,7 @@
   "name": "algoritmos-monorepo",
   "private": true,
   "version": "0.0.1",
-  "description": "Monorepo para Analizador de Complejidades (Next.js + FastAPI)",
+  "description": "Monorepo para AALIE - Analizador de Complejidades (Next.js + FastAPI)",
   "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=20 <23"

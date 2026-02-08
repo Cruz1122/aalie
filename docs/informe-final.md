@@ -2,7 +2,7 @@
 
 ## 1. Portada
 
-**Nombre del Proyecto:** Analizador de Complejidad Algorítmica
+**Nombre del Proyecto:** AALIE (Algorithmic Analysis Live Interaction Expert)
 
 **Integrantes del Grupo:** Juan Camilo Cruz Parra, Jhon Hander Patiño Londoño, Juan Felipe Henao Tovar
 
@@ -186,7 +186,7 @@ END
 
 3. **Modo AI (Chatbot):**
    - Usuario puede describir algoritmos en lenguaje natural
-   - El chatbot (Jhon Jairo) asiste con la generación de código
+   - El chatbot (AALIE) asiste con la generación de código
    - Integración con LLM para sugerencias y correcciones
 
 **Cargando Archivos de Texto:**
