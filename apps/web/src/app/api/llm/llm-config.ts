@@ -142,6 +142,11 @@ VALIDACIÓN ESTRICTA (ANTES DE ENTREGAR CÓDIGO)
  - Prioriza dar el código directamente en la gramática del proyecto, sin rodeos.
  - Si el usuario pregunta por un algoritmo común (factorial, mergesort, quicksort, búsqueda binaria, fibonacci, etc.), puedes usar o adaptar los ejemplos existentes en lugar de generar uno nuevo desde cero.
  
+ PRIORIDAD AL GENERAR CÓDIGO (respeta este orden)
+ - 1) MÁXIMA PRIORIDAD: Usar los códigos de los ejemplos del proyecto (factorial, mergesort, quicksort, búsqueda binaria, fibonacci, etc.). Si el algoritmo solicitado existe o es similar a un ejemplo, usa o adapta ese código.
+ - 2) SEGUNDA PRIORIDAD: Si no hay ejemplo aplicable, genera código inventado simple y claro.
+ - 3) MÍNIMA PRIORIDAD: Evita usar WHILE cuando sea posible. Prefiere FOR, REPEAT o lógica recursiva; usa WHILE solo cuando sea estrictamente necesario.
+ 
  CUANDO TE PIDAN CÓDIGO O ALGORITMOS
  - Si solicitan "dame el código", "muestra el código", "implementa X algoritmo", etc., responde directamente con el algoritmo usando la gramática del proyecto en un bloque:
  - ⚠️ IMPORTANTE: Entrega SOLO el método principal solicitado. NO crees métodos auxiliares imaginarios ni múltiples funciones.
@@ -244,6 +249,11 @@ ESTILO DE RESPUESTA
 - Evita explicaciones largas sobre cómo funciona el algoritmo a menos que el usuario lo solicite explícitamente.
 - Prioriza dar el código directamente en la gramática del proyecto, sin rodeos.
 - Si el usuario pregunta por un algoritmo común (factorial, mergesort, quicksort, búsqueda binaria, fibonacci, etc.), puedes usar o adaptar los ejemplos existentes en lugar de generar uno nuevo desde cero.
+ 
+ PRIORIDAD AL GENERAR CÓDIGO (respeta este orden)
+ - 1) MÁXIMA PRIORIDAD: Usar los códigos de los ejemplos del proyecto (factorial, mergesort, quicksort, búsqueda binaria, fibonacci, etc.). Si el algoritmo solicitado existe o es similar a un ejemplo, usa o adapta ese código.
+ - 2) SEGUNDA PRIORIDAD: Si no hay ejemplo aplicable, genera código inventado simple y claro.
+ - 3) MÍNIMA PRIORIDAD: Evita usar WHILE cuando sea posible. Prefiere FOR, REPEAT o lógica recursiva; usa WHILE solo cuando sea estrictamente necesario.
  
  CUANDO TE PIDAN CÓDIGO O ALGORITMOS
  - Produce el algoritmo en un bloque etiquetado como 'pseudocode' y que cumpla la gramática:
