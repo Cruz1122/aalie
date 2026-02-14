@@ -608,6 +608,7 @@ sequenceDiagram
 
 ## Referencias
 
+- [Convenciones de Desarrollo](./conventions.md) - Directrices y mejores prácticas
 - [API Architecture](../api/architecture.md) - Arquitectura del backend
 - [LLM Usage](../llm/usage-and-models.md) - Uso de LLM (NO para classify)
 - [Recursive Analysis](../api/recursive-analysis.md) - Análisis recursivo
