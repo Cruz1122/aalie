@@ -1,12 +1,14 @@
 "use client";
 
 import type { Program } from "@aa/types";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AnalysisLoader } from "@/components/AnalysisLoader";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import { PageHeader } from "@/components/PageHeader";
 import MethodSelector, { MethodType } from "@/components/MethodSelector";
 import NavigationLink from "@/components/NavigationLink";
 import { useNavigation } from "@/contexts/NavigationContext";
@@ -707,6 +709,9 @@ const formatAlgorithmKindLabel = (value: AlgorithmKind): string => {
 
 export default function ExamplesPage() {
   const router = useRouter();
+  const t = useTranslations("examples");
+  const tCategories = useTranslations("examples.categories");
+  const tCategoryDesc = useTranslations("examples.categoryDesc");
   const { animateProgress } = useAnalysisProgress();
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [viewingCodeId, setViewingCodeId] = useState<number | null>(null);
@@ -1255,17 +1260,11 @@ export default function ExamplesPage() {
 
       <main className="flex-1 z-10 p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto space-y-4 lg:space-y-6">
-          <header className="space-y-2 text-center lg:text-left">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white leading-tight">
-              Ejemplos de Algoritmos
-            </h1>
-            <p className="text-dark-text text-xs sm:text-sm lg:text-base leading-relaxed max-w-4xl mx-auto lg:mx-0">
-              Colección de algoritmos clásicos organizados por métodos de
-              análisis. Los ejemplos están agrupados por: algoritmos básicos
-              (unknown), iterativos, y recursivos clasificados según el método
-              utilizado (iteración, teorema maestro, o árbol de recursión).
-            </p>
-          </header>
+          <PageHeader
+            icon="code_blocks"
+            title={t("title")}
+            description={t("subtitle")}
+          />
 
           {/* Índice de Contenido */}
           <div className="glass-card p-4 rounded-lg">
@@ -1289,40 +1288,23 @@ export default function ExamplesPage() {
                 );
                 if (categoryExamples.length === 0) return null;
 
-                const categoryLabels: Record<
-                  ExampleCategory,
-                  { label: string; color: string }
-                > = {
-                  simple: {
-                    label: "Algoritmos Unknown/Básicos",
-                    color: "bg-gray-500/20 border-gray-500/30 text-gray-300",
-                  },
-                  iterative: {
-                    label: "Iterativos",
-                    color: "bg-blue-500/20 border-blue-500/30 text-blue-300",
-                  },
-                  recursive_iteration: {
-                    label: "Recursivos (Método Iterativo)",
-                    color:
-                      "bg-purple-500/20 border-purple-500/30 text-purple-300",
-                  },
-                  recursive_master: {
-                    label: "Recursivos (Teorema Maestro)",
-                    color:
-                      "bg-orange-500/20 border-orange-500/30 text-orange-300",
-                  },
-                  recursive_tree: {
-                    label: "Recursivos (Árbol de Recursión)",
-                    color: "bg-cyan-500/20 border-cyan-500/30 text-cyan-300",
-                  },
-                  recursive_characteristic: {
-                    label: "Recursivos (Ecuación Característica)",
-                    color:
-                      "bg-indigo-500/20 border-indigo-500/30 text-indigo-300",
-                  },
+                const categoryColors: Record<ExampleCategory, string> = {
+                  simple: "bg-gray-500/20 border-gray-500/30 text-gray-300",
+                  iterative: "bg-blue-500/20 border-blue-500/30 text-blue-300",
+                  recursive_iteration:
+                    "bg-purple-500/20 border-purple-500/30 text-purple-300",
+                  recursive_master:
+                    "bg-orange-500/20 border-orange-500/30 text-orange-300",
+                  recursive_tree:
+                    "bg-cyan-500/20 border-cyan-500/30 text-cyan-300",
+                  recursive_characteristic:
+                    "bg-indigo-500/20 border-indigo-500/30 text-indigo-300",
                 };
 
-                const catInfo = categoryLabels[category];
+                const catInfo = {
+                  label: tCategories(category),
+                  color: categoryColors[category],
+                };
 
                 return (
                   <a
@@ -1332,8 +1314,11 @@ export default function ExamplesPage() {
                   >
                     <div className="font-semibold mb-1">{catInfo.label}</div>
                     <div className="text-xs opacity-75">
-                      {categoryExamples.length} ejemplo
-                      {categoryExamples.length !== 1 ? "s" : ""}
+                      {categoryExamples.length === 1
+                        ? t("exampleCount", { count: categoryExamples.length })
+                        : t("exampleCountPlural", {
+                            count: categoryExamples.length,
+                          })}
                     </div>
                   </a>
                 );
@@ -1357,49 +1342,24 @@ export default function ExamplesPage() {
             );
             if (categoryExamples.length === 0) return null;
 
-            const categoryLabels: Record<
-              ExampleCategory,
-              { label: string; description: string; color: string }
-            > = {
-              simple: {
-                label: "Algoritmos Unknown/Básicos",
-                description:
-                  "Algoritmos básicos sin bucles complejos. Se clasificarán como 'unknown' en el análisis.",
-                color: "bg-gray-500/20 border-gray-500/30 text-gray-300",
-              },
-              iterative: {
-                label: "Iterativos",
-                description:
-                  "Algoritmos con bucles FOR/WHILE. Totalmente soportados por el analizador iterativo.",
-                color: "bg-blue-500/20 border-blue-500/30 text-blue-300",
-              },
-              recursive_iteration: {
-                label: "Recursivos/Híbridos (Método Iterativo)",
-                description:
-                  "Algoritmos recursivos analizados con el método de iteración (unrolling). Se usan cuando la recurrencia no cumple las condiciones del Teorema Maestro, Árbol de Recursión ni Ecuación Característica.",
-                color: "bg-purple-500/20 border-purple-500/30 text-purple-300",
-              },
-              recursive_master: {
-                label: "Recursivos/Híbridos (Teorema Maestro)",
-                description:
-                  "Algoritmos recursivos analizados con el Teorema Maestro. Se usan cuando la recurrencia tiene la forma T(n) = aT(n/b) + f(n) con a < 2 o no cumple las condiciones del Árbol de Recursión ni Ecuación Característica.",
-                color: "bg-orange-500/20 border-orange-500/30 text-orange-300",
-              },
-              recursive_tree: {
-                label: "Recursivos/Híbridos (Árbol de Recursión)",
-                description:
-                  "Algoritmos recursivos analizados con el método de Árbol de Recursión. Se usan cuando a ≥ 2, divide uniformemente y es divide-and-conquer. Incluye visualización del árbol y tabla por niveles.",
-                color: "bg-cyan-500/20 border-cyan-500/30 text-cyan-300",
-              },
-              recursive_characteristic: {
-                label: "Recursivos/Híbridos (Ecuación Característica)",
-                description:
-                  "Algoritmos recursivos analizados con el método de Ecuación Característica. Se usan cuando la recurrencia es lineal con desplazamientos constantes T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n). Tiene PRIORIDAD sobre el método de iteración. Detecta automáticamente casos de Programación Dinámica lineal y genera versión DP.",
-                color: "bg-indigo-500/20 border-indigo-500/30 text-indigo-300",
-              },
+            const categoryColors: Record<ExampleCategory, string> = {
+              simple: "bg-gray-500/20 border-gray-500/30 text-gray-300",
+              iterative: "bg-blue-500/20 border-blue-500/30 text-blue-300",
+              recursive_iteration:
+                "bg-purple-500/20 border-purple-500/30 text-purple-300",
+              recursive_master:
+                "bg-orange-500/20 border-orange-500/30 text-orange-300",
+              recursive_tree:
+                "bg-cyan-500/20 border-cyan-500/30 text-cyan-300",
+              recursive_characteristic:
+                "bg-indigo-500/20 border-indigo-500/30 text-indigo-300",
             };
 
-            const catInfo = categoryLabels[category];
+            const catInfo = {
+              label: tCategories(category),
+              description: tCategoryDesc(category),
+              color: categoryColors[category],
+            };
 
             return (
               <div
@@ -1427,17 +1387,17 @@ export default function ExamplesPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <h3 className="text-sm font-semibold text-white mb-1 truncate">
-                            {example.name}
+                            {t(`items.${example.id}.name`)}
                           </h3>
                           <p className="text-[10px] text-slate-400 font-mono break-words">
-                            {example.complexity}
+                            {t(`items.${example.id}.complexity`)}
                           </p>
                         </div>
                       </div>
 
                       {/* Descripción */}
                       <p className="text-dark-text text-xs leading-relaxed line-clamp-3">
-                        {example.description}
+                        {t(`items.${example.id}.description`)}
                       </p>
 
                       {/* Badges para ecuación característica */}
@@ -1455,22 +1415,23 @@ export default function ExamplesPage() {
                                 functions
                               </span>
                               {example.isHomogeneous
-                                ? "Homogénea"
-                                : "No Homogénea"}
+                                ? t("homogeneous")
+                                : t("nonHomogeneous")}
                             </span>
                           )}
                           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border bg-green-500/20 text-green-300 border-green-500/30">
                             <span className="material-symbols-outlined text-xs mr-1">
                               memory
                             </span>
-                            DP Lineal
+                            {t("dpLinear")}
                           </span>
                         </div>
                       )}
 
                       {example.note && (
                         <div className="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-[10px] text-yellow-300">
-                          <strong>Nota:</strong> {example.note}
+                          <strong>{t("note")}:</strong>{" "}
+                          {t(`items.${example.id}.note`)}
                         </div>
                       )}
 
@@ -1491,8 +1452,8 @@ export default function ExamplesPage() {
                               : "visibility"}
                           </span>
                           {viewingCodeId === example.id
-                            ? "Ocultar Código"
-                            : "Ver Código"}
+                            ? t("hideCode")
+                            : t("viewCode")}
                         </button>
 
                         {viewingCodeId === example.id && (
@@ -1516,7 +1477,7 @@ export default function ExamplesPage() {
                                   check
                                 </span>
                                 <span className="hidden sm:inline">
-                                  Copiado
+                                  {t("copied")}
                                 </span>
                               </>
                             ) : (
@@ -1524,7 +1485,7 @@ export default function ExamplesPage() {
                                 <span className="material-symbols-outlined text-xs">
                                   content_copy
                                 </span>
-                                <span className="hidden sm:inline">Copiar</span>
+                                <span className="hidden sm:inline">{t("copy")}</span>
                               </>
                             )}
                           </button>
@@ -1541,7 +1502,7 @@ export default function ExamplesPage() {
                                   progress_activity
                                 </span>
                                 <span className="hidden sm:inline">
-                                  Analizando...
+                                  {t("analyzing")}
                                 </span>
                               </>
                             ) : (
@@ -1550,7 +1511,7 @@ export default function ExamplesPage() {
                                   functions
                                 </span>
                                 <span className="hidden sm:inline">
-                                  Analizar
+                                  {t("analyze")}
                                 </span>
                               </>
                             )}

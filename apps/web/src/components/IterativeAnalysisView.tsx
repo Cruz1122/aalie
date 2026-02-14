@@ -1,6 +1,7 @@
 "use client";
 
 import type { AnalyzeOpenResponse } from "@aa/types";
+import { useTranslations } from "next-intl";
 import React from "react";
 
 import { getBestAsymptoticNotation } from "@/lib/asymptotic-notation";
@@ -29,23 +30,6 @@ interface IterativeAnalysisViewProps {
   /** Callback para ver el procedimiento general */
   onViewGeneralProcedure: (caseType: CaseType) => void;
 }
-
-/**
- * Obtiene la etiqueta en español para un tipo de caso.
- * @param caseType - Tipo de caso (worst, best, average)
- * @returns Etiqueta en español del caso
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- */
-const getCaseLabel = (caseType: CaseType): string => {
-  switch (caseType) {
-    case "worst":
-      return "Peor caso";
-    case "best":
-      return "Mejor caso";
-    case "average":
-      return "Caso promedio";
-  }
-};
 
 /**
  * Obtiene las clases CSS para el badge de un tipo de caso.
@@ -120,6 +104,13 @@ export default function IterativeAnalysisView({
   onViewLineProcedure,
   onViewGeneralProcedure,
 }: IterativeAnalysisViewProps) {
+  const t = useTranslations("analyzer.cases");
+  const tView = useTranslations("analyzer.view");
+
+  const getCaseLabel = (caseType: CaseType) => t(caseType);
+  const getCaseShortLabel = (caseType: CaseType) =>
+    caseType === "best" ? t("bestShort") : caseType === "average" ? t("avgShort") : t("worstShort");
+
   /**
    * Renderiza el contenido de la tabla de costos por línea.
    * @returns Elemento React con la tabla de costos o estado vacío
@@ -133,7 +124,7 @@ export default function IterativeAnalysisView({
             <span className="material-symbols-outlined text-4xl mb-2 block">
               table_chart
             </span>
-            <p>Ejecuta el análisis para ver los costos</p>
+            <p>{tView("runAnalysisToSeeCosts")}</p>
           </div>
         </div>
       );
@@ -159,8 +150,7 @@ export default function IterativeAnalysisView({
               hourglass_empty
             </span>
             <p>
-              El caso &quot;{getCaseLabel(selectedCase)}&quot; estará disponible
-              próximamente
+              {tView("caseAvailableSoon", { case: getCaseLabel(selectedCase) })}
             </p>
           </div>
         </div>
@@ -189,7 +179,7 @@ export default function IterativeAnalysisView({
             <span className="material-symbols-outlined mr-2 text-amber-400">
               table_chart
             </span>
-            <span>Costos por Línea</span>
+            <span>{tView("costsPerLine")}</span>
             <span
               className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide ${getCaseBadgeStyle(selectedCase)}`}
             >
@@ -201,19 +191,19 @@ export default function IterativeAnalysisView({
               onClick={() => onCaseChange("best")}
               className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle("best", selectedCase === "best")}`}
             >
-              Mejor
+              {getCaseShortLabel("best")}
             </button>
             <button
               onClick={() => onCaseChange("average")}
               className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle("average", selectedCase === "average")}`}
             >
-              Promedio
+              {getCaseShortLabel("average")}
             </button>
             <button
               onClick={() => onCaseChange("worst")}
               className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle("worst", selectedCase === "worst")}`}
             >
-              Peor
+              {getCaseShortLabel("worst")}
             </button>
           </div>
         </div>
@@ -239,7 +229,7 @@ export default function IterativeAnalysisView({
                 />
               </div>
             </div>
-            <h3 className="font-semibold text-green-300 mb-1">Mejor caso</h3>
+            <h3 className="font-semibold text-green-300 mb-1">{getCaseLabel("best")}</h3>
             {getBestAsymptoticNotation("best", 
               data?.best === "same_as_worst" 
                 ? data?.worst?.totals || {} 
@@ -263,7 +253,7 @@ export default function IterativeAnalysisView({
                     }`}
                     title={
                       chip.type === "bound-only"
-                        ? "Solo se conoce esta cota"
+                        ? tView("boundOnly")
                         : undefined
                     }
                   >
@@ -282,14 +272,14 @@ export default function IterativeAnalysisView({
               }`}
               title={
                 (data?.best === "same_as_worst" ? data?.worst?.ok : data?.best?.ok)
-                  ? "Ver procedimiento general (mejor caso)"
-                  : "Ejecuta el análisis para ver el procedimiento"
+                  ? tView("viewProcedureGeneral", { case: getCaseLabel("best") })
+                  : tView("runAnalysisToSeeProcedure")
               }
             >
               <span className="material-symbols-outlined text-sm">
                 visibility
               </span>
-              <span>Ver Procedimiento</span>
+              <span>{tView("viewProcedure")}</span>
             </button>
           </div>
         </div>
@@ -328,7 +318,7 @@ export default function IterativeAnalysisView({
               </div>
             </div>
             <h3 className="font-semibold text-yellow-300 mb-1">
-              Caso promedio
+              {getCaseLabel("average")}
             </h3>
             <button
               onClick={() => onViewGeneralProcedure("average")}
@@ -340,14 +330,14 @@ export default function IterativeAnalysisView({
               }`}
               title={
                 (data?.avg === "same_as_worst" ? data?.worst?.ok : data?.avg?.ok)
-                  ? "Ver procedimiento general (caso promedio)"
-                  : "Ejecuta el análisis para ver el procedimiento"
+                  ? tView("viewProcedureGeneral", { case: getCaseLabel("average") })
+                  : tView("runAnalysisToSeeProcedure")
               }
             >
               <span className="material-symbols-outlined text-sm">
                 visibility
               </span>
-              <span>Ver Procedimiento</span>
+              <span>{tView("viewProcedure")}</span>
             </button>
           </div>
         </div>
@@ -365,7 +355,7 @@ export default function IterativeAnalysisView({
                 />
               </div>
             </div>
-            <h3 className="font-semibold text-red-300 mb-1">Peor caso</h3>
+            <h3 className="font-semibold text-red-300 mb-1">{getCaseLabel("worst")}</h3>
             {getBestAsymptoticNotation("worst", data?.worst?.totals || {}).chips
               .length > 0 && (
               <div className="flex flex-wrap gap-1 justify-center mt-1">
@@ -384,7 +374,7 @@ export default function IterativeAnalysisView({
                     }`}
                     title={
                       chip.type === "bound-only"
-                        ? "Solo se conoce esta cota"
+                        ? tView("boundOnly")
                         : undefined
                     }
                   >
@@ -403,14 +393,14 @@ export default function IterativeAnalysisView({
               }`}
               title={
                 data?.worst?.ok
-                  ? "Ver procedimiento general (peor caso)"
-                  : "Ejecuta el análisis para ver el procedimiento"
+                  ? tView("viewProcedureGeneral", { case: getCaseLabel("worst") })
+                  : tView("runAnalysisToSeeProcedure")
               }
             >
               <span className="material-symbols-outlined text-sm">
                 visibility
               </span>
-              <span>Ver Procedimiento</span>
+              <span>{tView("viewProcedure")}</span>
             </button>
           </div>
         </div>

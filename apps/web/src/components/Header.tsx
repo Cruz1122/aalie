@@ -6,9 +6,11 @@
  *
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
-import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { usePathname } from "@/i18n/navigation";
+import LocaleSwitcher from "./LocaleSwitcher";
 import NavigationLink from "./NavigationLink";
 
 /**
@@ -17,8 +19,8 @@ import NavigationLink from "./NavigationLink";
 interface NavItem {
   /** URL del enlace */
   href: string;
-  /** Etiqueta visible del enlace */
-  label: string;
+  /** Clave de traducción para la etiqueta */
+  labelKey: string;
   /** Nombre del ícono Material Symbols */
   icon: string;
   /** Color del tema del enlace */
@@ -26,26 +28,26 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: "/", label: "Inicio", icon: "home", color: "purple" },
+  { href: "/", labelKey: "home", icon: "home", color: "purple" },
   {
     href: "/analyzer",
-    label: "Analizador",
+    labelKey: "analyzer",
     icon: "analytics",
     color: "orange",
   },
   {
     href: "/documentation",
-    label: "Documentación",
+    labelKey: "documentation",
     icon: "menu_book",
     color: "blue",
   },
   {
     href: "/examples",
-    label: "Ejemplos",
+    labelKey: "examples",
     icon: "code_blocks",
     color: "emerald",
   },
-  { href: "/about-us", label: "Acerca de", icon: "info", color: "cyan" },
+  { href: "/about-us", labelKey: "about", icon: "info", color: "cyan" },
 ];
 
 const getColorClasses = (color: string, isActiveItem: boolean) => {
@@ -96,6 +98,7 @@ const getColorClasses = (color: string, isActiveItem: boolean) => {
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
+  const t = useTranslations("nav");
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -112,7 +115,7 @@ export default function Header() {
     <header className="glass-header relative z-50">
       <div className="flex items-center justify-center whitespace-nowrap px-4 sm:px-6 py-2">
         {/* Navegación Desktop - Centrada */}
-        <div className="hidden lg:flex items-center gap-2">
+        <div className="hidden lg:flex items-center gap-4">
           <nav className="flex items-center gap-2">
             {navItems.map((item) => {
               const active = isActive(item.href);
@@ -126,18 +129,19 @@ export default function Header() {
                   <span className="material-symbols-outlined text-base">
                     {item.icon}
                   </span>
-                  <span>{item.label}</span>
+                  <span>{t(item.labelKey)}</span>
                 </NavigationLink>
               );
             })}
           </nav>
+          <LocaleSwitcher />
         </div>
 
         {/* Botón Hamburguesa para Mobile */}
         <button
           className="lg:hidden glass-secondary p-2 rounded-lg transition-colors flex items-center justify-center hover:bg-white/10"
           onClick={toggleMenu}
-          aria-label="Abrir menú"
+          aria-label={t("openMenu")}
         >
           <span className="material-symbols-outlined text-lg text-slate-300">
             {isMenuOpen ? "close" : "menu"}
@@ -162,11 +166,12 @@ export default function Header() {
                   <span className="material-symbols-outlined text-base">
                     {item.icon}
                   </span>
-                  <span>{item.label}</span>
+                  <span>{t(item.labelKey)}</span>
                 </NavigationLink>
               );
             })}
           </nav>
+          <LocaleSwitcher />
         </div>
       )}
     </header>

@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 interface ModeToggleProps {
   readonly mode: "ai" | "manual";
   readonly isSwitching: boolean;
@@ -9,6 +13,7 @@ export default function ModeToggle({
   isSwitching,
   onModeSwitch,
 }: ModeToggleProps) {
+  const t = useTranslations("home");
   return (
     <div className="text-center mb-8">
       <div className="inline-flex items-center bg-slate-800/60 border border-slate-600/50 rounded-xl p-1 gap-1">
@@ -22,7 +27,7 @@ export default function ModeToggle({
           disabled={isSwitching}
         >
           <span className="material-symbols-outlined text-base">smart_toy</span>{" "}
-          AALIE
+          {t("modeAI")}
         </button>
         <button
           onClick={() => onModeSwitch("manual")}
@@ -34,7 +39,7 @@ export default function ModeToggle({
           disabled={isSwitching}
         >
           <span className="material-symbols-outlined text-base">terminal</span>{" "}
-          Modo Manual
+          {t("modeManual")}
         </button>
       </div>
     </div>

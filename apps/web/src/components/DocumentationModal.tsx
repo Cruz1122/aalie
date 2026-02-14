@@ -10,6 +10,7 @@ import {
   Code2,
 } from "lucide-react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 
 import Formula from "@/components/Formula";
@@ -50,6 +51,8 @@ export default function DocumentationModal({
   onClose: () => void;
   section: DocumentationSection | null;
 }>) {
+  const t = useTranslations("documentation.technical");
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -75,29 +78,31 @@ export default function DocumentationModal({
 
   if (!open || !section) return null;
 
+  const displayTitle = section.titleKey
+    ? t(`sections.${section.titleKey}`)
+    : section.title;
+
   return (
     <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div className="absolute left-1/2 top-1/2 w-[min(90vw,800px)] max-h-[80vh] overflow-y-auto scrollbar-custom -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 p-6 ring-1 ring-white/10 shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
-          <h3 className="text-lg font-semibold text-white">{section.title}</h3>
+          <h3 className="text-lg font-semibold text-white">{displayTitle}</h3>
           <button
             onClick={onClose}
             className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
-            aria-label="Cerrar modal"
+            aria-label={t("modalClose")}
           >
             ✕
           </button>
         </div>
 
-        {/* Descripción completa (si quieres usarla distinta de la corta de la card) */}
         {section.description && (
           <p className="mt-4 text-sm text-slate-300 leading-relaxed">
             {section.description}
           </p>
         )}
 
-        {/* Render detallado por tipo */}
         <div className="mt-6 space-y-6">{renderSectionDetail(section)}</div>
       </div>
     </div>
@@ -124,9 +129,8 @@ function renderSectionDetail(section: DocumentationSection) {
     case "text":
       return <TextDetail section={section} />;
     default:
-      // Por defecto solo muestra el diagrama si existe
       return (
-        <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+        <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
           {section.image?.src && (
             <div className="flex justify-center">
               {/* Imagen redimensionada para el modal */}
@@ -139,7 +143,7 @@ function renderSectionDetail(section: DocumentationSection) {
               />
             </div>
           )}
-        </div>
+        </article>
       );
   }
 }
@@ -151,21 +155,13 @@ function UIShowcaseDetail({
   const content = section.content as UIShowcaseContent;
 
   return (
-    <article className="p-4 rounded-lg bg-gradient-to-b from-slate-800/50 to-slate-800/30 border border-purple-500/20">
-      <header className="space-y-4 mb-6">
-        <div className="flex justify-center">
-          <div className="p-3 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 backdrop-blur-sm border border-purple-400/30">
-            <Zap size={56} className="text-purple-400" />
-          </div>
+    <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+      <header className="flex items-center gap-3 mb-6">
+        <div className="p-2 rounded-lg bg-purple-500/20 border border-purple-500/30">
+          <Zap size={24} className="text-purple-400" />
         </div>
-        <h4 className="text-lg font-semibold text-white text-center">
-          {section.title}
-        </h4>
+        <p className="text-sm text-slate-300">{content?.implementation?.description}</p>
       </header>
-
-      <p className="text-sm text-slate-300 text-center mb-6">
-        {section.description}
-      </p>
 
       {/* Lista de características */}
       {content?.implementation?.features && (
@@ -210,18 +206,12 @@ function PackagesDetail({
   const content = section.content as PackageContent;
   return (
     <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-      <header className="space-y-4 mb-6">
-        <div className="flex justify-center">
-          <Package size={56} className="text-purple-400" />
+      <header className="flex items-center gap-3 mb-6">
+        <div className="p-2 rounded-lg bg-purple-500/20 border border-purple-500/30">
+          <Package size={24} className="text-purple-400" />
         </div>
-        <h4 className="text-lg font-semibold text-white text-center">
-          {section.title}
-        </h4>
+        <p className="text-sm text-slate-300">{section.description}</p>
       </header>
-
-      <p className="text-sm text-slate-300 text-center mb-6">
-        {section.description}
-      </p>
 
       <div className="grid md:grid-cols-2 gap-6 mb-2 max-w-4xl mx-auto">
         {content?.packages?.map((pkg: PackageInfo) => (
@@ -293,18 +283,12 @@ function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
 
   return (
     <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-      <header className="space-y-4 mb-6">
-        <div className="flex justify-center">
-          <Settings size={56} className="text-green-400" />
+      <header className="flex items-center gap-3 mb-6">
+        <div className="p-2 rounded-lg bg-green-500/20 border border-green-500/30">
+          <Settings size={24} className="text-green-400" />
         </div>
-        <h4 className="text-lg font-semibold text-white text-center">
-          {section.title}
-        </h4>
+        <p className="text-sm text-slate-300">{section.description}</p>
       </header>
-
-      <p className="text-sm text-slate-300 text-center mb-8">
-        {section.description}
-      </p>
 
       <div className="grid md:grid-cols-2 gap-8 mb-8">
         {/* Frontend */}
@@ -442,18 +426,12 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
 
   return (
     <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-      <header className="space-y-4 mb-6">
-        <div className="flex justify-center">
-          <Calculator size={56} className="text-emerald-400" />
+      <header className="flex items-center gap-3 mb-6">
+        <div className="p-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30">
+          <Calculator size={24} className="text-emerald-400" />
         </div>
-        <h4 className="text-lg font-semibold text-white text-center">
-          {section.title}
-        </h4>
+        <p className="text-sm text-slate-300">{section.description}</p>
       </header>
-
-      <p className="text-sm text-slate-300 text-center mb-8">
-        {section.description}
-      </p>
 
       {/* Implementación Técnica */}
       <section className="mb-8">
@@ -715,18 +693,12 @@ function GrammarDetail({
 
   return (
     <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-      <header className="space-y-4 mb-6">
-        <div className="flex justify-center">
-          <Code2 size={56} className="text-green-400" />
+      <header className="flex items-center gap-3 mb-6">
+        <div className="p-2 rounded-lg bg-green-500/20 border border-green-500/30">
+          <Code2 size={24} className="text-green-400" />
         </div>
-        <h4 className="text-lg font-semibold text-white text-center">
-          {section.title}
-        </h4>
+        <p className="text-sm text-slate-300">{section.description}</p>
       </header>
-
-      <p className="text-sm text-slate-300 text-center mb-8">
-        {section.description}
-      </p>
 
       {/* Overview */}
       <section className="mb-8 p-4 rounded-lg bg-green-800/20 border border-green-500/20">
@@ -1102,18 +1074,12 @@ function AnalyzerDetail({
 
   return (
     <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-      <header className="space-y-4 mb-6">
-        <div className="flex justify-center">
-          <BarChart3 size={56} className="text-cyan-400" />
+      <header className="flex items-center gap-3 mb-6">
+        <div className="p-2 rounded-lg bg-cyan-500/20 border border-cyan-500/30">
+          <BarChart3 size={24} className="text-cyan-400" />
         </div>
-        <h4 className="text-lg font-semibold text-white text-center">
-          {section.title}
-        </h4>
+        <p className="text-sm text-slate-300">{section.description}</p>
       </header>
-
-      <p className="text-sm text-slate-300 text-center mb-8">
-        {section.description}
-      </p>
 
       {/* Interfaz - puede ser 3 columnas o descripción simple */}
       {content?.interface && (
@@ -1775,17 +1741,11 @@ function TextDetail({ section }: Readonly<{ section: DocumentationSection }>) {
 
   return (
     <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-      {/* Header with icon */}
       <header className="flex items-center gap-3 mb-6">
         <div className={`p-2 rounded-lg ${style.bgColor} border ${style.borderColor}`}>
-          <div className={style.iconColor}>
-            {style.icon}
-          </div>
+          <div className={style.iconColor}>{style.icon}</div>
         </div>
-        <div>
-          <h4 className="text-lg font-semibold text-white">{section.title}</h4>
-          <p className="text-xs text-slate-400">{section.description}</p>
-        </div>
+        <p className="text-sm text-slate-300">{section.description}</p>
       </header>
 
       {/* Content sections */}

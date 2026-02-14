@@ -56,22 +56,18 @@ algorithmic-analysis/
 
 ---
 
-## Labels y literales
+## Labels y literales (i18n)
 
 ### Frontend
 
 - **Prohibido** usar literales de texto directamente en JSX o UI.
-- Ruta base: `apps/web/src/labels/`.
-- Agrupa por dominio (ej. `common.ts`, `analyzer.ts`, `documentation.ts`) y exporta un índice para acceso tipado.
-- Ejemplo de estructura futura:
-
-  ```
-  labels/
-  ├── common.ts
-  ├── analyzer.ts
-  ├── documentation.ts
-  └── index.ts
-  ```
+- Sistema: **next-intl** con archivos JSON en `apps/web/messages/`.
+- Idiomas: `es.json` (español), `en.json` (inglés).
+- Namespaces por dominio: `common`, `nav`, `footer`, `analyzer`, `metadata`, etc.
+- Uso en componentes: `useTranslations("namespace")` → `t("key")`.
+- Rutas con prefijo de idioma: `/es/analyzer`, `/en/analyzer`.
+- Navegación: usar `Link`, `useRouter`, `usePathname` de `@/i18n/navigation`.
+- Selector de idioma: componente `LocaleSwitcher` en el Header.
 
 ### Backend
 

@@ -1,10 +1,8 @@
 "use client";
 
-import type { Route } from "next";
-import Link from "next/link";
-import { ReactNode, MouseEvent } from "react";
-
+import { Link } from "@/i18n/navigation";
 import { useNavigation } from "@/contexts/NavigationContext";
+import type { ReactNode, MouseEvent } from "react";
 
 interface NavigationLinkProps {
   href: string;
@@ -23,11 +21,11 @@ export default function NavigationLink({
 
   const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
     // Si es el mismo path, no mostrar loader
-    if (
-      typeof globalThis.window !== "undefined" &&
-      globalThis.window.location.pathname === href
-    ) {
-      return;
+    if (typeof globalThis.window !== "undefined") {
+      const pathname = globalThis.window.location.pathname;
+      const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, "") || "/";
+      const normalizedHref = href === "/" ? "/" : href;
+      if (pathWithoutLocale === normalizedHref) return;
     }
 
     // Iniciar animación de carga
@@ -40,7 +38,7 @@ export default function NavigationLink({
   };
 
   return (
-    <Link href={href as Route} className={className} onClick={handleClick}>
+    <Link href={href} className={className} onClick={handleClick}>
       {children}
     </Link>
   );

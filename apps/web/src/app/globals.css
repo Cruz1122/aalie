@@ -143,11 +143,11 @@ body {
       0 0 0 1px rgba(255, 255, 255, 0.1);
   }
 
-  /* Consistencia en altura de cards */
+  /* Grid de documentación técnica */
   .documentation-grid {
     display: grid;
-    gap: 1.5rem;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 
   /* Animaciones para el chatbot */
@@ -306,9 +306,9 @@ body {
   }
 }
 
-/* Altura fija para todas las cards - consistencia total */
+/* Cards de documentación - altura fija para alineación */
 .documentation-card {
-  height: 480px;
+  height: 300px;
   display: flex;
   flex-direction: column;
 }
@@ -317,7 +317,9 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
 }
 
 /* Line clamp utilities for text truncation */

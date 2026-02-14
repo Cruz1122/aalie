@@ -1,6 +1,7 @@
 "use client";
 
 import { RotateCcw, Send, User } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
@@ -190,6 +191,9 @@ export default function ChatBot({
   setMessages,
   onAnalyzeCode,
 }: Readonly<ChatBotProps>) {
+  const t = useTranslations("chat");
+  const tCommon = useTranslations("common");
+  const tFooter = useTranslations("footer.apiKey");
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState("");
@@ -358,7 +362,7 @@ export default function ChatBot({
           id: `bot-error-${Date.now()}`,
           content: isGeminiError
             ? `Error de Gemini: ${error instanceof Error ? error.message : "Error desconocido"}`
-            : "Disculpa, tuve un problema al procesar tu mensaje. ¿Podrías intentarlo de nuevo?",
+            : t("errorGeneric"),
           sender: "bot",
           timestamp: new Date(),
           isError: true,
@@ -371,7 +375,7 @@ export default function ChatBot({
         processingRef.current = false;
       }
     },
-    [messages, setMessages],
+    [messages, setMessages, t],
   );
 
   // Responder automáticamente si el último mensaje del historial es del usuario
@@ -508,7 +512,7 @@ export default function ChatBot({
             <div className="flex flex-col min-w-0">
               <h3 className="text-white font-semibold text-xs">AALIE</h3>
               <p className="text-slate-400 text-[10px] truncate">
-                Asistente de análisis de algoritmos
+                {t("assistantTitle")}
               </p>
             </div>
           </div>
@@ -516,7 +520,7 @@ export default function ChatBot({
             <button
               onClick={clearConversation}
               className="w-8 h-8 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white flex items-center justify-center"
-              title="Limpiar conversación"
+              title={t("clearConversation")}
               disabled={isTyping}
             >
               <RotateCcw size={18} />
@@ -524,7 +528,7 @@ export default function ChatBot({
             <button
               onClick={onClose}
               className="w-8 h-8 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white flex items-center justify-center"
-              title="Volver al inicio"
+              title={t("backToHome")}
             >
               <span className="material-symbols-outlined text-lg leading-none">
                 arrow_back
@@ -547,19 +551,17 @@ export default function ChatBot({
                 <div className="flex-1 space-y-3">
                   <div>
                     <h4 className="text-white font-semibold text-sm mb-1">
-                      Chatbot no disponible
+                      {t("unavailable")}
                     </h4>
                     <p className="text-slate-300 text-xs">
-                      El chatbot requiere una API Key de Gemini para funcionar.
-                      Configura tu API Key para habilitar el chatbot. Puedes
-                      obtenerla en{" "}
+                      {t("apiKeyRequired")}{" "}
                       <a
                         href="https://aistudio.google.com/apikey"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-400 hover:text-blue-300 underline"
                       >
-                        Google AI Studio
+                        {tFooter("googleAIStudio")}
                       </a>
                       .
                     </p>
@@ -569,7 +571,7 @@ export default function ChatBot({
                       type="password"
                       value={apiKeyInput}
                       onChange={(e) => setApiKeyInput(e.target.value)}
-                      placeholder="API Key de Gemini"
+                      placeholder={tFooter("placeholder")}
                       className={`flex-1 px-2.5 py-1.5 rounded-lg bg-white/5 border ${
                         apiKeyInput && !validateApiKey(apiKeyInput)
                           ? "border-red-500/50 focus:border-red-500"
@@ -593,17 +595,17 @@ export default function ChatBot({
                           : "bg-slate-500/20 text-slate-500 border border-slate-500/30 cursor-not-allowed"
                       }`}
                     >
-                      Guardar
+                      {tCommon("save")}
                     </button>
                   </div>
                   {apiKeyInput && !validateApiKey(apiKeyInput) && (
-                    <p className="text-red-400 text-[10px]">API Key inválida</p>
+                    <p className="text-red-400 text-[10px]">{tFooter("invalid")}</p>
                   )}
                 </div>
                 <button
                   onClick={onClose}
                   className="w-6 h-6 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white flex items-center justify-center flex-shrink-0"
-                  title="Cerrar"
+                  title={tCommon("close")}
                 >
                   <span className="material-symbols-outlined text-sm">
                     close
@@ -699,7 +701,7 @@ export default function ChatBot({
                               {/* Solicitud */}
                               <div className="pt-1">
                                 <p className="text-white text-[11px] font-medium">
-                                  Ayúdame a solucionar este error
+                                  {t("helpRequest")}
                                 </p>
                               </div>
                             </div>
@@ -737,7 +739,7 @@ export default function ChatBot({
                               <span className="material-symbols-outlined text-xs">
                                 refresh
                               </span>
-                              Reintentar
+                              {t("retry")}
                             </button>
                           </div>
                         )}
@@ -787,7 +789,7 @@ export default function ChatBot({
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Escribe tu mensaje..."
+              placeholder={t("placeholder")}
               className="flex-1 bg-white/5 border border-slate-600/50 rounded-lg px-2.5 py-1.5 text-white placeholder-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
               disabled={isTyping}
             />

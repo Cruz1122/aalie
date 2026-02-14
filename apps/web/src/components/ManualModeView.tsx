@@ -1,5 +1,6 @@
 import type { Program } from "@aa/types";
-import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 import {
   forwardRef,
   useCallback,
@@ -22,12 +23,6 @@ import MethodSelector, { MethodType } from "./MethodSelector";
 // Constantes
 const COPY_FEEDBACK_DURATION = 2000; // 2 segundos
 const ANALYSIS_RESULT_DURATION = 5000; // 5 segundos
-
-const ANALYSIS_MESSAGES = {
-  SUCCESS: "El código es sintácticamente correcto",
-  ERROR_SYNTAX: "El código contiene errores de sintaxis",
-  ERROR_CONNECTION: "Error al conectar con el servidor",
-} as const;
 
 type Message = {
   id: string;
@@ -56,43 +51,6 @@ interface ManualModeViewProps {
 export interface ManualModeViewHandle {
   analyzeCode: (source: string) => Promise<void>;
 }
-
-/**
- * Formatea la etiqueta del tipo de algoritmo en español.
- * @param value - Tipo de algoritmo
- * @returns Etiqueta en español del tipo de algoritmo
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- */
-const formatAlgorithmKindLabel = (value: AlgorithmKind): string => {
-  switch (value) {
-    case "iterative":
-      return "Iterativo";
-    case "recursive":
-      return "Recursivo";
-    case "hybrid":
-      return "Híbrido";
-    default:
-      return "Desconocido";
-  }
-};
-
-const DEFAULT_CODE = `busquedaBinaria(A[n], x, inicio, fin) BEGIN
-  IF (inicio > fin) THEN BEGIN
-    RETURN -1;
-  END
-  mitad <- (inicio + fin) / 2;
-  IF (A[mitad] = x) THEN BEGIN
-    RETURN mitad;
-  END
-  ELSE BEGIN
-    IF (x < A[mitad]) THEN BEGIN
-      RETURN busquedaBinaria(A, x, inicio, mitad - 1);
-    END
-    ELSE BEGIN
-      RETURN busquedaBinaria(A, x, mitad + 1, fin);
-    END
-  END
-END`;
 
 /**
  * Componente principal para el modo manual de análisis.
@@ -127,15 +85,28 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
   ) {
     const router = useRouter();
     const { animateProgress } = useAnalysisProgress();
+    const t = useTranslations("analyzer.messages");
+    const tProgress = useTranslations("analyzer.progress");
+    const tAlgorithmType = useTranslations("analyzer.algorithmType");
+    const locale = useLocale();
+    const tManual = useTranslations("analyzer.manualMode");
+    const formatAlgorithmKindLabel = (value: AlgorithmKind) =>
+      tAlgorithmType(value === "unknown" ? "unknown" : value);
 
-    // Cargar código desde localStorage o usar valor por defecto
-    const [code, setCode] = useState(() => {
-      if (globalThis.window !== undefined) {
-        const savedCode = localStorage.getItem("manualModeCode");
-        return savedCode || DEFAULT_CODE;
+    const defaultCode = tManual("defaultCode");
+    const [code, setCode] = useState(defaultCode);
+
+    // Cargar desde localStorage al montar y actualizar cuando cambia el locale
+    useEffect(() => {
+      if (globalThis.window === undefined) return;
+      const savedCode = localStorage.getItem("manualModeCode");
+      const savedLocale = localStorage.getItem("manualModeLocale");
+      if (savedCode && savedLocale === locale) {
+        setCode(savedCode);
+      } else {
+        setCode(defaultCode);
       }
-      return DEFAULT_CODE;
-    });
+    }, [locale, defaultCode]);
     const [ast, setAst] = useState<Program | null>(null);
     const [showAstModal, setShowAstModal] = useState(false);
     const [localParseOk, setLocalParseOk] = useState(false);
@@ -186,8 +157,8 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
 
     // Estados para el loader de análisis de complejidad
     const [analysisProgress, setAnalysisProgress] = useState(0);
-    const [analysisMessage, setAnalysisMessage] = useState(
-      "Iniciando análisis...",
+    const [analysisMessage, setAnalysisMessage] = useState(() =>
+      tProgress("init"),
     );
     const [algorithmType, setAlgorithmType] = useState<
       "iterative" | "recursive" | "hybrid" | "unknown" | undefined
@@ -296,12 +267,12 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
             setShowAIHelpButton(false);
             setBackendParseError(null);
           } else {
-            setBackendParseError(data.error || "Error de sintaxis detectado");
+            setBackendParseError(data.error || t("parseErrorDetected"));
             setShowAIHelpButton(true);
           }
         } catch (e) {
           console.error("Error al verificar parse:", e);
-          setBackendParseError("Error al verificar el código");
+          setBackendParseError(t("verifyError"));
           setShowAIHelpButton(true);
         }
       }, 3000);
@@ -313,12 +284,13 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
       };
     }, [localParseOk, code]);
 
-    // Guardar código en localStorage cuando cambia
+    // Guardar código y locale en localStorage cuando cambia
     useEffect(() => {
       if (globalThis.window !== undefined) {
         localStorage.setItem("manualModeCode", code);
+        localStorage.setItem("manualModeLocale", locale);
       }
-    }, [code]);
+    }, [code, locale]);
 
     // Resetear estado de copiado cuando se cierra el modal
     useEffect(() => {
@@ -365,19 +337,19 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
         if (data.ok) {
           setAnalysisResult({
             success: true,
-            message: ANALYSIS_MESSAGES.SUCCESS,
+            message: t("success"),
           });
         } else {
           setAnalysisResult({
             success: false,
-            message: data.error || ANALYSIS_MESSAGES.ERROR_SYNTAX,
+            message: data.error || t("errorSyntax"),
           });
         }
       } catch (e) {
         console.error("Error analyzing code:", e);
         setAnalysisResult({
           success: false,
-          message: ANALYSIS_MESSAGES.ERROR_CONNECTION,
+          message: t("errorConnection"),
         });
       } finally {
         setIsVerifyingParse(false);
@@ -396,7 +368,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
 
         setIsAnalyzing(true);
         setAnalysisProgress(0);
-        setAnalysisMessage("Iniciando análisis...");
+        setAnalysisMessage(tProgress("init"));
         setAlgorithmType(undefined);
         setIsAnalysisComplete(false);
         setAnalysisResult(null);
@@ -405,7 +377,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
         setShowAIHelpButton(false);
 
         try {
-          setAnalysisMessage("Parseando código...");
+          setAnalysisMessage(tProgress("parsing"));
           const parsePromise = fetch("/api/grammar/parse", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -437,7 +409,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
             setTimeout(() => {
               setIsAnalyzing(false);
               setAnalysisProgress(0);
-              setAnalysisMessage("Iniciando análisis...");
+              setAnalysisMessage(tProgress("init"));
               setAlgorithmType(undefined);
               setIsAnalysisComplete(false);
               setAnalysisError(null);
@@ -447,7 +419,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
 
           setLocalParseOk(true);
 
-          setAnalysisMessage("Clasificando algoritmo...");
+          setAnalysisMessage(tProgress("classifying"));
           let kind: AlgorithmKind;
           try {
             // Obtener API_KEY del localStorage (el backend usará la de variables de entorno si no hay)
@@ -484,7 +456,9 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
               kind = cls.kind as AlgorithmKind;
               setAlgorithmType(kind);
               setAnalysisMessage(
-                `Algoritmo identificado: ${formatAlgorithmKindLabel(kind)}`,
+                tProgress("algorithmIdentified", {
+                  type: formatAlgorithmKindLabel(kind),
+                }),
               );
               console.log(
                 `[ManualMode] Clasificación: ${kind} (método: ${cls.method})`,
@@ -510,13 +484,13 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
           let selectedMethod: MethodType | undefined = undefined;
 
           if (isRecursive) {
-            setAnalysisMessage("Verificando condiciones...");
+            setAnalysisMessage(tProgress("verifyingConditions"));
             await animateProgress(40, 50, 300, setAnalysisProgress);
-            setAnalysisMessage("Extrayendo recurrencia...");
+            setAnalysisMessage(tProgress("extractingRecurrence"));
             await animateProgress(50, 65, 400, setAnalysisProgress);
-            setAnalysisMessage("Normalizando recurrencia...");
+            setAnalysisMessage(tProgress("normalizingRecurrence"));
             await animateProgress(65, 75, 300, setAnalysisProgress);
-            setAnalysisMessage("Detectando método de análisis...");
+            setAnalysisMessage(tProgress("detectingMethod"));
             await animateProgress(75, 85, 500, setAnalysisProgress);
 
             // Guardar el progreso actual antes de detectar métodos
@@ -559,7 +533,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
 
                 // Si hay múltiples métodos aplicables, mostrar selector
                 if (methods.length > 1) {
-                  setAnalysisMessage("Selecciona el método de análisis...");
+                  setAnalysisMessage(tProgress("selectMethod"));
 
                   // Guardar el progreso mínimo para evitar que baje
                   minProgressRef.current = progressBeforeMethodSelection;
@@ -605,7 +579,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
                 } else {
                   selectedMethod = defaultMethodValue;
                   // Continuar con el progreso normalmente
-                  setAnalysisMessage("Iniciando análisis de complejidad...");
+                  setAnalysisMessage(tProgress("analyzingComplexity"));
                   await animateProgress(
                     progressBeforeMethodSelection,
                     90,
@@ -616,7 +590,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
               } else {
                 selectedMethod = "master";
                 // Continuar con el progreso normalmente
-                setAnalysisMessage("Iniciando análisis de complejidad...");
+                setAnalysisMessage(tProgress("analyzingComplexity"));
                 await animateProgress(
                   progressBeforeMethodSelection,
                   90,
@@ -631,7 +605,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
               );
               selectedMethod = "master";
               // Continuar con el progreso normalmente
-              setAnalysisMessage("Iniciando análisis de complejidad...");
+              setAnalysisMessage(tProgress("analyzingComplexity"));
               await animateProgress(
                 progressBeforeMethodSelection,
                 90,
@@ -640,9 +614,9 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
               );
             }
           } else {
-            setAnalysisMessage("Hallando sumatorias...");
+            setAnalysisMessage(tProgress("findingSums"));
             await animateProgress(40, 50, 200, setAnalysisProgress);
-            setAnalysisMessage("Cerrando sumatorias...");
+            setAnalysisMessage(tProgress("closingSums"));
             await animateProgress(50, 55, 200, setAnalysisProgress);
           }
 
@@ -696,7 +670,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
             [key: string]: unknown;
           };
 
-          setAnalysisMessage("Generando forma polinómica...");
+          setAnalysisMessage(tProgress("generatingPolynomial"));
           await animateProgress(70, 80, 200, setAnalysisProgress);
 
           if (!analyzeRes.ok) {
@@ -719,7 +693,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
             setTimeout(() => {
               setIsAnalyzing(false);
               setAnalysisProgress(0);
-              setAnalysisMessage("Iniciando análisis...");
+              setAnalysisMessage(tProgress("init"));
               setAlgorithmType(undefined);
               setIsAnalysisComplete(false);
               setAnalysisError(null);
@@ -727,7 +701,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
             return;
           }
 
-          setAnalysisMessage("Finalizando análisis...");
+          setAnalysisMessage(tProgress("finalizing"));
           await animateProgress(80, 100, 200, setAnalysisProgress);
 
           if (globalThis.window !== undefined) {
@@ -738,7 +712,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
             );
           }
 
-          setAnalysisMessage("Análisis completo");
+          setAnalysisMessage(tProgress("complete"));
           setIsAnalysisComplete(true);
 
           await new Promise((resolve) => setTimeout(resolve, 800));
@@ -754,7 +728,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
           setTimeout(() => {
             setIsAnalyzing(false);
             setAnalysisProgress(0);
-            setAnalysisMessage("Iniciando análisis...");
+            setAnalysisMessage(tProgress("init"));
             setAlgorithmType(undefined);
             setIsAnalysisComplete(false);
             setAnalysisError(null);
@@ -779,12 +753,13 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
 
           if (globalThis.window !== undefined) {
             localStorage.setItem("manualModeCode", source);
+            localStorage.setItem("manualModeLocale", locale);
           }
 
           await runAnalysis(source);
         },
       }),
-      [runAnalysis],
+      [runAnalysis, locale],
     );
 
     return (
@@ -800,7 +775,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
             onClose={() => {
               setIsAnalyzing(false);
               setAnalysisProgress(0);
-              setAnalysisMessage("Iniciando análisis...");
+              setAnalysisMessage(tProgress("init"));
               setAlgorithmType(undefined);
               setIsAnalysisComplete(false);
               setAnalysisError(null);
@@ -858,14 +833,14 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
                     <span className="material-symbols-outlined text-base animate-spin">
                       progress_activity
                     </span>{" "}
-                    Verificando...
+                    {tManual("verifying")}
                   </>
                 ) : (
                   <>
                     <span className="material-symbols-outlined text-base">
                       check_circle
                     </span>{" "}
-                    Verificar Parse
+                    {tManual("verifyParse")}
                   </>
                 )}
               </button>
@@ -880,14 +855,14 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
                     <span className="material-symbols-outlined text-base animate-spin">
                       progress_activity
                     </span>{" "}
-                    Analizando...
+                    {tManual("analyzing")}
                   </>
                 ) : (
                   <>
                     <span className="material-symbols-outlined text-base">
                       functions
                     </span>{" "}
-                    Analizar Complejidad
+                    {tManual("analyzeComplexity")}
                   </>
                 )}
               </button>
@@ -898,7 +873,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
                 className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg text-white text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-yellow-400/50 bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 hover:from-yellow-500/30 hover:to-amber-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 <span className="material-symbols-outlined">account_tree</span>{" "}
-                Ver AST
+                {tManual("viewAst")}
               </button>
 
               {/* Botón de Ayuda con IA - aparece después de 3 segundos si hay error y hay API_KEY */}

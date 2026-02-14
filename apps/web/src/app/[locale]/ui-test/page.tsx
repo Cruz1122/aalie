@@ -13,6 +13,7 @@ import Footer from "@/components/Footer";
 import Formula from "@/components/Formula";
 import FormulaBlock from "@/components/FormulaBlock";
 import Header from "@/components/Header";
+import { PageHeader } from "@/components/PageHeader";
 
 // Datos de ejemplo
 const sampleTableData = [
@@ -125,21 +126,11 @@ export default function UITestPage() {
 
       <main className="flex-1 z-10 p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto space-y-8">
-          {/* Header */}
-          <header className="space-y-4 text-center">
-            <div className="flex justify-center mb-4">
-              <div className="p-4 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 backdrop-blur-sm border border-white/10">
-                <FlaskConical size={48} className="text-purple-400" />
-              </div>
-            </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
-              Componentes Nativos de UI
-            </h1>
-            <p className="text-dark-text text-base sm:text-lg lg:text-xl leading-relaxed max-w-3xl mx-auto">
-              Demostración de componentes nativos optimizados para máximo
-              rendimiento, sin dependencias externas.
-            </p>
-          </header>
+          <PageHeader
+            icon={<FlaskConical size={24} className="text-primary" />}
+            title="Componentes Nativos de UI"
+            description="Demostración de componentes nativos optimizados para máximo rendimiento, sin dependencias externas."
+          />
 
           <div className="grid gap-8">
             {/* Buttons Section */}
