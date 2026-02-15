@@ -8,8 +8,8 @@
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 import type { AnalyzeOpenResponse } from "@aa/types";
-import React, { useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
+import React, { useEffect, useMemo } from "react";
 
 import Formula from "./Formula";
 

@@ -1,8 +1,8 @@
 "use client";
 
 import type { ParseError } from "@aa/types";
-import { useState, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { useState, useEffect } from "react";
 
 interface RepairModalProps {
   open: boolean;

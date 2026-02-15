@@ -685,7 +685,10 @@ const renderEmptyState = (props: EmptyStateProps): React.JSX.Element => {
 
 interface RecursionTreeCardsProps {
   readonly tCases: (k: string) => string;
-  readonly tRecursionTree: (k: string) => string;
+  readonly tRecursionTree: (
+    k: string,
+    values?: Record<string, string | number>,
+  ) => string;
   readonly translateReason: (reason: string) => string;
   readonly recursionTree: RecursionTreeType;
   readonly hasDifferentComplexities: boolean;
@@ -796,7 +799,10 @@ const renderRecursionTreeCards = (
 
 interface EfficiencyCardProps {
   readonly tCases: (k: string) => string;
-  readonly tRecursionTree: (k: string) => string;
+  readonly tRecursionTree: (
+    k: string,
+    values?: Record<string, string | number>,
+  ) => string;
   readonly isMasterMethod: boolean;
   readonly isIterationMethod: boolean;
   readonly hasDifferentComplexities: boolean;

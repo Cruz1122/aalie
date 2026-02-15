@@ -2,8 +2,8 @@
  * Prompts para generate-diagram parametrizados por idioma.
  */
 
-import type { SupportedLocale } from "./types";
 import { getExplanationLanguageInstruction } from "./response-language";
+import type { SupportedLocale } from "./types";
 
 function normalizeLocale(locale: string | undefined): SupportedLocale {
   if (!locale || typeof locale !== "string") return "es";

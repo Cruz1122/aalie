@@ -1,6 +1,7 @@
 import type { Program, AstNode, ProcDef, Block, For, While, Repeat, If, Call, Index, Assign, Binary, Unary, Return, Print } from "@aa/types";
 
 import type { GPUCPUMetrics, GPUCPUAnalysisResult, GPUCPUProfile } from "@/types/gpu-cpu";
+
 import { GPU_CPU_TEXTS, type GpuCpuLocale } from "./gpu-cpu-texts";
 
 /**

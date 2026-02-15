@@ -6,8 +6,8 @@
  *
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
-import React from "react";
 import { useTranslations } from "next-intl";
+import React from "react";
 
 /**
  * Tipos de métodos de análisis disponibles.

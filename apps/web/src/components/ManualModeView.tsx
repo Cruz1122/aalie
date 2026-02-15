@@ -1,6 +1,5 @@
 import type { Program } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/navigation";
 import {
   forwardRef,
   useCallback,
@@ -13,6 +12,7 @@ import ReactDOM from "react-dom";
 
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
+import { useRouter } from "@/i18n/navigation";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 import { GrammarApiService } from "@/services/grammar-api";
 
@@ -93,8 +93,11 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     const tManual = useTranslations("analyzer.manualMode");
     const tView = useTranslations("analyzer.view");
     const tCommon = useTranslations("common");
-    const formatAlgorithmKindLabel = (value: AlgorithmKind) =>
-      tAlgorithmType(value === "unknown" ? "unknown" : value);
+    const formatAlgorithmKindLabel = useCallback(
+      (value: AlgorithmKind) =>
+        tAlgorithmType(value === "unknown" ? "unknown" : value),
+      [tAlgorithmType],
+    );
 
     const defaultCode = tManual("defaultCode");
     const [code, setCode] = useState(defaultCode);
@@ -285,7 +288,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
           clearTimeout(aiHelpTimeoutRef.current);
         }
       };
-    }, [localParseOk, code]);
+    }, [localParseOk, code, t]);
 
     // Guardar código y locale en localStorage cuando cambia
     useEffect(() => {
@@ -634,6 +637,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
             avgModel?: { mode: string; predicates?: Record<string, string> };
             algorithm_kind?: string;
             preferred_method?: MethodType;
+            locale?: string;
           } = {
             source: sourceCode,
             mode: "all",
@@ -739,7 +743,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
           }, 3000);
         }
       },
-      [animateProgress, isAnalyzing, router],
+      [animateProgress, formatAlgorithmKindLabel, isAnalyzing, locale, router, tProgress],
     );
 
     const handleAnalyzeComplexity = () => {

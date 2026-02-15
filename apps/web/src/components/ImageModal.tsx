@@ -34,7 +34,7 @@ export const ImageModal = ({ image, isOpen, onClose }: ImageModalProps) => {
       show({
         variant: "spinner",
         size: "md",
-        message: t("loadingImageAlt", { alt: image.alt }),
+        message: t("loadingImageAlt", { alt: image.alt || "image" }),
         overlay: true, // Activar overlay para que sea visible por encima del modal
       });
 
@@ -52,7 +52,7 @@ export const ImageModal = ({ image, isOpen, onClose }: ImageModalProps) => {
       document.body.style.overflow = "";
       document.documentElement.style.overflow = "";
     };
-  }, [isOpen, image, show, hide]);
+  }, [isOpen, image, show, hide, t]);
 
   // Handlers para carga de imagen
   const handleImageLoad = () => {
@@ -112,7 +112,7 @@ export const ImageModal = ({ image, isOpen, onClose }: ImageModalProps) => {
                 {t("loadImage")}
               </h3>
               <p className="text-sm text-slate-400">
-                {t("loadImageAlt", { alt: image.alt })}
+                {t("loadImageAlt", { alt: image.alt || "image" })}
               </p>
             </div>
           )}

@@ -8,9 +8,9 @@ import { DocumentationIndex } from "@/components/DocumentationIndex";
 import DocumentationModal from "@/components/DocumentationModal";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
-import { PageHeader } from "@/components/PageHeader";
 import { ImageModal } from "@/components/ImageModal";
-import NavigationLink from "@/components/NavigationLink";
+import { NavigationFooter } from "@/components/NavigationFooter";
+import { PageHeader } from "@/components/PageHeader";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useDocumentationSections } from "@/hooks/useDocumentationSections";
 import { useImageModal } from "@/hooks/useImageModal";
@@ -67,7 +67,11 @@ export default function TechnicalDocsPage() {
               <section aria-label="Secciones de documentación técnica">
                 <div className="documentation-grid">
                   {sections.map((section) => (
-                    <div key={section.id} id={section.id} className="scroll-mt-24">
+                    <div
+                      key={section.id}
+                      id={section.id}
+                      className="scroll-mt-24"
+                    >
                       <DocumentationCard
                         section={section}
                         onImageClick={openModal}
@@ -82,223 +86,227 @@ export default function TechnicalDocsPage() {
               <section className="mt-12">
                 <div className="glass-card p-6 lg:p-8 rounded-xl">
                   <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
-                  <span className="material-symbols-outlined text-primary text-2xl">
-                    description
-                  </span>
-                </div>
-                <h2 className="text-2xl font-bold text-white">
-                  {t("fullTitle")}
-                </h2>
+                    <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
+                      <span className="material-symbols-outlined text-primary text-2xl">
+                        description
+                      </span>
+                    </div>
+                    <h2 className="text-2xl font-bold text-white">
+                      {t("fullTitle")}
+                    </h2>
                   </div>
                   <p className="text-dark-text mb-6 text-base leading-relaxed">
                     {t("fullDesc")}
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Documentación de API */}
-                <div className="glass-secondary p-6 rounded-lg">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="material-symbols-outlined text-primary text-xl">
-                      api
-                    </span>
-                    <h3 className="text-xl font-semibold text-white">
-                      {t("apiTitle")}
-                    </h3>
-                  </div>
-                  <p className="text-dark-text text-sm mb-4">
-                    {t("apiDesc")}
-                  </p>
-                  <ul className="list-none space-y-2 text-sm text-dark-text">
-                    <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
-                        check_circle
-                      </span>
-                      <span>
-                        <code className="text-cyan-300">
-                          docs/api/README.md
-                        </code>{" "}
-                        - {t("indexGeneral")}
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
-                        check_circle
-                      </span>
-                      <span>
-                        <code className="text-cyan-300">
-                          docs/api/endpoints.md
-                        </code>{" "}
-                        - {t("endpoints")}
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
-                        check_circle
-                      </span>
-                      <span>
-                        <code className="text-cyan-300">
-                          docs/api/models.md
-                        </code>{" "}
-                        - {t("models")}
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
-                        check_circle
-                      </span>
-                      <span>
-                        <code className="text-cyan-300">
-                          docs/api/architecture.md
-                        </code>{" "}
-                        - {t("architecture")}
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
-                        check_circle
-                      </span>
-                      <span>
-                        <code className="text-cyan-300">
-                          docs/api/errors.md
-                        </code>{" "}
-                        - {t("errors")}
-                      </span>
-                    </li>
-                  </ul>
-                </div>
+                    {/* Documentación de API */}
+                    <div className="glass-secondary p-6 rounded-lg">
+                      <div className="flex items-center gap-3 mb-4">
+                        <span className="material-symbols-outlined text-primary text-xl">
+                          api
+                        </span>
+                        <h3 className="text-xl font-semibold text-white">
+                          {t("apiTitle")}
+                        </h3>
+                      </div>
+                      <p className="text-dark-text text-sm mb-4">
+                        {t("apiDesc")}
+                      </p>
+                      <ul className="list-none space-y-2 text-sm text-dark-text">
+                        <li className="flex items-start gap-2">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                            check_circle
+                          </span>
+                          <span>
+                            <code className="text-cyan-300">
+                              docs/api/README.md
+                            </code>{" "}
+                            - {t("indexGeneral")}
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                            check_circle
+                          </span>
+                          <span>
+                            <code className="text-cyan-300">
+                              docs/api/endpoints.md
+                            </code>{" "}
+                            - {t("endpoints")}
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                            check_circle
+                          </span>
+                          <span>
+                            <code className="text-cyan-300">
+                              docs/api/models.md
+                            </code>{" "}
+                            - {t("models")}
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                            check_circle
+                          </span>
+                          <span>
+                            <code className="text-cyan-300">
+                              docs/api/architecture.md
+                            </code>{" "}
+                            - {t("architecture")}
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                            check_circle
+                          </span>
+                          <span>
+                            <code className="text-cyan-300">
+                              docs/api/errors.md
+                            </code>{" "}
+                            - {t("errors")}
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
 
-                {/* Documentación de Aplicación Web */}
-                <div className="glass-secondary p-6 rounded-lg">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="material-symbols-outlined text-primary text-xl">
-                      web
-                    </span>
-                    <h3 className="text-xl font-semibold text-white">
-                      {t("appTitle")}
-                    </h3>
-                  </div>
-                  <p className="text-dark-text text-sm mb-4">
-                    {t("appDesc")}
-                  </p>
-                  <ul className="list-none space-y-2 text-sm text-dark-text">
-                    <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
-                        check_circle
-                      </span>
-                      <span>
-                        <code className="text-cyan-300">
-                          docs/app/README.md
-                        </code>{" "}
-                        - {t("indexGeneral")}
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
-                        check_circle
-                      </span>
-                      <span>
-                        <code className="text-cyan-300">
-                          docs/app/architecture.md
-                        </code>{" "}
-                        - {t("architecture")}
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
-                        check_circle
-                      </span>
-                      <span>
-                        <code className="text-cyan-300">
-                          docs/app/components.md
-                        </code>{" "}
-                        - {t("components")}
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
-                        check_circle
-                      </span>
-                      <span>
-                        <code className="text-cyan-300">
-                          docs/app/routing.md
-                        </code>{" "}
-                        - {t("routing")}
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
-                        check_circle
-                      </span>
-                      <span>
-                        <code className="text-cyan-300">
-                          docs/app/state-management.md
-                        </code>{" "}
-                        - {t("state")}
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
-                        check_circle
-                      </span>
-                      <span>
-                        <code className="text-cyan-300">
-                          docs/app/styling.md
-                        </code>{" "}
-                        - {t("styling")}
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
-                        check_circle
-                      </span>
-                      <span>
-                        <code className="text-cyan-300">
-                          docs/app/api-integration.md
-                        </code>{" "}
-                        - {t("apiIntegration")}
-                      </span>
-                    </li>
-                  </ul>
-                </div>
+                    {/* Documentación de Aplicación Web */}
+                    <div className="glass-secondary p-6 rounded-lg">
+                      <div className="flex items-center gap-3 mb-4">
+                        <span className="material-symbols-outlined text-primary text-xl">
+                          web
+                        </span>
+                        <h3 className="text-xl font-semibold text-white">
+                          {t("appTitle")}
+                        </h3>
+                      </div>
+                      <p className="text-dark-text text-sm mb-4">
+                        {t("appDesc")}
+                      </p>
+                      <ul className="list-none space-y-2 text-sm text-dark-text">
+                        <li className="flex items-start gap-2">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                            check_circle
+                          </span>
+                          <span>
+                            <code className="text-cyan-300">
+                              docs/app/README.md
+                            </code>{" "}
+                            - {t("indexGeneral")}
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                            check_circle
+                          </span>
+                          <span>
+                            <code className="text-cyan-300">
+                              docs/app/architecture.md
+                            </code>{" "}
+                            - {t("architecture")}
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                            check_circle
+                          </span>
+                          <span>
+                            <code className="text-cyan-300">
+                              docs/app/components.md
+                            </code>{" "}
+                            - {t("components")}
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                            check_circle
+                          </span>
+                          <span>
+                            <code className="text-cyan-300">
+                              docs/app/routing.md
+                            </code>{" "}
+                            - {t("routing")}
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                            check_circle
+                          </span>
+                          <span>
+                            <code className="text-cyan-300">
+                              docs/app/state-management.md
+                            </code>{" "}
+                            - {t("state")}
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                            check_circle
+                          </span>
+                          <span>
+                            <code className="text-cyan-300">
+                              docs/app/styling.md
+                            </code>{" "}
+                            - {t("styling")}
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                            check_circle
+                          </span>
+                          <span>
+                            <code className="text-cyan-300">
+                              docs/app/api-integration.md
+                            </code>{" "}
+                            - {t("apiIntegration")}
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                            check_circle
+                          </span>
+                          <span>
+                            <code className="text-cyan-300">
+                              docs/development/i18n-labels-prompts.md
+                            </code>{" "}
+                            - {t("i18nLabels")}
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                   <div className="mt-6 bg-blue-500/10 border-l-4 border-blue-500/50 rounded-r-lg p-4">
-                <div className="flex items-start gap-3">
-                  <span className="material-symbols-outlined text-blue-400 text-xl">
-                    info
-                  </span>
-                  <div>
-                    <p className="text-blue-300 text-sm font-semibold mb-1">
-                      {t("note")}
-                    </p>
-                    <p className="text-blue-200 text-sm">
-                      {t("noteText")}{" "}
-                      <code className="text-blue-100 bg-slate-800/50 px-1.5 py-0.5 rounded">
-                        docs/api/
-                      </code>{" "}
-                      y{" "}
-                      <code className="text-blue-100 bg-slate-800/50 px-1.5 py-0.5 rounded">
-                        docs/app/
-                      </code>
-                      .
-                    </p>
-                  </div>
-                </div>
+                    <div className="flex items-start gap-3">
+                      <span className="material-symbols-outlined text-blue-400 text-xl">
+                        info
+                      </span>
+                      <div>
+                        <p className="text-blue-300 text-sm font-semibold mb-1">
+                          {t("note")}
+                        </p>
+                        <p className="text-blue-200 text-sm">
+                          {t("noteText")}{" "}
+                          <code className="text-blue-100 bg-slate-800/50 px-1.5 py-0.5 rounded">
+                            docs/api/
+                          </code>{" "}
+                          y{" "}
+                          <code className="text-blue-100 bg-slate-800/50 px-1.5 py-0.5 rounded">
+                            docs/app/
+                          </code>
+                          .
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </section>
 
-              {/* Footer de navegación */}
-              <footer className="text-sm sm:text-base text-dark-text text-center lg:text-left border-t border-white/10 pt-6 mt-8">
-            <p>
-              {t("updating")}{" "}
-              <NavigationLink
-                href="/documentation"
-                className="text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400/50 rounded px-1 py-0.5"
-              >
-                {t("backToDocs")}
-              </NavigationLink>
-            </p>
-              </footer>
+              <NavigationFooter
+                namespace="documentation.technical"
+                prev={{ href: "/documentation", labelKey: "backToDocs" }}
+                next={{ href: "/user-guide", labelKey: "nextToUserGuide" }}
+              />
             </div>
           </div>
         </div>

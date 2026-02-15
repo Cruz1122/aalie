@@ -154,19 +154,9 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
           loading={
             <div className="flex items-center justify-center h-full">
               <div className="flex flex-col items-center gap-3">
-                <div className="flex gap-2">
-                  <span
-                    className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"
-                    style={{ animationDelay: "0ms" }}
-                  />
-                  <span
-                    className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
-                    style={{ animationDelay: "150ms" }}
-                  />
-                  <span
-                    className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"
-                    style={{ animationDelay: "300ms" }}
-                  />
+                <div className="relative flex items-center justify-center">
+                  <div className="w-12 h-12 bg-blue-500/20 rounded-full animate-ping" />
+                  <div className="absolute w-6 h-6 bg-blue-500 rounded-full" />
                 </div>
                 <span className="text-sm text-slate-300 font-medium">
                   Cargando editor...
@@ -178,7 +168,7 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
             minimap: { enabled: false },
             fontSize: 14,
             fontFamily:
-              "'Spline Sans', 'Noto Sans', 'Monaco', 'Menlo', 'Consolas', monospace",
+              "'Monaco', 'Menlo', 'Consolas', 'Ubuntu Mono', monospace",
             fontLigatures: true,
             lineNumbers: "on",
             lineNumbersMinChars: 3,
@@ -186,7 +176,7 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
             wordWrap: "on",
             scrollBeyondLastLine: false,
             automaticLayout: true,
-            tabSize: 2,
+            tabSize: 4,
             insertSpaces: true,
             renderWhitespace: "selection",
             smoothScrolling: true,
@@ -195,7 +185,6 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
             roundedSelection: true,
             padding: { top: 16, bottom: 16 },
             lineHeight: 1.6,
-            letterSpacing: 0.5,
             bracketPairColorization: {
               enabled: true,
             },

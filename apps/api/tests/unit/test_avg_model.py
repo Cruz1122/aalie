@@ -105,7 +105,7 @@ class TestAvgModel(unittest.TestCase):
     def test_get_model_info_uniform_no_predicates(self):
         """Test: Obtiene información del modelo uniform sin predicados"""
         model = AvgModel(mode="uniform")
-        info = model.get_model_info()
+        info = model.get_model_info(locale="es")
         self.assertEqual(info["mode"], "uniform")
         self.assertIn("uniforme", info["note"])
 
@@ -113,14 +113,14 @@ class TestAvgModel(unittest.TestCase):
         """Test: Obtiene información del modelo uniform con predicados"""
         predicates = {"A[j] > A[j+1]": "1/2"}
         model = AvgModel(mode="uniform", predicates=predicates)
-        info = model.get_model_info()
+        info = model.get_model_info(locale="es")
         self.assertEqual(info["mode"], "uniform")
         self.assertIn("predicados", info["note"])
 
     def test_get_model_info_symbolic_no_predicates(self):
         """Test: Obtiene información del modelo symbolic sin predicados"""
         model = AvgModel(mode="symbolic")
-        info = model.get_model_info()
+        info = model.get_model_info(locale="es")
         self.assertEqual(info["mode"], "symbolic")
         self.assertIn("simbólico", info["note"])
 

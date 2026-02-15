@@ -2,8 +2,8 @@ import { getTranslations } from "next-intl/server";
 
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
-import { PageHeader } from "@/components/PageHeader";
 import NavigationLink from "@/components/NavigationLink";
+import { PageHeader } from "@/components/PageHeader";
 
 type Props = { params: Promise<{ locale: string }> };
 

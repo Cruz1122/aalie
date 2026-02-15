@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useRef, useEffect, useState } from "react";
 
 interface InputSizeControlProps {
   value: number;

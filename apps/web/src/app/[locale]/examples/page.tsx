@@ -2,19 +2,20 @@
 
 import type { Program } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AnalysisLoader } from "@/components/AnalysisLoader";
 import { ExampleCard, type Example, type ExampleCategory } from "@/components/ExampleCard";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
-import { PageHeader } from "@/components/PageHeader";
 import MethodSelector, { MethodType } from "@/components/MethodSelector";
+import { NavigationFooter } from "@/components/NavigationFooter";
 import NavigationLink from "@/components/NavigationLink";
+import { PageHeader } from "@/components/PageHeader";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
+import { useRouter } from "@/i18n/navigation";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 
 const EXAMPLE_CATEGORIES: ExampleCategory[] = [
@@ -1231,7 +1232,7 @@ export default function ExamplesPage() {
         }, 3000);
       }
     },
-    [animateProgress, analyzingExampleId, router, tProgress, tAlgorithmType, tMessages, tMethods],
+    [animateProgress, analyzingExampleId, locale, router, tProgress, tAlgorithmType, tMessages, tMethods],
   );
 
   const handleAnalyze = (code: string, exampleId: number) => {
@@ -1464,20 +1465,11 @@ export default function ExamplesPage() {
                 )}
               </section>
 
-              <footer className="flex justify-between items-center flex-wrap gap-4 pt-4 border-t border-white/10">
-                <NavigationLink
-                  href="/user-guide"
-                  className="text-blue-400 hover:text-blue-300 underline underline-offset-2 text-sm"
-                >
-                  {t("backToUserGuide")}
-                </NavigationLink>
-                <NavigationLink
-                  href="/analyzer"
-                  className="text-blue-400 hover:text-blue-300 underline underline-offset-2 text-sm"
-                >
-                  {t("goToAnalyzer")}
-                </NavigationLink>
-              </footer>
+              <NavigationFooter
+                namespace="examples"
+                prev={{ href: "/user-guide", labelKey: "backToUserGuide" }}
+                next={{ href: "/analyzer", labelKey: "goToAnalyzer" }}
+              />
             </div>
           </div>
         </div>

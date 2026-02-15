@@ -1,28 +1,19 @@
 import "./globals.css";
 import "katex/dist/katex.min.css";
-import { Noto_Sans, Spline_Sans } from "next/font/google";
-
-const notoSans = Noto_Sans({
-  weight: ["400", "500", "700", "900"],
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-noto-sans",
-});
-
-const splineSans = Spline_Sans({
-  weight: ["400", "500", "700"],
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-spline-sans",
-});
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es" className={`${notoSans.variable} ${splineSans.variable}`}>
+    <html lang="es">
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?display=swap&family=Noto+Sans:wght@400;500;700;900&family=Spline+Sans:wght@400;500;700"
+        />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&display=swap"
@@ -31,10 +22,7 @@ export default function RootLayout({
       </head>
       <body
         className="min-h-screen bg-[#101a23] text-white antialiased"
-        style={{
-          fontFamily:
-            "var(--font-spline-sans), var(--font-noto-sans), sans-serif",
-        }}
+        style={{ fontFamily: '"Spline Sans", "Noto Sans", sans-serif' }}
       >
         {children}
       </body>

@@ -7,8 +7,8 @@
  *
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
-import React, { useState } from "react";
 import { useTranslations } from "next-intl";
+import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import rehypeKatex from "rehype-katex";

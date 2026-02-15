@@ -2,7 +2,6 @@
 
 import type { Program } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import AIModeView from "@/components/AIModeView";
@@ -17,6 +16,7 @@ import ModeToggle from "@/components/ModeToggle";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
+import { useRouter } from "@/i18n/navigation";
 
 interface Message {
   id: string;
@@ -182,6 +182,12 @@ export default function HomePage() {
 
   type AlgorithmKind = "iterative" | "recursive" | "hybrid" | "unknown";
 
+  const formatAlgorithmKind = useCallback(
+    (value: "iterative" | "recursive" | "hybrid" | "unknown"): string =>
+      tAlgorithmType(value === "unknown" ? "unknown" : value),
+    [tAlgorithmType],
+  );
+
   const handleMethodSelectionForRecursive = useCallback(
     async (
       defaultMethodValue: MethodType,
@@ -218,7 +224,7 @@ export default function HomePage() {
       );
       return selectedMethod;
     },
-    [animateProgress],
+    [animateProgress, t],
   );
 
   const detectAndSelectMethodForRecursive = useCallback(
@@ -294,7 +300,7 @@ export default function HomePage() {
         return "master";
       }
     },
-    [animateProgress, handleMethodSelectionForRecursive],
+    [animateProgress, handleMethodSelectionForRecursive, t],
   );
 
   const prepareRecursiveAnalysisSteps = useCallback(async (): Promise<void> => {
@@ -306,14 +312,14 @@ export default function HomePage() {
     await animateProgress(65, 75, 300, setChatAnalysisProgress);
     setChatAnalysisMessage(t("detectingMethod"));
     await animateProgress(75, 85, 500, setChatAnalysisProgress);
-  }, [animateProgress]);
+  }, [animateProgress, t]);
 
   const prepareIterativeAnalysisSteps = useCallback(async (): Promise<void> => {
     setChatAnalysisMessage(t("findingSums"));
     await animateProgress(40, 50, 200, setChatAnalysisProgress);
     setChatAnalysisMessage(t("closingSums"));
     await animateProgress(50, 55, 200, setChatAnalysisProgress);
-  }, [animateProgress]);
+  }, [animateProgress, t]);
 
   const runChatAnalysis = useCallback(
     async (sourceCode: string) => {
@@ -504,7 +510,10 @@ export default function HomePage() {
     },
     [
       animateProgress,
+      formatAlgorithmKind,
+      locale,
       router,
+      t,
       detectAndSelectMethodForRecursive,
       prepareIterativeAnalysisSteps,
       prepareRecursiveAnalysisSteps,
@@ -520,10 +529,6 @@ export default function HomePage() {
     setChatAnalysisComplete(false);
     setIsChatAnalyzing(false);
   };
-
-  const formatAlgorithmKind = (
-    value: "iterative" | "recursive" | "hybrid" | "unknown",
-  ): string => tAlgorithmType(value === "unknown" ? "unknown" : value);
 
   return (
     <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">
