@@ -3,8 +3,9 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { getIconConfig } from "./DocumentationIcons";
 import { DocumentationSection } from "@/types/documentation";
+
+import { getIconConfig } from "./DocumentationIcons";
 
 interface DocumentationIndexProps {
   sections: DocumentationSection[];

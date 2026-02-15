@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import React, { useEffect } from "react";
+
+import { translatePseudocode } from "@/lib/pseudocode-translator";
 
 import Formula from "./Formula";
-import { translatePseudocode } from "@/lib/pseudocode-translator";
 
 interface DPVersionModalProps {
   open: boolean;

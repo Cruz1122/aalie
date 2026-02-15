@@ -393,7 +393,7 @@ export default function ChatBot({
         processingRef.current = false;
       }
     },
-    [messages, setMessages, t, tMessages],
+    [locale, messages, setMessages, t, tMessages],
   );
 
   // Responder automáticamente si el último mensaje del historial es del usuario

@@ -3,8 +3,8 @@
  * Exporta funciones que construyen el systemPrompt con la instrucción de idioma correcta.
  */
 
-import type { SupportedLocale } from "./types";
 import { getExplanationLanguageInstruction } from "./response-language";
+import type { SupportedLocale } from "./types";
 
 function normalizeLocale(locale: string | undefined): SupportedLocale {
   if (!locale || typeof locale !== "string") return "es";

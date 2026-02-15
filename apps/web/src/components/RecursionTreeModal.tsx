@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, {
   useEffect,
   useMemo,
@@ -7,7 +8,6 @@ import React, {
   useRef,
   useCallback,
 } from "react";
-import { useTranslations } from "next-intl";
 import {
   default as ReactFlow,
   Background,

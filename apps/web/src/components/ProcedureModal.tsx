@@ -1,6 +1,7 @@
 "use client";
 
 import type { AnalyzeOpenResponse } from "@aa/types";
+import { useTranslations } from "next-intl";
 import React, {
   useEffect,
   useMemo,
@@ -8,7 +9,6 @@ import React, {
   useState,
   useRef,
 } from "react";
-import { useTranslations } from "next-intl";
 
 import Formula from "./Formula";
 

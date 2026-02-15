@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { useRef, useEffect } from "react";
 
 import type { TraceGraph } from "@/types/trace";
 

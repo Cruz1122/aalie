@@ -2,8 +2,9 @@
 
 import { CO, US } from "country-flag-icons/react/3x2";
 import { useLocale } from "next-intl";
-import { usePathname, useRouter } from "@/i18n/navigation";
 import { useTransition } from "react";
+
+import { usePathname, useRouter } from "@/i18n/navigation";
 
 const locales = [
   { code: "es" as const, label: "ES", Flag: CO },

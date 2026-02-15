@@ -1,6 +1,5 @@
 "use client";
 
-import { usePathname } from "@/i18n/navigation";
 import {
   createContext,
   ReactNode,
@@ -11,6 +10,8 @@ import {
   useRef,
   useState,
 } from "react";
+
+import { usePathname } from "@/i18n/navigation";
 
 interface NavigationContextType {
   isLoading: boolean;

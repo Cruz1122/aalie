@@ -6,8 +6,9 @@ import { useEffect, useState } from "react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { ImageModal } from "@/components/ImageModal";
-import { PageHeader } from "@/components/PageHeader";
+import { NavigationFooter } from "@/components/NavigationFooter";
 import NavigationLink from "@/components/NavigationLink";
+import { PageHeader } from "@/components/PageHeader";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useImageModal } from "@/hooks/useImageModal";
 
@@ -170,16 +171,14 @@ export default function UserGuidePage() {
                           {t("introTip")}
                         </p>
                         <p className="text-blue-200 text-sm">
-                          {t.rich("introTipDesc", {
-                            link: (chunks) => (
-                              <NavigationLink
-                                href="/examples"
-                                className="underline hover:text-blue-100 font-medium"
-                              >
-                                {chunks}
-                              </NavigationLink>
-                            ),
-                          })}
+                            {t("introTipDescPre")}
+                            <NavigationLink
+                              href="/examples"
+                              className="underline hover:text-blue-100 font-medium"
+                            >
+                              {t("introTipDescLinkText")}
+                            </NavigationLink>
+                            {t("introTipDescPost")}
                         </p>
                       </div>
                     </div>
@@ -1306,16 +1305,14 @@ END`}
                           {t("ejemplosMore")}
                         </p>
                         <p className="text-blue-200 text-sm">
-                          {t.rich("ejemplosMoreDesc", {
-                            link: (chunks) => (
-                              <NavigationLink
-                                href="/examples"
-                                className="underline hover:text-blue-100 font-medium"
-                              >
-                                {chunks}
-                              </NavigationLink>
-                            ),
-                          })}
+                            {t("ejemplosMoreDescPre")}
+                            <NavigationLink
+                              href="/examples"
+                              className="underline hover:text-blue-100 font-medium"
+                            >
+                              {t("ejemplosMoreDescLinkText")}
+                            </NavigationLink>
+                            {t("ejemplosMoreDescPost")}
                         </p>
                       </div>
                     </div>
@@ -1435,29 +1432,11 @@ END`}
                 </div>
               </section>
 
-              {/* Footer de navegación mejorado */}
-              <footer className="glass-card p-6 rounded-xl mt-8 border border-white/5">
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                  <NavigationLink
-                    href="/documentation"
-                    className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors group"
-                  >
-                    <span className="material-symbols-outlined text-lg group-hover:-translate-x-1 transition-transform">
-                      arrow_back
-                    </span>
-                    <span className="font-medium">{t("backToDoc")}</span>
-                  </NavigationLink>
-                  <NavigationLink
-                    href="/examples"
-                    className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors group"
-                  >
-                    <span className="font-medium">{t("viewExamples")}</span>
-                    <span className="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">
-                      arrow_forward
-                    </span>
-                  </NavigationLink>
-                </div>
-              </footer>
+              <NavigationFooter
+                namespace="userGuide"
+                prev={{ href: "/documentation", labelKey: "backToDoc" }}
+                next={{ href: "/examples", labelKey: "viewExamples" }}
+              />
             </div>
           </div>
         </div>

@@ -1,8 +1,8 @@
 "use client";
 
 import type { Program } from "@aa/types";
-import { useEffect, useState, useMemo, useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useState, useMemo, useCallback } from "react";
 
 import type {
   CaseType,

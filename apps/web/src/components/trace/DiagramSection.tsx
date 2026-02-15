@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+
 import type { TraceGraph } from "@/types/trace";
 
 import MarkdownRenderer from "../MarkdownRenderer";

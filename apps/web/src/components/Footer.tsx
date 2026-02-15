@@ -4,7 +4,6 @@
 import { useTranslations } from "next-intl";
 import { useState, useEffect, useCallback } from "react";
 
-import { Link } from "@/i18n/navigation";
 import {
   getApiKey,
   setApiKey,
@@ -12,6 +11,7 @@ import {
   removeApiKey,
   getApiKeyStatus,
 } from "@/hooks/useApiKey";
+import { Link } from "@/i18n/navigation";
 
 import HealthStatus from "./HealthStatus";
 
@@ -320,18 +320,16 @@ export default function Footer() {
           )}
           {!hasServerApiKey && !hasLocalApiKey && (
             <p className="text-slate-400 text-[10px] text-center max-w-xl leading-tight mt-0.5">
-              {tApiKey.rich("geminiHint", {
-                link: (chunks) => (
-                  <a
-                    href="https://aistudio.google.com/apikey"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-400 hover:text-blue-300 underline"
-                  >
-                    {chunks}
-                  </a>
-                ),
-              })}
+              {tApiKey("geminiHintPre")}
+              <a
+                href="https://aistudio.google.com/apikey"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:text-blue-300 underline"
+              >
+                {tApiKey("geminiHintLinkText")}
+              </a>
+              {tApiKey("geminiHintPost")}
             </p>
           )}
         </div>

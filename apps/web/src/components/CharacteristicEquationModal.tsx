@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import React, { useEffect } from "react";
+
+import { translateProofStep } from "@/lib/proof-step-translator";
 
 import Formula from "./Formula";
-import { translateProofStep } from "@/lib/proof-step-translator";
 
 /**
  * Redondea los valores numéricos en una expresión LaTeX a 3 decimales.

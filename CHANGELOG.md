@@ -14,6 +14,15 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Soporte de locale en análisis y trace de ejecución
 - Integración de localización en la API de análisis y parser
 - Referencia a convenciones de desarrollo en documentación de request-flow
+- Componente `NavigationFooter` reutilizable para páginas de documentación y guías
+- Referencia a `docs/development/i18n-labels-prompts.md` en documentación técnica
+
+### Changed
+
+- User-guide, documentación técnica y ejemplos usan `NavigationFooter` normalizado
+- Editor Monaco: restaurada indentación (sin letterSpacing, detectIndentation: false) y loader pulse unificado
+- Restaurada carga de fuentes original (Google Fonts directo) en lugar de next/font
+- Eliminado separador (border-t) sobre footer en documentación técnica
 
 ## [1.1.1] - 2026-02-08
 
@@ -34,6 +43,13 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Referencia a paquete local y versión de setuptools en requirements
 - Tests de avg_model y avg_case: pasar `locale="es"` para compatibilidad con parametrización de idioma 
 - Error de compilación: parámetro requerido tras opcional en `detectAndSelectMethod` (analyzer-helpers)
+- Error de tipos: `locale` string no asignable a `"es" | "en"` en layout de locale
+- Avisos de lint: dependencias exhaustivas en hooks (useCallback/useEffect) y variable `locale` no usada en ComparisonModal
+- Error de tipos: `ComparisonT.view` no aceptaba segundo argumento para placeholders (caseNumber)
+- Error de tipos: `locale` no existía en el tipo de `analyzeBody` en ManualModeView
+- Error de tipos: `tRecursionTree` en RecursiveAnalysisView no aceptaba segundo argumento (levelWithNumber)
+- Error de tipos: `routing.locales.includes(requested)` en request.ts (string vs "es"|"en")
+- INVALID_MESSAGE EMPTY_ARGUMENT: reemplazo de t.rich por mensajes simples en user-guide y Footer (geminiHint); fallback para alt vacío en ImageModal
 
 ### Security
 

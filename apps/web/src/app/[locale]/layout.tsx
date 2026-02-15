@@ -1,6 +1,6 @@
+import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
-import { notFound } from "next/navigation";
 
 import { GlobalLoaderOverlay } from "@/components/GlobalLoaderOverlay";
 import NavigationLoadingWrapper from "@/components/NavigationLoadingWrapper";
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props) {
 export default async function LocaleLayout({ children, params }: Props) {
   const { locale } = await params;
 
-  if (!routing.locales.includes(locale)) {
+  if (!(routing.locales as readonly string[]).includes(locale)) {
     notFound();
   }
 

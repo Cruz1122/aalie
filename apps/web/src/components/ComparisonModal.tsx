@@ -4,8 +4,8 @@ import { useLocale, useTranslations } from "next-intl";
 import React from "react";
 
 import { getBestAsymptoticNotation } from "@/lib/asymptotic-notation";
-import { translateProofStep } from "@/lib/proof-step-translator";
 import type { CoreAnalysisData } from "@/lib/extract-core-data";
+import { translateProofStep } from "@/lib/proof-step-translator";
 
 import Formula from "./Formula";
 
@@ -114,7 +114,7 @@ function parseNote(note: string): {
 
 type ComparisonT = {
   cases: (k: string) => string;
-  view: (k: string) => string;
+  view: (k: string, values?: Record<string, string | number>) => string;
 };
 
 /**
@@ -334,6 +334,7 @@ function renderRecursiveData(
   label: string,
   isOwn: boolean,
   t: ComparisonT,
+  locale: "es" | "en",
 ) {
   // Resolver "same_as_worst" a worstData
   const resolvedBest = bestData === "same_as_worst" ? worstData : bestData;
@@ -1474,6 +1475,7 @@ export default function ComparisonModal({
                   tView("ownAnalysis"),
                   true,
                   t,
+                  locale,
                 )
               : renderIterativeData(ownData, llmData, true, t)}
           </div>
@@ -1488,6 +1490,7 @@ export default function ComparisonModal({
                   tView("llmAnalysis"),
                   false,
                   t,
+                  locale,
                 )
               : renderIterativeData(ownData, llmData, false, t)}
           </div>
