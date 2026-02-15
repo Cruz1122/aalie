@@ -748,6 +748,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
           job: 'compare',
           prompt,
           apiKey: apiKey || undefined,
+          locale,
         }),
       });
 

@@ -2,6 +2,7 @@
 
 import type { Program } from "@aa/types";
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { useLocale, useTranslations } from "next-intl";
 
 import type {
   CaseType,
@@ -33,6 +34,9 @@ export default function ExecutionTraceModal({
   caseType,
   onCaseChange,
 }: ExecutionTraceModalProps) {
+  const locale = useLocale();
+  const t = useTranslations("analyzer.executionTrace");
+  const tAlgorithm = useTranslations("analyzer.algorithmType");
   const [inputSize, setInputSize] = useState<number>(4);
   const [debouncedInputSize, setDebouncedInputSize] = useState<number>(4);
   const [trace, setTrace] = useState<TraceApiResponse | null>(null);
@@ -170,6 +174,7 @@ export default function ExecutionTraceModal({
           case: scenario,
           input_size: n,
           initial_variables: initialVariables,
+          locale: locale === "es" ? "es" : "en",
         }),
       });
 
@@ -189,12 +194,12 @@ export default function ExecutionTraceModal({
       console.error("Error loading trace:", error);
       setTrace({
         ok: false,
-        errors: [{ message: "Error al cargar el rastro de ejecución" }],
+        errors: [{ message: t("loadError") }],
       });
     } finally {
       setLoading(false);
     }
-  }, [caseType, debouncedInputSize, inputSize, source, traceConfig]);
+  }, [caseType, debouncedInputSize, inputSize, source, traceConfig, t, locale]);
 
   useEffect(() => {
     if (open && source) {
@@ -203,7 +208,7 @@ export default function ExecutionTraceModal({
       loadTrace();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, caseType, debouncedInputSize, source]);
+  }, [open, caseType, debouncedInputSize, source, locale]);
 
   // Bloquear scroll del body mientras el modal esté abierto
   useEffect(() => {
@@ -239,7 +244,7 @@ export default function ExecutionTraceModal({
               <div className="w-16 h-16 bg-blue-500/20 rounded-full animate-ping" />
               <div className="absolute w-8 h-8 bg-blue-500 rounded-full" />
             </div>
-            <p className="text-sm text-slate-300">Detectando tipo de algoritmo...</p>
+            <p className="text-sm text-slate-300">{t("detectingAlgorithm")}</p>
           </div>
         ) : (
           <>
@@ -250,7 +255,7 @@ export default function ExecutionTraceModal({
                   <span className="material-symbols-outlined text-blue-400 text-xl">
                     play_circle
                   </span>
-                  Seguimiento de Ejecución
+                  {t("title")}
                 </h2>
                 {trace?.algorithmKind && (
                   <span
@@ -262,17 +267,17 @@ export default function ExecutionTraceModal({
                       }`}
                   >
                     {trace.algorithmKind === "recursive"
-                      ? "Recursivo"
+                      ? tAlgorithm("recursive")
                       : trace.algorithmKind === "hybrid"
-                        ? "Híbrido"
-                        : "Iterativo"}
+                        ? tAlgorithm("hybrid")
+                        : tAlgorithm("iterative")}
                   </span>
                 )}
               </div>
               <button
                 onClick={onClose}
                 className="p-2 rounded-lg hover:bg-white/10 transition-colors flex items-center justify-center"
-                title="Cerrar"
+                title={t("close")}
               >
                 <span className="material-symbols-outlined text-white">close</span>
               </button>
@@ -333,7 +338,7 @@ export default function ExecutionTraceModal({
                   onClick={() => setIsDiagramExpanded(false)}
                   role="button"
                   tabIndex={0}
-                  aria-label="Cerrar diagrama expandido"
+                  aria-label={t("closeExpandedDiagram")}
                 />
                 <div className="relative z-10 w-[98vw] h-[98vh] rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col p-4 gap-3">
                   <div className="flex items-center justify-between flex-shrink-0">
@@ -341,13 +346,13 @@ export default function ExecutionTraceModal({
                       <span className="material-symbols-outlined text-sky-400 text-lg">
                         {isRecursiveOrHybrid ? "account_tree" : "schema"}
                       </span>
-                      <span>{isRecursiveOrHybrid ? "Árbol de Recursión" : "Diagrama de flujo del seguimiento"}</span>
+                      <span>{isRecursiveOrHybrid ? t("recursionTreeTitle") : t("flowDiagramTitle")}</span>
                     </h3>
                     <button
                       type="button"
                       onClick={() => setIsDiagramExpanded(false)}
                       className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-800/70 hover:bg-slate-700/80 border border-slate-600/60 transition-colors"
-                      title="Cerrar"
+                      title={t("close")}
                     >
                       <span className="material-symbols-outlined text-lg text-slate-200 leading-none">
                         close

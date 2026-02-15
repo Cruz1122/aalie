@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useLocale } from "next-intl";
 
 import type { TraceGraph } from "@/types/trace";
 
@@ -37,6 +38,7 @@ export default function RecursionTreeView({
   onRegenerate: _onRegenerate,
   onDiagramGenerated,
 }: RecursionTreeViewProps) {
+  const locale = useLocale();
   const [diagram, setDiagram] = useState<RecursionDiagram | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -77,6 +79,7 @@ export default function RecursionTreeView({
             // Extraer parámetros de las llamadas si existen
             params: calls.length > 0 ? Object.keys(calls[0].params) : [],
           },
+          locale,
           apiKey: apiKey || undefined, // Enviar API_KEY si está disponible
         }),
       });

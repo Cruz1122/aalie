@@ -191,3 +191,37 @@ NOTES_LABELS: Dict[str, Dict[str, str]] = {
 def get_note_labels(locale: str = "en") -> Dict[str, str]:
     """Devuelve las etiquetas de notas para el locale dado."""
     return NOTES_LABELS.get(locale, NOTES_LABELS["en"])
+
+
+# Descripciones de pasos del rastro de ejecución (trace step descriptions)
+TRACE_STEP_LABELS: Dict[str, Dict[str, str]] = {
+    "en": {
+        "assign": "Assignment: {expr}",
+        "recursive_call": "Recursive call to {proc_name} (depth {depth})",
+        "for_iteration": "Iteration {iteration_count}: {var_name} = {value}",
+        "for_symbolic": "FOR loop {var_name} (symbolic evaluation)",
+        "while_iteration": "Iteration {iteration_count} of WHILE loop",
+        "repeat_iteration": "Iteration {iteration_count} of REPEAT loop",
+        "if_condition": "IF: condition = {condition_val}",
+        "return_val": "RETURN {value_str}",
+        "call_proc": "Call to {proc_name}",
+        "print_args": "PRINT: {args}",
+    },
+    "es": {
+        "assign": "Asignación: {expr}",
+        "recursive_call": "Llamada recursiva a {proc_name} (profundidad {depth})",
+        "for_iteration": "Iteración {iteration_count}: {var_name} = {value}",
+        "for_symbolic": "Bucle FOR {var_name} (evaluación simbólica)",
+        "while_iteration": "Iteración {iteration_count} del bucle WHILE",
+        "repeat_iteration": "Iteración {iteration_count} del bucle REPEAT",
+        "if_condition": "IF: condición = {condition_val}",
+        "return_val": "RETURN {value_str}",
+        "call_proc": "Llamada a {proc_name}",
+        "print_args": "PRINT: {args}",
+    },
+}
+
+
+def get_trace_step_labels(locale: str = "en") -> Dict[str, str]:
+    """Devuelve las etiquetas de pasos del trace para el locale dado."""
+    return TRACE_STEP_LABELS.get(locale, TRACE_STEP_LABELS["en"])

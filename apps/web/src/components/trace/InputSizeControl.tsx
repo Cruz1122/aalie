@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface InputSizeControlProps {
   value: number;
@@ -17,6 +18,7 @@ export default function InputSizeControl({
   onChange,
   debounceMs = 800,
 }: InputSizeControlProps) {
+  const t = useTranslations("analyzer.executionTrace");
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const [localValue, setLocalValue] = useState(value);
 
@@ -45,7 +47,7 @@ export default function InputSizeControl({
 
   return (
     <div className="flex items-center gap-3 mb-3">
-      <label className="text-xs text-slate-300 whitespace-nowrap">Tamaño (n):</label>
+      <label className="text-xs text-slate-300 whitespace-nowrap">{t("inputSizeLabel")}</label>
       <div className="flex items-center gap-2 flex-1">
         <input
           type="range"

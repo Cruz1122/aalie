@@ -14,6 +14,7 @@
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  transform: translateZ(0);
 }
 
 .glass-header {
@@ -21,6 +22,7 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(34, 54, 73, 0.5);
+  transform: translateZ(0);
 }
 
 .glass-card {
@@ -30,6 +32,7 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
   transition: all 0.3s ease;
+  transform: translateZ(0);
 }
 
 .glass-card:hover {
@@ -45,6 +48,7 @@
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(13, 127, 242, 0.3);
   box-shadow: 0 4px 20px 0 rgba(13, 127, 242, 0.3);
+  transform: translateZ(0);
 }
 
 .glass-button:hover {
@@ -57,6 +61,7 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  transform: translateZ(0);
 }
 
 .glass-secondary:hover {
@@ -72,6 +77,7 @@
   );
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
+  transform: translateZ(0);
 }
 
 .glass-modal-header {
@@ -80,6 +86,7 @@
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.3);
+  transform: translateZ(0);
 }
 
 .glass-modal-container {
@@ -88,6 +95,7 @@
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 20px 60px 0 rgba(31, 38, 135, 0.4);
+  transform: translateZ(0);
 }
 
 /* Ajustes mínimos globales */
@@ -443,9 +451,6 @@ kbd {
 .scrollbar-custom {
   scrollbar-width: thin;
   scrollbar-color: #475569 #1e293b;
-  /* Optimizaciones de rendimiento */
-  will-change: scroll-position;
-  contain: layout style paint;
 }
 
 .scrollbar-custom::-webkit-scrollbar {

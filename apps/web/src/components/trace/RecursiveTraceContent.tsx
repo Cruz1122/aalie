@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 import type { TraceGraph } from "@/types/trace";
 
@@ -44,6 +45,7 @@ export default function RecursiveTraceContent({
   setIsDiagramExpanded,
   onLoadTrace,
 }: RecursiveTraceContentProps) {
+  const t = useTranslations("analyzer.executionTrace");
   const inputSizeDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Debounce input size changes
@@ -83,7 +85,7 @@ export default function RecursiveTraceContent({
         {/* Columna centro: Diagrama de Recursión */}
         <div className="flex flex-col border-r border-slate-700 pr-4 overflow-hidden">
           <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0">
-            Diagrama de Recursión
+            {t("recursionDiagram")}
           </h3>
 
           <DiagramSection
@@ -102,7 +104,7 @@ export default function RecursiveTraceContent({
         {/* Columna derecha: Explicación */}
         <div className="flex flex-col overflow-hidden">
           <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0">
-            Explicación
+            {t("explanation")}
           </h3>
 
           <InputSizeControl
@@ -131,7 +133,7 @@ export default function RecursiveTraceContent({
                   </span>
                 </div>
                 <div className="text-sm font-medium text-slate-400 text-center px-4">
-                  La explicación aparecerá aquí cuando se genere el diagrama
+                  {t("explanationPlaceholder")}
                 </div>
               </div>
             )}

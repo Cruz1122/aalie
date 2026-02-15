@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import { useLocale, useTranslations } from "next-intl";
 
 import type { CaseType, TraceApiResponse, TraceGraph, TraceConfig, DiagramGraphResponse, ExecutionStep } from "@/types/trace";
 
@@ -68,6 +69,10 @@ export default function IterativeTraceContent({
   setIsDiagramExpanded,
   onLoadTrace,
 }: IterativeTraceContentProps) {
+  const locale = useLocale();
+  const t = useTranslations("analyzer.executionTrace");
+  const tCases = useTranslations("analyzer.cases");
+  const tCommon = useTranslations("common");
   const playIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const inputSizeDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const currentStepRef = useRef<number>(currentStep);
@@ -143,6 +148,7 @@ export default function IterativeTraceContent({
           trace: trace.trace,
           source,
           case: caseType,
+          locale,
           apiKey: apiKey || undefined, // Enviar API_KEY si está disponible
         }),
       });
@@ -285,34 +291,34 @@ export default function IterativeTraceContent({
         {/* Case Switcher */}
         {traceConfig.controls.scenario && (
           <div className="flex items-center gap-2">
-            <label className="text-sm text-slate-300">Caso:</label>
+            <label className="text-sm text-slate-300">{t("case")}</label>
             <div className="flex items-center gap-1 bg-slate-800/60 border border-white/10 rounded-lg p-1">
               <button
                 onClick={() => onCaseChange("best")}
                 className={`px-2 py-1 text-xs rounded-md transition-colors font-semibold ${caseType === "best"
                     ? "bg-green-500/30 text-green-200 border border-green-500/50"
                     : "text-slate-400 hover:text-slate-200"
-                  }`}
+                }`}
               >
-                Mejor
+                {tCases("bestShort")}
               </button>
               <button
                 onClick={() => onCaseChange("avg")}
                 className={`px-2 py-1 text-xs rounded-md transition-colors font-semibold ${caseType === "avg"
                     ? "bg-yellow-500/30 text-yellow-200 border border-yellow-500/50"
                     : "text-slate-400 hover:text-slate-200"
-                  }`}
+                }`}
               >
-                Promedio
+                {tCases("avgShort")}
               </button>
               <button
                 onClick={() => onCaseChange("worst")}
                 className={`px-2 py-1 text-xs rounded-md transition-colors font-semibold ${caseType === "worst"
                     ? "bg-red-500/30 text-red-200 border border-red-500/50"
                     : "text-slate-400 hover:text-slate-200"
-                  }`}
+                }`}
               >
-                Peor
+                {tCases("worstShort")}
               </button>
             </div>
           </div>
@@ -323,7 +329,7 @@ export default function IterativeTraceContent({
           onClick={onLoadTrace}
           disabled={loading}
           className="w-9 h-9 flex items-center justify-center rounded-lg bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 disabled:opacity-40 transition-colors"
-          title={loading ? "Cargando..." : "Recargar rastro"}
+          title={loading ? tCommon("loading") : t("reloadTrace")}
         >
           <span className="material-symbols-outlined text-base leading-none">
             {loading ? "progress_activity" : "refresh"}
@@ -333,7 +339,7 @@ export default function IterativeTraceContent({
 
       {/* Texto aclaratorio global para iterativos */}
       <p className="text-xs text-slate-400 mb-4">
-        El caso seleccionado (mejor/peor/promedio) se refleja en un input generado automáticamente; el arreglo mostrado es solo un ejemplo no editable.
+        {t("iterativeCaseNote")}
       </p>
 
       {/* Contenido: 3 columnas con proporciones ajustadas */}
@@ -344,7 +350,7 @@ export default function IterativeTraceContent({
         {/* Columna centro: Seguimiento Paso a Paso */}
         <div className="flex flex-col border-r border-slate-700 pr-4 overflow-hidden">
           <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0">
-            Seguimiento Paso a Paso
+            {t("stepByStepTrace")}
           </h3>
 
           <StepControls
@@ -371,7 +377,7 @@ export default function IterativeTraceContent({
         {/* Columna derecha: Diagrama de flujo */}
         <div className="flex flex-col overflow-hidden">
           <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0">
-            Diagrama de Flujo
+            {t("flowDiagramSection")}
           </h3>
 
           <InputSizeControl

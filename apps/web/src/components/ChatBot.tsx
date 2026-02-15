@@ -1,7 +1,7 @@
 "use client";
 
 import { Key, RotateCcw, Send, User } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
@@ -55,9 +55,10 @@ interface ChatBotProps {
 async function classifyIntent(
   message: string,
   apiKey: string | null,
+  locale?: string,
 ): Promise<"parser_assist" | "general"> {
   try {
-    const body: { job: string; prompt: string; apiKey?: string } = {
+    const body: { job: string; prompt: string; apiKey?: string; locale?: string } = {
       job: "classify",
       prompt: message,
     };
@@ -66,6 +67,9 @@ async function classifyIntent(
     // Si no hay apiKey, el backend usará la de variables de entorno
     if (apiKey) {
       body.apiKey = apiKey;
+    }
+    if (locale) {
+      body.locale = locale;
     }
 
     const response = await fetch("/api/llm", {
@@ -109,6 +113,7 @@ async function getLLMResponse(
   job: "parser_assist" | "general",
   chatHistory: Message[],
   apiKey: string | null,
+  locale?: string,
 ): Promise<string> {
   try {
     // Convertir historial a formato para el LLM (últimos 10 mensajes)
@@ -122,6 +127,7 @@ async function getLLMResponse(
       prompt: string;
       chatHistory: Array<{ role: string; content: string }>;
       apiKey?: string;
+      locale?: string;
     } = {
       job,
       prompt: message,
@@ -132,6 +138,9 @@ async function getLLMResponse(
     // Si no hay apiKey, el backend usará la de variables de entorno
     if (apiKey) {
       body.apiKey = apiKey;
+    }
+    if (locale) {
+      body.locale = locale;
     }
 
     const response = await fetch("/api/llm", {
@@ -191,6 +200,7 @@ export default function ChatBot({
   setMessages,
   onAnalyzeCode,
 }: Readonly<ChatBotProps>) {
+  const locale = useLocale();
   const t = useTranslations("chat");
   const tCommon = useTranslations("common");
   const tFooter = useTranslations("footer.apiKey");
@@ -318,6 +328,7 @@ export default function ChatBot({
         const intent = await classifyIntent(
           lastUserMessage.content,
           currentApiKey,
+          locale,
         );
 
         // Paso 2: Obtener respuesta con el modelo apropiado (incluyendo historial)
@@ -327,6 +338,7 @@ export default function ChatBot({
           intent,
           messages,
           currentApiKey,
+          locale,
         );
 
         // Crear mensaje del bot

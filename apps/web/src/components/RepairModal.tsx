@@ -2,6 +2,7 @@
 
 import type { ParseError } from "@aa/types";
 import { useState, useEffect } from "react";
+import { useLocale } from "next-intl";
 
 interface RepairModalProps {
   open: boolean;
@@ -18,6 +19,7 @@ export default function RepairModal({
   originalCode,
   parseErrors,
 }: Readonly<RepairModalProps>) {
+  const locale = useLocale();
   const [isRepairing, setIsRepairing] = useState(false);
   const [repairedCode, setRepairedCode] = useState<string | null>(null);
   const [removedLines, setRemovedLines] = useState<number[]>([]);
@@ -77,6 +79,7 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
         body: JSON.stringify({
           job: "repair",
           prompt,
+          locale,
           apiKey: apiKey || undefined,
         }),
       });
