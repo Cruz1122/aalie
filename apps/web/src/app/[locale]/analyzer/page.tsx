@@ -361,14 +361,14 @@ export default function AnalyzerPage() {
           kind,
           progressBeforeMethodSelection,
           setAnalysisMessage,
-          getMessage,
           setAnalysisProgress,
           setApplicableMethods,
           setDefaultMethod,
           setShowMethodSelector,
           minProgressRef,
           methodSelectionPromiseRef,
-          animateProgress
+          animateProgress,
+          getMessage
         );
         
         progressBeforeAnalysis = 90;

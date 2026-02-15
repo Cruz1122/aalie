@@ -33,6 +33,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 - Referencia a paquete local y versión de setuptools en requirements
 - Tests de avg_model y avg_case: pasar `locale="es"` para compatibilidad con parametrización de idioma 
+- Error de compilación: parámetro requerido tras opcional en `detectAndSelectMethod` (analyzer-helpers)
 
 ### Security
 

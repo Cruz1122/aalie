@@ -77,7 +77,6 @@ export async function detectAndSelectMethod(
   kind: string,
   progressBeforeMethodSelection: number,
   setAnalysisMessage: (value: string) => void,
-  getMessage?: GetAnalysisMessage,
   setAnalysisProgress: React.Dispatch<React.SetStateAction<number>>,
   setApplicableMethods: (methods: MethodType[]) => void,
   setDefaultMethod: (method: MethodType) => void,
@@ -94,6 +93,7 @@ export async function detectAndSelectMethod(
     setProgress: React.Dispatch<React.SetStateAction<number>>,
     promise?: Promise<T>,
   ) => Promise<T | void>,
+  getMessage?: GetAnalysisMessage,
 ): Promise<MethodType> {
   try {
     const detectMethodsResponse = await fetch("/api/analyze/detect-methods", {
