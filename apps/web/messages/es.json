@@ -6,7 +6,9 @@
     "save": "Guardar",
     "cancel": "Cancelar",
     "delete": "Eliminar",
-    "error": "Error"
+    "error": "Error",
+    "copyCode": "Copiar código",
+    "codeCopied": "¡Copiado!"
   },
   "nav": {
     "home": "Inicio",
@@ -40,6 +42,17 @@
   "metadata": {
     "title": "AALIE",
     "description": "AALIE: análisis de complejidad algorítmica en vivo con asistente experto (Algorithmic Analysis Live Interaction Expert)"
+  },
+  "errors": {
+    "loadImage": "Error al cargar la imagen",
+    "loadImageAlt": "No se pudo cargar {alt}",
+    "loadingImageAlt": "Cargando {alt}...",
+    "pressEscToClose": "Presiona Esc o haz clic en el fondo para cerrar",
+    "noDiagramAvailable": "No hay diagrama disponible",
+    "renderDiagram": "Error al renderizar el diagrama: {message}",
+    "parseCode": "Error al parsear el código",
+    "analyzeAlgorithm": "Error al analizar el algoritmo",
+    "unexpectedAnalysis": "Error inesperado durante el análisis"
   },
   "analyzer": {
     "progress": {
@@ -160,7 +173,28 @@
       "nonHomogeneous": "No Homogénea",
       "dpLinearDetected": "DP Lineal Detectada",
       "recurrOrder": "orden",
-      "recurrShifts": "desplazamientos"
+      "recurrShifts": "desplazamientos",
+      "methodUsed": "Método usado:",
+      "noDataAvailable": "No hay datos disponibles",
+      "tPolynomial": "T_polynomial:",
+      "tOpen": "T_open:",
+      "bigO": "Big-O",
+      "bigOmega": "Big-Ω",
+      "bigTheta": "Big-Θ",
+      "boundUpper": "Cota superior:",
+      "boundLower": "Cota inferior:",
+      "boundAvg": "Cota promedio:",
+      "ownAnalysis": "Análisis Propio",
+      "llmAnalysis": "Análisis LLM",
+      "characteristicEquation": "Ecuación característica:",
+      "recurrenceLabel": "Recurrencia:",
+      "roots": "Raíces:",
+      "order": "Orden:",
+      "shifts": "Desplazamientos:",
+      "comparisonWithLlm": "Comparación con LLM",
+      "llmObservation": "Observación del LLM:",
+      "masterTheorem": "Teorema Maestro",
+      "caseNumber": "Caso {number}"
     },
     "executionTrace": {
       "title": "Seguimiento de Ejecución",
@@ -216,7 +250,11 @@
       "initialVariables": "Variables iniciales",
       "finalVariables": "Variables finales",
       "noResultNode": "No se pudo identificar un nodo de resultado final en el diagrama.",
-      "moreVariables": "+ más variables"
+      "moreVariables": "+ más variables",
+      "diagramError": "Error al generar el diagrama de recursión",
+      "diagramConnectionError": "Error de conexión al generar el diagrama",
+      "generatingDiagramWithLlm": "Generando diagrama de recursión con LLM...",
+      "noPseudocodeForDiagram": "No se proporcionó pseudocódigo para generar el diagrama"
     },
     "recursionTree": {
       "dominatingLevel": "Nivel Dominante",
@@ -499,7 +537,21 @@
       "errorSyntax": "El código contiene errores de sintaxis",
       "errorConnection": "Error al conectar con el servidor",
       "parseErrorDetected": "Error de sintaxis detectado",
-      "verifyError": "Error al verificar el código"
+      "verifyError": "Error al verificar el código",
+      "unknownLlmError": "Error desconocido del LLM",
+      "emptyLlmResponse": "Respuesta vacía del LLM",
+      "parseJsonError": "No se pudo parsear la respuesta como JSON",
+      "invalidCodeResponse": "La respuesta no contiene código válido",
+      "repairUnknownError": "Error desconocido al reparar código",
+      "llmResponseError": "Error al obtener respuesta del LLM",
+      "llmParseError": "No se pudo parsear la respuesta del LLM como JSON",
+      "lineErrorFormat": "Línea {line}:{column} - {message}",
+      "geminiError": "Error de Gemini: {message}",
+      "unexpectedAnalysisError": "Error inesperado durante el análisis",
+      "lineError": "Error en línea {line}",
+      "analyzeFailed": "No se pudo analizar el algoritmo",
+      "parseError": "Error de parseo",
+      "syntaxErrors": "Errores de sintaxis:"
     },
     "manualMode": {
       "verifyParse": "Verificar Parse",
@@ -508,6 +560,15 @@
       "analyzing": "Analizando...",
       "viewAst": "Ver AST",
       "defaultCode": "busquedaBinaria(A[n], x, inicio, fin) BEGIN\n  IF (inicio > fin) THEN BEGIN\n    RETURN -1;\n  END\n  mitad <- (inicio + fin) / 2;\n  IF (A[mitad] = x) THEN BEGIN\n    RETURN mitad;\n  END\n  ELSE BEGIN\n    IF (x < A[mitad]) THEN BEGIN\n      RETURN busquedaBinaria(A, x, inicio, mitad - 1);\n    END\n    ELSE BEGIN\n      RETURN busquedaBinaria(A, x, mitad + 1, fin);\n    END\n  END\nEND"
+    },
+    "repairModal": {
+      "repairing": "Reparando algoritmo...",
+      "mayTakeSeconds": "Esto puede tardar unos segundos",
+      "retry": "Reintentar",
+      "comparisonTitle": "Comparación de código",
+      "originalCode": "Código Original",
+      "repairedCode": "Código Reparado",
+      "acceptChanges": "Aceptar cambios"
     },
     "loader": {
       "errorTitle": "Error en el análisis",

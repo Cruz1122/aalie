@@ -48,6 +48,8 @@ export default function AnalyzerPage() {
   const tMethods = useTranslations("analyzer.methods");
   const tAlgorithmType = useTranslations("analyzer.algorithmType");
   const tView = useTranslations("analyzer.view");
+  const tMessages = useTranslations("analyzer.messages");
+  const tCommon = useTranslations("common");
   const getMessage = (key: string) => t(key);
 
   // Estados del flujo de análisis
@@ -607,10 +609,10 @@ export default function AnalyzerPage() {
       let methodInstruction = "";
       if (ownMethod && isRecursive) {
         const methodNames: Record<string, string> = {
-          "characteristic_equation": "Ecuación Característica",
-          "iteration": "Método de Iteración",
-          "master": "Teorema Maestro",
-          "recursion_tree": "Árbol de Recursión"
+          "characteristic_equation": tMethods("characteristicEquation"),
+          "iteration": tMethods("iterationMethod"),
+          "master": tMethods("masterTheorem"),
+          "recursion_tree": tMethods("recursionTree")
         };
         const methodDisplayName = methodNames[ownMethod] || ownMethod;
         methodInstruction = `\n**MÉTODO A USAR (CRÍTICO):**
@@ -766,7 +768,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
       const result = await response.json();
       
       if (!result.ok) {
-        throw new Error(result.error || "Error al obtener respuesta del LLM");
+        throw new Error(result.error || tMessages("llmResponseError"));
       }
 
       setComparisonMessage("Generando comparación...");
@@ -792,7 +794,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         if (jsonMatch) {
           llmResponse = JSON.parse(jsonMatch[1]);
         } else {
-          throw new Error("No se pudo parsear la respuesta del LLM como JSON");
+          throw new Error(tMessages("llmParseError"));
         }
       }
 
@@ -1966,7 +1968,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
             {/* Footer compacto */}
             <div className="flex justify-between items-center gap-3 px-5 py-3 border-t border-white/10 rounded-b-xl">
               <div className="text-xs text-slate-400">
-                {viewMode === 'tree' ? 'Vista interactiva del árbol' : 'Vista JSON completa'}
+                {viewMode === 'tree' ? tView("astTreeViewDesc") : tView("astJsonViewDesc")}
               </div>
               <div className="flex gap-2">
                 <button
@@ -1978,13 +1980,13 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                   <span className="material-symbols-outlined text-sm">
                     {copied ? 'check' : 'content_copy'}
                   </span>
-                  {copied ? 'Copiado!' : 'Copiar JSON'}
+                  {copied ? tView("astModalCopied") : tView("copyJson")}
                 </button>
                 <button
                   onClick={() => setShowAstModal(false)}
                   className="glass-button px-4 py-2 text-xs font-semibold text-white rounded-lg transition-all hover:scale-105 bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 hover:from-yellow-500/30 hover:to-amber-500/30"
                 >
-                  Cerrar
+                  {tCommon("close")}
                 </button>
               </div>
             </div>

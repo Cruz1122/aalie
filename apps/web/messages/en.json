@@ -6,7 +6,9 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
-    "error": "Error"
+    "error": "Error",
+    "copyCode": "Copy code",
+    "codeCopied": "Copied!"
   },
   "nav": {
     "home": "Home",
@@ -40,6 +42,17 @@
   "metadata": {
     "title": "AALIE",
     "description": "AALIE: live algorithmic complexity analysis with expert assistant (Algorithmic Analysis Live Interaction Expert)"
+  },
+  "errors": {
+    "loadImage": "Error loading image",
+    "loadImageAlt": "Could not load {alt}",
+    "loadingImageAlt": "Loading {alt}...",
+    "pressEscToClose": "Press Esc or click the background to close",
+    "noDiagramAvailable": "No diagram available",
+    "renderDiagram": "Error rendering diagram: {message}",
+    "parseCode": "Error parsing code",
+    "analyzeAlgorithm": "Error analyzing algorithm",
+    "unexpectedAnalysis": "Unexpected error during analysis"
   },
   "analyzer": {
     "progress": {
@@ -160,7 +173,28 @@
       "nonHomogeneous": "Non-Homogeneous",
       "dpLinearDetected": "Linear DP Detected",
       "recurrOrder": "order",
-      "recurrShifts": "shifts"
+      "recurrShifts": "shifts",
+      "methodUsed": "Method used:",
+      "noDataAvailable": "No data available",
+      "tPolynomial": "T_polynomial:",
+      "tOpen": "T_open:",
+      "bigO": "Big-O",
+      "bigOmega": "Big-Ω",
+      "bigTheta": "Big-Θ",
+      "boundUpper": "Upper bound:",
+      "boundLower": "Lower bound:",
+      "boundAvg": "Average bound:",
+      "ownAnalysis": "Own Analysis",
+      "llmAnalysis": "LLM Analysis",
+      "characteristicEquation": "Characteristic equation:",
+      "recurrenceLabel": "Recurrence:",
+      "roots": "Roots:",
+      "order": "Order:",
+      "shifts": "Shifts:",
+      "comparisonWithLlm": "Comparison with LLM",
+      "llmObservation": "LLM observation:",
+      "masterTheorem": "Master Theorem",
+      "caseNumber": "Case {number}"
     },
     "executionTrace": {
       "title": "Execution Trace",
@@ -216,7 +250,11 @@
       "initialVariables": "Initial variables",
       "finalVariables": "Final variables",
       "noResultNode": "Could not identify a final result node in the diagram.",
-      "moreVariables": "+ more variables"
+      "moreVariables": "+ more variables",
+      "diagramError": "Error generating recursion diagram",
+      "diagramConnectionError": "Connection error while generating diagram",
+      "generatingDiagramWithLlm": "Generating recursion diagram with LLM...",
+      "noPseudocodeForDiagram": "No pseudocode provided to generate the diagram"
     },
     "recursionTree": {
       "dominatingLevel": "Dominating Level",
@@ -499,7 +537,21 @@
       "errorSyntax": "The code contains syntax errors",
       "errorConnection": "Error connecting to server",
       "parseErrorDetected": "Syntax error detected",
-      "verifyError": "Error verifying code"
+      "verifyError": "Error verifying code",
+      "unknownLlmError": "Unknown LLM error",
+      "emptyLlmResponse": "Empty LLM response",
+      "parseJsonError": "Could not parse response as JSON",
+      "invalidCodeResponse": "Response does not contain valid code",
+      "repairUnknownError": "Unknown error while repairing code",
+      "llmResponseError": "Error getting LLM response",
+      "llmParseError": "Could not parse LLM response as JSON",
+      "lineErrorFormat": "Line {line}:{column} - {message}",
+      "geminiError": "Gemini error: {message}",
+      "unexpectedAnalysisError": "Unexpected error during analysis",
+      "lineError": "Error on line {line}",
+      "analyzeFailed": "Could not analyze the algorithm",
+      "parseError": "Parse error",
+      "syntaxErrors": "Syntax errors:"
     },
     "manualMode": {
       "verifyParse": "Verify Parse",
@@ -508,6 +560,15 @@
       "analyzing": "Analyzing...",
       "viewAst": "View AST",
       "defaultCode": "binarySearch(A[n], x, start, high) BEGIN\n  IF (start > high) THEN BEGIN\n    RETURN -1;\n  END\n  mid <- (start + high) / 2;\n  IF (A[mid] = x) THEN BEGIN\n    RETURN mid;\n  END\n  ELSE BEGIN\n    IF (x < A[mid]) THEN BEGIN\n      RETURN binarySearch(A, x, start, mid - 1);\n    END\n    ELSE BEGIN\n      RETURN binarySearch(A, x, mid + 1, high);\n    END\n  END\nEND"
+    },
+    "repairModal": {
+      "repairing": "Repairing algorithm...",
+      "mayTakeSeconds": "This may take a few seconds",
+      "retry": "Retry",
+      "comparisonTitle": "Code comparison",
+      "originalCode": "Original Code",
+      "repairedCode": "Repaired Code",
+      "acceptChanges": "Accept changes"
     },
     "loader": {
       "errorTitle": "Analysis error",

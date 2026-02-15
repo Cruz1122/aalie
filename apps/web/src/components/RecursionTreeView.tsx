@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import type { TraceGraph } from "@/types/trace";
 
@@ -39,6 +39,7 @@ export default function RecursionTreeView({
   onDiagramGenerated,
 }: RecursionTreeViewProps) {
   const locale = useLocale();
+  const t = useTranslations("analyzer.executionTrace");
   const [diagram, setDiagram] = useState<RecursionDiagram | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -55,7 +56,7 @@ export default function RecursionTreeView({
 
   const generateDiagram = async () => {
     if (!pseudocode) {
-      setError("No se proporcionó pseudocódigo para generar el diagrama");
+      setError(t("noPseudocodeForDiagram"));
       return;
     }
 
@@ -98,11 +99,11 @@ export default function RecursionTreeView({
           onDiagramGenerated(newDiagram);
         }
       } else {
-        setError(data.error || "Error al generar el diagrama de recursión");
+        setError(data.error || t("diagramError"));
       }
     } catch (err) {
       console.error("Error generando diagrama de recursión:", err);
-      setError("Error de conexión al generar el diagrama");
+      setError(t("diagramConnectionError"));
     } finally {
       setLoading(false);
     }
@@ -116,7 +117,7 @@ export default function RecursionTreeView({
           <div className="absolute w-6 h-6 bg-purple-500 rounded-full" />
         </div>
         <p className="text-xs text-slate-300">
-          Generando diagrama de recursión con LLM...
+          {t("generatingDiagramWithLlm")}
         </p>
       </div>
     );
@@ -138,7 +139,7 @@ export default function RecursionTreeView({
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-300 text-xs font-medium transition-colors"
         >
           <span className="material-symbols-outlined text-sm">refresh</span>
-          Reintentar
+          {t("retry")}
         </button>
       </div>
     );

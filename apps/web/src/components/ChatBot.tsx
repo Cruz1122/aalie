@@ -114,6 +114,7 @@ async function getLLMResponse(
   chatHistory: Message[],
   apiKey: string | null,
   locale?: string,
+  t?: (key: string) => string,
 ): Promise<string> {
   try {
     // Convertir historial a formato para el LLM (últimos 10 mensajes)
@@ -169,7 +170,7 @@ async function getLLMResponse(
 
     // Verificar si la respuesta indica un error
     if (!result.ok) {
-      const errorMessage = result?.error || "Error desconocido del LLM";
+      const errorMessage = result?.error || (t ? t("unknownLlmError") : "Unknown LLM error");
       // Todos los errores 500 son del LLM/Gemini, también errores que mencionen Gemini, API_KEY o LLM
       const isGeminiError =
         errorMessage.includes("Gemini") ||
@@ -184,7 +185,7 @@ async function getLLMResponse(
     const content =
       result?.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
     if (!content || String(content).trim().length === 0) {
-      throw new Error("Respuesta vacía del LLM");
+      throw new Error(t ? t("emptyLlmResponse") : "Empty LLM response");
     }
     return String(content);
   } catch (error) {
@@ -202,6 +203,7 @@ export default function ChatBot({
 }: Readonly<ChatBotProps>) {
   const locale = useLocale();
   const t = useTranslations("chat");
+  const tMessages = useTranslations("analyzer.messages");
   const tCommon = useTranslations("common");
   const tFooter = useTranslations("footer.apiKey");
   const [inputValue, setInputValue] = useState("");
@@ -339,6 +341,7 @@ export default function ChatBot({
           messages,
           currentApiKey,
           locale,
+          tMessages,
         );
 
         // Crear mensaje del bot
@@ -373,7 +376,10 @@ export default function ChatBot({
         const errorResponse: Message = {
           id: `bot-error-${Date.now()}`,
           content: isGeminiError
-            ? `Error de Gemini: ${error instanceof Error ? error.message : "Error desconocido"}`
+            ? tMessages("geminiError", {
+                message:
+                  error instanceof Error ? error.message : tMessages("unknownLlmError"),
+              })
             : t("errorGeneric"),
           sender: "bot",
           timestamp: new Date(),
@@ -387,7 +393,7 @@ export default function ChatBot({
         processingRef.current = false;
       }
     },
-    [messages, setMessages, t],
+    [messages, setMessages, t, tMessages],
   );
 
   // Responder automáticamente si el último mensaje del historial es del usuario

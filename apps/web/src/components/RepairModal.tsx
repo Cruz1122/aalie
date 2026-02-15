@@ -2,7 +2,7 @@
 
 import type { ParseError } from "@aa/types";
 import { useState, useEffect } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 interface RepairModalProps {
   open: boolean;
@@ -20,6 +20,10 @@ export default function RepairModal({
   parseErrors,
 }: Readonly<RepairModalProps>) {
   const locale = useLocale();
+  const t = useTranslations("analyzer.messages");
+  const tView = useTranslations("analyzer.view");
+  const tRepair = useTranslations("analyzer.repairModal");
+  const tCommon = useTranslations("common");
   const [isRepairing, setIsRepairing] = useState(false);
   const [repairedCode, setRepairedCode] = useState<string | null>(null);
   const [removedLines, setRemovedLines] = useState<number[]>([]);
@@ -49,9 +53,15 @@ export default function RepairModal({
       // Construir prompt con código y errores
       const errorMessages = parseErrors
         ? parseErrors
-            .map((e) => `Línea ${e.line}:${e.column} - ${e.message}`)
+            .map((e) =>
+              t("lineErrorFormat", {
+                line: e.line,
+                column: e.column,
+                message: e.message,
+              }),
+            )
             .join("\n")
-        : "Error de sintaxis detectado";
+        : t("parseErrorDetected");
 
       const prompt = `Necesito reparar un error de sintaxis en mi código de pseudocódigo.
 
@@ -94,7 +104,7 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
       const result = await response.json();
 
       if (!result.ok) {
-        throw new Error(result?.error || "Error desconocido del LLM");
+        throw new Error(result?.error || t("unknownLlmError"));
       }
 
       // Extraer JSON de la respuesta
@@ -102,7 +112,7 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
         result?.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
       if (!content || String(content).trim().length === 0) {
-        throw new Error("Respuesta vacía del LLM");
+        throw new Error(t("emptyLlmResponse"));
       }
 
       // Intentar parsear como JSON
@@ -130,13 +140,13 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
             return;
           }
         } else {
-          throw new Error("No se pudo parsear la respuesta como JSON");
+          throw new Error(t("parseJsonError"));
         }
       }
 
       // Validar estructura
       if (!repairData.code || typeof repairData.code !== "string") {
-        throw new Error("La respuesta no contiene código válido");
+        throw new Error(t("invalidCodeResponse"));
       }
 
       setRepairedCode(repairData.code);
@@ -152,9 +162,7 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
     } catch (err) {
       console.error("Error reparando código:", err);
       setError(
-        err instanceof Error
-          ? err.message
-          : "Error desconocido al reparar código",
+        err instanceof Error ? err.message : t("repairUnknownError"),
       );
       setIsRepairing(false);
     }
@@ -259,7 +267,7 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
       <div className="glass-modal-container rounded-2xl shadow-xl max-w-6xl w-[95vw] h-[85vh] flex flex-col m-4 modal-animate-in">
         {/* Header */}
         <div className="glass-modal-header flex items-center justify-between px-6 py-4 rounded-t-2xl border-b border-white/10">
-          <h2 className="text-2xl font-bold text-white">Reparar con IA</h2>
+          <h2 className="text-2xl font-bold text-white">{tView("repairWithAI")}</h2>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-white text-3xl leading-none transition-colors hover:rotate-90 transform duration-200"
@@ -280,10 +288,10 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
                   auto_awesome
                 </span>
                 <p className="text-2xl text-slate-300 font-medium mb-2">
-                  Reparando algoritmo...
+                  {tRepair("repairing")}
                 </p>
                 <p className="text-sm text-slate-400">
-                  Esto puede tardar unos segundos
+                  {tRepair("mayTakeSeconds")}
                 </p>
               </div>
             </div>
@@ -297,7 +305,7 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
                   onClick={repairCode}
                   className="mt-3 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-sm font-semibold transition-colors"
                 >
-                  Reintentar
+                  {tRepair("retry")}
                 </button>
               </div>
             </div>
@@ -306,13 +314,13 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
           {showComparison && repairedCode && (
             <div className="flex-1 flex flex-col overflow-hidden p-6 min-h-0">
               <h3 className="text-lg font-semibold text-white mb-4 flex-shrink-0">
-                Comparación de código
+                {tRepair("comparisonTitle")}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0">
                 {/* Código original */}
                 <div className="flex flex-col min-h-0">
                   <div className="text-sm font-semibold text-red-300 mb-2 flex-shrink-0">
-                    Código Original
+                    {tRepair("originalCode")}
                   </div>
                   <div className="bg-slate-900/80 rounded-lg border border-red-500/30 p-3 flex-1 overflow-auto min-h-0 scrollbar-custom">
                     <table className="text-sm w-full">
@@ -345,7 +353,7 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
                 {/* Código reparado */}
                 <div className="flex flex-col min-h-0">
                   <div className="text-sm font-semibold text-blue-300 mb-2 flex-shrink-0">
-                    Código Reparado
+                    {tRepair("repairedCode")}
                   </div>
                   <div className="bg-slate-900/80 rounded-lg border border-blue-500/30 p-3 flex-1 overflow-auto min-h-0 scrollbar-custom">
                     <table className="text-sm w-full">
@@ -386,13 +394,13 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
               onClick={onClose}
               className="glass-secondary px-5 py-2.5 text-sm font-semibold text-slate-200 rounded-lg transition-all hover:scale-105"
             >
-              Cancelar
+              {tCommon("cancel")}
             </button>
             <button
               onClick={handleAccept}
               className="flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-lg transition-all hover:scale-105 bg-gradient-to-br from-purple-500/20 to-purple-500/20 border border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30"
             >
-              Aceptar cambios
+              {tRepair("acceptChanges")}
             </button>
           </div>
         )}

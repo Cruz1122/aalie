@@ -702,6 +702,8 @@ export default function ExamplesPage() {
   const tAlgorithmType = useTranslations("analyzer.algorithmType");
   const tCategories = useTranslations("examples.categories");
   const tCategoryDesc = useTranslations("examples.categoryDesc");
+  const tMessages = useTranslations("analyzer.messages");
+  const tMethods = useTranslations("analyzer.methods");
   const { animateProgress } = useAnalysisProgress();
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [viewingCodeId, setViewingCodeId] = useState<number | null>(null);
@@ -834,10 +836,14 @@ export default function ExamplesPage() {
             parseRes.errors
               ?.map(
                 (e: { line: number; column: number; message: string }) =>
-                  `Línea ${e.line}:${e.column} ${e.message}`,
+                  tMessages("lineErrorFormat", {
+                    line: e.line,
+                    column: e.column,
+                    message: e.message,
+                  }),
               )
-              .join("\n") || "Error de parseo";
-          setAnalysisError(`Errores de sintaxis:\n${msg}`);
+              .join("\n") || tMessages("parseError");
+          setAnalysisError(`${tMessages("syntaxErrors")}\n${msg}`);
           setTimeout(() => {
             setAnalyzingExampleId(null);
             setAnalysisProgress(0);
@@ -1118,9 +1124,10 @@ export default function ExamplesPage() {
             ).errors
               ?.map(
                 (e: { message: string; line?: number; column?: number }) =>
-                  e.message || `Error en línea ${e.line || "?"}`,
+                  e.message ||
+                  tMessages("lineError", { line: e.line ?? "?" }),
               )
-              .join("\n") || "No se pudo analizar el algoritmo";
+              .join("\n") || tMessages("analyzeFailed");
           setAnalysisError(errorMsg);
           setTimeout(() => {
             setAnalyzingExampleId(null);
@@ -1148,22 +1155,22 @@ export default function ExamplesPage() {
               };
             };
             if (worstData.totals?.characteristic_equation) {
-              return "Ecuación Característica";
+              return tMethods("characteristicEquation");
             } else if (
               worstData.totals?.recurrence?.method === "characteristic_equation"
             ) {
-              return "Ecuación Característica";
+              return tMethods("characteristicEquation");
             } else if (worstData.totals?.recurrence?.method === "iteration") {
-              return "Método de Iteración";
+              return tMethods("iterationMethod");
             } else if (
               worstData.totals?.recurrence?.method === "recursion_tree"
             ) {
-              return "Método de Árbol de Recursión";
+              return tMethods("recursionTree");
             } else if (worstData.totals?.recurrence?.method === "master") {
-              return "Teorema Maestro";
+              return tMethods("masterTheorem");
             }
           }
-          return "análisis";
+          return "analysis";
         })();
 
         if (typeof analyzeRes.worst === "object" && analyzeRes.worst !== null) {
@@ -1212,7 +1219,7 @@ export default function ExamplesPage() {
         const errorMsg =
           error instanceof Error
             ? error.message
-            : "Error inesperado durante el análisis";
+            : tMessages("unexpectedAnalysisError");
         setAnalysisError(errorMsg);
         setTimeout(() => {
           setAnalyzingExampleId(null);
@@ -1224,7 +1231,7 @@ export default function ExamplesPage() {
         }, 3000);
       }
     },
-    [animateProgress, analyzingExampleId, router, tProgress, tAlgorithmType],
+    [animateProgress, analyzingExampleId, router, tProgress, tAlgorithmType, tMessages, tMethods],
   );
 
   const handleAnalyze = (code: string, exampleId: number) => {
@@ -1436,19 +1443,19 @@ export default function ExamplesPage() {
                       </p>
                       <ul className="space-y-1 text-[11px] text-blue-200 list-disc list-inside">
                         <li>
-                          <strong>Ecuación Característica:</strong>{" "}
+                          <strong>{tMethods("characteristicEquation")}</strong>{" "}
                           {tCategoryDesc("recursive_characteristic")}
                         </li>
                         <li>
-                          <strong>Método de Iteración:</strong>{" "}
+                          <strong>{tMethods("iterationMethod")}</strong>{" "}
                           {tCategoryDesc("recursive_iteration")}
                         </li>
                         <li>
-                          <strong>Teorema Maestro:</strong>{" "}
+                          <strong>{tMethods("masterTheorem")}</strong>{" "}
                           {tCategoryDesc("recursive_master")}
                         </li>
                         <li>
-                          <strong>Árbol de Recursión:</strong>{" "}
+                          <strong>{tMethods("recursionTree")}</strong>{" "}
                           {tCategoryDesc("recursive_tree")}
                         </li>
                       </ul>
