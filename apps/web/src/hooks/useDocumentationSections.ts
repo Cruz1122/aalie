@@ -96,6 +96,34 @@ export const useDocumentationSections = (): DocumentationSection[] => {
         },
       },
       {
+        id: "i18n-labels-prompts",
+        titleKey: "i18nLabelsPrompts",
+        descriptionKey: "i18nLabelsPrompts",
+        title: "Internacionalización, Labels y Prompts",
+        description:
+          "Soporte multiidioma (es/en), sistema de labels en backend para procedimientos y trace, y prompts de LLM parametrizados por locale.",
+        content: {
+          type: "text",
+          sections: [
+            {
+              title: "Internacionalización",
+              content:
+                "next-intl con messages/es.json y messages/en.json. Rutas con prefijo [locale] (/es/analyzer, /en/analyzer). LocaleSwitcher en Header, useLocale(), useTranslations(). Navegación con @/i18n/navigation. El frontend envía locale en el body de las peticiones a /analyze/open, /api/llm y /analyze/trace.",
+            },
+            {
+              title: "Sistema de Labels (Backend)",
+              content:
+                "apps/api/app/modules/analysis/translations.py: PROCEDURE_LABELS, NOTES_LABELS, TRACE_STEP_LABELS (en/es). Funciones get_labels(locale), get_note_labels(locale), get_trace_step_labels(locale). Usados en BaseAnalyzer, IterativeAnalyzer, RecursiveAnalyzer, SummationCloser, Executor. Fallback a 'en' si locale no existe.",
+            },
+            {
+              title: "Prompts por Idioma",
+              content:
+                "apps/web/src/app/api/llm/prompts/index.ts: getPrompt(job, locale). Jobs con prompts localizados: classify, parser_assist, general, simplifier, repair, compare. response-language.ts: getResponseLanguageInstruction, getExplanationLanguageInstruction. Prompts de diagramas: getGenerateDiagramSystemPrompt(locale), getRecursionDiagramSystemPrompt(locale). Parámetro locale en requests a /api/llm.",
+            },
+          ],
+        },
+      },
+      {
         id: "export",
         titleKey: "export",
         descriptionKey: "export",

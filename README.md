@@ -10,22 +10,22 @@
 
 > Herramienta educativa moderna para analizar la complejidad algorítmica de pseudocódigo con visualizaciones interactivas y cálculos automáticos.
 
-## 📋 Tabla de Contenidos
+## Tabla de Contenidos
 
-- [Descripción](#-descripción)
-- [Características](#-características)
-- [Estado del Proyecto](#-estado-del-proyecto)
-- [Tecnologías](#-tecnologías)
-- [Requisitos](#-requisitos)
-- [Instalación](#-instalación)
-- [Uso](#-uso)
-- [Estructura del Proyecto](#-estructura-del-proyecto)
-- [Documentación](#-documentación)
-- [Testing](#-testing)
-- [CI/CD](#-cicd)
-- [Contribuir](#-contribuir)
+- [Descripción](#descripción)
+- [Características](#características)
+- [Estado del Proyecto](#estado-del-proyecto)
+- [Tecnologías](#tecnologías)
+- [Requisitos](#requisitos)
+- [Instalación](#instalación)
+- [Uso](#uso)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+- [Documentación](#documentación)
+- [Testing](#testing)
+- [CI/CD](#cicd)
+- [Contribuir](#contribuir)
 
-## 📖 Descripción
+## Descripción
 
 **AALIE** es la aplicación de análisis de complejidad algorítmica que permite escribir algoritmos en pseudocódigo y obtener automáticamente el análisis de su complejidad. El asistente integrado se llama AALIE (Algorithmic Analysis Live Interaction Expert). El sistema utiliza un lenguaje de pseudocódigo estructurado con validación en tiempo real, análisis automático de casos (best/worst/average), y visualizaciones interactivas de resultados.
 
@@ -33,74 +33,80 @@
 Este repositorio usa **pnpm workspaces** para gestionar paquetes de Node del frontend y utilidades compartidas.  
 El backend (Python) NO forma parte de los workspaces de pnpm.
 
-## ✨ Características
+## Características
 
-### 🎯 Análisis Completo
-- ✅ Análisis de complejidad temporal (Big-O) automático
-- ✅ Soporte para algoritmos iterativos y recursivos
-- ✅ Análisis de best/worst/average case
-- ✅ Modelos probabilísticos para caso promedio
-- ✅ **Cuatro métodos para análisis recursivo:**
+### Análisis Completo
+- Análisis de complejidad temporal (Big-O) automático
+- Soporte para algoritmos iterativos y recursivos
+- Análisis de best/worst/average case
+- Modelos probabilísticos para caso promedio
+- **Cuatro métodos para análisis recursivo:**
   - **Teorema Maestro** - Para recurrencias divide-and-conquer estándar T(n) = a·T(n/b) + f(n)
   - **Método de Iteración** - Despliega la recurrencia iterativamente para obtener forma cerrada
   - **Árbol de Recursión** - Visualiza el árbol de llamadas recursivas para divide-and-conquer
   - **Ecuación Característica** - Para recurrencias lineales homogéneas y no homogéneas (ej: Fibonacci)
-- ✅ Detección automática de métodos aplicables para cada algoritmo
-- ✅ Visualización interactiva de árboles de recursión con React Flow
+- Detección automática de métodos aplicables para cada algoritmo
+- Visualización interactiva de árboles de recursión con React Flow
 
-### 💻 Editor Avanzado
-- ✅ Editor Monaco (VS Code en el navegador)
-- ✅ Syntax highlighting para pseudocódigo
-- ✅ Validación en tiempo real con Web Workers
-- ✅ Autocompletado y numeración de líneas
-- ✅ Múltiples operadores de asignación soportados
+### Editor Avanzado
+- Editor Monaco (VS Code en el navegador)
+- Syntax highlighting para pseudocódigo
+- Validación en tiempo real con Web Workers
+- Autocompletado y numeración de líneas
+- Múltiples operadores de asignación soportados
 
-### 🤖 Asistente IA
-- ✅ Chatbot integrado con modelos de lenguaje
-- ✅ Clasificación automática de algoritmos
-- ✅ Análisis directo desde bloques de código
-- ✅ Corrección automática de errores
+### Asistente IA
+- Chatbot integrado con modelos de lenguaje
+- Clasificación automática de algoritmos
+- Análisis directo desde bloques de código
+- Corrección automática de errores
 
-### 📊 Visualizaciones
-- ✅ Tablas de costos por línea
-- ✅ Fórmulas matemáticas renderizadas con KaTeX
-- ✅ Visualización de AST
-- ✅ Procedimientos detallados paso a paso
-- ✅ Gráficos de complejidad
-- ✅ **Árboles de recursión interactivos con React Flow**
-- ✅ **Trace de ejecución paso a paso** (iterativos y recursivos)
-- ✅ **Diagramas de flujo generados con LLM** (para algoritmos recursivos)
+### Visualizaciones
+- Tablas de costos por línea
+- Fórmulas matemáticas renderizadas con KaTeX
+- Visualización de AST
+- Procedimientos detallados paso a paso
+- Gráficos de complejidad
+- **Árboles de recursión interactivos con React Flow**
+- **Trace de ejecución paso a paso** (iterativos y recursivos)
+- **Diagramas de flujo generados con LLM** (para algoritmos recursivos)
 
-### 🆕 Nuevas Funcionalidades
+### Internacionalización
+- Soporte multiidioma (español/inglés) con next-intl
+- Rutas localizadas (`/es/analyzer`, `/en/analyzer`)
+- Labels de procedimiento y trace en idioma del usuario
+- Prompts de LLM parametrizados por idioma
 
-#### 🔍 Seguimiento de Pseudocódigo
-- ✅ **Trace iterativo**: Instrumentación de código y captura de estado en cada paso
-- ✅ **Trace recursivo**: Generación automática de diagramas de árbol con LLM (Gemini)
-- ✅ Visualización paso a paso de variables y operaciones
-- ✅ Diagramas Mermaid interactivos
+### Nuevas Funcionalidades
 
-#### 🤖 Comparación con LLM
-- ✅ Contrasta el análisis del sistema con análisis de Gemini
-- ✅ Detección automática de diferencias
-- ✅ Explicaciones de discrepancias
-- ✅ Nivel de confianza del análisis
+#### Seguimiento de Pseudocódigo
+- **Trace iterativo**: Instrumentación de código y captura de estado en cada paso
+- **Trace recursivo**: Generación automática de diagramas de árbol con LLM (Gemini)
+- Visualización paso a paso de variables y operaciones
+- Diagramas Mermaid interactivos
 
-#### 🎮 Análisis GPU vs CPU
-- ✅ Sistema de scoring (0-100) para GPU y CPU
-- ✅ Análisis de paralelismo y patrones de acceso a memoria
-- ✅ Evaluación de complejidad de control de flujo
-- ✅ Recomendaciones de ejecución (GPU/CPU/Mixto)
-- ✅ Métricas detalladas: recursión, branching, loops, arrays, operaciones matemáticas
+#### Comparación con LLM
+- Contrasta el análisis del sistema con análisis de Gemini
+- Detección automática de diferencias
+- Explicaciones de discrepancias
+- Nivel de confianza del análisis
 
-#### 🔑 Configuración de API Key
-- ✅ Gestión de API key de Gemini en el frontend
-- ✅ Almacenamiento seguro en localStorage
-- ✅ Validación de formato y autenticidad
-- ✅ Prioridad: localStorage > variables de entorno
+#### Análisis GPU vs CPU
+- Sistema de scoring (0-100) para GPU y CPU
+- Análisis de paralelismo y patrones de acceso a memoria
+- Evaluación de complejidad de control de flujo
+- Recomendaciones de ejecución (GPU/CPU/Mixto)
+- Métricas detalladas: recursión, branching, loops, arrays, operaciones matemáticas
 
-## 🚀 Estado del Proyecto
+#### Configuración de API Key
+- Gestión de API key de Gemini en el frontend
+- Almacenamiento seguro en localStorage
+- Validación de formato y autenticidad
+- Prioridad: localStorage > variables de entorno
 
-### ✅ Completado
+## Estado del Proyecto
+
+### Completado
 
 **Frontend:**
 - [x] Editor Monaco con validación en tiempo real
@@ -111,6 +117,8 @@ El backend (Python) NO forma parte de los workspaces de pnpm.
   - Soporta algoritmos con desplazamiento lineal (ej: Fibonacci)
 - [x] Chatbot integrado con IA
 - [x] Modo manual y modo AI
+- [x] Internacionalización con next-intl (español/inglés)
+- [x] Soporte de locale en análisis y trace de ejecución
 - [x] Guía de usuario completa
 - [x] Documentación técnica
 
@@ -133,11 +141,11 @@ El backend (Python) NO forma parte de los workspaces de pnpm.
 - [x] Guía de usuario rediseñada
 - [x] README completo
 
-### 🔄 En Desarrollo
+### En Desarrollo
 
 - [ ] Exportación de resultados (PDF, LaTeX)
 
-## 🛠 Tecnologías
+## Tecnologías
 
 ### Frontend
 ![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)
@@ -174,7 +182,7 @@ El backend (Python) NO forma parte de los workspaces de pnpm.
 - **Docker Compose** - Containerización
 - **ANTLR4** - Generación de parsers TS/Py
 
-## 📦 Requisitos
+## Requisitos
 
 - **Node.js** ≥20 <23 (CI usa 22.x, compatible con 20.x)
 - **pnpm** 9.x
@@ -182,7 +190,7 @@ El backend (Python) NO forma parte de los workspaces de pnpm.
 - **Java** ≥8 (para generación de parser Python con ANTLR)
 - **Git**
 
-## 🚀 Instalación
+## Instalación
 
 ### 1. Clonar el repositorio
 
@@ -212,7 +220,7 @@ GEMINI_API_KEY=tu_api_key_here  # Opcional, para usar LLM
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 ```
 
-## 💻 Uso
+## Uso
 
 ### Desarrollo
 
@@ -256,7 +264,7 @@ cd infra
 docker-compose up
 ```
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 algorithmic-analysis/
@@ -294,7 +302,7 @@ algorithmic-analysis/
 
 Incluyen solo `apps/web` y `packages/*` para evitar mezclar Python con Node.
 
-## 📚 Documentación
+## Documentación
 
 ### Documentación Técnica
 
@@ -315,12 +323,13 @@ Incluyen solo `apps/web` y `packages/*` para evitar mezclar Python con Node.
   - [Gestión de Estado](docs/app/state-management.md)
   - [Sistema de Diseño](docs/app/styling.md)
   - [Integración con API](docs/app/api-integration.md)
-  - **Nuevos documentos técnicos:**
+  - **Documentos técnicos adicionales:**
     - [React Flow](docs/app/react-flow.md) - Visualización de diagramas interactivos
     - [GPU vs CPU Comparison](docs/app/gpu-cpu-comparison.md) - Sistema de análisis GPU/CPU
     - [LLM Comparison](docs/app/llm-comparison.md) - Comparación con análisis de LLM
     - [Pseudocode Tracking](docs/app/pseudocode-tracking.md) - Seguimiento de ejecución
     - [API Key Configuration](docs/app/api-key-configuration.md) - Configuración de API key
+    - [Internacionalización, Labels y Prompts](docs/app/i18n-labels-prompts.md) - i18n, labels y prompts parametrizados por idioma
 
 - **[Documentación de LLM](docs/llm/usage-and-models.md)** - Uso de modelos de lenguaje
   - Jobs disponibles y modelos usados
@@ -344,7 +353,7 @@ Incluyen solo `apps/web` y `packages/*` para evitar mezclar Python con Node.
 - [Configurar KaTeX](packages/grammar/grammar/README.md#activar-katex-para-renderizado-de-fórmulas)
 - [Contratos de tipos @aa/types](packages/grammar/grammar/README.md#contratos-de-tipos-en-aatypes)
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Tests del backend (Python)
@@ -377,22 +386,22 @@ Para más información sobre cobertura, ver [apps/api/tests/README.md](apps/api/
 ### Cobertura de Tests
 
 **Analizador Iterativo:**
-- ✅ Casos comunes: búsqueda lineal, búsqueda binaria, factorial
-- ✅ Casos intermedios: selection sort, bubble sort, insertion sort
-- ✅ Casos complejos: bucles anidados, WHILE complejos, IF anidados
-- ✅ Caso promedio: modelos uniforme y simbólico
-- ✅ Todos los tests cubren best/worst/average case
+- Casos comunes: búsqueda lineal, búsqueda binaria, factorial
+- Casos intermedios: selection sort, bubble sort, insertion sort
+- Casos complejos: bucles anidados, WHILE complejos, IF anidados
+- Caso promedio: modelos uniforme y simbólico
+- Todos los tests cubren best/worst/average case
 
 **Analizador Recursivo:**
-- ✅ Extracción de recurrencias: merge sort, binary search, quick sort, factorial, Fibonacci
-- ✅ **Teorema Maestro**: verificación de los 3 casos (f(n) < n^log_b(a), f(n) = n^log_b(a), f(n) > n^log_b(a))
-- ✅ **Método de Iteración**: despliegue iterativo de recurrencias para obtener forma cerrada
-- ✅ **Árbol de Recursión**: construcción y visualización del árbol para divide-and-conquer
-- ✅ **Ecuación Característica**: resolución de recurrencias lineales homogéneas y no homogéneas
-- ✅ Detección automática de métodos aplicables según el tipo de recurrencia
-- ✅ Priorización de métodos: characteristic_equation > iteration > recursion_tree > master
-- ✅ Estructura: validación de parámetros a, b, f(n), n₀, y formas de recurrencia
-- ✅ Pasos de prueba: verificación de generación de pasos en LaTeX para todos los métodos
+- Extracción de recurrencias: merge sort, binary search, quick sort, factorial, Fibonacci
+- **Teorema Maestro**: verificación de los 3 casos (f(n) < n^log_b(a), f(n) = n^log_b(a), f(n) > n^log_b(a))
+- **Método de Iteración**: despliegue iterativo de recurrencias para obtener forma cerrada
+- **Árbol de Recursión**: construcción y visualización del árbol para divide-and-conquer
+- **Ecuación Característica**: resolución de recurrencias lineales homogéneas y no homogéneas
+- Detección automática de métodos aplicables según el tipo de recurrencia
+- Priorización de métodos: characteristic_equation > iteration > recursion_tree > master
+- Estructura: validación de parámetros a, b, f(n), n₀, y formas de recurrencia
+- Pasos de prueba: verificación de generación de pasos en LaTeX para todos los métodos
 
 **Ubicación de Tests:**
 - `apps/api/tests/integration/test_iterative_analyzer.py`
@@ -401,7 +410,7 @@ Para más información sobre cobertura, ver [apps/api/tests/README.md](apps/api/
 - `apps/api/tests/integration/test_avg_case.py`
 - `apps/api/tests/integration/test_recursive_algorithms.py`
 
-## 🔄 CI/CD
+## CI/CD
 
 El proyecto utiliza **GitHub Actions** para automatización continua de builds, tests y calidad de código.
 
@@ -436,7 +445,7 @@ El workflow se activa automáticamente en:
 
 **Ubicación:** `.github/workflows/ci.yaml`
 
-## 🤝 Contribuir
+## Contribuir
 
 Las contribuciones son bienvenidas. Por favor:
 

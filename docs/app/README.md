@@ -20,6 +20,7 @@ Esta carpeta contiene la documentación técnica completa del frontend del anali
 - [LLM Comparison](./llm-comparison.md) - Comparación de análisis con LLM
 - [Pseudocode Tracking](./pseudocode-tracking.md) - Seguimiento de ejecución paso a paso
 - [API Key Configuration](./api-key-configuration.md) - Configuración de API key de Gemini
+- [Internacionalización, Labels y Prompts](./i18n-labels-prompts.md) - i18n, sistema de labels y prompts parametrizados por idioma
 
 ## Descripción General
 

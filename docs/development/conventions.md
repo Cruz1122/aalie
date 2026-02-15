@@ -63,16 +63,28 @@ algorithmic-analysis/
 - **Prohibido** usar literales de texto directamente en JSX o UI.
 - Sistema: **next-intl** con archivos JSON en `apps/web/messages/`.
 - Idiomas: `es.json` (español), `en.json` (inglés).
-- Namespaces por dominio: `common`, `nav`, `footer`, `analyzer`, `metadata`, etc.
+- Namespaces por dominio: `common`, `nav`, `footer`, `analyzer`, `metadata`, `documentation`, etc.
 - Uso en componentes: `useTranslations("namespace")` → `t("key")`.
-- Rutas con prefijo de idioma: `/es/analyzer`, `/en/analyzer`.
-- Navegación: usar `Link`, `useRouter`, `usePathname` de `@/i18n/navigation`.
+- Rutas con prefijo de idioma: `/es/analyzer`, `/en/analyzer`, `/es/examples`, etc.
+- Navegación: usar `Link`, `useRouter`, `usePathname` de `@/i18n/navigation` para preservar el locale.
 - Selector de idioma: componente `LocaleSwitcher` en el Header.
+- **Flujo de locale en requests**: Obtener `useLocale()` y enviar `locale: "es" | "en"` en el body de peticiones a `/analyze/open`, `/api/llm`, `/analyze/trace`.
 
 ### Backend
 
+- **Labels de procedimiento y trace**: `apps/api/app/modules/analysis/translations.py`.
+  - `PROCEDURE_LABELS`, `NOTES_LABELS`, `TRACE_STEP_LABELS` (en/es).
+  - Funciones: `get_labels(locale)`, `get_note_labels(locale)`, `get_trace_step_labels(locale)`.
+  - Usados en analizadores, SummationCloser, Executor. Fallback a `"en"` si locale no existe.
 - Mensajes y constantes por dominio en `apps/api/app/modules/<feature>/constants.py`.
 - Constantes transversales en `apps/api/app/core/constants.py`.
+
+### Prompts LLM
+
+- Prompts parametrizados por locale en `apps/web/src/app/api/llm/prompts/`.
+- `getPrompt(job, locale)` selecciona el prompt según idioma.
+- Jobs con prompts localizados: `parser_assist`, `general`, `simplifier`, `repair`, `compare`.
+- Documentación detallada: [i18n-labels-prompts.md](../app/i18n-labels-prompts.md).
 
 ---
 
@@ -166,16 +178,6 @@ Actualiza la versión cuando cambie en `CHANGELOG.md`.
 
 ---
 
-## Sistema de feedback al usuario (recomendación)
-
-Cuando se implemente un sistema de notificaciones toast:
-
-- Usar para feedback inmediato en operaciones asíncronas (éxito, error de servidor).
-- **No** usar para errores de validación de formularios (usar mensajes de error del campo).
-- Centralizar mensajes de error técnicos en un helper que los traduzca a lenguaje natural.
-
----
-
 ## Packages compartidos
 
 ### `@aa/types`
@@ -201,7 +203,7 @@ Cuando se implemente un sistema de notificaciones toast:
 
 ## Checklist rápido antes de commit/PR
 
-- [ ] Sin literales de texto en UI: labels usados (cuando exista el sistema).
+- [ ] Sin literales de texto en UI: usar `useTranslations` y claves de `messages/`.
 - [ ] Reutilicé componentes existentes o creé uno AA* si faltaba.
 - [ ] Docstrings de clases/funciones públicas con autor y versión actual.
 - [ ] Changelog actualizado en `[Unreleased]`.
@@ -213,5 +215,6 @@ Cuando se implemente un sistema de notificaciones toast:
 ## Referencias
 
 - [request-flow.md](./request-flow.md): Flujo de peticiones backend desde frontend.
+- [i18n-labels-prompts.md](../app/i18n-labels-prompts.md): Internacionalización, labels y prompts por idioma.
 - [docs/app/architecture.md](../app/architecture.md): Arquitectura del frontend.
 - [docs/api/endpoints.md](../api/endpoints.md): Endpoints de la API.
