@@ -53,7 +53,7 @@ class TestAvgCase:
     
     def test_avg_case_has_model_info(self):
         """Test: Verificar que caso promedio tiene avg_model_info en totals"""
-        analyzer = IterativeAnalyzer()
+        analyzer = IterativeAnalyzer(locale="es")
         
         # AST simple
         ast = {
@@ -344,7 +344,7 @@ class TestAvgCase:
     
     def test_symbolic_model_avg_case(self):
         """Test: Modelo simbólico en caso promedio"""
-        analyzer = IterativeAnalyzer()
+        analyzer = IterativeAnalyzer(locale="es")
         
         # AST simple
         ast = {
