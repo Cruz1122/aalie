@@ -3,6 +3,8 @@ from sympy import Symbol, summation, simplify, latex, sympify, Sum, expand, fact
 from sympy.parsing.sympy_parser import parse_expr
 import re
 
+from ..translations import get_labels
+
 
 class SummationCloser:
     """
@@ -17,13 +19,16 @@ class SummationCloser:
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
-    def __init__(self):
+    def __init__(self, locale: str = "en"):
         """
         Inicializa una instancia de SummationCloser.
         
+        Args:
+            locale: Código de idioma para las etiquetas ("en" | "es")
+        
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        pass
+        self._labels = get_labels(locale)
     
     def _has_iterative_symbols(self, expr: Expr) -> bool:
         """
@@ -117,10 +122,10 @@ class SummationCloser:
                     
                     # Generar pasos educativos explicando el símbolo iterativo
                     steps = [
-                        f"\\text{{Expresión con variable iterativa no acotada: }} {closed_latex}",
-                        f"\\text{{Esta variable representa el número de iteraciones de un bucle no acotado.}}",
-                        f"\\text{{Requiere análisis adicional o asumir límites para acotar.}}",
-                        f"\\text{{Resultado: }} {closed_latex}"
+                        closed_latex,
+                        f"\\text{{{self._labels['unbounded_var_note']}}}",
+                        f"\\text{{{self._labels['unbounded_requires']}}}",
+                        closed_latex
                     ]
                     
                     return closed_latex, steps
@@ -218,10 +223,10 @@ class SummationCloser:
                 if steps:
                     # Verificar si el último paso ya contiene el resultado
                     last_step = steps[-1]
-                    if closed_latex not in last_step and "Resultado" not in last_step:
-                        steps.append(f"\\text{{Resultado: }} {closed_latex}")
+                    if closed_latex not in last_step:
+                        steps.append(closed_latex)
                 else:
-                    steps = [f"\\text{{Resultado: }} {closed_latex}"]
+                    steps = [closed_latex]
                 
                 return closed_latex, steps
             except Exception as e:
@@ -270,10 +275,10 @@ class SummationCloser:
                 
                 # Generar pasos educativos
                 steps = [
-                    f"\\text{{Expresión con variable iterativa no acotada: }} {expr}",
-                    f"\\text{{Esta variable representa el número de iteraciones de un bucle no acotado.}}",
-                    f"\\text{{Requiere análisis adicional o asumir límites para acotar.}}",
-                    f"\\text{{Resultado: }} {closed_latex}"
+                    expr,
+                    f"\\text{{{self._labels['unbounded_var_note']}}}",
+                    f"\\text{{{self._labels['unbounded_requires']}}}",
+                    closed_latex
                 ]
                 
                 return closed_latex, steps
@@ -281,10 +286,10 @@ class SummationCloser:
                 print(f"[SummationCloser] Error procesando símbolo iterativo {expr}: {e}")
                 # Fallback: devolver expresión original con pasos educativos
                 steps = [
-                    f"\\text{{Expresión con variable iterativa no acotada: }} {expr}",
-                    f"\\text{{Esta variable representa el número de iteraciones de un bucle no acotado.}}",
-                    f"\\text{{Requiere análisis adicional o asumir límites para acotar.}}",
-                    f"\\text{{Resultado: }} {expr}"
+                    expr,
+                    f"\\text{{{self._labels['unbounded_var_note']}}}",
+                    f"\\text{{{self._labels['unbounded_requires']}}}",
+                    expr
                 ]
                 return expr, steps
         
@@ -292,7 +297,7 @@ class SummationCloser:
         # Esto maneja casos como "(n) - (2) + 2" → "n"
         simplified_expr = self._simplify_algebraic_expression(expr, variable)
         if simplified_expr != expr:
-            steps = [f"\\text{{Simplificando expresión algebraica: }} {expr} → {simplified_expr}"]
+            steps = [f"{expr} → {simplified_expr}"]
             expr = simplified_expr
         else:
             steps = []
@@ -324,10 +329,10 @@ class SummationCloser:
             
             # Si el resultado es diferente a la entrada, agregar paso final
             if closed_latex != expr:
-                if steps and not any("Resultado final" in step or "Forma final" in step for step in steps):
-                    steps.append(f"\\text{{Resultado final: }} {closed_latex}")
+                if steps:
+                    steps.append(closed_latex)
             elif not steps:
-                steps.append(f"\\text{{Resultado: }} {closed_latex}")
+                steps.append(closed_latex)
             
             return closed_latex, steps
         except Exception as e:
@@ -336,7 +341,7 @@ class SummationCloser:
             traceback.print_exc()
             # Fallback: devolver expresión original
             if not steps:
-                steps.append(f"\\text{{No se pudo simplificar: }} {expr}")
+                steps.append(expr)
             return expr, steps
     
     def _detect_pattern(self, expr: str) -> str:
@@ -387,20 +392,11 @@ class SummationCloser:
             
             # Generar paso explicativo
             if start == '1' and end == variable:
-                steps.append(
-                    f"\\text{{Aplicando fórmula de sumatoria constante: }} "
-                    f"\\sum_{{{var}={start}}}^{{{end}}} 1 = {end}"
-                )
+                steps.append(f"\\sum_{{{var}={start}}}^{{{end}}} 1 = {end}")
             elif start == '0' and end == variable:
-                steps.append(
-                    f"\\text{{Aplicando fórmula de sumatoria constante: }} "
-                    f"\\sum_{{{var}={start}}}^{{{end}}} 1 = {end} + 1"
-                )
+                steps.append(f"\\sum_{{{var}={start}}}^{{{end}}} 1 = {end} + 1")
             else:
-                steps.append(
-                    f"\\text{{Aplicando fórmula de sumatoria constante: }} "
-                    f"\\sum_{{{var}={start}}}^{{{end}}} 1 = {end} - {start} + 1"
-                )
+                steps.append(f"\\sum_{{{var}={start}}}^{{{end}}} 1 = {end} - {start} + 1")
         
         return steps
     
@@ -417,15 +413,9 @@ class SummationCloser:
             outer_var, outer_start, outer_end = outer_match.groups()
             
             if inner_end == outer_var:  # Triangular: \sum_{i=1}^{n} \sum_{j=1}^{i} 1
+                steps.append(f"\\sum_{{{inner_var}={inner_start}}}^{{{inner_end}}} 1 = {inner_end}")
+                steps.append(f"\\sum_{{{outer_var}={outer_start}}}^{{{outer_end}}} {outer_var}")
                 steps.append(
-                    f"\\text{{Evaluando sumatoria interna: }} "
-                    f"\\sum_{{{inner_var}={inner_start}}}^{{{inner_end}}} 1 = {inner_end}"
-                )
-                steps.append(
-                    f"\\text{{Sustituyendo: }} \\sum_{{{outer_var}={outer_start}}}^{{{outer_end}}} {outer_var}"
-                )
-                steps.append(
-                    f"\\text{{Aplicando fórmula de suma aritmética: }} "
                     f"\\sum_{{{outer_var}={outer_start}}}^{{{outer_end}}} {outer_var} = \\frac{{{outer_end}({outer_end}+1)}}{{2}}"
                 )
         
@@ -446,21 +436,15 @@ class SummationCloser:
             outer_var, outer_start, outer_end = outer_match.groups()
             
             steps.append(
-                f"\\text{{Evaluando sumatoria interna: }} "
                 f"\\sum_{{{inner_var}={inner_start}}}^{{{inner_end}}} 1 = {inner_end} - {inner_start} + 1"
             )
             
             # Simplificar si es posible
             if inner_start == '1':
-                steps.append(
-                    f"\\text{{Simplificando: }} {inner_end} - 1 + 1 = {inner_end}"
-                )
+                steps.append(f"{inner_end} - 1 + 1 = {inner_end}")
             
+            steps.append(f"\\sum_{{{outer_var}={outer_start}}}^{{{outer_end}}} ({inner_end})")
             steps.append(
-                f"\\text{{Sustituyendo: }} \\sum_{{{outer_var}={outer_start}}}^{{{outer_end}}} ({inner_end})"
-            )
-            steps.append(
-                f"\\text{{Aplicando factor constante: }} "
                 f"{inner_end} \\cdot \\sum_{{{outer_var}={outer_start}}}^{{{outer_end}}} 1 = "
                 f"{inner_end} \\cdot ({outer_end} - {outer_start} + 1)"
             )
@@ -483,7 +467,6 @@ class SummationCloser:
                 if start_val == 1:
                     # Caso especial: suma desde 1
                     steps.append(
-                        f"\\text{{Aplicando fórmula de suma aritmética: }} "
                         f"\\sum_{{{var}={start}}}^{{{end}}} {var} = \\frac{{{end}({end}+1)}}{{2}}"
                     )
                 else:
@@ -491,18 +474,15 @@ class SummationCloser:
                     # Fórmula: Σ_{i=a}^{b} i = (b(b+1))/2 - ((a-1)a)/2
                     start_minus_one = start_val - 1
                     steps.append(
-                        f"\\text{{Aplicando fórmula de suma aritmética: }} "
                         f"\\sum_{{{var}={start}}}^{{{end}}} {var} = "
                         f"\\sum_{{{var}=1}}^{{{end}}} {var} - \\sum_{{{var}=1}}^{{{start_minus_one}}} {var}"
                     )
                     steps.append(
-                        f"\\text{{Evaluando: }} "
                         f"\\frac{{{end}({end}+1)}}{{2}} - \\frac{{{start_minus_one}({start})}}{{2}}"
                     )
             except Exception:
                 # Si no se puede convertir a números, usar fórmula general
                 steps.append(
-                    f"\\text{{Aplicando fórmula de suma aritmética: }} "
                     f"\\sum_{{{var}={start}}}^{{{end}}} {var} = "
                     f"\\frac{{{end}({end}+1) - {start}({start}-1)}}{{2}}"
                 )
@@ -515,10 +495,10 @@ class SummationCloser:
         
         # Intentar simplificar paso a paso
         try:
-            steps.append(f"\\text{{Simplificando expresión: }} {expr}")
+            steps.append(expr)
             # SymPy manejará la simplificación
         except Exception:
-            steps.append(f"\\text{{No se pudo simplificar automáticamente: }} {expr}")
+            steps.append(expr)
         
         return steps
     
@@ -1307,7 +1287,7 @@ class SummationCloser:
             steps = self._generate_arithmetic_sum_steps(expr_latex, variable)
         else:
             # Expresión simple sin patrón conocido
-            steps = [f"\\text{{Expresión: }} {expr_latex}"]
+            steps = [expr_latex]
         
         return steps
     
@@ -1396,7 +1376,7 @@ class SummationCloser:
         else:
             # No hay sumatorias, es una expresión simple
             expr_latex = self._sympy_to_latex(expr)
-            steps.append(f"\\text{{Expresión: }} {expr_latex}")
+            steps.append(expr_latex)
         
         return steps
     
@@ -1459,7 +1439,7 @@ class SummationCloser:
                     body_latex = latex(body)
                     sum_latex = f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {body_latex}"
                     
-                    steps.append(f"\\text{{Sumatoria: }} {sum_latex}")
+                    steps.append(sum_latex)
                     
                     # Analizar el cuerpo
                     # Verificar si el cuerpo es constante respecto a la variable de suma
@@ -1491,18 +1471,18 @@ class SummationCloser:
                         formula_latex = latex(formula_expr)
                         
                         steps.append(
-                            f"\\text{{Aplicando fórmula de sumatoria constante: }} "
+                            f"\\text{{{self._labels['applying_constant_formula']} }} "
                             f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} 1 = {formula_latex}"
                         )
                         # Si la simplificación cambia algo, mostrar el paso
                         if result_latex != formula_latex:
                             steps.append(
-                                f"\\text{{Simplificando: }} {formula_latex} = {result_latex}"
+                                f"\\text{{{self._labels['simplifying']} }} {formula_latex} = {result_latex}"
                             )
                         else:
                             # Asegurar que el resultado final esté en los pasos
                             if result_latex not in steps[-1]:
-                                steps.append(f"\\text{{Resultado: }} {result_latex}")
+                                steps.append(result_latex)
                     # Si el cuerpo es la variable de la sumatoria, es una suma aritmética
                     # DEBE ir ANTES del caso de factor constante
                     elif is_arithmetic_sum:
@@ -1531,12 +1511,12 @@ class SummationCloser:
                             if start == Int(1) or (isinstance(start, Integer) and int(start) == 1):
                                 # Caso especial: suma desde 1
                                 steps.append(
-                                    f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                    f"\\text{{{self._labels['applying_arithmetic_formula']} }} "
                                     f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
                                     f"\\frac{{{end_latex} \\left({end_latex} + 1\\right)}}{{2}}"
                                 )
                                 if result_latex not in steps[-1]:
-                                    steps.append(f"\\text{{Resultado: }} {result_latex}")
+                                    steps.append(result_latex)
                             else:
                                 # Caso general: suma desde a hasta b
                                 # Mostrar fórmula: Σ_{i=a}^{b} i = Σ_{i=1}^{b} i - Σ_{i=1}^{a-1} i
@@ -1555,12 +1535,12 @@ class SummationCloser:
                                         result_manual_latex = latex(result_manual)
                                         
                                         steps.append(
-                                            f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                            f"\\text{{{self._labels['applying_arithmetic_formula']} }} "
                                             f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
                                             f"\\sum_{{{var_latex}=1}}^{{{end_latex}}} {var_latex} - \\sum_{{{var_latex}=1}}^{{{start_minus_one_latex}}} {var_latex}"
                                         )
                                         steps.append(
-                                            f"\\text{{Evaluando: }} "
+                                            f"\\text{{{self._labels['evaluating']} }} "
                                             f"\\frac{{{end_latex}({end_latex}+1)}}{{2}} - \\frac{{({start_val-1})({start_val})}}{{2}} = {result_manual_latex}"
                                         )
                                         
@@ -1573,24 +1553,24 @@ class SummationCloser:
                                     else:
                                         # start no es un Integer, usar expresión general
                                         steps.append(
-                                            f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                            f"\\text{{{self._labels['applying_arithmetic_formula']} }} "
                                             f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
                                             f"\\sum_{{{var_latex}=1}}^{{{end_latex}}} {var_latex} - \\sum_{{{var_latex}=1}}^{{{start_minus_one_latex}}} {var_latex}"
                                         )
                                         steps.append(
-                                            f"\\text{{Evaluando: }} "
+                                            f"\\text{{{self._labels['evaluating']} }} "
                                             f"\\frac{{{end_latex}({end_latex}+1)}}{{2}} - \\frac{{{start_minus_one_latex}({start_latex})}}{{2}} = {result_latex}"
                                         )
                                 except Exception as e3:
                                     print(f"[SummationCloser] Error calculando manualmente: {e3}")
                                     # Usar resultado de summation()
                                     steps.append(
-                                        f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                        f"\\text{{{self._labels['applying_arithmetic_formula']} }} "
                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
                                         f"\\sum_{{{var_latex}=1}}^{{{end_latex}}} {var_latex} - \\sum_{{{var_latex}=1}}^{{{start_minus_one_latex}}} {var_latex}"
                                     )
                                     steps.append(
-                                        f"\\text{{Evaluando: }} "
+                                        f"\\text{{{self._labels['evaluating']} }} "
                                         f"\\frac{{{end_latex}({end_latex}+1)}}{{2}} - \\frac{{{start_minus_one_latex}({start_latex})}}{{2}} = {result_latex}"
                                     )
                         except Exception as e:
@@ -1606,7 +1586,7 @@ class SummationCloser:
                                 
                                 if start == Int(1) or (isinstance(start, Integer) and int(start) == 1):
                                     steps.append(
-                                        f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                        f"\\text{{{self._labels['applying_arithmetic_formula']} }} "
                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
                                         f"\\frac{{{end_latex} \\left({end_latex} + 1\\right)}}{{2}}"
                                     )
@@ -1614,30 +1594,30 @@ class SummationCloser:
                                     start_minus_one = simplify(start - Int(1))
                                     start_minus_one_latex = latex(start_minus_one)
                                     steps.append(
-                                        f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                        f"\\text{{{self._labels['applying_arithmetic_formula']} }} "
                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
                                         f"\\sum_{{{var_latex}=1}}^{{{end_latex}}} {var_latex} - \\sum_{{{var_latex}=1}}^{{{start_minus_one_latex}}} {var_latex}"
                                     )
                                     steps.append(
-                                        f"\\text{{Evaluando: }} "
+                                        f"\\text{{{self._labels['evaluating']} }} "
                                         f"\\frac{{{end_latex}({end_latex}+1)}}{{2}} - \\frac{{{start_minus_one_latex}({start_latex})}}{{2}} = {result_latex}"
                                     )
                             except Exception as e2:
                                 print(f"[SummationCloser] Error con doit() también: {e2}")
                                 # Último fallback: fórmula general
                                 steps.append(
-                                    f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                    f"\\text{{{self._labels['applying_arithmetic_formula']} }} "
                                     f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
                                     f"\\frac{{{end_latex} \\left({end_latex} + 1\\right) - {start_latex} \\left({start_latex} - 1\\right)}}{{2}}"
                                 )
                                 result_latex = f"\\frac{{{end_latex} \\left({end_latex} + 1\\right) - {start_latex} \\left({start_latex} - 1\\right)}}{{2}}"
                         
                         # Asegurar que el resultado final esté en los pasos si no está ya
-                        if steps and result_latex not in steps[-1] and "Resultado" not in steps[-1]:
+                        if steps and result_latex not in steps[-1]:
                             # Verificar si el último paso ya muestra el resultado
                             last_step_has_result = any(result_latex in step for step in steps)
                             if not last_step_has_result:
-                                steps.append(f"\\text{{Resultado: }} {result_latex}")
+                                steps.append(result_latex)
                         
                         # Retornar el resultado evaluado
                         return steps, result_simplified
@@ -1651,12 +1631,10 @@ class SummationCloser:
                         body_latex_display = latex(body)
                         
                         steps.append(
-                            f"\\text{{Aplicando factor constante: }} "
                             f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {body_latex_display} = "
                             f"{body_latex_display} \\cdot \\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} 1"
                         )
                         steps.append(
-                            f"\\text{{Evaluando sumatoria constante: }} "
                             f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} 1 = {end_latex} - {start_latex} + 1"
                         )
                         # Simplificar si es necesario
@@ -1665,10 +1643,10 @@ class SummationCloser:
                         const_count_latex = latex(const_count_simplified)
                         if const_count_latex != f"{end_latex} - {start_latex} + 1":
                             steps.append(
-                                f"\\text{{Simplificando: }} {end_latex} - {start_latex} + 1 = {const_count_latex}"
+                                f"{end_latex} - {start_latex} + 1 = {const_count_latex}"
                             )
                         steps.append(
-                            f"\\text{{Multiplicando: }} {body_latex_display} \\cdot {const_count_latex} = {result_latex}"
+                            f"{body_latex_display} \\cdot {const_count_latex} = {result_latex}"
                         )
                     # Si el cuerpo depende de la variable de forma lineal (como -i + n + 1)
                     else:
@@ -1698,7 +1676,7 @@ class SummationCloser:
                                 const_terms_latex = latex(SymAdd(*constant_terms))
                                 
                                 steps.append(
-                                    f"\\text{{Aplicando propiedad de linealidad: }} "
+                                    f"\\text{{{self._labels['applying_linearity']} }} "
                                     f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} "
                                     f"\\left({terms_var_latex} + {const_terms_latex}\\right) = "
                                     f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} + "
@@ -1717,7 +1695,6 @@ class SummationCloser:
                                         const_result_simplified = simplify(const_result)
                                         const_result_latex = latex(const_result_simplified)
                                         steps.append(
-                                            f"\\text{{Evaluando sumatoria constante: }} "
                                             f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {const_terms_latex} = {const_result_latex}"
                                         )
                                     except Exception:
@@ -1761,7 +1738,7 @@ class SummationCloser:
                                                         total_latex = latex(total_simplified)
                                                         
                                                         steps.append(
-                                                            f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                                            f"\\text{{{self._labels['applying_arithmetic_formula']} }} "
                                                             f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = "
                                                             f"{coeff_latex} \\cdot \\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
                                                             f"{coeff_latex} \\cdot {var_sum_latex} = {total_latex}"
@@ -1769,13 +1746,13 @@ class SummationCloser:
                                                         var_result_latex = total_latex
                                                     else:
                                                         steps.append(
-                                                            f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                                            f"\\text{{{self._labels['applying_arithmetic_formula']} }} "
                                                             f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = {var_sum_latex}"
                                                         )
                                                         var_result_latex = var_sum_latex
                                                 except Exception:
                                                     steps.append(
-                                                        f"\\text{{Evaluando sumatoria: }} "
+                                                        f"\\text{{{self._labels['evaluating_summation']} }} "
                                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
                                                     )
                                             else:
@@ -1786,13 +1763,13 @@ class SummationCloser:
                                                     var_sum_simplified = simplify(var_sum_result)
                                                     var_sum_latex = latex(var_sum_simplified)
                                                     steps.append(
-                                                        f"\\text{{Evaluando sumatoria: }} "
+                                                        f"\\text{{{self._labels['evaluating_summation']} }} "
                                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = {var_sum_latex}"
                                                     )
                                                     var_result_latex = var_sum_latex
                                                 except Exception:
                                                     steps.append(
-                                                        f"\\text{{Evaluando sumatoria: }} "
+                                                        f"\\text{{{self._labels['evaluating_summation']} }} "
                                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
                                                     )
                                         else:
@@ -1804,13 +1781,13 @@ class SummationCloser:
                                                     var_sum_simplified = simplify(var_sum_result)
                                                     var_sum_latex = latex(var_sum_simplified)
                                                     steps.append(
-                                                        f"\\text{{Aplicando fórmula de suma aritmética: }} "
+                                                        f"\\text{{{self._labels['applying_arithmetic_formula']} }} "
                                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = {var_sum_latex}"
                                                     )
                                                     var_result_latex = var_sum_latex
                                                 except Exception:
                                                     steps.append(
-                                                        f"\\text{{Evaluando sumatoria: }} "
+                                                        f"\\text{{{self._labels['evaluating_summation']} }} "
                                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
                                                     )
                                             else:
@@ -1821,13 +1798,13 @@ class SummationCloser:
                                                     var_sum_simplified = simplify(var_sum_result)
                                                     var_sum_latex = latex(var_sum_simplified)
                                                     steps.append(
-                                                        f"\\text{{Evaluando sumatoria: }} "
+                                                        f"\\text{{{self._labels['evaluating_summation']} }} "
                                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = {var_sum_latex}"
                                                     )
                                                     var_result_latex = var_sum_latex
                                                 except Exception:
                                                     steps.append(
-                                                        f"\\text{{Evaluando sumatoria: }} "
+                                                        f"\\text{{{self._labels['evaluating_summation']} }} "
                                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
                                                     )
                                     else:
@@ -1838,30 +1815,30 @@ class SummationCloser:
                                             var_sum_simplified = simplify(var_sum_result)
                                             var_sum_latex = latex(var_sum_simplified)
                                             steps.append(
-                                                f"\\text{{Evaluando sumatoria: }} "
+                                                f"\\text{{{self._labels['evaluating_summation']} }} "
                                                 f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = {var_sum_latex}"
                                             )
                                             var_result_latex = var_sum_latex
                                         except Exception:
                                             steps.append(
-                                                f"\\text{{Evaluando sumatoria: }} "
+                                                f"\\text{{{self._labels['evaluating_summation']} }} "
                                                 f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
                                             )
                             
                             elif terms_with_var:
                                 # Solo términos que dependen de la variable
                                 steps.append(
-                                    f"\\text{{Evaluando sumatoria con cuerpo dependiente de la variable: }} {sum_latex}"
+                                    f"\\text{{{self._labels['evaluating_dependent_body']} }} {sum_latex}"
                                 )
                             else:
                                 # Solo términos constantes (debería haber sido detectado antes como constante)
                                 steps.append(
-                                    f"\\text{{Aplicando fórmula de sumatoria constante: }} {sum_latex}"
+                                    f"\\text{{{self._labels['applying_constant_formula']} }} {sum_latex}"
                                 )
                         else:
                             # No es una Add, es una expresión más compleja
                             steps.append(
-                                f"\\text{{Evaluando sumatoria: }} {sum_latex}"
+                                f"\\text{{{self._labels['evaluating_summation']} }} {sum_latex}"
                             )
                         
                         # Agregar resultado final combinado si hay partes separadas (solo dentro del bloque Add)
@@ -1874,7 +1851,7 @@ class SummationCloser:
                                     total_simplified = simplify(total_expr)
                                     total_latex = latex(total_simplified)
                                     steps.append(
-                                        f"\\text{{Combinando resultados: }} {var_result_latex} + {const_result_latex} = {total_latex}"
+                                        f"\\text{{{self._labels['combining_results']} }} {var_result_latex} + {const_result_latex} = {total_latex}"
                                     )
                                 except Exception:
                                     pass
@@ -1886,25 +1863,25 @@ class SummationCloser:
                             evaluated_latex = latex(evaluated_simplified)
                             # Solo agregar si no está ya en los pasos
                             if evaluated_latex not in " ".join(steps):
-                                steps.append(f"\\text{{Resultado: }} {evaluated_latex}")
+                                steps.append(evaluated_latex)
                         except Exception:
                             pass
                 except (TypeError, IndexError, AttributeError):
                     # No se puede acceder a limits como secuencia o tiene estructura inesperada
                     try:
                         sum_latex = latex(sum_expr)
-                        steps.append(f"\\text{{Sumatoria: }} {sum_latex}")
+                        steps.append(sum_latex)
                     except Exception:
-                        steps.append(f"\\text{{Error: no se pudo procesar la sumatoria}}")
+                        steps.append(f"\\text{{{self._labels['error_processing']}}}")
         except Exception as e:
             print(f"[SummationCloser] Error analizando sumatoria: {e}")
             import traceback
             traceback.print_exc()
             try:
                 sum_latex = latex(sum_expr)
-                steps.append(f"\\text{{Sumatoria: }} {sum_latex}")
+                steps.append(sum_latex)
             except Exception:
-                steps.append(f"\\text{{Error: no se pudo procesar la sumatoria}}")
+                steps.append(f"\\text{{{self._labels['error_processing']}}}")
         
         return steps
     
@@ -1954,7 +1931,7 @@ class SummationCloser:
                     
                     # Mostrar estructura anidada
                     steps.append(
-                        f"\\text{{Sumatorias anidadas: }} "
+                        f"\\text{{{self._labels['nested_summations']} }} "
                         f"\\sum_{{{outer_var_latex}={outer_start_latex}}}^{{{outer_end_latex}}} "
                         f"\\left(\\sum_{{{inner_var_latex}={inner_start_latex}}}^{{{inner_end_latex}}} {inner_body_latex}\\right)"
                     )
@@ -1962,7 +1939,7 @@ class SummationCloser:
                     # Si el cuerpo interno es 1, es una sumatoria constante anidada
                     if inner_body == Int(1) or inner_body == 1:
                         steps.append(
-                            f"\\text{{Evaluando sumatoria interna: }} "
+                            f"\\text{{{self._labels['evaluating_inner']} }} "
                             f"\\sum_{{{inner_var_latex}={inner_start_latex}}}^{{{inner_end_latex}}} 1 = {inner_end_latex} - {inner_start_latex} + 1"
                         )
                         
@@ -1974,26 +1951,25 @@ class SummationCloser:
                             inner_result_latex = latex(inner_result_simplified)
                             
                             steps.append(
-                                f"\\text{{Simplificando: }} {inner_end_latex} - {inner_start_latex} + 1 = {inner_result_latex}"
+                                f"\\text{{{self._labels['simplifying']} }} {inner_end_latex} - {inner_start_latex} + 1 = {inner_result_latex}"
                             )
                             
                             # Sustituir en la sumatoria externa
                             steps.append(
-                                f"\\text{{Sustituyendo en sumatoria externa: }} "
+                                f"\\text{{{self._labels['substituting_outer']} }} "
                                 f"\\sum_{{{outer_var_latex}={outer_start_latex}}}^{{{outer_end_latex}}} {inner_result_latex}"
                             )
                             
                             # Si el resultado interno no depende de la variable externa, es constante
                             if not inner_result_expr.has(outer_var):
                                 steps.append(
-                                    f"\\text{{Aplicando factor constante: }} "
                                     f"{inner_result_latex} \\cdot \\sum_{{{outer_var_latex}={outer_start_latex}}}^{{{outer_end_latex}}} 1 = "
                                     f"{inner_result_latex} \\cdot ({outer_end_latex} - {outer_start_latex} + 1)"
                                 )
                             else:
                                 # El resultado interno depende de la variable externa (caso triangular o dependiente)
                                 steps.append(
-                                    f"\\text{{Evaluando sumatoria externa con límite dependiente: }} "
+                                    f"\\text{{{self._labels['evaluating_outer_dependent']} }} "
                                     f"\\sum_{{{outer_var_latex}={outer_start_latex}}}^{{{outer_end_latex}}} {inner_result_latex}"
                                 )
                                 
@@ -2036,7 +2012,7 @@ class SummationCloser:
                                         # Intentar evaluar de nuevo si el LaTeX todavía tiene variables
                                         print(f"[SummationCloser] Advertencia: Resultado LaTeX todavía contiene variables de iteración: {outer_result_latex}")
                                     
-                                    steps.append(f"\\text{{Resultado: }} {outer_result_latex}")
+                                    steps.append(outer_result_latex)
                                 except Exception as eval_error:
                                     print(f"[SummationCloser] Error evaluando sumatoria externa: {eval_error}")
                         except Exception as e:
@@ -2045,7 +2021,7 @@ class SummationCloser:
             # Una sola sumatoria o ninguna
             for i, sum_expr in enumerate(sums):
                 sum_latex = latex(sum_expr)
-                steps.append(f"\\text{{Sumatoria: }} {sum_latex}")
+                steps.append(sum_latex)
         
         return steps
     
@@ -2112,7 +2088,7 @@ class SummationCloser:
                 if not limits_info:
                     # No se pudieron extraer los límites
                     sum_latex = latex(sum_expr)
-                    steps.append(f"\\text{{Sumatoria: }} {sum_latex}")
+                    steps.append(sum_latex)
                     return steps
                 
                 # Construir representación de sumatorias anidadas (de externa a interna)
@@ -2129,7 +2105,7 @@ class SummationCloser:
                 for limit_info in reversed(limits_info):  # Empezar con interno ([-1]), terminar con externo ([0])
                     sum_chain = f"\\sum_{{{limit_info['var_latex']}={limit_info['start_latex']}}}^{{{limit_info['end_latex']}}} {sum_chain}"
                 
-                steps.append(f"\\text{{Sumatorias anidadas: }} {sum_chain}")
+                steps.append(sum_chain)
                 
                 # Para el análisis, usar el más interno y el más externo
                 # inner_limits = all_limits[-1]  # Último límite = más interno - No usado
@@ -2164,19 +2140,19 @@ class SummationCloser:
                     inner_result_unsimplified_latex = latex(inner_result_unsimplified)
                     
                     steps.append(
-                        f"\\text{{Evaluando sumatoria interna: }} "
+                        f"\\text{{{self._labels['evaluating_inner']} }} "
                         f"\\sum_{{{inner_var_latex}={inner_start_latex}}}^{{{inner_end_latex}}} 1 = {inner_result_unsimplified_latex}"
                     )
                     
                     # Mostrar el paso de simplificación si cambia
                     if inner_result_latex != inner_result_unsimplified_latex:
                         steps.append(
-                            f"\\text{{Simplificando: }} {inner_result_unsimplified_latex} = {inner_result_latex}"
+                            f"\\text{{{self._labels['simplifying']} }} {inner_result_unsimplified_latex} = {inner_result_latex}"
                         )
                     
                     # Sustituir en la sumatoria externa
                     steps.append(
-                        f"\\text{{Sustituyendo en sumatoria externa: }} "
+                        f"\\text{{{self._labels['substituting_outer']} }} "
                         f"\\sum_{{{outer_var_latex}={outer_start_latex}}}^{{{outer_end_latex}}} {inner_result_latex}"
                     )
                     
@@ -2184,13 +2160,12 @@ class SummationCloser:
                     if inner_result_expr.has(outer_var):
                         # El resultado interno depende de la variable externa (caso triangular o dependiente)
                         steps.append(
-                            f"\\text{{Evaluando sumatoria externa con límite dependiente: }} "
+                            f"\\text{{{self._labels['evaluating_outer_dependent']} }} "
                             f"\\sum_{{{outer_var_latex}={outer_start_latex}}}^{{{outer_end_latex}}} {inner_result_latex}"
                         )
                     else:
                         # El resultado interno NO depende de la variable externa, es constante
                         steps.append(
-                            f"\\text{{Aplicando factor constante: }} "
                             f"{inner_result_latex} \\cdot \\sum_{{{outer_var_latex}={outer_start_latex}}}^{{{outer_end_latex}}} 1 = "
                             f"{inner_result_latex} \\cdot ({outer_end_latex} - {outer_start_latex} + 1)"
                         )
@@ -2244,7 +2219,7 @@ class SummationCloser:
                         print(f"[SummationCloser] Advertencia: Resultado LaTeX todavía contiene variables de iteración: {evaluated_latex}")
                     
                     if evaluated_latex not in " ".join(steps):
-                        steps.append(f"\\text{{Resultado: }} {evaluated_latex}")
+                        steps.append(evaluated_latex)
                 except Exception as e:
                     print(f"[SummationCloser] Error evaluando sumatoria múltiple: {e}")
                     # e se usa en el print, así que está bien

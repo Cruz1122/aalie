@@ -48,7 +48,8 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
         api_key=payload.api_key,
         avg_model=avg_model,
         algorithm_kind=payload.algorithm_kind,
-        preferred_method=payload.preferred_method
+        preferred_method=payload.preferred_method,
+        locale=payload.locale
     )
 
 

@@ -203,22 +203,23 @@ export async function detectAndSelectMethod(
 
 /**
  * Detecta el método usado en el análisis recursivo.
+ * Devuelve la clave de traducción (analyzer.methods.*), no el texto.
  */
 export function detectRecursiveMethod(
   worst: AnalyzeOpenResponse | null | undefined,
   best: AnalyzeOpenResponse | null | undefined,
-): string {
+): "characteristicEquation" | "iterationMethod" | "recursionTree" | "masterTheorem" {
   const method =
     worst?.totals?.recurrence?.method || best?.totals?.recurrence?.method;
 
   if (method === "characteristic_equation") {
-    return "Ecuación Característica";
+    return "characteristicEquation";
   } else if (method === "iteration") {
-    return "Método de Iteración";
+    return "iterationMethod";
   } else if (method === "recursion_tree") {
-    return "Método de Árbol de Recursión";
+    return "recursionTree";
   } else {
-    return "Teorema Maestro";
+    return "masterTheorem";
   }
 }
 
@@ -226,17 +227,17 @@ export function detectRecursiveMethod(
  * Actualiza el mensaje de análisis según el método detectado.
  */
 export function updateAnalysisMessageForMethod(
-  method: string,
+  methodKey: "characteristicEquation" | "iterationMethod" | "recursionTree" | "masterTheorem",
   setAnalysisMessage: (value: string) => void,
   getMessage?: GetAnalysisMessage,
 ): void {
   const msg = (key: string, fallback: string) =>
     getMessage ? getMessage(key) : fallback;
-  if (method === "Ecuación Característica") {
+  if (methodKey === "characteristicEquation") {
     setAnalysisMessage(msg("applyingCharacteristic", "Aplicando Método de Ecuación Característica..."));
-  } else if (method === "Método de Iteración") {
+  } else if (methodKey === "iterationMethod") {
     setAnalysisMessage(msg("applyingIteration", "Aplicando Método de Iteración..."));
-  } else if (method === "Método de Árbol de Recursión") {
+  } else if (methodKey === "recursionTree") {
     setAnalysisMessage(msg("applyingRecursionTree", "Aplicando Método de Árbol de Recursión..."));
   } else {
     setAnalysisMessage(msg("applyingMaster", "Aplicando Teorema Maestro..."));

@@ -1,7 +1,7 @@
 "use client";
 
 import type { AnalyzeOpenResponse, ParseError, ParseResponse, Program } from "@aa/types";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { AnalysisLoader } from "@/components/AnalysisLoader";
@@ -42,8 +42,10 @@ type ClassifyResponse = { kind: "iterative" | "recursive" | "hybrid" | "unknown"
 type CaseType = 'worst' | 'average' | 'best';
 
 export default function AnalyzerPage() {
+  const locale = useLocale();
   const { animateProgress } = useAnalysisProgress();
   const t = useTranslations("analyzer.progress");
+  const tMethods = useTranslations("analyzer.methods");
   const tAlgorithmType = useTranslations("analyzer.algorithmType");
   const tView = useTranslations("analyzer.view");
   const getMessage = (key: string) => t(key);
@@ -387,6 +389,7 @@ export default function AnalyzerPage() {
         avgModel?: { mode: string; predicates?: Record<string, string> };
         algorithm_kind?: string;
         preferred_method?: MethodType;
+        locale?: string;
       } = { 
         source, 
         mode: "all",
@@ -394,7 +397,8 @@ export default function AnalyzerPage() {
           mode: "uniform",
           predicates: {}
         },
-        algorithm_kind: kind  // Enviar el tipo de algoritmo al backend
+        algorithm_kind: kind,  // Enviar el tipo de algoritmo al backend
+        locale: locale === "es" ? "es" : "en",  // Etiquetas del procedimiento en el idioma del usuario
       };
       
       // Solo agregar preferred_method si es recursivo y hay un método seleccionado
@@ -462,11 +466,11 @@ export default function AnalyzerPage() {
       }
 
       // 6) Detectar el método usado y actualizar mensaje
-      let detectedMethod = "método recursivo";
+      let methodKey: "characteristicEquation" | "iterationMethod" | "recursionTree" | "masterTheorem" | "iterativeAnalysis" = "iterativeAnalysis";
       if (isRecursive && analyzeRes.worst?.totals?.recurrence) {
         const bestForDetection = analyzeRes.best === "same_as_worst" ? null : analyzeRes.best;
-        detectedMethod = detectRecursiveMethod(analyzeRes.worst, bestForDetection);
-        updateAnalysisMessageForMethod(detectedMethod, setAnalysisMessage, getMessage);
+        methodKey = detectRecursiveMethod(analyzeRes.worst, bestForDetection);
+        updateAnalysisMessageForMethod(methodKey, setAnalysisMessage, getMessage);
         await new Promise((resolve) => setTimeout(resolve, 300));
       }
       
@@ -495,7 +499,7 @@ export default function AnalyzerPage() {
       // Debug: verificar que el tipo de algoritmo sea correcto
       console.log('[Analyzer] Datos actualizados:', {
         algorithmType: algorithmType || "recursive (detectado desde datos)",
-        method: detectedMethod,
+        method: methodKey,
         hasWorst: !!analyzeRes.worst,
         hasBest: !!analyzeRes.best,
         hasAvg: !!analyzeRes.avg,
@@ -506,7 +510,7 @@ export default function AnalyzerPage() {
       });
 
       // 7) Mostrar completado y cerrar de forma suave
-      setAnalysisMessage(`Análisis completo con ${detectedMethod}`);
+      setAnalysisMessage(t("completeWithMethod", { method: tMethods(methodKey) }));
       setIsAnalysisComplete(true);
       
       // Animar a 100% antes de cerrar
@@ -1803,7 +1807,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                       <button
                         onClick={() => {
                           if (!ast) return;
-                          const analysis = analyzeASTForGPUCPU(ast);
+                          const analysis = analyzeASTForGPUCPU(ast, (locale === "es" ? "es" : "en") as "en" | "es");
                           setGpuCpuAnalysis(analysis);
                           setShowGPUCPUModal(true);
                         }}

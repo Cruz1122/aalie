@@ -17,6 +17,7 @@ class AnalyzeRequest(BaseModel):
     avgModel: Optional[AvgModelConfig] = None  # Modelo probabilístico para caso promedio
     algorithm_kind: Optional[str] = None  # "iterative" | "recursive" | "hybrid" | "unknown"
     preferred_method: Optional[str] = None  # "characteristic_equation" | "iteration" | "recursion_tree" | "master"
+    locale: Optional[str] = None  # "en" | "es" - idioma para etiquetas del procedimiento
 
 
 class LineCost(BaseModel):

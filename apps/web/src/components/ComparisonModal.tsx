@@ -1,8 +1,10 @@
 "use client";
 
+import { useLocale } from "next-intl";
 import React from "react";
 
 import { getBestAsymptoticNotation } from "@/lib/asymptotic-notation";
+import { translateProofStep } from "@/lib/proof-step-translator";
 import type { CoreAnalysisData } from "@/lib/extract-core-data";
 
 import Formula from "./Formula";
@@ -1280,7 +1282,10 @@ function renderRecursiveData(
                     <div className="mt-2 text-xs text-blue-200/80">
                       <div className="scale-90 origin-top-left">
                         <Formula
-                          latex={data.recursion_tree.dominating_level.reason}
+                          latex={translateProofStep(
+                            data.recursion_tree.dominating_level.reason,
+                            locale,
+                          )}
                           display
                         />
                       </div>
@@ -1416,6 +1421,8 @@ export default function ComparisonModal({
   note,
   isRecursive,
 }: Readonly<ComparisonModalProps>) {
+  const locale = useLocale() as "en" | "es";
+
   if (!open) return null;
 
   const { icon, text, color, bgColor, borderColor } = parseNote(note);

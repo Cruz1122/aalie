@@ -24,13 +24,16 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
-    def __init__(self):
+    def __init__(self, locale: str = "en"):
         """
         Inicializa una instancia de IterativeAnalyzer.
         
+        Args:
+            locale: Código de idioma para etiquetas del procedimiento ("en" | "es")
+        
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        super().__init__()
+        super().__init__(locale=locale)
         self.big_o: Optional[str] = None
         self.big_omega: Optional[str] = None
         self.big_theta: Optional[str] = None
@@ -153,7 +156,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         
         # Intentar simplificar más agresivamente
         from ..utils.summation_closer import SummationCloser
-        closer = SummationCloser()
+        closer = SummationCloser(locale=self.locale)
         
         # Evaluar todas las sumatorias
         expr = closer._evaluate_all_sums_sympy(expr)
@@ -249,7 +252,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         self.visit(ast, mode)
         
         # Usar SymPy para cerrar sumatorias y generar procedimientos
-        closer = SummationCloser()
+        closer = SummationCloser(locale=self.locale)
         complexity = ComplexityClasses()
         
         # Detectar variable principal (n por defecto)
@@ -269,7 +272,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 from sympy import Integer
                 # Verificar fracaso PRIMERO (más específico)
                 # return -1: nunca ocurre (0)
-                if note and ("fracaso" in note or "nunca ocurre" in note):
+                if note and ("fracaso" in note or "nunca ocurre" in note or "failure" in note or "never occurs" in note):
                     # return -1: nunca ocurre (0)
                     row["count_raw_expr"] = Integer(0)
                     row["count_raw"] = "0"
@@ -278,12 +281,12 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     # Generar procedimiento
                     row["procedure"] = [
                         f"\\text{{Esperanza de ejecuciones para línea {row.get('line', '?')}: }} E[N_{{{row.get('line', '?')}}}] = 0",
-                        "\\text{Resultado: } 0"
+                        "0"
                     ]
                     continue  # Saltar procesamiento normal
                 # Verificar éxito (dentro o fuera del bucle)
                 # Verificar que sea éxito real, no "éxito seguro" en contexto de fracaso
-                elif note and ("éxito seguro" in note or ("éxito" in note and "siempre ocurre" in note and "fracaso" not in note)):
+                elif note and ("éxito seguro" in note or "guaranteed success" in note or ("éxito" in note and "siempre ocurre" in note and "fracaso" not in note)):
                     # return i: siempre ocurre 1 vez, no multiplicado por E[iter]
                     row["count_raw_expr"] = Integer(1)
                     row["count_raw"] = "1"
@@ -292,7 +295,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     # Generar procedimiento
                     row["procedure"] = [
                         f"\\text{{Esperanza de ejecuciones para línea {row.get('line', '?')}: }} E[N_{{{row.get('line', '?')}}}] = 1",
-                        "\\text{Resultado: } 1"
+                        "1"
                     ]
                     continue  # Saltar procesamiento normal
             
@@ -347,7 +350,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                         if steps:
                             procedure_steps.extend(steps)
                         else:
-                            procedure_steps.append(f"\\text{{Resultado: }} E[N_{{{row.get('line', '?')}}}] = {closed_count}")
+                            procedure_steps.append(f"E[N_{{{row.get('line', '?')}}}] = {closed_count}")
                         row["procedure"] = procedure_steps
                     else:
                         # Para worst/best, procedimiento normal
@@ -357,8 +360,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                         else:
                             # Si no hay pasos, generar procedimiento básico
                             row["procedure"] = [
-                                f"\\text{{Expresión original: }} {count_raw_latex_str}",
-                                f"\\text{{Resultado: }} {closed_count}"
+                                count_raw_latex_str,
+                                closed_count
                             ]
                     continue
                 except Exception as e:
@@ -412,7 +415,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     if steps:
                         procedure_steps.extend(steps)
                     else:
-                        procedure_steps.append(f"\\text{{Resultado: }} E[N_{{{row.get('line', '?')}}}] = {closed_count}")
+                        procedure_steps.append(f"E[N_{{{row.get('line', '?')}}}] = {closed_count}")
                     row["procedure"] = procedure_steps
                 else:
                     # Para worst/best, procedimiento normal
@@ -420,8 +423,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                         row["procedure"] = steps
                     else:
                         row["procedure"] = [
-                            f"\\text{{Expresión original: }} {count_raw_latex}",
-                            f"\\text{{Resultado: }} {closed_count}"
+                            count_raw_latex,
+                            closed_count
                         ]
             except Exception as e:
                 print(f"[IterativeAnalyzer] Error cerrando sumatoria para {count_raw_latex}: {e}")
@@ -429,7 +432,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 traceback.print_exc()
                 # Fallback: usar expresión original
                 row["count"] = count_raw_latex
-                row["procedure"] = [f"\\text{{Error al simplificar: }} {count_raw_latex}"]
+                row["procedure"] = [count_raw_latex]
         
         # Calcular T_polynomial y notaciones asintóticas usando SymPy
         # Obtener expresión SymPy de T_open directamente (más robusto que parsear LaTeX)
@@ -669,34 +672,26 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         procedure_steps = []
         
         # Paso 1: Definición de caso promedio
-        procedure_steps.append(
-            "\\text{Paso 1: Definición de caso promedio}"
-        )
+        procedure_steps.append(self._note("proc_step1_def"))
         procedure_steps.append(
             "A(n) = \\sum_{I \\in I_n} T(I) \\cdot p(I)"
         )
         
         # Paso 2: Si es uniforme, mostrar fórmula uniforme
         if self.avg_model.mode == "uniform":
-            procedure_steps.append(
-                "\\text{Paso 2: Modelo uniforme}"
-            )
+            procedure_steps.append(self._note("proc_step2_model"))
             procedure_steps.append(
                 "A(n) = \\frac{1}{|I_n|} \\sum_{I \\in I_n} T(I)"
             )
         
         # Paso 3: Linealidad de la esperanza
-        procedure_steps.append(
-            "\\text{Paso 3: Linealidad de la esperanza}"
-        )
+        procedure_steps.append(self._note("proc_step3_linearity"))
         procedure_steps.append(
             "A(n) = \\sum_{\\ell} C_{\\ell} \\cdot E[N_{\\ell}]"
         )
         
         # Paso 4: Cálculo de E[N_ℓ] por constructo
-        procedure_steps.append(
-            "\\text{Paso 4: Cálculo de } E[N_{\\ell}] \\text{ por constructo}"
-        )
+        procedure_steps.append(self._note("proc_step4_construct"))
         
         # Agregar explicaciones por tipo de constructo encontrado
         constructos_encontrados = set()
@@ -713,74 +708,57 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     has_early_return_avg = True
                     break
             if has_early_return_avg:
-                procedure_steps.append(
-                    "\\text{- FOR con early return: } E[iter] = \\frac{n+1}{2} \\text{ (uniforme condicionado a éxito)}"
-                )
+                procedure_steps.append(self._note("proc_for_early"))
             else:
-                procedure_steps.append(
-                    "\\text{- FOR: } E[N_{cuerpo}] = b - a + 1 \\text{ (determinista)}"
-                )
+                procedure_steps.append(self._note("proc_for_deterministic"))
         if "if" in constructos_encontrados:
             # Verificar si hay early return para mostrar regla correcta
             has_early_return_avg = False
             has_success_return = False
             for row in self.rows:
-                if row.get("kind") == "return" and row.get("note") and "éxito seguro" in row.get("note", ""):
+                if row.get("kind") == "return" and row.get("note") and ("éxito seguro" in row.get("note", "") or "guaranteed success" in row.get("note", "")):
                     has_early_return_avg = True
                     has_success_return = True
                     break
             if has_early_return_avg and has_success_return:
-                procedure_steps.append(
-                    "\\text{- IF con early return: siempre entra en THEN (éxito seguro), no aplicar probabilidades}"
-                )
+                procedure_steps.append(self._note("proc_if_early"))
             else:
-                model_info = self.avg_model.get_model_info()
                 p_str = self.avg_model.get_default_probability()
-                procedure_steps.append(
-                    f"\\text{{- IF: }} E[N_{{then}}] = p \\cdot \\#visitas, E[N_{{else}}] = (1-p) \\cdot \\#visitas \\text{{ (con }} p = {p_str} \\text{{ por defecto)}}"
-                )
+                procedure_steps.append(self._note("proc_if_formula", p_str=p_str))
         if "while" in constructos_encontrados:
-            procedure_steps.append(
-                "\\text{- WHILE: } E[\\#iteraciones] = \\frac{1}{p} \\text{ (geométrico) o símbolo } \\bar{{t}}_{{while}}"
-            )
+            procedure_steps.append(self._note("proc_while_formula"))
         
         # Paso 5: Cierre de sumatorias
-        procedure_steps.append(
-            "\\text{Paso 5: Cierre de sumatorias}"
-        )
+        procedure_steps.append(self._note("proc_step5_summation"))
         t_open = self.build_t_open()
         procedure_steps.append(
             f"A(n) = {t_open}"
         )
         
         # Paso 6: Resultado y modelo
-        procedure_steps.append(
-            "\\text{Paso 6: Resultado y modelo usado}"
-        )
+        procedure_steps.append(self._note("proc_step6_result"))
         # Detectar si estamos en Modelo A (éxito seguro con early return)
         has_success_return = False
         has_failure_return = False
         for row in self.rows:
             if row.get("kind") == "return":
                 note = row.get("note", "")
-                if note and ("éxito seguro" in note or ("éxito" in note and "siempre ocurre" in note)):
+                if note and ("éxito seguro" in note or "guaranteed success" in note or ("éxito" in note and "siempre ocurre" in note)):
                     has_success_return = True
-                if note and ("fracaso" in note or "nunca ocurre" in note):
+                if note and ("fracaso" in note or "nunca ocurre" in note or "failure" in note or "never occurs" in note):
                     has_failure_return = True
         # Si hay early return en bucle y éxito seguro, es Modelo A
         if has_success_return and has_failure_return:
-            model_note = "uniforme (éxito)"
+            model_note = self._note("model_uniform_success")
         else:
-            model_info = self.avg_model.get_model_info()
+            model_info = self.avg_model.get_model_info(locale=self.locale)
             model_note = model_info['note']
-        procedure_steps.append(
-            f"\\text{{Modelo: {model_note}}}"
-        )
+        procedure_steps.append(self._note("proc_model_label", model_note=model_note))
         
         # Agregar hipótesis si hay símbolos
         if self.avg_model.has_symbols():
             procedure_steps.append(
-                "\\text{Hipótesis: Probabilidades simbólicas (p, q, etc.) son constantes > 0}"
+                self._note("hypotheses_symbolic")
             )
         
         # Almacenar en un campo separado para totals.procedure (no en notes)
@@ -816,7 +794,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # coeff_tuple es una tupla normalizada para comparación determinista
         degree_to_coeffs = {}  # {degree: {coeff_tuple: [C_k strings]}}
         
-        closer = SummationCloser()
+        closer = SummationCloser(locale=self.locale)
         
         # Procesar cada fila y extraer coeficientes polinomiales
         for row in self.rows:
@@ -1253,5 +1231,5 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             kind="other",
             ck=ck,
             count=Integer(1),  # Usar Integer(1) de SymPy
-            note=f"Statement {node_type}"
+            note=self._note("statement", node_type=node_type)
         )

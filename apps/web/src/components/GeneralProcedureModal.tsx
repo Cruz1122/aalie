@@ -8,7 +8,8 @@
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 import type { AnalyzeOpenResponse } from "@aa/types";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
 
 import Formula from "./Formula";
 
@@ -82,8 +83,26 @@ export default function GeneralProcedureModal({
   onClose,
   data,
 }: Readonly<GeneralProcedureModalProps>) {
+  const t = useTranslations("analyzer.generalProcedureModal");
+
   // Detectar si es caso promedio
   const isAvgCase = data?.totals?.avg_model_info !== undefined;
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    if (open) {
+      document.body.style.overflow = "hidden";
+      document.addEventListener("keydown", onKey);
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, onClose]);
 
   const tOpen = data?.totals?.A_of_n || data?.totals?.T_open || "";
   const rawPoly = (data?.totals as { T_polynomial?: string })?.T_polynomial;
@@ -130,48 +149,57 @@ export default function GeneralProcedureModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 glass-modal-overlay"
         onClick={onClose}
+        aria-hidden
       />
-      <div className="absolute left-1/2 top-1/2 w-[min(95vw,1000px)] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col">
-        <div className="flex items-center justify-between border-b border-white/10 p-4 flex-shrink-0">
-          <h3 className="text-lg font-semibold text-white">
-            Procedimiento General
+      <div className="relative z-10 w-[min(95vw,1000px)] max-h-[90vh] rounded-2xl glass-modal-container shadow-2xl flex flex-col overflow-hidden mx-4">
+        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 flex-shrink-0 glass-modal-header">
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <span className="material-symbols-outlined text-blue-400">
+              science
+            </span>
+            {t("title")}
           </h3>
           <button
             onClick={onClose}
-            className="text-slate-300 hover:text-white transition-colors p-1 hover:bg-white/10 rounded"
-            aria-label="Cerrar modal"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center"
+            aria-label={t("closeModal")}
           >
-            ✕
+            <span className="material-symbols-outlined text-xl">close</span>
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-custom">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-custom">
           {/* T_open o A(n) */}
-          <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-            <h4 className="text-white font-semibold mb-2">
-              {isAvgCase
-                ? "Ecuación de Eficiencia Promedio A(n)"
-                : "Ecuación de Eficiencia T(n)"}
+          <div className="p-4 rounded-xl glass-card border border-white/10 space-y-3">
+            <h4 className="text-white font-semibold flex items-center gap-2">
+              <span className="material-symbols-outlined text-amber-400 text-lg">
+                functions
+              </span>
+              {isAvgCase ? t("efficiencyEqA") : t("efficiencyEqT")}
             </h4>
-            <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto">
+            <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
               <Formula latex={tOpen} display />
             </div>
             {isAvgCase && totals?.avg_model_info && (
-              <p className="text-slate-300 mt-2 text-sm">
-                Modelo: {totals.avg_model_info.note}
+              <p className="text-slate-300 text-sm flex items-center gap-2">
+                <span className="text-slate-400">{t("modelLabel")}</span>
+                {totals.avg_model_info.note}
               </p>
             )}
           </div>
 
           {/* Forma polinómica */}
-          <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-            <h4 className="text-white font-semibold mb-2">
-              {isAvgCase ? "Forma polinómica A(n)" : "Forma polinómica T(n)"}
+          <div className="p-4 rounded-xl glass-card border border-white/10 space-y-3">
+            <h4 className="text-white font-semibold flex items-center gap-2">
+              <span className="material-symbols-outlined text-green-400 text-lg">
+                calculate
+              </span>
+              {isAvgCase ? t("polynomialFormA") : t("polynomialFormT")}
             </h4>
-            <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto">
+            <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
               <Formula
                 latex={normPoly && normPoly !== "0" ? normPoly : grouped}
                 display
@@ -181,17 +209,25 @@ export default function GeneralProcedureModal({
 
           {/* Pasos del procedimiento para caso promedio */}
           {isAvgCase && avgProcedureSteps.length > 0 && (
-            <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-              <h4 className="text-white font-semibold mb-3">
-                Procedimiento de Caso Promedio
+            <div className="p-4 rounded-xl glass-card border border-white/10 space-y-4">
+              <h4 className="text-white font-semibold flex items-center gap-2">
+                <span className="material-symbols-outlined text-purple-400 text-lg">
+                  list_alt
+                </span>
+                {t("avgProcedure")}
               </h4>
               <div className="space-y-3">
                 {avgProcedureSteps.map((step, index) => (
                   <div
                     key={index}
-                    className="bg-slate-900/50 p-3 rounded border border-white/10"
+                    className="flex items-start gap-3 p-3 bg-slate-900/50 rounded-lg border border-white/10"
                   >
-                    <Formula latex={step} display />
+                    <div className="flex-shrink-0 w-6 h-6 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs font-medium">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0 overflow-x-auto scrollbar-custom">
+                      <Formula latex={step} display />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -199,26 +235,29 @@ export default function GeneralProcedureModal({
           )}
 
           {/* Notación asintótica */}
-          <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-            <h4 className="text-white font-semibold mb-2">
-              Notación asintótica
+          <div className="p-4 rounded-xl glass-card border border-white/10 space-y-4">
+            <h4 className="text-white font-semibold flex items-center gap-2">
+              <span className="material-symbols-outlined text-cyan-400 text-lg">
+                trending_up
+              </span>
+              {t("asymptoticNotation")}
             </h4>
             <div className="space-y-3">
-              <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto">
-                <div className="text-sm text-slate-400 mb-1">
-                  Big-O (cota superior):
+              <div className="p-3 bg-slate-900/50 rounded-lg border border-white/10 overflow-x-auto">
+                <div className="text-sm text-slate-400 mb-1.5">
+                  {t("bigOUpper")}
                 </div>
                 <Formula latex={bigO} display />
               </div>
-              <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto">
-                <div className="text-sm text-slate-400 mb-1">
-                  Big-Omega (cota inferior):
+              <div className="p-3 bg-slate-900/50 rounded-lg border border-white/10 overflow-x-auto">
+                <div className="text-sm text-slate-400 mb-1.5">
+                  {t("bigOmegaLower")}
                 </div>
                 <Formula latex={bigOmega} display />
               </div>
-              <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto">
-                <div className="text-sm text-slate-400 mb-1">
-                  Big-Theta (cota ajustada):
+              <div className="p-3 bg-slate-900/50 rounded-lg border border-white/10 overflow-x-auto">
+                <div className="text-sm text-slate-400 mb-1.5">
+                  {t("bigThetaTight")}
                 </div>
                 <Formula latex={bigTheta} display />
               </div>
@@ -226,13 +265,19 @@ export default function GeneralProcedureModal({
             {isAvgCase &&
               totals?.hypotheses &&
               totals.hypotheses.length > 0 && (
-                <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded">
-                  <div className="text-sm text-yellow-300 font-semibold mb-1">
-                    Hipótesis:
+                <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                  <div className="text-sm text-yellow-300 font-semibold mb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-lg">
+                      info
+                    </span>
+                    {t("hypotheses")}
                   </div>
-                  <ul className="text-sm text-yellow-200 space-y-1">
+                  <ul className="text-sm text-yellow-200 space-y-1.5">
                     {totals.hypotheses.map((hyp, idx) => (
-                      <li key={idx}>• {hyp}</li>
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="text-amber-400 mt-0.5">•</span>
+                        <span>{hyp}</span>
+                      </li>
                     ))}
                   </ul>
                 </div>

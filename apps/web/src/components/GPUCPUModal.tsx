@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 import type { GPUCPUAnalysisResult, GPUCPUMetrics } from "@/types/gpu-cpu";
 
@@ -52,181 +53,88 @@ function getCardStyle(score: number): {
 }
 
 /**
- * Genera las razones por las que GPU es mejor o peor
+ * Genera las claves de razones por las que GPU es mejor o peor (para traducción)
  */
 function getGPUReasons(score: number, metrics: GPUCPUMetrics): string[] {
   const reasons: string[] = [];
-  
+  const br = metrics.totalLoops > 0 ? metrics.conditionalsInLoops / metrics.totalLoops : 0;
+
   if (score > 60) {
-    // Razones por las que es bueno para GPU
     if (metrics.totalLoops > 0) {
-      const branchingRatio = metrics.conditionalsInLoops / metrics.totalLoops;
-      if (branchingRatio < 0.2) {
-        reasons.push("✓ Los bucles presentan una estructura muy regular, con mínimas decisiones condicionales que permiten una ejecución uniforme en paralelo");
-      } else if (branchingRatio < 0.3) {
-        reasons.push("✓ Los bucles tienen poca lógica condicional, lo que facilita la paralelización masiva sin divergencia significativa entre threads");
-      }
+      if (br < 0.2) reasons.push("regular_loops_very");
+      else if (br < 0.3) reasons.push("regular_loops_little");
     }
-    
     if (metrics.arrayAccessCount > metrics.totalLoops * 2 && metrics.totalLoops > 0) {
-      reasons.push("✓ El algoritmo realiza múltiples accesos a estructuras de datos en bloque, un patrón ideal para kernels de GPU que procesan grandes volúmenes de datos simultáneamente");
+      reasons.push("array_block");
     } else if (metrics.arrayAccessCount > 0) {
-      reasons.push("✓ Se detectan accesos frecuentes a arrays, indicando procesamiento de datos que se beneficia del ancho de banda de memoria de las GPUs");
+      reasons.push("array_frequent");
     }
-    
-    if (metrics.maxLoopDepth >= 2 && metrics.conditionalsInLoops / metrics.totalLoops < 0.4) {
-      reasons.push("✓ La anidación de bucles con lógica simple crea oportunidades para paralelización en múltiples dimensiones, aprovechando la arquitectura masivamente paralela de las GPUs");
-    }
-    
-    if (!metrics.isRecursive) {
-      reasons.push("✓ La ausencia de recursión elimina la necesidad de manejar stacks complejos, permitiendo un flujo de ejecución predecible y paralelizable");
-    }
-    
-    if (metrics.totalLoops > 0 && metrics.conditionalsInLoops === 0) {
-      reasons.push("✓ Los bucles carecen completamente de decisiones condicionales, garantizando que todos los threads sigan el mismo camino de ejecución sin penalizaciones por divergencia");
-    }
-    
-    if (metrics.totalLoops > 3 && metrics.conditionalsInLoops / metrics.totalLoops < 0.3) {
-      reasons.push("✓ La presencia de múltiples bucles regulares sugiere un patrón de cálculo repetitivo que se puede distribuir eficientemente entre miles de cores de GPU");
-    }
+    if (metrics.maxLoopDepth >= 2 && br < 0.4) reasons.push("nested_simple");
+    if (!metrics.isRecursive) reasons.push("no_recursion");
+    if (metrics.totalLoops > 0 && metrics.conditionalsInLoops === 0) reasons.push("no_conditionals");
+    if (metrics.totalLoops > 3 && br < 0.3) reasons.push("multiple_loops");
   } else if (score < 40) {
-    // Razones por las que es malo para GPU
     if (metrics.isRecursive) {
-      if (metrics.recursiveCallCount > 1) {
-        reasons.push("✗ La recursión compleja introduce flujo de control irregular y dependencias entre llamadas que dificultan la paralelización masiva en GPU");
-      } else {
-        reasons.push("✗ La presencia de recursión crea un flujo de ejecución no lineal que no se adapta bien a la arquitectura de ejecución paralela de las GPUs");
-      }
+      reasons.push(metrics.recursiveCallCount > 1 ? "complex_recursion" : "recursion");
     }
-    
     if (metrics.totalLoops > 0) {
-      const branchingRatio = metrics.conditionalsInLoops / metrics.totalLoops;
-      if (branchingRatio > 0.7) {
-        reasons.push("✗ La alta densidad de decisiones condicionales dentro de los bucles causa divergencia masiva entre threads, reduciendo drásticamente la eficiencia de la GPU");
-      } else if (branchingRatio > 0.5) {
-        reasons.push("✗ Las múltiples decisiones dentro de los bucles generan caminos de ejecución divergentes que penalizan el rendimiento en arquitecturas SIMD como las GPUs");
-      }
+      if (br > 0.7) reasons.push("high_branching");
+      else if (br > 0.5) reasons.push("moderate_branching");
     }
-    
-    if (metrics.callsInsideLoops > metrics.totalLoops * 2) {
-      reasons.push("✗ Las frecuentes llamadas a funciones dentro de los bucles introducen overhead y complejidad que dificultan la optimización y paralelización en GPU");
-    }
-    
-    if (metrics.totalLoops === 0 && metrics.isRecursive) {
-      reasons.push("✗ La ausencia de bucles junto con recursión indica un algoritmo basado en árboles o backtracking, típicamente más eficiente en CPU");
-    }
+    if (metrics.callsInsideLoops > metrics.totalLoops * 2) reasons.push("calls_in_loops");
+    if (metrics.totalLoops === 0 && metrics.isRecursive) reasons.push("no_loops_recursive");
   } else {
-    // Score intermedio
-    reasons.push("• El algoritmo presenta características mixtas que no favorecen claramente ni GPU ni CPU");
-    
-    if (metrics.totalLoops > 0) {
-      const branchingRatio = metrics.conditionalsInLoops / metrics.totalLoops;
-      if (branchingRatio > 0.3 && branchingRatio < 0.5) {
-        reasons.push("• Los bucles tienen un nivel moderado de decisiones condicionales, creando un equilibrio entre paralelización y divergencia");
-      }
-    }
-    
-    if (metrics.isRecursive && metrics.recursiveCallCount === 1) {
-      reasons.push("• La recursión limitada introduce cierta complejidad, pero no es suficientemente profunda como para descartar completamente la paralelización");
-    }
-    
+    reasons.push("mixed");
+    if (metrics.totalLoops > 0 && br > 0.3 && br < 0.5) reasons.push("mixed_moderate");
+    if (metrics.isRecursive && metrics.recursiveCallCount === 1) reasons.push("mixed_limited_recursion");
     if (metrics.arrayAccessCount > 0 && metrics.arrayAccessCount < metrics.totalLoops * 2) {
-      reasons.push("• Los accesos a arrays están presentes pero no en la densidad suficiente para aprovechar completamente el ancho de banda de memoria de GPU");
+      reasons.push("mixed_array");
     }
   }
-  
-  return reasons.length > 0 ? reasons : ["• El análisis no muestra características claramente definidas hacia GPU o CPU"];
+  return reasons.length > 0 ? reasons : ["fallback"];
 }
 
 /**
- * Genera las razones por las que CPU es mejor o peor
+ * Genera las claves de razones por las que CPU es mejor o peor (para traducción)
  */
 function getCPUReasons(score: number, metrics: GPUCPUMetrics): string[] {
   const reasons: string[] = [];
-  
+  const br = metrics.totalLoops > 0 ? metrics.conditionalsInLoops / metrics.totalLoops : 0;
+
   if (score > 60) {
-    // Razones por las que es bueno para CPU
     if (metrics.isRecursive) {
-      if (metrics.recursiveCallCount > 2) {
-        reasons.push("✓ La recursión profunda y múltiple crea un flujo de control que se maneja naturalmente en CPU, donde el stack y la gestión de llamadas están optimizados");
-      } else {
-        reasons.push("✓ La presencia de recursión indica un algoritmo que se beneficia del manejo eficiente de llamadas y contexto que ofrecen las CPUs modernas");
-      }
+      reasons.push(metrics.recursiveCallCount > 2 ? "deep_recursion" : "recursion");
     }
-    
     if (metrics.totalLoops > 0) {
-      const branchingRatio = metrics.conditionalsInLoops / metrics.totalLoops;
-      if (branchingRatio > 0.7) {
-        reasons.push("✓ La alta densidad de decisiones condicionales dentro de los bucles crea un flujo de control complejo que las CPUs manejan eficientemente con predicción de saltos y ejecución fuera de orden");
-      } else if (branchingRatio > 0.5) {
-        reasons.push("✓ Las múltiples decisiones dentro de los bucles generan caminos de ejecución variados que se optimizan mejor en CPU mediante técnicas de branch prediction");
-      }
+      if (br > 0.7) reasons.push("high_branching");
+      else if (br > 0.5) reasons.push("moderate_branching");
     }
-    
-    if (metrics.recursiveCallCount > 1) {
-      reasons.push("✓ El patrón recursivo complejo con múltiples llamadas aprovecha la flexibilidad del modelo de ejecución de CPU, donde cada llamada puede tener su propio contexto y stack");
-    }
-    
-    if (metrics.callsInsideLoops > metrics.totalLoops * 2) {
-      reasons.push("✓ Las frecuentes llamadas a funciones dentro de los bucles se ejecutan eficientemente en CPU gracias a la optimización de llamadas y el cache de instrucciones");
-    }
-    
+    if (metrics.recursiveCallCount > 1) reasons.push("complex_recursion");
+    if (metrics.callsInsideLoops > metrics.totalLoops * 2) reasons.push("calls_in_loops");
     if (metrics.totalLoops > 0 && metrics.conditionalsInLoops > metrics.totalLoops) {
-      reasons.push("✓ La complejidad de las decisiones dentro de los bucles requiere evaluación condicional que las CPUs procesan eficientemente con unidades de ejecución especializadas");
+      reasons.push("complex_decisions");
     }
-    
-    if (metrics.isRecursive && metrics.totalLoops === 0) {
-      reasons.push("✓ Un algoritmo puramente recursivo sin bucles se beneficia del modelo de ejecución secuencial y la gestión de memoria stack que caracteriza a las CPUs");
-    }
+    if (metrics.isRecursive && metrics.totalLoops === 0) reasons.push("pure_recursion");
   } else if (score < 40) {
-    // Razones por las que es malo para CPU
-    if (metrics.totalLoops > 0) {
-      const branchingRatio = metrics.conditionalsInLoops / metrics.totalLoops;
-      if (branchingRatio < 0.2) {
-        reasons.push("✗ Los bucles extremadamente regulares con poca lógica condicional representan un patrón ideal para paralelización masiva en GPU, donde la CPU no puede aprovechar su flexibilidad");
-      }
-    }
-    
+    if (metrics.totalLoops > 0 && br < 0.2) reasons.push("regular_loops");
     if (metrics.arrayAccessCount > metrics.totalLoops * 2 && metrics.totalLoops > 0) {
-      reasons.push("✗ El procesamiento intensivo de arrays en bloque se beneficia más del ancho de banda de memoria y la paralelización masiva de GPU que de la ejecución secuencial de CPU");
+      reasons.push("array_block");
     }
-    
-    if (!metrics.isRecursive && metrics.totalLoops > 3 && metrics.conditionalsInLoops / metrics.totalLoops < 0.3) {
-      reasons.push("✗ El patrón iterativo simple y repetitivo con múltiples bucles es un candidato ideal para paralelización en GPU, donde miles de threads pueden ejecutar la misma operación simultáneamente");
-    }
-    
-    if (metrics.maxLoopDepth >= 2 && metrics.conditionalsInLoops / metrics.totalLoops < 0.3) {
-      reasons.push("✗ Los bucles anidados con lógica simple crean oportunidades de paralelización multidimensional que las GPUs explotan mejor que las CPUs");
-    }
-    
-    if (metrics.totalLoops > 0 && metrics.conditionalsInLoops === 0) {
-      reasons.push("✗ La ausencia total de decisiones condicionales en los bucles elimina las ventajas de la predicción de saltos de CPU, favoreciendo la ejecución masivamente paralela de GPU");
-    }
+    if (!metrics.isRecursive && metrics.totalLoops > 3 && br < 0.3) reasons.push("iterative_simple");
+    if (metrics.maxLoopDepth >= 2 && br < 0.3) reasons.push("nested_simple");
+    if (metrics.totalLoops > 0 && metrics.conditionalsInLoops === 0) reasons.push("no_conditionals");
   } else {
-    // Score intermedio
-    reasons.push("• El algoritmo presenta características mixtas que no favorecen claramente ni CPU ni GPU");
-    
-    if (metrics.totalLoops > 0) {
-      const branchingRatio = metrics.conditionalsInLoops / metrics.totalLoops;
-      if (branchingRatio > 0.3 && branchingRatio < 0.5) {
-        reasons.push("• Los bucles tienen un nivel moderado de decisiones, creando un equilibrio donde ni la paralelización masiva ni la flexibilidad de CPU dominan claramente");
-      }
-    }
-    
-    if (metrics.isRecursive && metrics.recursiveCallCount === 1) {
-      reasons.push("• La recursión limitada introduce cierta complejidad de flujo, pero no es suficientemente profunda como para descartar completamente otras estrategias de optimización");
-    }
-    
+    reasons.push("mixed");
+    if (metrics.totalLoops > 0 && br > 0.3 && br < 0.5) reasons.push("mixed_moderate");
+    if (metrics.isRecursive && metrics.recursiveCallCount === 1) reasons.push("mixed_limited_recursion");
     if (metrics.arrayAccessCount > 0 && metrics.arrayAccessCount < metrics.totalLoops * 2) {
-      reasons.push("• Los accesos a arrays están presentes pero no en la densidad suficiente para justificar completamente una migración a GPU");
+      reasons.push("mixed_array");
     }
-    
     if (metrics.totalLoops > 0 && metrics.callsInsideLoops > 0 && metrics.callsInsideLoops <= metrics.totalLoops) {
-      reasons.push("• Las llamadas a funciones dentro de bucles añaden complejidad, pero en un nivel que puede manejarse tanto en CPU como en implementaciones híbridas");
+      reasons.push("mixed_calls");
     }
   }
-  
-  return reasons.length > 0 ? reasons : ["• El análisis no muestra características claramente definidas hacia CPU o GPU"];
+  return reasons.length > 0 ? reasons : ["fallback"];
 }
 
 /**
@@ -239,6 +147,7 @@ function GPUCard({
   metrics,
   isFlipped,
   onFlip,
+  t,
 }: Readonly<{ 
   score: number; 
   label: "GPU" | "CPU"; 
@@ -246,10 +155,12 @@ function GPUCard({
   metrics: GPUCPUMetrics;
   isFlipped: boolean;
   onFlip: () => void;
+  t: (key: string) => string;
 }>) {
   const style = getCardStyle(score);
   const icon = label === "GPU" ? "memory" : "developer_board";
-  const reasons = label === "GPU" ? getGPUReasons(score, metrics) : getCPUReasons(score, metrics);
+  const reasonKeys = label === "GPU" ? getGPUReasons(score, metrics) : getCPUReasons(score, metrics);
+  const reasonsPrefix = label === "GPU" ? "gpuReasons" : "cpuReasons";
   
   // Color invertido para el reverso (más oscuro pero manteniendo el tono)
   let flippedBgColor: string;
@@ -324,11 +235,11 @@ function GPUCard({
           }}
         >
           <h3 className="text-base font-semibold mb-2 text-white/90">
-            {label} - Razones
+            {label} — {t("reasonsLabel")}
           </h3>
           <div className="space-y-1 text-xs text-white/80 text-center">
-            {reasons.map((reason, idx) => (
-              <div key={idx}>{reason}</div>
+            {reasonKeys.map((key, idx) => (
+              <div key={idx}>{t(`${reasonsPrefix}.${key}`)}</div>
             ))}
           </div>
         </div>
@@ -344,10 +255,12 @@ function GPUCPUContent({
   analysis,
   gpuScore,
   cpuScore,
+  t,
 }: Readonly<{
   analysis: GPUCPUAnalysisResult;
   gpuScore: number;
   cpuScore: number;
+  t: (key: string) => string;
 }>) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [shouldAnimate, setShouldAnimate] = useState(true);
@@ -376,6 +289,7 @@ function GPUCPUContent({
             metrics={analysis.metrics}
             isFlipped={gpuFlipped}
             onFlip={() => setGpuFlipped(!gpuFlipped)}
+            t={t}
           />
 
           {/* Card CPU */}
@@ -386,6 +300,7 @@ function GPUCPUContent({
             metrics={analysis.metrics}
             isFlipped={cpuFlipped}
             onFlip={() => setCpuFlipped(!cpuFlipped)}
+            t={t}
           />
         </div>
       )}
@@ -415,7 +330,7 @@ function GPUCPUContent({
               description
             </span>
             <div className="text-sm font-semibold text-slate-300">
-              {isExpanded ? "Ocultar detalles" : "Ver análisis y recomendación"}
+              {isExpanded ? t("hideDetails") : t("showDetails")}
             </div>
           </div>
           <span
@@ -435,7 +350,7 @@ function GPUCPUContent({
                   description
                 </span>
                 <div className="text-sm font-semibold text-slate-300">
-                  Análisis de la estructura:
+                  {t("structureAnalysis")}
                 </div>
               </div>
               <div className="text-sm text-slate-300 pl-7 whitespace-pre-line">
@@ -450,7 +365,7 @@ function GPUCPUContent({
                   lightbulb
                 </span>
                 <div className="text-sm font-semibold text-purple-300">
-                  Recomendación:
+                  {t("recommendation")}
                 </div>
               </div>
               <div className="text-sm text-purple-200 pl-7">
@@ -472,6 +387,24 @@ export default function GPUCPUModal({
   onClose,
   analysis,
 }: Readonly<GPUCPUModalProps>) {
+  const t = useTranslations("analyzer.gpuCpuModal");
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    if (open) {
+      document.body.style.overflow = "hidden";
+      document.addEventListener("keydown", onKey);
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, onClose]);
+
   if (!open || !analysis) return null;
 
   return (
@@ -509,46 +442,44 @@ export default function GPUCPUModal({
       />
 
       {/* Modal */}
-      <div className="relative z-10 glass-modal-container rounded-2xl p-6 w-[85vw] max-w-4xl h-[80vh] mx-4 shadow-2xl flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4 flex-shrink-0">
+      <div className="relative z-10 glass-modal-container rounded-2xl w-[85vw] max-w-4xl h-[80vh] mx-4 shadow-2xl flex flex-col overflow-hidden">
+        {/* Header con estilo glass */}
+        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 flex-shrink-0 glass-modal-header">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
             <span className="material-symbols-outlined text-blue-400 text-xl">
               speed
             </span>
-            Análisis GPU vs CPU
+            {t("title")}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-            title="Cerrar"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center"
+            aria-label={t("closeModal")}
           >
-            <span className="material-symbols-outlined text-white">close</span>
+            <span className="material-symbols-outlined text-xl">close</span>
           </button>
         </div>
 
-        {/* Contenido: dos cards lado a lado o sección expandida */}
-        <GPUCPUContent
-          analysis={analysis}
-          gpuScore={analysis.gpuScore}
-          cpuScore={analysis.cpuScore}
-        />
+        {/* Contenido */}
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col min-h-0 scrollbar-custom">
+          <GPUCPUContent
+            analysis={analysis}
+            gpuScore={analysis.gpuScore}
+            cpuScore={analysis.cpuScore}
+            t={t}
+          />
 
-        {/* Disclaimer - botón (?) */}
-        <div className="mt-4 flex-shrink-0 flex justify-end">
-          <div className="relative group">
-            <button
-              className="w-5 h-5 rounded-full bg-slate-500/20 border border-slate-500/30 text-slate-300 hover:bg-slate-500/30 flex items-center justify-center text-xs font-semibold transition-colors"
-              title="Información sobre el análisis"
-            >
-              ?
-            </button>
-            <div className="absolute right-0 bottom-full mb-2 w-64 p-2 bg-slate-800 border border-slate-500/30 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-xs text-left">
-              <div className="text-slate-300">
-                Este análisis es cualitativo y basado únicamente en la estructura
-                del algoritmo (su AST). No se promete que GPU sea siempre más rápida
-                que CPU ni al revés. La recomendación es orientativa y sirve como guía
-                conceptual, no como benchmark real.
+          {/* Disclaimer - botón (?) */}
+          <div className="mt-4 flex-shrink-0 flex justify-end">
+            <div className="relative group">
+              <button
+                className="w-5 h-5 rounded-full bg-slate-500/20 border border-slate-500/30 text-slate-300 hover:bg-slate-500/30 flex items-center justify-center text-xs font-semibold transition-colors"
+                title={t("disclaimerTitle")}
+              >
+                ?
+              </button>
+              <div className="absolute right-0 bottom-full mb-2 w-64 p-2 bg-slate-800 border border-slate-500/30 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-xs text-left">
+                <div className="text-slate-300">{t("disclaimer")}</div>
               </div>
             </div>
           </div>

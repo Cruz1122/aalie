@@ -1,6 +1,9 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
 import React from "react";
+
+import { translateProofStep } from "@/lib/proof-step-translator";
 
 import Formula from "./Formula";
 
@@ -21,6 +24,9 @@ export default function RecursionTreeStepsModal({
   onClose,
   proof,
 }: Readonly<RecursionTreeStepsModalProps>) {
+  const t = useTranslations("analyzer.recursionTreeStepsModal");
+  const locale = useLocale() as "en" | "es";
+
   if (!open) return null;
 
   return (
@@ -33,20 +39,20 @@ export default function RecursionTreeStepsModal({
         }}
         role="button"
         tabIndex={0}
-        aria-label="Cerrar modal"
+        aria-label={t("closeModal")}
       />
-      <div className="absolute left-1/2 top-1/2 w-[min(95vw,1400px)] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col">
+      <div className="absolute left-1/2 top-1/2 w-[min(95vw,1400px)] max-h-[75vh] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col">
         <div className="flex items-center justify-between border-b border-white/10 p-4 flex-shrink-0">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
             <span className="material-symbols-outlined text-purple-400">
-              description
+              list
             </span>
-            <span>Paso a Paso - Método de Árbol de Recursión</span>
+            <span>{t("title")}</span>
           </h3>
           <button
             onClick={onClose}
             className="text-slate-300 hover:text-white transition-colors p-1 hover:bg-white/10 rounded"
-            aria-label="Cerrar modal"
+            aria-label={t("closeModal")}
           >
             ✕
           </button>
@@ -66,7 +72,10 @@ export default function RecursionTreeStepsModal({
                       </span>
                     </div>
                     <div className="flex-1 overflow-x-auto">
-                      <Formula latex={step.text} display />
+                      <Formula
+                        latex={translateProofStep(step.text, locale)}
+                        display
+                      />
                     </div>
                   </div>
                 </div>
@@ -74,7 +83,7 @@ export default function RecursionTreeStepsModal({
             </div>
           ) : (
             <div className="flex items-center justify-center h-full text-slate-400">
-              <p>No hay pasos disponibles</p>
+              <p>{t("noStepsAvailable")}</p>
             </div>
           )}
         </div>

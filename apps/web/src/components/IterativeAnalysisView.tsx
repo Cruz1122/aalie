@@ -294,7 +294,7 @@ export default function IterativeAnalysisView({
               </button>
               <div className="absolute right-0 top-6 w-48 p-2 bg-slate-800 border border-yellow-500/30 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-xs text-left">
                 <div className="text-yellow-300 font-semibold mb-1">
-                  Modelo:
+                  {tView("model")}:
                 </div>
                 <div className="text-slate-300">
                   {data.avg.totals.avg_model_info.note}

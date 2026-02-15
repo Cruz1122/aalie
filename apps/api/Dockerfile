@@ -9,18 +9,17 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Directorio de trabajo dentro del contenedor
 WORKDIR /usr/src/app/apps/api
 
-# Copiamos requirements primero para aprovechar la cache de capas
+# Copiar aa_grammar antes de instalar (requirements.txt lo referencia)
+COPY packages/grammar/py /usr/src/app/packages/grammar/py
+
+# Copiamos requirements
 COPY apps/api/requirements.txt /tmp/requirements.txt
 COPY apps/api/requirements-dev.txt /tmp/requirements-dev.txt
 
-# Instalar dependencias
+# Instalar dependencias (incluye aa_grammar vía -e en requirements.txt)
 RUN python -m pip install --upgrade pip && \
     pip install -r /tmp/requirements.txt && \
     pip install -r /tmp/requirements-dev.txt
-
-WORKDIR /usr/src/app
-COPY packages/grammar/py /usr/src/app/packages/grammar/py
-RUN pip install -e /usr/src/app/packages/grammar/py
 
 WORKDIR /usr/src/app/apps/api
 # Copiar el código fuente de la API

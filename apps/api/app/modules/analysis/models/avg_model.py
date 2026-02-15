@@ -139,37 +139,37 @@ class AvgModel:
             # Fallback: símbolo genérico
             return Symbol("p", real=True, positive=True)
     
-    def get_model_info(self) -> Dict[str, str]:
+    def get_model_info(self, locale: str = "en") -> Dict[str, str]:
         """
         Obtiene información del modelo para mostrar en la UI.
+        
+        Args:
+            locale: Código de idioma ("en" | "es")
         
         Returns:
             Diccionario con mode y note (badge del modelo)
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
+        from ..translations import get_note_labels
+        labels = get_note_labels(locale)
         if self.mode == "uniform":
             if self.predicates:
-                # Hay predicados explícitos
                 predicates_str = ", ".join([f"{k}: {v}" for k, v in list(self.predicates.items())[:2]])
                 if len(self.predicates) > 2:
                     predicates_str += "..."
-                note = f"uniforme (predicados: {predicates_str})"
+                note = labels["model_uniform_predicates"].format(predicates_str=predicates_str)
             else:
-                note = "uniforme (p=1/2)"
+                note = labels["model_uniform_half"]
         else:  # symbolic
             if self.predicates:
                 predicates_str = ", ".join([f"{k}: {v}" for k, v in list(self.predicates.items())[:2]])
                 if len(self.predicates) > 2:
                     predicates_str += "..."
-                note = f"simbólico (predicados: {predicates_str})"
+                note = labels["model_symbolic_predicates"].format(predicates_str=predicates_str)
             else:
-                note = "simbólico (p)"
-        
-        return {
-            "mode": self.mode,
-            "note": note
-        }
+                note = labels["model_symbolic_p"]
+        return {"mode": self.mode, "note": note}
     
     def has_symbols(self) -> bool:
         """

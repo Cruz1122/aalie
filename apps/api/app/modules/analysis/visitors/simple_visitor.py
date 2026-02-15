@@ -170,12 +170,12 @@ class SimpleVisitor:
             # - return -1 (fracaso, dentro o fuera del bucle): 0 (nunca ocurre)
             if is_failure:
                 count = Integer(0)
-                note = "avg: fracaso (nunca ocurre con éxito seguro)"
+                note = self._note("avg_failure")
             elif is_success and has_active_loop:
                 # return i dentro del bucle: siempre ocurre exactamente una vez (no multiplicado por E[iter])
                 count = Integer(1)
                 # La nota se agregará en IfVisitor si es necesario, aquí solo marcamos éxito
-                note = "avg: éxito seguro"
+                note = self._note("avg_success")
         
         self.add_row(line, "return", ck, count, note=note)
     
@@ -417,5 +417,5 @@ class SimpleVisitor:
             kind="other",
             ck=ck,
             count=Integer(1),
-            note=f"Statement {node_type}"
+            note=self._note("statement", node_type=node_type)
         )

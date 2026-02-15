@@ -284,7 +284,7 @@ class ForVisitor:
             # Evaluación inicial: i=1, condición verdadera, ejecuta cuerpo (encuentra y retorna)
             # Evaluación final: i=2, condición verdadera pero no ejecuta cuerpo (early return previo)
             header_count = Integer(2)
-            header_note = f"Cabecera del bucle for {var}={a_str}..{b_str} (best: early return en primera iteración, cabecera evalúa 2 veces)"
+            header_note = self._note("for_header_best", var=var, a_str=a_str, b_str=b_str)
         elif mode == "avg" and has_return:
             # En caso promedio con early return: E[iter] = (n+1)/2
             # Cabecera: E[iter] + 1 = (n+1)/2 + 1 = (n+3)/2
@@ -297,13 +297,13 @@ class ForVisitor:
                 e_iter = (n_sym + Integer(1)) / Integer(2)
                 # Cabecera: E[iter] + 1 = (n+1)/2 + 1 = (n+3)/2
                 header_count = e_iter + Integer(1)
-                header_note = f"Cabecera del bucle for {var}={a_str}..{b_str} (avg: E[iter] + 1)"
+                header_note = self._note("for_header_avg", var=var, a_str=a_str, b_str=b_str)
             except Exception:
                 # Fallback: usar expresión simbólica genérica
                 n_sym = SymSymbol('n', integer=True, positive=True)
                 e_iter = (n_sym + Integer(1)) / Integer(2)
                 header_count = e_iter + Integer(1)
-                header_note = f"Cabecera del bucle for {var}={a_str}..{b_str} (avg: E[iter] + 1)"
+                header_note = self._note("for_header_avg", var=var, a_str=a_str, b_str=b_str)
         else:
             # Cabecera normal: (b - a + 2) evaluaciones
             # La cabecera se evalúa: evaluación inicial + b - a evaluaciones de condición + 1 final = (b - a + 2)
@@ -316,7 +316,7 @@ class ForVisitor:
             except Exception:
                 # Fallback: expresión general
                 header_count = b_expr - a_expr + Integer(2)
-            header_note = f"Cabecera del bucle for {var}={a_str}..{b_str}"
+            header_note = self._note("for_header", var=var, a_str=a_str, b_str=b_str)
         
         # Para cabeceras de bucles anidados, usar add_row para generar count_raw correctamente
         # add_row aplicará los multiplicadores del stack automáticamente

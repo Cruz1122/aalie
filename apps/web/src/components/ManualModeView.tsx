@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import ReactDOM from "react-dom";
 
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
@@ -90,6 +91,8 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     const tAlgorithmType = useTranslations("analyzer.algorithmType");
     const locale = useLocale();
     const tManual = useTranslations("analyzer.manualMode");
+    const tView = useTranslations("analyzer.view");
+    const tCommon = useTranslations("common");
     const formatAlgorithmKindLabel = (value: AlgorithmKind) =>
       tAlgorithmType(value === "unknown" ? "unknown" : value);
 
@@ -639,6 +642,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
               predicates: {},
             },
             algorithm_kind: kind,
+            locale: locale === "es" ? "es" : "en",
           };
 
           // Solo agregar preferred_method si es recursivo y hay un método seleccionado
@@ -991,10 +995,12 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
             </div>
           )}
 
-          {/* Modal AST */}
-          {showAstModal && ast && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center glass-modal-overlay modal-animate-in">
-              <div className="glass-modal-container rounded-xl shadow-2xl max-w-3xl w-full max-h-[80vh] flex flex-col m-4 modal-animate-in">
+          {/* Modal AST - Portal para cubrir y desenfocar todo (Header, ModeToggle, etc.) */}
+          {showAstModal &&
+            ast &&
+            ReactDOM.createPortal(
+              <div className="fixed inset-0 z-[60] flex items-center justify-center glass-modal-overlay modal-animate-in">
+                <div className="glass-modal-container rounded-xl shadow-2xl max-w-3xl w-full max-h-[80vh] flex flex-col m-4 modal-animate-in">
                 {/* Header compacto */}
                 <div className="glass-modal-header flex items-center justify-between px-5 py-3 rounded-t-xl border-b border-white/10">
                   <div className="flex items-center gap-3">
@@ -1002,7 +1008,7 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                       account_tree
                     </span>
                     <h2 className="text-lg font-bold text-white">
-                      Abstract Syntax Tree
+                      {tView("abstractSyntaxTree")}
                     </h2>
                   </div>
                   <button
@@ -1027,7 +1033,7 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                       <span className="material-symbols-outlined text-base">
                         account_tree
                       </span>{" "}
-                      Vista de Árbol
+                      {tView("treeView")}
                     </span>
                   </button>
                   <button
@@ -1042,7 +1048,7 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                       <span className="material-symbols-outlined text-base">
                         code
                       </span>{" "}
-                      Vista JSON
+                      {tView("jsonView")}
                     </span>
                   </button>
                 </div>
@@ -1062,8 +1068,8 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                 <div className="flex justify-between items-center gap-3 px-5 py-3 border-t border-white/10 rounded-b-xl">
                   <div className="text-xs text-slate-400">
                     {viewMode === "tree"
-                      ? "Vista interactiva del árbol"
-                      : "Vista JSON completa"}
+                      ? tView("astTreeViewDesc")
+                      : tView("astJsonViewDesc")}
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -1077,19 +1083,20 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                       <span className="material-symbols-outlined text-sm">
                         {copied ? "check" : "content_copy"}
                       </span>
-                      {copied ? "Copiado!" : "Copiar JSON"}
+                      {copied ? tView("astModalCopied") : tView("copyJson")}
                     </button>
                     <button
                       onClick={() => setShowAstModal(false)}
                       className="glass-button px-4 py-2 text-xs font-semibold text-white rounded-lg transition-all hover:scale-105 bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 hover:from-yellow-500/30 hover:to-amber-500/30"
                     >
-                      Cerrar
+                      {tCommon("close")}
                     </button>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            </div>,
+              document.body,
+            )}
         </div>
       </div>
     );

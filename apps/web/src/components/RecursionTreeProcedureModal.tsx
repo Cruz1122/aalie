@@ -1,7 +1,10 @@
 "use client";
 
 import type { AnalyzeOpenResponse } from "@aa/types";
+import { useLocale, useTranslations } from "next-intl";
 import React from "react";
+
+import { translateProofStep } from "@/lib/proof-step-translator";
 
 import Formula from "./Formula";
 
@@ -92,6 +95,9 @@ export default function RecursionTreeProcedureModal({
   proof: _proof,
   theta,
 }: Readonly<RecursionTreeProcedureModalProps>) {
+  const t = useTranslations("analyzer.recursionTreeProcedureModal");
+  const locale = useLocale() as "en" | "es";
+
   if (!open) return null;
 
   return (
@@ -104,20 +110,20 @@ export default function RecursionTreeProcedureModal({
         }}
         role="button"
         tabIndex={0}
-        aria-label="Cerrar modal"
+        aria-label={t("closeModal")}
       />
-      <div className="absolute left-1/2 top-1/2 w-[min(95vw,1600px)] max-h-[95vh] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col">
+      <div className="absolute left-1/2 top-1/2 w-[min(95vw,1600px)] max-h-[75vh] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col">
         <div className="flex items-center justify-between border-b border-white/10 p-3 flex-shrink-0">
           <h3 className="text-base font-semibold text-white flex items-center gap-2">
             <span className="material-symbols-outlined text-cyan-400">
               account_tree
             </span>
-            <span>Procedimiento Completo - Método de Árbol de Recursión</span>
+            <span>{t("title")}</span>
           </h3>
           <button
             onClick={onClose}
             className="text-slate-300 hover:text-white transition-colors p-1 hover:bg-white/10 rounded"
-            aria-label="Cerrar modal"
+            aria-label={t("closeModal")}
           >
             ✕
           </button>
@@ -130,8 +136,11 @@ export default function RecursionTreeProcedureModal({
               {recurrence && (
                 <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10 flex-shrink-0">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-white font-semibold text-sm">
-                      Ecuación de Recurrencia
+                    <h4 className="text-white font-semibold text-sm flex items-center gap-2">
+                      <span className="material-symbols-outlined text-blue-400">
+                        functions
+                      </span>
+                      <span>{t("recurrenceEquation")}</span>
                     </h4>
                     <div className="flex flex-wrap items-center gap-1 text-xs">
                       <Formula latex={`a = ${recurrence.a}`} />
@@ -154,27 +163,30 @@ export default function RecursionTreeProcedureModal({
                 recursionTree.table_by_levels &&
                 recursionTree.table_by_levels.length > 0 && (
                   <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10 flex flex-col flex-1 min-h-0">
-                    <h4 className="text-white font-semibold mb-3 text-sm flex-shrink-0">
-                      Tabla por Niveles
+                    <h4 className="text-white font-semibold mb-3 text-sm flex-shrink-0 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-amber-400">
+                        table_chart
+                      </span>
+                      <span>{t("tableByLevels")}</span>
                     </h4>
                     <div className="overflow-auto flex-1 scrollbar-custom">
                       <table className="w-full text-xs border-collapse">
                         <thead className="sticky top-0 bg-slate-800/95 z-10">
                           <tr className="border-b border-white/20">
-                            <th className="text-left p-1.5 text-slate-300 font-semibold">
-                              i
+                            <th className="text-center p-1.5 text-slate-300 font-semibold w-12">
+                              {t("levelCol")}
                             </th>
-                            <th className="text-left p-1.5 text-slate-300 font-semibold">
-                              # Nodos
+                            <th className="text-center p-1.5 text-slate-300 font-semibold">
+                              {t("numNodesCol")}
                             </th>
-                            <th className="text-left p-1.5 text-slate-300 font-semibold">
-                              Tamaño
+                            <th className="text-center p-1.5 text-slate-300 font-semibold">
+                              {t("sizeCol")}
                             </th>
-                            <th className="text-left p-1.5 text-slate-300 font-semibold">
-                              Costo/nodo
+                            <th className="text-center p-1.5 text-slate-300 font-semibold">
+                              {t("costPerNodeCol")}
                             </th>
-                            <th className="text-left p-1.5 text-slate-300 font-semibold">
-                              Costo total
+                            <th className="text-center p-1.5 text-slate-300 font-semibold">
+                              {t("totalCostCol")}
                             </th>
                           </tr>
                         </thead>
@@ -187,16 +199,16 @@ export default function RecursionTreeProcedureModal({
                               <td className="p-1.5 text-white font-medium text-center">
                                 {row.level}
                               </td>
-                              <td className="p-1.5 text-slate-300">
+                              <td className="p-1.5 text-slate-300 text-center">
                                 <Formula latex={row.num_nodes} />
                               </td>
-                              <td className="p-1.5 text-slate-300">
+                              <td className="p-1.5 text-slate-300 text-center">
                                 <Formula latex={row.subproblem_size} />
                               </td>
-                              <td className="p-1.5 text-slate-300">
+                              <td className="p-1.5 text-slate-300 text-center">
                                 <Formula latex={row.cost_per_node} />
                               </td>
-                              <td className="p-1.5 text-slate-300">
+                              <td className="p-1.5 text-slate-300 text-center">
                                 <Formula latex={row.total_cost} />
                               </td>
                             </tr>
@@ -213,8 +225,11 @@ export default function RecursionTreeProcedureModal({
               {/* Altura */}
               {recursionTree && recursionTree.height && (
                 <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                  <h4 className="text-white font-semibold mb-2 text-sm">
-                    Altura
+                  <h4 className="text-white font-semibold mb-2 text-sm flex items-center gap-2">
+                    <span className="material-symbols-outlined text-emerald-400">
+                      height
+                    </span>
+                    <span>{t("height")}</span>
                   </h4>
                   <div className="bg-slate-900/50 p-2 rounded border border-white/10 overflow-x-auto flex justify-center">
                     <Formula latex={`h = ${recursionTree.height}`} />
@@ -225,18 +240,21 @@ export default function RecursionTreeProcedureModal({
               {/* Sumatoria */}
               {recursionTree && recursionTree.summation && (
                 <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                  <h4 className="text-white font-semibold mb-2 text-sm">
-                    Sumatoria
+                  <h4 className="text-white font-semibold mb-2 text-sm flex items-center gap-2">
+                    <span className="material-symbols-outlined text-orange-400">
+                      calculate
+                    </span>
+                    <span>{t("summation")}</span>
                   </h4>
                   <div className="bg-slate-900/50 p-2 rounded border border-white/10 overflow-x-auto">
                     <div className="text-xs text-slate-400 mb-1">
-                      Expresión:
+                      {t("expression")}
                     </div>
                     <div className="flex justify-center scale-90 origin-center">
                       <Formula latex={recursionTree.summation.expression} />
                     </div>
                     <div className="text-xs text-slate-400 mb-1 mt-2">
-                      Evaluada:
+                      {t("evaluated")}
                     </div>
                     <div className="flex justify-center scale-90 origin-center">
                       <Formula latex={recursionTree.summation.evaluated} />
@@ -248,13 +266,19 @@ export default function RecursionTreeProcedureModal({
               {/* Nivel Dominante */}
               {recursionTree && recursionTree.dominating_level && (
                 <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                  <h4 className="text-white font-semibold mb-2 text-sm">
-                    Nivel Dominante
+                  <h4 className="text-white font-semibold mb-2 text-sm flex items-center gap-2">
+                    <span className="material-symbols-outlined text-cyan-400">
+                      trending_up
+                    </span>
+                    <span>{t("dominatingLevel")}</span>
                   </h4>
                   <div className="bg-slate-900/50 p-2 rounded border border-white/10 overflow-x-auto">
                     <div className="flex justify-center scale-90 origin-center">
                       <Formula
-                        latex={recursionTree.dominating_level.reason}
+                        latex={translateProofStep(
+                          recursionTree.dominating_level.reason,
+                          locale,
+                        )}
                         display
                       />
                     </div>
@@ -267,9 +291,9 @@ export default function RecursionTreeProcedureModal({
                 <div className="p-4 rounded-lg bg-cyan-500/20 border border-cyan-500/30">
                   <h5 className="text-cyan-300 font-semibold mb-2 text-sm flex items-center gap-2">
                     <span className="material-symbols-outlined text-base">
-                      functions
+                      workspace_premium
                     </span>
-                    <span>Ecuación de eficiencia</span>
+                    <span>{t("efficiencyEquation")}</span>
                   </h5>
                   <div className="text-center">
                     <Formula

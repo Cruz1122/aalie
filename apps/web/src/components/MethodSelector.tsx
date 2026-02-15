@@ -7,6 +7,7 @@
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 import React from "react";
+import { useTranslations } from "next-intl";
 
 /**
  * Tipos de métodos de análisis disponibles.
@@ -19,8 +20,6 @@ export type MethodType =
 
 interface MethodInfo {
   id: MethodType;
-  name: string;
-  description: string;
   icon: string;
   color: string;
   borderColor: string;
@@ -30,9 +29,6 @@ interface MethodInfo {
 const methods: Record<MethodType, MethodInfo> = {
   characteristic_equation: {
     id: "characteristic_equation",
-    name: "Ecuación Característica",
-    description:
-      "Para recurrencias lineales con desplazamientos constantes. Detecta automáticamente DP lineal.",
     icon: "calculate",
     color: "text-blue-300",
     borderColor: "border-blue-500/30",
@@ -40,9 +36,6 @@ const methods: Record<MethodType, MethodInfo> = {
   },
   iteration: {
     id: "iteration",
-    name: "Método de Iteración",
-    description:
-      "Para recurrencias decrease-and-conquer (n-1, n-k) desplegando la recurrencia.",
     icon: "unfold_more",
     color: "text-purple-300",
     borderColor: "border-purple-500/30",
@@ -50,9 +43,6 @@ const methods: Record<MethodType, MethodInfo> = {
   },
   recursion_tree: {
     id: "recursion_tree",
-    name: "Árbol de Recursión",
-    description:
-      "Visualiza el árbol de llamadas recursivas para divide-and-conquer con múltiples subproblemas.",
     icon: "account_tree",
     color: "text-cyan-300",
     borderColor: "border-cyan-500/30",
@@ -60,9 +50,6 @@ const methods: Record<MethodType, MethodInfo> = {
   },
   master: {
     id: "master",
-    name: "Teorema Maestro",
-    description:
-      "Para recurrencias divide-and-conquer estándar T(n) = a·T(n/b) + f(n).",
     icon: "science",
     color: "text-orange-300",
     borderColor: "border-orange-500/30",
@@ -108,6 +95,7 @@ export default function MethodSelector({
   onSelect,
   onCancel,
 }: MethodSelectorProps) {
+  const t = useTranslations("analyzer.methodSelector");
   const [selectedMethod, setSelectedMethod] =
     React.useState<MethodType>(defaultMethod);
 
@@ -137,12 +125,9 @@ export default function MethodSelector({
             <span className="material-symbols-outlined text-2xl text-blue-400">
               settings
             </span>
-            Seleccionar Método de Análisis
+            {t("title")}
           </h2>
-          <p className="text-sm text-slate-400">
-            Este algoritmo puede resolverse con múltiples métodos. Selecciona el
-            método que deseas usar:
-          </p>
+          <p className="text-sm text-slate-400">{t("subtitle")}</p>
         </div>
 
         {/* Lista de métodos */}
@@ -197,18 +182,18 @@ export default function MethodSelector({
                       <h3
                         className={`font-semibold ${isSelected ? method.color : "text-white"}`}
                       >
-                        {method.name}
+                        {t(`methods.${methodId}.name`)}
                       </h3>
                       {isDefault && (
                         <span className="text-xs px-2 py-0.5 rounded-md bg-slate-700/50 text-slate-300 border border-slate-600">
-                          Por defecto
+                          {t("default")}
                         </span>
                       )}
                     </div>
                     <p
                       className={`text-sm ${isSelected ? "text-slate-300" : "text-slate-400"}`}
                     >
-                      {method.description}
+                      {t(`methods.${methodId}.description`)}
                     </p>
                   </div>
                 </div>
@@ -224,7 +209,7 @@ export default function MethodSelector({
               onClick={onCancel}
               className="px-4 py-2 rounded-lg bg-slate-700/50 text-slate-300 border border-slate-600 hover:bg-slate-700/70 transition-colors text-sm font-semibold"
             >
-              Cancelar
+              {t("cancel")}
             </button>
           )}
           <button
@@ -232,7 +217,7 @@ export default function MethodSelector({
             className="px-6 py-2 rounded-lg bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 transition-colors text-sm font-semibold flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-base">check</span>
-            Confirmar
+            {t("confirm")}
           </button>
         </div>
       </div>

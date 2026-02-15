@@ -8,6 +8,7 @@ import React, {
   useState,
   useRef,
 } from "react";
+import { useTranslations } from "next-intl";
 
 import Formula from "./Formula";
 
@@ -128,6 +129,8 @@ export default function ProcedureModal({
   selectedLine,
   analysisData,
 }: Readonly<ProcedureModalProps>) {
+  const t = useTranslations("analyzer.procedureModal");
+  const tLineTable = useTranslations("analyzer.lineTable");
   const [scrollDebounce, setScrollDebounce] = useState<NodeJS.Timeout | null>(
     null,
   );
@@ -140,11 +143,11 @@ export default function ProcedureModal({
   // Memoizar el título del modal
   const modalTitle = useMemo(() => {
     const isLineProcedure = selectedLine !== null && selectedLine !== undefined;
-    const caseType = isAvgCase ? " (Caso Promedio)" : "";
+    const caseType = isAvgCase ? t("avgCaseSuffix") : "";
     return isLineProcedure
-      ? `Procedimiento - Línea ${selectedLine}${caseType}`
-      : `Procedimiento Completo${caseType}`;
-  }, [selectedLine, isAvgCase]);
+      ? `${t("titleLine", { line: selectedLine })}${caseType}`
+      : `${t("titleComplete")}${caseType}`;
+  }, [selectedLine, isAvgCase, t]);
 
   /**
    * Función para extraer el patrón de un término (n+1, n, 1, etc.).
@@ -365,7 +368,7 @@ export default function ProcedureModal({
 
       // Paso 1: Definición de caso promedio
       steps.push({
-        title: "Definición de caso promedio",
+        title: t("stepDefAvgCase"),
         equation: "A(n) = \\sum_{I \\in I_n} T(I) \\cdot p(I)",
         description: "Costo promedio como esperanza sobre todas las instancias",
       });
@@ -373,7 +376,7 @@ export default function ProcedureModal({
       // Paso 2: Modelo uniforme (si aplica)
       if (totals?.avg_model_info?.mode === "uniform") {
         steps.push({
-          title: "Modelo uniforme",
+          title: t("stepUniformModel"),
           equation: "A(n) = \\frac{1}{|I_n|} \\sum_{I \\in I_n} T(I)",
           description: "Distribución uniforme sobre todas las instancias",
         });
@@ -381,7 +384,7 @@ export default function ProcedureModal({
 
       // Paso 3: Linealidad de la esperanza
       steps.push({
-        title: "Linealidad de la esperanza",
+        title: t("stepLinearity"),
         equation: "A(n) = \\sum_{\\ell} C_{\\ell} \\cdot E[N_{\\ell}]",
         description: "Descomposición línea a línea usando esperanzas",
       });
@@ -394,9 +397,9 @@ export default function ProcedureModal({
         })
         .join(" + ");
       steps.push({
-        title: "Cálculo de E[N_ℓ] por línea",
+        title: t("stepCalcE"),
         equation: `A(n) = ${step4}`,
-        description: "Esperanza de ejecuciones para cada línea",
+        description: t("expectedExecutionsDesc"),
       });
 
       // Paso 5: Simplificación
@@ -404,16 +407,16 @@ export default function ProcedureModal({
         .map((line) => `${line.ck} \\cdot (${line.count})`)
         .join(" + ");
       steps.push({
-        title: "Simplificación",
+        title: t("stepSimplification"),
         equation: `A(n) = ${step5}`,
-        description: "Expresión simplificada de A(n)",
+        description: t("stepSimplifySumsDesc"),
       });
 
       // Paso 6: Forma polinómica
       const tPoly = analysisData.totals?.T_polynomial;
       if (tPoly && typeof tPoly === "string") {
         steps.push({
-          title: "Forma polinómica",
+          title: t("stepPolynomialForm"),
           equation: `A(n) = ${tPoly}`,
           description: "Forma polinómica canónica",
         });
@@ -424,23 +427,23 @@ export default function ProcedureModal({
       const bigOmega = analysisData.totals?.big_omega || "\\Omega(1)";
       const bigTheta = analysisData.totals?.big_theta || "\\Theta(1)";
       steps.push({
-        title: "Notación asintótica",
+        title: t("stepAsymptotic"),
         equation: `${bigO}, ${bigOmega}, ${bigTheta}`,
-        description: "Clases de complejidad temporal para caso promedio",
+        description: t("stepAsymptoticDesc"),
       });
 
       // Paso 8: Modelo e hipótesis
       if (totals?.avg_model_info) {
         steps.push({
-          title: "Modelo usado",
-          equation: `\\text{Modelo: ${totals.avg_model_info.note}}`,
+          title: t("stepModelUsed"),
+          equation: `\\text{${t("modelLabel")} ${totals.avg_model_info.note}}`,
           description: "Modelo probabilístico utilizado",
         });
       }
 
       if (totals?.hypotheses && totals.hypotheses.length > 0) {
         steps.push({
-          title: "Hipótesis",
+          title: t("stepHypotheses"),
           equation: totals.hypotheses.map((h) => `\\text{${h}}`).join(", "),
           description: "Supuestos del análisis",
         });
@@ -488,33 +491,29 @@ export default function ProcedureModal({
     // Crear array de pasos con sus ecuaciones
     const allSteps = [
       {
-        title: "Ecuación completa con sumatorias",
+        title: t("stepFullEquation"),
         equation: step1,
-        description:
-          "Ecuación original con todas las sumatorias y multiplicadores aplicados",
+        description: t("stepFullEquationDesc"),
       },
       {
-        title: "Simplificación de sumatorias",
+        title: t("stepSimplifySums"),
         equation: step2,
-        description:
-          "Se resuelven las sumatorias y se simplifican los términos",
+        description: t("stepSimplifySumsDesc"),
       },
       {
-        title: "Agrupación de términos similares",
+        title: t("stepGroupTerms"),
         equation: step3,
-        description:
-          "Se agrupan los términos por patrones similares (n+1, n, constantes)",
+        description: t("stepGroupTermsDesc"),
       },
       {
-        title: "Forma final en términos de n",
+        title: t("stepFinalForm"),
         equation: step4,
-        description: "Forma polinómica canónica en términos de n (a, b, c)",
+        description: t("stepFinalFormDesc"),
       },
       {
-        title: "Notación asintótica",
+        title: t("stepAsymptotic"),
         equation: `${bigO}, ${bigOmega}, ${bigTheta}`,
-        description:
-          "Clases de complejidad temporal (Big-O, Big-Omega, Big-Theta) calculadas con SymPy",
+        description: t("stepAsymptoticDesc"),
       },
     ];
 
@@ -533,6 +532,7 @@ export default function ProcedureModal({
     createFinalSimplifiedForm,
     calculateBigOFromExpression,
     isAvgCase,
+    t,
   ]);
 
   // Memoizar los símbolos
@@ -590,21 +590,24 @@ export default function ProcedureModal({
   const isLineProcedure = selectedLine !== null && selectedLine !== undefined;
 
   return (
-    <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className="absolute left-1/2 top-1/2 w-[min(95vw,1200px)] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col">
-        <div className="flex items-center justify-between border-b border-white/10 p-4 flex-shrink-0">
-          <h3 className="text-lg font-semibold text-white">{modalTitle}</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 glass-modal-overlay" />
+      <div className="relative z-10 w-[min(95vw,1200px)] max-h-[90vh] rounded-2xl glass-modal-container shadow-2xl flex flex-col overflow-hidden mx-4">
+        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 flex-shrink-0 glass-modal-header">
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <span className="material-symbols-outlined text-blue-400">description</span>
+            {modalTitle}
+          </h3>
           <button
             onClick={onClose}
-            className="text-slate-300 hover:text-white transition-colors p-1 hover:bg-white/10 rounded"
-            aria-label="Cerrar modal"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center"
+            aria-label={t("closeModal")}
           >
-            ✕
+            <span className="material-symbols-outlined text-xl">close</span>
           </button>
         </div>
         <div
-          className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-custom"
+          className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-custom"
           onScroll={handleScroll}
           style={{
             scrollBehavior: "smooth",
@@ -623,8 +626,7 @@ export default function ProcedureModal({
                     return (
                       <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
                         <p className="text-red-300">
-                          No se encontró información para la línea{" "}
-                          {selectedLine}
+                          {t("lineNotFound", { line: selectedLine })}
                         </p>
                       </div>
                     );
@@ -633,65 +635,71 @@ export default function ProcedureModal({
                   return (
                     <div className="space-y-4">
                       {/* Información de la línea */}
-                      <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                        <h4 className="font-semibold text-white mb-3">
-                          Análisis de Línea {selectedLine}
+                      <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10 space-y-4">
+                        <h4 className="font-semibold text-white text-base flex items-center gap-2">
+                          <span className="material-symbols-outlined text-amber-400 text-lg">insights</span>
+                          {t("lineAnalysis", { line: selectedLine })}
                         </h4>
 
                         {/* Tipo de operación */}
-                        <div className="mb-4">
-                          <span className="text-sm font-medium text-slate-400">
-                            Tipo de operación:
+                        <div>
+                          <span className="text-sm font-medium text-slate-400 block mb-2">
+                            {t("operationType")}
                           </span>
                           <div className="mt-1">
                             {(() => {
                               const kindConfig: Record<
                                 string,
-                                { label: string; className: string }
+                                { labelKey: string; className: string }
                               > = {
                                 assign: {
-                                  label: "Asignación",
+                                  labelKey: "assign",
                                   className:
                                     "bg-blue-500/20 text-blue-300 border-blue-500/30",
                                 },
                                 if: {
-                                  label: "Condicional",
+                                  labelKey: "if",
                                   className:
                                     "bg-purple-500/20 text-purple-300 border-purple-500/30",
                                 },
                                 for: {
-                                  label: "Bucle For",
+                                  labelKey: "for",
                                   className:
                                     "bg-green-500/20 text-green-300 border-green-500/30",
                                 },
                                 while: {
-                                  label: "Bucle While",
+                                  labelKey: "while",
                                   className:
                                     "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
                                 },
                                 repeat: {
-                                  label: "Bucle Repeat",
+                                  labelKey: "repeat",
                                   className:
                                     "bg-orange-500/20 text-orange-300 border-orange-500/30",
                                 },
                                 call: {
-                                  label: "Llamada",
+                                  labelKey: "call",
                                   className:
                                     "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
                                 },
                                 return: {
-                                  label: "Retorno",
+                                  labelKey: "return",
                                   className:
                                     "bg-pink-500/20 text-pink-300 border-pink-500/30",
                                 },
+                                print: {
+                                  labelKey: "print",
+                                  className:
+                                    "bg-teal-500/20 text-teal-300 border-teal-500/30",
+                                },
                                 decl: {
-                                  label: "Declaración",
+                                  labelKey: "decl",
                                   className:
                                     "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
                                 },
                               };
                               const config = kindConfig[lineData.kind] || {
-                                label: "Otro",
+                                labelKey: "other",
                                 className:
                                   "bg-gray-500/20 text-gray-300 border-gray-500/30",
                               };
@@ -699,7 +707,7 @@ export default function ProcedureModal({
                                 <span
                                   className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${config.className}`}
                                 >
-                                  {config.label}
+                                  {tLineTable(config.labelKey)}
                                 </span>
                               );
                             })()}
@@ -707,43 +715,43 @@ export default function ProcedureModal({
                         </div>
 
                         {/* Costo elemental */}
-                        <div className="mb-4">
-                          <span className="text-sm font-medium text-slate-400">
-                            Costo elemental (C<sub>k</sub>):
+                        <div>
+                          <span className="text-sm font-medium text-slate-400 block mb-2">
+                            {t("elementalCost")}
                           </span>
-                          <div className="mt-2 p-3 rounded bg-slate-900/50 border border-blue-500/20 overflow-x-auto scrollbar-custom">
+                          <div className="p-3 rounded-lg bg-slate-900/50 border border-blue-500/20 overflow-x-auto scrollbar-custom">
                             <Formula latex={lineData.ck} display />
                           </div>
-                          <p className="text-slate-300 mt-1 text-xs">
-                            Costo computacional básico de esta operación
+                          <p className="text-slate-400 mt-1.5 text-xs">
+                            {t("elementalCostDesc")}
                           </p>
                         </div>
 
                         {/* Número de ejecuciones (o E[#] para promedio) */}
-                        <div className="mb-4">
-                          <span className="text-sm font-medium text-slate-400">
+                        <div>
+                          <span className="text-sm font-medium text-slate-400 block mb-2">
                             {isAvgCase
-                              ? "Esperanza de ejecuciones:"
-                              : "Número de ejecuciones:"}
+                              ? t("expectedExecutions")
+                              : t("numExecutions")}
                           </span>
-                          <div className="mt-2 p-3 rounded bg-slate-900/50 border border-amber-500/20 overflow-x-auto scrollbar-custom">
+                          <div className="p-3 rounded-lg bg-slate-900/50 border border-amber-500/20 overflow-x-auto scrollbar-custom">
                             <Formula
                               latex={lineData.expectedRuns || lineData.count}
                               display
                             />
                           </div>
-                          <p className="text-slate-300 mt-1 text-xs">
+                          <p className="text-slate-400 mt-1.5 text-xs">
                             {isAvgCase
-                              ? "Esperanza del número de veces que se ejecuta esta línea (E[N_ℓ])"
-                              : "Cuántas veces se ejecuta esta línea"}
+                              ? t("expectedExecutionsDesc")
+                              : t("numExecutionsDesc")}
                           </p>
                         </div>
 
                         {/* Notas adicionales */}
                         {lineData.note && (
-                          <div className="mb-4">
-                            <span className="text-sm font-medium text-slate-400">
-                              Notas:
+                          <div>
+                            <span className="text-sm font-medium text-slate-400 block mb-2">
+                              {t("notes")}
                             </span>
                             <div className="mt-2 p-3 rounded bg-slate-900/50 border border-green-500/20">
                               <p className="text-slate-300 text-sm">
@@ -754,38 +762,39 @@ export default function ProcedureModal({
                         )}
 
                         {/* Fórmula de costo total */}
-                        <div className="mb-4">
-                          <span className="text-sm font-medium text-slate-400">
+                        <div>
+                          <span className="text-sm font-medium text-slate-400 block mb-2">
                             {isAvgCase
-                              ? "Costo esperado de la línea:"
-                              : "Costo total de la línea:"}
+                              ? t("lineCostAvg")
+                              : t("lineCost")}
                           </span>
-                          <div className="mt-2 p-3 rounded bg-slate-900/50 border border-purple-500/20 overflow-x-auto scrollbar-custom">
+                          <div className="p-3 rounded-lg bg-slate-900/50 border border-purple-500/20 overflow-x-auto scrollbar-custom">
                             <Formula
                               latex={`${lineData.ck} \\cdot ${lineData.expectedRuns || lineData.count}`}
                               display
                             />
                           </div>
-                          <p className="text-slate-300 mt-1 text-xs">
+                          <p className="text-slate-400 mt-1.5 text-xs">
                             {isAvgCase
-                              ? "Producto del costo elemental por la esperanza de ejecuciones (C_ℓ · E[N_ℓ])"
-                              : "Producto del costo elemental por el número de ejecuciones"}
+                              ? t("lineCostAvgDesc")
+                              : t("lineCostDesc")}
                           </p>
                         </div>
                       </div>
 
                       {/* Información adicional del análisis completo */}
-                      <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                        <h4 className="font-semibold text-white mb-3">
-                          Contexto del Análisis
+                      <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10 space-y-4">
+                        <h4 className="font-semibold text-white text-base flex items-center gap-2">
+                          <span className="material-symbols-outlined text-cyan-400 text-lg">science</span>
+                          {t("analysisContext")}
                         </h4>
 
                         {/* Ecuación principal */}
-                        <div className="mb-4">
-                          <span className="text-sm font-medium text-slate-400">
+                        <div>
+                          <span className="text-sm font-medium text-slate-400 block mb-2">
                             {isAvgCase
-                              ? "Ecuación de eficiencia promedio A(n):"
-                              : "Ecuación de eficiencia completa:"}
+                              ? t("efficiencyEqAvg")
+                              : t("efficiencyEq")}
                           </span>
                           <div className="mt-2 p-3 rounded bg-slate-900/50 border border-white/10 overflow-x-auto scrollbar-custom">
                             <Formula
@@ -798,7 +807,7 @@ export default function ProcedureModal({
                           </div>
                           {isAvgCase && analysisData.totals.avg_model_info && (
                             <p className="text-slate-300 mt-1 text-xs">
-                              Modelo: {analysisData.totals.avg_model_info.note}
+                              {t("modelLabel")} {analysisData.totals.avg_model_info.note}
                             </p>
                           )}
                         </div>
@@ -806,9 +815,9 @@ export default function ProcedureModal({
                         {/* Pasos del procedimiento específico de la línea */}
                         {lineData.procedure &&
                           lineData.procedure.length > 0 && (
-                            <div className="mb-4">
-                              <span className="text-sm font-medium text-slate-400">
-                                Procedimiento de simplificación:
+                            <div>
+                              <span className="text-sm font-medium text-slate-400 block mb-2">
+                                {t("simplificationProcedure")}
                               </span>
                               <div className="mt-2 space-y-2 max-h-48 overflow-y-auto scrollbar-custom">
                                 {lineData.procedure.map((step, index) => (
@@ -835,9 +844,9 @@ export default function ProcedureModal({
                         {analysisData.totals.symbols &&
                           Object.keys(analysisData.totals.symbols).length >
                             0 && (
-                            <div className="mb-4">
-                              <span className="text-sm font-medium text-slate-400">
-                                Símbolos utilizados:
+                            <div>
+                              <span className="text-sm font-medium text-slate-400 block mb-2">
+                                {t("symbolsUsed")}
                               </span>
                               <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 max-h-32 overflow-y-auto scrollbar-custom">
                                 {Object.entries(
@@ -863,8 +872,8 @@ export default function ProcedureModal({
                         {analysisData.totals.notes &&
                           analysisData.totals.notes.length > 0 && (
                             <div>
-                              <span className="text-sm font-medium text-slate-400">
-                                Notas generales:
+                              <span className="text-sm font-medium text-slate-400 block mb-2">
+                                {t("generalNotes")}
                               </span>
                               <ul className="mt-2 space-y-1 max-h-24 overflow-y-auto scrollbar-custom">
                                 {analysisData.totals.notes.map(
@@ -895,10 +904,11 @@ export default function ProcedureModal({
                 <div className="space-y-4">
                   {/* Ecuación principal */}
                   <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                    <h4 className="font-semibold text-white mb-3">
+                    <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-cyan-400">functions</span>
                       {isAvgCase
-                        ? "Ecuación de Eficiencia Promedio A(n)"
-                        : "Ecuación de Eficiencia"}
+                        ? t("efficiencyEquationAvg")
+                        : t("efficiencyEquation")}
                     </h4>
                     <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
                       <Formula
@@ -911,7 +921,7 @@ export default function ProcedureModal({
                     </div>
                     {isAvgCase && analysisData.totals.avg_model_info && (
                       <p className="text-slate-300 mt-2 text-sm">
-                        Modelo: {analysisData.totals.avg_model_info.note}
+                        {t("modelLabel")} {analysisData.totals.avg_model_info.note}
                       </p>
                     )}
                   </div>
@@ -919,10 +929,11 @@ export default function ProcedureModal({
                   {/* Forma polinómica T(n) o A(n) si está disponible */}
                   {analysisData.totals.T_polynomial && (
                     <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                      <h4 className="font-semibold text-white mb-3">
+                      <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-green-400">calculate</span>
                         {isAvgCase
-                          ? "Forma polinómica A(n)"
-                          : "Forma polinómica T(n)"}
+                          ? t("polynomialFormAvg")
+                          : t("polynomialForm")}
                       </h4>
                       <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
                         <Formula
@@ -938,8 +949,9 @@ export default function ProcedureModal({
 
                   {/* Notación asintótica derivada de T(n) o de la forma detectada */}
                   <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                    <h4 className="font-semibold text-white mb-3">
-                      Notación asintótica
+                    <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-amber-400">trending_up</span>
+                      {t("asymptoticNotation")}
                     </h4>
                     <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
                       {(() => {
@@ -956,10 +968,11 @@ export default function ProcedureModal({
 
                   {/* Pasos de derivación de la ecuación */}
                   <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                    <h4 className="font-semibold text-white mb-3">
+                    <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-purple-400">account_tree</span>
                       {isAvgCase
-                        ? "Derivación de la Ecuación A(n)"
-                        : "Derivación de la Ecuación T(n)"}
+                        ? t("derivationA")
+                        : t("derivationT")}
                     </h4>
                     <div className="space-y-4">
                       {derivationSteps.map((step, index) => {
@@ -1016,8 +1029,9 @@ export default function ProcedureModal({
                   {/* Símbolos */}
                   {Object.keys(symbols).length > 0 && (
                     <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                      <h4 className="font-semibold text-white mb-3">
-                        Símbolos
+                      <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-blue-400">abc</span>
+                        {t("symbols")}
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto scrollbar-custom">
                         {Object.entries(symbols).map(
@@ -1042,7 +1056,10 @@ export default function ProcedureModal({
                   {/* Notas */}
                   {notes.length > 0 && (
                     <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                      <h4 className="font-semibold text-white mb-3">Notas</h4>
+                      <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-amber-400">note</span>
+                        {t("generalNotes")}
+                      </h4>
                       <ul className="space-y-2 max-h-32 overflow-y-auto scrollbar-custom">
                         {notes.map((note, index) => (
                           <li

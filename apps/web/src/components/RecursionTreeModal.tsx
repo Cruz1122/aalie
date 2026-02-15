@@ -1,12 +1,13 @@
 "use client";
 
 import React, {
+  useEffect,
   useMemo,
   useState,
-  useEffect,
   useRef,
   useCallback,
 } from "react";
+import { useTranslations } from "next-intl";
 import {
   default as ReactFlow,
   Background,
@@ -108,6 +109,7 @@ const TreeNode = React.memo(
   }: {
     data: TreeNodeData & { sourcePosition?: string; targetPosition?: string };
   }) => {
+    const t = useTranslations("analyzer.recursionTreeModal");
     const {
       label,
       size,
@@ -186,21 +188,26 @@ const TreeNode = React.memo(
           ) : (
             <div className="font-medium">n ≈ {size.toFixed(1)}</div>
           )}
-          <div className="text-slate-400">Nivel {level}</div>
+          <div className="text-slate-400">
+            {t("levelLabel")} {level}
+          </div>
           {duplicateCount && duplicateCount > 1 ? (
             <div className="text-orange-400 font-semibold text-[10px] bg-orange-500/20 px-1.5 py-0.5 rounded">
-              ⚠ Subproblema duplicado ({duplicateCount}x)
+              {t("duplicateSubproblem", { count: duplicateCount })}
             </div>
           ) : (
             <div
               className={`text-xs ${isBaseCase ? "text-green-400" : "text-slate-500"}`}
             >
-              {nodeCount} nodo{nodeCount !== 1 ? "s" : ""}
+              {t("nodeCount", {
+                count: nodeCount,
+                plural: nodeCount !== 1 ? "s" : "",
+              })}
             </div>
           )}
           {isBaseCase && (
             <div className="text-green-300 font-semibold mt-1 pt-1 border-t border-green-500/30">
-              Retorna
+              {t("returns")}
             </div>
           )}
         </div>
@@ -453,29 +460,21 @@ export default function RecursionTreeModal({
     open,
   ]);
 
-  // Manejar tecla Escape
+  const t = useTranslations("analyzer.recursionTreeModal");
+
+  // Manejar tecla Escape y scroll
   useEffect(() => {
     if (!open) return;
-
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
+      if (e.key === "Escape") onClose();
     };
-
+    document.body.style.overflow = "hidden";
     document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
+    return () => {
+      document.body.style.overflow = "";
+      document.removeEventListener("keydown", handleEscape);
+    };
   }, [open, onClose]);
-
-  // Bloquear scroll del body cuando el modal está abierto
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = "";
-      };
-    }
-  }, [open]);
 
   // Centrar el árbol cuando se abre el modal (solo si ya hay nodos generados)
   useEffect(() => {
@@ -595,29 +594,27 @@ export default function RecursionTreeModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 glass-modal-overlay"
         onClick={onClose}
-        role="button"
-        tabIndex={0}
-        aria-label="Cerrar modal"
+        aria-hidden
       />
-      <div className="absolute left-1/2 top-1/2 w-[min(95vw,1600px)] h-[min(85vh,800px)] max-h-[85vh] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col">
+      <div className="relative z-10 w-[min(95vw,1000px)] h-[min(75vh,650px)] max-h-[75vh] rounded-2xl glass-modal-container shadow-2xl flex flex-col overflow-hidden mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 p-4 flex-shrink-0">
+        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 flex-shrink-0 glass-modal-header">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
             <span className="material-symbols-outlined text-purple-400">
               account_tree
             </span>
-            <span>Árbol de Recursión</span>
+            {t("title")}
           </h3>
           <button
             onClick={onClose}
-            className="text-slate-300 hover:text-white transition-colors p-1 hover:bg-white/10 rounded"
-            aria-label="Cerrar modal"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center"
+            aria-label={t("closeModal")}
           >
-            ✕
+            <span className="material-symbols-outlined text-xl">close</span>
           </button>
         </div>
 
@@ -626,8 +623,11 @@ export default function RecursionTreeModal({
           <div className="flex flex-wrap items-center gap-4">
             {/* Tamaño inicial n */}
             <div className="flex items-center gap-3 min-w-[220px]">
-              <label className="text-sm text-slate-300 whitespace-nowrap font-medium">
-                n inicial:
+              <label className="text-sm text-slate-300 whitespace-nowrap font-medium flex items-center gap-2">
+                <span className="material-symbols-outlined text-cyan-400 text-base">
+                  numbers
+                </span>
+                {t("initialN")}
               </label>
               <div className="flex items-center gap-2 flex-1">
                 <input
@@ -664,8 +664,11 @@ export default function RecursionTreeModal({
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="text-sm text-slate-300 whitespace-nowrap">
-                Profundidad:
+              <label className="text-sm text-slate-300 whitespace-nowrap flex items-center gap-2">
+                <span className="material-symbols-outlined text-emerald-400 text-base">
+                  layers
+                </span>
+                {t("depth")}
               </label>
               <input
                 type="number"
@@ -677,24 +680,32 @@ export default function RecursionTreeModal({
                 placeholder="Auto"
               />
               <span className="text-xs text-slate-400">
-                / {maxPossibleDepth} (caso base)
+                / {maxPossibleDepth} {t("baseCase")}
               </span>
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="text-sm text-slate-300 whitespace-nowrap">
-                Orientación:
+              <label className="text-sm text-slate-300 whitespace-nowrap flex items-center gap-2">
+                <span className="material-symbols-outlined text-amber-400 text-base">
+                  swap_vert
+                </span>
+                {t("orientation")}
               </label>
               <button
                 onClick={toggleOrientation}
                 className="flex items-center gap-2 px-3 py-1 rounded bg-slate-700 border border-white/10 text-white text-sm hover:bg-slate-600 transition-all duration-200 hover:shadow-lg"
-                title={`Cambiar a orientación ${orientation === "vertical" ? "horizontal" : "vertical"}`}
+                title={t("changeOrientation", {
+                  orientation:
+                    orientation === "vertical" ? t("horizontal") : t("vertical"),
+                })}
               >
                 <span className="text-base">
                   {orientation === "vertical" ? "↓" : "→"}
                 </span>
                 <span>
-                  {orientation === "vertical" ? "Vertical" : "Horizontal"}
+                  {orientation === "vertical"
+                    ? t("vertical")
+                    : t("horizontal")}
                 </span>
               </button>
             </div>
@@ -702,14 +713,18 @@ export default function RecursionTreeModal({
             <div className="ml-auto flex items-center gap-2 text-xs text-slate-400">
               {isLinearRecurrence ? (
                 <>
-                  <span>Desplazamientos: [{recurrence.shifts.join(", ")}]</span>
+                  <span>
+                    {t("shifts")} [{recurrence.shifts.join(", ")}]
+                  </span>
                   <span>,</span>
-                  <span>Coefs: [{recurrence.coefficients.join(", ")}]</span>
+                  <span>
+                    {t("coefs")} [{recurrence.coefficients.join(", ")}]
+                  </span>
                   {characteristicEquation?.growth_rate && (
                     <>
                       <span>,</span>
                       <span className="text-orange-300">
-                        Crecimiento: ≈
+                        {t("growth")} ≈
                         {characteristicEquation.growth_rate.toFixed(3)}ⁿ
                       </span>
                     </>
@@ -728,8 +743,8 @@ export default function RecursionTreeModal({
           </div>
         </div>
 
-        {/* Área del árbol */}
-        <div className="flex-1 relative bg-slate-950 recursion-tree-container">
+        {/* Área del árbol - min-h-0 permite que flex-1 encoja correctamente en el contenedor flex */}
+        <div className="flex-1 min-h-0 relative bg-slate-950 recursion-tree-container">
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -783,13 +798,13 @@ export default function RecursionTreeModal({
               <div className="flex items-center justify-between text-xs text-slate-400">
                 <div className="flex items-center gap-4 flex-wrap">
                   <span>
-                    Total de nodos:{" "}
+                    {t("totalNodes")}{" "}
                     <span className="text-white font-semibold">
                       {nodes.length}
                     </span>
                   </span>
                   <span>
-                    Niveles:{" "}
+                    {t("levels")}{" "}
                     <span className="text-white font-semibold">
                       {Math.max(...nodes.map((n) => n.data?.level || 0)) + 1}
                     </span>
@@ -797,7 +812,7 @@ export default function RecursionTreeModal({
                   {isLinearRecurrence && (
                     <>
                       <span>
-                        Subproblemas duplicados:{" "}
+                        {t("duplicateSubproblems")}{" "}
                         <span className="text-orange-300 font-semibold">
                           {
                             nodes.filter(
@@ -810,7 +825,7 @@ export default function RecursionTreeModal({
                       </span>
                       {characteristicEquation?.growth_rate && (
                         <span className="text-orange-300">
-                          Crecimiento: Θ(
+                          {t("growth")} Θ(
                           {characteristicEquation.growth_rate.toFixed(3)}ⁿ)
                         </span>
                       )}
@@ -818,13 +833,10 @@ export default function RecursionTreeModal({
                   )}
                 </div>
                 <div className="text-slate-500 flex items-center gap-2">
-                  <span>
-                    Usa el mouse para hacer zoom y arrastrar. Presiona Esc para
-                    cerrar.
-                  </span>
+                  <span>{t("zoomHint")}</span>
                   {isLinearRecurrence && (
                     <span className="text-orange-400 text-[10px]">
-                      ⚠ Árbol irregular: los nodos se duplican
+                      {t("irregularTree")}
                     </span>
                   )}
                 </div>

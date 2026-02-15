@@ -197,7 +197,7 @@ cd algorithmic-analysis
 # Instalar dependencias de Node/pnpm
 pnpm install
 
-# Instalar dependencias Python (backend)
+# Instalar dependencias Python (backend, incluye parser aa_grammar)
 cd apps/api
 pip install -r requirements.txt
 ```

@@ -1,7 +1,7 @@
 "use client";
 
 import type { Program } from "@aa/types";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -28,6 +28,7 @@ interface Message {
 }
 
 export default function HomePage() {
+  const locale = useLocale();
   const router = useRouter();
   const t = useTranslations("analyzer.progress");
   const tAlgorithmType = useTranslations("analyzer.algorithmType");
@@ -424,11 +425,13 @@ export default function HomePage() {
           avgModel?: { mode: string; predicates?: Record<string, string> };
           algorithm_kind?: string;
           preferred_method?: MethodType;
+          locale?: string;
         } = {
           source: sourceCode,
           mode: "all",
           avgModel: { mode: "uniform", predicates: {} },
           algorithm_kind: kind,
+          locale: locale === "es" ? "es" : "en",
         };
 
         if (isRecursive && selectedMethod) {

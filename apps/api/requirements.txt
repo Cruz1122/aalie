@@ -3,3 +3,6 @@ uvicorn[standard]>=0.27,<1.0
 antlr4-python3-runtime==4.13.2
 python-dotenv>=1.0.0
 sympy>=1.12,<2.0
+
+# Parser aa_grammar (ruta relativa desde apps/api)
+-e ../../packages/grammar/py
