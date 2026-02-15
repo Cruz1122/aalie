@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
+import AALIEIcon from "@/components/AALIEIcon";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { ImageModal } from "@/components/ImageModal";
@@ -52,7 +53,7 @@ export default function UserGuidePage() {
       icon: "analytics",
       subsections: [
         { id: "analisis-editor", titleKey: "analisisEditor", icon: "code" },
-        { id: "analisis-chatbot", titleKey: "analisisChatbot", icon: "smart_toy" },
+        { id: "analisis-chatbot", titleKey: "analisisChatbot", icon: "aalie" },
         { id: "analisis-resultados", titleKey: "analisisResultados", icon: "insights" },
         { id: "analisis-llm", titleKey: "analisisLlm", icon: "compare_arrows" },
         { id: "analisis-gpu-cpu", titleKey: "analisisGpuCpu", icon: "memory" },
@@ -122,9 +123,13 @@ export default function UserGuidePage() {
                               onClick={() => setActiveSection(sub.id)}
                             >
                               {sub.icon && (
-                                <span className="material-symbols-outlined text-xs">
-                                  {sub.icon}
-                                </span>
+                                sub.icon === "aalie" ? (
+                                  <AALIEIcon className="text-primary" size={14} />
+                                ) : (
+                                  <span className="material-symbols-outlined text-xs">
+                                    {sub.icon}
+                                  </span>
+                                )
                               )}
                               <span>{t(sub.titleKey)}</span>
                             </a>
@@ -811,9 +816,7 @@ print("Dijo \"hola\" y salió");`}
 
                 <div id="analisis-chatbot" className="mb-8 scroll-mt-24">
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="material-symbols-outlined text-primary text-xl">
-                      smart_toy
-                    </span>
+                    <AALIEIcon className="text-primary" size={20} />
                     <h3 className="text-lg sm:text-xl font-semibold text-white">
                       {t("analisisChatbot")}
                     </h3>

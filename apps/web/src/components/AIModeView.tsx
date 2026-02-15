@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 
+import AALIEIcon from "./AALIEIcon";
 import ChatBot from "./ChatBot";
 
 /**
@@ -100,9 +101,7 @@ export default function AIModeView({
         className={`mb-6 transition-all duration-300 ${isAnimating ? "scale-0" : "scale-100"}`}
       >
         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center">
-          <span className="material-symbols-outlined text-purple-300 text-3xl">
-            smart_toy
-          </span>
+          <AALIEIcon className="text-purple-300" size={52} />
         </div>
       </div>
 
