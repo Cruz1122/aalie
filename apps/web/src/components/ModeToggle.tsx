@@ -2,6 +2,8 @@
 
 import { useTranslations } from "next-intl";
 
+import AALIEIcon from "./AALIEIcon";
+
 interface ModeToggleProps {
   readonly mode: "ai" | "manual";
   readonly isSwitching: boolean;
@@ -26,7 +28,7 @@ export default function ModeToggle({
           }`}
           disabled={isSwitching}
         >
-          <span className="material-symbols-outlined text-base">smart_toy</span>{" "}
+          <AALIEIcon className="text-base" size={24} />{" "}
           {t("modeAI")}
         </button>
         <button

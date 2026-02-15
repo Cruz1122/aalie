@@ -5,6 +5,16 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [Unreleased]
+
+### Added
+
+- Componente `AALIEIcon` para el logo del asistente de IA
+
+### Changed
+
+- Icono `smart_toy` reemplazado por `aalie.svg` en ModeToggle, AIModeView, ChatBot, ManualModeView y user-guide
+
 ## [1.1.2] - 2026-02-14
 
 ### Added

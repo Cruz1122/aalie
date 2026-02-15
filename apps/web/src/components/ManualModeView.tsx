@@ -16,6 +16,7 @@ import { useRouter } from "@/i18n/navigation";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 import { GrammarApiService } from "@/services/grammar-api";
 
+import AALIEIcon from "./AALIEIcon";
 import { AnalysisLoader } from "./AnalysisLoader";
 import { AnalyzerEditor } from "./AnalyzerEditor";
 import { ASTTreeView } from "./ASTTreeView";
@@ -970,9 +971,7 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                   }}
                   className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg text-white text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 border animate-[slideInUp_0.3s_ease-out] bg-gradient-to-br from-purple-500/20 to-purple-500/20 border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 animate-pulse-slow cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-base animate-shake">
-                    smart_toy
-                  </span>{" "}
+                  <AALIEIcon className="text-base animate-shake" size={18} />{" "}
                   Ayuda con IA
                 </button>
               )}

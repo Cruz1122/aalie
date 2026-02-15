@@ -11,6 +11,7 @@ import {
   validateApiKey,
 } from "@/hooks/useApiKey";
 
+import AALIEIcon from "./AALIEIcon";
 import MarkdownRenderer from "./MarkdownRenderer";
 
 /**
@@ -523,9 +524,7 @@ export default function ChatBot({
         <div className="glass-modal-header p-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center flex-shrink-0">
-              <span className="material-symbols-outlined text-purple-300 text-lg">
-                smart_toy
-              </span>
+              <AALIEIcon className="text-purple-300" size={26} />
             </div>
             <div className="flex flex-col min-w-0">
               <h3 className="text-white font-semibold text-xs">AALIE</h3>
@@ -644,9 +643,7 @@ export default function ChatBot({
                   {message.sender === "user" ? (
                     <User size={14} className="text-blue-300" />
                   ) : (
-                    <span className="material-symbols-outlined text-purple-300 text-xs">
-                      smart_toy
-                    </span>
+                    <AALIEIcon className="text-purple-300" size={22} />
                   )}
                 </div>
 
@@ -766,10 +763,8 @@ export default function ChatBot({
           {/* Typing Indicator - Estilo WhatsApp */}
           {isTyping && (
             <div className="flex items-start gap-2 chat-message-slide-in">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center flex-shrink-0">
-                <span className="material-symbols-outlined text-purple-300 text-xs">
-                  smart_toy
-                </span>
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <AALIEIcon className="text-purple-300" size={22} />
               </div>
               <div className="glass-card border-white/10 px-2.5 py-1.5 rounded-xl rounded-bl-md min-w-[45px]">
                 <div className="flex items-center justify-center space-x-1 h-3">

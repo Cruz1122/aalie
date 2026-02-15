@@ -678,9 +678,9 @@
   "home": {
     "modeAI": "AALIE",
     "modeManual": "Manual Mode",
-    "welcome": "Hi! I'm AALIE (Algorithmic Analysis Live Interaction Expert), your assistant for algorithm analysis. How can I help you today?",
+    "welcome": "Hi! I'm AALIE (Algorithmic Analysis Live Interaction Expert), your assistant for algorithm analysis. How may I help you today?",
     "greeting": "Hi, I'm AALIE.",
-    "greetingQuestion": "How can I help you?",
+    "greetingQuestion": "How may I help you?",
     "placeholder": "Describe the algorithm you need...",
     "suggestions": {
       "notation": "What is asymptotic notation?",
