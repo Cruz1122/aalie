@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 import type { ExecutionStep, TraceApiResponse } from "@/types/trace";
 
@@ -75,6 +76,7 @@ export default function StepInfo({
   currentStep,
   loadingDiagram = false,
 }: StepInfoProps) {
+  const t = useTranslations("analyzer.executionTrace");
   const [expandedDescription, setExpandedDescription] = useState(false);
   const [expandedIteration, setExpandedIteration] = useState(false);
 
@@ -93,7 +95,7 @@ export default function StepInfo({
             <div className="absolute w-6 h-6 bg-blue-500 rounded-full" />
           </div>
           <p className="text-xs text-slate-300">
-            Ejecutando rastro de ejecución...
+            {t("executingTrace")}
           </p>
         </div>
       ) : trace?.ok && stepData ? (
@@ -101,7 +103,7 @@ export default function StepInfo({
           {/* Grid for Line, Type, Cost, Microseconds, Tokens */}
           <div className={`grid gap-2 ${stepData.cost ? 'grid-cols-5' : 'grid-cols-4'}`}>
             <div className="glass-card p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 flex flex-col">
-              <div className="text-xs text-blue-300 mb-2 font-bold text-center">Línea</div>
+              <div className="text-xs text-blue-300 mb-2 font-bold text-center">{t("line")}</div>
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-white font-semibold text-sm">
                   {stepData.line}
@@ -110,7 +112,7 @@ export default function StepInfo({
             </div>
 
             <div className="glass-card p-2 rounded-lg bg-purple-500/10 border border-purple-500/20 flex flex-col">
-              <div className="text-xs text-purple-300 mb-2 font-bold text-center">Tipo</div>
+              <div className="text-xs text-purple-300 mb-2 font-bold text-center">{t("type")}</div>
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-white font-semibold capitalize text-sm">
                   {stepData.kind}
@@ -120,13 +122,13 @@ export default function StepInfo({
 
             {stepData.cost && (
               <div className="glass-card p-2 rounded-lg bg-orange-500/10 border border-orange-500/20 flex flex-col">
-                <div className="text-xs text-orange-300 mb-2 font-bold text-center">Coste</div>
+                <div className="text-xs text-orange-300 mb-2 font-bold text-center">{t("cost")}</div>
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-white text-sm text-center">
                     <Formula latex={stepData.cost} />
                     {stepData.accumulated_cost && (
                       <div className="text-slate-400 text-xs mt-1">
-                        Acum: <Formula latex={formatAccumulatedCost(stepData.accumulated_cost)} />
+                        {t("accumulated")} <Formula latex={formatAccumulatedCost(stepData.accumulated_cost)} />
                       </div>
                     )}
                   </div>
@@ -136,7 +138,7 @@ export default function StepInfo({
 
             {/* Microsegundos - mostrar siempre, con loader si está cargando */}
             <div className="glass-card p-2 rounded-lg bg-green-500/10 border border-green-500/20 flex flex-col">
-              <div className="text-xs text-green-300 mb-2 font-bold text-center">Microsegundos</div>
+              <div className="text-xs text-green-300 mb-2 font-bold text-center">{t("microseconds")}</div>
               <div className="flex-1 flex items-center justify-center">
                 {loadingDiagram && stepData?.microseconds === undefined ? (
                   <div className="w-4 h-4 border-2 border-green-300/50 border-t-green-300 rounded-full animate-spin" />
@@ -152,7 +154,7 @@ export default function StepInfo({
 
             {/* Tokens - mostrar siempre, con loader si está cargando */}
             <div className="glass-card p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex flex-col">
-              <div className="text-xs text-cyan-300 mb-2 font-bold text-center">Tokens</div>
+              <div className="text-xs text-cyan-300 mb-2 font-bold text-center">{t("tokens")}</div>
               <div className="flex-1 flex items-center justify-center">
                 {loadingDiagram && stepData?.tokens === undefined ? (
                   <div className="w-4 h-4 border-2 border-cyan-300/50 border-t-cyan-300 rounded-full animate-spin" />
@@ -182,7 +184,7 @@ export default function StepInfo({
                     <span className="material-symbols-outlined text-sm">
                       {expandedDescription ? "expand_less" : "expand_more"}
                     </span>
-                    Descripción
+                    {t("description")}
                   </button>
                 )}
 
@@ -197,7 +199,7 @@ export default function StepInfo({
                     <span className="material-symbols-outlined text-sm">
                       {expandedIteration ? "expand_less" : "expand_more"}
                     </span>
-                    Iteración{stepData.iteration.iteration ? ` #${stepData.iteration.iteration}` : ""}
+                    {t("iteration")}{stepData.iteration.iteration ? ` #${stepData.iteration.iteration}` : ""}
                   </button>
                 )}
               </div>
@@ -206,7 +208,7 @@ export default function StepInfo({
               {expandedDescription && stepData.description && (
                 <div className="glass-card p-3 rounded-lg animate-fade-in min-h-[80px]">
                   <div className="bg-slate-800/40 rounded px-3 py-2 border border-white/5">
-                    <div className="text-xs text-slate-400 mb-1">Descripción del paso</div>
+                    <div className="text-xs text-slate-400 mb-1">{t("stepDescription")}</div>
                     <div className="text-white text-sm font-medium">
                       {stepData.description}
                     </div>
@@ -218,7 +220,7 @@ export default function StepInfo({
                 <div className="glass-card p-3 rounded-lg bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 animate-fade-in min-h-[80px]">
                   {stepData.iteration.loopVar && (
                     <div className="bg-slate-800/40 rounded px-3 py-2 border border-white/5">
-                      <div className="text-xs text-slate-400 mb-1">Variable de iteración</div>
+                      <div className="text-xs text-slate-400 mb-1">{t("iterationVariable")}</div>
                       <div className="text-white text-sm font-medium">
                         <Formula latex={`${stepData.iteration.loopVar} = ${stepData.iteration.currentValue}${stepData.iteration.maxValue ? ` / ${stepData.iteration.maxValue}` : ""}`} />
                       </div>
@@ -232,15 +234,15 @@ export default function StepInfo({
           {stepData.recursion && (
             <div className="glass-card p-3 rounded-lg">
               <div className="text-xs text-slate-400 mb-1">
-                Recursión:
+                {t("recursion")}
               </div>
               <div className="text-white text-sm">
                 <div>
-                  Profundidad: {stepData.recursion.depth}
+                  {t("depth")} {stepData.recursion.depth}
                 </div>
                 {stepData.recursion.procedure && (
                   <div>
-                    Procedimiento:{" "}
+                    {t("procedure")}{" "}
                     {stepData.recursion.procedure}
                   </div>
                 )}
@@ -250,7 +252,7 @@ export default function StepInfo({
 
           {/* Variables with colorful styling and flex-wrap layout */}
           <div className="glass-card p-3 rounded-lg bg-gradient-to-br from-cyan-500/10 to-purple-500/10 border border-cyan-500/20">
-            <div className="text-xs text-cyan-300 mb-2 font-semibold">Variables:</div>
+            <div className="text-xs text-cyan-300 mb-2 font-semibold">{t("variables")}:</div>
             <div className="flex flex-wrap gap-2">
               {Object.entries(stepData.variables).map(
                 ([key, value]) => {
@@ -284,8 +286,8 @@ export default function StepInfo({
           </div>
           <div className="text-sm font-medium">
             {trace?.errors
-              ? trace.errors[0]?.message || "Error al cargar el rastro"
-              : "No hay datos de seguimiento disponibles"}
+              ? trace.errors[0]?.message || t("traceLoadError")
+              : t("noTraceData")}
           </div>
         </div>
       )}

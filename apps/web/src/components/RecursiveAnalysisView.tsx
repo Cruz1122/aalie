@@ -1,7 +1,10 @@
 "use client";
 
 import type { AnalyzeOpenResponse } from "@aa/types";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useState } from "react";
+
+import { translateProofStep } from "@/lib/proof-step-translator";
 
 import CharacteristicEquationModal from "./CharacteristicEquationModal";
 import DPVersionModal from "./DPVersionModal";
@@ -21,23 +24,6 @@ type MasterType = AnalyzeOpenResponse["totals"]["master"];
 type ProofType = AnalyzeOpenResponse["totals"]["proof"];
 
 type CaseType = "worst" | "best" | "average";
-
-/**
- * Obtiene la etiqueta en español para un tipo de caso.
- * @param caseType - Tipo de caso (worst, best, average)
- * @returns Etiqueta en español del caso
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- */
-const getCaseLabel = (caseType: CaseType): string => {
-  switch (caseType) {
-    case "worst":
-      return "Peor caso";
-    case "best":
-      return "Mejor caso";
-    case "average":
-      return "Caso promedio";
-  }
-};
 
 /**
  * Obtiene las clases CSS para el badge de un tipo de caso.
@@ -142,25 +128,6 @@ const getMethodBadgeStyle = (
 };
 
 /**
- * Obtiene el texto del badge según el método de análisis utilizado.
- * @param isCharacteristicMethod - Indica si es método de ecuación característica
- * @param isIterationMethod - Indica si es método de iteración
- * @param isRecursionTreeMethod - Indica si es método de árbol de recursión
- * @returns String con el texto del badge en español
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- */
-const getMethodBadgeText = (
-  isCharacteristicMethod: boolean,
-  isIterationMethod: boolean,
-  isRecursionTreeMethod: boolean,
-): string => {
-  if (isCharacteristicMethod) return "Ecuación Característica";
-  if (isIterationMethod) return "Método de Iteración";
-  if (isRecursionTreeMethod) return "Árbol de Recursión";
-  return "Teorema Maestro";
-};
-
-/**
  * Obtiene los datos de análisis para el caso seleccionado.
  * @param selectedCase - Tipo de caso seleccionado
  * @param worstData - Datos del peor caso
@@ -260,6 +227,7 @@ const extractDivideConquerRecurrenceWithoutMethod = (recurrence: {
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 const renderEfficiencyEquation = (
+  tCases: (k: string) => string,
   isMasterMethod: boolean,
   hasDifferentComplexities: boolean,
   currentTheta: string | null | undefined,
@@ -279,19 +247,18 @@ const renderEfficiencyEquation = (
   }
 
   if (hasDifferentComplexities) {
-    // Para otros métodos con diferentes complejidades, mostrar todas en la misma línea
     return (
       <div className="flex flex-row gap-4 items-center justify-center flex-wrap">
         <div className="text-center">
-          <div className="text-xs text-green-300 mb-1">Mejor caso:</div>
+          <div className="text-xs text-green-300 mb-1">{tCases("best")}:</div>
           <Formula latex={`T(n) = ${roundLatexNumbers(bestT)}`} display />
         </div>
         <div className="text-center">
-          <div className="text-xs text-yellow-300 mb-1">Caso promedio:</div>
+          <div className="text-xs text-yellow-300 mb-1">{tCases("average")}:</div>
           <Formula latex={`T(n) = ${roundLatexNumbers(avgT)}`} display />
         </div>
         <div className="text-center">
-          <div className="text-xs text-red-300 mb-1">Peor caso:</div>
+          <div className="text-xs text-red-300 mb-1">{tCases("worst")}:</div>
           <Formula latex={`T(n) = ${roundLatexNumbers(worstT)}`} display />
         </div>
       </div>
@@ -498,11 +465,13 @@ const renderProcedureModal = (
 /**
  * Renderiza los badges informativos de la ecuación característica (homogénea/no homogénea, DP).
  * @param characteristicEquation - Datos de la ecuación característica
+ * @param tView - Función de traducción
  * @returns Elemento React con los badges o null si no hay ecuación característica
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 const renderCharacteristicBadges = (
   characteristicEquation: CharacteristicEquationType,
+  tView: (key: string) => string,
 ): React.JSX.Element | null => {
   if (!characteristicEquation) return null;
 
@@ -514,21 +483,21 @@ const renderCharacteristicBadges = (
           <span className="material-symbols-outlined text-xs mr-1">
             functions
           </span>{" "}
-          No Homogénea
+          {tView("nonHomogeneous")}
         </span>
       ) : (
         <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold border bg-blue-500/20 text-blue-300 border-blue-500/30">
           <span className="material-symbols-outlined text-xs mr-1">
             functions
           </span>{" "}
-          Homogénea
+          {tView("homogeneous")}
         </span>
       )}
       {/* Badge de DP si aplica */}
       {characteristicEquation.is_dp_linear && (
         <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold border bg-green-500/20 text-green-300 border-green-500/30">
           <span className="material-symbols-outlined text-xs mr-1">memory</span>{" "}
-          DP Lineal Detectada
+          {tView("dpLinearDetected")}
         </span>
       )}
     </div>
@@ -543,6 +512,7 @@ const renderCharacteristicBadges = (
  */
 const renderRecurrenceParameters = (
   recurrence: NonNullable<RecurrenceType>,
+  tView: (key: string) => string,
 ): React.JSX.Element => {
   if (recurrence.type === "divide_conquer") {
     return (
@@ -558,6 +528,8 @@ const renderRecurrenceParameters = (
     );
   }
 
+  const orderLabel = tView("recurrOrder");
+  const shiftsLabel = tView("recurrShifts");
   return (
     <>
       {recurrence["g(n)"] && (
@@ -566,9 +538,9 @@ const renderRecurrenceParameters = (
           <span className="text-slate-300">,</span>
         </>
       )}
-      <Formula latex={`orden = ${recurrence.order}`} />
+      <Formula latex={`${orderLabel} = ${recurrence.order}`} />
       <span className="text-slate-300">,</span>
-      <Formula latex={`desplazamientos = [${recurrence.shifts.join(", ")}]`} />
+      <Formula latex={`${shiftsLabel} = [${recurrence.shifts.join(", ")}]`} />
       <span className="text-slate-300">,</span>
       <Formula latex={`n_0 = ${recurrence.n0}`} />
     </>
@@ -576,6 +548,7 @@ const renderRecurrenceParameters = (
 };
 
 interface ActionButtonsProps {
+  readonly tView: (k: string) => string;
   readonly isCharacteristicMethod: boolean;
   readonly isRecursionTreeMethod: boolean;
   readonly proof: ProofType;
@@ -612,7 +585,7 @@ const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
         className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-sky-500/20 transition-colors ${showGrid ? "" : "w-full"}`}
       >
         <span className="material-symbols-outlined text-sm">info</span>
-        <span>Ver Detalles</span>
+        <span>{props.tView("viewDetails")}</span>
       </button>
       {props.isRecursionTreeMethod && props.proof && props.proof.length > 0 && (
         <button
@@ -620,7 +593,7 @@ const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
           className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors"
         >
           <span className="material-symbols-outlined text-sm">description</span>
-          <span>Ver Paso a Paso</span>
+          <span>{props.tView("viewStepByStep")}</span>
         </button>
       )}
       {props.isCharacteristicMethod &&
@@ -630,7 +603,7 @@ const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
             className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-green-500/20 transition-colors"
           >
             <span className="material-symbols-outlined text-sm">memory</span>
-            <span>Ver Versión DP</span>
+            <span>{props.tView("viewDPVersion")}</span>
           </button>
         )}
     </div>
@@ -711,6 +684,9 @@ const renderEmptyState = (props: EmptyStateProps): React.JSX.Element => {
 };
 
 interface RecursionTreeCardsProps {
+  readonly tCases: (k: string) => string;
+  readonly tRecursionTree: (k: string) => string;
+  readonly translateReason: (reason: string) => string;
   readonly recursionTree: RecursionTreeType;
   readonly hasDifferentComplexities: boolean;
   readonly bestT: string;
@@ -734,13 +710,15 @@ const renderRecursionTreeCards = (
    * @returns Texto en español que describe el nivel dominante
    * @author Juan Camilo Cruz Parra (@Cruz1122)
    */
+  const tRT = props.tRecursionTree;
   const getDominatingLevelText = (
     level: string | number | undefined,
   ): string => {
-    if (level === "leaves") return "Dominan las hojas";
-    if (level === "root") return "Domina la raíz";
-    if (level === "all") return "Trabajo equilibrado";
-    return "Nivel dominante";
+    if (level === "leaves") return tRT("leavesDominate");
+    if (level === "root") return tRT("rootDominates");
+    if (level === "all") return tRT("balancedWork");
+    if (typeof level === "number") return tRT("levelWithNumber", { level });
+    return tRT("dominantLevel");
   };
 
   return (
@@ -752,7 +730,7 @@ const renderRecursionTreeCards = (
             <span className="material-symbols-outlined text-base">
               trending_up
             </span>
-            <span>Nivel Dominante</span>
+            <span>{tRT("dominatingLevel")}</span>
           </h3>
           <div className="bg-slate-800/60 p-3 rounded border border-white/10 flex flex-col items-center justify-center gap-2 flex-1 min-h-[120px]">
             <div className="text-base font-semibold text-cyan-300 text-center">
@@ -763,7 +741,11 @@ const renderRecursionTreeCards = (
             <div className="text-center overflow-x-auto w-full max-w-full">
               <div className="text-xs scale-85">
                 <Formula
-                  latex={props.recursionTree?.dominating_level?.reason || ""}
+                  latex={
+                    props.translateReason(
+                      props.recursionTree?.dominating_level?.reason || "",
+                    )
+                  }
                   display
                 />
               </div>
@@ -779,23 +761,23 @@ const renderRecursionTreeCards = (
             <span className="material-symbols-outlined text-base">
               functions
             </span>
-            <span>Ecuación de Eficiencia</span>
+            <span>{tRT("efficiencyEquation")}</span>
           </h3>
           <div className="bg-slate-800/60 p-3 rounded border border-white/10 flex flex-col items-center justify-center gap-3 overflow-x-auto flex-1 min-h-[120px]">
             {props.hasDifferentComplexities ? (
               <div className="flex flex-row gap-4 items-center justify-center flex-wrap">
                 <div className="text-center">
-                  <div className="text-xs text-green-300 mb-1">Mejor caso:</div>
+                  <div className="text-xs text-green-300 mb-1">{props.tCases("best")}:</div>
                   <Formula latex={`T(n) = ${props.bestT}`} display />
                 </div>
                 <div className="text-center">
                   <div className="text-xs text-yellow-300 mb-1">
-                    Caso promedio:
+                    {props.tCases("average")}:
                   </div>
                   <Formula latex={`T(n) = ${props.avgT}`} display />
                 </div>
                 <div className="text-center">
-                  <div className="text-xs text-red-300 mb-1">Peor caso:</div>
+                  <div className="text-xs text-red-300 mb-1">{props.tCases("worst")}:</div>
                   <Formula latex={`T(n) = ${props.worstT}`} display />
                 </div>
               </div>
@@ -813,6 +795,8 @@ const renderRecursionTreeCards = (
 };
 
 interface EfficiencyCardProps {
+  readonly tCases: (k: string) => string;
+  readonly tRecursionTree: (k: string) => string;
   readonly isMasterMethod: boolean;
   readonly isIterationMethod: boolean;
   readonly hasDifferentComplexities: boolean;
@@ -841,12 +825,12 @@ const renderEfficiencyCard = (
           <span className="material-symbols-outlined text-base text-blue-400">
             functions
           </span>
-          Ecuación de Eficiencia
+          {props.tRecursionTree("efficiencyEquation")}
           {props.isMasterMethod && props.hasDifferentComplexities && (
             <span
               className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide ${getCaseBadgeStyle(props.selectedCase)}`}
             >
-              {getCaseLabel(props.selectedCase)}
+              {props.tCases(props.selectedCase)}
             </span>
           )}
         </h3>
@@ -857,19 +841,19 @@ const renderEfficiencyCard = (
               onClick={() => props.setSelectedCase("best")}
               className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle("best", props.selectedCase === "best")}`}
             >
-              Mejor
+              {props.tCases("bestShort")}
             </button>
             <button
               onClick={() => props.setSelectedCase("average")}
               className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle("average", props.selectedCase === "average")}`}
             >
-              Promedio
+              {props.tCases("avgShort")}
             </button>
             <button
               onClick={() => props.setSelectedCase("worst")}
               className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle("worst", props.selectedCase === "worst")}`}
             >
-              Peor
+              {props.tCases("worstShort")}
             </button>
           </div>
         )}
@@ -880,6 +864,7 @@ const renderEfficiencyCard = (
         }`}
       >
         {renderEfficiencyEquation(
+          props.tCases,
           props.isMasterMethod,
           props.hasDifferentComplexities,
           props.currentTheta,
@@ -953,6 +938,23 @@ interface RecursiveAnalysisViewProps {
 export default function RecursiveAnalysisView({
   data,
 }: RecursiveAnalysisViewProps) {
+  const locale = useLocale() as "en" | "es";
+  const tCases = useTranslations("analyzer.cases");
+  const tMethods = useTranslations("analyzer.methods");
+  const tRecursionTree = useTranslations("analyzer.recursionTree");
+  const tView = useTranslations("analyzer.view");
+
+  const getMethodBadgeText = (
+    isChar: boolean,
+    isIter: boolean,
+    isTree: boolean,
+  ) => {
+    if (isChar) return tMethods("characteristicEquation");
+    if (isIter) return tMethods("iterationMethod");
+    if (isTree) return tMethods("recursionTree");
+    return tMethods("masterTheorem");
+  };
+
   // Memoizar los datos para evitar recálculos innecesarios
   const analysisData = useMemo(() => {
     const worstData = data?.worst;
@@ -1157,7 +1159,7 @@ export default function RecursiveAnalysisView({
                   isRecursionTreeMethod,
                 )}
               </span>
-              <span>Método de Análisis</span>
+              <span>{tView("analysisMethod")}</span>
               <span
                 className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide ${getMethodBadgeStyle(isCharacteristicMethod, isIterationMethod, isRecursionTreeMethod)}`}
               >
@@ -1171,24 +1173,24 @@ export default function RecursiveAnalysisView({
 
             {/* Badges de información (solo para ecuación característica) */}
             {isCharacteristicMethod &&
-              renderCharacteristicBadges(characteristicEquation)}
+              renderCharacteristicBadges(characteristicEquation, tView)}
           </div>
         </div>
 
         {/* Parámetros de la recurrencia */}
         <div className="mb-4">
           <h3 className="text-white font-semibold text-sm mb-3">
-            Parámetros de la Recurrencia
+            {tView("recurrenceParameters")}
           </h3>
           <div className="flex flex-wrap items-center justify-center gap-1">
-            {recurrence && renderRecurrenceParameters(recurrence)}
+            {recurrence && renderRecurrenceParameters(recurrence, tView)}
           </div>
         </div>
 
         {/* Ecuación de Recurrencia */}
         <div className="mb-4">
           <h3 className="text-white font-semibold text-sm mb-2">
-            Ecuación de Recurrencia
+            {tView("recurrenceEquation")}
           </h3>
           <div className="p-3 rounded-lg bg-slate-800/60 border border-white/10 flex justify-center">
             <Formula latex={recurrence.form} />
@@ -1219,7 +1221,7 @@ export default function RecursiveAnalysisView({
                   <span className="material-symbols-outlined text-sm">
                     info
                   </span>
-                  <span>Ver Detalles</span>
+                  <span>{tView("viewDetails")}</span>
                 </button>
                 {hasDPButton && (
                   <button
@@ -1229,7 +1231,7 @@ export default function RecursiveAnalysisView({
                     <span className="material-symbols-outlined text-sm">
                       memory
                     </span>
-                    <span>Ver Versión DP</span>
+                    <span>{tView("viewDPVersion")}</span>
                   </button>
                 )}
                 <button
@@ -1239,7 +1241,7 @@ export default function RecursiveAnalysisView({
                   <span className="material-symbols-outlined text-sm">
                     account_tree
                   </span>
-                  <span>Ver Árbol de Recurrencia</span>
+                  <span>{tView("viewRecurrenceTree")}</span>
                 </button>
               </div>
             );
@@ -1256,7 +1258,7 @@ export default function RecursiveAnalysisView({
                   <span className="material-symbols-outlined text-sm">
                     info
                   </span>
-                  <span>Ver Detalles</span>
+                  <span>{tView("viewDetails")}</span>
                 </button>
                 <button
                   onClick={() => setShowTreeModal(true)}
@@ -1265,7 +1267,7 @@ export default function RecursiveAnalysisView({
                   <span className="material-symbols-outlined text-sm">
                     account_tree
                   </span>
-                  <span>Ver Árbol de Recurrencia</span>
+                  <span>{tView("viewRecurrenceTree")}</span>
                 </button>
               </div>
             );
@@ -1275,6 +1277,7 @@ export default function RecursiveAnalysisView({
           return (
             <>
               {renderActionButtons({
+                tView,
                 isCharacteristicMethod,
                 isRecursionTreeMethod,
                 proof,
@@ -1293,7 +1296,7 @@ export default function RecursiveAnalysisView({
                     <span className="material-symbols-outlined text-sm">
                       account_tree
                     </span>
-                    <span>Ver Árbol de Recurrencia</span>
+                    <span>{tView("viewRecurrenceTree")}</span>
                   </button>
                 </div>
               )}
@@ -1305,6 +1308,9 @@ export default function RecursiveAnalysisView({
       {/* Card de costos o información del método de Árbol de Recursión */}
       {isRecursionTreeMethod && recursionTree
         ? renderRecursionTreeCards({
+            tCases,
+            tRecursionTree,
+            translateReason: (r) => translateProofStep(r, locale),
             recursionTree,
             hasDifferentComplexities,
             bestT,
@@ -1313,6 +1319,8 @@ export default function RecursiveAnalysisView({
             theta,
           })
         : renderEfficiencyCard({
+            tCases,
+            tRecursionTree,
             isMasterMethod,
             isIterationMethod,
             hasDifferentComplexities,

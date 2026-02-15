@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
       context,
       chatHistory,
       apiKey,
+      locale,
     } = await req.json();
 
     // Obtener API_KEY: prioridad a variables de entorno del servidor, luego al parámetro del request
@@ -95,7 +96,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const config = getJobConfig(job);
+    const config = getJobConfig(job, locale);
     const userPrompt = context
       ? `Contexto adicional: ${context}\n\n${prompt}`
       : prompt;

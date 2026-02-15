@@ -1,7 +1,10 @@
 "use client";
 
 import type { AnalyzeOpenResponse } from "@aa/types";
+import { useLocale, useTranslations } from "next-intl";
 import React from "react";
+
+import { translateProofStep } from "@/lib/proof-step-translator";
 
 import Formula from "./Formula";
 
@@ -73,20 +76,10 @@ export default function RecursiveProcedureModal({
   proof,
   theta,
 }: Readonly<RecursiveProcedureModalProps>) {
-  if (!open) return null;
+  const t = useTranslations("analyzer.masterProcedureModal");
+  const locale = useLocale() as "en" | "es";
 
-  // Los pasos de prueba ya vienen con el formato correcto desde el backend
-  
-  // Debug: verificar que proof esté llegando
-  if (process.env.NODE_ENV === "development") {
-    console.log("[RecursiveProcedureModal] proof recibido:", {
-      proof,
-      hasProof: !!proof,
-      proofLength: proof?.length,
-      proofType: typeof proof,
-      isArray: Array.isArray(proof),
-    });
-  }
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50">
@@ -98,17 +91,15 @@ export default function RecursiveProcedureModal({
         }}
         role="button"
         tabIndex={0}
-        aria-label="Cerrar modal"
+        aria-label={t("closeModal")}
       />
-      <div className="absolute left-1/2 top-1/2 w-[min(95vw,1400px)] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col">
+      <div className="absolute left-1/2 top-1/2 w-[min(95vw,1400px)] max-h-[75vh] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col">
         <div className="flex items-center justify-between border-b border-white/10 p-4 flex-shrink-0">
-          <h3 className="text-lg font-semibold text-white">
-            Procedimiento Completo - Teorema Maestro
-          </h3>
+          <h3 className="text-lg font-semibold text-white">{t("title")}</h3>
           <button
             onClick={onClose}
             className="text-slate-300 hover:text-white transition-colors p-1 hover:bg-white/10 rounded"
-            aria-label="Cerrar modal"
+            aria-label={t("closeModal")}
           >
             ✕
           </button>
@@ -120,8 +111,11 @@ export default function RecursiveProcedureModal({
               {/* Ecuación de Recurrencia */}
               {recurrence && (
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                  <h4 className="text-white font-semibold mb-3">
-                    Ecuación de Recurrencia
+                  <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-blue-400">
+                      functions
+                    </span>
+                    <span>{t("recurrenceEquation")}</span>
                   </h4>
                   <div className="bg-slate-900/50 p-4 rounded border border-white/10 overflow-x-auto flex justify-center">
                     <Formula latex={recurrence.form} display />
@@ -141,8 +135,11 @@ export default function RecursiveProcedureModal({
               {/* Casos del Teorema Maestro */}
               {master && (
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                  <h4 className="text-white font-semibold mb-4">
-                    Casos del Teorema Maestro
+                  <h4 className="text-white font-semibold mb-4 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-amber-400">
+                      hub
+                    </span>
+                    <span>{t("masterCases")}</span>
                   </h4>
 
                   {/* Mostrar g(n) */}
@@ -173,7 +170,7 @@ export default function RecursiveProcedureModal({
                           }`}
                         />
                         <h5 className="font-semibold text-white text-sm">
-                          Caso 1
+                          {t("case1")}
                         </h5>
                       </div>
                       <div className="text-xs text-slate-300 mb-1 flex justify-center">
@@ -199,7 +196,7 @@ export default function RecursiveProcedureModal({
                           }`}
                         />
                         <h5 className="font-semibold text-white text-sm">
-                          Caso 2
+                          {t("case2")}
                         </h5>
                       </div>
                       <div className="text-xs text-slate-300 mb-1 flex justify-center">
@@ -225,7 +222,7 @@ export default function RecursiveProcedureModal({
                           }`}
                         />
                         <h5 className="font-semibold text-white text-sm">
-                          Caso 3
+                          {t("case3")}
                         </h5>
                       </div>
                       <div className="text-xs text-slate-300 mb-1 flex justify-center">
@@ -237,10 +234,10 @@ export default function RecursiveProcedureModal({
                       {master.case === 3 && master.regularity && (
                         <div className="mt-1.5 pt-1.5 border-t border-white/10">
                           <p className="text-xs text-slate-400">
-                            Regularidad:{" "}
+                            {t("regularity")}{" "}
                             {master.regularity.checked
-                              ? "✓ Verificada"
-                              : "⚠ Asumida"}
+                              ? t("regularityVerified")
+                              : t("regularityAssumed")}
                             {master.regularity.note &&
                               ` - ${master.regularity.note}`}
                           </p>
@@ -259,65 +256,30 @@ export default function RecursiveProcedureModal({
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
                   <h4 className="text-white font-semibold mb-4 flex items-center gap-2">
                     <span className="material-symbols-outlined text-purple-400">
-                      description
+                      list
                     </span>
-                    <span>Pasos de Prueba</span>
+                    <span>{t("proofSteps")}</span>
                     <span className="text-xs text-slate-400 ml-auto">
-                      ({proof.length} pasos)
+                      {t("stepsCount", { count: proof.length })}
                     </span>
                   </h4>
                   <div 
-                    className="space-y-2 max-h-[calc(90vh-435px)] overflow-y-auto scrollbar-custom w-full"
+                    className="space-y-2 max-h-[calc(75vh-435px)] overflow-y-auto scrollbar-custom w-full"
                     style={{ minHeight: "200px" }}
                   >
                     {proof.length === 0 ? (
                       <div className="p-3 rounded-lg bg-yellow-900/20 border border-yellow-500/30">
                         <p className="text-yellow-400 text-sm">
-                          No hay pasos disponibles
+                          {t("noStepsAvailable")}
                         </p>
                       </div>
                     ) : (
                       proof.map((step, idx) => {
-                        // Debug: verificar estructura del paso
-                        if (process.env.NODE_ENV === "development" && idx === 0) {
-                          console.log("[RecursiveProcedureModal] Primer paso:", {
-                            step,
-                            hasText: !!step.text,
-                            text: step.text,
-                            stepKeys: Object.keys(step),
-                          });
-                        }
-                        
-                        if (!step) {
-                          console.warn(`[RecursiveProcedureModal] Paso ${idx} es null/undefined`);
-                          return (
-                            <div
-                              key={`proof-step-${idx}`}
-                              className="p-3 rounded-lg bg-red-900/20 border border-red-500/30 w-full"
-                            >
-                              <p className="text-red-400 text-xs">
-                                Paso {idx + 1}: null/undefined
-                              </p>
-                            </div>
-                          );
-                        }
-                        
+                        if (!step) return null;
+
                         const stepText = step.text || String(step);
-                        
-                        if (!stepText) {
-                          console.warn(`[RecursiveProcedureModal] Paso ${idx} sin texto:`, step);
-                          return (
-                            <div
-                              key={`proof-step-${idx}`}
-                              className="p-3 rounded-lg bg-red-900/20 border border-red-500/30 w-full"
-                            >
-                              <p className="text-red-400 text-xs">
-                                Paso {idx + 1}: Sin contenido (debug)
-                              </p>
-                            </div>
-                          );
-                        }
-                        
+                        if (!stepText) return null;
+
                         return (
                           <div
                             key={`proof-step-${idx}`}
@@ -326,13 +288,10 @@ export default function RecursiveProcedureModal({
                           >
                             <div className="text-sm text-slate-200 w-full overflow-x-auto">
                               <div className="w-full" style={{ minHeight: "1.5rem" }}>
-                                {stepText ? (
-                                  <Formula latex={stepText} display />
-                                ) : (
-                                  <span className="text-red-400">
-                                    Error: No se pudo renderizar el paso {idx + 1}
-                                  </span>
-                                )}
+                                <Formula
+                                  latex={translateProofStep(stepText, locale)}
+                                  display
+                                />
                               </div>
                             </div>
                           </div>
@@ -344,9 +303,7 @@ export default function RecursiveProcedureModal({
               ) : (
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-yellow-500/30">
                   <p className="text-yellow-400 text-sm">
-                    {process.env.NODE_ENV === "development" 
-                      ? `Debug: No hay pasos de prueba disponibles. proof = ${JSON.stringify(proof)}`
-                      : "No hay pasos de prueba disponibles para este caso."}
+                    {t("noProofSteps")}
                   </p>
                 </div>
               )}
@@ -354,8 +311,11 @@ export default function RecursiveProcedureModal({
               {/* Ecuación de eficiencia */}
               {theta && (
                 <div className="p-4 rounded-lg bg-green-500/20 border border-green-500/30">
-                  <h5 className="text-green-300 font-semibold mb-2 text-sm">
-                    Ecuación de eficiencia
+                  <h5 className="text-green-300 font-semibold mb-2 text-sm flex items-center gap-2">
+                    <span className="material-symbols-outlined text-green-400">
+                      workspace_premium
+                    </span>
+                    <span>{t("efficiencyEquation")}</span>
                   </h5>
                   <div className="text-lg flex justify-center">
                     <Formula

@@ -1,3 +1,16 @@
+[project]
+name = "algorithmic-analysis-api"
+version = "0.1.0"
+description = "API FastAPI para análisis de algoritmos"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110,<1.0",
+    "uvicorn[standard]>=0.27,<1.0",
+    "antlr4-python3-runtime==4.13.2",
+    "python-dotenv>=1.0.0",
+    "sympy>=1.12,<2.0",
+]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"

@@ -1,8 +1,10 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
 import React from "react";
 
 import { getBestAsymptoticNotation } from "@/lib/asymptotic-notation";
+import { translateProofStep } from "@/lib/proof-step-translator";
 import type { CoreAnalysisData } from "@/lib/extract-core-data";
 
 import Formula from "./Formula";
@@ -110,6 +112,11 @@ function parseNote(note: string): {
   return { icon, text, color, bgColor, borderColor };
 }
 
+type ComparisonT = {
+  cases: (k: string) => string;
+  view: (k: string) => string;
+};
+
 /**
  * Renderiza los datos core de un análisis iterativo para un caso específico.
  */
@@ -117,7 +124,8 @@ function renderIterativeCaseData(
   data: CoreAnalysisData | "same_as_worst" | null,
   caseType: "worst" | "best" | "average",
   _isOwn: boolean,
-  worstData?: CoreAnalysisData | null,
+  worstData: CoreAnalysisData | null | undefined,
+  t: ComparisonT,
 ) {
   // Resolver data: si es "same_as_worst", usar worstData
   const resolvedData = data === "same_as_worst" ? worstData : data;
@@ -128,17 +136,17 @@ function renderIterativeCaseData(
         <span className="material-symbols-outlined text-2xl mb-1 block">
           hourglass_empty
         </span>
-        <p className="text-xs">No disponible</p>
+        <p className="text-xs">{t.view("noDataAvailable")}</p>
       </div>
     );
   }
 
   const caseLabel =
     caseType === "worst"
-      ? "Peor caso"
+      ? t.cases("worst")
       : caseType === "best"
-        ? "Mejor caso"
-        : "Caso promedio";
+        ? t.cases("best")
+        : t.cases("average");
   const caseColor =
     caseType === "worst" ? "red" : caseType === "best" ? "green" : "yellow";
 
@@ -172,7 +180,7 @@ function renderIterativeCaseData(
       <div className="flex-1 flex flex-col space-y-2 min-h-0">
         {resolvedData.T_polynomial && (
           <div className="glass-card p-2 rounded-lg flex-shrink-0">
-            <div className="text-xs text-slate-400 mb-1">T_polynomial:</div>
+            <div className="text-xs text-slate-400 mb-1">{t.view("tPolynomial")}</div>
             <div className="text-white overflow-x-auto scrollbar-custom">
               <Formula latex={resolvedData.T_polynomial} display />
             </div>
@@ -181,7 +189,7 @@ function renderIterativeCaseData(
 
         {resolvedData.T_open && (
           <div className="glass-card p-2 rounded-lg flex-shrink-0">
-            <div className="text-xs text-slate-400 mb-1">T_open:</div>
+            <div className="text-xs text-slate-400 mb-1">{t.view("tOpen")}</div>
             <div className="text-white overflow-x-auto scrollbar-custom">
               <Formula latex={resolvedData.T_open} display />
             </div>
@@ -191,7 +199,7 @@ function renderIterativeCaseData(
         <div className="grid grid-cols-3 gap-2 flex-shrink-0">
           {resolvedData.big_o && (
             <div className="glass-card p-2 rounded-lg text-center">
-              <div className="text-[10px] text-slate-400 mb-1">Big-O</div>
+              <div className="text-[10px] text-slate-400 mb-1">{t.view("bigO")}</div>
               <div className="text-white font-semibold text-xs overflow-x-auto scrollbar-custom">
                 <Formula latex={resolvedData.big_o} />
               </div>
@@ -199,7 +207,7 @@ function renderIterativeCaseData(
           )}
           {resolvedData.big_omega && (
             <div className="glass-card p-2 rounded-lg text-center">
-              <div className="text-[10px] text-slate-400 mb-1">Big-Ω</div>
+              <div className="text-[10px] text-slate-400 mb-1">{t.view("bigOmega")}</div>
               <div className="text-white font-semibold text-xs overflow-x-auto scrollbar-custom">
                 <Formula latex={resolvedData.big_omega} />
               </div>
@@ -207,7 +215,7 @@ function renderIterativeCaseData(
           )}
           {resolvedData.big_theta && (
             <div className="glass-card p-2 rounded-lg text-center">
-              <div className="text-[10px] text-slate-400 mb-1">Big-Θ</div>
+              <div className="text-[10px] text-slate-400 mb-1">{t.view("bigTheta")}</div>
               <div className="text-white font-semibold text-xs overflow-x-auto scrollbar-custom">
                 <Formula latex={resolvedData.big_theta} />
               </div>
@@ -227,13 +235,11 @@ function renderIterativeCaseData(
             }`}
           >
             <div className="text-[10px] text-slate-400 mb-1">
-              Cota{" "}
               {caseType === "worst"
-                ? "superior"
+                ? t.view("boundUpper")
                 : caseType === "best"
-                  ? "inferior"
-                  : "promedio"}
-              :
+                  ? t.view("boundLower")
+                  : t.view("boundAvg")}
             </div>
             <div
               className={`text-${caseColor}-300 font-semibold text-sm overflow-x-auto scrollbar-custom`}
@@ -262,12 +268,13 @@ function renderIterativeData(
     avg: CoreAnalysisData | "same_as_worst" | null;
   },
   isOwn: boolean,
+  t: ComparisonT,
 ) {
   const cardColor = isOwn
     ? "bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/30"
     : "bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/30";
   const titleColor = isOwn ? "text-blue-400" : "text-purple-400";
-  const label = isOwn ? "Análisis Propio" : "Análisis LLM";
+  const label = isOwn ? t.view("ownAnalysis") : t.view("llmAnalysis");
 
   return (
     <div
@@ -283,32 +290,33 @@ function renderIterativeData(
       </h3>
 
       <div className="space-y-4 flex-1 flex flex-col">
-        {/* Peor caso */}
         <div className="glass-card p-3 rounded-lg bg-red-500/5 border border-red-500/20 flex-1 flex flex-col min-h-0">
           {renderIterativeCaseData(
             isOwn ? ownData.worst : llmData.worst,
             "worst",
             isOwn,
+            isOwn ? ownData.worst : llmData.worst,
+            t,
           )}
         </div>
 
-        {/* Mejor caso */}
         <div className="glass-card p-3 rounded-lg bg-green-500/5 border border-green-500/20 flex-1 flex flex-col min-h-0">
           {renderIterativeCaseData(
             isOwn ? ownData.best : llmData.best,
             "best",
             isOwn,
             isOwn ? ownData.worst : llmData.worst,
+            t,
           )}
         </div>
 
-        {/* Caso promedio */}
         <div className="glass-card p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/20 flex-1 flex flex-col min-h-0">
           {renderIterativeCaseData(
             isOwn ? ownData.avg : llmData.avg,
             "average",
             isOwn,
             isOwn ? ownData.worst : llmData.worst,
+            t,
           )}
         </div>
       </div>
@@ -325,6 +333,7 @@ function renderRecursiveData(
   avgData: CoreAnalysisData | "same_as_worst" | null,
   label: string,
   isOwn: boolean,
+  t: ComparisonT,
 ) {
   // Resolver "same_as_worst" a worstData
   const resolvedBest = bestData === "same_as_worst" ? worstData : bestData;
@@ -355,7 +364,7 @@ function renderRecursiveData(
             <span className="material-symbols-outlined text-4xl mb-2 block">
               hourglass_empty
             </span>
-            <p>No hay datos disponibles</p>
+            <p>{t.view("noDataAvailable")}</p>
           </div>
         </div>
       </div>
@@ -378,7 +387,7 @@ function renderRecursiveData(
       <div className="space-y-4 flex-1 flex flex-col">
         {data.recurrence && (
           <div className="glass-card p-3 rounded-lg flex-shrink-0">
-            <div className="text-sm text-slate-300 mb-1">Recurrencia:</div>
+            <div className="text-sm text-slate-300 mb-1">{t.view("recurrenceLabel")}</div>
             <div className="text-white overflow-x-auto scrollbar-custom">
               <Formula latex={data.recurrence.form} display />
             </div>
@@ -392,7 +401,7 @@ function renderRecursiveData(
             )}
             {data.recurrence.type === "linear_shift" && (
               <div className="mt-2 text-xs text-slate-400">
-                Orden: {data.recurrence.order}, Desplazamientos: [
+                {t.view("order")}: {data.recurrence.order}, {t.view("shifts")} [
                 {data.recurrence.shifts?.join(", ")}]
               </div>
             )}
@@ -401,7 +410,7 @@ function renderRecursiveData(
 
         {data.method && (
           <div className="glass-card p-3 rounded-lg flex-shrink-0">
-            <div className="text-sm text-slate-300 mb-1">Método usado:</div>
+            <div className="text-sm text-slate-300 mb-1">{t.view("methodUsed")}</div>
             <div className="text-white font-semibold capitalize">
               {data.method.replace("_", " ")}
             </div>
@@ -417,7 +426,7 @@ function renderRecursiveData(
                   calculate
                 </span>
                 <div className="text-sm font-semibold text-slate-300">
-                  Ecuación característica:
+                  {t.view("characteristicEquation")}
                 </div>
               </div>
               <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
@@ -439,7 +448,7 @@ function renderRecursiveData(
                       functions
                     </span>
                     <div className="text-sm font-semibold text-slate-300">
-                      Raíces:
+                      {t.view("roots")}
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -592,7 +601,7 @@ function renderRecursiveData(
                         {bestTheta && (
                           <div className="text-center">
                             <div className="text-xs text-green-300 mb-1">
-                              Mejor caso:
+                              {t.cases("best")}:
                             </div>
                             <div className="scale-90">
                               <Formula latex={bestTheta} display />
@@ -602,7 +611,7 @@ function renderRecursiveData(
                         {avgTheta && (
                           <div className="text-center">
                             <div className="text-xs text-yellow-300 mb-1">
-                              Caso promedio:
+                              {t.cases("average")}:
                             </div>
                             <div className="scale-90">
                               <Formula latex={avgTheta} display />
@@ -612,7 +621,7 @@ function renderRecursiveData(
                         {worstTheta && (
                           <div className="text-center">
                             <div className="text-xs text-red-300 mb-1">
-                              Peor caso:
+                              {t.cases("worst")}:
                             </div>
                             <div className="scale-90">
                               <Formula latex={worstTheta} display />
@@ -648,7 +657,7 @@ function renderRecursiveData(
                           {bestTheta && (
                             <div className="text-center">
                               <div className="text-xs text-green-300 mb-1">
-                                Mejor caso:
+                                {t.cases("best")}:
                               </div>
                               <div className="scale-90">
                                 <Formula latex={bestTheta} display />
@@ -658,7 +667,7 @@ function renderRecursiveData(
                           {worstTheta && (
                             <div className="text-center">
                               <div className="text-xs text-red-300 mb-1">
-                                Peor caso:
+                                {t.cases("worst")}:
                               </div>
                               <div className="scale-90">
                                 <Formula latex={worstTheta} display />
@@ -707,11 +716,11 @@ function renderRecursiveData(
                   calculate
                 </span>
                 <div className="text-sm font-semibold text-orange-300">
-                  Teorema Maestro
+                  {t.view("masterTheorem")}
                 </div>
                 {data.master.case && (
                   <span className="ml-auto inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-orange-500/30 text-orange-200 border border-orange-500/50">
-                    Caso {data.master.case}
+                    {t.view("caseNumber", { number: data.master.case })}
                   </span>
                 )}
               </div>
@@ -881,7 +890,7 @@ function renderRecursiveData(
                         {bestTheta && (
                           <div className="text-center">
                             <div className="text-xs text-green-300 mb-1">
-                              Mejor caso:
+                              {t.cases("best")}:
                             </div>
                             <div className="scale-90">
                               <Formula latex={bestTheta} display />
@@ -891,7 +900,7 @@ function renderRecursiveData(
                         {avgTheta && (
                           <div className="text-center">
                             <div className="text-xs text-yellow-300 mb-1">
-                              Caso promedio:
+                              {t.cases("average")}:
                             </div>
                             <div className="scale-90">
                               <Formula latex={avgTheta} display />
@@ -901,7 +910,7 @@ function renderRecursiveData(
                         {worstTheta && (
                           <div className="text-center">
                             <div className="text-xs text-red-300 mb-1">
-                              Peor caso:
+                              {t.cases("worst")}:
                             </div>
                             <div className="scale-90">
                               <Formula latex={worstTheta} display />
@@ -1075,7 +1084,7 @@ function renderRecursiveData(
                         {bestTheta && (
                           <div className="text-center">
                             <div className="text-xs text-green-300 mb-1">
-                              Mejor caso:
+                              {t.cases("best")}:
                             </div>
                             <div className="scale-90">
                               <Formula latex={bestTheta} display />
@@ -1085,7 +1094,7 @@ function renderRecursiveData(
                         {avgTheta && (
                           <div className="text-center">
                             <div className="text-xs text-yellow-300 mb-1">
-                              Caso promedio:
+                              {t.cases("average")}:
                             </div>
                             <div className="scale-90">
                               <Formula latex={avgTheta} display />
@@ -1095,7 +1104,7 @@ function renderRecursiveData(
                         {worstTheta && (
                           <div className="text-center">
                             <div className="text-xs text-red-300 mb-1">
-                              Peor caso:
+                              {t.cases("worst")}:
                             </div>
                             <div className="scale-90">
                               <Formula latex={worstTheta} display />
@@ -1130,7 +1139,7 @@ function renderRecursiveData(
                           {bestTheta && (
                             <div className="text-center">
                               <div className="text-xs text-green-300 mb-1">
-                                Mejor caso:
+                                {t.cases("best")}:
                               </div>
                               <div className="scale-90">
                                 <Formula latex={bestTheta} display />
@@ -1140,7 +1149,7 @@ function renderRecursiveData(
                           {worstTheta && (
                             <div className="text-center">
                               <div className="text-xs text-red-300 mb-1">
-                                Peor caso:
+                                {t.cases("worst")}:
                               </div>
                               <div className="scale-90">
                                 <Formula latex={worstTheta} display />
@@ -1280,7 +1289,10 @@ function renderRecursiveData(
                     <div className="mt-2 text-xs text-blue-200/80">
                       <div className="scale-90 origin-top-left">
                         <Formula
-                          latex={data.recursion_tree.dominating_level.reason}
+                          latex={translateProofStep(
+                            data.recursion_tree.dominating_level.reason,
+                            locale,
+                          )}
                           display
                         />
                       </div>
@@ -1328,7 +1340,7 @@ function renderRecursiveData(
                         {bestTheta && (
                           <div className="text-center">
                             <div className="text-xs text-green-300 mb-1">
-                              Mejor caso:
+                              {t.cases("best")}:
                             </div>
                             <div className="scale-90">
                               <Formula latex={bestTheta} display />
@@ -1338,7 +1350,7 @@ function renderRecursiveData(
                         {avgTheta && (
                           <div className="text-center">
                             <div className="text-xs text-yellow-300 mb-1">
-                              Caso promedio:
+                              {t.cases("average")}:
                             </div>
                             <div className="scale-90">
                               <Formula latex={avgTheta} display />
@@ -1348,7 +1360,7 @@ function renderRecursiveData(
                         {worstTheta && (
                           <div className="text-center">
                             <div className="text-xs text-red-300 mb-1">
-                              Peor caso:
+                              {t.cases("worst")}:
                             </div>
                             <div className="scale-90">
                               <Formula latex={worstTheta} display />
@@ -1416,6 +1428,12 @@ export default function ComparisonModal({
   note,
   isRecursive,
 }: Readonly<ComparisonModalProps>) {
+  const locale = useLocale() as "en" | "es";
+  const tCases = useTranslations("analyzer.cases");
+  const tView = useTranslations("analyzer.view");
+  const tCommon = useTranslations("common");
+  const t: ComparisonT = { cases: tCases, view: tView };
+
   if (!open) return null;
 
   const { icon, text, color, bgColor, borderColor } = parseNote(note);
@@ -1433,12 +1451,12 @@ export default function ComparisonModal({
             <span className="material-symbols-outlined text-purple-400 text-xl">
               compare_arrows
             </span>
-            Comparación con LLM
+            {tView("comparisonWithLlm")}
           </h2>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-            title="Cerrar"
+            title={tCommon("close")}
           >
             <span className="material-symbols-outlined text-white">close</span>
           </button>
@@ -1453,10 +1471,11 @@ export default function ComparisonModal({
                   ownData.worst,
                   ownData.best,
                   ownData.avg,
-                  "Análisis Propio",
+                  tView("ownAnalysis"),
                   true,
+                  t,
                 )
-              : renderIterativeData(ownData, llmData, true)}
+              : renderIterativeData(ownData, llmData, true, t)}
           </div>
 
           {/* Columna derecha: Análisis LLM */}
@@ -1466,10 +1485,11 @@ export default function ComparisonModal({
                   llmData.worst,
                   llmData.best,
                   llmData.avg,
-                  "Análisis LLM",
+                  tView("llmAnalysis"),
                   false,
+                  t,
                 )
-              : renderIterativeData(ownData, llmData, false)}
+              : renderIterativeData(ownData, llmData, false, t)}
           </div>
         </div>
 
@@ -1481,7 +1501,7 @@ export default function ComparisonModal({
             </span>
             <div className="flex-1">
               <div className={`text-xs font-semibold mb-0.5 ${color}`}>
-                Observación del LLM:
+                {tView("llmObservation")}
               </div>
               <div className={`text-xs ${color}`}>{text}</div>
             </div>

@@ -16,13 +16,16 @@ class RecursiveAnalyzer(BaseAnalyzer):
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
-    def __init__(self):
+    def __init__(self, locale: str = "en"):
         """
         Inicializa una instancia de RecursiveAnalyzer.
         
+        Args:
+            locale: Código de idioma para etiquetas del procedimiento ("en" | "es")
+        
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        super().__init__()
+        super().__init__(locale=locale)
         self.procedure_name: Optional[str] = None
         self.proc_def: Optional[Dict[str, Any]] = None
         self.ast: Optional[Dict[str, Any]] = None  # Guardar AST completo para buscar funciones auxiliares
@@ -3177,12 +3180,12 @@ class RecursiveAnalyzer(BaseAnalyzer):
         if f_exponent is not None and f_exponent > log_b_a:
             return {
                 "checked": True,
-                "note": "Regularidad verificada para funciones polinómicas"
+                "note": self._note("regularity_verified")
             }
         
         return {
             "checked": False,
-            "note": "Regularidad asumida"
+            "note": self._note("regularity_assumed")
         }
     
     def _simplify_latex_expr(self, latex_str: str) -> str:

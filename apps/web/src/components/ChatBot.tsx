@@ -1,6 +1,7 @@
 "use client";
 
-import { RotateCcw, Send, User } from "lucide-react";
+import { Key, RotateCcw, Send, User } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
@@ -54,9 +55,10 @@ interface ChatBotProps {
 async function classifyIntent(
   message: string,
   apiKey: string | null,
+  locale?: string,
 ): Promise<"parser_assist" | "general"> {
   try {
-    const body: { job: string; prompt: string; apiKey?: string } = {
+    const body: { job: string; prompt: string; apiKey?: string; locale?: string } = {
       job: "classify",
       prompt: message,
     };
@@ -65,6 +67,9 @@ async function classifyIntent(
     // Si no hay apiKey, el backend usará la de variables de entorno
     if (apiKey) {
       body.apiKey = apiKey;
+    }
+    if (locale) {
+      body.locale = locale;
     }
 
     const response = await fetch("/api/llm", {
@@ -108,6 +113,8 @@ async function getLLMResponse(
   job: "parser_assist" | "general",
   chatHistory: Message[],
   apiKey: string | null,
+  locale?: string,
+  t?: (key: string) => string,
 ): Promise<string> {
   try {
     // Convertir historial a formato para el LLM (últimos 10 mensajes)
@@ -121,6 +128,7 @@ async function getLLMResponse(
       prompt: string;
       chatHistory: Array<{ role: string; content: string }>;
       apiKey?: string;
+      locale?: string;
     } = {
       job,
       prompt: message,
@@ -131,6 +139,9 @@ async function getLLMResponse(
     // Si no hay apiKey, el backend usará la de variables de entorno
     if (apiKey) {
       body.apiKey = apiKey;
+    }
+    if (locale) {
+      body.locale = locale;
     }
 
     const response = await fetch("/api/llm", {
@@ -159,7 +170,7 @@ async function getLLMResponse(
 
     // Verificar si la respuesta indica un error
     if (!result.ok) {
-      const errorMessage = result?.error || "Error desconocido del LLM";
+      const errorMessage = result?.error || (t ? t("unknownLlmError") : "Unknown LLM error");
       // Todos los errores 500 son del LLM/Gemini, también errores que mencionen Gemini, API_KEY o LLM
       const isGeminiError =
         errorMessage.includes("Gemini") ||
@@ -174,7 +185,7 @@ async function getLLMResponse(
     const content =
       result?.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
     if (!content || String(content).trim().length === 0) {
-      throw new Error("Respuesta vacía del LLM");
+      throw new Error(t ? t("emptyLlmResponse") : "Empty LLM response");
     }
     return String(content);
   } catch (error) {
@@ -190,6 +201,11 @@ export default function ChatBot({
   setMessages,
   onAnalyzeCode,
 }: Readonly<ChatBotProps>) {
+  const locale = useLocale();
+  const t = useTranslations("chat");
+  const tMessages = useTranslations("analyzer.messages");
+  const tCommon = useTranslations("common");
+  const tFooter = useTranslations("footer.apiKey");
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState("");
@@ -314,6 +330,7 @@ export default function ChatBot({
         const intent = await classifyIntent(
           lastUserMessage.content,
           currentApiKey,
+          locale,
         );
 
         // Paso 2: Obtener respuesta con el modelo apropiado (incluyendo historial)
@@ -323,6 +340,8 @@ export default function ChatBot({
           intent,
           messages,
           currentApiKey,
+          locale,
+          tMessages,
         );
 
         // Crear mensaje del bot
@@ -357,8 +376,11 @@ export default function ChatBot({
         const errorResponse: Message = {
           id: `bot-error-${Date.now()}`,
           content: isGeminiError
-            ? `Error de Gemini: ${error instanceof Error ? error.message : "Error desconocido"}`
-            : "Disculpa, tuve un problema al procesar tu mensaje. ¿Podrías intentarlo de nuevo?",
+            ? tMessages("geminiError", {
+                message:
+                  error instanceof Error ? error.message : tMessages("unknownLlmError"),
+              })
+            : t("errorGeneric"),
           sender: "bot",
           timestamp: new Date(),
           isError: true,
@@ -371,7 +393,7 @@ export default function ChatBot({
         processingRef.current = false;
       }
     },
-    [messages, setMessages],
+    [messages, setMessages, t, tMessages],
   );
 
   // Responder automáticamente si el último mensaje del historial es del usuario
@@ -455,7 +477,7 @@ export default function ChatBot({
         const welcomeMessage: Message = {
           id: `welcome-${Date.now()}`,
           content:
-            "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+            "¡Hola! Soy AALIE (Algorithmic Analysis Live Interaction Expert), tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
           sender: "bot",
           timestamp: new Date(),
         };
@@ -471,7 +493,7 @@ export default function ChatBot({
     const welcomeMessage: Message = {
       id: `welcome-${Date.now()}`,
       content:
-        "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+        "¡Hola! Soy AALIE (Algorithmic Analysis Live Interaction Expert), tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
       sender: "bot",
       timestamp: new Date(),
     };
@@ -506,9 +528,9 @@ export default function ChatBot({
               </span>
             </div>
             <div className="flex flex-col min-w-0">
-              <h3 className="text-white font-semibold text-xs">Jhon Jairo</h3>
+              <h3 className="text-white font-semibold text-xs">AALIE</h3>
               <p className="text-slate-400 text-[10px] truncate">
-                Asistente de análisis de algoritmos
+                {t("assistantTitle")}
               </p>
             </div>
           </div>
@@ -516,7 +538,7 @@ export default function ChatBot({
             <button
               onClick={clearConversation}
               className="w-8 h-8 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white flex items-center justify-center"
-              title="Limpiar conversación"
+              title={t("clearConversation")}
               disabled={isTyping}
             >
               <RotateCcw size={18} />
@@ -524,7 +546,7 @@ export default function ChatBot({
             <button
               onClick={onClose}
               className="w-8 h-8 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white flex items-center justify-center"
-              title="Volver al inicio"
+              title={t("backToHome")}
             >
               <span className="material-symbols-outlined text-lg leading-none">
                 arrow_back
@@ -533,88 +555,72 @@ export default function ChatBot({
           </div>
         </div>
 
-        {/* Messages Container */}
-        <div className="flex-1 overflow-y-auto p-2.5 space-y-2.5 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
-          {/* Card de API_KEY si no está configurada */}
-          {showApiKeyCard && (
-            <div className="glass-card border-yellow-500/30 p-4 rounded-xl mb-4">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
-                  <span className="material-symbols-outlined text-yellow-400 text-lg">
-                    key
-                  </span>
-                </div>
-                <div className="flex-1 space-y-3">
-                  <div>
-                    <h4 className="text-white font-semibold text-sm mb-1">
-                      Chatbot no disponible
-                    </h4>
-                    <p className="text-slate-300 text-xs">
-                      El chatbot requiere una API Key de Gemini para funcionar.
-                      Configura tu API Key para habilitar el chatbot. Puedes
-                      obtenerla en{" "}
-                      <a
-                        href="https://aistudio.google.com/apikey"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300 underline"
-                      >
-                        Google AI Studio
-                      </a>
-                      .
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="password"
-                      value={apiKeyInput}
-                      onChange={(e) => setApiKeyInput(e.target.value)}
-                      placeholder="API Key de Gemini"
-                      className={`flex-1 px-2.5 py-1.5 rounded-lg bg-white/5 border ${
-                        apiKeyInput && !validateApiKey(apiKeyInput)
-                          ? "border-red-500/50 focus:border-red-500"
-                          : apiKeyInput && validateApiKey(apiKeyInput)
-                            ? "border-green-500/50 focus:border-green-500"
-                            : "border-slate-600/50 focus:border-slate-500"
-                      } text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-1 ${
-                        apiKeyInput && !validateApiKey(apiKeyInput)
-                          ? "focus:ring-red-500/50"
-                          : apiKeyInput && validateApiKey(apiKeyInput)
-                            ? "focus:ring-green-500/50"
-                            : "focus:ring-slate-500/50"
-                      } transition-all`}
-                    />
-                    <button
-                      onClick={handleSaveApiKey}
-                      disabled={!validateApiKey(apiKeyInput)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                        validateApiKey(apiKeyInput)
-                          ? "bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30"
-                          : "bg-slate-500/20 text-slate-500 border border-slate-500/30 cursor-not-allowed"
-                      }`}
-                    >
-                      Guardar
-                    </button>
-                  </div>
-                  {apiKeyInput && !validateApiKey(apiKeyInput) && (
-                    <p className="text-red-400 text-[10px]">API Key inválida</p>
-                  )}
-                </div>
-                <button
-                  onClick={onClose}
-                  className="w-6 h-6 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white flex items-center justify-center flex-shrink-0"
-                  title="Cerrar"
+        {/* Content: API Key config (full frame) o mensajes del chat */}
+        {showApiKeyCard ? (
+          /* Frame completo centrado cuando no hay API Key */
+          <div className="flex-1 flex flex-col items-center justify-center p-6 bg-slate-900/30">
+            <div className="flex flex-col items-center max-w-md w-full space-y-6">
+              <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                <Key className="w-8 h-8 text-yellow-400" strokeWidth={2} />
+              </div>
+              <h4 className="text-white font-semibold text-lg text-center">
+                {t("unavailable")}
+              </h4>
+              <p className="text-slate-300 text-sm text-center leading-relaxed">
+                {t("apiKeyRequired")}{" "}
+                <a
+                  href="https://aistudio.google.com/apikey"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 underline"
                 >
-                  <span className="material-symbols-outlined text-sm">
-                    close
-                  </span>
+                  {tFooter("googleAIStudio")}
+                </a>
+                .
+              </p>
+              <div className="flex items-center gap-2 w-full max-w-[70%]">
+                <input
+                  type="password"
+                  value={apiKeyInput}
+                  onChange={(e) => setApiKeyInput(e.target.value)}
+                  placeholder={tFooter("placeholder")}
+                  className={`flex-1 px-3 py-2 rounded-lg bg-white/5 border ${
+                    apiKeyInput && !validateApiKey(apiKeyInput)
+                      ? "border-red-500/50 focus:border-red-500"
+                      : apiKeyInput && validateApiKey(apiKeyInput)
+                        ? "border-green-500/50 focus:border-green-500"
+                        : "border-slate-600/50 focus:border-slate-500"
+                  } text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-1 ${
+                    apiKeyInput && !validateApiKey(apiKeyInput)
+                      ? "focus:ring-red-500/50"
+                      : apiKeyInput && validateApiKey(apiKeyInput)
+                        ? "focus:ring-green-500/50"
+                        : "focus:ring-slate-500/50"
+                  } transition-all`}
+                />
+                <button
+                  onClick={handleSaveApiKey}
+                  disabled={!validateApiKey(apiKeyInput)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    validateApiKey(apiKeyInput)
+                      ? "bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30"
+                      : "bg-slate-500/20 text-slate-500 border border-slate-500/30 cursor-not-allowed"
+                  }`}
+                >
+                  {tCommon("save")}
                 </button>
               </div>
+              {apiKeyInput && !validateApiKey(apiKeyInput) && (
+                <p className="text-red-400 text-xs">{tFooter("invalid")}</p>
+              )}
             </div>
-          )}
-
-          {/* Mostrar mensajes (el backend manejará la API_KEY automáticamente) */}
-          {messages.map((message) => {
+          </div>
+        ) : (
+          <>
+            {/* Messages Container */}
+            <div className="flex-1 overflow-y-auto p-2.5 space-y-2.5 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
+              {/* Mostrar mensajes (el backend manejará la API_KEY automáticamente) */}
+              {messages.map((message) => {
             const isNewMessage = !animatedMessagesRef.current.has(message.id);
             if (isNewMessage) {
               animatedMessagesRef.current.add(message.id);
@@ -699,7 +705,7 @@ export default function ChatBot({
                               {/* Solicitud */}
                               <div className="pt-1">
                                 <p className="text-white text-[11px] font-medium">
-                                  Ayúdame a solucionar este error
+                                  {t("helpRequest")}
                                 </p>
                               </div>
                             </div>
@@ -737,7 +743,7 @@ export default function ChatBot({
                               <span className="material-symbols-outlined text-xs">
                                 refresh
                               </span>
-                              Reintentar
+                              {t("retry")}
                             </button>
                           </div>
                         )}
@@ -778,8 +784,8 @@ export default function ChatBot({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Container */}
-        <div className="glass-modal-header p-2.5 border-t border-white/10">
+            {/* Input Container */}
+            <div className="glass-modal-header p-2.5 border-t border-white/10">
           <div className="flex items-center gap-2">
             <input
               ref={inputRef}
@@ -787,7 +793,7 @@ export default function ChatBot({
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Escribe tu mensaje..."
+              placeholder={t("placeholder")}
               className="flex-1 bg-white/5 border border-slate-600/50 rounded-lg px-2.5 py-1.5 text-white placeholder-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
               disabled={isTyping}
             />
@@ -799,7 +805,9 @@ export default function ChatBot({
               <Send size={16} />
             </button>
           </div>
-        </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,8 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
+import { useLocale, useTranslations } from "next-intl";
 
 import Formula from "./Formula";
+import { translateProofStep } from "@/lib/proof-step-translator";
 
 /**
  * Redondea los valores numéricos en una expresión LaTeX a 3 decimales.
@@ -118,6 +120,13 @@ interface CharacteristicEquationModalProps {
  * />
  * ```
  */
+const MODAL_SIZE = "w-[min(95vw,1000px)] max-h-[75vh]";
+
+const DP_EQUIVALENCE_ES =
+  "Las raíces de la ecuación característica corresponden a los valores propios de la transición lineal del sistema DP. La solución cerrada matemática equivale a la solución iterativa mediante programación dinámica."
+    .replace(/\s+/g, " ")
+    .trim();
+
 export default function CharacteristicEquationModal({
   open,
   onClose,
@@ -126,42 +135,64 @@ export default function CharacteristicEquationModal({
   proof,
   theta,
 }: Readonly<CharacteristicEquationModalProps>) {
+  const t = useTranslations("analyzer.characteristicEquationModal");
+  const locale = useLocale();
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    if (open) {
+      document.body.style.overflow = "hidden";
+      document.addEventListener("keydown", onKey);
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, onClose]);
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 glass-modal-overlay"
         onClick={onClose}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") onClose();
-        }}
-        role="button"
-        tabIndex={0}
-        aria-label="Cerrar modal"
+        aria-hidden
       />
-      <div className="absolute left-1/2 top-1/2 w-[min(95vw,1200px)] max-h-[85vh] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col">
-        <div className="flex items-center justify-between border-b border-white/10 p-3 flex-shrink-0">
-          <h3 className="text-base font-semibold text-white">
-            Procedimiento Completo - Método de Ecuación Característica
+      <div
+        className={`relative z-10 ${MODAL_SIZE} rounded-2xl glass-modal-container shadow-2xl flex flex-col overflow-hidden mx-4`}
+      >
+        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 flex-shrink-0 glass-modal-header">
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <span className="material-symbols-outlined text-blue-400">
+              calculate
+            </span>
+            {t("title")}
           </h3>
           <button
             onClick={onClose}
-            className="text-slate-300 hover:text-white transition-colors p-1 hover:bg-white/10 rounded"
-            aria-label="Cerrar modal"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center"
+            aria-label={t("closeModal")}
           >
-            ✕
+            <span className="material-symbols-outlined text-xl">close</span>
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 scrollbar-custom">
+        <div className="flex-1 overflow-y-auto p-6 scrollbar-custom">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
             {/* Columna izquierda: Ecuación de Recurrencia y Solución */}
             <div className="space-y-4 lg:col-span-3">
               {/* Ecuación de Recurrencia */}
               {recurrence && (
-                <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                  <h4 className="text-white font-semibold text-sm mb-2">
-                    Ecuación de Recurrencia
+                <div className="p-4 rounded-xl glass-card border border-white/10">
+                  <h4 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-amber-400 text-lg">
+                      functions
+                    </span>
+                    {t("recurrenceEquation")}
                   </h4>
                   <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto flex justify-center">
                     <div className="scale-90">
@@ -179,7 +210,7 @@ export default function CharacteristicEquationModal({
                       ) : (
                         <>
                           <span className="text-slate-400 italic">
-                            g(n) = 0 (homogénea)
+                            {t("gHomogeneous")}
                           </span>
                           <span className="text-slate-300">,</span>
                         </>
@@ -197,9 +228,12 @@ export default function CharacteristicEquationModal({
 
               {/* Ecuación Característica */}
               {characteristicEquation && (
-                <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                  <h4 className="text-white font-semibold text-sm mb-2">
-                    Ecuación Característica
+                <div className="p-4 rounded-xl glass-card border border-white/10">
+                  <h4 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-blue-400 text-lg">
+                      calculate
+                    </span>
+                    {t("characteristicEquation")}
                   </h4>
                   <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto flex justify-center">
                     <div className="scale-90">
@@ -215,7 +249,7 @@ export default function CharacteristicEquationModal({
                     characteristicEquation.roots.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-white/10">
                         <h5 className="text-slate-400 text-xs font-semibold mb-2">
-                          Raíces:
+                          {t("roots")}
                         </h5>
                         <div className="flex flex-wrap gap-2">
                           {characteristicEquation.roots.map((rootInfo, idx) => (
@@ -244,9 +278,12 @@ export default function CharacteristicEquationModal({
 
               {/* Solución Homogénea */}
               {characteristicEquation && (
-                <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                  <h4 className="text-white font-semibold text-sm mb-2">
-                    Solución Homogénea
+                <div className="p-4 rounded-xl glass-card border border-white/10">
+                  <h4 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-cyan-400 text-lg">
+                      calculate
+                    </span>
+                    {t("homogeneousSolution")}
                   </h4>
                   <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto flex justify-center">
                     <div className="scale-90">
@@ -262,9 +299,12 @@ export default function CharacteristicEquationModal({
               {/* Solución Particular */}
               {characteristicEquation &&
                 characteristicEquation.particular_solution && (
-                  <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                    <h4 className="text-white font-semibold text-sm mb-2">
-                      Solución Particular
+                  <div className="p-4 rounded-xl glass-card border border-white/10">
+                    <h4 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-purple-400 text-lg">
+                        calculate
+                      </span>
+                      {t("particularSolution")}
                     </h4>
                     <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto flex justify-center">
                       <div className="scale-90">
@@ -275,8 +315,7 @@ export default function CharacteristicEquationModal({
                       </div>
                     </div>
                     <p className="text-slate-400 text-xs mt-2">
-                      Para encontrar la solución particular, asumimos una forma
-                      adecuada y sustituimos en la recurrencia.
+                      {t("particularSolutionNote")}
                     </p>
                   </div>
                 )}
@@ -285,9 +324,12 @@ export default function CharacteristicEquationModal({
               {characteristicEquation &&
                 (characteristicEquation.general_solution ||
                   characteristicEquation.particular_solution) && (
-                  <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                    <h4 className="text-white font-semibold text-sm mb-2">
-                      Solución General
+                  <div className="p-4 rounded-xl glass-card border border-white/10">
+                    <h4 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-green-400 text-lg">
+                        add_circle
+                      </span>
+                      {t("generalSolution")}
                     </h4>
                     <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto flex justify-center">
                       <div className="scale-90">
@@ -306,8 +348,8 @@ export default function CharacteristicEquationModal({
                     </div>
                     <p className="text-slate-400 text-xs mt-2">
                       {characteristicEquation.particular_solution
-                        ? "La solución general es la suma de la solución homogénea y la solución particular."
-                        : "La solución general para la recurrencia homogénea."}
+                        ? t("generalSolutionNote")
+                        : t("generalSolutionHomogeneousNote")}
                     </p>
                   </div>
                 )}
@@ -316,9 +358,12 @@ export default function CharacteristicEquationModal({
               {characteristicEquation &&
                 characteristicEquation.base_cases &&
                 Object.keys(characteristicEquation.base_cases).length > 0 && (
-                  <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                    <h4 className="text-white font-semibold text-sm mb-2">
-                      Casos Base Detectados
+                  <div className="p-4 rounded-xl glass-card border border-white/10">
+                    <h4 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-green-400 text-lg">
+                        check_circle
+                      </span>
+                      {t("baseCasesDetected")}
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {Object.entries(characteristicEquation.base_cases).map(
@@ -339,16 +384,19 @@ export default function CharacteristicEquationModal({
                       )}
                     </div>
                     <p className="text-slate-400 text-xs mt-2">
-                      Casos base extraídos del algoritmo original.
+                      {t("baseCasesNote")}
                     </p>
                   </div>
                 )}
 
               {/* Forma Cerrada */}
               {characteristicEquation && (
-                <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                  <h4 className="text-white font-semibold text-sm mb-2">
-                    Forma Cerrada (Complejidad Asintótica)
+                <div className="p-4 rounded-xl glass-card border border-white/10">
+                  <h4 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-amber-400 text-lg">
+                      calculate
+                    </span>
+                    {t("closedForm")}
                   </h4>
                   <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto flex justify-center">
                     <div className="scale-90">
@@ -364,15 +412,19 @@ export default function CharacteristicEquationModal({
               {/* Equivalencia con DP */}
               {characteristicEquation &&
                 characteristicEquation.is_dp_linear && (
-                  <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                  <div className="p-4 rounded-xl glass-card bg-green-500/10 border border-green-500/30">
                     <h4 className="text-green-300 font-semibold text-sm mb-2 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-sm">
+                      <span className="material-symbols-outlined text-lg">
                         memory
                       </span>
-                      Equivalencia con Programación Dinámica
+                      {t("dpEquivalence")}
                     </h4>
                     <p className="text-slate-300 text-xs">
-                      {characteristicEquation.dp_equivalence}
+                      {locale === "en" &&
+                      characteristicEquation.dp_equivalence?.replace(/\s+/g, " ").trim() ===
+                        DP_EQUIVALENCE_ES
+                        ? t("dpEquivalenceDefault")
+                        : characteristicEquation.dp_equivalence}
                     </p>
                   </div>
                 )}
@@ -381,9 +433,12 @@ export default function CharacteristicEquationModal({
             {/* Columna derecha: Resultado Final y Pasos */}
             <div className="space-y-4 lg:col-span-2">
               {/* Resultado Final */}
-              <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30">
-                <h4 className="text-white font-semibold text-sm mb-2">
-                  Resultado Final
+              <div className="p-4 rounded-xl glass-card bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30">
+                <h4 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-blue-400 text-lg">
+                    flag
+                  </span>
+                  {t("finalResult")}
                 </h4>
                 <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto flex justify-center">
                   <div className="scale-90">
@@ -397,13 +452,19 @@ export default function CharacteristicEquationModal({
 
               {/* Pasos de Prueba */}
               {proof && proof.length > 0 && (
-                <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
-                  <h4 className="text-white font-semibold text-sm mb-2">
-                    Pasos de Prueba
+                <div className="p-4 rounded-xl glass-card border border-white/10">
+                  <h4 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-purple-400 text-lg">
+                      list
+                    </span>
+                    {t("proofSteps")}
                   </h4>
                   <div className="space-y-2 max-h-[300px] overflow-y-auto scrollbar-custom">
                     {proof.map((step, idx) => {
-                      const stepText = step.text;
+                      const stepText = translateProofStep(
+                        step.text,
+                        locale === "es" ? "es" : "en"
+                      );
 
                       return (
                         <div
@@ -411,7 +472,7 @@ export default function CharacteristicEquationModal({
                           className="bg-slate-900/50 p-2 rounded border border-white/10"
                         >
                           <div className="text-xs text-slate-400 mb-1">
-                            Paso {idx + 1}
+                            {t("step")} {idx + 1}
                           </div>
                           <div className="scale-90 origin-top-left">
                             <Formula latex={stepText} />
@@ -427,14 +488,17 @@ export default function CharacteristicEquationModal({
               {characteristicEquation &&
                 characteristicEquation.is_dp_linear &&
                 characteristicEquation.dp_version && (
-                  <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
-                    <h4 className="text-green-300 font-semibold text-sm mb-2">
-                      Información de DP
+                  <div className="p-4 rounded-xl glass-card bg-green-500/10 border border-green-500/30">
+                    <h4 className="text-green-300 font-semibold text-sm mb-2 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-lg">
+                        memory
+                      </span>
+                      {t("dpInfo")}
                     </h4>
                     <div className="space-y-1.5 text-xs">
                       <div>
                         <span className="text-slate-400">
-                          Complejidad recursiva:
+                          {t("recursiveComplexity")}
                         </span>
                         <span className="text-red-300 ml-2 font-semibold">
                           {
@@ -445,14 +509,14 @@ export default function CharacteristicEquationModal({
                       </div>
                       <div>
                         <span className="text-slate-400">
-                          Complejidad con DP:
+                          {t("dpComplexity")}
                         </span>
                         <span className="text-green-300 ml-2 font-semibold">
                           {characteristicEquation.dp_version.time_complexity}
                         </span>
                       </div>
                       <div>
-                        <span className="text-slate-400">Espacio con DP:</span>
+                        <span className="text-slate-400">{t("dpSpace")}</span>
                         <span className="text-green-300 ml-2 font-semibold">
                           {characteristicEquation.dp_version.space_complexity}
                         </span>

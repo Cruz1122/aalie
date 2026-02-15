@@ -1,8 +1,10 @@
 // path: apps/web/src/components/Footer.tsx
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, useEffect, useCallback } from "react";
 
+import { Link } from "@/i18n/navigation";
 import {
   getApiKey,
   setApiKey,
@@ -16,6 +18,9 @@ import HealthStatus from "./HealthStatus";
 type ApiKeyStatus = "none" | "invalid" | "valid" | "server" | "local";
 
 export default function Footer() {
+  const t = useTranslations("footer");
+  const tCommon = useTranslations("common");
+  const tApiKey = useTranslations("footer.apiKey");
   const [apiKey, setApiKeyValue] = useState<string>("");
   const [status, setStatus] = useState<ApiKeyStatus>("none");
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -185,26 +190,26 @@ export default function Footer() {
 
   const getStatusText = () => {
     if (isCheckingStatus) {
-      return "Verificando API Key...";
+      return tApiKey("checking");
     }
 
     if (hasServerApiKey) {
-      return "API Key en variables de entorno";
+      return tApiKey("inEnv");
     }
 
     if (hasLocalApiKey) {
-      return "API Key en el almacenamiento local";
+      return tApiKey("inLocalStorage");
     }
 
     switch (status) {
       case "none":
-        return "API Key no configurada";
+        return tApiKey("notConfigured");
       case "invalid":
-        return "API Key inválida";
+        return tApiKey("invalid");
       case "valid":
-        return "API Key configurada";
+        return tApiKey("configured");
       default:
-        return "API Key no configurada";
+        return tApiKey("notConfigured");
     }
   };
 
@@ -264,7 +269,7 @@ export default function Footer() {
               type="password"
               value={apiKey}
               onChange={handleChange}
-              placeholder="API Key de Gemini"
+              placeholder={tApiKey("placeholder")}
               className={`px-2 py-1 rounded-lg bg-white/5 border ${
                 status === "invalid"
                   ? "border-red-500/50 focus:border-red-500"
@@ -290,7 +295,7 @@ export default function Footer() {
                     : "bg-slate-500/20 text-slate-500 border border-slate-500/30 cursor-not-allowed"
                 }`}
               >
-                Guardar
+                {tCommon("save")}
               </button>
             )}
             {hasLocalApiKey && (
@@ -298,34 +303,35 @@ export default function Footer() {
                 onClick={handleClear}
                 className="px-2 py-1 rounded-lg text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-all h-6"
               >
-                Eliminar
+                {tCommon("delete")}
               </button>
             )}
             <button
               onClick={() => setShowInput(false)}
               className="px-2 py-1 rounded-lg text-xs font-medium bg-slate-500/20 text-slate-400 border border-slate-500/30 hover:bg-slate-500/30 transition-all h-6"
             >
-              Cerrar
+              {tCommon("close")}
             </button>
           </div>
           {apiKey && !validateApiKey(apiKey) && (
             <p className="text-red-400 text-[10px] text-center leading-tight mt-0.5">
-              API Key inválida
+              {tApiKey("invalidHint")}
             </p>
           )}
           {!hasServerApiKey && !hasLocalApiKey && (
             <p className="text-slate-400 text-[10px] text-center max-w-xl leading-tight mt-0.5">
-              Ingresa tu API Key de Gemini para habilitar la simplificación de
-              expresiones matemáticas. Puedes obtenerla en{" "}
-              <a
-                href="https://aistudio.google.com/apikey"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 underline"
-              >
-                Google AI Studio
-              </a>
-              .
+              {tApiKey.rich("geminiHint", {
+                link: (chunks) => (
+                  <a
+                    href="https://aistudio.google.com/apikey"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300 underline"
+                  >
+                    {chunks}
+                  </a>
+                ),
+              })}
             </p>
           )}
         </div>
@@ -336,15 +342,15 @@ export default function Footer() {
             className="text-dark-text hover:text-white transition-colors"
             href="https://ingenierias.ucaldas.edu.co"
           >
-            Universidad de Caldas - 2025
+            {t("university")}
           </a>
           <span className="text-slate-600">•</span>
-          <a
+          <Link
             className="text-dark-text hover:text-white transition-colors"
             href="/privacy"
           >
-            Política de Privacidad
-          </a>
+            {t("privacyPolicy")}
+          </Link>
           <span className="text-slate-600">•</span>
           <button
             onClick={() => setShowInput(true)}

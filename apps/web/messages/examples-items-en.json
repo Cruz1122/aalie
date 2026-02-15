@@ -1,0 +1,173 @@
+{
+  "1": {
+    "name": "Simple Assignment",
+    "description": "Basic assignment operation without loops. This type of algorithm is classified as 'unknown' since it has no complex control structures.",
+    "complexity": "O(1)",
+    "note": "Will be classified as 'unknown' in the analysis (no complex loops)"
+  },
+  "2": {
+    "name": "Simple Array Access",
+    "description": "Direct access to an array element. Constant-time operation without loops.",
+    "complexity": "O(1)",
+    "note": "Will be classified as 'unknown' in the analysis"
+  },
+  "3": {
+    "name": "Linear Search",
+    "description": "Traverses an array sequentially looking for a specific element. The simplest search algorithm, ideal for small or unsorted arrays.",
+    "complexity": "Best: O(1), Worst: O(n), Avg: O(n/2)"
+  },
+  "4": {
+    "name": "Iterative Binary Search",
+    "description": "Searches for an element in a sorted array by halving the search space at each iteration. Iterative version of binary search.",
+    "complexity": "Best: O(1), Worst: O(log n), Avg: O(log n)"
+  },
+  "5": {
+    "name": "Iterative Factorial",
+    "description": "Computes the factorial of a number iteratively. More efficient than the recursive version and has no stack overflow risk for large numbers.",
+    "complexity": "O(n)"
+  },
+  "6": {
+    "name": "Array Sum",
+    "description": "Computes the sum of all elements in an array. Simple linear algorithm that traverses the array once.",
+    "complexity": "O(n)"
+  },
+  "7": {
+    "name": "Array Maximum",
+    "description": "Finds the maximum element in an array. Traverses the array comparing each element with the current maximum.",
+    "complexity": "Best: O(n), Worst: O(n), Avg: O(n)"
+  },
+  "8": {
+    "name": "Greatest Common Divisor - Euclid's Algorithm",
+    "description": "Computes the greatest common divisor of two numbers using Euclid's algorithm. One of the oldest and most efficient algorithms, with logarithmic complexity.",
+    "complexity": "O(log min(a, b))"
+  },
+  "9": {
+    "name": "Bubble Sort",
+    "description": "Sorts an array by comparing adjacent elements and swapping them if they are in the wrong order. One of the simplest sorting algorithms, but also one of the least efficient.",
+    "complexity": "Best: O(n), Worst: O(n²), Avg: O(n²)"
+  },
+  "10": {
+    "name": "Insertion Sort",
+    "description": "Builds the sorted array by inserting each element in its correct position. Efficient for small or nearly sorted arrays, with better performance than Bubble Sort in practice.",
+    "complexity": "Best: O(n), Worst: O(n²), Avg: O(n²)"
+  },
+  "11": {
+    "name": "Selection Sort",
+    "description": "Finds the minimum element and places it in its final position in each iteration. Performs fewer swaps than Bubble Sort, but has the same time complexity.",
+    "complexity": "O(n²)"
+  },
+  "12": {
+    "name": "Recursive Fibonacci",
+    "description": "Computes the nth Fibonacci number using direct recursion. Now analyzed with the Characteristic Equation method because T(n) = T(n-1) + T(n-2) is a linear recurrence with constant shifts. Automatically detects that it is a linear Dynamic Programming case.",
+    "complexity": "O(φⁿ) where φ = (1+√5)/2 ≈ 1.618",
+    "note": "Analyzed with Characteristic Equation (linear DP detected)"
+  },
+  "13": {
+    "name": "Tower of Hanoi",
+    "description": "Solves the classic Tower of Hanoi problem using recursion. Analyzed with the Characteristic Equation method because T(n) = 2T(n-1) + 1 is a linear recurrence. Automatically detects that it is a linear Dynamic Programming case.",
+    "complexity": "O(2ⁿ)",
+    "note": "Analyzed with Characteristic Equation (linear DP detected)"
+  },
+  "14": {
+    "name": "Recursive Factorial",
+    "description": "Computes the factorial of a number using recursion. Analyzed with the iteration method because the recurrence T(n) = T(n-1) + O(1) does not divide uniformly.",
+    "complexity": "O(n)",
+    "note": "Analyzed with iteration method (unrolled)"
+  },
+  "15": {
+    "name": "Recursive Binary Search",
+    "description": "Searches for an element in a sorted array using recursion. Analyzed with the Master Theorem because T(n) = T(n/2) + O(1) with a=1, b=2.",
+    "complexity": "Best: O(1), Worst: O(log n), Avg: O(log n)",
+    "note": "Analyzed with Master Theorem (a=1, b=2)"
+  },
+  "16": {
+    "name": "MergeSort",
+    "description": "Divide and conquer sorting algorithm that divides the array into two halves, sorts each half recursively and merges them. Analyzed with the Recursion Tree method because T(n) = 2T(n/2) + n with a=2, b=2.",
+    "complexity": "O(n log n)",
+    "note": "Analyzed with Recursion Tree method (a=2, b=2)"
+  },
+  "17": {
+    "name": "Unequal Divide Algorithm",
+    "description": "Divides a problem into 3 equal subproblems. Analyzed with the Recursion Tree method because T(n) = 3T(n/3) + 1 with a=3, b=3.",
+    "complexity": "O(n)",
+    "note": "Analyzed with Recursion Tree method (a=3, b=3)"
+  },
+  "18": {
+    "name": "Quaternary Algorithm",
+    "description": "Divides a problem into 4 equal subproblems. Analyzed with the Recursion Tree method because T(n) = 4T(n/4) + 1 with a=4, b=4.",
+    "complexity": "O(n)",
+    "note": "Analyzed with Recursion Tree method (a=4, b=4)"
+  },
+  "19": {
+    "name": "QuickSort",
+    "description": "Divide and conquer sorting algorithm using partitioning. In the best case, analyzed with the Recursion Tree method because T(n) = 2T(n/2) + n with a=2, b=2.",
+    "complexity": "Best: O(n log n), Worst: O(n²), Avg: O(n log n)",
+    "note": "In best case analyzed with Recursion Tree method (a=2, b=2)"
+  },
+  "20": {
+    "name": "N-Step Stairs (Climbing Stairs)",
+    "description": "Counts the number of ways to climb n steps, being able to take steps of 1 or 2 at a time. Linear recurrence T(n) = T(n-1) + T(n-2). Analyzed with Characteristic Equation and automatically detects linear DP.",
+    "complexity": "O(φⁿ) where φ = (1+√5)/2 ≈ 1.618",
+    "note": "Analyzed with Characteristic Equation (linear DP detected)"
+  },
+  "21": {
+    "name": "Decode Ways",
+    "description": "Counts the number of ways to decode a numeric message where each digit or pair of digits can represent a letter. Linear recurrence T(n) = T(n-1) + T(n-2) with conditions. Analyzed with Characteristic Equation.",
+    "complexity": "O(φⁿ) where φ = (1+√5)/2 ≈ 1.618",
+    "note": "Analyzed with Characteristic Equation (linear DP detected)"
+  },
+  "22": {
+    "name": "Tiling 2xN (Dominoes)",
+    "description": "Counts the number of ways to fill a 2xN board with domino tiles (2x1). Linear recurrence T(n) = T(n-1) + T(n-2). Analyzed with Characteristic Equation and detects linear DP.",
+    "complexity": "O(φⁿ) where φ = (1+√5)/2 ≈ 1.618",
+    "note": "Analyzed with Characteristic Equation (linear DP detected)"
+  },
+  "23": {
+    "name": "Tribonacci",
+    "description": "Computes the nth Tribonacci number (similar to Fibonacci but sums the last 3 terms). Linear recurrence T(n) = T(n-1) + T(n-2) + T(n-3). Analyzed with Characteristic Equation.",
+    "complexity": "O(rⁿ) where r is the largest real root of the characteristic equation",
+    "note": "Analyzed with Characteristic Equation (linear DP detected)"
+  },
+  "24": {
+    "name": "Pell Numbers",
+    "description": "Computes the nth Pell number using the recurrence P(n) = 2P(n-1) + P(n-2). Homogeneous linear recurrence. Analyzed with Characteristic Equation.",
+    "complexity": "O((1+√2)ⁿ)",
+    "note": "Analyzed with Characteristic Equation (linear DP detected)"
+  },
+  "25": {
+    "name": "QuickSort (Average Case)",
+    "description": "Divide and conquer sorting algorithm that works by choosing a pivot and dividing the array into two parts. In the average case, T(n) = 2T(n/2) + O(n) but the pivot does not divide exactly in half. Analyzed only with Master Theorem because a=1 does not meet the Recursion Tree conditions.",
+    "complexity": "Best: O(n log n), Worst: O(n²), Avg: O(n log n)",
+    "note": "Analyzed only with Master Theorem (a=1, non-uniform divide)"
+  },
+  "26": {
+    "name": "Binary Search Tree Search",
+    "description": "Searches for an element in a BST. The recurrence T(n) = T(n/2) + O(1) depends on the tree height. Analyzed only with Master Theorem because a=1, b=2 does not meet the Recursion Tree conditions.",
+    "complexity": "Best: O(log n), Worst: O(n), Avg: O(log n)",
+    "note": "Analyzed only with Master Theorem (a=1, b=2, average case)"
+  },
+  "27": {
+    "name": "Recursive Fast Exponentiation",
+    "description": "Computes x^n efficiently using divide and conquer. T(n) = T(n/2) + O(1). Analyzed only with Master Theorem because a=1, b=2.",
+    "complexity": "O(log n)",
+    "note": "Analyzed only with Master Theorem (a=1, b=2)"
+  },
+  "28": {
+    "name": "Recursive Array Sum",
+    "description": "Sums array elements recursively processing one element at a time. Recurrence T(n) = T(n-1) + O(1). Analyzed only with iterative method because it is not linear with multiple constant shifts.",
+    "complexity": "O(n)",
+    "note": "Analyzed only with iterative method (T(n) = T(n-1) + O(1))"
+  },
+  "29": {
+    "name": "Linked List Search",
+    "description": "Searches for an element in a linked list recursively. Recurrence T(n) = T(n-1) + O(1). Analyzed only with iterative method.",
+    "complexity": "O(n)",
+    "note": "Analyzed only with iterative method (T(n) = T(n-1) + O(1))"
+  },
+  "30": {
+    "name": "Recursive Array Reverse",
+    "description": "Reverses an array recursively by swapping elements from the ends. Recurrence T(n) = T(n-2) + O(1). Analyzed only with iterative method because it does not meet the characteristic equation conditions.",
+    "complexity": "O(n)",
+    "note": "Analyzed only with iterative method (T(n) = T(n-2) + O(1))"
+  }
+}

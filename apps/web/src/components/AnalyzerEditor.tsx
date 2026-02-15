@@ -2,6 +2,7 @@
 import type { ParseError, Program } from "@aa/types";
 import MonacoEditor, { Monaco as MonacoReact } from "@monaco-editor/react";
 import type * as Monaco from "monaco-editor";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 import { useParseWorker } from "../hooks/useParseWorker";
@@ -54,6 +55,8 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
   } = props;
   const [code, setCode] = useState(initialValue);
   const [showAstModal, setShowAstModal] = useState(false);
+  const tView = useTranslations("analyzer.view");
+  const tCommon = useTranslations("common");
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<MonacoReact | null>(null);
 
@@ -238,13 +241,13 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
                 }}
                 className="glass-secondary px-5 py-2.5 text-sm font-semibold text-slate-200 rounded-lg transition-all hover:scale-105"
               >
-                Copiar JSON
+                {tView("copyJson")}
               </button>
               <button
                 onClick={() => setShowAstModal(false)}
                 className="glass-button px-5 py-2.5 text-sm font-semibold text-white rounded-lg transition-all hover:scale-105"
               >
-                Cerrar
+                {tCommon("close")}
               </button>
             </div>
           </div>

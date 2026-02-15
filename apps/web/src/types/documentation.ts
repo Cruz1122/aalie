@@ -323,6 +323,10 @@ export interface DocumentationSection {
   id: string;
   title: string;
   description: string;
+  /** Clave de traducción para el título (documentation.technical.sections.*) */
+  titleKey?: string;
+  /** Clave de traducción para la descripción (documentation.technical.descriptions.*) */
+  descriptionKey?: string;
   image?: ImageData;
   content?:
     | PackageContent

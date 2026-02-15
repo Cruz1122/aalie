@@ -17,6 +17,21 @@ import katex from "katex";
  * const html = renderLatexToHtml("T(n) = O(n^2)", { displayMode: true });
  * ```
  */
+/**
+ * Convierte el contenido dentro de O(...) a LaTeX para KaTeX.
+ * Ej: "n²" -> "n^2", "log n" -> "\\log n", "2ⁿ" -> "2^n"
+ */
+export function complexityToLatex(content: string): string {
+  return content
+    .replace(/²/g, "^2")
+    .replace(/ⁿ/g, "^n")
+    .replace(/φ/g, "\\phi")
+    .replace(/√(\d+)/g, "\\sqrt{$1}")
+    .replace(/√(\w+)/g, "\\sqrt{$1}")
+    .replace(/\blog\s+/g, "\\log ")
+    .replace(/\bmin\s*\(/g, "\\min(");
+}
+
 export function renderLatexToHtml(
   latex: string,
   opts?: Partial<katex.KatexOptions>,

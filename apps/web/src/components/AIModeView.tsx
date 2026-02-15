@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import ChatBot from "./ChatBot";
 
 /**
@@ -68,6 +69,7 @@ export default function AIModeView({
   onClose,
   onAnalyzeCode,
 }: AIModeViewProps) {
+  const t = useTranslations("home");
   if (chatOpen) {
     return (
       <div className="w-full animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
@@ -107,12 +109,12 @@ export default function AIModeView({
       <h4
         className={`text-lg lg:text-xl font-semibold text-purple-400 ${fadeClass()}`}
       >
-        Hola, soy Jhon Jairo.
+        {t("greeting")}
       </h4>
       <h2
         className={`text-2xl lg:text-3xl font-semibold text-white mb-8 ${fadeClass("delay-75")}`}
       >
-        ¿En qué puedo ayudarte?
+        {t("greetingQuestion")}
       </h2>
 
       {/* Input principal */}
@@ -120,7 +122,7 @@ export default function AIModeView({
         <div className="relative">
           <input
             type="text"
-            placeholder="Describe el algoritmo que necesitas..."
+            placeholder={t("placeholder")}
             className="w-full bg-white/5 border border-slate-600/50 rounded-xl px-4 py-4 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
             value={inputMessage}
             onChange={onInputChange}
@@ -146,21 +148,21 @@ export default function AIModeView({
         <SuggestionButton
           icon="science"
           iconColor="blue-400"
-          text="¿Qué es la notación asintótica?"
+          text={t("suggestions.notation")}
           onClick={onSuggestionClick}
           disabled={isAnimating}
         />
         <SuggestionButton
           icon="account_tree"
           iconColor="green-400"
-          text="¿Cómo funciona bubble sort?"
+          text={t("suggestions.bubbleSort")}
           onClick={onSuggestionClick}
           disabled={isAnimating}
         />
         <SuggestionButton
           icon="code"
           iconColor="purple-400"
-          text="Dame el código de mergesort"
+          text={t("suggestions.mergesort")}
           onClick={onSuggestionClick}
           disabled={isAnimating}
         />

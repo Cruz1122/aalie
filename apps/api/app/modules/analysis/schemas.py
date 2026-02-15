@@ -17,6 +17,7 @@ class AnalyzeRequest(BaseModel):
     avgModel: Optional[AvgModelConfig] = None  # Modelo probabilístico para caso promedio
     algorithm_kind: Optional[str] = None  # "iterative" | "recursive" | "hybrid" | "unknown"
     preferred_method: Optional[str] = None  # "characteristic_equation" | "iteration" | "recursion_tree" | "master"
+    locale: Optional[str] = None  # "en" | "es" - idioma para etiquetas del procedimiento
 
 
 class LineCost(BaseModel):
@@ -44,6 +45,7 @@ class TraceRequest(BaseModel):
     case: str = "worst"  # "worst" | "best" | "avg"
     input_size: Optional[int] = None  # Tamaño de entrada concreto (ej: n=4)
     initial_variables: Optional[Dict[str, Any]] = None  # Variables iniciales (ej: arrays)
+    locale: Optional[str] = None  # "en" | "es" - idioma para descripciones de pasos
 
 
 class TraceResponse(BaseModel):

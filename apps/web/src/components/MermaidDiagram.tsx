@@ -1,6 +1,7 @@
 "use client";
 
 import mermaid from "mermaid";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 
 interface MermaidDiagramProps {
@@ -9,6 +10,7 @@ interface MermaidDiagramProps {
 
 export default function MermaidDiagram({ diagram }: MermaidDiagramProps) {
   const diagramRef = useRef<HTMLDivElement>(null);
+  const t = useTranslations("errors");
 
   useEffect(() => {
     if (!diagram || !diagramRef.current) return;
@@ -58,15 +60,15 @@ export default function MermaidDiagram({ diagram }: MermaidDiagramProps) {
       .catch((error) => {
         console.error("Error rendering Mermaid diagram:", error);
         if (diagramRef.current) {
-          diagramRef.current.innerHTML = `<div class="text-red-400 text-sm p-4">Error al renderizar el diagrama: ${error.message}</div>`;
+          diagramRef.current.innerHTML = `<div class="text-red-400 text-sm p-4">${t("renderDiagram", { message: error instanceof Error ? error.message : String(error) })}</div>`;
         }
       });
-  }, [diagram]);
+  }, [diagram, t]);
 
   if (!diagram) {
     return (
       <div className="text-slate-400 text-sm p-4 text-center">
-        No hay diagrama disponible
+        {t("noDiagramAvailable")}
       </div>
     );
   }

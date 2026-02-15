@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 import { useGlobalLoader } from "@/contexts/GlobalLoaderContext";
@@ -14,6 +15,7 @@ export const ImageModal = ({ image, isOpen, onClose }: ImageModalProps) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [hasError, setHasError] = useState(false);
   const { show, hide } = useGlobalLoader();
+  const t = useTranslations("errors");
 
   // Manejar apertura y cierre del dialog nativo
   useEffect(() => {
@@ -32,7 +34,7 @@ export const ImageModal = ({ image, isOpen, onClose }: ImageModalProps) => {
       show({
         variant: "spinner",
         size: "md",
-        message: `Cargando ${image.alt}...`,
+        message: t("loadingImageAlt", { alt: image.alt }),
         overlay: true, // Activar overlay para que sea visible por encima del modal
       });
 
@@ -107,10 +109,10 @@ export const ImageModal = ({ image, isOpen, onClose }: ImageModalProps) => {
             <div className="glass-modal-container p-6 sm:p-8 rounded-xl text-center max-w-md mx-auto pointer-events-auto">
               <div className="text-red-400 text-4xl mb-4">⚠️</div>
               <h3 className="text-lg font-medium text-white mb-2">
-                Error al cargar la imagen
+                {t("loadImage")}
               </h3>
               <p className="text-sm text-slate-400">
-                No se pudo cargar {image.alt}
+                {t("loadImageAlt", { alt: image.alt })}
               </p>
             </div>
           )}
@@ -118,11 +120,7 @@ export const ImageModal = ({ image, isOpen, onClose }: ImageModalProps) => {
 
         {/* Indicación de cierre fija en la parte inferior */}
         <div className="absolute bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 glass-secondary text-white/90 text-xs sm:text-sm px-3 py-2 rounded-full whitespace-nowrap pointer-events-auto">
-          Presiona{" "}
-          <kbd className="bg-white/20 px-2 py-1 rounded text-white font-medium mx-1">
-            Esc
-          </kbd>{" "}
-          o haz clic en el fondo para cerrar
+          {t("pressEscToClose")}
         </div>
       </div>
     </dialog>

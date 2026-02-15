@@ -7,6 +7,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
     () => [
       {
         id: "arquitectura",
+        titleKey: "arquitectura",
+        descriptionKey: "arquitectura",
         title: "Arquitectura general",
         description:
           "Monorepo con web (Next.js+TS) y api (FastAPI+Py 3.11), más packages compartidos (grammar, types, ui). La web consume REST del backend (/parse para AST canónico, /analyze para conteos y T(n), /health) y expone un BFF /api/llm/compare para el LLM (Gemini u OpenAI, por env). Procesamiento sin estado: sin BD ni persistencia; todo en memoria por solicitud; desarrollo con Docker Compose.",
@@ -20,6 +22,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
       },
       {
         id: "ui-flujo",
+        titleKey: "uiFlujo",
+        descriptionKey: "uiFlujo",
         title: "Flujo de análisis en la UI",
         description:
           "El usuario escribe en Monaco (validación inmediata con parser TS en Web Worker); tras una pausa se llama a /parse y, con AST válido, a /analyze. El análisis puede iniciarse desde el editor manual o desde el chatbot. Durante el análisis, un loader a pantalla completa muestra el progreso, etapas (parseo, clasificación, sumatorias, simplificación) y el tipo de algoritmo identificado. La vista muestra código numerado, tabla de costos (C_k, #ejec, costo) con selector de casos (Best/Avg/Worst), tarjetas de resumen con notación asintótica, y modales de procedimiento detallado (general y por línea) con pasos en LaTeX normalizados.",
@@ -33,6 +37,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
       },
       {
         id: "parse-analyze",
+        titleKey: "parseAnalyze",
+        descriptionKey: "parseAnalyze",
         title: "Backend: parse y analyze",
         description:
           "/parse usa ANTLR (Python) para devolver un AST canónico o errores con línea/columna; /analyze recibe el AST y opciones (C_k, modo, promedio), aplica reglas de conteo por línea, arma sumatorias y las cierra con SymPy para producir T_best/T_avg/T_worst con pasos en LaTeX y formas cerradas, sin almacenar código ni resultados.",
@@ -46,6 +52,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
       },
       {
         id: "cfg-recursion",
+        titleKey: "cfgRecursion",
+        descriptionKey: "cfgRecursion",
         title: "Visualizaciones: CFG y Recursión",
         description:
           "Desde el AST canónico se generan el CFG (bloques y flujo) y, si aplica, el árbol de recursión; ambos se renderizan con Cytoscape.js y se sincronizan con las líneas del código para trazabilidad y comprensión del origen de los términos de T(n).",
@@ -59,6 +67,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
       },
       {
         id: "errores",
+        titleKey: "errores",
+        descriptionKey: "errores",
         title: "Manejo de errores",
         description:
           "API caída → UX limitada con parser cliente y banner; gramática inválida → errores con línea/columna y sugerencias del LLM; sumatoria no cerrable → se muestra sumatoria abierta con recomendaciones (rango, cambio de variable, particiones) y diagnóstico asistido por LLM; no hay BD y los logs son técnicos y temporales.",
@@ -72,6 +82,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
       },
       {
         id: "llm",
+        titleKey: "llm",
+        descriptionKey: "llm",
         title: "Integración con LLM",
         description:
           "El LLM es parte del flujo en múltiples puntos: (1) Corrección de gramática: cuando hay errores de sintaxis, el chatbot puede sugerir correcciones; (2) Análisis directo: desde bloques de código en el chat, se puede iniciar análisis completo con el mismo loader que el editor manual; (3) Simplificación matemática: el backend usa Gemini para simplificar expresiones count_raw y generar formas polinómicas canónicas; (4) Generación de procedimientos: se usa un modelo más ligero (Gemini Flash Lite) para generar pasos detallados en LaTeX con notación asintótica. La web llama al BFF /api/llm/* que invoca Gemini u OpenAI según variables de entorno.",
@@ -84,7 +96,37 @@ export const useDocumentationSections = (): DocumentationSection[] => {
         },
       },
       {
+        id: "i18n-labels-prompts",
+        titleKey: "i18nLabelsPrompts",
+        descriptionKey: "i18nLabelsPrompts",
+        title: "Internacionalización, Labels y Prompts",
+        description:
+          "Soporte multiidioma (es/en), sistema de labels en backend para procedimientos y trace, y prompts de LLM parametrizados por locale.",
+        content: {
+          type: "text",
+          sections: [
+            {
+              title: "Internacionalización",
+              content:
+                "next-intl con messages/es.json y messages/en.json. Rutas con prefijo [locale] (/es/analyzer, /en/analyzer). LocaleSwitcher en Header, useLocale(), useTranslations(). Navegación con @/i18n/navigation. El frontend envía locale en el body de las peticiones a /analyze/open, /api/llm y /analyze/trace.",
+            },
+            {
+              title: "Sistema de Labels (Backend)",
+              content:
+                "apps/api/app/modules/analysis/translations.py: PROCEDURE_LABELS, NOTES_LABELS, TRACE_STEP_LABELS (en/es). Funciones get_labels(locale), get_note_labels(locale), get_trace_step_labels(locale). Usados en BaseAnalyzer, IterativeAnalyzer, RecursiveAnalyzer, SummationCloser, Executor. Fallback a 'en' si locale no existe.",
+            },
+            {
+              title: "Prompts por Idioma",
+              content:
+                "apps/web/src/app/api/llm/prompts/index.ts: getPrompt(job, locale). Jobs con prompts localizados: classify, parser_assist, general, simplifier, repair, compare. response-language.ts: getResponseLanguageInstruction, getExplanationLanguageInstruction. Prompts de diagramas: getGenerateDiagramSystemPrompt(locale), getRecursionDiagramSystemPrompt(locale). Parámetro locale en requests a /api/llm.",
+            },
+          ],
+        },
+      },
+      {
         id: "export",
+        titleKey: "export",
+        descriptionKey: "export",
         title: "Exportación de reportes",
         description:
           "Exporta Markdown/HTML con tabla por línea, pasos en LaTeX y T(n) final para Best/Avg/Worst (opcionalmente con resumen de la comparativa LLM); la exportación no persiste datos y el archivo se genera y descarga al instante.",
@@ -98,6 +140,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
       },
       {
         id: "monorepo-packages",
+        titleKey: "monorepoPackages",
+        descriptionKey: "monorepoPackages",
         title: "Paquetes del Monorepo",
         description:
           "Este monorepo está organizado en dos paquetes especializados que trabajan en conjunto. El paquete @aa/grammar se encarga de definir la gramática ANTLR y generar parsers tanto para TypeScript como Python, garantizando que el AST sea idéntico entre cliente y servidor. Por otro lado, @aa/types centraliza todos los contratos de API y DTOs compartidos entre la web y el API, proporcionando tipado fuerte y consistencia. La interfaz de usuario utiliza componentes nativos cuidadosamente optimizados para ofrecer el máximo rendimiento.",
@@ -149,6 +193,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
       },
       {
         id: "code-quality",
+        titleKey: "codeQuality",
+        descriptionKey: "codeQuality",
         title: "Calidad de Código y Herramientas",
         description:
           "Sistema integral de linting y formateo automatizado que garantiza consistencia y alta calidad de código en todo el monorepo. Implementa herramientas modernas tanto para el frontend (ESLint v9, Prettier) como el backend (Ruff, Black) con scripts orquestados que permiten validar y formatear ambos mundos simultáneamente.",
@@ -235,6 +281,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
       },
       {
         id: "ui-showcase",
+        titleKey: "uiShowcase",
+        descriptionKey: "uiShowcase",
         title: "Demostración de Componentes Nativos",
         description:
           "Prueba interactiva de componentes nativos optimizados. Explora botones, modales, bloques LaTeX y tablas de costos implementados directamente con Tailwind CSS para máximo rendimiento.",
@@ -258,6 +306,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
       },
       {
         id: "katex-integration",
+        titleKey: "katexIntegration",
+        descriptionKey: "katexIntegration",
         title: "Renderizado LaTeX con KaTeX",
         description:
           "Sistema completo de renderizado matemático usando KaTeX para ecuaciones LaTeX tanto inline como en bloque. Optimizado para SSR, incluye componentes reutilizables, utilidades de renderizado seguro y soporte para ecuaciones complejas con scroll horizontal.",
@@ -349,6 +399,8 @@ export const useDocumentationSections = (): DocumentationSection[] => {
       },
       {
         id: "grammar-parser",
+        titleKey: "grammarParser",
+        descriptionKey: "grammarParser",
         title: "Gramática y Parser",
         description:
           "Sistema completo de parsing basado en ANTLR4 que define la sintaxis del lenguaje de pseudocódigo y genera parsers para TypeScript y Python. Soporta procedimientos, estructuras de control, arrays con rangos, operadores normalizados y produce un AST canónico con información de posición para diagnósticos precisos.",
@@ -553,6 +605,8 @@ variable ⟵ expresion;`,
       },
       {
         id: "analyzer-interface",
+        titleKey: "analyzerInterface",
+        descriptionKey: "analyzerInterface",
         title: "Interfaz de Análisis de Complejidad",
         description:
           "Analizador visual de complejidad algorítmica con interfaz de 3 columnas que muestra código numerado, tabla de costos por línea y visualizaciones matemáticas. Incluye modal de procedimiento detallado para Best, Average y Worst case con pasos en LaTeX. Soporte completo para análisis iterativo con modelos probabilísticos.",
@@ -723,6 +777,8 @@ variable ⟵ expresion;`,
       },
       {
         id: "iterative-analyzer",
+        titleKey: "iterativeAnalyzer",
+        descriptionKey: "iterativeAnalyzer",
         title: "Analizador Iterativo Unificado",
         description:
           "Sistema completo de análisis iterativo que soporta best/worst/average case con modelos probabilísticos. Analiza bucles FOR, WHILE, REPEAT, condicionales IF, y líneas simples con precisión matemática.",
@@ -1016,6 +1072,8 @@ variable ⟵ expresion;`,
       },
       {
         id: "recursive-analyzer",
+        titleKey: "recursiveAnalyzer",
+        descriptionKey: "recursiveAnalyzer",
         title: "Analizador Recursivo y Teorema Maestro",
         description:
           "Sistema completo de análisis para algoritmos recursivos e híbridos que utiliza el Teorema Maestro para resolver recurrencias de la forma T(n) = a·T(n/b) + f(n). Incluye extracción automática de recurrencias, visualización del árbol de recursión, y procedimiento completo con pasos de prueba.",
@@ -1248,6 +1306,8 @@ variable ⟵ expresion;`,
       },
       {
         id: "memoization",
+        titleKey: "memoization",
+        descriptionKey: "memoization",
         title: "Memoización (Programación Dinámica)",
         description:
           "Optimización del análisis mediante cacheo de resultados para nodos AST repetitivos",
@@ -1274,6 +1334,8 @@ variable ⟵ expresion;`,
       },
       {
         id: "llm-jobs-models",
+        titleKey: "llmJobsModels",
+        descriptionKey: "llmJobsModels",
         title: "LLM: Jobs y Modelos",
         description:
           "Configuración centralizada de LLM (Gemini) con diferentes jobs especializados. Cada job usa un modelo específico optimizado para su tarea. IMPORTANTE: El job 'classify' está DEPRECADO - la clasificación se hace por heurística en /classify (backend Python), NO usa LLM.",
@@ -1300,6 +1362,8 @@ variable ⟵ expresion;`,
       },
       {
         id: "recursive-methods",
+        titleKey: "recursiveMethods",
+        descriptionKey: "recursiveMethods",
         title: "Métodos de Análisis Recursivo",
         description:
           "Detección automática y aplicación de métodos de resolución de recurrencias",
@@ -1336,6 +1400,8 @@ variable ⟵ expresion;`,
       },
       {
         id: "request-flow",
+        titleKey: "requestFlow",
+        descriptionKey: "requestFlow",
         title: "Flujo de Peticiones",
         description:
           "Flujo completo y preciso de peticiones desde el frontend hasta el backend. Incluye diagramas Mermaid de arquitectura, flujos de análisis iterativo/recursivo, y diagramas de secuencia. Next.js SOLO hace proxy para /api/llm/*, los endpoints principales van directo al backend Python.",
@@ -1362,6 +1428,8 @@ variable ⟵ expresion;`,
       },
       {
         id: "react-flow",
+        titleKey: "reactFlow",
+        descriptionKey: "reactFlow",
         title: "React Flow para Visualización",
         description:
           "Sistema de visualización de diagramas interactivos usando React Flow. Soporta árboles de recursión, grafos de ejecución, y diagramas de flujo de trace. Incluye layout automático con Dagre, nodos/edges personalizados, y optimizaciones de rendimiento.",
@@ -1393,6 +1461,8 @@ variable ⟵ expresion;`,
       },
       {
         id: "gpu-cpu",
+        titleKey: "gpuCpu",
+        descriptionKey: "gpuCpu",
         title: "Análisis GPU vs CPU",
         description:
           "Sistema de scoring que determina la idoneidad de un algoritmo para GPU o CPU",
@@ -1419,6 +1489,8 @@ variable ⟵ expresion;`,
       },
       {
         id: "trace-environment",
+        titleKey: "traceEnvironment",
+        descriptionKey: "traceEnvironment",
         title: "Environment y Trace Endpoint",
         description:
           "Configuración de variables de entorno y metadata del endpoint de seguimiento de ejecución",

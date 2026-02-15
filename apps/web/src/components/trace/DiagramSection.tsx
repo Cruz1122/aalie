@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { TraceGraph } from "@/types/trace";
 
 import MarkdownRenderer from "../MarkdownRenderer";
@@ -42,6 +43,7 @@ export default function DiagramSection({
   onDiagramGenerated,
   loadingRecursion = false,
 }: DiagramSectionProps) {
+  const t = useTranslations("analyzer.executionTrace");
   if (mode === "recursive") {
     return (
       <div className="flex-1 overflow-hidden flex flex-col">
@@ -51,14 +53,14 @@ export default function DiagramSection({
             <span className="material-symbols-outlined text-base">
               account_tree
             </span>
-            Árbol de Recursión
+            {t("recursionTreeTitle")}
           </h3>
           <div className="flex items-center gap-2">
             {onRegenerate && (
               <button
                 onClick={onRegenerate}
                 className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/70 hover:bg-slate-600/80 border border-slate-600/60 transition-colors"
-                title="Regenerar diagrama"
+                title={t("regenerateDiagram")}
               >
                 <span className="material-symbols-outlined text-sm text-slate-200 leading-none">
                   refresh
@@ -69,7 +71,7 @@ export default function DiagramSection({
               <button
                 onClick={onExpand}
                 className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/70 hover:bg-slate-600/80 border border-slate-600/60 transition-colors"
-                title="Expandir diagrama"
+                title={t("expandDiagram")}
               >
                 <span className="material-symbols-outlined text-sm text-slate-200 leading-none">
                   fullscreen
@@ -81,7 +83,7 @@ export default function DiagramSection({
         {/* Advertencia contextual sobre el caso mostrado */}
         {inputSize !== undefined && (
           <p className="text-xs text-slate-400 mb-2">
-            Este diagrama muestra un ejemplo de ejecución para n = {inputSize}; no corresponde necesariamente al peor caso, sino a un caso típico de tamaño n.
+            {t("diagramNote", { n: inputSize })}
           </p>
         )}
         
@@ -94,7 +96,7 @@ export default function DiagramSection({
                 <div className="absolute w-6 h-6 bg-purple-500 rounded-full" />
               </div>
               <p className="text-xs text-slate-300">
-                Generando árbol de recursión...
+                {t("generatingRecursionDiagram")}
               </p>
             </div>
           ) : (
@@ -122,7 +124,7 @@ export default function DiagramSection({
             <div className="absolute w-6 h-6 bg-blue-500 rounded-full" />
           </div>
           <p className="text-xs text-slate-300">
-            Generando diagrama de flujo...
+            {t("generatingFlowDiagram")}
           </p>
         </div>
       ) : graph ? (
@@ -130,14 +132,14 @@ export default function DiagramSection({
           <div className="glass-card rounded-lg overflow-hidden">
             {/* Header with title and actions */}
             <div className="flex items-center justify-between p-3 border-b border-white/5 bg-slate-800/30">
-              <div className="text-sm font-semibold text-slate-300">Diagrama de flujo</div>
+              <div className="text-sm font-semibold text-slate-300">{t("flowDiagram")}</div>
               <div className="flex items-center gap-2">
                 {onRegenerate && (
                   <button
                     type="button"
                     onClick={onRegenerate}
                     className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/70 hover:bg-slate-600/80 border border-slate-600/60 transition-colors"
-                    title="Regenerar diagrama"
+                    title={t("regenerateDiagram")}
                   >
                     <span className="material-symbols-outlined text-sm text-slate-200 leading-none">
                       refresh
@@ -149,7 +151,7 @@ export default function DiagramSection({
                     type="button"
                     onClick={onExpand}
                     className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/70 hover:bg-slate-600/80 border border-slate-600/60 transition-colors"
-                    title="Expandir diagrama"
+                    title={t("expandDiagram")}
                   >
                     <span className="material-symbols-outlined text-sm text-slate-200 leading-none">
                       fullscreen
@@ -166,7 +168,7 @@ export default function DiagramSection({
           {explanation && (
             <div className="glass-card p-3 rounded-lg">
               <div className="text-xs text-slate-400 mb-2">
-                Explicación:
+                {t("explanationLabel")}
               </div>
               <MarkdownRenderer content={explanation} />
             </div>
@@ -180,7 +182,7 @@ export default function DiagramSection({
             </span>
           </div>
           <div className="text-sm font-medium text-slate-400 text-center px-4">
-            {explanation || "El diagrama se generará al cargar el rastro"}
+            {explanation || t("diagramPlaceholder")}
           </div>
           {/* Show retry button ONLY if there is an error explanation or if we have trace data but no graph */}
           {onRegenerate && (explanation || graph === null) && (
@@ -193,7 +195,7 @@ export default function DiagramSection({
               <span className="material-symbols-outlined text-sm">
                 refresh
               </span>
-              Intentar de nuevo
+              {t("retry")}
             </button>
           )}
         </div>

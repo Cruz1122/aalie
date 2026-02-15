@@ -1,0 +1,173 @@
+{
+  "1": {
+    "name": "Asignación Simple",
+    "description": "Operación básica de asignación sin bucles. Este tipo de algoritmo se clasifica como 'unknown' ya que no tiene estructuras de control complejas.",
+    "complexity": "O(1)",
+    "note": "Se clasificará como 'unknown' en el análisis (sin bucles complejos)"
+  },
+  "2": {
+    "name": "Acceso a Array Simple",
+    "description": "Acceso directo a un elemento de un array. Operación de tiempo constante sin bucles.",
+    "complexity": "O(1)",
+    "note": "Se clasificará como 'unknown' en el análisis"
+  },
+  "3": {
+    "name": "Búsqueda Lineal",
+    "description": "Recorre un array secuencialmente buscando un elemento específico. Es el algoritmo de búsqueda más simple, ideal para arrays pequeños o no ordenados.",
+    "complexity": "Mejor: O(1), Peor: O(n), Prom: O(n/2)"
+  },
+  "4": {
+    "name": "Búsqueda Binaria Iterativa",
+    "description": "Busca un elemento en un array ordenado dividiendo el espacio de búsqueda a la mitad en cada iteración. Versión iterativa de la búsqueda binaria.",
+    "complexity": "Mejor: O(1), Peor: O(log n), Prom: O(log n)"
+  },
+  "5": {
+    "name": "Factorial Iterativo",
+    "description": "Calcula el factorial de un número de forma iterativa. Es más eficiente que la versión recursiva y no tiene riesgo de stack overflow para números grandes.",
+    "complexity": "O(n)"
+  },
+  "6": {
+    "name": "Suma de Array",
+    "description": "Calcula la suma de todos los elementos de un array. Algoritmo lineal simple que recorre el array una vez.",
+    "complexity": "O(n)"
+  },
+  "7": {
+    "name": "Máximo de Array",
+    "description": "Encuentra el elemento máximo en un array. Recorre el array comparando cada elemento con el máximo actual.",
+    "complexity": "Mejor: O(n), Peor: O(n), Prom: O(n)"
+  },
+  "8": {
+    "name": "Máximo Común Divisor - Algoritmo de Euclides",
+    "description": "Calcula el máximo común divisor de dos números usando el algoritmo de Euclides. Es uno de los algoritmos más antiguos y eficientes, con complejidad logarítmica.",
+    "complexity": "O(log min(a, b))"
+  },
+  "9": {
+    "name": "Ordenamiento Burbuja (Bubble Sort)",
+    "description": "Ordena un array comparando elementos adyacentes e intercambiándolos si están en el orden incorrecto. Es uno de los algoritmos de ordenamiento más simples, pero también uno de los menos eficientes.",
+    "complexity": "Mejor: O(n), Peor: O(n²), Prom: O(n²)"
+  },
+  "10": {
+    "name": "Ordenamiento por Inserción (Insertion Sort)",
+    "description": "Construye el array ordenado insertando cada elemento en su posición correcta. Es eficiente para arrays pequeños o casi ordenados, con mejor rendimiento que Bubble Sort en la práctica.",
+    "complexity": "Mejor: O(n), Peor: O(n²), Prom: O(n²)"
+  },
+  "11": {
+    "name": "Ordenamiento por Selección (Selection Sort)",
+    "description": "Encuentra el elemento mínimo y lo coloca en su posición final en cada iteración. Realiza menos intercambios que Bubble Sort, pero tiene la misma complejidad temporal.",
+    "complexity": "O(n²)"
+  },
+  "12": {
+    "name": "Fibonacci Recursivo",
+    "description": "Calcula el n-ésimo número de Fibonacci usando recursión directa. Ahora analizado con el método de Ecuación Característica porque T(n) = T(n-1) + T(n-2) es una recurrencia lineal con desplazamientos constantes. Detecta automáticamente que es un caso de Programación Dinámica lineal.",
+    "complexity": "O(φⁿ) donde φ = (1+√5)/2 ≈ 1.618",
+    "note": "Se analiza con Ecuación Característica (DP lineal detectada)"
+  },
+  "13": {
+    "name": "Torres de Hanoi",
+    "description": "Resuelve el problema clásico de las Torres de Hanoi usando recursión. Analizado con el método de Ecuación Característica porque T(n) = 2T(n-1) + 1 es una recurrencia lineal. Detecta automáticamente que es un caso de Programación Dinámica lineal.",
+    "complexity": "O(2ⁿ)",
+    "note": "Se analiza con Ecuación Característica (DP lineal detectada)"
+  },
+  "14": {
+    "name": "Factorial Recursivo",
+    "description": "Calcula el factorial de un número usando recursión. Analizado con el método de iteración porque la recurrencia T(n) = T(n-1) + O(1) no divide uniformemente.",
+    "complexity": "O(n)",
+    "note": "Se analiza con método de iteración (desenrollado)"
+  },
+  "15": {
+    "name": "Búsqueda Binaria Recursiva",
+    "description": "Busca un elemento en un array ordenado usando recursión. Analizado con el Teorema Maestro porque T(n) = T(n/2) + O(1) con a=1, b=2.",
+    "complexity": "Mejor: O(1), Peor: O(log n), Prom: O(log n)",
+    "note": "Se analiza con Teorema Maestro (a=1, b=2)"
+  },
+  "16": {
+    "name": "MergeSort (Ordenamiento por Mezcla)",
+    "description": "Algoritmo de ordenamiento divide y conquista que divide el array en dos mitades, ordena cada mitad recursivamente y las combina. Analizado con el método de Árbol de Recursión porque T(n) = 2T(n/2) + n con a=2, b=2.",
+    "complexity": "O(n log n)",
+    "note": "Se analiza con método de Árbol de Recursión (a=2, b=2)"
+  },
+  "17": {
+    "name": "Algoritmo Divide Desigual",
+    "description": "Divide un problema en 3 subproblemas iguales. Analizado con el método de Árbol de Recursión porque T(n) = 3T(n/3) + 1 con a=3, b=3.",
+    "complexity": "O(n)",
+    "note": "Se analiza con método de Árbol de Recursión (a=3, b=3)"
+  },
+  "18": {
+    "name": "Algoritmo Cuaternario",
+    "description": "Divide un problema en 4 subproblemas iguales. Analizado con el método de Árbol de Recursión porque T(n) = 4T(n/4) + 1 con a=4, b=4.",
+    "complexity": "O(n)",
+    "note": "Se analiza con método de Árbol de Recursión (a=4, b=4)"
+  },
+  "19": {
+    "name": "QuickSort (Ordenamiento Rápido)",
+    "description": "Algoritmo de ordenamiento divide y conquista usando particionamiento. En el mejor caso, analizado con el método de Árbol de Recursión porque T(n) = 2T(n/2) + n con a=2, b=2.",
+    "complexity": "Mejor: O(n log n), Peor: O(n²), Prom: O(n log n)",
+    "note": "En el mejor caso se analiza con método de Árbol de Recursión (a=2, b=2)"
+  },
+  "20": {
+    "name": "N-Step Stairs (Subir Escaleras)",
+    "description": "Cuenta el número de formas de subir n escalones, pudiendo dar pasos de 1 o 2 escalones a la vez. Recurrencia lineal T(n) = T(n-1) + T(n-2). Analizado con Ecuación Característica y detecta DP lineal automáticamente.",
+    "complexity": "O(φⁿ) donde φ = (1+√5)/2 ≈ 1.618",
+    "note": "Se analiza con Ecuación Característica (DP lineal detectada)"
+  },
+  "21": {
+    "name": "Formas de Decodificar",
+    "description": "Cuenta el número de formas de decodificar un mensaje numérico donde cada dígito o par de dígitos puede representar una letra. Recurrencia lineal T(n) = T(n-1) + T(n-2) con condiciones. Analizado con Ecuación Característica.",
+    "complexity": "O(φⁿ) donde φ = (1+√5)/2 ≈ 1.618",
+    "note": "Se analiza con Ecuación Característica (DP lineal detectada)"
+  },
+  "22": {
+    "name": "Tiling 2xN (Mosaicos)",
+    "description": "Cuenta el número de formas de llenar un tablero de 2xN con fichas de dominó (2x1). Recurrencia lineal T(n) = T(n-1) + T(n-2). Analizado con Ecuación Característica y detecta DP lineal.",
+    "complexity": "O(φⁿ) donde φ = (1+√5)/2 ≈ 1.618",
+    "note": "Se analiza con Ecuación Característica (DP lineal detectada)"
+  },
+  "23": {
+    "name": "Tribonacci",
+    "description": "Calcula el n-ésimo número de Tribonacci (similar a Fibonacci pero suma los últimos 3 términos). Recurrencia lineal T(n) = T(n-1) + T(n-2) + T(n-3). Analizado con Ecuación Característica.",
+    "complexity": "O(rⁿ) donde r es la raíz real mayor de la ecuación característica",
+    "note": "Se analiza con Ecuación Característica (DP lineal detectada)"
+  },
+  "24": {
+    "name": "Pell Numbers",
+    "description": "Calcula el n-ésimo número de Pell usando la recurrencia P(n) = 2P(n-1) + P(n-2). Recurrencia lineal homogénea. Analizado con Ecuación Característica.",
+    "complexity": "O((1+√2)ⁿ)",
+    "note": "Se analiza con Ecuación Característica (DP lineal detectada)"
+  },
+  "25": {
+    "name": "QuickSort (Caso Promedio)",
+    "description": "Algoritmo de ordenamiento divide y conquista que funciona eligiendo un pivote y dividiendo el array en dos partes. En el caso promedio, T(n) = 2T(n/2) + O(n) pero el pivote no divide exactamente a la mitad. Analizado únicamente con Teorema Maestro porque a=1 no cumple las condiciones del Árbol de Recursión.",
+    "complexity": "Mejor: O(n log n), Peor: O(n²), Prom: O(n log n)",
+    "note": "Se analiza únicamente con Teorema Maestro (a=1, divide no uniforme)"
+  },
+  "26": {
+    "name": "Búsqueda en Árbol Binario de Búsqueda",
+    "description": "Busca un elemento en un BST. La recurrencia T(n) = T(n/2) + O(1) depende de la altura del árbol. Analizado únicamente con Teorema Maestro porque a=1, b=2 no cumple las condiciones del Árbol de Recursión.",
+    "complexity": "Mejor: O(log n), Peor: O(n), Prom: O(log n)",
+    "note": "Se analiza únicamente con Teorema Maestro (a=1, b=2, caso promedio)"
+  },
+  "27": {
+    "name": "Exponentiación Rápida Recursiva",
+    "description": "Calcula x^n de forma eficiente usando divide y conquista. T(n) = T(n/2) + O(1). Analizado únicamente con Teorema Maestro porque a=1, b=2.",
+    "complexity": "O(log n)",
+    "note": "Se analiza únicamente con Teorema Maestro (a=1, b=2)"
+  },
+  "28": {
+    "name": "Suma de Array Recursiva",
+    "description": "Suma los elementos de un array recursivamente procesando un elemento a la vez. Recurrencia T(n) = T(n-1) + O(1). Analizado únicamente con método iterativo porque no es lineal por desplazamientos constantes múltiples.",
+    "complexity": "O(n)",
+    "note": "Se analiza únicamente con método iterativo (T(n) = T(n-1) + O(1))"
+  },
+  "29": {
+    "name": "Búsqueda en Lista Enlazada",
+    "description": "Busca un elemento en una lista enlazada recursivamente. Recurrencia T(n) = T(n-1) + O(1). Analizado únicamente con método iterativo.",
+    "complexity": "O(n)",
+    "note": "Se analiza únicamente con método iterativo (T(n) = T(n-1) + O(1))"
+  },
+  "30": {
+    "name": "Invertir Array Recursivo",
+    "description": "Invierte un array recursivamente intercambiando elementos de los extremos. Recurrencia T(n) = T(n-2) + O(1). Analizado únicamente con método iterativo porque no cumple las condiciones de ecuación característica.",
+    "complexity": "O(n)",
+    "note": "Se analiza únicamente con método iterativo (T(n) = T(n-2) + O(1))"
+  }
+}

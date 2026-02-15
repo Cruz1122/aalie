@@ -1,6 +1,7 @@
 "use client";
 
 import type { AnalyzeOpenResponse, ParseError, ParseResponse, Program } from "@aa/types";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { AnalysisLoader } from "@/components/AnalysisLoader";
@@ -41,7 +42,15 @@ type ClassifyResponse = { kind: "iterative" | "recursive" | "hybrid" | "unknown"
 type CaseType = 'worst' | 'average' | 'best';
 
 export default function AnalyzerPage() {
+  const locale = useLocale();
   const { animateProgress } = useAnalysisProgress();
+  const t = useTranslations("analyzer.progress");
+  const tMethods = useTranslations("analyzer.methods");
+  const tAlgorithmType = useTranslations("analyzer.algorithmType");
+  const tView = useTranslations("analyzer.view");
+  const tMessages = useTranslations("analyzer.messages");
+  const tCommon = useTranslations("common");
+  const getMessage = (key: string) => t(key);
 
   // Estados del flujo de análisis
   const [source, setSource] = useState<string>(() => {
@@ -57,7 +66,7 @@ export default function AnalyzerPage() {
   });
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [analysisMessage, setAnalysisMessage] = useState("Iniciando análisis...");
+  const [analysisMessage, setAnalysisMessage] = useState(() => t("init"));
   const [algorithmType, setAlgorithmType] = useState<"iterative" | "recursive" | "hybrid" | "unknown" | undefined>(undefined);
   const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
@@ -264,14 +273,14 @@ export default function AnalyzerPage() {
     // Activar estado de carga inmediatamente
     setAnalyzing(true);
     setAnalysisProgress(0);
-    setAnalysisMessage("Iniciando análisis...");
+    setAnalysisMessage(getMessage("init"));
     setAlgorithmType(undefined);
     setIsAnalysisComplete(false);
     setAnalysisError(null);
 
     try {
       // 1) Parsear el código (0-20%)
-      setAnalysisMessage("Parseando código...");
+      setAnalysisMessage(getMessage("parsing"));
       const parsePromise = fetch("/api/grammar/parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -291,13 +300,14 @@ export default function AnalyzerPage() {
           setAnalysisMessage,
           setAlgorithmType,
           setIsAnalysisComplete,
-          setAnalysisError
+          setAnalysisError,
+          getMessage
         );
         return;
       }
 
       // 2) Clasificar el algoritmo (20-40%)
-      setAnalysisMessage("Clasificando algoritmo...");
+      setAnalysisMessage(getMessage("classifying"));
       let kind: ClassifyResponse["kind"];
       try {
         const apiKey = getApiKey();
@@ -314,7 +324,7 @@ export default function AnalyzerPage() {
           const cls = await clsResponse.json() as ClassifyResponse & { method?: string; mode?: string };
           kind = cls.kind;
           setAlgorithmType(kind);
-          setAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKind(kind)}`);
+          setAnalysisMessage(t("algorithmIdentified", { type: formatAlgorithmKind(kind) }));
           console.log(`[Analyzer] Clasificación: ${kind} (método: ${cls.method})`);
         } else {
           throw new Error(`HTTP ${clsResponse.status}`);
@@ -323,7 +333,7 @@ export default function AnalyzerPage() {
         console.warn(`[Analyzer] Error en clasificación, usando heurística:`, error);
         kind = heuristicKind(parseRes.ast);
         setAlgorithmType(kind);
-        setAnalysisMessage(`Algoritmo identificado: ${formatAlgorithmKind(kind)}`);
+        setAnalysisMessage(t("algorithmIdentified", { type: formatAlgorithmKind(kind) }));
       }
 
       // 3) Realizar el análisis de complejidad (40-80%)
@@ -333,13 +343,13 @@ export default function AnalyzerPage() {
       let selectedMethod: MethodType | undefined = undefined;
       
       if (isRecursive) {
-        setAnalysisMessage("Verificando condiciones...");
+        setAnalysisMessage(getMessage("verifyingConditions"));
         await animateProgress(40, 50, 300, setAnalysisProgress);
-        setAnalysisMessage("Extrayendo recurrencia...");
+        setAnalysisMessage(getMessage("extractingRecurrence"));
         await animateProgress(50, 65, 400, setAnalysisProgress);
-        setAnalysisMessage("Normalizando recurrencia...");
+        setAnalysisMessage(getMessage("normalizingRecurrence"));
         await animateProgress(65, 75, 300, setAnalysisProgress);
-        setAnalysisMessage("Detectando método de análisis...");
+        setAnalysisMessage(getMessage("detectingMethod"));
         await animateProgress(75, 85, 500, setAnalysisProgress);
         
         // Guardar el progreso actual antes de detectar métodos
@@ -351,6 +361,7 @@ export default function AnalyzerPage() {
           kind,
           progressBeforeMethodSelection,
           setAnalysisMessage,
+          getMessage,
           setAnalysisProgress,
           setApplicableMethods,
           setDefaultMethod,
@@ -362,9 +373,9 @@ export default function AnalyzerPage() {
         
         progressBeforeAnalysis = 90;
       } else {
-        setAnalysisMessage("Hallando sumatorias...");
+        setAnalysisMessage(getMessage("findingSums"));
         await animateProgress(40, 50, 200, setAnalysisProgress);
-        setAnalysisMessage("Cerrando sumatorias...");
+        setAnalysisMessage(getMessage("closingSums"));
         await animateProgress(50, 55, 200, setAnalysisProgress);
         progressBeforeAnalysis = 55;
       }
@@ -380,6 +391,7 @@ export default function AnalyzerPage() {
         avgModel?: { mode: string; predicates?: Record<string, string> };
         algorithm_kind?: string;
         preferred_method?: MethodType;
+        locale?: string;
       } = { 
         source, 
         mode: "all",
@@ -387,7 +399,8 @@ export default function AnalyzerPage() {
           mode: "uniform",
           predicates: {}
         },
-        algorithm_kind: kind  // Enviar el tipo de algoritmo al backend
+        algorithm_kind: kind,  // Enviar el tipo de algoritmo al backend
+        locale: locale === "es" ? "es" : "en",  // Etiquetas del procedimiento en el idioma del usuario
       };
       
       // Solo agregar preferred_method si es recursivo y hay un método seleccionado
@@ -400,9 +413,9 @@ export default function AnalyzerPage() {
       
       // Actualizar mensaje antes de iniciar el análisis real
       if (isRecursive) {
-        setAnalysisMessage("Calculando complejidad...");
+        setAnalysisMessage(getMessage("calculatingComplexity"));
       } else {
-        setAnalysisMessage("Analizando complejidad...");
+        setAnalysisMessage(getMessage("analyzing"));
       }
       
       const analyzePromise = fetch("/api/analyze/open", {
@@ -433,7 +446,8 @@ export default function AnalyzerPage() {
           setAnalysisMessage,
           setAlgorithmType,
           setIsAnalysisComplete,
-          setAnalysisError
+          setAnalysisError,
+          getMessage
         );
         return;
       }
@@ -445,20 +459,20 @@ export default function AnalyzerPage() {
         setTimeout(() => {
           setAnalyzing(false);
           setAnalysisProgress(0);
-          setAnalysisMessage("Iniciando análisis...");
-          setAlgorithmType(undefined);
-          setIsAnalysisComplete(false);
-          setAnalysisError(null);
+        setAnalysisMessage(getMessage("init"));
+        setAlgorithmType(undefined);
+        setIsAnalysisComplete(false);
+        setAnalysisError(null);
         }, 3000);
         return;
       }
 
       // 6) Detectar el método usado y actualizar mensaje
-      let detectedMethod = "método recursivo";
+      let methodKey: "characteristicEquation" | "iterationMethod" | "recursionTree" | "masterTheorem" | "iterativeAnalysis" = "iterativeAnalysis";
       if (isRecursive && analyzeRes.worst?.totals?.recurrence) {
         const bestForDetection = analyzeRes.best === "same_as_worst" ? null : analyzeRes.best;
-        detectedMethod = detectRecursiveMethod(analyzeRes.worst, bestForDetection);
-        updateAnalysisMessageForMethod(detectedMethod, setAnalysisMessage);
+        methodKey = detectRecursiveMethod(analyzeRes.worst, bestForDetection);
+        updateAnalysisMessageForMethod(methodKey, setAnalysisMessage, getMessage);
         await new Promise((resolve) => setTimeout(resolve, 300));
       }
       
@@ -487,7 +501,7 @@ export default function AnalyzerPage() {
       // Debug: verificar que el tipo de algoritmo sea correcto
       console.log('[Analyzer] Datos actualizados:', {
         algorithmType: algorithmType || "recursive (detectado desde datos)",
-        method: detectedMethod,
+        method: methodKey,
         hasWorst: !!analyzeRes.worst,
         hasBest: !!analyzeRes.best,
         hasAvg: !!analyzeRes.avg,
@@ -498,7 +512,7 @@ export default function AnalyzerPage() {
       });
 
       // 7) Mostrar completado y cerrar de forma suave
-      setAnalysisMessage(`Análisis completo con ${detectedMethod}`);
+      setAnalysisMessage(t("completeWithMethod", { method: tMethods(methodKey) }));
       setIsAnalysisComplete(true);
       
       // Animar a 100% antes de cerrar
@@ -515,7 +529,7 @@ export default function AnalyzerPage() {
       // Resetear estados después de que termine la animación de cierre
       setTimeout(() => {
         setAnalysisProgress(0);
-        setAnalysisMessage("Iniciando análisis...");
+        setAnalysisMessage(getMessage("init"));
         setAlgorithmType(undefined);
         setIsAnalysisComplete(false);
       }, 350);
@@ -527,7 +541,7 @@ export default function AnalyzerPage() {
       setTimeout(() => {
         setAnalyzing(false);
         setAnalysisProgress(0);
-        setAnalysisMessage("Iniciando análisis...");
+        setAnalysisMessage(getMessage("init"));
         setAlgorithmType(undefined);
         setIsAnalysisComplete(false);
         setAnalysisError(null);
@@ -595,10 +609,10 @@ export default function AnalyzerPage() {
       let methodInstruction = "";
       if (ownMethod && isRecursive) {
         const methodNames: Record<string, string> = {
-          "characteristic_equation": "Ecuación Característica",
-          "iteration": "Método de Iteración",
-          "master": "Teorema Maestro",
-          "recursion_tree": "Árbol de Recursión"
+          "characteristic_equation": tMethods("characteristicEquation"),
+          "iteration": tMethods("iterationMethod"),
+          "master": tMethods("masterTheorem"),
+          "recursion_tree": tMethods("recursionTree")
         };
         const methodDisplayName = methodNames[ownMethod] || ownMethod;
         methodInstruction = `\n**MÉTODO A USAR (CRÍTICO):**
@@ -736,6 +750,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
           job: 'compare',
           prompt,
           apiKey: apiKey || undefined,
+          locale,
         }),
       });
 
@@ -753,7 +768,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
       const result = await response.json();
       
       if (!result.ok) {
-        throw new Error(result.error || "Error al obtener respuesta del LLM");
+        throw new Error(result.error || tMessages("llmResponseError"));
       }
 
       setComparisonMessage("Generando comparación...");
@@ -779,7 +794,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         if (jsonMatch) {
           llmResponse = JSON.parse(jsonMatch[1]);
         } else {
-          throw new Error("No se pudo parsear la respuesta del LLM como JSON");
+          throw new Error(tMessages("llmParseError"));
         }
       }
 
@@ -1617,16 +1632,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
 
 
   const formatAlgorithmKind = (value: ClassifyResponse["kind"]): string => {
-    switch (value) {
-      case "iterative":
-        return "Iterativo";
-      case "recursive":
-        return "Recursivo";
-      case "hybrid":
-        return "Híbrido";
-      default:
-        return "Desconocido";
-    }
+    return tAlgorithmType(value === "unknown" ? "unknown" : value);
   };
 
   // Selector de casos (worst por defecto, preparado para best/average)
@@ -1664,7 +1670,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
           onClose={() => {
             setAnalyzing(false);
             setAnalysisProgress(0);
-            setAnalysisMessage("Iniciando análisis...");
+            setAnalysisMessage(getMessage("init"));
             setAlgorithmType(undefined);
             setIsAnalysisComplete(false);
             setAnalysisError(null);
@@ -1706,7 +1712,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-white font-semibold flex items-center">
                     <span className="material-symbols-outlined mr-2 text-blue-400">code</span>{" "}
-                    Código Fuente
+                    {tView("sourceCode")}
                   </h2>
                   <button
                     onClick={handleAnalyze}
@@ -1719,7 +1725,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                         <div className="w-2 h-2 bg-blue-500 rounded-full" />
                       </div>
                     ) : (
-                      "Analizar"
+                      tView("analyze")
                     )}
                   </button>
                 </div>
@@ -1748,11 +1754,11 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                           <span className="material-symbols-outlined text-sm">auto_awesome</span>
                           {!hasApiKey ? (
                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                              Se requiere una API_KEY
+                              {tView("apiKeyRequired")}
                             </div>
                           ) : (
                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                              Reparar con IA
+                              {tView("repairWithAI")}
                             </div>
                           )}
                         </button>
@@ -1764,7 +1770,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                       >
                         <span className="material-symbols-outlined text-sm">account_tree</span>
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                          Ver AST
+                          {tView("viewAst")}
                         </div>
                       </button>
                       <button
@@ -1776,12 +1782,12 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                         {(!hasComparableData || !hasApiKey) ? (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
                             {!hasComparableData
-                              ? "No hay análisis completo"
-                              : "Se requiere una API_KEY para el seguimiento"}
+                              ? tView("noCompleteAnalysis")
+                              : tView("apiKeyRequiredForTrace")}
                           </div>
                         ) : (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                            Ver seguimiento de ejecución
+                            {tView("viewExecutionTrace")}
                           </div>
                         )}
                       </button>
@@ -1793,18 +1799,18 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                         <span className="material-symbols-outlined text-sm">compare_arrows</span>
                         {(!hasApiKey || !hasComparableData) ? (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                            {!hasApiKey ? "Se requiere una API_KEY" : "No hay información para comparar"}
+                            {!hasApiKey ? tView("apiKeyRequired") : tView("noInfoToCompare")}
                           </div>
                         ) : (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                            Comparar con LLM
+                            {tView("compareWithLLM")}
                           </div>
                         )}
                       </button>
                       <button
                         onClick={() => {
                           if (!ast) return;
-                          const analysis = analyzeASTForGPUCPU(ast);
+                          const analysis = analyzeASTForGPUCPU(ast, (locale === "es" ? "es" : "en") as "en" | "es");
                           setGpuCpuAnalysis(analysis);
                           setShowGPUCPUModal(true);
                         }}
@@ -1814,11 +1820,11 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                         <span className="material-symbols-outlined text-sm">speed</span>
                         {(!ast || !hasComparableData) ? (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                            {!ast ? "No hay AST disponible" : "Ejecuta un análisis primero"}
+                            {!ast ? tView("noAstAvailable") : tView("runAnalysisFirst")}
                           </div>
                         ) : (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                            Análisis GPU vs CPU
+                            {tView("gpuVsCpuAnalysis")}
                           </div>
                         )}
                       </button>
@@ -1907,7 +1913,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined text-yellow-400">account_tree</span>
                 <h2 className="text-lg font-bold text-white">
-                  Abstract Syntax Tree
+                  {tView("abstractSyntaxTree")}
                 </h2>
               </div>
               <button
@@ -1930,7 +1936,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
               >
                 <span className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-base">account_tree</span>{' '}
-                  Vista de Árbol
+                  {tView("treeView")}
                 </span>
               </button>
               <button
@@ -1943,7 +1949,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
               >
                 <span className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-base">code</span>{' '}
-                  Vista JSON
+                  {tView("jsonView")}
                 </span>
               </button>
             </div>
@@ -1962,7 +1968,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
             {/* Footer compacto */}
             <div className="flex justify-between items-center gap-3 px-5 py-3 border-t border-white/10 rounded-b-xl">
               <div className="text-xs text-slate-400">
-                {viewMode === 'tree' ? 'Vista interactiva del árbol' : 'Vista JSON completa'}
+                {viewMode === 'tree' ? tView("astTreeViewDesc") : tView("astJsonViewDesc")}
               </div>
               <div className="flex gap-2">
                 <button
@@ -1974,13 +1980,13 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                   <span className="material-symbols-outlined text-sm">
                     {copied ? 'check' : 'content_copy'}
                   </span>
-                  {copied ? 'Copiado!' : 'Copiar JSON'}
+                  {copied ? tView("astModalCopied") : tView("copyJson")}
                 </button>
                 <button
                   onClick={() => setShowAstModal(false)}
                   className="glass-button px-4 py-2 text-xs font-semibold text-white rounded-lg transition-all hover:scale-105 bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 hover:from-yellow-500/30 hover:to-amber-500/30"
                 >
-                  Cerrar
+                  {tCommon("close")}
                 </button>
               </div>
             </div>

@@ -560,7 +560,7 @@ class WhileRepeatVisitor:
                     "complexity": "log(n)",
                     "variables": [var1, var2],
                     "midpoint_var": midpoint_var,
-                    "note": f"Patrón de búsqueda binaria detectado: {var1} <= {var2}, {midpoint_var} = ({var1} + {var2}) / 2"
+                    "note": self._note("binary_search_pattern", var1=var1, var2=var2, midpoint_var=midpoint_var)
                 }
         
         return None
@@ -1022,7 +1022,7 @@ class WhileRepeatVisitor:
                             kind="while",
                             ck=ck_cond,
                             count=cond_count,
-                            note=f"Condición del bucle while en línea {L} (avg: E[#iteraciones] = 1/p, p={p_str})"
+                            note=self._note("while_avg_iter", L=L, p_str=p_str)
                         )
                         
                         # Cuerpo: se ejecuta E[#iteraciones] veces
@@ -1131,28 +1131,27 @@ class WhileRepeatVisitor:
             
             # Agregar información del modo si es best case y hay 0 iteraciones
             if pattern == "binary_search":
-                # Nota especial para búsqueda binaria
-                note_text = f"Condición del bucle while en línea {L} ({mode_info} case: búsqueda binaria detectada, O(log n) iteraciones)"
+                note_text = self._note("while_binary_search", L=L, mode_info=mode_info)
             elif mode_info == "best" and iterations == "0":
                 if initial_value:
-                    note_text = f"Condición del bucle while en línea {L} (best case: condición falsa desde el inicio, variable {var_name} inicializada en {initial_value})"
+                    note_text = self._note("while_best_false_start", L=L, var_name=var_name, initial_value=initial_value)
                 else:
-                    note_text = f"Condición del bucle while en línea {L} (best case: condición falsa desde el inicio, variable {var_name})"
+                    note_text = self._note("while_best_false_start_no_init", L=L, var_name=var_name)
             elif mode_info == "best":
                 if initial_value:
-                    note_text = f"Condición del bucle while en línea {L} (best case: variable {var_name} inicializada en {initial_value}, cambia en {change_op} {change_const}, límite: {var_name} {operator} {limit})"
+                    note_text = self._note("while_best_var", L=L, var_name=var_name, initial_value=initial_value, change_op=change_op, change_const=change_const, operator=operator, limit=limit)
                 else:
-                    note_text = f"Condición del bucle while en línea {L} (best case: variable {var_name} cambia en {change_op} {change_const}, límite: {var_name} {operator} {limit})"
+                    note_text = self._note("while_best_var_no_init", L=L, var_name=var_name, change_op=change_op, change_const=change_const, operator=operator, limit=limit)
             elif mode_info == "worst":
                 if initial_value:
-                    note_text = f"Condición del bucle while en línea {L} (worst case: variable {var_name} inicializada en {initial_value}, cambia en {change_op} {change_const}, límite: {var_name} {operator} {limit})"
+                    note_text = self._note("while_worst_var", L=L, var_name=var_name, initial_value=initial_value, change_op=change_op, change_const=change_const, operator=operator, limit=limit)
                 else:
-                    note_text = f"Condición del bucle while en línea {L} (worst case: variable {var_name} cambia en {change_op} {change_const}, límite: {var_name} {operator} {limit})"
+                    note_text = self._note("while_worst_var_no_init", L=L, var_name=var_name, change_op=change_op, change_const=change_const, operator=operator, limit=limit)
             else:
                 if initial_value:
-                    note_text = f"Condición del bucle while en línea {L} (variable {var_name} inicializada en {initial_value}, cambia en {change_op} {change_const}, límite: {var_name} {operator} {limit})"
+                    note_text = self._note("while_var", L=L, var_name=var_name, initial_value=initial_value, change_op=change_op, change_const=change_const, operator=operator, limit=limit)
                 else:
-                    note_text = f"Condición del bucle while en línea {L} (variable {var_name} cambia en {change_op} {change_const}, límite: {var_name} {operator} {limit})"
+                    note_text = self._note("while_var_no_init", L=L, var_name=var_name, change_op=change_op, change_const=change_const, operator=operator, limit=limit)
             
             self.add_row(
                 line=L,
@@ -1201,19 +1200,11 @@ class WhileRepeatVisitor:
                 # En promedio, usar símbolo t̄_while_L (esperanza)
                 t_bar = f"\\bar{{t}}_{{while_{L}}}"
                 t_sym = Symbol(f"t_bar_while_{L}", real=True, positive=True)
-                note_text = (
-                    f"Condición del bucle while en línea {L} "
-                    f"(avg: E[#iteraciones] = {t_bar}). "
-                    f"Variable iterativa no acotada - requiere análisis adicional para determinar límites."
-                )
+                note_text = self._note("while_avg_unbounded", L=L, t_bar=t_bar)
             else:
                 # En worst/best, usar símbolo t_while_L
                 t_sym = Symbol(t, real=True)
-                note_text = (
-                    f"Condición del bucle while en línea {L}. "
-                    f"Variable iterativa {t} no acotada - no se pudo determinar el número de iteraciones. "
-                    f"Requiere análisis adicional o asumir límites según el caso ({mode} case)."
-                )
+                note_text = self._note("while_unbounded", L=L, t=t, mode=mode)
             
             # 1) Condición: se evalúa (t + 1) veces
             ck_cond = self.C()
@@ -1307,5 +1298,5 @@ class WhileRepeatVisitor:
             kind="repeat",
             ck=ck_cond,
             count=cond_count,
-            note=f"Condición del bucle repeat en línea {L}"
+            note=self._note("repeat_cond_line", L=L)
         )

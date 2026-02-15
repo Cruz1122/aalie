@@ -2,18 +2,18 @@
 "use client";
 
 import type { HealthResponse } from "@aa/types";
-import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useState } from "react";
 
 type Props = { intervalMs?: number };
 
 export default function HealthStatus({ intervalMs = 20_000 }: Readonly<Props>) {
+  const t = useTranslations("footer.backendStatus");
   const [up, setUp] = useState<boolean | null>(null);
-  const [msg, setMsg] = useState<string>("Comprobando…");
 
-  async function check() {
+  const check = useCallback(async () => {
     try {
       const res = await fetch("/api/health", { cache: "no-store" });
-      // Aunque el proxy responda 502/503, intentamos leer el JSON
       const data = (await res
         .json()
         .catch(() => ({}))) as Partial<HealthResponse> & {
@@ -26,18 +26,18 @@ export default function HealthStatus({ intervalMs = 20_000 }: Readonly<Props>) {
           ["ok", "healthy", "up"].includes(data.status.toLowerCase()));
 
       setUp(isUp);
-      setMsg(isUp ? "Backend conectado" : "Backend desconectado");
     } catch {
       setUp(false);
-      setMsg("Backend desconectado");
     }
-  }
+  }, []);
+
+  const msg = up === null ? t("connecting") : up ? t("online") : t("offline");
 
   useEffect(() => {
     check();
-    const t = setInterval(check, intervalMs);
-    return () => clearInterval(t);
-  }, [intervalMs]);
+    const id = setInterval(check, intervalMs);
+    return () => clearInterval(id);
+  }, [check, intervalMs]);
 
   const pillBase =
     "inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs";

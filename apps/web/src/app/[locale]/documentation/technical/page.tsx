@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { DocumentationCard } from "@/components/DocumentationCard";
@@ -7,8 +8,8 @@ import { DocumentationIndex } from "@/components/DocumentationIndex";
 import DocumentationModal from "@/components/DocumentationModal";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import { PageHeader } from "@/components/PageHeader";
 import { ImageModal } from "@/components/ImageModal";
-import { LoaderDemo } from "@/components/LoaderDemo";
 import NavigationLink from "@/components/NavigationLink";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useDocumentationSections } from "@/hooks/useDocumentationSections";
@@ -16,6 +17,7 @@ import { useImageModal } from "@/hooks/useImageModal";
 import { DocumentationSection } from "@/types/documentation";
 
 export default function TechnicalDocsPage() {
+  const t = useTranslations("documentation.technical");
   const { selectedImage, openModal, closeModal, isModalOpen } = useImageModal();
   const [selectedSection, setSelectedSection] =
     useState<DocumentationSection | null>(null);
@@ -47,65 +49,52 @@ export default function TechnicalDocsPage() {
       <Header />
 
       <main className="flex-1 z-10 p-4 sm:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto space-y-6 lg:space-y-8">
-          <header className="space-y-3 text-center lg:text-left">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white leading-tight">
-              Documentación Técnica
-            </h1>
-            <p className="text-dark-text text-sm sm:text-base lg:text-lg leading-relaxed max-w-4xl mx-auto lg:mx-0">
-              Visión general del flujo, arquitectura del monorepo y contratos
-              iniciales de API. Este documento es un borrador inicial y se
-              actualizará conforme evolucione el proyecto.
-            </p>
-          </header>
-
-          {/* Índice de navegación */}
-          <DocumentationIndex
-            sections={sections}
-            onSectionClick={handleSectionClick}
+        <div className="max-w-7xl mx-auto">
+          <PageHeader
+            icon="code"
+            title={t("title")}
+            description={t("subtitle")}
           />
 
-          {/* Grid de documentación */}
-          <section aria-label="Secciones de documentación técnica">
-            <div className="documentation-grid">
-              {sections.map((section) => (
-                <div key={section.id} id={section.id} className="scroll-mt-24">
-                  <DocumentationCard
-                    section={section}
-                    onImageClick={openModal}
-                    onOpenSection={openDocumentationModal}
-                  />
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <DocumentationIndex
+              sections={sections}
+              onSectionClick={handleSectionClick}
+            />
+
+            <div className="lg:col-span-3 space-y-8">
+              {/* Grid de documentación */}
+              <section aria-label="Secciones de documentación técnica">
+                <div className="documentation-grid">
+                  {sections.map((section) => (
+                    <div key={section.id} id={section.id} className="scroll-mt-24">
+                      <DocumentationCard
+                        section={section}
+                        onImageClick={openModal}
+                        onOpenSection={openDocumentationModal}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </section>
+              </section>
 
-          {/* Demo del loader global y modal */}
-          <section className="mt-8">
-            <h2 className="text-xl font-bold text-white mb-4 text-center">
-              Prueba el Sistema de Loader Global
-            </h2>
-            <LoaderDemo />
-          </section>
-
-          {/* Documentación Técnica Completa */}
-          <section className="mt-12">
-            <div className="glass-card p-6 lg:p-8 rounded-xl">
-              <div className="flex items-center gap-3 mb-6">
+              {/* Documentación Técnica Completa */}
+              <section className="mt-12">
+                <div className="glass-card p-6 lg:p-8 rounded-xl">
+                  <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
                   <span className="material-symbols-outlined text-primary text-2xl">
                     description
                   </span>
                 </div>
                 <h2 className="text-2xl font-bold text-white">
-                  Documentación Técnica Completa
+                  {t("fullTitle")}
                 </h2>
-              </div>
-              <p className="text-dark-text mb-6 text-base leading-relaxed">
-                Para documentación técnica detallada, consulta los siguientes
-                recursos en el repositorio:
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  </div>
+                  <p className="text-dark-text mb-6 text-base leading-relaxed">
+                    {t("fullDesc")}
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Documentación de API */}
                 <div className="glass-secondary p-6 rounded-lg">
                   <div className="flex items-center gap-3 mb-4">
@@ -113,13 +102,11 @@ export default function TechnicalDocsPage() {
                       api
                     </span>
                     <h3 className="text-xl font-semibold text-white">
-                      Documentación de API
+                      {t("apiTitle")}
                     </h3>
                   </div>
                   <p className="text-dark-text text-sm mb-4">
-                    Documentación completa de la API backend, incluyendo
-                    endpoints, modelos de datos, arquitectura y manejo de
-                    errores.
+                    {t("apiDesc")}
                   </p>
                   <ul className="list-none space-y-2 text-sm text-dark-text">
                     <li className="flex items-start gap-2">
@@ -130,7 +117,7 @@ export default function TechnicalDocsPage() {
                         <code className="text-cyan-300">
                           docs/api/README.md
                         </code>{" "}
-                        - Índice general
+                        - {t("indexGeneral")}
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
@@ -141,7 +128,7 @@ export default function TechnicalDocsPage() {
                         <code className="text-cyan-300">
                           docs/api/endpoints.md
                         </code>{" "}
-                        - Endpoints REST
+                        - {t("endpoints")}
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
@@ -152,7 +139,7 @@ export default function TechnicalDocsPage() {
                         <code className="text-cyan-300">
                           docs/api/models.md
                         </code>{" "}
-                        - Modelos de datos
+                        - {t("models")}
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
@@ -163,7 +150,7 @@ export default function TechnicalDocsPage() {
                         <code className="text-cyan-300">
                           docs/api/architecture.md
                         </code>{" "}
-                        - Arquitectura
+                        - {t("architecture")}
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
@@ -174,7 +161,7 @@ export default function TechnicalDocsPage() {
                         <code className="text-cyan-300">
                           docs/api/errors.md
                         </code>{" "}
-                        - Manejo de errores
+                        - {t("errors")}
                       </span>
                     </li>
                   </ul>
@@ -187,12 +174,11 @@ export default function TechnicalDocsPage() {
                       web
                     </span>
                     <h3 className="text-xl font-semibold text-white">
-                      Documentación de App
+                      {t("appTitle")}
                     </h3>
                   </div>
                   <p className="text-dark-text text-sm mb-4">
-                    Documentación completa del frontend, incluyendo componentes,
-                    routing, gestión de estado, estilos e integración con API.
+                    {t("appDesc")}
                   </p>
                   <ul className="list-none space-y-2 text-sm text-dark-text">
                     <li className="flex items-start gap-2">
@@ -203,7 +189,7 @@ export default function TechnicalDocsPage() {
                         <code className="text-cyan-300">
                           docs/app/README.md
                         </code>{" "}
-                        - Índice general
+                        - {t("indexGeneral")}
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
@@ -214,7 +200,7 @@ export default function TechnicalDocsPage() {
                         <code className="text-cyan-300">
                           docs/app/architecture.md
                         </code>{" "}
-                        - Arquitectura
+                        - {t("architecture")}
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
@@ -225,7 +211,7 @@ export default function TechnicalDocsPage() {
                         <code className="text-cyan-300">
                           docs/app/components.md
                         </code>{" "}
-                        - Componentes
+                        - {t("components")}
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
@@ -236,7 +222,7 @@ export default function TechnicalDocsPage() {
                         <code className="text-cyan-300">
                           docs/app/routing.md
                         </code>{" "}
-                        - Sistema de rutas
+                        - {t("routing")}
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
@@ -247,7 +233,7 @@ export default function TechnicalDocsPage() {
                         <code className="text-cyan-300">
                           docs/app/state-management.md
                         </code>{" "}
-                        - Estado
+                        - {t("state")}
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
@@ -258,7 +244,7 @@ export default function TechnicalDocsPage() {
                         <code className="text-cyan-300">
                           docs/app/styling.md
                         </code>{" "}
-                        - Estilos
+                        - {t("styling")}
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
@@ -269,24 +255,23 @@ export default function TechnicalDocsPage() {
                         <code className="text-cyan-300">
                           docs/app/api-integration.md
                         </code>{" "}
-                        - Integración API
+                        - {t("apiIntegration")}
                       </span>
                     </li>
                   </ul>
                 </div>
-              </div>
-              <div className="mt-6 bg-blue-500/10 border-l-4 border-blue-500/50 rounded-r-lg p-4">
+                  </div>
+                  <div className="mt-6 bg-blue-500/10 border-l-4 border-blue-500/50 rounded-r-lg p-4">
                 <div className="flex items-start gap-3">
                   <span className="material-symbols-outlined text-blue-400 text-xl">
                     info
                   </span>
                   <div>
                     <p className="text-blue-300 text-sm font-semibold mb-1">
-                      Nota
+                      {t("note")}
                     </p>
                     <p className="text-blue-200 text-sm">
-                      Esta documentación está disponible en el repositorio del
-                      proyecto en las carpetas{" "}
+                      {t("noteText")}{" "}
                       <code className="text-blue-100 bg-slate-800/50 px-1.5 py-0.5 rounded">
                         docs/api/
                       </code>{" "}
@@ -298,22 +283,24 @@ export default function TechnicalDocsPage() {
                     </p>
                   </div>
                 </div>
-              </div>
-            </div>
-          </section>
+                  </div>
+                </div>
+              </section>
 
-          {/* Footer de navegación */}
-          <footer className="text-sm sm:text-base text-dark-text text-center lg:text-left border-t border-white/10 pt-6 mt-8">
+              {/* Footer de navegación */}
+              <footer className="text-sm sm:text-base text-dark-text text-center lg:text-left border-t border-white/10 pt-6 mt-8">
             <p>
-              Esta página se está actualizando constantemente.{" "}
+              {t("updating")}{" "}
               <NavigationLink
                 href="/documentation"
                 className="text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400/50 rounded px-1 py-0.5"
               >
-                Volver a Documentación
+                {t("backToDocs")}
               </NavigationLink>
             </p>
-          </footer>
+              </footer>
+            </div>
+          </div>
         </div>
       </main>
 

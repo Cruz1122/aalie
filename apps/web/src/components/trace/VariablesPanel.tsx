@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { TraceGraph } from "@/types/trace";
 
 interface RecursionDiagram {
@@ -20,6 +21,7 @@ export default function VariablesPanel({
   finalVariables,
   recursionDiagram,
 }: VariablesPanelProps) {
+  const t = useTranslations("analyzer.executionTrace");
   if (mode === "recursive") {
     // Para recursivos, extraer información del diagrama LLM
     if (!recursionDiagram?.graph?.nodes?.length) {
@@ -35,7 +37,7 @@ export default function VariablesPanel({
     const initialLabel =
       (firstNode && typeof firstNode.data?.label === "string"
         ? firstNode.data.label
-        : "") || "No disponible";
+        : "") || t("notAvailable");
 
     // Intentar primero con el id canónico "end_node"
     let endNode = nodes.find((n) => n.id === "end_node") || null;
@@ -57,7 +59,7 @@ export default function VariablesPanel({
       <div className="mb-3 grid grid-cols-1 gap-2">
         <div className="glass-card p-2 rounded-lg bg-slate-800/60 border border-white/10">
           <div className="text-[11px] text-slate-400 mb-1 font-semibold">
-            Variables iniciales
+            {t("initialVariables")}
           </div>
           <p className="text-[11px] text-slate-200 font-mono whitespace-pre-wrap">
             {initialLabel}
@@ -66,7 +68,7 @@ export default function VariablesPanel({
         {endNode ? (
           <div className="glass-card p-2 rounded-lg bg-slate-800/60 border border-white/10">
             <div className="text-[11px] text-slate-400 mb-1 font-semibold">
-              Variables finales
+              {t("finalVariables")}
             </div>
             <p className="text-[11px] text-slate-200 font-mono whitespace-pre-wrap">
               {endNode.data?.label}
@@ -75,10 +77,10 @@ export default function VariablesPanel({
         ) : (
           <div className="glass-card p-2 rounded-lg bg-slate-800/60 border border-white/10">
             <div className="text-[11px] text-slate-400 mb-1 font-semibold">
-              Variables finales
+              {t("finalVariables")}
             </div>
             <p className="text-[11px] text-slate-400">
-              No se pudo identificar un nodo de resultado final en el diagrama.
+              {t("noResultNode")}
             </p>
           </div>
         )}
@@ -97,7 +99,7 @@ export default function VariablesPanel({
       {initialVariables && Object.keys(initialVariables).length > 0 && (
         <div className="glass-card p-2 rounded-lg bg-slate-800/60 border border-white/10">
           <div className="text-[11px] text-slate-400 mb-1 font-semibold">
-            Variables iniciales
+            {t("initialVariables")}
           </div>
           <div className="flex flex-wrap gap-1">
             {Object.entries(initialVariables)
@@ -112,7 +114,7 @@ export default function VariablesPanel({
               ))}
             {Object.keys(initialVariables).length > 6 && (
               <span className="text-[11px] text-slate-400">
-                + más variables
+                {t("moreVariables")}
               </span>
             )}
           </div>
@@ -122,7 +124,7 @@ export default function VariablesPanel({
       {finalVariables && Object.keys(finalVariables).length > 0 && (
         <div className="glass-card p-2 rounded-lg bg-slate-800/60 border border-white/10">
           <div className="text-[11px] text-slate-400 mb-1 font-semibold">
-            Variables finales
+            {t("finalVariables")}
           </div>
           <div className="flex flex-wrap gap-1">
             {Object.entries(finalVariables)
@@ -137,7 +139,7 @@ export default function VariablesPanel({
               ))}
             {Object.keys(finalVariables).length > 6 && (
               <span className="text-[11px] text-slate-400">
-                + más variables
+                {t("moreVariables")}
               </span>
             )}
           </div>

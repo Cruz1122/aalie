@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 /**
  * Propiedades del componente AnalysisLoader.
@@ -19,27 +20,6 @@ interface AnalysisLoaderProps {
   /** Callback para cerrar el loader */
   onClose?: () => void;
 }
-
-/**
- * Obtiene la etiqueta en español para un tipo de algoritmo.
- * @param type - Tipo de algoritmo
- * @returns Etiqueta en español del tipo de algoritmo
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- */
-const getAlgorithmTypeLabel = (type?: string): string => {
-  switch (type) {
-    case "iterative":
-      return "Iterativo";
-    case "recursive":
-      return "Recursivo";
-    case "hybrid":
-      return "Híbrido";
-    case "unknown":
-      return "Desconocido";
-    default:
-      return "";
-  }
-};
 
 /**
  * Obtiene las clases CSS para el badge de un tipo de algoritmo.
@@ -91,8 +71,16 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
   error = null,
   onClose,
 }) => {
+  const t = useTranslations("analyzer");
+  const tLoader = useTranslations("analyzer.loader");
+  const tCommon = useTranslations("common");
   const hasError = !!error;
   const [isClosing, setIsClosing] = useState(false);
+
+  const getAlgorithmTypeLabel = (type?: string): string => {
+    if (!type) return "";
+    return t(`algorithmType.${type}`);
+  };
 
   // Iniciar animación de cierre cuando se completa
   useEffect(() => {
@@ -156,7 +144,7 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
           <h3
             className={`text-xl font-semibold mb-2 ${hasError ? "text-red-300" : "text-white"}`}
           >
-            {hasError ? "Error en el análisis" : message}
+            {hasError ? tLoader("errorTitle") : message}
           </h3>
 
           {/* Mensaje de error */}
@@ -176,7 +164,7 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
               <span className="material-symbols-outlined text-base">
                 category
               </span>
-              <span>Algoritmo: {getAlgorithmTypeLabel(algorithmType)}</span>
+              <span>{tLoader("algorithmLabel")}: {getAlgorithmTypeLabel(algorithmType)}</span>
             </div>
           )}
         </div>
@@ -185,7 +173,7 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
         {!hasError && (
           <div className="mb-4">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-slate-300">Progreso</span>
+              <span className="text-sm text-slate-300">{tLoader("progress")}</span>
               <span className="text-sm font-semibold text-white">
                 {Math.round(progress)}%
               </span>
@@ -206,11 +194,11 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
           <div className="text-center">
             {algorithmType === "recursive" || algorithmType === "hybrid" ? (
               <p className="text-xs text-slate-400">
-                Analizando recurrencia...
+                {tLoader("analyzingRecurrence")}
               </p>
             ) : (
               <p className="text-xs text-slate-400">
-                Por favor, espera mientras se completa el análisis...
+                {tLoader("pleaseWait")}
               </p>
             )}
           </div>
@@ -223,7 +211,7 @@ export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({
               onClick={handleClose}
               className="px-4 py-2 rounded-lg bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition-colors text-sm font-semibold"
             >
-              Cerrar
+              {tCommon("close")}
             </button>
           </div>
         )}

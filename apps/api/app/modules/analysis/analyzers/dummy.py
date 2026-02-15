@@ -41,8 +41,8 @@ class DummyAnalyzer(BaseAnalyzer):
         self.add_symbol("C_3", "costo de incremento")
         
         # Agregar notas
-        self.add_note("Análisis dummy para demostrar funcionalidad")
-        self.add_note("Se asumen costos constantes por operación")
+        self.add_note(self._note("dummy_note1"))
+        self.add_note(self._note("dummy_note2"))
         
         # Línea 1: Declaración de variable
         self.add_row(
@@ -50,7 +50,7 @@ class DummyAnalyzer(BaseAnalyzer):
             kind="decl",
             ck="C_1",
             count="1",
-            note="Declaración de variable i"
+            note=self._note("decl_var", var="i")
         )
         
         # Línea 2: Asignación inicial
@@ -59,7 +59,7 @@ class DummyAnalyzer(BaseAnalyzer):
             kind="assign",
             ck="C_1",
             count="1",
-            note="Inicialización de i = 0"
+            note=self._note("init_var", var="i", val="0")
         )
         
         # Línea 3: Inicio del bucle for
@@ -68,7 +68,7 @@ class DummyAnalyzer(BaseAnalyzer):
             kind="for",
             ck="C_2",
             count="n + 1",
-            note="Condición del bucle for (se evalúa n+1 veces)"
+            note=self._note("for_cond")
         )
         
         # Entrar al contexto del bucle
@@ -80,7 +80,7 @@ class DummyAnalyzer(BaseAnalyzer):
             kind="assign",
             ck="C_1",
             count="1",
-            note="Asignación dentro del bucle"
+            note=self._note("assign_in_loop")
         )
         
         # Línea 5: Cuerpo del bucle - incremento
@@ -89,7 +89,7 @@ class DummyAnalyzer(BaseAnalyzer):
             kind="assign",
             ck="C_3",
             count="1",
-            note="Incremento de i"
+            note=self._note("increment")
         )
         
         # Salir del contexto del bucle
@@ -101,7 +101,7 @@ class DummyAnalyzer(BaseAnalyzer):
             kind="return",
             ck="C_1",
             count="1",
-            note="Retorno de la función"
+            note=self._note("return_stmt")
         )
         
         # Agregar pasos específicos del procedimiento

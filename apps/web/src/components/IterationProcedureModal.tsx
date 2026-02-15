@@ -1,7 +1,10 @@
 "use client";
 
 import type { AnalyzeOpenResponse } from "@aa/types";
+import { useLocale, useTranslations } from "next-intl";
 import React from "react";
+
+import { translateProofStep } from "@/lib/proof-step-translator";
 
 import Formula from "./Formula";
 
@@ -79,6 +82,9 @@ export default function IterationProcedureModal({
   proof,
   theta: _theta,
 }: Readonly<IterationProcedureModalProps>) {
+  const t = useTranslations("analyzer.iterationProcedureModal");
+  const locale = useLocale() as "en" | "es";
+
   if (!open) return null;
 
   return (
@@ -91,17 +97,15 @@ export default function IterationProcedureModal({
         }}
         role="button"
         tabIndex={0}
-        aria-label="Cerrar modal"
+        aria-label={t("closeModal")}
       />
-      <div className="absolute left-1/2 top-1/2 w-[min(95vw,1400px)] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col">
+      <div className="absolute left-1/2 top-1/2 w-[min(95vw,1400px)] max-h-[75vh] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col">
         <div className="flex items-center justify-between border-b border-white/10 p-4 flex-shrink-0">
-          <h3 className="text-lg font-semibold text-white">
-            Procedimiento Completo - Método de Iteración
-          </h3>
+          <h3 className="text-lg font-semibold text-white">{t("title")}</h3>
           <button
             onClick={onClose}
             className="text-slate-300 hover:text-white transition-colors p-1 hover:bg-white/10 rounded"
-            aria-label="Cerrar modal"
+            aria-label={t("closeModal")}
           >
             ✕
           </button>
@@ -113,8 +117,11 @@ export default function IterationProcedureModal({
               {/* Ecuación de Recurrencia */}
               {recurrence && (
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                  <h4 className="text-white font-semibold mb-3">
-                    Ecuación de Recurrencia
+                  <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-blue-400">
+                      functions
+                    </span>
+                    <span>{t("recurrenceEquation")}</span>
                   </h4>
                   <div className="bg-slate-900/50 p-4 rounded border border-white/10 overflow-x-auto flex justify-center">
                     <Formula latex={recurrence.form} display />
@@ -136,32 +143,32 @@ export default function IterationProcedureModal({
                     <span className="material-symbols-outlined text-purple-400">
                       check_circle
                     </span>
-                    <span>Detección Automática</span>
+                    <span>{t("autoDetection")}</span>
                   </h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-start gap-2">
                       <span className="text-green-400 mt-0.5">✓</span>
                       <span className="text-slate-300">
-                        Un solo llamado recursivo (a = 1)
+                        {t("singleRecursiveCall")}
                       </span>
                     </div>
                     <div className="flex items-start gap-2">
                       <span className="text-green-400 mt-0.5">✓</span>
                       <span className="text-slate-300">
-                        Subproblema decrease-and-conquer:{" "}
+                        {t("decreaseAndConquer")}{" "}
                         <Formula latex={iteration.g_function} />
                       </span>
                     </div>
                     <div className="flex items-start gap-2">
                       <span className="text-green-400 mt-0.5">✓</span>
                       <span className="text-slate-300">
-                        No divide-and-conquer (no múltiples subproblemas)
+                        {t("noDivideAndConquer")}
                       </span>
                     </div>
                     <div className="flex items-start gap-2">
                       <span className="text-green-400 mt-0.5">✓</span>
                       <span className="text-slate-300">
-                        Subproblema estrictamente más pequeño
+                        {t("strictlySmaller")}
                       </span>
                     </div>
                   </div>
@@ -173,8 +180,11 @@ export default function IterationProcedureModal({
                 iteration.expansions &&
                 iteration.expansions.length > 0 && (
                   <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                    <h4 className="text-white font-semibold mb-4">
-                      Expansiones Simbólicas
+                    <h4 className="text-white font-semibold mb-4 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-amber-400">
+                        expand_content
+                      </span>
+                      <span>{t("symbolicExpansions")}</span>
                     </h4>
                     <div className="space-y-3">
                       {iteration.expansions.map((expansion, idx) => (
@@ -199,8 +209,11 @@ export default function IterationProcedureModal({
               {/* Forma General */}
               {iteration && iteration.general_form && (
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                  <h4 className="text-white font-semibold mb-3">
-                    Forma General
+                  <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-cyan-400">
+                      table_chart
+                    </span>
+                    <span>{t("generalForm")}</span>
                   </h4>
                   <div className="bg-slate-900/50 p-4 rounded border border-white/10 overflow-x-auto flex justify-center">
                     <Formula latex={iteration.general_form} display />
@@ -211,13 +224,16 @@ export default function IterationProcedureModal({
               {/* Caso Base */}
               {iteration && iteration.base_case && (
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                  <h4 className="text-white font-semibold mb-3">
-                    Determinación del Caso Base
+                  <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-emerald-400">
+                      rule
+                    </span>
+                    <span>{t("baseCaseDetermination")}</span>
                   </h4>
                   <div className="space-y-2">
                     <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto">
                       <div className="text-sm text-slate-300 mb-2">
-                        Condición:
+                        {t("condition")}
                       </div>
                       <div className="flex justify-center">
                         <Formula
@@ -228,7 +244,7 @@ export default function IterationProcedureModal({
                     </div>
                     <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto">
                       <div className="text-sm text-slate-300 mb-2">
-                        Resolviendo para k:
+                        {t("solvingForK")}
                       </div>
                       <div className="flex justify-center">
                         <Formula
@@ -244,13 +260,16 @@ export default function IterationProcedureModal({
               {/* Evaluación de Sumatoria */}
               {iteration && iteration.summation && (
                 <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                  <h4 className="text-white font-semibold mb-3">
-                    Evaluación de la Sumatoria
+                  <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-orange-400">
+                      calculate
+                    </span>
+                    <span>{t("summationEvaluation")}</span>
                   </h4>
                   <div className="space-y-3">
                     <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto">
                       <div className="text-sm text-slate-300 mb-2">
-                        Sustitución:
+                        {t("substitution")}
                       </div>
                       <div className="flex justify-center">
                         <Formula
@@ -261,7 +280,7 @@ export default function IterationProcedureModal({
                     </div>
                     <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto">
                       <div className="text-sm text-slate-300 mb-2">
-                        Resultado:
+                        {t("result")}
                       </div>
                       <div className="flex justify-center">
                         <Formula
@@ -281,7 +300,7 @@ export default function IterationProcedureModal({
                     <span className="material-symbols-outlined text-purple-400">
                       workspace_premium
                     </span>
-                    <span>Resultado Final</span>
+                    <span>{t("finalResult")}</span>
                   </h4>
                   <div className="bg-slate-900/50 p-4 rounded border border-purple-500/20 overflow-x-auto">
                     <div className="flex justify-center">
@@ -302,9 +321,9 @@ export default function IterationProcedureModal({
                   <span className="material-symbols-outlined text-purple-400">
                     list
                   </span>
-                  <span>Pasos del Método</span>
+                  <span>{t("methodSteps")}</span>
                 </h4>
-                <div className="space-y-2 max-h-[calc(90vh-12rem)] overflow-y-auto scrollbar-custom">
+                <div className="space-y-2 max-h-[calc(75vh-12rem)] overflow-y-auto scrollbar-custom">
                   {proof && proof.length > 0 ? (
                     proof.map((step, idx) => (
                       <div
@@ -325,12 +344,14 @@ export default function IterationProcedureModal({
                                     : "bg-slate-900/50 border border-white/10"
                         }`}
                       >
-                        <Formula latex={step.text} />
+                        <Formula
+                          latex={translateProofStep(step.text, locale)}
+                        />
                       </div>
                     ))
                   ) : (
                     <p className="text-slate-400 text-center py-4">
-                      No hay pasos disponibles
+                      {t("noStepsAvailable")}
                     </p>
                   )}
                 </div>

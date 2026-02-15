@@ -18,7 +18,8 @@ def analyze_algorithm(
     api_key: Optional[str] = None,
     avg_model: Optional[Dict[str, Any]] = None,
     algorithm_kind: Optional[str] = None,
-    preferred_method: Optional[str] = None
+    preferred_method: Optional[str] = None,
+    locale: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Analiza un algoritmo y devuelve el resultado.
@@ -30,6 +31,7 @@ def analyze_algorithm(
         avg_model: Modelo probabilístico para caso promedio
         algorithm_kind: Tipo de algoritmo (opcional, se detecta automáticamente)
         preferred_method: Método preferido para algoritmos recursivos
+        locale: Idioma para etiquetas del procedimiento ("en" | "es", default "en")
         
     Returns:
         Resultado del análisis con estructura AnalyzeOpenResponse o diccionario con worst/best/avg
@@ -69,11 +71,15 @@ def analyze_algorithm(
         # 3) Determinar si debemos analizar todos los casos
         analyze_all = mode == "all"
         
+        locale_val = (locale or "en").lower()[:2]  # "en" | "es"
+        if locale_val not in ("en", "es"):
+            locale_val = "en"
+
         if analyze_all:
             # Analizar todos los casos (worst, best y avg)
-            analyzer_worst = analyzer_class()
-            analyzer_best = analyzer_class()
-            analyzer_avg = analyzer_class()
+            analyzer_worst = analyzer_class(locale=locale_val)
+            analyzer_best = analyzer_class(locale=locale_val)
+            analyzer_avg = analyzer_class(locale=locale_val)
             
             # Analizar worst y best
             if isinstance(analyzer_worst, RecursiveAnalyzer) and preferred_method:
@@ -153,7 +159,7 @@ def analyze_algorithm(
             return response
         else:
             # Analizar solo el caso solicitado
-            analyzer = analyzer_class()
+            analyzer = analyzer_class(locale=locale_val)
             
             # Preparar avgModel si mode == "avg"
             if mode == "avg" and avg_model:

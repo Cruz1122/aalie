@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 
 import Footer from "@/components/Footer";
@@ -9,6 +10,7 @@ import { useNavigation } from "@/contexts/NavigationContext";
 
 export default function DocumentationPage() {
   const { finishNavigation } = useNavigation();
+  const t = useTranslations("documentation.index");
 
   // Finalizar la carga cuando el componente se monte
   useEffect(() => {
@@ -25,18 +27,16 @@ export default function DocumentationPage() {
           <span className="material-symbols-outlined text-6xl text-primary mb-4">
             code
           </span>
-          <h2 className="text-xl font-bold mb-2">Documentación Técnica</h2>
+          <h2 className="text-xl font-bold mb-2">{t("technicalTitle")}</h2>
           <p className="text-sm text-dark-text mb-6">
-            Guías detalladas para desarrolladores, APIs, arquitectura del
-            sistema y ejemplos de código para integrar el analizador en tus
-            proyectos.
+            {t("technicalDesc")}
           </p>
           <NavigationLink
             href="/documentation/technical"
             className="glass-secondary flex items-center justify-center rounded-md h-10 px-4 text-white text-sm font-bold transition-colors hover:bg-white/20"
           >
-            <span className="material-symbols-outlined mr-2">terminal</span> Ver
-            Documentación Técnica
+            <span className="material-symbols-outlined mr-2">terminal</span>{" "}
+            {t("technicalLink")}
           </NavigationLink>
         </div>
 
@@ -45,17 +45,16 @@ export default function DocumentationPage() {
           <span className="material-symbols-outlined text-6xl text-primary mb-4">
             menu_book
           </span>
-          <h2 className="text-xl font-bold mb-2">Guía de Usuario</h2>
+          <h2 className="text-xl font-bold mb-2">{t("userGuideTitle")}</h2>
           <p className="text-sm text-dark-text mb-6">
-            Tutoriales paso a paso, casos de uso comunes y guías para aprovechar
-            al máximo las funcionalidades del analizador de complejidad.
+            {t("userGuideDesc")}
           </p>
           <NavigationLink
             href="/user-guide"
             className="glass-secondary flex items-center justify-center rounded-md h-10 px-4 text-white text-sm font-bold transition-colors hover:bg-white/20"
           >
-            <span className="material-symbols-outlined mr-2">school</span> Ver
-            Guía de Usuario
+            <span className="material-symbols-outlined mr-2">school</span>{" "}
+            {t("userGuideLink")}
           </NavigationLink>
         </div>
 
@@ -64,19 +63,16 @@ export default function DocumentationPage() {
           <span className="material-symbols-outlined text-6xl text-primary mb-4">
             code_blocks
           </span>
-          <h2 className="text-xl font-bold mb-2">Ejemplos de Algoritmos</h2>
+          <h2 className="text-xl font-bold mb-2">{t("examplesTitle")}</h2>
           <p className="text-sm text-dark-text mb-6">
-            Colección de algoritmos clásicos organizados por métodos de
-            análisis. Copia cualquier ejemplo y analiza su complejidad con el
-            método más apropiado (iteración, teorema maestro, o árbol de
-            recursión).
+            {t("examplesDesc")}
           </p>
           <NavigationLink
             href="/examples"
             className="glass-secondary flex items-center justify-center rounded-md h-10 px-4 text-white text-sm font-bold transition-colors hover:bg-white/20"
           >
             <span className="material-symbols-outlined mr-2">lightbulb</span>{" "}
-            Ver Ejemplos
+            {t("examplesLink")}
           </NavigationLink>
         </div>
       </main>

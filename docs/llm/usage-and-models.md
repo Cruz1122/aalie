@@ -29,6 +29,31 @@ export const GEMINI_MODELS = {
 };
 ```
 
+## Sistema de Prompts por Idioma
+
+Los prompts del LLM están parametrizados por el idioma del usuario (`locale`). El frontend envía el parámetro `locale` en el body de las requests a `/api/llm`, y el sistema selecciona el prompt adecuado.
+
+### Configuración
+
+- **getJobConfig(job, locale)**: Devuelve la configuración completa del job incluyendo el system prompt en el idioma correcto
+- **getPromptByLocale(job, locale)**: Obtiene el prompt del sistema según el job y el locale (`"es"` | `"en"`)
+- **Instrucciones de idioma**: Para jobs como `parser_assist` y `general`, se añade dinámicamente una instrucción que obliga al LLM a responder en español o inglés según el locale
+
+### Uso
+
+```typescript
+// El frontend envía locale en cada request
+body: JSON.stringify({
+  job: "parser_assist",
+  message: "Dame el código de merge sort",
+  locale: "es",  // opcional, default "es"
+});
+```
+
+### Documentación detallada
+
+Para más información sobre internacionalización, labels de backend y el flujo completo de locale, ver [Internacionalización, Labels y Prompts](../app/i18n-labels-prompts.md).
+
 ## Jobs Disponibles
 
 ### ⚠️ LEGACY: Classify (NO SE USA)
@@ -336,7 +361,8 @@ const response = await fetch("/api/llm/recursion-diagram", {
   "code"?: string,         // Para repair
   "errors"?: Error[],      // Para repair
   "systemAnalysis"?: any,  // Para compare
-  "source"?: string        // Para compare
+  "source"?: string,       // Para compare
+  "locale"?: string        // "es" | "en" - idioma para prompts (default: "es")
 }
 ```
 

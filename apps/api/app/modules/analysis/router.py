@@ -48,7 +48,8 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
         api_key=payload.api_key,
         avg_model=avg_model,
         algorithm_kind=payload.algorithm_kind,
-        preferred_method=payload.preferred_method
+        preferred_method=payload.preferred_method,
+        locale=payload.locale
     )
 
 
@@ -156,11 +157,15 @@ def analyze_trace(payload: TraceRequest = Body(...)) -> Dict[str, Any]:
             }
         else:
             # Para iterativos: trace completo como siempre
+            locale_val = (payload.locale or "en").lower()[:2]
+            if locale_val not in ("en", "es"):
+                locale_val = "en"
             executor = CodeExecutor(
-                ast, 
-                payload.input_size, 
+                ast,
+                payload.input_size,
                 payload.case,
-                initial_variables=payload.initial_variables
+                initial_variables=payload.initial_variables,
+                locale=locale_val,
             )
             trace = executor.execute()
             

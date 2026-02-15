@@ -1,12 +1,15 @@
 "use client";
 
 import type { Program } from "@aa/types";
-import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AnalysisLoader } from "@/components/AnalysisLoader";
+import { ExampleCard, type Example, type ExampleCategory } from "@/components/ExampleCard";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import { PageHeader } from "@/components/PageHeader";
 import MethodSelector, { MethodType } from "@/components/MethodSelector";
 import NavigationLink from "@/components/NavigationLink";
 import { useNavigation } from "@/contexts/NavigationContext";
@@ -14,24 +17,23 @@ import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 
-type ExampleCategory =
-  | "simple"
-  | "iterative"
-  | "recursive_iteration"
-  | "recursive_master"
-  | "recursive_tree"
-  | "recursive_characteristic";
+const EXAMPLE_CATEGORIES: ExampleCategory[] = [
+  "simple",
+  "iterative",
+  "recursive_iteration",
+  "recursive_master",
+  "recursive_tree",
+  "recursive_characteristic",
+];
 
-interface Example {
-  id: number;
-  name: string;
-  description: string;
-  complexity: string;
-  code: string;
-  category: ExampleCategory;
-  note?: string;
-  isHomogeneous?: boolean; // Solo para ejemplos de ecuación característica
-}
+const CATEGORY_ICONS: Record<ExampleCategory, string> = {
+  simple: "help",
+  iterative: "loop",
+  recursive_iteration: "replay",
+  recursive_master: "calculate",
+  recursive_tree: "account_tree",
+  recursive_characteristic: "functions",
+};
 
 const examples: Example[] = [
   // ========== Algoritmos Unknown/Básicos ==========
@@ -692,21 +694,16 @@ END`,
 
 type AlgorithmKind = "iterative" | "recursive" | "hybrid" | "unknown";
 
-const formatAlgorithmKindLabel = (value: AlgorithmKind): string => {
-  switch (value) {
-    case "iterative":
-      return "Iterativo";
-    case "recursive":
-      return "Recursivo";
-    case "hybrid":
-      return "Híbrido";
-    default:
-      return "Desconocido";
-  }
-};
-
 export default function ExamplesPage() {
+  const locale = useLocale();
   const router = useRouter();
+  const t = useTranslations("examples");
+  const tProgress = useTranslations("analyzer.progress");
+  const tAlgorithmType = useTranslations("analyzer.algorithmType");
+  const tCategories = useTranslations("examples.categories");
+  const tCategoryDesc = useTranslations("examples.categoryDesc");
+  const tMessages = useTranslations("analyzer.messages");
+  const tMethods = useTranslations("analyzer.methods");
   const { animateProgress } = useAnalysisProgress();
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [viewingCodeId, setViewingCodeId] = useState<number | null>(null);
@@ -717,9 +714,7 @@ export default function ExamplesPage() {
     null,
   ); // Estado individual por ejemplo
   const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [analysisMessage, setAnalysisMessage] = useState(
-    "Iniciando análisis...",
-  );
+  const [analysisMessage, setAnalysisMessage] = useState("");
   const [algorithmType, setAlgorithmType] = useState<AlgorithmKind | undefined>(
     undefined,
   );
@@ -728,6 +723,8 @@ export default function ExamplesPage() {
   const [showMethodSelector, setShowMethodSelector] = useState(false);
   const [applicableMethods, setApplicableMethods] = useState<MethodType[]>([]);
   const [defaultMethod, setDefaultMethod] = useState<MethodType>("master");
+  const [activeSection, setActiveSection] = useState<string>("simple");
+  const [showHowToUse, setShowHowToUse] = useState(false);
   const methodSelectionPromiseRef = useRef<{
     resolve: (method: MethodType) => void;
     reject: () => void;
@@ -760,6 +757,38 @@ export default function ExamplesPage() {
     finishNavigation();
   }, [finishNavigation]);
 
+  // Scroll spy: actualizar activeSection al hacer scroll
+  useEffect(() => {
+    const categories = [
+      "simple",
+      "iterative",
+      "recursive_iteration",
+      "recursive_master",
+      "recursive_tree",
+      "recursive_characteristic",
+    ] as ExampleCategory[];
+    const onScroll = () => {
+      const headerOffset = 100;
+      const sections = categories
+        .map((cat) => ({
+          id: cat,
+          el: document.getElementById(`category-${cat}`),
+        }))
+        .filter((s) => s.el)
+        .map((s) => ({
+          id: s.id,
+          top: s.el!.getBoundingClientRect().top,
+        }));
+      const passed = sections.filter((s) => s.top <= headerOffset);
+      const toSet =
+        passed.length > 0 ? passed[passed.length - 1].id : sections[0]?.id ?? categories[0];
+      setActiveSection(toSet);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const handleCopy = async (code: string, id: number) => {
     try {
       await navigator.clipboard.writeText(code);
@@ -777,13 +806,13 @@ export default function ExamplesPage() {
 
       setAnalyzingExampleId(exampleId);
       setAnalysisProgress(0);
-      setAnalysisMessage("Iniciando análisis...");
+      setAnalysisMessage(tProgress("init"));
       setAlgorithmType(undefined);
       setIsAnalysisComplete(false);
       setAnalysisError(null);
 
       try {
-        setAnalysisMessage("Parseando código...");
+        setAnalysisMessage(tProgress("parsing"));
         const parsePromise = fetch("/api/grammar/parse", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -807,14 +836,18 @@ export default function ExamplesPage() {
             parseRes.errors
               ?.map(
                 (e: { line: number; column: number; message: string }) =>
-                  `Línea ${e.line}:${e.column} ${e.message}`,
+                  tMessages("lineErrorFormat", {
+                    line: e.line,
+                    column: e.column,
+                    message: e.message,
+                  }),
               )
-              .join("\n") || "Error de parseo";
-          setAnalysisError(`Errores de sintaxis:\n${msg}`);
+              .join("\n") || tMessages("parseError");
+          setAnalysisError(`${tMessages("syntaxErrors")}\n${msg}`);
           setTimeout(() => {
             setAnalyzingExampleId(null);
             setAnalysisProgress(0);
-            setAnalysisMessage("Iniciando análisis...");
+            setAnalysisMessage(tProgress("init"));
             setAlgorithmType(undefined);
             setIsAnalysisComplete(false);
             setAnalysisError(null);
@@ -822,7 +855,7 @@ export default function ExamplesPage() {
           return;
         }
 
-        setAnalysisMessage("Clasificando algoritmo...");
+        setAnalysisMessage(tProgress("classifying"));
         let kind: AlgorithmKind;
         try {
           const apiKey = getApiKey();
@@ -853,7 +886,9 @@ export default function ExamplesPage() {
             kind = cls.kind as AlgorithmKind;
             setAlgorithmType(kind);
             setAnalysisMessage(
-              `Algoritmo identificado: ${formatAlgorithmKindLabel(kind)}`,
+              tProgress("algorithmIdentified", {
+                type: tAlgorithmType(kind),
+              }),
             );
           } else {
             throw new Error(`HTTP ${clsResponse.status}`);
@@ -866,7 +901,9 @@ export default function ExamplesPage() {
           kind = heuristicKind(parseRes.ast || null);
           setAlgorithmType(kind);
           setAnalysisMessage(
-            `Algoritmo identificado: ${formatAlgorithmKindLabel(kind)}`,
+            tProgress("algorithmIdentified", {
+              type: tAlgorithmType(kind),
+            }),
           );
         }
 
@@ -876,13 +913,13 @@ export default function ExamplesPage() {
         let selectedMethod: MethodType | undefined = undefined;
 
         if (isRecursive) {
-          setAnalysisMessage("Verificando condiciones...");
+          setAnalysisMessage(tProgress("verifyingConditions"));
           await animateProgress(40, 50, 300, setAnalysisProgress);
-          setAnalysisMessage("Extrayendo recurrencia...");
+          setAnalysisMessage(tProgress("extractingRecurrence"));
           await animateProgress(50, 65, 400, setAnalysisProgress);
-          setAnalysisMessage("Normalizando recurrencia...");
+          setAnalysisMessage(tProgress("normalizingRecurrence"));
           await animateProgress(65, 75, 300, setAnalysisProgress);
-          setAnalysisMessage("Detectando método de análisis...");
+          setAnalysisMessage(tProgress("detectingMethod"));
           await animateProgress(75, 85, 500, setAnalysisProgress);
 
           // Guardar el progreso actual antes de detectar métodos
@@ -924,7 +961,7 @@ export default function ExamplesPage() {
 
               // Si hay múltiples métodos aplicables, mostrar selector
               if (methods.length > 1) {
-                setAnalysisMessage("Selecciona el método de análisis...");
+                setAnalysisMessage(tProgress("selectMethod"));
 
                 // Guardar el progreso mínimo para evitar que baje
                 minProgressRef.current = progressBeforeMethodSelection;
@@ -957,9 +994,7 @@ export default function ExamplesPage() {
                 // Limpiar el progreso mínimo después de ocultar el selector
                 minProgressRef.current = 0;
 
-                setAnalysisMessage(
-                  "Método seleccionado, continuando análisis...",
-                );
+                setAnalysisMessage(tProgress("methodSelected"));
                 // Mantener el progreso y avanzar suavemente
                 await animateProgress(
                   progressBeforeMethodSelection,
@@ -970,7 +1005,7 @@ export default function ExamplesPage() {
               } else {
                 selectedMethod = defaultMethodValue;
                 // Continuar con el progreso normalmente
-                setAnalysisMessage("Iniciando análisis de complejidad...");
+                setAnalysisMessage(tProgress("analyzingComplexity"));
                 await animateProgress(
                   progressBeforeMethodSelection,
                   90,
@@ -981,7 +1016,7 @@ export default function ExamplesPage() {
             } else {
               selectedMethod = "master";
               // Continuar con el progreso normalmente
-              setAnalysisMessage("Iniciando análisis de complejidad...");
+              setAnalysisMessage(tProgress("analyzingComplexity"));
               await animateProgress(
                 progressBeforeMethodSelection,
                 90,
@@ -996,7 +1031,7 @@ export default function ExamplesPage() {
             );
             selectedMethod = "master";
             // Continuar con el progreso normalmente
-            setAnalysisMessage("Iniciando análisis de complejidad...");
+            setAnalysisMessage(tProgress("analyzingComplexity"));
             await animateProgress(
               progressBeforeMethodSelection,
               90,
@@ -1005,9 +1040,9 @@ export default function ExamplesPage() {
             );
           }
         } else {
-          setAnalysisMessage("Hallando sumatorias...");
+          setAnalysisMessage(tProgress("findingSums"));
           await animateProgress(40, 50, 200, setAnalysisProgress);
-          setAnalysisMessage("Cerrando sumatorias...");
+          setAnalysisMessage(tProgress("closingSums"));
           await animateProgress(50, 55, 200, setAnalysisProgress);
         }
 
@@ -1018,9 +1053,9 @@ export default function ExamplesPage() {
 
         // Mostrar mensaje según disponibilidad de API_KEY
         if (hasApiKey) {
-          setAnalysisMessage("Simplificando expresiones matemáticas...");
+          setAnalysisMessage(tProgress("simplifyingMath"));
         } else {
-          setAnalysisMessage("Analizando (sin simplificación LLM)...");
+          setAnalysisMessage(tProgress("analyzingWithoutLLM"));
         }
 
         // Realizar una sola petición que trae todos los casos (worst, best y avg)
@@ -1031,6 +1066,7 @@ export default function ExamplesPage() {
           avgModel?: { mode: string; predicates?: Record<string, string> };
           algorithm_kind?: string;
           preferred_method?: MethodType;
+          locale?: string;
         } = {
           source: sourceCode,
           mode: "all",
@@ -1039,6 +1075,7 @@ export default function ExamplesPage() {
             predicates: {},
           },
           algorithm_kind: kind,
+          locale: locale === "es" ? "es" : "en",
         };
 
         // Solo agregar preferred_method si es recursivo y hay un método seleccionado
@@ -1071,7 +1108,7 @@ export default function ExamplesPage() {
           [key: string]: unknown;
         };
 
-        setAnalysisMessage("Generando forma polinómica...");
+        setAnalysisMessage(tProgress("generatingPolynomial"));
         await animateProgress(70, 80, 200, setAnalysisProgress);
 
         if (!analyzeRes.ok) {
@@ -1087,14 +1124,15 @@ export default function ExamplesPage() {
             ).errors
               ?.map(
                 (e: { message: string; line?: number; column?: number }) =>
-                  e.message || `Error en línea ${e.line || "?"}`,
+                  e.message ||
+                  tMessages("lineError", { line: e.line ?? "?" }),
               )
-              .join("\n") || "No se pudo analizar el algoritmo";
+              .join("\n") || tMessages("analyzeFailed");
           setAnalysisError(errorMsg);
           setTimeout(() => {
             setAnalyzingExampleId(null);
             setAnalysisProgress(0);
-            setAnalysisMessage("Iniciando análisis...");
+            setAnalysisMessage(tProgress("init"));
             setAlgorithmType(undefined);
             setIsAnalysisComplete(false);
             setAnalysisError(null);
@@ -1117,22 +1155,22 @@ export default function ExamplesPage() {
               };
             };
             if (worstData.totals?.characteristic_equation) {
-              return "Ecuación Característica";
+              return tMethods("characteristicEquation");
             } else if (
               worstData.totals?.recurrence?.method === "characteristic_equation"
             ) {
-              return "Ecuación Característica";
+              return tMethods("characteristicEquation");
             } else if (worstData.totals?.recurrence?.method === "iteration") {
-              return "Método de Iteración";
+              return tMethods("iterationMethod");
             } else if (
               worstData.totals?.recurrence?.method === "recursion_tree"
             ) {
-              return "Método de Árbol de Recursión";
+              return tMethods("recursionTree");
             } else if (worstData.totals?.recurrence?.method === "master") {
-              return "Teorema Maestro";
+              return tMethods("masterTheorem");
             }
           }
-          return "análisis";
+          return "analysis";
         })();
 
         if (typeof analyzeRes.worst === "object" && analyzeRes.worst !== null) {
@@ -1143,27 +1181,23 @@ export default function ExamplesPage() {
             };
           };
           if (worstData.totals?.characteristic_equation) {
-            setAnalysisMessage(
-              "Aplicando Método de Ecuación Característica...",
-            );
+            setAnalysisMessage(tProgress("applyingCharacteristic"));
           } else if (worstData.totals?.recurrence) {
             const method = worstData.totals.recurrence.method;
             if (method === "characteristic_equation") {
-              setAnalysisMessage(
-                "Aplicando Método de Ecuación Característica...",
-              );
+              setAnalysisMessage(tProgress("applyingCharacteristic"));
             } else if (method === "iteration") {
-              setAnalysisMessage("Aplicando Método de Iteración...");
+              setAnalysisMessage(tProgress("applyingIteration"));
             } else if (method === "recursion_tree") {
-              setAnalysisMessage("Aplicando Método de Árbol de Recursión...");
+              setAnalysisMessage(tProgress("applyingRecursionTree"));
             } else if (method === "master") {
-              setAnalysisMessage("Aplicando Teorema Maestro...");
+              setAnalysisMessage(tProgress("applyingMaster"));
             }
           }
         }
         await new Promise((resolve) => setTimeout(resolve, 300));
 
-        setAnalysisMessage("Finalizando análisis...");
+        setAnalysisMessage(tProgress("finalizing"));
         await animateProgress(80, 100, 200, setAnalysisProgress);
 
         // Guardar código y resultados en sessionStorage (igual que ManualModeView y chatbot)
@@ -1172,7 +1206,7 @@ export default function ExamplesPage() {
           sessionStorage.setItem("analyzerResults", JSON.stringify(analyzeRes));
         }
 
-        setAnalysisMessage("Análisis completo");
+        setAnalysisMessage(tProgress("complete"));
         setIsAnalysisComplete(true);
 
         // Esperar antes de navegar
@@ -1185,19 +1219,19 @@ export default function ExamplesPage() {
         const errorMsg =
           error instanceof Error
             ? error.message
-            : "Error inesperado durante el análisis";
+            : tMessages("unexpectedAnalysisError");
         setAnalysisError(errorMsg);
         setTimeout(() => {
           setAnalyzingExampleId(null);
           setAnalysisProgress(0);
-          setAnalysisMessage("Iniciando análisis...");
+          setAnalysisMessage(tProgress("init"));
           setAlgorithmType(undefined);
           setIsAnalysisComplete(false);
           setAnalysisError(null);
         }, 3000);
       }
     },
-    [animateProgress, analyzingExampleId, router],
+    [animateProgress, analyzingExampleId, router, tProgress, tAlgorithmType, tMessages, tMethods],
   );
 
   const handleAnalyze = (code: string, exampleId: number) => {
@@ -1219,7 +1253,7 @@ export default function ExamplesPage() {
           onClose={() => {
             setAnalyzingExampleId(null);
             setAnalysisProgress(0);
-            setAnalysisMessage("Iniciando análisis...");
+            setAnalysisMessage(tProgress("init"));
             setAlgorithmType(undefined);
             setIsAnalysisComplete(false);
             setAnalysisError(null);
@@ -1254,397 +1288,198 @@ export default function ExamplesPage() {
         )}
 
       <main className="flex-1 z-10 p-4 sm:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto space-y-4 lg:space-y-6">
-          <header className="space-y-2 text-center lg:text-left">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white leading-tight">
-              Ejemplos de Algoritmos
-            </h1>
-            <p className="text-dark-text text-xs sm:text-sm lg:text-base leading-relaxed max-w-4xl mx-auto lg:mx-0">
-              Colección de algoritmos clásicos organizados por métodos de
-              análisis. Los ejemplos están agrupados por: algoritmos básicos
-              (unknown), iterativos, y recursivos clasificados según el método
-              utilizado (iteración, teorema maestro, o árbol de recursión).
-            </p>
-          </header>
+        <div className="max-w-7xl mx-auto">
+          <PageHeader
+            icon="code_blocks"
+            title={t("title")}
+            description={t("subtitle")}
+          />
 
-          {/* Índice de Contenido */}
-          <div className="glass-card p-4 rounded-lg">
-            <h2 className="text-base font-bold text-white mb-3 flex items-center gap-2">
-              <span className="material-symbols-outlined text-lg">list</span>
-              Índice de Contenido
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {(
-                [
-                  "simple",
-                  "iterative",
-                  "recursive_iteration",
-                  "recursive_master",
-                  "recursive_tree",
-                  "recursive_characteristic",
-                ] as ExampleCategory[]
-              ).map((category) => {
-                const categoryExamples = examples.filter(
-                  (ex) => ex.category === category,
-                );
-                if (categoryExamples.length === 0) return null;
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8 mt-6">
+            {/* TOC lateral - estilo user guide / technical docs */}
+            <aside className="lg:col-span-1 order-2 lg:order-1">
+              <div className="glass-card p-4 sticky top-4 rounded-xl border border-white/5">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="material-symbols-outlined text-primary text-xl">
+                    list
+                  </span>
+                  <h2 className="text-lg font-bold text-white">{t("toc")}</h2>
+                </div>
+                <nav className="space-y-1">
+                  {EXAMPLE_CATEGORIES.map((category) => {
+                    const categoryExamples = examples.filter(
+                      (ex) => ex.category === category,
+                    );
+                    if (categoryExamples.length === 0) return null;
 
-                const categoryLabels: Record<
-                  ExampleCategory,
-                  { label: string; color: string }
-                > = {
-                  simple: {
-                    label: "Algoritmos Unknown/Básicos",
-                    color: "bg-gray-500/20 border-gray-500/30 text-gray-300",
-                  },
-                  iterative: {
-                    label: "Iterativos",
-                    color: "bg-blue-500/20 border-blue-500/30 text-blue-300",
-                  },
-                  recursive_iteration: {
-                    label: "Recursivos (Método Iterativo)",
-                    color:
-                      "bg-purple-500/20 border-purple-500/30 text-purple-300",
-                  },
-                  recursive_master: {
-                    label: "Recursivos (Teorema Maestro)",
-                    color:
-                      "bg-orange-500/20 border-orange-500/30 text-orange-300",
-                  },
-                  recursive_tree: {
-                    label: "Recursivos (Árbol de Recursión)",
-                    color: "bg-cyan-500/20 border-cyan-500/30 text-cyan-300",
-                  },
-                  recursive_characteristic: {
-                    label: "Recursivos (Ecuación Característica)",
-                    color:
-                      "bg-indigo-500/20 border-indigo-500/30 text-indigo-300",
-                  },
-                };
+                    return (
+                      <div key={category} className="space-y-0.5">
+                        <a
+                          href={`#category-${category}`}
+                          className={`flex items-center gap-2 text-sm py-2 px-3 rounded-lg transition-all ${
+                            activeSection === category
+                              ? "text-white bg-primary/20 border border-primary/30"
+                              : "text-dark-text hover:text-white hover:bg-white/5"
+                          }`}
+                          onClick={() => setActiveSection(category)}
+                        >
+                          <span className="material-symbols-outlined text-base">
+                            {CATEGORY_ICONS[category]}
+                          </span>
+                          <span className="line-clamp-2">
+                            {tCategories(category)}
+                          </span>
+                          <span className="text-xs opacity-70 ml-auto">
+                            {categoryExamples.length}
+                          </span>
+                        </a>
+                        {categoryExamples.map((ex) => (
+                          <a
+                            key={ex.id}
+                            href={`#example-${ex.id}`}
+                            className="flex items-center gap-2 text-xs py-1.5 pl-8 pr-3 rounded-lg transition-all text-dark-text hover:text-white hover:bg-white/5"
+                            onClick={() => setActiveSection(category)}
+                          >
+                            <span className="line-clamp-1">
+                              {t(`items.${ex.id}.name`)}
+                            </span>
+                          </a>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </nav>
+              </div>
+            </aside>
 
-                const catInfo = categoryLabels[category];
-
-                return (
-                  <a
-                    key={category}
-                    href={`#category-${category}`}
-                    className={`p-3 rounded border ${catInfo.color} hover:opacity-80 transition-opacity text-xs font-medium`}
-                  >
-                    <div className="font-semibold mb-1">{catInfo.label}</div>
-                    <div className="text-xs opacity-75">
-                      {categoryExamples.length} ejemplo
-                      {categoryExamples.length !== 1 ? "s" : ""}
-                    </div>
-                  </a>
-                );
-              })}
-            </div>
-          </div>
-
+            {/* Contenido principal */}
+            <div className="lg:col-span-3 space-y-8 order-1 lg:order-2">
           {/* Categorías */}
-          {(
-            [
-              "simple",
-              "iterative",
-              "recursive_iteration",
-              "recursive_master",
-              "recursive_tree",
-              "recursive_characteristic",
-            ] as ExampleCategory[]
-          ).map((category) => {
+          {EXAMPLE_CATEGORIES.map((category) => {
             const categoryExamples = examples.filter(
               (ex) => ex.category === category,
             );
             if (categoryExamples.length === 0) return null;
 
-            const categoryLabels: Record<
-              ExampleCategory,
-              { label: string; description: string; color: string }
-            > = {
-              simple: {
-                label: "Algoritmos Unknown/Básicos",
-                description:
-                  "Algoritmos básicos sin bucles complejos. Se clasificarán como 'unknown' en el análisis.",
-                color: "bg-gray-500/20 border-gray-500/30 text-gray-300",
-              },
-              iterative: {
-                label: "Iterativos",
-                description:
-                  "Algoritmos con bucles FOR/WHILE. Totalmente soportados por el analizador iterativo.",
-                color: "bg-blue-500/20 border-blue-500/30 text-blue-300",
-              },
-              recursive_iteration: {
-                label: "Recursivos/Híbridos (Método Iterativo)",
-                description:
-                  "Algoritmos recursivos analizados con el método de iteración (unrolling). Se usan cuando la recurrencia no cumple las condiciones del Teorema Maestro, Árbol de Recursión ni Ecuación Característica.",
-                color: "bg-purple-500/20 border-purple-500/30 text-purple-300",
-              },
-              recursive_master: {
-                label: "Recursivos/Híbridos (Teorema Maestro)",
-                description:
-                  "Algoritmos recursivos analizados con el Teorema Maestro. Se usan cuando la recurrencia tiene la forma T(n) = aT(n/b) + f(n) con a < 2 o no cumple las condiciones del Árbol de Recursión ni Ecuación Característica.",
-                color: "bg-orange-500/20 border-orange-500/30 text-orange-300",
-              },
-              recursive_tree: {
-                label: "Recursivos/Híbridos (Árbol de Recursión)",
-                description:
-                  "Algoritmos recursivos analizados con el método de Árbol de Recursión. Se usan cuando a ≥ 2, divide uniformemente y es divide-and-conquer. Incluye visualización del árbol y tabla por niveles.",
-                color: "bg-cyan-500/20 border-cyan-500/30 text-cyan-300",
-              },
-              recursive_characteristic: {
-                label: "Recursivos/Híbridos (Ecuación Característica)",
-                description:
-                  "Algoritmos recursivos analizados con el método de Ecuación Característica. Se usan cuando la recurrencia es lineal con desplazamientos constantes T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n). Tiene PRIORIDAD sobre el método de iteración. Detecta automáticamente casos de Programación Dinámica lineal y genera versión DP.",
-                color: "bg-indigo-500/20 border-indigo-500/30 text-indigo-300",
-              },
+            const catInfo = {
+              label: tCategories(category),
+              description: tCategoryDesc(category),
             };
 
-            const catInfo = categoryLabels[category];
-
             return (
-              <div
+              <section
                 key={category}
                 id={`category-${category}`}
-                className="space-y-3 scroll-mt-20"
+                className="scroll-mt-24"
               >
-                <div className="glass-card p-3">
-                  <h2 className="text-base font-bold text-white mb-1">
+                <div className="mb-3">
+                  <h2 className="text-lg font-bold text-white">
                     {catInfo.label}
                   </h2>
-                  <p className="text-xs text-dark-text">
+                  <p className="text-xs text-dark-text mt-0.5">
                     {catInfo.description}
                   </p>
                 </div>
 
-                {/* Grid de ejemplos de esta categoría */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {categoryExamples.map((example) => (
-                    <div
+                    <ExampleCard
                       key={example.id}
-                      className="glass-card p-4 flex flex-col space-y-2 hover:scale-[1.02] transition-transform"
-                    >
-                      {/* Header del ejemplo */}
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-semibold text-white mb-1 truncate">
-                            {example.name}
-                          </h3>
-                          <p className="text-[10px] text-slate-400 font-mono break-words">
-                            {example.complexity}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Descripción */}
-                      <p className="text-dark-text text-xs leading-relaxed line-clamp-3">
-                        {example.description}
-                      </p>
-
-                      {/* Badges para ecuación característica */}
-                      {example.category === "recursive_characteristic" && (
-                        <div className="flex flex-wrap gap-2">
-                          {example.isHomogeneous !== undefined && (
-                            <span
-                              className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border ${
-                                example.isHomogeneous
-                                  ? "bg-blue-500/20 text-blue-300 border-blue-500/30"
-                                  : "bg-yellow-500/20 text-yellow-300 border-yellow-500/30"
-                              }`}
-                            >
-                              <span className="material-symbols-outlined text-xs mr-1">
-                                functions
-                              </span>
-                              {example.isHomogeneous
-                                ? "Homogénea"
-                                : "No Homogénea"}
-                            </span>
-                          )}
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border bg-green-500/20 text-green-300 border-green-500/30">
-                            <span className="material-symbols-outlined text-xs mr-1">
-                              memory
-                            </span>
-                            DP Lineal
-                          </span>
-                        </div>
-                      )}
-
-                      {example.note && (
-                        <div className="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-[10px] text-yellow-300">
-                          <strong>Nota:</strong> {example.note}
-                        </div>
-                      )}
-
-                      {/* Botones de acción */}
-                      <div className="flex flex-col gap-2 pt-1">
-                        <button
-                          onClick={() =>
-                            setViewingCodeId(
-                              viewingCodeId === example.id ? null : example.id,
-                            )
-                          }
-                          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded text-xs font-medium transition-colors border border-white/10 hover:bg-white/5 hover:border-white/20 text-slate-300"
-                          disabled={analyzingExampleId !== null}
-                        >
-                          <span className="material-symbols-outlined text-sm">
-                            {viewingCodeId === example.id
-                              ? "visibility_off"
-                              : "visibility"}
-                          </span>
-                          {viewingCodeId === example.id
-                            ? "Ocultar Código"
-                            : "Ver Código"}
-                        </button>
-
-                        {viewingCodeId === example.id && (
-                          <div className="bg-slate-900/50 border border-white/10 rounded p-2 overflow-x-auto scrollbar-custom max-h-64">
-                            <pre className="text-green-300 font-mono text-[10px] leading-relaxed whitespace-pre">
-                              {example.code}
-                            </pre>
-                          </div>
-                        )}
-
-                        <div className="grid grid-cols-2 gap-2">
-                          <button
-                            onClick={() => handleCopy(example.code, example.id)}
-                            className="flex items-center justify-center gap-1 py-1.5 px-2 rounded text-xs font-medium transition-colors border border-white/10 hover:bg-white/5 hover:border-white/20 disabled:opacity-50 disabled:cursor-not-allowed text-slate-300"
-                            title="Copiar código"
-                            disabled={analyzingExampleId !== null}
-                          >
-                            {copiedId === example.id ? (
-                              <>
-                                <span className="material-symbols-outlined text-xs">
-                                  check
-                                </span>
-                                <span className="hidden sm:inline">
-                                  Copiado
-                                </span>
-                              </>
-                            ) : (
-                              <>
-                                <span className="material-symbols-outlined text-xs">
-                                  content_copy
-                                </span>
-                                <span className="hidden sm:inline">Copiar</span>
-                              </>
-                            )}
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleAnalyze(example.code, example.id)
-                            }
-                            disabled={analyzingExampleId !== null}
-                            className="flex items-center justify-center gap-1 py-1.5 px-2 rounded text-white text-xs font-medium transition-colors bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            {analyzingExampleId === example.id ? (
-                              <>
-                                <span className="material-symbols-outlined text-xs animate-spin">
-                                  progress_activity
-                                </span>
-                                <span className="hidden sm:inline">
-                                  Analizando...
-                                </span>
-                              </>
-                            ) : (
-                              <>
-                                <span className="material-symbols-outlined text-xs">
-                                  functions
-                                </span>
-                                <span className="hidden sm:inline">
-                                  Analizar
-                                </span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                      example={example}
+                      category={category}
+                      copiedId={copiedId}
+                      viewingCodeId={viewingCodeId}
+                      analyzingExampleId={analyzingExampleId}
+                      onCopy={handleCopy}
+                      onViewCode={setViewingCodeId}
+                      onAnalyze={handleAnalyze}
+                      t={t}
+                    />
                   ))}
                 </div>
-              </div>
+              </section>
             );
           })}
 
-          {/* Información adicional */}
-          <div className="glass-card p-4">
-            <h2 className="text-base font-bold text-white mb-3">
-              Cómo usar estos ejemplos
-            </h2>
-            <div className="space-y-2 text-dark-text text-xs">
-              <p>
-                1. <strong className="text-white">Ver Código:</strong> Haz clic
-                en el botón &quot;Ver Código&quot; para ver el código completo
-                del algoritmo.
-              </p>
-              <p>
-                2. <strong className="text-white">Copiar:</strong> Haz clic en
-                el botón &quot;Copiar&quot; para copiar el código al
-                portapapeles.
-              </p>
-              <p>
-                3. <strong className="text-white">Analizar:</strong> Haz clic en
-                el botón &quot;Analizar&quot; para analizar el algoritmo
-                directamente desde esta página, o ve al{" "}
+              {/* Cómo usar - compacto y colapsable */}
+              <section className="glass-card p-4 rounded-xl border border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setShowHowToUse(!showHowToUse)}
+                  className="w-full flex items-center justify-between text-left"
+                >
+                  <h2 className="text-base font-bold text-white flex items-center gap-2">
+                    <span className="material-symbols-outlined text-lg">
+                      help
+                    </span>
+                    {t("howToUse")}
+                  </h2>
+                  <span
+                    className={`material-symbols-outlined text-slate-400 transition-transform ${
+                      showHowToUse ? "rotate-180" : ""
+                    }`}
+                  >
+                    expand_more
+                  </span>
+                </button>
+                {showHowToUse && (
+                  <div className="mt-3 space-y-2 text-dark-text text-xs">
+                    <p>1. {t("howToUse1")}</p>
+                    <p>2. {t("howToUse2")}</p>
+                    <p>
+                      3. {t("howToUse3")}{" "}
+                      <NavigationLink
+                        href="/analyzer"
+                        className="text-blue-400 hover:text-blue-300 underline"
+                      >
+                        {t("howToUse3Link")}
+                      </NavigationLink>
+                      .
+                    </p>
+                    <p>4. {t("howToUse4")}</p>
+                    <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                      <p className="text-blue-300 text-xs font-semibold mb-2">
+                        💡 {t("methodsNote")}
+                      </p>
+                      <ul className="space-y-1 text-[11px] text-blue-200 list-disc list-inside">
+                        <li>
+                          <strong>{tMethods("characteristicEquation")}</strong>{" "}
+                          {tCategoryDesc("recursive_characteristic")}
+                        </li>
+                        <li>
+                          <strong>{tMethods("iterationMethod")}</strong>{" "}
+                          {tCategoryDesc("recursive_iteration")}
+                        </li>
+                        <li>
+                          <strong>{tMethods("masterTheorem")}</strong>{" "}
+                          {tCategoryDesc("recursive_master")}
+                        </li>
+                        <li>
+                          <strong>{tMethods("recursionTree")}</strong>{" "}
+                          {tCategoryDesc("recursive_tree")}
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </section>
+
+              <footer className="flex justify-between items-center flex-wrap gap-4 pt-4 border-t border-white/10">
+                <NavigationLink
+                  href="/user-guide"
+                  className="text-blue-400 hover:text-blue-300 underline underline-offset-2 text-sm"
+                >
+                  {t("backToUserGuide")}
+                </NavigationLink>
                 <NavigationLink
                   href="/analyzer"
-                  className="text-blue-400 hover:text-blue-300 underline"
+                  className="text-blue-400 hover:text-blue-300 underline underline-offset-2 text-sm"
                 >
-                  analizador
-                </NavigationLink>{" "}
-                y pega el código en el editor.
-              </p>
-              <p>
-                4. <strong className="text-white">Explorar:</strong> El sistema
-                calculará automáticamente la complejidad temporal para
-                best/worst/average case mostrando el análisis detallado.
-              </p>
-              <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                <p className="text-blue-300 text-xs font-semibold mb-2">
-                  💡 Nota sobre métodos de análisis:
-                </p>
-                <ul className="space-y-1 text-[11px] text-blue-200 list-disc list-inside">
-                  <li>
-                    <strong>Ecuación Característica:</strong> Para recurrencias
-                    lineales T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n).
-                    Tiene PRIORIDAD sobre iteración. Detecta DP lineal
-                    automáticamente y genera versión DP.
-                  </li>
-                  <li>
-                    <strong>Método de Iteración:</strong> Para recurrencias no
-                    uniformes como T(n) = T(n/2) + f(n) o T(n) = T(√n) + f(n)
-                    (solo si NO es lineal por desplazamientos constantes)
-                  </li>
-                  <li>
-                    <strong>Teorema Maestro:</strong> Para recurrencias T(n) =
-                    aT(n/b) + f(n) con a &lt; 2 o que no cumplen las condiciones
-                    del Árbol de Recursión ni Ecuación Característica
-                  </li>
-                  <li>
-                    <strong>Árbol de Recursión:</strong> Para recurrencias con a
-                    ≥ 2, divide uniformemente, divide-and-conquer. Incluye
-                    visualización del árbol y tabla detallada por niveles
-                  </li>
-                </ul>
-              </div>
+                  {t("goToAnalyzer")}
+                </NavigationLink>
+              </footer>
             </div>
           </div>
-
-          {/* Navegación */}
-          <footer className="text-xs sm:text-sm text-dark-text text-center border-t border-white/10 pt-4">
-            <div className="flex justify-between items-center flex-wrap gap-4">
-              <NavigationLink
-                href="/user-guide"
-                className="text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors"
-              >
-                ← Ver Guía de Usuario
-              </NavigationLink>
-              <NavigationLink
-                href="/analyzer"
-                className="text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors"
-              >
-                Ir al Analizador →
-              </NavigationLink>
-            </div>
-          </footer>
         </div>
       </main>
 

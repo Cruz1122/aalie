@@ -1,4 +1,4 @@
-# Informe Técnico: Analizador de Complejidad Algorítmica
+# Informe Técnico: AALIE (Algorithmic Analysis Live Interaction Expert)
 
 **Fecha**: Noviembre 2025  
 **Versión**: 1.0

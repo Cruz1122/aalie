@@ -92,7 +92,7 @@ class IfVisitor:
             kind="if",
             ck=ck_guard,
             count=Integer(1),
-            note="Evaluación de la condición"
+            note=self._note("cond_eval")
         )
         
         # Helper para ejecutar un bloque y extraer solo las filas nuevas (con memoización)
@@ -164,11 +164,7 @@ class IfVisitor:
                     pass
                 
                 # Actualizar nota para indicar probabilidad
-                old_note = new_row.get("note", "")
-                if old_note:
-                    new_row["note"] = f"avg: {branch_name}, p={prob_str}"
-                else:
-                    new_row["note"] = f"avg: {branch_name}, p={prob_str}"
+                new_row["note"] = self._note("avg_branch", branch_name=branch_name, prob_str=prob_str)
                 
                 multiplied_rows.append(new_row)
             return multiplied_rows
@@ -285,7 +281,7 @@ class IfVisitor:
                         # No multiplicar por probabilidad, mantener count_raw_expr original
                         # Solo agregar nota si no tiene una ya
                         if not row.get("note"):
-                            row["note"] = "avg: éxito seguro"
+                            row["note"] = self._note("avg_success")
                     self.rows.extend(then_buf)
                 elif else_buf and any(row.get("kind") == "return" for row in else_buf):
                     # ELSE tiene return (fracaso): nunca se ejecuta en Modelo A

@@ -6,6 +6,7 @@ from sympy import Expr, Integer, Symbol, Sum, latex, sympify
 
 from ...shared.types import AnalyzeOpenResponse, LineCost
 from ..models.avg_model import AvgModel
+from ..translations import get_note_labels
 from ..utils.expr_converter import ExprConverter
 
 
@@ -38,12 +39,17 @@ class BaseAnalyzer:
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
-    def __init__(self):
+    def __init__(self, locale: str = "en"):
         """
         Inicializa una instancia de BaseAnalyzer.
         
+        Args:
+            locale: Código de idioma para etiquetas del procedimiento ("en" | "es")
+        
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
+        self.locale = locale if locale in ("en", "es") else "en"
+        self._note_labels = get_note_labels(self.locale)
         self.rows: List[LineCost] = []      # tabla por línea
         self.loop_stack: List[Expr] = []    # multiplicadores activos (expresiones SymPy)
         self.symbols: Dict[str, str] = {}   # ej: { "n": "length(A)" }
@@ -340,7 +346,7 @@ class BaseAnalyzer:
         from ..utils.summation_closer import SummationCloser
         
         # Usar SummationCloser para evaluar todas las sumatorias correctamente
-        closer = SummationCloser()
+        closer = SummationCloser(locale=self.locale)
         total_expr = closer._evaluate_all_sums_sympy(total_expr)
         
         # Simplificar y expandir para obtener la forma más simple
@@ -435,7 +441,7 @@ class BaseAnalyzer:
                 from sympy import simplify as sympy_simplify, expand
                 from ..utils.summation_closer import SummationCloser
                 
-                closer = SummationCloser()
+                closer = SummationCloser(locale=self.locale)
                 count_expr_simplified = closer._evaluate_all_sums_sympy(count_expr)
                 try:
                     count_expr_simplified = expand(count_expr_simplified)
@@ -496,7 +502,7 @@ class BaseAnalyzer:
         from sympy import Symbol, preorder_traversal, simplify as sympy_simplify, expand
         from ..utils.summation_closer import SummationCloser
         
-        closer = SummationCloser()
+        closer = SummationCloser(locale=self.locale)
         
         for r in self.rows:
             if r.get('ck') != "—" and r.get('count') != "—":
@@ -657,7 +663,7 @@ class BaseAnalyzer:
         from ..utils.summation_closer import SummationCloser
         
         # Usar SummationCloser para evaluar todas las sumatorias correctamente
-        closer = SummationCloser()
+        closer = SummationCloser(locale=self.locale)
         total_expr = closer._evaluate_all_sums_sympy(total_expr)
         
         # Simplificar y expandir para obtener la forma más simple
@@ -765,25 +771,25 @@ class BaseAnalyzer:
             for row in clean_rows:
                 if row.get("kind") == "return":
                     note = row.get("note", "")
-                    if note and ("éxito seguro" in note or ("éxito" in note and "siempre ocurre" in note)):
+                    if note and ("éxito seguro" in note or "guaranteed success" in note or ("éxito" in note and "siempre ocurre" in note)):
                         has_success_return = True
-                    if note and ("fracaso" in note or "nunca ocurre" in note):
+                    if note and ("fracaso" in note or "failure" in note or "nunca ocurre" in note or "never occurs" in note):
                         has_failure_return = True
             # Si hay early return en bucle y éxito seguro, es Modelo A
             if has_success_return and has_failure_return:
                 model_info = {
                     "mode": self.avg_model.mode,
-                    "note": "uniforme (éxito)"
+                    "note": self._note("model_uniform_success")
                 }
             else:
-                model_info = self.avg_model.get_model_info()
+                model_info = self.avg_model.get_model_info(locale=self.locale)
             totals["avg_model_info"] = model_info
             
             # Agregar hipótesis si hay símbolos
             if self.avg_model.has_symbols():
                 hypotheses = []
                 if self.avg_model.mode == "symbolic":
-                    hypotheses.append("Probabilidades simbólicas (p, q, etc.) son constantes > 0")
+                    hypotheses.append(self._note("hypotheses_symbolic"))
                 totals["hypotheses"] = hypotheses
         
         return {
@@ -965,6 +971,14 @@ class BaseAnalyzer:
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self.symbols[symbol] = description
+
+    def _note(self, key: str, **kwargs) -> str:
+        """Devuelve una nota traducida con formato. Ej: _note('for_header', var='i', a_str='1', b_str='n')"""
+        template = self._note_labels.get(key, key)
+        try:
+            return template.format(**kwargs)
+        except KeyError:
+            return template
 
     def add_note(self, note: str):
         """

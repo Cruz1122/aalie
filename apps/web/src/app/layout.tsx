@@ -1,11 +1,6 @@
 import "./globals.css";
-import "katex/dist/katex.min.css"; // <-- estilos de KaTeX después de globals
+import "katex/dist/katex.min.css";
 import { Noto_Sans, Spline_Sans } from "next/font/google";
-
-import { GlobalLoaderOverlay } from "@/components/GlobalLoaderOverlay";
-import NavigationLoadingWrapper from "@/components/NavigationLoadingWrapper";
-import { GlobalLoaderProvider } from "@/contexts/GlobalLoaderContext";
-import { NavigationProvider } from "@/contexts/NavigationContext";
 
 const notoSans = Noto_Sans({
   weight: ["400", "500", "700", "900"],
@@ -20,11 +15,6 @@ const splineSans = Spline_Sans({
   display: "swap",
   variable: "--font-spline-sans",
 });
-
-export const metadata = {
-  title: "Analizador de Complejidad",
-  description: "Análisis avanzado de complejidad algorítmica",
-};
 
 export default function RootLayout({
   children,
@@ -46,12 +36,7 @@ export default function RootLayout({
             "var(--font-spline-sans), var(--font-noto-sans), sans-serif",
         }}
       >
-        <GlobalLoaderProvider>
-          <NavigationProvider>
-            <NavigationLoadingWrapper>{children}</NavigationLoadingWrapper>
-          </NavigationProvider>
-          <GlobalLoaderOverlay />
-        </GlobalLoaderProvider>
+        {children}
       </body>
     </html>
   );

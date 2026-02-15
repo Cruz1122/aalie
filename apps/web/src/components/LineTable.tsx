@@ -1,5 +1,7 @@
 "use client";
+
 import type { LineCost } from "@aa/types";
+import { useTranslations } from "next-intl";
 
 import Formula from "./Formula";
 
@@ -19,7 +21,7 @@ interface LineTableProps {
  * @returns Componente React del badge
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
-function Badge({ kind }: { readonly kind: LineCost["kind"] }) {
+function Badge({ kind, t }: { readonly kind: LineCost["kind"]; readonly t: (k: string) => string }) {
   const badgeStyles = {
     assign: "bg-blue-500/20 text-blue-300 border-blue-500/30",
     if: "bg-purple-500/20 text-purple-300 border-purple-500/30",
@@ -33,17 +35,17 @@ function Badge({ kind }: { readonly kind: LineCost["kind"] }) {
     other: "bg-gray-500/20 text-gray-300 border-gray-500/30",
   };
 
-  const kindLabels = {
-    assign: "Asignación",
-    if: "Condicional",
-    for: "Bucle For",
-    while: "Bucle While",
-    repeat: "Bucle Repeat",
-    call: "Llamada",
-    print: "Impresión",
-    return: "Retorno",
-    decl: "Declaración",
-    other: "Otro",
+  const kindLabels: Record<LineCost["kind"], string> = {
+    assign: t("assign"),
+    if: t("if"),
+    for: t("for"),
+    while: t("while"),
+    repeat: t("repeat"),
+    call: t("call"),
+    print: t("print"),
+    return: t("return"),
+    decl: t("decl"),
+    other: t("other"),
   };
 
   return (
@@ -76,7 +78,7 @@ export default function LineTable({
   rows,
   onViewProcedure,
 }: Readonly<LineTableProps>) {
-  // Detectar si estamos en modo promedio (si alguna fila tiene expectedRuns)
+  const t = useTranslations("analyzer.lineTable");
   const isAvgMode = rows.some((row) => row.expectedRuns !== undefined);
 
   return (
@@ -86,7 +88,7 @@ export default function LineTable({
           <tr>
             <th className="text-center p-2 font-semibold text-slate-300">#</th>
             <th className="text-center p-2 font-semibold text-slate-300">
-              Tipo
+              {t("type")}
             </th>
             <th className="text-center p-2 font-semibold text-slate-300">
               C<sub>k</sub>
@@ -95,12 +97,12 @@ export default function LineTable({
               {isAvgMode ? (
                 <Formula latex="E[\# \text{ ejecuciones}]" />
               ) : (
-                "# ejecuciones"
+                t("executions")
               )}
             </th>
             {onViewProcedure && (
               <th className="text-center p-2 font-semibold text-slate-300">
-                Acción
+                {t("action")}
               </th>
             )}
           </tr>
@@ -115,7 +117,7 @@ export default function LineTable({
                 {row.line}
               </td>
               <td className="p-2 text-center">
-                <Badge kind={row.kind} />
+                <Badge kind={row.kind} t={t} />
               </td>
               <td className="p-2 text-center whitespace-nowrap text-slate-200">
                 <Formula latex={row.ck} />
@@ -129,7 +131,7 @@ export default function LineTable({
                     onClick={() => onViewProcedure(row.line)}
                     className="text-xs px-2 py-1 rounded bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 transition-colors"
                   >
-                    Ver
+                    {t("view")}
                   </button>
                 </td>
               )}

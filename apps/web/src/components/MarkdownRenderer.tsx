@@ -8,6 +8,7 @@
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 import React, { useState } from "react";
+import { useTranslations } from "next-intl";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import rehypeKatex from "rehype-katex";
@@ -44,6 +45,7 @@ interface AnalyzeButtonProps {
  */
 const CopyButton = ({ code }: CopyButtonProps) => {
   const [copied, setCopied] = useState(false);
+  const t = useTranslations("common");
 
   const handleCopy = async () => {
     try {
@@ -51,7 +53,7 @@ const CopyButton = ({ code }: CopyButtonProps) => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Error al copiar:", err);
+      console.error("Error copying:", err);
     }
   };
 
@@ -59,7 +61,7 @@ const CopyButton = ({ code }: CopyButtonProps) => {
     <button
       onClick={handleCopy}
       className="p-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white rounded transition-colors duration-200 text-xs"
-      title={copied ? "¡Copiado!" : "Copiar código"}
+      title={copied ? t("codeCopied") : t("copyCode")}
     >
       {copied ? (
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">

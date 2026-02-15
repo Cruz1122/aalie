@@ -4,6 +4,7 @@ Ejecutor principal que recorre el AST y genera pasos de ejecución.
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 from typing import Any, Dict, List, Optional
+from ..analysis.translations import get_trace_step_labels
 from .environment import ExecutionEnvironment
 from .trace_builder import TraceBuilder
 
@@ -22,22 +23,33 @@ class CodeExecutor:
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
-    def __init__(self, ast: Dict[str, Any], input_size: Optional[int] = None, case: str = "worst", initial_variables: Optional[Dict[str, Any]] = None, max_recursion_depth: int = 100):
+    def __init__(
+        self,
+        ast: Dict[str, Any],
+        input_size: Optional[int] = None,
+        case: str = "worst",
+        initial_variables: Optional[Dict[str, Any]] = None,
+        max_recursion_depth: int = 100,
+        locale: str = "en",
+    ):
         """
         Inicializa el ejecutor.
-        
+
         Args:
             ast: AST del código a ejecutar
             input_size: Tamaño de entrada concreto (ej: n=4)
             case: Caso a ejecutar ("worst", "best", "avg")
             initial_variables: Variables iniciales para el environment
             max_recursion_depth: Límite de profundidad recursiva (default: 100)
-            
+            locale: Idioma para descripciones de pasos ("en" | "es")
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self.ast = ast
         self.input_size = input_size
         self.case = case
+        self.locale = locale if locale in ("en", "es") else "en"
+        self._trace_labels = get_trace_step_labels(self.locale)
         self.environment = ExecutionEnvironment(input_size)
         
         # Cargar variables iniciales si existen
@@ -207,7 +219,9 @@ class CodeExecutor:
                     "params": params,
                     "procedure": proc_name
                 },
-                description=f"Llamada recursiva a {proc_name} (profundidad {depth})"
+                description=self._trace_labels["recursive_call"].format(
+                    proc_name=proc_name, depth=depth
+                )
             )
         
         # Si no es recursivo, aún necesitamos establecer los parámetros en el environment
@@ -389,8 +403,9 @@ class CodeExecutor:
         val_str = self.environment.evaluate_to_string(value)
         description_parts.append(val_str)
         
-        description = f"Asignación: {' = '.join(description_parts)}"
-        
+        expr = " = ".join(description_parts)
+        description = self._trace_labels["assign"].format(expr=expr)
+
         self.trace_builder.add_step(
             line=node.get("pos", {}).get("line", 0),
             kind="assign",
@@ -445,7 +460,9 @@ class CodeExecutor:
                         "maxValue": end_int,
                         "iteration": iteration_count
                     },
-                    description=f"Iteración {iteration_count}: {var_name} = {i}"
+                    description=self._trace_labels["for_iteration"].format(
+                        iteration_count=iteration_count, var_name=var_name, value=i
+                    )
                 )
                 
                 # Ejecutar cuerpo
@@ -467,7 +484,7 @@ class CodeExecutor:
                 line=node.get("pos", {}).get("line", 0),
                 kind="for",
                 variables=self.environment.get_variables_snapshot(),
-                description=f"Bucle FOR {var_name} (evaluación simbólica)"
+                description=self._trace_labels["for_symbolic"].format(var_name=var_name)
             )
     
     def _execute_while(self, node: Dict[str, Any]) -> None:
@@ -495,7 +512,9 @@ class CodeExecutor:
                 iteration={
                     "iteration": iteration_count
                 },
-                description=f"Iteración {iteration_count} del bucle WHILE"
+                description=self._trace_labels["while_iteration"].format(
+                    iteration_count=iteration_count
+                )
             )
             
             # Ejecutar cuerpo
@@ -531,7 +550,9 @@ class CodeExecutor:
                 iteration={
                     "iteration": iteration_count
                 },
-                description=f"Iteración {iteration_count} del bucle REPEAT"
+                description=self._trace_labels["repeat_iteration"].format(
+                    iteration_count=iteration_count
+                )
             )
             
             # Ejecutar cuerpo
@@ -601,7 +622,9 @@ class CodeExecutor:
             line=node.get("pos", {}).get("line", 0),
             kind="if",
             variables=self.environment.get_variables_snapshot(),
-            description=f"IF: condición = {condition_val}"
+            description=self._trace_labels["if_condition"].format(
+                condition_val=condition_val
+            )
         )
         
         if execute_then:
@@ -631,7 +654,7 @@ class CodeExecutor:
             line=node.get("pos", {}).get("line", 0),
             kind="return",
             variables=self.environment.get_variables_snapshot(),
-            description=f"RETURN {value_str}"
+            description=self._trace_labels["return_val"].format(value_str=value_str)
         )
         # Marcar como terminado para no ejecutar más sentencias después del return
         self.terminated = True
@@ -696,7 +719,7 @@ class CodeExecutor:
                 line=node.get("pos", {}).get("line", 0),
                 kind="call",
                 variables=self.environment.get_variables_snapshot(),
-                description=f"Llamada a {proc_name}"
+                description=self._trace_labels["call_proc"].format(proc_name=proc_name)
             )
             return None
     
@@ -709,7 +732,9 @@ class CodeExecutor:
             line=node.get("pos", {}).get("line", 0),
             kind="print",
             variables=self.environment.get_variables_snapshot(),
-            description=f"PRINT: {', '.join(arg_strs)}"
+            description=self._trace_labels["print_args"].format(
+                args=", ".join(arg_strs)
+            )
         )
     
     def _execute_block(self, node: Dict[str, Any]) -> None:

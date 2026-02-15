@@ -1,7 +1,8 @@
 "use client";
 
 import type { Program } from "@aa/types";
-import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import AIModeView from "@/components/AIModeView";
@@ -27,7 +28,11 @@ interface Message {
 }
 
 export default function HomePage() {
+  const locale = useLocale();
   const router = useRouter();
+  const t = useTranslations("analyzer.progress");
+  const tAlgorithmType = useTranslations("analyzer.algorithmType");
+  const tHome = useTranslations("home");
   const { animateProgress } = useAnalysisProgress();
   const manualViewRef = useRef<ManualModeViewHandle>(null);
   const [mode, setMode] = useState<"ai" | "manual">("ai");
@@ -38,9 +43,7 @@ export default function HomePage() {
   const { messages, setMessages } = useChatHistory();
   const [chatLoaderVisible, setChatLoaderVisible] = useState(false);
   const [chatAnalysisProgress, setChatAnalysisProgress] = useState(0);
-  const [chatAnalysisMessage, setChatAnalysisMessage] = useState(
-    "Iniciando análisis...",
-  );
+  const [chatAnalysisMessage, setChatAnalysisMessage] = useState(() => t("init"));
   const [chatAlgorithmType, setChatAlgorithmType] = useState<
     "iterative" | "recursive" | "hybrid" | "unknown" | undefined
   >(undefined);
@@ -104,8 +107,7 @@ export default function HomePage() {
           return [
             {
               id: "welcome",
-              content:
-                "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+              content: tHome("welcome"),
               sender: "bot",
               timestamp: new Date(),
             } as Message,
@@ -135,8 +137,7 @@ export default function HomePage() {
           return [
             {
               id: "welcome",
-              content:
-                "¡Hola! Soy Jhon Jairo, tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+              content: tHome("welcome"),
               sender: "bot",
               timestamp: new Date(),
             } as Message,
@@ -186,7 +187,7 @@ export default function HomePage() {
       defaultMethodValue: MethodType,
       progressBeforeMethodSelection: number,
     ): Promise<MethodType> => {
-      setChatAnalysisMessage("Selecciona el método de análisis...");
+      setChatAnalysisMessage(t("selectMethod"));
       minProgressRef.current = progressBeforeMethodSelection;
       setChatAnalysisProgress(progressBeforeMethodSelection);
       setShowMethodSelector(true);
@@ -208,7 +209,7 @@ export default function HomePage() {
       setShowMethodSelector(false);
       methodSelectionPromiseRef.current = null;
       minProgressRef.current = 0;
-      setChatAnalysisMessage("Método seleccionado, continuando análisis...");
+      setChatAnalysisMessage(t("methodSelected"));
       await animateProgress(
         progressBeforeMethodSelection,
         90,
@@ -247,7 +248,7 @@ export default function HomePage() {
           !detectMethodsResult.ok ||
           !detectMethodsResult.applicable_methods
         ) {
-          setChatAnalysisMessage("Iniciando análisis de complejidad...");
+          setChatAnalysisMessage(t("analyzingComplexity"));
           await animateProgress(
             progressBeforeMethodSelection,
             90,
@@ -270,7 +271,7 @@ export default function HomePage() {
           );
         }
 
-        setChatAnalysisMessage("Iniciando análisis de complejidad...");
+        setChatAnalysisMessage(t("analyzingComplexity"));
         await animateProgress(
           progressBeforeMethodSelection,
           90,
@@ -283,7 +284,7 @@ export default function HomePage() {
           "Error detectando métodos, usando método por defecto:",
           error,
         );
-        setChatAnalysisMessage("Iniciando análisis de complejidad...");
+        setChatAnalysisMessage(t("analyzingComplexity"));
         await animateProgress(
           progressBeforeMethodSelection,
           90,
@@ -297,20 +298,20 @@ export default function HomePage() {
   );
 
   const prepareRecursiveAnalysisSteps = useCallback(async (): Promise<void> => {
-    setChatAnalysisMessage("Verificando condiciones...");
+    setChatAnalysisMessage(t("verifyingConditions"));
     await animateProgress(40, 50, 300, setChatAnalysisProgress);
-    setChatAnalysisMessage("Extrayendo recurrencia...");
+    setChatAnalysisMessage(t("extractingRecurrence"));
     await animateProgress(50, 65, 400, setChatAnalysisProgress);
-    setChatAnalysisMessage("Normalizando recurrencia...");
+    setChatAnalysisMessage(t("normalizingRecurrence"));
     await animateProgress(65, 75, 300, setChatAnalysisProgress);
-    setChatAnalysisMessage("Detectando método de análisis...");
+    setChatAnalysisMessage(t("detectingMethod"));
     await animateProgress(75, 85, 500, setChatAnalysisProgress);
   }, [animateProgress]);
 
   const prepareIterativeAnalysisSteps = useCallback(async (): Promise<void> => {
-    setChatAnalysisMessage("Hallando sumatorias...");
+    setChatAnalysisMessage(t("findingSums"));
     await animateProgress(40, 50, 200, setChatAnalysisProgress);
-    setChatAnalysisMessage("Cerrando sumatorias...");
+    setChatAnalysisMessage(t("closingSums"));
     await animateProgress(50, 55, 200, setChatAnalysisProgress);
   }, [animateProgress]);
 
@@ -321,14 +322,14 @@ export default function HomePage() {
       setIsChatAnalyzing(true);
       setChatLoaderVisible(true);
       setChatAnalysisProgress(0);
-      setChatAnalysisMessage("Iniciando análisis...");
+      setChatAnalysisMessage(t("init"));
       setChatAlgorithmType(undefined);
       setChatAnalysisComplete(false);
       setChatAnalysisError(null);
 
       try {
         // Parse source code
-        setChatAnalysisMessage("Parseando código...");
+        setChatAnalysisMessage(t("parsing"));
         const parsePromise = fetch("/api/grammar/parse", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -352,13 +353,13 @@ export default function HomePage() {
               ?.map((e) => `Línea ${e.line}:${e.column} ${e.message}`)
               .join("\n") || "Error de parseo";
           setChatAnalysisError(`Errores de sintaxis:\n${msg}`);
-          setChatAnalysisMessage("No se pudo parsear el código");
+          setChatAnalysisMessage(t("parseError"));
           setIsChatAnalyzing(false);
           return;
         }
 
         // Classify algorithm
-        setChatAnalysisMessage("Clasificando algoritmo...");
+        setChatAnalysisMessage(t("classifying"));
         let kind: AlgorithmKind;
         try {
           const apiKey = getApiKey();
@@ -389,7 +390,7 @@ export default function HomePage() {
             kind = cls.kind;
             setChatAlgorithmType(kind);
             setChatAnalysisMessage(
-              `Algoritmo identificado: ${formatAlgorithmKind(kind)}`,
+              t("algorithmIdentified", { type: formatAlgorithmKind(kind) }),
             );
           } else {
             throw new Error(`HTTP ${clsResponse.status}`);
@@ -398,7 +399,7 @@ export default function HomePage() {
           console.warn("[ChatAnalysis] Error en clasificación", error);
           kind = "unknown";
           setChatAlgorithmType(kind);
-          setChatAnalysisMessage(`No se pudo clasificar el algoritmo`);
+          setChatAnalysisMessage(t("classifyError"));
         }
 
         const isRecursive = kind === "recursive" || kind === "hybrid";
@@ -424,11 +425,13 @@ export default function HomePage() {
           avgModel?: { mode: string; predicates?: Record<string, string> };
           algorithm_kind?: string;
           preferred_method?: MethodType;
+          locale?: string;
         } = {
           source: sourceCode,
           mode: "all",
           avgModel: { mode: "uniform", predicates: {} },
           algorithm_kind: kind,
+          locale: locale === "es" ? "es" : "en",
         };
 
         if (isRecursive && selectedMethod) {
@@ -445,7 +448,7 @@ export default function HomePage() {
         }).then((r) => r.json());
 
         const progressStart = isRecursive ? 90 : 55;
-        setChatAnalysisMessage("Analizando complejidad...");
+        setChatAnalysisMessage(t("analyzing"));
         const analyzeRes = (await animateProgress(
           progressStart,
           70,
@@ -461,7 +464,7 @@ export default function HomePage() {
           [key: string]: unknown;
         };
 
-        setChatAnalysisMessage("Generando forma polinómica...");
+        setChatAnalysisMessage(t("generatingPolynomial"));
         await animateProgress(70, 80, 200, setChatAnalysisProgress);
 
         // Finalize analysis
@@ -471,12 +474,12 @@ export default function HomePage() {
               ?.map((e) => e.message || `Error en línea ${e.line ?? "?"}`)
               .join("\n") || "No se pudo analizar el algoritmo";
           setChatAnalysisError(errorMsg);
-          setChatAnalysisMessage("Análisis detenido");
+          setChatAnalysisMessage(t("analysisStopped"));
           setIsChatAnalyzing(false);
           return;
         }
 
-        setChatAnalysisMessage("Finalizando análisis...");
+        setChatAnalysisMessage(t("finalizing"));
         await animateProgress(80, 100, 200, setChatAnalysisProgress);
 
         if (globalThis.window !== undefined) {
@@ -484,7 +487,7 @@ export default function HomePage() {
           sessionStorage.setItem("analyzerResults", JSON.stringify(analyzeRes));
         }
 
-        setChatAnalysisMessage("Análisis completo");
+        setChatAnalysisMessage(t("complete"));
         setChatAnalysisComplete(true);
         await new Promise((resolve) => setTimeout(resolve, 2000));
         router.push("/analyzer");
@@ -495,7 +498,7 @@ export default function HomePage() {
             ? error.message
             : "Error inesperado durante el análisis";
         setChatAnalysisError(message);
-        setChatAnalysisMessage("Ocurrió un error");
+        setChatAnalysisMessage(t("errorOccurred"));
         setIsChatAnalyzing(false);
       }
     },
@@ -512,7 +515,7 @@ export default function HomePage() {
     setChatLoaderVisible(false);
     setChatAnalysisError(null);
     setChatAnalysisProgress(0);
-    setChatAnalysisMessage("Iniciando análisis...");
+    setChatAnalysisMessage(t("init"));
     setChatAlgorithmType(undefined);
     setChatAnalysisComplete(false);
     setIsChatAnalyzing(false);
@@ -520,18 +523,7 @@ export default function HomePage() {
 
   const formatAlgorithmKind = (
     value: "iterative" | "recursive" | "hybrid" | "unknown",
-  ): string => {
-    switch (value) {
-      case "iterative":
-        return "Iterativo";
-      case "recursive":
-        return "Recursivo";
-      case "hybrid":
-        return "Híbrido";
-      default:
-        return "Desconocido";
-    }
-  };
+  ): string => tAlgorithmType(value === "unknown" ? "unknown" : value);
 
   return (
     <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">
