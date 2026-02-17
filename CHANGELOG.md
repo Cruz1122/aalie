@@ -9,6 +9,10 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Added
 
+- Tests auténticos (input pseudocode → output esperado real): módulo `tests/integration/fixtures/algorithm_expectations.py` con helpers `notation_has_complexity`, `assert_worst_complexity`, `get_totals`, `get_by_line`
+- Migración de tests "arreglados" a tests auténticos: `test_algorithms.py`, `test_intermediate_algorithms.py`, `test_complex_algorithms.py`, `test_iterative_analyzer` (TestCommonAlgorithms), `test_avg_case.py`, `test_recursive_algorithms.py`, `test_analyze_endpoint.py`
+- Verificación explícita de complejidad esperada (Θ(n²), Θ(n³), Θ(log n), etc.) en tests de integración y sistema
+- Tests pseudocode para merge sort y búsqueda binaria recursiva en `test_recursive_algorithms.py`
 - Convenciones y MCP: instrucciones para ejecutar tests con `python -m pytest` (docs/development/conventions.md, mcp/README.md, .cursor/rules/aalie-conventions.mdc)
 - Componente `AALIEIcon` para el logo del asistente de IA
 - Módulo `while_analysis` con GuardInfo, UpdateSummary y classify_while para análisis de terminación de bucles WHILE
@@ -28,6 +32,11 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Tests oráculo adicionales en test_while_repeat_visitor: incremento lineal, multiplicación log, decremento, nota descriptiva, búsqueda binaria
 - Tests `test_deterministic_algorithms.py`: 10+ algoritmos determinísticos (WHILE/FOR constantes), avg = same_as_worst
 - Tests `test_flag_param_algorithms.py`: 5+ algoritmos con banderas (IF param=const controla update), best bounded, avg sin geométrico
+
+### Changed
+
+- Tests de integración usan `analyze_algorithm(source)` (pipeline completo) en lugar de AST directo
+- Tests system verifican `big_theta`/`big_o` para insertion sort, bubble sort, triangular, WHILE log
 
 ### Fixed
 

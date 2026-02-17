@@ -1,273 +1,85 @@
 # tests/integration/test_intermediate_algorithms.py
 """
 Tests de integración para algoritmos de complejidad intermedia.
-Verifica el análisis de algoritmos como selection sort, bubble sort, insertion sort, etc.
+Verifica selection sort Θ(n²) y multiplicación de matrices Θ(n³).
+Usa pseudocode como input y expectativas explícitas (auténticos).
+
+Author: @Cruz1122
+"""
+import pytest
+from app.modules.analysis.service import analyze_algorithm
+from tests.integration.fixtures.algorithm_expectations import (
+    assert_worst_complexity,
+    get_totals,
+)
+
+
+SELECTION_SORT = """selectionSort(A, n) BEGIN
+  FOR i <- 1 TO n - 1 DO BEGIN
+    min_idx <- i;
+    FOR j <- i + 1 TO n DO BEGIN
+      IF (A[j] < A[min_idx]) THEN BEGIN
+        min_idx <- j;
+      END
+    END
+    IF (min_idx != i) THEN BEGIN
+      temp <- A[i];
+      A[i] <- A[min_idx];
+      A[min_idx] <- temp;
+    END
+  END
+END
 """
 
-import pytest
-from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
+MATRIX_MULTIPLICATION = """matrixMult(n) BEGIN
+  FOR i <- 1 TO n DO BEGIN
+    FOR j <- 1 TO n DO BEGIN
+      sum <- 0;
+      FOR k <- 1 TO n DO BEGIN
+        sum <- sum + 1;
+      END
+      result <- sum;
+    END
+  END
+END
+"""
 
 
 class TestIntermediateAlgorithms:
     """Tests para algoritmos de complejidad intermedia."""
-    
-    def _create_selection_sort_ast(self):
-        """Crea AST para selection sort"""
-        return {
-            "type": "Program",
-            "body": [
-                {
-                    "type": "For",
-                    "var": "i",
-                    "start": {"type": "number", "value": 1},
-                    "end": {
-                        "type": "binary",
-                        "left": {"type": "identifier", "name": "n"},
-                        "operator": "-",
-                        "right": {"type": "number", "value": 1}
-                    },
-                    "body": {
-                        "type": "Block",
-                        "body": [
-                            {
-                                "type": "Assign",
-                                "target": {"type": "identifier", "name": "min_idx"},
-                                "value": {"type": "identifier", "name": "i"},
-                                "pos": {"line": 2}
-                            },
-                            {
-                                "type": "For",
-                                "var": "j",
-                                "start": {
-                                    "type": "binary",
-                                    "left": {"type": "identifier", "name": "i"},
-                                    "operator": "+",
-                                    "right": {"type": "number", "value": 1}
-                                },
-                                "end": {"type": "identifier", "name": "n"},
-                                "body": {
-                                    "type": "Block",
-                                    "body": [
-                                        {
-                                            "type": "If",
-                                            "test": {
-                                                "type": "binary",
-                                                "op": "<",
-                                                "left": {
-                                                    "type": "index",
-                                                    "target": {"type": "identifier", "name": "A"},
-                                                    "index": {"type": "identifier", "name": "j"}
-                                                },
-                                                "right": {
-                                                    "type": "index",
-                                                    "target": {"type": "identifier", "name": "A"},
-                                                    "index": {"type": "identifier", "name": "min_idx"}
-                                                }
-                                            },
-                                            "consequent": {
-                                                "type": "Block",
-                                                "body": [
-                                                    {
-                                                        "type": "Assign",
-                                                        "target": {"type": "identifier", "name": "min_idx"},
-                                                        "value": {"type": "identifier", "name": "j"},
-                                                        "pos": {"line": 4}
-                                                    }
-                                                ]
-                                            },
-                                            "alternate": None,
-                                            "pos": {"line": 3}
-                                        }
-                                    ]
-                                },
-                                "pos": {"line": 3}
-                            },
-                            {
-                                "type": "Assign",
-                                "target": {"type": "identifier", "name": "temp"},
-                                "value": {
-                                    "type": "index",
-                                    "target": {"type": "identifier", "name": "A"},
-                                    "index": {"type": "identifier", "name": "i"}
-                                },
-                                "pos": {"line": 5}
-                            },
-                            {
-                                "type": "Assign",
-                                "target": {
-                                    "type": "index",
-                                    "target": {"type": "identifier", "name": "A"},
-                                    "index": {"type": "identifier", "name": "i"}
-                                },
-                                "value": {
-                                    "type": "index",
-                                    "target": {"type": "identifier", "name": "A"},
-                                    "index": {"type": "identifier", "name": "min_idx"}
-                                },
-                                "pos": {"line": 6}
-                            },
-                            {
-                                "type": "Assign",
-                                "target": {
-                                    "type": "index",
-                                    "target": {"type": "identifier", "name": "A"},
-                                    "index": {"type": "identifier", "name": "min_idx"}
-                                },
-                                "value": {"type": "identifier", "name": "temp"},
-                                "pos": {"line": 7}
-                            }
-                        ]
-                    },
-                    "pos": {"line": 1}
-                }
-            ]
-        }
-    
-    def test_selection_sort_all_cases(self):
-        """Test: Selection sort - todos los casos (O(n²))"""
-        analyzer_worst = IterativeAnalyzer()
-        analyzer_best = IterativeAnalyzer()
-        analyzer_avg = IterativeAnalyzer()
-        ast = self._create_selection_sort_ast()
-        
-        result_worst = analyzer_worst.analyze(ast, mode="worst")
-        result_best = analyzer_best.analyze(ast, mode="best")
-        result_avg = analyzer_avg.analyze(ast, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
-        
-        for result in [result_worst, result_best, result_avg]:
-            assert result.get("ok", False), "Análisis debe ser exitoso"
-            assert "byLine" in result, "Debe tener byLine"
-            assert "totals" in result, "Debe tener totals"
-            assert "T_open" in result["totals"], "Debe tener T_open"
-        
-        # Verificar caso promedio
-        for row in result_avg["byLine"]:
-            assert "expectedRuns" in row, "Debe tener expectedRuns en avg case"
-    
-    def _create_matrix_multiplication_ast(self):
-        """Crea AST para multiplicación de matrices (O(n³))"""
-        return {
-            "type": "Program",
-            "body": [
-                {
-                    "type": "For",
-                    "var": "i",
-                    "start": {"type": "number", "value": 1},
-                    "end": {"type": "identifier", "name": "n"},
-                    "body": {
-                        "type": "Block",
-                        "body": [
-                            {
-                                "type": "For",
-                                "var": "j",
-                                "start": {"type": "number", "value": 1},
-                                "end": {"type": "identifier", "name": "n"},
-                                "body": {
-                                    "type": "Block",
-                                    "body": [
-                                        {
-                                            "type": "Assign",
-                                            "target": {
-                                                "type": "index",
-                                                "target": {
-                                                    "type": "index",
-                                                    "target": {"type": "identifier", "name": "C"},
-                                                    "index": {"type": "identifier", "name": "i"}
-                                                },
-                                                "index": {"type": "identifier", "name": "j"}
-                                            },
-                                            "value": {"type": "number", "value": 0},
-                                            "pos": {"line": 3}
-                                        },
-                                        {
-                                            "type": "For",
-                                            "var": "k",
-                                            "start": {"type": "number", "value": 1},
-                                            "end": {"type": "identifier", "name": "n"},
-                                            "body": {
-                                                "type": "Block",
-                                                "body": [
-                                                    {
-                                                        "type": "Assign",
-                                                        "target": {
-                                                            "type": "index",
-                                                            "target": {
-                                                                "type": "index",
-                                                                "target": {"type": "identifier", "name": "C"},
-                                                                "index": {"type": "identifier", "name": "i"}
-                                                            },
-                                                            "index": {"type": "identifier", "name": "j"}
-                                                        },
-                                                        "value": {
-                                                            "type": "binary",
-                                                            "left": {
-                                                                "type": "index",
-                                                                "target": {
-                                                                    "type": "index",
-                                                                    "target": {"type": "identifier", "name": "C"},
-                                                                    "index": {"type": "identifier", "name": "i"}
-                                                                },
-                                                                "index": {"type": "identifier", "name": "j"}
-                                                            },
-                                                            "operator": "+",
-                                                            "right": {
-                                                                "type": "binary",
-                                                                "left": {
-                                                                    "type": "index",
-                                                                    "target": {
-                                                                        "type": "index",
-                                                                        "target": {"type": "identifier", "name": "A"},
-                                                                        "index": {"type": "identifier", "name": "i"}
-                                                                    },
-                                                                    "index": {"type": "identifier", "name": "k"}
-                                                                },
-                                                                "operator": "*",
-                                                                "right": {
-                                                                    "type": "index",
-                                                                    "target": {
-                                                                        "type": "index",
-                                                                        "target": {"type": "identifier", "name": "B"},
-                                                                        "index": {"type": "identifier", "name": "k"}
-                                                                    },
-                                                                    "index": {"type": "identifier", "name": "j"}
-                                                                }
-                                                            }
-                                                        },
-                                                        "pos": {"line": 5}
-                                                    }
-                                                ]
-                                            },
-                                            "pos": {"line": 4}
-                                        }
-                                    ]
-                                },
-                                "pos": {"line": 2}
-                            }
-                        ]
-                    },
-                    "pos": {"line": 1}
-                }
-            ]
-        }
-    
-    def test_matrix_multiplication_all_cases(self):
-        """Test: Multiplicación de matrices - todos los casos (O(n³))"""
-        analyzer_worst = IterativeAnalyzer()
-        analyzer_best = IterativeAnalyzer()
-        analyzer_avg = IterativeAnalyzer()
-        ast = self._create_matrix_multiplication_ast()
-        
-        result_worst = analyzer_worst.analyze(ast, mode="worst")
-        result_best = analyzer_best.analyze(ast, mode="best")
-        result_avg = analyzer_avg.analyze(ast, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
-        
-        for result in [result_worst, result_best, result_avg]:
-            assert result.get("ok", False), "Análisis debe ser exitoso"
-            assert "byLine" in result, "Debe tener byLine"
-            assert "totals" in result, "Debe tener totals"
-            assert "T_open" in result["totals"], "Debe tener T_open"
-        
-        # Verificar caso promedio
-        for row in result_avg["byLine"]:
-            assert "expectedRuns" in row, "Debe tener expectedRuns en avg case"
 
+    def test_selection_sort_quadratic_worst(self):
+        """Selection sort worst case debe ser Θ(n²)."""
+        result = analyze_algorithm(SELECTION_SORT, mode="all")
+        assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
+        assert_worst_complexity(result, "quadratic", "Selection Sort")
+
+    def test_selection_sort_all_cases(self):
+        """Selection sort: worst, best y avg deben analizarse correctamente."""
+        result = analyze_algorithm(SELECTION_SORT, mode="all")
+        assert result.get("ok", False)
+        assert "worst" in result and result["worst"].get("ok")
+        assert "best" in result
+        best = result.get("best")
+        if best != "same_as_worst" and isinstance(best, dict):
+            assert best.get("ok") and "byLine" in best
+        if result.get("avg") != "same_as_worst" and isinstance(result.get("avg"), dict):
+            for row in result["avg"].get("byLine", []):
+                assert "expectedRuns" in row
+
+    def test_matrix_multiplication_cubic_worst(self):
+        """Multiplicación de matrices worst case debe ser Θ(n³)."""
+        result = analyze_algorithm(MATRIX_MULTIPLICATION, mode="all")
+        assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
+        assert_worst_complexity(result, "cubic", "Matrix Multiplication")
+
+    def test_matrix_multiplication_all_cases(self):
+        """Matrix mult: worst, best y avg deben analizarse correctamente."""
+        result = analyze_algorithm(MATRIX_MULTIPLICATION, mode="all")
+        assert result.get("ok", False)
+        assert "worst" in result and result["worst"].get("ok")
+        totals = get_totals(result, "worst")
+        assert "T_open" in totals and len(totals["T_open"]) > 0
+        if result.get("avg") != "same_as_worst" and isinstance(result.get("avg"), dict):
+            for row in result["avg"].get("byLine", []):
+                assert "expectedRuns" in row

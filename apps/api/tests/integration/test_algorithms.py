@@ -2,293 +2,103 @@
 """
 Tests de integración para algoritmos completos.
 Verifica el análisis de algoritmos complejos como insertion sort y bubble sort.
+Usa pseudocode como input y expectativas explícitas de complejidad (auténticos).
+
+Author: @Cruz1122
+"""
+import pytest
+from app.modules.analysis.service import analyze_algorithm
+from tests.integration.fixtures.algorithm_expectations import (
+    assert_worst_complexity,
+    get_totals,
+    get_by_line,
+)
+
+
+INSERTION_SORT = """insertionSort(arr, n) BEGIN
+  FOR i <- 2 TO n DO BEGIN
+    key <- arr[i];
+    j <- i - 1;
+    WHILE (j >= 1 AND arr[j] > key) DO BEGIN
+      arr[j + 1] <- arr[j];
+      j <- j - 1;
+    END
+    arr[j + 1] <- key;
+  END
+END
 """
 
-import pytest
-from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
+BUBBLE_SORT = """burbuja(A, n) BEGIN
+  FOR i <- 1 TO n - 1 DO BEGIN
+    FOR j <- 1 TO n - i DO BEGIN
+      IF (A[j] > A[j + 1]) THEN BEGIN
+        temp <- A[j];
+        A[j] <- A[j + 1];
+        A[j + 1] <- temp;
+      END
+    END
+  END
+END
+"""
 
 
 class TestAlgorithms:
-    """Tests de integración para algoritmos completos."""
-    
-    def test_insertion_sort(self):
-        """Test: Análisis completo de insertion sort con WHILE anidado"""
-        analyzer = IterativeAnalyzer()
-        
-        # AST de insertion sort simplificado
-        ast = {
-            "type": "Program",
-            "body": [
-                {
-                    "type": "For",
-                    "var": "i",
-                    "start": {"type": "number", "value": 2},
-                    "end": {"type": "identifier", "name": "n"},
-                    "body": {
-                        "type": "Block",
-                        "body": [
-                            {
-                                "type": "Assign",
-                                "target": {"type": "identifier", "name": "key"},
-                                "value": {
-                                    "type": "index",
-                                    "target": {"type": "identifier", "name": "arr"},
-                                    "index": {"type": "identifier", "name": "i"}
-                                },
-                                "pos": {"line": 2}
-                            },
-                            {
-                                "type": "Assign",
-                                "target": {"type": "identifier", "name": "j"},
-                                "value": {
-                                    "type": "binary",
-                                    "left": {"type": "identifier", "name": "i"},
-                                    "right": {"type": "number", "value": 1},
-                                    "operator": "-"
-                                },
-                                "pos": {"line": 3}
-                            },
-                            {
-                                "type": "While",
-                                "test": {
-                                    "type": "binary",
-                                    "op": "and",
-                                    "left": {
-                                        "type": "binary",
-                                        "left": {"type": "identifier", "name": "j"},
-                                        "right": {"type": "number", "value": 1},
-                                        "op": ">="
-                                    },
-                                    "right": {
-                                        "type": "binary",
-                                        "left": {
-                                            "type": "index",
-                                            "target": {"type": "identifier", "name": "arr"},
-                                            "index": {"type": "identifier", "name": "j"}
-                                        },
-                                        "right": {"type": "identifier", "name": "key"},
-                                        "op": ">"
-                                    }
-                                },
-                                "body": {
-                                    "type": "Block",
-                                    "body": [
-                                        {
-                                            "type": "Assign",
-                                            "target": {
-                                                "type": "index",
-                                                "target": {"type": "identifier", "name": "arr"},
-                                                "index": {
-                                                    "type": "binary",
-                                                    "left": {"type": "identifier", "name": "j"},
-                                                    "right": {"type": "number", "value": 1},
-                                                    "operator": "+"
-                                                }
-                                            },
-                                            "value": {
-                                                "type": "index",
-                                                "target": {"type": "identifier", "name": "arr"},
-                                                "index": {"type": "identifier", "name": "j"}
-                                            },
-                                            "pos": {"line": 5}
-                                        },
-                                        {
-                                            "type": "Assign",
-                                            "target": {"type": "identifier", "name": "j"},
-                                            "value": {
-                                                "type": "binary",
-                                                "left": {"type": "identifier", "name": "j"},
-                                                "right": {"type": "number", "value": 1},
-                                                "operator": "-"
-                                            },
-                                            "pos": {"line": 6}
-                                        }
-                                    ]
-                                },
-                                "pos": {"line": 4}
-                            },
-                            {
-                                "type": "Assign",
-                                "target": {
-                                    "type": "index",
-                                    "target": {"type": "identifier", "name": "arr"},
-                                    "index": {
-                                        "type": "binary",
-                                        "left": {"type": "identifier", "name": "j"},
-                                        "right": {"type": "number", "value": 1},
-                                        "operator": "+"
-                                    }
-                                },
-                                "value": {"type": "identifier", "name": "key"},
-                                "pos": {"line": 7}
-                            }
-                        ]
-                    },
-                    "pos": {"line": 1}
-                }
-            ]
-        }
-        
-        result = analyzer.analyze(ast, mode="worst")
-        
-        assert result.get("ok", False), "Análisis debe ser exitoso"
-        assert "byLine" in result, "Debe tener byLine"
-        assert len(result["byLine"]) > 0, "Debe tener filas"
-        
-        # Verificar que todas las filas tienen count_raw y count
-        for row in result["byLine"]:
+    """Tests de integración para algoritmos completos (insertion sort, bubble sort)."""
+
+    def test_insertion_sort_analyzes_successfully(self):
+        """Insertion sort debe analizarse correctamente con pipeline completo."""
+        result = analyze_algorithm(INSERTION_SORT, mode="all")
+        assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
+        assert "worst" in result
+        worst = result["worst"]
+        assert worst.get("ok", False)
+        assert "byLine" in worst and len(worst["byLine"]) > 0
+        assert "totals" in worst and "T_open" in worst["totals"]
+        t_open = worst["totals"]["T_open"]
+        assert isinstance(t_open, str) and len(t_open) > 0
+
+    def test_insertion_sort_quadratic_worst(self):
+        """Insertion sort worst case debe ser Θ(n²)."""
+        result = analyze_algorithm(INSERTION_SORT, mode="all")
+        assert result.get("ok", False)
+        assert_worst_complexity(result, "quadratic", "Insertion Sort")
+
+    def test_insertion_sort_by_line_fields(self):
+        """Todas las filas de byLine deben tener count_raw y count."""
+        result = analyze_algorithm(INSERTION_SORT, mode="all")
+        assert result.get("ok", False)
+        by_line = get_by_line(result, "worst")
+        for row in by_line:
             assert "count_raw" in row, f"Fila {row.get('line')} debe tener count_raw"
             assert "count" in row, f"Fila {row.get('line')} debe tener count"
-            assert isinstance(row["count_raw"], str), "count_raw debe ser string"
-            assert isinstance(row["count"], str), "count debe ser string"
-        
-        # Verificar T_open
-        assert "totals" in result, "Debe tener totals"
-        assert "T_open" in result["totals"], "Debe tener T_open"
-        t_open = result["totals"]["T_open"]
-        assert isinstance(t_open, str), "T_open debe ser string"
-        assert len(t_open) > 0, "T_open no debe estar vacío"
-    
-    def test_bubble_sort_nested_loops(self):
-        """Test: Bucles FOR anidados (bubble sort)"""
-        analyzer = IterativeAnalyzer()
-        
-        ast = {
-            "type": "Program",
-            "body": [
-                {
-                    "type": "For",
-                    "var": "i",
-                    "start": {"type": "number", "value": 1},
-                    "end": {
-                        "type": "binary",
-                        "left": {"type": "identifier", "name": "n"},
-                        "right": {"type": "number", "value": 1},
-                        "operator": "-"
-                    },
-                    "body": {
-                        "type": "Block",
-                        "body": [
-                            {
-                                "type": "For",
-                                "var": "j",
-                                "start": {"type": "number", "value": 1},
-                                "end": {
-                                    "type": "binary",
-                                    "left": {"type": "identifier", "name": "n"},
-                                    "right": {"type": "identifier", "name": "i"},
-                                    "operator": "-"
-                                },
-                                "body": {
-                                    "type": "Block",
-                                    "body": [
-                                        {
-                                            "type": "If",
-                                            "test": {
-                                                "type": "binary",
-                                                "left": {
-                                                    "type": "index",
-                                                    "target": {"type": "identifier", "name": "A"},
-                                                    "index": {"type": "identifier", "name": "j"}
-                                                },
-                                                "right": {
-                                                    "type": "index",
-                                                    "target": {"type": "identifier", "name": "A"},
-                                                    "index": {
-                                                        "type": "binary",
-                                                        "left": {"type": "identifier", "name": "j"},
-                                                        "right": {"type": "number", "value": 1},
-                                                        "operator": "+"
-                                                    }
-                                                },
-                                                "op": ">"
-                                            },
-                                            "consequent": {
-                                                "type": "Block",
-                                                "body": [
-                                                    {
-                                                        "type": "Assign",
-                                                        "target": {"type": "identifier", "name": "temp"},
-                                                        "value": {
-                                                            "type": "index",
-                                                            "target": {"type": "identifier", "name": "A"},
-                                                            "index": {"type": "identifier", "name": "j"}
-                                                        },
-                                                        "pos": {"line": 4}
-                                                    },
-                                                    {
-                                                        "type": "Assign",
-                                                        "target": {
-                                                            "type": "index",
-                                                            "target": {"type": "identifier", "name": "A"},
-                                                            "index": {"type": "identifier", "name": "j"}
-                                                        },
-                                                        "value": {
-                                                            "type": "index",
-                                                            "target": {"type": "identifier", "name": "A"},
-                                                            "index": {
-                                                                "type": "binary",
-                                                                "left": {"type": "identifier", "name": "j"},
-                                                                "right": {"type": "number", "value": 1},
-                                                                "operator": "+"
-                                                            }
-                                                        },
-                                                        "pos": {"line": 5}
-                                                    },
-                                                    {
-                                                        "type": "Assign",
-                                                        "target": {
-                                                            "type": "index",
-                                                            "target": {"type": "identifier", "name": "A"},
-                                                            "index": {
-                                                                "type": "binary",
-                                                                "left": {"type": "identifier", "name": "j"},
-                                                                "right": {"type": "number", "value": 1},
-                                                                "operator": "+"
-                                                            }
-                                                        },
-                                                        "value": {"type": "identifier", "name": "temp"},
-                                                        "pos": {"line": 6}
-                                                    }
-                                                ]
-                                            },
-                                            "pos": {"line": 3}
-                                        }
-                                    ]
-                                },
-                                "pos": {"line": 2}
-                            }
-                        ]
-                    },
-                    "pos": {"line": 1}
-                }
-            ]
-        }
-        
-        result = analyzer.analyze(ast, mode="worst")
-        
-        assert result.get("ok", False), "Análisis debe ser exitoso"
-        assert "byLine" in result, "Debe tener byLine"
-        
-        # Verificar que hay sumatorias anidadas o que se simplificaron correctamente
-        has_nested = False
-        has_simplified = False
-        
-        for row in result["byLine"]:
-            count_raw = row.get("count_raw", "")
-            count = row.get("count", "")
-            
-            # Buscar sumatorias anidadas en count_raw
-            if count_raw.count("sum") >= 2 or count_raw.count("\\sum") >= 2:
-                has_nested = True
-            
-            # Verificar que el resultado esté simplificado (no debe contener "unknown")
-            if "unknown" not in count.lower() and count != count_raw:
-                has_simplified = True
-                # Verificar que el resultado tenga sentido (contiene n o alguna expresión válida)
-                if "n" in count.lower() or "frac" in count.lower() or count.strip().isdigit():
-                    pass
-        
-        # Debe tener sumatorias anidadas O resultados simplificados correctamente
-        assert has_nested or has_simplified, "Debe tener sumatorias anidadas o resultados simplificados"
+            assert isinstance(row["count_raw"], str)
+            assert isinstance(row["count"], str)
 
+    def test_bubble_sort_analyzes_successfully(self):
+        """Bubble sort debe analizarse correctamente con pipeline completo."""
+        result = analyze_algorithm(BUBBLE_SORT, mode="all")
+        assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
+        assert "worst" in result
+        worst = result["worst"]
+        assert worst.get("ok", False)
+        assert "byLine" in worst and len(worst["byLine"]) > 0
+        assert "totals" in worst and "T_open" in worst["totals"]
+
+    def test_bubble_sort_quadratic_worst(self):
+        """Bubble sort worst case debe ser Θ(n²)."""
+        result = analyze_algorithm(BUBBLE_SORT, mode="all")
+        assert result.get("ok", False)
+        assert_worst_complexity(result, "quadratic", "Bubble Sort")
+
+    def test_bubble_sort_no_unknown_in_count(self):
+        """Ninguna fila debe tener count 'unknown' (salvo unbounded)."""
+        result = analyze_algorithm(BUBBLE_SORT, mode="all")
+        assert result.get("ok", False)
+        by_line = get_by_line(result, "worst")
+        for row in by_line:
+            if row.get("unbounded"):
+                continue
+            count = str(row.get("count", ""))
+            assert "unknown" not in count.lower(), (
+                f"Línea {row.get('line')} tiene count unknown: {count}"
+            )
