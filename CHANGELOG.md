@@ -9,6 +9,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Added
 
+- Convenciones y MCP: instrucciones para ejecutar tests con `python -m pytest` (docs/development/conventions.md, mcp/README.md, .cursor/rules/aalie-conventions.mdc)
 - Componente `AALIEIcon` para el logo del asistente de IA
 - Módulo `while_analysis` con GuardInfo, UpdateSummary y classify_while para análisis de terminación de bucles WHILE
 - Tres estados de clasificación: bounded, unbounded y unknown
@@ -30,6 +31,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Fixed
 
+- IterativeAnalyzer.analyze: validación de AST inválido (None o no-dict); retorna resultado vacío sin AttributeError
 - Costos por línea: marcar unbounded en fallback de WHILE para mostrar ∞ en lugar de t_while cuando no se puede determinar el número de iteraciones
 - Procedimiento por línea y de eficiencia: cuando hay bucles unbounded, mostrar que tiende a infinito (N_ℓ → ∞, T_open → ∞, A(n) → ∞) en lugar de t_while
 - Notación asintótica: cuando hay bucles unbounded, mostrar O(∞), Ω(1), Θ(∞) en lugar de O(n^k) (no sustituir t_while por n)

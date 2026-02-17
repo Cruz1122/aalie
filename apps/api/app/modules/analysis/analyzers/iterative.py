@@ -279,6 +279,10 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Establecer modo
         self.mode = mode
         
+        # AST inválido: retornar resultado vacío sin fallar
+        if ast is None or not isinstance(ast, dict):
+            return self.result()
+        
         # Crear instancia de AvgModel si mode == "avg"
         if mode == "avg":
             if avg_model:
