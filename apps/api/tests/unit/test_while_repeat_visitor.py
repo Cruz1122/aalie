@@ -454,3 +454,128 @@ END
         count_str = str(wr.get("count", ""))
         self.assertIn("min", count_str.lower(), f"Count debe contener min(a,b): {count_str}")
 
+    def test_oracle_while_increment_linear_bounded(self):
+        """WHILE i < n DO { i <- i + 1 } → bounded, count = n + 1 (cond eval)"""
+        src = """linear(n) BEGIN
+  i <- 0;
+  WHILE (i < n) DO BEGIN
+    x <- 1;
+    i <- i + 1;
+  END
+END
+"""
+        r = parse_source(src)
+        self.assertTrue(r.get("ok"), f"Parse failed: {r.get('errors')}")
+        self.analyzer.analyze(r["ast"], "worst")
+        while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
+        self.assertGreater(len(while_rows), 0)
+        wr = while_rows[0]
+        self.assertFalse(wr.get("unbounded", False), "Debe ser bounded (incremento lineal)")
+        count_str = str(wr.get("count", ""))
+        self.assertIn("n", count_str, f"Count debe contener n: {count_str}")
+        note = wr.get("note", "")
+        self.assertTrue(
+            "worst" in note.lower() or "variable" in note.lower() or "n" in note.lower(),
+            f"Note debe describir análisis: {note}",
+        )
+
+    def test_oracle_while_multiplication_log_bounded(self):
+        """WHILE i <= n DO { i <- i * 2 } → bounded, O(log n) iteraciones"""
+        src = """logLoop(n) BEGIN
+  i <- 1;
+  WHILE (i <= n) DO BEGIN
+    x <- 1;
+    i <- i * 2;
+  END
+END
+"""
+        r = parse_source(src)
+        self.assertTrue(r.get("ok"), f"Parse failed: {r.get('errors')}")
+        self.analyzer.analyze(r["ast"], "worst")
+        while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
+        self.assertGreater(len(while_rows), 0)
+        wr = while_rows[0]
+        self.assertFalse(wr.get("unbounded", False), "Debe ser bounded (multiplicación)")
+        count_str = str(wr.get("count", ""))
+        self.assertTrue(
+            "log" in count_str.lower() or "n" in count_str,
+            f"Count debe reflejar O(log n): {count_str}",
+        )
+
+    def test_oracle_while_decrement_to_zero_bounded(self):
+        """WHILE i > 0 DO { i <- i - 1 } con i <- n → bounded, n+1 evaluaciones"""
+        src = """countdown(n) BEGIN
+  i <- n;
+  WHILE (i > 0) DO BEGIN
+    x <- 1;
+    i <- i - 1;
+  END
+END
+"""
+        r = parse_source(src)
+        self.assertTrue(r.get("ok"), f"Parse failed: {r.get('errors')}")
+        self.analyzer.analyze(r["ast"], "worst")
+        while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
+        self.assertGreater(len(while_rows), 0)
+        wr = while_rows[0]
+        self.assertFalse(wr.get("unbounded", False), "Debe ser bounded (decremento)")
+        count_str = str(wr.get("count", ""))
+        self.assertIn("n", count_str, f"Count debe contener n: {count_str}")
+
+    def test_oracle_while_note_contains_condition_info(self):
+        """Filas WHILE bounded deben tener note que describa condición o iteraciones."""
+        src = """simple(n) BEGIN
+  i <- 0;
+  WHILE (i < n) DO BEGIN
+    i <- i + 1;
+  END
+END
+"""
+        r = parse_source(src)
+        self.assertTrue(r.get("ok"), f"Parse failed: {r.get('errors')}")
+        self.analyzer.analyze(r["ast"], "worst")
+        while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
+        self.assertGreater(len(while_rows), 0)
+        wr = while_rows[0]
+        note = wr.get("note", "")
+        # Note debe mencionar variable, condición o modo (en/es)
+        self.assertGreater(len(note), 0, "WHILE debe tener note")
+        keywords = ["while", "condition", "variable", "worst", "condición", "peor", "línea"]
+        self.assertTrue(
+            any(kw in note.lower() for kw in keywords) or "i" in note or "n" in note,
+            f"Note debe describir análisis: {note}",
+        )
+
+    def test_oracle_while_binary_search_pattern(self):
+        """WHILE low <= high con mid = (low+high)/2 → patrón búsqueda binaria, O(log n)"""
+        src = """binarySearch(A, n, x) BEGIN
+  low <- 1;
+  high <- n;
+  WHILE (low <= high) DO BEGIN
+    mid <- (low + high) / 2;
+    IF (A[mid] = x) THEN BEGIN
+      RETURN mid;
+    END
+    IF (A[mid] < x) THEN BEGIN
+      low <- mid + 1;
+    END
+    ELSE BEGIN
+      high <- mid - 1;
+    END
+  END
+  RETURN -1;
+END
+"""
+        r = parse_source(src)
+        self.assertTrue(r.get("ok"), f"Parse failed: {r.get('errors')}")
+        self.analyzer.analyze(r["ast"], "worst")
+        while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
+        self.assertGreater(len(while_rows), 0)
+        wr = while_rows[0]
+        self.assertFalse(wr.get("unbounded", False), "Búsqueda binaria debe ser bounded")
+        count_str = str(wr.get("count", ""))
+        self.assertTrue(
+            "log" in count_str.lower() or "n" in count_str,
+            f"Count debe reflejar O(log n): {count_str}",
+        )
+

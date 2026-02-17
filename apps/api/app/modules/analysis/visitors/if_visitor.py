@@ -225,10 +225,14 @@ class IfVisitor:
             
             if not else_buf:
                 # Si no hay else, en best case la condición es falsa (no se ejecuta el THEN)
-                # EXCEPTO si hay early return, que es favorable (termina temprano)
+                # EXCEPTO: 1) early return (favorable), 2) param-controlled WHILE (param habilita → THEN)
                 if has_early_return(then_buf):
                     chosen = then_buf  # Ejecutar early return en best case (favorable)
                     annotate = "best: early-exit (then)"
+                elif getattr(self, "_param_controlled_if_take_then", False) and self._is_var_eq_const(node.get("test", {})):
+                    # IF(param=const) que guarda update del WHILE: best case = param habilita → ejecutar THEN
+                    chosen = then_buf
+                    annotate = "best: param enables (then)"
                 else:
                     # En best case sin early return: condición falsa → NO ejecutar THEN
                     chosen = []

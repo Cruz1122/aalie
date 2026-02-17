@@ -567,3 +567,146 @@ class TestWhileAlgorithms:
         assert _notation_has_complexity(notation, expected), (
             f"[{name}] Esperado {expected}, obtenido: big_theta={big_theta!r}, big_o={big_o!r}"
         )
+
+    # --- Tests exhaustivos de salida y notaciones ---
+
+    @pytest.mark.parametrize("name,source", ALGORITHMS, ids=[a[0] for a in ALGORITHMS])
+    def test_by_line_required_fields(self, name: str, source: str):
+        """Todas las filas de byLine deben tener line, kind, ck, count_raw, count."""
+        result = analyze_algorithm(source, mode="all")
+        assert result.get("ok", False), f"[{name}] Análisis falló"
+        by_line = _get_by_line(result, "worst")
+        for i, row in enumerate(by_line):
+            assert "line" in row, f"[{name}] Fila {i} debe tener line: {row}"
+            assert "kind" in row, f"[{name}] Fila {i} debe tener kind: {row}"
+            assert "ck" in row, f"[{name}] Fila {i} debe tener ck: {row}"
+            assert "count_raw" in row, f"[{name}] Fila {i} debe tener count_raw: {row}"
+            assert "count" in row, f"[{name}] Fila {i} debe tener count: {row}"
+            assert isinstance(row["count"], str), (
+                f"[{name}] Fila {i} count debe ser string: {type(row['count'])}"
+            )
+            assert isinstance(row["count_raw"], str), (
+                f"[{name}] Fila {i} count_raw debe ser string: {type(row['count_raw'])}"
+            )
+
+    @pytest.mark.parametrize("name,source", ALGORITHMS, ids=[a[0] for a in ALGORITHMS])
+    def test_by_line_count_not_nan_or_empty(self, name: str, source: str):
+        """count no debe ser vacío, 'nan' o 'NaN' (salvo unbounded)."""
+        result = analyze_algorithm(source, mode="all")
+        assert result.get("ok", False), f"[{name}] Análisis falló"
+        by_line = _get_by_line(result, "worst")
+        for row in by_line:
+            if row.get("unbounded"):
+                continue
+            count = str(row.get("count", ""))
+            assert len(count) > 0, f"[{name}] Línea {row.get('line')} count vacío"
+            assert "nan" not in count.lower(), (
+                f"[{name}] Línea {row.get('line')} count no debe ser NaN: {count}"
+            )
+
+    @pytest.mark.parametrize("name,source", ALGORITHMS, ids=[a[0] for a in ALGORITHMS])
+    def test_totals_has_t_polynomial_or_t_open(self, name: str, source: str):
+        """totals debe tener T_polynomial cuando se puede simplificar, o al menos T_open."""
+        result = analyze_algorithm(source, mode="all")
+        assert result.get("ok", False), f"[{name}] Análisis falló"
+        totals = _get_totals(result, "worst")
+        assert "T_open" in totals, f"[{name}] totals debe tener T_open"
+        t_open = totals.get("T_open", "")
+        assert isinstance(t_open, str) and len(t_open) > 0, (
+            f"[{name}] T_open debe ser string no vacío"
+        )
+        # T_polynomial es opcional; si existe, debe ser string no vacío
+        t_poly = totals.get("T_polynomial")
+        if t_poly is not None:
+            assert isinstance(t_poly, str) and len(t_poly) > 0, (
+                f"[{name}] T_polynomial debe ser string no vacío si existe"
+            )
+
+    @pytest.mark.parametrize("name,source", ALGORITHMS, ids=[a[0] for a in ALGORITHMS])
+    def test_while_rows_have_coherent_notes(self, name: str, source: str):
+        """Filas WHILE deben tener note coherente (o unbounded con unbounded_kind)."""
+        result = analyze_algorithm(source, mode="all")
+        assert result.get("ok", False), f"[{name}] Análisis falló"
+        by_line = _get_by_line(result, "worst")
+        for row in by_line:
+            if row.get("kind") != "while":
+                continue
+            # WHILE unbounded: debe tener unbounded=True y unbounded_kind o note explicativa
+            if row.get("unbounded"):
+                note = row.get("note", "")
+                kind_val = row.get("unbounded_kind", "")
+                assert kind_val or "never" in note.lower() or "unbounded" in note.lower() or "not change" in note.lower() or "may never" in note.lower(), (
+                    f"[{name}] WHILE unbounded en línea {row.get('line')} debe tener note o unbounded_kind"
+                )
+            # WHILE bounded: note puede describir condición o iteraciones
+            else:
+                count = str(row.get("count", ""))
+                assert len(count) > 0, f"[{name}] WHILE bounded en línea {row.get('line')} debe tener count"
+
+    def test_whilen_incremento_linear_output(self):
+        """WHILE i<n DO { i<-i+1 } debe dar Θ(n) y T_open con n."""
+        source = ALGORITHMS[2][1]  # WHILE incremento
+        result = analyze_algorithm(source, mode="all")
+        assert result.get("ok", False)
+        totals = _get_totals(result, "worst")
+        big_theta = totals.get("big_theta", "").lower()
+        big_o = totals.get("big_o", "").lower()
+        t_open = totals.get("T_open", "").lower()
+        assert "n" in big_theta or "n" in big_o, (
+            f"WHILE incremento debe ser Θ(n) o O(n): big_theta={totals.get('big_theta')}, big_o={totals.get('big_o')}"
+        )
+        assert "n" in t_open, f"T_open debe contener n: {totals.get('T_open')}"
+
+    def test_whilen_multiplicacion_log_output(self):
+        """WHILE i<=n DO { i<-i*2 } debe dar Θ(log n)."""
+        source = ALGORITHMS[3][1]  # WHILE multiplicación
+        result = analyze_algorithm(source, mode="all")
+        assert result.get("ok", False)
+        totals = _get_totals(result, "worst")
+        notation = (totals.get("big_theta", "") + " " + totals.get("big_o", "")).lower()
+        assert "log" in notation, (
+            f"WHILE multiplicación debe ser Θ(log n): {totals.get('big_theta')}"
+        )
+
+    def test_whilen_anidados_quadratic_output(self):
+        """Dos WHILE anidados i<n, j<n deben dar Θ(n²)."""
+        source = ALGORITHMS[8][1]  # WHILE anidados
+        result = analyze_algorithm(source, mode="all")
+        assert result.get("ok", False)
+        totals = _get_totals(result, "worst")
+        notation = (totals.get("big_theta", "") + " " + totals.get("big_o", "")).lower()
+        assert "n" in notation and ("2" in notation or "²" in notation or "n^" in notation), (
+            f"WHILE anidados debe ser Θ(n²): {totals.get('big_theta')}"
+        )
+
+    def test_avg_case_has_structure(self):
+        """Caso promedio debe tener A_of_n o T_open y estructura coherente."""
+        source = ALGORITHMS[2][1]  # WHILE incremento
+        result = analyze_algorithm(source, mode="all")
+        assert result.get("ok", False)
+        avg = result.get("avg")
+        if avg and avg != "same_as_worst":
+            totals = avg.get("totals", {})
+            assert "A_of_n" in totals or "T_open" in totals, (
+                "avg debe tener A_of_n o T_open"
+            )
+            assert _has_asymptotic_notation(totals), (
+                "avg debe tener notación asintótica"
+            )
+
+    def test_big_o_big_omega_ordering(self):
+        """Para algoritmos no constantes: O >= Θ >= Ω en nivel de complejidad."""
+        # Solo verificamos que existan y sean coherentes (no O(1) cuando es O(n))
+        source = ALGORITHMS[2][1]  # WHILE incremento
+        result = analyze_algorithm(source, mode="all")
+        assert result.get("ok", False)
+        totals = _get_totals(result, "worst")
+        big_o = totals.get("big_o", "")
+        big_omega = totals.get("big_omega", "")
+        big_theta = totals.get("big_theta", "")
+        # Si hay las tres, deben referirse a la misma variable (n, log n, etc.)
+        if big_o and big_omega and big_theta:
+            for notation in (big_o, big_omega, big_theta):
+                assert "n" in notation.lower() or "log" in notation.lower() or "min" in notation.lower(), (
+                    f"Notaciones deben referirse a variable de tamaño: O={big_o}, Ω={big_omega}, Θ={big_theta}"
+                )

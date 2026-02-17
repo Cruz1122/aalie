@@ -5,6 +5,31 @@ import { useTranslations } from "next-intl";
 
 import Formula from "./Formula";
 
+/** Detecta si el count contiene símbolos iterativos unbounded (t_while, t_repeat). */
+function hasUnboundedIterativeSymbol(count: string): boolean {
+  if (!count || typeof count !== "string") return false;
+  return (
+    /t_\{?while[\d_]*\}?|t_\{?repeat[\d_]*\}?|t_while|t_repeat/i.test(count) ||
+    count.includes("t_{while") ||
+    count.includes("t_{repeat")
+  );
+}
+
+/** Devuelve LaTeX para mostrar: ∞ cuando es unbounded con t_while/t_repeat, sino el count original. */
+function getDisplayCountLatex(
+  row: LineCost,
+  hasUnboundedInData: boolean,
+): string {
+  const count = row.expectedRuns ?? row.count ?? "";
+  if (
+    hasUnboundedInData &&
+    hasUnboundedIterativeSymbol(count)
+  ) {
+    return "\\infty";
+  }
+  return count;
+}
+
 /**
  * Propiedades del componente LineTable.
  */
@@ -80,6 +105,7 @@ export default function LineTable({
 }: Readonly<LineTableProps>) {
   const t = useTranslations("analyzer.lineTable");
   const isAvgMode = rows.some((row) => row.expectedRuns !== undefined);
+  const hasUnboundedInData = rows.some((row) => row.unbounded === true);
 
   return (
     <div className="overflow-auto">
@@ -133,7 +159,9 @@ export default function LineTable({
                 <Formula latex={row.ck} />
               </td>
               <td className="p-2 text-center whitespace-nowrap text-slate-200">
-                <Formula latex={row.expectedRuns || row.count} />
+                <Formula
+                  latex={getDisplayCountLatex(row, hasUnboundedInData)}
+                />
               </td>
               {onViewProcedure && (
                 <td className="p-2 text-center">

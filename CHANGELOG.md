@@ -21,9 +21,23 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Euclides: notación asintótica O(log(min(a,b))), Ω(1), Θ(log(min(a,b)))
 - Tests de integración `test_while_algorithms.py`: 23 algoritmos con WHILE (simple, anidados, mixtos) validando análisis y notación asintótica
 - Validación de T_open: tests que rechazan O(1) incorrecto y exigen variable de tamaño en T_open para algoritmos no constantes
+- Tests exhaustivos WHILE: byLine (line, kind, ck, count_raw, count), count no NaN/vacío, T_polynomial/T_open, notas coherentes
+- Tests de salida específica: WHILE incremento Θ(n), multiplicación Θ(log n), anidados Θ(n²)
+- Tests caso promedio y notaciones: avg con A_of_n/T_open, O/Ω/Θ coherentes
+- Tests oráculo adicionales en test_while_repeat_visitor: incremento lineal, multiplicación log, decremento, nota descriptiva, búsqueda binaria
+- Tests `test_deterministic_algorithms.py`: 10+ algoritmos determinísticos (WHILE/FOR constantes), avg = same_as_worst
+- Tests `test_flag_param_algorithms.py`: 5+ algoritmos con banderas (IF param=const controla update), best bounded, avg sin geométrico
 
 ### Fixed
 
+- Costos por línea: marcar unbounded en fallback de WHILE para mostrar ∞ en lugar de t_while cuando no se puede determinar el número de iteraciones
+- Procedimiento por línea y de eficiencia: cuando hay bucles unbounded, mostrar que tiende a infinito (N_ℓ → ∞, T_open → ∞, A(n) → ∞) en lugar de t_while
+- Notación asintótica: cuando hay bucles unbounded, mostrar O(∞), Ω(1), Θ(∞) en lugar de O(n^k) (no sustituir t_while por n)
+- Best case card: mostrar Θ(1)/Ω(1) en lugar de ω(—) cuando el bucle es acotado sin variable de tamaño (ej. param-controlled)
+- Costos por línea: mostrar ∞ en lugar de t_while cuando hay bucles unbounded (worst/avg)
+- Caso promedio determinístico: cuando worst == best (bucles con cotas constantes, sin IF early return), no se aplica modelo probabilístico; avg = same_as_worst
+- Algoritmos con banderas (IF param=const controla update): best case asume param habilita progreso → bounded; avg no aplica modelo geométrico (E[iter]=1/p) cuando unbounded por param-controlled
+- Detección de variable de tamaño: excluir params de control detectados dinámicamente (IF id=const que guarda update del WHILE), sin listas explícitas de nombres
 - IterativeAnalysisView: ocultar bolitas cuando la notación asintótica es demasiado larga para evitar desborde (ej. Θ(log(min(a,b))))
 - IterativeAnalyzer: corregido O(1) incorrecto para WHILE con log, t_while y exp
   - BaseAnalyzer._str_to_sympy: parseo de LaTeX `\log_{k}(expr)` y `\frac{a}{b}`

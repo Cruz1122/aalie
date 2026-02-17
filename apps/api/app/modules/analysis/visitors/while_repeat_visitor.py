@@ -1,6 +1,7 @@
 # apps/api/app/analysis/visitors/while_repeat_visitor.py
 
 from typing import Any, Dict, List, Optional
+
 from sympy import Symbol, Integer, Expr, sympify, Sum, Rational
 import re
 
@@ -715,6 +716,149 @@ class WhileRepeatVisitor:
         
         return False
     
+    def _try_param_controlled_best_case(
+        self,
+        body: Any,
+        guard: Any,
+        updates: Dict[str, Any],
+        var_name: Optional[str],
+        while_line: int,
+        parent_context: Optional[Dict],
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Best case: si el update está en IF(x=const) o IF(x!=0), asumir que la condición
+        habilita progreso. Funciona para cualquier nombre de variable (param o local).
+        """
+        if not var_name:
+            return None
+        summary = updates.get(var_name) if isinstance(updates, dict) else None
+        if not summary or not getattr(summary, "may_updates", []):
+            return None
+        # Buscar IF con condición id=const o id!=0 que contiene el assign a var_name
+        if_info = self._find_var_guarded_if(body, var_name)
+        if not if_info:
+            return None
+        may_updates = getattr(summary, "may_updates", [])
+        change_rule = None
+        for u in may_updates:
+            if u.get("type") == "num":
+                change_rule = {"operator": u.get("operator", "+"), "constant": u.get("constant", "1")}
+                break
+        if not change_rule:
+            return None
+        # Obtener limit y operator del guard
+        limit = ""
+        operator = "<"
+        if guard and getattr(guard, "atoms", None):
+            for atom in guard.atoms:
+                if atom.get("var") == var_name:
+                    limit = atom.get("limit", "")
+                    operator = atom.get("op", "<")
+                    break
+        if not limit:
+            return None
+        initial_value = self._find_initial_value_of_var(var_name, while_line, parent_context)
+        iterations = self._calculate_iterations(var_name, initial_value, change_rule, limit, operator, "best")
+        if not iterations:
+            return None
+        return {
+            "variable": var_name,
+            "initial_value": initial_value,
+            "change_rule": change_rule,
+            "limit": limit,
+            "operator": operator,
+            "iterations": iterations,
+            "success": True,
+            "mode": "best",
+            "reason_code": "while_param_enables",
+        }
+
+    def _find_var_guarded_if(self, node: Any, var_name: str) -> Optional[Dict]:
+        """Encuentra IF con condición id=const o id!=0 que contiene assign a var_name.
+        Funciona para cualquier nombre de variable (param o local)."""
+        if not isinstance(node, dict):
+            return None
+        nt = node.get("type", "").lower()
+        if nt == "if":
+            test = node.get("test", {})
+            if self._is_var_eq_const(test):
+                consequent = node.get("consequent") or node.get("then")
+                if consequent and self._contains_assign_to(consequent, var_name):
+                    return {"test": test, "consequent": consequent}
+            return None
+        if nt == "block":
+            for stmt in node.get("body", []):
+                found = self._find_var_guarded_if(stmt, var_name)
+                if found:
+                    return found
+        for key in ["body", "consequent", "alternate", "then"]:
+            if key in node:
+                found = self._find_var_guarded_if(node[key], var_name)
+                if found:
+                    return found
+        return None
+
+    def _is_var_eq_const(self, test: Any) -> bool:
+        """True si test es id=const o id!=0 (cualquier identificador, no solo params)."""
+        if not isinstance(test, dict):
+            return False
+        op = (test.get("op") or test.get("operator", "")).lower()
+        left = test.get("left", {})
+        right = test.get("right", {})
+        left_id = isinstance(left, dict) and left.get("type", "").lower() == "identifier"
+        right_id = isinstance(right, dict) and right.get("type", "").lower() == "identifier"
+
+        def _is_const(expr: Any) -> bool:
+            if not isinstance(expr, dict):
+                return False
+            t = expr.get("type", "").lower()
+            if t in ("number", "literal"):
+                return True
+            if t == "identifier" and (expr.get("name", "").lower() in ("true", "false", "t", "f")):
+                return True
+            return False
+
+        left_const = _is_const(left)
+        right_const = _is_const(right)
+        # id = const o const = id
+        if op in ("=", "=="):
+            return (left_id and right_const) or (right_id and left_const)
+        # id != 0 (truthy)
+        if op in ("!=", "<>"):
+            return (left_id and right_const) or (right_id and left_const)
+        return False
+
+    def _extract_id_from_var_eq_const(self, test: Any) -> Optional[str]:
+        """Extrae el identificador de test cuando es id=const o id!=0.
+        Retorna el nombre del id o None si no coincide con el patrón."""
+        if not isinstance(test, dict):
+            return None
+        if not self._is_var_eq_const(test):
+            return None
+        left = test.get("left", {})
+        right = test.get("right", {})
+        left_id = isinstance(left, dict) and left.get("type", "").lower() == "identifier"
+        if left_id:
+            return left.get("name", "") or None
+        if isinstance(right, dict) and right.get("type", "").lower() == "identifier":
+            return right.get("name", "") or None
+        return None
+
+    def _contains_assign_to(self, node: Any, var_name: str) -> bool:
+        """True si node contiene assign a var_name."""
+        if not isinstance(node, dict):
+            return False
+        if node.get("type", "").lower() == "assign":
+            t = node.get("target", {})
+            if isinstance(t, dict) and t.get("type", "").lower() == "identifier":
+                if t.get("name", "") == var_name:
+                    return True
+        if node.get("type", "").lower() == "block":
+            for stmt in node.get("body", []):
+                if self._contains_assign_to(stmt, var_name):
+                    return True
+        return False
+
     def _calculate_iterations(self, var_name: str, initial: Optional[str], change_rule: Dict[str, Any], limit: str, operator: str, mode: str = "worst") -> Optional[str]:
         """
         Calcula el número de iteraciones basándose en valor inicial, regla de cambio, límite y operador.
@@ -812,6 +956,13 @@ class WhileRepeatVisitor:
                     "reason_code": result.reason_code,
                 }
             if result.status == "unbounded":
+                # Best case: si es no_progress_must y el update está en IF(param=const), asumir param habilita
+                if mode == "best" and result.reason_code == "while_no_progress_must":
+                    param_bounded = self._try_param_controlled_best_case(
+                        body, guard, updates, result.evidence.get("var"), L, parent_context
+                    )
+                    if param_bounded:
+                        return param_bounded
                 return {
                     "success": True,
                     "status": "unbounded",
@@ -1037,13 +1188,20 @@ class WhileRepeatVisitor:
         # que tiene complejidad determinística incluso en average case
         if mode == "avg":
             # Verificar si hay un patrón detectado primero (búsqueda binaria o Euclides)
+            # O si es unbounded por param-controlled (no_progress_must): NO aplicar modelo geométrico
             closure_info_pattern = self._analyze_while_closure(node, parent_context, mode)
-            if closure_info_pattern and (
-                closure_info_pattern.get("pattern")
-                or closure_info_pattern.get("reason_code") == "while_euclid_mod"
-            ):
-                # Hay un patrón detectado (ej: búsqueda binaria, Euclides), usar ese en lugar de probabilidad
-                # No hacer el análisis probabilístico, saltar directamente al paso 2
+            skip_geometric = False
+            if closure_info_pattern:
+                if closure_info_pattern.get("pattern") or closure_info_pattern.get("reason_code") == "while_euclid_mod":
+                    skip_geometric = True
+                elif closure_info_pattern.get("status") == "unbounded" and closure_info_pattern.get("reason_code") in (
+                    "while_no_progress_must",
+                    "while_or_no_progress",
+                ):
+                    # Progreso controlado por parámetro/condición: modelo geométrico no aplica
+                    skip_geometric = True
+            if skip_geometric:
+                # Saltar análisis probabilístico, ir al paso 2 (manejo unbounded)
                 pass
             else:
                 # No hay patrón, intentar análisis probabilístico
@@ -1270,6 +1428,11 @@ class WhileRepeatVisitor:
             else:
                 self.push_multiplier(mult_expr)
             
+            # Best case param-controlled: IF(param=const) debe tomar THEN (param habilita progreso)
+            param_controlled = mode == "best" and closure_info.get("reason_code") == "while_param_enables"
+            if param_controlled:
+                setattr(self, "_param_controlled_if_take_then", True)
+            
             # Visitar el cuerpo del bucle (con memoización si es un bloque)
             body = node.get("body")
             if body:
@@ -1294,6 +1457,8 @@ class WhileRepeatVisitor:
                     # No es cacheable, visitar normalmente
                     self.visit(body, mode)
             
+            if param_controlled:
+                setattr(self, "_param_controlled_if_take_then", False)
             self.pop_multiplier()
         else:
             # Paso 3: Fallback - usar símbolo iterativo con nota mejorada
@@ -1315,7 +1480,9 @@ class WhileRepeatVisitor:
                 kind="while",
                 ck=ck_cond,
                 count=cond_count,
-                note=note_text
+                note=note_text,
+                unbounded=True,
+                unbounded_kind="unknown",
             )
             
             # 2) Cuerpo: se ejecuta t veces

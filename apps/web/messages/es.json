@@ -145,6 +145,7 @@
       "viewProcedureGeneral": "Ver procedimiento general ({case})",
       "runAnalysisToSeeProcedure": "Ejecuta el análisis para ver el procedimiento",
       "boundOnly": "Solo se conoce esta cota",
+      "couldBeInfinity": "Puede ser {notations} si hay bucles no acotados",
       "model": "Modelo",
       "repairWithAI": "Reparar con IA",
       "apiKeyRequired": "Se requiere API Key para funciones con IA",
