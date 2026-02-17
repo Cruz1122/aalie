@@ -282,7 +282,8 @@
       "print": "Print",
       "return": "Return",
       "decl": "Declaration",
-      "other": "Other"
+      "other": "Other",
+      "whileUnboundedWarning": "May not terminate"
     },
     "procedureModal": {
       "titleLine": "Procedure - Line {line}",

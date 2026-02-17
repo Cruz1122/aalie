@@ -117,7 +117,17 @@ export default function LineTable({
                 {row.line}
               </td>
               <td className="p-2 text-center">
-                <Badge kind={row.kind} t={t} />
+                <span className="inline-flex items-center gap-1.5 flex-wrap justify-center">
+                  <Badge kind={row.kind} t={t} />
+                  {row.unbounded === true && (
+                    <span
+                      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                      title={t("whileUnboundedWarning")}
+                    >
+                      {t("whileUnboundedWarning")}
+                    </span>
+                  )}
+                </span>
               </td>
               <td className="p-2 text-center whitespace-nowrap text-slate-200">
                 <Formula latex={row.ck} />

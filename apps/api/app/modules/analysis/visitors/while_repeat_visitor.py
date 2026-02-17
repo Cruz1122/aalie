@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Optional
 from sympy import Symbol, Integer, Expr, sympify, Sum, Rational
 import re
 
+from ..while_analysis import analyze_guard, summarize_updates, classify_while
+
 
 class WhileRepeatVisitor:
     """
@@ -81,6 +83,7 @@ class WhileRepeatVisitor:
     def _str_to_sympy(self, expr_str: str) -> Expr:
         """
         Convierte un string a expresión SymPy.
+        Soporta LaTeX: \\log_{k}(expr), etc.
         
         Args:
             expr_str: String representando una expresión
@@ -90,24 +93,51 @@ class WhileRepeatVisitor:
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
+        import re
+
         if not expr_str or expr_str.strip() == "":
             return Integer(1)
-        
+
+        expr_str = expr_str.strip()
+
+        # Preprocesar LaTeX: \\log_{base}(arg) -> log(arg, base)
+        log_match = re.search(r"\\log_\{([^}]+)\}\s*\(", expr_str)
+        if log_match:
+            start = log_match.end()
+            depth, i = 1, start
+            while i < len(expr_str) and depth > 0:
+                if expr_str[i] == "(":
+                    depth += 1
+                elif expr_str[i] == ")":
+                    depth -= 1
+                i += 1
+            arg = expr_str[start : i - 1]
+            expr_str = (
+                expr_str[: log_match.start()]
+                + f"log({arg}, {log_match.group(1)})"
+                + expr_str[i:]
+            )
+        expr_str = re.sub(r"\\log\s*\(([^)]+)\)", r"log(\1)", expr_str)
+        expr_str = re.sub(r"\\frac\{([^}]+)\}\{([^}]+)\}", r"(\1)/(\2)", expr_str)
+        expr_str = expr_str.replace("\\cdot", "*")
+
         try:
-            # Crear contexto con símbolos comunes
-            variable = getattr(self, 'variable', 'n')
+            from sympy import log as sympy_log
+
+            variable = getattr(self, "variable", "n")
             n = Symbol(variable, integer=True, positive=True)
-            i = Symbol('i', integer=True)
-            j = Symbol('j', integer=True)
-            k = Symbol('k', integer=True)
-            
+            i = Symbol("i", integer=True)
+            j = Symbol("j", integer=True)
+            k = Symbol("k", integer=True)
+
             syms = {
                 variable: n,
-                'i': i,
-                'j': j,
-                'k': k,
+                "i": i,
+                "j": j,
+                "k": k,
+                "log": sympy_log,
             }
-            
+
             return sympify(expr_str, locals=syms)
         except Exception:
             return Integer(1)
@@ -746,10 +776,11 @@ class WhileRepeatVisitor:
         Analiza el cierre de un bucle WHILE.
         
         Estrategia mejorada:
-        1. Verificar best case (early exit)
-        2. Intentar análisis simple (variable de control)
-        3. Intentar detectar patrones de convergencia (búsqueda binaria, etc.)
-        4. Fallback a símbolo iterativo
+        1. Nuevo clasificador (GuardInfo, UpdateSummary, classify_while) para const/bool_var/rel
+        2. Verificar best case (early exit)
+        3. Intentar análisis simple (variable de control)
+        4. Intentar detectar patrones de convergencia (búsqueda binaria, etc.)
+        5. Fallback a símbolo iterativo
         
         Args:
             node: Nodo WHILE del AST
@@ -763,7 +794,34 @@ class WhileRepeatVisitor:
         body = node.get("body", {})
         L = node.get("pos", {}).get("line", 0)
         
-        # 0) VERIFICAR BEST CASE ANTES: Si es best case y hay condición AND con array/variable diferente
+        # 0) NUEVO CLASIFICADOR: GuardInfo + UpdateSummary + classify_while
+        try:
+            guard = analyze_guard(test)
+            updates = summarize_updates(body, guard.vars_used, guard, parent_context)
+            result = classify_while(guard, updates, mode, parent_context, L)
+            if result.status == "bounded" and result.iterations_expr:
+                return {
+                    "variable": result.evidence.get("var", ""),
+                    "initial_value": None,
+                    "change_rule": {"operator": result.evidence.get("change", "+1"), "constant": "1"},
+                    "limit": result.evidence.get("limit", ""),
+                    "operator": result.evidence.get("op", "<"),
+                    "iterations": result.iterations_expr,
+                    "success": True,
+                    "mode": mode,
+                    "reason_code": result.reason_code,
+                }
+            if result.status == "unbounded":
+                return {
+                    "success": True,
+                    "status": "unbounded",
+                    "reason_code": result.reason_code or "while_unbounded_unknown",
+                    "evidence": result.evidence,
+                }
+        except Exception as e:
+            print(f"[WhileRepeatVisitor] Error en classify_while: {e}")
+        
+        # 1) VERIFICAR BEST CASE ANTES: Si es best case y hay condición AND con array/variable diferente
         # Para insertion sort: WHILE (j > 0 AND A[j] > key)
         # En best case: A[j] <= key desde el inicio, entonces la condición es falsa, 0 iteraciones
         test_op = test.get("op", "") or test.get("operator", "")
@@ -978,10 +1036,13 @@ class WhileRepeatVisitor:
         # PERO: primero verificar si es un patrón conocido (como búsqueda binaria)
         # que tiene complejidad determinística incluso en average case
         if mode == "avg":
-            # Verificar si hay un patrón detectado primero
+            # Verificar si hay un patrón detectado primero (búsqueda binaria o Euclides)
             closure_info_pattern = self._analyze_while_closure(node, parent_context, mode)
-            if closure_info_pattern and closure_info_pattern.get("pattern"):
-                # Hay un patrón detectado (ej: búsqueda binaria), usar ese en lugar de probabilidad
+            if closure_info_pattern and (
+                closure_info_pattern.get("pattern")
+                or closure_info_pattern.get("reason_code") == "while_euclid_mod"
+            ):
+                # Hay un patrón detectado (ej: búsqueda binaria, Euclides), usar ese en lugar de probabilidad
                 # No hacer el análisis probabilístico, saltar directamente al paso 2
                 pass
             else:
@@ -1060,10 +1121,46 @@ class WhileRepeatVisitor:
         # Paso 2: Intentar análisis de cierre (para todos los modos, incluyendo avg como fallback)
         closure_info = self._analyze_while_closure(node, parent_context, mode)
         
+        if closure_info and closure_info.get("success") and closure_info.get("status") == "unbounded":
+            # Caso UNBOUNDED: evidencia de no terminación
+            reason_code = closure_info.get("reason_code", "while_unbounded_unknown")
+            note_text = self._note(reason_code)
+            t_sym = Symbol(t, real=True)
+            ck_cond = self.C()
+            cond_count = t_sym + Integer(1)
+            self.add_row(
+                line=L,
+                kind="while",
+                ck=ck_cond,
+                count=cond_count,
+                note=note_text,
+                unbounded=True,
+                unbounded_kind="non_terminating",
+            )
+            self.push_multiplier(t_sym)
+            body = node.get("body")
+            if body:
+                if self._should_memoize(body):
+                    ctx_hash = self.get_context_hash()
+                    memo_key = self.memo_key(body, mode, ctx_hash)
+                    cached_rows = self.memo_get(memo_key)
+                    if cached_rows is not None:
+                        self.rows.extend(cached_rows)
+                    else:
+                        rows_before = len(self.rows)
+                        self.visit(body, mode)
+                        rows_added = self.rows[rows_before:]
+                        if rows_added:
+                            self.memo_set(memo_key, rows_added)
+                else:
+                    self.visit(body, mode)
+            self.pop_multiplier()
+            return
+        
         if closure_info and closure_info.get("success"):
-            # Análisis exitoso: usar expresiones concretas
-            iterations = closure_info["iterations"]
-            var_name = closure_info["variable"]
+            # Análisis exitoso (bounded): usar expresiones concretas
+            iterations = closure_info.get("iterations")
+            var_name = closure_info.get("variable", "")
             change_rule = closure_info["change_rule"]
             limit = closure_info["limit"]
             operator = closure_info["operator"]
@@ -1130,7 +1227,10 @@ class WhileRepeatVisitor:
             pattern_note = closure_info.get("pattern_note", "")
             
             # Agregar información del modo si es best case y hay 0 iteraciones
-            if pattern == "binary_search":
+            reason_code = closure_info.get("reason_code", "")
+            if reason_code == "while_euclid_mod":
+                note_text = self._note("while_euclid_mod", L=L, var_name=var_name)
+            elif pattern == "binary_search":
                 note_text = self._note("while_binary_search", L=L, mode_info=mode_info)
             elif mode_info == "best" and iterations == "0":
                 if initial_value:
@@ -1158,9 +1258,10 @@ class WhileRepeatVisitor:
                 kind="while",
                 ck=ck_cond,
                 count=cond_count,
-                note=note_text
+                note=note_text,
+                euclid_pattern=(reason_code == "while_euclid_mod"),
             )
-            
+
             # 2) Cuerpo: se ejecuta iterations veces
             # En best case con 0 iteraciones, el multiplicador debe ser 0
             if mode == "best" and iterations == "0":

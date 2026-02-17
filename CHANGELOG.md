@@ -10,10 +10,33 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ### Added
 
 - Componente `AALIEIcon` para el logo del asistente de IA
+- Módulo `while_analysis` con GuardInfo, UpdateSummary y classify_while para análisis de terminación de bucles WHILE
+- Tres estados de clasificación: bounded, unbounded y unknown
+- Campos opcionales `unbounded` y `unbounded_kind` en LineCost (API y @aa/types)
+- Badge "Puede no terminar" en LineTable para filas con evidencia de no terminación
+- Warning en trace de ejecución cuando un bucle alcanza el límite de seguridad (10 iteraciones)
+- Tests oráculo para WHILE: bool unbounded/bounded, decremento, sin progreso must, OR sin kill, Euclides (MOD)
+- Patrón Euclides: `var <- expr MOD var` con guard `var != 0` → bounded con iteraciones ≤ min(a,b)
+- Euclides: caso promedio usa análisis acotado (min(a,b)) en lugar de modelo probabilístico
+- Euclides: notación asintótica O(log(min(a,b))), Ω(1), Θ(log(min(a,b)))
+- Tests de integración `test_while_algorithms.py`: 23 algoritmos con WHILE (simple, anidados, mixtos) validando análisis y notación asintótica
+- Validación de T_open: tests que rechazan O(1) incorrecto y exigen variable de tamaño en T_open para algoritmos no constantes
+
+### Fixed
+
+- IterativeAnalysisView: ocultar bolitas cuando la notación asintótica es demasiado larga para evitar desborde (ej. Θ(log(min(a,b))))
+- IterativeAnalyzer: corregido O(1) incorrecto para WHILE con log, t_while y exp
+  - BaseAnalyzer._str_to_sympy: parseo de LaTeX `\log_{k}(expr)` y `\frac{a}{b}`
+  - WhileRepeatVisitor._str_to_sympy: mismo soporte para expresiones log
+  - Sustitución de símbolos iterativos (t_while_L, exp_0) por variable de tamaño antes de calcular notación
+  - Detección de variable desde params (n, exp, m)
+  - Poly fallback: capturar excepciones con expresiones log (no polinómicas)
 
 ### Changed
 
 - Icono `smart_toy` reemplazado por `aalie.svg` en ModeToggle, AIModeView, ChatBot, ManualModeView y user-guide
+- WhileRepeatVisitor usa classify_while para distinguir bucles acotados, no acotados y desconocidos
+- Guard y updates soportan Identifier "true"/"false" del parser además de Literal
 
 ## [1.1.2] - 2026-02-14
 

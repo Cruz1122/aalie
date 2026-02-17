@@ -64,7 +64,17 @@ class BaseAnalyzer:
         self.procedure_steps: Optional[List[str]] = None  # pasos del procedimiento para caso promedio
 
     # --- util 1: agregar fila ---
-    def add_row(self, line: int, kind: str, ck: str, count: Union[str, Expr], note: Optional[str] = None):
+    def add_row(
+        self,
+        line: int,
+        kind: str,
+        ck: str,
+        count: Union[str, Expr],
+        note: Optional[str] = None,
+        unbounded: bool = False,
+        unbounded_kind: Optional[str] = None,
+        euclid_pattern: bool = False,
+    ):
         """
         Inserta una fila aplicando el multiplicador del contexto de bucles.
         
@@ -74,6 +84,8 @@ class BaseAnalyzer:
             ck: Costo individual de la línea (string KaTeX)
             count: Número de ejecuciones (puede ser string o Expr de SymPy)
             note: Nota opcional sobre la línea
+            unbounded: True si el bucle puede no terminar (evidencia de no terminación)
+            unbounded_kind: "non_terminating" | "unknown" para clasificación
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
@@ -118,6 +130,12 @@ class BaseAnalyzer:
             "note": note
         }
         
+        if unbounded:
+            row["unbounded"] = True
+            row["unbounded_kind"] = unbounded_kind or "unknown"
+        if euclid_pattern:
+            row["euclid_pattern"] = True
+
         # En modo promedio, agregar expectedRuns (alias de count para E[#])
         if self.mode == "avg":
             row["expectedRuns"] = count_latex
@@ -190,6 +208,7 @@ class BaseAnalyzer:
     def _str_to_sympy(self, expr_str: str) -> Expr:
         """
         Convierte un string a expresión SymPy.
+        Soporta LaTeX: \\log_{k}(expr), \\frac{a}{b}, etc.
         
         Args:
             expr_str: String representando una expresión
@@ -199,28 +218,58 @@ class BaseAnalyzer:
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
+        import re
+
         if not expr_str or expr_str.strip() == "":
             return Integer(1)
-        
+
         expr_str = expr_str.strip()
-        
+
+        # Preprocesar LaTeX: \\log_{base}(arg) -> log(arg, base) (arg puede tener paréntesis)
+        log_match = re.search(r"\\log_\{([^}]+)\}\s*\(", expr_str)
+        if log_match:
+            start = log_match.end()
+            depth, i = 1, start
+            while i < len(expr_str) and depth > 0:
+                if expr_str[i] == "(":
+                    depth += 1
+                elif expr_str[i] == ")":
+                    depth -= 1
+                i += 1
+            arg = expr_str[start:i-1]
+            expr_str = (
+                expr_str[: log_match.start()]
+                + f"log({arg}, {log_match.group(1)})"
+                + expr_str[i:]
+            )
+        # \\log(arg) -> log(arg)
+        expr_str = re.sub(r"\\log\s*\(([^)]+)\)", r"log(\1)", expr_str)
+        expr_str = re.sub(r"\\log\s*\{([^}]+)\}", r"log(\1)", expr_str)
+
+        # \\frac{a}{b} -> (a)/(b)
+        expr_str = re.sub(r"\\frac\{([^}]+)\}\{([^}]+)\}", r"(\1)/(\2)", expr_str)
+        # \\cdot -> *
+        expr_str = expr_str.replace("\\cdot", "*")
+
         # Intentar parsear directamente
         try:
-            # Crear contexto con símbolos comunes
+            from sympy import log as sympy_log
+
             n = Symbol(self.variable, integer=True, positive=True)
-            i = Symbol('i', integer=True)
-            j = Symbol('j', integer=True)
-            k = Symbol('k', integer=True)
-            m = Symbol('m', integer=True, positive=True)
-            
+            i = Symbol("i", integer=True)
+            j = Symbol("j", integer=True)
+            k = Symbol("k", integer=True)
+            m = Symbol("m", integer=True, positive=True)
+
             syms = {
                 self.variable: n,
-                'i': i,
-                'j': j,
-                'k': k,
-                'm': m
+                "i": i,
+                "j": j,
+                "k": k,
+                "m": m,
+                "log": sympy_log,
             }
-            
+
             return sympify(expr_str, locals=syms)
         except Exception:
             # Fallback: retornar 1

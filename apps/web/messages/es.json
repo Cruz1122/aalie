@@ -282,7 +282,8 @@
       "print": "Impresión",
       "return": "Retorno",
       "decl": "Declaración",
-      "other": "Otro"
+      "other": "Otro",
+      "whileUnboundedWarning": "Puede no terminar"
     },
     "procedureModal": {
       "titleLine": "Procedimiento - Línea {line}",

@@ -254,9 +254,23 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Usar SymPy para cerrar sumatorias y generar procedimientos
         closer = SummationCloser(locale=self.locale)
         complexity = ComplexityClasses()
-        
-        # Detectar variable principal (n por defecto)
+
+        # Detectar variable principal desde params del procedimiento (n por defecto)
         variable = "n"
+        for node in ast.get("body", []):
+            if isinstance(node, dict) and node.get("type") == "ProcDef":
+                params = node.get("params", [])
+                param_names = [
+                    p.get("name", "") if isinstance(p, dict) else str(p)
+                    for p in params
+                ]
+                if "exp" in param_names and "base" in param_names:
+                    variable = "exp"
+                elif "n" in param_names:
+                    variable = "n"
+                elif param_names:
+                    variable = param_names[-1]
+                break
         
         # Cerrar sumatorias y generar procedimientos para cada fila
         for row in self.rows:
@@ -444,22 +458,47 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         
         # Calcular T_polynomial: agrupar términos con C_k (para mostrar estructura)
         self._calculate_t_polynomial_fallback()
-        
+
         # Generar procedimiento general para caso promedio
         if mode == "avg":
             self._generate_avg_procedure()
         
         # Calcular notaciones asintóticas usando la expresión SymPy directamente
-        if t_open_expr is not None:
+        # Caso especial: algoritmo de Euclides (mcd) → O(log(min(a,b)))
+        has_euclid = any(r.get("euclid_pattern") for r in self.rows)
+        if has_euclid:
+            self.big_o = "O(\\log(\\min(a,b)))"
+            self.big_omega = "\\Omega(1)"
+            self.big_theta = "\\Theta(\\log(\\min(a,b)))"
+        elif t_open_expr is not None:
             try:
                 from sympy import latex as sympy_latex, Symbol, expand, simplify
-                
+
+                # Sustituir símbolos iterativos (t_while_L, exp_0, etc.) por variable de tamaño
+                # para poder calcular notación asintótica correctamente
+                n_sym = Symbol(variable, integer=True, positive=True)
+                for sym in list(t_open_expr.free_symbols):
+                    name = getattr(sym, "name", str(sym))
+                    if (
+                        "while_" in name
+                        or "repeat_" in name
+                        or name.startswith("t_while_")
+                        or name.startswith("t_repeat_")
+                    ):
+                        t_open_expr = t_open_expr.subs(sym, n_sym)
+                    elif name.startswith("exp_") or name == "exp":
+                        # power(base, exp): variable de tamaño es exp
+                        exp_sym = Symbol("exp", integer=True, positive=True)
+                        t_open_expr = t_open_expr.subs(sym, exp_sym)
+                        variable = "exp"
+                        n_sym = exp_sym
+
                 # Primero, asegurarse de que la expresión esté completamente simplificada
                 t_open_expr = expand(t_open_expr)
                 t_open_expr = simplify(t_open_expr)
-                
+
                 # Verificar y eliminar variables de iteración que no deberían estar
-                iteration_vars = ['i', 'j', 'k']
+                iteration_vars = ["i", "j", "k"]
                 for var_name in iteration_vars:
                     var_symbol = Symbol(var_name, integer=True)
                     if t_open_expr.has(var_symbol):
@@ -875,8 +914,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                             # Agregar C_k a este coeficiente
                             degree_to_coeffs[degree][coeff_key]['cks'].append(ck_str)
                             
-                except (ValueError, TypeError, AttributeError):
-                    # Si Poly falla (p.ej., expresión no es polinómica), tratar como constante
+                except Exception:
+                    # Si Poly falla (p.ej., expresión con log/sqrt no es polinómica), tratar como constante
                     # Esto puede pasar con expresiones complejas, pero intentamos manejarlo
                     try:
                         # Intentar extraer como constante (grado 0)

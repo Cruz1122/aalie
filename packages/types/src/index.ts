@@ -226,6 +226,8 @@ export interface LineCost {
   note?: string;        // aclaraciones (p. ej., "worst: max(then, else)")
   procedure?: string[]; // procedimiento completo por línea (desde count_raw hasta forma polinómica)
   expectedRuns?: string; // E[# ejecuciones] para caso promedio (KaTeX)
+  unbounded?: boolean;  // true si el bucle puede no terminar (evidencia de no terminación)
+  unbounded_kind?: "non_terminating" | "unknown";  // clasificación del unbounded
 }
 
 /** Modelo probabilístico para caso promedio */
