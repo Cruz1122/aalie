@@ -19,6 +19,7 @@
     "openMenu": "Abrir menú"
   },
   "footer": {
+    "languageLabel": "Idioma",
     "university": "Universidad de Caldas - 2025",
     "privacyPolicy": "Política de Privacidad",
     "backendStatus": {
@@ -31,8 +32,8 @@
       "configured": "API Key configurada",
       "notConfigured": "Configura tu API Key",
       "invalid": "API Key inválida",
-      "inEnv": "API Key en variables de entorno",
-      "inLocalStorage": "API Key en el almacenamiento local",
+      "inEnv": "API Key guardada en el servidor",
+      "inLocalStorage": "API Key guardada en este navegador",
       "placeholder": "API Key de Gemini",
       "invalidHint": "API Key inválida",
       "geminiHintPre": "Ingresa tu API Key de Gemini para habilitar las funciones con IA. Puedes obtenerla en ",

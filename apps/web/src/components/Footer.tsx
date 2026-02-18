@@ -14,6 +14,7 @@ import {
 import { Link } from "@/i18n/navigation";
 
 import HealthStatus from "./HealthStatus";
+import LocaleSwitcher from "./LocaleSwitcher";
 
 type ApiKeyStatus = "none" | "invalid" | "valid" | "server" | "local";
 
@@ -260,7 +261,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="glass-header px-6 py-3">
+    <footer className="glass-header px-3 sm:px-4 md:px-6 py-3">
       {showInput ? (
         /* Input de API_KEY - reemplaza el contenido del footer cuando está activo */
         <div className="flex flex-col items-center justify-center gap-1">
@@ -335,32 +336,38 @@ export default function Footer() {
         </div>
       ) : (
         /* Enlaces y badges - contenido normal del footer */
-        <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
-          <a
-            className="text-dark-text hover:text-white transition-colors"
-            href="https://ingenierias.ucaldas.edu.co"
-          >
-            {t("university")}
-          </a>
-          <span className="text-slate-600">•</span>
-          <Link
-            className="text-dark-text hover:text-white transition-colors"
-            href="/privacy"
-          >
-            {t("privacyPolicy")}
-          </Link>
-          <span className="text-slate-600">•</span>
-          <button
-            onClick={() => setShowInput(true)}
-            className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs cursor-pointer hover:opacity-80 transition-opacity ${getStatusStyle()}`}
-          >
-            <span
-              className={`inline-block h-1.5 w-1.5 rounded-full ${getStatusDot()}`}
-            />
-            {getStatusText()}
-          </button>
-          <span className="text-slate-600">•</span>
-          <HealthStatus />
+        <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-y-3 sm:gap-y-0 sm:gap-x-3 md:gap-x-4 text-xs">
+          <div className="flex items-center gap-x-2 sm:gap-x-3 flex-wrap justify-center">
+            <a
+              className="text-dark-text hover:text-white transition-colors whitespace-nowrap"
+              href="https://ingenierias.ucaldas.edu.co"
+            >
+              {t("university")}
+            </a>
+            <span className="text-slate-600 hidden sm:inline">•</span>
+            <Link
+              className="text-dark-text hover:text-white transition-colors whitespace-nowrap"
+              href="/privacy"
+            >
+              {t("privacyPolicy")}
+            </Link>
+          </div>
+          <div className="flex items-center gap-x-2 sm:gap-x-3 flex-wrap justify-center">
+            <span className="text-slate-600 hidden sm:inline">•</span>
+            <button
+              onClick={() => setShowInput(true)}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs cursor-pointer hover:opacity-80 transition-opacity ${getStatusStyle()}`}
+            >
+              <span
+                className={`inline-block h-1.5 w-1.5 rounded-full ${getStatusDot()}`}
+              />
+              {getStatusText()}
+            </button>
+            <span className="text-slate-600 hidden sm:inline">•</span>
+            <HealthStatus />
+            <span className="text-slate-600 hidden sm:inline">•</span>
+            <LocaleSwitcher />
+          </div>
         </div>
       )}
     </footer>

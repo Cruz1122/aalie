@@ -22,6 +22,8 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - T_open y T_polynomial incluyen factor ops; fórmula T(n) = Σ C_k · ops_k · count_k
 - Icono `smart_toy` por `aalie.svg`; WhileRepeatVisitor usa classify_while
 - Tests de integración usan `analyze_algorithm(source)`
+- Selector de idioma movido del header al footer
+- Mejorada responsividad del footer
 
 ### Fixed
 
