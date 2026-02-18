@@ -5,79 +5,31 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
-## [Unreleased]
+## [1.1.3] - 2026-02-17
 
 ### Added
 
-- Columna "Ops" (operaciones elementales) en tabla de costos iterativos, después de Ck
-- Campo `ops` en LineCost: número de operaciones elementales por ejecución (asignación, suma, acceso array, comparación, etc.)
-- Fórmula de eficiencia actualizada: T(n) = Σ C_k · ops_k · count_k (Ck única por línea)
+- Columna "Ops" en tabla de costos iterativos
+- Validación de eficiencia de los 30 algoritmos de ejemplos (docs/pruebas-algoritmos.md)
+- Módulo `while_analysis` y clasificación de bucles WHILE (bounded/unbounded/unknown)
+- Campos `unbounded` y `unbounded_kind` en LineCost; badge "Puede no terminar" en LineTable
+- Componente AALIEIcon; tests auténticos y exhaustivos para WHILE, determinísticos y casos promedio
 
 ### Changed
 
-- Ck pasa a ser una única constante por línea (C_1, C_2, C_3...) en lugar de suma compuesta (C_1+C_2)
-- SimpleVisitor: _ops_of_lvalue y _ops_of_expr devuelven conteo de ops en lugar de lista de C_k
-- ForVisitor: cabecera FOR con ops=3 (incremento, asignación, comparación)
-- IfVisitor, WhileVisitor, RepeatVisitor: condición con ops según expresión
-- T_open, T_polynomial y build_t_open_expr incluyen factor ops en el cálculo
-- Lvalue en asignación: no se cuenta acceso extra al array/campo (la asignación es la escritura); ej. `A[j+1] <- A[j]` = 3 ops
-- Campo `ops` siempre presente en byLine (incluye 1 para líneas con una sola operación elemental)
-
-### Added (previous)
-
-- Tests auténticos (input pseudocode → output esperado real): módulo `tests/integration/fixtures/algorithm_expectations.py` con helpers `notation_has_complexity`, `assert_worst_complexity`, `get_totals`, `get_by_line`
-- Migración de tests "arreglados" a tests auténticos: `test_algorithms.py`, `test_intermediate_algorithms.py`, `test_complex_algorithms.py`, `test_iterative_analyzer` (TestCommonAlgorithms), `test_avg_case.py`, `test_recursive_algorithms.py`, `test_analyze_endpoint.py`
-- Verificación explícita de complejidad esperada (Θ(n²), Θ(n³), Θ(log n), etc.) en tests de integración y sistema
-- Tests pseudocode para merge sort y búsqueda binaria recursiva en `test_recursive_algorithms.py`
-- Convenciones y MCP: instrucciones para ejecutar tests con `python -m pytest` (docs/development/conventions.md, mcp/README.md, .cursor/rules/aalie-conventions.mdc)
-- Componente `AALIEIcon` para el logo del asistente de IA
-- Módulo `while_analysis` con GuardInfo, UpdateSummary y classify_while para análisis de terminación de bucles WHILE
-- Tres estados de clasificación: bounded, unbounded y unknown
-- Campos opcionales `unbounded` y `unbounded_kind` en LineCost (API y @aa/types)
-- Badge "Puede no terminar" en LineTable para filas con evidencia de no terminación
-- Warning en trace de ejecución cuando un bucle alcanza el límite de seguridad (10 iteraciones)
-- Tests oráculo para WHILE: bool unbounded/bounded, decremento, sin progreso must, OR sin kill, Euclides (MOD)
-- Patrón Euclides: `var <- expr MOD var` con guard `var != 0` → bounded con iteraciones ≤ min(a,b)
-- Euclides: caso promedio usa análisis acotado (min(a,b)) en lugar de modelo probabilístico
-- Euclides: notación asintótica O(log(min(a,b))), Ω(1), Θ(log(min(a,b)))
-- Tests de integración `test_while_algorithms.py`: 23 algoritmos con WHILE (simple, anidados, mixtos) validando análisis y notación asintótica
-- Validación de T_open: tests que rechazan O(1) incorrecto y exigen variable de tamaño en T_open para algoritmos no constantes
-- Tests exhaustivos WHILE: byLine (line, kind, ck, count_raw, count), count no NaN/vacío, T_polynomial/T_open, notas coherentes
-- Tests de salida específica: WHILE incremento Θ(n), multiplicación Θ(log n), anidados Θ(n²)
-- Tests caso promedio y notaciones: avg con A_of_n/T_open, O/Ω/Θ coherentes
-- Tests oráculo adicionales en test_while_repeat_visitor: incremento lineal, multiplicación log, decremento, nota descriptiva, búsqueda binaria
-- Tests `test_deterministic_algorithms.py`: 10+ algoritmos determinísticos (WHILE/FOR constantes), avg = same_as_worst
-- Tests `test_flag_param_algorithms.py`: 5+ algoritmos con banderas (IF param=const controla update), best bounded, avg sin geométrico
-
-### Changed
-
-- Tests de integración usan `analyze_algorithm(source)` (pipeline completo) en lugar de AST directo
-- Tests system verifican `big_theta`/`big_o` para insertion sort, bubble sort, triangular, WHILE log
+- Página ejemplos: complexity actualizada (Bubble Sort O(n²), Hanoi O(1), etc.); BST con raiz.izquierda/derecha
+- Ck única por línea; SimpleVisitor/ForVisitor/IfVisitor/WhileVisitor con ops por expresión
+- T_open y T_polynomial incluyen factor ops; fórmula T(n) = Σ C_k · ops_k · count_k
+- Icono `smart_toy` por `aalie.svg`; WhileRepeatVisitor usa classify_while
+- Tests de integración usan `analyze_algorithm(source)`
 
 ### Fixed
 
-- IterativeAnalyzer.analyze: validación de AST inválido (None o no-dict); retorna resultado vacío sin AttributeError
-- Costos por línea: marcar unbounded en fallback de WHILE para mostrar ∞ en lugar de t_while cuando no se puede determinar el número de iteraciones
-- Procedimiento por línea y de eficiencia: cuando hay bucles unbounded, mostrar que tiende a infinito (N_ℓ → ∞, T_open → ∞, A(n) → ∞) en lugar de t_while
-- Notación asintótica: cuando hay bucles unbounded, mostrar O(∞), Ω(1), Θ(∞) en lugar de O(n^k) (no sustituir t_while por n)
-- Best case card: mostrar Θ(1)/Ω(1) en lugar de ω(—) cuando el bucle es acotado sin variable de tamaño (ej. param-controlled)
-- Costos por línea: mostrar ∞ en lugar de t_while cuando hay bucles unbounded (worst/avg)
-- Caso promedio determinístico: cuando worst == best (bucles con cotas constantes, sin IF early return), no se aplica modelo probabilístico; avg = same_as_worst
-- Algoritmos con banderas (IF param=const controla update): best case asume param habilita progreso → bounded; avg no aplica modelo geométrico (E[iter]=1/p) cuando unbounded por param-controlled
-- Detección de variable de tamaño: excluir params de control detectados dinámicamente (IF id=const que guarda update del WHILE), sin listas explícitas de nombres
-- IterativeAnalysisView: ocultar bolitas cuando la notación asintótica es demasiado larga para evitar desborde (ej. Θ(log(min(a,b))))
-- IterativeAnalyzer: corregido O(1) incorrecto para WHILE con log, t_while y exp
-  - BaseAnalyzer._str_to_sympy: parseo de LaTeX `\log_{k}(expr)` y `\frac{a}{b}`
-  - WhileRepeatVisitor._str_to_sympy: mismo soporte para expresiones log
-  - Sustitución de símbolos iterativos (t_while_L, exp_0) por variable de tamaño antes de calcular notación
-  - Detección de variable desde params (n, exp, m)
-  - Poly fallback: capturar excepciones con expresiones log (no polinómicas)
-
-### Changed
-
-- Icono `smart_toy` reemplazado por `aalie.svg` en ModeToggle, AIModeView, ChatBot, ManualModeView y user-guide
-- WhileRepeatVisitor usa classify_while para distinguir bucles acotados, no acotados y desconocidos
-- Guard y updates soportan Identifier "true"/"false" del parser además de Literal
+- RecursiveAnalyzer: subproblemas type "division" (raiz.izquierda/derecha) no añadían "b"
+- IterativeAnalyzer: AST inválido, O(1) incorrecto para WHILE con log, parseo LaTeX `\log_k` y `\frac`
+- Bucles unbounded: mostrar ∞ en costos y notación O(∞)/Θ(∞) en lugar de t_while
+- Caso promedio determinístico y algoritmos con banderas (param-controlled)
+- IterativeAnalysisView: ocultar bolitas cuando notación demasiado larga
 
 ## [1.1.2] - 2026-02-14
 
