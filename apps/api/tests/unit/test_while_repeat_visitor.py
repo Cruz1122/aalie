@@ -5,6 +5,7 @@ Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 import unittest
 from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
+from app.modules.parsing.service import parse_source
 from sympy import Symbol, Integer
 
 
@@ -329,4 +330,252 @@ class TestWhileRepeatVisitor(unittest.TestCase):
         """Test: _has_non_control_comparison con nodo que no es dict"""
         result = self.analyzer._has_non_control_comparison("not_a_dict", "i")
         self.assertFalse(result)
+
+    # --- Tests oráculo (plan mejora WHILE - Fase 1) ---
+
+    def test_oracle_while_bool_unbounded_no_kill(self):
+        """WHILE flag=true DO { x <- x + 1 } → unbounded, unbounded_kind=non_terminating"""
+        src = """test() BEGIN
+  flag <- true
+  WHILE (flag = true) DO BEGIN
+    x <- x + 1
+  END
+END
+"""
+        r = parse_source(src)
+        self.assertTrue(r.get("ok"), f"Parse failed: {r.get('errors')}")
+        self.analyzer.analyze(r["ast"], "worst")
+        while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
+        self.assertGreater(len(while_rows), 0, "Debe haber al menos una fila while")
+        wr = while_rows[0]
+        self.assertTrue(wr.get("unbounded"), "Debe ser unbounded")
+        self.assertEqual(wr.get("unbounded_kind"), "non_terminating")
+        self.assertIn("never set to false", wr.get("note", "").lower())
+
+    def test_oracle_while_bool_bounded_kill(self):
+        """WHILE flag=true DO { flag <- false } → bounded, iterations=1"""
+        src = """test() BEGIN
+  flag <- true
+  WHILE (flag = true) DO BEGIN
+    flag <- false
+  END
+END
+"""
+        r = parse_source(src)
+        self.assertTrue(r.get("ok"), f"Parse failed: {r.get('errors')}")
+        self.analyzer.analyze(r["ast"], "worst")
+        while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
+        self.assertGreater(len(while_rows), 0)
+        wr = while_rows[0]
+        self.assertFalse(wr.get("unbounded", False), "No debe ser unbounded")
+        # Condición: 2 evaluaciones (entrada + salida), count = iterations+1 = 2
+        count_str = str(wr.get("count", ""))
+        self.assertEqual(count_str, "2", f"Count debe ser 2 (1 iteración + 1 eval salida): {count_str}")
+
+    def test_oracle_while_decrement_bounded(self):
+        """WHILE i != 0 DO { i <- i - 1 } con i inicializado → bounded, iterations = i0"""
+        src = """test() BEGIN
+  i <- n
+  WHILE (i != 0) DO BEGIN
+    i <- i - 1
+  END
+END
+"""
+        r = parse_source(src)
+        self.assertTrue(r.get("ok"), f"Parse failed: {r.get('errors')}")
+        self.analyzer.analyze(r["ast"], "worst")
+        while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
+        self.assertGreater(len(while_rows), 0)
+        wr = while_rows[0]
+        self.assertFalse(wr.get("unbounded", False), "No debe ser unbounded")
+        count_str = str(wr.get("count", ""))
+        # Debe contener n o i_0 (iteraciones = valor inicial - 0)
+        self.assertTrue(
+            "n" in count_str or "i" in count_str.lower(),
+            f"Count debe reflejar iteraciones: {count_str}",
+        )
+
+    def test_oracle_while_no_progress_must(self):
+        """WHILE i < n DO { IF (p) THEN i <- i+1 } → unbounded (no progreso must)"""
+        src = """test() BEGIN
+  i <- 0
+  WHILE (i < n) DO BEGIN
+    IF (p) THEN BEGIN
+      i <- i + 1
+    END
+  END
+END
+"""
+        r = parse_source(src)
+        self.assertTrue(r.get("ok"), f"Parse failed: {r.get('errors')}")
+        self.analyzer.analyze(r["ast"], "worst")
+        while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
+        self.assertGreater(len(while_rows), 0)
+        wr = while_rows[0]
+        self.assertTrue(wr.get("unbounded"), "Debe ser unbounded (update solo en rama condicional)")
+        self.assertIn("not change", wr.get("note", "").lower())
+
+    def test_oracle_while_or_no_progress(self):
+        """WHILE (i < n OR flag = true) DO { i <- i + 1 } con flag sin kill → unbounded"""
+        src = """test() BEGIN
+  i <- 0
+  flag <- true
+  WHILE ((i < n) OR (flag = true)) DO BEGIN
+    i <- i + 1
+  END
+END
+"""
+        r = parse_source(src)
+        self.assertTrue(r.get("ok"), f"Parse failed: {r.get('errors')}")
+        self.analyzer.analyze(r["ast"], "worst")
+        while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
+        self.assertGreater(len(while_rows), 0)
+        wr = while_rows[0]
+        self.assertTrue(wr.get("unbounded"), "Debe ser unbounded (OR con disyunto sin kill)")
+
+    def test_oracle_while_euclid_mod(self):
+        """WHILE (b != 0) DO { b <- a MOD b; ... } (Euclides) → bounded con min(a,b)"""
+        src = """mcd(a, b) BEGIN
+  WHILE (b != 0) DO BEGIN
+    temp <- b;
+    b <- a MOD b;
+    a <- temp;
+  END
+  RETURN a;
+END
+"""
+        r = parse_source(src)
+        self.assertTrue(r.get("ok"), f"Parse failed: {r.get('errors')}")
+        self.analyzer.analyze(r["ast"], "worst")
+        while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
+        self.assertGreater(len(while_rows), 0)
+        wr = while_rows[0]
+        self.assertFalse(wr.get("unbounded", False), "Debe ser bounded (algoritmo de Euclides)")
+        count_str = str(wr.get("count", ""))
+        self.assertIn("min", count_str.lower(), f"Count debe contener min(a,b): {count_str}")
+
+    def test_oracle_while_increment_linear_bounded(self):
+        """WHILE i < n DO { i <- i + 1 } → bounded, count = n + 1 (cond eval)"""
+        src = """linear(n) BEGIN
+  i <- 0;
+  WHILE (i < n) DO BEGIN
+    x <- 1;
+    i <- i + 1;
+  END
+END
+"""
+        r = parse_source(src)
+        self.assertTrue(r.get("ok"), f"Parse failed: {r.get('errors')}")
+        self.analyzer.analyze(r["ast"], "worst")
+        while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
+        self.assertGreater(len(while_rows), 0)
+        wr = while_rows[0]
+        self.assertFalse(wr.get("unbounded", False), "Debe ser bounded (incremento lineal)")
+        count_str = str(wr.get("count", ""))
+        self.assertIn("n", count_str, f"Count debe contener n: {count_str}")
+        note = wr.get("note", "")
+        self.assertTrue(
+            "worst" in note.lower() or "variable" in note.lower() or "n" in note.lower(),
+            f"Note debe describir análisis: {note}",
+        )
+
+    def test_oracle_while_multiplication_log_bounded(self):
+        """WHILE i <= n DO { i <- i * 2 } → bounded, O(log n) iteraciones"""
+        src = """logLoop(n) BEGIN
+  i <- 1;
+  WHILE (i <= n) DO BEGIN
+    x <- 1;
+    i <- i * 2;
+  END
+END
+"""
+        r = parse_source(src)
+        self.assertTrue(r.get("ok"), f"Parse failed: {r.get('errors')}")
+        self.analyzer.analyze(r["ast"], "worst")
+        while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
+        self.assertGreater(len(while_rows), 0)
+        wr = while_rows[0]
+        self.assertFalse(wr.get("unbounded", False), "Debe ser bounded (multiplicación)")
+        count_str = str(wr.get("count", ""))
+        self.assertTrue(
+            "log" in count_str.lower() or "n" in count_str,
+            f"Count debe reflejar O(log n): {count_str}",
+        )
+
+    def test_oracle_while_decrement_to_zero_bounded(self):
+        """WHILE i > 0 DO { i <- i - 1 } con i <- n → bounded, n+1 evaluaciones"""
+        src = """countdown(n) BEGIN
+  i <- n;
+  WHILE (i > 0) DO BEGIN
+    x <- 1;
+    i <- i - 1;
+  END
+END
+"""
+        r = parse_source(src)
+        self.assertTrue(r.get("ok"), f"Parse failed: {r.get('errors')}")
+        self.analyzer.analyze(r["ast"], "worst")
+        while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
+        self.assertGreater(len(while_rows), 0)
+        wr = while_rows[0]
+        self.assertFalse(wr.get("unbounded", False), "Debe ser bounded (decremento)")
+        count_str = str(wr.get("count", ""))
+        self.assertIn("n", count_str, f"Count debe contener n: {count_str}")
+
+    def test_oracle_while_note_contains_condition_info(self):
+        """Filas WHILE bounded deben tener note que describa condición o iteraciones."""
+        src = """simple(n) BEGIN
+  i <- 0;
+  WHILE (i < n) DO BEGIN
+    i <- i + 1;
+  END
+END
+"""
+        r = parse_source(src)
+        self.assertTrue(r.get("ok"), f"Parse failed: {r.get('errors')}")
+        self.analyzer.analyze(r["ast"], "worst")
+        while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
+        self.assertGreater(len(while_rows), 0)
+        wr = while_rows[0]
+        note = wr.get("note", "")
+        # Note debe mencionar variable, condición o modo (en/es)
+        self.assertGreater(len(note), 0, "WHILE debe tener note")
+        keywords = ["while", "condition", "variable", "worst", "condición", "peor", "línea"]
+        self.assertTrue(
+            any(kw in note.lower() for kw in keywords) or "i" in note or "n" in note,
+            f"Note debe describir análisis: {note}",
+        )
+
+    def test_oracle_while_binary_search_pattern(self):
+        """WHILE low <= high con mid = (low+high)/2 → patrón búsqueda binaria, O(log n)"""
+        src = """binarySearch(A, n, x) BEGIN
+  low <- 1;
+  high <- n;
+  WHILE (low <= high) DO BEGIN
+    mid <- (low + high) / 2;
+    IF (A[mid] = x) THEN BEGIN
+      RETURN mid;
+    END
+    IF (A[mid] < x) THEN BEGIN
+      low <- mid + 1;
+    END
+    ELSE BEGIN
+      high <- mid - 1;
+    END
+  END
+  RETURN -1;
+END
+"""
+        r = parse_source(src)
+        self.assertTrue(r.get("ok"), f"Parse failed: {r.get('errors')}")
+        self.analyzer.analyze(r["ast"], "worst")
+        while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
+        self.assertGreater(len(while_rows), 0)
+        wr = while_rows[0]
+        self.assertFalse(wr.get("unbounded", False), "Búsqueda binaria debe ser bounded")
+        count_str = str(wr.get("count", ""))
+        self.assertTrue(
+            "log" in count_str.lower() or "n" in count_str,
+            f"Count debe reflejar O(log n): {count_str}",
+        )
 

@@ -24,9 +24,12 @@ class LineCost(BaseModel):
     line: int
     kind: str  # "assign" | "if" | "for" | "while" | "repeat" | "call" | "return" | "decl" | "other"
     ck: str
+    ops: Optional[int] = None  # Operaciones elementales por ejecución
     count: str
     count_raw: str  # Sumatorias sin simplificar
     note: Optional[str] = None
+    unbounded: Optional[bool] = None  # True si el bucle puede no terminar
+    unbounded_kind: Optional[str] = None  # "non_terminating" | "unknown"
 
 
 class AnalyzeOpenResponse(BaseModel):

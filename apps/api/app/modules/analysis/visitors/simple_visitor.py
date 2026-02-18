@@ -1,6 +1,6 @@
 # apps/api/app/analysis/visitors/simple_visitor.py
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 from sympy import Integer
 
 
@@ -82,19 +82,9 @@ class SimpleVisitor:
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         line = node.get("pos", {}).get("line", 0)
-        ck_terms = []
-        
-        # target (p.ej., A[i] o x.f)
-        ck_terms += self._cost_of_lvalue(node.get("target", {}))
-        
-        # expr (recorre y collecciona constantes)
-        ck_terms += self._cost_of_expr(node.get("value"))
-        
-        # constante de la propia asignación
-        ck_terms.append(self.C())  # -> "C_{k}"
-        
-        ck = " + ".join(ck_terms)
-        self.add_row(line, "assign", ck, Integer(1))
+        ops = self._ops_of_lvalue(node.get("target", {})) + self._ops_of_expr(node.get("value")) + 1  # +1 asignación
+        ck = self.C()
+        self.add_row(line, "assign", ck, Integer(1), ops=ops)
     
     def visitCallStmt(self, node: Dict[str, Any], _mode: str = "worst") -> None:
         """
@@ -107,13 +97,9 @@ class SimpleVisitor:
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         line = node.get("pos", {}).get("line", 0)
-        ck_terms = [self.C()]  # costo de la llamada
-        
-        for arg in node.get("args", []):
-            ck_terms += self._cost_of_expr(arg)
-        
-        ck = " + ".join(ck_terms)
-        self.add_row(line, "call", ck, Integer(1))
+        ops = 1 + sum(self._ops_of_expr(arg) for arg in node.get("args", []))  # 1 llamada + args
+        ck = self.C()
+        self.add_row(line, "call", ck, Integer(1), ops=ops)
     
     def visitReturn(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """
@@ -126,10 +112,8 @@ class SimpleVisitor:
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         line = node.get("pos", {}).get("line", 0)
-        ck_terms = self._cost_of_expr(node.get("value"))
-        ck_terms.append(self.C())  # costo del return
-        
-        ck = " + ".join(ck_terms)
+        ops = self._ops_of_expr(node.get("value")) + 1  # +1 return
+        ck = self.C()
         
         # En caso promedio con early return en bucle:
         # - return i (éxito): 1 (siempre ocurre en Modelo A, no multiplicado por E[iter])
@@ -177,7 +161,7 @@ class SimpleVisitor:
                 # La nota se agregará en IfVisitor si es necesario, aquí solo marcamos éxito
                 note = self._note("avg_success")
         
-        self.add_row(line, "return", ck, count, note=note)
+        self.add_row(line, "return", ck, count, note=note, ops=ops)
     
     def visitPrint(self, node: Dict[str, Any], _mode: str = "worst") -> None:
         """
@@ -191,14 +175,9 @@ class SimpleVisitor:
             mode: Modo de análisis
         """
         line = node.get("pos", {}).get("line", 0)
-        ck_terms = [self.C()]  # costo base de print (constante)
-        
-        # Agregar costo de evaluar cada argumento
-        for arg in node.get("args", []):
-            ck_terms += self._cost_of_expr(arg)
-        
-        ck = " + ".join(ck_terms)
-        self.add_row(line, "print", ck, Integer(1))
+        ops = 1 + sum(self._ops_of_expr(arg) for arg in node.get("args", []))  # 1 print + args
+        ck = self.C()
+        self.add_row(line, "print", ck, Integer(1), ops=ops)
     
     def visitDecl(self, node: Dict[str, Any], _mode: str = "worst") -> None:
         """
@@ -209,120 +188,100 @@ class SimpleVisitor:
             mode: Modo de análisis
         """
         line = node.get("pos", {}).get("line", 0)
-        ck_terms = [self.C()]  # costo de la declaración
-        
-        # Si la declaración incluye tamaños con expresiones
-        if "size" in node:
-            ck_terms += self._cost_of_expr(node["size"])
-        
-        ck = " + ".join(ck_terms)
-        self.add_row(line, "decl", ck, Integer(1))
+        ops = 1 + (self._ops_of_expr(node["size"]) if "size" in node else 0)  # 1 decl + size si existe
+        ck = self.C()
+        self.add_row(line, "decl", ck, Integer(1), ops=ops)
     
-    def _cost_of_lvalue(self, lv: Dict[str, Any]) -> List[str]:
+    def _ops_of_lvalue(self, lv: Dict[str, Any]) -> int:
         """
-        Calcula el costo de un lvalue (lado izquierdo de una asignación).
+        Calcula el número de operaciones elementales de un lvalue (lado izquierdo de una asignación).
         
         Args:
             lv: Lvalue del AST
             
         Returns:
-            Lista de términos de costo
+            Número de operaciones elementales
         """
-        terms = []
-        
         if not isinstance(lv, dict):
-            return terms
+            return 0
         
         t = lv.get("type", "")
         
         # ID simple: no agrega nada
         if t.lower() == "identifier":
-            return terms
+            return 0
         
-        # A[i] o anidado
+        # A[i] o anidado: solo ops del índice (la asignación es la escritura, no se cuenta acceso extra)
         elif t.lower() == "index":
-            terms.append(self.C())  # costo de indexación
-            terms += self._cost_of_expr(lv.get("index", {}))
-            # Si el target es también un índice o campo, calcular su costo
+            ops = self._ops_of_expr(lv.get("index", {}))
             target = lv.get("target", {})
             if target.get("type", "").lower() in ("index", "field"):
-                terms += self._cost_of_lvalue(target)
+                ops += self._ops_of_lvalue(target)
+            return ops
         
-        # Acceso a campo x.f
+        # Acceso a campo x.f: solo ops del target (la asignación es la escritura)
         elif t.lower() == "field":
-            terms.append(self.C())  # costo de acceso a campo
-            # Si el target es también un índice o campo, calcular su costo
+            ops = 0
             target = lv.get("target", {})
             if target.get("type", "").lower() in ("index", "field"):
-                terms += self._cost_of_lvalue(target)
+                ops += self._ops_of_lvalue(target)
+            return ops
         
-        return terms
+        return 0
     
-    def _cost_of_expr(self, e: Any) -> List[str]:
+    def _ops_of_expr(self, e: Any) -> int:
         """
-        Calcula el costo de una expresión.
+        Calcula el número de operaciones elementales de una expresión.
         
         Args:
             e: Expresión del AST
             
         Returns:
-            Lista de términos de costo
+            Número de operaciones elementales
         """
         if e is None:
-            return []
+            return 0
         
         if not isinstance(e, dict):
-            return []
+            return 0
         
         t = e.get("type", "")
         
         # Literales y identificadores simples: no tienen costo
         if t.lower() in ("literal", "identifier", "number", "string", "true", "false", "null"):
-            return []
+            return 0
         
         # Acceso a índice A[i]
         elif t.lower() == "index":
-            terms = [self.C()]  # costo del acceso
-            terms += self._cost_of_expr(e.get("index", {}))
-            # Si el target es también un índice, calcular su costo
+            ops = 1 + self._ops_of_expr(e.get("index", {}))
             target = e.get("target", {})
             if target.get("type", "").lower() == "index":
-                terms += self._cost_of_expr(target)
-            return terms
+                ops += self._ops_of_expr(target)
+            return ops
         
         # Acceso a campo x.f
         elif t.lower() == "field":
-            terms = [self.C()]  # costo del acceso a campo
-            terms += self._cost_of_expr(e.get("target", {}))
-            return terms
+            return 1 + self._ops_of_expr(e.get("target", {}))
         
-        # Operación binaria
+        # Operación binaria: left + right + 1 (op)
         elif t.lower() == "binary":
-            terms = []
-            terms += self._cost_of_expr(e.get("left", {}))
-            terms += self._cost_of_expr(e.get("right", {}))
-            terms.append(self.C())  # costo de la operación
-            return terms
+            return self._ops_of_expr(e.get("left", {})) + self._ops_of_expr(e.get("right", {})) + 1
         
         # Operación unaria
         elif t.lower() == "unary":
-            terms = self._cost_of_expr(e.get("arg", {}))
-            # Solo agregar costo si la operación es compleja (no simple negación de literal)
+            arg_ops = self._ops_of_expr(e.get("arg", {}))
             arg_type = e.get("arg", {}).get("type", "").lower()
             if arg_type not in ("literal", "number", "identifier"):
-                terms.append(self.C())  # costo de la operación
-            return terms
+                arg_ops += 1
+            return arg_ops
         
         # Llamada a función
         elif t.lower() == "call":
-            terms = [self.C()]  # costo de la llamada
-            for arg in e.get("args", []):
-                terms += self._cost_of_expr(arg)
-            return terms
+            return 1 + sum(self._ops_of_expr(arg) for arg in e.get("args", []))
         
         # Otros tipos: fallback prudente
         else:
-            return [self.C()]
+            return 1
     
     def visit(self, node: Any, mode: str = "worst") -> None:
         """

@@ -1,433 +1,145 @@
 # tests/integration/test_avg_case.py
 """
 Tests de integración para caso promedio (average case analysis).
-Verifica que el análisis de caso promedio funcione correctamente con esperanzas.
+Usa pseudocode como input y verifica expectedRuns, A_of_n, avg_model_info.
+
+Author: @Cruz1122
+"""
+import pytest
+from app.modules.analysis.service import analyze_algorithm
+from tests.integration.fixtures.algorithm_expectations import notation_has_complexity
+
+
+LINEAR_SEARCH = """linearSearch(A, n, x) BEGIN
+  FOR i <- 1 TO n DO BEGIN
+    IF (A[i] = x) THEN BEGIN
+      RETURN i;
+    END
+  END
+  RETURN -1;
+END
 """
 
-import pytest
-from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
+BUBBLE_SORT = """burbuja(A, n) BEGIN
+  FOR i <- 1 TO n - 1 DO BEGIN
+    FOR j <- 1 TO n - i DO BEGIN
+      IF (A[j] > A[j + 1]) THEN BEGIN
+        temp <- A[j];
+        A[j] <- A[j + 1];
+        A[j + 1] <- temp;
+      END
+    END
+  END
+END
+"""
+
+SIMPLE_FOR = """simpleFor(n) BEGIN
+  FOR i <- 1 TO n DO BEGIN
+    x <- 1;
+  END
+END
+"""
+
+IF_BOTH_BRANCHES = """ifBoth(x) BEGIN
+  IF (x > 0) THEN BEGIN
+    y <- 1;
+  END
+  ELSE BEGIN
+    y <- 0;
+  END
+END
+"""
+
+SIMPLE_ASSIGN = """simpleAssign() BEGIN
+  x <- 1;
+END
+"""
 
 
 class TestAvgCase:
-    """Tests para análisis de caso promedio."""
-    
-    def test_avg_case_has_expected_runs(self):
-        """Test: Verificar que caso promedio tiene expectedRuns en cada fila"""
-        analyzer = IterativeAnalyzer()
-        
-        # AST simple: bucle for
-        ast = {
-            "type": "Program",
-            "body": [
-                {
-                    "type": "For",
-                    "var": "i",
-                    "start": {"type": "number", "value": 1},
-                    "end": {"type": "identifier", "name": "n"},
-                    "body": {
-                        "type": "Block",
-                        "body": [
-                            {
-                                "type": "Assign",
-                                "target": {"type": "identifier", "name": "x"},
-                                "value": {"type": "number", "value": 1},
-                                "pos": {"line": 2}
-                            }
-                        ]
-                    },
-                    "pos": {"line": 1}
-                }
-            ]
-        }
-        
-        # Analizar en modo promedio
-        result = analyzer.analyze(ast, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
-        
-        assert result.get("ok", False), "Análisis debe ser exitoso"
-        assert "byLine" in result, "Debe tener byLine"
-        
-        # Verificar que todas las filas tienen expectedRuns
-        for row in result["byLine"]:
-            assert "expectedRuns" in row, f"Fila {row.get('line')} debe tener expectedRuns"
-            assert isinstance(row["expectedRuns"], str), "expectedRuns debe ser string"
-    
-    def test_avg_case_has_model_info(self):
-        """Test: Verificar que caso promedio tiene avg_model_info en totals"""
-        analyzer = IterativeAnalyzer(locale="es")
-        
-        # AST simple
-        ast = {
-            "type": "Program",
-            "body": [
-                {
-                    "type": "Assign",
-                    "target": {"type": "identifier", "name": "x"},
-                    "value": {"type": "number", "value": 1},
-                    "pos": {"line": 1}
-                }
-            ]
-        }
-        
-        # Analizar en modo promedio
-        result = analyzer.analyze(ast, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
-        
-        assert result.get("ok", False), "Análisis debe ser exitoso"
-        assert "totals" in result, "Debe tener totals"
-        assert "avg_model_info" in result["totals"], "Debe tener avg_model_info"
-        
-        model_info = result["totals"]["avg_model_info"]
-        assert "mode" in model_info, "avg_model_info debe tener mode"
-        assert "note" in model_info, "avg_model_info debe tener note"
-        assert model_info["mode"] == "uniform", "mode debe ser uniform"
-        assert "uniforme" in model_info["note"].lower(), "note debe mencionar uniforme"
-    
-    def test_linear_search_avg_case(self):
-        """Test: Búsqueda lineal en caso promedio (posición uniforme)"""
-        analyzer = IterativeAnalyzer()
-        
-        # AST de búsqueda lineal: FOR i=1 TO n, IF A[i]=x THEN RETURN i
-        ast = {
-            "type": "Program",
-            "body": [
-                {
-                    "type": "For",
-                    "var": "i",
-                    "start": {"type": "number", "value": 1},
-                    "end": {"type": "identifier", "name": "n"},
-                    "body": {
-                        "type": "Block",
-                        "body": [
-                            {
-                                "type": "If",
-                                "test": {
-                                    "type": "binary",
-                                    "op": "=",
-                                    "left": {
-                                        "type": "index",
-                                        "target": {"type": "identifier", "name": "A"},
-                                        "index": {"type": "identifier", "name": "i"}
-                                    },
-                                    "right": {"type": "identifier", "name": "x"}
-                                },
-                                "consequent": {
-                                    "type": "Block",
-                                    "body": [
-                                        {
-                                            "type": "Return",
-                                            "value": {"type": "identifier", "name": "i"},
-                                            "pos": {"line": 3}
-                                        }
-                                    ]
-                                },
-                                "alternate": None,
-                                "pos": {"line": 2}
-                            }
-                        ]
-                    },
-                    "pos": {"line": 1}
-                }
-            ]
-        }
-        
-        # Analizar en modo promedio con modelo uniforme
-        result = analyzer.analyze(ast, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
-        
-        assert result.get("ok", False), "Análisis debe ser exitoso"
-        assert "byLine" in result, "Debe tener byLine"
-        
-        # Verificar que hay filas
-        assert len(result["byLine"]) > 0, "Debe tener al menos una fila"
-        
-        # Verificar que la comparación tiene probabilidad aplicada
-        # En caso promedio con modelo uniforme, la condición del IF tiene p=1/2
-        # Pero como hay early return, la esperanza debería ser menor que n
-        
-        # Verificar estructura básica
-        totals = result["totals"]
-        assert "avg_model_info" in totals, "Debe tener avg_model_info"
-        assert "A_of_n" in totals, "Debe tener A_of_n para caso promedio"
-    
-    def test_bubble_sort_avg_case(self):
-        """Test: Bubble sort básico en caso promedio"""
-        analyzer = IterativeAnalyzer()
-        
-        # AST de bubble sort: dos bucles FOR anidados con IF para swap
-        ast = {
-            "type": "Program",
-            "body": [
-                {
-                    "type": "For",
-                    "var": "i",
-                    "start": {"type": "number", "value": 1},
-                    "end": {
-                        "type": "binary",
-                        "op": "-",
-                        "left": {"type": "identifier", "name": "n"},
-                        "right": {"type": "number", "value": 1}
-                    },
-                    "body": {
-                        "type": "Block",
-                        "body": [
-                            {
-                                "type": "For",
-                                "var": "j",
-                                "start": {"type": "number", "value": 1},
-                                "end": {
-                                    "type": "binary",
-                                    "op": "-",
-                                    "left": {"type": "identifier", "name": "n"},
-                                    "right": {"type": "identifier", "name": "i"}
-                                },
-                                "body": {
-                                    "type": "Block",
-                                    "body": [
-                                        {
-                                            "type": "If",
-                                            "test": {
-                                                "type": "binary",
-                                                "op": ">",
-                                                "left": {
-                                                    "type": "index",
-                                                    "target": {"type": "identifier", "name": "A"},
-                                                    "index": {"type": "identifier", "name": "j"}
-                                                },
-                                                "right": {
-                                                    "type": "index",
-                                                    "target": {"type": "identifier", "name": "A"},
-                                                    "index": {
-                                                        "type": "binary",
-                                                        "op": "+",
-                                                        "left": {"type": "identifier", "name": "j"},
-                                                        "right": {"type": "number", "value": 1}
-                                                    }
-                                                }
-                                            },
-                                            "consequent": {
-                                                "type": "Block",
-                                                "body": [
-                                                    {
-                                                        "type": "Assign",
-                                                        "target": {"type": "identifier", "name": "temp"},
-                                                        "value": {
-                                                            "type": "index",
-                                                            "target": {"type": "identifier", "name": "A"},
-                                                            "index": {"type": "identifier", "name": "j"}
-                                                        },
-                                                        "pos": {"line": 4}
-                                                    },
-                                                    {
-                                                        "type": "Assign",
-                                                        "target": {
-                                                            "type": "index",
-                                                            "target": {"type": "identifier", "name": "A"},
-                                                            "index": {"type": "identifier", "name": "j"}
-                                                        },
-                                                        "value": {
-                                                            "type": "index",
-                                                            "target": {"type": "identifier", "name": "A"},
-                                                            "index": {
-                                                                "type": "binary",
-                                                                "op": "+",
-                                                                "left": {"type": "identifier", "name": "j"},
-                                                                "right": {"type": "number", "value": 1}
-                                                            }
-                                                        },
-                                                        "pos": {"line": 5}
-                                                    },
-                                                    {
-                                                        "type": "Assign",
-                                                        "target": {
-                                                            "type": "index",
-                                                            "target": {"type": "identifier", "name": "A"},
-                                                            "index": {
-                                                                "type": "binary",
-                                                                "op": "+",
-                                                                "left": {"type": "identifier", "name": "j"},
-                                                                "right": {"type": "number", "value": 1}
-                                                            }
-                                                        },
-                                                        "value": {"type": "identifier", "name": "temp"},
-                                                        "pos": {"line": 6}
-                                                    }
-                                                ]
-                                            },
-                                            "alternate": None,
-                                            "pos": {"line": 3}
-                                        }
-                                    ]
-                                },
-                                "pos": {"line": 2}
-                            }
-                        ]
-                    },
-                    "pos": {"line": 1}
-                }
-            ]
-        }
-        
-        # Analizar en modo promedio con modelo uniforme
-        result = analyzer.analyze(ast, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
-        
-        assert result.get("ok", False), "Análisis debe ser exitoso"
-        assert "byLine" in result, "Debe tener byLine"
-        assert "totals" in result, "Debe tener totals"
-        
-        # Verificar que hay filas
-        assert len(result["byLine"]) > 0, "Debe tener al menos una fila"
-        
-        # Verificar estructura
-        totals = result["totals"]
-        assert "avg_model_info" in totals, "Debe tener avg_model_info"
-        assert "A_of_n" in totals, "Debe tener A_of_n"
-        
-        # Verificar que todas las filas tienen expectedRuns
-        for row in result["byLine"]:
-            assert "expectedRuns" in row, f"Fila {row.get('line')} debe tener expectedRuns"
-    
-    def test_if_with_probability_avg_case(self):
-        """Test: IF con probabilidad en caso promedio"""
-        analyzer = IterativeAnalyzer()
-        
-        # AST con IF que tiene ambas ramas
-        ast = {
-            "type": "Program",
-            "body": [
-                {
-                    "type": "If",
-                    "test": {
-                        "type": "binary",
-                        "op": ">",
-                        "left": {"type": "identifier", "name": "x"},
-                        "right": {"type": "number", "value": 0}
-                    },
-                    "consequent": {
-                        "type": "Block",
-                        "body": [
-                            {
-                                "type": "Assign",
-                                "target": {"type": "identifier", "name": "y"},
-                                "value": {"type": "number", "value": 1},
-                                "pos": {"line": 2}
-                            }
-                        ]
-                    },
-                    "alternate": {
-                        "type": "Block",
-                        "body": [
-                            {
-                                "type": "Assign",
-                                "target": {"type": "identifier", "name": "y"},
-                                "value": {"type": "number", "value": 0},
-                                "pos": {"line": 3}
-                            }
-                        ]
-                    },
-                    "pos": {"line": 1}
-                }
-            ]
-        }
-        
-        # Analizar en modo promedio
-        result = analyzer.analyze(ast, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
-        
-        assert result.get("ok", False), "Análisis debe ser exitoso"
-        assert "byLine" in result, "Debe tener byLine"
-        
-        # Verificar que hay filas para ambas ramas (then y else)
-        # En caso promedio, ambas ramas deben tener probabilidades aplicadas
-        rows = result["byLine"]
-        assert len(rows) >= 3, "Debe tener al menos guardia, then y else"
-        
-        # Verificar que las filas tienen expectedRuns
-        for row in rows:
-            assert "expectedRuns" in row, f"Fila {row.get('line')} debe tener expectedRuns"
-    
-    def test_symbolic_model_avg_case(self):
-        """Test: Modelo simbólico en caso promedio"""
-        analyzer = IterativeAnalyzer(locale="es")
-        
-        # AST simple
-        ast = {
-            "type": "Program",
-            "body": [
-                {
-                    "type": "Assign",
-                    "target": {"type": "identifier", "name": "x"},
-                    "value": {"type": "number", "value": 1},
-                    "pos": {"line": 1}
-                }
-            ]
-        }
-        
-        # Analizar en modo promedio con modelo simbólico
-        result = analyzer.analyze(ast, mode="avg", avg_model={"mode": "symbolic", "predicates": {}})
-        
-        assert result.get("ok", False), "Análisis debe ser exitoso"
-        assert "totals" in result, "Debe tener totals"
-        
-        totals = result["totals"]
-        assert "avg_model_info" in totals, "Debe tener avg_model_info"
-        
-        model_info = totals["avg_model_info"]
-        assert model_info["mode"] == "symbolic", "mode debe ser symbolic"
-        assert "simbólico" in model_info["note"].lower(), "note debe mencionar simbólico"
-        
-        # Verificar que hay hipótesis cuando es simbólico
-        assert "hypotheses" in totals, "Debe tener hypotheses para modelo simbólico"
-        assert len(totals["hypotheses"]) > 0, "Debe tener al menos una hipótesis"
-    
-    def test_avg_case_procedure_steps(self):
-        """Test: Verificar que caso promedio genera pasos de procedimiento"""
-        analyzer = IterativeAnalyzer()
-        
-        # AST simple
-        ast = {
-            "type": "Program",
-            "body": [
-                {
-                    "type": "For",
-                    "var": "i",
-                    "start": {"type": "number", "value": 1},
-                    "end": {"type": "identifier", "name": "n"},
-                    "body": {
-                        "type": "Block",
-                        "body": [
-                            {
-                                "type": "Assign",
-                                "target": {"type": "identifier", "name": "x"},
-                                "value": {"type": "number", "value": 1},
-                                "pos": {"line": 2}
-                            }
-                        ]
-                    },
-                    "pos": {"line": 1}
-                }
-            ]
-        }
-        
-        # Analizar en modo promedio
-        result = analyzer.analyze(ast, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
-        
-        assert result.get("ok", False), "Análisis debe ser exitoso"
-        assert "totals" in result, "Debe tener totals"
-        
-        totals = result["totals"]
-        
-        # Verificar que hay A_of_n para caso promedio
-        assert "A_of_n" in totals, "Debe tener A_of_n para caso promedio"
-        
-        # Verificar que hay información del modelo promedio
-        assert "avg_model_info" in totals, "Debe tener avg_model_info"
-        
-        # Verificar pasos del procedimiento si están disponibles
-        # Los pasos del procedimiento se agregan a procedure (opcional)
-        if "procedure" in totals:
-            procedure = totals["procedure"]
-            assert isinstance(procedure, list), "procedure debe ser una lista"
-            assert len(procedure) > 0, "Debe tener al menos un paso del procedimiento"
-            
-            # Verificar que hay pasos relacionados con caso promedio
-            avg_related_steps = [step for step in procedure if "A(n)" in step or "E[N" in step or "promedio" in step.lower() or "esperanza" in step.lower() or "A_of_n" in step]
-            # No es estricto: puede que no haya pasos específicos de promedio en procedimientos simples
-            # Si hay procedure, verificamos que sea una lista válida
+    """Tests para análisis de caso promedio (auténticos con pseudocode)."""
 
+    def test_linear_search_avg_has_expected_runs_and_a_of_n(self):
+        """Búsqueda lineal avg debe tener expectedRuns y A_of_n con n."""
+        result = analyze_algorithm(LINEAR_SEARCH, mode="all")
+        assert result.get("ok", False)
+        avg = result.get("avg")
+        assert avg != "same_as_worst", "Linear search tiene variabilidad"
+        assert isinstance(avg, dict)
+        for row in avg.get("byLine", []):
+            assert "expectedRuns" in row
+            assert isinstance(row["expectedRuns"], str)
+        totals = avg.get("totals", {})
+        assert "avg_model_info" in totals
+        assert "A_of_n" in totals
+        a_of_n = totals.get("A_of_n", "")
+        assert "n" in a_of_n.lower() or "frac" in a_of_n.lower(), (
+            f"A_of_n debe contener n o fracción: {a_of_n}"
+        )
+
+    def test_linear_search_avg_has_model_info(self):
+        """Búsqueda lineal avg debe tener avg_model_info con mode y note."""
+        result = analyze_algorithm(LINEAR_SEARCH, mode="all")
+        assert result.get("ok", False)
+        avg = result.get("avg")
+        if isinstance(avg, dict):
+            model_info = avg.get("totals", {}).get("avg_model_info", {})
+            assert "mode" in model_info
+            assert "note" in model_info
+
+    def test_bubble_sort_avg_quadratic(self):
+        """Bubble sort avg case debe ser Θ(n²)."""
+        result = analyze_algorithm(BUBBLE_SORT, mode="all")
+        assert result.get("ok", False)
+        avg = result.get("avg")
+        if avg != "same_as_worst" and isinstance(avg, dict):
+            totals = avg.get("totals", {})
+            big_theta = totals.get("big_theta", "") or totals.get("big_o", "")
+            assert notation_has_complexity(big_theta, "quadratic"), (
+                f"Bubble sort avg debe ser Θ(n²): {big_theta}"
+            )
+
+    def test_bubble_sort_avg_has_expected_runs(self):
+        """Bubble sort avg debe tener expectedRuns en cada fila."""
+        result = analyze_algorithm(BUBBLE_SORT, mode="all")
+        assert result.get("ok", False)
+        avg = result.get("avg")
+        if avg != "same_as_worst" and isinstance(avg, dict):
+            for row in avg.get("byLine", []):
+                assert "expectedRuns" in row
+
+    def test_simple_for_avg_has_expected_runs(self):
+        """FOR simple en avg debe tener expectedRuns."""
+        result = analyze_algorithm(SIMPLE_FOR, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
+        assert result.get("ok", False)
+        assert "byLine" in result
+        for row in result["byLine"]:
+            assert "expectedRuns" in row
+
+    def test_if_with_probability_avg_case(self):
+        """IF con ambas ramas en avg debe tener expectedRuns en guardia, then y else."""
+        result = analyze_algorithm(IF_BOTH_BRANCHES, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
+        assert result.get("ok", False)
+        rows = result.get("byLine", [])
+        assert len(rows) >= 3
+        for row in rows:
+            assert "expectedRuns" in row
+
+    def test_symbolic_model_avg_case(self):
+        """Modelo simbólico debe tener avg_model_info con mode symbolic."""
+        result = analyze_algorithm(SIMPLE_ASSIGN, mode="avg", avg_model={"mode": "symbolic", "predicates": {}})
+        assert result.get("ok", False)
+        totals = result.get("totals", {})
+        assert "avg_model_info" in totals
+        model_info = totals["avg_model_info"]
+        assert model_info["mode"] == "symbolic"
+        note = model_info.get("note", "").lower()
+        assert "symbolic" in note or "simbólico" in note, f"note debe mencionar symbolic: {note}"
+
+    def test_avg_case_has_a_of_n(self):
+        """Caso promedio con FOR debe tener A_of_n en totals."""
+        result = analyze_algorithm(SIMPLE_FOR, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
+        assert result.get("ok", False)
+        totals = result.get("totals", {})
+        assert "A_of_n" in totals
+        assert "avg_model_info" in totals

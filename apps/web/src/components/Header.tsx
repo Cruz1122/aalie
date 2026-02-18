@@ -11,7 +11,6 @@ import { useState } from "react";
 
 import { usePathname } from "@/i18n/navigation";
 
-import LocaleSwitcher from "./LocaleSwitcher";
 import NavigationLink from "./NavigationLink";
 
 /**
@@ -135,7 +134,6 @@ export default function Header() {
               );
             })}
           </nav>
-          <LocaleSwitcher />
         </div>
 
         {/* Botón Hamburguesa para Mobile */}
@@ -172,7 +170,6 @@ export default function Header() {
               );
             })}
           </nav>
-          <LocaleSwitcher />
         </div>
       )}
     </header>

@@ -134,7 +134,8 @@ export default function GeneralProcedureModal({
     return data.byLine
       .map((line) => {
         const count = line.expectedRuns || line.count;
-        return `${line.ck} \\cdot (${count})`;
+        const opsPart = (line.ops ?? 1) > 1 ? ` \\cdot ${line.ops}` : "";
+        return `${line.ck}${opsPart} \\cdot (${count})`;
       })
       .join(" + ");
   }, [data?.byLine]);

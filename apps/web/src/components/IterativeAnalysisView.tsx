@@ -55,6 +55,9 @@ const getCaseBadgeStyle = (caseType: CaseType): string => {
  * @returns String con las clases CSS para el botón
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
+/** Longitud máxima de notación para mostrar la bolita; si es mayor, se oculta para evitar desborde. */
+const NOTATION_LENGTH_FOR_CIRCLE = 16;
+
 const getSelectorButtonStyle = (
   caseType: CaseType,
   isSelected: boolean,
@@ -213,22 +216,28 @@ export default function IterativeAnalysisView({
       </div>
 
       {/* Card de ecuaciones matemáticas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(34,197,94,0.3)] hover:shadow-[0_12px_40px_0_rgba(34,197,94,0.4)]">
-          <div className="h-full flex flex-col items-center justify-center gap-2">
-            <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/30">
-              <div className="scale-110">
-                <Formula
-                  latex={
-                    getBestAsymptoticNotation("best", 
-                      data?.best === "same_as_worst" 
-                        ? data?.worst?.totals || {} 
-                        : data?.best?.totals || {}
-                    ).notation
-                  }
-                />
-              </div>
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-w-0">
+        <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(34,197,94,0.3)] hover:shadow-[0_12px_40px_0_rgba(34,197,94,0.4)] min-w-0">
+          <div className="h-full flex flex-col items-center justify-center gap-2 min-w-0">
+            {(() => {
+              const bestNotation = getBestAsymptoticNotation("best",
+                data?.best === "same_as_worst"
+                  ? data?.worst?.totals || {}
+                  : data?.best?.totals || {}
+              ).notation;
+              const showCircle = bestNotation.length <= NOTATION_LENGTH_FOR_CIRCLE;
+              return showCircle ? (
+                <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/30 shrink-0">
+                  <div className="scale-110">
+                    <Formula latex={bestNotation} />
+                  </div>
+                </div>
+              ) : (
+                <div className="min-h-16 min-w-0 w-full overflow-hidden flex justify-center items-center py-2">
+                  <Formula latex={bestNotation} />
+                </div>
+              );
+            })()}
             <h3 className="font-semibold text-green-300 mb-1">{getCaseLabel("best")}</h3>
             {getBestAsymptoticNotation("best", 
               data?.best === "same_as_worst" 
@@ -283,7 +292,7 @@ export default function IterativeAnalysisView({
             </button>
           </div>
         </div>
-        <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(234,179,8,0.3)] hover:shadow-[0_12px_40px_0_rgba(234,179,8,0.4)] relative">
+        <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(234,179,8,0.3)] hover:shadow-[0_12px_40px_0_rgba(234,179,8,0.4)] relative min-w-0">
           {data?.avg && typeof data.avg !== "string" && data.avg.totals?.avg_model_info && (
             <div className="absolute top-2 right-2 group">
               <button
@@ -302,21 +311,27 @@ export default function IterativeAnalysisView({
               </div>
             </div>
           )}
-          <div className="h-full flex flex-col items-center justify-center gap-2">
-            <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30">
-              <div className="scale-110">
-                <Formula
-                  latex={
-                    getBestAsymptoticNotation(
-                      "average",
-                      data?.avg === "same_as_worst" 
-                        ? data?.worst?.totals || {} 
-                        : data?.avg?.totals || {},
-                    ).notation
-                  }
-                />
-              </div>
-            </div>
+          <div className="h-full flex flex-col items-center justify-center gap-2 min-w-0">
+            {(() => {
+              const avgNotation = getBestAsymptoticNotation(
+                "average",
+                data?.avg === "same_as_worst"
+                  ? data?.worst?.totals || {}
+                  : data?.avg?.totals || {},
+              ).notation;
+              const showCircle = avgNotation.length <= NOTATION_LENGTH_FOR_CIRCLE;
+              return showCircle ? (
+                <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30 shrink-0">
+                  <div className="scale-110">
+                    <Formula latex={avgNotation} />
+                  </div>
+                </div>
+              ) : (
+                <div className="min-h-16 min-w-0 w-full overflow-hidden flex justify-center items-center py-2">
+                  <Formula latex={avgNotation} />
+                </div>
+              );
+            })()}
             <h3 className="font-semibold text-yellow-300 mb-1">
               {getCaseLabel("average")}
             </h3>
@@ -341,20 +356,26 @@ export default function IterativeAnalysisView({
             </button>
           </div>
         </div>
-        <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(239,68,68,0.3)] hover:shadow-[0_12px_40px_0_rgba(239,68,68,0.4)]">
-          <div className="h-full flex flex-col items-center justify-center gap-2">
-            <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30">
-              <div className="scale-110">
-                <Formula
-                  latex={
-                    getBestAsymptoticNotation(
-                      "worst",
-                      data?.worst?.totals || {},
-                    ).notation
-                  }
-                />
-              </div>
-            </div>
+        <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(239,68,68,0.3)] hover:shadow-[0_12px_40px_0_rgba(239,68,68,0.4)] min-w-0">
+          <div className="h-full flex flex-col items-center justify-center gap-2 min-w-0">
+            {(() => {
+              const worstNotation = getBestAsymptoticNotation(
+                "worst",
+                data?.worst?.totals || {},
+              ).notation;
+              const showCircle = worstNotation.length <= NOTATION_LENGTH_FOR_CIRCLE;
+              return showCircle ? (
+                <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30 shrink-0">
+                  <div className="scale-110">
+                    <Formula latex={worstNotation} />
+                  </div>
+                </div>
+              ) : (
+                <div className="min-h-16 min-w-0 w-full overflow-hidden flex justify-center items-center py-2">
+                  <Formula latex={worstNotation} />
+                </div>
+              );
+            })()}
             <h3 className="font-semibold text-red-300 mb-1">{getCaseLabel("worst")}</h3>
             {getBestAsymptoticNotation("worst", data?.worst?.totals || {}).chips
               .length > 0 && (

@@ -169,6 +169,12 @@ Actualiza la versión cuando cambie en `CHANGELOG.md`.
 - Tests al añadir lógica no trivial.
 - Estructura: `tests/unit/`, `tests/integration/`, `tests/system/` por capa.
 - Backend: pytest en `apps/api/tests/`.
+- **Ejecución**: usar `python -m pytest` (no `pytest` directo) para evitar problemas de PATH:
+  ```bash
+  cd apps/api && python -m pytest tests/ -v
+  python -m pytest tests/unit/ -v
+  python -m pytest tests/integration/test_iterative_analyzer.py::TestIterativeAnalyzer::test_foo -v
+  ```
 - Frontend: tests por componente o feature cuando se implementen.
 
 ### Accesibilidad

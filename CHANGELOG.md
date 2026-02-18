@@ -5,15 +5,33 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
-## [Unreleased]
+## [1.1.3] - 2026-02-17
 
 ### Added
 
-- Componente `AALIEIcon` para el logo del asistente de IA
+- Columna "Ops" en tabla de costos iterativos
+- Validación de eficiencia de los 30 algoritmos de ejemplos (docs/pruebas-algoritmos.md)
+- Módulo `while_analysis` y clasificación de bucles WHILE (bounded/unbounded/unknown)
+- Campos `unbounded` y `unbounded_kind` en LineCost; badge "Puede no terminar" en LineTable
+- Componente AALIEIcon; tests auténticos y exhaustivos para WHILE, determinísticos y casos promedio
 
 ### Changed
 
-- Icono `smart_toy` reemplazado por `aalie.svg` en ModeToggle, AIModeView, ChatBot, ManualModeView y user-guide
+- Página ejemplos: complexity actualizada (Bubble Sort O(n²), Hanoi O(1), etc.); BST con raiz.izquierda/derecha
+- Ck única por línea; SimpleVisitor/ForVisitor/IfVisitor/WhileVisitor con ops por expresión
+- T_open y T_polynomial incluyen factor ops; fórmula T(n) = Σ C_k · ops_k · count_k
+- Icono `smart_toy` por `aalie.svg`; WhileRepeatVisitor usa classify_while
+- Tests de integración usan `analyze_algorithm(source)`
+- Selector de idioma movido del header al footer
+- Mejorada responsividad del footer
+
+### Fixed
+
+- RecursiveAnalyzer: subproblemas type "division" (raiz.izquierda/derecha) no añadían "b"
+- IterativeAnalyzer: AST inválido, O(1) incorrecto para WHILE con log, parseo LaTeX `\log_k` y `\frac`
+- Bucles unbounded: mostrar ∞ en costos y notación O(∞)/Θ(∞) en lugar de t_while
+- Caso promedio determinístico y algoritmos con banderas (param-controlled)
+- IterativeAnalysisView: ocultar bolitas cuando notación demasiado larga
 
 ## [1.1.2] - 2026-02-14
 

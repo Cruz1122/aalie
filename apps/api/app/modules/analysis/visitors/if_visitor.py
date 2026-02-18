@@ -87,12 +87,15 @@ class IfVisitor:
         
         # 1) Guardia: siempre se evalúa una vez
         ck_guard = self.C()  # generar siguiente constante
+        ops = self._ops_of_expr(node.get("test", {})) if hasattr(self, "_ops_of_expr") else 1
+        ops = max(1, ops)  # al menos 1 (comparación)
         self.add_row(
             line=line,
             kind="if",
             ck=ck_guard,
             count=Integer(1),
-            note=self._note("cond_eval")
+            note=self._note("cond_eval"),
+            ops=ops
         )
         
         # Helper para ejecutar un bloque y extraer solo las filas nuevas (con memoización)
@@ -225,10 +228,14 @@ class IfVisitor:
             
             if not else_buf:
                 # Si no hay else, en best case la condición es falsa (no se ejecuta el THEN)
-                # EXCEPTO si hay early return, que es favorable (termina temprano)
+                # EXCEPTO: 1) early return (favorable), 2) param-controlled WHILE (param habilita → THEN)
                 if has_early_return(then_buf):
                     chosen = then_buf  # Ejecutar early return en best case (favorable)
                     annotate = "best: early-exit (then)"
+                elif getattr(self, "_param_controlled_if_take_then", False) and self._is_var_eq_const(node.get("test", {})):
+                    # IF(param=const) que guarda update del WHILE: best case = param habilita → ejecutar THEN
+                    chosen = then_buf
+                    annotate = "best: param enables (then)"
                 else:
                     # En best case sin early return: condición falsa → NO ejecutar THEN
                     chosen = []

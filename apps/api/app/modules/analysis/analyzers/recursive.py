@@ -579,11 +579,15 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 pattern = subproblem_info.get("pattern", "n-1")
                 # Para decrease-and-conquer, no usamos "b" tradicional
                 # En su lugar, almacenamos la información en el subproblem_size
-                subproblem_sizes.append({
+                entry = {
                     "type": subproblem_info["type"],
                     "pattern": pattern,
                     "factor": factor
-                })
+                }
+                # Para division (ej: BST con raiz.izquierda/derecha → n/2), añadir "b" para divide-and-conquer
+                if subproblem_info["type"] == "division":
+                    entry["b"] = int(factor)
+                subproblem_sizes.append(entry)
             else:
                 # Si no es decrease-and-conquer, intentar divide-and-conquer
                 size_info = self._analyze_subproblem_size(call, proc_def)
