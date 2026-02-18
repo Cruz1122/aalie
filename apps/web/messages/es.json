@@ -270,6 +270,7 @@
     },
     "lineTable": {
       "type": "Tipo",
+      "elementaryOps": "Operaciones",
       "executions": "# ejecuciones",
       "expectedExecutions": "E[# ejecuciones]",
       "action": "Acción",

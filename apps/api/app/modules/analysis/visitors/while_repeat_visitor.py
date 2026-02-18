@@ -1236,12 +1236,15 @@ class WhileRepeatVisitor:
                         # Condición: se evalúa (iterations + 1) veces
                         ck_cond = self.C()
                         cond_count = iterations_expr + Integer(1)
+                        ops = self._ops_of_expr(node.get("test", {})) if hasattr(self, "_ops_of_expr") else 1
+                        ops = max(1, ops)
                         self.add_row(
                             line=L,
                             kind="while",
                             ck=ck_cond,
                             count=cond_count,
-                            note=self._note("while_avg_iter", L=L, p_str=p_str)
+                            note=self._note("while_avg_iter", L=L, p_str=p_str),
+                            ops=ops
                         )
                         
                         # Cuerpo: se ejecuta E[#iteraciones] veces
@@ -1286,6 +1289,8 @@ class WhileRepeatVisitor:
             t_sym = Symbol(t, real=True)
             ck_cond = self.C()
             cond_count = t_sym + Integer(1)
+            ops = self._ops_of_expr(node.get("test", {})) if hasattr(self, "_ops_of_expr") else 1
+            ops = max(1, ops)
             self.add_row(
                 line=L,
                 kind="while",
@@ -1294,6 +1299,7 @@ class WhileRepeatVisitor:
                 note=note_text,
                 unbounded=True,
                 unbounded_kind="non_terminating",
+                ops=ops
             )
             self.push_multiplier(t_sym)
             body = node.get("body")
@@ -1411,6 +1417,8 @@ class WhileRepeatVisitor:
                 else:
                     note_text = self._note("while_var_no_init", L=L, var_name=var_name, change_op=change_op, change_const=change_const, operator=operator, limit=limit)
             
+            ops = self._ops_of_expr(node.get("test", {})) if hasattr(self, "_ops_of_expr") else 1
+            ops = max(1, ops)
             self.add_row(
                 line=L,
                 kind="while",
@@ -1418,6 +1426,7 @@ class WhileRepeatVisitor:
                 count=cond_count,
                 note=note_text,
                 euclid_pattern=(reason_code == "while_euclid_mod"),
+                ops=ops
             )
 
             # 2) Cuerpo: se ejecuta iterations veces
@@ -1475,6 +1484,8 @@ class WhileRepeatVisitor:
             # 1) Condición: se evalúa (t + 1) veces
             ck_cond = self.C()
             cond_count = t_sym + Integer(1)
+            ops = self._ops_of_expr(node.get("test", {})) if hasattr(self, "_ops_of_expr") else 1
+            ops = max(1, ops)
             self.add_row(
                 line=L,
                 kind="while",
@@ -1483,6 +1494,7 @@ class WhileRepeatVisitor:
                 note=note_text,
                 unbounded=True,
                 unbounded_kind="unknown",
+                ops=ops
             )
             
             # 2) Cuerpo: se ejecuta t veces
@@ -1561,10 +1573,13 @@ class WhileRepeatVisitor:
         # 2) Condición: se evalúa también (1 + t_{repeat_L}) veces
         ck_cond = self.C()
         cond_count = Integer(1) + t_sym
+        ops = self._ops_of_expr(node.get("test", {})) if hasattr(self, "_ops_of_expr") else 1
+        ops = max(1, ops)
         self.add_row(
             line=L,
             kind="repeat",
             ck=ck_cond,
             count=cond_count,
-            note=self._note("repeat_cond_line", L=L)
+            note=self._note("repeat_cond_line", L=L),
+            ops=ops
         )

@@ -87,12 +87,15 @@ class IfVisitor:
         
         # 1) Guardia: siempre se evalúa una vez
         ck_guard = self.C()  # generar siguiente constante
+        ops = self._ops_of_expr(node.get("test", {})) if hasattr(self, "_ops_of_expr") else 1
+        ops = max(1, ops)  # al menos 1 (comparación)
         self.add_row(
             line=line,
             kind="if",
             ck=ck_guard,
             count=Integer(1),
-            note=self._note("cond_eval")
+            note=self._note("cond_eval"),
+            ops=ops
         )
         
         # Helper para ejecutar un bloque y extraer solo las filas nuevas (con memoización)

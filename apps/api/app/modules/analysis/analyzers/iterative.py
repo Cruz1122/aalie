@@ -900,6 +900,11 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 count_expr = expand(count_expr)
                 count_expr = simplify(count_expr)
                 
+                # Aplicar factor de operaciones elementales: C_k · ops · count
+                ops_val = row.get('ops', 1)
+                if ops_val != 1:
+                    count_expr = Integer(ops_val) * count_expr
+                
                 # IMPORTANTE: Eliminar variables de iteración (i, j, k) que no deberían estar en el resultado final
                 count_expr = self._sanitize_expression(count_expr)
                 

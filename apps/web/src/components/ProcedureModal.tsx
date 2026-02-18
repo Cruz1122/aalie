@@ -393,7 +393,8 @@ export default function ProcedureModal({
       const step4 = analysisData.byLine
         .map((line) => {
           const count = line.expectedRuns || line.count;
-          return `${line.ck} \\cdot E[N_{${line.line}}] = ${line.ck} \\cdot (${count})`;
+          const opsPart = (line.ops ?? 1) > 1 ? ` \\cdot ${line.ops}` : "";
+          return `${line.ck} \\cdot E[N_{${line.line}}] = ${line.ck}${opsPart} \\cdot (${count})`;
         })
         .join(" + ");
       steps.push({
@@ -404,7 +405,10 @@ export default function ProcedureModal({
 
       // Paso 5: Simplificación
       const step5 = analysisData.byLine
-        .map((line) => `${line.ck} \\cdot (${line.count})`)
+        .map((line) => {
+          const opsPart = (line.ops ?? 1) > 1 ? ` \\cdot ${line.ops}` : "";
+          return `${line.ck}${opsPart} \\cdot (${line.count})`;
+        })
         .join(" + ");
       steps.push({
         title: t("stepSimplification"),
@@ -455,17 +459,26 @@ export default function ProcedureModal({
     // Para worst/best case, usar pasos normales
     // Paso 1: Ecuación completa con count_raw (o count si count_raw no está disponible)
     const step1 = analysisData.byLine
-      .map((line) => `${line.ck} \\cdot (${line.count_raw ?? line.count})`)
+      .map((line) => {
+        const opsPart = (line.ops ?? 1) > 1 ? ` \\cdot ${line.ops}` : "";
+        return `${line.ck}${opsPart} \\cdot (${line.count_raw ?? line.count})`;
+      })
       .join(" + ");
 
     // Paso 2: Ecuación con count simplificado
     const step2 = analysisData.byLine
-      .map((line) => `${line.ck} \\cdot (${line.count})`)
+      .map((line) => {
+        const opsPart = (line.ops ?? 1) > 1 ? ` \\cdot ${line.ops}` : "";
+        return `${line.ck}${opsPart} \\cdot (${line.count})`;
+      })
       .join(" + ");
 
-    // Paso 3: Agrupación de términos similares
+    // Paso 3: Agrupación de términos similares (incluir ops en ck para agrupación)
     const step3 = groupSimilarTerms(
-      analysisData.byLine.map((line) => ({ ck: line.ck, count: line.count })),
+      analysisData.byLine.map((line) => ({
+        ck: (line.ops ?? 1) > 1 ? `${line.ck} \\cdot ${line.ops}` : line.ck,
+        count: line.count,
+      })),
     );
 
     // Paso 4: Forma final con constantes a, b, c, etc. (usar T_polynomial si está)
@@ -727,6 +740,18 @@ export default function ProcedureModal({
                           </p>
                         </div>
 
+                        {/* Operaciones elementales */}
+                        {lineData.ops != null && lineData.ops > 1 && (
+                          <div>
+                            <span className="text-sm font-medium text-slate-400 block mb-2">
+                              {tLineTable("elementaryOps")}
+                            </span>
+                            <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-600/30">
+                              <span className="text-slate-200">{lineData.ops}</span>
+                            </div>
+                          </div>
+                        )}
+
                         {/* Número de ejecuciones (o E[#] para promedio) */}
                         <div>
                           <span className="text-sm font-medium text-slate-400 block mb-2">
@@ -770,7 +795,11 @@ export default function ProcedureModal({
                           </span>
                           <div className="p-3 rounded-lg bg-slate-900/50 border border-purple-500/20 overflow-x-auto scrollbar-custom">
                             <Formula
-                              latex={`${lineData.ck} \\cdot ${lineData.expectedRuns || lineData.count}`}
+                              latex={
+                                (lineData.ops ?? 1) > 1
+                                  ? `${lineData.ck} \\cdot ${lineData.ops} \\cdot (${lineData.expectedRuns || lineData.count})`
+                                  : `${lineData.ck} \\cdot (${lineData.expectedRuns || lineData.count})`
+                              }
                               display
                             />
                           </div>

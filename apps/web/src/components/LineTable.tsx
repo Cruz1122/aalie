@@ -120,6 +120,9 @@ export default function LineTable({
               C<sub>k</sub>
             </th>
             <th className="text-center p-2 font-semibold text-slate-300">
+              {t("elementaryOps")}
+            </th>
+            <th className="text-center p-2 font-semibold text-slate-300">
               {isAvgMode ? (
                 <Formula latex="E[\# \text{ ejecuciones}]" />
               ) : (
@@ -157,6 +160,13 @@ export default function LineTable({
               </td>
               <td className="p-2 text-center whitespace-nowrap text-slate-200">
                 <Formula latex={row.ck} />
+              </td>
+              <td className="p-2 text-center whitespace-nowrap text-slate-200">
+                <Formula
+                  latex={
+                    row.ops != null ? String(row.ops) : "\\text{—}"
+                  }
+                />
               </td>
               <td className="p-2 text-center whitespace-nowrap text-slate-200">
                 <Formula

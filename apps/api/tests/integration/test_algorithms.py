@@ -64,15 +64,22 @@ class TestAlgorithms:
         assert_worst_complexity(result, "quadratic", "Insertion Sort")
 
     def test_insertion_sort_by_line_fields(self):
-        """Todas las filas de byLine deben tener count_raw y count."""
+        """Todas las filas de byLine deben tener count_raw, count; ck única; ops cuando > 1."""
         result = analyze_algorithm(INSERTION_SORT, mode="all")
         assert result.get("ok", False)
         by_line = get_by_line(result, "worst")
+        has_ops_gt_1 = False
         for row in by_line:
             assert "count_raw" in row, f"Fila {row.get('line')} debe tener count_raw"
             assert "count" in row, f"Fila {row.get('line')} debe tener count"
             assert isinstance(row["count_raw"], str)
             assert isinstance(row["count"], str)
+            # ck debe ser única constante (C_k), no suma compuesta como "C_1 + C_2"
+            ck = row.get("ck", "")
+            assert " + " not in ck, f"ck debe ser única por línea, no suma: {ck}"
+            if row.get("ops", 1) > 1:
+                has_ops_gt_1 = True
+        assert has_ops_gt_1, "Al menos una fila debe tener ops > 1 (ej. asignación con array)"
 
     def test_bubble_sort_analyzes_successfully(self):
         """Bubble sort debe analizarse correctamente con pipeline completo."""

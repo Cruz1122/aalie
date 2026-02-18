@@ -9,6 +9,22 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Added
 
+- Columna "Ops" (operaciones elementales) en tabla de costos iterativos, después de Ck
+- Campo `ops` en LineCost: número de operaciones elementales por ejecución (asignación, suma, acceso array, comparación, etc.)
+- Fórmula de eficiencia actualizada: T(n) = Σ C_k · ops_k · count_k (Ck única por línea)
+
+### Changed
+
+- Ck pasa a ser una única constante por línea (C_1, C_2, C_3...) en lugar de suma compuesta (C_1+C_2)
+- SimpleVisitor: _ops_of_lvalue y _ops_of_expr devuelven conteo de ops en lugar de lista de C_k
+- ForVisitor: cabecera FOR con ops=3 (incremento, asignación, comparación)
+- IfVisitor, WhileVisitor, RepeatVisitor: condición con ops según expresión
+- T_open, T_polynomial y build_t_open_expr incluyen factor ops en el cálculo
+- Lvalue en asignación: no se cuenta acceso extra al array/campo (la asignación es la escritura); ej. `A[j+1] <- A[j]` = 3 ops
+- Campo `ops` siempre presente en byLine (incluye 1 para líneas con una sola operación elemental)
+
+### Added (previous)
+
 - Tests auténticos (input pseudocode → output esperado real): módulo `tests/integration/fixtures/algorithm_expectations.py` con helpers `notation_has_complexity`, `assert_worst_complexity`, `get_totals`, `get_by_line`
 - Migración de tests "arreglados" a tests auténticos: `test_algorithms.py`, `test_intermediate_algorithms.py`, `test_complex_algorithms.py`, `test_iterative_analyzer` (TestCommonAlgorithms), `test_avg_case.py`, `test_recursive_algorithms.py`, `test_analyze_endpoint.py`
 - Verificación explícita de complejidad esperada (Θ(n²), Θ(n³), Θ(log n), etc.) en tests de integración y sistema

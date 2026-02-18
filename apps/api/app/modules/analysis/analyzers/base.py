@@ -74,6 +74,7 @@ class BaseAnalyzer:
         unbounded: bool = False,
         unbounded_kind: Optional[str] = None,
         euclid_pattern: bool = False,
+        ops: int = 1,
     ):
         """
         Inserta una fila aplicando el multiplicador del contexto de bucles.
@@ -81,11 +82,12 @@ class BaseAnalyzer:
         Args:
             line: Número de línea
             kind: Tipo de instrucción (assign, for, while, if, etc.)
-            ck: Costo individual de la línea (string KaTeX)
+            ck: Costo elemental único de la línea (string KaTeX, ej: "C_3")
             count: Número de ejecuciones (puede ser string o Expr de SymPy)
             note: Nota opcional sobre la línea
             unbounded: True si el bucle puede no terminar (evidencia de no terminación)
             unbounded_kind: "non_terminating" | "unknown" para clasificación
+            ops: Operaciones elementales por ejecución (asignación, suma, acceso array, etc.)
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
@@ -123,13 +125,14 @@ class BaseAnalyzer:
         row = {
             "line": line,
             "kind": kind,
-            "ck": ck,              # Ej: "C_{2} + C_{3}"
+            "ck": ck,              # Ej: "C_{3}" (una única constante por línea)
             "count": count_latex,   # LaTeX para compatibilidad, se actualizará después
             "count_raw": count_raw_latex,  # LaTeX de la expresión con sumatorias
             "count_raw_expr": count_raw_expr,  # Expresión SymPy (nuevo campo interno)
-            "note": note
+            "note": note,
+            "ops": ops,
         }
-        
+
         if unbounded:
             row["unbounded"] = True
             row["unbounded_kind"] = unbounded_kind or "unknown"
@@ -378,10 +381,10 @@ class BaseAnalyzer:
                 if count_expr == Integer(0):
                     continue
                 
-                # Crear término: C_k * count_expr
-                # C_k es solo un símbolo para mostrar, no afecta la expresión SymPy
-                # Multiplicamos directamente
-                terms.append(count_expr)
+                # Crear término: C_k * ops * count_expr (ops = operaciones elementales)
+                ops_val = r.get('ops', 1)
+                term_expr = Integer(ops_val) * count_expr if ops_val != 1 else count_expr
+                terms.append(term_expr)
         
         if not terms:
             return "0"
@@ -502,6 +505,11 @@ class BaseAnalyzer:
                 # Esto evita términos como "C_4 · 0" en T_open que no aportan información
                 if count_expr_simplified == Integer(0):
                     continue
+                
+                # Aplicar factor de operaciones elementales: C_k · ops · count
+                ops_val = r.get('ops', 1)
+                if ops_val != 1:
+                    count_expr_simplified = Integer(ops_val) * count_expr_simplified
                 
                 # Convertir count a LaTeX
                 count_latex = latex(count_expr_simplified)
@@ -687,6 +695,8 @@ class BaseAnalyzer:
                 # Preferir usar count_expr (expresión SymPy evaluada) si está disponible
                 count_expr = r.get('count_expr')
                 if count_expr is None:
+                    count_expr = r.get('count_raw_expr')
+                if count_expr is None:
                     # Fallback: parsear desde count (LaTeX evaluado)
                     count_latex = r.get('count', '1')
                     count_expr = self._str_to_sympy(count_latex)
@@ -696,10 +706,10 @@ class BaseAnalyzer:
                 if count_expr == Integer(0):
                     continue
                 
-                # Crear término: C_k * count_expr
-                # C_k es solo un símbolo para mostrar, no afecta la expresión SymPy
-                # Multiplicamos directamente
-                terms.append(count_expr)
+                # Crear término: C_k * ops * count_expr (ops = operaciones elementales)
+                ops_val = r.get('ops', 1)
+                term_expr = Integer(ops_val) * count_expr if ops_val != 1 else count_expr
+                terms.append(term_expr)
         
         if not terms:
             return None

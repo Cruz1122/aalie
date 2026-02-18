@@ -13,7 +13,7 @@
   "nav": {
     "home": "Home",
     "analyzer": "Analyzer",
-    "documentation": "Documentation",
+    "documentation": "Docs",
     "examples": "Examples",
     "about": "About Us",
     "openMenu": "Open menu"
@@ -269,6 +269,7 @@
     },
     "lineTable": {
       "type": "Type",
+      "elementaryOps": "Operations",
       "executions": "# executions",
       "expectedExecutions": "E[# executions]",
       "action": "Action",
