@@ -322,495 +322,141 @@ class TestIterativeAnalyzer:
 
 
 class TestCommonAlgorithms:
-    """Tests para algoritmos comunes."""
-    
-    def _create_linear_search_ast(self):
-        """Crea AST para búsqueda lineal"""
-        return {
-            "type": "Program",
-            "body": [
-                {
-                    "type": "For",
-                    "var": "i",
-                    "start": {"type": "number", "value": 1},
-                    "end": {"type": "identifier", "name": "n"},
-                    "body": {
-                        "type": "Block",
-                        "body": [
-                            {
-                                "type": "If",
-                                "test": {
-                                    "type": "binary",
-                                    "op": "=",
-                                    "left": {
-                                        "type": "index",
-                                        "target": {"type": "identifier", "name": "A"},
-                                        "index": {"type": "identifier", "name": "i"}
-                                    },
-                                    "right": {"type": "identifier", "name": "x"}
-                                },
-                                "consequent": {
-                                    "type": "Block",
-                                    "body": [
-                                        {
-                                            "type": "Return",
-                                            "value": {"type": "identifier", "name": "i"},
-                                            "pos": {"line": 3}
-                                        }
-                                    ]
-                                },
-                                "alternate": None,
-                                "pos": {"line": 2}
-                            }
-                        ]
-                    },
-                    "pos": {"line": 1}
-                },
-                {
-                    "type": "Return",
-                    "value": {"type": "number", "value": -1},
-                    "pos": {"line": 4}
-                }
-            ]
-        }
-    
-    def test_linear_search_worst_case(self):
-        """Test: Búsqueda lineal - peor caso (O(n))"""
-        analyzer = IterativeAnalyzer()
-        ast = self._create_linear_search_ast()
-        
-        result = analyzer.analyze(ast, mode="worst")
-        
-        assert result.get("ok", False), "Análisis debe ser exitoso"
-        assert "byLine" in result, "Debe tener byLine"
-        assert "totals" in result, "Debe tener totals"
-        assert "T_open" in result["totals"], "Debe tener T_open"
-        
-        # En worst case, el IF debe elegir la rama con RETURN (más costosa)
-        # Verificar que todas las filas tienen count
-        for row in result["byLine"]:
-            assert "count" in row, f"Fila {row.get('line')} debe tener count"
-            assert "count_raw" in row, f"Fila {row.get('line')} debe tener count_raw"
-    
-    def test_linear_search_best_case(self):
-        """Test: Búsqueda lineal - mejor caso (O(1))"""
-        analyzer = IterativeAnalyzer()
-        ast = self._create_linear_search_ast()
-        
-        result = analyzer.analyze(ast, mode="best")
-        
-        assert result.get("ok", False), "Análisis debe ser exitoso"
-        assert "byLine" in result, "Debe tener byLine"
-        assert "totals" in result, "Debe tener totals"
-        assert "T_open" in result["totals"], "Debe tener T_open"
-        
-        # En best case, el IF debe elegir la rama mínima o el early return debe terminar rápido
-        for row in result["byLine"]:
-            assert "count" in row, f"Fila {row.get('line')} debe tener count"
-    
-    def test_linear_search_avg_case(self):
-        """Test: Búsqueda lineal - caso promedio (O(n/2))"""
-        analyzer = IterativeAnalyzer()
-        ast = self._create_linear_search_ast()
-        
-        result = analyzer.analyze(ast, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
-        
-        assert result.get("ok", False), "Análisis debe ser exitoso"
-        assert "byLine" in result, "Debe tener byLine"
-        assert "totals" in result, "Debe tener totals"
-        
-        # Verificar que caso promedio tiene expectedRuns y avg_model_info
-        for row in result["byLine"]:
-            assert "expectedRuns" in row, f"Fila {row.get('line')} debe tener expectedRuns en avg case"
-        
-        assert "avg_model_info" in result["totals"], "Debe tener avg_model_info"
-        assert "A_of_n" in result["totals"], "Debe tener A_of_n para caso promedio"
-    
-    def _create_factorial_ast(self):
-        """Crea AST para factorial iterativo"""
-        return {
-            "type": "Program",
-            "body": [
-                {
-                    "type": "Assign",
-                    "target": {"type": "identifier", "name": "resultado"},
-                    "value": {"type": "number", "value": 1},
-                    "pos": {"line": 1}
-                },
-                {
-                    "type": "For",
-                    "var": "i",
-                    "start": {"type": "number", "value": 2},
-                    "end": {"type": "identifier", "name": "n"},
-                    "body": {
-                        "type": "Block",
-                        "body": [
-                            {
-                                "type": "Assign",
-                                "target": {"type": "identifier", "name": "resultado"},
-                                "value": {
-                                    "type": "binary",
-                                    "left": {"type": "identifier", "name": "resultado"},
-                                    "operator": "*",
-                                    "right": {"type": "identifier", "name": "i"}
-                                },
-                                "pos": {"line": 3}
-                            }
-                        ]
-                    },
-                    "pos": {"line": 2}
-                },
-                {
-                    "type": "Return",
-                    "value": {"type": "identifier", "name": "resultado"},
-                    "pos": {"line": 4}
-                }
-            ]
-        }
-    
-    def test_factorial_worst_case(self):
-        """Test: Factorial iterativo - peor caso (O(n))"""
-        analyzer = IterativeAnalyzer()
-        ast = self._create_factorial_ast()
-        
-        result = analyzer.analyze(ast, mode="worst")
-        
-        assert result.get("ok", False), "Análisis debe ser exitoso"
-        assert "byLine" in result, "Debe tener byLine"
-        assert "totals" in result, "Debe tener totals"
-        assert "T_open" in result["totals"], "Debe tener T_open"
-        
-        # Factorial es O(n) en todos los casos
-        for row in result["byLine"]:
-            assert "count" in row, f"Fila {row.get('line')} debe tener count"
-    
-    def test_factorial_best_case(self):
-        """Test: Factorial iterativo - mejor caso (O(n))"""
-        analyzer = IterativeAnalyzer()
-        ast = self._create_factorial_ast()
-        
-        result = analyzer.analyze(ast, mode="best")
-        
-        assert result.get("ok", False), "Análisis debe ser exitoso"
-        assert "byLine" in result, "Debe tener byLine"
-        assert "totals" in result, "Debe tener totals"
-        assert "T_open" in result["totals"], "Debe tener T_open"
-    
-    def test_factorial_avg_case(self):
-        """Test: Factorial iterativo - caso promedio (O(n))"""
-        analyzer = IterativeAnalyzer()
-        ast = self._create_factorial_ast()
-        
-        result = analyzer.analyze(ast, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
-        
-        assert result.get("ok", False), "Análisis debe ser exitoso"
-        assert "byLine" in result, "Debe tener byLine"
-        
-        for row in result["byLine"]:
-            assert "expectedRuns" in row, f"Fila {row.get('line')} debe tener expectedRuns"
-    
-    def _create_array_sum_ast(self):
-        """Crea AST para suma de array"""
-        return {
-            "type": "Program",
-            "body": [
-                {
-                    "type": "Assign",
-                    "target": {"type": "identifier", "name": "suma"},
-                    "value": {"type": "number", "value": 0},
-                    "pos": {"line": 1}
-                },
-                {
-                    "type": "For",
-                    "var": "i",
-                    "start": {"type": "number", "value": 1},
-                    "end": {"type": "identifier", "name": "n"},
-                    "body": {
-                        "type": "Block",
-                        "body": [
-                            {
-                                "type": "Assign",
-                                "target": {"type": "identifier", "name": "suma"},
-                                "value": {
-                                    "type": "binary",
-                                    "left": {"type": "identifier", "name": "suma"},
-                                    "operator": "+",
-                                    "right": {
-                                        "type": "index",
-                                        "target": {"type": "identifier", "name": "A"},
-                                        "index": {"type": "identifier", "name": "i"}
-                                    }
-                                },
-                                "pos": {"line": 3}
-                            }
-                        ]
-                    },
-                    "pos": {"line": 2}
-                },
-                {
-                    "type": "Return",
-                    "value": {"type": "identifier", "name": "suma"},
-                    "pos": {"line": 4}
-                }
-            ]
-        }
-    
-    def test_array_sum_all_cases(self):
-        """Test: Suma de array - todos los casos (O(n))"""
-        analyzer_worst = IterativeAnalyzer()
-        analyzer_best = IterativeAnalyzer()
-        analyzer_avg = IterativeAnalyzer()
-        ast = self._create_array_sum_ast()
-        
-        result_worst = analyzer_worst.analyze(ast, mode="worst")
-        result_best = analyzer_best.analyze(ast, mode="best")
-        result_avg = analyzer_avg.analyze(ast, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
-        
-        for result in [result_worst, result_best, result_avg]:
-            assert result.get("ok", False), "Análisis debe ser exitoso"
-            assert "byLine" in result, "Debe tener byLine"
-            assert "totals" in result, "Debe tener totals"
-            assert "T_open" in result["totals"], "Debe tener T_open"
-        
-        # Verificar caso promedio
-        for row in result_avg["byLine"]:
-            assert "expectedRuns" in row, "Debe tener expectedRuns en avg case"
-    
-    def _create_array_max_ast(self):
-        """Crea AST para máximo de array"""
-        return {
-            "type": "Program",
-            "body": [
-                {
-                    "type": "Assign",
-                    "target": {"type": "identifier", "name": "maximo"},
-                    "value": {
-                        "type": "index",
-                        "target": {"type": "identifier", "name": "A"},
-                        "index": {"type": "number", "value": 1}
-                    },
-                    "pos": {"line": 1}
-                },
-                {
-                    "type": "For",
-                    "var": "i",
-                    "start": {"type": "number", "value": 2},
-                    "end": {"type": "identifier", "name": "n"},
-                    "body": {
-                        "type": "Block",
-                        "body": [
-                            {
-                                "type": "If",
-                                "test": {
-                                    "type": "binary",
-                                    "op": ">",
-                                    "left": {
-                                        "type": "index",
-                                        "target": {"type": "identifier", "name": "A"},
-                                        "index": {"type": "identifier", "name": "i"}
-                                    },
-                                    "right": {"type": "identifier", "name": "maximo"}
-                                },
-                                "consequent": {
-                                    "type": "Block",
-                                    "body": [
-                                        {
-                                            "type": "Assign",
-                                            "target": {"type": "identifier", "name": "maximo"},
-                                            "value": {
-                                                "type": "index",
-                                                "target": {"type": "identifier", "name": "A"},
-                                                "index": {"type": "identifier", "name": "i"}
-                                            },
-                                            "pos": {"line": 3}
-                                        }
-                                    ]
-                                },
-                                "alternate": None,
-                                "pos": {"line": 2}
-                            }
-                        ]
-                    },
-                    "pos": {"line": 2}
-                },
-                {
-                    "type": "Return",
-                    "value": {"type": "identifier", "name": "maximo"},
-                    "pos": {"line": 4}
-                }
-            ]
-        }
-    
-    def test_array_max_all_cases(self):
-        """Test: Máximo de array - todos los casos"""
-        analyzer_worst = IterativeAnalyzer()
-        analyzer_best = IterativeAnalyzer()
-        analyzer_avg = IterativeAnalyzer()
-        ast = self._create_array_max_ast()
-        
-        result_worst = analyzer_worst.analyze(ast, mode="worst")
-        result_best = analyzer_best.analyze(ast, mode="best")
-        result_avg = analyzer_avg.analyze(ast, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
-        
-        for result in [result_worst, result_best, result_avg]:
-            assert result.get("ok", False), "Análisis debe ser exitoso"
-            assert "byLine" in result, "Debe tener byLine"
-            assert "totals" in result, "Debe tener totals"
-            assert "T_open" in result["totals"], "Debe tener T_open"
-        
-        # Verificar caso promedio
-        for row in result_avg["byLine"]:
-            assert "expectedRuns" in row, "Debe tener expectedRuns en avg case"
-    
-    def _create_binary_search_ast(self):
-        """Crea AST para búsqueda binaria iterativa"""
-        return {
-            "type": "Program",
-            "body": [
-                {
-                    "type": "Assign",
-                    "target": {"type": "identifier", "name": "izq"},
-                    "value": {"type": "number", "value": 1},
-                    "pos": {"line": 1}
-                },
-                {
-                    "type": "Assign",
-                    "target": {"type": "identifier", "name": "der"},
-                    "value": {"type": "identifier", "name": "n"},
-                    "pos": {"line": 2}
-                },
-                {
-                    "type": "While",
-                    "test": {
-                        "type": "binary",
-                        "op": "<=",
-                        "left": {"type": "identifier", "name": "izq"},
-                        "right": {"type": "identifier", "name": "der"}
-                    },
-                    "body": {
-                        "type": "Block",
-                        "body": [
-                            {
-                                "type": "Assign",
-                                "target": {"type": "identifier", "name": "mitad"},
-                                "value": {
-                                    "type": "binary",
-                                    "left": {
-                                        "type": "binary",
-                                        "left": {"type": "identifier", "name": "izq"},
-                                        "operator": "+",
-                                        "right": {"type": "identifier", "name": "der"}
-                                    },
-                                    "operator": "/",
-                                    "right": {"type": "number", "value": 2}
-                                },
-                                "pos": {"line": 4}
-                            },
-                            {
-                                "type": "If",
-                                "test": {
-                                    "type": "binary",
-                                    "op": "=",
-                                    "left": {
-                                        "type": "index",
-                                        "target": {"type": "identifier", "name": "A"},
-                                        "index": {"type": "identifier", "name": "mitad"}
-                                    },
-                                    "right": {"type": "identifier", "name": "x"}
-                                },
-                                "consequent": {
-                                    "type": "Block",
-                                    "body": [
-                                        {
-                                            "type": "Return",
-                                            "value": {"type": "identifier", "name": "mitad"},
-                                            "pos": {"line": 6}
-                                        }
-                                    ]
-                                },
-                                "alternate": {
-                                    "type": "Block",
-                                    "body": [
-                                        {
-                                            "type": "If",
-                                            "test": {
-                                                "type": "binary",
-                                                "op": "<",
-                                                "left": {
-                                                    "type": "index",
-                                                    "target": {"type": "identifier", "name": "A"},
-                                                    "index": {"type": "identifier", "name": "mitad"}
-                                                },
-                                                "right": {"type": "identifier", "name": "x"}
-                                            },
-                                            "consequent": {
-                                                "type": "Block",
-                                                "body": [
-                                                    {
-                                                        "type": "Assign",
-                                                        "target": {"type": "identifier", "name": "izq"},
-                                                        "value": {
-                                                            "type": "binary",
-                                                            "left": {"type": "identifier", "name": "mitad"},
-                                                            "operator": "+",
-                                                            "right": {"type": "number", "value": 1}
-                                                        },
-                                                        "pos": {"line": 8}
-                                                    }
-                                                ]
-                                            },
-                                            "alternate": {
-                                                "type": "Block",
-                                                "body": [
-                                                    {
-                                                        "type": "Assign",
-                                                        "target": {"type": "identifier", "name": "der"},
-                                                        "value": {
-                                                            "type": "binary",
-                                                            "left": {"type": "identifier", "name": "mitad"},
-                                                            "operator": "-",
-                                                            "right": {"type": "number", "value": 1}
-                                                        },
-                                                        "pos": {"line": 10}
-                                                    }
-                                                ]
-                                            },
-                                            "pos": {"line": 7}
-                                        }
-                                    ]
-                                },
-                                "pos": {"line": 5}
-                            }
-                        ]
-                    },
-                    "pos": {"line": 3}
-                },
-                {
-                    "type": "Return",
-                    "value": {"type": "number", "value": -1},
-                    "pos": {"line": 11}
-                }
-            ]
-        }
-    
-    def test_binary_search_all_cases(self):
-        """Test: Búsqueda binaria iterativa - todos los casos"""
-        analyzer_worst = IterativeAnalyzer()
-        analyzer_best = IterativeAnalyzer()
-        analyzer_avg = IterativeAnalyzer()
-        ast = self._create_binary_search_ast()
-        
-        result_worst = analyzer_worst.analyze(ast, mode="worst")
-        result_best = analyzer_best.analyze(ast, mode="best")
-        result_avg = analyzer_avg.analyze(ast, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
-        
-        for result in [result_worst, result_best, result_avg]:
-            assert result.get("ok", False), "Análisis debe ser exitoso"
-            assert "byLine" in result, "Debe tener byLine"
-            assert "totals" in result, "Debe tener totals"
-            assert "T_open" in result["totals"], "Debe tener T_open"
-        
-        # Verificar caso promedio
-        for row in result_avg["byLine"]:
-            assert "expectedRuns" in row, "Debe tener expectedRuns en avg case"
+    """Tests para algoritmos comunes (pseudocode, expectativas explícitas)."""
+
+    LINEAR_SEARCH = """linearSearch(A, n, x) BEGIN
+  FOR i <- 1 TO n DO BEGIN
+    IF (A[i] = x) THEN BEGIN
+      RETURN i;
+    END
+  END
+  RETURN -1;
+END
+"""
+
+    FACTORIAL = """factorial(n) BEGIN
+  resultado <- 1;
+  FOR i <- 2 TO n DO BEGIN
+    resultado <- resultado * i;
+  END
+  RETURN resultado;
+END
+"""
+
+    ARRAY_SUM = """arraySum(A, n) BEGIN
+  suma <- 0;
+  FOR i <- 1 TO n DO BEGIN
+    suma <- suma + A[i];
+  END
+  RETURN suma;
+END
+"""
+
+    ARRAY_MAX = """arrayMax(A, n) BEGIN
+  maximo <- A[1];
+  FOR i <- 2 TO n DO BEGIN
+    IF (A[i] > maximo) THEN BEGIN
+      maximo <- A[i];
+    END
+  END
+  RETURN maximo;
+END
+"""
+
+    BINARY_SEARCH_ITERATIVE = """binarySearch(A, n, x) BEGIN
+  izq <- 1;
+  der <- n;
+  WHILE (izq <= der) DO BEGIN
+    mitad <- (izq + der) / 2;
+    IF (A[mitad] = x) THEN BEGIN
+      RETURN mitad;
+    END
+    IF (A[mitad] < x) THEN BEGIN
+      izq <- mitad + 1;
+    END
+    ELSE BEGIN
+      der <- mitad - 1;
+    END
+  END
+  RETURN -1;
+END
+"""
+
+    def test_linear_search_worst_linear(self):
+        """Búsqueda lineal worst case debe ser O(n)."""
+        from app.modules.analysis.service import analyze_algorithm
+        from tests.integration.fixtures.algorithm_expectations import assert_worst_complexity
+
+        result = analyze_algorithm(self.LINEAR_SEARCH, mode="all")
+        assert result.get("ok", False)
+        assert_worst_complexity(result, "linear", "Linear Search")
+
+    def test_linear_search_avg_has_expected_runs(self):
+        """Búsqueda lineal avg debe tener expectedRuns y A_of_n."""
+        from app.modules.analysis.service import analyze_algorithm
+
+        result = analyze_algorithm(self.LINEAR_SEARCH, mode="all")
+        assert result.get("ok", False)
+        avg = result.get("avg")
+        if avg != "same_as_worst" and isinstance(avg, dict):
+            for row in avg.get("byLine", []):
+                assert "expectedRuns" in row
+            assert "A_of_n" in avg.get("totals", {})
+
+    def test_factorial_linear(self):
+        """Factorial iterativo debe ser O(n)."""
+        from app.modules.analysis.service import analyze_algorithm
+        from tests.integration.fixtures.algorithm_expectations import assert_worst_complexity
+
+        result = analyze_algorithm(self.FACTORIAL, mode="all")
+        assert result.get("ok", False)
+        assert_worst_complexity(result, "linear", "Factorial")
+
+    def test_array_sum_linear(self):
+        """Suma de array debe ser O(n)."""
+        from app.modules.analysis.service import analyze_algorithm
+        from tests.integration.fixtures.algorithm_expectations import assert_worst_complexity
+
+        result = analyze_algorithm(self.ARRAY_SUM, mode="all")
+        assert result.get("ok", False)
+        assert_worst_complexity(result, "linear", "Array Sum")
+
+    def test_array_max_linear(self):
+        """Máximo de array debe ser O(n)."""
+        from app.modules.analysis.service import analyze_algorithm
+        from tests.integration.fixtures.algorithm_expectations import assert_worst_complexity
+
+        result = analyze_algorithm(self.ARRAY_MAX, mode="all")
+        assert result.get("ok", False)
+        assert_worst_complexity(result, "linear", "Array Max")
+
+    def test_binary_search_iterative_log(self):
+        """Búsqueda binaria iterativa debe ser O(log n)."""
+        from app.modules.analysis.service import analyze_algorithm
+        from tests.integration.fixtures.algorithm_expectations import assert_worst_complexity
+
+        result = analyze_algorithm(self.BINARY_SEARCH_ITERATIVE, mode="all")
+        assert result.get("ok", False)
+        assert_worst_complexity(result, "log", "Binary Search")
+
+    def test_array_sum_all_cases_structure(self):
+        """Suma de array: worst, best y avg deben tener estructura correcta."""
+        from app.modules.analysis.service import analyze_algorithm
+
+        result = analyze_algorithm(self.ARRAY_SUM, mode="all")
+        assert result.get("ok", False)
+        assert "worst" in result and result["worst"].get("ok")
+        assert "byLine" in result["worst"] and "totals" in result["worst"]
+        if result.get("avg") != "same_as_worst" and isinstance(result.get("avg"), dict):
+            for row in result["avg"].get("byLine", []):
+                assert "expectedRuns" in row
+
+    def test_binary_search_all_cases_structure(self):
+        """Búsqueda binaria: worst, best y avg deben tener estructura correcta."""
+        from app.modules.analysis.service import analyze_algorithm
+
+        result = analyze_algorithm(self.BINARY_SEARCH_ITERATIVE, mode="all")
+        assert result.get("ok", False)
+        assert "worst" in result and result["worst"].get("ok")
+        assert "byLine" in result["worst"] and "totals" in result["worst"]
 

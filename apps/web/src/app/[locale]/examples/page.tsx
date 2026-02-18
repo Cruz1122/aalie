@@ -177,7 +177,7 @@ END`,
     name: "Ordenamiento Burbuja (Bubble Sort)",
     description:
       "Ordena un array comparando elementos adyacentes e intercambiándolos si están en el orden incorrecto. Es uno de los algoritmos de ordenamiento más simples, pero también uno de los menos eficientes.",
-    complexity: "Best: O(n), Worst: O(n²), Avg: O(n²)",
+    complexity: "O(n²)",
     code: `burbuja(A[n], n) BEGIN
     FOR i <- 1 TO n - 1 DO BEGIN
         FOR j <- 1 TO n - i DO BEGIN
@@ -256,7 +256,7 @@ END`,
     name: "Torres de Hanoi",
     description:
       "Resuelve el problema clásico de las Torres de Hanoi usando recursión. Analizado con el método de Ecuación Característica porque T(n) = 2T(n-1) + 1 es una recurrencia lineal. Detecta automáticamente que es un caso de Programación Dinámica lineal.",
-    complexity: "O(2ⁿ)",
+    complexity: "Best: O(1), Worst: O(2ⁿ), Avg: O(2ⁿ)",
     code: `hanoi(n, origen, destino, auxiliar) BEGIN
     IF (n = 1) THEN BEGIN
         RETURN 1;
@@ -277,7 +277,7 @@ END`,
     name: "Factorial Recursivo",
     description:
       "Calcula el factorial de un número usando recursión. Analizado con el método de iteración porque la recurrencia T(n) = T(n-1) + O(1) no divide uniformemente.",
-    complexity: "O(n)",
+    complexity: "Best: O(1), Worst: O(n), Avg: O(n)",
     code: `factorialRecursivo(n) BEGIN
     IF (n <= 1) THEN BEGIN
         RETURN 1;
@@ -451,7 +451,7 @@ END`,
     name: "N-Step Stairs (Subir Escaleras)",
     description:
       "Cuenta el número de formas de subir n escalones, pudiendo dar pasos de 1 o 2 escalones a la vez. Recurrencia lineal T(n) = T(n-1) + T(n-2). Analizado con Ecuación Característica y detecta DP lineal automáticamente.",
-    complexity: "O(φⁿ) donde φ = (1+√5)/2 ≈ 1.618",
+    complexity: "Best: O(1), Worst: O(φⁿ), Avg: O(φⁿ) donde φ = (1+√5)/2 ≈ 1.618",
     code: `subirEscaleras(n) BEGIN
     IF (n <= 1) THEN BEGIN
         RETURN 1;
@@ -474,7 +474,7 @@ END`,
     name: "Formas de Decodificar",
     description:
       "Cuenta el número de formas de decodificar un mensaje numérico donde cada dígito o par de dígitos puede representar una letra. Recurrencia lineal T(n) = T(n-1) + T(n-2) con condiciones. Analizado con Ecuación Característica.",
-    complexity: "O(φⁿ) donde φ = (1+√5)/2 ≈ 1.618",
+    complexity: "Best: O(1), Worst: O(φⁿ), Avg: O(φⁿ) donde φ = (1+√5)/2 ≈ 1.618",
     code: `formasDecodificar(mensaje, n) BEGIN
     IF (n = 0 OR n = 1) THEN BEGIN
         RETURN 1;
@@ -518,7 +518,7 @@ END`,
     description:
       "Calcula el n-ésimo número de Tribonacci (similar a Fibonacci pero suma los últimos 3 términos). Recurrencia lineal T(n) = T(n-1) + T(n-2) + T(n-3). Analizado con Ecuación Característica.",
     complexity:
-      "O(rⁿ) donde r es la raíz real mayor de la ecuación característica",
+      "Best: O(1), Worst: O(rⁿ), Avg: O(rⁿ) donde r es la raíz real mayor",
     code: `tribonacci(n) BEGIN
     IF (n <= 1) THEN BEGIN
         RETURN 0;
@@ -593,8 +593,8 @@ END`,
     id: 26,
     name: "Búsqueda en Árbol Binario de Búsqueda",
     description:
-      "Busca un elemento en un BST. La recurrencia T(n) = T(n/2) + O(1) depende de la altura del árbol. Analizado únicamente con Teorema Maestro porque a=1, b=2 no cumple las condiciones del Árbol de Recursión.",
-    complexity: "Best: O(log n), Worst: O(n), Avg: O(log n)",
+      "Busca un elemento en un BST. La recurrencia T(n) = T(n/2) + O(1) depende de la altura del árbol. Analizado con Teorema Maestro porque a=1, b=2.",
+    complexity: "Best: O(1), Worst: O(log n), Avg: O(log n)",
     code: `buscarBST(raiz, valor) BEGIN
     IF (raiz = null) THEN BEGIN
         RETURN null;
@@ -612,14 +612,14 @@ END`,
     END
 END`,
     category: "recursive_master",
-    note: "Se analiza únicamente con Teorema Maestro (a=1, b=2, caso promedio)",
+    note: "Se analiza con Teorema Maestro (a=1, b=2). Detecta raiz.izquierda/derecha como n/2.",
   },
   {
     id: 27,
     name: "Exponentiación Rápida Recursiva",
     description:
       "Calcula x^n de forma eficiente usando divide y conquista. T(n) = T(n/2) + O(1). Analizado únicamente con Teorema Maestro porque a=1, b=2.",
-    complexity: "O(log n)",
+    complexity: "Best: O(1), Worst: O(log n), Avg: O(log n)",
     code: `exponenciacionRapida(x, n) BEGIN
     IF (n = 0) THEN BEGIN
         RETURN 1;
@@ -641,7 +641,7 @@ END`,
     name: "Suma de Array Recursiva",
     description:
       "Suma los elementos de un array recursivamente procesando un elemento a la vez. Recurrencia T(n) = T(n-1) + O(1). Analizado únicamente con método iterativo porque no es lineal por desplazamientos constantes múltiples.",
-    complexity: "O(n)",
+    complexity: "Best: O(1), Worst: O(n), Avg: O(n)",
     code: `sumaArray(A[n], n) BEGIN
     IF (n = 0) THEN BEGIN
         RETURN 0;
@@ -658,7 +658,7 @@ END`,
     name: "Búsqueda en Lista Enlazada",
     description:
       "Busca un elemento en una lista enlazada recursivamente. Recurrencia T(n) = T(n-1) + O(1). Analizado únicamente con método iterativo.",
-    complexity: "O(n)",
+    complexity: "Best: O(1), Worst: O(n), Avg: O(n)",
     code: `buscarLista(nodo, valor) BEGIN
     IF (nodo = null) THEN BEGIN
         RETURN false;

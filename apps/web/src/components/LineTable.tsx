@@ -5,6 +5,31 @@ import { useTranslations } from "next-intl";
 
 import Formula from "./Formula";
 
+/** Detecta si el count contiene símbolos iterativos unbounded (t_while, t_repeat). */
+function hasUnboundedIterativeSymbol(count: string): boolean {
+  if (!count || typeof count !== "string") return false;
+  return (
+    /t_\{?while[\d_]*\}?|t_\{?repeat[\d_]*\}?|t_while|t_repeat/i.test(count) ||
+    count.includes("t_{while") ||
+    count.includes("t_{repeat")
+  );
+}
+
+/** Devuelve LaTeX para mostrar: ∞ cuando es unbounded con t_while/t_repeat, sino el count original. */
+function getDisplayCountLatex(
+  row: LineCost,
+  hasUnboundedInData: boolean,
+): string {
+  const count = row.expectedRuns ?? row.count ?? "";
+  if (
+    hasUnboundedInData &&
+    hasUnboundedIterativeSymbol(count)
+  ) {
+    return "\\infty";
+  }
+  return count;
+}
+
 /**
  * Propiedades del componente LineTable.
  */
@@ -80,6 +105,7 @@ export default function LineTable({
 }: Readonly<LineTableProps>) {
   const t = useTranslations("analyzer.lineTable");
   const isAvgMode = rows.some((row) => row.expectedRuns !== undefined);
+  const hasUnboundedInData = rows.some((row) => row.unbounded === true);
 
   return (
     <div className="overflow-auto">
@@ -92,6 +118,9 @@ export default function LineTable({
             </th>
             <th className="text-center p-2 font-semibold text-slate-300">
               C<sub>k</sub>
+            </th>
+            <th className="text-center p-2 font-semibold text-slate-300">
+              {t("elementaryOps")}
             </th>
             <th className="text-center p-2 font-semibold text-slate-300">
               {isAvgMode ? (
@@ -117,13 +146,32 @@ export default function LineTable({
                 {row.line}
               </td>
               <td className="p-2 text-center">
-                <Badge kind={row.kind} t={t} />
+                <span className="inline-flex items-center gap-1.5 flex-wrap justify-center">
+                  <Badge kind={row.kind} t={t} />
+                  {row.unbounded === true && (
+                    <span
+                      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                      title={t("whileUnboundedWarning")}
+                    >
+                      {t("whileUnboundedWarning")}
+                    </span>
+                  )}
+                </span>
               </td>
               <td className="p-2 text-center whitespace-nowrap text-slate-200">
                 <Formula latex={row.ck} />
               </td>
               <td className="p-2 text-center whitespace-nowrap text-slate-200">
-                <Formula latex={row.expectedRuns || row.count} />
+                <Formula
+                  latex={
+                    row.ops != null ? String(row.ops) : "\\text{—}"
+                  }
+                />
+              </td>
+              <td className="p-2 text-center whitespace-nowrap text-slate-200">
+                <Formula
+                  latex={getDisplayCountLatex(row, hasUnboundedInData)}
+                />
               </td>
               {onViewProcedure && (
                 <td className="p-2 text-center">

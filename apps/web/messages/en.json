@@ -13,12 +13,13 @@
   "nav": {
     "home": "Home",
     "analyzer": "Analyzer",
-    "documentation": "Documentation",
+    "documentation": "Docs",
     "examples": "Examples",
     "about": "About Us",
     "openMenu": "Open menu"
   },
   "footer": {
+    "languageLabel": "Language",
     "university": "University of Caldas - 2025",
     "privacyPolicy": "Privacy Policy",
     "backendStatus": {
@@ -31,8 +32,8 @@
       "configured": "API Key configured",
       "notConfigured": "Configure your API Key",
       "invalid": "Invalid API Key",
-      "inEnv": "API Key in environment variables",
-      "inLocalStorage": "API Key in local storage",
+      "inEnv": "API Key saved on server",
+      "inLocalStorage": "API Key saved in this browser",
       "placeholder": "Gemini API Key",
       "invalidHint": "Invalid API Key",
       "geminiHintPre": "Enter your Gemini API Key to enable AI functions. You can get it at ",
@@ -269,6 +270,7 @@
     },
     "lineTable": {
       "type": "Type",
+      "elementaryOps": "Operations",
       "executions": "# executions",
       "expectedExecutions": "E[# executions]",
       "action": "Action",
@@ -282,7 +284,8 @@
       "print": "Print",
       "return": "Return",
       "decl": "Declaration",
-      "other": "Other"
+      "other": "Other",
+      "whileUnboundedWarning": "May not terminate"
     },
     "procedureModal": {
       "titleLine": "Procedure - Line {line}",

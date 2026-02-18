@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Set
 from sympy import Expr, latex, Integer
 from .base import BaseAnalyzer
 from ..visitors.for_visitor import ForVisitor
@@ -37,6 +37,17 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         self.big_o: Optional[str] = None
         self.big_omega: Optional[str] = None
         self.big_theta: Optional[str] = None
+
+    def build_t_open(self) -> str:
+        """
+        Construye T_open (o A(n) para promedio). Si hay bucles unbounded, retorna expresión que tiende a infinito.
+        """
+        has_unbounded = any(r.get("unbounded") for r in self.rows)
+        if has_unbounded:
+            if self.mode == "avg":
+                return self._note("proc_a_of_n_tends_infinity")
+            return self._note("proc_t_open_tends_infinity")
+        return super().build_t_open()
     
     def _expr_to_str(self, expr: Any) -> str:
         """
@@ -212,7 +223,40 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 expr = simplify(expr)
         
         return expr
-    
+
+    def _detect_control_params(self, ast: Dict[str, Any]) -> Set[str]:
+        """Detecta params usados como control (IF id=const que guarda update del WHILE)."""
+        control: Set[str] = set()
+        for node in ast.get("body", []):
+            if not isinstance(node, dict) or node.get("type") != "ProcDef":
+                continue
+            params = node.get("params", [])
+            param_names = {p.get("name", "") if isinstance(p, dict) else str(p) for p in params}
+            param_names.discard("")
+            proc_body = node.get("body") or node.get("block", {})
+            self._collect_control_params_from_node(proc_body, param_names, control)
+        return control
+
+    def _collect_control_params_from_node(self, node: Any, param_names: Set[str], control: Set[str]) -> None:
+        if not isinstance(node, dict):
+            return
+        nt = node.get("type", "").lower()
+        if nt == "while":
+            test, body = node.get("test", {}), node.get("body", {})
+            info = self._extract_condition_info(test)
+            if info and info.get("variable"):
+                if_info = self._find_var_guarded_if(body, info["variable"])
+                if if_info:
+                    id_name = self._extract_id_from_var_eq_const(if_info.get("test", {}))
+                    if id_name and id_name in param_names:
+                        control.add(id_name)
+        if nt == "block":
+            for stmt in node.get("body", []):
+                self._collect_control_params_from_node(stmt, param_names, control)
+        for key in ["body", "consequent", "alternate", "then"]:
+            if key in node:
+                self._collect_control_params_from_node(node[key], param_names, control)
+
     def analyze(self, ast: Dict[str, Any], mode: str = "worst", api_key: Optional[str] = None, avg_model: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Analiza un AST completo y retorna el resultado.
@@ -235,6 +279,10 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Establecer modo
         self.mode = mode
         
+        # AST inválido: retornar resultado vacío sin fallar
+        if ast is None or not isinstance(ast, dict):
+            return self.result()
+        
         # Crear instancia de AvgModel si mode == "avg"
         if mode == "avg":
             if avg_model:
@@ -254,9 +302,40 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Usar SymPy para cerrar sumatorias y generar procedimientos
         closer = SummationCloser(locale=self.locale)
         complexity = ComplexityClasses()
-        
-        # Detectar variable principal (n por defecto)
-        variable = "n"
+
+        # Detectar variable principal desde params del procedimiento
+        # Excluir params de control (IF id=const que guarda update del WHILE)
+        # NO usar "n" por defecto si no existe en params (evita O(n) espurio)
+        control_params = self._detect_control_params(ast)
+        SIZE_PARAMS = {"n", "m", "size", "length", "exp", "count"}
+        variable: Optional[str] = "n"
+        has_size_variable = True
+        for node in ast.get("body", []):
+            if isinstance(node, dict) and node.get("type") == "ProcDef":
+                params = node.get("params", [])
+                param_names = [
+                    p.get("name", "") if isinstance(p, dict) else str(p)
+                    for p in params
+                ]
+                if "exp" in param_names and "base" in param_names:
+                    variable = "exp"
+                elif "n" in param_names:
+                    variable = "n"
+                elif "m" in param_names:
+                    variable = "m"
+                elif param_names:
+                    candidates = [p for p in param_names if p not in control_params]
+                    if candidates:
+                        for pref in SIZE_PARAMS:
+                            if pref in candidates:
+                                variable = pref
+                                break
+                        else:
+                            variable = candidates[0]
+                    else:
+                        variable = None
+                        has_size_variable = False
+                break
         
         # Cerrar sumatorias y generar procedimientos para cada fila
         for row in self.rows:
@@ -299,6 +378,13 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     ]
                     continue  # Saltar procesamiento normal
             
+            # Filas unbounded: procedimiento indica que tiende a infinito
+            if row.get("unbounded"):
+                line_num = row.get("line", "?")
+                proc_inf = self._note("proc_line_tends_infinity", line=line_num)
+                row["procedure"] = [proc_inf, "\\infty"]
+                continue
+            
             # Preferir usar count_raw_expr directamente si está disponible
             if count_raw_expr is not None:
                 try:
@@ -315,7 +401,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                         pass  # Si falla, mantener count_raw original
                     
                     # Pasar el objeto SymPy directamente a close_summation
-                    closed_count, steps = closer.close_summation(count_raw_expr, variable)
+                    closed_count, steps = closer.close_summation(count_raw_expr, variable or "n")
                     row["count"] = closed_count
                     
                     # En modo promedio, actualizar expectedRuns con la expresión cerrada
@@ -399,7 +485,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             
             # Cerrar sumatoria (trabaja con LaTeX por ahora, pero recibe SymPy internamente)
             try:
-                closed_count, steps = closer.close_summation(count_raw_latex, variable)
+                closed_count, steps = closer.close_summation(count_raw_latex, variable or "n")
                 row["count"] = closed_count
                 
                 # En modo promedio, actualizar expectedRuns con la expresión cerrada
@@ -444,206 +530,207 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         
         # Calcular T_polynomial: agrupar términos con C_k (para mostrar estructura)
         self._calculate_t_polynomial_fallback()
-        
+        # Si hay bucles unbounded, T_polynomial tiende a infinito
+        has_unbounded = any(r.get("unbounded") for r in self.rows)
+        if has_unbounded:
+            self.t_polynomial = self._note("proc_t_open_tends_infinity")
+
         # Generar procedimiento general para caso promedio
         if mode == "avg":
             self._generate_avg_procedure()
         
         # Calcular notaciones asintóticas usando la expresión SymPy directamente
-        if t_open_expr is not None:
+        # Caso especial: algoritmo de Euclides (mcd) → O(log(min(a,b)))
+        has_euclid = any(r.get("euclid_pattern") for r in self.rows)
+        if has_euclid:
+            self.big_o = "O(\\log(\\min(a,b)))"
+            self.big_omega = "\\Omega(1)"
+            self.big_theta = "\\Theta(\\log(\\min(a,b)))"
+        elif t_open_expr is not None:
             try:
                 from sympy import latex as sympy_latex, Symbol, expand, simplify
-                
-                # Primero, asegurarse de que la expresión esté completamente simplificada
-                t_open_expr = expand(t_open_expr)
-                t_open_expr = simplify(t_open_expr)
-                
-                # Verificar y eliminar variables de iteración que no deberían estar
-                iteration_vars = ['i', 'j', 'k']
-                for var_name in iteration_vars:
-                    var_symbol = Symbol(var_name, integer=True)
-                    if t_open_expr.has(var_symbol):
-                        # Intentar expandir y simplificar para eliminar la variable
-                        t_open_expr = expand(t_open_expr)
-                        t_open_expr = simplify(t_open_expr)
-                
-                n_sym = Symbol(variable, integer=True, positive=True)
-                
-                # Método robusto: buscar término con mayor potencia de n
-                try:
-                    # Expandir completamente y buscar manualmente
-                    expanded = expand(t_open_expr)
-                    
-                    # Si es una expresión Add (suma de términos), analizar cada término
-                    if hasattr(expanded, 'args') and len(expanded.args) > 0:
-                        terms = expanded.args
-                        max_degree = -1
-                        dominant_term = None
-                        
-                        for term in terms:
-                            # Calcular el grado/complejidad de este término respecto a n
-                            # Método directo: buscar potencias de n en el término
-                            term_degree = 0
-                            term_has_log = False
-                            
-                            # Buscar todas las potencias de n y funciones log(n) en el término
-                            # No confiar en has() ya que puede fallar en algunos casos
-                            from sympy import preorder_traversal, Pow, log as sym_log
-                            
-                            # Primero verificar si el término tiene log(n)
-                            # Usar has() para verificar rápidamente
-                            from sympy import log as sym_log
-                            if term.has(sym_log):
-                                # Verificar si el log contiene n
-                                for subexpr in preorder_traversal(term):
-                                    if hasattr(subexpr, 'func') and subexpr.func == sym_log:
-                                        if any(isinstance(s, Symbol) and s.name == n_sym.name for s in subexpr.free_symbols):
-                                            term_has_log = True
-                                            break
-                            
-                            # Ahora buscar potencias de n FUERA de log
-                            # Si hay log(n), solo buscar n que esté multiplicando al log
-                            if term_has_log:
-                                # Verificar si es n * log(n) o n^k * log(n)
-                                # Dividir por log para ver qué queda
-                                try:
-                                    # Buscar si hay un n multiplicando
-                                    from sympy import collect
-                                    # Si el término es algo como n * log(n) o 5*n*log(n), detectarlo
-                                    if term.has(n_sym * sym_log(n_sym)):
-                                        term_degree = 1
-                                    elif term.has(n_sym**2 * sym_log(n_sym)):
-                                        term_degree = 2
-                                    # Agregar más casos si es necesario
-                                except Exception:
-                                    pass
-                            else:
-                                # No hay log, buscar potencias de n normalmente
-                                for subexpr in preorder_traversal(term):
-                                    if isinstance(subexpr, Symbol) and subexpr.name == n_sym.name:
-                                        # Encontramos n directamente
-                                        term_degree = max(term_degree, 1)
-                                    elif isinstance(subexpr, Pow):
-                                        # Verificar si es una potencia de n
-                                        try:
-                                            if isinstance(subexpr.base, Symbol) and subexpr.base.name == n_sym.name:
-                                                exp_val = subexpr.exp
-                                                if exp_val.is_number:
-                                                    exp_int = int(float(exp_val))
-                                                    term_degree = max(term_degree, exp_int)
-                                        except Exception:
-                                            pass
-                            
-                            # Determinar complejidad del término
-                            # log(n) < n < n*log(n) < n^2 < n^2*log(n) < ...
-                            # Usar números decimales para ordenar: log(n) = 0.5, n = 1, n*log(n) = 1.5, n^2 = 2, ...
-                            if term_has_log and term_degree == 0:
-                                # Solo log(n), sin n^k
-                                term_complexity = 0.5
-                            elif term_has_log and term_degree > 0:
-                                # n^k * log(n)
-                                term_complexity = term_degree + 0.5
-                            else:
-                                # n^k sin log
-                                term_complexity = float(term_degree)
-                            
-                            if term_complexity > max_degree:
-                                max_degree = term_complexity
-                                dominant_term = term
-                        
-                        if dominant_term is not None and max_degree >= 0:
-                            # Simplificar el término dominante
-                            dominant_term = simplify(dominant_term)
-                            
-                            # Para notación asintótica, simplificar el coeficiente: O(5n²/2) -> O(n²)
-                            # Extraer solo la forma asintótica sin coeficientes
-                            if max_degree == 0.5:
-                                # Solo log(n)
-                                from sympy import log as sym_log, Symbol as SymSymbol
-                                n_for_notation = SymSymbol(variable, integer=True, positive=True)
-                                dominant_latex = sympy_latex(sym_log(n_for_notation))
-                            elif max_degree > 0 and max_degree < 1:
-                                # Caso edge: constante, no debería llegar aquí
-                                dominant_latex = "1"
-                            elif max_degree >= 1:
-                                # n^k (posiblemente con log)
-                                from sympy import Symbol as SymSymbol, log as sym_log
-                                n_for_notation = SymSymbol(variable, integer=True, positive=True)
-                                degree_int = int(max_degree)
-                                has_log_component = (max_degree - degree_int) >= 0.5
-                                
-                                if degree_int == 1 and not has_log_component:
-                                    # Solo n
-                                    dominant_latex = sympy_latex(n_for_notation)
-                                elif degree_int == 1 and has_log_component:
-                                    # n * log(n)
-                                    dominant_latex = sympy_latex(n_for_notation * sym_log(n_for_notation))
-                                elif degree_int > 1 and not has_log_component:
-                                    # n^k
-                                    dominant_latex = sympy_latex(n_for_notation**degree_int)
+
+                # Bucles unbounded: complejidad tiende a infinito (no sustituir t_while por n)
+                has_unbounded = any(r.get("unbounded") for r in self.rows)
+                if has_unbounded:
+                    self.big_o = "O(\\infty)"
+                    self.big_omega = "\\Omega(1)"
+                    self.big_theta = "\\Theta(\\infty)"
+                elif not has_size_variable and not has_unbounded:
+                    # Caso sin variable de tamaño y bucle acotado (ej. best case param-controlled)
+                    self.big_o = "O(1)"
+                    self.big_omega = "\\Omega(1)"
+                    self.big_theta = "\\Theta(1)"
+                elif variable:
+                    # Sustituir símbolos iterativos (t_while_L, exp_0, etc.) por variable de tamaño
+                    n_sym = Symbol(variable, integer=True, positive=True)
+                    for sym in list(t_open_expr.free_symbols):
+                        name = getattr(sym, "name", str(sym))
+                        if (
+                            "while_" in name
+                            or "repeat_" in name
+                            or name.startswith("t_while_")
+                            or name.startswith("t_repeat_")
+                        ):
+                            t_open_expr = t_open_expr.subs(sym, n_sym)
+                        elif name.startswith("exp_") or name == "exp":
+                            exp_sym = Symbol("exp", integer=True, positive=True)
+                            t_open_expr = t_open_expr.subs(sym, exp_sym)
+                            variable = "exp"
+                            n_sym = exp_sym
+
+                    t_open_expr = expand(t_open_expr)
+                    t_open_expr = simplify(t_open_expr)
+
+                    iteration_vars = ["i", "j", "k"]
+                    for var_name in iteration_vars:
+                        var_symbol = Symbol(var_name, integer=True)
+                        if t_open_expr.has(var_symbol):
+                            t_open_expr = expand(t_open_expr)
+                            t_open_expr = simplify(t_open_expr)
+
+                    n_sym = Symbol(variable, integer=True, positive=True)
+
+                    try:
+                        expanded = expand(t_open_expr)
+                        if hasattr(expanded, 'args') and len(expanded.args) > 0:
+                            terms = expanded.args
+                            max_degree = -1
+                            dominant_term = None
+
+                            for term in terms:
+                                term_degree = 0
+                                term_has_log = False
+                                from sympy import preorder_traversal, Pow, log as sym_log
+                                from sympy import log as sym_log
+                                if term.has(sym_log):
+                                    for subexpr in preorder_traversal(term):
+                                        if hasattr(subexpr, 'func') and subexpr.func == sym_log:
+                                            if any(isinstance(s, Symbol) and s.name == n_sym.name for s in subexpr.free_symbols):
+                                                term_has_log = True
+                                                break
+                                if term_has_log:
+                                    try:
+                                        from sympy import collect
+                                        if term.has(n_sym * sym_log(n_sym)):
+                                            term_degree = 1
+                                        elif term.has(n_sym**2 * sym_log(n_sym)):
+                                            term_degree = 2
+                                    except Exception:
+                                        pass
                                 else:
-                                    # n^k * log(n)
-                                    dominant_latex = sympy_latex((n_for_notation**degree_int) * sym_log(n_for_notation))
-                            else:
-                                # Si es constante (grado 0), mostrar como "1" en notación asintótica
-                                # En notación asintótica, todas las constantes son equivalentes a 1
-                                dominant_latex = "1"
+                                    for subexpr in preorder_traversal(term):
+                                        if isinstance(subexpr, Symbol) and subexpr.name == n_sym.name:
+                                            term_degree = max(term_degree, 1)
+                                        elif isinstance(subexpr, Pow):
+                                            try:
+                                                if isinstance(subexpr.base, Symbol) and subexpr.base.name == n_sym.name:
+                                                    exp_val = subexpr.exp
+                                                    if exp_val.is_number:
+                                                        exp_int = int(float(exp_val))
+                                                        term_degree = max(term_degree, exp_int)
+                                            except Exception:
+                                                pass
+                                if term_has_log and term_degree == 0:
+                                    term_complexity = 0.5
+                                elif term_has_log and term_degree > 0:
+                                    term_complexity = term_degree + 0.5
+                                else:
+                                    term_complexity = float(term_degree)
+                                if term_complexity > max_degree:
+                                    max_degree = term_complexity
+                                    dominant_term = term
+                        
+                            if dominant_term is not None and max_degree >= 0:
+                                # Simplificar el término dominante
+                                dominant_term = simplify(dominant_term)
                             
-                            # Construir notaciones asintóticas
-                            # Para caso promedio con símbolos, agregar hipótesis
-                            if mode == "avg" and self.avg_model and self.avg_model.has_symbols():
-                                # Verificar si hay símbolos probabilísticos en la expresión
-                                from sympy import Symbol as SymSymbol
-                                prob_symbols = ['p', 'q', 'r', 's', 't']
-                                has_prob_symbols = False
-                                for sym_name in prob_symbols:
-                                    sym = SymSymbol(sym_name, real=True)
-                                    if t_open_expr.has(sym):
-                                        has_prob_symbols = True
-                                        break
+                                # Para notación asintótica, simplificar el coeficiente: O(5n²/2) -> O(n²)
+                                # Extraer solo la forma asintótica sin coeficientes
+                                if max_degree == 0.5:
+                                    # Solo log(n)
+                                    from sympy import log as sym_log, Symbol as SymSymbol
+                                    n_for_notation = SymSymbol(variable, integer=True, positive=True)
+                                    dominant_latex = sympy_latex(sym_log(n_for_notation))
+                                elif max_degree > 0 and max_degree < 1:
+                                    # Caso edge: constante, no debería llegar aquí
+                                    dominant_latex = "1"
+                                elif max_degree >= 1:
+                                    # n^k (posiblemente con log)
+                                    from sympy import Symbol as SymSymbol, log as sym_log
+                                    n_for_notation = SymSymbol(variable, integer=True, positive=True)
+                                    degree_int = int(max_degree)
+                                    has_log_component = (max_degree - degree_int) >= 0.5
+                                    
+                                    if degree_int == 1 and not has_log_component:
+                                        # Solo n
+                                        dominant_latex = sympy_latex(n_for_notation)
+                                    elif degree_int == 1 and has_log_component:
+                                        # n * log(n)
+                                        dominant_latex = sympy_latex(n_for_notation * sym_log(n_for_notation))
+                                    elif degree_int > 1 and not has_log_component:
+                                        # n^k
+                                        dominant_latex = sympy_latex(n_for_notation**degree_int)
+                                    else:
+                                        # n^k * log(n)
+                                        dominant_latex = sympy_latex((n_for_notation**degree_int) * sym_log(n_for_notation))
+                                else:
+                                    # Si es constante (grado 0), mostrar como "1" en notación asintótica
+                                    # En notación asintótica, todas las constantes son equivalentes a 1
+                                    dominant_latex = "1"
                                 
-                                if has_prob_symbols:
-                                    # Notación condicionada
-                                    self.big_o = f"O({dominant_latex}) \\text{{ (para }} p > 0 \\text{{ constante)}}"
-                                    self.big_omega = f"\\Omega({dominant_latex}) \\text{{ (para }} p > 0 \\text{{ constante)}}"
-                                    self.big_theta = f"\\Theta({dominant_latex}) \\text{{ (para }} p > 0 \\text{{ constante)}}"
+                                # Construir notaciones asintóticas
+                                # Para caso promedio con símbolos, agregar hipótesis
+                                if mode == "avg" and self.avg_model and self.avg_model.has_symbols():
+                                    # Verificar si hay símbolos probabilísticos en la expresión
+                                    from sympy import Symbol as SymSymbol
+                                    prob_symbols = ['p', 'q', 'r', 's', 't']
+                                    has_prob_symbols = False
+                                    for sym_name in prob_symbols:
+                                        sym = SymSymbol(sym_name, real=True)
+                                        if t_open_expr.has(sym):
+                                            has_prob_symbols = True
+                                            break
+                                    
+                                    if has_prob_symbols:
+                                        # Notación condicionada
+                                        self.big_o = f"O({dominant_latex}) \\text{{ (para }} p > 0 \\text{{ constante)}}"
+                                        self.big_omega = f"\\Omega({dominant_latex}) \\text{{ (para }} p > 0 \\text{{ constante)}}"
+                                        self.big_theta = f"\\Theta({dominant_latex}) \\text{{ (para }} p > 0 \\text{{ constante)}}"
+                                    else:
+                                        self.big_o = f"O({dominant_latex})"
+                                        self.big_omega = f"\\Omega({dominant_latex})"
+                                        self.big_theta = f"\\Theta({dominant_latex})"
                                 else:
                                     self.big_o = f"O({dominant_latex})"
                                     self.big_omega = f"\\Omega({dominant_latex})"
                                     self.big_theta = f"\\Theta({dominant_latex})"
                             else:
-                                self.big_o = f"O({dominant_latex})"
-                                self.big_omega = f"\\Omega({dominant_latex})"
-                                self.big_theta = f"\\Theta({dominant_latex})"
+                                # Fallback: usar ComplexityClasses
+                                t_open_latex = sympy_latex(t_open_expr)
+                                self.big_o = complexity.calculate_big_o(t_open_latex, variable or "n")
+                                self.big_omega = complexity.calculate_big_omega(t_open_latex, variable or "n")
+                                self.big_theta = complexity.calculate_big_theta(t_open_latex, variable or "n")
                         else:
-                            # Fallback: usar ComplexityClasses
-                            t_open_latex = sympy_latex(t_open_expr)
-                            self.big_o = complexity.calculate_big_o(t_open_latex, variable)
-                            self.big_omega = complexity.calculate_big_omega(t_open_latex, variable)
-                            self.big_theta = complexity.calculate_big_theta(t_open_latex, variable)
-                    else:
-                        # Expresión simple, verificar si es constante
-                        simplified = simplify(t_open_expr)
-                        # Verificar si la expresión es constante (no depende de n)
-                        n_sym = Symbol(variable, integer=True, positive=True)
-                        if not simplified.has(n_sym):
-                            # Es constante, mostrar como "1"
-                            dominant_latex = "1"
-                        else:
-                            # No es constante, usar la expresión
-                            dominant_latex = sympy_latex(simplified)
-                        self.big_o = f"O({dominant_latex})"
-                        self.big_omega = f"\\Omega({dominant_latex})"
-                        self.big_theta = f"\\Theta({dominant_latex})"
-                except Exception as e:
-                    print(f"[IterativeAnalyzer] Error calculando término dominante: {e}")
-                    import traceback
-                    traceback.print_exc()
-                    # Fallback: usar ComplexityClasses con LaTeX
-                    t_open_latex = sympy_latex(t_open_expr)
-                    self.big_o = complexity.calculate_big_o(t_open_latex, variable)
-                    self.big_omega = complexity.calculate_big_omega(t_open_latex, variable)
-                    self.big_theta = complexity.calculate_big_theta(t_open_latex, variable)
+                            # Expresión simple, verificar si es constante
+                            simplified = simplify(t_open_expr)
+                            n_sym = Symbol(variable, integer=True, positive=True)
+                            if not simplified.has(n_sym):
+                                dominant_latex = "1"
+                            else:
+                                dominant_latex = sympy_latex(simplified)
+                            self.big_o = f"O({dominant_latex})"
+                            self.big_omega = f"\\Omega({dominant_latex})"
+                            self.big_theta = f"\\Theta({dominant_latex})"
+                    except Exception as e:
+                        print(f"[IterativeAnalyzer] Error calculando término dominante: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        # Fallback: usar ComplexityClasses con LaTeX
+                        t_open_latex = sympy_latex(t_open_expr)
+                        self.big_o = complexity.calculate_big_o(t_open_latex, variable or "n")
+                        self.big_omega = complexity.calculate_big_omega(t_open_latex, variable or "n")
+                        self.big_theta = complexity.calculate_big_theta(t_open_latex, variable or "n")
             except Exception as e:
                 print(f"[IterativeAnalyzer] Error calculando notaciones asintóticas desde expresión SymPy: {e}")
                 import traceback
@@ -730,10 +817,12 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         
         # Paso 5: Cierre de sumatorias
         procedure_steps.append(self._note("proc_step5_summation"))
-        t_open = self.build_t_open()
-        procedure_steps.append(
-            f"A(n) = {t_open}"
-        )
+        has_unbounded = any(r.get("unbounded") for r in self.rows)
+        if has_unbounded:
+            procedure_steps.append(self._note("proc_a_of_n_tends_infinity"))
+        else:
+            t_open = self.build_t_open()
+            procedure_steps.append(f"A(n) = {t_open}")
         
         # Paso 6: Resultado y modelo
         procedure_steps.append(self._note("proc_step6_result"))
@@ -811,6 +900,11 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 count_expr = expand(count_expr)
                 count_expr = simplify(count_expr)
                 
+                # Aplicar factor de operaciones elementales: C_k · ops · count
+                ops_val = row.get('ops', 1)
+                if ops_val != 1:
+                    count_expr = Integer(ops_val) * count_expr
+                
                 # IMPORTANTE: Eliminar variables de iteración (i, j, k) que no deberían estar en el resultado final
                 count_expr = self._sanitize_expression(count_expr)
                 
@@ -875,8 +969,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                             # Agregar C_k a este coeficiente
                             degree_to_coeffs[degree][coeff_key]['cks'].append(ck_str)
                             
-                except (ValueError, TypeError, AttributeError):
-                    # Si Poly falla (p.ej., expresión no es polinómica), tratar como constante
+                except Exception:
+                    # Si Poly falla (p.ej., expresión con log/sqrt no es polinómica), tratar como constante
                     # Esto puede pasar con expresiones complejas, pero intentamos manejarlo
                     try:
                         # Intentar extraer como constante (grado 0)

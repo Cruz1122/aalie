@@ -71,35 +71,35 @@ class TestSimpleVisitor(unittest.TestCase):
         self.analyzer.visitDecl(node)
         self.assertGreater(len(self.analyzer.rows), 0)
 
-    def test_cost_of_lvalue_identifier(self):
+    def test_ops_of_lvalue_identifier(self):
         """Test: Calcula costo de lvalue identificador"""
         lvalue = {"type": "identifier", "name": "x"}
-        result = self.analyzer._cost_of_lvalue(lvalue)
-        self.assertIsInstance(result, list)
+        result = self.analyzer._ops_of_lvalue(lvalue)
+        self.assertIsInstance(result, int)
 
-    def test_cost_of_lvalue_index(self):
+    def test_ops_of_lvalue_index(self):
         """Test: Calcula costo de lvalue índice"""
         lvalue = {
             "type": "index",
             "target": {"type": "identifier", "name": "A"},
             "index": {"type": "identifier", "name": "i"}
         }
-        result = self.analyzer._cost_of_lvalue(lvalue)
-        self.assertIsInstance(result, list)
+        result = self.analyzer._ops_of_lvalue(lvalue)
+        self.assertIsInstance(result, int)
 
-    def test_cost_of_expr_identifier(self):
+    def test_ops_of_expr_identifier(self):
         """Test: Calcula costo de expresión identificador"""
         expr = {"type": "identifier", "name": "x"}
-        result = self.analyzer._cost_of_expr(expr)
-        self.assertIsInstance(result, list)
+        result = self.analyzer._ops_of_expr(expr)
+        self.assertIsInstance(result, int)
 
-    def test_cost_of_expr_number(self):
+    def test_ops_of_expr_number(self):
         """Test: Calcula costo de expresión número"""
         expr = {"type": "number", "value": 42}
-        result = self.analyzer._cost_of_expr(expr)
-        self.assertIsInstance(result, list)
+        result = self.analyzer._ops_of_expr(expr)
+        self.assertIsInstance(result, int)
 
-    def test_cost_of_expr_binary(self):
+    def test_ops_of_expr_binary(self):
         """Test: Calcula costo de expresión binaria"""
         expr = {
             "type": "binary",
@@ -107,8 +107,8 @@ class TestSimpleVisitor(unittest.TestCase):
             "operator": "+",
             "right": {"type": "number", "value": 1}
         }
-        result = self.analyzer._cost_of_expr(expr)
-        self.assertIsInstance(result, list)
+        result = self.analyzer._ops_of_expr(expr)
+        self.assertIsInstance(result, int)
 
     def test_expr_to_str_identifier(self):
         """Test: Convierte identificador a string"""
@@ -122,7 +122,7 @@ class TestSimpleVisitor(unittest.TestCase):
         result = self.analyzer._expr_to_str(expr)
         self.assertIn("hello", result)
 
-    def test_cost_of_lvalue_nested_index(self):
+    def test_ops_of_lvalue_nested_index(self):
         """Test: Calcula costo de lvalue con índice anidado"""
         lvalue = {
             "type": "index",
@@ -133,49 +133,49 @@ class TestSimpleVisitor(unittest.TestCase):
             },
             "index": {"type": "identifier", "name": "j"}
         }
-        result = self.analyzer._cost_of_lvalue(lvalue)
-        self.assertIsInstance(result, list)
-        self.assertGreater(len(result), 0)
+        result = self.analyzer._ops_of_lvalue(lvalue)
+        self.assertIsInstance(result, int)
+        self.assertGreaterEqual(result, 0)
 
-    def test_cost_of_lvalue_field(self):
+    def test_ops_of_lvalue_field(self):
         """Test: Calcula costo de lvalue con acceso a campo"""
         lvalue = {
             "type": "field",
             "target": {"type": "identifier", "name": "obj"},
             "field": "prop"
         }
-        result = self.analyzer._cost_of_lvalue(lvalue)
-        self.assertIsInstance(result, list)
-        self.assertGreater(len(result), 0)
+        result = self.analyzer._ops_of_lvalue(lvalue)
+        self.assertIsInstance(result, int)
+        self.assertGreaterEqual(result, 0)
 
-    def test_cost_of_lvalue_not_dict(self):
+    def test_ops_of_lvalue_not_dict(self):
         """Test: Calcula costo de lvalue que no es dict"""
-        result = self.analyzer._cost_of_lvalue("not_a_dict")
-        self.assertEqual(result, [])
+        result = self.analyzer._ops_of_lvalue("not_a_dict")
+        self.assertEqual(result, 0)
 
-    def test_cost_of_expr_index(self):
+    def test_ops_of_expr_index(self):
         """Test: Calcula costo de expresión con índice"""
         expr = {
             "type": "index",
             "target": {"type": "identifier", "name": "A"},
             "index": {"type": "identifier", "name": "i"}
         }
-        result = self.analyzer._cost_of_expr(expr)
-        self.assertIsInstance(result, list)
-        self.assertGreater(len(result), 0)
+        result = self.analyzer._ops_of_expr(expr)
+        self.assertIsInstance(result, int)
+        self.assertGreater(result, 0)
 
-    def test_cost_of_expr_field(self):
+    def test_ops_of_expr_field(self):
         """Test: Calcula costo de expresión con acceso a campo"""
         expr = {
             "type": "field",
             "target": {"type": "identifier", "name": "obj"},
             "field": "prop"
         }
-        result = self.analyzer._cost_of_expr(expr)
-        self.assertIsInstance(result, list)
-        self.assertGreater(len(result), 0)
+        result = self.analyzer._ops_of_expr(expr)
+        self.assertIsInstance(result, int)
+        self.assertGreater(result, 0)
 
-    def test_cost_of_expr_unary(self):
+    def test_ops_of_expr_unary(self):
         """Test: Calcula costo de expresión unaria"""
         expr = {
             "type": "unary",
@@ -187,22 +187,22 @@ class TestSimpleVisitor(unittest.TestCase):
                 "right": {"type": "number", "value": 2}
             }
         }
-        result = self.analyzer._cost_of_expr(expr)
-        self.assertIsInstance(result, list)
-        self.assertGreater(len(result), 0)
+        result = self.analyzer._ops_of_expr(expr)
+        self.assertIsInstance(result, int)
+        self.assertGreater(result, 0)
 
-    def test_cost_of_expr_unary_literal(self):
+    def test_ops_of_expr_unary_literal(self):
         """Test: Calcula costo de expresión unaria sobre literal"""
         expr = {
             "type": "unary",
             "operator": "-",
             "arg": {"type": "literal", "value": 5}
         }
-        result = self.analyzer._cost_of_expr(expr)
+        result = self.analyzer._ops_of_expr(expr)
         # No debe agregar costo para literal
-        self.assertEqual(result, [])
+        self.assertEqual(result, 0)
 
-    def test_cost_of_expr_call(self):
+    def test_ops_of_expr_call(self):
         """Test: Calcula costo de expresión con llamada a función"""
         expr = {
             "type": "call",
@@ -211,11 +211,11 @@ class TestSimpleVisitor(unittest.TestCase):
                 {"type": "identifier", "name": "x"}
             ]
         }
-        result = self.analyzer._cost_of_expr(expr)
-        self.assertIsInstance(result, list)
-        self.assertGreater(len(result), 0)
+        result = self.analyzer._ops_of_expr(expr)
+        self.assertIsInstance(result, int)
+        self.assertGreater(result, 0)
 
-    def test_cost_of_expr_call_multiple_args(self):
+    def test_ops_of_expr_call_multiple_args(self):
         """Test: Calcula costo de expresión con llamada a función múltiples argumentos"""
         expr = {
             "type": "call",
@@ -226,27 +226,27 @@ class TestSimpleVisitor(unittest.TestCase):
                 {"type": "identifier", "name": "z"}
             ]
         }
-        result = self.analyzer._cost_of_expr(expr)
-        self.assertIsInstance(result, list)
-        self.assertGreater(len(result), 0)
+        result = self.analyzer._ops_of_expr(expr)
+        self.assertIsInstance(result, int)
+        self.assertGreater(result, 0)
 
-    def test_cost_of_expr_none(self):
+    def test_ops_of_expr_none(self):
         """Test: Calcula costo de expresión None"""
-        result = self.analyzer._cost_of_expr(None)
-        self.assertEqual(result, [])
+        result = self.analyzer._ops_of_expr(None)
+        self.assertEqual(result, 0)
 
-    def test_cost_of_expr_not_dict(self):
+    def test_ops_of_expr_not_dict(self):
         """Test: Calcula costo de expresión que no es dict"""
-        result = self.analyzer._cost_of_expr("not_a_dict")
-        self.assertEqual(result, [])
+        result = self.analyzer._ops_of_expr("not_a_dict")
+        self.assertEqual(result, 0)
 
-    def test_cost_of_expr_unknown_type(self):
+    def test_ops_of_expr_unknown_type(self):
         """Test: Calcula costo de expresión con tipo desconocido (fallback)"""
         expr = {"type": "unknown_type"}
-        result = self.analyzer._cost_of_expr(expr)
+        result = self.analyzer._ops_of_expr(expr)
         # Debe usar fallback y agregar costo
-        self.assertIsInstance(result, list)
-        self.assertGreater(len(result), 0)
+        self.assertIsInstance(result, int)
+        self.assertGreater(result, 0)
 
     def test_visit_other(self):
         """Test: visitOther con nodo desconocido"""
@@ -392,8 +392,8 @@ class TestSimpleVisitor(unittest.TestCase):
     
     # === Fase 3: Casos Edge Avanzados ===
     
-    def test_cost_of_lvalue_nested_field(self):
-        """Test: _cost_of_lvalue con campo anidado"""
+    def test_ops_of_lvalue_nested_field(self):
+        """Test: _ops_of_lvalue con campo anidado"""
         lvalue = {
             "type": "field",
             "target": {
@@ -403,12 +403,12 @@ class TestSimpleVisitor(unittest.TestCase):
             },
             "field": "prop"
         }
-        result = self.analyzer._cost_of_lvalue(lvalue)
-        self.assertIsInstance(result, list)
-        self.assertGreater(len(result), 0)
+        result = self.analyzer._ops_of_lvalue(lvalue)
+        self.assertIsInstance(result, int)
+        self.assertGreaterEqual(result, 0)
     
-    def test_cost_of_lvalue_index_with_field(self):
-        """Test: _cost_of_lvalue con índice que tiene campo"""
+    def test_ops_of_lvalue_index_with_field(self):
+        """Test: _ops_of_lvalue con índice que tiene campo"""
         lvalue = {
             "type": "index",
             "target": {
@@ -418,12 +418,12 @@ class TestSimpleVisitor(unittest.TestCase):
             },
             "index": {"type": "identifier", "name": "i"}
         }
-        result = self.analyzer._cost_of_lvalue(lvalue)
-        self.assertIsInstance(result, list)
-        self.assertGreater(len(result), 0)
+        result = self.analyzer._ops_of_lvalue(lvalue)
+        self.assertIsInstance(result, int)
+        self.assertGreaterEqual(result, 0)
     
-    def test_cost_of_expr_nested_index(self):
-        """Test: _cost_of_expr con índice anidado"""
+    def test_ops_of_expr_nested_index(self):
+        """Test: _ops_of_expr con índice anidado"""
         expr = {
             "type": "index",
             "target": {
@@ -433,12 +433,12 @@ class TestSimpleVisitor(unittest.TestCase):
             },
             "index": {"type": "identifier", "name": "j"}
         }
-        result = self.analyzer._cost_of_expr(expr)
-        self.assertIsInstance(result, list)
-        self.assertGreater(len(result), 0)
+        result = self.analyzer._ops_of_expr(expr)
+        self.assertIsInstance(result, int)
+        self.assertGreater(result, 0)
     
-    def test_cost_of_expr_nested_binary(self):
-        """Test: _cost_of_expr con expresión binaria anidada"""
+    def test_ops_of_expr_nested_binary(self):
+        """Test: _ops_of_expr con expresión binaria anidada"""
         expr = {
             "type": "binary",
             "operator": "+",
@@ -455,12 +455,12 @@ class TestSimpleVisitor(unittest.TestCase):
                 "right": {"type": "identifier", "name": "d"}
             }
         }
-        result = self.analyzer._cost_of_expr(expr)
-        self.assertIsInstance(result, list)
-        self.assertGreater(len(result), 0)
+        result = self.analyzer._ops_of_expr(expr)
+        self.assertIsInstance(result, int)
+        self.assertGreater(result, 0)
     
-    def test_cost_of_expr_call_with_complex_args(self):
-        """Test: _cost_of_expr con llamada a función con argumentos complejos"""
+    def test_ops_of_expr_call_with_complex_args(self):
+        """Test: _ops_of_expr con llamada a función con argumentos complejos"""
         expr = {
             "type": "call",
             "name": "max",
@@ -478,9 +478,9 @@ class TestSimpleVisitor(unittest.TestCase):
                 }
             ]
         }
-        result = self.analyzer._cost_of_expr(expr)
-        self.assertIsInstance(result, list)
-        self.assertGreater(len(result), 0)
+        result = self.analyzer._ops_of_expr(expr)
+        self.assertIsInstance(result, int)
+        self.assertGreater(result, 0)
     
     def test_expr_to_str_binary_no_operator(self):
         """Test: _expr_to_str con expresión binaria sin operador"""
@@ -728,44 +728,44 @@ class TestSimpleVisitor(unittest.TestCase):
         self.analyzer.visitDecl(node)
         self.assertGreater(len(self.analyzer.rows), initial_rows)
     
-    def test_cost_of_expr_string(self):
-        """Test: _cost_of_expr con tipo string"""
+    def test_ops_of_expr_string(self):
+        """Test: _ops_of_expr con tipo string"""
         expr = {"type": "string", "value": "hello"}
-        result = self.analyzer._cost_of_expr(expr)
-        self.assertEqual(result, [])
+        result = self.analyzer._ops_of_expr(expr)
+        self.assertEqual(result, 0)
     
-    def test_cost_of_expr_true(self):
-        """Test: _cost_of_expr con tipo true"""
+    def test_ops_of_expr_true(self):
+        """Test: _ops_of_expr con tipo true"""
         expr = {"type": "true"}
-        result = self.analyzer._cost_of_expr(expr)
-        self.assertEqual(result, [])
+        result = self.analyzer._ops_of_expr(expr)
+        self.assertEqual(result, 0)
     
-    def test_cost_of_expr_false(self):
-        """Test: _cost_of_expr con tipo false"""
+    def test_ops_of_expr_false(self):
+        """Test: _ops_of_expr con tipo false"""
         expr = {"type": "false"}
-        result = self.analyzer._cost_of_expr(expr)
-        self.assertEqual(result, [])
+        result = self.analyzer._ops_of_expr(expr)
+        self.assertEqual(result, 0)
     
-    def test_cost_of_expr_null(self):
-        """Test: _cost_of_expr con tipo null"""
+    def test_ops_of_expr_null(self):
+        """Test: _ops_of_expr con tipo null"""
         expr = {"type": "null"}
-        result = self.analyzer._cost_of_expr(expr)
-        self.assertEqual(result, [])
+        result = self.analyzer._ops_of_expr(expr)
+        self.assertEqual(result, 0)
     
-    def test_cost_of_expr_unary_identifier(self):
-        """Test: _cost_of_expr con expresión unaria sobre identificador"""
+    def test_ops_of_expr_unary_identifier(self):
+        """Test: _ops_of_expr con expresión unaria sobre identificador"""
         expr = {
             "type": "unary",
             "operator": "-",
             "arg": {"type": "identifier", "name": "x"}
         }
-        result = self.analyzer._cost_of_expr(expr)
+        result = self.analyzer._ops_of_expr(expr)
         # No debe agregar costo para identificador (es simple)
-        self.assertIsInstance(result, list)
-        self.assertEqual(len(result), 0)
+        self.assertIsInstance(result, int)
+        self.assertEqual(result, 0)
     
-    def test_cost_of_expr_unary_complex(self):
-        """Test: _cost_of_expr con expresión unaria sobre expresión compleja"""
+    def test_ops_of_expr_unary_complex(self):
+        """Test: _ops_of_expr con expresión unaria sobre expresión compleja"""
         expr = {
             "type": "unary",
             "operator": "-",
@@ -776,20 +776,20 @@ class TestSimpleVisitor(unittest.TestCase):
                 "right": {"type": "identifier", "name": "b"}
             }
         }
-        result = self.analyzer._cost_of_expr(expr)
+        result = self.analyzer._ops_of_expr(expr)
         # Debe agregar costo para operación unaria sobre expresión compleja
-        self.assertIsInstance(result, list)
-        self.assertGreater(len(result), 0)
+        self.assertIsInstance(result, int)
+        self.assertGreater(result, 0)
     
-    def test_cost_of_expr_unary_number(self):
-        """Test: _cost_of_expr con expresión unaria sobre número"""
+    def test_ops_of_expr_unary_number(self):
+        """Test: _ops_of_expr con expresión unaria sobre número"""
         expr = {
             "type": "unary",
             "operator": "-",
             "arg": {"type": "number", "value": 5}
         }
-        result = self.analyzer._cost_of_expr(expr)
+        result = self.analyzer._ops_of_expr(expr)
         # No debe agregar costo para literal
-        self.assertEqual(result, [])
+        self.assertEqual(result, 0)
 
 

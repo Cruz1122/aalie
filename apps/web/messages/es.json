@@ -19,6 +19,7 @@
     "openMenu": "Abrir menú"
   },
   "footer": {
+    "languageLabel": "Idioma",
     "university": "Universidad de Caldas - 2025",
     "privacyPolicy": "Política de Privacidad",
     "backendStatus": {
@@ -31,8 +32,8 @@
       "configured": "API Key configurada",
       "notConfigured": "Configura tu API Key",
       "invalid": "API Key inválida",
-      "inEnv": "API Key en variables de entorno",
-      "inLocalStorage": "API Key en el almacenamiento local",
+      "inEnv": "API Key guardada en el servidor",
+      "inLocalStorage": "API Key guardada en este navegador",
       "placeholder": "API Key de Gemini",
       "invalidHint": "API Key inválida",
       "geminiHintPre": "Ingresa tu API Key de Gemini para habilitar las funciones con IA. Puedes obtenerla en ",
@@ -145,6 +146,7 @@
       "viewProcedureGeneral": "Ver procedimiento general ({case})",
       "runAnalysisToSeeProcedure": "Ejecuta el análisis para ver el procedimiento",
       "boundOnly": "Solo se conoce esta cota",
+      "couldBeInfinity": "Puede ser {notations} si hay bucles no acotados",
       "model": "Modelo",
       "repairWithAI": "Reparar con IA",
       "apiKeyRequired": "Se requiere API Key para funciones con IA",
@@ -269,6 +271,7 @@
     },
     "lineTable": {
       "type": "Tipo",
+      "elementaryOps": "Operaciones",
       "executions": "# ejecuciones",
       "expectedExecutions": "E[# ejecuciones]",
       "action": "Acción",
@@ -282,7 +285,8 @@
       "print": "Impresión",
       "return": "Retorno",
       "decl": "Declaración",
-      "other": "Otro"
+      "other": "Otro",
+      "whileUnboundedWarning": "Puede no terminar"
     },
     "procedureModal": {
       "titleLine": "Procedimiento - Línea {line}",
