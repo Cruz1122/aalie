@@ -4,7 +4,7 @@ import type { AnalyzeOpenResponse } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useState } from "react";
 
-import { translateProofStep } from "@/lib/proof-step-translator";
+import { translateBackendContent } from "@/lib/backend-content-translator";
 
 import CharacteristicEquationModal from "./CharacteristicEquationModal";
 import DPVersionModal from "./DPVersionModal";
@@ -1316,7 +1316,7 @@ export default function RecursiveAnalysisView({
         ? renderRecursionTreeCards({
             tCases,
             tRecursionTree,
-            translateReason: (r) => translateProofStep(r, locale),
+            translateReason: (r) => translateBackendContent(r, locale),
             recursionTree,
             hasDifferentComplexities,
             bestT,
