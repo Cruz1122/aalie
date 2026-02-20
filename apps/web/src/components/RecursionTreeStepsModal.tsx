@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import React from "react";
 
-import { translateProofStep } from "@/lib/proof-step-translator";
+import { translateBackendContent } from "@/lib/backend-content-translator";
 
 import Formula from "./Formula";
 
@@ -73,7 +73,7 @@ export default function RecursionTreeStepsModal({
                     </div>
                     <div className="flex-1 overflow-x-auto">
                       <Formula
-                        latex={translateProofStep(step.text, locale)}
+                        latex={translateBackendContent(step.text, locale)}
                         display
                       />
                     </div>

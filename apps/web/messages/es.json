@@ -198,7 +198,33 @@
       "comparisonWithLlm": "Comparación con LLM",
       "llmObservation": "Observación del LLM:",
       "masterTheorem": "Teorema Maestro",
-      "caseNumber": "Caso {number}"
+      "caseNumber": "Caso {number}",
+      "parameters": "Parámetros:",
+      "gnCalculation": "Cálculo de g(n) = n<sup>log<sub>b</sub> a</sup>:",
+      "comparison": "Comparación:",
+      "case1Desc": "→ Caso 1: f(n) es polinomialmente menor que g(n)",
+      "case2Desc": "→ Caso 2: f(n) es igual a g(n)",
+      "case3Desc": "→ Caso 3: f(n) es polinomialmente mayor que g(n)",
+      "regularityCondition": "Condición de Regularidad:",
+      "regularityVerified": "Verificada: ∃c < 1, ∃n₀: a·f(n/b) ≤ c·f(n) para n ≥ n₀",
+      "regularityAssumed": "Asumida: Se asume que se cumple la condición de regularidad",
+      "homogeneousSolution": "Solución homogénea:",
+      "particularSolution": "Solución particular:",
+      "generalSolution": "Solución general:",
+      "closedForm": "Forma cerrada:",
+      "thetaFinalResult": "Θ (Resultado Final):",
+      "gFunction": "Función g(n):",
+      "expansions": "Expansiones:",
+      "generalForm": "Forma general:",
+      "summation": "Sumatoria:",
+      "recursionTree": "Árbol de Recursión",
+      "treeHeight": "Altura del árbol:",
+      "expression": "Expresión:",
+      "evaluated": "Evaluada:",
+      "dominatingLevel": "Nivel Dominante:",
+      "leavesLevel": "Hojas (último nivel)",
+      "rootLevel": "Raíz (primer nivel)",
+      "levelN": "Nivel {level}"
     },
     "executionTrace": {
       "title": "Seguimiento de Ejecución",
@@ -259,6 +285,13 @@
       "diagramConnectionError": "Error de conexión al generar el diagrama",
       "generatingDiagramWithLlm": "Generando diagrama de recursión con LLM...",
       "noPseudocodeForDiagram": "No se proporcionó pseudocódigo para generar el diagrama"
+    },
+    "comparisonLoader": {
+      "errorTitle": "Error en la comparación",
+      "comparingWithLlm": "Comparando con LLM",
+      "progress": "Progreso",
+      "pleaseWait": "Por favor, espera mientras se completa la comparación...",
+      "close": "Cerrar"
     },
     "recursionTree": {
       "dominatingLevel": "Nivel Dominante",

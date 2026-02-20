@@ -197,7 +197,33 @@
       "comparisonWithLlm": "Comparison with LLM",
       "llmObservation": "LLM observation:",
       "masterTheorem": "Master Theorem",
-      "caseNumber": "Case {number}"
+      "caseNumber": "Case {number}",
+      "parameters": "Parameters:",
+      "gnCalculation": "Calculation of g(n) = n<sup>log<sub>b</sub> a</sup>:",
+      "comparison": "Comparison:",
+      "case1Desc": "→ Case 1: f(n) is polynomially smaller than g(n)",
+      "case2Desc": "→ Case 2: f(n) equals g(n)",
+      "case3Desc": "→ Case 3: f(n) is polynomially larger than g(n)",
+      "regularityCondition": "Regularity Condition:",
+      "regularityVerified": "Verified: ∃c < 1, ∃n₀: a·f(n/b) ≤ c·f(n) for n ≥ n₀",
+      "regularityAssumed": "Assumed: Regularity condition is assumed to hold",
+      "homogeneousSolution": "Homogeneous solution:",
+      "particularSolution": "Particular solution:",
+      "generalSolution": "General solution:",
+      "closedForm": "Closed form:",
+      "thetaFinalResult": "Θ (Final Result):",
+      "gFunction": "Function g(n):",
+      "expansions": "Expansions:",
+      "generalForm": "General form:",
+      "summation": "Summation:",
+      "recursionTree": "Recursion Tree",
+      "treeHeight": "Tree height:",
+      "expression": "Expression:",
+      "evaluated": "Evaluated:",
+      "dominatingLevel": "Dominating Level:",
+      "leavesLevel": "Leaves (last level)",
+      "rootLevel": "Root (first level)",
+      "levelN": "Level {level}"
     },
     "executionTrace": {
       "title": "Execution Trace",
@@ -258,6 +284,13 @@
       "diagramConnectionError": "Connection error while generating diagram",
       "generatingDiagramWithLlm": "Generating recursion diagram with LLM...",
       "noPseudocodeForDiagram": "No pseudocode provided to generate the diagram"
+    },
+    "comparisonLoader": {
+      "errorTitle": "Comparison error",
+      "comparingWithLlm": "Comparing with LLM",
+      "progress": "Progress",
+      "pleaseWait": "Please wait while the comparison completes...",
+      "close": "Close"
     },
     "recursionTree": {
       "dominatingLevel": "Dominating Level",

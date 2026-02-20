@@ -4,7 +4,7 @@ import type { AnalyzeOpenResponse } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
 import React from "react";
 
-import { translateProofStep } from "@/lib/proof-step-translator";
+import { translateBackendContent } from "@/lib/backend-content-translator";
 
 import Formula from "./Formula";
 
@@ -273,7 +273,10 @@ export default function IterationProcedureModal({
                       </div>
                       <div className="flex justify-center">
                         <Formula
-                          latex={iteration.summation.expression}
+                          latex={translateBackendContent(
+                            iteration.summation.expression,
+                            locale,
+                          )}
                           display
                         />
                       </div>
@@ -284,7 +287,10 @@ export default function IterationProcedureModal({
                       </div>
                       <div className="flex justify-center">
                         <Formula
-                          latex={iteration.summation.evaluated}
+                          latex={translateBackendContent(
+                            iteration.summation.evaluated,
+                            locale,
+                          )}
                           display
                         />
                       </div>
@@ -345,7 +351,7 @@ export default function IterationProcedureModal({
                         }`}
                       >
                         <Formula
-                          latex={translateProofStep(step.text, locale)}
+                          latex={translateBackendContent(step.text, locale)}
                         />
                       </div>
                     ))

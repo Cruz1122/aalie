@@ -4,7 +4,7 @@ import type { AnalyzeOpenResponse } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
 import React from "react";
 
-import { translateProofStep } from "@/lib/proof-step-translator";
+import { translateBackendContent } from "@/lib/backend-content-translator";
 
 import Formula from "./Formula";
 
@@ -289,7 +289,7 @@ export default function RecursiveProcedureModal({
                             <div className="text-sm text-slate-200 w-full overflow-x-auto">
                               <div className="w-full" style={{ minHeight: "1.5rem" }}>
                                 <Formula
-                                  latex={translateProofStep(stepText, locale)}
+                                  latex={translateBackendContent(stepText, locale)}
                                   display
                                 />
                               </div>

@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect } from "react";
 
-import { translateProofStep } from "@/lib/proof-step-translator";
+import { translateBackendContent } from "@/lib/backend-content-translator";
 
 import Formula from "./Formula";
 
@@ -462,7 +462,7 @@ export default function CharacteristicEquationModal({
                   </h4>
                   <div className="space-y-2 max-h-[300px] overflow-y-auto scrollbar-custom">
                     {proof.map((step, idx) => {
-                      const stepText = translateProofStep(
+                      const stepText = translateBackendContent(
                         step.text,
                         locale === "es" ? "es" : "en"
                       );
