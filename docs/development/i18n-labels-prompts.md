@@ -191,6 +191,48 @@ flowchart LR
 
 ---
 
+## Traductor de contenido del backend (Frontend)
+
+### Ubicación y propósito
+
+**Archivo**: `apps/web/src/lib/backend-content-translator.ts`
+
+El backend de análisis recursivo (`RecursiveAnalyzer`) genera proof steps, `summation.evaluated` y otros textos en español. Este módulo centraliza la traducción español → inglés para todo ese contenido.
+
+### Segmentación del diccionario
+
+| Segmento | Contenido | Ejemplos |
+|----------|-----------|----------|
+| Métodos | Nombres de métodos de análisis | Teorema Maestro, Método de Iteración |
+| Ecuación característica | Pasos de la ecuación | De ..., reemplazando, obtenemos |
+| Extracción | Parámetros y recurrencia | Parámetros extraídos, Encontradas N llamadas |
+| Teorema Maestro | Casos, comparación | Calculando, Caso 1, Mejor caso |
+| Método de iteración | Pasos estándar y Fibonacci | Paso 1: Recurrencia identificada |
+| Árbol de recursión | Niveles, trabajo | Nivel dominante, Trabajo en hojas |
+| Texto plano | summation.evaluated | Análisis complejo requerido |
+
+### Uso
+
+```typescript
+import { translateBackendContent } from "@/lib/backend-content-translator";
+
+// En componentes que muestran contenido del backend
+const locale = useLocale() as "en" | "es";
+
+<Formula
+  latex={translateBackendContent(step.text, locale)}
+  display
+/>
+```
+
+**Componentes que deben usar `translateBackendContent`**:
+
+- Proof steps: `RecursiveProcedureModal`, `IterationProcedureModal`, `RecursionTreeProcedureModal`, `RecursionTreeStepsModal`, `CharacteristicEquationModal`
+- Summation: `iteration.summation.expression`, `iteration.summation.evaluated`, `recursion_tree.summation.*`
+- Razones: `dominating_level.reason` en árbol de recursión
+
+---
+
 ## Referencias
 
 - [Convenciones de desarrollo](../development/conventions.md) - Sección "Labels y literales (i18n)"

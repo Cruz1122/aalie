@@ -5,6 +5,27 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [Unreleased]
+
+### Added
+
+- Ejemplo de informe LaTeX (docs/latex-example/main.tex) con resultados reales del análisis de búsqueda lineal ejecutado en AALIE
+
+### Fixed
+
+- O(1) incorrecto en Bubble Sort y algoritmos con bubbleSort(A[n]), N <- n: inferencia genérica de variable de tamaño desde la expresión (no reservar nombres; usar n, N, m, etc. según el código)
+- Extracción de variable de tamaño desde dimensiones de ArrayParam (A[n] -> n como candidato)
+- Validación T_polynomial: aceptar cualquier variable de tamaño (N, n, m), no solo n
+
+### Changed
+
+- Labels de pasos del Teorema Maestro en ComparisonModal: Parámetros, Cálculo de g(n), Comparación, descripciones de Casos 1-3 y Condición de Regularidad ahora usan useTranslations correctamente
+- Traducciones en ComparisonModal para Ecuación Característica (solución homogénea/particular/general, forma cerrada), Método de Iteración (g(n), expansiones, forma general, sumatoria), Árbol de Recursión (altura, sumatoria, expresión, evaluada, nivel dominante), Θ Resultado Final
+- Traducciones en ComparisonLoader: error, comparando con LLM, progreso, mensaje de espera, cerrar
+- proof-step-translator: añadidas traducciones para "return temprano detectado, no se ejecuta recursión" y "Nota: Esta recurrencia tiene coeficiente"
+- Traducción centralizada: nuevo `backend-content-translator.ts` con configuración única para todo contenido del backend (proof steps, summation.evaluated). Segmentación por dominio. `translateBackendContent` aplicado en ComparisonModal, IterationProcedureModal, RecursionTreeProcedureModal. Documentación en i18n-labels-prompts.md
+- Eliminado `proof-step-translator.ts` deprecado; todos los imports usan `backend-content-translator`
+
 ## [1.1.3] - 2026-02-17
 
 ### Added

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
 
 /**
@@ -44,6 +45,7 @@ export const ComparisonLoader: React.FC<ComparisonLoaderProps> = ({
   error = null,
   onClose,
 }) => {
+  const t = useTranslations("analyzer.comparisonLoader");
   const hasError = !!error;
   const [isClosing, setIsClosing] = useState(false);
 
@@ -109,7 +111,7 @@ export const ComparisonLoader: React.FC<ComparisonLoaderProps> = ({
           <h3
             className={`text-xl font-semibold mb-2 ${hasError ? "text-red-300" : "text-white"}`}
           >
-            {hasError ? "Error en la comparación" : message}
+            {hasError ? t("errorTitle") : message}
           </h3>
 
           {/* Mensaje de error */}
@@ -127,7 +129,7 @@ export const ComparisonLoader: React.FC<ComparisonLoaderProps> = ({
               <span className="material-symbols-outlined text-base">
                 compare_arrows
               </span>
-              <span>Comparando con LLM</span>
+              <span>{t("comparingWithLlm")}</span>
             </div>
           )}
         </div>
@@ -136,7 +138,7 @@ export const ComparisonLoader: React.FC<ComparisonLoaderProps> = ({
         {!hasError && (
           <div className="mb-4">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-slate-300">Progreso</span>
+              <span className="text-sm text-slate-300">{t("progress")}</span>
               <span className="text-sm font-semibold text-white">
                 {Math.round(progress)}%
               </span>
@@ -156,7 +158,7 @@ export const ComparisonLoader: React.FC<ComparisonLoaderProps> = ({
         {!isComplete && !hasError && (
           <div className="text-center">
             <p className="text-xs text-slate-400">
-              Por favor, espera mientras se completa la comparación...
+              {t("pleaseWait")}
             </p>
           </div>
         )}
@@ -168,7 +170,7 @@ export const ComparisonLoader: React.FC<ComparisonLoaderProps> = ({
               onClick={handleClose}
               className="px-4 py-2 rounded-lg bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition-colors text-sm font-semibold"
             >
-              Cerrar
+              {t("close")}
             </button>
           </div>
         )}

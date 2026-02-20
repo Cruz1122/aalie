@@ -4,7 +4,7 @@ import type { AnalyzeOpenResponse } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
 import React from "react";
 
-import { translateProofStep } from "@/lib/proof-step-translator";
+import { translateBackendContent } from "@/lib/backend-content-translator";
 
 import Formula from "./Formula";
 
@@ -251,13 +251,23 @@ export default function RecursionTreeProcedureModal({
                       {t("expression")}
                     </div>
                     <div className="flex justify-center scale-90 origin-center">
-                      <Formula latex={recursionTree.summation.expression} />
+                      <Formula
+                        latex={translateBackendContent(
+                          recursionTree.summation.expression,
+                          locale,
+                        )}
+                      />
                     </div>
                     <div className="text-xs text-slate-400 mb-1 mt-2">
                       {t("evaluated")}
                     </div>
                     <div className="flex justify-center scale-90 origin-center">
-                      <Formula latex={recursionTree.summation.evaluated} />
+                      <Formula
+                        latex={translateBackendContent(
+                          recursionTree.summation.evaluated,
+                          locale,
+                        )}
+                      />
                     </div>
                   </div>
                 </div>
@@ -275,7 +285,7 @@ export default function RecursionTreeProcedureModal({
                   <div className="bg-slate-900/50 p-2 rounded border border-white/10 overflow-x-auto">
                     <div className="flex justify-center scale-90 origin-center">
                       <Formula
-                        latex={translateProofStep(
+                        latex={translateBackendContent(
                           recursionTree.dominating_level.reason,
                           locale,
                         )}
