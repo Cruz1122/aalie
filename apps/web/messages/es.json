@@ -773,6 +773,8 @@
     "title": "Guía de Usuario",
     "subtitle": "Aprende a utilizar el analizador de complejidad algorítmica con esta guía completa que cubre desde la sintaxis básica hasta el análisis avanzado de algoritmos.",
     "toc": "Contenido",
+    "viewDetails": "Ver Detalles",
+    "modalClose": "Cerrar modal",
     "introduccion": "Introducción",
     "editor": "Uso del Editor",
     "editorBasico": "Funciones Básicas",

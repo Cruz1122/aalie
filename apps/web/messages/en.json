@@ -772,6 +772,8 @@
     "title": "User Guide",
     "subtitle": "Learn to use the algorithmic complexity analyzer with this complete guide covering from basic syntax to advanced algorithm analysis.",
     "toc": "Contents",
+    "viewDetails": "View Details",
+    "modalClose": "Close modal",
     "introduccion": "Introduction",
     "editor": "Using the Editor",
     "editorBasico": "Basic Functions",
