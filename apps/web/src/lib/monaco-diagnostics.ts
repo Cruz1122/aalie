@@ -151,60 +151,52 @@ export function registerPseudocodeLanguage(monaco: typeof Monaco): void {
     },
   });
 
-  // Configurar tema oscuro consistente con la paleta del sitio (tema azul)
+  // Configurar tema oscuro consistente con la paleta del sitio (primary #0d7ff2, dark.bg #101a23)
   monaco.editor.defineTheme("pseudocode-theme", {
     base: "vs-dark",
     inherit: true,
     rules: [
-      { token: "keyword", foreground: "60a5fa", fontStyle: "bold" }, // Blue-400 - palabras clave en azul
-      { token: "identifier", foreground: "e2e8f0" }, // Slate-200 - identificadores en gris claro
+      { token: "keyword", foreground: "0d7ff2", fontStyle: "bold" }, // primary - palabras clave
+      { token: "identifier", foreground: "cbd5e1" }, // identificadores en gris claro
       { token: "number", foreground: "34d399" }, // Emerald-400 - números en verde
       { token: "string", foreground: "fbbf24" }, // Amber-400 - strings en amarillo
-      { token: "string.quote", foreground: "fbbf24" }, // Amber-400 - comillas de string en amarillo
-      { token: "string.escape", foreground: "fbbf24" }, // Amber-400 - escapes en string en amarillo
-      { token: "operator", foreground: "3b82f6" }, // Blue-500 - operadores en azul
-      { token: "delimiter", foreground: "94a3b8" }, // Slate-400 - delimitadores en gris
-      { token: "comment", foreground: "64748b", fontStyle: "italic" }, // Slate-500 - comentarios en gris (más visible)
-      { token: "white", foreground: "ffffff" }, // Blanco para espacios
+      { token: "string.quote", foreground: "fbbf24" },
+      { token: "string.escape", foreground: "fbbf24" },
+      { token: "operator", foreground: "0d7ff2" }, // primary - operadores
+      { token: "delimiter", foreground: "94a3b8" }, // delimitadores en gris
+      { token: "comment", foreground: "64748b", fontStyle: "italic" },
+      { token: "white", foreground: "ffffff" },
     ],
     colors: {
-      // Fondo y colores base más suaves
-      "editor.foreground": "#e2e8f0",
-      "editor.background": "#0f172a", // Slate-900
-      "editor.lineHighlightBackground": "#1e293b", // Slate-800
+      "editor.foreground": "#cbd5e1",
+      "editor.background": "#101a23", // dark.bg
+      "editor.lineHighlightBackground": "transparent", // sin resaltado al hover/focus
 
-      // Selección con tono azul suave
-      "editor.selectionBackground": "#3b82f630",
-      "editor.inactiveSelectionBackground": "#3b82f620",
-      "editor.selectionHighlightBackground": "#3b82f615",
+      "editor.selectionBackground": "#0d7ff230",
+      "editor.inactiveSelectionBackground": "#0d7ff220",
+      "editor.selectionHighlightBackground": "#0d7ff215",
 
-      // Números de línea más suaves
-      "editorLineNumber.foreground": "#475569", // Slate-600
-      "editorLineNumber.activeForeground": "#60a5fa", // Blue-400
+      "editorLineNumber.foreground": "#475569",
+      "editorLineNumber.activeForeground": "#0d7ff2", // primary
 
-      // Cursor azul para combinar
-      "editorCursor.foreground": "#60a5fa",
+      "editorCursor.foreground": "#0d7ff2",
 
-      // Brackets matching suave
-      "editorBracketMatch.background": "#3b82f620",
-      "editorBracketMatch.border": "#60a5fa60",
+      "editorBracketMatch.background": "#0d7ff220",
+      "editorBracketMatch.border": "#0d7ff260",
 
-      // Scrollbar suave
       "scrollbarSlider.background": "#ffffff15",
       "scrollbarSlider.hoverBackground": "#ffffff20",
       "scrollbarSlider.activeBackground": "#ffffff25",
 
-      // Indentación suave
       "editorIndentGuide.background": "#ffffff08",
-      "editorIndentGuide.activeBackground": "#3b82f630",
+      "editorIndentGuide.activeBackground": "#0d7ff230",
 
-      // Otros colores para consistencia
-      "editorWidget.background": "#1e293b",
+      "editorWidget.background": "#182431",
       "editorWidget.border": "#ffffff10",
-      "editorSuggestWidget.background": "#1e293b",
+      "editorSuggestWidget.background": "#182431",
       "editorSuggestWidget.border": "#ffffff10",
-      "editorHoverWidget.background": "#1e293b",
-      "editorHoverWidget.border": "#60a5fa40",
+      "editorHoverWidget.background": "#182431",
+      "editorHoverWidget.border": "#0d7ff240",
     },
   });
 }

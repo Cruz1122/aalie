@@ -606,6 +606,7 @@
       "analyzeComplexity": "Analizar Complejidad",
       "analyzing": "Analizando...",
       "viewAst": "Ver AST",
+      "aiHelp": "Ayuda con IA",
       "defaultCode": "busquedaBinaria(A[n], x, inicio, fin) BEGIN\n  IF (inicio > fin) THEN BEGIN\n    RETURN -1;\n  END\n  mitad <- (inicio + fin) / 2;\n  IF (A[mitad] = x) THEN BEGIN\n    RETURN mitad;\n  END\n  ELSE BEGIN\n    IF (x < A[mitad]) THEN BEGIN\n      RETURN busquedaBinaria(A, x, inicio, mitad - 1);\n    END\n    ELSE BEGIN\n      RETURN busquedaBinaria(A, x, mitad + 1, fin);\n    END\n  END\nEND"
     },
     "repairModal": {

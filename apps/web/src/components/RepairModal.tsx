@@ -268,7 +268,7 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center glass-modal-overlay modal-animate-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center glass-modal-overlay glass-modal-overlay-fixed modal-animate-in">
       <div className="glass-modal-container rounded-2xl shadow-xl max-w-6xl w-[95vw] h-[85vh] flex flex-col m-4 modal-animate-in">
         {/* Header */}
         <div className="glass-modal-header flex items-center justify-between px-6 py-4 rounded-t-2xl border-b border-white/10">

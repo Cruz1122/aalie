@@ -3,6 +3,7 @@
 import type { AnalyzeOpenResponse, ParseError, ParseResponse, Program } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
+import ReactDOM from "react-dom";
 
 import { AnalysisLoader } from "@/components/AnalysisLoader";
 import { AnalyzerEditor } from "@/components/AnalyzerEditor";
@@ -1905,10 +1906,13 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
               generalProcedureCase === 'average' ? (data?.avg === "same_as_worst" ? data?.worst : data?.avg) || undefined : undefined}
       />
 
-      {/* Modal AST */}
-      {showAstModal && ast && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center glass-modal-overlay modal-animate-in">
-          <div className="glass-modal-container rounded-xl shadow-2xl max-w-3xl w-full max-h-[80vh] flex flex-col m-4 modal-animate-in">
+      {/* Modal AST - Portal a body para que sea overlay fijo */}
+      {showAstModal &&
+        ast &&
+        typeof document !== "undefined" &&
+        ReactDOM.createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center glass-modal-overlay glass-modal-overlay-fixed modal-animate-in">
+            <div className="glass-modal-container rounded-xl shadow-2xl max-w-3xl w-full max-h-[80vh] flex flex-col m-4 modal-animate-in">
             {/* Header compacto */}
             <div className="glass-modal-header flex items-center justify-between px-5 py-3 rounded-t-xl border-b border-white/10">
               <div className="flex items-center gap-3">
@@ -1992,8 +1996,9 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+          document.body
+        )}
 
       {/* ChatBot */}
       <ChatBot

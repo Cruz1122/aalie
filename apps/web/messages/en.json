@@ -605,6 +605,7 @@
       "analyzeComplexity": "Analyze Complexity",
       "analyzing": "Analyzing...",
       "viewAst": "View AST",
+      "aiHelp": "AI Help",
       "defaultCode": "binarySearch(A[n], x, start, high) BEGIN\n  IF (start > high) THEN BEGIN\n    RETURN -1;\n  END\n  mid <- (start + high) / 2;\n  IF (A[mid] = x) THEN BEGIN\n    RETURN mid;\n  END\n  ELSE BEGIN\n    IF (x < A[mid]) THEN BEGIN\n      RETURN binarySearch(A, x, start, mid - 1);\n    END\n    ELSE BEGIN\n      RETURN binarySearch(A, x, mid + 1, high);\n    END\n  END\nEND"
     },
     "repairModal": {

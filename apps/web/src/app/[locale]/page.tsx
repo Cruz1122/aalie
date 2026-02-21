@@ -34,10 +34,42 @@ export default function HomePage() {
   const t = useTranslations("analyzer.progress");
   const tAlgorithmType = useTranslations("analyzer.algorithmType");
   const tHome = useTranslations("home");
+  const tManual = useTranslations("analyzer.manualMode");
   const tMessages = useTranslations("analyzer.messages");
   const { animateProgress } = useAnalysisProgress();
   const manualViewRef = useRef<ManualModeViewHandle>(null);
   const [mode, setMode] = useState<"ai" | "manual">("ai");
+  const defaultCode = tManual("defaultCode");
+  const [sharedCode, setSharedCode] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("manualModeCode");
+      const savedLocale = localStorage.getItem("manualModeLocale");
+      if (saved && savedLocale === locale) return saved;
+    }
+    return "";
+  });
+  const hasLoadedRef = useRef(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = localStorage.getItem("manualModeCode");
+    const savedLocale = localStorage.getItem("manualModeLocale");
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      if (saved && savedLocale === locale) {
+        setSharedCode(saved);
+      } else {
+        setSharedCode(defaultCode);
+      }
+    } else if (savedLocale !== locale) {
+      setSharedCode(saved && savedLocale === locale ? saved : defaultCode);
+    }
+  }, [locale, defaultCode]);
+  useEffect(() => {
+    if (typeof window !== "undefined" && sharedCode !== "") {
+      localStorage.setItem("manualModeCode", sharedCode);
+      localStorage.setItem("manualModeLocale", locale);
+    }
+  }, [sharedCode, locale]);
   const [chatOpen, setChatOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
   const [isAnimating, setIsAnimating] = useState(false);
@@ -573,6 +605,8 @@ export default function HomePage() {
                 setMessages={setMessages}
                 onOpenChat={() => setChatOpen(true)}
                 onSwitchToAIMode={() => setMode("ai")}
+                initialCode={sharedCode}
+                onCodeChange={setSharedCode}
               />
             )}
           </div>

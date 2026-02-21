@@ -49,6 +49,18 @@
   transform: translateY(-2px);
 }
 
+/* Editor: sin efecto hover (sombra difuminada); z-index bajo; sin sombra azul debajo */
+.glass-card-editor {
+  z-index: 0;
+  box-shadow: none;
+}
+.glass-card-editor:hover {
+  background: rgba(24, 36, 49, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+  transform: translateZ(0);
+}
+
 .glass-button {
   background: rgba(13, 127, 242, 0.9);
   backdrop-filter: blur(10px);
@@ -88,8 +100,14 @@
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   transform: translateZ(0);
-  position: relative;
   z-index: 1;
+}
+
+/* Overlay portaled a body: debe ser fixed para cubrir viewport; z-index alto para estar encima de todo */
+.glass-modal-overlay-fixed {
+  position: fixed !important;
+  inset: 0;
+  z-index: 99999 !important;
 }
 
 .glass-modal-header {

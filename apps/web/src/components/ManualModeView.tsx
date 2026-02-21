@@ -1,7 +1,6 @@
 import type { Program } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
 
-import { translateLlmError } from "@/lib/llm-error-translator";
 import {
   forwardRef,
   useCallback,
@@ -19,7 +18,6 @@ import { useRouter } from "@/i18n/navigation";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 import { GrammarApiService } from "@/services/grammar-api";
 
-import AALIEIcon from "./AALIEIcon";
 import { AnalysisLoader } from "./AnalysisLoader";
 import { AnalyzerEditor } from "./AnalyzerEditor";
 import { ASTTreeView } from "./ASTTreeView";
@@ -48,6 +46,10 @@ interface ManualModeViewProps {
   readonly setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   readonly onOpenChat: () => void;
   readonly onSwitchToAIMode: () => void;
+  /** Código controlado desde el padre (persiste al cambiar de modo) */
+  readonly initialCode?: string;
+  /** Callback cuando cambia el código (para sincronizar con el padre) */
+  readonly onCodeChange?: (code: string) => void;
 }
 
 /**
@@ -85,7 +87,14 @@ export interface ManualModeViewHandle {
  */
 const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
   function ManualModeView(
-    { messages, setMessages, onOpenChat, onSwitchToAIMode },
+    {
+      messages,
+      setMessages,
+      onOpenChat,
+      onSwitchToAIMode,
+      initialCode,
+      onCodeChange,
+    },
     ref,
   ) {
     const router = useRouter();
@@ -105,19 +114,30 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     );
 
     const defaultCode = tManual("defaultCode");
-    const [code, setCode] = useState(defaultCode);
+    const isControlled = initialCode !== undefined;
+    const [internalCode, setInternalCode] = useState(defaultCode);
+    const code = isControlled ? initialCode : internalCode;
+    const setCode = useCallback(
+      (value: string | ((prev: string) => string)) => {
+        const next =
+          typeof value === "function" ? value(code) : value;
+        if (!isControlled) setInternalCode(next);
+        onCodeChange?.(next);
+      },
+      [isControlled, onCodeChange, code],
+    );
 
-    // Cargar desde localStorage al montar y actualizar cuando cambia el locale
+    // Solo cargar desde localStorage si no está controlado por el padre
     useEffect(() => {
-      if (globalThis.window === undefined) return;
+      if (isControlled || globalThis.window === undefined) return;
       const savedCode = localStorage.getItem("manualModeCode");
       const savedLocale = localStorage.getItem("manualModeLocale");
       if (savedCode && savedLocale === locale) {
-        setCode(savedCode);
+        setInternalCode(savedCode);
       } else {
-        setCode(defaultCode);
+        setInternalCode(defaultCode);
       }
-    }, [locale, defaultCode]);
+    }, [locale, defaultCode, isControlled]);
     const [ast, setAst] = useState<Program | null>(null);
     const [showAstModal, setShowAstModal] = useState(false);
     const [localParseOk, setLocalParseOk] = useState(false);
@@ -125,7 +145,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     const [viewMode, setViewMode] = useState<"tree" | "json">("tree");
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isVerifyingParse, setIsVerifyingParse] = useState(false);
-    const [analysisResult, setAnalysisResult] = useState<{
+    const [verifyParseResult, setVerifyParseResult] = useState<{
       success: boolean;
       message: string;
     } | null>(null);
@@ -335,7 +355,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     // Función para verificar parse (estado independiente)
     const handleAnalyzeCode = async () => {
       setIsVerifyingParse(true);
-      setAnalysisResult(null);
+      setVerifyParseResult(null);
 
       // Limpiar timeout anterior si existe
       if (analysisTimeoutRef.current) {
@@ -346,29 +366,29 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
         const data = await GrammarApiService.parseCode(code);
 
         if (data.ok) {
-          setAnalysisResult({
+          setVerifyParseResult({
             success: true,
             message: t("success"),
           });
         } else {
-          setAnalysisResult({
+          setVerifyParseResult({
             success: false,
-            message: data.error ? t(translateLlmError(data.error)) : t("errorSyntax"),
+            message: data.error || t("errorSyntax"),
           });
         }
       } catch (e) {
         console.error("Error analyzing code:", e);
-        setAnalysisResult({
+        setVerifyParseResult({
           success: false,
           message: t("errorConnection"),
         });
       } finally {
         setIsVerifyingParse(false);
-        // Auto-ocultar el mensaje después de 5 segundos
+        // Auto-ocultar el resultado del verify después de 4 segundos
         analysisTimeoutRef.current = setTimeout(() => {
-          setAnalysisResult(null);
+          setVerifyParseResult(null);
           analysisTimeoutRef.current = null;
-        }, ANALYSIS_RESULT_DURATION);
+        }, 4000);
       }
     };
 
@@ -382,7 +402,6 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
         setAnalysisMessage(tProgress("init"));
         setAlgorithmType(undefined);
         setIsAnalysisComplete(false);
-        setAnalysisResult(null);
         setAnalysisError(null);
         setBackendParseError(null);
         setShowAIHelpButton(false);
@@ -821,85 +840,24 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
         )}
 
         <div className="flex flex-col items-center">
-          {/* Contenedor flex: editor a la izquierda, botones a la derecha */}
-          <div className="flex flex-col lg:flex-row gap-6 w-full items-center lg:items-center">
-            {/* Editor de Código con Monaco - 75% en desktop, 100% en mobile */}
+          {/* Contenedor flex: editor a la izquierda, botón Analizar a la derecha; items-start evita espacio muerto */}
+          <div className="flex flex-col lg:flex-row gap-6 w-full items-start">
+            {/* Editor de Código con Monaco - 75% en desktop, 100% en mobile; tooltips Verificar parse y Ver AST en esquina */}
             <div className="w-full lg:w-[75%]">
               <AnalyzerEditor
                 initialValue={code}
                 onChange={setCode}
                 onAstChange={setAst}
                 onParseStatusChange={handleParseStatusChange}
-                height={isDesktop ? "420px" : "280px"}
-              />
-            </div>
-
-            {/* Botones Analizar y Ver AST - 25% en desktop, 100% en mobile */}
-            <div className="w-full lg:w-[25%] flex flex-col gap-3">
-              <button
-                onClick={handleAnalyzeCode}
-                disabled={isVerifyingParse || code.trim() === ""}
-                className="flex items-center justify-center gap-2 py-2.5 px-4 sm:px-6 rounded-lg text-white text-xs sm:text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-400/50 bg-gradient-to-br from-blue-500/20 to-blue-500/20 border border-blue-500/30 hover:from-blue-500/30 hover:to-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
-              >
-                {isVerifyingParse ? (
-                  <>
-                    <span className="material-symbols-outlined text-base animate-spin">
-                      progress_activity
-                    </span>{" "}
-                    {tManual("verifying")}
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-base">
-                      check_circle
-                    </span>{" "}
-                    {tManual("verifyParse")}
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={handleAnalyzeComplexity}
-                disabled={isAnalyzing || !localParseOk || code.trim() === ""}
-                className="flex items-center justify-center gap-2 py-2.5 px-4 sm:px-6 rounded-lg text-white text-xs sm:text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-green-400/50 bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 hover:from-green-500/30 hover:to-emerald-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <span className="material-symbols-outlined text-base animate-spin">
-                      progress_activity
-                    </span>{" "}
-                    {tManual("analyzing")}
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-base">
-                      functions
-                    </span>{" "}
-                    {tManual("analyzeComplexity")}
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={() => setShowAstModal(true)}
-                disabled={!localParseOk || !ast}
-                className="flex items-center justify-center gap-2 py-2.5 px-4 sm:px-6 rounded-lg text-white text-xs sm:text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-yellow-400/50 bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 hover:from-yellow-500/30 hover:to-amber-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
-              >
-                <span className="material-symbols-outlined">account_tree</span>{" "}
-                {tManual("viewAst")}
-              </button>
-
-              {/* Botón de Ayuda con IA - aparece después de 3 segundos si hay error y hay API_KEY */}
-              {showAIHelpButton && backendParseError && hasValidApiKey && (
-                <button
-                  onClick={async () => {
-                    // No verificar API_KEY del servidor (no hacer peticiones)
-                    // El backend manejará la API_KEY automáticamente
-                    // Permitir continuar incluso sin API_KEY del cliente
-                    // El backend intentará usar la de variables de entorno
-
-                    // Crear mensaje estructurado con el código y el error para el LLM
-                    const errorMessage = `Necesito ayuda con un error de sintaxis en mi código de pseudocódigo.
+                onVerifyParse={handleAnalyzeCode}
+                onViewAst={() => setShowAstModal(true)}
+                isVerifyingParse={isVerifyingParse}
+                canViewAst={localParseOk && ast != null}
+                hasCode={code.trim() !== ""}
+                verifyParseResult={verifyParseResult}
+                showAIHelpButton={showAIHelpButton && !!backendParseError && hasValidApiKey}
+                onAIHelpClick={async () => {
+                  const errorMessage = `Necesito ayuda con un error de sintaxis en mi código de pseudocódigo.
 
 **CÓDIGO ADJUNTO:**
 \`\`\`pseudocode
@@ -914,99 +872,85 @@ ${backendParseError}
 **SOLICITUD:**
 Por favor, analiza el código y el error, identifica la causa del problema y proporciona una solución corregida. Explica qué estaba mal y cómo solucionarlo.`;
 
-                    const newMessage: Message = {
-                      id: `user-help-${Date.now()}`,
-                      content: errorMessage,
-                      sender: "user",
-                      timestamp: new Date(),
-                    };
+                  const newMessage: Message = {
+                    id: `user-help-${Date.now()}`,
+                    content: errorMessage,
+                    sender: "user",
+                    timestamp: new Date(),
+                  };
 
-                    // Verificar si ya existe un mensaje con exactamente el mismo código y error
-                    // Solo evitar duplicados si es el mismo código y el mismo error
-                    const codeHash = code.trim().slice(0, 100); // Usar más caracteres para mejor comparación
-                    const errorHash =
-                      backendParseError?.trim().slice(0, 50) || "";
-                    const messageExists = messages.some(
-                      (msg) =>
-                        msg.sender === "user" &&
-                        msg.content.includes("**CÓDIGO ADJUNTO:**") &&
-                        msg.content.includes(codeHash) &&
-                        msg.content.includes(errorHash),
-                    );
+                  const codeHash = code.trim().slice(0, 100);
+                  const errorHash = backendParseError?.trim().slice(0, 50) || "";
+                  const messageExists = messages.some(
+                    (msg) =>
+                      msg.sender === "user" &&
+                      msg.content.includes("**CÓDIGO ADJUNTO:**") &&
+                      msg.content.includes(codeHash) &&
+                      msg.content.includes(errorHash),
+                  );
 
-                    // Si el mensaje ya existe exactamente igual, solo abrir el chat sin agregar duplicado
-                    if (messageExists) {
-                      onSwitchToAIMode();
-                      setTimeout(() => {
-                        onOpenChat();
-                      }, 100);
-                      return;
-                    }
+                  if (messageExists) {
+                    onSwitchToAIMode();
+                    setTimeout(() => onOpenChat(), 100);
+                    return;
+                  }
 
-                    // Agregar mensaje de bienvenida solo si no hay mensajes previos
-                    // Usar una función de actualización para evitar problemas de estado
-                    setMessages((prev) => {
-                      // Si ya hay mensajes, solo agregar el nuevo mensaje
-                      if (prev.length > 0) {
-                        return [...prev, newMessage];
-                      }
+                  setMessages((prev) =>
+                    prev.length > 0
+                      ? [...prev, newMessage]
+                      : [
+                          {
+                            id: "welcome",
+                            content:
+                              "¡Hola! Soy AALIE (Algorithmic Analysis Live Interaction Expert), tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+                            sender: "bot",
+                            timestamp: new Date(),
+                          },
+                          newMessage,
+                        ]
+                  );
 
-                      // Si no hay mensajes, agregar bienvenida y el nuevo mensaje
-                      const welcomeMessage: Message = {
-                        id: "welcome",
-                        content:
-                          "¡Hola! Soy AALIE (Algorithmic Analysis Live Interaction Expert), tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
-                        sender: "bot",
-                        timestamp: new Date(),
-                      };
-                      return [welcomeMessage, newMessage];
-                    });
+                  setTimeout(() => {
+                    onSwitchToAIMode();
+                    setTimeout(() => onOpenChat(), 150);
+                  }, 100);
+                }}
+                height={isDesktop ? "420px" : "280px"}
+              />
+            </div>
 
-                    // Cambiar al modo asistente y abrir el chat después de que se actualice el estado
-                    // El ChatBot detectará el nuevo mensaje y generará la respuesta automáticamente
-                    setTimeout(() => {
-                      onSwitchToAIMode();
-
-                      // Luego abrir el chat después de cambiar de modo
-                      setTimeout(() => {
-                        onOpenChat();
-                      }, 150);
-                    }, 100);
-                  }}
-                  className="flex items-center justify-center gap-2 py-2.5 px-4 sm:px-6 rounded-lg text-white text-xs sm:text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 border animate-[slideInUp_0.3s_ease-out] bg-gradient-to-br from-purple-500/20 to-purple-500/20 border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 animate-pulse-slow cursor-pointer"
-                >
-                  <AALIEIcon className="text-base animate-shake" size={18} />{" "}
-                  Ayuda con IA
-                </button>
-              )}
+            {/* Botón Analizar - 25% en desktop, 100% en mobile; azul con icono play como ejemplos */}
+            <div className="w-full lg:w-[25%] flex flex-col gap-3 relative z-10">
+              <button
+                onClick={handleAnalyzeComplexity}
+                disabled={isAnalyzing || !localParseOk || code.trim() === ""}
+                className="flex items-center justify-center gap-2 py-2.5 px-4 sm:px-6 rounded-lg text-white text-xs sm:text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-400/50 bg-primary/25 border border-primary/40 hover:bg-primary/35 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <span className="material-symbols-outlined text-base animate-spin">
+                      progress_activity
+                    </span>{" "}
+                    {tManual("analyzing")}
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-base">
+                      play_arrow
+                    </span>{" "}
+                    {tManual("analyzeComplexity")}
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
-          {/* Resultado del análisis */}
-          {analysisResult && (
-            <div
-              className={`mt-4 w-full max-w-5xl mx-auto px-6 py-4 rounded-lg border animate-[slideInUp_0.3s_ease-out,fadeIn_0.3s_ease-out] ${
-                analysisResult.success
-                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                  : "bg-red-500/10 border-red-500/30 text-red-300"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-2xl">
-                  {analysisResult.success ? "check_circle" : "error"}
-                </span>
-                <p className="text-sm font-medium whitespace-pre-line">
-                  {analysisResult.message}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Modal AST - Portal para cubrir y desenfocar todo (Header, ModeToggle, etc.) */}
+          {/* Modal AST - Portal a body para overlay fijo sobre todo */}
           {showAstModal &&
             ast &&
+            typeof document !== "undefined" &&
             ReactDOM.createPortal(
-              <div className="fixed inset-0 z-[60] flex items-center justify-center glass-modal-overlay modal-animate-in">
+              <div className="fixed inset-0 z-[9999] flex items-center justify-center glass-modal-overlay glass-modal-overlay-fixed modal-animate-in">
                 <div className="glass-modal-container rounded-xl shadow-2xl max-w-3xl w-full max-h-[80vh] flex flex-col m-4 modal-animate-in">
                 {/* Header compacto */}
                 <div className="glass-modal-header flex items-center justify-between px-5 py-3 rounded-t-xl border-b border-white/10">
