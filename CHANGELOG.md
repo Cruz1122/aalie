@@ -21,6 +21,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Fixed
 
+- Componentes glass que desaparecían al hacer scroll (Edge, Chrome, Firefox, Safari): añadido `position: relative` y `z-index: 1` a todas las clases glass para mantener stacking context correcto durante scroll
 - Modals: bloqueo de scroll, botón cerrar (X) estilo DocumentationModal, spam de generate diagram (isGeneratingRef)
 - Desbordes: StepInfo, cards GPU/CPU, ChatBot (bloques 420px, botones Copiar/Analizar), switcher Efficiency Equation, labels analysis method, badges, FormulaBlock, efecto glass (isolation)
 - Errores LLM traducidos a mensajes legibles (`llm-error-translator`)
