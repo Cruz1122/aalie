@@ -7,6 +7,23 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Added
+
+- Módulo MCP en documentación técnica: herramientas read_conventions, read_doc, list_components, changelog_template, i18n_reminder
+
+### Removed
+
+- Página ui-test y sección ui-showcase de documentación técnica
+- Sección export de documentación técnica (no implementada aún)
+- Botón "Ver diagrama" e ImageModal de las cards de documentación técnica
+- Loader de navegación (PageLoader / NavigationLoadingWrapper)
+
+### Changed
+
+- Documentación técnica: paleta neutra (slate) en modales; estilos profesionales sin colores por sección
+- Documentación técnica: secciones consolidadas de 24 a 11 (arquitectura+parse+request-flow, visualizaciones, llm, analisis, herramientas, etc.)
+- DocumentationCard: botón "Ver detalles" con estilo neutro unificado
+
 ## [1.1.4] - 2026-02-21
 
 ### Added

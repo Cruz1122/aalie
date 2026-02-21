@@ -3,7 +3,6 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 
 import { GlobalLoaderOverlay } from "@/components/GlobalLoaderOverlay";
-import NavigationLoadingWrapper from "@/components/NavigationLoadingWrapper";
 import { GlobalLoaderProvider } from "@/contexts/GlobalLoaderContext";
 import { NavigationProvider } from "@/contexts/NavigationContext";
 import { routing } from "@/i18n/routing";
@@ -40,7 +39,7 @@ export default async function LocaleLayout({ children, params }: Props) {
     <NextIntlClientProvider messages={messages} locale={locale}>
       <GlobalLoaderProvider>
         <NavigationProvider>
-          <NavigationLoadingWrapper>{children}</NavigationLoadingWrapper>
+          {children}
         </NavigationProvider>
         <GlobalLoaderOverlay />
       </GlobalLoaderProvider>

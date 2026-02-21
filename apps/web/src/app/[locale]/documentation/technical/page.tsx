@@ -8,17 +8,14 @@ import { DocumentationIndex } from "@/components/DocumentationIndex";
 import DocumentationModal from "@/components/DocumentationModal";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
-import { ImageModal } from "@/components/ImageModal";
 import { NavigationFooter } from "@/components/NavigationFooter";
 import { PageHeader } from "@/components/PageHeader";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useDocumentationSections } from "@/hooks/useDocumentationSections";
-import { useImageModal } from "@/hooks/useImageModal";
 import { DocumentationSection } from "@/types/documentation";
 
 export default function TechnicalDocsPage() {
   const t = useTranslations("documentation.technical");
-  const { selectedImage, openModal, closeModal, isModalOpen } = useImageModal();
   const [selectedSection, setSelectedSection] =
     useState<DocumentationSection | null>(null);
   const [isDocModalOpen, setIsDocModalOpen] = useState(false);
@@ -74,7 +71,6 @@ export default function TechnicalDocsPage() {
                     >
                       <DocumentationCard
                         section={section}
-                        onImageClick={openModal}
                         onOpenSection={openDocumentationModal}
                       />
                     </div>
@@ -311,13 +307,6 @@ export default function TechnicalDocsPage() {
           </div>
         </div>
       </main>
-
-      {/* Modal de imagen */}
-      <ImageModal
-        image={selectedImage}
-        isOpen={isModalOpen}
-        onClose={closeModal}
-      />
 
       {/* Modal de documentación */}
       <DocumentationModal

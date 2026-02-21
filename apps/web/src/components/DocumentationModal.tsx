@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Zap,
   Package,
   Settings,
   Calculator,
@@ -17,7 +16,6 @@ import Formula from "@/components/Formula";
 import NavigationLink from "@/components/NavigationLink";
 import {
   DocumentationSection,
-  UIShowcaseContent,
   PackageContent,
   PackageInfo,
   ToolsContent,
@@ -114,8 +112,6 @@ function renderSectionDetail(section: DocumentationSection) {
   const t = section.content?.type;
 
   switch (t) {
-    case "ui-showcase":
-      return <UIShowcaseDetail section={section} />;
     case "packages":
       return <PackagesDetail section={section} />;
     case "tools":
@@ -148,57 +144,6 @@ function renderSectionDetail(section: DocumentationSection) {
   }
 }
 
-/* -------- Render: UI Showcase -------- */
-function UIShowcaseDetail({
-  section,
-}: Readonly<{ section: DocumentationSection }>) {
-  const content = section.content as UIShowcaseContent;
-
-  return (
-    <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-      <header className="flex items-center gap-3 mb-6">
-        <div className="p-2 rounded-lg bg-purple-500/20 border border-purple-500/30">
-          <Zap size={24} className="text-purple-400" />
-        </div>
-        <p className="text-sm text-slate-300">{content?.implementation?.description}</p>
-      </header>
-
-      {/* Lista de características */}
-      {content?.implementation?.features && (
-        <div className="mb-6">
-          <h5 className="text-sm font-semibold text-purple-300 mb-3">
-            Componentes Disponibles:
-          </h5>
-          <div className="grid grid-cols-1 gap-2">
-            {content.implementation.features.map((feature, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-2 text-xs text-slate-300"
-              >
-                <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
-                {feature}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Botón de redirección */}
-      {content?.implementation?.testRoute && (
-        <div className="text-center">
-          <NavigationLink
-            href={content.implementation.testRoute}
-            className="inline-flex items-center gap-2 glass-button px-6 py-3 rounded-lg text-white font-semibold transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400/50"
-          >
-            <Zap size={16} />
-            Ver Demostración Interactiva
-          </NavigationLink>
-        </div>
-      )}
-    </article>
-  );
-}
-
 /* -------- Render: Packages -------- */
 function PackagesDetail({
   section,
@@ -207,8 +152,8 @@ function PackagesDetail({
   return (
     <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
       <header className="flex items-center gap-3 mb-6">
-        <div className="p-2 rounded-lg bg-purple-500/20 border border-purple-500/30">
-          <Package size={24} className="text-purple-400" />
+        <div className="p-2 rounded-lg bg-slate-800/50 border border-white/10">
+          <Package size={24} className="text-slate-400" />
         </div>
         <p className="text-sm text-slate-300">{section.description}</p>
       </header>
@@ -223,7 +168,7 @@ function PackagesDetail({
               <h5 className="text-base font-semibold text-white mb-1">
                 {pkg.name}
               </h5>
-              <p className="text-sm font-medium text-purple-300 mb-2">
+              <p className="text-sm font-medium text-slate-300 mb-2">
                 {pkg.purpose}
               </p>
               <p className="text-xs text-slate-400">{pkg.description}</p>
@@ -231,14 +176,14 @@ function PackagesDetail({
 
             <div className="space-y-3">
               <div>
-                <h6 className="text-xs font-semibold text-blue-300 mb-1">
+                <h6 className="text-xs font-semibold text-slate-300 mb-1">
                   Entrada
                 </h6>
                 <p className="text-xs text-slate-300">{pkg.io?.input}</p>
               </div>
 
               <div>
-                <h6 className="text-xs font-semibold text-emerald-300 mb-1">
+                <h6 className="text-xs font-semibold text-slate-300 mb-1">
                   Salidas
                 </h6>
                 <ul className="space-y-1">
@@ -249,7 +194,7 @@ function PackagesDetail({
                     >
                       <ArrowRight
                         size={10}
-                        className="text-emerald-400 mt-0.5 flex-shrink-0"
+                        className="text-slate-400 mt-0.5 flex-shrink-0"
                       />
                       <span>{output}</span>
                     </li>
@@ -258,7 +203,7 @@ function PackagesDetail({
               </div>
 
               <div>
-                <h6 className="text-xs font-semibold text-amber-300 mb-1">
+                <h6 className="text-xs font-semibold text-slate-300 mb-1">
                   Usado por
                 </h6>
                 <ul className="space-y-1">
@@ -284,8 +229,8 @@ function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
   return (
     <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
       <header className="flex items-center gap-3 mb-6">
-        <div className="p-2 rounded-lg bg-green-500/20 border border-green-500/30">
-          <Settings size={24} className="text-green-400" />
+        <div className="p-2 rounded-lg bg-slate-800/50 border border-white/10">
+          <Settings size={24} className="text-slate-400" />
         </div>
         <p className="text-sm text-slate-300">{section.description}</p>
       </header>
@@ -293,20 +238,20 @@ function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
       <div className="grid md:grid-cols-2 gap-8 mb-8">
         {/* Frontend */}
         <div className="space-y-4">
-          <h5 className="text-lg font-semibold text-blue-300 text-center">
+          <h5 className="text-lg font-semibold text-slate-300 text-center">
             {content?.frontend?.title}
           </h5>
           <div className="space-y-4">
             {content?.frontend?.tools?.map((tool: ToolInfo) => (
               <div
                 key={tool.name}
-                className="p-4 rounded-lg bg-blue-800/20 border border-blue-500/20"
+                className="p-4 rounded-lg bg-slate-800/50 border border-white/10"
               >
                 <div className="mb-3">
-                  <h6 className="text-sm font-semibold text-blue-200 mb-1">
+                  <h6 className="text-sm font-semibold text-slate-300 mb-1">
                     {tool.name}
                   </h6>
-                  <p className="text-xs text-blue-300 mb-2">{tool.purpose}</p>
+                  <p className="text-xs text-slate-400 mb-2">{tool.purpose}</p>
                   {tool.config && (
                     <p className="text-xs text-slate-400">
                       Config: {tool.config}
@@ -325,7 +270,7 @@ function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
                       >
                         <ArrowRight
                           size={8}
-                          className="text-blue-400 mt-0.5 flex-shrink-0"
+                          className="text-slate-400 mt-0.5 flex-shrink-0"
                         />
                         <span>{feature}</span>
                       </li>
@@ -339,20 +284,20 @@ function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
 
         {/* Backend */}
         <div className="space-y-4">
-          <h5 className="text-lg font-semibold text-green-300 text-center">
+          <h5 className="text-lg font-semibold text-slate-300 text-center">
             {content?.backend?.title}
           </h5>
           <div className="space-y-4">
             {content?.backend?.tools?.map((tool: ToolInfo) => (
               <div
                 key={tool.name}
-                className="p-4 rounded-lg bg-green-800/20 border border-green-500/20"
+                className="p-4 rounded-lg bg-slate-800/50 border border-white/10"
               >
                 <div className="mb-3">
-                  <h6 className="text-sm font-semibold text-green-200 mb-1">
+                  <h6 className="text-sm font-semibold text-slate-300 mb-1">
                     {tool.name}
                   </h6>
-                  <p className="text-xs text-green-300 mb-2">{tool.purpose}</p>
+                  <p className="text-xs text-slate-400 mb-2">{tool.purpose}</p>
                   {tool.config && (
                     <p className="text-xs text-slate-400">
                       Config: {tool.config}
@@ -371,7 +316,7 @@ function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
                       >
                         <ArrowRight
                           size={8}
-                          className="text-green-400 mt-0.5 flex-shrink-0"
+                          className="text-slate-400 mt-0.5 flex-shrink-0"
                         />
                         <span>{feature}</span>
                       </li>
@@ -385,8 +330,8 @@ function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
       </div>
 
       {/* Automatización */}
-      <div className="p-4 rounded-lg bg-purple-800/20 border border-purple-500/20">
-        <h5 className="text-lg font-semibold text-purple-300 text-center mb-4">
+      <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+        <h5 className="text-lg font-semibold text-slate-300 text-center mb-4">
           {content?.automation?.title}
         </h5>
         <div className="grid gap-3">
@@ -397,7 +342,7 @@ function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
                 className="p-3 rounded-lg bg-slate-800/50 border border-white/10"
               >
                 <div className="flex items-start gap-3">
-                  <code className="text-xs font-mono text-purple-300 bg-purple-900/30 px-2 py-1 rounded flex-shrink-0">
+                  <code className="text-xs font-mono text-slate-300 bg-slate-900/50 px-2 py-1 rounded flex-shrink-0">
                     {cmd.command}
                   </code>
                   <div className="flex-1 min-w-0">
@@ -405,7 +350,7 @@ function ToolsDetail({ section }: Readonly<{ section: DocumentationSection }>) {
                       {cmd.description}
                     </p>
                     {cmd.result && (
-                      <p className="text-xs text-emerald-300 font-medium">
+                      <p className="text-xs text-slate-300 font-medium">
                         {cmd.result}
                       </p>
                     )}
@@ -427,24 +372,24 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
   return (
     <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
       <header className="flex items-center gap-3 mb-6">
-        <div className="p-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30">
-          <Calculator size={24} className="text-emerald-400" />
+        <div className="p-2 rounded-lg bg-slate-800/50 border border-white/10">
+          <Calculator size={24} className="text-slate-400" />
         </div>
         <p className="text-sm text-slate-300">{section.description}</p>
       </header>
 
       {/* Implementación Técnica */}
       <section className="mb-8">
-        <h5 className="text-lg font-semibold text-emerald-300 text-center mb-6">
+        <h5 className="text-lg font-semibold text-slate-300 text-center mb-6">
           {content?.implementation?.title}
         </h5>
 
         {/* Librería */}
-        <div className="p-4 rounded-lg bg-emerald-800/20 border border-emerald-500/20 mb-6">
-          <h6 className="text-sm font-semibold text-emerald-200 mb-2">
+        <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10 mb-6">
+          <h6 className="text-sm font-semibold text-slate-300 mb-2">
             {content?.implementation?.library?.name}
           </h6>
-          <p className="text-xs text-emerald-300 mb-3">
+          <p className="text-xs text-slate-300 mb-3">
             {content?.implementation?.library?.purpose}
           </p>
           <h6 className="text-xs font-semibold text-slate-300 mb-2">
@@ -459,7 +404,7 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
                 >
                   <ArrowRight
                     size={8}
-                    className="text-emerald-400 mt-0.5 flex-shrink-0"
+                    className="text-slate-400 mt-0.5 flex-shrink-0"
                   />
                   <span>{f}</span>
                 </li>
@@ -472,7 +417,7 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           {/* Componentes */}
           <div className="space-y-4">
-            <h6 className="text-sm font-semibold text-blue-300 text-center">
+            <h6 className="text-sm font-semibold text-slate-300 text-center">
               Componentes React
             </h6>
             {content?.implementation?.components?.map(
@@ -481,10 +426,10 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
                   key={component.name}
                   className="p-3 rounded-lg bg-blue-800/20 border border-blue-500/20"
                 >
-                  <h6 className="text-xs font-semibold text-blue-200 mb-1">
+                  <h6 className="text-xs font-semibold text-slate-300 mb-1">
                     {component.name}
                   </h6>
-                  <p className="text-xs text-blue-300 mb-2">
+                  <p className="text-xs text-slate-300 mb-2">
                     {component.purpose}
                   </p>
                   <div className="space-y-1">
@@ -507,22 +452,22 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
 
           {/* Utilidades */}
           <div className="space-y-4">
-            <h6 className="text-sm font-semibold text-purple-300 text-center">
+            <h6 className="text-sm font-semibold text-slate-300 text-center">
               Utilidades
             </h6>
             {content?.implementation?.utilities?.map(
               (utility: KaTeXUtility) => (
                 <div
                   key={utility.function}
-                  className="p-3 rounded-lg bg-purple-800/20 border border-purple-500/20"
+                  className="p-3 rounded-lg bg-slate-800/50 border border-white/10"
                 >
                   <div className="mb-2">
-                    <h6 className="text-xs font-semibold text-purple-200">
+                    <h6 className="text-xs font-semibold text-slate-300">
                       {utility.function}
                     </h6>
                     <p className="text-xs text-slate-400">en {utility.file}</p>
                   </div>
-                  <p className="text-xs text-purple-300 mb-2">
+                  <p className="text-xs text-slate-300 mb-2">
                     {utility.purpose}
                   </p>
                   <div className="space-y-1">
@@ -538,7 +483,7 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
                     </div>
                   </div>
                   {utility.security && (
-                    <p className="text-xs text-emerald-300 mt-2 font-medium">
+                    <p className="text-xs text-slate-300 mt-2 font-medium">
                       {utility.security}
                     </p>
                   )}
@@ -551,16 +496,16 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
 
       {/* Ejemplos */}
       <section className="mb-8">
-        <h5 className="text-lg font-semibold text-amber-300 text-center mb-6">
+        <h5 className="text-lg font-semibold text-slate-300 text-center mb-6">
           {content?.examples?.title}
         </h5>
 
         {/* Inline */}
-        <div className="p-4 rounded-lg bg-amber-800/20 border border-amber-500/20 mb-4">
-          <h6 className="text-sm font-semibold text-amber-200 mb-2">
+        <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10 mb-4">
+          <h6 className="text-sm font-semibold text-slate-300 mb-2">
             Matemáticas Inline
           </h6>
-          <p className="text-xs text-amber-300 mb-3">
+          <p className="text-xs text-slate-300 mb-3">
             {content?.examples?.inline?.description}
           </p>
           <div className="space-y-3">
@@ -582,11 +527,11 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
         </div>
 
         {/* Block */}
-        <div className="p-4 rounded-lg bg-amber-800/20 border border-amber-500/20 mb-4">
-          <h6 className="text-sm font-semibold text-amber-200 mb-2">
+        <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10 mb-4">
+          <h6 className="text-sm font-semibold text-slate-300 mb-2">
             Ecuaciones en Bloque
           </h6>
-          <p className="text-xs text-amber-300 mb-3">
+          <p className="text-xs text-slate-300 mb-3">
             {content?.examples?.block?.description}
           </p>
           <div className="space-y-3">
@@ -608,11 +553,11 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
         </div>
 
         {/* Complex */}
-        <div className="p-4 rounded-lg bg-amber-800/20 border border-amber-500/20">
-          <h6 className="text-sm font-semibold text-amber-200 mb-2">
+        <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+          <h6 className="text-sm font-semibold text-slate-300 mb-2">
             Ecuaciones Complejas
           </h6>
-          <p className="text-xs text-amber-300 mb-3">
+          <p className="text-xs text-slate-300 mb-3">
             {content?.examples?.complex?.description}
           </p>
           <div className="space-y-3">
@@ -648,7 +593,7 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
         </h5>
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <h6 className="text-sm font-semibold text-blue-300 mb-2">CSS</h6>
+            <h6 className="text-sm font-semibold text-slate-300 mb-2">CSS</h6>
             <ul className="space-y-2">
               <li className="text-xs text-slate-400">
                 <span className="font-medium text-slate-300">Importación:</span>{" "}
@@ -667,7 +612,7 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
             </ul>
           </div>
           <div>
-            <h6 className="text-sm font-semibold text-green-300 mb-2">Temas</h6>
+            <h6 className="text-sm font-semibold text-slate-300 mb-2">Temas</h6>
             <ul className="space-y-2">
               <li className="text-xs text-slate-400">
                 <span className="font-medium text-slate-300">Oscuro:</span>{" "}
@@ -694,15 +639,15 @@ function GrammarDetail({
   return (
     <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
       <header className="flex items-center gap-3 mb-6">
-        <div className="p-2 rounded-lg bg-green-500/20 border border-green-500/30">
-          <Code2 size={24} className="text-green-400" />
+        <div className="p-2 rounded-lg bg-slate-800/50 border border-white/10">
+          <Code2 size={24} className="text-slate-400" />
         </div>
         <p className="text-sm text-slate-300">{section.description}</p>
       </header>
 
       {/* Overview */}
-      <section className="mb-8 p-4 rounded-lg bg-green-800/20 border border-green-500/20">
-        <h5 className="text-lg font-semibold text-green-300 text-center mb-4">
+      <section className="mb-8 p-4 rounded-lg bg-slate-800/50 border border-white/10">
+        <h5 className="text-lg font-semibold text-slate-300 text-center mb-4">
           {content?.overview?.title}
         </h5>
         <p className="text-sm text-slate-300 text-center mb-4">
@@ -711,13 +656,13 @@ function GrammarDetail({
         <div className="grid md:grid-cols-2 gap-4">
           <div className="text-xs">
             <p className="text-slate-400">
-              <span className="font-semibold text-green-300">Tecnología:</span>{" "}
+              <span className="font-semibold text-slate-300">Tecnología:</span>{" "}
               {content?.overview?.technology}
             </p>
           </div>
           <div className="text-xs">
             <p className="text-slate-400">
-              <span className="font-semibold text-green-300">Ubicación:</span>{" "}
+              <span className="font-semibold text-slate-300">Ubicación:</span>{" "}
               <code className="bg-slate-900/50 px-1 rounded">
                 {content?.overview?.location}
               </code>
@@ -725,7 +670,7 @@ function GrammarDetail({
           </div>
         </div>
         <div className="mt-4">
-          <p className="text-xs font-semibold text-green-300 mb-2">
+          <p className="text-xs font-semibold text-slate-300 mb-2">
             Generadores:
           </p>
           <ul className="space-y-1">
@@ -736,7 +681,7 @@ function GrammarDetail({
               >
                 <ArrowRight
                   size={8}
-                  className="text-green-400 mt-0.5 flex-shrink-0"
+                  className="text-slate-400 mt-0.5 flex-shrink-0"
                 />
                 <span>{gen}</span>
               </li>
@@ -747,7 +692,7 @@ function GrammarDetail({
 
       {/* Características */}
       <section className="mb-8">
-        <h5 className="text-lg font-semibold text-blue-300 text-center mb-6">
+        <h5 className="text-lg font-semibold text-slate-300 text-center mb-6">
           {content?.features?.title}
         </h5>
         <div className="grid gap-4">
@@ -757,14 +702,14 @@ function GrammarDetail({
                 key={idx}
                 className="p-4 rounded-lg bg-blue-800/20 border border-blue-500/20"
               >
-                <h6 className="text-sm font-semibold text-blue-200 mb-2">
+                <h6 className="text-sm font-semibold text-slate-300 mb-2">
                   {feature.name}
                 </h6>
-                <p className="text-xs text-blue-300 mb-2">
+                <p className="text-xs text-slate-300 mb-2">
                   {feature.description}
                 </p>
                 <div className="bg-slate-900/50 p-2 rounded">
-                  <code className="text-xs font-mono text-green-300">
+                  <code className="text-xs font-mono text-slate-300">
                     {feature.example}
                   </code>
                 </div>
@@ -776,7 +721,7 @@ function GrammarDetail({
 
       {/* Sintaxis */}
       <section className="mb-8">
-        <h5 className="text-lg font-semibold text-purple-300 text-center mb-6">
+        <h5 className="text-lg font-semibold text-slate-300 text-center mb-6">
           {content?.syntax?.title}
         </h5>
         <div className="grid gap-4">
@@ -784,13 +729,13 @@ function GrammarDetail({
             (syntaxSection: GrammarSyntaxSection, idx: number) => (
               <div
                 key={idx}
-                className="p-4 rounded-lg bg-purple-800/20 border border-purple-500/20"
+                className="p-4 rounded-lg bg-slate-800/50 border border-white/10"
               >
-                <h6 className="text-sm font-semibold text-purple-200 mb-3">
+                <h6 className="text-sm font-semibold text-slate-300 mb-3">
                   {syntaxSection.name}
                 </h6>
                 <div className="bg-slate-900/50 p-3 rounded mb-3 overflow-x-auto">
-                  <pre className="text-xs font-mono text-green-300 whitespace-pre">
+                  <pre className="text-xs font-mono text-slate-300 whitespace-pre">
                     {syntaxSection.code}
                   </pre>
                 </div>
@@ -808,7 +753,7 @@ function GrammarDetail({
                           >
                             <ArrowRight
                               size={8}
-                              className="text-purple-400 mt-0.5 flex-shrink-0"
+                              className="text-slate-400 mt-0.5 flex-shrink-0"
                             />
                             <span>{note}</span>
                           </li>
@@ -825,7 +770,7 @@ function GrammarDetail({
 
       {/* Operadores */}
       <section className="mb-8">
-        <h5 className="text-lg font-semibold text-amber-300 text-center mb-6">
+        <h5 className="text-lg font-semibold text-slate-300 text-center mb-6">
           {content?.operators?.title}
         </h5>
         <div className="grid md:grid-cols-3 gap-4">
@@ -833,9 +778,9 @@ function GrammarDetail({
             (category: GrammarOperatorCategory, idx: number) => (
               <div
                 key={idx}
-                className="p-4 rounded-lg bg-amber-800/20 border border-amber-500/20"
+                className="p-4 rounded-lg bg-slate-800/50 border border-white/10"
               >
-                <h6 className="text-sm font-semibold text-amber-200 mb-2">
+                <h6 className="text-sm font-semibold text-slate-300 mb-2">
                   {category.name}
                 </h6>
                 <div className="mb-2">
@@ -846,7 +791,7 @@ function GrammarDetail({
                     {category.operators?.map((op: string, opIdx: number) => (
                       <code
                         key={opIdx}
-                        className="text-xs font-mono text-amber-300 bg-slate-900/50 px-2 py-0.5 rounded"
+                        className="text-xs font-mono text-slate-300 bg-slate-900/50 px-2 py-0.5 rounded"
                       >
                         {op}
                       </code>
@@ -866,8 +811,8 @@ function GrammarDetail({
       </section>
 
       {/* AST */}
-      <section className="mb-8 p-4 rounded-lg bg-cyan-800/20 border border-cyan-500/20">
-        <h5 className="text-lg font-semibold text-cyan-300 text-center mb-4">
+      <section className="mb-8 p-4 rounded-lg bg-slate-800/50 border border-white/10">
+        <h5 className="text-lg font-semibold text-slate-300 text-center mb-4">
           {content?.ast?.title}
         </h5>
         <p className="text-sm text-slate-300 text-center mb-4">
@@ -875,7 +820,7 @@ function GrammarDetail({
         </p>
 
         <div className="mb-4">
-          <p className="text-xs font-semibold text-cyan-300 mb-2">
+          <p className="text-xs font-semibold text-slate-300 mb-2">
             Tipos de Nodos:
           </p>
           <div className="grid md:grid-cols-2 gap-2">
@@ -886,9 +831,9 @@ function GrammarDetail({
               >
                 <ArrowRight
                   size={8}
-                  className="text-cyan-400 mt-0.5 flex-shrink-0"
+                  className="text-slate-400 mt-0.5 flex-shrink-0"
                 />
-                <code className="text-cyan-300">{nodeType}</code>
+                <code className="text-slate-300">{nodeType}</code>
               </div>
             ))}
           </div>
@@ -896,11 +841,11 @@ function GrammarDetail({
 
         {content?.ast?.example && (
           <div className="mt-4">
-            <p className="text-xs font-semibold text-cyan-300 mb-2">Ejemplo:</p>
+            <p className="text-xs font-semibold text-slate-300 mb-2">Ejemplo:</p>
             <div className="mb-2">
               <p className="text-xs text-slate-400 mb-1">Entrada:</p>
               <div className="bg-slate-900/50 p-2 rounded overflow-x-auto">
-                <pre className="text-xs font-mono text-green-300 whitespace-pre">
+                <pre className="text-xs font-mono text-slate-300 whitespace-pre">
                   {content.ast.example.input}
                 </pre>
               </div>
@@ -908,7 +853,7 @@ function GrammarDetail({
             <div>
               <p className="text-xs text-slate-400 mb-1">AST (fragmento):</p>
               <div className="bg-slate-900/50 p-2 rounded overflow-x-auto">
-                <pre className="text-xs font-mono text-cyan-300 whitespace-pre">
+                <pre className="text-xs font-mono text-slate-300 whitespace-pre">
                   {content.ast.example.astFragment}
                 </pre>
               </div>
@@ -919,20 +864,20 @@ function GrammarDetail({
 
       {/* Validación */}
       <section className="mb-8">
-        <h5 className="text-lg font-semibold text-emerald-300 text-center mb-6">
+        <h5 className="text-lg font-semibold text-slate-300 text-center mb-6">
           {content?.validation?.title}
         </h5>
         <div className="grid md:grid-cols-2 gap-4">
           {/* Cliente */}
-          <div className="p-4 rounded-lg bg-emerald-800/20 border border-emerald-500/20">
-            <h6 className="text-sm font-semibold text-emerald-200 mb-3">
+          <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+            <h6 className="text-sm font-semibold text-slate-300 mb-3">
               Cliente (TypeScript)
             </h6>
-            <p className="text-xs text-emerald-300 mb-2">
+            <p className="text-xs text-slate-300 mb-2">
               <span className="font-semibold">Tecnología:</span>{" "}
               {content?.validation?.client?.technology}
             </p>
-            <p className="text-xs text-emerald-300 mb-3">
+            <p className="text-xs text-slate-300 mb-3">
               <span className="font-semibold">Propósito:</span>{" "}
               {content?.validation?.client?.purpose}
             </p>
@@ -949,7 +894,7 @@ function GrammarDetail({
                     >
                       <ArrowRight
                         size={8}
-                        className="text-emerald-400 mt-0.5 flex-shrink-0"
+                        className="text-slate-400 mt-0.5 flex-shrink-0"
                       />
                       <span>{feature}</span>
                     </li>
@@ -961,20 +906,20 @@ function GrammarDetail({
 
           {/* Servidor */}
           <div className="p-4 rounded-lg bg-blue-800/20 border border-blue-500/20">
-            <h6 className="text-sm font-semibold text-blue-200 mb-3">
+            <h6 className="text-sm font-semibold text-slate-300 mb-3">
               Servidor (Python)
             </h6>
-            <p className="text-xs text-blue-300 mb-2">
+            <p className="text-xs text-slate-300 mb-2">
               <span className="font-semibold">Tecnología:</span>{" "}
               {content?.validation?.server?.technology}
             </p>
-            <p className="text-xs text-blue-300 mb-2">
+            <p className="text-xs text-slate-300 mb-2">
               <span className="font-semibold">Endpoint:</span>{" "}
               <code className="bg-slate-900/50 px-1 rounded">
                 {content?.validation?.server?.endpoint}
               </code>
             </p>
-            <p className="text-xs text-blue-300 mb-3">
+            <p className="text-xs text-slate-300 mb-3">
               <span className="font-semibold">Propósito:</span>{" "}
               {content?.validation?.server?.purpose}
             </p>
@@ -991,7 +936,7 @@ function GrammarDetail({
                     >
                       <ArrowRight
                         size={8}
-                        className="text-blue-400 mt-0.5 flex-shrink-0"
+                        className="text-slate-400 mt-0.5 flex-shrink-0"
                       />
                       <span>{feature}</span>
                     </li>
@@ -1021,7 +966,7 @@ function GrammarDetail({
                 >
                   <ArrowRight
                     size={8}
-                    className="text-red-400 mt-0.5 flex-shrink-0"
+                    className="text-slate-400 mt-0.5 flex-shrink-0"
                   />
                   <span>{feature}</span>
                 </li>
@@ -1042,7 +987,7 @@ function GrammarDetail({
                 >
                   <ArrowRight
                     size={8}
-                    className="text-red-400 mt-0.5 flex-shrink-0"
+                    className="text-slate-400 mt-0.5 flex-shrink-0"
                   />
                   <span>{errorType}</span>
                 </li>
@@ -1076,7 +1021,7 @@ function AnalyzerDetail({
     <article className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
       <header className="flex items-center gap-3 mb-6">
         <div className="p-2 rounded-lg bg-cyan-500/20 border border-cyan-500/30">
-          <BarChart3 size={24} className="text-cyan-400" />
+          <BarChart3 size={24} className="text-slate-400" />
         </div>
         <p className="text-sm text-slate-300">{section.description}</p>
       </header>
@@ -1084,13 +1029,13 @@ function AnalyzerDetail({
       {/* Interfaz - puede ser 3 columnas o descripción simple */}
       {content?.interface && (
         <section className="mb-8">
-          <h5 className="text-lg font-semibold text-cyan-300 text-center mb-6">
+          <h5 className="text-lg font-semibold text-slate-300 text-center mb-6">
             {content.interface.title}
           </h5>
 
           {content.interface.description && (
-            <div className="p-4 rounded-lg bg-cyan-800/20 border border-cyan-500/20 mb-6">
-              <p className="text-xs text-cyan-300 text-center">
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10 mb-6">
+              <p className="text-xs text-slate-300 text-center">
                 {content.interface.description}
               </p>
             </div>
@@ -1099,8 +1044,8 @@ function AnalyzerDetail({
           {content.interface.features &&
             content.interface.features.length > 0 &&
             !content.interface.layout && (
-              <div className="p-4 rounded-lg bg-cyan-800/20 border border-cyan-500/20 mb-6">
-                <p className="text-xs font-medium text-cyan-300 mb-2">
+              <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10 mb-6">
+                <p className="text-xs font-medium text-slate-300 mb-2">
                   Características:
                 </p>
                 <ul className="space-y-1">
@@ -1111,7 +1056,7 @@ function AnalyzerDetail({
                     >
                       <ArrowRight
                         size={8}
-                        className="text-cyan-400 mt-0.5 flex-shrink-0"
+                        className="text-slate-400 mt-0.5 flex-shrink-0"
                       />
                       <span>{feature}</span>
                     </li>
@@ -1121,8 +1066,8 @@ function AnalyzerDetail({
             )}
 
           {content.interface.layout && (
-            <div className="p-4 rounded-lg bg-cyan-800/20 border border-cyan-500/20 mb-6">
-              <p className="text-xs text-cyan-300 mb-4 text-center">
+            <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10 mb-6">
+              <p className="text-xs text-slate-300 mb-4 text-center">
                 {content.interface.layout.description}
               </p>
 
@@ -1133,10 +1078,10 @@ function AnalyzerDetail({
                       key={column.name}
                       className="p-3 rounded-lg bg-slate-800/50 border border-white/10"
                     >
-                      <h6 className="text-sm font-semibold text-cyan-200 mb-2">
+                      <h6 className="text-sm font-semibold text-slate-300 mb-2">
                         {column.name}
                       </h6>
-                      <p className="text-xs text-cyan-300 mb-2">
+                      <p className="text-xs text-slate-300 mb-2">
                         {column.purpose}
                       </p>
                       <p className="text-xs text-slate-400 mb-2">
@@ -1155,7 +1100,7 @@ function AnalyzerDetail({
                               >
                                 <ArrowRight
                                   size={8}
-                                  className="text-cyan-400 mt-0.5 flex-shrink-0"
+                                  className="text-slate-400 mt-0.5 flex-shrink-0"
                                 />
                                 <span>{feature}</span>
                               </li>
@@ -1173,7 +1118,7 @@ function AnalyzerDetail({
           {/* Responsiveness */}
           {content.interface.responsiveness && (
             <div className="p-4 rounded-lg bg-blue-800/20 border border-blue-500/20">
-              <h6 className="text-sm font-semibold text-blue-300 text-center mb-4">
+              <h6 className="text-sm font-semibold text-slate-300 text-center mb-4">
                 {content.interface.responsiveness.title}
               </h6>
               <div className="grid gap-3">
@@ -1183,10 +1128,10 @@ function AnalyzerDetail({
                       key={bp.size}
                       className="p-3 rounded-lg bg-slate-800/50 border border-white/10"
                     >
-                      <p className="text-xs font-semibold text-blue-200">
+                      <p className="text-xs font-semibold text-slate-300">
                         {bp.size}
                       </p>
-                      <p className="text-xs text-blue-300 mb-1">{bp.layout}</p>
+                      <p className="text-xs text-slate-300 mb-1">{bp.layout}</p>
                       <p className="text-xs text-slate-400">{bp.description}</p>
                     </div>
                   ),
@@ -1199,12 +1144,12 @@ function AnalyzerDetail({
 
       {/* Modal de procedimiento (documentación) */}
       <section className="mb-8">
-        <h5 className="text-lg font-semibold text-purple-300 text-center mb-6">
+        <h5 className="text-lg font-semibold text-slate-300 text-center mb-6">
           {content?.modal?.title}
         </h5>
 
-        <div className="p-4 rounded-lg bg-purple-800/20 border border-purple-500/20 mb-4">
-          <p className="text-xs text-purple-300 mb-4 text-center">
+        <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10 mb-4">
+          <p className="text-xs text-slate-300 mb-4 text-center">
             {content?.modal?.purpose}
           </p>
 
@@ -1220,7 +1165,7 @@ function AnalyzerDetail({
                 >
                   <ArrowRight
                     size={8}
-                    className="text-purple-400 mt-0.5 flex-shrink-0"
+                    className="text-slate-400 mt-0.5 flex-shrink-0"
                   />
                   <span>{feature}</span>
                 </li>
@@ -1234,10 +1179,10 @@ function AnalyzerDetail({
                 key={type.name}
                 className="p-3 rounded-lg bg-slate-800/50 border border-white/10"
               >
-                <h6 className="text-xs font-semibold text-purple-200 mb-1">
+                <h6 className="text-xs font-semibold text-slate-300 mb-1">
                   {type.name}
                 </h6>
-                <p className="text-xs text-purple-300 mb-2">
+                <p className="text-xs text-slate-300 mb-2">
                   {type.description}
                 </p>
                 <p className="text-xs text-slate-400">{type.content}</p>
@@ -1259,7 +1204,7 @@ function AnalyzerDetail({
                 key={mode.name}
                 className="p-3 rounded-lg bg-slate-800/50 border border-white/10"
               >
-                <h6 className="text-sm font-semibold text-yellow-200 mb-2">
+                <h6 className="text-sm font-semibold text-slate-300 mb-2">
                   {mode.name}
                 </h6>
                 <p className="text-xs text-yellow-300 mb-2">
@@ -1277,7 +1222,7 @@ function AnalyzerDetail({
                       >
                         <ArrowRight
                           size={8}
-                          className="text-yellow-400 mt-0.5 flex-shrink-0"
+                          className="text-slate-400 mt-0.5 flex-shrink-0"
                         />
                         <span>{feature}</span>
                       </li>
@@ -1326,7 +1271,7 @@ function AnalyzerDetail({
       {/* Visitors Especializados */}
       {content?.visitors && (
         <section className="mb-8">
-          <h5 className="text-lg font-semibold text-indigo-300 text-center mb-6">
+          <h5 className="text-lg font-semibold text-slate-300 text-center mb-6">
             {content.visitors.title}
           </h5>
           <div className="grid md:grid-cols-2 gap-4">
@@ -1335,10 +1280,10 @@ function AnalyzerDetail({
                 key={visitor.name}
                 className="p-3 rounded-lg bg-slate-800/50 border border-white/10"
               >
-                <h6 className="text-sm font-semibold text-indigo-200 mb-2">
+                <h6 className="text-sm font-semibold text-slate-300 mb-2">
                   {visitor.name}
                 </h6>
-                <p className="text-xs text-indigo-300 mb-2">
+                <p className="text-xs text-slate-300 mb-2">
                   {visitor.description}
                 </p>
                 <div>
@@ -1353,7 +1298,7 @@ function AnalyzerDetail({
                       >
                         <ArrowRight
                           size={8}
-                          className="text-indigo-400 mt-0.5 flex-shrink-0"
+                          className="text-slate-400 mt-0.5 flex-shrink-0"
                         />
                         <span>{feature}</span>
                       </li>
@@ -1377,9 +1322,9 @@ function AnalyzerDetail({
               (category: AlgorithmCategory) => (
                 <div
                   key={category.name}
-                  className="p-4 rounded-lg bg-teal-800/20 border border-teal-500/20"
+                  className="p-4 rounded-lg bg-slate-800/50 border border-white/10"
                 >
-                  <h6 className="text-sm font-semibold text-teal-200 mb-3">
+                  <h6 className="text-sm font-semibold text-slate-300 mb-3">
                     {category.name}
                   </h6>
                   <ul className="space-y-1">
@@ -1390,7 +1335,7 @@ function AnalyzerDetail({
                       >
                         <ArrowRight
                           size={8}
-                          className="text-teal-400 mt-0.5 flex-shrink-0"
+                          className="text-slate-400 mt-0.5 flex-shrink-0"
                         />
                         <span>{example}</span>
                       </li>
@@ -1406,15 +1351,15 @@ function AnalyzerDetail({
       {/* API y Endpoints */}
       {content?.api && (
         <section className="mb-8">
-          <h5 className="text-lg font-semibold text-pink-300 text-center mb-6">
+          <h5 className="text-lg font-semibold text-slate-300 text-center mb-6">
             {content.api.title}
           </h5>
-          <div className="p-4 rounded-lg bg-pink-800/20 border border-pink-500/20">
+          <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
             <div className="mb-4">
-              <h6 className="text-sm font-semibold text-pink-200 mb-2">
+              <h6 className="text-sm font-semibold text-slate-300 mb-2">
                 {content.api.endpoint.name}
               </h6>
-              <p className="text-xs text-pink-300 mb-3">
+              <p className="text-xs text-slate-300 mb-3">
                 {content.api.endpoint.description}
               </p>
             </div>
@@ -1442,8 +1387,8 @@ function AnalyzerDetail({
 
       {/* Componentes */}
       {content?.components && (
-        <section className="p-4 rounded-lg bg-green-800/20 border border-green-500/20 mb-8">
-          <h5 className="text-lg font-semibold text-green-300 text-center mb-4">
+        <section className="p-4 rounded-lg bg-slate-800/50 border border-white/10 mb-8">
+          <h5 className="text-lg font-semibold text-slate-300 text-center mb-4">
             {content.components.title}
           </h5>
           <div className="grid gap-4">
@@ -1453,12 +1398,12 @@ function AnalyzerDetail({
                 className="p-3 rounded-lg bg-slate-800/50 border border-white/10"
               >
                 <div className="mb-2">
-                  <h6 className="text-sm font-semibold text-green-200">
+                  <h6 className="text-sm font-semibold text-slate-300">
                     {comp.name}
                   </h6>
                   <p className="text-xs text-slate-400">{comp.file}</p>
                 </div>
-                <p className="text-xs text-green-300 mb-2">{comp.purpose}</p>
+                <p className="text-xs text-slate-300 mb-2">{comp.purpose}</p>
                 <div>
                   <p className="text-xs font-medium text-slate-300 mb-1">
                     Props:
@@ -1480,11 +1425,11 @@ function AnalyzerDetail({
       {/* Teorema Maestro (solo para analizador recursivo) */}
       {content?.masterTheorem && (
         <section className="mb-8">
-          <h5 className="text-lg font-semibold text-emerald-300 text-center mb-6">
+          <h5 className="text-lg font-semibold text-slate-300 text-center mb-6">
             {content.masterTheorem.title}
           </h5>
-          <div className="p-4 rounded-lg bg-emerald-800/20 border border-emerald-500/20 mb-4">
-            <div className="text-xs text-emerald-300 mb-4 text-center space-y-2">
+          <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10 mb-4">
+            <div className="text-xs text-slate-300 mb-4 text-center space-y-2">
               <p>El Teorema Maestro resuelve recurrencias de la forma</p>
               <div className="flex justify-center">
                 <Formula latex="T(n) = a \\cdot T(n/b) + f(n)" display />
@@ -1501,10 +1446,10 @@ function AnalyzerDetail({
                   key={theoremCase.case}
                   className="p-3 rounded-lg bg-slate-800/50 border border-white/10"
                 >
-                  <h6 className="text-sm font-semibold text-emerald-200 mb-2">
+                  <h6 className="text-sm font-semibold text-slate-300 mb-2">
                     Caso {theoremCase.case}
                   </h6>
-                  <div className="text-xs text-emerald-300 mb-2 font-medium flex justify-center">
+                  <div className="text-xs text-slate-300 mb-2 font-medium flex justify-center">
                     <Formula latex={theoremCase.condition} />
                   </div>
                   <div className="text-xs text-slate-300 mb-2 flex justify-center">
@@ -1526,11 +1471,11 @@ function AnalyzerDetail({
       {/* Extracción de Recurrencias (solo para analizador recursivo) */}
       {content?.recurrenceExtraction && (
         <section className="mb-8">
-          <h5 className="text-lg font-semibold text-amber-300 text-center mb-6">
+          <h5 className="text-lg font-semibold text-slate-300 text-center mb-6">
             {content.recurrenceExtraction.title}
           </h5>
-          <div className="p-4 rounded-lg bg-amber-800/20 border border-amber-500/20">
-            <p className="text-xs text-amber-300 mb-4 text-center">
+          <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+            <p className="text-xs text-slate-300 mb-4 text-center">
               {content.recurrenceExtraction.description}
             </p>
             <div className="grid md:grid-cols-2 gap-4">
@@ -1545,7 +1490,7 @@ function AnalyzerDetail({
                         key={idx}
                         className="text-xs text-slate-400 flex items-start gap-1"
                       >
-                        <span className="text-amber-400">{idx + 1}.</span>
+                        <span className="text-slate-400">{idx + 1}.</span>
                         <span>{step}</span>
                       </li>
                     ),
@@ -1565,7 +1510,7 @@ function AnalyzerDetail({
                       >
                         <ArrowRight
                           size={8}
-                          className="text-amber-400 mt-0.5 flex-shrink-0"
+                          className="text-slate-400 mt-0.5 flex-shrink-0"
                         />
                         <span>{req}</span>
                       </li>
@@ -1581,19 +1526,19 @@ function AnalyzerDetail({
       {/* Visualizaciones (solo para analizador recursivo) */}
       {content?.visualization && (
         <section className="mb-8">
-          <h5 className="text-lg font-semibold text-violet-300 text-center mb-6">
+          <h5 className="text-lg font-semibold text-slate-300 text-center mb-6">
             {content.visualization.title}
           </h5>
           <div className="grid md:grid-cols-2 gap-4">
             {content.visualization.components.map((component) => (
               <div
                 key={component.name}
-                className="p-4 rounded-lg bg-violet-800/20 border border-violet-500/20"
+                className="p-4 rounded-lg bg-slate-800/50 border border-white/10"
               >
-                <h6 className="text-sm font-semibold text-violet-200 mb-2">
+                <h6 className="text-sm font-semibold text-slate-300 mb-2">
                   {component.name}
                 </h6>
-                <p className="text-xs text-violet-300 mb-3">
+                <p className="text-xs text-slate-300 mb-3">
                   {component.description}
                 </p>
                 {component.features && component.features.length > 0 && (
@@ -1609,7 +1554,7 @@ function AnalyzerDetail({
                         >
                           <ArrowRight
                             size={8}
-                            className="text-violet-400 mt-0.5 flex-shrink-0"
+                            className="text-slate-400 mt-0.5 flex-shrink-0"
                           />
                           <span>{feature}</span>
                         </li>
@@ -1630,7 +1575,7 @@ function AnalyzerDetail({
                         >
                           <ArrowRight
                             size={8}
-                            className="text-violet-400 mt-0.5 flex-shrink-0"
+                            className="text-slate-400 mt-0.5 flex-shrink-0"
                           />
                           <span>{section}</span>
                         </li>
@@ -1676,65 +1621,14 @@ function TextDetail({ section }: Readonly<{ section: DocumentationSection }>) {
     });
   };
 
-  // Get icon and color based on section ID
   const getSectionStyle = (sectionId: string) => {
-    const styles: Record<string, { icon: JSX.Element; bgColor: string; borderColor: string; iconColor: string }> = {
-      'memoization': {
-        icon: <BarChart3 size={20} />,
-        bgColor: 'bg-blue-800/20',
-        borderColor: 'border-blue-500/30',
-        iconColor: 'text-blue-400'
-      },
-      'llm-jobs-models': {
-        icon: <Zap size={20} />,
-        bgColor: 'bg-purple-800/20',
-        borderColor: 'border-purple-500/30',
-        iconColor: 'text-purple-400'
-      },
-      'recursive-methods': {
-        icon: <Calculator size={20} />,
-        bgColor: 'bg-emerald-800/20',
-        borderColor: 'border-emerald-500/30',
-        iconColor: 'text-emerald-400'
-      },
-      'request-flow': {
-        icon: <ArrowRight size={20} />,
-        bgColor: 'bg-cyan-800/20',
-        borderColor: 'border-cyan-500/30',
-        iconColor: 'text-cyan-400'
-      },
-      'react-flow': {
-        icon: <Code2 size={20} />,
-        bgColor: 'bg-violet-800/20',
-        borderColor: 'border-violet-500/30',
-        iconColor: 'text-violet-400'
-      },
-      'gpu-cpu': {
-        icon: <Settings size={20} />,
-        bgColor: 'bg-orange-800/20',
-        borderColor: 'border-orange-500/30',
-        iconColor: 'text-orange-400'
-      },
-      'trace-env': {
-        icon: <Package size={20} />,
-        bgColor: 'bg-pink-800/20',
-        borderColor: 'border-pink-500/30',
-        iconColor: 'text-pink-400'
-      },
-      'trace-environment': {
-        icon: <Package size={20} />,
-        bgColor: 'bg-pink-800/20',
-        borderColor: 'border-pink-500/30',
-        iconColor: 'text-pink-400'
-      }
-    };
-
-    return styles[sectionId] || {
+    const defaultStyle = {
       icon: <ArrowRight size={20} />,
-      bgColor: 'bg-slate-700/30',
+      bgColor: 'bg-slate-800/50',
       borderColor: 'border-white/10',
       iconColor: 'text-slate-400'
     };
+    return defaultStyle;
   };
 
   const style = getSectionStyle(section.id);

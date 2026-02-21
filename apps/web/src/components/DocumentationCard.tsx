@@ -1,18 +1,16 @@
 "use client";
 
-import { Eye, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { memo, useMemo } from "react";
 
-import { DocumentationSection, ModalImageData } from "@/types/documentation";
+import { DocumentationSection } from "@/types/documentation";
 
-import { DocumentationIcon, getIconConfig } from "./DocumentationIcons";
+import { DocumentationIcon } from "./DocumentationIcons";
 
 interface DocumentationCardProps {
   section: DocumentationSection;
-  onOpenSection: (section: DocumentationSection) => void; // abre modal con el contenido
-  /** opcional, si quieres seguir abriendo un visor de imagen (diagramas) */
-  onImageClick?: (imageData: ModalImageData) => void;
+  onOpenSection: (section: DocumentationSection) => void;
   /** longitud máxima de la descripción visible en la card */
   maxDescriptionChars?: number;
 }
@@ -24,9 +22,8 @@ function truncate(text: string, max = 100) {
 }
 
 export const DocumentationCard = memo<DocumentationCardProps>(
-  ({ section, onOpenSection, onImageClick, maxDescriptionChars = 100 }) => {
+  ({ section, onOpenSection, maxDescriptionChars = 100 }) => {
     const t = useTranslations("documentation.technical");
-    const iconConfig = getIconConfig(section.id);
     const shortDescription = useMemo(() => {
       if (section.descriptionKey) {
         return t(`descriptions.${section.descriptionKey}`);
@@ -35,22 +32,8 @@ export const DocumentationCard = memo<DocumentationCardProps>(
     }, [section.descriptionKey, section.description, maxDescriptionChars, t]);
 
     const handlePrimaryClick = () => {
-      // Abrimos SIEMPRE modal con el contenido completo de la sección
       onOpenSection(section);
     };
-
-    const handleImageClick = () => {
-      if (section.image && onImageClick) {
-        onImageClick({
-          src: section.image.src,
-          alt: section.image.alt,
-          width: section.image.width,
-          height: section.image.height,
-        });
-      }
-    };
-
-    const hasDiagram = Boolean(section.image && onImageClick);
 
     return (
       <article
@@ -81,20 +64,18 @@ export const DocumentationCard = memo<DocumentationCardProps>(
             {shortDescription}
           </p>
 
-          {/* Área de botones */}
-          <div className="flex items-center justify-center gap-2 min-h-[40px] shrink-0">
+          {/* Botón Ver detalles */}
+          <div className="flex items-center justify-center min-h-[40px] shrink-0">
             <button
               onClick={handlePrimaryClick}
-              className={`
-                inline-flex items-center gap-1.5 px-3 py-2 rounded-lg
-                border transition-all duration-200 font-medium text-xs shrink-0
-                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900
+              className="
+                inline-flex items-center gap-1.5 px-3 py-2 rounded-lg shrink-0
+                border border-slate-500/30 bg-slate-700/50 text-slate-300
+                hover:bg-slate-600/50 hover:text-white hover:border-slate-400/50
+                transition-all duration-200 font-medium text-xs
+                focus:outline-none focus:ring-2 focus:ring-slate-400/50 focus:ring-offset-2 focus:ring-offset-gray-900
                 hover:scale-105 active:scale-95
-                ${iconConfig.color.replace("text-", "focus:ring-")}
-                ${iconConfig.bgColor} hover:brightness-110
-                ${iconConfig.color} hover:text-white
-                border-current/30 hover:border-current/50
-              `}
+              "
               aria-label={
                 section.titleKey
                   ? t("viewDetails") + " " + t(`sections.${section.titleKey}`)
@@ -104,26 +85,6 @@ export const DocumentationCard = memo<DocumentationCardProps>(
               <Info size={14} strokeWidth={2} />
               {t("viewDetails")}
             </button>
-            {hasDiagram && (
-              <button
-                onClick={handleImageClick}
-                className="
-                  inline-flex items-center gap-1.5 px-3 py-2 rounded-lg shrink-0
-                  border border-white/20 text-slate-300 hover:text-white
-                  hover:bg-white/5 hover:border-white/30 transition-all duration-200 font-medium text-xs
-                  focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-gray-900
-                  hover:scale-105 active:scale-95
-                "
-                aria-label={
-                  section.titleKey
-                    ? t("viewDiagram") + " " + t(`sections.${section.titleKey}`)
-                    : t("viewDiagram") + " " + section.title
-                }
-              >
-                <Eye size={14} strokeWidth={2} />
-                {t("viewDiagram")}
-              </button>
-            )}
           </div>
         </div>
       </article>
