@@ -8,40 +8,9 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
-
-- Guía de usuario: migración a cards con modales (UserGuideCard, UserGuideModal, UserGuideIcons, UserGuideTableOfContents, useUserGuideSections)
-- Tipos estructurados para guía de usuario (user-guide.ts): bloques paragraph, list, code, table, note, subsection, link
-- Módulo MCP en documentación técnica: herramientas read_conventions, read_doc, list_components, changelog_template, i18n_reminder
-
 ### Changed
-
-- Editor Monaco: tema de colores alineado con paleta de la app (primary #0d7ff2, fondos #101a23/#182431); fuente JetBrains Mono para lectura más suave
-- Editor Monaco: quitado efecto hover difuminado (glass-card-editor); z-index 0 para no tapar tooltips de botones del analyzer
-- Manual mode: Verificar parse y Ver AST movidos a tooltips en esquina superior derecha del editor (estilo card caso promedio); botón Analizar azul con icono play; items-start para eliminar espacio muerto
-- Editor: quitada sombra azul (box-shadow: none en glass-card-editor); tooltips más grandes (w-7 h-7), menor opacidad base y mayor al hover
-- Modal AST: render con createPortal a document.body (z-9999) en analyzer page y ManualModeView para overlay fijo
-- Tooltips editor: opacidad como botón Analizar (bg-*/25, border-*/40, hover-*/35); tamaño w-9 h-9; margen right-14; respuesta de verify parse como tooltip reemplazando icono/color (verde/rojo)
-- Tooltips editor: padding reducido a la mitad; opacidad base menor (bg-*/12, border-*/20, text-*/70); iconos text-sm; animación animate-fade-in al cambiar icono/color; botón Ayuda con IA en esquina
-- Tooltips editor: padding aún menor (top-0.5, gap-0.5, p-0.5); iconos text-xs (círculos w-8); Ayuda IA a la izquierda; icono AALIE size 20
-- Guía de usuario: contenido extenso reemplazado por grid de cards que abren modales con estructura estandarizada
-- Documentación técnica: paleta neutra (slate) en modales; estilos profesionales sin colores por sección
-- Documentación técnica: secciones consolidadas de 24 a 11 (arquitectura+parse+request-flow, visualizaciones, llm, analisis, herramientas, etc.)
-- DocumentationCard: botón "Ver detalles" con estilo neutro unificado
-
-### Removed
-
-- Página ui-test y sección ui-showcase de documentación técnica
-- Sección export de documentación técnica (no implementada aún)
-- Botón "Ver diagrama" e ImageModal de las cards de documentación técnica
-
 ### Fixed
-
-- Tooltips del editor: reemplazados por atributo `title` nativo para evitar posicionamiento irregular
-- Código del editor: persiste al cambiar entre modo manual y AALIE (estado compartido en página con localStorage)
-- Tooltip Verificar parse: mostrar error real de sintaxis en vez de "Error desconocido de LLM" (usar data.error directo, no translateLlmError)
-- Tooltips de botones del editor: reposicionados arriba de los círculos (bottom-full) y botones fuera de overflow-hidden para evitar recorte
-- Modal AST: clase glass-modal-overlay-fixed para forzar position:fixed en overlays portaled a body (evitar que aparezca abajo como inyección DOM)
-- Loader global de navegación: restaurado NavigationLoadingWrapper en el layout para mostrar PageLoader durante la transición entre páginas
+### Removed
 
 ## [1.1.4] - 2026-02-21
 
@@ -49,11 +18,23 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 - Ejemplo de informe LaTeX (docs/latex-example/main.tex) con resultados del análisis de búsqueda lineal
 - Hook useMediaQuery para detección responsive
+- AAProgressLoader unificado (análisis y comparación), AnalysisProgressContext, hook useRunAnalysis; loader persistente durante navegación
+- Guía de usuario: cards con modales (UserGuideCard, UserGuideModal, UserGuideTableOfContents); tipos estructurados (user-guide.ts)
+- Módulo MCP: read_conventions, read_doc, list_components, changelog_template, i18n_reminder
 
 ### Changed
 
 - Responsividad: inicio (AIModeView, ManualModeView, ChatBot), modals Execution Trace y GPU vs CPU, centrado de contenido y switcher de modo
 - Traducciones centralizadas: `backend-content-translator.ts`; ComparisonModal, ComparisonLoader y proof steps con useTranslations; eliminado `proof-step-translator` deprecado
+- Loader de análisis: unificado en AAProgressLoader; ManualModeView, examples, chat y analyzer migrados; barra y tooltip en mismo modal; barra más alta al inicio, fixed abajo al clasificar
+- Editor Monaco: tema paleta app, JetBrains Mono; tooltips en esquina; botón Analizar azul; modal AST portaled a body
+- Guía de usuario: grid de cards; documentación técnica: 11 secciones, paleta neutra
+- Manual mode: blur en fondo (glass-modal-overlay-container-only con backdrop-filter)
+
+### Removed
+
+- AnalysisLoader.tsx y ComparisonLoader.tsx (reemplazados por AAProgressLoader)
+- Página ui-test, ui-showcase, sección export, botón "Ver diagrama" e ImageModal de documentación
 
 ### Fixed
 
@@ -62,6 +43,9 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Desbordes: StepInfo, cards GPU/CPU, ChatBot (bloques 420px, botones Copiar/Analizar), switcher Efficiency Equation, labels analysis method, badges, FormulaBlock, efecto glass (isolation)
 - Errores LLM traducidos a mensajes legibles (`llm-error-translator`)
 - Inferencia de variables: Bubble Sort O(1), ArrayParam, T_polynomial; bucles unbounded solo ∞
+- Hydration error en analyzer: source y data cargados en useEffect (no en useState) para coincidir servidor/cliente
+- Tooltips editor: `title` nativo; código persiste al cambiar modo; errores de parse reales; modal AST position fixed
+- Loader global de navegación: NavigationLoadingWrapper restaurado en layout para PageLoader durante transiciones
 
 ## [1.1.3] - 2026-02-17
 

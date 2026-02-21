@@ -5,11 +5,10 @@ import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 
-import { AnalysisLoader } from "@/components/AnalysisLoader";
+import { AAProgressLoader } from "@/components/AAProgressLoader";
 import { AnalyzerEditor } from "@/components/AnalyzerEditor";
 import { ASTTreeView } from "@/components/ASTTreeView";
 import ChatBot from "@/components/ChatBot";
-import { ComparisonLoader } from "@/components/ComparisonLoader";
 import ComparisonModal from "@/components/ComparisonModal";
 import ExecutionTraceModal from "@/components/ExecutionTraceModal";
 import Footer from "@/components/Footer";
@@ -54,18 +53,8 @@ export default function AnalyzerPage() {
   const tCommon = useTranslations("common");
   const getMessage = (key: string) => t(key);
 
-  // Estados del flujo de análisis
-  const [source, setSource] = useState<string>(() => {
-    // Cargar código desde sessionStorage si viene del editor manual o del chatbot
-    if (globalThis.window !== undefined) {
-      const savedCode = globalThis.window.sessionStorage.getItem('analyzerCode');
-      if (savedCode) {
-        // NO limpiar el código aquí todavía, se limpiará después de cargar
-        return savedCode;
-      }
-    }
-    return "";
-  });
+  // Estados del flujo de análisis (inicial neutro para evitar hydration mismatch)
+  const [source, setSource] = useState<string>("");
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisMessage, setAnalysisMessage] = useState(() => t("init"));
@@ -116,40 +105,7 @@ export default function AnalyzerPage() {
     best: AnalyzeOpenResponse | "same_as_worst" | null;
     avg?: AnalyzeOpenResponse | "same_as_worst" | null;
     has_case_variability?: boolean;
-  } | null>(() => {
-    // Cargar resultados desde sessionStorage si vienen del editor manual o del chatbot
-    if (globalThis.window !== undefined) {
-      const savedResults = globalThis.window.sessionStorage.getItem('analyzerResults');
-      if (savedResults) {
-        try {
-          const parsed = JSON.parse(savedResults);
-          // Limpiar los resultados guardados después de cargarlos
-          globalThis.window.sessionStorage.removeItem('analyzerResults');
-          // También limpiar el código después de cargarlo
-          globalThis.window.sessionStorage.removeItem('analyzerCode');
-          // Si es el formato antiguo (solo worst), convertirlo al nuevo formato
-          if (parsed && !parsed.worst && !parsed.best) {
-            return { worst: parsed, best: null, avg: null };
-          }
-          // Si es el formato nuevo (con worst, best, avg), extraer solo esos campos
-          if (parsed && (parsed.worst || parsed.best)) {
-            return {
-              worst: parsed.worst || null,
-              best: parsed.best || null,
-              avg: parsed.avg || null
-            };
-          }
-          return { worst: null, best: null, avg: null };
-        } catch (error) {
-          console.error('Error parsing saved results:', error);
-          // Limpiar datos corruptos
-          globalThis.window.sessionStorage.removeItem('analyzerResults');
-          globalThis.window.sessionStorage.removeItem('analyzerCode');
-        }
-      }
-    }
-    return { worst: null, best: null, avg: null };
-  });
+  } | null>(null);
 
   const hasComparableData = useMemo(() => {
     if (!data) {
@@ -214,6 +170,35 @@ export default function AnalyzerPage() {
     return () => {
       globalThis.window.removeEventListener('apiKeyChanged', handleApiKeyChange);
     };
+  }, []);
+
+  // Cargar código y resultados desde sessionStorage tras montar (evita hydration mismatch)
+  useEffect(() => {
+    const savedCode = globalThis.window.sessionStorage.getItem('analyzerCode');
+    if (savedCode) {
+      setSource(savedCode);
+    }
+    const savedResults = globalThis.window.sessionStorage.getItem('analyzerResults');
+    if (savedResults) {
+      try {
+        const parsed = JSON.parse(savedResults);
+        globalThis.window.sessionStorage.removeItem('analyzerResults');
+        globalThis.window.sessionStorage.removeItem('analyzerCode');
+        if (parsed && !parsed.worst && !parsed.best) {
+          setData({ worst: parsed, best: null, avg: null });
+        } else if (parsed && (parsed.worst || parsed.best)) {
+          setData({
+            worst: parsed.worst || null,
+            best: parsed.best || null,
+            avg: parsed.avg || null
+          });
+        }
+      } catch (error) {
+        console.error('Error parsing saved results:', error);
+        globalThis.window.sessionStorage.removeItem('analyzerResults');
+        globalThis.window.sessionStorage.removeItem('analyzerCode');
+      }
+    }
   }, []);
 
   // Manejar cambios en el estado de parsing local
@@ -1663,7 +1648,8 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
     <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">
       {/* Loader de análisis */}
       {analyzing && (
-        <AnalysisLoader
+        <AAProgressLoader
+          mode="analysis"
           progress={analysisProgress}
           message={analysisMessage}
           algorithmType={algorithmType}
@@ -2030,7 +2016,8 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
 
       {/* Loader de comparación con LLM */}
       {isComparing && (
-        <ComparisonLoader
+        <AAProgressLoader
+          mode="comparison"
           progress={comparisonProgress}
           message={comparisonMessage}
           isComplete={false}

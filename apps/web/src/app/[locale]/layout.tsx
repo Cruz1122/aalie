@@ -4,6 +4,7 @@ import { getMessages, getTranslations, setRequestLocale } from "next-intl/server
 
 import { GlobalLoaderOverlay } from "@/components/GlobalLoaderOverlay";
 import NavigationLoadingWrapper from "@/components/NavigationLoadingWrapper";
+import { AnalysisProgressProvider } from "@/contexts/AnalysisProgressContext";
 import { GlobalLoaderProvider } from "@/contexts/GlobalLoaderContext";
 import { NavigationProvider } from "@/contexts/NavigationContext";
 import { routing } from "@/i18n/routing";
@@ -39,12 +40,14 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <NextIntlClientProvider messages={messages} locale={locale}>
       <GlobalLoaderProvider>
-        <NavigationProvider>
-          <NavigationLoadingWrapper>
-            {children}
-          </NavigationLoadingWrapper>
-        </NavigationProvider>
-        <GlobalLoaderOverlay />
+        <AnalysisProgressProvider>
+          <NavigationProvider>
+            <NavigationLoadingWrapper>
+              {children}
+            </NavigationLoadingWrapper>
+          </NavigationProvider>
+          <GlobalLoaderOverlay />
+        </AnalysisProgressProvider>
       </GlobalLoaderProvider>
     </NextIntlClientProvider>
   );

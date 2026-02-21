@@ -11,17 +11,14 @@ import {
 } from "react";
 import ReactDOM from "react-dom";
 
-import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useRunAnalysis } from "@/hooks/useRunAnalysis";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
-import { useRouter } from "@/i18n/navigation";
-import { heuristicKind } from "@/lib/algorithm-classifier";
+import { useAnalysisProgressContext } from "@/contexts/AnalysisProgressContext";
 import { GrammarApiService } from "@/services/grammar-api";
 
-import { AnalysisLoader } from "./AnalysisLoader";
 import { AnalyzerEditor } from "./AnalyzerEditor";
 import { ASTTreeView } from "./ASTTreeView";
-import MethodSelector, { MethodType } from "./MethodSelector";
 
 // Constantes
 const COPY_FEEDBACK_DURATION = 2000; // 2 segundos
@@ -36,7 +33,6 @@ type Message = {
   retryMessageId?: string;
 };
 
-type AlgorithmKind = "iterative" | "recursive" | "hybrid" | "unknown";
 
 /**
  * Propiedades del componente ManualModeView.
@@ -97,21 +93,12 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     },
     ref,
   ) {
-    const router = useRouter();
-    const { animateProgress } = useAnalysisProgress();
     const isDesktop = useMediaQuery("(min-width: 1024px)");
     const t = useTranslations("analyzer.messages");
-    const tProgress = useTranslations("analyzer.progress");
-    const tAlgorithmType = useTranslations("analyzer.algorithmType");
     const locale = useLocale();
     const tManual = useTranslations("analyzer.manualMode");
     const tView = useTranslations("analyzer.view");
     const tCommon = useTranslations("common");
-    const formatAlgorithmKindLabel = useCallback(
-      (value: AlgorithmKind) =>
-        tAlgorithmType(value === "unknown" ? "unknown" : value),
-      [tAlgorithmType],
-    );
 
     const defaultCode = tManual("defaultCode");
     const isControlled = initialCode !== undefined;
@@ -143,7 +130,6 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     const [localParseOk, setLocalParseOk] = useState(false);
     const [copied, setCopied] = useState(false);
     const [viewMode, setViewMode] = useState<"tree" | "json">("tree");
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isVerifyingParse, setIsVerifyingParse] = useState(false);
     const [verifyParseResult, setVerifyParseResult] = useState<{
       success: boolean;
@@ -154,48 +140,14 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
       null,
     );
     const [hasValidApiKey, setHasValidApiKey] = useState<boolean>(false);
-    const [showMethodSelector, setShowMethodSelector] = useState(false);
-    const [applicableMethods, setApplicableMethods] = useState<MethodType[]>(
-      [],
-    );
-    const [defaultMethod, setDefaultMethod] = useState<MethodType>("master");
-    const methodSelectionPromiseRef = useRef<{
-      resolve: (method: MethodType) => void;
-      reject: () => void;
-    } | null>(null);
-    const minProgressRef = useRef<number>(0);
 
-    // Efecto para mantener el progreso mínimo cuando el selector está visible
-    useEffect(() => {
-      if (showMethodSelector && minProgressRef.current > 0) {
-        // Establecer el progreso al mínimo inmediatamente
-        setAnalysisProgress(minProgressRef.current);
-
-        // Usar un intervalo para mantener el progreso mientras el selector está visible
-        const intervalId = setInterval(() => {
-          setAnalysisProgress((prev) => {
-            const minProgress = minProgressRef.current;
-            if (prev < minProgress) {
-              return minProgress;
-            }
-            return prev;
-          });
-        }, 100); // Verificar cada 100ms
-
-        return () => clearInterval(intervalId);
-      }
-    }, [showMethodSelector]);
-
-    // Estados para el loader de análisis de complejidad
-    const [analysisProgress, setAnalysisProgress] = useState(0);
-    const [analysisMessage, setAnalysisMessage] = useState(() =>
-      tProgress("init"),
-    );
-    const [algorithmType, setAlgorithmType] = useState<
-      "iterative" | "recursive" | "hybrid" | "unknown" | undefined
-    >(undefined);
-    const [isAnalysisComplete, setIsAnalysisComplete] = useState(false);
-    const [analysisError, setAnalysisError] = useState<string | null>(null);
+    const { state: analysisState } = useAnalysisProgressContext();
+    const { runAnalysis } = useRunAnalysis({
+      blurScope: "container",
+      onParseFail: () => setLocalParseOk(false),
+    });
+    const isAnalyzing =
+      analysisState.visible && analysisState.mode === "analysis";
 
     // Refs para evitar memory leaks con timeouts
     const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -392,384 +344,6 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
       }
     };
 
-    const runAnalysis = useCallback(
-      async (sourceCode: string) => {
-        if (!sourceCode.trim()) return;
-        if (isAnalyzing) return;
-
-        setIsAnalyzing(true);
-        setAnalysisProgress(0);
-        setAnalysisMessage(tProgress("init"));
-        setAlgorithmType(undefined);
-        setIsAnalysisComplete(false);
-        setAnalysisError(null);
-        setBackendParseError(null);
-        setShowAIHelpButton(false);
-
-        try {
-          setAnalysisMessage(tProgress("parsing"));
-          const parsePromise = fetch("/api/grammar/parse", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ source: sourceCode }),
-          }).then((r) => r.json());
-
-          const parseRes = (await animateProgress(
-            0,
-            20,
-            800,
-            setAnalysisProgress,
-            parsePromise,
-          )) as {
-            ok: boolean;
-            ast?: Program;
-            errors?: Array<{ line: number; column: number; message: string }>;
-          };
-
-          if (!parseRes.ok) {
-            const msg =
-              parseRes.errors
-                ?.map(
-                  (e: { line: number; column: number; message: string }) =>
-                    `Línea ${e.line}:${e.column} ${e.message}`,
-                )
-                .join("\n") || "Error de parseo";
-            setLocalParseOk(false);
-            setAnalysisError(`Errores de sintaxis:\n${msg}`);
-            setTimeout(() => {
-              setIsAnalyzing(false);
-              setAnalysisProgress(0);
-              setAnalysisMessage(tProgress("init"));
-              setAlgorithmType(undefined);
-              setIsAnalysisComplete(false);
-              setAnalysisError(null);
-            }, 3000);
-            return;
-          }
-
-          setLocalParseOk(true);
-
-          setAnalysisMessage(tProgress("classifying"));
-          let kind: AlgorithmKind;
-          try {
-            // Obtener API_KEY del localStorage (el backend usará la de variables de entorno si no hay)
-            const apiKey = getApiKey();
-
-            const body: { source: string; mode: string; apiKey?: string } = {
-              source: sourceCode,
-              mode: "local",
-            };
-            if (apiKey) {
-              body.apiKey = apiKey;
-            }
-
-            const clsPromise = fetch("/api/llm/classify", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(body),
-            });
-
-            const clsResponse = (await animateProgress(
-              20,
-              40,
-              1200,
-              setAnalysisProgress,
-              clsPromise,
-            )) as Response;
-
-            if (clsResponse.ok) {
-              const cls = (await clsResponse.json()) as {
-                kind: string;
-                method?: string;
-                mode?: string;
-              };
-              kind = cls.kind as AlgorithmKind;
-              setAlgorithmType(kind);
-              setAnalysisMessage(
-                tProgress("algorithmIdentified", {
-                  type: formatAlgorithmKindLabel(kind),
-                }),
-              );
-              console.log(
-                `[ManualMode] Clasificación: ${kind} (método: ${cls.method})`,
-              );
-            } else {
-              throw new Error(`HTTP ${clsResponse.status}`);
-            }
-          } catch (error) {
-            console.warn(
-              `[ManualMode] Error en clasificación, usando heurística:`,
-              error,
-            );
-            kind = heuristicKind(parseRes.ast || null);
-            setAlgorithmType(kind);
-            setAnalysisMessage(
-              `Algoritmo identificado: ${formatAlgorithmKindLabel(kind)}`,
-            );
-          }
-
-          // 3) Realizar el análisis de complejidad (40-80%)
-          const isRecursive = kind === "recursive" || kind === "hybrid";
-
-          let selectedMethod: MethodType | undefined = undefined;
-
-          if (isRecursive) {
-            setAnalysisMessage(tProgress("verifyingConditions"));
-            await animateProgress(40, 50, 300, setAnalysisProgress);
-            setAnalysisMessage(tProgress("extractingRecurrence"));
-            await animateProgress(50, 65, 400, setAnalysisProgress);
-            setAnalysisMessage(tProgress("normalizingRecurrence"));
-            await animateProgress(65, 75, 300, setAnalysisProgress);
-            setAnalysisMessage(tProgress("detectingMethod"));
-            await animateProgress(75, 85, 500, setAnalysisProgress);
-
-            // Guardar el progreso actual antes de detectar métodos
-            const progressBeforeMethodSelection = 85;
-
-            // Detectar métodos aplicables
-            selectedMethod = "master";
-            try {
-              const detectMethodsResponse = await fetch(
-                "/api/analyze/detect-methods",
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    source: sourceCode,
-                    algorithm_kind: kind,
-                  }),
-                },
-              );
-
-              const detectMethodsResult =
-                (await detectMethodsResponse.json()) as {
-                  ok: boolean;
-                  applicable_methods?: MethodType[];
-                  default_method?: MethodType;
-                  errors?: Array<{ message: string }>;
-                };
-
-              if (
-                detectMethodsResult.ok &&
-                detectMethodsResult.applicable_methods
-              ) {
-                const methods = detectMethodsResult.applicable_methods;
-                const defaultMethodValue =
-                  (detectMethodsResult.default_method ||
-                    "master") as MethodType;
-
-                setApplicableMethods(methods);
-                setDefaultMethod(defaultMethodValue);
-
-                // Si hay múltiples métodos aplicables, mostrar selector
-                if (methods.length > 1) {
-                  setAnalysisMessage(tProgress("selectMethod"));
-
-                  // Guardar el progreso mínimo para evitar que baje
-                  minProgressRef.current = progressBeforeMethodSelection;
-
-                  // Establecer el progreso directamente al valor guardado
-                  setAnalysisProgress(progressBeforeMethodSelection);
-
-                  setShowMethodSelector(true);
-
-                  // Esperar un poco para que el selector se renderice completamente
-                  await new Promise((resolve) => setTimeout(resolve, 200));
-
-                  // Crear un Promise que se resolverá cuando el usuario seleccione un método
-                  selectedMethod = await new Promise<MethodType>(
-                    (resolve, reject) => {
-                      methodSelectionPromiseRef.current = { resolve, reject };
-                      setTimeout(() => {
-                        if (methodSelectionPromiseRef.current) {
-                          methodSelectionPromiseRef.current.resolve(
-                            defaultMethodValue,
-                          );
-                          methodSelectionPromiseRef.current = null;
-                        }
-                      }, 60000);
-                    },
-                  ).catch(() => defaultMethodValue);
-
-                  setShowMethodSelector(false);
-                  methodSelectionPromiseRef.current = null;
-                  // Limpiar el progreso mínimo después de ocultar el selector
-                  minProgressRef.current = 0;
-
-                  setAnalysisMessage(
-                    "Método seleccionado, continuando análisis...",
-                  );
-                  // Mantener el progreso y avanzar suavemente
-                  await animateProgress(
-                    progressBeforeMethodSelection,
-                    90,
-                    400,
-                    setAnalysisProgress,
-                  );
-                } else {
-                  selectedMethod = defaultMethodValue;
-                  // Continuar con el progreso normalmente
-                  setAnalysisMessage(tProgress("analyzingComplexity"));
-                  await animateProgress(
-                    progressBeforeMethodSelection,
-                    90,
-                    400,
-                    setAnalysisProgress,
-                  );
-                }
-              } else {
-                selectedMethod = "master";
-                // Continuar con el progreso normalmente
-                setAnalysisMessage(tProgress("analyzingComplexity"));
-                await animateProgress(
-                  progressBeforeMethodSelection,
-                  90,
-                  400,
-                  setAnalysisProgress,
-                );
-              }
-            } catch (error) {
-              console.warn(
-                "Error detectando métodos, usando método por defecto:",
-                error,
-              );
-              selectedMethod = "master";
-              // Continuar con el progreso normalmente
-              setAnalysisMessage(tProgress("analyzingComplexity"));
-              await animateProgress(
-                progressBeforeMethodSelection,
-                90,
-                400,
-                setAnalysisProgress,
-              );
-            }
-          } else {
-            setAnalysisMessage(tProgress("findingSums"));
-            await animateProgress(40, 50, 200, setAnalysisProgress);
-            setAnalysisMessage(tProgress("closingSums"));
-            await animateProgress(50, 55, 200, setAnalysisProgress);
-          }
-
-          // Obtener API key (solo necesitamos la key, no el status completo)
-          const apiKey = getApiKey();
-
-          // Realizar una sola petición que trae todos los casos (worst, best y avg)
-          const analyzeBody: {
-            source: string;
-            mode: string;
-            api_key?: string;
-            avgModel?: { mode: string; predicates?: Record<string, string> };
-            algorithm_kind?: string;
-            preferred_method?: MethodType;
-            locale?: string;
-          } = {
-            source: sourceCode,
-            mode: "all",
-            avgModel: {
-              mode: "uniform",
-              predicates: {},
-            },
-            algorithm_kind: kind,
-            locale: locale === "es" ? "es" : "en",
-          };
-
-          // Solo agregar preferred_method si es recursivo y hay un método seleccionado
-          if (isRecursive && selectedMethod) {
-            analyzeBody.preferred_method = selectedMethod;
-          }
-          if (apiKey) {
-            analyzeBody.api_key = apiKey; // Mantener por compatibilidad, pero backend ya no lo usa para simplificación
-          }
-
-          const analyzePromise = fetch("/api/analyze/open", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(analyzeBody),
-          }).then((r) => r.json());
-
-          const analyzeRes = (await animateProgress(
-            50,
-            70,
-            2000,
-            setAnalysisProgress,
-            analyzePromise,
-          )) as {
-            ok: boolean;
-            worst?: unknown;
-            best?: unknown;
-            avg?: unknown;
-            errors?: Array<{ message: string; line?: number; column?: number }>;
-            [key: string]: unknown;
-          };
-
-          setAnalysisMessage(tProgress("generatingPolynomial"));
-          await animateProgress(70, 80, 200, setAnalysisProgress);
-
-          if (!analyzeRes.ok) {
-            const errorMsg =
-              (
-                analyzeRes as {
-                  errors?: Array<{
-                    message: string;
-                    line?: number;
-                    column?: number;
-                  }>;
-                }
-              ).errors
-                ?.map(
-                  (e: { message: string; line?: number; column?: number }) =>
-                    e.message || `Error en línea ${e.line || "?"}`,
-                )
-                .join("\n") || "No se pudo analizar el algoritmo";
-            setAnalysisError(errorMsg);
-            setTimeout(() => {
-              setIsAnalyzing(false);
-              setAnalysisProgress(0);
-              setAnalysisMessage(tProgress("init"));
-              setAlgorithmType(undefined);
-              setIsAnalysisComplete(false);
-              setAnalysisError(null);
-            }, 3000);
-            return;
-          }
-
-          setAnalysisMessage(tProgress("finalizing"));
-          await animateProgress(80, 100, 200, setAnalysisProgress);
-
-          if (globalThis.window !== undefined) {
-            sessionStorage.setItem("analyzerCode", sourceCode);
-            sessionStorage.setItem(
-              "analyzerResults",
-              JSON.stringify(analyzeRes),
-            );
-          }
-
-          setAnalysisMessage(tProgress("complete"));
-          setIsAnalysisComplete(true);
-
-          await new Promise((resolve) => setTimeout(resolve, 800));
-
-          router.push("/analyzer");
-        } catch (error) {
-          console.error("[ManualMode] Error inesperado:", error);
-          const errorMsg =
-            error instanceof Error
-              ? error.message
-              : "Error inesperado durante el análisis";
-          setAnalysisError(errorMsg);
-          setTimeout(() => {
-            setIsAnalyzing(false);
-            setAnalysisProgress(0);
-            setAnalysisMessage(tProgress("init"));
-            setAlgorithmType(undefined);
-            setIsAnalysisComplete(false);
-            setAnalysisError(null);
-          }, 3000);
-        }
-      },
-      [animateProgress, formatAlgorithmKindLabel, isAnalyzing, locale, router, tProgress],
-    );
-
     const handleAnalyzeComplexity = () => {
       void runAnalysis(code);
     };
@@ -796,49 +370,6 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
 
     return (
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Loader de análisis */}
-        {isAnalyzing && (
-          <AnalysisLoader
-            progress={analysisProgress}
-            message={analysisMessage}
-            algorithmType={algorithmType}
-            isComplete={isAnalysisComplete}
-            error={analysisError}
-            onClose={() => {
-              setIsAnalyzing(false);
-              setAnalysisProgress(0);
-              setAnalysisMessage(tProgress("init"));
-              setAlgorithmType(undefined);
-              setIsAnalysisComplete(false);
-              setAnalysisError(null);
-            }}
-          />
-        )}
-
-        {/* Selector de método - debe aparecer sobre el loader */}
-        {showMethodSelector && applicableMethods.length > 0 && isAnalyzing && (
-          <MethodSelector
-            applicableMethods={applicableMethods}
-            defaultMethod={defaultMethod}
-            onSelect={(method) => {
-              console.log("[MethodSelector] Método seleccionado:", method);
-              if (methodSelectionPromiseRef.current) {
-                methodSelectionPromiseRef.current.resolve(method);
-              }
-            }}
-            onCancel={() => {
-              // Si cancela, usar método por defecto
-              console.log(
-                "[MethodSelector] Cancelado, usando método por defecto:",
-                defaultMethod,
-              );
-              if (methodSelectionPromiseRef.current) {
-                methodSelectionPromiseRef.current.resolve(defaultMethod);
-              }
-            }}
-          />
-        )}
-
         <div className="flex flex-col items-center">
           {/* Contenedor flex: editor a la izquierda, botón Analizar a la derecha; items-start evita espacio muerto */}
           <div className="flex flex-col lg:flex-row gap-6 w-full items-start">

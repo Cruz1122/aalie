@@ -103,6 +103,20 @@
   z-index: 1;
 }
 
+/* Overlay para manual mode: blur en fondo + oscurece; el contenedor también tiene blur */
+.glass-modal-overlay-container-only {
+  background: linear-gradient(
+    135deg,
+    rgba(16, 26, 35, 0.5) 0%,
+    rgba(15, 20, 25, 0.7) 50%,
+    rgba(16, 26, 35, 0.85) 100%
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transform: translateZ(0);
+  z-index: 1;
+}
+
 /* Overlay portaled a body: debe ser fixed para cubrir viewport; z-index alto para estar encima de todo */
 .glass-modal-overlay-fixed {
   position: fixed !important;
