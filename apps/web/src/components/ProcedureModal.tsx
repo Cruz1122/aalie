@@ -430,9 +430,10 @@ export default function ProcedureModal({
       const bigO = analysisData.totals?.big_o || "O(1)";
       const bigOmega = analysisData.totals?.big_omega || "\\Omega(1)";
       const bigTheta = analysisData.totals?.big_theta || "\\Theta(1)";
+      const isUnbounded = bigO === "\\infty" || bigTheta === "\\infty";
       steps.push({
         title: t("stepAsymptotic"),
-        equation: `${bigO}, ${bigOmega}, ${bigTheta}`,
+        equation: isUnbounded ? "\\infty" : `${bigO}, ${bigOmega}, ${bigTheta}`,
         description: t("stepAsymptoticDesc"),
       });
 
@@ -500,6 +501,7 @@ export default function ProcedureModal({
     const bigO = totals?.big_o || calculateBigOFromExpression(step4);
     const bigOmega = totals?.big_omega || "\\Omega(1)";
     const bigTheta = totals?.big_theta || "\\Theta(1)";
+    const isUnbounded = bigO === "\\infty" || bigTheta === "\\infty";
 
     // Crear array de pasos con sus ecuaciones
     const allSteps = [
@@ -525,7 +527,7 @@ export default function ProcedureModal({
       },
       {
         title: t("stepAsymptotic"),
-        equation: `${bigO}, ${bigOmega}, ${bigTheta}`,
+        equation: isUnbounded ? "\\infty" : `${bigO}, ${bigOmega}, ${bigTheta}`,
         description: t("stepAsymptoticDesc"),
       },
     ];

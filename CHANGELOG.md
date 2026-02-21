@@ -13,6 +13,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Fixed
 
+- Bucles unbounded: mostrar solo ∞ (no O(∞)/Θ(∞)) en notaciones y pasos del procedimiento; O(∞) es incorrecto asintóticamente
 - O(1) incorrecto en Bubble Sort y algoritmos con bubbleSort(A[n]), N <- n: inferencia genérica de variable de tamaño desde la expresión (no reservar nombres; usar n, N, m, etc. según el código)
 - Extracción de variable de tamaño desde dimensiones de ArrayParam (A[n] -> n como candidato)
 - Validación T_polynomial: aceptar cualquier variable de tamaño (N, n, m), no solo n

@@ -380,9 +380,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             
             # Filas unbounded: procedimiento indica que tiende a infinito
             if row.get("unbounded"):
-                line_num = row.get("line", "?")
-                proc_inf = self._note("proc_line_tends_infinity", line=line_num)
-                row["procedure"] = [proc_inf, "\\infty"]
+                row["procedure"] = ["\\infty"]
                 continue
             
             # Preferir usar count_raw_expr directamente si está disponible
@@ -553,9 +551,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 # Bucles unbounded: complejidad tiende a infinito (no sustituir t_while por n)
                 has_unbounded = any(r.get("unbounded") for r in self.rows)
                 if has_unbounded:
-                    self.big_o = "O(\\infty)"
+                    self.big_o = "\\infty"
                     self.big_omega = "\\Omega(1)"
-                    self.big_theta = "\\Theta(\\infty)"
+                    self.big_theta = "\\infty"
                 elif not has_size_variable and not has_unbounded:
                     # Caso sin variable de tamaño y bucle acotado (ej. best case param-controlled)
                     self.big_o = "O(1)"
