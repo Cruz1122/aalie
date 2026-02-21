@@ -2,6 +2,8 @@
 
 import type { ParseError } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
+
+import { translateLlmError } from "@/lib/llm-error-translator";
 import { useState, useEffect } from "react";
 
 interface RepairModalProps {
@@ -104,7 +106,8 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
       const result = await response.json();
 
       if (!result.ok) {
-        throw new Error(result?.error || t("unknownLlmError"));
+        const rawErr = result?.error || t("unknownLlmError");
+        throw new Error(typeof rawErr === "string" ? rawErr : t("unknownLlmError"));
       }
 
       // Extraer JSON de la respuesta
@@ -161,8 +164,10 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
       setShowComparison(true);
     } catch (err) {
       console.error("Error reparando código:", err);
+      const rawMsg = err instanceof Error ? err.message : String(err);
+      const key = translateLlmError(rawMsg);
       setError(
-        err instanceof Error ? err.message : t("repairUnknownError"),
+        key === "unknownLlmError" ? t("repairUnknownError") : t(key),
       );
       setIsRepairing(false);
     }

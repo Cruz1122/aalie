@@ -74,7 +74,7 @@ export default function AIModeView({
   const t = useTranslations("home");
   if (chatOpen) {
     return (
-      <div className="w-full animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
+      <div className="w-full flex flex-col items-center justify-center animate-in fade-in-0 slide-in-from-bottom-4 duration-500 flex-1 min-h-0">
         <ChatBot
           isOpen={chatOpen}
           onClose={onClose}
@@ -94,36 +94,36 @@ export default function AIModeView({
 
   return (
     <div
-      className={`flex flex-col items-center justify-center min-h-[calc(100vh-16rem)] text-center transition-all duration-500 ${animClass}`}
+      className={`flex flex-col items-center justify-center min-h-[50vh] sm:min-h-[calc(100vh-16rem)] text-center transition-all duration-500 ${animClass}`}
     >
       {/* Icono del robot */}
       <div
-        className={`mb-6 transition-all duration-300 ${isAnimating ? "scale-0" : "scale-100"}`}
+        className={`mb-4 sm:mb-6 transition-all duration-300 ${isAnimating ? "scale-0" : "scale-100"}`}
       >
-        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center">
-          <AALIEIcon className="text-purple-300" size={52} />
+        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center">
+          <AALIEIcon className="text-purple-300 scale-75 sm:scale-100" size={52} />
         </div>
       </div>
 
       {/* Título principal */}
       <h4
-        className={`text-lg lg:text-xl font-semibold text-purple-400 ${fadeClass()}`}
+        className={`text-base sm:text-lg lg:text-xl font-semibold text-purple-400 ${fadeClass()}`}
       >
         {t("greeting")}
       </h4>
       <h2
-        className={`text-2xl lg:text-3xl font-semibold text-white mb-8 ${fadeClass("delay-75")}`}
+        className={`text-xl sm:text-2xl lg:text-3xl font-semibold text-white mb-4 sm:mb-8 ${fadeClass("delay-75")}`}
       >
         {t("greetingQuestion")}
       </h2>
 
       {/* Input principal */}
-      <div className={`w-full max-w-2xl mb-8 ${fadeClass("delay-150")}`}>
+      <div className={`w-full max-w-2xl mb-4 sm:mb-8 px-2 sm:px-0 ${fadeClass("delay-150")}`}>
         <div className="relative">
           <input
             type="text"
             placeholder={t("placeholder")}
-            className="w-full bg-white/5 border border-slate-600/50 rounded-xl px-4 py-4 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+            className="w-full bg-white/5 border border-slate-600/50 rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
             value={inputMessage}
             onChange={onInputChange}
             onKeyDown={onKeyPress}
@@ -143,7 +143,7 @@ export default function AIModeView({
 
       {/* Sugerencias como chips simples */}
       <div
-        className={`flex flex-wrap gap-2 justify-center max-w-2xl w-full mb-8 ${fadeClass("delay-200")}`}
+        className={`flex flex-wrap gap-2 justify-center max-w-2xl w-full mb-4 sm:mb-8 px-2 sm:px-0 ${fadeClass("delay-200")}`}
       >
         <SuggestionButton
           icon="science"

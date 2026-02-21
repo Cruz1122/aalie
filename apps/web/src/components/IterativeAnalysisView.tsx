@@ -176,20 +176,20 @@ export default function IterativeAnalysisView({
   return (
     <>
       {/* Card de costos por línea */}
-      <div className="glass-card p-4 rounded-lg h-full flex flex-col">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-white font-semibold flex items-center gap-2">
-            <span className="material-symbols-outlined mr-2 text-amber-400">
+      <div className="glass-card p-4 rounded-lg h-full flex flex-col min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 min-w-0">
+          <h2 className="text-white font-semibold flex items-center gap-2 flex-wrap min-w-0">
+            <span className="material-symbols-outlined text-amber-400 flex-shrink-0">
               table_chart
             </span>
-            <span>{tView("costsPerLine")}</span>
+            <span className="truncate">{tView("costsPerLine")}</span>
             <span
-              className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide ${getCaseBadgeStyle(selectedCase)}`}
+              className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide flex-shrink-0 ${getCaseBadgeStyle(selectedCase)}`}
             >
               {getCaseLabel(selectedCase)}
             </span>
           </h2>
-          <div className="flex items-center gap-1 bg-slate-800/60 border border-white/10 rounded-lg p-1">
+          <div className="flex items-center justify-center gap-1 bg-slate-800/60 border border-white/10 rounded-lg p-1 flex-shrink-0">
             <button
               onClick={() => onCaseChange("best")}
               className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle("best", selectedCase === "best")}`}
@@ -274,7 +274,7 @@ export default function IterativeAnalysisView({
             <button
               onClick={() => onViewGeneralProcedure("best")}
               disabled={!(data?.best === "same_as_worst" ? data?.worst?.ok : data?.best?.ok)}
-              className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors ${
+              className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors min-w-0 ${
                 (data?.best === "same_as_worst" ? data?.worst?.ok : data?.best?.ok)
                   ? "text-white glass-secondary hover:bg-sky-500/20"
                   : "text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60"
@@ -285,10 +285,10 @@ export default function IterativeAnalysisView({
                   : tView("runAnalysisToSeeProcedure")
               }
             >
-              <span className="material-symbols-outlined text-sm">
+              <span className="material-symbols-outlined text-sm flex-shrink-0">
                 visibility
               </span>
-              <span>{tView("viewProcedure")}</span>
+              <span className="truncate">{tView("viewProcedure")}</span>
             </button>
           </div>
         </div>
@@ -338,7 +338,7 @@ export default function IterativeAnalysisView({
             <button
               onClick={() => onViewGeneralProcedure("average")}
               disabled={!(data?.avg === "same_as_worst" ? data?.worst?.ok : data?.avg?.ok)}
-              className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors ${
+              className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors min-w-0 ${
                 (data?.avg === "same_as_worst" ? data?.worst?.ok : data?.avg?.ok)
                   ? "text-white glass-secondary hover:bg-sky-500/20"
                   : "text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60"
@@ -349,10 +349,10 @@ export default function IterativeAnalysisView({
                   : tView("runAnalysisToSeeProcedure")
               }
             >
-              <span className="material-symbols-outlined text-sm">
+              <span className="material-symbols-outlined text-sm flex-shrink-0">
                 visibility
               </span>
-              <span>{tView("viewProcedure")}</span>
+              <span className="truncate">{tView("viewProcedure")}</span>
             </button>
           </div>
         </div>
@@ -407,7 +407,7 @@ export default function IterativeAnalysisView({
             <button
               onClick={() => onViewGeneralProcedure("worst")}
               disabled={!data?.worst?.ok}
-              className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors ${
+              className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors min-w-0 ${
                 data?.worst?.ok
                   ? "text-white glass-secondary hover:bg-sky-500/20"
                   : "text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60"
@@ -418,10 +418,10 @@ export default function IterativeAnalysisView({
                   : tView("runAnalysisToSeeProcedure")
               }
             >
-              <span className="material-symbols-outlined text-sm">
+              <span className="material-symbols-outlined text-sm flex-shrink-0">
                 visibility
               </span>
-              <span>{tView("viewProcedure")}</span>
+              <span className="truncate">{tView("viewProcedure")}</span>
             </button>
           </div>
         </div>

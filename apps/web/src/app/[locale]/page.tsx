@@ -17,6 +17,7 @@ import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { useRouter } from "@/i18n/navigation";
+import { translateLlmError } from "@/lib/llm-error-translator";
 
 interface Message {
   id: string;
@@ -33,6 +34,7 @@ export default function HomePage() {
   const t = useTranslations("analyzer.progress");
   const tAlgorithmType = useTranslations("analyzer.algorithmType");
   const tHome = useTranslations("home");
+  const tMessages = useTranslations("analyzer.messages");
   const { animateProgress } = useAnalysisProgress();
   const manualViewRef = useRef<ManualModeViewHandle>(null);
   const [mode, setMode] = useState<"ai" | "manual">("ai");
@@ -499,11 +501,11 @@ export default function HomePage() {
         router.push("/analyzer");
       } catch (error) {
         console.error("[ChatAnalysis] Error inesperado", error);
-        const message =
+        const rawMsg =
           error instanceof Error
             ? error.message
             : "Error inesperado durante el análisis";
-        setChatAnalysisError(message);
+        setChatAnalysisError(tMessages(translateLlmError(rawMsg)));
         setChatAnalysisMessage(t("errorOccurred"));
         setIsChatAnalyzing(false);
       }
@@ -514,6 +516,7 @@ export default function HomePage() {
       locale,
       router,
       t,
+      tMessages,
       detectAndSelectMethodForRecursive,
       prepareIterativeAnalysisSteps,
       prepareRecursiveAnalysisSteps,
@@ -534,14 +537,14 @@ export default function HomePage() {
     <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">
       <Header />
 
-      <main className="flex-1 p-4 z-10">
+      <main className="flex-1 flex flex-col justify-center p-3 sm:p-4 z-10 min-h-0">
         <ModeToggle
           mode={mode}
           isSwitching={isSwitching}
           onModeSwitch={handleModeSwitch}
         />
 
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col justify-center">
           <div
             className={`transition-all duration-300 ${
               isSwitching

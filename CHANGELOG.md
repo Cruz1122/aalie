@@ -7,25 +7,24 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-02-21
+
 ### Added
 
-- Ejemplo de informe LaTeX (docs/latex-example/main.tex) con resultados reales del análisis de búsqueda lineal ejecutado en AALIE
-
-### Fixed
-
-- Bucles unbounded: mostrar solo ∞ (no O(∞)/Θ(∞)) en notaciones y pasos del procedimiento; O(∞) es incorrecto asintóticamente
-- O(1) incorrecto en Bubble Sort y algoritmos con bubbleSort(A[n]), N <- n: inferencia genérica de variable de tamaño desde la expresión (no reservar nombres; usar n, N, m, etc. según el código)
-- Extracción de variable de tamaño desde dimensiones de ArrayParam (A[n] -> n como candidato)
-- Validación T_polynomial: aceptar cualquier variable de tamaño (N, n, m), no solo n
+- Ejemplo de informe LaTeX (docs/latex-example/main.tex) con resultados del análisis de búsqueda lineal
+- Hook useMediaQuery para detección responsive
 
 ### Changed
 
-- Labels de pasos del Teorema Maestro en ComparisonModal: Parámetros, Cálculo de g(n), Comparación, descripciones de Casos 1-3 y Condición de Regularidad ahora usan useTranslations correctamente
-- Traducciones en ComparisonModal para Ecuación Característica (solución homogénea/particular/general, forma cerrada), Método de Iteración (g(n), expansiones, forma general, sumatoria), Árbol de Recursión (altura, sumatoria, expresión, evaluada, nivel dominante), Θ Resultado Final
-- Traducciones en ComparisonLoader: error, comparando con LLM, progreso, mensaje de espera, cerrar
-- proof-step-translator: añadidas traducciones para "return temprano detectado, no se ejecuta recursión" y "Nota: Esta recurrencia tiene coeficiente"
-- Traducción centralizada: nuevo `backend-content-translator.ts` con configuración única para todo contenido del backend (proof steps, summation.evaluated). Segmentación por dominio. `translateBackendContent` aplicado en ComparisonModal, IterationProcedureModal, RecursionTreeProcedureModal. Documentación en i18n-labels-prompts.md
-- Eliminado `proof-step-translator.ts` deprecado; todos los imports usan `backend-content-translator`
+- Responsividad: inicio (AIModeView, ManualModeView, ChatBot), modals Execution Trace y GPU vs CPU, centrado de contenido y switcher de modo
+- Traducciones centralizadas: `backend-content-translator.ts`; ComparisonModal, ComparisonLoader y proof steps con useTranslations; eliminado `proof-step-translator` deprecado
+
+### Fixed
+
+- Modals: bloqueo de scroll, botón cerrar (X) estilo DocumentationModal, spam de generate diagram (isGeneratingRef)
+- Desbordes: StepInfo, cards GPU/CPU, ChatBot (bloques 420px, botones Copiar/Analizar), switcher Efficiency Equation, labels analysis method, badges, FormulaBlock, efecto glass (isolation)
+- Errores LLM traducidos a mensajes legibles (`llm-error-translator`)
+- Inferencia de variables: Bubble Sort O(1), ArrayParam, T_polynomial; bucles unbounded solo ∞
 
 ## [1.1.3] - 2026-02-17
 

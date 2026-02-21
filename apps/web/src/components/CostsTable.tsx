@@ -46,8 +46,8 @@ export default function CostsTable({
   onViewProcedure,
 }: Readonly<CostsTableProps>) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-white/10 flex-1">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto min-w-0 rounded-lg border border-white/10 flex-1" style={{ WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
+      <table className="w-full text-sm min-w-[280px]">
         <thead className="bg-slate-800 text-slate-100">
           <tr>
             <th className="px-2 py-2 text-left w-12">#</th>
@@ -66,7 +66,7 @@ export default function CostsTable({
               className="bg-slate-900/40 hover:bg-slate-800/50 transition-colors"
             >
               <td className="px-2 py-2 text-slate-200 text-xs">{r.line}</td>
-              <td className="px-2 py-2">
+              <td className="px-2 py-2 min-w-0">
                 {(() => {
                   const getBadgeStyle = (kind: string) => {
                     switch (kind) {
@@ -91,7 +91,7 @@ export default function CostsTable({
 
                   return (
                     <span
-                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getBadgeStyle(r.kind)}`}
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium flex-wrap ${getBadgeStyle(r.kind)}`}
                     >
                       {r.kind}
                     </span>
@@ -106,7 +106,7 @@ export default function CostsTable({
                 ) : (
                   <button
                     onClick={() => onViewProcedure?.(r.line)}
-                    className="p-1 rounded-md hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
+                    className="p-2 min-w-[44px] min-h-[44px] sm:p-1 sm:min-w-0 sm:min-h-0 rounded-md hover:bg-white/10 text-slate-300 hover:text-white transition-colors flex items-center justify-center"
                     title={`Ver procedimiento para línea ${r.line}`}
                     aria-label={`Ver procedimiento para línea ${r.line}`}
                   >

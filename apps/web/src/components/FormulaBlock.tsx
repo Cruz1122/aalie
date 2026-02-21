@@ -10,7 +10,7 @@ export default function FormulaBlock({
 }) {
   return (
     <div
-      className={`overflow-x-auto rounded-md border border-white/10 bg-slate-900/50 p-3 ${className ?? ""}`}
+      className={`overflow-x-auto overflow-y-auto max-h-[40vh] rounded-md border border-white/10 bg-slate-900/50 p-3 ${className ?? ""}`}
     >
       <div className="min-w-[48rem]">
         <Formula latex={latex} display />

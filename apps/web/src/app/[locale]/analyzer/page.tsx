@@ -25,6 +25,7 @@ import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 import { extractCoreData, isRecursiveAnalysis, type CoreAnalysisData } from "@/lib/extract-core-data";
+import { translateLlmError } from "@/lib/llm-error-translator";
 import { analyzeASTForGPUCPU } from "@/lib/gpu-cpu-analyzer";
 import { getSavedCase, saveCase } from "@/lib/polynomial";
 import type { GPUCPUAnalysisResult } from "@/types/gpu-cpu";
@@ -536,8 +537,8 @@ export default function AnalyzerPage() {
 
     } catch (error) {
       console.error("[Analyzer] Error inesperado:", error);
-      const errorMsg = error instanceof Error ? error.message : "Error inesperado durante el análisis";
-      setAnalysisError(errorMsg);
+      const rawMsg = error instanceof Error ? error.message : "Error inesperado durante el análisis";
+      setAnalysisError(tMessages(translateLlmError(rawMsg)));
       setTimeout(() => {
         setAnalyzing(false);
         setAnalysisProgress(0);
@@ -1602,8 +1603,8 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
 
     } catch (error) {
       console.error("[Comparison] Error:", error);
-      const errorMsg = error instanceof Error ? error.message : "Error inesperado durante la comparación";
-      setComparisonMessage(`Error: ${errorMsg}`);
+      const rawMsg = error instanceof Error ? error.message : "Error inesperado durante la comparación";
+      setComparisonMessage("Error: " + tMessages(translateLlmError(rawMsg)));
       setComparisonProgress(0);
       
       setTimeout(() => {

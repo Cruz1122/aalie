@@ -265,13 +265,13 @@ export default function Footer() {
       {showInput ? (
         /* Input de API_KEY - reemplaza el contenido del footer cuando está activo */
         <div className="flex flex-col items-center justify-center gap-1">
-          <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs w-full max-w-2xl">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 text-xs w-full max-w-2xl min-w-0 px-2 sm:px-0">
             <input
               type="password"
               value={apiKey}
               onChange={handleChange}
               placeholder={tApiKey("placeholder")}
-              className={`px-2 py-1 rounded-lg bg-white/5 border ${
+              className={`px-2 py-1 rounded-lg bg-white/5 border flex-1 min-w-[140px] sm:min-w-[180px] ${
                 status === "invalid"
                   ? "border-red-500/50 focus:border-red-500"
                   : status === "valid"

@@ -1,5 +1,7 @@
 import type { Program } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
+
+import { translateLlmError } from "@/lib/llm-error-translator";
 import {
   forwardRef,
   useCallback,
@@ -11,6 +13,7 @@ import {
 import ReactDOM from "react-dom";
 
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { useRouter } from "@/i18n/navigation";
 import { heuristicKind } from "@/lib/algorithm-classifier";
@@ -87,6 +90,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
   ) {
     const router = useRouter();
     const { animateProgress } = useAnalysisProgress();
+    const isDesktop = useMediaQuery("(min-width: 1024px)");
     const t = useTranslations("analyzer.messages");
     const tProgress = useTranslations("analyzer.progress");
     const tAlgorithmType = useTranslations("analyzer.algorithmType");
@@ -349,7 +353,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
         } else {
           setAnalysisResult({
             success: false,
-            message: data.error || t("errorSyntax"),
+            message: data.error ? t(translateLlmError(data.error)) : t("errorSyntax"),
           });
         }
       } catch (e) {
@@ -826,7 +830,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
                 onChange={setCode}
                 onAstChange={setAst}
                 onParseStatusChange={handleParseStatusChange}
-                height="420px"
+                height={isDesktop ? "420px" : "280px"}
               />
             </div>
 
@@ -835,7 +839,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
               <button
                 onClick={handleAnalyzeCode}
                 disabled={isVerifyingParse || code.trim() === ""}
-                className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg text-white text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-400/50 bg-gradient-to-br from-blue-500/20 to-blue-500/20 border border-blue-500/30 hover:from-blue-500/30 hover:to-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="flex items-center justify-center gap-2 py-2.5 px-4 sm:px-6 rounded-lg text-white text-xs sm:text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-400/50 bg-gradient-to-br from-blue-500/20 to-blue-500/20 border border-blue-500/30 hover:from-blue-500/30 hover:to-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 {isVerifyingParse ? (
                   <>
@@ -857,7 +861,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
               <button
                 onClick={handleAnalyzeComplexity}
                 disabled={isAnalyzing || !localParseOk || code.trim() === ""}
-                className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg text-white text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-green-400/50 bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 hover:from-green-500/30 hover:to-emerald-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="flex items-center justify-center gap-2 py-2.5 px-4 sm:px-6 rounded-lg text-white text-xs sm:text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-green-400/50 bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 hover:from-green-500/30 hover:to-emerald-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 {isAnalyzing ? (
                   <>
@@ -879,7 +883,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
               <button
                 onClick={() => setShowAstModal(true)}
                 disabled={!localParseOk || !ast}
-                className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg text-white text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-yellow-400/50 bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 hover:from-yellow-500/30 hover:to-amber-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="flex items-center justify-center gap-2 py-2.5 px-4 sm:px-6 rounded-lg text-white text-xs sm:text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-yellow-400/50 bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 hover:from-yellow-500/30 hover:to-amber-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 <span className="material-symbols-outlined">account_tree</span>{" "}
                 {tManual("viewAst")}
@@ -969,7 +973,7 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                       }, 150);
                     }, 100);
                   }}
-                  className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-lg text-white text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 border animate-[slideInUp_0.3s_ease-out] bg-gradient-to-br from-purple-500/20 to-purple-500/20 border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 animate-pulse-slow cursor-pointer"
+                  className="flex items-center justify-center gap-2 py-2.5 px-4 sm:px-6 rounded-lg text-white text-xs sm:text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/50 border animate-[slideInUp_0.3s_ease-out] bg-gradient-to-br from-purple-500/20 to-purple-500/20 border-purple-500/30 hover:from-purple-500/30 hover:to-purple-500/30 animate-pulse-slow cursor-pointer"
                 >
                   <AALIEIcon className="text-base animate-shake" size={18} />{" "}
                   Ayuda con IA

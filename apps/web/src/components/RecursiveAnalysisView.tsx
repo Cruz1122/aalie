@@ -579,31 +579,31 @@ const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
   };
 
   return (
-    <div className={`mb-4 ${showGrid ? "grid grid-cols-2 gap-3" : ""}`}>
+    <div className={`mb-4 ${showGrid ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : ""}`}>
       <button
         onClick={handleDetailsClick}
-        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-sky-500/20 transition-colors ${showGrid ? "" : "w-full"}`}
+        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-sky-500/20 transition-colors min-w-0 ${showGrid ? "" : "w-full"}`}
       >
-        <span className="material-symbols-outlined text-sm">info</span>
-        <span>{props.tView("viewDetails")}</span>
+        <span className="material-symbols-outlined text-sm flex-shrink-0">info</span>
+        <span className="truncate">{props.tView("viewDetails")}</span>
       </button>
       {props.isRecursionTreeMethod && props.proof && props.proof.length > 0 && (
         <button
           onClick={() => props.setShowStepsModal(true)}
-          className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors"
+          className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors min-w-0"
         >
-          <span className="material-symbols-outlined text-sm">description</span>
-          <span>{props.tView("viewStepByStep")}</span>
+          <span className="material-symbols-outlined text-sm flex-shrink-0">description</span>
+          <span className="truncate">{props.tView("viewStepByStep")}</span>
         </button>
       )}
       {props.isCharacteristicMethod &&
         props.characteristicEquation?.is_dp_linear && (
           <button
             onClick={() => props.setShowDPModal(true)}
-            className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-green-500/20 transition-colors"
+            className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-green-500/20 transition-colors min-w-0"
           >
-            <span className="material-symbols-outlined text-sm">memory</span>
-            <span>{props.tView("viewDPVersion")}</span>
+            <span className="material-symbols-outlined text-sm flex-shrink-0">memory</span>
+            <span className="truncate">{props.tView("viewDPVersion")}</span>
           </button>
         )}
     </div>
@@ -766,30 +766,32 @@ const renderRecursionTreeCards = (
             </span>
             <span>{tRT("efficiencyEquation")}</span>
           </h3>
-          <div className="bg-slate-800/60 p-3 rounded border border-white/10 flex flex-col items-center justify-center gap-3 overflow-x-auto flex-1 min-h-[120px]">
-            {props.hasDifferentComplexities ? (
-              <div className="flex flex-row gap-4 items-center justify-center flex-wrap">
-                <div className="text-center">
-                  <div className="text-xs text-green-300 mb-1">{props.tCases("best")}:</div>
-                  <Formula latex={`T(n) = ${props.bestT}`} display />
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-yellow-300 mb-1">
-                    {props.tCases("average")}:
+          <div className="bg-slate-800/60 p-3 rounded border border-white/10 flex flex-col items-center justify-center gap-3 overflow-x-auto overflow-y-auto max-h-[40vh] flex-1 min-h-[120px] min-w-0">
+            <div className="w-full min-w-0 overflow-auto [&_.katex]:!text-[0.8em] sm:[&_.katex]:!text-[0.95em] md:[&_.katex]:!text-[1em]">
+              {props.hasDifferentComplexities ? (
+                <div className="flex flex-row gap-4 items-center justify-center flex-wrap">
+                  <div className="text-center">
+                    <div className="text-xs text-green-300 mb-1">{props.tCases("best")}:</div>
+                    <Formula latex={`T(n) = ${props.bestT}`} display />
                   </div>
-                  <Formula latex={`T(n) = ${props.avgT}`} display />
+                  <div className="text-center">
+                    <div className="text-xs text-yellow-300 mb-1">
+                      {props.tCases("average")}:
+                    </div>
+                    <Formula latex={`T(n) = ${props.avgT}`} display />
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xs text-red-300 mb-1">{props.tCases("worst")}:</div>
+                    <Formula latex={`T(n) = ${props.worstT}`} display />
+                  </div>
                 </div>
-                <div className="text-center">
-                  <div className="text-xs text-red-300 mb-1">{props.tCases("worst")}:</div>
-                  <Formula latex={`T(n) = ${props.worstT}`} display />
-                </div>
-              </div>
-            ) : (
-              <Formula
-                latex={`T(n) = ${roundLatexNumbers(props.theta || props.recursionTree?.theta || props.worstT || "N/A")}`}
-                display
-              />
-            )}
+              ) : (
+                <Formula
+                  latex={`T(n) = ${roundLatexNumbers(props.theta || props.recursionTree?.theta || props.worstT || "N/A")}`}
+                  display
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -825,16 +827,16 @@ const renderEfficiencyCard = (
   props: EfficiencyCardProps,
 ): React.JSX.Element => {
   return (
-    <div className="glass-card p-7 rounded-lg shadow-[0_8px_32px_0_rgba(59,130,246,0.3)] hover:shadow-[0_12px_40px_0_rgba(59,130,246,0.4)] border border-blue-500/20 flex-shrink-0">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-white font-semibold text-sm flex items-center gap-2">
-          <span className="material-symbols-outlined text-base text-blue-400">
+    <div className="glass-card p-4 sm:p-7 rounded-lg shadow-[0_8px_32px_0_rgba(59,130,246,0.3)] hover:shadow-[0_12px_40px_0_rgba(59,130,246,0.4)] border border-blue-500/20 flex-shrink-0 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 min-w-0">
+        <h3 className="text-white font-semibold text-sm flex items-center gap-2 flex-wrap min-w-0">
+          <span className="material-symbols-outlined text-base text-blue-400 flex-shrink-0">
             functions
           </span>
-          {props.tRecursionTree("efficiencyEquation")}
+          <span className="truncate">{props.tRecursionTree("efficiencyEquation")}</span>
           {props.isMasterMethod && props.hasDifferentComplexities && (
             <span
-              className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide ${getCaseBadgeStyle(props.selectedCase)}`}
+              className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide flex-shrink-0 ${getCaseBadgeStyle(props.selectedCase)}`}
             >
               {props.tCases(props.selectedCase)}
             </span>
@@ -842,22 +844,22 @@ const renderEfficiencyCard = (
         </h3>
         {/* Switch de casos (solo para teorema maestro con diferentes complejidades) */}
         {props.isMasterMethod && props.hasDifferentComplexities && (
-          <div className="flex items-center gap-1 bg-slate-800/60 border border-white/10 rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-slate-800/60 border border-white/10 rounded-lg p-1 flex-shrink-0 self-start sm:self-auto">
             <button
               onClick={() => props.setSelectedCase("best")}
-              className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle("best", props.selectedCase === "best")}`}
+              className={`px-2 py-1 text-xs rounded-md whitespace-nowrap ${getSelectorButtonStyle("best", props.selectedCase === "best")}`}
             >
               {props.tCases("bestShort")}
             </button>
             <button
               onClick={() => props.setSelectedCase("average")}
-              className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle("average", props.selectedCase === "average")}`}
+              className={`px-2 py-1 text-xs rounded-md whitespace-nowrap ${getSelectorButtonStyle("average", props.selectedCase === "average")}`}
             >
               {props.tCases("avgShort")}
             </button>
             <button
               onClick={() => props.setSelectedCase("worst")}
-              className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle("worst", props.selectedCase === "worst")}`}
+              className={`px-2 py-1 text-xs rounded-md whitespace-nowrap ${getSelectorButtonStyle("worst", props.selectedCase === "worst")}`}
             >
               {props.tCases("worstShort")}
             </button>
@@ -865,20 +867,22 @@ const renderEfficiencyCard = (
         )}
       </div>
       <div
-        className={`rounded-lg bg-slate-800/60 border border-blue-500/30 flex justify-center items-center overflow-x-auto ${
-          props.isIterationMethod ? "p-7 min-h-[140px]" : "p-6 min-h-[120px]"
+        className={`rounded-lg bg-slate-800/60 border border-blue-500/30 flex justify-start sm:justify-center items-center overflow-x-auto overflow-y-auto max-h-[40vh] min-w-0 ${
+          props.isIterationMethod ? "p-4 sm:p-7 min-h-[100px] sm:min-h-[140px]" : "p-4 sm:p-6 min-h-[100px] sm:min-h-[120px]"
         }`}
       >
-        {renderEfficiencyEquation(
-          props.tCases,
-          props.isMasterMethod,
-          props.hasDifferentComplexities,
-          props.currentTheta,
-          props.bestT,
-          props.avgT,
-          props.worstT,
-          props.theta,
-        )}
+        <div className="w-full min-w-0 overflow-auto [&_.katex]:!text-[0.8em] sm:[&_.katex]:!text-[0.95em] md:[&_.katex]:!text-[1em]">
+          {renderEfficiencyEquation(
+            props.tCases,
+            props.isMasterMethod,
+            props.hasDifferentComplexities,
+            props.currentTheta,
+            props.bestT,
+            props.avgT,
+            props.worstT,
+            props.theta,
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1218,36 +1222,36 @@ export default function RecursiveAnalysisView({
             const hasDPButton = characteristicEquation?.is_dp_linear;
             return (
               <div
-                className={`mb-4 grid gap-3 ${hasDPButton ? "grid-cols-3" : "grid-cols-2"}`}
+                className={`mb-4 grid gap-3 grid-cols-1 sm:grid-cols-2 ${hasDPButton ? "lg:grid-cols-3" : ""}`}
               >
                 <button
                   onClick={() => setShowCharacteristicModal(true)}
-                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-sky-500/20 transition-colors"
+                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-sky-500/20 transition-colors min-w-0"
                 >
-                  <span className="material-symbols-outlined text-sm">
+                  <span className="material-symbols-outlined text-sm flex-shrink-0">
                     info
                   </span>
-                  <span>{tView("viewDetails")}</span>
+                  <span className="truncate">{tView("viewDetails")}</span>
                 </button>
                 {hasDPButton && (
                   <button
                     onClick={() => setShowDPModal(true)}
-                    className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-green-500/20 transition-colors"
+                    className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-green-500/20 transition-colors min-w-0"
                   >
-                    <span className="material-symbols-outlined text-sm">
+                    <span className="material-symbols-outlined text-sm flex-shrink-0">
                       memory
                     </span>
-                    <span>{tView("viewDPVersion")}</span>
+                    <span className="truncate">{tView("viewDPVersion")}</span>
                   </button>
                 )}
                 <button
                   onClick={() => setShowTreeModal(true)}
-                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors"
+                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors min-w-0"
                 >
-                  <span className="material-symbols-outlined text-sm">
+                  <span className="material-symbols-outlined text-sm flex-shrink-0">
                     account_tree
                   </span>
-                  <span>{tView("viewRecurrenceTree")}</span>
+                  <span className="truncate">{tView("viewRecurrenceTree")}</span>
                 </button>
               </div>
             );
@@ -1256,24 +1260,24 @@ export default function RecursiveAnalysisView({
           // Si hay botón de árbol y es método maestro o iteración, ponerlos en la misma línea
           if (showTreeButton && (isMasterMethod || isIterationMethod)) {
             return (
-              <div className="mb-4 grid grid-cols-2 gap-3">
+              <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   onClick={() => setShowProcedureModal(true)}
-                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-sky-500/20 transition-colors"
+                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-sky-500/20 transition-colors min-w-0"
                 >
-                  <span className="material-symbols-outlined text-sm">
+                  <span className="material-symbols-outlined text-sm flex-shrink-0">
                     info
                   </span>
-                  <span>{tView("viewDetails")}</span>
+                  <span className="truncate">{tView("viewDetails")}</span>
                 </button>
                 <button
                   onClick={() => setShowTreeModal(true)}
-                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors"
+                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors min-w-0"
                 >
-                  <span className="material-symbols-outlined text-sm">
+                  <span className="material-symbols-outlined text-sm flex-shrink-0">
                     account_tree
                   </span>
-                  <span>{tView("viewRecurrenceTree")}</span>
+                  <span className="truncate">{tView("viewRecurrenceTree")}</span>
                 </button>
               </div>
             );
@@ -1297,12 +1301,12 @@ export default function RecursiveAnalysisView({
                 <div className="mb-4">
                   <button
                     onClick={() => setShowTreeModal(true)}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors min-w-0"
                   >
-                    <span className="material-symbols-outlined text-sm">
+                    <span className="material-symbols-outlined text-sm flex-shrink-0">
                       account_tree
                     </span>
-                    <span>{tView("viewRecurrenceTree")}</span>
+                    <span className="truncate">{tView("viewRecurrenceTree")}</span>
                   </button>
                 </div>
               )}

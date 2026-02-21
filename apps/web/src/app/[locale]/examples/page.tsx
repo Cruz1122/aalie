@@ -16,6 +16,7 @@ import { useNavigation } from "@/contexts/NavigationContext";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { useRouter } from "@/i18n/navigation";
+import { translateLlmError } from "@/lib/llm-error-translator";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 
 const EXAMPLE_CATEGORIES: ExampleCategory[] = [
@@ -1217,11 +1218,11 @@ export default function ExamplesPage() {
         router.push("/analyzer");
       } catch (error) {
         console.error("[Examples] Error inesperado:", error);
-        const errorMsg =
+        const rawMsg =
           error instanceof Error
             ? error.message
             : tMessages("unexpectedAnalysisError");
-        setAnalysisError(errorMsg);
+        setAnalysisError(tMessages(translateLlmError(rawMsg)));
         setTimeout(() => {
           setAnalyzingExampleId(null);
           setAnalysisProgress(0);
@@ -1297,8 +1298,8 @@ export default function ExamplesPage() {
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8 mt-6">
-            {/* TOC lateral - estilo user guide / technical docs */}
-            <aside className="lg:col-span-1 order-2 lg:order-1">
+            {/* TOC lateral - primero en mobile, lateral en desktop */}
+            <aside className="lg:col-span-1 order-1 lg:order-1">
               <div className="glass-card p-4 sticky top-4 rounded-xl border border-white/5">
                 <div className="flex items-center gap-2 mb-4">
                   <span className="material-symbols-outlined text-primary text-xl">
@@ -1354,7 +1355,7 @@ export default function ExamplesPage() {
             </aside>
 
             {/* Contenido principal */}
-            <div className="lg:col-span-3 space-y-8 order-1 lg:order-2">
+            <div className="lg:col-span-3 space-y-8 order-2 lg:order-2">
           {/* Categorías */}
           {EXAMPLE_CATEGORIES.map((category) => {
             const categoryExamples = examples.filter(

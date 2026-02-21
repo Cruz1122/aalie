@@ -1468,10 +1468,11 @@ export default function ComparisonModal({
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
             title={tCommon("close")}
+            aria-label={tCommon("close")}
           >
-            <span className="material-symbols-outlined text-white">close</span>
+            ✕
           </button>
         </div>
 

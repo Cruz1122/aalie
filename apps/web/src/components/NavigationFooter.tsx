@@ -40,19 +40,19 @@ export function NavigationFooter({
 
   return (
     <footer
-      className={`glass-card p-6 rounded-xl mt-8 border border-white/5 ${className}`}
+      className={`glass-card p-4 sm:p-6 rounded-xl mt-8 border border-white/5 min-w-0 ${className}`}
       aria-label="Navegación de página"
     >
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 min-w-0">
         {prev ? (
           <NavigationLink
             href={prev.href}
-            className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors group"
+            className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors group min-w-0 py-2 sm:py-0 min-h-[44px] sm:min-h-0"
           >
-            <span className="material-symbols-outlined text-lg group-hover:-translate-x-1 transition-transform">
+            <span className="material-symbols-outlined text-lg group-hover:-translate-x-1 transition-transform flex-shrink-0">
               {prev.icon ?? "arrow_back"}
             </span>
-            <span className="font-medium">{t(prev.labelKey)}</span>
+            <span className="font-medium truncate">{t(prev.labelKey)}</span>
           </NavigationLink>
         ) : (
           <div />
@@ -60,10 +60,10 @@ export function NavigationFooter({
         {next ? (
           <NavigationLink
             href={next.href}
-            className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors group"
+            className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors group min-w-0 py-2 sm:py-0 min-h-[44px] sm:min-h-0 justify-end sm:justify-start"
           >
-            <span className="font-medium">{t(next.labelKey)}</span>
-            <span className="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">
+            <span className="font-medium truncate">{t(next.labelKey)}</span>
+            <span className="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform flex-shrink-0">
               {next.icon ?? "arrow_forward"}
             </span>
           </NavigationLink>

@@ -94,7 +94,7 @@ export default function LocaleSwitcher() {
   const dropdownPanel = isOpen && (
     <ul
       ref={panelRef}
-      className="fixed py-1 rounded-lg bg-slate-800/95 border border-white/10 shadow-xl backdrop-blur-sm z-[99999] min-w-[72px]"
+      className="fixed py-1 rounded-lg bg-slate-900/98 border border-white/10 shadow-xl backdrop-blur-sm z-[99999] min-w-[72px]"
       style={{
         bottom: `calc(100vh - ${position.top}px + 4px)`,
         left: position.left,

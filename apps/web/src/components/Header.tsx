@@ -150,7 +150,7 @@ export default function Header() {
 
       {/* Menú Mobile */}
       {isMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 right-0 glass-header border-t border-white/10 z-50 backdrop-blur-sm">
+        <div className="lg:hidden absolute top-full left-0 right-0 glass-header border-t border-white/10 z-50 backdrop-blur-sm bg-slate-900/98">
           <nav className="flex flex-col p-3 space-y-2">
             {navItems.map((item) => {
               const active = isActive(item.href);

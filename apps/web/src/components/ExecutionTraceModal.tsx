@@ -210,15 +210,21 @@ export default function ExecutionTraceModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, caseType, debouncedInputSize, source, locale]);
 
-  // Bloquear scroll del body mientras el modal esté abierto
+  // Bloquear scroll del body y html mientras el modal esté abierto
   useEffect(() => {
     if (!open && !isDiagramExpanded) return;
 
-    const previousOverflow = document.body.style.overflow;
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevBodyPosition = document.body.style.position;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.documentElement.style.overflow = "hidden";
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+      document.body.style.position = prevBodyPosition;
+      document.documentElement.style.overflow = prevHtmlOverflow;
     };
   }, [open, isDiagramExpanded]);
 
@@ -236,7 +242,7 @@ export default function ExecutionTraceModal({
       />
 
       {/* Modal */}
-      <div className="relative z-10 glass-modal-container rounded-2xl p-6 w-[95vw] max-w-[95vw] h-[90vh] mx-4 shadow-2xl flex flex-col">
+      <div className="relative z-10 glass-modal-container rounded-2xl p-4 sm:p-6 w-[95vw] max-w-[95vw] sm:max-w-6xl h-[90vh] max-h-[90dvh] mx-2 sm:mx-4 shadow-2xl flex flex-col overflow-hidden">
         {/* Show initial loader while determining algorithm type */}
         {loading && algorithmKind === null ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
@@ -247,19 +253,19 @@ export default function ExecutionTraceModal({
             <p className="text-sm text-slate-300">{t("detectingAlgorithm")}</p>
           </div>
         ) : (
-          <>
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4 flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <span className="material-symbols-outlined text-blue-400 text-xl">
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            {/* Header: título a la izquierda, X a la derecha (estilo DocumentationModal) */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-3 flex-shrink-0 min-w-0">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <h2 className="text-lg font-semibold text-white flex items-center gap-2 truncate">
+                  <span className="material-symbols-outlined text-blue-400 text-xl flex-shrink-0">
                     play_circle
                   </span>
-                  {t("title")}
+                  <span className="truncate">{t("title")}</span>
                 </h2>
                 {trace?.algorithmKind && (
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${trace.algorithmKind === "recursive"
+                    className={`px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${trace.algorithmKind === "recursive"
                       ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
                       : trace.algorithmKind === "hybrid"
                         ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/40"
@@ -276,14 +282,15 @@ export default function ExecutionTraceModal({
               </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-lg hover:bg-white/10 transition-colors flex items-center justify-center"
-                title={t("close")}
+                className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg flex-shrink-0"
+                aria-label={t("close")}
               >
-                <span className="material-symbols-outlined text-white">close</span>
+                ✕
               </button>
             </div>
 
-            {/* Render content based on algorithm kind */}
+            {/* Contenido - scroll en cada columna, no aquí */}
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             {isRecursiveOrHybrid ? (
               <RecursiveTraceContent
                 source={source}
@@ -329,6 +336,7 @@ export default function ExecutionTraceModal({
                 onLoadTrace={loadTrace}
               />
             )}
+            </div>
 
             {/* Expanded diagram modal (shared) */}
             {isDiagramExpanded && (graph || recursionDiagram) && (
@@ -340,7 +348,7 @@ export default function ExecutionTraceModal({
                   tabIndex={0}
                   aria-label={t("closeExpandedDiagram")}
                 />
-                <div className="relative z-10 w-[98vw] h-[98vh] rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col p-4 gap-3">
+                <div className="relative z-10 w-[98vw] max-w-[98vw] h-[98vh] max-h-[98dvh] rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col p-4 gap-3 overflow-hidden">
                   <div className="flex items-center justify-between flex-shrink-0">
                     <h3 className="text-base font-semibold text-slate-100 flex items-center gap-2">
                       <span className="material-symbols-outlined text-sky-400 text-lg">
@@ -351,12 +359,11 @@ export default function ExecutionTraceModal({
                     <button
                       type="button"
                       onClick={() => setIsDiagramExpanded(false)}
-                      className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-800/70 hover:bg-slate-700/80 border border-slate-600/60 transition-colors"
+                      className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
                       title={t("close")}
+                      aria-label={t("close")}
                     >
-                      <span className="material-symbols-outlined text-lg text-slate-200 leading-none">
-                        close
-                      </span>
+                      ✕
                     </button>
                   </div>
                   <div className="flex-1 glass-card rounded-lg overflow-hidden">
@@ -365,7 +372,7 @@ export default function ExecutionTraceModal({
                 </div>
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>

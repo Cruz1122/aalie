@@ -87,7 +87,7 @@ export default function StepInfo({
   }, [currentStep]);
 
   return (
-    <div className="flex-1 overflow-y-auto scrollbar-custom">
+    <div className="flex-1 min-h-0">
       {loading ? (
         <div className="h-full flex flex-col items-center justify-center gap-4">
           <div className="relative flex items-center justify-center">
@@ -102,8 +102,8 @@ export default function StepInfo({
         <div className="space-y-3 animate-fade-in" key={currentStep}>
           {/* Grid for Line, Type, Cost, Microseconds, Tokens */}
           <div className={`grid gap-2 ${stepData.cost ? 'grid-cols-5' : 'grid-cols-4'}`}>
-            <div className="glass-card p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 flex flex-col">
-              <div className="text-xs text-blue-300 mb-2 font-bold text-center">{t("line")}</div>
+            <div className="glass-card p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 flex flex-col min-w-0">
+              <div className="text-xs text-blue-300 mb-2 font-bold text-center truncate">{t("line")}</div>
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-white font-semibold text-sm">
                   {stepData.line}
@@ -111,8 +111,8 @@ export default function StepInfo({
               </div>
             </div>
 
-            <div className="glass-card p-2 rounded-lg bg-purple-500/10 border border-purple-500/20 flex flex-col">
-              <div className="text-xs text-purple-300 mb-2 font-bold text-center">{t("type")}</div>
+            <div className="glass-card p-2 rounded-lg bg-purple-500/10 border border-purple-500/20 flex flex-col min-w-0">
+              <div className="text-xs text-purple-300 mb-2 font-bold text-center truncate">{t("type")}</div>
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-white font-semibold capitalize text-sm">
                   {stepData.kind}
@@ -121,8 +121,8 @@ export default function StepInfo({
             </div>
 
             {stepData.cost && (
-              <div className="glass-card p-2 rounded-lg bg-orange-500/10 border border-orange-500/20 flex flex-col">
-                <div className="text-xs text-orange-300 mb-2 font-bold text-center">{t("cost")}</div>
+              <div className="glass-card p-2 rounded-lg bg-orange-500/10 border border-orange-500/20 flex flex-col min-w-0">
+                <div className="text-xs text-orange-300 mb-2 font-bold text-center truncate">{t("cost")}</div>
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-white text-sm text-center">
                     <Formula latex={stepData.cost} />
@@ -137,8 +137,8 @@ export default function StepInfo({
             )}
 
             {/* Microsegundos - mostrar siempre, con loader si está cargando */}
-            <div className="glass-card p-2 rounded-lg bg-green-500/10 border border-green-500/20 flex flex-col">
-              <div className="text-xs text-green-300 mb-2 font-bold text-center">{t("microseconds")}</div>
+            <div className="glass-card p-2 rounded-lg bg-green-500/10 border border-green-500/20 flex flex-col min-w-0">
+              <div className="text-xs text-green-300 mb-2 font-bold text-center truncate">{t("microseconds")}</div>
               <div className="flex-1 flex items-center justify-center">
                 {loadingDiagram && stepData?.microseconds === undefined ? (
                   <div className="w-4 h-4 border-2 border-green-300/50 border-t-green-300 rounded-full animate-spin" />
@@ -153,8 +153,8 @@ export default function StepInfo({
             </div>
 
             {/* Tokens - mostrar siempre, con loader si está cargando */}
-            <div className="glass-card p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex flex-col">
-              <div className="text-xs text-cyan-300 mb-2 font-bold text-center">{t("tokens")}</div>
+            <div className="glass-card p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex flex-col min-w-0">
+              <div className="text-xs text-cyan-300 mb-2 font-bold text-center truncate">{t("tokens")}</div>
               <div className="flex-1 flex items-center justify-center">
                 {loadingDiagram && stepData?.tokens === undefined ? (
                   <div className="w-4 h-4 border-2 border-cyan-300/50 border-t-cyan-300 rounded-full animate-spin" />

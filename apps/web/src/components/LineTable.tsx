@@ -108,8 +108,8 @@ export default function LineTable({
   const hasUnboundedInData = rows.some((row) => row.unbounded === true);
 
   return (
-    <div className="overflow-auto">
-      <table className="w-full text-sm">
+    <div className="overflow-auto min-w-0" style={{ WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
+      <table className="w-full text-sm min-w-[280px]">
         <thead className="sticky top-0 bg-white/5 backdrop-blur-sm">
           <tr>
             <th className="text-center p-2 font-semibold text-slate-300">#</th>
@@ -140,13 +140,13 @@ export default function LineTable({
           {rows.map((row, idx) => (
             <tr
               key={idx}
-              className="border-t border-white/10 hover:bg-white/5 transition-colors"
+              className="border-t border-white/10 hover:bg-white/5 transition-colors min-w-0"
             >
               <td className="p-2 text-center text-slate-200 font-mono">
                 {row.line}
               </td>
-              <td className="p-2 text-center">
-                <span className="inline-flex items-center gap-1.5 flex-wrap justify-center">
+              <td className="p-2 text-center min-w-0">
+                <span className="inline-flex items-center gap-1.5 flex-wrap justify-center max-w-full">
                   <Badge kind={row.kind} t={t} />
                   {row.unbounded === true && (
                     <span

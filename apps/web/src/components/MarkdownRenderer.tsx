@@ -126,7 +126,7 @@ const AnalyzeButton = ({ code, onAnalyze }: AnalyzeButtonProps) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomH1 = (props: any) => (
   <h1
-    className="text-sm font-bold text-white mb-1.5 mt-3 first:mt-0"
+    className="text-sm font-bold text-white mb-1.5 mt-3 first:mt-0 break-words min-w-0 max-w-full"
     {...props}
   >
     {props.children}
@@ -136,7 +136,7 @@ const CustomH1 = (props: any) => (
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomH2 = (props: any) => (
   <h2
-    className="text-xs font-semibold text-white mb-1.5 mt-2 first:mt-0"
+    className="text-xs font-semibold text-white mb-1.5 mt-2 first:mt-0 break-words min-w-0 max-w-full"
     {...props}
   >
     {props.children}
@@ -146,7 +146,7 @@ const CustomH2 = (props: any) => (
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomH3 = (props: any) => (
   <h3
-    className="text-[11px] font-semibold text-white mb-1 mt-1.5 first:mt-0"
+    className="text-[11px] font-semibold text-white mb-1 mt-1.5 first:mt-0 break-words min-w-0 max-w-full"
     {...props}
   >
     {props.children}
@@ -156,7 +156,7 @@ const CustomH3 = (props: any) => (
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomP = (props: any) => (
   <p
-    className="text-white text-[11px] leading-relaxed mb-1.5 last:mb-0"
+    className="text-white text-[11px] leading-relaxed mb-1.5 last:mb-0 break-words min-w-0 max-w-full"
     {...props}
   >
     {props.children}
@@ -166,7 +166,7 @@ const CustomP = (props: any) => (
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomUl = (props: any) => (
   <ul
-    className="text-white text-[11px] leading-relaxed mb-1.5 ml-3 list-disc"
+    className="text-white text-[11px] leading-relaxed mb-1.5 ml-3 list-disc break-words min-w-0 max-w-full"
     {...props}
   >
     {props.children}
@@ -176,7 +176,7 @@ const CustomUl = (props: any) => (
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomOl = (props: any) => (
   <ol
-    className="text-white text-[11px] leading-relaxed mb-1.5 ml-3 list-decimal"
+    className="text-white text-[11px] leading-relaxed mb-1.5 ml-3 list-decimal break-words min-w-0 max-w-full"
     {...props}
   >
     {props.children}
@@ -185,7 +185,7 @@ const CustomOl = (props: any) => (
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomLi = (props: any) => (
-  <li className="text-white text-[11px] leading-relaxed mb-0.5" {...props}>
+  <li className="text-white text-[11px] leading-relaxed mb-0.5 break-words min-w-0 max-w-full" {...props}>
     {props.children}
   </li>
 );
@@ -247,14 +247,12 @@ const CustomPre = (props: any) => {
     .onAnalyzeCode;
 
   return (
-    <div className="relative group w-full">
+    <div className="relative group w-full max-w-full min-w-0">
       <div
-        className="bg-slate-800/70 border border-slate-600/40 rounded-md p-2.5 overflow-x-auto max-h-[300px] overflow-y-auto mb-1.5"
-        style={{ maxWidth: "100%", width: "100%" }}
+        className="bg-slate-800/70 border border-slate-600/40 rounded-md p-2.5 max-h-[300px] overflow-y-auto mb-1.5 max-w-[min(100%,420px)] min-w-0 overflow-hidden"
       >
         <pre
-          className="text-slate-200 text-[10px] font-mono whitespace-pre leading-relaxed m-0"
-          style={{ maxWidth: "100%", wordBreak: "break-word" }}
+          className="text-slate-200 text-[10px] font-mono whitespace-pre-wrap break-words leading-relaxed m-0"
         >
           {codeContent}
         </pre>
@@ -272,7 +270,7 @@ const CustomPre = (props: any) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomBlockquote = (props: any) => (
   <blockquote
-    className="border-l-2 border-blue-500 pl-2 py-1 bg-blue-500/10 rounded-r mb-1.5"
+    className="border-l-2 border-blue-500 pl-2 py-1 bg-blue-500/10 rounded-r mb-1.5 break-words min-w-0 max-w-full"
     {...props}
   >
     {props.children}
@@ -374,7 +372,7 @@ export default function MarkdownRenderer({
   const PreWithAnalyze = createPreWithAnalyze(onAnalyzeCode);
 
   return (
-    <div className={className}>
+    <div className={`min-w-0 max-w-full overflow-hidden ${className ?? ""}`.trim()}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeHighlight, rehypeKatex]}
