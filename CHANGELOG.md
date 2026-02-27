@@ -8,8 +8,15 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
+
+- Tests de variaciones para notación WHILE (test_while_loop_notation.py): bubble sort mejorado, flag kill/no kill, progreso must/may
+
 ### Changed
+
 ### Fixed
+
+- Bucles infinitos: kills_guard_must ahora considera guard_desired=False (ej. `ordenado = false` con `ordenado <- true`). Bubble sort mejorado ya no se marca como unbounded cuando la variable de control muta.
+
 ### Removed
 
 ## [1.1.4] - 2026-02-21

@@ -240,15 +240,19 @@ def _compute_summary_for_var(
 ) -> VarUpdateSummary:
     """
     Calcula VarUpdateSummary para una variable.
-    guard_desired: True si el guard exige var==true para continuar.
+    guard_desired: True si el guard exige var==true para continuar;
+                   False si exige var==false (ej. ordenado=false en bubble sort mejorado).
     """
     must, may = _must_may_stmt(body, var_name)
     kills_guard_must = False
     monotone_progress_must = False
 
     for u in must:
-        if u.get("type") == "bool_assign" and u.get("value") is False and guard_desired is True:
-            kills_guard_must = True
+        if u.get("type") == "bool_assign":
+            if u.get("value") is False and guard_desired is True:
+                kills_guard_must = True  # var=true → var<-false mata
+            elif u.get("value") is True and guard_desired is False:
+                kills_guard_must = True  # var=false → var<-true mata (bubble sort mejorado)
         if (u.get("type") == "num" or u.get("type") == "mod_decrease") and u.get("monotone"):
             monotone_progress_must = True
 
