@@ -9,12 +9,16 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Added
 
-- Tests de variaciones para notación WHILE (test_while_loop_notation.py): bubble sort mejorado, flag kill/no kill, progreso must/may
+- Tests de benchmark para motor de análisis (test_engine_benchmark.py): 40 tests (20 iterativos + 20 recursivos) que verifican worst, best y avg
+- Fixture algorithm_expectations: assert_case_complexity, assert_all_cases_complexity, get_notation_from_totals para validar worst/best/avg
 
 ### Changed
 
 ### Fixed
 
+- Fibonacci iterativo con ELSE IF: el ast_builder (packages/grammar) no visitaba el alternate cuando era ifStmt (ELSE IF). Solo usaba block(1), pero ELSE IF produce ifStmt como alternate. Ahora se visita ctx.ifStmt() cuando existe.
+- test_recursive_algorithms: test_binary_search_recursive_theta_log_n usa get_notation_from_totals para obtener theta desde iteration/master/recursion_tree; test_binary_search_case_2 pasa preferred_method="master" para forzar teorema maestro.
+- Motor de análisis: 5 correcciones que permiten quitar xfail de test_engine_benchmark. (1) Hanoi: `_apply_iteration_method` usa coeficiente >1 en linear_shift para T(n)=2T(n-1)+1 → Θ(2^n). (2) Binary search simple: `_calculate_recursive_calls_count` detecta IF THEN RETURN; RETURN implícito → T(n)=T(n/2)+1. (3) Binary search master: `_detect_early_return` y `_has_return_before_recursive_calls` detectan early return A[mitad]=x → best O(1). (4) Find last index: `visitWhile` evita modelo geométrico p=1/2 cuando WHILE AND tiene array y closure bounded → avg Θ(n). (5) Quick sort worst: heurística pivot=izq fuerza T(n)=T(n-1)+n en worst/best/avg para recursion_tree → Θ(n²).
 - Bucles infinitos: kills_guard_must ahora considera guard_desired=False (ej. `ordenado = false` con `ordenado <- true`). Bubble sort mejorado ya no se marca como unbounded cuando la variable de control muta.
 
 ### Removed

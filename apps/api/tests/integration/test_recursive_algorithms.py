@@ -8,7 +8,10 @@ Incluye tests auténticos con pseudocode y expectativas de complejidad.
 import pytest
 from app.modules.analysis.analyzers.recursive import RecursiveAnalyzer
 from app.modules.analysis.service import analyze_algorithm
-from tests.integration.fixtures.algorithm_expectations import notation_has_complexity
+from tests.integration.fixtures.algorithm_expectations import (
+    get_notation_from_totals,
+    notation_has_complexity,
+)
 
 
 MERGE_SORT_PSEUDOCODE = """mergeSort(A, izq, der) BEGIN
@@ -61,10 +64,7 @@ class TestRecursiveAlgorithmsPseudocode:
             pytest.skip(f"Parser/RecursiveAnalyzer no soporta: {result.get('errors', [])}")
         worst = result.get("worst", {})
         totals = worst.get("totals", {})
-        theta = totals.get("big_theta", "") or totals.get("big_o", "") or ""
-        master = totals.get("master", {})
-        if master:
-            theta = master.get("theta", "") or theta
+        theta = get_notation_from_totals(totals)
         assert notation_has_complexity(theta, "log"), (
             f"Binary search recursivo debe ser Θ(log n): {theta}"
         )
@@ -645,8 +645,8 @@ class TestRecursiveAlgorithms:
         """Test: Búsqueda Binaria - Caso 2 - T(n) = T(n/2) + Θ(1) -> Θ(log n)"""
         analyzer = RecursiveAnalyzer()
         ast = self.create_binary_search_ast()
-        
-        result = analyzer.analyze(ast, mode="worst")
+
+        result = analyzer.analyze(ast, mode="worst", preferred_method="master")
         
         assert result.get("ok"), "Análisis debe ser exitoso"
         assert "totals" in result, "Debe tener totals"

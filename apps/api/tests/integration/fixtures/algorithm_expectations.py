@@ -57,7 +57,7 @@ def is_o1_notation(notation: str) -> bool:
 def notation_has_complexity(notation: str, level: str) -> bool:
     """
     True si la notación contiene la complejidad esperada (o mayor).
-    level: "constant" | "log" | "linear" | "quadratic" | "cubic"
+    level: "constant" | "log" | "linear" | "quadratic" | "cubic" | "exponential"
     """
     if not notation:
         return False
@@ -66,6 +66,8 @@ def notation_has_complexity(notation: str, level: str) -> bool:
         return is_o1_notation(notation)
     if level == "log":
         return "log" in s
+    if level == "exponential":
+        return "^n" in s or "**n" in s or "exp(" in s or "2^n" in s or "phi" in s
     if level == "linear":
         return any(x in s for x in ["n", "exp", "m", "min"])
     if level == "quadratic":
@@ -94,6 +96,50 @@ def t_open_has_variable(t_open: str) -> bool:
     return any(v in s for v in vars_ok)
 
 
+def get_notation_from_totals(totals: dict) -> str:
+    """
+    Obtiene la notación asintótica de totals.
+    Para recursivos, la theta puede estar en master, iteration, characteristic_equation, recursion_tree.
+    """
+    notation = totals.get("big_theta", "") or totals.get("big_o", "") or ""
+    if notation:
+        return notation
+    master = totals.get("master", {})
+    if master:
+        notation = master.get("theta", "") or notation
+    iteration = totals.get("iteration", {})
+    if iteration:
+        notation = iteration.get("theta", "") or notation
+    char_eq = totals.get("characteristic_equation", {})
+    if char_eq:
+        notation = char_eq.get("solution", "") or char_eq.get("theta", "") or notation
+    rec_tree = totals.get("recursion_tree", {})
+    if rec_tree:
+        notation = rec_tree.get("theta", "") or notation
+    recurrence = totals.get("recurrence", {})
+    if recurrence and not notation:
+        notation = recurrence.get("theta", "") or ""
+    return notation or ""
+
+
+def assert_case_complexity(
+    result: Dict[str, Any],
+    case: str,
+    expected_level: str,
+    name: str = "",
+) -> None:
+    """
+    Verifica que el caso indicado (worst, best, avg) tenga la complejidad esperada.
+    case: "worst" | "best" | "avg"
+    expected_level: "constant" | "log" | "linear" | "quadratic" | "cubic" | "exponential"
+    """
+    totals = get_totals(result, case)
+    notation = get_notation_from_totals(totals)
+    assert notation_has_complexity(notation, expected_level), (
+        f"[{name}] {case.upper()}: esperado {expected_level}, obtenido: {notation!r}"
+    )
+
+
 def assert_worst_complexity(
     result: Dict[str, Any],
     expected_level: str,
@@ -101,12 +147,29 @@ def assert_worst_complexity(
 ) -> None:
     """
     Verifica que el worst case tenga la complejidad esperada.
-    expected_level: "constant" | "log" | "linear" | "quadratic" | "cubic"
+    expected_level: "constant" | "log" | "linear" | "quadratic" | "cubic" | "exponential"
     """
-    totals = get_totals(result, "worst")
-    big_theta = totals.get("big_theta", "") or ""
-    big_o = totals.get("big_o", "") or ""
-    notation = big_theta or big_o
-    assert notation_has_complexity(notation, expected_level), (
-        f"[{name}] Esperado {expected_level}, obtenido: big_theta={big_theta!r}, big_o={big_o!r}"
-    )
+    assert_case_complexity(result, "worst", expected_level, name)
+
+
+def assert_all_cases_complexity(
+    result: Dict[str, Any],
+    expected_worst: str,
+    expected_best: Optional[str] = None,
+    expected_avg: Optional[str] = None,
+    name: str = "",
+) -> None:
+    """
+    Valida worst, best y avg según corresponda.
+    Si expected_best/expected_avg es None, se usa expected_worst (determinístico).
+    Si best/avg es "same_as_worst", no se valida por separado (ya cubierto por worst).
+    """
+    assert_case_complexity(result, "worst", expected_worst, name)
+    best = result.get("best")
+    avg = result.get("avg")
+    best_level = expected_best if expected_best is not None else expected_worst
+    avg_level = expected_avg if expected_avg is not None else expected_worst
+    if best != "same_as_worst" and isinstance(best, dict):
+        assert_case_complexity(result, "best", best_level, name)
+    if avg != "same_as_worst" and avg is not None and isinstance(avg, dict):
+        assert_case_complexity(result, "avg", avg_level, name)

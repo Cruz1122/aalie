@@ -614,21 +614,17 @@ class WhileRepeatVisitor:
             return False
         
         test_type = test.get("type", "").lower()
-        operator = test.get("operator", "").lower()
+        operator = (test.get("op", "") or test.get("operator", "")).lower()
         
         # Si es un AND, verificar si alguna parte puede ser falsa desde el inicio
         if test_type in ("binary", "binaryop") and operator in ("and", "&&"):
             left = test.get("left", {})
             right = test.get("right", {})
             
-            print(f"[Early Exit] Detected AND condition, checking left and right for non-control comparisons")
-            
             # Verificar si alguna parte tiene una comparación con arrays u otras variables
             # (no solo la variable de control)
             left_has_non_control = self._has_non_control_comparison(left, var_name)
             right_has_non_control = self._has_non_control_comparison(right, var_name)
-            
-            print(f"[Early Exit] left has non-control: {left_has_non_control}, right has non-control: {right_has_non_control}")
             
             if left_has_non_control or right_has_non_control:
                 return True
@@ -1106,6 +1102,12 @@ class WhileRepeatVisitor:
         if not iterations:
             return None
         
+        # 4.5) Para avg con condición AND que incluye array (ej: i>=1 AND A[i]!=x):
+        # E[iteraciones] ≈ (n+1)/2 en lugar de usar el peor caso
+        if mode == "avg" and self._has_early_exit_condition(test, var_name):
+            initial_expr = initial_value if initial_value else f"{var_name}_0"
+            iterations = f"(({initial_expr}) - ({limit}) + 2) / 2"
+        
         return {
             "variable": var_name,
             "initial_value": initial_value,
@@ -1189,6 +1191,8 @@ class WhileRepeatVisitor:
         if mode == "avg":
             # Verificar si hay un patrón detectado primero (búsqueda binaria o Euclides)
             # O si es unbounded por param-controlled (no_progress_must): NO aplicar modelo geométrico
+            # O si es WHILE con AND y array (ej: find_last_index): E[iteraciones] ≈ (n+1)/2, no 1/p
+            test = node.get("test", {})
             closure_info_pattern = self._analyze_while_closure(node, parent_context, mode)
             skip_geometric = False
             if closure_info_pattern:
@@ -1199,6 +1203,14 @@ class WhileRepeatVisitor:
                     "while_or_no_progress",
                 ):
                     # Progreso controlado por parámetro/condición: modelo geométrico no aplica
+                    skip_geometric = True
+                elif (
+                    closure_info_pattern.get("success")
+                    and closure_info_pattern.get("iterations")
+                    and self._has_early_exit_condition(test, closure_info_pattern.get("variable", ""))
+                ):
+                    # WHILE con AND y acceso a array (ej: i>=1 AND A[i]!=x): modelo geométrico p=1/2 no aplica
+                    # E[iteraciones] ≈ (n+1)/2 para búsqueda lineal con salida aleatoria
                     skip_geometric = True
             if skip_geometric:
                 # Saltar análisis probabilístico, ir al paso 2 (manejo unbounded)

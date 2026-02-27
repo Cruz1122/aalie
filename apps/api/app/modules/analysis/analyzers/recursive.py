@@ -96,6 +96,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "byLine": [],
                     "totals": {
                         "T_open": "O(1)",
+                        "big_theta": "O(1)",
                         "symbols": None,
                         "notes": None,
                         "proof": self.proof_steps.copy()
@@ -730,6 +731,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # 7. Construir recurrencia con método apropiado
         # Simplificar b para mostrar
         b_str = self._simplify_number_latex(b)
+        quicksort_worst_override = False
         
         # Para ecuación característica e iteración, usar desplazamientos constantes (n-1, n-2, etc.)
         if use_characteristic or use_iteration:
@@ -770,7 +772,17 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     recurrence_form = f"T(n) = T(n-1) + {f_n_display}"
         else:
             # Para divide-and-conquer (Teorema Maestro o Árbol de Recursión)
-            recurrence_form = f"T(n) = {a} \\cdot T(n/{b_str}) + f(n)"
+            # Heurística: QuickSort con pivot=izq → siempre worst case T(n)=T(n-1)+n (Θ(n²))
+            # Aplica a worst, best y avg porque el pivot fijo hace que todas las ejecuciones sean cuadráticas.
+            quicksort_worst_override = (
+                use_recursion_tree
+                and preferred_method == "recursion_tree"
+                and self._detect_quicksort_pivot_izq(proc_def)
+            )
+            if quicksort_worst_override:
+                recurrence_form = "T(n) = T(n-1) + n"
+            else:
+                recurrence_form = f"T(n) = {a} \\cdot T(n/{b_str}) + f(n)"
         
         # Determinar método a usar (PRIORIDAD: characteristic_equation > iteration > recursion_tree > master)
         if use_characteristic:
@@ -919,17 +931,32 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 }
         else:
             # Para otros métodos (master, recursion_tree), usar a, b, f (divide_conquer)
-            recurrence = {
-                "type": "divide_conquer",
-                "form": recurrence_form,
-                "a": a,
-                "b": float(b),
-                "f": f_n,
-                "n0": n0,
-                "applicable": True,
-                "notes": [],
-                "method": method
-            }
+            # O linear_shift si es quicksort worst case override
+            if quicksort_worst_override:
+                recurrence = {
+                    "type": "linear_shift",
+                    "form": recurrence_form,
+                    "order": 1,
+                    "shifts": [1],
+                    "coefficients": [1],
+                    "g(n)": "n",
+                    "n0": n0,
+                    "applicable": True,
+                    "notes": ["QuickSort con pivot fijo en izq: worst case T(n)=T(n-1)+n"],
+                    "method": method
+                }
+            else:
+                recurrence = {
+                    "type": "divide_conquer",
+                    "form": recurrence_form,
+                    "a": a,
+                    "b": float(b),
+                    "f": f_n,
+                    "n0": n0,
+                    "applicable": True,
+                    "notes": [],
+                    "method": method
+                }
         
         # Simplificar valores para mostrar en proof
         b_display = self._simplify_number_latex(b)
@@ -1003,6 +1030,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         Si las llamadas recursivas están en un IF-ELSE, solo se ejecuta una por llamada,
         entonces a = 1. Si están en diferentes caminos no mutuamente excluyentes, se suman.
+        También detecta el patrón implícito: IF cond THEN RETURN rec; RETURN rec; (siguiente
+        statement es el "else" implícito).
         
         Args:
             proc_def: Nodo ProcDef del procedimiento
@@ -1014,15 +1043,12 @@ class RecursiveAnalyzer(BaseAnalyzer):
         if len(recursive_calls) <= 1:
             return len(recursive_calls)
         
-        # Buscar si hay llamadas recursivas en ramas IF-ELSE mutuamente excluyentes
+        if not self.procedure_name:
+            return len(recursive_calls)
+        
+        # 1. Buscar IF-ELSE explícito con llamadas en ambas ramas
         body = proc_def.get("body", {})
         if_else_paths = self._find_if_else_paths(body)
-        
-        # Si encontramos un IF-ELSE con llamadas recursivas en ambas ramas,
-        # entonces a = 1 (solo se ejecuta una rama)
-        if not self.procedure_name:
-            # Si no tenemos el nombre del procedimiento, usar todas las llamadas
-            return len(recursive_calls)
         
         for if_node in if_else_paths:
             consequent_has_recursive = self._has_recursive_call_in_subtree(
@@ -1033,11 +1059,13 @@ class RecursiveAnalyzer(BaseAnalyzer):
             )
             
             if consequent_has_recursive and alternate_has_recursive:
-                # Las dos llamadas están en ramas mutuamente excluyentes
-                # Solo se ejecuta una por llamada, así que a = 1
                 return 1
         
-        # Si no hay ramas mutuamente excluyentes, contar todas las llamadas
+        # 2. Buscar patrón implícito: IF cond THEN RETURN rec; RETURN rec;
+        # (IF sin alternate, siguiente statement es RETURN con recursión)
+        if self._has_implicit_if_else_pattern(body):
+            return 1
+        
         return len(recursive_calls)
     
     def _find_if_else_paths(self, node: Any) -> List[Dict[str, Any]]:
@@ -1072,6 +1100,53 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 if_nodes.extend(self._find_if_else_paths(value))
         
         return if_nodes
+    
+    def _get_body_statements(self, body_node: Any) -> List[Any]:
+        """Obtiene la lista de statements de un body (Block o dict con body)."""
+        if not isinstance(body_node, dict):
+            return []
+        if body_node.get("type") == "Block":
+            return body_node.get("body", [])
+        return body_node.get("body", [])
+    
+    def _is_recursive_return(self, node: Any, proc_name: str) -> bool:
+        """True si node es RETURN con llamada recursiva."""
+        if not isinstance(node, dict):
+            return False
+        if node.get("type") == "Return":
+            return self._has_recursive_call_in_subtree(node, proc_name)
+        return False
+    
+    def _consequent_has_recursive_return(self, consequent: Any, proc_name: str) -> bool:
+        """True si consequent termina en RETURN con llamada recursiva."""
+        if not isinstance(consequent, dict):
+            return False
+        if consequent.get("type") == "Return":
+            return self._has_recursive_call_in_subtree(consequent, proc_name)
+        if consequent.get("type") == "Block":
+            stmts = consequent.get("body", [])
+            if stmts:
+                return self._is_recursive_return(stmts[-1], proc_name)
+        return False
+    
+    def _has_implicit_if_else_pattern(self, body_node: Any) -> bool:
+        """
+        Detecta patrón IF cond THEN RETURN rec; RETURN rec; (else implícito).
+        El siguiente statement del IF es el RETURN alternativo.
+        """
+        stmts = self._get_body_statements(body_node)
+        if len(stmts) < 2 or not self.procedure_name:
+            return False
+        for i in range(len(stmts) - 1):
+            stmt = stmts[i]
+            next_stmt = stmts[i + 1]
+            if not isinstance(stmt, dict) or not isinstance(next_stmt, dict):
+                continue
+            if stmt.get("type") == "If" and not stmt.get("alternate"):
+                if self._consequent_has_recursive_return(stmt.get("consequent"), self.procedure_name):
+                    if self._is_recursive_return(next_stmt, self.procedure_name):
+                        return True
+        return False
     
     def _has_recursive_call_in_subtree(self, node: Any, proc_name: str) -> bool:
         """
@@ -1485,6 +1560,35 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     return True
         
         return False
+    
+    def _detect_quicksort_pivot_izq(self, proc_def: Dict[str, Any]) -> bool:
+        """
+        Detecta QuickSort con pivot fijo en el inicio (pivot <- izq).
+        En worst case (array ordenado), una partición queda vacía: T(n)=T(n-1)+n.
+        """
+        def _search_assign(node: Any) -> bool:
+            if not isinstance(node, dict):
+                return False
+            if node.get("type", "").lower() == "assign":
+                target = node.get("target", {})
+                value = node.get("value", {})
+                if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
+                    tname = (target.get("name") or "").lower()
+                    if tname in ["pivot", "pivote", "pi"]:
+                        if isinstance(value, dict) and value.get("type", "").lower() == "identifier":
+                            vname = (value.get("name") or "").lower()
+                            if vname in ["izq", "izquierda", "left", "inicio", "start", "low"]:
+                                return True
+            for key in ["body", "consequent", "alternate", "then"]:
+                child = node.get(key)
+                if isinstance(child, dict) and _search_assign(child):
+                    return True
+                if isinstance(child, list):
+                    for item in child:
+                        if _search_assign(item):
+                            return True
+            return False
+        return _search_assign(proc_def.get("body", {}))
     
     def _detect_variable_size_reduction(self, args: List[Any], params: List[Any], proc_def: Dict[str, Any]) -> Optional[float]:
         """
@@ -2580,6 +2684,18 @@ class RecursiveAnalyzer(BaseAnalyzer):
             condition = node.get("test") or node.get("condition")
             then_body = node.get("then") or node.get("thenBody") or node.get("consequent")
             else_body = node.get("else") or node.get("elseBody") or node.get("alternate")
+            
+            # Patrón: IF cond THEN RETURN (sin recursivas); sin ELSE o con ELSE con recursivas
+            # Ej: IF (A[mitad]=x) THEN RETURN mitad; ... (early return en búsqueda binaria)
+            if then_body and not else_body:
+                returns_in_then = self._find_return_statements(then_body)
+                has_early_return = any(
+                    ret for ret in returns_in_then
+                    if not self._contains_recursive_call(ret, recursive_calls)
+                )
+                if has_early_return:
+                    # Si hay recursivas en algún lugar del procedimiento, este return es early
+                    return True
             
             # Verificar si en THEN hay return sin recursivas Y en ELSE hay recursivas
             if then_body and else_body:
@@ -4665,6 +4781,11 @@ FIN FUNCIÓN"""
         if range_reduction:
             return range_reduction
         
+        # Estrategia 0.5: Detectar búsqueda binaria (izq, medio-1) o (medio+1, der) con medio=(izq+der)/2
+        binary_search_reduction = self._detect_binary_search_range_reduction(args, params, proc_def)
+        if binary_search_reduction:
+            return binary_search_reduction
+        
         # Obtener el nombre del primer parámetro (usualmente el tamaño)
         first_param = params[0]
         if isinstance(first_param, dict):
@@ -4894,6 +5015,71 @@ FIN FUNCIÓN"""
         
         return False
     
+    def _detect_binary_search_range_reduction(
+        self, args: List[Any], params: List[Any], proc_def: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Detecta patrón de búsqueda binaria: (izq, medio-1) o (medio+1, der) con medio=(izq+der)/2.
+        El tamaño del subproblema es n/2.
+        """
+        if len(args) < 4 or len(params) < 4:
+            return None
+        param_names = []
+        for p in params:
+            if isinstance(p, dict):
+                param_names.append((p.get("name") or "").lower())
+            else:
+                param_names.append(str(p).lower())
+        inicio_keywords = ["inicio", "izq", "left", "start", "begin", "low"]
+        fin_keywords = ["fin", "der", "right", "end", "high"]
+        inicio_idx = next((i for i, n in enumerate(param_names) if any(k in n for k in inicio_keywords)), None)
+        fin_idx = next((i for i, n in enumerate(param_names) if any(k in n for k in fin_keywords)), None)
+        if inicio_idx is None or fin_idx is None or inicio_idx >= len(args) or fin_idx >= len(args):
+            return None
+        inicio_arg = args[inicio_idx]
+        fin_arg = args[fin_idx]
+        body = proc_def.get("body", {}) or {}
+        stmts = body.get("body", []) if isinstance(body, dict) else []
+        medio_var = None
+        for stmt in stmts:
+            if not isinstance(stmt, dict) or stmt.get("type", "").lower() != "assign":
+                continue
+            target = stmt.get("target", {})
+            value = stmt.get("value", {})
+            if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
+                tname = (target.get("name") or "").lower()
+                if tname in ["medio", "mid", "middle", "mitad"]:
+                    if isinstance(value, dict) and value.get("type", "").lower() == "binary":
+                        if value.get("op", "") == "/":
+                            left = value.get("left", {})
+                            right = value.get("right", {})
+                            if isinstance(right, dict) and right.get("type", "").lower() == "literal":
+                                if right.get("value") == 2:
+                                    if isinstance(left, dict) and left.get("op", "") == "+":
+                                        medio_var = target.get("name", "")
+                                        break
+        if not medio_var:
+            return None
+        is_division = False
+        if isinstance(fin_arg, dict) and fin_arg.get("type", "").lower() == "binary":
+            if fin_arg.get("op", "") == "-":
+                left = fin_arg.get("left", {})
+                if isinstance(left, dict) and left.get("type", "").lower() == "identifier":
+                    if (left.get("name") or "").lower() == medio_var.lower():
+                        is_division = True
+        if isinstance(inicio_arg, dict) and inicio_arg.get("type", "").lower() == "binary":
+            if inicio_arg.get("op", "") == "+":
+                right = inicio_arg.get("right", {})
+                if isinstance(right, dict) and right.get("type", "").lower() == "literal":
+                    if right.get("value") == 1:
+                        left = inicio_arg.get("left", {})
+                        if isinstance(left, dict) and left.get("type", "").lower() == "identifier":
+                            if (left.get("name") or "").lower() == medio_var.lower():
+                                is_division = True
+        if is_division:
+            return {"type": "division", "pattern": "n/2", "factor": 2}
+        return None
+    
     def _detect_range_reduction(self, args: List[Any], params: List[Any]) -> Optional[Dict[str, Any]]:
         """
         Detecta reducción de rango cuando los parámetros son inicio/fin.
@@ -5120,12 +5306,16 @@ FIN FUNCIÓN"""
             f_n_str = self.recurrence.get("g(n)", "0")
             if f_n_str == "0" or f_n_str is None:
                 f_n_str = "0"
-            # Para linear_shift con un solo término (T(n) = T(n-1) + g(n)), a = 1
-            a = 1
             # Obtener el orden y los shifts
             order = self.recurrence.get("order", 1)
             shifts = self.recurrence.get("shifts", [1])
-            coefficients = self.recurrence.get("coefficients", [1])
+            coefficients_list = self.recurrence.get("coefficients", [1])
+            # Para linear_shift: si hay un solo término con coeficiente > 1 (ej: Hanoi 2T(n-1)+1), usar a = coeficiente
+            # Si hay múltiples términos (Fibonacci) o coeficiente 1, a = 1
+            if len(coefficients_list) == 1 and coefficients_list[0] > 1:
+                a = coefficients_list[0]
+            else:
+                a = 1
         else:
             # Para divide_conquer, usar a, b, f
             a = self.recurrence.get("a", 1)
@@ -5775,11 +5965,38 @@ FIN FUNCIÓN"""
         
         self.proof_steps.append({"id": "tree_start", "text": "\\text{Aplicando Método de Árbol de Recursión}"})
         
-        # Paso 1: Extraer parámetros de la recurrencia
-        a = self.recurrence["a"]
-        b = self.recurrence["b"]
-        f_n = self.recurrence["f"]
-        n0 = self.recurrence["n0"]
+        # Caso especial: T(n)=T(n-1)+n (ej: QuickSort worst case con pivot=izq)
+        recurrence_type = self.recurrence.get("type", "divide_conquer")
+        if recurrence_type == "linear_shift":
+            g_n = self.recurrence.get("g(n)", "0")
+            n0 = self.recurrence.get("n0", 1)
+            if g_n and g_n.strip().lower() == "n":
+                # Árbol lineal: nivel i tiene 1 nodo con costo (n-i), total = n+(n-1)+...+1 = n(n+1)/2 = Θ(n²)
+                self.proof_steps.append({
+                    "id": "tree_extract",
+                    "text": "T(n) = T(n-1) + n \\quad \\text{(árbol lineal: 1 hijo por nivel)}"
+                })
+                theta = "n^2"
+                recursion_tree = {
+                    "method": "recursion_tree",
+                    "levels": [
+                        {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "n", "total_cost_latex": "n"},
+                        {"level": 1, "num_nodes_latex": "1", "subproblem_size_latex": "n-1", "cost_per_node_latex": "n-1", "total_cost_latex": "n-1"},
+                    ],
+                    "height": "n",
+                    "summation": {"expression": "\\sum_{i=0}^{n-1} (n-i) = \\frac{n(n+1)}{2}", "theta": theta},
+                    "dominating_level": {"reason": "\\text{Suma aritmética } n + (n-1) + \\ldots + 1 = \\Theta(n^2)"},
+                    "table_by_levels": [],
+                    "theta": f"\\Theta({theta})"
+                }
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                return {"success": True, "recursion_tree": recursion_tree}
+        
+        # Paso 1: Extraer parámetros de la recurrencia (divide-and-conquer)
+        a = self.recurrence.get("a", 1)
+        b = self.recurrence.get("b", 2)
+        f_n = self.recurrence.get("f", "n")
+        n0 = self.recurrence.get("n0", 1)
         
         self.proof_steps.append({
             "id": "tree_extract",
