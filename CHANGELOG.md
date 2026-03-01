@@ -15,6 +15,8 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ### Fixed
 
 - Motor: merge_sort f(n)=n con llamadas auxiliares; rectangular_loops grado total n·m (poly_degree) y notación cuadrática genérica; fast_exponentiation WHILE var/2 → log y símbolos exp/e_0 en _str_to_sympy; gramática ELSE IF (alternate ifStmt); Hanoi 2T(n-1)+1 → Θ(2^n); binary search implícito y early return; find last index sin p=1/2; quicksort pivot=izq → Θ(n²); bucles infinitos guard_desired=False.
+- AAProgressLoader: en estado de error el botón cerrar queda justo debajo del mensaje (se oculta el hueco del badge para no empujarlo abajo).
+- Chatbot: input de mensaje con texto largo ya no se solapa con el icono de enviar; mismo icono y mismo estilo sin borde/cuadrado en estado inicial y dentro del chat; contenedor en flex con centrado vertical.
 
 ### Removed
 

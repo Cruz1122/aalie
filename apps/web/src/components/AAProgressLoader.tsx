@@ -186,47 +186,48 @@ export const AAProgressLoader: React.FC<AAProgressLoaderProps> = ({
           </h3>
 
           {hasError && (
-            <div className="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-              <p className="text-sm text-red-300 whitespace-pre-wrap">{error}</p>
-            </div>
+            <>
+              <div className="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+                <p className="text-sm text-red-300 whitespace-pre-wrap">{error}</p>
+              </div>
+              <div className="text-center mt-4">
+                <button
+                  onClick={handleClose}
+                  className="px-4 py-2 rounded-lg bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition-colors text-sm font-semibold"
+                >
+                  {closeLabel}
+                </button>
+              </div>
+            </>
           )}
 
-          {/* Badge: espacio reservado para que no mute el tamaño */}
-          <div className="min-h-[40px] flex items-center justify-center mt-6">
-            {mode === "analysis" && algorithmType && !hasError && (
-              <div
-                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium ${getAlgorithmTypeColor(algorithmType)} animate-[pop_0.5s_ease-out]`}
-              >
-                <span className="material-symbols-outlined text-base">
-                  category
-                </span>
-                <span>
-                  {tLoader("algorithmLabel")}:{" "}
-                  {getAlgorithmTypeLabel(algorithmType)}
-                </span>
-              </div>
-            )}
-            {mode === "comparison" && !hasError && (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium bg-purple-500/20 text-purple-400 border-purple-500/30 animate-[pop_0.5s_ease-out]">
-                <span className="material-symbols-outlined text-base">
-                  compare_arrows
-                </span>
-                <span>{tComparison("comparingWithLlm")}</span>
-              </div>
-            )}
-          </div>
+          {/* Badge: espacio reservado solo cuando no hay error para no empujar el botón abajo */}
+          {!hasError && (
+            <div className="min-h-[40px] flex items-center justify-center mt-6">
+              {mode === "analysis" && algorithmType && (
+                <div
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium ${getAlgorithmTypeColor(algorithmType)} animate-[pop_0.5s_ease-out]`}
+                >
+                  <span className="material-symbols-outlined text-base">
+                    category
+                  </span>
+                  <span>
+                    {tLoader("algorithmLabel")}:{" "}
+                    {getAlgorithmTypeLabel(algorithmType)}
+                  </span>
+                </div>
+              )}
+              {mode === "comparison" && (
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium bg-purple-500/20 text-purple-400 border-purple-500/30 animate-[pop_0.5s_ease-out]">
+                  <span className="material-symbols-outlined text-base">
+                    compare_arrows
+                  </span>
+                  <span>{tComparison("comparingWithLlm")}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-
-        {hasError && (
-          <div className="text-center mt-4">
-            <button
-              onClick={handleClose}
-              className="px-4 py-2 rounded-lg bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition-colors text-sm font-semibold"
-            >
-              {closeLabel}
-            </button>
-          </div>
-        )}
         </div>
 
         {/* Barra de progreso: absoluta; más alta al inicio (!algorithmType), fixed abajo al clasificar */}
