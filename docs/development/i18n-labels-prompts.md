@@ -108,7 +108,6 @@ export function getPrompt(job: LLMJob, locale?: string): string {
     case "classify": return classify[loc];
     case "parser_assist": return parserAssistBase + getResponseLanguageInstruction(loc);
     case "general": return generalBase + getResponseLanguageInstruction(loc);
-    case "simplifier": return simplifier[loc];
     case "repair": return repair[loc];
     case "compare": return compare[loc];
     default: return parserAssistBase + getResponseLanguageInstruction(loc);
@@ -121,7 +120,7 @@ export function getPrompt(job: LLMJob, locale?: string): string {
 Todos los jobs activos tienen prompts en español e inglés:
 
 - `parser_assist`, `general`: Base común + instrucción de idioma de respuesta
-- `classify`, `simplifier`, `repair`, `compare`: Prompts completos por locale
+- `classify`, `repair`, `compare`: Prompts completos por locale
 
 ### Instrucciones de idioma de respuesta
 

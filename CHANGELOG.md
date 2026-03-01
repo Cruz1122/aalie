@@ -28,6 +28,14 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 - Configuración de modelos del frontend migrada a variables de entorno (`GEMINI_ENDPOINT_BASE`, `LLM_MODEL_*`) con lectura centralizada desde `llm-config.ts`.
 - Documentación de despliegue y uso de LLM actualizada al nuevo esquema de variables en `apps/web/LLM_CONFIG.md`, `apps/web/src/app/api/llm/README.md`, `docs/app/api-key-configuration.md` y `docs/llm/usage-and-models.md`.
+- Limpieza de referencias de jobs en documentación técnica: `apps/web/src/hooks/useDocumentationSections.ts`, `docs/development/i18n-labels-prompts.md` y `docs/development/conventions.md`, alineando la lista vigente (`classify`, `parser_assist`, `general`, `repair`, `compare`).
+- `docs/llm/usage-and-models.md` ajustado de forma conservadora para eliminar contenido legado de `simplifier` (sección, unión de jobs en request, variable `LLM_MODEL_SIMPLIFIER`, tabla de jobs y mención en cache), manteniendo el resto del contenido histórico.
+
+### Removed
+
+- Job `simplifier` eliminado del flujo LLM del frontend (tipos/configuración y documentación asociada), junto con la variable `LLM_MODEL_SIMPLIFIER`.
+- Prompt legacy removido: `apps/web/src/app/api/llm/prompts/simplifier.ts`.
+- Claves i18n obsoletas relacionadas con simplificación eliminadas de `apps/web/messages/es.json` y `apps/web/messages/en.json`.
 
 ## [1.1.5]
 

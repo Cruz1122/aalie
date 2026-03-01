@@ -11,7 +11,6 @@ export type LLMJob =
   | "classify"
   | "parser_assist"
   | "general"
-  | "simplifier"
   | "repair"
   | "compare";
 
@@ -32,10 +31,6 @@ export const GEMINI_MODELS = {
     DEFAULT_GEMINI_MODELS.parser_assist,
   ),
   general: getEnvOrDefault("LLM_MODEL_GENERAL", DEFAULT_GEMINI_MODELS.general),
-  simplifier: getEnvOrDefault(
-    "LLM_MODEL_SIMPLIFIER",
-    DEFAULT_GEMINI_MODELS.simplifier,
-  ),
   repair: getEnvOrDefault("LLM_MODEL_REPAIR", DEFAULT_GEMINI_MODELS.repair),
   compare: getEnvOrDefault("LLM_MODEL_COMPARE", DEFAULT_GEMINI_MODELS.compare),
 };
@@ -67,10 +62,6 @@ export const JOB_CONFIG = {
   general: {
     temperature: 0.7,
     maxTokens: 16000,
-  },
-  simplifier: {
-    temperature: 0,
-    maxTokens: 8000,
   },
   repair: {
     temperature: 0.5,

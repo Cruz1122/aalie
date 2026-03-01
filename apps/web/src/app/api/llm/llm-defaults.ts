@@ -5,7 +5,6 @@ export const DEFAULT_GEMINI_MODELS = {
   classify: "gemini-2.0-flash-lite",
   parser_assist: "gemini-2.5-flash",
   general: "gemini-2.5-flash",
-  simplifier: "gemini-2.5-flash",
   repair: "gemini-2.5-flash",
   compare: "gemini-2.5-pro",
 } as const;

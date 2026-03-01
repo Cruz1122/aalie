@@ -9,7 +9,6 @@ import { generalBase } from "./general";
 import { parserAssistBase } from "./parser_assist";
 import { repair } from "./repair";
 import { getResponseLanguageInstruction } from "./response-language";
-import { simplifier } from "./simplifier";
 import type { LLMJob, SupportedLocale } from "./types";
 
 const SUPPORTED_LOCALES: SupportedLocale[] = ["es", "en"];
@@ -35,8 +34,6 @@ export function getPrompt(job: LLMJob, locale?: string): string {
       return parserAssistBase + getResponseLanguageInstruction(loc);
     case "general":
       return generalBase + getResponseLanguageInstruction(loc);
-    case "simplifier":
-      return simplifier[loc];
     case "repair":
       return repair[loc];
     case "compare":

@@ -83,7 +83,7 @@ algorithmic-analysis/
 
 - Prompts parametrizados por locale en `apps/web/src/app/api/llm/prompts/`.
 - `getPrompt(job, locale)` selecciona el prompt según idioma.
-- Jobs con prompts localizados: `parser_assist`, `general`, `simplifier`, `repair`, `compare`.
+- Jobs con prompts localizados: `classify`, `parser_assist`, `general`, `repair`, `compare`.
 - Documentación detallada: [i18n-labels-prompts.md](../app/i18n-labels-prompts.md).
 
 ---

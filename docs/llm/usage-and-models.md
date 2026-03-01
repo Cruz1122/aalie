@@ -2,7 +2,7 @@
 
 ## Descripción General
 
-El sistema utiliza modelos de lenguaje grande (LLM) de Google Gemini para diversas tareas relacionadas con el análisis de algoritmos. La configuración está centralizada y cada "job" (tarea) tiene asignado un modelo específico optimizado para ese propósito.
+El sistema usa endpoints LLM en `apps/web/src/app/api/llm/*` con configuración centralizada por variables de entorno. Cada job tiene un modelo asignado y parámetros de inferencia definidos en `llm-config.ts`.
 
 ## Configuración Centralizada
 
@@ -15,7 +15,6 @@ export type LLMJob =
   | "classify"        // Clasificación de intención para el chat
   | "parser_assist"   // Asistencia para generar/corregir código
   | "general"         // Chatbot general
-  | "simplifier"      // Simplificación matemática
   | "repair"          // Reparación de código con errores
   | "compare";        // Comparación de análisis
 
@@ -23,7 +22,6 @@ export const GEMINI_MODELS = {
   classify: getEnvOrDefault("LLM_MODEL_CLASSIFY", DEFAULT_GEMINI_MODELS.classify),
   parser_assist: getEnvOrDefault("LLM_MODEL_PARSER_ASSIST", DEFAULT_GEMINI_MODELS.parser_assist),
   general: getEnvOrDefault("LLM_MODEL_GENERAL", DEFAULT_GEMINI_MODELS.general),
-  simplifier: getEnvOrDefault("LLM_MODEL_SIMPLIFIER", DEFAULT_GEMINI_MODELS.simplifier),
   repair: getEnvOrDefault("LLM_MODEL_REPAIR", DEFAULT_GEMINI_MODELS.repair),
   compare: getEnvOrDefault("LLM_MODEL_COMPARE", DEFAULT_GEMINI_MODELS.compare),
 };
@@ -58,6 +56,16 @@ body: JSON.stringify({
 Para más información sobre internacionalización, labels de backend y el flujo completo de locale, ver [Internacionalización, Labels y Prompts](../app/i18n-labels-prompts.md).
 
 ## Jobs Disponibles
+
+| Job | Propósito | Endpoint | Modelo (env) |
+|-----|-----------|----------|--------------|
+| `classify` | Clasificación de intención del chat (`parser_assist` vs `general`) | `POST /api/llm` | `LLM_MODEL_CLASSIFY` |
+| `parser_assist` | Generación/corrección de pseudocódigo | `POST /api/llm` | `LLM_MODEL_PARSER_ASSIST` |
+| `general` | Respuesta conversacional general | `POST /api/llm` | `LLM_MODEL_GENERAL` |
+| `repair` | Reparación de código con errores | `POST /api/llm` | `LLM_MODEL_REPAIR` |
+| `compare` | Comparación sistema vs LLM | `POST /api/llm` | `LLM_MODEL_COMPARE` |
+| `recursion_diagram` | Diagrama de recursión | `POST /api/llm/recursion-diagram` | `LLM_MODEL_RECURSION_DIAGRAM` |
+| `generate_diagram` | Diagrama de flujo/trace | `POST /api/llm/generate-diagram` | `LLM_MODEL_GENERATE_DIAGRAM` |
 
 ### 0. Classify (intención del chat)
 
@@ -143,34 +151,7 @@ const response = await fetch("/api/llm", {
 
 **Endpoint**: `POST /api/llm` (con `job: "general"`)
 
-### 3. Simplifier
-
-**Propósito**: Simplificar expresiones matemáticas de análisis
-
-**Modelo**: `gemini-2.5-flash`
-
-**Configuración**:
-- `maxTokens`: 8000
-- `temperature`: 0 (completamente determinista)
-
-**Uso**:
-```typescript
-// Usado internamente por el backend durante análisis
-
-// El backend llama a este job para simplificar sumatorias
-// y expresiones algebraicas complejas
-```
-
-**Características**:
-- Simplifica sumatorias a formas cerradas
-- Elimina paréntesis innecesarios
-- Agrupa términos similares
-- Genera forma polinómica T(n) = an² + bn + c
-- Respeta notación original (n vs N)
-
-**Uso**: Interno del backend, no expuesto directamente al frontend
-
-### 4. Repair
+### 3. Repair
 
 **Propósito**: Reparar código con errores de sintaxis
 
@@ -215,7 +196,7 @@ const response = await fetch("/api/llm", {
 }
 ```
 
-### 5. Compare
+### 4. Compare
 
 **Propósito**: Comparar análisis del sistema con análisis del LLM
 
@@ -269,7 +250,7 @@ const response = await fetch('/api/llm', {
 
 **Documentación**: [LLM Comparison](../app/llm-comparison.md)
 
-### 6. Recursion Diagram (Adicional)
+### 5. Recursion Diagram (Adicional)
 
 **Propósito**: Generar diagramas de árbol de recursión
 
@@ -305,7 +286,7 @@ const response = await fetch("/api/llm/recursion-diagram", {
 
 ### Gemini 2.5 Flash
 
-**Usado en**: `parser_assist`, `general`, `simplifier`, `repair`
+**Usado en**: `parser_assist`, `general`, `repair`
 
 **Características**:
 - Rápido y eficiente
@@ -359,7 +340,7 @@ const response = await fetch("/api/llm/recursion-diagram", {
 **Request**:
 ```typescript
 {
-  "job": "classify" | "parser_assist" | "general" | "simplifier" | "repair" | "compare",
+  "job": "classify" | "parser_assist" | "general" | "repair" | "compare",
   "prompt": string,
   "chatHistory"?: Array<{ role: string; content: string }>,
   "apiKey"?: string,
@@ -480,7 +461,6 @@ GEMINI_ENDPOINT_BASE=https://generativelanguage.googleapis.com/v1beta/models
 LLM_MODEL_CLASSIFY=gemini-2.0-flash-lite
 LLM_MODEL_PARSER_ASSIST=gemini-2.5-flash
 LLM_MODEL_GENERAL=gemini-2.5-flash
-LLM_MODEL_SIMPLIFIER=gemini-2.5-flash
 LLM_MODEL_REPAIR=gemini-2.5-flash
 LLM_MODEL_COMPARE=gemini-2.5-pro
 LLM_MODEL_RECURSION_DIAGRAM=gemini-2.0-flash
@@ -537,7 +517,7 @@ const metrics = {
 ### Cache de Resultados
 
 ```typescript
-// Cache en memoria para resultados de simplifier
+// Cache en memoria para resultados de jobs LLM
 const cache = new Map<string, CachedResult>();
 
 export async function callGeminiWithCache(
@@ -597,7 +577,6 @@ export function checkRateLimit(apiKey: string): boolean {
 |-----|--------|-----|----------|
 | `parser_assist` | gemini-2.5-flash | Generación de código | `/api/llm` |
 | `general` | gemini-2.5-flash | Chatbot general | `/api/llm` |
-| `simplifier` | gemini-2.5-flash | Simplificación matemática | Interno backend |
 | `repair` | gemini-2.5-flash | Reparación de código | `/api/llm` |
 | `compare` | gemini-2.5-pro | Comparación de análisis | `/api/llm` |
 | (recursion_diagram) | gemini-2.0-flash | Diagramas recursivos | `/api/llm/recursion-diagram` |
@@ -613,3 +592,4 @@ La clasificación determinista de algoritmos en backend Python (`/classify`) sig
 - [Pseudocode Tracking](../app/pseudocode-tracking.md) - Seguimiento de ejecución
 - [Request Flow](../development/request-flow.md) - Flujo de peticiones
 - [Google Gemini API Documentation](https://ai.google.dev/docs)
+- [Internacionalización, Labels y Prompts](../development/i18n-labels-prompts.md)
