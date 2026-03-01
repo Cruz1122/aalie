@@ -9,7 +9,7 @@ Author: @Cruz1122
 import pytest
 from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import (
-    assert_worst_complexity,
+    assert_all_cases_complexity,
     get_totals,
 )
 
@@ -66,10 +66,10 @@ class TestComplexAlgorithms:
     """Tests para algoritmos complejos con casos raros."""
 
     def test_nested_loops_variable_limits_quadratic(self):
-        """Bucles FOR i=1..n, j=i..n (triangular) deben dar Θ(n²)."""
+        """Bucles FOR i=1..n, j=i..n (triangular): validar todos los casos Θ(n²)."""
         result = analyze_algorithm(NESTED_LOOPS_VARIABLE_LIMITS, mode="all")
         assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
-        assert_worst_complexity(result, "quadratic", "Triangular loops")
+        assert_all_cases_complexity(result, "quadratic", name="Triangular loops")
 
     def test_nested_loops_variable_limits_all_cases(self):
         """Triangular loops: worst, best y avg deben analizarse correctamente."""
@@ -81,10 +81,10 @@ class TestComplexAlgorithms:
         assert "T_open" in totals and len(totals["T_open"]) > 0
 
     def test_complex_while_linear(self):
-        """WHILE con condición compuesta debe dar O(n)."""
+        """WHILE con condición compuesta: validar todos los casos O(n)."""
         result = analyze_algorithm(COMPLEX_WHILE, mode="all")
         assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
-        assert_worst_complexity(result, "linear", "Complex WHILE")
+        assert_all_cases_complexity(result, "linear", name="Complex WHILE")
 
     def test_complex_while_all_cases(self):
         """Complex WHILE: worst, best y avg deben analizarse correctamente."""
@@ -98,10 +98,10 @@ class TestComplexAlgorithms:
                 assert data.get("ok") and "byLine" in data and "totals" in data
 
     def test_complex_indexed_array_quadratic(self):
-        """Doble FOR rectangular debe dar Θ(n²)."""
+        """Doble FOR rectangular: validar todos los casos Θ(n²)."""
         result = analyze_algorithm(COMPLEX_INDEXED_ARRAY, mode="all")
         assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
-        assert_worst_complexity(result, "quadratic", "Complex indexed array")
+        assert_all_cases_complexity(result, "quadratic", name="Complex indexed array")
 
     def test_complex_indexed_array_all_cases(self):
         """Complex indexed: worst, best y avg deben analizarse correctamente."""
@@ -112,10 +112,10 @@ class TestComplexAlgorithms:
         assert "T_open" in totals
 
     def test_nested_if_in_for_linear(self):
-        """FOR con IF anidados debe dar O(n)."""
+        """FOR con IF anidados: validar todos los casos O(n)."""
         result = analyze_algorithm(NESTED_IF_IN_FOR, mode="all")
         assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
-        assert_worst_complexity(result, "linear", "Nested IF in FOR")
+        assert_all_cases_complexity(result, "linear", name="Nested IF in FOR")
 
     def test_nested_if_in_for_all_cases(self):
         """Nested IF in FOR: worst, best y avg deben analizarse correctamente."""

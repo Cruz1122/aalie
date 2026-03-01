@@ -9,7 +9,7 @@ Author: @Cruz1122
 import pytest
 from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import (
-    assert_worst_complexity,
+    assert_all_cases_complexity,
     get_by_line,
 )
 
@@ -96,12 +96,11 @@ class TestWhileLoopNotationBounded:
             )
 
     def test_bubble_sort_mejorado_not_constant(self):
-        """Bubble sort mejorado worst case debe ser al menos O(n) (no O(1))."""
+        """Bubble sort mejorado: validar todos los casos al menos O(n) (no O(1))."""
         result = analyze_algorithm(BUBBLE_SORT_MEJORADO, mode="all")
         assert result.get("ok", False)
         # El analizador puede devolver O(n) o O(n²) según cómo modele el while bounded.
-        # Lo importante: no debe ser O(1) (el bucle interno FOR es O(n)).
-        assert_worst_complexity(result, "linear", "Bubble Sort Mejorado")
+        assert_all_cases_complexity(result, "linear", name="Bubble Sort Mejorado")
 
     def test_while_flag_kill_bounded(self):
         """WHILE flag=true con flag <- false (must) → bounded."""

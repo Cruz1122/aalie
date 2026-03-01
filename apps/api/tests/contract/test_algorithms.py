@@ -9,7 +9,7 @@ Author: @Cruz1122
 import pytest
 from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import (
-    assert_worst_complexity,
+    assert_all_cases_complexity,
     get_totals,
     get_by_line,
 )
@@ -58,10 +58,12 @@ class TestAlgorithms:
         assert isinstance(t_open, str) and len(t_open) > 0
 
     def test_insertion_sort_quadratic_worst(self):
-        """Insertion sort worst case debe ser Θ(n²)."""
+        """Insertion sort: validar todos los casos (worst/avg Θ(n²), best Θ(n) si aplica)."""
         result = analyze_algorithm(INSERTION_SORT, mode="all")
         assert result.get("ok", False)
-        assert_worst_complexity(result, "quadratic", "Insertion Sort")
+        assert_all_cases_complexity(
+            result, "quadratic", expected_best="linear", expected_avg="quadratic", name="Insertion Sort"
+        )
 
     def test_insertion_sort_by_line_fields(self):
         """Todas las filas de byLine deben tener count_raw, count; ck única; ops cuando > 1."""
@@ -92,10 +94,10 @@ class TestAlgorithms:
         assert "totals" in worst and "T_open" in worst["totals"]
 
     def test_bubble_sort_quadratic_worst(self):
-        """Bubble sort worst case debe ser Θ(n²)."""
+        """Bubble sort: validar todos los casos (worst, best, avg)."""
         result = analyze_algorithm(BUBBLE_SORT, mode="all")
         assert result.get("ok", False)
-        assert_worst_complexity(result, "quadratic", "Bubble Sort")
+        assert_all_cases_complexity(result, "quadratic", name="Bubble Sort")
 
     def test_bubble_sort_no_unknown_in_count(self):
         """Ninguna fila debe tener count 'unknown' (salvo unbounded)."""

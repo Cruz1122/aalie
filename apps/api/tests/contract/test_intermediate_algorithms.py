@@ -9,7 +9,7 @@ Author: @Cruz1122
 import pytest
 from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import (
-    assert_worst_complexity,
+    assert_all_cases_complexity,
     get_totals,
 )
 
@@ -49,10 +49,10 @@ class TestIntermediateAlgorithms:
     """Tests para algoritmos de complejidad intermedia."""
 
     def test_selection_sort_quadratic_worst(self):
-        """Selection sort worst case debe ser Θ(n²)."""
+        """Selection sort: validar todos los casos (worst, best, avg)."""
         result = analyze_algorithm(SELECTION_SORT, mode="all")
         assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
-        assert_worst_complexity(result, "quadratic", "Selection Sort")
+        assert_all_cases_complexity(result, "quadratic", name="Selection Sort")
 
     def test_selection_sort_all_cases(self):
         """Selection sort: worst, best y avg deben analizarse correctamente."""
@@ -68,10 +68,10 @@ class TestIntermediateAlgorithms:
                 assert "expectedRuns" in row
 
     def test_matrix_multiplication_cubic_worst(self):
-        """Multiplicación de matrices worst case debe ser Θ(n³)."""
+        """Multiplicación de matrices: validar todos los casos Θ(n³)."""
         result = analyze_algorithm(MATRIX_MULTIPLICATION, mode="all")
         assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
-        assert_worst_complexity(result, "cubic", "Matrix Multiplication")
+        assert_all_cases_complexity(result, "cubic", name="Matrix Multiplication")
 
     def test_matrix_multiplication_all_cases(self):
         """Matrix mult: worst, best y avg deben analizarse correctamente."""

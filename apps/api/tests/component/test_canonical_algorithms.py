@@ -5,7 +5,7 @@ Carga pseudocódigo desde _support/algorithms/ y valida con _support.assertions.
 import pytest
 from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import (
-    assert_complexity_class,
+    assert_all_cases_complexity,
     assert_has_asymptotic_notation,
     assert_no_unknown_counts,
     get_totals,
@@ -47,8 +47,8 @@ class TestCanonicalAlgorithms:
         source = load_algorithm(family, name)
         result = analyze_algorithm(source, mode="all")
         assert result.get("ok"), f"{family}/{name}: analizador falló: {result.get('errors', [])}"
-        # Assert
-        assert_complexity_class(result, "worst", expected, name=f"{family}/{name}")
+        # Assert: validar todos los casos (worst, best, avg)
+        assert_all_cases_complexity(result, expected, name=f"{family}/{name}")
 
     @pytest.mark.parametrize("family,name,expected", CANONICAL[:6], ids=[f[1] for f in CANONICAL[:6]])
     def test_canonical_has_asymptotic_notation(self, family, name, expected):

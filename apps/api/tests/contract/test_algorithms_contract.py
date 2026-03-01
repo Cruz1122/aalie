@@ -4,7 +4,7 @@ Para nightly o ejecución completa; no obligatorio en daily gate.
 """
 import pytest
 from app.modules.analysis.service import analyze_algorithm
-from tests._support.assertions import assert_complexity_class
+from tests._support.assertions import assert_complexity_class, assert_case_complexity
 from tests._support.loaders import load_algorithm, load_spec
 
 # Lista (familia, nombre) de algoritmos con spec en expectations/
@@ -20,9 +20,12 @@ def test_contract_algorithm_analyzes_and_matches_spec(family, name):
     # Arrange
     source = load_algorithm(family, name)
     spec = load_spec(family, name)
-    expected_worst = spec.get("worst", "linear")
     # Act
     result = analyze_algorithm(source, mode="all")
-    # Assert
+    # Assert: validar worst; best/avg solo cuando la spec los define (el analizador puede no distinguirlos)
     assert result.get("ok"), result.get("errors", [])
-    assert_complexity_class(result, "worst", expected_worst, name=f"{family}/{name}")
+    assert_complexity_class(result, "worst", spec.get("worst", "linear"), name=f"{family}/{name}")
+    if "best" in spec:
+        assert_case_complexity(result, "best", spec["best"], name=f"{family}/{name}")
+    if "avg" in spec:
+        assert_case_complexity(result, "avg", spec["avg"], name=f"{family}/{name}")

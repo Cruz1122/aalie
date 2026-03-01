@@ -678,6 +678,20 @@ class RecursiveAnalyzer(BaseAnalyzer):
                         "success": False,
                         "reason": "No se pudieron determinar los tamaños de los subproblemas"
                     }
+        else:
+            # Si la llamada recursiva está dentro de un FOR (generación de subconjuntos), forzar modelo 2^n
+            if self._recursive_call_inside_for(proc_def, recursive_calls):
+                has_heuristic = any(s.get("heuristic") == "recursive_call_inside_for" for s in subproblem_sizes)
+                if not has_heuristic:
+                    # Override: pudo haberse clasificado como divide_conquer; forzar subtraction + heuristic
+                    subproblem_sizes = [
+                        {"type": "subtraction", "pattern": "n-1", "factor": 1, "heuristic": "recursive_call_inside_for"}
+                    ]
+                else:
+                    for s in subproblem_sizes:
+                        if s.get("type") == "subtraction":
+                            s["heuristic"] = "recursive_call_inside_for"
+                            break
         
         # 3. Verificar que todos los subproblemas tienen el mismo tamaño relativo
         # Distinguir entre decrease-and-conquer, divide-and-conquer y solo MOD (Euclides)
@@ -787,6 +801,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
             if not use_iteration:
                 # Solo considerar Árbol de Recursión si no aplica Ecuación Característica ni Iteración
                 use_recursion_tree = self._detect_recursion_tree_method(proc_def, recursive_calls, a, b)
+
+        # Recursión dentro de FOR (generación de subconjuntos): no usar iteración ni master → usar árbol → Θ(2^n)
+        has_recursive_call_inside_for = any(
+            s.get("heuristic") == "recursive_call_inside_for" for s in subproblem_sizes
+        )
+        if not use_characteristic and has_recursive_call_inside_for:
+            use_iteration = False
+            use_recursion_tree = True
         
         # Solo MOD (Euclides): forzar método de iteración → Θ(log n)
         if only_mod:
@@ -798,54 +820,71 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Simplificar b para mostrar
         b_str = self._simplify_number_latex(b)
         quicksort_worst_override = False
+
+        # Cuando hay substracción, construir una sola vez la forma lineal para reutilizar en iteración o recursion_tree (branching subset)
+        recurrence_form_linear = None
+        if has_subtraction:
+            from collections import Counter
+            term_counts_linear = Counter()
+            for s in subproblem_sizes:
+                if s.get("type") == "subtraction":
+                    p = s.get("pattern", "n-1")
+                    term_counts_linear[p] = term_counts_linear.get(p, 0) + 1
+            if term_counts_linear:
+                f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
+                if len(term_counts_linear) > 1:
+                    terms_latex = " + ".join([f"T({t})" for t in sorted(term_counts_linear.keys(), reverse=True)])
+                    recurrence_form_linear = f"T(n) = {terms_latex} + {f_n_display}"
+                else:
+                    pattern, count = list(term_counts_linear.items())[0]
+                    if count > 1:
+                        recurrence_form_linear = f"T(n) = {count} \\cdot T({pattern}) + {f_n_display}"
+                    else:
+                        recurrence_form_linear = f"T(n) = T({pattern}) + {f_n_display}"
         
         # Para ecuación característica e iteración, usar desplazamientos constantes (n-1, n-2, etc.)
         if use_characteristic or use_iteration:
-            # Para método de iteración o ecuación característica, construir la forma de la recurrencia
-            # Contar todas las llamadas recursivas por tamaño (puede haber múltiples del mismo tamaño)
-            from collections import Counter
-            term_counts = Counter()
-            for call in recursive_calls:
-                subproblem_info = self._analyze_subproblem_type(call, proc_def)
-                if subproblem_info and subproblem_info["type"] == "subtraction":
-                    pattern = subproblem_info.get("pattern", "n-1")
-                    term_counts[pattern] += 1
-            
-            if len(term_counts) > 1:
-                # Caso especial: múltiples términos recursivos DIFERENTES (ej: Fibonacci T(n) = T(n-1) + T(n-2))
-                # Construir forma completa: T(n) = T(n-1) + T(n-2) + f(n)
-                terms_latex = " + ".join([f"T({term})" for term in sorted(term_counts.keys(), reverse=True)])
-                f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
-                recurrence_form = f"T(n) = {terms_latex} + {f_n_display}"
-            elif len(term_counts) == 1:
-                # Caso normal: un solo término recursivo (puede aparecer múltiples veces)
-                pattern, count = list(term_counts.items())[0]
-                # Reemplazar f(n) con el valor real calculado
-                f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
-                if count > 1:
-                    # Múltiples llamadas del mismo tamaño (ej: Torres de Hanoi T(n) = 2T(n-1) + 1)
-                    recurrence_form = f"T(n) = {count} \\cdot T({pattern}) + {f_n_display}"
-                else:
-                    recurrence_form = f"T(n) = T({pattern}) + {f_n_display}"
+            # Usar forma lineal ya construida si existe; si no, construir desde recursive_calls
+            if recurrence_form_linear is not None:
+                recurrence_form = recurrence_form_linear
             else:
-                # Fallback
-                subproblem_info = self._analyze_subproblem_type(recursive_calls[0], proc_def)
-                f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
-                if subproblem_info:
-                    pattern = subproblem_info.get("pattern", "n-1")
-                    recurrence_form = f"T(n) = T({pattern}) + {f_n_display}"
+                from collections import Counter
+                term_counts = Counter()
+                for call in recursive_calls:
+                    subproblem_info = self._analyze_subproblem_type(call, proc_def)
+                    if subproblem_info and subproblem_info["type"] == "subtraction":
+                        pattern = subproblem_info.get("pattern", "n-1")
+                        term_counts[pattern] += 1
+                if len(term_counts) > 1:
+                    terms_latex = " + ".join([f"T({term})" for term in sorted(term_counts.keys(), reverse=True)])
+                    f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
+                    recurrence_form = f"T(n) = {terms_latex} + {f_n_display}"
+                elif len(term_counts) == 1:
+                    pattern, count = list(term_counts.items())[0]
+                    f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
+                    if count > 1:
+                        recurrence_form = f"T(n) = {count} \\cdot T({pattern}) + {f_n_display}"
+                    else:
+                        recurrence_form = f"T(n) = T({pattern}) + {f_n_display}"
                 else:
-                    recurrence_form = f"T(n) = T(n-1) + {f_n_display}"
+                    subproblem_info = self._analyze_subproblem_type(recursive_calls[0], proc_def)
+                    f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
+                    if subproblem_info:
+                        pattern = subproblem_info.get("pattern", "n-1")
+                        recurrence_form = f"T(n) = T({pattern}) + {f_n_display}"
+                    else:
+                        recurrence_form = f"T(n) = T(n-1) + {f_n_display}"
         else:
             # Para divide-and-conquer (Teorema Maestro o Árbol de Recursión)
-            # Heurística: QuickSort con pivot=izq → siempre worst case T(n)=T(n-1)+n (Θ(n²))
-            # Aplica a worst, best y avg porque el pivot fijo hace que todas las ejecuciones sean cuadráticas.
+            # Recursión dentro de FOR (branching subset): usar forma lineal ya construida
             quicksort_worst_override = (
                 use_recursion_tree
                 and preferred_method == "recursion_tree"
                 and self._detect_quicksort_pivot_izq(proc_def)
             )
-            if quicksort_worst_override:
+            if has_recursive_call_inside_for and recurrence_form_linear is not None:
+                recurrence_form = recurrence_form_linear
+            elif quicksort_worst_override:
                 recurrence_form = "T(n) = T(n-1) + n"
             else:
                 recurrence_form = f"T(n) = {a} \\cdot T(n/{b_str}) + f(n)"
@@ -999,7 +1038,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     recurrence["subproblem_type"] = "mod"
         else:
             # Para otros métodos (master, recursion_tree), usar a, b, f (divide_conquer)
-            # O linear_shift si es quicksort worst case override
+            # O linear_shift si es quicksort worst case override o recursión dentro de FOR (branching subset)
             if quicksort_worst_override:
                 recurrence = {
                     "type": "linear_shift",
@@ -1012,6 +1051,21 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "applicable": True,
                     "notes": ["QuickSort con pivot fijo en izq: worst case T(n)=T(n-1)+n"],
                     "method": method
+                }
+            elif method == "recursion_tree" and has_recursive_call_inside_for:
+                f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
+                recurrence = {
+                    "type": "linear_shift",
+                    "form": recurrence_form,
+                    "order": 1,
+                    "shifts": [1],
+                    "coefficients": [1],
+                    "g(n)": f_n_display,
+                    "n0": n0,
+                    "applicable": True,
+                    "notes": ["Recursión dentro de FOR (generación de subconjuntos), análisis por árbol de recursión"],
+                    "method": method,
+                    "branching_subset": True
                 }
             else:
                 recurrence = {
@@ -6100,11 +6154,50 @@ FIN FUNCIÓN"""
         
         self.proof_steps.append({"id": "tree_start", "text": "\\text{Aplicando Método de Árbol de Recursión}"})
         
-        # Caso especial: T(n)=T(n-1)+n (ej: QuickSort worst case con pivot=izq)
+        # Caso especial: linear_shift (QuickSort T(n)=T(n-1)+n → n², o recursión en FOR → 2^n)
         recurrence_type = self.recurrence.get("type", "divide_conquer")
         if recurrence_type == "linear_shift":
             g_n = self.recurrence.get("g(n)", "0")
             n0 = self.recurrence.get("n0", 1)
+            # Prioridad: branching subset (generación de subconjuntos) → 2^n antes que QuickSort → n²
+            if self.recurrence.get("branching_subset"):
+                recurrence_form = self.recurrence.get("form", "T(n) = T(n-1) + \\Theta(1)")
+                self.proof_steps.append({"id": "tree_extract", "text": f"\\text{{Recurrencia identificada }} {recurrence_form}"})
+                self.proof_steps.append({
+                    "id": "step1_note",
+                    "text": "\\text{Nota: Recursión dentro de FOR (generación de subconjuntos). En cada nivel hay múltiples ramas; el árbol tiene } O(2^n) \\text{ nodos.}"
+                })
+                self.proof_steps.append({
+                    "id": "step2",
+                    "text": "\\text{Paso 2: Análisis del árbol de recursión} \\\\ \\text{En cada llamada el FOR genera varias ramas recursivas}"
+                })
+                self.proof_steps.append({
+                    "id": "step3",
+                    "text": "\\text{Paso 3: Número de nodos} \\\\ \\text{En el nivel } i \\text{, hay en el orden de } 2^i \\text{ nodos}"
+                })
+                self.proof_steps.append({
+                    "id": "step4",
+                    "text": "\\text{Paso 4: Altura del árbol} \\\\ \\text{La altura es } \\Theta(n)"
+                })
+                self.proof_steps.append({
+                    "id": "step5",
+                    "text": "\\text{Paso 5: Costo total} \\\\ \\sum_{i=0}^{n} 2^i = 2^{n+1} - 1 = \\Theta(2^n)"
+                })
+                theta = "2^n"
+                recursion_tree = {
+                    "method": "recursion_tree",
+                    "levels": [
+                        {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "1", "total_cost_latex": "1"},
+                        {"level": 1, "num_nodes_latex": "n", "subproblem_size_latex": "n-1", "cost_per_node_latex": "1", "total_cost_latex": "n"},
+                    ],
+                    "height": "n",
+                    "summation": {"expression": "\\sum_{i=0}^{n} 2^i = 2^{n+1} - 1", "theta": theta},
+                    "dominating_level": {"reason": "\\text{Ramificación: número de nodos } \\Theta(2^n)"},
+                    "table_by_levels": [],
+                    "theta": f"\\Theta({theta})"
+                }
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                return {"success": True, "recursion_tree": recursion_tree}
             if g_n and g_n.strip().lower() == "n":
                 # Árbol lineal: nivel i tiene 1 nodo con costo (n-i), total = n+(n-1)+...+1 = n(n+1)/2 = Θ(n²)
                 self.proof_steps.append({
@@ -6121,6 +6214,46 @@ FIN FUNCIÓN"""
                     "height": "n",
                     "summation": {"expression": "\\sum_{i=0}^{n-1} (n-i) = \\frac{n(n+1)}{2}", "theta": theta},
                     "dominating_level": {"reason": "\\text{Suma aritmética } n + (n-1) + \\ldots + 1 = \\Theta(n^2)"},
+                    "table_by_levels": [],
+                    "theta": f"\\Theta({theta})"
+                }
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                return {"success": True, "recursion_tree": recursion_tree}
+
+            # Recursión dentro de FOR (generación de subconjuntos): ramificación → Θ(2^n)
+            if self.recurrence.get("branching_subset"):
+                recurrence_form = self.recurrence.get("form", "T(n) = T(n-1) + \\Theta(1)")
+                self.proof_steps.append({"id": "tree_extract", "text": f"\\text{{Recurrencia identificada }} {recurrence_form}"})
+                self.proof_steps.append({
+                    "id": "step1_note",
+                    "text": "\\text{Nota: Recursión dentro de FOR (generación de subconjuntos). En cada nivel hay múltiples ramas; el árbol tiene } O(2^n) \\text{ nodos.}"
+                })
+                self.proof_steps.append({
+                    "id": "step2",
+                    "text": "\\text{Paso 2: Análisis del árbol de recursión} \\\\ \\text{En cada llamada el FOR genera varias ramas recursivas}"
+                })
+                self.proof_steps.append({
+                    "id": "step3",
+                    "text": "\\text{Paso 3: Número de nodos} \\\\ \\text{En el nivel } i \\text{, hay en el orden de } 2^i \\text{ nodos}"
+                })
+                self.proof_steps.append({
+                    "id": "step4",
+                    "text": "\\text{Paso 4: Altura del árbol} \\\\ \\text{La altura es } \\Theta(n)"
+                })
+                self.proof_steps.append({
+                    "id": "step5",
+                    "text": "\\text{Paso 5: Costo total} \\\\ \\sum_{i=0}^{n} 2^i = 2^{n+1} - 1 = \\Theta(2^n)"
+                })
+                theta = "2^n"
+                recursion_tree = {
+                    "method": "recursion_tree",
+                    "levels": [
+                        {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "1", "total_cost_latex": "1"},
+                        {"level": 1, "num_nodes_latex": "n", "subproblem_size_latex": "n-1", "cost_per_node_latex": "1", "total_cost_latex": "n"},
+                    ],
+                    "height": "n",
+                    "summation": {"expression": "\\sum_{i=0}^{n} 2^i = 2^{n+1} - 1", "theta": theta},
+                    "dominating_level": {"reason": "\\text{Ramificación: número de nodos } \\Theta(2^n)"},
                     "table_by_levels": [],
                     "theta": f"\\Theta({theta})"
                 }

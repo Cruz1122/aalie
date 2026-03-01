@@ -383,13 +383,13 @@ END
 """
 
     def test_linear_search_worst_linear(self):
-        """Búsqueda lineal worst case debe ser O(n)."""
+        """Búsqueda lineal: validar todos los casos (worst, best, avg)."""
         from app.modules.analysis.service import analyze_algorithm
-        from tests._support.assertions import assert_worst_complexity
+        from tests._support.assertions import assert_all_cases_complexity
 
         result = analyze_algorithm(self.LINEAR_SEARCH, mode="all")
         assert result.get("ok", False)
-        assert_worst_complexity(result, "linear", "Linear Search")
+        assert_all_cases_complexity(result, "linear", name="Linear Search")
 
     def test_linear_search_avg_has_expected_runs(self):
         """Búsqueda lineal avg debe tener expectedRuns y A_of_n."""
@@ -404,40 +404,40 @@ END
             assert "A_of_n" in avg.get("totals", {})
 
     def test_factorial_linear(self):
-        """Factorial iterativo debe ser O(n)."""
+        """Factorial iterativo: validar todos los casos O(n)."""
         from app.modules.analysis.service import analyze_algorithm
-        from tests._support.assertions import assert_worst_complexity
+        from tests._support.assertions import assert_all_cases_complexity
 
         result = analyze_algorithm(self.FACTORIAL, mode="all")
         assert result.get("ok", False)
-        assert_worst_complexity(result, "linear", "Factorial")
+        assert_all_cases_complexity(result, "linear", name="Factorial")
 
     def test_array_sum_linear(self):
-        """Suma de array debe ser O(n)."""
+        """Suma de array: validar todos los casos O(n)."""
         from app.modules.analysis.service import analyze_algorithm
-        from tests._support.assertions import assert_worst_complexity
+        from tests._support.assertions import assert_all_cases_complexity
 
         result = analyze_algorithm(self.ARRAY_SUM, mode="all")
         assert result.get("ok", False)
-        assert_worst_complexity(result, "linear", "Array Sum")
+        assert_all_cases_complexity(result, "linear", name="Array Sum")
 
     def test_array_max_linear(self):
-        """Máximo de array debe ser O(n)."""
+        """Máximo de array: validar todos los casos O(n)."""
         from app.modules.analysis.service import analyze_algorithm
-        from tests._support.assertions import assert_worst_complexity
+        from tests._support.assertions import assert_all_cases_complexity
 
         result = analyze_algorithm(self.ARRAY_MAX, mode="all")
         assert result.get("ok", False)
-        assert_worst_complexity(result, "linear", "Array Max")
+        assert_all_cases_complexity(result, "linear", name="Array Max")
 
     def test_binary_search_iterative_log(self):
-        """Búsqueda binaria iterativa debe ser O(log n)."""
+        """Búsqueda binaria iterativa: validar todos los casos O(log n)."""
         from app.modules.analysis.service import analyze_algorithm
-        from tests._support.assertions import assert_worst_complexity
+        from tests._support.assertions import assert_all_cases_complexity
 
         result = analyze_algorithm(self.BINARY_SEARCH_ITERATIVE, mode="all")
         assert result.get("ok", False)
-        assert_worst_complexity(result, "log", "Binary Search")
+        assert_all_cases_complexity(result, "log", name="Binary Search")
 
     def test_array_sum_all_cases_structure(self):
         """Suma de array: worst, best y avg deben tener estructura correcta."""

@@ -9,6 +9,7 @@ import pytest
 from app.modules.analysis.analyzers.recursive import RecursiveAnalyzer
 from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import (
+    assert_all_cases_complexity,
     get_notation_from_totals,
     notation_has_complexity,
 )
@@ -46,7 +47,7 @@ class TestRecursiveAlgorithmsPseudocode:
     """Tests auténticos con pseudocode para algoritmos recursivos."""
 
     def test_merge_sort_theta_n_log_n(self):
-        """Merge sort debe dar Θ(n) o Θ(n log n) vía pipeline completo."""
+        """Merge sort debe dar Θ(n log n) y validar todos los casos."""
         result = analyze_algorithm(MERGE_SORT_PSEUDOCODE, mode="all", preferred_method="master")
         assert result.get("ok"), (
             f"Parser/RecursiveAnalyzer debe soportar merge sort: {result.get('errors', [])}"
@@ -57,9 +58,10 @@ class TestRecursiveAlgorithmsPseudocode:
         theta = master.get("theta", "") or totals.get("big_theta", "") or totals.get("big_o", "")
         # Idealmente Θ(n log n); si no se captura el costo del merge, puede dar Θ(n)
         assert "n" in theta.lower(), f"Merge sort debe contener n: theta={theta}"
+        assert_all_cases_complexity(result, "nlogn", name="Merge Sort")
 
     def test_binary_search_recursive_theta_log_n(self):
-        """Búsqueda binaria recursiva debe dar Θ(log n)."""
+        """Búsqueda binaria recursiva debe dar Θ(log n) y validar todos los casos."""
         result = analyze_algorithm(BINARY_SEARCH_RECURSIVE_PSEUDOCODE, mode="all")
         assert result.get("ok"), (
             f"Parser/RecursiveAnalyzer debe soportar búsqueda binaria: {result.get('errors', [])}"
@@ -69,6 +71,9 @@ class TestRecursiveAlgorithmsPseudocode:
         theta = get_notation_from_totals(totals)
         assert notation_has_complexity(theta, "log"), (
             f"Binary search recursivo debe ser Θ(log n): {theta}"
+        )
+        assert_all_cases_complexity(
+            result, "log", expected_best="constant", name="Binary search rec"
         )
 
 
