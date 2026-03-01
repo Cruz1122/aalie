@@ -699,7 +699,7 @@ export default function ExamplesPage() {
   const [analyzingExampleId, setAnalyzingExampleId] = useState<number | null>(
     null,
   );
-  const { state: analysisState } = useAnalysisProgressContext();
+  useAnalysisProgressContext();
   const { runAnalysis } = useRunAnalysis({
     onComplete: () => setAnalyzingExampleId(null),
   });
