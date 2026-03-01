@@ -9,19 +9,38 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Added
 
-- Tests de benchmark para motor de análisis (test_engine_benchmark.py): 40 tests (20 iterativos + 20 recursivos) que verifican worst, best y avg
-- Fixture algorithm_expectations: assert_case_complexity, assert_all_cases_complexity, get_notation_from_totals para validar worst/best/avg
+### Fixed
 
 ### Changed
 
+## [1.1.5]
+
+### Added
+
+- Scripts en el proyecto para lanzar tests (API, contrato, cobertura, etc.) y herramienta MCP para ejecutarlos; convenciones y documentación actualizadas.
+- Animación suave al cambiar entre modo AALIE y modo manual en el selector.
+- Tests que comprueban peor caso, mejor caso y caso promedio en algoritmos de estrés, contrato, canónicos y otros; cada algoritmo puede definir qué complejidad se espera en cada caso.
+- Motor: algoritmos con recursión dentro de un bucle (por ejemplo generación de subconjuntos) se analizan con árbol de recursión y dan la complejidad correcta Θ(2^n).
+- Motor: recurrencias tipo Euclides (MOD) → Θ(log n); recursión dentro de FOR por sustracción.
+- Tests: algoritmos de estrés Prueba1–Prueba7, reestructuración de tests con soporte común (algoritmos, expectativas, aserciones), benchmark de 40 tests y oráculo de aserciones.
+
 ### Fixed
 
-- Fibonacci iterativo con ELSE IF: el ast_builder (packages/grammar) no visitaba el alternate cuando era ifStmt (ELSE IF). Solo usaba block(1), pero ELSE IF produce ifStmt como alternate. Ahora se visita ctx.ifStmt() cuando existe.
-- test_recursive_algorithms: test_binary_search_recursive_theta_log_n usa get_notation_from_totals para obtener theta desde iteration/master/recursion_tree; test_binary_search_case_2 pasa preferred_method="master" para forzar teorema maestro.
-- Motor de análisis: 5 correcciones que permiten quitar xfail de test_engine_benchmark. (1) Hanoi: `_apply_iteration_method` usa coeficiente >1 en linear_shift para T(n)=2T(n-1)+1 → Θ(2^n). (2) Binary search simple: `_calculate_recursive_calls_count` detecta IF THEN RETURN; RETURN implícito → T(n)=T(n/2)+1. (3) Binary search master: `_detect_early_return` y `_has_return_before_recursive_calls` detectan early return A[mitad]=x → best O(1). (4) Find last index: `visitWhile` evita modelo geométrico p=1/2 cuando WHILE AND tiene array y closure bounded → avg Θ(n). (5) Quick sort worst: heurística pivot=izq fuerza T(n)=T(n-1)+n en worst/best/avg para recursion_tree → Θ(n²).
-- Bucles infinitos: kills_guard_must ahora considera guard_desired=False (ej. `ordenado = false` con `ordenado <- true`). Bubble sort mejorado ya no se marca como unbounded cuando la variable de control muta.
+- Tests de complejidad: el mejor caso se comprueba según la teoría (búsqueda lineal, insertion sort, búsqueda binaria, WHILE compuesto); los tests ya no exigen que best sea igual que worst cuando no lo es.
+- Motor: corrección al eliminar índices de bucle (i, j, k) de la expresión de coste final en algoritmos como insertion sort, evitando errores cuando la expresión los arrastraba.
+- Prueba7 y tests de estrés: complejidad exponencial correcta y comprobación en todos los casos cuando hay especificación.
+- Tests de contrato: solo se exige mejor caso o promedio cuando la especificación del algoritmo lo indica.
+- Interfaz: textos de documentación y selector de idioma ya no se desbordan en pantallas pequeñas; cards y modales de documentación contienen bien el contenido; bloques de código con scroll horizontal cuando las líneas son largas.
+- Motor: merge_sort, bucles rectangulares, exponenciación rápida, gramática ELSE IF, Torres de Hanoi, búsqueda binaria, quicksort, bucles infinitos y otros casos corregidos.
+- Loader de análisis: botón cerrar bien colocado en error; Chatbot: campo de mensaje y icono de enviar sin solapamientos.
+
+### Changed
+
+- Botones principales (Ver Guía de Usuario, Ir a AALIE) y pie de página con estilo unificado y mejor comportamiento en móvil.
 
 ### Removed
+
+- docs/test-architecture.md y test-baseline.md (contenido centralizado en tests/README.md); carpeta tests/integration.
 
 ## [1.1.4] - 2026-02-21
 

@@ -776,28 +776,26 @@ export default function ChatBot({
           <div ref={messagesEndRef} />
         </div>
 
-            {/* Input Container */}
+            {/* Input Container: flex para evitar solapamiento con el botón y centrado vertical */}
             <div className="glass-modal-header p-2.5 border-t border-white/10">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="flex-1 min-w-0 relative">
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={t("placeholder")}
-                disabled={isTyping}
-                className="w-full bg-white/5 border border-slate-600/50 rounded-lg pl-2.5 pr-10 py-1.5 text-white placeholder-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
-              />
-              <button
-                onClick={handleSendMessage}
-                disabled={!inputValue.trim() || isTyping}
-                className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/30 text-purple-300 hover:from-purple-500/30 hover:to-blue-500/30 hover:text-purple-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Send size={16} />
-              </button>
-            </div>
+          <div className="flex items-center gap-2 min-w-0 rounded-lg border border-slate-600/50 bg-white/5 focus-within:ring-2 focus-within:ring-purple-500/50 focus-within:border-transparent transition-all">
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={t("placeholder")}
+              disabled={isTyping}
+              className="flex-1 min-w-0 bg-transparent pl-2.5 pr-2 py-2 text-white placeholder-slate-400 text-xs focus:outline-none"
+            />
+            <button
+              onClick={handleSendMessage}
+              disabled={!inputValue.trim() || isTyping}
+              className="flex-shrink-0 p-2 rounded-lg hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-slate-400 hover:text-white"
+            >
+              <Send size={18} className="shrink-0" />
+            </button>
           </div>
             </div>
           </>

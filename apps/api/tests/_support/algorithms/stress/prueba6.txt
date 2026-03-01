@@ -1,0 +1,13 @@
+XXX6(m, n) BEGIN
+  IF (m = 0) THEN BEGIN
+    RETURN n + 1;
+  END
+  ELSE BEGIN
+    IF (n = 0) THEN BEGIN
+      RETURN XXX6(m - 1, 1);
+    END
+    ELSE BEGIN
+      RETURN XXX6(m - 1, XXX6(m, n - 1));
+    END
+  END
+END

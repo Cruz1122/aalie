@@ -1,0 +1,16 @@
+XXX21(n) BEGIN
+  IF (n = 0) THEN BEGIN
+    RETURN 1;
+  END
+  ELSE BEGIN
+    RETURN XXX22(n - 1);
+  END
+END
+XXX22(n) BEGIN
+  IF (n = 0) THEN BEGIN
+    RETURN 0;
+  END
+  ELSE BEGIN
+    RETURN XXX21(n - 1);
+  END
+END

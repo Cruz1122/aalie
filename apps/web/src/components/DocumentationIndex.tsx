@@ -31,8 +31,8 @@ export const DocumentationIndex = ({
   };
 
   return (
-    <aside className="lg:col-span-1">
-      <div className="glass-card p-5 sticky top-4 rounded-xl border border-white/5">
+    <aside className="lg:col-span-1 min-w-0">
+      <div className="glass-card p-5 sticky top-4 rounded-xl border border-white/5 min-w-0 overflow-hidden">
         <div className="flex items-center gap-2 mb-4">
           <span className="material-symbols-outlined text-primary text-xl">
             list
@@ -65,7 +65,7 @@ export const DocumentationIndex = ({
                   />
                 );
               })()}
-              <span className="line-clamp-2">
+              <span className="line-clamp-2 min-w-0 break-words flex-1">
                 {section.titleKey
                   ? t(`sections.${section.titleKey}`)
                   : section.title}

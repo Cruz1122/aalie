@@ -59,15 +59,15 @@ export default function TechnicalDocsPage() {
               onSectionClick={handleSectionClick}
             />
 
-            <div className="lg:col-span-3 space-y-8">
+            <div className="lg:col-span-3 space-y-8 min-w-0">
               {/* Grid de documentación */}
-              <section aria-label="Secciones de documentación técnica">
+              <section aria-label="Secciones de documentación técnica" className="min-w-0">
                 <div className="documentation-grid">
                   {sections.map((section) => (
                     <div
                       key={section.id}
                       id={section.id}
-                      className="scroll-mt-24"
+                      className="scroll-mt-24 min-w-0 overflow-hidden"
                     >
                       <DocumentationCard
                         section={section}
@@ -79,85 +79,85 @@ export default function TechnicalDocsPage() {
               </section>
 
               {/* Documentación Técnica Completa */}
-              <section className="mt-12">
-                <div className="glass-card p-6 lg:p-8 rounded-xl">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
+              <section className="mt-12 min-w-0">
+                <div className="glass-card p-6 lg:p-8 rounded-xl min-w-0 overflow-hidden">
+                  <div className="flex items-center gap-3 mb-6 min-w-0">
+                    <div className="w-12 h-12 shrink-0 bg-primary/20 rounded-full flex items-center justify-center">
                       <span className="material-symbols-outlined text-primary text-2xl">
                         description
                       </span>
                     </div>
-                    <h2 className="text-2xl font-bold text-white">
+                    <h2 className="text-2xl font-bold text-white min-w-0 break-words">
                       {t("fullTitle")}
                     </h2>
                   </div>
-                  <p className="text-dark-text mb-6 text-base leading-relaxed">
+                  <p className="text-dark-text mb-6 text-base leading-relaxed min-w-0 break-words">
                     {t("fullDesc")}
                   </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 min-w-0">
                     {/* Documentación de API */}
-                    <div className="glass-secondary p-6 rounded-lg">
-                      <div className="flex items-center gap-3 mb-4">
-                        <span className="material-symbols-outlined text-primary text-xl">
+                    <div className="glass-secondary p-6 rounded-lg min-w-0 overflow-hidden">
+                      <div className="flex items-center gap-3 mb-4 min-w-0">
+                        <span className="material-symbols-outlined text-primary text-xl shrink-0">
                           api
                         </span>
-                        <h3 className="text-xl font-semibold text-white">
+                        <h3 className="text-xl font-semibold text-white min-w-0 break-words">
                           {t("apiTitle")}
                         </h3>
                       </div>
-                      <p className="text-dark-text text-sm mb-4">
+                      <p className="text-dark-text text-sm mb-4 min-w-0 break-words">
                         {t("apiDesc")}
                       </p>
-                      <ul className="list-none space-y-2 text-sm text-dark-text">
-                        <li className="flex items-start gap-2">
-                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                      <ul className="list-none space-y-2 text-sm text-dark-text min-w-0">
+                        <li className="flex items-start gap-2 min-w-0">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5 shrink-0">
                             check_circle
                           </span>
-                          <span>
+                          <span className="min-w-0 break-words">
                             <code className="text-cyan-300">
                               docs/api/README.md
                             </code>{" "}
                             - {t("indexGeneral")}
                           </span>
                         </li>
-                        <li className="flex items-start gap-2">
-                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        <li className="flex items-start gap-2 min-w-0">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5 shrink-0">
                             check_circle
                           </span>
-                          <span>
+                          <span className="min-w-0 break-words">
                             <code className="text-cyan-300">
                               docs/api/endpoints.md
                             </code>{" "}
                             - {t("endpoints")}
                           </span>
                         </li>
-                        <li className="flex items-start gap-2">
-                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        <li className="flex items-start gap-2 min-w-0">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5 shrink-0">
                             check_circle
                           </span>
-                          <span>
+                          <span className="min-w-0 break-words">
                             <code className="text-cyan-300">
                               docs/api/models.md
                             </code>{" "}
                             - {t("models")}
                           </span>
                         </li>
-                        <li className="flex items-start gap-2">
-                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        <li className="flex items-start gap-2 min-w-0">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5 shrink-0">
                             check_circle
                           </span>
-                          <span>
+                          <span className="min-w-0 break-words">
                             <code className="text-cyan-300">
                               docs/api/architecture.md
                             </code>{" "}
                             - {t("architecture")}
                           </span>
                         </li>
-                        <li className="flex items-start gap-2">
-                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        <li className="flex items-start gap-2 min-w-0">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5 shrink-0">
                             check_circle
                           </span>
-                          <span>
+                          <span className="min-w-0 break-words">
                             <code className="text-cyan-300">
                               docs/api/errors.md
                             </code>{" "}
@@ -168,57 +168,57 @@ export default function TechnicalDocsPage() {
                     </div>
 
                     {/* Documentación de Aplicación Web */}
-                    <div className="glass-secondary p-6 rounded-lg">
-                      <div className="flex items-center gap-3 mb-4">
-                        <span className="material-symbols-outlined text-primary text-xl">
+                    <div className="glass-secondary p-6 rounded-lg min-w-0 overflow-hidden">
+                      <div className="flex items-center gap-3 mb-4 min-w-0">
+                        <span className="material-symbols-outlined text-primary text-xl shrink-0">
                           web
                         </span>
-                        <h3 className="text-xl font-semibold text-white">
+                        <h3 className="text-xl font-semibold text-white min-w-0 break-words">
                           {t("appTitle")}
                         </h3>
                       </div>
-                      <p className="text-dark-text text-sm mb-4">
+                      <p className="text-dark-text text-sm mb-4 min-w-0 break-words">
                         {t("appDesc")}
                       </p>
-                      <ul className="list-none space-y-2 text-sm text-dark-text">
-                        <li className="flex items-start gap-2">
-                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                      <ul className="list-none space-y-2 text-sm text-dark-text min-w-0">
+                        <li className="flex items-start gap-2 min-w-0">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5 shrink-0">
                             check_circle
                           </span>
-                          <span>
+                          <span className="min-w-0 break-words">
                             <code className="text-cyan-300">
                               docs/app/README.md
                             </code>{" "}
                             - {t("indexGeneral")}
                           </span>
                         </li>
-                        <li className="flex items-start gap-2">
-                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        <li className="flex items-start gap-2 min-w-0">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5 shrink-0">
                             check_circle
                           </span>
-                          <span>
+                          <span className="min-w-0 break-words">
                             <code className="text-cyan-300">
                               docs/app/architecture.md
                             </code>{" "}
                             - {t("architecture")}
                           </span>
                         </li>
-                        <li className="flex items-start gap-2">
-                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        <li className="flex items-start gap-2 min-w-0">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5 shrink-0">
                             check_circle
                           </span>
-                          <span>
+                          <span className="min-w-0 break-words">
                             <code className="text-cyan-300">
                               docs/app/components.md
                             </code>{" "}
                             - {t("components")}
                           </span>
                         </li>
-                        <li className="flex items-start gap-2">
-                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5">
+                        <li className="flex items-start gap-2 min-w-0">
+                          <span className="material-symbols-outlined text-green-400 text-sm mt-0.5 shrink-0">
                             check_circle
                           </span>
-                          <span>
+                          <span className="min-w-0 break-words">
                             <code className="text-cyan-300">
                               docs/app/routing.md
                             </code>{" "}

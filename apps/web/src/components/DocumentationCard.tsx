@@ -37,16 +37,16 @@ export const DocumentationCard = memo<DocumentationCardProps>(
 
     return (
       <article
-        className="documentation-card glass-card p-4 rounded-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-xl border border-white/10 h-[300px] flex flex-col"
+        className="documentation-card glass-card p-4 rounded-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-xl border border-white/10 h-[300px] flex flex-col min-w-0 max-w-full overflow-hidden"
         aria-labelledby={`doc-card-${section.id}-title`}
       >
-        <div className="documentation-card-content flex-1 flex flex-col items-center justify-center text-center min-h-0">
+        <div className="documentation-card-content flex-1 flex flex-col items-center justify-center text-center min-h-0 min-w-0 w-full overflow-hidden px-1">
           {/* Header centrado */}
-          <header className="flex flex-col items-center gap-2 mb-3">
+          <header className="flex flex-col items-center gap-2 mb-3 min-w-0 w-full">
             <DocumentationIcon sectionId={section.id} size={36} />
             <h2
               id={`doc-card-${section.id}-title`}
-              className="text-base font-bold text-white leading-tight line-clamp-2"
+              className="text-base font-bold text-white leading-tight line-clamp-2 w-full min-w-0 break-words"
               title={
                 section.titleKey
                   ? t(`sections.${section.titleKey}`)
@@ -60,7 +60,7 @@ export const DocumentationCard = memo<DocumentationCardProps>(
           </header>
 
           {/* Descripción breve */}
-          <p className="text-xs text-dark-text leading-snug line-clamp-2 mb-4 max-w-full">
+          <p className="text-xs text-dark-text leading-snug line-clamp-2 mb-4 w-full min-w-0 break-words">
             {shortDescription}
           </p>
 

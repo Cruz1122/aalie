@@ -1,0 +1,13 @@
+XXX1(num1, num2) BEGIN
+  IF (num2 = 1) THEN BEGIN
+    RETURN T;
+  END
+  ELSE BEGIN
+    IF (num1 MOD num2 = 0) THEN BEGIN
+      RETURN F;
+    END
+    ELSE BEGIN
+      RETURN XXX1(num1, num2 - 1);
+    END
+  END
+END

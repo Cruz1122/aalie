@@ -3,9 +3,9 @@
 import { useLocale, useTranslations } from "next-intl";
 import React from "react";
 
-import type { CoreAnalysisData } from "@/lib/extract-core-data";
 import { getBestAsymptoticNotation } from "@/lib/asymptotic-notation";
 import { translateBackendContent } from "@/lib/backend-content-translator";
+import type { CoreAnalysisData } from "@/lib/extract-core-data";
 
 import Formula from "./Formula";
 

@@ -1,0 +1,8 @@
+mcd(a, b) BEGIN
+  WHILE (b != 0) DO BEGIN
+    temp <- b;
+    b <- a MOD b;
+    a <- temp;
+  END
+  RETURN a;
+END

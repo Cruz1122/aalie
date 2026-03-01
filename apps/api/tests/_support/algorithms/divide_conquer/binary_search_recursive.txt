@@ -1,0 +1,15 @@
+busquedaBinaria(A, x, inicio, fin) BEGIN
+  IF (inicio > fin) THEN BEGIN
+    RETURN -1;
+  END
+  mitad <- (inicio + fin) / 2;
+  IF (A[mitad] = x) THEN BEGIN
+    RETURN mitad;
+  END
+  IF (x < A[mitad]) THEN BEGIN
+    RETURN busquedaBinaria(A, x, inicio, mitad - 1);
+  END
+  ELSE BEGIN
+    RETURN busquedaBinaria(A, x, mitad + 1, fin);
+  END
+END

@@ -8,7 +8,7 @@ Incluye verificaciones de complejidad esperada (big_theta/big_o) para tests aut√
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
-from tests.integration.fixtures.algorithm_expectations import notation_has_complexity
+from tests._support.assertions import notation_has_complexity
 
 client = TestClient(app)
 

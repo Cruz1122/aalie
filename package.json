@@ -1,14 +1,13 @@
 {
   "name": "algoritmos-monorepo",
   "private": true,
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "Monorepo para AALIE - Analizador de Complejidades (Next.js + FastAPI)",
   "packageManager": "pnpm@9.15.0",
-  "engines": {
-    "node": ">=20 <23"
-  },
+  "engines": {"node": ">=20 <23"},
   "scripts": {
     "dev": "pnpm -r dev",
+    "dev:api": "cd apps/api && python -m uvicorn app.main:app --reload --port 8000",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint:web": "pnpm -C apps/web lint",
@@ -18,7 +17,13 @@
     "lint:api": "cd infra && docker compose exec -T api ruff check .",
     "format:api": "cd infra && docker compose exec -T api black .",
     "lint:all": "pnpm run lint:web || true && pnpm run lint:api",
-    "format:all": "pnpm run format:web || true && pnpm run format:api"
+    "format:all": "pnpm run format:web || true && pnpm run format:api",
+    "test:api": "cd apps/api && python -m pytest tests/ -v",
+    "test:api:gate": "cd apps/api && python -m pytest -m \"unit or component or system\" -q",
+    "test:api:contract": "cd apps/api && python -m pytest -m contract -q",
+    "test:api:cov": "cd apps/api && python -m pytest tests/ --cov=app --cov-report=term",
+    "test:api:unit": "cd apps/api && python -m pytest tests/unit/ -v",
+    "test:api:stress": "cd apps/api && python -m pytest tests/contract/test_stress_algorithms.py -v"
   },
   "dependencies": {
     "antlr4ts": "0.5.0-alpha.4",

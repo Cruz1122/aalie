@@ -83,7 +83,7 @@ export default function DocumentationModal({
   return (
     <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className="absolute left-1/2 top-1/2 w-[min(90vw,800px)] max-h-[80vh] overflow-y-auto scrollbar-custom -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 p-6 ring-1 ring-white/10 shadow-2xl">
+      <div className="absolute left-1/2 top-1/2 w-[min(90vw,800px)] max-h-[80vh] overflow-y-auto overflow-x-hidden scrollbar-custom -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 p-6 ring-1 ring-white/10 shadow-2xl min-w-0">
         <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
           <h3 className="text-lg font-semibold text-white">{displayTitle}</h3>
           <button
@@ -101,7 +101,7 @@ export default function DocumentationModal({
           </p>
         )}
 
-        <div className="mt-6 space-y-6">{renderSectionDetail(section)}</div>
+        <div className="mt-6 space-y-6 min-w-0 overflow-x-hidden">{renderSectionDetail(section)}</div>
       </div>
     </div>
   );
@@ -474,7 +474,7 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
                     <p className="text-xs font-medium text-slate-300">
                       Configuración:
                     </p>
-                    <div className="text-xs text-slate-400 bg-slate-900/50 p-2 rounded font-mono">
+                    <div className="text-xs text-slate-400 bg-slate-900/50 p-2 rounded font-mono min-w-0 max-w-full overflow-x-auto">
                       {Object.entries(utility.config || {}).map(([k, v]) => (
                         <div key={k}>
                           {k}: {typeof v === "string" ? `"${v}"` : String(v)}
@@ -509,11 +509,13 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
             {content?.examples?.inline?.description}
           </p>
           <div className="space-y-3">
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-medium text-slate-300 mb-1">Código:</p>
-              <code className="text-xs font-mono text-slate-400 bg-slate-900/50 px-2 py-1 rounded block">
-                {content?.examples?.inline?.code}
-              </code>
+              <div className="min-w-0 max-w-full overflow-x-auto">
+                <code className="text-xs font-mono text-slate-400 bg-slate-900/50 px-2 py-1 rounded block">
+                  {content?.examples?.inline?.code}
+                </code>
+              </div>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-300 mb-1">
@@ -535,11 +537,13 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
             {content?.examples?.block?.description}
           </p>
           <div className="space-y-3">
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-medium text-slate-300 mb-1">Código:</p>
-              <code className="text-xs font-mono text-slate-400 bg-slate-900/50 px-2 py-1 rounded block">
-                {content?.examples?.block?.code}
-              </code>
+              <div className="min-w-0 max-w-full overflow-x-auto">
+                <code className="text-xs font-mono text-slate-400 bg-slate-900/50 px-2 py-1 rounded block">
+                  {content?.examples?.block?.code}
+                </code>
+              </div>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-300 mb-1">
@@ -561,11 +565,13 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
             {content?.examples?.complex?.description}
           </p>
           <div className="space-y-3">
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-medium text-slate-300 mb-1">Código:</p>
-              <code className="text-xs font-mono text-slate-400 bg-slate-900/50 px-2 py-1 rounded block break-all">
-                {content?.examples?.complex?.code}
-              </code>
+              <div className="min-w-0 max-w-full overflow-x-auto">
+                <code className="text-xs font-mono text-slate-400 bg-slate-900/50 px-2 py-1 rounded block break-all">
+                  {content?.examples?.complex?.code}
+                </code>
+              </div>
             </div>
             <div>
               <p className="text-xs font-medium text-slate-300 mb-1">
@@ -634,6 +640,7 @@ function KatexDetail({ section }: Readonly<{ section: DocumentationSection }>) {
 function GrammarDetail({
   section,
 }: Readonly<{ section: DocumentationSection }>) {
+  const t = useTranslations("documentation.technical");
   const content = section.content as GrammarContent;
 
   return (
@@ -708,7 +715,7 @@ function GrammarDetail({
                 <p className="text-xs text-slate-300 mb-2">
                   {feature.description}
                 </p>
-                <div className="bg-slate-900/50 p-2 rounded">
+                <div className="bg-slate-900/50 p-2 rounded min-w-0 max-w-full overflow-x-auto">
                   <code className="text-xs font-mono text-slate-300">
                     {feature.example}
                   </code>
@@ -720,22 +727,22 @@ function GrammarDetail({
       </section>
 
       {/* Sintaxis */}
-      <section className="mb-8">
+      <section className="mb-8 min-w-0">
         <h5 className="text-lg font-semibold text-slate-300 text-center mb-6">
           {content?.syntax?.title}
         </h5>
-        <div className="grid gap-4">
+        <div className="grid gap-4 min-w-0">
           {content?.syntax?.sections?.map(
             (syntaxSection: GrammarSyntaxSection, idx: number) => (
               <div
                 key={idx}
-                className="p-4 rounded-lg bg-slate-800/50 border border-white/10"
+                className="p-4 rounded-lg bg-slate-800/50 border border-white/10 min-w-0 overflow-hidden"
               >
                 <h6 className="text-sm font-semibold text-slate-300 mb-3">
                   {syntaxSection.name}
                 </h6>
-                <div className="bg-slate-900/50 p-3 rounded mb-3 overflow-x-auto">
-                  <pre className="text-xs font-mono text-slate-300 whitespace-pre">
+                <div className="bg-slate-900/50 p-3 rounded mb-3 min-w-0 max-w-full overflow-x-auto">
+                  <pre className="text-xs font-mono text-slate-300 whitespace-pre min-w-0">
                     {syntaxSection.code}
                   </pre>
                 </div>
@@ -811,7 +818,7 @@ function GrammarDetail({
       </section>
 
       {/* AST */}
-      <section className="mb-8 p-4 rounded-lg bg-slate-800/50 border border-white/10">
+      <section className="mb-8 p-4 rounded-lg bg-slate-800/50 border border-white/10 min-w-0 overflow-hidden">
         <h5 className="text-lg font-semibold text-slate-300 text-center mb-4">
           {content?.ast?.title}
         </h5>
@@ -844,16 +851,16 @@ function GrammarDetail({
             <p className="text-xs font-semibold text-slate-300 mb-2">Ejemplo:</p>
             <div className="mb-2">
               <p className="text-xs text-slate-400 mb-1">Entrada:</p>
-              <div className="bg-slate-900/50 p-2 rounded overflow-x-auto">
-                <pre className="text-xs font-mono text-slate-300 whitespace-pre">
+              <div className="bg-slate-900/50 p-2 rounded min-w-0 max-w-full overflow-x-auto">
+                <pre className="text-xs font-mono text-slate-300 whitespace-pre min-w-0">
                   {content.ast.example.input}
                 </pre>
               </div>
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs text-slate-400 mb-1">AST (fragmento):</p>
-              <div className="bg-slate-900/50 p-2 rounded overflow-x-auto">
-                <pre className="text-xs font-mono text-slate-300 whitespace-pre">
+              <div className="bg-slate-900/50 p-2 rounded min-w-0 max-w-full overflow-x-auto">
+                <pre className="text-xs font-mono text-slate-300 whitespace-pre min-w-0">
                   {content.ast.example.astFragment}
                 </pre>
               </div>
@@ -1001,10 +1008,10 @@ function GrammarDetail({
       <div className="text-center mt-6">
         <NavigationLink
           href="/user-guide"
-          className="inline-flex items-center gap-2 glass-button px-6 py-3 rounded-lg text-white font-semibold transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400/50"
+          className="inline-flex items-center gap-2 glass-secondary px-6 py-3 rounded-lg text-white font-semibold transition-all hover:scale-105 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30"
         >
           <Code2 size={16} />
-          Ver Guía de Usuario Completa
+          {t("nextToUserGuide")}
         </NavigationLink>
       </div>
     </article>
@@ -1363,20 +1370,20 @@ function AnalyzerDetail({
                 {content.api.endpoint.description}
               </p>
             </div>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+            <div className="grid md:grid-cols-2 gap-4 min-w-0">
+              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10 min-w-0 overflow-hidden">
                 <p className="text-xs font-medium text-slate-300 mb-2">
                   Request:
                 </p>
-                <pre className="text-xs text-slate-400 overflow-x-auto">
+                <pre className="text-xs text-slate-400 min-w-0 max-w-full overflow-x-auto">
                   {JSON.stringify(content.api.endpoint.request, null, 2)}
                 </pre>
               </div>
-              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10">
+              <div className="p-3 rounded-lg bg-slate-800/50 border border-white/10 min-w-0 overflow-hidden">
                 <p className="text-xs font-medium text-slate-300 mb-2">
                   Response:
                 </p>
-                <pre className="text-xs text-slate-400 overflow-x-auto">
+                <pre className="text-xs text-slate-400 min-w-0 max-w-full overflow-x-auto">
                   {JSON.stringify(content.api.endpoint.response, null, 2)}
                 </pre>
               </div>
@@ -1621,7 +1628,7 @@ function TextDetail({ section }: Readonly<{ section: DocumentationSection }>) {
     });
   };
 
-  const getSectionStyle = (sectionId: string) => {
+  const getSectionStyle = (_sectionId: string) => {
     const defaultStyle = {
       icon: <ArrowRight size={20} />,
       bgColor: 'bg-slate-800/50',

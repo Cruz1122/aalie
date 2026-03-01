@@ -58,5 +58,21 @@ def i18n_reminder() -> str:
     )
 
 
+@mcp.tool()
+def test_suite_commands() -> str:
+    """Comandos de la suite de tests backend (apps/api). Usar desde raíz del repo."""
+    return """Suite de tests API (ejecutar desde raíz: pnpm <script> o cd apps/api && python -m pytest ...):
+
+- pnpm test:api          → Todos los tests (tests/ -v)
+- pnpm test:api:gate     → Daily gate (unit or component or system, -q)
+- pnpm test:api:contract → Solo contract (nightly)
+- pnpm test:api:cov      → Con cobertura (--cov=app --cov-report=term)
+- pnpm test:api:unit     → Solo tests/unit/ -v
+- pnpm test:api:stress   → Solo test_stress_algorithms.py (Prueba1–Prueba7)
+
+Desde apps/api: python -m pytest tests/ -v (siempre python -m pytest, no pytest directo).
+Markers: unit, component, contract, system, slow, while, recursive, dp."""
+
+
 if __name__ == "__main__":
     mcp.run(transport="stdio")
