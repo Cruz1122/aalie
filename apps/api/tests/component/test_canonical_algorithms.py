@@ -26,6 +26,13 @@ CANONICAL = [
     ("math", "rectangular_loops", "quadratic"),
 ]
 
+# Best case teórico cuando difiere de worst (teoría de algoritmos)
+BEST_BY_ALGORITHM = {
+    "linear_search": "constant",
+    "insertion_sort": "linear",
+    "binary_search_recursive": "constant",
+}
+
 
 @pytest.mark.component
 class TestCanonicalAlgorithms:
@@ -47,8 +54,9 @@ class TestCanonicalAlgorithms:
         source = load_algorithm(family, name)
         result = analyze_algorithm(source, mode="all")
         assert result.get("ok"), f"{family}/{name}: analizador falló: {result.get('errors', [])}"
-        # Assert: validar todos los casos (worst, best, avg)
-        assert_all_cases_complexity(result, expected, name=f"{family}/{name}")
+        # Assert: validar todos los casos (worst, best, avg); best según teoría cuando difiere
+        expected_best = BEST_BY_ALGORITHM.get(name, expected)
+        assert_all_cases_complexity(result, expected, expected_best=expected_best, name=f"{family}/{name}")
 
     @pytest.mark.parametrize("family,name,expected", CANONICAL[:6], ids=[f[1] for f in CANONICAL[:6]])
     def test_canonical_has_asymptotic_notation(self, family, name, expected):

@@ -81,10 +81,12 @@ class TestComplexAlgorithms:
         assert "T_open" in totals and len(totals["T_open"]) > 0
 
     def test_complex_while_linear(self):
-        """WHILE con condición compuesta: validar todos los casos O(n)."""
+        """WHILE con condición compuesta: worst O(n). Best/avg teóricos O(1) (salida temprana)."""
         result = analyze_algorithm(COMPLEX_WHILE, mode="all")
         assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
-        assert_all_cases_complexity(result, "linear", name="Complex WHILE")
+        assert_all_cases_complexity(
+            result, "linear", expected_best="constant", expected_avg="constant", name="Complex WHILE"
+        )
 
     def test_complex_while_all_cases(self):
         """Complex WHILE: worst, best y avg deben analizarse correctamente."""

@@ -383,13 +383,13 @@ END
 """
 
     def test_linear_search_worst_linear(self):
-        """Búsqueda lineal: validar todos los casos (worst, best, avg)."""
+        """Búsqueda lineal: validar todos los casos (worst, best, avg). Best case teórico O(1)."""
         from app.modules.analysis.service import analyze_algorithm
         from tests._support.assertions import assert_all_cases_complexity
 
         result = analyze_algorithm(self.LINEAR_SEARCH, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "linear", name="Linear Search")
+        assert_all_cases_complexity(result, "linear", expected_best="constant", name="Linear Search")
 
     def test_linear_search_avg_has_expected_runs(self):
         """Búsqueda lineal avg debe tener expectedRuns y A_of_n."""
@@ -431,13 +431,13 @@ END
         assert_all_cases_complexity(result, "linear", name="Array Max")
 
     def test_binary_search_iterative_log(self):
-        """Búsqueda binaria iterativa: validar todos los casos O(log n)."""
+        """Búsqueda binaria iterativa: validar todos los casos O(log n). Best case teórico O(1)."""
         from app.modules.analysis.service import analyze_algorithm
         from tests._support.assertions import assert_all_cases_complexity
 
         result = analyze_algorithm(self.BINARY_SEARCH_ITERATIVE, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "log", name="Binary Search")
+        assert_all_cases_complexity(result, "log", expected_best="constant", name="Binary Search")
 
     def test_array_sum_all_cases_structure(self):
         """Suma de array: worst, best y avg deben tener estructura correcta."""

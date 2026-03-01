@@ -190,36 +190,28 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         
         if has_iteration_vars:
             # Si aún quedan variables de iteración libres, eliminarlas completamente
-            # En T_polynomial, las variables de iteración NO deben aparecer como variables libres
-            # Después de evaluar todas las sumatorias, estas variables no deberían existir
+            # En T_polynomial, las variables de iteración NO deben aparecer como variables libres.
+            # Sustituir usando los símbolos que realmente están en la expresión (subs con Symbol('i')
+            # creado aquí puede no hacer match si la expresión tiene otro contexto/atributo).
             from sympy import Integer as SymInteger
             try:
-                # Expandir y simplificar para asegurar que todas las sumatorias estén evaluadas
                 expr = expand(expr)
                 expr = simplify(expr)
-                
-                # Verificar de nuevo si todavía quedan
                 free_vars_after = expr.free_symbols
-                remaining_iter_vars = []
-                for var_name in iteration_vars:
-                    var_symbol = Symbol(var_name, integer=True)
-                    if any(v.name == var_name for v in free_vars_after):
-                        remaining_iter_vars.append((var_name, var_symbol))
-                
-                # Si todavía quedan, eliminarlas sustituyendo por 0
-                # Esto es seguro porque en T_polynomial estas variables no deberían estar presentes
-                if remaining_iter_vars:
-                    for var_name, var_symbol in remaining_iter_vars:
-                        expr = expr.subs(var_symbol, SymInteger(0))
-                    expr = simplify(expr)
-                    print(f"[IterativeAnalyzer] Advertencia: Variables de iteración {[v[0] for v in remaining_iter_vars]} eliminadas de expresión final (sustituidas por 0)")
+                replaced = []
+                for sym in list(free_vars_after):
+                    if getattr(sym, "name", "") in iteration_vars:
+                        expr = expr.subs(sym, SymInteger(0))
+                        replaced.append(getattr(sym, "name", str(sym)))
+                expr = simplify(expr)
+                if replaced:
+                    print(f"[IterativeAnalyzer] Advertencia: Variables de iteración {replaced} eliminadas de expresión final (sustituidas por 0)")
             except Exception as e:
                 print(f"[IterativeAnalyzer] Error al limpiar variables de iteración: {e}")
-                # Fallback: sustituir todas las variables de iteración por 0
                 from sympy import Integer as SymInteger
-                for var_name in iteration_vars:
-                    var_symbol = Symbol(var_name, integer=True)
-                    expr = expr.subs(var_symbol, SymInteger(0))
+                for sym in list(expr.free_symbols):
+                    if getattr(sym, "name", "") in iteration_vars:
+                        expr = expr.subs(sym, SymInteger(0))
                 expr = simplify(expr)
         
         return expr

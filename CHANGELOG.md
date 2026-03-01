@@ -5,22 +5,42 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [Unreleased]
+
+### Added
+
+### Fixed
+
+### Changed
+
 ## [1.1.5]
 
 ### Added
 
-- Motor: recurrencias MOD (Euclides) → Θ(log n); heurística recursión dentro de FOR (substracción n-1).
-- Tests: algoritmos de estrés Prueba1–Prueba7 en `_support/algorithms/stress/` y `test_stress_algorithms.py`; reforma unit/component/contract/system con _support (algorithms, expectations, assertions, loaders), BDD en system, markers; benchmark 40 tests (test_engine_benchmark); oráculo en _support/assertions.py.
+- Scripts en el proyecto para lanzar tests (API, contrato, cobertura, etc.) y herramienta MCP para ejecutarlos; convenciones y documentación actualizadas.
+- Animación suave al cambiar entre modo AALIE y modo manual en el selector.
+- Tests que comprueban peor caso, mejor caso y caso promedio en algoritmos de estrés, contrato, canónicos y otros; cada algoritmo puede definir qué complejidad se espera en cada caso.
+- Motor: algoritmos con recursión dentro de un bucle (por ejemplo generación de subconjuntos) se analizan con árbol de recursión y dan la complejidad correcta Θ(2^n).
+- Motor: recurrencias tipo Euclides (MOD) → Θ(log n); recursión dentro de FOR por sustracción.
+- Tests: algoritmos de estrés Prueba1–Prueba7, reestructuración de tests con soporte común (algoritmos, expectativas, aserciones), benchmark de 40 tests y oráculo de aserciones.
 
 ### Fixed
 
-- Motor: merge_sort f(n)=n con llamadas auxiliares; rectangular_loops grado total n·m (poly_degree) y notación cuadrática genérica; fast_exponentiation WHILE var/2 → log y símbolos exp/e_0 en _str_to_sympy; gramática ELSE IF (alternate ifStmt); Hanoi 2T(n-1)+1 → Θ(2^n); binary search implícito y early return; find last index sin p=1/2; quicksort pivot=izq → Θ(n²); bucles infinitos guard_desired=False.
-- AAProgressLoader: en estado de error el botón cerrar queda justo debajo del mensaje (se oculta el hueco del badge para no empujarlo abajo).
-- Chatbot: input de mensaje con texto largo ya no se solapa con el icono de enviar; mismo icono y mismo estilo sin borde/cuadrado en estado inicial y dentro del chat; contenedor en flex con centrado vertical.
+- Tests de complejidad: el mejor caso se comprueba según la teoría (búsqueda lineal, insertion sort, búsqueda binaria, WHILE compuesto); los tests ya no exigen que best sea igual que worst cuando no lo es.
+- Motor: corrección al eliminar índices de bucle (i, j, k) de la expresión de coste final en algoritmos como insertion sort, evitando errores cuando la expresión los arrastraba.
+- Prueba7 y tests de estrés: complejidad exponencial correcta y comprobación en todos los casos cuando hay especificación.
+- Tests de contrato: solo se exige mejor caso o promedio cuando la especificación del algoritmo lo indica.
+- Interfaz: textos de documentación y selector de idioma ya no se desbordan en pantallas pequeñas; cards y modales de documentación contienen bien el contenido; bloques de código con scroll horizontal cuando las líneas son largas.
+- Motor: merge_sort, bucles rectangulares, exponenciación rápida, gramática ELSE IF, Torres de Hanoi, búsqueda binaria, quicksort, bucles infinitos y otros casos corregidos.
+- Loader de análisis: botón cerrar bien colocado en error; Chatbot: campo de mensaje y icono de enviar sin solapamientos.
+
+### Changed
+
+- Botones principales (Ver Guía de Usuario, Ir a AALIE) y pie de página con estilo unificado y mejor comportamiento en móvil.
 
 ### Removed
 
-- docs/test-architecture.md y test-baseline.md (centralizado en tests/README.md); carpeta tests/integration.
+- docs/test-architecture.md y test-baseline.md (contenido centralizado en tests/README.md); carpeta tests/integration.
 
 ## [1.1.4] - 2026-02-21
 
