@@ -5,23 +5,20 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
-## [Unreleased]
+## [1.1.5]
 
 ### Added
 
-- Tests de benchmark para motor de análisis (test_engine_benchmark.py): 40 tests (20 iterativos + 20 recursivos) que verifican worst, best y avg
-- Fixture algorithm_expectations: assert_case_complexity, assert_all_cases_complexity, get_notation_from_totals para validar worst/best/avg
-
-### Changed
+- Motor: recurrencias MOD (Euclides) → Θ(log n); heurística recursión dentro de FOR (substracción n-1).
+- Tests: algoritmos de estrés Prueba1–Prueba7 en `_support/algorithms/stress/` y `test_stress_algorithms.py`; reforma unit/component/contract/system con _support (algorithms, expectations, assertions, loaders), BDD en system, markers; benchmark 40 tests (test_engine_benchmark); oráculo en _support/assertions.py.
 
 ### Fixed
 
-- Fibonacci iterativo con ELSE IF: el ast_builder (packages/grammar) no visitaba el alternate cuando era ifStmt (ELSE IF). Solo usaba block(1), pero ELSE IF produce ifStmt como alternate. Ahora se visita ctx.ifStmt() cuando existe.
-- test_recursive_algorithms: test_binary_search_recursive_theta_log_n usa get_notation_from_totals para obtener theta desde iteration/master/recursion_tree; test_binary_search_case_2 pasa preferred_method="master" para forzar teorema maestro.
-- Motor de análisis: 5 correcciones que permiten quitar xfail de test_engine_benchmark. (1) Hanoi: `_apply_iteration_method` usa coeficiente >1 en linear_shift para T(n)=2T(n-1)+1 → Θ(2^n). (2) Binary search simple: `_calculate_recursive_calls_count` detecta IF THEN RETURN; RETURN implícito → T(n)=T(n/2)+1. (3) Binary search master: `_detect_early_return` y `_has_return_before_recursive_calls` detectan early return A[mitad]=x → best O(1). (4) Find last index: `visitWhile` evita modelo geométrico p=1/2 cuando WHILE AND tiene array y closure bounded → avg Θ(n). (5) Quick sort worst: heurística pivot=izq fuerza T(n)=T(n-1)+n en worst/best/avg para recursion_tree → Θ(n²).
-- Bucles infinitos: kills_guard_must ahora considera guard_desired=False (ej. `ordenado = false` con `ordenado <- true`). Bubble sort mejorado ya no se marca como unbounded cuando la variable de control muta.
+- Motor: merge_sort f(n)=n con llamadas auxiliares; rectangular_loops grado total n·m (poly_degree) y notación cuadrática genérica; fast_exponentiation WHILE var/2 → log y símbolos exp/e_0 en _str_to_sympy; gramática ELSE IF (alternate ifStmt); Hanoi 2T(n-1)+1 → Θ(2^n); binary search implícito y early return; find last index sin p=1/2; quicksort pivot=izq → Θ(n²); bucles infinitos guard_desired=False.
 
 ### Removed
+
+- docs/test-architecture.md y test-baseline.md (centralizado en tests/README.md); carpeta tests/integration.
 
 ## [1.1.4] - 2026-02-21
 

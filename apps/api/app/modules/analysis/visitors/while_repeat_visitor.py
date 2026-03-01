@@ -130,6 +130,10 @@ class WhileRepeatVisitor:
             i = Symbol("i", integer=True)
             j = Symbol("j", integer=True)
             k = Symbol("k", integer=True)
+            # Símbolos para parámetros de tamaño habituales (evitar fallo en log(exp), log(e_0), etc.)
+            exp_sym = Symbol("exp", integer=True, positive=True)
+            m_sym = Symbol("m", integer=True, positive=True)
+            e0_sym = Symbol("e_0", integer=True, positive=True)
 
             syms = {
                 variable: n,
@@ -137,6 +141,9 @@ class WhileRepeatVisitor:
                 "j": j,
                 "k": k,
                 "log": sympy_log,
+                "exp": exp_sym,
+                "m": m_sym,
+                "e_0": e0_sym,
             }
 
             return sympify(expr_str, locals=syms)
@@ -932,6 +939,8 @@ class WhileRepeatVisitor:
         """
         test = node.get("test", {})
         body = node.get("body", {})
+        if isinstance(body, list):
+            body = {"type": "Block", "body": body}
         L = node.get("pos", {}).get("line", 0)
         
         # 0) NUEVO CLASIFICADOR: GuardInfo + UpdateSummary + classify_while
@@ -940,12 +949,23 @@ class WhileRepeatVisitor:
             updates = summarize_updates(body, guard.vars_used, guard, parent_context)
             result = classify_while(guard, updates, mode, parent_context, L)
             if result.status == "bounded" and result.iterations_expr:
+                ev = result.evidence
+                op_rule = ev.get("change_operator")
+                const_rule = ev.get("change_constant")
+                if op_rule is None or const_rule is None:
+                    ch = (ev.get("change") or "+1").strip()
+                    if ch.startswith("+") or ch.startswith("-"):
+                        op_rule = ch[0]
+                        const_rule = ch[1:] or "1"
+                    else:
+                        op_rule = "+"
+                        const_rule = "1"
                 return {
-                    "variable": result.evidence.get("var", ""),
+                    "variable": ev.get("var", ""),
                     "initial_value": None,
-                    "change_rule": {"operator": result.evidence.get("change", "+1"), "constant": "1"},
-                    "limit": result.evidence.get("limit", ""),
-                    "operator": result.evidence.get("op", "<"),
+                    "change_rule": {"operator": op_rule, "constant": str(const_rule)},
+                    "limit": ev.get("limit", ""),
+                    "operator": ev.get("op", "<"),
                     "iterations": result.iterations_expr,
                     "success": True,
                     "mode": mode,

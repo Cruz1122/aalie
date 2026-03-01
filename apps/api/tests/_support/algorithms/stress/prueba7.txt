@@ -1,0 +1,11 @@
+XXX7(tablero, n, pos, sub, cant) BEGIN
+  IF (cant <= n) THEN BEGIN
+    IF (cant > 0) THEN BEGIN
+      CALL mostrar(sub, cant);
+    END
+    FOR x <- pos TO n DO BEGIN
+      sub[cant] <- tablero[x];
+      CALL XXX7(tablero, n, x + 1, sub, cant + 1);
+    END
+  END
+END

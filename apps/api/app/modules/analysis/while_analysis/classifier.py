@@ -209,7 +209,33 @@ def classify_while(
                         status="bounded",
                         iterations_expr=iterations,
                         reason_code="while_log",
-                        evidence={"var": var_name, "limit": limit},
+                        evidence={
+                            "var": var_name,
+                            "limit": limit,
+                            "change_operator": change_op,
+                            "change_constant": const,
+                        },
+                    )
+                # var > 0 (o var >= cte) con var <- var / c → iteraciones log_c(initial) o log(initial/limit) (genérico)
+                if change_op in ("/", "//") and op in (">", ">="):
+                    try:
+                        is_zero = limit in ("0", "0.0") or (isinstance(limit, str) and limit.isdigit() and int(limit) == 0)
+                    except (ValueError, TypeError):
+                        is_zero = False
+                    if is_zero:
+                        iterations = f"\\log_{{{const}}}(({initial_expr}))"
+                    else:
+                        iterations = f"\\log_{{{const}}}(({initial_expr}) / ({limit}))"
+                    return ClassifyResult(
+                        status="bounded",
+                        iterations_expr=iterations,
+                        reason_code="while_log",
+                        evidence={
+                            "var": var_name,
+                            "limit": limit,
+                            "change_operator": change_op,
+                            "change_constant": const,
+                        },
                     )
 
         if must and any(u.get("type") == "reset" for u in must):

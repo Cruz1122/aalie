@@ -1,0 +1,7 @@
+rectangular(n, m) BEGIN
+  FOR i <- 1 TO n DO BEGIN
+    FOR j <- 1 TO m DO BEGIN
+      x <- i + j;
+    END
+  END
+END

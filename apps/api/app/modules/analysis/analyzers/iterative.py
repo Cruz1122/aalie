@@ -560,20 +560,21 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     self.big_omega = "\\Omega(1)"
                     self.big_theta = "\\Theta(1)"
                 else:
-                    # Inferir variable de tamaño desde la expresión (genérico: no reservar nombres)
+                    # Inferir variable(s) de tamaño desde la expresión (genérico: no reservar nombres)
                     free_names = {getattr(s, "name", str(s)) for s in t_open_expr.free_symbols}
                     EXCLUDED = {"i", "j", "k"}
+                    candidates = [
+                        getattr(s, "name", "")
+                        for s in t_open_expr.free_symbols
+                        if (n := getattr(s, "name", ""))
+                        and n not in EXCLUDED
+                        and not n.startswith("C_")
+                        and not n.startswith("t_")
+                    ]
+                    candidates = sorted(set(candidates))
                     if not variable or variable not in free_names:
-                        candidates = [
-                            getattr(s, "name", "")
-                            for s in t_open_expr.free_symbols
-                            if (n := getattr(s, "name", ""))
-                            and n not in EXCLUDED
-                            and not n.startswith("C_")
-                            and not n.startswith("t_")
-                        ]
                         if candidates:
-                            variable = sorted(set(candidates))[0]
+                            variable = candidates[0]
                     if variable:
                         # Sustituir símbolos iterativos (t_while_L, exp_0, etc.) por variable de tamaño
                         n_sym = Symbol(variable, integer=True, positive=True)
@@ -611,48 +612,86 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                                 max_degree = -1
                                 dominant_term = None
 
-                                for term in terms:
-                                    term_degree = 0
-                                    term_has_log = False
-                                    from sympy import preorder_traversal, Pow, log as sym_log
-                                    from sympy import log as sym_log
-                                    if term.has(sym_log):
-                                        for subexpr in preorder_traversal(term):
-                                            if hasattr(subexpr, 'func') and subexpr.func == sym_log:
-                                                if any(isinstance(s, Symbol) and s.name == n_sym.name for s in subexpr.free_symbols):
-                                                    term_has_log = True
-                                                    break
-                                    if term_has_log:
-                                        try:
-                                            from sympy import collect
-                                            if term.has(n_sym * sym_log(n_sym)):
-                                                term_degree = 1
-                                            elif term.has(n_sym**2 * sym_log(n_sym)):
-                                                term_degree = 2
-                                        except Exception:
-                                            pass
+                                # Varias variables de tamaño: término dominante por grado total (ej. n*m, n*(m+1) → cuadrático)
+                                if len(candidates) >= 2:
+                                    size_syms = [
+                                        Symbol(v, integer=True, positive=True)
+                                        for v in candidates
+                                    ]
+                                    max_total = -1
+                                    try:
+                                        from sympy.polys.polytools import degree as poly_degree
+                                    except ImportError:
+                                        poly_degree = None
+                                    for term in terms:
+                                        total_degree = 0
+                                        if poly_degree:
+                                            try:
+                                                for sym in size_syms:
+                                                    total_degree += poly_degree(term, sym)
+                                            except Exception:
+                                                pass
+                                        else:
+                                            try:
+                                                d = term.as_powers_dict()
+                                                for (base, exp) in d:
+                                                    if base in size_syms:
+                                                        total_degree += exp
+                                            except Exception:
+                                                pass
+                                        if total_degree > max_total:
+                                            max_total = total_degree
+                                            dominant_term = term
+                                    if dominant_term is not None and max_total >= 1:
+                                        dominant_latex = sympy_latex(simplify(dominant_term))
+                                        self.big_o = f"O({dominant_latex})"
+                                        self.big_omega = f"\\Omega({dominant_latex})"
+                                        self.big_theta = f"\\Theta({dominant_latex})"
                                     else:
-                                        for subexpr in preorder_traversal(term):
-                                            if isinstance(subexpr, Symbol) and subexpr.name == n_sym.name:
-                                                term_degree = max(term_degree, 1)
-                                            elif isinstance(subexpr, Pow):
-                                                try:
-                                                    if isinstance(subexpr.base, Symbol) and subexpr.base.name == n_sym.name:
-                                                        exp_val = subexpr.exp
-                                                        if exp_val.is_number:
-                                                            exp_int = int(float(exp_val))
-                                                            term_degree = max(term_degree, exp_int)
-                                                except Exception:
-                                                    pass
-                                    if term_has_log and term_degree == 0:
-                                        term_complexity = 0.5
-                                    elif term_has_log and term_degree > 0:
-                                        term_complexity = term_degree + 0.5
-                                    else:
-                                        term_complexity = float(term_degree)
-                                    if term_complexity > max_degree:
-                                        max_degree = term_complexity
-                                        dominant_term = term
+                                        dominant_term = None  # fallback al flujo single-variable
+                                if dominant_term is None:
+                                    for term in terms:
+                                        term_degree = 0
+                                        term_has_log = False
+                                        from sympy import preorder_traversal, Pow, log as sym_log
+                                        from sympy import log as sym_log
+                                        if term.has(sym_log):
+                                            for subexpr in preorder_traversal(term):
+                                                if hasattr(subexpr, 'func') and subexpr.func == sym_log:
+                                                    if any(isinstance(s, Symbol) and s.name == n_sym.name for s in subexpr.free_symbols):
+                                                        term_has_log = True
+                                                        break
+                                        if term_has_log:
+                                            try:
+                                                from sympy import collect
+                                                if term.has(n_sym * sym_log(n_sym)):
+                                                    term_degree = 1
+                                                elif term.has(n_sym**2 * sym_log(n_sym)):
+                                                    term_degree = 2
+                                            except Exception:
+                                                pass
+                                        else:
+                                            for subexpr in preorder_traversal(term):
+                                                if isinstance(subexpr, Symbol) and subexpr.name == n_sym.name:
+                                                    term_degree = max(term_degree, 1)
+                                                elif isinstance(subexpr, Pow):
+                                                    try:
+                                                        if isinstance(subexpr.base, Symbol) and subexpr.base.name == n_sym.name:
+                                                            exp_val = subexpr.exp
+                                                            if exp_val.is_number:
+                                                                exp_int = int(float(exp_val))
+                                                                term_degree = max(term_degree, exp_int)
+                                                    except Exception:
+                                                        pass
+                                        if term_has_log and term_degree == 0:
+                                            term_complexity = 0.5
+                                        elif term_has_log and term_degree > 0:
+                                            term_complexity = term_degree + 0.5
+                                        else:
+                                            term_complexity = float(term_degree)
+                                        if term_complexity > max_degree:
+                                            max_degree = term_complexity
+                                            dominant_term = term
 
                                 if dominant_term is not None and max_degree >= 0:
                                     # Simplificar el término dominante
