@@ -9,6 +9,7 @@ interface NavigationLinkProps {
   href: string;
   children: ReactNode;
   className?: string;
+  title?: string;
   onClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
 }
 
@@ -16,6 +17,7 @@ export default function NavigationLink({
   href,
   children,
   className,
+  title,
   onClick,
 }: Readonly<NavigationLinkProps>) {
   const { startNavigation } = useNavigation();
@@ -39,7 +41,7 @@ export default function NavigationLink({
   };
 
   return (
-    <Link href={href} className={className} onClick={handleClick}>
+    <Link href={href} className={className} title={title} onClick={handleClick}>
       {children}
     </Link>
   );

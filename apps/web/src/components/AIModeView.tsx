@@ -1,3 +1,4 @@
+import { Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import AALIEIcon from "./AALIEIcon";
@@ -117,26 +118,24 @@ export default function AIModeView({
         {t("greetingQuestion")}
       </h2>
 
-      {/* Input principal */}
+      {/* Input principal: flex para evitar solapamiento y centrado vertical del icono */}
       <div className={`w-full max-w-2xl mb-4 sm:mb-8 px-2 sm:px-0 ${fadeClass("delay-150")}`}>
-        <div className="relative">
+        <div className="flex items-center gap-2 min-w-0 rounded-xl border border-slate-600/50 bg-white/5 focus-within:ring-2 focus-within:ring-purple-500/50 focus-within:border-transparent transition-all">
           <input
             type="text"
             placeholder={t("placeholder")}
-            className="w-full bg-white/5 border border-slate-600/50 rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+            className="flex-1 min-w-0 bg-transparent px-3 sm:px-4 py-3 sm:py-4 text-white placeholder-slate-400 text-sm focus:outline-none"
             value={inputMessage}
             onChange={onInputChange}
             onKeyDown={onKeyPress}
             disabled={isAnimating}
           />
           <button
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg hover:bg-white/5 transition-colors disabled:opacity-50"
+            className="flex-shrink-0 p-2 mr-3 rounded-lg hover:bg-white/5 transition-colors disabled:opacity-50 flex items-center justify-center text-slate-400 hover:text-white"
             onClick={onSendMessage}
             disabled={isAnimating || !inputMessage.trim()}
           >
-            <span className="material-symbols-outlined text-slate-400 text-lg">
-              send
-            </span>
+            <Send size={18} className="shrink-0" />
           </button>
         </div>
       </div>

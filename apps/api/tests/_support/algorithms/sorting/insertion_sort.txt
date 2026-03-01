@@ -1,0 +1,11 @@
+insertionSort(arr, n) BEGIN
+  FOR i <- 2 TO n DO BEGIN
+    key <- arr[i];
+    j <- i - 1;
+    WHILE (j >= 1 AND arr[j] > key) DO BEGIN
+      arr[j + 1] <- arr[j];
+      j <- j - 1;
+    END
+    arr[j + 1] <- key;
+  END
+END

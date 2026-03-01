@@ -8,12 +8,12 @@
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 import { CO, US } from "country-flag-icons/react/3x2";
-import { useLocale } from "next-intl";
+import { useLocale , useTranslations } from "next-intl";
 import { useRef, useEffect, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
+
 
 const locales = [
   { code: "es" as const, label: "ES", Flag: CO },
@@ -102,7 +102,7 @@ export default function LocaleSwitcher() {
       role="listbox"
     >
       {locales.map(({ code, label, Flag }) => (
-        <li key={code} role="option">
+        <li key={code} role="option" aria-selected={locale === code}>
           <button
             type="button"
             onMouseDown={(e) => {

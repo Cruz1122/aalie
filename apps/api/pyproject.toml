@@ -59,3 +59,13 @@ addopts = [
     "--strict-markers",
     "--tb=short"
 ]
+markers = [
+    "unit: unit tests (fast, isolated)",
+    "component: component/integration tests (few canonical algorithms)",
+    "contract: contract/regression tests (many parametrized cases)",
+    "system: system/HTTP endpoint tests",
+    "slow: slow tests (e.g. heavy SymPy)",
+    "while: tests involving WHILE loops",
+    "recursive: tests involving recursive analysis",
+    "dp: tests involving DP algorithms",
+]

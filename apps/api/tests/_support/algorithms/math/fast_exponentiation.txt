@@ -1,0 +1,13 @@
+potencia(base, exp, n) BEGIN
+  resultado <- 1;
+  b <- base;
+  e <- exp;
+  WHILE (e > 0) DO BEGIN
+    IF (e MOD 2 = 1) THEN BEGIN
+      resultado <- (resultado * b) MOD n;
+    END
+    e <- e / 2;
+    b <- (b * b) MOD n;
+  END
+  RETURN resultado;
+END

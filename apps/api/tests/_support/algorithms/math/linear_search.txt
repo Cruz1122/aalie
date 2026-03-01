@@ -1,0 +1,8 @@
+linearSearch(A, n, x) BEGIN
+  FOR i <- 1 TO n DO BEGIN
+    IF (A[i] = x) THEN BEGIN
+      RETURN i;
+    END
+  END
+  RETURN -1;
+END

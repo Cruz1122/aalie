@@ -1,0 +1,8 @@
+mergeSort(A, izq, der) BEGIN
+  IF (izq < der) THEN BEGIN
+    medio <- (izq + der) / 2;
+    CALL mergeSort(A, izq, medio);
+    CALL mergeSort(A, medio + 1, der);
+    CALL merge(A, izq, medio, der);
+  END
+END

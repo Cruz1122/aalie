@@ -263,6 +263,8 @@ class BaseAnalyzer:
             j = Symbol("j", integer=True)
             k = Symbol("k", integer=True)
             m = Symbol("m", integer=True, positive=True)
+            exp_sym = Symbol("exp", integer=True, positive=True)
+            e0_sym = Symbol("e_0", integer=True, positive=True)
 
             syms = {
                 self.variable: n,
@@ -270,6 +272,8 @@ class BaseAnalyzer:
                 "j": j,
                 "k": k,
                 "m": m,
+                "exp": exp_sym,
+                "e_0": e0_sym,
                 "log": sympy_log,
             }
 

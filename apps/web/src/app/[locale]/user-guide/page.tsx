@@ -50,14 +50,14 @@ export default function UserGuidePage() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <UserGuideTableOfContents sections={sections} />
 
-            <div className="lg:col-span-3">
-              <section aria-label={t("toc")}>
+            <div className="lg:col-span-3 min-w-0">
+              <section aria-label={t("toc")} className="min-w-0">
                 <div className="documentation-grid">
                   {sections.map((section) => (
                     <div
                       key={section.id}
                       id={section.id}
-                      className="scroll-mt-24"
+                      className="scroll-mt-24 min-w-0 overflow-hidden"
                     >
                       <UserGuideCard
                         section={section}

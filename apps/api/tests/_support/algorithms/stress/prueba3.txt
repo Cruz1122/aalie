@@ -1,0 +1,8 @@
+XXX3(a, b) BEGIN
+  IF (b = 0) THEN BEGIN
+    RETURN a;
+  END
+  ELSE BEGIN
+    RETURN XXX3(b, a MOD b);
+  END
+END

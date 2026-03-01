@@ -10,8 +10,8 @@ import { NavigationFooter } from "@/components/NavigationFooter";
 import NavigationLink from "@/components/NavigationLink";
 import { PageHeader } from "@/components/PageHeader";
 import { useAnalysisProgressContext } from "@/contexts/AnalysisProgressContext";
-import { useRunAnalysis } from "@/hooks/useRunAnalysis";
 import { useNavigation } from "@/contexts/NavigationContext";
+import { useRunAnalysis } from "@/hooks/useRunAnalysis";
 
 const EXAMPLE_CATEGORIES: ExampleCategory[] = [
   "simple",
@@ -699,15 +699,12 @@ export default function ExamplesPage() {
   const [analyzingExampleId, setAnalyzingExampleId] = useState<number | null>(
     null,
   );
-  const { state: analysisState } = useAnalysisProgressContext();
+  useAnalysisProgressContext();
   const { runAnalysis } = useRunAnalysis({
     onComplete: () => setAnalyzingExampleId(null),
   });
   const [activeSection, setActiveSection] = useState<string>("simple");
   const [showHowToUse, setShowHowToUse] = useState(false);
-
-  const isAnalyzing =
-    analysisState.visible && analysisState.mode === "analysis";
 
   // Finalizar la carga cuando el componente se monte
   useEffect(() => {
