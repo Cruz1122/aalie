@@ -698,7 +698,7 @@
   },
   "home": {
     "modeAI": "AALIE",
-    "modeManual": "Manual Mode",
+    "modeManual": "Manual",
     "welcome": "Hi! I'm AALIE (Algorithmic Analysis Live Interaction Expert), your assistant for algorithm analysis. How may I help you today?",
     "greeting": "Hi, I'm AALIE.",
     "greetingQuestion": "How may I help you?",

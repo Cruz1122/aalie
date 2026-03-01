@@ -11,8 +11,8 @@ import ManualModeView, {
 } from "@/components/ManualModeView";
 import ModeToggle from "@/components/ModeToggle";
 import { useAnalysisProgressContext } from "@/contexts/AnalysisProgressContext";
-import { useRunAnalysis } from "@/hooks/useRunAnalysis";
 import { useChatHistory } from "@/hooks/useChatHistory";
+import { useRunAnalysis } from "@/hooks/useRunAnalysis";
 
 interface Message {
   id: string;

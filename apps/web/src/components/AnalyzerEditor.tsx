@@ -5,13 +5,13 @@ import type * as Monaco from "monaco-editor";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
+import AALIEIcon from "./AALIEIcon";
 import { useParseWorker } from "../hooks/useParseWorker";
 import {
   errorsToMarkers,
   registerPseudocodeLanguage,
 } from "../lib/monaco-diagnostics";
 
-import AALIEIcon from "./AALIEIcon";
 
 /**
  * Propiedades del componente AnalyzerEditor.

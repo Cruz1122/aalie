@@ -4,11 +4,11 @@ import type { ParseResponse, Program } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useRef } from "react";
 
-import type { MethodType } from "@/components/MethodSelector";
 import {
   detectAndSelectMethod,
   type GetAnalysisMessage,
 } from "@/app/[locale]/analyzer/analyzer-helpers";
+import type { MethodType } from "@/components/MethodSelector";
 import { useAnalysisProgressContext } from "@/contexts/AnalysisProgressContext";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey } from "@/hooks/useApiKey";
@@ -318,9 +318,7 @@ export function useRunAnalysis(options?: {
       getMessage,
       hide,
       locale,
-      options?.blurScope,
-      options?.onParseFail,
-      options?.onComplete,
+      options,
       router,
       setAlgorithmType,
       setApplicableMethods,
@@ -330,6 +328,7 @@ export function useRunAnalysis(options?: {
       setShowMethodSelector,
       show,
       tMessages,
+      tProgress,
       updateMessage,
       updateProgress,
       methodSelectionPromiseRef,

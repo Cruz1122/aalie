@@ -352,7 +352,7 @@ export default function Footer() {
               {t("privacyPolicy")}
             </Link>
           </div>
-          <div className="flex items-center gap-x-2 sm:gap-x-3 flex-wrap justify-center">
+          <div className="flex items-center gap-x-2 sm:gap-x-3 gap-y-2 flex-wrap justify-center">
             <span className="text-slate-600 hidden sm:inline">•</span>
             <button
               onClick={() => setShowInput(true)}

@@ -2,9 +2,9 @@
 
 import type { ParseError } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
+import { useState, useEffect } from "react";
 
 import { translateLlmError } from "@/lib/llm-error-translator";
-import { useState, useEffect } from "react";
 
 interface RepairModalProps {
   open: boolean;

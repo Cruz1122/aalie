@@ -1,6 +1,5 @@
 import type { Program } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
-
 import {
   forwardRef,
   useCallback,
@@ -11,10 +10,10 @@ import {
 } from "react";
 import ReactDOM from "react-dom";
 
+import { useAnalysisProgressContext } from "@/contexts/AnalysisProgressContext";
+import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useRunAnalysis } from "@/hooks/useRunAnalysis";
-import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
-import { useAnalysisProgressContext } from "@/contexts/AnalysisProgressContext";
 import { GrammarApiService } from "@/services/grammar-api";
 
 import { AnalyzerEditor } from "./AnalyzerEditor";
@@ -22,7 +21,6 @@ import { ASTTreeView } from "./ASTTreeView";
 
 // Constantes
 const COPY_FEEDBACK_DURATION = 2000; // 2 segundos
-const ANALYSIS_RESULT_DURATION = 5000; // 5 segundos
 
 type Message = {
   id: string;
@@ -365,7 +363,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
           await runAnalysis(source);
         },
       }),
-      [runAnalysis, locale],
+      [runAnalysis, locale, setCode],
     );
 
     return (

@@ -3,8 +3,8 @@
 import { useLocale, useTranslations } from "next-intl";
 import { useState, useRef, useEffect, useMemo } from "react";
 
-import type { CaseType, TraceApiResponse, TraceGraph, TraceConfig, DiagramGraphResponse, ExecutionStep } from "@/types/trace";
 import { translateLlmError } from "@/lib/llm-error-translator";
+import type { CaseType, TraceApiResponse, TraceGraph, TraceConfig, DiagramGraphResponse, ExecutionStep } from "@/types/trace";
 
 import DiagramSection from "./DiagramSection";
 import InputSizeControl from "./InputSizeControl";

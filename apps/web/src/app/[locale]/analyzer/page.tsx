@@ -25,8 +25,8 @@ import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 import { extractCoreData, isRecursiveAnalysis, type CoreAnalysisData } from "@/lib/extract-core-data";
-import { translateLlmError } from "@/lib/llm-error-translator";
 import { analyzeASTForGPUCPU } from "@/lib/gpu-cpu-analyzer";
+import { translateLlmError } from "@/lib/llm-error-translator";
 import { getSavedCase, saveCase } from "@/lib/polynomial";
 import type { GPUCPUAnalysisResult } from "@/types/gpu-cpu";
 

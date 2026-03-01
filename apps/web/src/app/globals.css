@@ -206,6 +206,7 @@ body {
     display: grid;
     gap: 1rem;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    min-width: 0;
   }
 
   /* Animaciones para el chatbot */
@@ -369,6 +370,8 @@ body {
   height: 300px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .documentation-card-content {
@@ -378,6 +381,7 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 0;
+  min-width: 0;
 }
 
 /* Line clamp utilities for text truncation */

@@ -3,8 +3,8 @@
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState, useRef } from "react";
 
-import type { TraceGraph } from "@/types/trace";
 import { translateLlmError } from "@/lib/llm-error-translator";
+import type { TraceGraph } from "@/types/trace";
 
 import TraceFlowDiagram from "./TraceFlowDiagram";
 
