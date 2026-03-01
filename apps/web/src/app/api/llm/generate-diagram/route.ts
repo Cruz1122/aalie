@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { GEMINI_ENDPOINT_BASE } from "../llm-config";
+import { GEMINI_DIAGRAM_MODELS, GEMINI_ENDPOINT_BASE } from "../llm-config";
 import { getGenerateDiagramSystemPrompt } from "../prompts/generate-diagram";
 
 export const runtime = "nodejs";
@@ -30,8 +30,7 @@ async function callGeminiLLM(
     generationConfig,
   };
   
-  // Usar el modelo general
-  const model = "gemini-2.0-flash";
+  const model = GEMINI_DIAGRAM_MODELS.generate_diagram;
   const url = `${GEMINI_ENDPOINT_BASE}/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
   
   const response = await fetch(url, {

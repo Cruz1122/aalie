@@ -1,6 +1,11 @@
 // Configuración centralizada para modelos LLM de Gemini
 
 import { getPrompt as getPromptByLocale } from "./prompts";
+import {
+  DEFAULT_GEMINI_DIAGRAM_MODELS,
+  DEFAULT_GEMINI_ENDPOINT_BASE,
+  DEFAULT_GEMINI_MODELS,
+} from "./llm-defaults";
 
 export type LLMJob =
   | "classify"
@@ -10,17 +15,44 @@ export type LLMJob =
   | "repair"
   | "compare";
 
+function getEnvOrDefault(name: string, fallback: string): string {
+  const value = process.env[name];
+  if (!value) {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : fallback;
+}
+
 export const GEMINI_MODELS = {
-  classify: "gemini-2.0-flash-lite",
-  parser_assist: "gemini-2.5-flash",
-  general: "gemini-2.5-flash",
-  simplifier: "gemini-2.5-flash",
-  repair: "gemini-2.5-flash",
-  compare: "gemini-2.5-pro",
+  classify: getEnvOrDefault("LLM_MODEL_CLASSIFY", DEFAULT_GEMINI_MODELS.classify),
+  parser_assist: getEnvOrDefault(
+    "LLM_MODEL_PARSER_ASSIST",
+    DEFAULT_GEMINI_MODELS.parser_assist,
+  ),
+  general: getEnvOrDefault("LLM_MODEL_GENERAL", DEFAULT_GEMINI_MODELS.general),
+  simplifier: getEnvOrDefault(
+    "LLM_MODEL_SIMPLIFIER",
+    DEFAULT_GEMINI_MODELS.simplifier,
+  ),
+  repair: getEnvOrDefault("LLM_MODEL_REPAIR", DEFAULT_GEMINI_MODELS.repair),
+  compare: getEnvOrDefault("LLM_MODEL_COMPARE", DEFAULT_GEMINI_MODELS.compare),
+};
+
+export const GEMINI_DIAGRAM_MODELS = {
+  recursion_diagram: getEnvOrDefault(
+    "LLM_MODEL_RECURSION_DIAGRAM",
+    DEFAULT_GEMINI_DIAGRAM_MODELS.recursion_diagram,
+  ),
+  generate_diagram: getEnvOrDefault(
+    "LLM_MODEL_GENERATE_DIAGRAM",
+    DEFAULT_GEMINI_DIAGRAM_MODELS.generate_diagram,
+  ),
 };
 
 export const GEMINI_ENDPOINT_BASE =
-  "https://generativelanguage.googleapis.com/v1beta/models";
+  getEnvOrDefault("GEMINI_ENDPOINT_BASE", DEFAULT_GEMINI_ENDPOINT_BASE);
 
 // Parámetros por job (temperatura, tokens). Los prompts se obtienen de ./prompts según locale.
 export const JOB_CONFIG = {

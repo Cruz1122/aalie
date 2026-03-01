@@ -13,6 +13,22 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Changed
 
+## [Unreleased] <-- Por Asignar Version
+
+### Added
+
+- Configuración base centralizada de LLM en `apps/web/src/app/api/llm/llm-defaults.ts` con modelos y endpoint por defecto para evitar fallos por variables faltantes.
+
+### Fixed
+
+- Frontend LLM: eliminación de modelos hardcodeados en rutas de diagramas (`generate-diagram`, `recursion-diagram`) para usar configuración central por variables de entorno.
+- Resiliencia de configuración LLM: cuando falta una variable de entorno, el sistema usa valores por defecto seguros y no crashea.
+
+### Changed
+
+- Configuración de modelos del frontend migrada a variables de entorno (`GEMINI_ENDPOINT_BASE`, `LLM_MODEL_*`) con lectura centralizada desde `llm-config.ts`.
+- Documentación de despliegue y uso de LLM actualizada al nuevo esquema de variables en `apps/web/LLM_CONFIG.md`, `apps/web/src/app/api/llm/README.md`, `docs/app/api-key-configuration.md` y `docs/llm/usage-and-models.md`.
+
 ## [1.1.5]
 
 ### Added

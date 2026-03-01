@@ -12,7 +12,7 @@ El sistema utiliza modelos de lenguaje grande (LLM) de Google Gemini para divers
 
 ```typescript
 export type LLMJob =
-  | "classify"        // ⚠️ LEGACY - No se usa, clasificación es por heurística
+  | "classify"        // Clasificación de intención para el chat
   | "parser_assist"   // Asistencia para generar/corregir código
   | "general"         // Chatbot general
   | "simplifier"      // Simplificación matemática
@@ -20,13 +20,16 @@ export type LLMJob =
   | "compare";        // Comparación de análisis
 
 export const GEMINI_MODELS = {
-  classify: "gemini-2.0-flash-lite",      // ⚠️ LEGACY - No se usa
-  parser_assist: "gemini-2.5-flash",
-  general: "gemini-2.5-flash",
-  simplifier: "gemini-2.5-flash",
-  repair: "gemini-2.5-flash",
-  compare: "gemini-2.5-pro",
+  classify: getEnvOrDefault("LLM_MODEL_CLASSIFY", DEFAULT_GEMINI_MODELS.classify),
+  parser_assist: getEnvOrDefault("LLM_MODEL_PARSER_ASSIST", DEFAULT_GEMINI_MODELS.parser_assist),
+  general: getEnvOrDefault("LLM_MODEL_GENERAL", DEFAULT_GEMINI_MODELS.general),
+  simplifier: getEnvOrDefault("LLM_MODEL_SIMPLIFIER", DEFAULT_GEMINI_MODELS.simplifier),
+  repair: getEnvOrDefault("LLM_MODEL_REPAIR", DEFAULT_GEMINI_MODELS.repair),
+  compare: getEnvOrDefault("LLM_MODEL_COMPARE", DEFAULT_GEMINI_MODELS.compare),
 };
+
+export const GEMINI_ENDPOINT_BASE =
+  getEnvOrDefault("GEMINI_ENDPOINT_BASE", DEFAULT_GEMINI_ENDPOINT_BASE);
 ```
 
 ## Sistema de Prompts por Idioma
@@ -56,15 +59,15 @@ Para más información sobre internacionalización, labels de backend y el flujo
 
 ## Jobs Disponibles
 
-### ⚠️ LEGACY: Classify (NO SE USA)
+### 0. Classify (intención del chat)
 
-**Estado**: **DEPRECADO** - No se utiliza en producción
+**Estado**: Activo en el frontend para enrutar mensajes del chat.
 
-**Razón**: La clasificación de algoritmos se realiza completamente por **heurística** en el backend Python mediante el endpoint `/classify`. No se usa LLM para esta tarea.
+**Propósito**: Clasificar la intención del mensaje entre `parser_assist` y `general`.
 
-**Modelo anterior**: `gemini-2.0-flash-lite`
+**Modelo**: `gemini-2.0-flash-lite` (configurable por `LLM_MODEL_CLASSIFY`).
 
-**Nota**: Aunque el job existe en la configuración, **no hay ningún endpoint activo** que lo use. La clasificación es 100% determinista y basada en análisis del AST.
+**Nota**: Este job no reemplaza la clasificación heurística del backend Python para análisis algorítmico (`/classify`); ambos flujos son distintos.
 
 ---
 
@@ -337,7 +340,7 @@ const response = await fetch("/api/llm/recursion-diagram", {
 - Bueno para generación de diagramas
 - Costo bajo
 
-**Nota**: El job `classify` está configurado con `gemini-2.0-flash-lite` pero **NO SE USA** en producción.
+**Nota**: Este modelo también se usa para `classify` (clasificación de intención del chat).
 
 ## Endpoints de LLM
 
@@ -346,8 +349,9 @@ const response = await fetch("/api/llm/recursion-diagram", {
 ```
 /api/llm/
 ├── route.ts              # Endpoint principal (POST /api/llm)
+├── classify/             # Endpoint auxiliar de clasificación
 ├── recursion-diagram/    # Generación de diagramas recursivos
-└── status/               # Validación de API key
+└── status/               # Estado global de jobs/modelos activos
 ```
 
 ### Endpoint Principal: POST /api/llm
@@ -355,23 +359,22 @@ const response = await fetch("/api/llm/recursion-diagram", {
 **Request**:
 ```typescript
 {
-  "job": "parser_assist" | "general" | "simplifier" | "repair" | "compare",
-  "message"?: string,      // Para parser_assist y general
-  "history"?: Message[],   // Para general (contexto del chat)
-  "code"?: string,         // Para repair
-  "errors"?: Error[],      // Para repair
-  "systemAnalysis"?: any,  // Para compare
-  "source"?: string,       // Para compare
-  "locale"?: string        // "es" | "en" - idioma para prompts (default: "es")
+  "job": "classify" | "parser_assist" | "general" | "simplifier" | "repair" | "compare",
+  "prompt": string,
+  "chatHistory"?: Array<{ role: string; content: string }>,
+  "apiKey"?: string,
+  "locale"?: "es" | "en",
+  "context"?: string
 }
 ```
 
 **Response**:
 ```typescript
 {
-  "text": string,          // Respuesta del LLM
-  "tokensUsed": number,
-  "cost": number
+  "ok": true,
+  "data": { ...respuesta Gemini... },
+  "model": string,
+  "intent"?: "parser_assist" | "general"  // solo en job classify
 }
 ```
 
@@ -381,19 +384,20 @@ const response = await fetch("/api/llm/recursion-diagram", {
 // apps/web/src/app/api/llm/route.ts
 
 export async function POST(request: Request) {
-  // Obtener API key (prioridad: header > env)
-  const apiKey = request.headers.get('X-API-Key') || 
-                 process.env.GEMINI_API_KEY;
+  // Obtener API key (prioridad: servidor > body)
+  const serverApiKey = process.env.API_KEY;
+  const body = await request.json();
+  const apiKey = serverApiKey || body.apiKey || null;
 
   if (!apiKey) {
     return Response.json(
       { error: 'API key required' },
-      { status: 401 }
+      { status: 400 }
     );
   }
 
   // Obtener configuración del job
-  const { job } = await request.json();
+  const { job } = body;
   const config = getJobConfig(job);
 
   // Llamar a Gemini
@@ -410,7 +414,7 @@ export async function POST(request: Request) {
 ```
 Usuario envía mensaje
     ↓
-Clasificación de intención (local, sin LLM)
+Clasificación de intención (`job: classify`)
     ↓
 Si es "parser_assist" → POST /api/llm (job: parser_assist)
 Si es "general" → POST /api/llm (job: general)
@@ -467,20 +471,29 @@ Retorna visualización
 ### Frontend (Next.js)
 
 ```env
-# .env.local
+# apps/web/.env
 
-# API key del servidor (fallback si usuario no proporciona la suya)
-GEMINI_API_KEY=AIza...
+# Endpoint base del proveedor Gemini
+GEMINI_ENDPOINT_BASE=https://generativelanguage.googleapis.com/v1beta/models
 
-# Configuración de LLM
-NEXT_PUBLIC_DEFAULT_MODEL=gemini-2.5-flash
-NEXT_PUBLIC_MAX_TOKENS=16000
+# Modelos por job
+LLM_MODEL_CLASSIFY=gemini-2.0-flash-lite
+LLM_MODEL_PARSER_ASSIST=gemini-2.5-flash
+LLM_MODEL_GENERAL=gemini-2.5-flash
+LLM_MODEL_SIMPLIFIER=gemini-2.5-flash
+LLM_MODEL_REPAIR=gemini-2.5-flash
+LLM_MODEL_COMPARE=gemini-2.5-pro
+LLM_MODEL_RECURSION_DIAGRAM=gemini-2.0-flash
+LLM_MODEL_GENERATE_DIAGRAM=gemini-2.0-flash
+
+# API key opcional del servidor Next.js para /api/llm/*
+API_KEY=
 ```
 
 ### Prioridad de API Keys
 
-1. **API key del usuario** (header `X-API-Key`) - Prioridad más alta
-2. **API key del servidor** (`GEMINI_API_KEY` en env) - Fallback
+1. **API key del servidor** (`API_KEY` en env) - Prioridad más alta
+2. **API key del usuario** (enviada en body como `apiKey`) - Fallback
 
 ## Monitoreo y Logging
 
@@ -589,11 +602,9 @@ export function checkRateLimit(apiKey: string): boolean {
 | `compare` | gemini-2.5-pro | Comparación de análisis | `/api/llm` |
 | (recursion_diagram) | gemini-2.0-flash | Diagramas recursivos | `/api/llm/recursion-diagram` |
 
-### ❌ Jobs Legacy (NO Se Usan)
+### ℹ️ Clasificación heurística del backend
 
-| Job | Modelo | Estado | Razón |
-|-----|--------|--------|-------|
-| `classify` | gemini-2.0-flash-lite | **DEPRECADO** | Clasificación es por heurística en `/classify` (backend Python) |
+La clasificación determinista de algoritmos en backend Python (`/classify`) sigue existiendo y es independiente del job `classify` del chat.
 
 ## Referencias
 
