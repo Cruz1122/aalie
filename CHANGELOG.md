@@ -13,6 +13,23 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Changed
 
+## [Unreleased] <-- Por Asignar Version (Monitoreo básico)
+
+### Added
+
+- Documento de monitoreo operativo `docs/development/basic-monitoring-log.md` con plantilla de registro diario, KPI semanales y checklist de seguimiento.
+- Script local temporal `scripts/local/monitoring_probe.py` para medir tiempos de respuesta y errores, y registrar resultados automáticamente en el documento de monitoreo.
+
+### Fixed
+
+- Script de monitoreo: corrección de flujo de requests para soportar métodos HTTP por caso (`GET` y `POST`) sin errores de ejecución.
+- Cobertura de pruebas de monitoreo ampliada para endpoints LLM adicionales (`/api/llm/status`, `/api/llm/classify`, `/api/llm/generate-diagram`) evitando validaciones parciales.
+
+### Changed
+
+- Proceso de monitoreo local actualizado para incluir más operaciones LLM (`general`, `parser_assist`, `repair`, `compare`) en una sola corrida.
+- Actualización automática del resumen semanal (p50, p95, error rate y top errores) a partir del registro diario en `docs/development/basic-monitoring-log.md`.
+
 ## [Unreleased] <-- Por Asignar Version
 
 ### Added

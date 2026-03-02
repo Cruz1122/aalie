@@ -4,9 +4,9 @@ export const DEFAULT_GEMINI_ENDPOINT_BASE =
 export const DEFAULT_GEMINI_MODELS = {
   classify: "gemini-2.0-flash-lite",
   parser_assist: "gemini-2.5-flash",
-  general: "gemini-2.5-flash",
+  general: "gemini-3-flash-preview",
   repair: "gemini-2.5-flash",
-  compare: "gemini-2.5-pro",
+  compare: "gemini-2.5-flash",
 } as const;
 
 export const DEFAULT_GEMINI_DIAGRAM_MODELS = {
