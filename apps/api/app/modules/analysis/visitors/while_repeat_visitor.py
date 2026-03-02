@@ -1054,8 +1054,10 @@ class WhileRepeatVisitor:
                 has_array_or_other_var = left_result or right_result
 
                 # Si la parte "no de control" es un flag booleano fijado antes del WHILE,
-                # NO debemos aplicar early-exit a 0 iteraciones. Ejemplo: intercambiado <- VERDADERO;
-                # WHILE (i < n AND intercambiado) ...
+                # NO debemos aplicar early-exit a 0 iteraciones. Ejemplo:
+                #   intercambiado <- VERDADERO;
+                #   WHILE (i < n AND intercambiado) ...
+                #   WHILE (i < n AND intercambiado = VERDADERO) ...
                 def _is_bool_flag_fixed_before(var_node: Dict[str, Any]) -> bool:
                     if not isinstance(var_node, Dict):
                         return False
@@ -1070,12 +1072,90 @@ class WhileRepeatVisitor:
                         return False
                     return initial_val.upper() in ("VERDADERO", "FALSO", "TRUE", "FALSE")
 
-                non_control_is_fixed_flag = False
-                if isinstance(left, Dict) and left.get("type", "").lower() == "identifier":
-                    non_control_is_fixed_flag = _is_bool_flag_fixed_before(left)
-                if not non_control_is_fixed_flag and isinstance(right, Dict) and right.get("type", "").lower() == "identifier":
-                    non_control_is_fixed_flag = _is_bool_flag_fixed_before(right)
+                def _extract_flag_identifier_node(expr: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+                    """
+                    Devuelve un nodo Identifier que represente una bandera booleana en la condición.
+                    
+                    Soporta:
+                    - Uso directo: intercambiado
+                    - Comparación explícita: intercambiado = VERDADERO / TRUE / FALSO / FALSE
+                    """
+                    if not isinstance(expr, Dict):
+                        return None
+                    t = expr.get("type", "").lower()
 
+                    # Caso 1: identificador directo (ej: WHILE (i < n AND intercambiado) ...)
+                    if t == "identifier":
+                        return expr
+
+                    # Caso 2: comparación binaria id = const / const = id / id != 0
+                    if t in ("binary", "binaryop"):
+                        op = (expr.get("op") or expr.get("operator", "")).lower()
+                        if op in ("=", "==", "!=", "<>"):
+                            left_e = expr.get("left", {})
+                            right_e = expr.get("right", {})
+
+                            def _is_bool_const(node: Dict[str, Any]) -> bool:
+                                if not isinstance(node, Dict):
+                                    return False
+                                nt = node.get("type", "").lower()
+                                if nt in ("number", "literal"):
+                                    # Cualquier literal booleano
+                                    val = node.get("value")
+                                    if isinstance(val, str) and val.lower().strip() in (
+                                        "true",
+                                        "false",
+                                        "verdadero",
+                                        "falso",
+                                        "v",
+                                        "f",
+                                    ):
+                                        return True
+                                    if isinstance(val, bool):
+                                        return True
+                                    return False
+                                if nt == "identifier":
+                                    name = (node.get("name", "") or "").lower()
+                                    return name in (
+                                        "true",
+                                        "false",
+                                        "verdadero",
+                                        "falso",
+                                        "v",
+                                        "f",
+                                    )
+                                return False
+
+                            # id = const
+                            if (
+                                isinstance(left_e, Dict)
+                                and left_e.get("type", "").lower() == "identifier"
+                                and _is_bool_const(right_e)
+                            ):
+                                return left_e
+                            # const = id
+                            if (
+                                isinstance(right_e, Dict)
+                                and right_e.get("type", "").lower() == "identifier"
+                                and _is_bool_const(left_e)
+                            ):
+                                return right_e
+
+                    return None
+
+                non_control_is_fixed_flag = False
+                # Detectar posible flag en cada lado (soportando tanto identificador como id=const)
+                left_flag = _extract_flag_identifier_node(left)
+                right_flag = _extract_flag_identifier_node(right)
+
+                if left_flag and left_flag.get("name") != var_name:
+                    non_control_is_fixed_flag = _is_bool_flag_fixed_before(left_flag)
+                if not non_control_is_fixed_flag and right_flag and right_flag.get("name") != var_name:
+                    non_control_is_fixed_flag = _is_bool_flag_fixed_before(right_flag)
+
+                # Early-exit a 0 iteraciones solo aplica cuando:
+                # - hay una comparación no solo de la variable de control, y
+                # - NO se trata de una bandera booleana fijada antes del WHILE.
                 if has_array_or_other_var and not non_control_is_fixed_flag:
                     # En best case, asumir que la parte con array/variable es falsa desde el inicio
                     # Por lo tanto, el WHILE solo evalúa la condición una vez y sale (0 iteraciones)

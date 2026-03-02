@@ -97,7 +97,14 @@ class TestAlgorithms:
         """Bubble sort: validar todos los casos (worst, best, avg)."""
         result = analyze_algorithm(BUBBLE_SORT, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "quadratic", name="Bubble Sort")
+        # Peor caso y caso promedio cuadráticos; mejor caso lineal (lista ya ordenada).
+        assert_all_cases_complexity(
+            result,
+            "quadratic",
+            expected_best="linear",
+            expected_avg="quadratic",
+            name="Bubble Sort",
+        )
 
     def test_bubble_sort_no_unknown_in_count(self):
         """Ninguna fila debe tener count 'unknown' (salvo unbounded)."""

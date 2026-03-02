@@ -58,7 +58,13 @@ class TestRecursiveAlgorithmsPseudocode:
         theta = master.get("theta", "") or totals.get("big_theta", "") or totals.get("big_o", "")
         # Idealmente Θ(n log n); si no se captura el costo del merge, puede dar Θ(n)
         assert "n" in theta.lower(), f"Merge sort debe contener n: theta={theta}"
-        assert_all_cases_complexity(result, "nlogn", name="Merge Sort")
+        assert_all_cases_complexity(
+            result,
+            "nlogn",
+            expected_best="nlogn",
+            expected_avg="nlogn",
+            name="Merge Sort",
+        )
 
     def test_binary_search_recursive_theta_log_n(self):
         """Búsqueda binaria recursiva debe dar Θ(log n) y validar todos los casos."""

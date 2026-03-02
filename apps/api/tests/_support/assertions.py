@@ -85,17 +85,25 @@ def infer_complexity_class(notation: str) -> str:
     if not expr:
         return "unknown"
 
+    # Símbolos que consideramos variables de tamaño (no constantes C_k)
     size_symbols = ["n", "m", "size", "length", "exp", "min"]
 
     def has_size_var() -> bool:
         return any(sym in expr for sym in size_symbols)
 
+    # Número total (aprox.) de apariciones de variables de tamaño
+    size_var_count = 0
+    for sym in size_symbols:
+        size_var_count += expr.count(sym)
+
     has_log = "log" in expr
 
     # --- Exponential ---
-    # Patrones típicos: 2^n, a^n, exp(n), n^k con k>=4
-    if re.search(r"(2|\d+)\^n", expr) or "exp(" in expr or re.search(r"[a-z]\^\{?n\}?", expr):
+    # Patrones típicos: 2^n, a^n, exp(n), (c)^n, n^k con k>=4
+    # Cualquier cosa elevada a n se considera exponencial
+    if "exp(" in expr or re.search(r"\^\{?n\}?", expr):
         return "exponential"
+    # n^k con k >= 4
     exp_match = re.search(r"\^\{?(\d+)\}?", expr)
     if exp_match:
         try:
@@ -113,20 +121,20 @@ def infer_complexity_class(notation: str) -> str:
     # Exponente 2 en alguna variable de tamaño
     if re.search(r"[a-z]\^\{?2\}?", expr):
         return "quadratic"
-    # Producto de dos o más variables de tamaño: tratar como al menos cuadrático
-    if has_size_var() and ("*" in expr or "cdot" in expr):
-        count = 0
-        for sym in size_symbols:
-            count += expr.count(sym)
-        if count >= 2:
-            return "quadratic"
+    # Producto (explícito o implícito) de dos o más variables de tamaño
+    # Ej: mn, nm, 5mn, 3nm, n*m, m*n → al menos cuadrático
+    if not has_log and size_var_count >= 2:
+        return "quadratic"
 
     # --- n log n ---
-    if has_log and has_size_var():
-        return "nlogn"
-
-    # --- Solo logarítmico ---
-    if has_log and not has_size_var():
+    # Distinguir entre log puro (log n, log(min(a,b)), log(exp)) y n log n
+    if has_log:
+        # Patrones típicos para n log n (con o sin paréntesis / espacios)
+        if re.search(r"nlogn", expr) or re.search(r"nlog\(n\)", expr):
+            return "nlogn"
+        if re.search(r"n\*logn", expr) or re.search(r"n\*log\(n\)", expr):
+            return "nlogn"
+        # Todo lo demás con log se considera logarítmico puro
         return "log"
 
     # --- Lineal ---

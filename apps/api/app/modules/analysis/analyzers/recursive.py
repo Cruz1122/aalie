@@ -72,6 +72,19 @@ class RecursiveAnalyzer(BaseAnalyzer):
         self.proc_def = proc_def  # Guardar para uso posterior
         self.procedure_name = proc_def.get("name")
         
+        # 2.1. Detectar variables de tamaño candidatas a partir del ProcDef
+        # Mantendremos la notación estándar T(n), pero registraremos el mapeo si
+        # el parámetro real tiene otro nombre.
+        try:
+            size_candidates = self.detect_size_variables_from_proc(proc_def)
+        except Exception:
+            size_candidates = []
+        if size_candidates:
+            primary = size_candidates[0]
+            if isinstance(primary, str) and primary and primary != "n":
+                # Registrar que nuestro 'n' conceptual corresponde a este parámetro
+                self.add_symbol("n", primary)
+
         # 2. Validar condiciones iniciales (divide-and-conquer canónico)
         validation_result = self._validate_conditions(proc_def)
         if not validation_result["valid"]:
@@ -6302,6 +6315,18 @@ FIN FUNCIÓN"""
         
         # Paso 7: Resultado final
         theta = summation_result.get("theta", f"\\Theta({f_n})")
+
+        # Corrección específica para recursión tipo búsqueda binaria:
+        # T(n) = T(n/2) + Θ(1) → Θ(log n)
+        try:
+            f_simplified = f_n.replace(" ", "").lower()
+            if a == 1 and self._simplify_number_latex(b) == "2":
+                if f_simplified in ("1", "theta(1)", "\\theta(1)", "o(1)"):
+                    theta = "\\Theta(\\log n)"
+                    summation_result["theta"] = theta
+        except Exception:
+            # Si algo falla en la detección, mantener el theta original
+            pass
         
         self.proof_steps.append({
             "id": "tree_result",

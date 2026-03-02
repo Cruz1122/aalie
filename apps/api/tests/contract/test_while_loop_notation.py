@@ -100,7 +100,13 @@ class TestWhileLoopNotationBounded:
         result = analyze_algorithm(BUBBLE_SORT_MEJORADO, mode="all")
         assert result.get("ok", False)
         # El analizador puede devolver O(n) o O(n²) según cómo modele el while bounded.
-        assert_all_cases_complexity(result, "linear", name="Bubble Sort Mejorado")
+        assert_all_cases_complexity(
+            result,
+            "linear",
+            expected_best="linear",
+            expected_avg="linear",
+            name="Bubble Sort Mejorado",
+        )
 
     def test_while_flag_kill_bounded(self):
         """WHILE flag=true con flag <- false (must) → bounded."""

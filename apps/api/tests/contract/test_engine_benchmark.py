@@ -422,7 +422,13 @@ class TestIterativeBenchmark:
     def test_01_fibonacci_iterative(self):
         result = analyze_algorithm(FIBONACCI_ITERATIVE, mode="all")
         assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
-        assert_all_cases_complexity(result, "linear", name="Fibonacci iterativo")
+        assert_all_cases_complexity(
+            result,
+            "linear",
+            expected_best="linear",
+            expected_avg="linear",
+            name="Fibonacci iterativo",
+        )
 
     def test_01b_fibonacci_iterative_else_structure(self):
         """Fibonacci con ELSE IF: FOR dentro de ELSE debe dar Θ(n) en worst/avg."""
@@ -436,37 +442,79 @@ class TestIterativeBenchmark:
     def test_02_prefix_sum(self):
         result = analyze_algorithm(PREFIX_SUM, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "linear", name="Prefix sum")
+        assert_all_cases_complexity(
+            result,
+            "linear",
+            expected_best="linear",
+            expected_avg="linear",
+            name="Prefix sum",
+        )
 
     def test_03_array_product(self):
         result = analyze_algorithm(ARRAY_PRODUCT, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "linear", name="Array product")
+        assert_all_cases_complexity(
+            result,
+            "linear",
+            expected_best="linear",
+            expected_avg="linear",
+            name="Array product",
+        )
 
     def test_04_array_min(self):
         result = analyze_algorithm(ARRAY_MIN, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "linear", name="Array min")
+        assert_all_cases_complexity(
+            result,
+            "linear",
+            expected_best="linear",
+            expected_avg="linear",
+            name="Array min",
+        )
 
     def test_05_reverse_array(self):
         result = analyze_algorithm(REVERSE_ARRAY, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "linear", name="Reverse array")
+        assert_all_cases_complexity(
+            result,
+            "linear",
+            expected_best="linear",
+            expected_avg="linear",
+            name="Reverse array",
+        )
 
     def test_06_copy_array(self):
         result = analyze_algorithm(COPY_ARRAY, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "linear", name="Copy array")
+        assert_all_cases_complexity(
+            result,
+            "linear",
+            expected_best="linear",
+            expected_avg="linear",
+            name="Copy array",
+        )
 
     def test_07_dot_product(self):
         result = analyze_algorithm(DOT_PRODUCT, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "linear", name="Dot product")
+        assert_all_cases_complexity(
+            result,
+            "linear",
+            expected_best="linear",
+            expected_avg="linear",
+            name="Dot product",
+        )
 
     def test_08_count_zeros(self):
         result = analyze_algorithm(COUNT_ZEROS, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "linear", name="Count zeros")
+        assert_all_cases_complexity(
+            result,
+            "linear",
+            expected_best="linear",
+            expected_avg="linear",
+            name="Count zeros",
+        )
 
     def test_09_find_last_index(self):
         result = analyze_algorithm(FIND_LAST_INDEX, mode="all")
@@ -478,7 +526,13 @@ class TestIterativeBenchmark:
     def test_10_sum_evens(self):
         result = analyze_algorithm(SUM_EVENS, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "linear", name="Sum evens")
+        assert_all_cases_complexity(
+            result,
+            "linear",
+            expected_best="linear",
+            expected_avg="linear",
+            name="Sum evens",
+        )
 
     def test_11_bubble_sort(self):
         result = analyze_algorithm(BUBBLE_SORT, mode="all")
@@ -490,7 +544,13 @@ class TestIterativeBenchmark:
     def test_12_selection_sort(self):
         result = analyze_algorithm(SELECTION_SORT, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "quadratic", name="Selection sort")
+        assert_all_cases_complexity(
+            result,
+            "quadratic",
+            expected_best="quadratic",
+            expected_avg="quadratic",
+            name="Selection sort",
+        )
 
     def test_13_insertion_sort(self):
         result = analyze_algorithm(INSERTION_SORT, mode="all")
@@ -502,22 +562,46 @@ class TestIterativeBenchmark:
     def test_14_double_for_rectangular(self):
         result = analyze_algorithm(DOUBLE_FOR_RECT, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "quadratic", name="Double FOR rectangular")
+        assert_all_cases_complexity(
+            result,
+            "quadratic",
+            expected_best="quadratic",
+            expected_avg="quadratic",
+            name="Double FOR rectangular",
+        )
 
     def test_15_triangular_loops(self):
         result = analyze_algorithm(TRIANGULAR_LOOPS, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "quadratic", name="Triangular loops")
+        assert_all_cases_complexity(
+            result,
+            "quadratic",
+            expected_best="quadratic",
+            expected_avg="quadratic",
+            name="Triangular loops",
+        )
 
     def test_16_matrix_mult(self):
         result = analyze_algorithm(MATRIX_MULT, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "cubic", name="Matrix mult")
+        assert_all_cases_complexity(
+            result,
+            "cubic",
+            expected_best="cubic",
+            expected_avg="cubic",
+            name="Matrix mult",
+        )
 
     def test_17_triple_for_cubic(self):
         result = analyze_algorithm(TRIPLE_FOR_CUBIC, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "cubic", name="Triple FOR cubic")
+        assert_all_cases_complexity(
+            result,
+            "cubic",
+            expected_best="cubic",
+            expected_avg="cubic",
+            name="Triple FOR cubic",
+        )
 
     def test_18_binary_search_iterative(self):
         result = analyze_algorithm(BINARY_SEARCH_ITER, mode="all")
@@ -529,12 +613,24 @@ class TestIterativeBenchmark:
     def test_19_while_log(self):
         result = analyze_algorithm(WHILE_LOG, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "log", name="WHILE log")
+        assert_all_cases_complexity(
+            result,
+            "log",
+            expected_best="log",
+            expected_avg="log",
+            name="WHILE log",
+        )
 
     def test_20_euclides_mcd(self):
         result = analyze_algorithm(EUCLIDES_MCD, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "log", name="Euclides MCD")
+        assert_all_cases_complexity(
+            result,
+            "log",
+            expected_best="log",
+            expected_avg="log",
+            name="Euclides MCD",
+        )
 
 
 def _assert_recursive_result(result, expected_worst, expected_best=None, expected_avg=None, name=""):
@@ -570,7 +666,7 @@ class TestRecursiveMasterBenchmark:
         if not result.get("ok"):
             pytest.fail(f"Merge sort falló: {result.get('errors', [])}")
         _assert_recurrence_method(result, "master", "Merge sort")
-        _assert_recursive_result(result, "linear", name="Merge sort")
+        _assert_recursive_result(result, "nlogn", name="Merge sort")
 
     def test_02_binary_search_master(self):
         result = analyze_algorithm(BINARY_SEARCH_REC, mode="all", preferred_method="master")
@@ -691,7 +787,7 @@ class TestRecursiveRecursionTreeBenchmark:
         if not result.get("ok"):
             pytest.fail(f"Merge sort tree falló: {result.get('errors', [])}")
         _assert_recurrence_method(result, "recursion_tree", "Merge sort tree")
-        _assert_recursive_result(result, "linear", name="Merge sort tree")
+        _assert_recursive_result(result, "nlogn", name="Merge sort tree")
 
     def test_02_binary_search_tree(self):
         result = analyze_algorithm(BINARY_SEARCH_REC, mode="all", preferred_method="recursion_tree")

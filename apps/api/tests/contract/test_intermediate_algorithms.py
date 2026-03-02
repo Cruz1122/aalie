@@ -52,7 +52,13 @@ class TestIntermediateAlgorithms:
         """Selection sort: validar todos los casos (worst, best, avg)."""
         result = analyze_algorithm(SELECTION_SORT, mode="all")
         assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
-        assert_all_cases_complexity(result, "quadratic", name="Selection Sort")
+        assert_all_cases_complexity(
+            result,
+            "quadratic",
+            expected_best="quadratic",
+            expected_avg="quadratic",
+            name="Selection Sort",
+        )
 
     def test_selection_sort_all_cases(self):
         """Selection sort: worst, best y avg deben analizarse correctamente."""
@@ -71,7 +77,13 @@ class TestIntermediateAlgorithms:
         """Multiplicación de matrices: validar todos los casos Θ(n³)."""
         result = analyze_algorithm(MATRIX_MULTIPLICATION, mode="all")
         assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
-        assert_all_cases_complexity(result, "cubic", name="Matrix Multiplication")
+        assert_all_cases_complexity(
+            result,
+            "cubic",
+            expected_best="cubic",
+            expected_avg="cubic",
+            name="Matrix Multiplication",
+        )
 
     def test_matrix_multiplication_all_cases(self):
         """Matrix mult: worst, best y avg deben analizarse correctamente."""

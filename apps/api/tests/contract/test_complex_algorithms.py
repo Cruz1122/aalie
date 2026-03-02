@@ -43,6 +43,25 @@ COMPLEX_INDEXED_ARRAY = """doubleLoop(n) BEGIN
 END
 """
 
+# Bubble sort mejorado con bandera en condición AND usando igualdad explícita
+BUBBLE_SORT_FLAG_EQ = """ordenamientoBurbujaMejorado(A, n) BEGIN
+  i <- 1;
+  intercambiado <- VERDADERO;
+  WHILE (i < n AND intercambiado = VERDADERO) DO BEGIN
+    intercambiado <- FALSO;
+    FOR j <- 1 TO n - i DO BEGIN
+      IF (A[j] > A[j+1]) THEN BEGIN
+        temp <- A[j];
+        A[j] <- A[j+1];
+        A[j+1] <- temp;
+        intercambiado <- VERDADERO;
+      END
+    END
+    i <- i + 1;
+  END
+END
+"""
+
 # FOR con IF anidados (3 ramas) → O(n)
 NESTED_IF_IN_FOR = """nestedIf(A, n) BEGIN
   FOR i <- 1 TO n DO BEGIN
@@ -187,6 +206,19 @@ class TestComplexAlgorithms:
                 data = result.get("worst")
             if isinstance(data, dict):
                 assert data.get("ok") and "byLine" in data and "totals" in data
+
+    def test_bubble_sort_flag_eq_best_linear(self):
+        """Bubble sort con bandera en condición AND (intercambiado = VERDADERO) debe ser lineal en best."""
+        result = analyze_algorithm(BUBBLE_SORT_FLAG_EQ, mode="all")
+        assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
+        # Peor caso cuadrático, mejor caso lineal, promedio cuadrático.
+        assert_all_cases_complexity(
+            result,
+            "quadratic",
+            expected_best="linear",
+            expected_avg="quadratic",
+            name="BubbleSortFlagEq",
+        )
 
     def test_multi_and_data_while_cases(self):
         """WHILE con i<=n AND A[i]>0 AND B[i]>0: worst/avg O(n), best O(1) (salida temprana)."""
