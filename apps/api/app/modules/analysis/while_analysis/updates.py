@@ -216,6 +216,11 @@ def _must_may_stmt(node: Any, var_name: str) -> tuple[List[Dict], List[Dict]]:
         return must_all, list({id(x): x for x in may_all}.values())
     if nt == "if":
         return _must_may_if(node, var_name)
+    if nt == "for":
+        # Todo dentro de un FOR se considera may update desde la perspectiva del WHILE:
+        # el rango puede ser vacío (0 iteraciones) o la rama condicional interna puede no ejecutarse.
+        _, may_nested = _must_may_stmt(node.get("body", {}), var_name)
+        return [], may_nested
     if nt in ("while", "repeat"):
         # Todo dentro de un bucle anidado se considera may update (ya que podría ejecutarse 0 veces)
         _, may_nested = _must_may_stmt(node.get("body", {}), var_name)
@@ -303,10 +308,23 @@ def summarize_updates(
         if guard_info:
             if getattr(guard_info, "bool_var", None) == var_name:
                 desired = getattr(guard_info, "desired", True)
-            elif hasattr(guard_info, "and_bool_vars") and var_name in guard_info.and_bool_vars:
-                # En un AND, si la variable está sola o comparada con TRUE, el deseado es TRUE
-                # TODO: Extraer de la comparación real (por ahora asumimos TRUE para Bubble Sort)
-                desired = True
+            else:
+                # Si el guard está compuesto (AND/OR) puede contener comparaciones explícitas
+                # del tipo flag == true/false. En ese caso, respetar el desired real.
+                atoms = getattr(guard_info, "atoms", None) or []
+                for atom in atoms:
+                    if not isinstance(atom, dict):
+                        continue
+                    if atom.get("var") == var_name and atom.get("bool_desired") is not None:
+                        desired = bool(atom.get("bool_desired"))
+                        break
+
+                # Si aparece como identificador suelto dentro de AND/OR, entonces el guard exige True.
+                if desired is None:
+                    if hasattr(guard_info, "and_bool_vars") and var_name in getattr(guard_info, "and_bool_vars", set()):
+                        desired = True
+                    elif hasattr(guard_info, "or_bool_vars") and var_name in getattr(guard_info, "or_bool_vars", set()):
+                        desired = True
         
         result[var_name] = _compute_summary_for_var(body, var_name, desired)
     return result

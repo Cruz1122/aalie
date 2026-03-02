@@ -564,3 +564,31 @@ END
         count_str = str(wr.get("count", ""))
         assert "log" in count_str.lower() or "n" in count_str, f"Count debe reflejar O(log n): {count_str}"
 
+    def test_oracle_while_and_flag_does_not_shrink_worst(self):
+        """
+        WHILE (i < n AND swapped = true) con swapped kill-must y revive-may
+        no debe colapsar el peor caso a 1 iteración; debe depender de n.
+        """
+        src = """bubbleFlag(n) BEGIN
+  i <- 1;
+  swapped <- true;
+  WHILE (i < n AND swapped = true) DO BEGIN
+    swapped <- false;
+    IF (p) THEN BEGIN
+      swapped <- true;
+    END
+    i <- i + 1;
+  END
+END
+"""
+        r = parse_source(src)
+        assert r.get("ok", f"Parse failed: {r.get('errors')}")
+        self.analyzer.analyze(r["ast"], "worst")
+        while_rows = [row for row in self.analyzer.rows if row.get("kind") == "while"]
+        assert len(while_rows) > 0, "Debe haber al menos una fila while"
+        wr = while_rows[0]
+        assert not wr.get("unbounded", False), "No debe ser unbounded"
+        count_str = str(wr.get("count", ""))
+        assert count_str != "2", f"No debe colapsar a 2 evaluaciones: {count_str}"
+        assert "n" in count_str.lower(), f"Peor caso debe depender de n: {count_str}"
+

@@ -60,7 +60,7 @@ const CopyButton = ({ code }: CopyButtonProps) => {
   return (
     <button
       onClick={handleCopy}
-      className="p-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white rounded transition-colors duration-200 text-xs"
+      className="w-8 h-8 shrink-0 border border-transparent bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white rounded-lg transition-colors duration-200 text-xs font-semibold inline-flex items-center justify-center active:scale-95"
       title={copied ? t("codeCopied") : t("copyCode")}
     >
       {copied ? (
@@ -258,7 +258,7 @@ const CustomPre = (props: any) => {
         </pre>
       </div>
       {codeContent?.trim() && (
-        <div className="absolute top-2 right-2 flex items-center gap-1.5">
+        <div className="absolute top-2 right-5 flex items-center gap-1.5 opacity-30 hover:opacity-100 transition-opacity">
           <AnalyzeButton code={codeContent} onAnalyze={onAnalyzeCode} />
           <CopyButton code={codeContent} />
         </div>

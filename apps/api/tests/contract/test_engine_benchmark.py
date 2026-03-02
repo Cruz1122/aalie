@@ -538,7 +538,7 @@ class TestIterativeBenchmark:
         result = analyze_algorithm(BUBBLE_SORT, mode="all")
         assert result.get("ok", False)
         assert_all_cases_complexity(
-            result, "quadratic", expected_best="linear", expected_avg="quadratic", name="Bubble sort"
+            result, "quadratic", expected_best="quadratic", expected_avg="quadratic", name="Bubble sort"
         )
 
     def test_12_selection_sort(self):

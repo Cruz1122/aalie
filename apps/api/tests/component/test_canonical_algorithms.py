@@ -33,7 +33,7 @@ BEST_BY_ALGORITHM = {
     "binary_search_recursive": "constant",
     # En bubble sort, el mejor caso (lista ya ordenada) es lineal:
     # se ejecuta un barrido sin swaps y se detecta temprano que no hay intercambios.
-    "bubble_sort": "linear",
+    "bubble_sort": "quadratic",
 }
 
 

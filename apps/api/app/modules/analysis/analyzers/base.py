@@ -437,13 +437,15 @@ class BaseAnalyzer:
 
         # Intentar parsear directamente
         try:
-            from sympy import log as sympy_log
+            from sympy import log as sympy_log, Min as sympy_Min, Max as sympy_Max
 
             n = Symbol(self.variable, integer=True, positive=True)
             i = Symbol("i", integer=True)
             j = Symbol("j", integer=True)
             k = Symbol("k", integer=True)
             m = Symbol("m", integer=True, positive=True)
+            # Evitar colisión con sympy.N (evalf). Tratar N como símbolo.
+            N_sym = Symbol("N", integer=True, positive=True)
             exp_sym = Symbol("exp", integer=True, positive=True)
             e0_sym = Symbol("e_0", integer=True, positive=True)
 
@@ -453,9 +455,12 @@ class BaseAnalyzer:
                 "j": j,
                 "k": k,
                 "m": m,
+                "N": N_sym,
                 "exp": exp_sym,
                 "e_0": e0_sym,
                 "log": sympy_log,
+                "Min": sympy_Min,
+                "Max": sympy_Max,
             }
 
             return sympify(expr_str, locals=syms)
@@ -475,7 +480,51 @@ class BaseAnalyzer:
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        return self.expr_converter.ast_to_sympy(expr)
+        out = self.expr_converter.ast_to_sympy(expr)
+
+        # Sustitución de alias simples de tamaño (p.ej., k <- n) detectados por el analizador.
+        # Esto se aplica lo más temprano posible para que límites de FOR dependientes de alias
+        # entren normalizados a SymPy.
+        aliases = getattr(self, "size_aliases", None)
+        if isinstance(aliases, dict) and aliases and out is not None:
+            try:
+                # Usar símbolos existentes del ExprConverter cuando sea posible.
+                for sym in list(getattr(out, "free_symbols", set()) or set()):
+                    name = getattr(sym, "name", "")
+                    if not name or name not in aliases:
+                        continue
+                    repl_name = aliases.get(name)
+                    if not isinstance(repl_name, str) or not repl_name:
+                        continue
+                    repl_sym = (
+                        self.expr_converter.get_symbol(repl_name)
+                        if hasattr(self, "expr_converter") and self.expr_converter
+                        else Symbol(repl_name)
+                    )
+                    out = out.subs(sym, repl_sym)
+            except Exception:
+                # Mantener fallback silencioso para no romper análisis por heurística.
+                pass
+
+        return out
+
+    def _iteration_var_names(self) -> set[str]:
+        """
+        Devuelve los nombres de variables que deben tratarse como iteradores
+        y eliminarse de expresiones finales (T_open, T_polynomial).
+
+        Por defecto usa el set legacy {i, j, k}. Analizadores que conozcan el AST
+        pueden exponer `self.loop_index_vars` (FOR + WHILE/REPEAT) o `self.for_index_vars`.
+
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
+        v = getattr(self, "loop_index_vars", None)
+        if isinstance(v, set) and v:
+            return set(v)
+        v = getattr(self, "for_index_vars", None)
+        if isinstance(v, set) and v:
+            return set(v)
+        return {"i", "j", "k"}
 
     # --- util 2: gestionar contexto de bucles ---
     def push_multiplier(self, m: Union[str, Expr]):
@@ -593,13 +642,13 @@ class BaseAnalyzer:
         except Exception:
             total_expr = sympy_simplify(total_expr)
         
-        # IMPORTANTE: Eliminar variables de iteración (i, j, k) que no deberían estar en T_open
+        # IMPORTANTE: Eliminar variables de iteración (índices reales de FOR) que no deberían estar en T_open
         if hasattr(self, '_sanitize_expression'):
             total_expr = self._sanitize_expression(total_expr)
         else:
             # Fallback: limpieza básica de variables de iteración
             from sympy import Symbol, Integer as SymInteger
-            iteration_vars = ['i', 'j', 'k']
+            iteration_vars = self._iteration_var_names()
             for var_name in iteration_vars:
                 var_symbol = Symbol(var_name, integer=True)
                 if total_expr.has(var_symbol):
@@ -613,7 +662,7 @@ class BaseAnalyzer:
         free_symbols = total_expr.free_symbols
         
         invalid_symbols = []
-        iteration_vars = {"i", "j", "k"}
+        iteration_vars = self._iteration_var_names()
         for sym in free_symbols:
             sym_name = str(sym)
             if sym_name in iteration_vars:
@@ -915,13 +964,13 @@ class BaseAnalyzer:
         except Exception:
             total_expr = sympy_simplify(total_expr)
         
-        # IMPORTANTE: Eliminar variables de iteración (i, j, k) que no deberían estar en T_open
+        # IMPORTANTE: Eliminar variables de iteración (índices reales de FOR) que no deberían estar en T_open
         if hasattr(self, '_sanitize_expression'):
             total_expr = self._sanitize_expression(total_expr)
         else:
             # Fallback: limpieza básica de variables de iteración
             from sympy import Symbol, Integer as SymInteger
-            iteration_vars = ['i', 'j', 'k']
+            iteration_vars = self._iteration_var_names()
             for var_name in iteration_vars:
                 var_symbol = Symbol(var_name, integer=True)
                 if total_expr.has(var_symbol):

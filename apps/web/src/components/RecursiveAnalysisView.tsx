@@ -514,6 +514,7 @@ const renderRecurrenceParameters = (
   recurrence: NonNullable<RecurrenceType>,
   tView: (key: string) => string,
 ): React.JSX.Element => {
+  // Caso clásico divide-and-conquer uniforme: T(n) = a·T(n/b) + f(n)
   if (recurrence.type === "divide_conquer") {
     return (
       <>
@@ -528,21 +529,45 @@ const renderRecurrenceParameters = (
     );
   }
 
-  const orderLabel = tView("recurrOrder");
-  const shiftsLabel = tView("recurrShifts");
+  // Caso lineal_shift: T(n) = Σ c_i T(n-i) + g(n)
+  if (recurrence.type === "linear_shift") {
+    const orderLabel = tView("recurrOrder");
+    const shiftsLabel = tView("recurrShifts");
+    const shifts = Array.isArray(recurrence.shifts) ? recurrence.shifts : [];
+
+    return (
+      <>
+        {recurrence["g(n)"] && (
+          <>
+            <Formula latex={`g(n) = ${recurrence["g(n)"]}`} />
+            <span className="text-slate-300">,</span>
+          </>
+        )}
+        <Formula latex={`${orderLabel} = ${recurrence.order}`} />
+        <span className="text-slate-300">,</span>
+        {shifts.length > 0 && (
+          <>
+            <Formula latex={`${shiftsLabel} = [${shifts.join(", ")}]`} />
+            <span className="text-slate-300">,</span>
+          </>
+        )}
+        <Formula latex={`n_0 = ${recurrence.n0}`} />
+      </>
+    );
+  }
+
+  // Fallback para nuevos tipos de recurrencia (ej. divide_conquer_multi):
+  // mostrar al menos la forma general y n0 para no romper la UI.
+  const fallback: { form?: string; n0?: number } = recurrence;
   return (
     <>
-      {recurrence["g(n)"] && (
+      {fallback.form && (
         <>
-          <Formula latex={`g(n) = ${recurrence["g(n)"]}`} />
+          <Formula latex={fallback.form} />
           <span className="text-slate-300">,</span>
         </>
       )}
-      <Formula latex={`${orderLabel} = ${recurrence.order}`} />
-      <span className="text-slate-300">,</span>
-      <Formula latex={`${shiftsLabel} = [${recurrence.shifts.join(", ")}]`} />
-      <span className="text-slate-300">,</span>
-      <Formula latex={`n_0 = ${recurrence.n0}`} />
+      <Formula latex={`n_0 = ${fallback.n0 ?? "?"}`} />
     </>
   );
 };

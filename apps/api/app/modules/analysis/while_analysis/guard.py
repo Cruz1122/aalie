@@ -97,7 +97,11 @@ def _is_literal_false(node: Dict[str, Any]) -> bool:
 
 
 def _collect_bool_vars(expr: Any) -> Set[str]:
-    """Recolecta variables que actúan como bool (identifier o var==true/false)."""
+    """Recolecta variables que actúan como bool (identifier o var==true/false).
+
+    Importante: NO recolectar identificadores que aparezcan dentro de comparaciones numéricas
+    (ej. i < n), porque eso termina tratando variables de control como flags booleanos.
+    """
     out: Set[str] = set()
     if not isinstance(expr, dict):
         return out
@@ -113,15 +117,16 @@ def _collect_bool_vars(expr: Any) -> Set[str]:
     if et == "binary":
         left = expr.get("left")
         right = expr.get("right")
+        # Si es una comparación numérica (relacional), no descender: evita recolectar i/n como bool vars.
+        if op in ("<", "<=", ">", ">=",):
+            return out
         # CASO: bool == true, bool != false, etc.
         if op in ("==", "!=", "="):
             if _is_literal_true(right) or _is_literal_false(right):
                 if isinstance(left, dict) and left.get("type", "").lower() == "identifier":
-                    print(f"DEBUG COLLECT BOOL: found {left.get('name')}")
                     out.add(left.get("name", ""))
             elif _is_literal_true(left) or _is_literal_false(left):
                 if isinstance(right, dict) and right.get("type", "").lower() == "identifier":
-                    print(f"DEBUG COLLECT BOOL: found {right.get('name')}")
                     out.add(right.get("name", ""))
         else:
             # Recursión para AND/OR

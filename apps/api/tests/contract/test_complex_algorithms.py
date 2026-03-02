@@ -119,6 +119,21 @@ MULTI_LIMIT_WHILE = """multiLimit(A, n, m) BEGIN
 END
 """
 
+# WHILE anidado con reinicio de variable interna: Σ_{i=1}^{n} i → Θ(n²)
+RESET_INNER_WHILE = """reinicioInterno(n) BEGIN
+    i <- 1;
+    j <- 1;
+    WHILE (i <= n) DO BEGIN
+        j <- 1;
+        WHILE (j <= i) DO BEGIN
+            x <- x + 1;
+            j <- j + 1;
+        END
+        i <- i + 1;
+    END
+END
+"""
+
 
 class TestComplexAlgorithms:
     """Tests para algoritmos complejos con casos raros."""
@@ -245,3 +260,9 @@ class TestComplexAlgorithms:
             expected_avg="linear",
             name="Multi limit WHILE",
         )
+
+    def test_reset_inner_while_quadratic(self):
+        """WHILE externo i<=n y WHILE interno j<=i con reinicio: Θ(n²)."""
+        result = analyze_algorithm(RESET_INNER_WHILE, mode="all")
+        assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
+        assert_all_cases_complexity(result, "quadratic", name="Reset inner while")

@@ -123,13 +123,15 @@ class WhileRepeatVisitor:
         expr_str = expr_str.replace("\\cdot", "*")
 
         try:
-            from sympy import log as sympy_log
+            from sympy import log as sympy_log, Min as sympy_Min, Max as sympy_Max
 
             variable = getattr(self, "variable", "n")
             n = Symbol(variable, integer=True, positive=True)
             i = Symbol("i", integer=True)
             j = Symbol("j", integer=True)
             k = Symbol("k", integer=True)
+            # Evitar colisión con sympy.N (evalf). Tratar N como símbolo.
+            N_sym = Symbol("N", integer=True, positive=True)
             # Símbolos para parámetros de tamaño habituales (evitar fallo en log(exp), log(e_0), etc.)
             exp_sym = Symbol("exp", integer=True, positive=True)
             m_sym = Symbol("m", integer=True, positive=True)
@@ -140,7 +142,10 @@ class WhileRepeatVisitor:
                 "i": i,
                 "j": j,
                 "k": k,
+                "N": N_sym,
                 "log": sympy_log,
+                "Min": sympy_Min,
+                "Max": sympy_Max,
                 "exp": exp_sym,
                 "m": m_sym,
                 "e_0": e0_sym,
@@ -1436,20 +1441,31 @@ class WhileRepeatVisitor:
             if closure_info_pattern:
                 if closure_info_pattern.get("pattern") or closure_info_pattern.get("reason_code") == "while_euclid_mod":
                     skip_geometric = True
+                # Si el clasificador ya determinó que el WHILE es bounded y tiene una expresión
+                # explícita de iteraciones, preferimos reutilizar esa expresión también en avg
+                # en lugar de aplicar un modelo geométrico 1/p genérico. Esto asegura, por ejemplo,
+                # que algoritmos como bubble sort mejorado tengan avg ~ n² (igual que worst) en
+                # vez de colapsar a O(n) por asumir pocas pasadas esperadas del WHILE.
+                elif (
+                    closure_info_pattern.get("success")
+                    and closure_info_pattern.get("iterations")
+                    and closure_info_pattern.get("status") in (None, "bounded")
+                ):
+                    # Por defecto, para WHILE bounded preferimos reutilizar el cierre determinista
+                    # (evita que el modelo geométrico 1/p colapse avg a O(1) indebidamente en
+                    # bucles como el WHILE interno de insertion sort).
+                    #
+                    # EXCEPCIÓN: patrón de prefijo positivo (i<=n AND A[i]>0) → E[iter] = O(1).
+                    var_tmp = closure_info_pattern.get("variable", "")
+                    if not self._is_positive_prefix_guard(test, var_tmp):
+                        skip_geometric = True
                 elif closure_info_pattern.get("status") == "unbounded" and closure_info_pattern.get("reason_code") in (
                     "while_no_progress_must",
                     "while_or_no_progress",
                 ):
                     # Progreso controlado por parámetro/condición: modelo geométrico no aplica
                     skip_geometric = True
-                elif (
-                    closure_info_pattern.get("success")
-                    and closure_info_pattern.get("iterations")
-                    and self._has_early_exit_condition(test, closure_info_pattern.get("variable", ""))
-                ):
-                    # WHILE con AND y acceso a array (ej: i>=1 AND A[i]!=x): modelo geométrico p=1/2 no aplica
-                    # E[iteraciones] ≈ (n+1)/2 para búsqueda lineal con salida aleatoria
-                    skip_geometric = True
+                # Nota: condiciones de salida temprana por datos se manejan arriba (no forzar skip_geometric).
             if skip_geometric:
                 # Saltar análisis probabilístico, ir al paso 2 (manejo unbounded)
                 pass
@@ -1600,16 +1616,86 @@ class WhileRepeatVisitor:
             if isinstance(limit, str) and limit and not limit.isdigit():
                 import re
                 if re.match(r'^[a-zA-Z_]\w*$', limit):
-                    initial_limit = self._find_initial_value_of_var(limit, L, parent_context)
-                    if initial_limit:
-                        try:
-                            lim_sym = self._str_to_sympy(limit)
-                            init_sym = self._str_to_sympy(initial_limit)
-                            iterations_expr = iterations_expr.subs(lim_sym, init_sym)
-                        except Exception:
-                            pass
+                    # Si el límite es una variable de bucle (outer loop), NO sustituir por su valor inicial.
+                    # Ejemplo: WHILE (j <= i) dentro de WHILE (i <= n). Aquí i cambia; sustituir i->1
+                    # colapsa la sumatoria triangular y rompe Θ(n²).
+                    try:
+                        loop_vars = set(getattr(self, "loop_index_vars", set()) or set())
+                    except Exception:
+                        loop_vars = set()
+                    if limit not in loop_vars:
+                        initial_limit = self._find_initial_value_of_var(limit, L, parent_context)
+                        if initial_limit:
+                            try:
+                                lim_sym = self._str_to_sympy(limit)
+                                init_sym = self._str_to_sympy(initial_limit)
+                                iterations_expr = iterations_expr.subs(lim_sym, init_sym)
+                            except Exception:
+                                pass
+
+            # APLICAR SUBSTITUCIÓN DE ALIAS (ej. N <- n) EN iteraciones:
+            # Si aparecen símbolos libres como N (o cualquier var) y tienen valor inicial antes del while,
+            # sustituirlos para evitar colisiones y mejorar la forma cerrada.
+            try:
+                from sympy import Symbol as SymSymbol
+
+                skip = {var_name, getattr(self, "variable", "n"), "i", "j", "k"}
+                for sym in list(getattr(iterations_expr, "free_symbols", set())):
+                    sname = getattr(sym, "name", "")
+                    if not sname or sname in skip:
+                        continue
+                    init_val = self._find_initial_value_of_var(sname, L, parent_context)
+                    if init_val:
+                        iterations_expr = iterations_expr.subs(SymSymbol(sname), self._str_to_sympy(init_val))
+            except Exception:
+                pass
             
             mult_expr = iterations_expr
+
+            # MEJORA: Si el WHILE es lineal simple (±1) y tenemos variable de control,
+            # representar el multiplicador como una sumatoria Σ_{var=start}^{end} 1.
+            # Esto permite cerrar correctamente anidados del tipo:
+            #   WHILE (i <= n) ... WHILE (j <= i) ...
+            # donde el coste es Σ_{i=1}^{n} i = Θ(n²).
+            try:
+                # No aplicar a patrones especiales (Euclides/binary search) o símbolos iterativos
+                reason_code_local = closure_info.get("reason_code", "")
+                pattern_local = closure_info.get("pattern")
+                if pattern_local not in ("binary_search",) and reason_code_local != "while_euclid_mod":
+                    var_sym = Symbol(var_name, integer=True)
+                    op = str(change_rule.get("operator", "") or "")
+                    const_str = str(change_rule.get("constant", "1") or "1")
+                    const_expr = self._str_to_sympy(const_str)
+
+                    # Solo paso unitario
+                    if const_expr == Integer(1) and op in ("+", "-"):
+                        # Inicio: usar inicial_value si existe, si no, default 1 para i/j/k
+                        start_expr = None
+                        if initial_value:
+                            start_expr = self._str_to_sympy(str(initial_value))
+                        else:
+                            if var_name in ("i", "j", "k"):
+                                start_expr = Integer(1)
+
+                        # Fin: depende del operador de la condición
+                        end_expr = None
+                        if isinstance(limit, str) and limit:
+                            end_expr = self._str_to_sympy(limit)
+                        else:
+                            end_expr = self._str_to_sympy(str(limit))
+
+                        cond_op = str(operator or "")
+
+                        # Normalizar bounds según tipo de condición
+                        if op == "+" and cond_op == "<":
+                            end_expr = end_expr - Integer(1)
+                        elif op == "-" and cond_op == ">":
+                            end_expr = end_expr + Integer(1)
+
+                        if start_expr is not None and end_expr is not None:
+                            mult_expr = Sum(Integer(1), (var_sym, start_expr, end_expr))
+            except Exception:
+                pass
             
             # 1) Condición: se evalúa (iterations + 1) veces
             # En best case con 0 iteraciones, la condición se evalúa 1 vez (y sale)
@@ -1714,7 +1800,9 @@ class WhileRepeatVisitor:
             else:
                 # En worst/best, usar símbolo t_while_L
                 t_sym = Symbol(t, real=True)
-                note_text = self._note("while_unbounded", L=L, t=t, mode=mode)
+                # Importante: “desconocido” no implica no-terminación.
+                # No marcar como unbounded a menos que el clasificador tenga evidencia.
+                note_text = self._note("while_unbounded_unknown")
             
             # 1) Condición: se evalúa (t + 1) veces
             ck_cond = self.C()
@@ -1727,8 +1815,6 @@ class WhileRepeatVisitor:
                 ck=ck_cond,
                 count=cond_count,
                 note=note_text,
-                unbounded=True,
-                unbounded_kind="unknown",
                 ops=ops
             )
             

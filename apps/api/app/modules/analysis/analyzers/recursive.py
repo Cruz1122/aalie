@@ -714,6 +714,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             and len(subproblem_sizes) >= 1
             and all(s.get("type") == "mod" for s in subproblem_sizes)
         )
+        multi_b_terms = None  # (a_i, b_i) para divide-and-conquer generalizado
         
         if has_subtraction:
             # Para decrease-and-conquer, verificar patrones
@@ -753,18 +754,29 @@ class RecursiveAnalyzer(BaseAnalyzer):
             if only_mod:
                 b = 2  # dummy para que el flujo continúe; se usará método de iteración con resultado log
             else:
-                # Para divide-and-conquer, verificar que todos tienen el mismo b
+                # Para divide-and-conquer, permitir ahora múltiples tamaños de subproblema (b distintos)
                 b_values = [s["b"] for s in subproblem_sizes if s.get("b")]
-                if not b_values or len(set(b_values)) > 1:
+                if not b_values:
                     return {
                         "success": False,
                         "recurrence": {
                             "applicable": False,
-                            "notes": ["Subproblemas de tamaños distintos o no proporcionales"]
+                            "notes": ["No se pudieron determinar factores de división (b)"]
                         },
-                        "reason": "Subproblemas de tamaños distintos"
+                        "reason": "Tamaños de subproblemas no determinados"
                     }
-                b = b_values[0]
+                unique_b_values = sorted(set(b_values))
+                if len(unique_b_values) == 1:
+                    # Caso clásico: todos los subproblemas tienen el mismo tamaño n/b
+                    b = unique_b_values[0]
+                else:
+                    # Caso generalizado: múltiples tamaños n/b_i (ej. n/2 y n/4)
+                    # Construir términos (a_i, b_i) contando cuántas llamadas tienen cada factor
+                    from collections import Counter
+                    counts = Counter(b_values)
+                    multi_b_terms = [(counts[b_val], float(b_val)) for b_val in unique_b_values]
+                    # Elegir un b representativo solo para mostrar en proof; no se usará en Master
+                    b = unique_b_values[0]
         
         # 3.5. Determinar el valor de 'a' considerando ramas mutuamente excluyentes
         # Si las llamadas recursivas están en un IF-ELSE, solo se ejecuta una rama
@@ -900,7 +912,17 @@ class RecursiveAnalyzer(BaseAnalyzer):
             elif quicksort_worst_override:
                 recurrence_form = "T(n) = T(n-1) + n"
             else:
-                recurrence_form = f"T(n) = {a} \\cdot T(n/{b_str}) + f(n)"
+                # Caso general: construir forma T(n) = sum a_i T(n/b_i) + f(n)
+                if multi_b_terms:
+                    terms_latex = []
+                    for coeff, b_val in multi_b_terms:
+                        coeff_str = "" if coeff == 1 else f"{coeff} \\cdot "
+                        b_part = self._simplify_number_latex(b_val)
+                        terms_latex.append(f"{coeff_str}T(n/{b_part})")
+                    terms_str = " + ".join(terms_latex) if terms_latex else "T(n)"
+                    recurrence_form = f"T(n) = {terms_str} + f(n)"
+                else:
+                    recurrence_form = f"T(n) = {a} \\cdot T(n/{b_str}) + f(n)"
         
         # Determinar método a usar (PRIORIDAD: characteristic_equation > iteration > recursion_tree > master)
         if use_characteristic:
@@ -908,6 +930,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
         elif use_iteration:
             method = "iteration"
         elif use_recursion_tree:
+            method = "recursion_tree"
+        elif multi_b_terms:
+            # Divide-and-conquer con múltiples tamaños de subproblema: usar árbol generalizado
             method = "recursion_tree"
         else:
             method = "master"
@@ -1080,6 +1105,19 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "method": method,
                     "branching_subset": True
                 }
+            elif multi_b_terms:
+                # Divide-and-conquer generalizado: múltiples tamaños n/b_i
+                recurrence = {
+                    "type": "divide_conquer_multi",
+                    "form": recurrence_form,
+                    "terms": multi_b_terms,
+                    "a": a,
+                    "f": f_n,
+                    "n0": n0,
+                    "applicable": True,
+                    "notes": ["Subproblemas de tamaños distintos (divide-and-conquer generalizado)"],
+                    "method": method
+                }
             else:
                 recurrence = {
                     "type": "divide_conquer",
@@ -1107,7 +1145,18 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Solo agregar "Parámetros extraídos" si NO es ecuación característica
         # Para ecuación característica, estos parámetros (a, b, f) no son relevantes
         if method != "characteristic_equation":
-            self.proof_steps.append({"id": "extract", "text": f"\\text{{Parámetros extraídos: }} a={a}, b={b_display}, f(n)={f_n}, n_0={n0}"})
+            if multi_b_terms:
+                # Mostrar conjunto de factores de división en lugar de un solo b
+                b_set_display = ", ".join(self._simplify_number_latex(term_b) for _, term_b in multi_b_terms)
+                self.proof_steps.append({
+                    "id": "extract",
+                    "text": f"\\text{{Parámetros extraídos: }} a={a}, b \\in \\{{{b_set_display}\\}}, f(n)={f_n}, n_0={n0}"
+                })
+            else:
+                self.proof_steps.append({
+                    "id": "extract",
+                    "text": f"\\text{{Parámetros extraídos: }} a={a}, b={b_display}, f(n)={f_n}, n_0={n0}"
+                })
         
         return {
             "success": True,
