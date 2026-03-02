@@ -192,7 +192,12 @@ class ASTBuilder(LanguageVisitor):
     def visitIfStmt(self, ctx: LanguageParser.IfStmtContext):
         test = self.visit(ctx.expr())
         cons = self.visit(ctx.block(0))
-        alt = self.visit(ctx.block(1)) if ctx.block(1) else None
+        # ELSE puede ser ifStmt (ELSE IF) o block (ELSE BEGIN...END)
+        alt = None
+        if ctx.ifStmt():
+            alt = self.visit(ctx.ifStmt())
+        elif ctx.block(1):
+            alt = self.visit(ctx.block(1))
         return {"type": "If", "test": test, "consequent": cons, "alternate": alt, "pos": get_pos(ctx)}
 
     def visitWhileStmt(self, ctx: LanguageParser.WhileStmtContext):

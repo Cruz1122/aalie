@@ -68,7 +68,7 @@ function ComplexityBadges({
 
   if (cases.length > 0) {
     return (
-      <div className={`flex flex-wrap justify-center gap-1.5 ${className || ""}`}>
+      <div className={`flex flex-wrap justify-center gap-1.5 min-w-0 max-w-full ${className || ""}`}>
         {cases.map((c, i) => {
           const inner = c.expr.slice(2, -1); // quitar O( y )
           const latex = complexityToLatex(inner);
@@ -215,7 +215,7 @@ export function ExampleCard({
             </h3>
 
             {/* Coste teórico (KaTeX) debajo del nombre */}
-            <div className="mt-1.5 flex flex-wrap justify-center gap-1.5 items-center">
+            <div className="mt-1.5 flex flex-wrap justify-center gap-1.5 items-center min-w-0 max-w-full">
               <ComplexityBadges complexity={t(`items.${example.id}.complexity`)} />
             </div>
 

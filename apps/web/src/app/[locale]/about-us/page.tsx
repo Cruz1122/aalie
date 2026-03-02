@@ -2,8 +2,8 @@ import { getTranslations } from "next-intl/server";
 
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
-import { PageHeader } from "@/components/PageHeader";
 import NavigationLink from "@/components/NavigationLink";
+import { PageHeader } from "@/components/PageHeader";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -304,7 +304,7 @@ export default async function AboutPage({ params }: Props) {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <NavigationLink
               href="/"
-              className="glass-button inline-flex items-center justify-center px-6 py-3 rounded-lg text-white font-medium transition-all hover:scale-105"
+              className="glass-secondary inline-flex items-center justify-center px-6 py-3 rounded-lg text-white font-medium transition-all hover:scale-105 hover:bg-white/20"
             >
               <span className="material-symbols-outlined mr-2">home</span>{" "}
               {t("gotoAALIE")}

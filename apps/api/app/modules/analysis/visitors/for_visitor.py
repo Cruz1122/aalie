@@ -320,12 +320,14 @@ class ForVisitor:
         
         # Para cabeceras de bucles anidados, usar add_row para generar count_raw correctamente
         # add_row aplicará los multiplicadores del stack automáticamente
+        # ops=3: incremento, asignación y comparación por evaluación (init solo 1 vez)
         self.add_row(
             line=line,
             kind="for",
             ck=ck_header,
             count=header_count,
-            note=header_note
+            note=header_note,
+            ops=3
         )
         
         # 2) Multiplicador del cuerpo

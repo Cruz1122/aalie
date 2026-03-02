@@ -63,17 +63,212 @@ class BaseAnalyzer:
         self.avg_model: Optional[AvgModel] = None  # modelo probabilístico para caso promedio
         self.procedure_steps: Optional[List[str]] = None  # pasos del procedimiento para caso promedio
 
+    # --- util: detección de variables de tamaño ---
+
+    def detect_size_variables_from_proc(
+        self,
+        proc_def: Dict[str, Any],
+        extra_forbidden: Optional[set[str]] = None,
+    ) -> List[str]:
+        """
+        Heurística genérica para detectar variables de tamaño a partir de un ProcDef.
+
+        Usa varias fuentes de evidencia (parámetros, límites de bucles, guards, asignaciones)
+        para asignar un score a cada identificador y devolver una lista ordenada de
+        candidatos a variable de tamaño.
+
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        Version: 0.1.0
+        """
+        from collections import defaultdict
+
+        if not isinstance(proc_def, dict) or proc_def.get("type") != "ProcDef":
+            return []
+
+        forbidden: set[str] = set(extra_forbidden or set())
+
+        scores: Dict[str, int] = defaultdict(int)
+        iter_like: set[str] = set()
+        index_uses: Dict[str, int] = defaultdict(int)
+        bool_flags: set[str] = set()
+
+        # 1) Parámetros del procedimiento
+        params = proc_def.get("params", []) or []
+        for p in params:
+            if isinstance(p, dict):
+                name = p.get("name")
+                if isinstance(name, str) and name:
+                    scores[name] += 5
+
+        def _gather_ids(node: Any, out: set[str]) -> None:
+            if isinstance(node, dict):
+                t = node.get("type", "").lower()
+                if t == "identifier":
+                    name = node.get("name")
+                    if isinstance(name, str) and name:
+                        out.add(name)
+                for v in node.values():
+                    _gather_ids(v, out)
+            elif isinstance(node, list):
+                for item in node:
+                    _gather_ids(item, out)
+
+        def _visit(node: Any, in_loop: bool = False) -> None:
+            if isinstance(node, list):
+                for child in node:
+                    _visit(child, in_loop)
+                return
+            if not isinstance(node, dict):
+                return
+
+            node_type = node.get("type", "").lower()
+
+            # Detectar entrada a bucles
+            if node_type in ("for", "while", "repeat"):
+                # Visitar hijos; el cuerpo se considera dentro de bucle
+                for key, child in node.items():
+                    if key in ("body", "then", "consequent", "alternate"):
+                        _visit(child, True)
+                    else:
+                        _visit(child, in_loop)
+                return
+
+            # Asignaciones: detectar variables iteradoras (x <- x +/- c, x <- x * c, etc.)
+            if node_type == "assign":
+                target = node.get("target")
+                value = node.get("value")
+                if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
+                    name = target.get("name")
+                    if isinstance(name, str) and name:
+                        # Si el RHS contiene a la misma variable y estamos dentro de un bucle,
+                        # es muy probable que sea variable de iteración.
+                        ids_in_value: set[str] = set()
+                        _gather_ids(value, ids_in_value)
+                        if name in ids_in_value and in_loop:
+                            iter_like.add(name)
+                # Seguir visitando subnodos
+                _visit(value, in_loop)
+                return
+
+            # Accesos a array: índice suele ser variable de iteración, no de tamaño
+            if node_type == "index":
+                index_expr = node.get("index")
+                ids_in_index: set[str] = set()
+                _gather_ids(index_expr, ids_in_index)
+                for name in ids_in_index:
+                    index_uses[name] += 1
+                # Visitar target e índice
+                _visit(node.get("target"), in_loop)
+                _visit(index_expr, in_loop)
+                return
+
+            # Binarias: analizar comparaciones para sumar evidencia y detectar bool flags
+            if node_type == "binary":
+                op = (node.get("op") or node.get("operator") or "").lower()
+                left = node.get("left")
+                right = node.get("right")
+
+                # Comparaciones relacionales: posibles límites de bucles / tamaños
+                if op in ("<", "<=", ">", ">="):
+                    ids_left: set[str] = set()
+                    ids_right: set[str] = set()
+                    _gather_ids(left, ids_left)
+                    _gather_ids(right, ids_right)
+                    for name in ids_left.union(ids_right):
+                        scores[name] += 3
+
+                # Comparaciones a booleanos / flags
+                if op in ("=", "==", "!=", "<>"):
+                    # Si un lado es literal booleano y el otro identificador → flag
+                    def _is_bool_literal(n: Any) -> bool:
+                        if not isinstance(n, dict):
+                            return False
+                        t = n.get("type", "").lower()
+                        if t == "literal":
+                            val = n.get("value")
+                            if isinstance(val, bool):
+                                return True
+                            if isinstance(val, str) and val.lower().strip() in ("true", "false", "verdadero", "falso", "v", "f"):
+                                return True
+                        if t == "identifier" and str(n.get("name", "")).lower() in ("true", "false", "verdadero", "falso", "v", "f"):
+                            return True
+                        return False
+
+                    if _is_bool_literal(right) and isinstance(left, dict) and left.get("type", "").lower() == "identifier":
+                        name = left.get("name")
+                        if isinstance(name, str) and name:
+                            bool_flags.add(name)
+                    elif _is_bool_literal(left) and isinstance(right, dict) and right.get("type", "").lower() == "identifier":
+                        name = right.get("name")
+                        if isinstance(name, str) and name:
+                            bool_flags.add(name)
+
+                # Seguir recorriendo
+                _visit(left, in_loop)
+                _visit(right, in_loop)
+                return
+
+            # Recorrer genéricamente otros campos
+            for child in node.values():
+                _visit(child, in_loop)
+
+        # Iniciar recorrido desde el cuerpo del ProcDef
+        body = proc_def.get("body") or proc_def.get("block")
+        _visit(body, in_loop=False)
+
+        # Ajustar scores con penalizaciones
+        for name in list(scores.keys()):
+            if name in iter_like:
+                scores[name] -= 8
+            if index_uses.get(name, 0) > 0:
+                scores[name] -= 4 * index_uses[name]
+            if name in bool_flags:
+                scores[name] -= 5
+            if name in forbidden:
+                scores[name] -= 10
+
+        # Filtro: solo candidatos con score positivo
+        candidates = [name for name, sc in scores.items() if sc > 0]
+
+        # Empate: como pista débil, favorecer nombres típicos de tamaño
+        def _tie_break_key(name: str) -> tuple[int, str]:
+            base = scores.get(name, 0)
+            bonus = 0
+            lowered = name.lower()
+            if lowered in ("n", "m"):
+                bonus += 2
+            if any(tok in lowered for tok in ("size", "len", "length", "tam")):
+                bonus += 1
+            return (base + bonus, name)
+
+        candidates.sort(key=_tie_break_key, reverse=True)
+        return candidates
+
     # --- util 1: agregar fila ---
-    def add_row(self, line: int, kind: str, ck: str, count: Union[str, Expr], note: Optional[str] = None):
+    def add_row(
+        self,
+        line: int,
+        kind: str,
+        ck: str,
+        count: Union[str, Expr],
+        note: Optional[str] = None,
+        unbounded: bool = False,
+        unbounded_kind: Optional[str] = None,
+        euclid_pattern: bool = False,
+        ops: int = 1,
+    ):
         """
         Inserta una fila aplicando el multiplicador del contexto de bucles.
         
         Args:
             line: Número de línea
             kind: Tipo de instrucción (assign, for, while, if, etc.)
-            ck: Costo individual de la línea (string KaTeX)
+            ck: Costo elemental único de la línea (string KaTeX, ej: "C_3")
             count: Número de ejecuciones (puede ser string o Expr de SymPy)
             note: Nota opcional sobre la línea
+            unbounded: True si el bucle puede no terminar (evidencia de no terminación)
+            unbounded_kind: "non_terminating" | "unknown" para clasificación
+            ops: Operaciones elementales por ejecución (asignación, suma, acceso array, etc.)
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
@@ -111,13 +306,20 @@ class BaseAnalyzer:
         row = {
             "line": line,
             "kind": kind,
-            "ck": ck,              # Ej: "C_{2} + C_{3}"
+            "ck": ck,              # Ej: "C_{3}" (una única constante por línea)
             "count": count_latex,   # LaTeX para compatibilidad, se actualizará después
             "count_raw": count_raw_latex,  # LaTeX de la expresión con sumatorias
             "count_raw_expr": count_raw_expr,  # Expresión SymPy (nuevo campo interno)
-            "note": note
+            "note": note,
+            "ops": ops,
         }
-        
+
+        if unbounded:
+            row["unbounded"] = True
+            row["unbounded_kind"] = unbounded_kind or "unknown"
+        if euclid_pattern:
+            row["euclid_pattern"] = True
+
         # En modo promedio, agregar expectedRuns (alias de count para E[#])
         if self.mode == "avg":
             row["expectedRuns"] = count_latex
@@ -190,6 +392,7 @@ class BaseAnalyzer:
     def _str_to_sympy(self, expr_str: str) -> Expr:
         """
         Convierte un string a expresión SymPy.
+        Soporta LaTeX: \\log_{k}(expr), \\frac{a}{b}, etc.
         
         Args:
             expr_str: String representando una expresión
@@ -199,28 +402,67 @@ class BaseAnalyzer:
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
+        import re
+
         if not expr_str or expr_str.strip() == "":
             return Integer(1)
-        
+
         expr_str = expr_str.strip()
-        
+
+        # Preprocesar LaTeX: \\log_{base}(arg) -> log(arg, base) (arg puede tener paréntesis)
+        log_match = re.search(r"\\log_\{([^}]+)\}\s*\(", expr_str)
+        if log_match:
+            start = log_match.end()
+            depth, i = 1, start
+            while i < len(expr_str) and depth > 0:
+                if expr_str[i] == "(":
+                    depth += 1
+                elif expr_str[i] == ")":
+                    depth -= 1
+                i += 1
+            arg = expr_str[start:i-1]
+            expr_str = (
+                expr_str[: log_match.start()]
+                + f"log({arg}, {log_match.group(1)})"
+                + expr_str[i:]
+            )
+        # \\log(arg) -> log(arg)
+        expr_str = re.sub(r"\\log\s*\(([^)]+)\)", r"log(\1)", expr_str)
+        expr_str = re.sub(r"\\log\s*\{([^}]+)\}", r"log(\1)", expr_str)
+
+        # \\frac{a}{b} -> (a)/(b)
+        expr_str = re.sub(r"\\frac\{([^}]+)\}\{([^}]+)\}", r"(\1)/(\2)", expr_str)
+        # \\cdot -> *
+        expr_str = expr_str.replace("\\cdot", "*")
+
         # Intentar parsear directamente
         try:
-            # Crear contexto con símbolos comunes
+            from sympy import log as sympy_log, Min as sympy_Min, Max as sympy_Max
+
             n = Symbol(self.variable, integer=True, positive=True)
-            i = Symbol('i', integer=True)
-            j = Symbol('j', integer=True)
-            k = Symbol('k', integer=True)
-            m = Symbol('m', integer=True, positive=True)
-            
+            i = Symbol("i", integer=True)
+            j = Symbol("j", integer=True)
+            k = Symbol("k", integer=True)
+            m = Symbol("m", integer=True, positive=True)
+            # Evitar colisión con sympy.N (evalf). Tratar N como símbolo.
+            N_sym = Symbol("N", integer=True, positive=True)
+            exp_sym = Symbol("exp", integer=True, positive=True)
+            e0_sym = Symbol("e_0", integer=True, positive=True)
+
             syms = {
                 self.variable: n,
-                'i': i,
-                'j': j,
-                'k': k,
-                'm': m
+                "i": i,
+                "j": j,
+                "k": k,
+                "m": m,
+                "N": N_sym,
+                "exp": exp_sym,
+                "e_0": e0_sym,
+                "log": sympy_log,
+                "Min": sympy_Min,
+                "Max": sympy_Max,
             }
-            
+
             return sympify(expr_str, locals=syms)
         except Exception:
             # Fallback: retornar 1
@@ -238,7 +480,51 @@ class BaseAnalyzer:
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        return self.expr_converter.ast_to_sympy(expr)
+        out = self.expr_converter.ast_to_sympy(expr)
+
+        # Sustitución de alias simples de tamaño (p.ej., k <- n) detectados por el analizador.
+        # Esto se aplica lo más temprano posible para que límites de FOR dependientes de alias
+        # entren normalizados a SymPy.
+        aliases = getattr(self, "size_aliases", None)
+        if isinstance(aliases, dict) and aliases and out is not None:
+            try:
+                # Usar símbolos existentes del ExprConverter cuando sea posible.
+                for sym in list(getattr(out, "free_symbols", set()) or set()):
+                    name = getattr(sym, "name", "")
+                    if not name or name not in aliases:
+                        continue
+                    repl_name = aliases.get(name)
+                    if not isinstance(repl_name, str) or not repl_name:
+                        continue
+                    repl_sym = (
+                        self.expr_converter.get_symbol(repl_name)
+                        if hasattr(self, "expr_converter") and self.expr_converter
+                        else Symbol(repl_name)
+                    )
+                    out = out.subs(sym, repl_sym)
+            except Exception:
+                # Mantener fallback silencioso para no romper análisis por heurística.
+                pass
+
+        return out
+
+    def _iteration_var_names(self) -> set[str]:
+        """
+        Devuelve los nombres de variables que deben tratarse como iteradores
+        y eliminarse de expresiones finales (T_open, T_polynomial).
+
+        Por defecto usa el set legacy {i, j, k}. Analizadores que conozcan el AST
+        pueden exponer `self.loop_index_vars` (FOR + WHILE/REPEAT) o `self.for_index_vars`.
+
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        """
+        v = getattr(self, "loop_index_vars", None)
+        if isinstance(v, set) and v:
+            return set(v)
+        v = getattr(self, "for_index_vars", None)
+        if isinstance(v, set) and v:
+            return set(v)
+        return {"i", "j", "k"}
 
     # --- util 2: gestionar contexto de bucles ---
     def push_multiplier(self, m: Union[str, Expr]):
@@ -329,10 +615,10 @@ class BaseAnalyzer:
                 if count_expr == Integer(0):
                     continue
                 
-                # Crear término: C_k * count_expr
-                # C_k es solo un símbolo para mostrar, no afecta la expresión SymPy
-                # Multiplicamos directamente
-                terms.append(count_expr)
+                # Crear término: C_k * ops * count_expr (ops = operaciones elementales)
+                ops_val = r.get('ops', 1)
+                term_expr = Integer(ops_val) * count_expr if ops_val != 1 else count_expr
+                terms.append(term_expr)
         
         if not terms:
             return "0"
@@ -356,13 +642,13 @@ class BaseAnalyzer:
         except Exception:
             total_expr = sympy_simplify(total_expr)
         
-        # IMPORTANTE: Eliminar variables de iteración (i, j, k) que no deberían estar en T_open
+        # IMPORTANTE: Eliminar variables de iteración (índices reales de FOR) que no deberían estar en T_open
         if hasattr(self, '_sanitize_expression'):
             total_expr = self._sanitize_expression(total_expr)
         else:
             # Fallback: limpieza básica de variables de iteración
             from sympy import Symbol, Integer as SymInteger
-            iteration_vars = ['i', 'j', 'k']
+            iteration_vars = self._iteration_var_names()
             for var_name in iteration_vars:
                 var_symbol = Symbol(var_name, integer=True)
                 if total_expr.has(var_symbol):
@@ -370,27 +656,25 @@ class BaseAnalyzer:
                     total_expr = total_expr.subs(var_symbol, SymInteger(0))
                     total_expr = sympy_simplify(total_expr)
         
-        # VALIDACIÓN: Verificar que solo contenga n y constantes C_k
-        # Se permiten: n, C_k (con cualquier k), números, operadores básicos
+        # VALIDACIÓN: Verificar que T_open no contenga variables de iteración
+        # Se permiten: variables de tamaño (self.variable y otras), C_k, símbolos t_*
         from sympy import Symbol
         free_symbols = total_expr.free_symbols
-        n_symbol = Symbol('n')
         
-        # Filtrar símbolos no permitidos (no son n, ni constantes C_k)
         invalid_symbols = []
+        iteration_vars = self._iteration_var_names()
         for sym in free_symbols:
             sym_name = str(sym)
-            # Permitir: n, C_k (donde k es un número), t_for, t_while, t_if, t_repeat, t_block
-            if sym_name not in ['n'] and not sym_name.startswith('C_') and not sym_name.startswith('t_'):
+            if sym_name in iteration_vars:
                 invalid_symbols.append(sym_name)
         
         if invalid_symbols:
-            # Log de advertencia: la expresión contiene variables no permitidas
+            # Log de advertencia: la expresión contiene variables de iteración que no deberían aparecer
             import logging
             logger = logging.getLogger(__name__)
             logger.warning(
-                f"T_open contiene variables no permitidas: {invalid_symbols}. "
-                f"Solo se permiten 'n' y constantes C_k. Expresión: {total_expr}"
+                f"T_open contiene variables de iteración no permitidas: {invalid_symbols}. "
+                f"Estas deberían haberse eliminado del resultado final. Expresión: {total_expr}"
             )
         
         # Convertir a LaTeX
@@ -453,6 +737,11 @@ class BaseAnalyzer:
                 # Esto evita términos como "C_4 · 0" en T_open que no aportan información
                 if count_expr_simplified == Integer(0):
                     continue
+                
+                # Aplicar factor de operaciones elementales: C_k · ops · count
+                ops_val = r.get('ops', 1)
+                if ops_val != 1:
+                    count_expr_simplified = Integer(ops_val) * count_expr_simplified
                 
                 # Convertir count a LaTeX
                 count_latex = latex(count_expr_simplified)
@@ -638,6 +927,8 @@ class BaseAnalyzer:
                 # Preferir usar count_expr (expresión SymPy evaluada) si está disponible
                 count_expr = r.get('count_expr')
                 if count_expr is None:
+                    count_expr = r.get('count_raw_expr')
+                if count_expr is None:
                     # Fallback: parsear desde count (LaTeX evaluado)
                     count_latex = r.get('count', '1')
                     count_expr = self._str_to_sympy(count_latex)
@@ -647,10 +938,10 @@ class BaseAnalyzer:
                 if count_expr == Integer(0):
                     continue
                 
-                # Crear término: C_k * count_expr
-                # C_k es solo un símbolo para mostrar, no afecta la expresión SymPy
-                # Multiplicamos directamente
-                terms.append(count_expr)
+                # Crear término: C_k * ops * count_expr (ops = operaciones elementales)
+                ops_val = r.get('ops', 1)
+                term_expr = Integer(ops_val) * count_expr if ops_val != 1 else count_expr
+                terms.append(term_expr)
         
         if not terms:
             return None
@@ -673,13 +964,13 @@ class BaseAnalyzer:
         except Exception:
             total_expr = sympy_simplify(total_expr)
         
-        # IMPORTANTE: Eliminar variables de iteración (i, j, k) que no deberían estar en T_open
+        # IMPORTANTE: Eliminar variables de iteración (índices reales de FOR) que no deberían estar en T_open
         if hasattr(self, '_sanitize_expression'):
             total_expr = self._sanitize_expression(total_expr)
         else:
             # Fallback: limpieza básica de variables de iteración
             from sympy import Symbol, Integer as SymInteger
-            iteration_vars = ['i', 'j', 'k']
+            iteration_vars = self._iteration_var_names()
             for var_name in iteration_vars:
                 var_symbol = Symbol(var_name, integer=True)
                 if total_expr.has(var_symbol):

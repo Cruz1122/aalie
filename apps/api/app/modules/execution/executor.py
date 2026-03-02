@@ -527,7 +527,19 @@ class CodeExecutor:
             # En best case, salir después de primera iteración
             if self.case == "best" and iteration_count == 1:
                 break
-    
+
+        # Si se alcanzó el límite de seguridad, añadir paso de advertencia
+        if iteration_count >= max_iterations:
+            label_key = "loop_truncated"
+            desc = self._trace_labels.get(label_key, "Loop reached safety limit.")
+            self.trace_builder.add_step(
+                line=node.get("pos", {}).get("line", 0),
+                kind="while",
+                variables=self.environment.get_variables_snapshot(),
+                iteration={"iteration": iteration_count, "truncated": True},
+                description=desc,
+            )
+
     def _execute_repeat(self, node: Dict[str, Any]) -> None:
         """Ejecuta un bucle REPEAT."""
         # AST: {"type": "Repeat", "body": {..}, "test": ...}
@@ -568,7 +580,18 @@ class CodeExecutor:
             condition_val = self._evaluate_condition(condition)
             if condition_val or getattr(self, "terminated", False):
                 break
-    
+
+        # Si se alcanzó el límite de seguridad, añadir paso de advertencia
+        if iteration_count >= max_iterations:
+            desc = self._trace_labels.get("loop_truncated", "Loop reached safety limit.")
+            self.trace_builder.add_step(
+                line=node.get("pos", {}).get("line", 0),
+                kind="repeat",
+                variables=self.environment.get_variables_snapshot(),
+                iteration={"iteration": iteration_count, "truncated": True},
+                description=desc,
+            )
+
     def _execute_if(self, node: Dict[str, Any]) -> None:
         """Ejecuta un condicional IF."""
         # AST: {"type": "If", "test": ..., "consequent": Block, "alternate": Block|None}

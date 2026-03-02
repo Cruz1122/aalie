@@ -10,7 +10,9 @@ import {
   setApiKey,
   validateApiKey,
 } from "@/hooks/useApiKey";
+import { translateLlmError } from "@/lib/llm-error-translator";
 
+import AALIEIcon from "./AALIEIcon";
 import MarkdownRenderer from "./MarkdownRenderer";
 
 /**
@@ -372,15 +374,12 @@ export default function ChatBot({
           ? messages.find((m) => m.id === retryMessageId && m.sender === "user")
           : [...messages].reverse().find((m) => m.sender === "user");
 
-        // Mensaje de error con información de reintento si es error de Gemini
+        // Mensaje de error traducido y legible
+        const rawMsg = error instanceof Error ? error.message : String(error);
+        const translatedError = tMessages(translateLlmError(rawMsg));
         const errorResponse: Message = {
           id: `bot-error-${Date.now()}`,
-          content: isGeminiError
-            ? tMessages("geminiError", {
-                message:
-                  error instanceof Error ? error.message : tMessages("unknownLlmError"),
-              })
-            : t("errorGeneric"),
+          content: isGeminiError ? translatedError : t("errorGeneric"),
           sender: "bot",
           timestamp: new Date(),
           isError: true,
@@ -393,7 +392,7 @@ export default function ChatBot({
         processingRef.current = false;
       }
     },
-    [messages, setMessages, t, tMessages],
+    [locale, messages, setMessages, t, tMessages],
   );
 
   // Responder automáticamente si el último mensaje del historial es del usuario
@@ -514,18 +513,15 @@ export default function ChatBot({
   if (!isOpen) return null;
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="w-full max-w-2xl mx-auto px-2 sm:px-0 flex flex-col items-center justify-center flex-1 min-h-0">
       <div
-        className="flex flex-col glass-modal-container rounded-2xl overflow-hidden"
-        style={{ height: "70vh" }}
+        className="flex flex-col glass-modal-container rounded-2xl overflow-hidden min-h-[50vh] sm:min-h-[60vh] h-[50vh] sm:h-[70vh]"
       >
         {/* Header */}
         <div className="glass-modal-header p-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center flex-shrink-0">
-              <span className="material-symbols-outlined text-purple-300 text-lg">
-                smart_toy
-              </span>
+              <AALIEIcon className="text-purple-300" size={26} />
             </div>
             <div className="flex flex-col min-w-0">
               <h3 className="text-white font-semibold text-xs">AALIE</h3>
@@ -644,22 +640,20 @@ export default function ChatBot({
                   {message.sender === "user" ? (
                     <User size={14} className="text-blue-300" />
                   ) : (
-                    <span className="material-symbols-outlined text-purple-300 text-xs">
-                      smart_toy
-                    </span>
+                    <AALIEIcon className="text-purple-300" size={22} />
                   )}
                 </div>
 
                 {/* Message Bubble */}
                 <div
-                  className={`flex flex-col ${
+                  className={`flex flex-col min-w-0 overflow-hidden ${
                     message.content.includes("**CÓDIGO ADJUNTO:**")
-                      ? "max-w-[85%]"
-                      : "max-w-[75%]"
+                      ? "max-w-[min(85%,420px)]"
+                      : "max-w-[min(75%,420px)]"
                   } ${message.sender === "user" ? "items-end" : "items-start"}`}
                 >
                   <div
-                    className={`${
+                    className={`min-w-0 max-w-full overflow-hidden ${
                       message.sender === "bot" ? "px-2 py-1.5" : "px-2.5 py-1.5"
                     } rounded-xl ${
                       message.sender === "user"
@@ -683,11 +677,11 @@ export default function ChatBot({
                           const errorMatch = errorRegex.exec(message.content);
 
                           return (
-                            <div className="space-y-2.5 min-w-[250px]">
+                            <div className="space-y-2.5 min-w-0 max-w-[min(100%,420px)]">
                               {/* Código Adjunto */}
-                              <div className="space-y-1">
-                                <div className="bg-slate-800/70 border border-slate-600/40 rounded-md p-2.5 overflow-x-auto max-h-[200px] overflow-y-auto">
-                                  <pre className="text-slate-200 text-[10px] font-mono whitespace-pre leading-relaxed">
+                              <div className="space-y-1 min-w-0">
+                                <div className="bg-slate-800/70 border border-slate-600/40 rounded-md p-2.5 max-h-[200px] overflow-y-auto max-w-full min-w-0 overflow-hidden">
+                                  <pre className="text-slate-200 text-[10px] font-mono whitespace-pre-wrap break-words leading-relaxed">
                                     {codeMatch?.[1] || ""}
                                   </pre>
                                 </div>
@@ -713,7 +707,7 @@ export default function ChatBot({
                         }
 
                         return (
-                          <p className="text-white text-[11px] leading-relaxed whitespace-pre-wrap">
+                          <p className="text-white text-[11px] leading-relaxed whitespace-pre-wrap break-words min-w-0 max-w-full">
                             {message.content}
                           </p>
                         );
@@ -721,7 +715,7 @@ export default function ChatBot({
                     ) : message.isError ? (
                       // Mensaje de error minimalista con botón de reintentar
                       <div className="space-y-1.5">
-                        <p className="text-red-300 text-[11px] leading-relaxed">
+                        <p className="text-red-300 text-[11px] leading-relaxed break-words min-w-0 max-w-full">
                           {message.content}
                         </p>
                         {message.retryMessageId && (
@@ -766,10 +760,8 @@ export default function ChatBot({
           {/* Typing Indicator - Estilo WhatsApp */}
           {isTyping && (
             <div className="flex items-start gap-2 chat-message-slide-in">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center flex-shrink-0">
-                <span className="material-symbols-outlined text-purple-300 text-xs">
-                  smart_toy
-                </span>
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <AALIEIcon className="text-purple-300" size={22} />
               </div>
               <div className="glass-card border-white/10 px-2.5 py-1.5 rounded-xl rounded-bl-md min-w-[45px]">
                 <div className="flex items-center justify-center space-x-1 h-3">
@@ -784,9 +776,9 @@ export default function ChatBot({
           <div ref={messagesEndRef} />
         </div>
 
-            {/* Input Container */}
+            {/* Input Container: flex para evitar solapamiento con el botón y centrado vertical */}
             <div className="glass-modal-header p-2.5 border-t border-white/10">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0 rounded-lg border border-slate-600/50 bg-white/5 focus-within:ring-2 focus-within:ring-purple-500/50 focus-within:border-transparent transition-all">
             <input
               ref={inputRef}
               type="text"
@@ -794,15 +786,15 @@ export default function ChatBot({
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={t("placeholder")}
-              className="flex-1 bg-white/5 border border-slate-600/50 rounded-lg px-2.5 py-1.5 text-white placeholder-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
               disabled={isTyping}
+              className="flex-1 min-w-0 bg-transparent pl-2.5 pr-2 py-2 text-white placeholder-slate-400 text-xs focus:outline-none"
             />
             <button
               onClick={handleSendMessage}
               disabled={!inputValue.trim() || isTyping}
-              className="p-1.5 rounded-lg bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/30 text-purple-300 hover:from-purple-500/30 hover:to-blue-500/30 hover:text-purple-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-shrink-0 p-2 rounded-lg hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-slate-400 hover:text-white"
             >
-              <Send size={16} />
+              <Send size={18} className="shrink-0" />
             </button>
           </div>
             </div>

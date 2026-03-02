@@ -1,2 +1,0 @@
-# Tests de integración
-

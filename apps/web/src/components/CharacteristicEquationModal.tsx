@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import React, { useEffect } from "react";
+
+import { translateBackendContent } from "@/lib/backend-content-translator";
 
 import Formula from "./Formula";
-import { translateProofStep } from "@/lib/proof-step-translator";
 
 /**
  * Redondea los valores numéricos en una expresión LaTeX a 3 decimales.
@@ -175,10 +176,10 @@ export default function CharacteristicEquationModal({
           </h3>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center"
+            className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
             aria-label={t("closeModal")}
           >
-            <span className="material-symbols-outlined text-xl">close</span>
+            ✕
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-6 scrollbar-custom">
@@ -461,7 +462,7 @@ export default function CharacteristicEquationModal({
                   </h4>
                   <div className="space-y-2 max-h-[300px] overflow-y-auto scrollbar-custom">
                     {proof.map((step, idx) => {
-                      const stepText = translateProofStep(
+                      const stepText = translateBackendContent(
                         step.text,
                         locale === "es" ? "es" : "en"
                       );

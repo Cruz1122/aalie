@@ -1,8 +1,10 @@
 "use client";
 
 import type { ParseError } from "@aa/types";
-import { useState, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { useState, useEffect } from "react";
+
+import { translateLlmError } from "@/lib/llm-error-translator";
 
 interface RepairModalProps {
   open: boolean;
@@ -104,7 +106,8 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
       const result = await response.json();
 
       if (!result.ok) {
-        throw new Error(result?.error || t("unknownLlmError"));
+        const rawErr = result?.error || t("unknownLlmError");
+        throw new Error(typeof rawErr === "string" ? rawErr : t("unknownLlmError"));
       }
 
       // Extraer JSON de la respuesta
@@ -161,8 +164,10 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
       setShowComparison(true);
     } catch (err) {
       console.error("Error reparando código:", err);
+      const rawMsg = err instanceof Error ? err.message : String(err);
+      const key = translateLlmError(rawMsg);
       setError(
-        err instanceof Error ? err.message : t("repairUnknownError"),
+        key === "unknownLlmError" ? t("repairUnknownError") : t(key),
       );
       setIsRepairing(false);
     }
@@ -263,7 +268,7 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center glass-modal-overlay modal-animate-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center glass-modal-overlay glass-modal-overlay-fixed modal-animate-in">
       <div className="glass-modal-container rounded-2xl shadow-xl max-w-6xl w-[95vw] h-[85vh] flex flex-col m-4 modal-animate-in">
         {/* Header */}
         <div className="glass-modal-header flex items-center justify-between px-6 py-4 rounded-t-2xl border-b border-white/10">

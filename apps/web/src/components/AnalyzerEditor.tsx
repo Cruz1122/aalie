@@ -5,11 +5,13 @@ import type * as Monaco from "monaco-editor";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
+import AALIEIcon from "./AALIEIcon";
 import { useParseWorker } from "../hooks/useParseWorker";
 import {
   errorsToMarkers,
   registerPseudocodeLanguage,
 } from "../lib/monaco-diagnostics";
+
 
 /**
  * Propiedades del componente AnalyzerEditor.
@@ -21,6 +23,18 @@ interface AnalyzerEditorProps {
   readonly onParseStatusChange?: (ok: boolean, isParsing: boolean) => void;
   readonly onErrorsChange?: (errors: ParseError[] | undefined) => void;
   readonly height?: string;
+  /** Callback para verificar parse (tooltip en esquina) */
+  readonly onVerifyParse?: () => void;
+  /** Callback para abrir modal AST (tooltip en esquina) */
+  readonly onViewAst?: () => void;
+  readonly isVerifyingParse?: boolean;
+  readonly canViewAst?: boolean;
+  readonly hasCode?: boolean;
+  /** Resultado de verificar parse: reemplaza icono/color y muestra en tooltip */
+  readonly verifyParseResult?: { success: boolean; message: string } | null;
+  /** Mostrar botón Ayuda con IA en esquina */
+  readonly showAIHelpButton?: boolean;
+  readonly onAIHelpClick?: () => void;
 }
 
 /**
@@ -52,11 +66,17 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
     onParseStatusChange,
     onErrorsChange,
     height,
+    onVerifyParse,
+    onViewAst,
+    isVerifyingParse = false,
+    canViewAst = false,
+    hasCode = true,
+    verifyParseResult = null,
+    showAIHelpButton = false,
+    onAIHelpClick,
   } = props;
   const [code, setCode] = useState(initialValue);
-  const [showAstModal, setShowAstModal] = useState(false);
-  const tView = useTranslations("analyzer.view");
-  const tCommon = useTranslations("common");
+  const tManual = useTranslations("analyzer.manualMode");
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<MonacoReact | null>(null);
 
@@ -142,9 +162,79 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Editor con borde glass */}
-      <div className="glass-card rounded-xl overflow-hidden">
+    <div className="flex flex-col relative">
+      {/* Botones fuera del overflow-hidden para que los tooltips no se recorten */}
+      {(onVerifyParse != null || onViewAst != null || showAIHelpButton) && (
+        <div className="absolute top-2 right-5 flex gap-1 z-20">
+            {showAIHelpButton && onAIHelpClick != null && (
+              <button
+                type="button"
+                onClick={onAIHelpClick}
+                className="w-8 h-8 rounded-full bg-purple-500/12 border border-purple-500/20 text-purple-300/70 hover:bg-purple-500/25 hover:text-purple-300 transition-all duration-300 ease-out flex items-center justify-center animate-pulse-slow"
+                title={tManual("aiHelp")}
+              >
+                <AALIEIcon size={20} />
+              </button>
+            )}
+            {onVerifyParse != null && (
+              <button
+                type="button"
+                onClick={onVerifyParse}
+                disabled={isVerifyingParse || !hasCode}
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ease-out disabled:opacity-40 disabled:cursor-not-allowed ${
+                  verifyParseResult != null
+                    ? verifyParseResult.success
+                      ? "bg-emerald-500/12 border border-emerald-500/20 text-emerald-300/70 hover:bg-emerald-500/25 hover:text-emerald-300"
+                      : "bg-red-500/12 border border-red-500/20 text-red-300/70 hover:bg-red-500/25 hover:text-red-300"
+                    : "bg-blue-500/12 border border-blue-500/20 text-blue-300/70 hover:bg-blue-500/25 hover:text-blue-300"
+                }`}
+                title={verifyParseResult?.message ?? tManual("verifyParse")}
+              >
+                {isVerifyingParse ? (
+                  <span
+                    className="material-symbols-outlined animate-spin"
+                    style={{ fontSize: 16 }}
+                  >
+                    progress_activity
+                  </span>
+                ) : verifyParseResult != null ? (
+                  <span
+                    key={verifyParseResult.success ? "ok" : "err"}
+                    className="material-symbols-outlined animate-fade-in"
+                    style={{ fontSize: 16 }}
+                  >
+                    {verifyParseResult.success ? "check_circle" : "error"}
+                  </span>
+                ) : (
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: 16 }}
+                  >
+                    check_circle
+                  </span>
+                )}
+              </button>
+            )}
+            {onViewAst != null && (
+              <button
+                type="button"
+                onClick={onViewAst}
+                disabled={!canViewAst}
+                className="w-8 h-8 rounded-full bg-amber-500/12 border border-amber-500/20 text-amber-300/70 hover:bg-amber-500/25 hover:text-amber-300 transition-all duration-300 ease-out disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
+                title={tManual("viewAst")}
+              >
+                <span
+                  className="material-symbols-outlined"
+                  style={{ fontSize: 16 }}
+                >
+                  account_tree
+                </span>
+              </button>
+            )}
+          </div>
+        )}
+      {/* Editor: glass-card-editor sin hover difuminado */}
+      <div className="glass-card glass-card-editor rounded-xl overflow-hidden relative !z-0">
         <MonacoEditor
           height={height || "300px"}
           defaultLanguage="pseudocode"
@@ -154,19 +244,9 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
           loading={
             <div className="flex items-center justify-center h-full">
               <div className="flex flex-col items-center gap-3">
-                <div className="flex gap-2">
-                  <span
-                    className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"
-                    style={{ animationDelay: "0ms" }}
-                  />
-                  <span
-                    className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
-                    style={{ animationDelay: "150ms" }}
-                  />
-                  <span
-                    className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"
-                    style={{ animationDelay: "300ms" }}
-                  />
+                <div className="relative flex items-center justify-center">
+                  <div className="w-12 h-12 bg-blue-500/20 rounded-full animate-ping" />
+                  <div className="absolute w-6 h-6 bg-blue-500 rounded-full" />
                 </div>
                 <span className="text-sm text-slate-300 font-medium">
                   Cargando editor...
@@ -178,7 +258,7 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
             minimap: { enabled: false },
             fontSize: 14,
             fontFamily:
-              "'Spline Sans', 'Noto Sans', 'Monaco', 'Menlo', 'Consolas', monospace",
+              "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
             fontLigatures: true,
             lineNumbers: "on",
             lineNumbersMinChars: 3,
@@ -186,7 +266,7 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
             wordWrap: "on",
             scrollBeyondLastLine: false,
             automaticLayout: true,
-            tabSize: 2,
+            tabSize: 4,
             insertSpaces: true,
             renderWhitespace: "selection",
             smoothScrolling: true,
@@ -195,7 +275,6 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
             roundedSelection: true,
             padding: { top: 16, bottom: 16 },
             lineHeight: 1.6,
-            letterSpacing: 0.5,
             bracketPairColorization: {
               enabled: true,
             },
@@ -203,56 +282,10 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
               indentation: true,
               bracketPairs: true,
             },
+            renderLineHighlight: "none",
           }}
         />
       </div>
-
-      {/* Modal AST con estilo glass */}
-      {showAstModal && parseResult.ast && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center glass-modal-overlay modal-animate-in">
-          <div className="glass-modal-container rounded-2xl shadow-xl max-w-5xl w-full max-h-[85vh] flex flex-col m-4 modal-animate-in">
-            {/* Header con estilo glass */}
-            <div className="glass-modal-header flex items-center justify-between px-6 py-4 rounded-t-2xl border-b border-white/10">
-              <h2 className="text-2xl font-bold text-white">
-                AST (Abstract Syntax Tree)
-              </h2>
-              <button
-                onClick={() => setShowAstModal(false)}
-                className="text-slate-400 hover:text-white text-3xl leading-none transition-colors hover:rotate-90 transform duration-200"
-              >
-                ×
-              </button>
-            </div>
-
-            {/* Content con scroll personalizado */}
-            <div className="flex-1 overflow-auto p-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
-              <pre className="text-sm bg-slate-900/50 text-emerald-300 p-6 rounded-xl border border-white/10 overflow-x-auto font-mono backdrop-blur-sm">
-                {JSON.stringify(parseResult.ast, null, 2)}
-              </pre>
-            </div>
-
-            {/* Footer */}
-            <div className="flex justify-end gap-3 px-6 py-4 border-t border-white/10 rounded-b-2xl">
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(
-                    JSON.stringify(parseResult.ast, null, 2),
-                  );
-                }}
-                className="glass-secondary px-5 py-2.5 text-sm font-semibold text-slate-200 rounded-lg transition-all hover:scale-105"
-              >
-                {tView("copyJson")}
-              </button>
-              <button
-                onClick={() => setShowAstModal(false)}
-                className="glass-button px-5 py-2.5 text-sm font-semibold text-white rounded-lg transition-all hover:scale-105"
-              >
-                {tCommon("close")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

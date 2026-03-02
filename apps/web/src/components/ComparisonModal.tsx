@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import React from "react";
 
 import { getBestAsymptoticNotation } from "@/lib/asymptotic-notation";
-import { translateProofStep } from "@/lib/proof-step-translator";
+import { translateBackendContent } from "@/lib/backend-content-translator";
 import type { CoreAnalysisData } from "@/lib/extract-core-data";
 
 import Formula from "./Formula";
@@ -114,7 +114,7 @@ function parseNote(note: string): {
 
 type ComparisonT = {
   cases: (k: string) => string;
-  view: (k: string) => string;
+  view: (k: string, values?: Record<string, string | number>) => string;
 };
 
 /**
@@ -334,6 +334,7 @@ function renderRecursiveData(
   label: string,
   isOwn: boolean,
   t: ComparisonT,
+  locale: "es" | "en",
 ) {
   // Resolver "same_as_worst" a worstData
   const resolvedBest = bestData === "same_as_worst" ? worstData : bestData;
@@ -482,7 +483,7 @@ function renderRecursiveData(
                     integration_instructions
                   </span>
                   <div className="text-sm font-semibold text-slate-300">
-                    Solución homogénea:
+                    {t.view("homogeneousSolution")}
                   </div>
                 </div>
                 <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
@@ -504,7 +505,7 @@ function renderRecursiveData(
                     add_circle
                   </span>
                   <div className="text-sm font-semibold text-slate-300">
-                    Solución particular:
+                    {t.view("particularSolution")}
                   </div>
                 </div>
                 <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
@@ -526,7 +527,7 @@ function renderRecursiveData(
                     functions
                   </span>
                   <div className="text-sm font-semibold text-slate-300">
-                    Solución general:
+                    {t.view("generalSolution")}
                   </div>
                 </div>
                 <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
@@ -548,7 +549,7 @@ function renderRecursiveData(
                     code
                   </span>
                   <div className="text-sm font-semibold text-slate-300">
-                    Forma cerrada:
+                    {t.view("closedForm")}
                   </div>
                 </div>
                 <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
@@ -734,7 +735,7 @@ function renderRecursiveData(
                     settings
                   </span>
                   <div className="text-sm font-semibold text-slate-300">
-                    Parámetros:
+                    {t.view("parameters")}
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
@@ -768,7 +769,7 @@ function renderRecursiveData(
                     functions
                   </span>
                   <div className="text-sm font-semibold text-slate-300">
-                    Cálculo de g(n) = n<sup>log<sub>b</sub> a</sup>:
+                    {t.view("gnCalculation")}
                   </div>
                 </div>
                 <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
@@ -787,7 +788,7 @@ function renderRecursiveData(
                     compare_arrows
                   </span>
                   <div className="text-sm font-semibold text-blue-300">
-                    Comparación:
+                    {t.view("comparison")}
                   </div>
                 </div>
                 <div className="bg-slate-900/50 p-3 rounded border border-blue-500/20 overflow-x-auto scrollbar-custom">
@@ -813,9 +814,9 @@ function renderRecursiveData(
                 </div>
                 {data.master.case && (
                   <div className="mt-2 text-xs text-blue-300 text-center">
-                    {data.master.case === 1 && "→ Caso 1: f(n) es polinomialmente menor que g(n)"}
-                    {data.master.case === 2 && "→ Caso 2: f(n) es igual a g(n)"}
-                    {data.master.case === 3 && "→ Caso 3: f(n) es polinomialmente mayor que g(n)"}
+                    {data.master.case === 1 && t.view("case1Desc")}
+                    {data.master.case === 2 && t.view("case2Desc")}
+                    {data.master.case === 3 && t.view("case3Desc")}
                   </div>
                 )}
               </div>
@@ -829,7 +830,7 @@ function renderRecursiveData(
                     verified
                   </span>
                   <div className="text-sm font-semibold text-yellow-300">
-                    Condición de Regularidad:
+                    {t.view("regularityCondition")}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -845,8 +846,8 @@ function renderRecursiveData(
                   <div className="text-xs text-yellow-200 flex-1">
                     {data.master.regularity.note || 
                       (data.master.regularity.checked 
-                        ? "Verificada: ∃c < 1, ∃n₀: a·f(n/b) ≤ c·f(n) para n ≥ n₀"
-                        : "Asumida: Se asume que se cumple la condición de regularidad")}
+                        ? t.view("regularityVerified")
+                        : t.view("regularityAssumed"))}
                   </div>
                 </div>
               </div>
@@ -882,7 +883,7 @@ function renderRecursiveData(
                         speed
                       </span>
                       <div className="text-sm font-semibold text-purple-300">
-                        Θ (Resultado Final):
+                        {t.view("thetaFinalResult")}
                       </div>
                     </div>
                     <div className="bg-slate-900/50 p-3 rounded border border-purple-500/20 overflow-x-auto scrollbar-custom">
@@ -930,7 +931,7 @@ function renderRecursiveData(
                         speed
                       </span>
                       <div className="text-sm font-semibold text-purple-300">
-                        Θ (Resultado Final):
+                        {t.view("thetaFinalResult")}
                       </div>
                     </div>
                     <div className="bg-slate-900/50 p-3 rounded border border-purple-500/20 overflow-x-auto scrollbar-custom flex justify-center">
@@ -956,7 +957,7 @@ function renderRecursiveData(
                     functions
                   </span>
                   <div className="text-sm font-semibold text-slate-300">
-                    Función g(n):
+                    {t.view("gFunction")}
                   </div>
                 </div>
                 <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
@@ -976,7 +977,7 @@ function renderRecursiveData(
                       unfold_more
                     </span>
                     <div className="text-sm font-semibold text-slate-300">
-                      Expansiones:
+                      {t.view("expansions")}
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -1004,7 +1005,7 @@ function renderRecursiveData(
                     code
                   </span>
                   <div className="text-sm font-semibold text-slate-300">
-                    Forma general:
+                    {t.view("generalForm")}
                   </div>
                 </div>
                 <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
@@ -1023,14 +1024,17 @@ function renderRecursiveData(
                     functions
                   </span>
                   <div className="text-sm font-semibold text-slate-300">
-                    Sumatoria:
+                    {t.view("summation")}
                   </div>
                 </div>
                 {data.iteration.summation.expression && (
                   <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center mb-2">
                     <div className="scale-90">
                       <Formula
-                        latex={data.iteration.summation.expression}
+                        latex={translateBackendContent(
+                          data.iteration.summation.expression,
+                          locale,
+                        )}
                         display
                       />
                     </div>
@@ -1040,7 +1044,10 @@ function renderRecursiveData(
                   <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
                     <div className="scale-90">
                       <Formula
-                        latex={data.iteration.summation.evaluated}
+                        latex={translateBackendContent(
+                          data.iteration.summation.evaluated,
+                          locale,
+                        )}
                         display
                       />
                     </div>
@@ -1195,7 +1202,7 @@ function renderRecursiveData(
                   account_tree
                 </span>
                 <div className="text-sm font-semibold text-green-300">
-                  Árbol de Recursión
+                  {t.view("recursionTree")}
                 </div>
               </div>
             </div>
@@ -1208,7 +1215,7 @@ function renderRecursiveData(
                     height
                   </span>
                   <div className="text-sm font-semibold text-slate-300">
-                    Altura del árbol:
+                    {t.view("treeHeight")}
                   </div>
                 </div>
                 <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
@@ -1227,16 +1234,19 @@ function renderRecursiveData(
                     functions
                   </span>
                   <div className="text-sm font-semibold text-slate-300">
-                    Sumatoria:
+                    {t.view("summation")}
                   </div>
                 </div>
                 {data.recursion_tree.summation.expression && (
                   <div className="mb-2">
-                    <div className="text-xs text-slate-400 mb-1">Expresión:</div>
+                    <div className="text-xs text-slate-400 mb-1">{t.view("expression")}</div>
                     <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
                       <div className="scale-90">
                         <Formula
-                          latex={data.recursion_tree.summation.expression}
+                          latex={translateBackendContent(
+                            data.recursion_tree.summation.expression,
+                            locale,
+                          )}
                           display
                         />
                       </div>
@@ -1245,11 +1255,14 @@ function renderRecursiveData(
                 )}
                 {data.recursion_tree.summation.evaluated && (
                   <div>
-                    <div className="text-xs text-slate-400 mb-1">Evaluada:</div>
+                    <div className="text-xs text-slate-400 mb-1">{t.view("evaluated")}</div>
                     <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
                       <div className="scale-90">
                         <Formula
-                          latex={data.recursion_tree.summation.evaluated}
+                          latex={translateBackendContent(
+                            data.recursion_tree.summation.evaluated,
+                            locale,
+                          )}
                           display
                         />
                       </div>
@@ -1267,21 +1280,21 @@ function renderRecursiveData(
                     trending_up
                   </span>
                   <div className="text-sm font-semibold text-blue-300">
-                    Nivel Dominante:
+                    {t.view("dominatingLevel")}
                   </div>
                 </div>
                 <div className="bg-slate-900/50 p-3 rounded border border-blue-500/20 overflow-x-auto scrollbar-custom">
                   <div className="text-xs text-blue-200">
                     {data.recursion_tree.dominating_level.level === "leaves" && (
-                      <span className="font-semibold">Hojas (último nivel)</span>
+                      <span className="font-semibold">{t.view("leavesLevel")}</span>
                     )}
                     {data.recursion_tree.dominating_level.level === "root" && (
-                      <span className="font-semibold">Raíz (primer nivel)</span>
+                      <span className="font-semibold">{t.view("rootLevel")}</span>
                     )}
                     {data.recursion_tree.dominating_level.level !== "leaves" &&
                       data.recursion_tree.dominating_level.level !== "root" && (
                         <span className="font-semibold">
-                          Nivel {data.recursion_tree.dominating_level.level}
+                          {t.view("levelN", { level: data.recursion_tree.dominating_level.level })}
                         </span>
                       )}
                   </div>
@@ -1289,7 +1302,7 @@ function renderRecursiveData(
                     <div className="mt-2 text-xs text-blue-200/80">
                       <div className="scale-90 origin-top-left">
                         <Formula
-                          latex={translateProofStep(
+                          latex={translateBackendContent(
                             data.recursion_tree.dominating_level.reason,
                             locale,
                           )}
@@ -1332,7 +1345,7 @@ function renderRecursiveData(
                         speed
                       </span>
                       <div className="text-sm font-semibold text-purple-300">
-                        Θ (Resultado Final):
+                        {t.view("thetaFinalResult")}
                       </div>
                     </div>
                     <div className="bg-slate-900/50 p-3 rounded border border-purple-500/20 overflow-x-auto scrollbar-custom">
@@ -1380,7 +1393,7 @@ function renderRecursiveData(
                         speed
                       </span>
                       <div className="text-sm font-semibold text-purple-300">
-                        Θ (Resultado Final):
+                        {t.view("thetaFinalResult")}
                       </div>
                     </div>
                     <div className="bg-slate-900/50 p-3 rounded border border-purple-500/20 overflow-x-auto scrollbar-custom flex justify-center">
@@ -1455,10 +1468,11 @@ export default function ComparisonModal({
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
             title={tCommon("close")}
+            aria-label={tCommon("close")}
           >
-            <span className="material-symbols-outlined text-white">close</span>
+            ✕
           </button>
         </div>
 
@@ -1474,6 +1488,7 @@ export default function ComparisonModal({
                   tView("ownAnalysis"),
                   true,
                   t,
+                  locale,
                 )
               : renderIterativeData(ownData, llmData, true, t)}
           </div>
@@ -1488,6 +1503,7 @@ export default function ComparisonModal({
                   tView("llmAnalysis"),
                   false,
                   t,
+                  locale,
                 )
               : renderIterativeData(ownData, llmData, false, t)}
           </div>

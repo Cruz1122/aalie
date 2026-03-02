@@ -1,0 +1,11 @@
+burbuja(A, n) BEGIN
+  FOR i <- 1 TO n - 1 DO BEGIN
+    FOR j <- 1 TO n - i DO BEGIN
+      IF (A[j] > A[j + 1]) THEN BEGIN
+        temp <- A[j];
+        A[j] <- A[j + 1];
+        A[j + 1] <- temp;
+      END
+    END
+  END
+END

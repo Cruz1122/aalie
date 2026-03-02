@@ -12,3 +12,4 @@ Antes de crear o modificar código:
 3. UI: usar `useTranslations`, nunca literales en JSX
 4. Antes de commit: añadir entrada en CHANGELOG.md [Unreleased]
 5. Consultar `read_doc` cuando toque docs (ej: app/i18n-labels-prompts.md)
+6. Tests backend: ejecutar con `pnpm test:api` (desde raíz). Ver `test_suite_commands` en MCP para atajos (test:api:gate, test:api:contract, test:api:cov, test:api:stress).

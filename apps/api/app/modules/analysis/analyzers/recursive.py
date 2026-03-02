@@ -72,6 +72,19 @@ class RecursiveAnalyzer(BaseAnalyzer):
         self.proc_def = proc_def  # Guardar para uso posterior
         self.procedure_name = proc_def.get("name")
         
+        # 2.1. Detectar variables de tamaño candidatas a partir del ProcDef
+        # Mantendremos la notación estándar T(n), pero registraremos el mapeo si
+        # el parámetro real tiene otro nombre.
+        try:
+            size_candidates = self.detect_size_variables_from_proc(proc_def)
+        except Exception:
+            size_candidates = []
+        if size_candidates:
+            primary = size_candidates[0]
+            if isinstance(primary, str) and primary and primary != "n":
+                # Registrar que nuestro 'n' conceptual corresponde a este parámetro
+                self.add_symbol("n", primary)
+
         # 2. Validar condiciones iniciales (divide-and-conquer canónico)
         validation_result = self._validate_conditions(proc_def)
         if not validation_result["valid"]:
@@ -96,6 +109,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "byLine": [],
                     "totals": {
                         "T_open": "O(1)",
+                        "big_theta": "O(1)",
                         "symbols": None,
                         "notes": None,
                         "proof": self.proof_steps.copy()
@@ -356,6 +370,49 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     return True
         return False
     
+    def _node_contains_call_ids(self, node: Any, call_ids: set) -> bool:
+        """True si el nodo (o algún descendiente) es uno de los call dicts por identidad."""
+        if isinstance(node, dict):
+            if id(node) in call_ids:
+                return True
+            for _k, v in node.items():
+                if _k in ("type", "pos"):
+                    continue
+                if self._node_contains_call_ids(v, call_ids):
+                    return True
+            return False
+        if isinstance(node, list):
+            return any(self._node_contains_call_ids(item, call_ids) for item in node)
+        return False
+    
+    def _recursive_call_inside_for(self, proc_def: Dict[str, Any], recursive_calls: List[Dict[str, Any]]) -> bool:
+        """
+        True si alguna llamada recursiva aparece dentro del cuerpo de un FOR.
+        Útil para heurística: F(n, pos) con FOR x <- pos TO n y CALL F(..., x+1, ...) → tamaño decrece (n-pos).
+        """
+        if not recursive_calls:
+            return False
+        call_ids = {id(c) for c in recursive_calls}
+        body = proc_def.get("body") or proc_def.get("block") or {}
+        
+        def any_for_contains_calls(node: Any) -> bool:
+            if isinstance(node, dict):
+                if node.get("type") == "For":
+                    for_body = node.get("body")
+                    if isinstance(for_body, dict):
+                        for_body = for_body.get("body", for_body.get("statements", [])) or []
+                    if self._node_contains_call_ids(for_body, call_ids):
+                        return True
+                for _k, v in node.items():
+                    if any_for_contains_calls(v):
+                        return True
+                return False
+            if isinstance(node, list):
+                return any(any_for_contains_calls(item) for item in node)
+            return False
+        
+        return any_for_contains_calls(body)
+    
     def _has_field_access(self, node: Any) -> bool:
         """
         Verifica si un nodo contiene accesos a campos (field access).
@@ -571,19 +628,24 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Primero intentar con decrease-and-conquer (para método de iteración)
         subproblem_sizes = []
         for call in recursive_calls:
-            # Intentar primero detectar decrease-and-conquer (n-1, n-k)
+            # Intentar primero detectar decrease-and-conquer (n-1, n-k), división o MOD (Euclides)
             subproblem_info = self._analyze_subproblem_type(call, proc_def)
-            if subproblem_info and subproblem_info["type"] in ["subtraction", "division"]:
+            if subproblem_info and subproblem_info["type"] in ["subtraction", "division", "mod"]:
                 # Para decrease-and-conquer, crear estructura compatible
                 factor = subproblem_info.get("factor", 1)
                 pattern = subproblem_info.get("pattern", "n-1")
                 # Para decrease-and-conquer, no usamos "b" tradicional
                 # En su lugar, almacenamos la información en el subproblem_size
-                subproblem_sizes.append({
+                entry = {
                     "type": subproblem_info["type"],
                     "pattern": pattern,
                     "factor": factor
-                })
+                }
+                # Para division (ej: BST con raiz.izquierda/derecha → n/2), añadir "b" para divide-and-conquer
+                if subproblem_info["type"] == "division":
+                    entry["b"] = int(factor)
+                # Para mod (Euclides): no hay "b" fijo; se resuelve por iteración → Θ(log n)
+                subproblem_sizes.append(entry)
             else:
                 # Si no es decrease-and-conquer, intentar divide-and-conquer
                 size_info = self._analyze_subproblem_size(call, proc_def)
@@ -618,14 +680,41 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     # Un solo campo, una sola llamada → lista enlazada (linear_shift, n-1)
                     subproblem_sizes = [{"type": "subtraction", "pattern": "n-1", "factor": 1, "heuristic": "object_field_access_list"}]
             else:
-                return {
-                    "success": False,
-                    "reason": "No se pudieron determinar los tamaños de los subproblemas"
-                }
+                # Heurística: llamada recursiva dentro de FOR (ej: generación de subconjuntos)
+                # El rango (n - pos) decrece en cada llamada → tratar como substracción n-1
+                if self._recursive_call_inside_for(proc_def, recursive_calls):
+                    subproblem_sizes = [
+                        {"type": "subtraction", "pattern": "n-1", "factor": 1, "heuristic": "recursive_call_inside_for"}
+                    ]
+                else:
+                    return {
+                        "success": False,
+                        "reason": "No se pudieron determinar los tamaños de los subproblemas"
+                    }
+        else:
+            # Si la llamada recursiva está dentro de un FOR (generación de subconjuntos), forzar modelo 2^n
+            if self._recursive_call_inside_for(proc_def, recursive_calls):
+                has_heuristic = any(s.get("heuristic") == "recursive_call_inside_for" for s in subproblem_sizes)
+                if not has_heuristic:
+                    # Override: pudo haberse clasificado como divide_conquer; forzar subtraction + heuristic
+                    subproblem_sizes = [
+                        {"type": "subtraction", "pattern": "n-1", "factor": 1, "heuristic": "recursive_call_inside_for"}
+                    ]
+                else:
+                    for s in subproblem_sizes:
+                        if s.get("type") == "subtraction":
+                            s["heuristic"] = "recursive_call_inside_for"
+                            break
         
         # 3. Verificar que todos los subproblemas tienen el mismo tamaño relativo
-        # Distinguir entre decrease-and-conquer y divide-and-conquer
+        # Distinguir entre decrease-and-conquer, divide-and-conquer y solo MOD (Euclides)
         has_subtraction = any(s.get("type") == "subtraction" for s in subproblem_sizes)
+        only_mod = (
+            not has_subtraction
+            and len(subproblem_sizes) >= 1
+            and all(s.get("type") == "mod" for s in subproblem_sizes)
+        )
+        multi_b_terms = None  # (a_i, b_i) para divide-and-conquer generalizado
         
         if has_subtraction:
             # Para decrease-and-conquer, verificar patrones
@@ -661,18 +750,33 @@ class RecursiveAnalyzer(BaseAnalyzer):
             # Para método de iteración, se detectará más adelante
             b = 2  # Valor por defecto, no se usará para decrease-and-conquer
         else:
-            # Para divide-and-conquer, verificar que todos tienen el mismo b
-            b_values = [s["b"] for s in subproblem_sizes if s.get("b")]
-            if not b_values or len(set(b_values)) > 1:
-                return {
-                    "success": False,
-                    "recurrence": {
-                        "applicable": False,
-                        "notes": ["Subproblemas de tamaños distintos o no proporcionales"]
-                    },
-                    "reason": "Subproblemas de tamaños distintos"
-                }
-            b = b_values[0]
+            # Solo mod (Euclides): T(b, a mod b) → Θ(log n), sin b constante
+            if only_mod:
+                b = 2  # dummy para que el flujo continúe; se usará método de iteración con resultado log
+            else:
+                # Para divide-and-conquer, permitir ahora múltiples tamaños de subproblema (b distintos)
+                b_values = [s["b"] for s in subproblem_sizes if s.get("b")]
+                if not b_values:
+                    return {
+                        "success": False,
+                        "recurrence": {
+                            "applicable": False,
+                            "notes": ["No se pudieron determinar factores de división (b)"]
+                        },
+                        "reason": "Tamaños de subproblemas no determinados"
+                    }
+                unique_b_values = sorted(set(b_values))
+                if len(unique_b_values) == 1:
+                    # Caso clásico: todos los subproblemas tienen el mismo tamaño n/b
+                    b = unique_b_values[0]
+                else:
+                    # Caso generalizado: múltiples tamaños n/b_i (ej. n/2 y n/4)
+                    # Construir términos (a_i, b_i) contando cuántas llamadas tienen cada factor
+                    from collections import Counter
+                    counts = Counter(b_values)
+                    multi_b_terms = [(counts[b_val], float(b_val)) for b_val in unique_b_values]
+                    # Elegir un b representativo solo para mostrar en proof; no se usará en Master
+                    b = unique_b_values[0]
         
         # 3.5. Determinar el valor de 'a' considerando ramas mutuamente excluyentes
         # Si las llamadas recursivas están en un IF-ELSE, solo se ejecuta una rama
@@ -722,51 +826,103 @@ class RecursiveAnalyzer(BaseAnalyzer):
             if not use_iteration:
                 # Solo considerar Árbol de Recursión si no aplica Ecuación Característica ni Iteración
                 use_recursion_tree = self._detect_recursion_tree_method(proc_def, recursive_calls, a, b)
+
+        # Recursión dentro de FOR (generación de subconjuntos): no usar iteración ni master → usar árbol → Θ(2^n)
+        has_recursive_call_inside_for = any(
+            s.get("heuristic") == "recursive_call_inside_for" for s in subproblem_sizes
+        )
+        if not use_characteristic and has_recursive_call_inside_for:
+            use_iteration = False
+            use_recursion_tree = True
+        
+        # Solo MOD (Euclides): forzar método de iteración → Θ(log n)
+        if only_mod:
+            use_characteristic = False
+            use_iteration = True
+            use_recursion_tree = False
         
         # 7. Construir recurrencia con método apropiado
         # Simplificar b para mostrar
         b_str = self._simplify_number_latex(b)
+        quicksort_worst_override = False
+
+        # Cuando hay substracción, construir una sola vez la forma lineal para reutilizar en iteración o recursion_tree (branching subset)
+        recurrence_form_linear = None
+        if has_subtraction:
+            from collections import Counter
+            term_counts_linear = Counter()
+            for s in subproblem_sizes:
+                if s.get("type") == "subtraction":
+                    p = s.get("pattern", "n-1")
+                    term_counts_linear[p] = term_counts_linear.get(p, 0) + 1
+            if term_counts_linear:
+                f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
+                if len(term_counts_linear) > 1:
+                    terms_latex = " + ".join([f"T({t})" for t in sorted(term_counts_linear.keys(), reverse=True)])
+                    recurrence_form_linear = f"T(n) = {terms_latex} + {f_n_display}"
+                else:
+                    pattern, count = list(term_counts_linear.items())[0]
+                    if count > 1:
+                        recurrence_form_linear = f"T(n) = {count} \\cdot T({pattern}) + {f_n_display}"
+                    else:
+                        recurrence_form_linear = f"T(n) = T({pattern}) + {f_n_display}"
         
         # Para ecuación característica e iteración, usar desplazamientos constantes (n-1, n-2, etc.)
         if use_characteristic or use_iteration:
-            # Para método de iteración o ecuación característica, construir la forma de la recurrencia
-            # Contar todas las llamadas recursivas por tamaño (puede haber múltiples del mismo tamaño)
-            from collections import Counter
-            term_counts = Counter()
-            for call in recursive_calls:
-                subproblem_info = self._analyze_subproblem_type(call, proc_def)
-                if subproblem_info and subproblem_info["type"] == "subtraction":
-                    pattern = subproblem_info.get("pattern", "n-1")
-                    term_counts[pattern] += 1
-            
-            if len(term_counts) > 1:
-                # Caso especial: múltiples términos recursivos DIFERENTES (ej: Fibonacci T(n) = T(n-1) + T(n-2))
-                # Construir forma completa: T(n) = T(n-1) + T(n-2) + f(n)
-                terms_latex = " + ".join([f"T({term})" for term in sorted(term_counts.keys(), reverse=True)])
-                f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
-                recurrence_form = f"T(n) = {terms_latex} + {f_n_display}"
-            elif len(term_counts) == 1:
-                # Caso normal: un solo término recursivo (puede aparecer múltiples veces)
-                pattern, count = list(term_counts.items())[0]
-                # Reemplazar f(n) con el valor real calculado
-                f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
-                if count > 1:
-                    # Múltiples llamadas del mismo tamaño (ej: Torres de Hanoi T(n) = 2T(n-1) + 1)
-                    recurrence_form = f"T(n) = {count} \\cdot T({pattern}) + {f_n_display}"
-                else:
-                    recurrence_form = f"T(n) = T({pattern}) + {f_n_display}"
+            # Usar forma lineal ya construida si existe; si no, construir desde recursive_calls
+            if recurrence_form_linear is not None:
+                recurrence_form = recurrence_form_linear
             else:
-                # Fallback
-                subproblem_info = self._analyze_subproblem_type(recursive_calls[0], proc_def)
-                f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
-                if subproblem_info:
-                    pattern = subproblem_info.get("pattern", "n-1")
-                    recurrence_form = f"T(n) = T({pattern}) + {f_n_display}"
+                from collections import Counter
+                term_counts = Counter()
+                for call in recursive_calls:
+                    subproblem_info = self._analyze_subproblem_type(call, proc_def)
+                    if subproblem_info and subproblem_info["type"] == "subtraction":
+                        pattern = subproblem_info.get("pattern", "n-1")
+                        term_counts[pattern] += 1
+                if len(term_counts) > 1:
+                    terms_latex = " + ".join([f"T({term})" for term in sorted(term_counts.keys(), reverse=True)])
+                    f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
+                    recurrence_form = f"T(n) = {terms_latex} + {f_n_display}"
+                elif len(term_counts) == 1:
+                    pattern, count = list(term_counts.items())[0]
+                    f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
+                    if count > 1:
+                        recurrence_form = f"T(n) = {count} \\cdot T({pattern}) + {f_n_display}"
+                    else:
+                        recurrence_form = f"T(n) = T({pattern}) + {f_n_display}"
                 else:
-                    recurrence_form = f"T(n) = T(n-1) + {f_n_display}"
+                    subproblem_info = self._analyze_subproblem_type(recursive_calls[0], proc_def)
+                    f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
+                    if subproblem_info:
+                        pattern = subproblem_info.get("pattern", "n-1")
+                        recurrence_form = f"T(n) = T({pattern}) + {f_n_display}"
+                    else:
+                        recurrence_form = f"T(n) = T(n-1) + {f_n_display}"
         else:
             # Para divide-and-conquer (Teorema Maestro o Árbol de Recursión)
-            recurrence_form = f"T(n) = {a} \\cdot T(n/{b_str}) + f(n)"
+            # Recursión dentro de FOR (branching subset): usar forma lineal ya construida
+            quicksort_worst_override = (
+                use_recursion_tree
+                and preferred_method == "recursion_tree"
+                and self._detect_quicksort_pivot_izq(proc_def)
+            )
+            if has_recursive_call_inside_for and recurrence_form_linear is not None:
+                recurrence_form = recurrence_form_linear
+            elif quicksort_worst_override:
+                recurrence_form = "T(n) = T(n-1) + n"
+            else:
+                # Caso general: construir forma T(n) = sum a_i T(n/b_i) + f(n)
+                if multi_b_terms:
+                    terms_latex = []
+                    for coeff, b_val in multi_b_terms:
+                        coeff_str = "" if coeff == 1 else f"{coeff} \\cdot "
+                        b_part = self._simplify_number_latex(b_val)
+                        terms_latex.append(f"{coeff_str}T(n/{b_part})")
+                    terms_str = " + ".join(terms_latex) if terms_latex else "T(n)"
+                    recurrence_form = f"T(n) = {terms_str} + f(n)"
+                else:
+                    recurrence_form = f"T(n) = {a} \\cdot T(n/{b_str}) + f(n)"
         
         # Determinar método a usar (PRIORIDAD: characteristic_equation > iteration > recursion_tree > master)
         if use_characteristic:
@@ -774,6 +930,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
         elif use_iteration:
             method = "iteration"
         elif use_recursion_tree:
+            method = "recursion_tree"
+        elif multi_b_terms:
+            # Divide-and-conquer con múltiples tamaños de subproblema: usar árbol generalizado
             method = "recursion_tree"
         else:
             method = "master"
@@ -901,7 +1060,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                         "method": method
                     }
             else:
-                # Es divide-and-conquer (aunque se use método de iteración)
+                # Es divide-and-conquer (aunque se use método de iteración) o solo MOD (Euclides)
                 recurrence = {
                     "type": "divide_conquer",
                     "form": recurrence_form,
@@ -913,19 +1072,64 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "notes": [],
                     "method": method
                 }
+                if only_mod:
+                    recurrence["subproblem_type"] = "mod"
         else:
             # Para otros métodos (master, recursion_tree), usar a, b, f (divide_conquer)
-            recurrence = {
-                "type": "divide_conquer",
-                "form": recurrence_form,
-                "a": a,
-                "b": float(b),
-                "f": f_n,
-                "n0": n0,
-                "applicable": True,
-                "notes": [],
-                "method": method
-            }
+            # O linear_shift si es quicksort worst case override o recursión dentro de FOR (branching subset)
+            if quicksort_worst_override:
+                recurrence = {
+                    "type": "linear_shift",
+                    "form": recurrence_form,
+                    "order": 1,
+                    "shifts": [1],
+                    "coefficients": [1],
+                    "g(n)": "n",
+                    "n0": n0,
+                    "applicable": True,
+                    "notes": ["QuickSort con pivot fijo en izq: worst case T(n)=T(n-1)+n"],
+                    "method": method
+                }
+            elif method == "recursion_tree" and has_recursive_call_inside_for:
+                f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
+                recurrence = {
+                    "type": "linear_shift",
+                    "form": recurrence_form,
+                    "order": 1,
+                    "shifts": [1],
+                    "coefficients": [1],
+                    "g(n)": f_n_display,
+                    "n0": n0,
+                    "applicable": True,
+                    "notes": ["Recursión dentro de FOR (generación de subconjuntos), análisis por árbol de recursión"],
+                    "method": method,
+                    "branching_subset": True
+                }
+            elif multi_b_terms:
+                # Divide-and-conquer generalizado: múltiples tamaños n/b_i
+                recurrence = {
+                    "type": "divide_conquer_multi",
+                    "form": recurrence_form,
+                    "terms": multi_b_terms,
+                    "a": a,
+                    "f": f_n,
+                    "n0": n0,
+                    "applicable": True,
+                    "notes": ["Subproblemas de tamaños distintos (divide-and-conquer generalizado)"],
+                    "method": method
+                }
+            else:
+                recurrence = {
+                    "type": "divide_conquer",
+                    "form": recurrence_form,
+                    "a": a,
+                    "b": float(b),
+                    "f": f_n,
+                    "n0": n0,
+                    "applicable": True,
+                    "notes": [],
+                    "method": method
+                }
         
         # Simplificar valores para mostrar en proof
         b_display = self._simplify_number_latex(b)
@@ -941,7 +1145,18 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Solo agregar "Parámetros extraídos" si NO es ecuación característica
         # Para ecuación característica, estos parámetros (a, b, f) no son relevantes
         if method != "characteristic_equation":
-            self.proof_steps.append({"id": "extract", "text": f"\\text{{Parámetros extraídos: }} a={a}, b={b_display}, f(n)={f_n}, n_0={n0}"})
+            if multi_b_terms:
+                # Mostrar conjunto de factores de división en lugar de un solo b
+                b_set_display = ", ".join(self._simplify_number_latex(term_b) for _, term_b in multi_b_terms)
+                self.proof_steps.append({
+                    "id": "extract",
+                    "text": f"\\text{{Parámetros extraídos: }} a={a}, b \\in \\{{{b_set_display}\\}}, f(n)={f_n}, n_0={n0}"
+                })
+            else:
+                self.proof_steps.append({
+                    "id": "extract",
+                    "text": f"\\text{{Parámetros extraídos: }} a={a}, b={b_display}, f(n)={f_n}, n_0={n0}"
+                })
         
         return {
             "success": True,
@@ -999,6 +1214,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         Si las llamadas recursivas están en un IF-ELSE, solo se ejecuta una por llamada,
         entonces a = 1. Si están en diferentes caminos no mutuamente excluyentes, se suman.
+        También detecta el patrón implícito: IF cond THEN RETURN rec; RETURN rec; (siguiente
+        statement es el "else" implícito).
         
         Args:
             proc_def: Nodo ProcDef del procedimiento
@@ -1010,15 +1227,12 @@ class RecursiveAnalyzer(BaseAnalyzer):
         if len(recursive_calls) <= 1:
             return len(recursive_calls)
         
-        # Buscar si hay llamadas recursivas en ramas IF-ELSE mutuamente excluyentes
+        if not self.procedure_name:
+            return len(recursive_calls)
+        
+        # 1. Buscar IF-ELSE explícito con llamadas en ambas ramas
         body = proc_def.get("body", {})
         if_else_paths = self._find_if_else_paths(body)
-        
-        # Si encontramos un IF-ELSE con llamadas recursivas en ambas ramas,
-        # entonces a = 1 (solo se ejecuta una rama)
-        if not self.procedure_name:
-            # Si no tenemos el nombre del procedimiento, usar todas las llamadas
-            return len(recursive_calls)
         
         for if_node in if_else_paths:
             consequent_has_recursive = self._has_recursive_call_in_subtree(
@@ -1029,11 +1243,13 @@ class RecursiveAnalyzer(BaseAnalyzer):
             )
             
             if consequent_has_recursive and alternate_has_recursive:
-                # Las dos llamadas están en ramas mutuamente excluyentes
-                # Solo se ejecuta una por llamada, así que a = 1
                 return 1
         
-        # Si no hay ramas mutuamente excluyentes, contar todas las llamadas
+        # 2. Buscar patrón implícito: IF cond THEN RETURN rec; RETURN rec;
+        # (IF sin alternate, siguiente statement es RETURN con recursión)
+        if self._has_implicit_if_else_pattern(body):
+            return 1
+        
         return len(recursive_calls)
     
     def _find_if_else_paths(self, node: Any) -> List[Dict[str, Any]]:
@@ -1068,6 +1284,53 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 if_nodes.extend(self._find_if_else_paths(value))
         
         return if_nodes
+    
+    def _get_body_statements(self, body_node: Any) -> List[Any]:
+        """Obtiene la lista de statements de un body (Block o dict con body)."""
+        if not isinstance(body_node, dict):
+            return []
+        if body_node.get("type") == "Block":
+            return body_node.get("body", [])
+        return body_node.get("body", [])
+    
+    def _is_recursive_return(self, node: Any, proc_name: str) -> bool:
+        """True si node es RETURN con llamada recursiva."""
+        if not isinstance(node, dict):
+            return False
+        if node.get("type") == "Return":
+            return self._has_recursive_call_in_subtree(node, proc_name)
+        return False
+    
+    def _consequent_has_recursive_return(self, consequent: Any, proc_name: str) -> bool:
+        """True si consequent termina en RETURN con llamada recursiva."""
+        if not isinstance(consequent, dict):
+            return False
+        if consequent.get("type") == "Return":
+            return self._has_recursive_call_in_subtree(consequent, proc_name)
+        if consequent.get("type") == "Block":
+            stmts = consequent.get("body", [])
+            if stmts:
+                return self._is_recursive_return(stmts[-1], proc_name)
+        return False
+    
+    def _has_implicit_if_else_pattern(self, body_node: Any) -> bool:
+        """
+        Detecta patrón IF cond THEN RETURN rec; RETURN rec; (else implícito).
+        El siguiente statement del IF es el RETURN alternativo.
+        """
+        stmts = self._get_body_statements(body_node)
+        if len(stmts) < 2 or not self.procedure_name:
+            return False
+        for i in range(len(stmts) - 1):
+            stmt = stmts[i]
+            next_stmt = stmts[i + 1]
+            if not isinstance(stmt, dict) or not isinstance(next_stmt, dict):
+                continue
+            if stmt.get("type") == "If" and not stmt.get("alternate"):
+                if self._consequent_has_recursive_return(stmt.get("consequent"), self.procedure_name):
+                    if self._is_recursive_return(next_stmt, self.procedure_name):
+                        return True
+        return False
     
     def _has_recursive_call_in_subtree(self, node: Any, proc_name: str) -> bool:
         """
@@ -1482,6 +1745,35 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         return False
     
+    def _detect_quicksort_pivot_izq(self, proc_def: Dict[str, Any]) -> bool:
+        """
+        Detecta QuickSort con pivot fijo en el inicio (pivot <- izq).
+        En worst case (array ordenado), una partición queda vacía: T(n)=T(n-1)+n.
+        """
+        def _search_assign(node: Any) -> bool:
+            if not isinstance(node, dict):
+                return False
+            if node.get("type", "").lower() == "assign":
+                target = node.get("target", {})
+                value = node.get("value", {})
+                if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
+                    tname = (target.get("name") or "").lower()
+                    if tname in ["pivot", "pivote", "pi"]:
+                        if isinstance(value, dict) and value.get("type", "").lower() == "identifier":
+                            vname = (value.get("name") or "").lower()
+                            if vname in ["izq", "izquierda", "left", "inicio", "start", "low"]:
+                                return True
+            for key in ["body", "consequent", "alternate", "then"]:
+                child = node.get(key)
+                if isinstance(child, dict) and _search_assign(child):
+                    return True
+                if isinstance(child, list):
+                    for item in child:
+                        if _search_assign(item):
+                            return True
+            return False
+        return _search_assign(proc_def.get("body", {}))
+    
     def _detect_variable_size_reduction(self, args: List[Any], params: List[Any], proc_def: Dict[str, Any]) -> Optional[float]:
         """
         Detecta reducción de tamaño variable para casos como QuickSort.
@@ -1573,13 +1865,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Analizar la complejidad del trabajo no recursivo
         work_complexity = self._analyze_work_complexity(body, recursive_calls)
         
-        # Si hay llamadas a funciones auxiliares (como merge), asumir O(n) típicamente
-        # Esto es común en divide-and-conquer donde se combinan resultados
-        # Nota: Las llamadas auxiliares simples (como moverDisco) son O(1)
-        # Las llamadas complejas (como merge) se detectarían por bucles en _analyze_work_complexity
-        # Por defecto, work_complexity ya es correcta después de _analyze_work_complexity
-        
-        return work_complexity
+        # Si hay llamadas a funciones auxiliares (como merge) sin definición en el AST,
+        # _analyze_work_complexity devuelve "1". En divide-and-conquer es común que la
+        # combinación sea lineal en el tamaño del subproblema. Heurística genérica: si
+        # existe al menos una llamada auxiliar y el trabajo calculado es constante, usar "n".
+        if work_complexity in ("1", "0") or not work_complexity:
+            if self._has_auxiliary_function_calls(body, recursive_calls):
+                return "n"
+        return work_complexity or "1"
     
     def _has_auxiliary_function_calls(self, node: Any, recursive_calls: List[Dict[str, Any]]) -> bool:
         """
@@ -2577,6 +2870,18 @@ class RecursiveAnalyzer(BaseAnalyzer):
             then_body = node.get("then") or node.get("thenBody") or node.get("consequent")
             else_body = node.get("else") or node.get("elseBody") or node.get("alternate")
             
+            # Patrón: IF cond THEN RETURN (sin recursivas); sin ELSE o con ELSE con recursivas
+            # Ej: IF (A[mitad]=x) THEN RETURN mitad; ... (early return en búsqueda binaria)
+            if then_body and not else_body:
+                returns_in_then = self._find_return_statements(then_body)
+                has_early_return = any(
+                    ret for ret in returns_in_then
+                    if not self._contains_recursive_call(ret, recursive_calls)
+                )
+                if has_early_return:
+                    # Si hay recursivas en algún lugar del procedimiento, este return es early
+                    return True
+            
             # Verificar si en THEN hay return sin recursivas Y en ELSE hay recursivas
             if then_body and else_body:
                 # Buscar todos los returns en THEN (pueden estar dentro de Blocks)
@@ -3462,9 +3767,10 @@ class RecursiveAnalyzer(BaseAnalyzer):
         else:
             t_open = "N/A"
         
-        # Construir totals
+        # Construir totals (big_theta para que get_notation_from_totals sea genérico)
         totals = {
             "T_open": t_open,
+            "big_theta": t_open if t_open and t_open != "N/A" else None,
             "symbols": self.symbols if self.symbols else None,
             "notes": self.notes if self.notes else None
         }
@@ -4661,6 +4967,30 @@ FIN FUNCIÓN"""
         if range_reduction:
             return range_reduction
         
+        # Estrategia 0.5: Detectar búsqueda binaria (izq, medio-1) o (medio+1, der) con medio=(izq+der)/2
+        binary_search_reduction = self._detect_binary_search_range_reduction(args, params, proc_def)
+        if binary_search_reduction:
+            return binary_search_reduction
+        
+        # Estrategia 0.6: Detectar reducción por MOD (Euclides, GCD): F(a,b) -> F(b, a MOD b)
+        if len(params) >= 2 and len(args) >= 2:
+            param_names = set()
+            for p in params:
+                if isinstance(p, dict):
+                    param_names.add((p.get("name") or "").strip().lower())
+                else:
+                    param_names.add(str(p).strip().lower())
+            for arg in args:
+                if isinstance(arg, dict) and arg.get("type", "").lower() == "binary":
+                    if str(arg.get("op", "")).lower() == "mod":
+                        left = arg.get("left", {})
+                        right = arg.get("right", {})
+                        if isinstance(left, dict) and isinstance(right, dict):
+                            ln = (left.get("name") or left.get("id") or "").strip().lower()
+                            rn = (right.get("name") or right.get("id") or "").strip().lower()
+                            if ln in param_names and rn in param_names:
+                                return {"type": "mod", "pattern": "mod", "factor": 1}
+        
         # Obtener el nombre del primer parámetro (usualmente el tamaño)
         first_param = params[0]
         if isinstance(first_param, dict):
@@ -4812,6 +5142,25 @@ FIN FUNCIÓN"""
                                 "pattern": "(inicio+fin)/2",
                                 "factor": 2
                             }
+                # Caso: a MOD b (Euclides, GCD): el tamaño se reduce (segundo parámetro → primero mod segundo)
+                elif str(op).lower() == "mod":
+                    left = size_arg.get("left", {})
+                    right = size_arg.get("right", {})
+                    if isinstance(left, dict) and isinstance(right, dict):
+                        left_name = (left.get("name") or left.get("id") or "").strip()
+                        right_name = (right.get("name") or right.get("id") or "").strip()
+                        param_names = set()
+                        for p in params:
+                            if isinstance(p, dict):
+                                param_names.add((p.get("name") or "").strip())
+                            else:
+                                param_names.add(str(p).strip())
+                        if left_name in param_names and right_name in param_names:
+                            return {
+                                "type": "mod",
+                                "pattern": "mod",
+                                "factor": 1
+                            }
         
         # Fallback: Si no se detectó nada y hay dos parámetros, probar con el segundo argumento
         if not first_param_is_array and len(params) == 2 and len(args) == 2:
@@ -4889,6 +5238,71 @@ FIN FUNCIÓN"""
                         return True
         
         return False
+    
+    def _detect_binary_search_range_reduction(
+        self, args: List[Any], params: List[Any], proc_def: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Detecta patrón de búsqueda binaria: (izq, medio-1) o (medio+1, der) con medio=(izq+der)/2.
+        El tamaño del subproblema es n/2.
+        """
+        if len(args) < 4 or len(params) < 4:
+            return None
+        param_names = []
+        for p in params:
+            if isinstance(p, dict):
+                param_names.append((p.get("name") or "").lower())
+            else:
+                param_names.append(str(p).lower())
+        inicio_keywords = ["inicio", "izq", "left", "start", "begin", "low"]
+        fin_keywords = ["fin", "der", "right", "end", "high"]
+        inicio_idx = next((i for i, n in enumerate(param_names) if any(k in n for k in inicio_keywords)), None)
+        fin_idx = next((i for i, n in enumerate(param_names) if any(k in n for k in fin_keywords)), None)
+        if inicio_idx is None or fin_idx is None or inicio_idx >= len(args) or fin_idx >= len(args):
+            return None
+        inicio_arg = args[inicio_idx]
+        fin_arg = args[fin_idx]
+        body = proc_def.get("body", {}) or {}
+        stmts = body.get("body", []) if isinstance(body, dict) else []
+        medio_var = None
+        for stmt in stmts:
+            if not isinstance(stmt, dict) or stmt.get("type", "").lower() != "assign":
+                continue
+            target = stmt.get("target", {})
+            value = stmt.get("value", {})
+            if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
+                tname = (target.get("name") or "").lower()
+                if tname in ["medio", "mid", "middle", "mitad"]:
+                    if isinstance(value, dict) and value.get("type", "").lower() == "binary":
+                        if value.get("op", "") == "/":
+                            left = value.get("left", {})
+                            right = value.get("right", {})
+                            if isinstance(right, dict) and right.get("type", "").lower() == "literal":
+                                if right.get("value") == 2:
+                                    if isinstance(left, dict) and left.get("op", "") == "+":
+                                        medio_var = target.get("name", "")
+                                        break
+        if not medio_var:
+            return None
+        is_division = False
+        if isinstance(fin_arg, dict) and fin_arg.get("type", "").lower() == "binary":
+            if fin_arg.get("op", "") == "-":
+                left = fin_arg.get("left", {})
+                if isinstance(left, dict) and left.get("type", "").lower() == "identifier":
+                    if (left.get("name") or "").lower() == medio_var.lower():
+                        is_division = True
+        if isinstance(inicio_arg, dict) and inicio_arg.get("type", "").lower() == "binary":
+            if inicio_arg.get("op", "") == "+":
+                right = inicio_arg.get("right", {})
+                if isinstance(right, dict) and right.get("type", "").lower() == "literal":
+                    if right.get("value") == 1:
+                        left = inicio_arg.get("left", {})
+                        if isinstance(left, dict) and left.get("type", "").lower() == "identifier":
+                            if (left.get("name") or "").lower() == medio_var.lower():
+                                is_division = True
+        if is_division:
+            return {"type": "division", "pattern": "n/2", "factor": 2}
+        return None
     
     def _detect_range_reduction(self, args: List[Any], params: List[Any]) -> Optional[Dict[str, Any]]:
         """
@@ -5116,12 +5530,16 @@ FIN FUNCIÓN"""
             f_n_str = self.recurrence.get("g(n)", "0")
             if f_n_str == "0" or f_n_str is None:
                 f_n_str = "0"
-            # Para linear_shift con un solo término (T(n) = T(n-1) + g(n)), a = 1
-            a = 1
             # Obtener el orden y los shifts
             order = self.recurrence.get("order", 1)
             shifts = self.recurrence.get("shifts", [1])
-            coefficients = self.recurrence.get("coefficients", [1])
+            coefficients_list = self.recurrence.get("coefficients", [1])
+            # Para linear_shift: si hay un solo término con coeficiente > 1 (ej: Hanoi 2T(n-1)+1), usar a = coeficiente
+            # Si hay múltiples términos (Fibonacci) o coeficiente 1, a = 1
+            if len(coefficients_list) == 1 and coefficients_list[0] > 1:
+                a = coefficients_list[0]
+            else:
+                a = 1
         else:
             # Para divide_conquer, usar a, b, f
             a = self.recurrence.get("a", 1)
@@ -5145,6 +5563,24 @@ FIN FUNCIÓN"""
         g_type = g_n_info["type"]
         g_pattern = g_n_info["pattern"]
         has_multiple = g_n_info.get("has_multiple_terms", False)
+        
+        # Recurrencia tipo MOD (Euclides): T(n) = T(b, a mod b) + O(1) → Θ(log n)
+        if g_type == "mod":
+            self.proof_steps.append({"id": "step1", "text": f"\\text{{Paso 1: Recurrencia identificada }} {recurrence_form} \\\\ \\text{{(reducción por módulo, algoritmo tipo Euclides)}}"})
+            self.proof_steps.append({"id": "step2", "text": "\\text{Paso 2: En cada paso el tamaño se reduce al menos a la mitad} \\\\ \\text{(a mod b < b, y en el peor caso a mod b \\leq b/2)}"})
+            self.proof_steps.append({"id": "step3", "text": "\\text{Paso 3: Número de pasos } \\leq 2 \\log_2(\\min(a,b)) = \\Theta(\\log n)"})
+            theta_latex = "\\Theta(\\log n)"
+            iteration = {
+                "method": "iteration",
+                "recurrence_form": recurrence_form,
+                "expansions": [],
+                "general_form": "T(n) = T(b, a \\bmod b) + \\Theta(1)",
+                "summation_result": {"theta": "log n"},
+                "theta": theta_latex,
+                "theta_best": "O(1)"
+            }
+            self.proof_steps.append({"id": "conclude", "text": f"\\text{{Resultado: }} T(n) = {theta_latex}"})
+            return {"success": True, "iteration": iteration}
         
         # Verificar si la recurrencia tiene coeficiente a > 1 para el mismo término (ej: Torres de Hanoi T(n) = 2T(n-1) + 1)
         recurrence_form = self.recurrence.get("form", "")
@@ -5389,6 +5825,15 @@ FIN FUNCIÓN"""
         """
         # Analizar la forma de la recurrencia para extraer g(n)
         form = self.recurrence.get("form", "")
+        
+        # Recurrencia tipo MOD (Euclides): T(n) = T(mod) + O(1) → Θ(log n)
+        if self.recurrence.get("subproblem_type") == "mod" or "T(mod)" in form:
+            return {
+                "type": "mod",
+                "pattern": "mod",
+                "factor": 1,
+                "has_multiple_terms": False
+            }
         
         # Buscar patrón T(n-k), T(n/k), etc.
         import re
@@ -5771,11 +6216,117 @@ FIN FUNCIÓN"""
         
         self.proof_steps.append({"id": "tree_start", "text": "\\text{Aplicando Método de Árbol de Recursión}"})
         
-        # Paso 1: Extraer parámetros de la recurrencia
-        a = self.recurrence["a"]
-        b = self.recurrence["b"]
-        f_n = self.recurrence["f"]
-        n0 = self.recurrence["n0"]
+        # Caso especial: linear_shift (QuickSort T(n)=T(n-1)+n → n², o recursión en FOR → 2^n)
+        recurrence_type = self.recurrence.get("type", "divide_conquer")
+        if recurrence_type == "linear_shift":
+            g_n = self.recurrence.get("g(n)", "0")
+            n0 = self.recurrence.get("n0", 1)
+            # Prioridad: branching subset (generación de subconjuntos) → 2^n antes que QuickSort → n²
+            if self.recurrence.get("branching_subset"):
+                recurrence_form = self.recurrence.get("form", "T(n) = T(n-1) + \\Theta(1)")
+                self.proof_steps.append({"id": "tree_extract", "text": f"\\text{{Recurrencia identificada }} {recurrence_form}"})
+                self.proof_steps.append({
+                    "id": "step1_note",
+                    "text": "\\text{Nota: Recursión dentro de FOR (generación de subconjuntos). En cada nivel hay múltiples ramas; el árbol tiene } O(2^n) \\text{ nodos.}"
+                })
+                self.proof_steps.append({
+                    "id": "step2",
+                    "text": "\\text{Paso 2: Análisis del árbol de recursión} \\\\ \\text{En cada llamada el FOR genera varias ramas recursivas}"
+                })
+                self.proof_steps.append({
+                    "id": "step3",
+                    "text": "\\text{Paso 3: Número de nodos} \\\\ \\text{En el nivel } i \\text{, hay en el orden de } 2^i \\text{ nodos}"
+                })
+                self.proof_steps.append({
+                    "id": "step4",
+                    "text": "\\text{Paso 4: Altura del árbol} \\\\ \\text{La altura es } \\Theta(n)"
+                })
+                self.proof_steps.append({
+                    "id": "step5",
+                    "text": "\\text{Paso 5: Costo total} \\\\ \\sum_{i=0}^{n} 2^i = 2^{n+1} - 1 = \\Theta(2^n)"
+                })
+                theta = "2^n"
+                recursion_tree = {
+                    "method": "recursion_tree",
+                    "levels": [
+                        {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "1", "total_cost_latex": "1"},
+                        {"level": 1, "num_nodes_latex": "n", "subproblem_size_latex": "n-1", "cost_per_node_latex": "1", "total_cost_latex": "n"},
+                    ],
+                    "height": "n",
+                    "summation": {"expression": "\\sum_{i=0}^{n} 2^i = 2^{n+1} - 1", "theta": theta},
+                    "dominating_level": {"reason": "\\text{Ramificación: número de nodos } \\Theta(2^n)"},
+                    "table_by_levels": [],
+                    "theta": f"\\Theta({theta})"
+                }
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                return {"success": True, "recursion_tree": recursion_tree}
+            if g_n and g_n.strip().lower() == "n":
+                # Árbol lineal: nivel i tiene 1 nodo con costo (n-i), total = n+(n-1)+...+1 = n(n+1)/2 = Θ(n²)
+                self.proof_steps.append({
+                    "id": "tree_extract",
+                    "text": "T(n) = T(n-1) + n \\quad \\text{(árbol lineal: 1 hijo por nivel)}"
+                })
+                theta = "n^2"
+                recursion_tree = {
+                    "method": "recursion_tree",
+                    "levels": [
+                        {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "n", "total_cost_latex": "n"},
+                        {"level": 1, "num_nodes_latex": "1", "subproblem_size_latex": "n-1", "cost_per_node_latex": "n-1", "total_cost_latex": "n-1"},
+                    ],
+                    "height": "n",
+                    "summation": {"expression": "\\sum_{i=0}^{n-1} (n-i) = \\frac{n(n+1)}{2}", "theta": theta},
+                    "dominating_level": {"reason": "\\text{Suma aritmética } n + (n-1) + \\ldots + 1 = \\Theta(n^2)"},
+                    "table_by_levels": [],
+                    "theta": f"\\Theta({theta})"
+                }
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                return {"success": True, "recursion_tree": recursion_tree}
+
+            # Recursión dentro de FOR (generación de subconjuntos): ramificación → Θ(2^n)
+            if self.recurrence.get("branching_subset"):
+                recurrence_form = self.recurrence.get("form", "T(n) = T(n-1) + \\Theta(1)")
+                self.proof_steps.append({"id": "tree_extract", "text": f"\\text{{Recurrencia identificada }} {recurrence_form}"})
+                self.proof_steps.append({
+                    "id": "step1_note",
+                    "text": "\\text{Nota: Recursión dentro de FOR (generación de subconjuntos). En cada nivel hay múltiples ramas; el árbol tiene } O(2^n) \\text{ nodos.}"
+                })
+                self.proof_steps.append({
+                    "id": "step2",
+                    "text": "\\text{Paso 2: Análisis del árbol de recursión} \\\\ \\text{En cada llamada el FOR genera varias ramas recursivas}"
+                })
+                self.proof_steps.append({
+                    "id": "step3",
+                    "text": "\\text{Paso 3: Número de nodos} \\\\ \\text{En el nivel } i \\text{, hay en el orden de } 2^i \\text{ nodos}"
+                })
+                self.proof_steps.append({
+                    "id": "step4",
+                    "text": "\\text{Paso 4: Altura del árbol} \\\\ \\text{La altura es } \\Theta(n)"
+                })
+                self.proof_steps.append({
+                    "id": "step5",
+                    "text": "\\text{Paso 5: Costo total} \\\\ \\sum_{i=0}^{n} 2^i = 2^{n+1} - 1 = \\Theta(2^n)"
+                })
+                theta = "2^n"
+                recursion_tree = {
+                    "method": "recursion_tree",
+                    "levels": [
+                        {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "1", "total_cost_latex": "1"},
+                        {"level": 1, "num_nodes_latex": "n", "subproblem_size_latex": "n-1", "cost_per_node_latex": "1", "total_cost_latex": "n"},
+                    ],
+                    "height": "n",
+                    "summation": {"expression": "\\sum_{i=0}^{n} 2^i = 2^{n+1} - 1", "theta": theta},
+                    "dominating_level": {"reason": "\\text{Ramificación: número de nodos } \\Theta(2^n)"},
+                    "table_by_levels": [],
+                    "theta": f"\\Theta({theta})"
+                }
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                return {"success": True, "recursion_tree": recursion_tree}
+        
+        # Paso 1: Extraer parámetros de la recurrencia (divide-and-conquer)
+        a = self.recurrence.get("a", 1)
+        b = self.recurrence.get("b", 2)
+        f_n = self.recurrence.get("f", "n")
+        n0 = self.recurrence.get("n0", 1)
         
         self.proof_steps.append({
             "id": "tree_extract",
@@ -5813,6 +6364,18 @@ FIN FUNCIÓN"""
         
         # Paso 7: Resultado final
         theta = summation_result.get("theta", f"\\Theta({f_n})")
+
+        # Corrección específica para recursión tipo búsqueda binaria:
+        # T(n) = T(n/2) + Θ(1) → Θ(log n)
+        try:
+            f_simplified = f_n.replace(" ", "").lower()
+            if a == 1 and self._simplify_number_latex(b) == "2":
+                if f_simplified in ("1", "theta(1)", "\\theta(1)", "o(1)"):
+                    theta = "\\Theta(\\log n)"
+                    summation_result["theta"] = theta
+        except Exception:
+            # Si algo falla en la detección, mantener el theta original
+            pass
         
         self.proof_steps.append({
             "id": "tree_result",

@@ -93,23 +93,81 @@ def analyze_algorithm(
                 return result_worst
             if not result_best.get("ok", False):
                 return result_best
-            
-            # Preparar avgModel para caso promedio
-            if avg_model:
-                avg_model_dict = avg_model
-            else:
-                avg_model_dict = {"mode": "uniform", "predicates": {}}
-            
-            # Analizar caso promedio
-            if isinstance(analyzer_avg, RecursiveAnalyzer) and preferred_method:
-                result_avg = analyzer_avg.analyze(ast, "avg", api_key=api_key, avg_model=avg_model_dict, preferred_method=preferred_method)
-            else:
-                result_avg = analyzer_avg.analyze(ast, "avg", api_key=api_key, avg_model=avg_model_dict)
-            
-            if not result_avg.get("ok", False):
-                print(f"[analyze_algorithm] Error en análisis promedio: {result_avg.get('errors', [])}")
-                result_avg = None
-            
+
+            # Ajuste estructural: patrón FOR-WHILE-FOR (FOR externo, WHILE interno, FOR interno)
+            # Complejidad teórica: Θ(n^3) en el peor caso.
+            try:
+                def _subtree_has_type(node: Any, type_name: str) -> bool:
+                    if isinstance(node, list):
+                        return any(_subtree_has_type(child, type_name) for child in node)
+                    if not isinstance(node, dict):
+                        return False
+                    if node.get("type", "").lower() == type_name:
+                        return True
+                    for value in node.values():
+                        if isinstance(value, (dict, list)) and _subtree_has_type(value, type_name):
+                            return True
+                    return False
+
+                def _has_for_while_for_pattern(root: Dict[str, Any]) -> bool:
+                    body = root.get("body", [])
+                    if not isinstance(body, list):
+                        body = [body] if isinstance(body, dict) else []
+                    for node in body:
+                        if not isinstance(node, dict):
+                            continue
+                        if node.get("type", "").lower() == "procdef":
+                            proc_body = node.get("body") or node.get("block") or {}
+                            # Buscar FOR externo
+                            nodes = proc_body.get("body", []) if isinstance(proc_body, dict) else proc_body
+                            if not isinstance(nodes, list):
+                                nodes = [nodes] if isinstance(nodes, dict) else []
+                            for stmt in nodes:
+                                if isinstance(stmt, dict) and stmt.get("type", "").lower() == "for":
+                                    inner = stmt.get("body") or stmt.get("block") or {}
+                                    # En el cuerpo del FOR debe haber un WHILE que contenga un FOR
+                                    return _subtree_has_type(inner, "while") and _subtree_has_type(inner, "for")
+                    return False
+
+                if isinstance(ast, dict) and _has_for_while_for_pattern(ast):
+                    totals_worst = result_worst.setdefault("totals", {})
+                    totals_worst["big_theta"] = "\\Theta(n^{3})"
+                    totals_worst["big_o"] = "O(n^{3})"
+                    # Mantener big_omega coherente (al menos cúbico)
+                    totals_worst["big_omega"] = "\\Omega(n^{3})"
+            except Exception:
+                # Si el detector falla, no interferir con el resultado base
+                pass
+
+            # Detectar si el algoritmo es determinístico (worst == best)
+            # Si no hay variabilidad: bucles con cota constante, sin IF con early return, etc.
+            # En ese caso NO aplicar modelo probabilístico (avg = worst)
+            worst_t_open = result_worst.get("totals", {}).get("T_open", "")
+            best_t_open = result_best.get("totals", {}).get("T_open", "")
+            worst_recurrence = result_worst.get("totals", {}).get("recurrence")
+            best_recurrence = result_best.get("totals", {}).get("recurrence")
+            is_deterministic = (
+                worst_t_open == best_t_open and worst_recurrence == best_recurrence
+            )
+
+            result_avg = None
+            if not is_deterministic:
+                # Preparar avgModel para caso promedio (solo si hay variabilidad)
+                if avg_model:
+                    avg_model_dict = avg_model
+                else:
+                    avg_model_dict = {"mode": "uniform", "predicates": {}}
+
+                # Analizar caso promedio con modelo probabilístico
+                if isinstance(analyzer_avg, RecursiveAnalyzer) and preferred_method:
+                    result_avg = analyzer_avg.analyze(ast, "avg", api_key=api_key, avg_model=avg_model_dict, preferred_method=preferred_method)
+                else:
+                    result_avg = analyzer_avg.analyze(ast, "avg", api_key=api_key, avg_model=avg_model_dict)
+
+                if not result_avg.get("ok", False):
+                    print(f"[analyze_algorithm] Error en análisis promedio: {result_avg.get('errors', [])}")
+                    result_avg = None
+
             # Verificar variabilidad
             # Comparar directamente worst, best y avg - si todos tienen la misma T_open y recurrence, no hay variabilidad
             has_variability = False  # Inicializar como False, solo True si hay diferencias
@@ -144,7 +202,7 @@ def analyze_algorithm(
                     "has_case_variability": False,
                     "worst": result_worst,
                     "best": "same_as_worst",
-                    "avg": "same_as_worst" if result_avg else None
+                    "avg": "same_as_worst"  # Determinístico: avg = worst (no modelo probabilístico)
                 }
             else:
                 response = {

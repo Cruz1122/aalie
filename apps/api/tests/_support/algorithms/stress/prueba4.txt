@@ -1,0 +1,9 @@
+CP(A, n) BEGIN
+  contador <- 0;
+  FOR i <- 1 TO n DO BEGIN
+    IF (A[i] MOD 2 = 0) THEN BEGIN
+      contador <- contador + 1;
+    END
+  END
+  PRINT(contador);
+END

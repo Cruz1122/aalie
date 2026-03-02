@@ -167,8 +167,15 @@ Actualiza la versión cuando cambie en `CHANGELOG.md`.
 ### Tests
 
 - Tests al añadir lógica no trivial.
-- Estructura: `tests/unit/`, `tests/integration/`, `tests/system/` por capa.
+- Estructura: `tests/unit/`, `tests/component/`, `tests/contract/`, `tests/system/` en `apps/api/tests/`.
 - Backend: pytest en `apps/api/tests/`.
+- **Atajos (desde raíz)**: `pnpm test:api` (todos), `pnpm test:api:gate` (daily: unit/component/system), `pnpm test:api:contract` (nightly), `pnpm test:api:cov` (con cobertura), `pnpm test:api:unit`, `pnpm test:api:stress` (Prueba1–Prueba7). Ver MCP `test_suite_commands`.
+- **Ejecución directa**: desde `apps/api`, usar `python -m pytest` (no `pytest` directo):
+  ```bash
+  cd apps/api && python -m pytest tests/ -v
+  python -m pytest tests/unit/ -v
+  python -m pytest tests/contract/test_stress_algorithms.py -v
+  ```
 - Frontend: tests por componente o feature cuando se implementen.
 
 ### Accesibilidad

@@ -55,6 +55,9 @@ const getCaseBadgeStyle = (caseType: CaseType): string => {
  * @returns String con las clases CSS para el botón
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
+/** Longitud máxima de notación para mostrar la bolita; si es mayor, se oculta para evitar desborde. */
+const NOTATION_LENGTH_FOR_CIRCLE = 16;
+
 const getSelectorButtonStyle = (
   caseType: CaseType,
   isSelected: boolean,
@@ -173,20 +176,20 @@ export default function IterativeAnalysisView({
   return (
     <>
       {/* Card de costos por línea */}
-      <div className="glass-card p-4 rounded-lg h-full flex flex-col">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-white font-semibold flex items-center gap-2">
-            <span className="material-symbols-outlined mr-2 text-amber-400">
+      <div className="glass-card p-4 rounded-lg h-full flex flex-col min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 min-w-0">
+          <h2 className="text-white font-semibold flex items-center gap-2 flex-wrap min-w-0">
+            <span className="material-symbols-outlined text-amber-400 flex-shrink-0">
               table_chart
             </span>
-            <span>{tView("costsPerLine")}</span>
+            <span className="truncate">{tView("costsPerLine")}</span>
             <span
-              className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide ${getCaseBadgeStyle(selectedCase)}`}
+              className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide flex-shrink-0 ${getCaseBadgeStyle(selectedCase)}`}
             >
               {getCaseLabel(selectedCase)}
             </span>
           </h2>
-          <div className="flex items-center gap-1 bg-slate-800/60 border border-white/10 rounded-lg p-1">
+          <div className="flex items-center justify-center gap-1 bg-slate-800/60 border border-white/10 rounded-lg p-1 flex-shrink-0">
             <button
               onClick={() => onCaseChange("best")}
               className={`px-2 py-1 text-xs rounded-md ${getSelectorButtonStyle("best", selectedCase === "best")}`}
@@ -213,22 +216,28 @@ export default function IterativeAnalysisView({
       </div>
 
       {/* Card de ecuaciones matemáticas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(34,197,94,0.3)] hover:shadow-[0_12px_40px_0_rgba(34,197,94,0.4)]">
-          <div className="h-full flex flex-col items-center justify-center gap-2">
-            <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/30">
-              <div className="scale-110">
-                <Formula
-                  latex={
-                    getBestAsymptoticNotation("best", 
-                      data?.best === "same_as_worst" 
-                        ? data?.worst?.totals || {} 
-                        : data?.best?.totals || {}
-                    ).notation
-                  }
-                />
-              </div>
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-w-0">
+        <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(34,197,94,0.3)] hover:shadow-[0_12px_40px_0_rgba(34,197,94,0.4)] min-w-0">
+          <div className="h-full flex flex-col items-center justify-center gap-2 min-w-0">
+            {(() => {
+              const bestNotation = getBestAsymptoticNotation("best",
+                data?.best === "same_as_worst"
+                  ? data?.worst?.totals || {}
+                  : data?.best?.totals || {}
+              ).notation;
+              const showCircle = bestNotation.length <= NOTATION_LENGTH_FOR_CIRCLE;
+              return showCircle ? (
+                <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/30 shrink-0">
+                  <div className="scale-110">
+                    <Formula latex={bestNotation} />
+                  </div>
+                </div>
+              ) : (
+                <div className="min-h-16 min-w-0 w-full overflow-hidden flex justify-center items-center py-2">
+                  <Formula latex={bestNotation} />
+                </div>
+              );
+            })()}
             <h3 className="font-semibold text-green-300 mb-1">{getCaseLabel("best")}</h3>
             {getBestAsymptoticNotation("best", 
               data?.best === "same_as_worst" 
@@ -265,7 +274,7 @@ export default function IterativeAnalysisView({
             <button
               onClick={() => onViewGeneralProcedure("best")}
               disabled={!(data?.best === "same_as_worst" ? data?.worst?.ok : data?.best?.ok)}
-              className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors ${
+              className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors min-w-0 ${
                 (data?.best === "same_as_worst" ? data?.worst?.ok : data?.best?.ok)
                   ? "text-white glass-secondary hover:bg-sky-500/20"
                   : "text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60"
@@ -276,14 +285,14 @@ export default function IterativeAnalysisView({
                   : tView("runAnalysisToSeeProcedure")
               }
             >
-              <span className="material-symbols-outlined text-sm">
+              <span className="material-symbols-outlined text-sm flex-shrink-0">
                 visibility
               </span>
-              <span>{tView("viewProcedure")}</span>
+              <span className="truncate">{tView("viewProcedure")}</span>
             </button>
           </div>
         </div>
-        <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(234,179,8,0.3)] hover:shadow-[0_12px_40px_0_rgba(234,179,8,0.4)] relative">
+        <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(234,179,8,0.3)] hover:shadow-[0_12px_40px_0_rgba(234,179,8,0.4)] relative min-w-0">
           {data?.avg && typeof data.avg !== "string" && data.avg.totals?.avg_model_info && (
             <div className="absolute top-2 right-2 group">
               <button
@@ -302,28 +311,34 @@ export default function IterativeAnalysisView({
               </div>
             </div>
           )}
-          <div className="h-full flex flex-col items-center justify-center gap-2">
-            <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30">
-              <div className="scale-110">
-                <Formula
-                  latex={
-                    getBestAsymptoticNotation(
-                      "average",
-                      data?.avg === "same_as_worst" 
-                        ? data?.worst?.totals || {} 
-                        : data?.avg?.totals || {},
-                    ).notation
-                  }
-                />
-              </div>
-            </div>
+          <div className="h-full flex flex-col items-center justify-center gap-2 min-w-0">
+            {(() => {
+              const avgNotation = getBestAsymptoticNotation(
+                "average",
+                data?.avg === "same_as_worst"
+                  ? data?.worst?.totals || {}
+                  : data?.avg?.totals || {},
+              ).notation;
+              const showCircle = avgNotation.length <= NOTATION_LENGTH_FOR_CIRCLE;
+              return showCircle ? (
+                <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30 shrink-0">
+                  <div className="scale-110">
+                    <Formula latex={avgNotation} />
+                  </div>
+                </div>
+              ) : (
+                <div className="min-h-16 min-w-0 w-full overflow-hidden flex justify-center items-center py-2">
+                  <Formula latex={avgNotation} />
+                </div>
+              );
+            })()}
             <h3 className="font-semibold text-yellow-300 mb-1">
               {getCaseLabel("average")}
             </h3>
             <button
               onClick={() => onViewGeneralProcedure("average")}
               disabled={!(data?.avg === "same_as_worst" ? data?.worst?.ok : data?.avg?.ok)}
-              className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors ${
+              className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors min-w-0 ${
                 (data?.avg === "same_as_worst" ? data?.worst?.ok : data?.avg?.ok)
                   ? "text-white glass-secondary hover:bg-sky-500/20"
                   : "text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60"
@@ -334,27 +349,33 @@ export default function IterativeAnalysisView({
                   : tView("runAnalysisToSeeProcedure")
               }
             >
-              <span className="material-symbols-outlined text-sm">
+              <span className="material-symbols-outlined text-sm flex-shrink-0">
                 visibility
               </span>
-              <span>{tView("viewProcedure")}</span>
+              <span className="truncate">{tView("viewProcedure")}</span>
             </button>
           </div>
         </div>
-        <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(239,68,68,0.3)] hover:shadow-[0_12px_40px_0_rgba(239,68,68,0.4)]">
-          <div className="h-full flex flex-col items-center justify-center gap-2">
-            <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30">
-              <div className="scale-110">
-                <Formula
-                  latex={
-                    getBestAsymptoticNotation(
-                      "worst",
-                      data?.worst?.totals || {},
-                    ).notation
-                  }
-                />
-              </div>
-            </div>
+        <div className="glass-card p-4 rounded-lg text-center shadow-[0_8px_32px_0_rgba(239,68,68,0.3)] hover:shadow-[0_12px_40px_0_rgba(239,68,68,0.4)] min-w-0">
+          <div className="h-full flex flex-col items-center justify-center gap-2 min-w-0">
+            {(() => {
+              const worstNotation = getBestAsymptoticNotation(
+                "worst",
+                data?.worst?.totals || {},
+              ).notation;
+              const showCircle = worstNotation.length <= NOTATION_LENGTH_FOR_CIRCLE;
+              return showCircle ? (
+                <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30 shrink-0">
+                  <div className="scale-110">
+                    <Formula latex={worstNotation} />
+                  </div>
+                </div>
+              ) : (
+                <div className="min-h-16 min-w-0 w-full overflow-hidden flex justify-center items-center py-2">
+                  <Formula latex={worstNotation} />
+                </div>
+              );
+            })()}
             <h3 className="font-semibold text-red-300 mb-1">{getCaseLabel("worst")}</h3>
             {getBestAsymptoticNotation("worst", data?.worst?.totals || {}).chips
               .length > 0 && (
@@ -386,7 +407,7 @@ export default function IterativeAnalysisView({
             <button
               onClick={() => onViewGeneralProcedure("worst")}
               disabled={!data?.worst?.ok}
-              className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors ${
+              className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold transition-colors min-w-0 ${
                 data?.worst?.ok
                   ? "text-white glass-secondary hover:bg-sky-500/20"
                   : "text-slate-400 border border-white/10 bg-white/5 cursor-not-allowed opacity-60"
@@ -397,10 +418,10 @@ export default function IterativeAnalysisView({
                   : tView("runAnalysisToSeeProcedure")
               }
             >
-              <span className="material-symbols-outlined text-sm">
+              <span className="material-symbols-outlined text-sm flex-shrink-0">
                 visibility
               </span>
-              <span>{tView("viewProcedure")}</span>
+              <span className="truncate">{tView("viewProcedure")}</span>
             </button>
           </div>
         </div>

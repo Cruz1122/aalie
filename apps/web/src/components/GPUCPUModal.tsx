@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { useState, useEffect } from "react";
 
 import type { GPUCPUAnalysisResult, GPUCPUMetrics } from "@/types/gpu-cpu";
 
@@ -174,7 +174,7 @@ function GPUCard({
 
   return (
     <div
-      className="relative h-full min-h-[200px] cursor-pointer"
+      className="relative h-full min-h-[160px] sm:min-h-[200px] cursor-pointer"
       onClick={onFlip}
       style={{ perspective: "1000px" }}
     >
@@ -187,7 +187,7 @@ function GPUCard({
       >
         {/* Frente de la card */}
         <div
-          className={`rounded-lg border ${style.bgColor} ${style.borderColor} ${style.shadowColor} absolute inset-0 flex flex-col items-center justify-center transition-all duration-500 ${
+          className={`rounded-lg border ${style.bgColor} ${style.borderColor} ${style.shadowColor} absolute inset-0 flex flex-col items-center justify-center p-4 transition-all duration-500 ${
             animate ? "animate-pulse-scale" : ""
           }`}
           style={{
@@ -198,16 +198,16 @@ function GPUCard({
           }}
         >
           {/* Label arriba del icono */}
-          <h3 className="text-lg font-semibold mb-2 text-white/90">
+          <h3 className="text-lg font-semibold mb-2 text-white/90 flex-shrink-0">
             {label}
           </h3>
 
-          {/* Icono principal con flecha en esquina - proporcional a la card */}
-          <div className="relative flex items-center justify-center">
+          {/* Icono principal con flecha en esquina - tamaño reducido para no solapar bordes */}
+          <div className="relative flex items-center justify-center flex-1 min-h-0 w-full">
             <span
               className={`material-symbols-outlined ${style.iconColor}`}
               style={{ 
-                fontSize: 'clamp(9rem, 12vw, 18rem)', 
+                fontSize: 'clamp(4rem, 10vw, 6rem)', 
                 lineHeight: '1',
                 display: 'block'
               }}
@@ -280,7 +280,7 @@ function GPUCPUContent({
     <>
       {/* Cards - se ocultan cuando está expandido */}
       {!isExpanded && (
-        <div className="flex-1 grid grid-cols-2 gap-4 mb-4 min-h-0">
+        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 min-h-0">
           {/* Card GPU */}
           <GPUCard 
             score={gpuScore} 
@@ -394,15 +394,21 @@ export default function GPUCPUModal({
       if (e.key === "Escape") onClose();
     }
     if (open) {
+      const prevBodyOverflow = document.body.style.overflow;
+      const prevBodyPosition = document.body.style.position;
+      const prevHtmlOverflow = document.documentElement.style.overflow;
       document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.documentElement.style.overflow = "hidden";
       document.addEventListener("keydown", onKey);
-    } else {
-      document.body.style.overflow = "unset";
+      return () => {
+        document.body.style.overflow = prevBodyOverflow;
+        document.body.style.position = prevBodyPosition;
+        document.documentElement.style.overflow = prevHtmlOverflow;
+        document.removeEventListener("keydown", onKey);
+      };
     }
-    return () => {
-      document.body.style.overflow = "unset";
-      document.removeEventListener("keydown", onKey);
-    };
+    return undefined;
   }, [open, onClose]);
 
   if (!open || !analysis) return null;
@@ -442,9 +448,9 @@ export default function GPUCPUModal({
       />
 
       {/* Modal */}
-      <div className="relative z-10 glass-modal-container rounded-2xl w-[85vw] max-w-4xl h-[80vh] mx-4 shadow-2xl flex flex-col overflow-hidden">
+      <div className="relative z-10 glass-modal-container rounded-2xl w-[95vw] sm:w-[85vw] max-w-4xl h-[85vh] max-h-[85dvh] mx-2 sm:mx-4 shadow-2xl flex flex-col overflow-hidden overscroll-contain">
         {/* Header con estilo glass */}
-        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 flex-shrink-0 glass-modal-header">
+        <div className="flex items-center justify-between border-b border-white/10 px-4 sm:px-6 py-4 flex-shrink-0 glass-modal-header">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
             <span className="material-symbols-outlined text-blue-400 text-xl">
               speed
@@ -453,15 +459,15 @@ export default function GPUCPUModal({
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center"
+            className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
             aria-label={t("closeModal")}
           >
-            <span className="material-symbols-outlined text-xl">close</span>
+            ✕
           </button>
         </div>
 
         {/* Contenido */}
-        <div className="flex-1 overflow-y-auto p-6 flex flex-col min-h-0 scrollbar-custom">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col min-h-0 scrollbar-custom">
           <GPUCPUContent
             analysis={analysis}
             gpuScore={analysis.gpuScore}

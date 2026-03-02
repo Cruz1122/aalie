@@ -3,14 +3,14 @@
  * Obtiene el prompt adecuado según el job y el locale del usuario.
  */
 
-import type { LLMJob, SupportedLocale } from "./types";
 import { classify } from "./classify";
-import { getResponseLanguageInstruction } from "./response-language";
-import { parserAssistBase } from "./parser_assist";
-import { generalBase } from "./general";
-import { simplifier } from "./simplifier";
-import { repair } from "./repair";
 import { compare } from "./compare";
+import { generalBase } from "./general";
+import { parserAssistBase } from "./parser_assist";
+import { repair } from "./repair";
+import { getResponseLanguageInstruction } from "./response-language";
+import { simplifier } from "./simplifier";
+import type { LLMJob, SupportedLocale } from "./types";
 
 const SUPPORTED_LOCALES: SupportedLocale[] = ["es", "en"];
 

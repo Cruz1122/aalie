@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { useRef, useEffect } from "react";
 
 import type { TraceGraph } from "@/types/trace";
 
@@ -71,20 +71,20 @@ export default function RecursiveTraceContent({
   };
 
   return (
-    <>
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
       {/* Controles superiores - vacío para recursivos */}
       <div className="flex items-center gap-4 mb-2 flex-shrink-0">
         {/* No hay controles superiores para recursivos */}
       </div>
 
-      {/* Contenido: 3 columnas con proporciones ajustadas */}
-      <div className="flex-1 grid gap-4 overflow-hidden" style={{ gridTemplateColumns: "0.8fr 1.8fr 1.4fr" }}>
+      {/* Contenido: 1 col mobile, 2 cols tablet, 3 cols desktop - scroll en el wrapper padre */}
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-h-0 min-w-0">
         {/* Columna izquierda: Pseudocódigo */}
         <PseudocodeViewer source={source} />
 
-        {/* Columna centro: Diagrama de Recursión */}
-        <div className="flex flex-col border-r border-slate-700 pr-4 overflow-hidden">
-          <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0">
+        {/* Columna centro: Diagrama de Recursión - scroll en toda la sección */}
+        <div className="flex flex-col border-r-0 md:border-r border-slate-700 md:pr-4 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-custom">
+          <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0 truncate">
             {t("recursionDiagram")}
           </h3>
 
@@ -101,9 +101,9 @@ export default function RecursiveTraceContent({
           />
         </div>
 
-        {/* Columna derecha: Explicación */}
-        <div className="flex flex-col overflow-hidden">
-          <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0">
+        {/* Columna derecha: Explicación - scroll en toda la sección */}
+        <div className="flex flex-col min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-custom">
+          <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0 truncate">
             {t("explanation")}
           </h3>
 
@@ -140,7 +140,7 @@ export default function RecursiveTraceContent({
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, {
   useEffect,
   useMemo,
@@ -7,7 +8,6 @@ import React, {
   useRef,
   useCallback,
 } from "react";
-import { useTranslations } from "next-intl";
 import {
   default as ReactFlow,
   Background,
@@ -611,10 +611,10 @@ export default function RecursionTreeModal({
           </h3>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center"
+            className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
             aria-label={t("closeModal")}
           >
-            <span className="material-symbols-outlined text-xl">close</span>
+            ✕
           </button>
         </div>
 

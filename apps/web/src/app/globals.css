@@ -15,6 +15,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
   transform: translateZ(0);
+  isolation: isolate;
 }
 
 .glass-header {
@@ -23,6 +24,9 @@
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(34, 54, 73, 0.5);
   transform: translateZ(0);
+  isolation: isolate;
+  position: relative;
+  z-index: 1;
 }
 
 .glass-card {
@@ -33,6 +37,9 @@
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
   transition: all 0.3s ease;
   transform: translateZ(0);
+  isolation: isolate;
+  position: relative;
+  z-index: 1;
 }
 
 .glass-card:hover {
@@ -40,6 +47,18 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.4);
   transform: translateY(-2px);
+}
+
+/* Editor: sin efecto hover (sombra difuminada); z-index bajo; sin sombra azul debajo */
+.glass-card-editor {
+  z-index: 0;
+  box-shadow: none;
+}
+.glass-card-editor:hover {
+  background: rgba(24, 36, 49, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+  transform: translateZ(0);
 }
 
 .glass-button {
@@ -62,6 +81,9 @@
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   transform: translateZ(0);
+  isolation: isolate;
+  position: relative;
+  z-index: 1;
 }
 
 .glass-secondary:hover {
@@ -78,6 +100,28 @@
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   transform: translateZ(0);
+  z-index: 1;
+}
+
+/* Overlay para manual mode: blur en fondo + oscurece; el contenedor también tiene blur */
+.glass-modal-overlay-container-only {
+  background: linear-gradient(
+    135deg,
+    rgba(16, 26, 35, 0.5) 0%,
+    rgba(15, 20, 25, 0.7) 50%,
+    rgba(16, 26, 35, 0.85) 100%
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transform: translateZ(0);
+  z-index: 1;
+}
+
+/* Overlay portaled a body: debe ser fixed para cubrir viewport; z-index alto para estar encima de todo */
+.glass-modal-overlay-fixed {
+  position: fixed !important;
+  inset: 0;
+  z-index: 99999 !important;
 }
 
 .glass-modal-header {
@@ -87,6 +131,9 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.3);
   transform: translateZ(0);
+  isolation: isolate;
+  position: relative;
+  z-index: 1;
 }
 
 .glass-modal-container {
@@ -96,6 +143,9 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 20px 60px 0 rgba(31, 38, 135, 0.4);
   transform: translateZ(0);
+  isolation: isolate;
+  position: relative;
+  z-index: 1;
 }
 
 /* Ajustes mínimos globales */
@@ -156,6 +206,7 @@ body {
     display: grid;
     gap: 1rem;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    min-width: 0;
   }
 
   /* Animaciones para el chatbot */
@@ -319,6 +370,8 @@ body {
   height: 300px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .documentation-card-content {
@@ -328,6 +381,7 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 0;
+  min-width: 0;
 }
 
 /* Line clamp utilities for text truncation */

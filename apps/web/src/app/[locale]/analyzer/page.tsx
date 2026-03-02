@@ -3,12 +3,12 @@
 import type { AnalyzeOpenResponse, ParseError, ParseResponse, Program } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
+import ReactDOM from "react-dom";
 
-import { AnalysisLoader } from "@/components/AnalysisLoader";
+import { AAProgressLoader } from "@/components/AAProgressLoader";
 import { AnalyzerEditor } from "@/components/AnalyzerEditor";
 import { ASTTreeView } from "@/components/ASTTreeView";
 import ChatBot from "@/components/ChatBot";
-import { ComparisonLoader } from "@/components/ComparisonLoader";
 import ComparisonModal from "@/components/ComparisonModal";
 import ExecutionTraceModal from "@/components/ExecutionTraceModal";
 import Footer from "@/components/Footer";
@@ -26,6 +26,7 @@ import { useChatHistory } from "@/hooks/useChatHistory";
 import { heuristicKind } from "@/lib/algorithm-classifier";
 import { extractCoreData, isRecursiveAnalysis, type CoreAnalysisData } from "@/lib/extract-core-data";
 import { analyzeASTForGPUCPU } from "@/lib/gpu-cpu-analyzer";
+import { translateLlmError } from "@/lib/llm-error-translator";
 import { getSavedCase, saveCase } from "@/lib/polynomial";
 import type { GPUCPUAnalysisResult } from "@/types/gpu-cpu";
 
@@ -52,18 +53,8 @@ export default function AnalyzerPage() {
   const tCommon = useTranslations("common");
   const getMessage = (key: string) => t(key);
 
-  // Estados del flujo de análisis
-  const [source, setSource] = useState<string>(() => {
-    // Cargar código desde sessionStorage si viene del editor manual o del chatbot
-    if (globalThis.window !== undefined) {
-      const savedCode = globalThis.window.sessionStorage.getItem('analyzerCode');
-      if (savedCode) {
-        // NO limpiar el código aquí todavía, se limpiará después de cargar
-        return savedCode;
-      }
-    }
-    return "";
-  });
+  // Estados del flujo de análisis (inicial neutro para evitar hydration mismatch)
+  const [source, setSource] = useState<string>("");
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisMessage, setAnalysisMessage] = useState(() => t("init"));
@@ -114,40 +105,7 @@ export default function AnalyzerPage() {
     best: AnalyzeOpenResponse | "same_as_worst" | null;
     avg?: AnalyzeOpenResponse | "same_as_worst" | null;
     has_case_variability?: boolean;
-  } | null>(() => {
-    // Cargar resultados desde sessionStorage si vienen del editor manual o del chatbot
-    if (globalThis.window !== undefined) {
-      const savedResults = globalThis.window.sessionStorage.getItem('analyzerResults');
-      if (savedResults) {
-        try {
-          const parsed = JSON.parse(savedResults);
-          // Limpiar los resultados guardados después de cargarlos
-          globalThis.window.sessionStorage.removeItem('analyzerResults');
-          // También limpiar el código después de cargarlo
-          globalThis.window.sessionStorage.removeItem('analyzerCode');
-          // Si es el formato antiguo (solo worst), convertirlo al nuevo formato
-          if (parsed && !parsed.worst && !parsed.best) {
-            return { worst: parsed, best: null, avg: null };
-          }
-          // Si es el formato nuevo (con worst, best, avg), extraer solo esos campos
-          if (parsed && (parsed.worst || parsed.best)) {
-            return {
-              worst: parsed.worst || null,
-              best: parsed.best || null,
-              avg: parsed.avg || null
-            };
-          }
-          return { worst: null, best: null, avg: null };
-        } catch (error) {
-          console.error('Error parsing saved results:', error);
-          // Limpiar datos corruptos
-          globalThis.window.sessionStorage.removeItem('analyzerResults');
-          globalThis.window.sessionStorage.removeItem('analyzerCode');
-        }
-      }
-    }
-    return { worst: null, best: null, avg: null };
-  });
+  } | null>(null);
 
   const hasComparableData = useMemo(() => {
     if (!data) {
@@ -212,6 +170,35 @@ export default function AnalyzerPage() {
     return () => {
       globalThis.window.removeEventListener('apiKeyChanged', handleApiKeyChange);
     };
+  }, []);
+
+  // Cargar código y resultados desde sessionStorage tras montar (evita hydration mismatch)
+  useEffect(() => {
+    const savedCode = globalThis.window.sessionStorage.getItem('analyzerCode');
+    if (savedCode) {
+      setSource(savedCode);
+    }
+    const savedResults = globalThis.window.sessionStorage.getItem('analyzerResults');
+    if (savedResults) {
+      try {
+        const parsed = JSON.parse(savedResults);
+        globalThis.window.sessionStorage.removeItem('analyzerResults');
+        globalThis.window.sessionStorage.removeItem('analyzerCode');
+        if (parsed && !parsed.worst && !parsed.best) {
+          setData({ worst: parsed, best: null, avg: null });
+        } else if (parsed && (parsed.worst || parsed.best)) {
+          setData({
+            worst: parsed.worst || null,
+            best: parsed.best || null,
+            avg: parsed.avg || null
+          });
+        }
+      } catch (error) {
+        console.error('Error parsing saved results:', error);
+        globalThis.window.sessionStorage.removeItem('analyzerResults');
+        globalThis.window.sessionStorage.removeItem('analyzerCode');
+      }
+    }
   }, []);
 
   // Manejar cambios en el estado de parsing local
@@ -361,14 +348,14 @@ export default function AnalyzerPage() {
           kind,
           progressBeforeMethodSelection,
           setAnalysisMessage,
-          getMessage,
           setAnalysisProgress,
           setApplicableMethods,
           setDefaultMethod,
           setShowMethodSelector,
           minProgressRef,
           methodSelectionPromiseRef,
-          animateProgress
+          animateProgress,
+          getMessage
         );
         
         progressBeforeAnalysis = 90;
@@ -536,8 +523,8 @@ export default function AnalyzerPage() {
 
     } catch (error) {
       console.error("[Analyzer] Error inesperado:", error);
-      const errorMsg = error instanceof Error ? error.message : "Error inesperado durante el análisis";
-      setAnalysisError(errorMsg);
+      const rawMsg = error instanceof Error ? error.message : "Error inesperado durante el análisis";
+      setAnalysisError(tMessages(translateLlmError(rawMsg)));
       setTimeout(() => {
         setAnalyzing(false);
         setAnalysisProgress(0);
@@ -1602,8 +1589,8 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
 
     } catch (error) {
       console.error("[Comparison] Error:", error);
-      const errorMsg = error instanceof Error ? error.message : "Error inesperado durante la comparación";
-      setComparisonMessage(`Error: ${errorMsg}`);
+      const rawMsg = error instanceof Error ? error.message : "Error inesperado durante la comparación";
+      setComparisonMessage("Error: " + tMessages(translateLlmError(rawMsg)));
       setComparisonProgress(0);
       
       setTimeout(() => {
@@ -1661,7 +1648,8 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
     <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">
       {/* Loader de análisis */}
       {analyzing && (
-        <AnalysisLoader
+        <AAProgressLoader
+          mode="analysis"
           progress={analysisProgress}
           message={analysisMessage}
           algorithmType={algorithmType}
@@ -1904,10 +1892,13 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
               generalProcedureCase === 'average' ? (data?.avg === "same_as_worst" ? data?.worst : data?.avg) || undefined : undefined}
       />
 
-      {/* Modal AST */}
-      {showAstModal && ast && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center glass-modal-overlay modal-animate-in">
-          <div className="glass-modal-container rounded-xl shadow-2xl max-w-3xl w-full max-h-[80vh] flex flex-col m-4 modal-animate-in">
+      {/* Modal AST - Portal a body para que sea overlay fijo */}
+      {showAstModal &&
+        ast &&
+        typeof document !== "undefined" &&
+        ReactDOM.createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center glass-modal-overlay glass-modal-overlay-fixed modal-animate-in">
+            <div className="glass-modal-container rounded-xl shadow-2xl max-w-3xl w-full max-h-[80vh] flex flex-col m-4 modal-animate-in">
             {/* Header compacto */}
             <div className="glass-modal-header flex items-center justify-between px-5 py-3 rounded-t-xl border-b border-white/10">
               <div className="flex items-center gap-3">
@@ -1991,8 +1982,9 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+          document.body
+        )}
 
       {/* ChatBot */}
       <ChatBot
@@ -2024,7 +2016,8 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
 
       {/* Loader de comparación con LLM */}
       {isComparing && (
-        <ComparisonLoader
+        <AAProgressLoader
+          mode="comparison"
           progress={comparisonProgress}
           message={comparisonMessage}
           isComplete={false}

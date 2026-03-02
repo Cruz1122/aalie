@@ -23,16 +23,6 @@ export interface PackageContent {
   packages: PackageInfo[];
 }
 
-export interface UIShowcaseContent {
-  type: "ui-showcase";
-  implementation: {
-    title: string;
-    description: string;
-    testRoute: string;
-    features: string[];
-  };
-}
-
 export interface ToolInfo {
   name: string;
   purpose: string;
@@ -330,7 +320,6 @@ export interface DocumentationSection {
   image?: ImageData;
   content?:
     | PackageContent
-    | UIShowcaseContent
     | ToolsContent
     | KaTeXContent
     | AnalyzerContent

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useState, useRef } from "react";
 
+import { translateLlmError } from "@/lib/llm-error-translator";
 import type { TraceGraph } from "@/types/trace";
 
 import TraceFlowDiagram from "./TraceFlowDiagram";
@@ -40,15 +41,18 @@ export default function RecursionTreeView({
 }: RecursionTreeViewProps) {
   const locale = useLocale();
   const t = useTranslations("analyzer.executionTrace");
+  const tMessages = useTranslations("analyzer.messages");
   const [diagram, setDiagram] = useState<RecursionDiagram | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const hasGeneratedRef = useRef(false);
+  const isGeneratingRef = useRef(false);
 
   useEffect(() => {
-    // Generar diagrama solo una vez al montar
-    if (!hasGeneratedRef.current && pseudocode) {
+    // Generar diagrama solo una vez al montar, evitando spam por StrictMode o re-renders
+    if (!hasGeneratedRef.current && pseudocode && !isGeneratingRef.current) {
       hasGeneratedRef.current = true;
+      isGeneratingRef.current = true;
       generateDiagram();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -59,6 +63,8 @@ export default function RecursionTreeView({
       setError(t("noPseudocodeForDiagram"));
       return;
     }
+    if (isGeneratingRef.current) return;
+    isGeneratingRef.current = true;
 
     setLoading(true);
     setError("");
@@ -99,12 +105,15 @@ export default function RecursionTreeView({
           onDiagramGenerated(newDiagram);
         }
       } else {
-        setError(data.error || t("diagramError"));
+        setError(data.error ? tMessages(translateLlmError(data.error)) : t("diagramError"));
       }
     } catch (err) {
       console.error("Error generando diagrama de recursión:", err);
-      setError(t("diagramConnectionError"));
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const key = translateLlmError(errMsg);
+      setError(key === "unknownLlmError" ? t("diagramConnectionError") : tMessages(key));
     } finally {
+      isGeneratingRef.current = false;
       setLoading(false);
     }
   };

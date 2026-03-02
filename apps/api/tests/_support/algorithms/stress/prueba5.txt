@@ -1,0 +1,8 @@
+Prueba5(n) BEGIN
+  FOR i <- 0 TO n DO BEGIN
+    PRINT(i);
+    IF ((i MOD 2) = 0) THEN BEGIN
+      PRINT("Par");
+    END
+  END
+END

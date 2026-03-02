@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { useState, useRef, useEffect, useMemo } from "react";
 
+import { translateLlmError } from "@/lib/llm-error-translator";
 import type { CaseType, TraceApiResponse, TraceGraph, TraceConfig, DiagramGraphResponse, ExecutionStep } from "@/types/trace";
 
 import DiagramSection from "./DiagramSection";
@@ -73,6 +74,7 @@ export default function IterativeTraceContent({
   const t = useTranslations("analyzer.executionTrace");
   const tCases = useTranslations("analyzer.cases");
   const tCommon = useTranslations("common");
+  const tMessages = useTranslations("analyzer.messages");
   const playIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const inputSizeDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const currentStepRef = useRef<number>(currentStep);
@@ -179,7 +181,9 @@ export default function IterativeTraceContent({
         }
       } else {
         setGraph(null);
-        setExplanation(data.error || data.explanation || "");
+        setExplanation(
+          data.error ? tMessages(translateLlmError(data.error)) : (data.explanation || "")
+        );
         if (trace?.ok && trace.trace) {
           setStepsWithCosts(trace.trace.steps);
         }
@@ -285,9 +289,9 @@ export default function IterativeTraceContent({
     : {};
 
   return (
-    <>
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
       {/* Controles superiores */}
-      <div className="flex items-center gap-4 mb-2 flex-shrink-0">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-2 flex-shrink-0">
         {/* Case Switcher */}
         {traceConfig.controls.scenario && (
           <div className="flex items-center gap-2">
@@ -338,18 +342,18 @@ export default function IterativeTraceContent({
       </div>
 
       {/* Texto aclaratorio global para iterativos */}
-      <p className="text-xs text-slate-400 mb-4">
+      <p className="text-xs text-slate-400 mb-2 flex-shrink-0">
         {t("iterativeCaseNote")}
       </p>
 
-      {/* Contenido: 3 columnas con proporciones ajustadas */}
-      <div className="flex-1 grid gap-4 overflow-hidden" style={{ gridTemplateColumns: "0.8fr 1.8fr 1.4fr" }}>
+      {/* Contenido: 1 col mobile, 2 cols tablet, 3 cols desktop - scroll en el wrapper padre */}
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-h-0 min-w-0">
         {/* Columna izquierda: Pseudocódigo */}
         <PseudocodeViewer source={source} currentLine={currentLine} />
 
-        {/* Columna centro: Seguimiento Paso a Paso */}
-        <div className="flex flex-col border-r border-slate-700 pr-4 overflow-hidden">
-          <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0">
+        {/* Columna centro: Seguimiento Paso a Paso - scroll en toda la sección */}
+        <div className="flex flex-col border-r-0 md:border-r border-slate-700 md:pr-4 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-custom">
+          <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0 truncate">
             {t("stepByStepTrace")}
           </h3>
 
@@ -374,9 +378,9 @@ export default function IterativeTraceContent({
           />
         </div>
 
-        {/* Columna derecha: Diagrama de flujo */}
-        <div className="flex flex-col overflow-hidden">
-          <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0">
+        {/* Columna derecha: Diagrama de flujo - scroll en toda la sección */}
+        <div className="flex flex-col min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-custom">
+          <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0 truncate">
             {t("flowDiagramSection")}
           </h3>
 
@@ -406,7 +410,7 @@ export default function IterativeTraceContent({
           />
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

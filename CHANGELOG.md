@@ -5,6 +5,115 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [Unreleased]
+
+### Added
+
+### Fixed
+
+### Changed
+
+## [1.2.0]
+
+### Changed
+
+- **Motor de análisis (iterativo y recursivo):** El motor calcula la complejidad con más precisión gracias a un mejor manejo de variables y tamaños. El analizador base admite más tipos de expresiones (mínimo, máximo) y sustituye alias cuando una variable es una copia del tamaño (por ejemplo `k <- n`). En algoritmos iterativos se identifican mejor las variables que controlan los bucles y los alias de tamaño, de modo que se analizan bien bucles anidados y límites que cambian (por ejemplo un bucle interno cuyo tope decrece). En recursivos se tienen en cuenta varios tamaños de subproblemas en divide y vencerás. Las utilidades de clases de complejidad normalizan mejor la variable de tamaño.
+- **Bucles WHILE:** Se determina si un bucle está acotado según la condición y cómo se actualizan las variables, y se aplican nuevos patrones para inferir la complejidad.
+- **Casos concretos:** Ajustes para que algoritmos como Bubble Sort (mejor caso) y otros con detección de tamaño y heurísticas específicas den el resultado esperado.
+- **Tests:** Más pruebas para algoritmos con límites decrecientes y bucles anidados con reinicio de variable interna, que validan las nuevas mejoras.
+
+## [1.1.5]
+
+### Added
+
+- Scripts en el proyecto para lanzar tests (API, contrato, cobertura, etc.) y herramienta MCP para ejecutarlos; convenciones y documentación actualizadas.
+- Animación suave al cambiar entre modo AALIE y modo manual en el selector.
+- Tests que comprueban peor caso, mejor caso y caso promedio en algoritmos de estrés, contrato, canónicos y otros; cada algoritmo puede definir qué complejidad se espera en cada caso.
+- Motor: algoritmos con recursión dentro de un bucle (por ejemplo generación de subconjuntos) se analizan con árbol de recursión y dan la complejidad correcta Θ(2^n).
+- Motor: recurrencias tipo Euclides (MOD) → Θ(log n); recursión dentro de FOR por sustracción.
+- Tests: algoritmos de estrés Prueba1–Prueba7, reestructuración de tests con soporte común (algoritmos, expectativas, aserciones), benchmark de 40 tests y oráculo de aserciones.
+
+### Fixed
+
+- Tests de complejidad: el mejor caso se comprueba según la teoría (búsqueda lineal, insertion sort, búsqueda binaria, WHILE compuesto); los tests ya no exigen que best sea igual que worst cuando no lo es.
+- Motor: corrección al eliminar índices de bucle (i, j, k) de la expresión de coste final en algoritmos como insertion sort, evitando errores cuando la expresión los arrastraba.
+- Prueba7 y tests de estrés: complejidad exponencial correcta y comprobación en todos los casos cuando hay especificación.
+- Tests de contrato: solo se exige mejor caso o promedio cuando la especificación del algoritmo lo indica.
+- Interfaz: textos de documentación y selector de idioma ya no se desbordan en pantallas pequeñas; cards y modales de documentación contienen bien el contenido; bloques de código con scroll horizontal cuando las líneas son largas.
+- Motor: merge_sort, bucles rectangulares, exponenciación rápida, gramática ELSE IF, Torres de Hanoi, búsqueda binaria, quicksort, bucles infinitos y otros casos corregidos.
+- Loader de análisis: botón cerrar bien colocado en error; Chatbot: campo de mensaje y icono de enviar sin solapamientos.
+
+### Changed
+
+- Botones principales (Ver Guía de Usuario, Ir a AALIE) y pie de página con estilo unificado y mejor comportamiento en móvil.
+
+### Removed
+
+- docs/test-architecture.md y test-baseline.md (contenido centralizado en tests/README.md); carpeta tests/integration.
+
+## [1.1.4] - 2026-02-21
+
+### Added
+
+- Ejemplo de informe LaTeX (docs/latex-example/main.tex) con resultados del análisis de búsqueda lineal
+- Hook useMediaQuery para detección responsive
+- AAProgressLoader unificado (análisis y comparación), AnalysisProgressContext, hook useRunAnalysis; loader persistente durante navegación
+- Guía de usuario: cards con modales (UserGuideCard, UserGuideModal, UserGuideTableOfContents); tipos estructurados (user-guide.ts)
+- Módulo MCP: read_conventions, read_doc, list_components, changelog_template, i18n_reminder
+
+### Changed
+
+- Responsividad: inicio (AIModeView, ManualModeView, ChatBot), modals Execution Trace y GPU vs CPU, centrado de contenido y switcher de modo
+- Traducciones centralizadas: `backend-content-translator.ts`; ComparisonModal, ComparisonLoader y proof steps con useTranslations; eliminado `proof-step-translator` deprecado
+- Loader de análisis: unificado en AAProgressLoader; ManualModeView, examples, chat y analyzer migrados; barra y tooltip en mismo modal; barra más alta al inicio, fixed abajo al clasificar
+- Editor Monaco: tema paleta app, JetBrains Mono; tooltips en esquina; botón Analizar azul; modal AST portaled a body
+- Guía de usuario: grid de cards; documentación técnica: 11 secciones, paleta neutra
+- Manual mode: blur en fondo (glass-modal-overlay-container-only con backdrop-filter)
+
+### Removed
+
+- AnalysisLoader.tsx y ComparisonLoader.tsx (reemplazados por AAProgressLoader)
+- Página ui-test, ui-showcase, sección export, botón "Ver diagrama" e ImageModal de documentación
+
+### Fixed
+
+- Componentes glass que desaparecían al hacer scroll (Edge, Chrome, Firefox, Safari): añadido `position: relative` y `z-index: 1` a todas las clases glass para mantener stacking context correcto durante scroll
+- Modals: bloqueo de scroll, botón cerrar (X) estilo DocumentationModal, spam de generate diagram (isGeneratingRef)
+- Desbordes: StepInfo, cards GPU/CPU, ChatBot (bloques 420px, botones Copiar/Analizar), switcher Efficiency Equation, labels analysis method, badges, FormulaBlock, efecto glass (isolation)
+- Errores LLM traducidos a mensajes legibles (`llm-error-translator`)
+- Inferencia de variables: Bubble Sort O(1), ArrayParam, T_polynomial; bucles unbounded solo ∞
+- Hydration error en analyzer: source y data cargados en useEffect (no en useState) para coincidir servidor/cliente
+- Tooltips editor: `title` nativo; código persiste al cambiar modo; errores de parse reales; modal AST position fixed
+- Loader global de navegación: NavigationLoadingWrapper restaurado en layout para PageLoader durante transiciones
+
+## [1.1.3] - 2026-02-17
+
+### Added
+
+- Columna "Ops" en tabla de costos iterativos
+- Validación de eficiencia de los 30 algoritmos de ejemplos (docs/pruebas-algoritmos.md)
+- Módulo `while_analysis` y clasificación de bucles WHILE (bounded/unbounded/unknown)
+- Campos `unbounded` y `unbounded_kind` en LineCost; badge "Puede no terminar" en LineTable
+- Componente AALIEIcon; tests auténticos y exhaustivos para WHILE, determinísticos y casos promedio
+
+### Changed
+
+- Página ejemplos: complexity actualizada (Bubble Sort O(n²), Hanoi O(1), etc.); BST con raiz.izquierda/derecha
+- Ck única por línea; SimpleVisitor/ForVisitor/IfVisitor/WhileVisitor con ops por expresión
+- T_open y T_polynomial incluyen factor ops; fórmula T(n) = Σ C_k · ops_k · count_k
+- Icono `smart_toy` por `aalie.svg`; WhileRepeatVisitor usa classify_while
+- Tests de integración usan `analyze_algorithm(source)`
+- Selector de idioma movido del header al footer
+- Mejorada responsividad del footer
+
+### Fixed
+
+- RecursiveAnalyzer: subproblemas type "division" (raiz.izquierda/derecha) no añadían "b"
+- IterativeAnalyzer: AST inválido, O(1) incorrecto para WHILE con log, parseo LaTeX `\log_k` y `\frac`
+- Bucles unbounded: mostrar ∞ en costos y notación O(∞)/Θ(∞) en lugar de t_while
+- Caso promedio determinístico y algoritmos con banderas (param-controlled)
+- IterativeAnalysisView: ocultar bolitas cuando notación demasiado larga
+
 ## [1.1.2] - 2026-02-14
 
 ### Added
@@ -14,6 +123,15 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Soporte de locale en análisis y trace de ejecución
 - Integración de localización en la API de análisis y parser
 - Referencia a convenciones de desarrollo en documentación de request-flow
+- Componente `NavigationFooter` reutilizable para páginas de documentación y guías
+- Referencia a `docs/development/i18n-labels-prompts.md` en documentación técnica
+
+### Changed
+
+- User-guide, documentación técnica y ejemplos usan `NavigationFooter` normalizado
+- Editor Monaco: restaurada indentación (sin letterSpacing, detectIndentation: false) y loader pulse unificado
+- Restaurada carga de fuentes original (Google Fonts directo) en lugar de next/font
+- Eliminado separador (border-t) sobre footer en documentación técnica
 
 ## [1.1.1] - 2026-02-08
 
@@ -32,6 +150,15 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ### Fixed
 
 - Referencia a paquete local y versión de setuptools en requirements
+- Tests de avg_model y avg_case: pasar `locale="es"` para compatibilidad con parametrización de idioma 
+- Error de compilación: parámetro requerido tras opcional en `detectAndSelectMethod` (analyzer-helpers)
+- Error de tipos: `locale` string no asignable a `"es" | "en"` en layout de locale
+- Avisos de lint: dependencias exhaustivas en hooks (useCallback/useEffect) y variable `locale` no usada en ComparisonModal
+- Error de tipos: `ComparisonT.view` no aceptaba segundo argumento para placeholders (caseNumber)
+- Error de tipos: `locale` no existía en el tipo de `analyzeBody` en ManualModeView
+- Error de tipos: `tRecursionTree` en RecursiveAnalysisView no aceptaba segundo argumento (levelWithNumber)
+- Error de tipos: `routing.locales.includes(requested)` en request.ts (string vs "es"|"en")
+- INVALID_MESSAGE EMPTY_ARGUMENT: reemplazo de t.rich por mensajes simples en user-guide y Footer (geminiHint); fallback para alt vacío en ImageModal
 
 ### Security
 

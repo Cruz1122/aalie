@@ -2,11 +2,13 @@
 """
 Tests de sistema para el endpoint /analyze/open.
 Verifica que el análisis de complejidad funcione correctamente a través del endpoint HTTP.
+Incluye verificaciones de complejidad esperada (big_theta/big_o) para tests auténticos.
 """
 
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
+from tests._support.assertions import notation_has_complexity
 
 client = TestClient(app)
 
@@ -76,6 +78,11 @@ END
         t_open = result["totals"]["T_open"]
         assert isinstance(t_open, str), "T_open debe ser string"
         assert len(t_open) > 0, "T_open no debe estar vacío"
+        # Verificar complejidad esperada Θ(n²)
+        notation = result["totals"].get("big_theta", "") or result["totals"].get("big_o", "")
+        assert notation_has_complexity(notation, "quadratic"), (
+            f"Insertion sort debe ser Θ(n²): {notation}"
+        )
     
     def test_bubble_sort(self):
         """Test: Bubble Sort con bucles anidados"""
@@ -104,11 +111,14 @@ END
         assert result.get("ok"), "Análisis debe ser exitoso"
         assert "byLine" in result, "Debe tener byLine"
         
-        # Verificar T_open
-        if "totals" in result and "T_open" in result["totals"]:
-            t_open = result["totals"]["T_open"]
-            assert isinstance(t_open, str), "T_open debe ser string"
-            assert len(t_open) > 0, "T_open no debe estar vacío"
+        # Verificar T_open y complejidad Θ(n²)
+        assert "totals" in result, "Debe tener totals"
+        t_open = result["totals"].get("T_open", "")
+        assert isinstance(t_open, str) and len(t_open) > 0, "T_open debe ser string no vacío"
+        notation = result["totals"].get("big_theta", "") or result["totals"].get("big_o", "")
+        assert notation_has_complexity(notation, "quadratic"), (
+            f"Bubble sort debe ser Θ(n²): {notation}"
+        )
     
     def test_triangular_sum(self):
         """Test: Sumatoria triangular (FOR anidado)"""
@@ -141,6 +151,12 @@ END
             assert "ck" in row, "Debe tener ck"
             assert "count_raw" in row, "Debe tener count_raw"
             assert "count" in row, "Debe tener count"
+        # Verificar complejidad Θ(n²) para sumatoria triangular
+        if "totals" in result:
+            notation = result["totals"].get("big_theta", "") or result["totals"].get("big_o", "")
+            assert notation_has_complexity(notation, "quadratic"), (
+                f"Triangular debe ser Θ(n²): {notation}"
+            )
     
     def test_nested_rectangular_loops(self):
         """Test: Bucles FOR anidados rectangulares"""
@@ -245,6 +261,12 @@ END
         result = response.json()
         assert result.get("ok"), "Análisis debe ser exitoso"
         assert "byLine" in result, "Debe tener byLine"
+        # Verificar complejidad Θ(log n) para WHILE i*2
+        if "totals" in result:
+            notation = result["totals"].get("big_theta", "") or result["totals"].get("big_o", "")
+            assert notation_has_complexity(notation, "log"), (
+                f"WHILE i*2 debe ser Θ(log n): {notation}"
+            )
     
     def test_mixed_for_and_while(self):
         """Test: FOR con WHILE anidado"""
