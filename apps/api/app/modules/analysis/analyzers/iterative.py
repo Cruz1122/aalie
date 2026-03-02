@@ -268,8 +268,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Limpiar estado previo
         self.clear()
         
-        # Establecer modo
+        # Establecer modo y guardar AST raíz
         self.mode = mode
+        self.root_ast = ast
         
         # AST inválido: retornar resultado vacío sin fallar
         if ast is None or not isinstance(ast, dict):

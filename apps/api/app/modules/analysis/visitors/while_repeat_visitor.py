@@ -333,14 +333,20 @@ class WhileRepeatVisitor:
                 last_assign = assignments[-1]
                 value = last_assign.get("value")
                 if value:
-                    initial_expr = self._expr_to_str(value)
-                    return initial_expr
+                    return self._expr_to_str(value)
         
-        # Si hay un loop_stack activo (FOR anidado), la variable podría depender
-        # de la variable del FOR. Por ejemplo: j <- i - 1 dentro de FOR i
-        # En este caso, el valor inicial se debería encontrar en el bloque padre,
-        # pero si no se encuentra, podríamos considerar la variable del FOR
-        # como parte del contexto (esto se maneja implícitamente en la expresión)
+        # Fallback: buscar en todo el AST raíz si está disponible
+        root_ast = getattr(self, 'root_ast', None)
+        if root_ast:
+            assignments = []
+            self._find_assignments_before_line(root_ast, var_name, while_line, assignments)
+            if assignments:
+                last_assign = assignments[-1]
+                value = last_assign.get("value")
+                if value:
+                    return self._expr_to_str(value)
+                    
+        # Si hay un loop_stack activo (FOR anidado)...
         
         return None
     
@@ -946,7 +952,24 @@ class WhileRepeatVisitor:
         # 0) NUEVO CLASIFICADOR: GuardInfo + UpdateSummary + classify_while
         try:
             guard = analyze_guard(test)
-            updates = summarize_updates(body, guard.vars_used, guard, parent_context)
+            
+            # Recopilar todas las variables asignadas en el cuerpo para evaluarlas como posibles cotas
+            assigned_vars = set()
+            def _collect_vars(n):
+                if isinstance(n, dict):
+                    if n.get("type", "").lower() == "assign":
+                        t = n.get("target", {})
+                        if isinstance(t, dict) and t.get("type", "").lower() == "identifier":
+                            assigned_vars.add(t.get("name", ""))
+                    for v in n.values():
+                        _collect_vars(v)
+                elif isinstance(n, list):
+                    for item in n:
+                        _collect_vars(item)
+            _collect_vars(body)
+            all_vars = guard.vars_used.union(assigned_vars)
+            
+            updates = summarize_updates(body, all_vars, guard, parent_context)
             result = classify_while(guard, updates, mode, parent_context, L)
             if result.status == "bounded" and result.iterations_expr:
                 ev = result.evidence
@@ -1254,17 +1277,6 @@ class WhileRepeatVisitor:
                         # Multiplicador para el cuerpo
                         mult_expr = iterations_expr
                         
-                        # Si hay multiplicadores externos, integrar
-                        if hasattr(self, 'loop_stack') and self.loop_stack:
-                            outer_mult = self.loop_stack[-1]
-                            if isinstance(outer_mult, Sum):
-                                var_sym = outer_mult.args[1][0]
-                                start_expr = outer_mult.args[1][1]
-                                end_expr = outer_mult.args[1][2]
-                                mult_expr = Sum(iterations_expr, (var_sym, start_expr, end_expr))
-                            else:
-                                mult_expr = iterations_expr * outer_mult
-                        
                         # Condición: se evalúa (iterations + 1) veces
                         ck_cond = self.C()
                         cond_count = iterations_expr + Integer(1)
@@ -1385,28 +1397,24 @@ class WhileRepeatVisitor:
                     iterations_expr = ceiling(log(n_sym, 2))
             else:
                 try:
-                    iterations_expr = sympify(iterations)
+                    iterations_expr = self._str_to_sympy(str(iterations))
                 except Exception:
-                    # Fallback: usar string y convertir después
-                    iterations_expr = self._str_to_sympy(iterations)
+                    iterations_expr = self._str_to_sympy(str(iterations))
+
+            # APLICAR SUBSTITUCIÓN DEL LÍMITE:
+            if isinstance(limit, str) and limit and not limit.isdigit():
+                import re
+                if re.match(r'^[a-zA-Z_]\w*$', limit):
+                    initial_limit = self._find_initial_value_of_var(limit, L, parent_context)
+                    if initial_limit:
+                        try:
+                            lim_sym = self._str_to_sympy(limit)
+                            init_sym = self._str_to_sympy(initial_limit)
+                            iterations_expr = iterations_expr.subs(lim_sym, init_sym)
+                        except Exception:
+                            pass
             
             mult_expr = iterations_expr
-            
-            # Si hay multiplicadores externos (anidado), integrar
-            if hasattr(self, 'loop_stack') and self.loop_stack:
-                # Integrar con multiplicadores externos
-                outer_mult = self.loop_stack[-1]
-                
-                # outer_mult ahora es un objeto SymPy (Sum o Expr)
-                if isinstance(outer_mult, Sum):
-                    # Es una sumatoria, envolver iterations_expr dentro
-                    var_sym = outer_mult.args[1][0]  # Variable de la sumatoria
-                    start_expr = outer_mult.args[1][1]  # Límite inferior
-                    end_expr = outer_mult.args[1][2]  # Límite superior
-                    mult_expr = Sum(iterations_expr, (var_sym, start_expr, end_expr))
-                else:
-                    # Es una expresión multiplicativa
-                    mult_expr = iterations_expr * outer_mult
             
             # 1) Condición: se evalúa (iterations + 1) veces
             # En best case con 0 iteraciones, la condición se evalúa 1 vez (y sale)

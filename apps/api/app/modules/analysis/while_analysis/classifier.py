@@ -105,6 +105,7 @@ def classify_while(
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     # --- UNBOUNDED: Guard constante True ---
+    print(f"DEBUG CLASSIFIER: guard={guard.kind}, atom={guard.atoms if hasattr(guard, 'atoms') else None}, bool_var={guard.bool_var}, desired={guard.desired}")
     if guard.kind == "const" and guard.const_value is True:
         return ClassifyResult(
             status="unbounded",
@@ -112,33 +113,79 @@ def classify_while(
             evidence={},
         )
 
-    # --- UNBOUNDED: Guard booleano sin kills_guard_must ---
-    if guard.kind == "bool_var" and guard.bool_var and guard.desired is True:
+def _classify_bool_guard(guard: GuardInfo, updates: Dict[str, VarUpdateSummary], parent_context: Optional[Dict], while_line: int, mode: str) -> Optional[ClassifyResult]:
+    """Lógica específica para guards de tipo bool_var."""
+    if guard.bool_var:
         summary = updates.get(guard.bool_var)
         if summary and not summary.kills_guard_must:
+            # Si no hay kill must y desired=True, es potencialmente unbounded (si es While flag)
             return ClassifyResult(
                 status="unbounded",
                 reason_code="while_bool_no_must_kill",
                 evidence={"var": guard.bool_var},
             )
         if summary and summary.kills_guard_must:
-            return ClassifyResult(
-                status="bounded",
-                iterations_expr="1",
-                reason_code="while_bool_kills",
-                evidence={"var": guard.bool_var},
-            )
+            if getattr(summary, "revives_guard_may", False) and mode != "best":
+                for v_name, v_summary in updates.items():
+                    # Ignorar variables que se reinician (ej. i <- 1 en cada pasada)
+                    has_reset = any(u.get("type") == "reset" for u in v_summary.must_updates + v_summary.may_updates)
+                    if v_name != guard.bool_var and v_summary.monotone_progress_must and not has_reset:
+                        initial_b = _find_initial_value(v_name, while_line, parent_context) if parent_context else None
+                        initial_b = initial_b if initial_b else f"{v_name}_0"
+                        return ClassifyResult(
+                            status="bounded",
+                            iterations_expr=initial_b,
+                            reason_code="while_flag_monotone_bound",
+                            evidence={"var": guard.bool_var, "bound_var": v_name},
+                        )
+                return ClassifyResult(status="unknown", reason_code="while_bool_revived")
+            else:
+                # En BEST mode, o si no hay revival, el flag se mata -> 1 iteración
+                return ClassifyResult(
+                    status="bounded",
+                    iterations_expr="1",
+                    reason_code="while_bool_kills",
+                    evidence={"var": guard.bool_var},
+                )
+    return None
 
-    # --- BOUNDED: Guard bool_var con desired=False (loop mientras false) ---
-    if guard.kind == "bool_var" and guard.bool_var and guard.desired is False:
-        summary = updates.get(guard.bool_var)
-        if summary and summary.kills_guard_must:
-            return ClassifyResult(
-                status="bounded",
-                iterations_expr="1",
-                reason_code="while_bool_kills",
-                evidence={"var": guard.bool_var},
-            )
+
+def classify_while(
+    guard: GuardInfo,
+    updates: Dict[str, VarUpdateSummary],
+    mode: str,
+    parent_context: Optional[Dict] = None,
+    while_line: int = 0,
+) -> ClassifyResult:
+    """
+    Clasifica el WHILE como bounded, unbounded o unknown.
+
+    Args:
+        guard: GuardInfo del guard
+        updates: Dict por variable con VarUpdateSummary
+        mode: "worst" | "best" | "avg"
+        parent_context: Bloque padre (para valor inicial)
+        while_line: Línea del while
+
+    Returns:
+        ClassifyResult con status, iterations_expr, reason_code, evidence
+
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
+    """
+    # --- UNBOUNDED: Guard constante True ---
+    print(f"DEBUG CLASSIFIER: guard={guard.kind}, atom={guard.atoms if hasattr(guard, 'atoms') else None}, bool_var={guard.bool_var}, desired={guard.desired}")
+    if guard.kind == "const" and guard.const_value is True:
+        return ClassifyResult(
+            status="unbounded",
+            reason_code="while_const_true",
+            evidence={},
+        )
+
+    # --- UNBOUNDED/BOUNDED: Guard booleano ---
+    if guard.kind == "bool_var":
+        res = _classify_bool_guard(guard, updates, parent_context, while_line, mode)
+        if res:
+            return res
 
     # --- Relacionales numéricos ---
     if guard.kind == "rel" and guard.atoms:
@@ -245,23 +292,81 @@ def classify_while(
                 evidence={"var": var_name},
             )
 
-    # --- OR: unbounded si algún disyunto bool no tiene kill must ---
-    if guard.kind == "or" and getattr(guard, "or_bool_vars", None):
-        for var in guard.or_bool_vars:
-            if not var:
-                continue
-            summary = updates.get(var)
-            if summary and not summary.kills_guard_must:
+    # --- OR: Bounded solo si TODOS los disyuntos están acotados ---
+    if guard.kind == "or":
+        sub_results = []
+        components = []
+        if getattr(guard, "atoms", None):
+            for atom in guard.atoms:
+                components.append(GuardInfo(kind="rel", atoms=[atom], vars_used=guard.vars_used))
+        if getattr(guard, "or_bool_vars", None):
+             for bvar in guard.or_bool_vars:
+                 components.append(GuardInfo(kind="bool_var", bool_var=bvar, desired=True, vars_used=guard.vars_used))
+        
+        if not components:
+            return ClassifyResult(status="unknown", reason_code="while_or_empty")
+
+        for comp in components:
+            res = classify_while(comp, updates, mode, parent_context, while_line)
+            sub_results.append(res)
+            
+        if all(r.status == "bounded" for r in sub_results):
+            exprs = [str(r.iterations_expr) for r in sub_results if r.iterations_expr]
+            if not exprs:
+                return ClassifyResult(status="unknown", reason_code="while_or_no_expr")
+            return ClassifyResult(
+                status="bounded",
+                iterations_expr=f"Max({', '.join(exprs)})",
+                reason_code="while_or_bounded",
+                evidence={"sub_results": len(sub_results)}
+            )
+        
+        if any(r.status == "unbounded" for r in sub_results):
+            unb = next(r for r in sub_results if r.status == "unbounded")
+            return ClassifyResult(status="unbounded", reason_code=unb.reason_code, evidence=unb.evidence)
+            
+        return ClassifyResult(status="unknown", reason_code="while_or_unknown")
+
+    # --- AND: Bounded si AL MENOS uno está acotado ---
+    if guard.kind == "and":
+        bounded_results = []
+        components = []
+        if getattr(guard, "atoms", None):
+            for atom in guard.atoms:
+                components.append(GuardInfo(kind="rel", atoms=[atom], vars_used=guard.vars_used))
+        
+        # En AND, recopilar variables booleanas también (si existen)
+        if hasattr(guard, "and_bool_vars"):
+            for bvar in guard.and_bool_vars:
+                components.append(GuardInfo(kind="bool_var", bool_var=bvar, desired=True, vars_used=guard.vars_used, atoms=[]))
+        
+        for comp in components:
+            res = classify_while(comp, updates, mode, parent_context, while_line)
+            if res.status == "bounded":
+                bounded_results.append(res)
+        
+        if bounded_results:
+            if mode == "best":
+                # PRIORIDAD: Si alguno es un flag killed (1 iteración), tomarlo
+                for r in bounded_results:
+                    if str(r.iterations_expr) == "1":
+                        return r
+                
+                # Si no hay 1, tomar el mínimo de las expresiones (Min)
+                if len(bounded_results) == 1:
+                    return bounded_results[0]
+                
+                exprs = [str(r.iterations_expr) for r in bounded_results if r.iterations_expr]
                 return ClassifyResult(
-                    status="unbounded",
-                    reason_code="while_or_no_progress",
-                    evidence={"var": var},
+                    status="bounded",
+                    iterations_expr=f"Min({', '.join(exprs)})",
+                    reason_code="while_and_bounded_best",
+                    evidence={"bounded_count": len(bounded_results)}
                 )
 
-    if guard.kind == "or":
-        return ClassifyResult(status="unknown", reason_code="while_or")
+            # WORST case: primer acotado (estructural)
+            return bounded_results[0]
 
-    if guard.kind == "and":
-        return ClassifyResult(status="unknown", reason_code="while_and")
+        return ClassifyResult(status="unknown", reason_code="while_and_unknown")
 
     return ClassifyResult(status="unknown", reason_code="while_unbounded_unknown")

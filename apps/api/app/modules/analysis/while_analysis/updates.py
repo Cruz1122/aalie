@@ -9,6 +9,7 @@ Version: 0.1.0
 """
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set
+from .guard import _is_literal_true, _is_literal_false
 
 
 @dataclass
@@ -26,6 +27,7 @@ class VarUpdateSummary:
     must_updates: List[Dict[str, Any]] = field(default_factory=list)
     may_updates: List[Dict[str, Any]] = field(default_factory=list)
     kills_guard_must: bool = False
+    revives_guard_may: bool = False
     monotone_progress_must: bool = False
 
 
@@ -77,19 +79,10 @@ def _parse_update(value: Any, var_name: str) -> Optional[Dict[str, Any]]:
     op = value.get("op", "") or value.get("operator", "")
 
     # Boolean: flag <- false / flag <- true (Literal, Number o Identifier)
-    if t in ("literal", "number"):
-        v = value.get("value")
-        if v is False or v == "false" or v == "F":
-            return {"type": "bool_assign", "value": False, "kills_guard": True}
-        if v is True or v == "true" or v == "T":
-            return {"type": "bool_assign", "value": True, "kills_guard": False}
-    # Parser puede producir Identifier name="false"/"true" para constantes booleanas
-    if t == "identifier":
-        name = (value.get("name", "") or "").lower()
-        if name in ("false", "f"):
-            return {"type": "bool_assign", "value": False, "kills_guard": True}
-        if name in ("true", "t"):
-            return {"type": "bool_assign", "value": True, "kills_guard": False}
+    if _is_literal_false(value):
+        return {"type": "bool_assign", "value": False, "kills_guard": True}
+    if _is_literal_true(value):
+        return {"type": "bool_assign", "value": True, "kills_guard": False}
 
     # Unary: flag <- not flag
     if t == "unary":
@@ -223,6 +216,12 @@ def _must_may_stmt(node: Any, var_name: str) -> tuple[List[Dict], List[Dict]]:
         return must_all, list({id(x): x for x in may_all}.values())
     if nt == "if":
         return _must_may_if(node, var_name)
+    if nt in ("while", "repeat"):
+        # Todo dentro de un bucle anidado se considera may update (ya que podría ejecutarse 0 veces)
+        _, may_nested = _must_may_stmt(node.get("body", {}), var_name)
+        # También extraer del bloque interno directamente por si no es un "block" Node
+        return [], may_nested
+
     if nt == "assign":
         target = node.get("target", {})
         if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
@@ -230,6 +229,7 @@ def _must_may_stmt(node: Any, var_name: str) -> tuple[List[Dict], List[Dict]]:
                 parsed = _parse_update(node.get("value"), var_name)
                 if parsed:
                     return [parsed], [parsed]
+                    
     return [], []
 
 
@@ -245,6 +245,7 @@ def _compute_summary_for_var(
     """
     must, may = _must_may_stmt(body, var_name)
     kills_guard_must = False
+    revives_guard_may = False
     monotone_progress_must = False
 
     for u in must:
@@ -256,10 +257,18 @@ def _compute_summary_for_var(
         if (u.get("type") == "num" or u.get("type") == "mod_decrease") and u.get("monotone"):
             monotone_progress_must = True
 
+    for u in may:
+        if u.get("type") == "bool_assign":
+            if u.get("value") is True and guard_desired is True:
+                revives_guard_may = True
+            elif u.get("value") is False and guard_desired is False:
+                revives_guard_may = True
+
     return VarUpdateSummary(
         must_updates=must,
         may_updates=may,
         kills_guard_must=kills_guard_must,
+        revives_guard_may=revives_guard_may,
         monotone_progress_must=monotone_progress_must,
     )
 
@@ -288,8 +297,16 @@ def summarize_updates(
     for var_name in vars_used:
         if not var_name:
             continue
+        
+        # Determinar si esta variable es la que controla el bucle como booleano
         desired = None
-        if guard_info and getattr(guard_info, "bool_var", None) == var_name:
-            desired = getattr(guard_info, "desired", None)
+        if guard_info:
+            if getattr(guard_info, "bool_var", None) == var_name:
+                desired = getattr(guard_info, "desired", True)
+            elif hasattr(guard_info, "and_bool_vars") and var_name in guard_info.and_bool_vars:
+                # En un AND, si la variable está sola o comparada con TRUE, el deseado es TRUE
+                # TODO: Extraer de la comparación real (por ahora asumimos TRUE para Bubble Sort)
+                desired = True
+        
         result[var_name] = _compute_summary_for_var(body, var_name, desired)
     return result
