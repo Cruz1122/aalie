@@ -61,6 +61,45 @@ NESTED_IF_IN_FOR = """nestedIf(A, n) BEGIN
 END
 """
 
+# Bubble sort mejorado con bandera de intercambio
+BUBBLE_SORT_MEJORADO = """bubbleSortMejorado(A, n) BEGIN
+  intercambiado <- VERDADERO;
+  i <- 1;
+  WHILE (i < n AND intercambiado) DO BEGIN
+    intercambiado <- FALSO;
+    FOR j <- 1 TO n - i DO BEGIN
+      IF (A[j] > A[j+1]) THEN BEGIN
+        temp <- A[j];
+        A[j] <- A[j+1];
+        A[j+1] <- temp;
+        intercambiado <- VERDADERO;
+      END
+    END
+    i <- i + 1;
+  END
+END
+"""
+
+# WHILE con múltiples condiciones AND (control + datos1 + datos2)
+MULTI_AND_DATA_WHILE = """multiAndData(A, B, n) BEGIN
+  i <- 1;
+  WHILE (i <= n AND A[i] > 0 AND B[i] > 0) DO BEGIN
+    x <- A[i] + B[i];
+    i <- i + 1;
+  END
+END
+"""
+
+# WHILE con múltiples límites simbólicos sobre la misma variable de control
+MULTI_LIMIT_WHILE = """multiLimit(A, n, m) BEGIN
+  i <- 1;
+  WHILE (i <= n AND i <= m) DO BEGIN
+    x <- A[i];
+    i <- i + 1;
+  END
+END
+"""
+
 
 class TestComplexAlgorithms:
     """Tests para algoritmos complejos con casos raros."""
@@ -129,3 +168,48 @@ class TestComplexAlgorithms:
                 data = result.get("worst")
             if isinstance(data, dict):
                 assert data.get("ok") and "byLine" in data and "totals" in data
+
+    def test_bubble_sort_mejorado_all_cases(self):
+        """Bubble sort mejorado: worst/avg Θ(n²), best Θ(n)."""
+        result = analyze_algorithm(BUBBLE_SORT_MEJORADO, mode="all")
+        assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
+        assert_all_cases_complexity(
+            result,
+            "quadratic",
+            expected_best="linear",
+            expected_avg="quadratic",
+            name="BubbleSortMejorado",
+        )
+        # Sanity check: estructura mínima por caso
+        for case in ("worst", "best", "avg"):
+            data = result.get(case)
+            if data == "same_as_worst":
+                data = result.get("worst")
+            if isinstance(data, dict):
+                assert data.get("ok") and "byLine" in data and "totals" in data
+
+    def test_multi_and_data_while_cases(self):
+        """WHILE con i<=n AND A[i]>0 AND B[i]>0: worst/avg O(n), best O(1) (salida temprana)."""
+        result = analyze_algorithm(MULTI_AND_DATA_WHILE, mode="all")
+        assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
+        # Worst lineal; best constante (caso prefijo positivo), avg lineal en el motor actual
+        assert_all_cases_complexity(
+            result,
+            "linear",
+            expected_best="constant",
+            expected_avg="linear",
+            name="Multi AND data WHILE",
+        )
+
+    def test_multi_limit_while_linear_all_cases(self):
+        """WHILE con i<=n AND i<=m: worst/avg O(min(n,m)) ~ lineal; best O(1) (salida temprana)."""
+        result = analyze_algorithm(MULTI_LIMIT_WHILE, mode="all")
+        assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
+        # No asumimos que solo exista n: basta con que la clase sea lineal para worst/avg
+        assert_all_cases_complexity(
+            result,
+            "linear",
+            expected_best="constant",
+            expected_avg="linear",
+            name="Multi limit WHILE",
+        )

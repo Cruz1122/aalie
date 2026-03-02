@@ -208,7 +208,6 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     print(f"[IterativeAnalyzer] Advertencia: Variables de iteración {replaced} eliminadas de expresión final (sustituidas por 0)")
             except Exception as e:
                 print(f"[IterativeAnalyzer] Error al limpiar variables de iteración: {e}")
-                from sympy import Integer as SymInteger
                 for sym in list(expr.free_symbols):
                     if getattr(sym, "name", "") in iteration_vars:
                         expr = expr.subs(sym, SymInteger(0))

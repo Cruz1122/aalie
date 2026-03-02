@@ -104,9 +104,11 @@ def _collect_bool_vars(expr: Any) -> Set[str]:
     et = expr.get("type", "").lower()
     op = (expr.get("op") or expr.get("operator") or "").lower()
     if et == "identifier":
-        # Solo recolectar si es la guarda completa (no en binarios donde ya se maneja)
-        # Pero and/or recurren aquí, así que es complicado.
-        # Por ahora lo dejamos pero con cuidado.
+        # Considerar cualquier identificador “suelto” dentro del guard como candidato a flag booleano.
+        # Esto permite detectar patrones como (i < n AND intercambiado) sin exigir intercambiado==VERDADERO.
+        name = expr.get("name", "")
+        if name:
+            out.add(name)
         return out
     if et == "binary":
         left = expr.get("left")

@@ -649,6 +649,74 @@ class WhileRepeatVisitor:
         
         return False
     
+    def _is_positive_prefix_guard(self, test: Dict[str, Any], var_name: str) -> bool:
+        """
+        Detecta el patrón específico de prefijo positivo:
+        WHILE (i <= n AND A[i] > 0)
+        
+        En este caso, bajo un modelo razonable donde la probabilidad de A[i] > 0
+        no tiende a 1 con n, la esperanza de iteraciones es O(1).
+        """
+        if not isinstance(test, dict):
+            return False
+        
+        test_type = test.get("type", "").lower()
+        op = (test.get("op", "") or test.get("operator", "")).lower()
+        if test_type not in ("binary", "binaryop") or op not in ("and", "&&"):
+            return False
+        
+        left = test.get("left", {})
+        right = test.get("right", {})
+        
+        def is_var_leq_limit(node: Dict[str, Any]) -> bool:
+            if not isinstance(node, dict):
+                return False
+            nt = node.get("type", "").lower()
+            if nt not in ("binary", "binaryop"):
+                return False
+            op2 = node.get("op", "") or node.get("operator", "")
+            if op2 not in ("<", "<="):
+                return False
+            l = node.get("left", {})
+            if not (isinstance(l, dict) and l.get("type", "").lower() == "identifier"):
+                return False
+            return l.get("name", "") == var_name
+        
+        def is_array_gt_zero(node: Dict[str, Any]) -> bool:
+            if not isinstance(node, dict):
+                return False
+            nt = node.get("type", "").lower()
+            if nt not in ("binary", "binaryop"):
+                return False
+            op3 = node.get("op", "") or node.get("operator", "")
+            if op3 not in (">", ">="):
+                return False
+            l = node.get("left", {})
+            r = node.get("right", {})
+            # Lado izquierdo: acceso a array A[i]
+            if not (isinstance(l, dict) and l.get("type", "").lower() == "index"):
+                return False
+            index = l.get("index", {})
+            if not (isinstance(index, dict) and index.get("type", "").lower() == "identifier"):
+                return False
+            if index.get("name", "") != var_name:
+                return False
+            # Lado derecho: constante 0
+            if not isinstance(r, dict):
+                return False
+            rt = r.get("type", "").lower()
+            if rt not in ("number", "literal"):
+                return False
+            val = r.get("value", 0)
+            try:
+                return float(val) == 0.0
+            except Exception:
+                return False
+        
+        return (is_var_leq_limit(left) and is_array_gt_zero(right)) or (
+            is_var_leq_limit(right) and is_array_gt_zero(left)
+        )
+    
     def _has_non_control_comparison(self, node: Dict[str, Any], var_name: str) -> bool:
         """
         Verifica si un nodo contiene una comparación que no es solo con la variable de control.
@@ -948,8 +1016,99 @@ class WhileRepeatVisitor:
         if isinstance(body, list):
             body = {"type": "Block", "body": body}
         L = node.get("pos", {}).get("line", 0)
+        condition_info_pre = self._extract_condition_info(test)
         
-        # 0) NUEVO CLASIFICADOR: GuardInfo + UpdateSummary + classify_while
+        # 1) VERIFICAR BEST CASE PRIMERO: Si es best case y hay condición AND con array/variable diferente
+        # Para insertion sort: WHILE (j > 0 AND A[j] > key)
+        # En best case: A[j] <= key desde el inicio, entonces la condición es falsa, 0 iteraciones.
+        # IMPORTANTE: no aplicar este early-exit cuando la segunda parte es un flag booleano
+        # fijado justo antes del WHILE (ej: intercambiado <- VERDADERO; WHILE (i < n AND intercambiado)...).
+        test_op = test.get("op", "") or test.get("operator", "")
+        test_type = test.get("type", "").lower()
+        
+        if mode == "best" and test_type in ("binary", "binaryop") and test_op.lower() in ("and", "&&"):
+            # Verificar si hay una parte que no depende solo de la variable de control
+            left = test.get("left", {})
+            right = test.get("right", {})
+            
+            # Primero extraer información para obtener var_name (necesitamos saber cuál es la variable de control)
+            condition_info = condition_info_pre
+            if condition_info:
+                var_name = condition_info.get("variable")
+            else:
+                # Si no se puede extraer, intentar detectar var_name de otra manera
+                # Por ejemplo, buscar en la parte izquierda que suele ser la comparación con la variable
+                if isinstance(left, dict):
+                    left_left = left.get("left", {})
+                    if isinstance(left_left, dict) and left_left.get("type", "").lower() == "identifier":
+                        var_name = left_left.get("name", "")
+                    else:
+                        var_name = None
+                else:
+                    var_name = None
+            
+            if var_name:
+                # Verificar si alguna parte tiene acceso a array u otra variable
+                left_result = self._has_non_control_comparison(left, var_name)
+                right_result = self._has_non_control_comparison(right, var_name)
+                has_array_or_other_var = left_result or right_result
+
+                # Si la parte "no de control" es un flag booleano fijado antes del WHILE,
+                # NO debemos aplicar early-exit a 0 iteraciones. Ejemplo: intercambiado <- VERDADERO;
+                # WHILE (i < n AND intercambiado) ...
+                def _is_bool_flag_fixed_before(var_node: Dict[str, Any]) -> bool:
+                    if not isinstance(var_node, Dict):
+                        return False
+                    if var_node.get("type", "").lower() != "identifier":
+                        return False
+                    flag_name = var_node.get("name", "")
+                    if not flag_name or flag_name == var_name:
+                        return False
+                    # Buscar valor inicial antes de la línea del while
+                    initial_val = self._find_initial_value_of_var(flag_name, L, parent_context)
+                    if not initial_val:
+                        return False
+                    return initial_val.upper() in ("VERDADERO", "FALSO", "TRUE", "FALSE")
+
+                non_control_is_fixed_flag = False
+                if isinstance(left, Dict) and left.get("type", "").lower() == "identifier":
+                    non_control_is_fixed_flag = _is_bool_flag_fixed_before(left)
+                if not non_control_is_fixed_flag and isinstance(right, Dict) and right.get("type", "").lower() == "identifier":
+                    non_control_is_fixed_flag = _is_bool_flag_fixed_before(right)
+
+                if has_array_or_other_var and not non_control_is_fixed_flag:
+                    # En best case, asumir que la parte con array/variable es falsa desde el inicio
+                    # Por lo tanto, el WHILE solo evalúa la condición una vez y sale (0 iteraciones)
+                    # Retornar información mínima para best case con 0 iteraciones
+                    return {
+                        "variable": var_name,
+                        "initial_value": None,
+                        "change_rule": {"operator": "-", "constant": "1"},
+                        "limit": "0",
+                        "operator": ">",
+                        "iterations": "0",
+                        "success": True,
+                        "mode": mode
+                    }
+        
+        # 1.5) Caso promedio especial: prefijo positivo WHILE (i <= n AND A[i] > 0)
+        # Para este patrón, la esperanza de iteraciones es O(1) (no depende de n).
+        if mode == "avg" and condition_info_pre and condition_info_pre.get("variable"):
+            var_for_avg = condition_info_pre["variable"]
+            if self._is_positive_prefix_guard(test, var_for_avg):
+                return {
+                    "variable": var_for_avg,
+                    "initial_value": None,
+                    "change_rule": {"operator": "+", "constant": "1"},
+                    "limit": condition_info_pre.get("limit", "n"),
+                    "operator": condition_info_pre.get("operator", "<="),
+                    "iterations": "1",
+                    "success": True,
+                    "mode": mode,
+                    "reason_code": "while_positive_prefix_avg",
+                }
+        
+        # 2) NUEVO CLASIFICADOR: GuardInfo + UpdateSummary + classify_while
         try:
             guard = analyze_guard(test)
             
@@ -1011,56 +1170,8 @@ class WhileRepeatVisitor:
         except Exception as e:
             print(f"[WhileRepeatVisitor] Error en classify_while: {e}")
         
-        # 1) VERIFICAR BEST CASE ANTES: Si es best case y hay condición AND con array/variable diferente
-        # Para insertion sort: WHILE (j > 0 AND A[j] > key)
-        # En best case: A[j] <= key desde el inicio, entonces la condición es falsa, 0 iteraciones
-        test_op = test.get("op", "") or test.get("operator", "")
-        test_type = test.get("type", "").lower()
-        
-        if mode == "best" and test_type in ("binary", "binaryop") and test_op.lower() in ("and", "&&"):
-            # Verificar si hay una parte que no depende solo de la variable de control
-            left = test.get("left", {})
-            right = test.get("right", {})
-            
-            # Primero extraer información para obtener var_name (necesitamos saber cuál es la variable de control)
-            condition_info = self._extract_condition_info(test)
-            if condition_info:
-                var_name = condition_info["variable"]
-            else:
-                # Si no se puede extraer, intentar detectar var_name de otra manera
-                # Por ejemplo, buscar en la parte izquierda que suele ser la comparación con la variable
-                if isinstance(left, dict):
-                    left_left = left.get("left", {})
-                    if isinstance(left_left, dict) and left_left.get("type", "").lower() == "identifier":
-                        var_name = left_left.get("name", "")
-                    else:
-                        var_name = None
-                else:
-                    var_name = None
-            
-            if var_name:
-                # Verificar si alguna parte tiene acceso a array u otra variable
-                left_result = self._has_non_control_comparison(left, var_name)
-                right_result = self._has_non_control_comparison(right, var_name)
-                has_array_or_other_var = left_result or right_result
-                
-                if has_array_or_other_var:
-                    # En best case, asumir que la parte con array/variable es falsa desde el inicio
-                    # Por lo tanto, el WHILE solo evalúa la condición una vez y sale (0 iteraciones)
-                    # Retornar información mínima para best case con 0 iteraciones
-                    return {
-                        "variable": var_name,
-                        "initial_value": None,
-                        "change_rule": {"operator": "-", "constant": "1"},
-                        "limit": "0",
-                        "operator": ">",
-                        "iterations": "0",
-                        "success": True,
-                        "mode": mode
-                    }
-        
-        # 1) Extraer información de la condición (para worst/avg case o si best case no aplica)
-        condition_info = self._extract_condition_info(test)
+        # 3) Extraer información de la condición (para worst/avg case o si best case no aplica)
+        condition_info = condition_info_pre or self._extract_condition_info(test)
         if not condition_info:
             return None
         
@@ -1145,11 +1256,15 @@ class WhileRepeatVisitor:
         if not iterations:
             return None
         
-        # 4.5) Para avg con condición AND que incluye array (ej: i>=1 AND A[i]!=x):
-        # E[iteraciones] ≈ (n+1)/2 en lugar de usar el peor caso
-        if mode == "avg" and self._has_early_exit_condition(test, var_name):
-            initial_expr = initial_value if initial_value else f"{var_name}_0"
-            iterations = f"(({initial_expr}) - ({limit}) + 2) / 2"
+        # 4.5) Ajustes específicos para caso promedio con condiciones AND que incluyen arrays
+        if mode == "avg":
+            # Prefijo positivo: WHILE (i <= n AND A[i] > 0) → esperanza O(1)
+            if self._is_positive_prefix_guard(test, var_name):
+                iterations = "1"
+            # Búsqueda lineal / patrones de early exit clásicos: E[iter] ≈ (n+1)/2
+            elif self._has_early_exit_condition(test, var_name):
+                initial_expr = initial_value if initial_value else f"{var_name}_0"
+                iterations = f"(({limit}) - ({initial_expr}) + 1) / 2"
         
         return {
             "variable": var_name,

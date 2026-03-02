@@ -2,7 +2,7 @@
 Oráculo único de aserciones semánticas para resultados de análisis de complejidad.
 Toda verificación de complejidad en tests debe usar este módulo.
 
-Author: AALIE reform (migrado desde integration/fixtures/algorithm_expectations)
+Author: Camilo Cruz (@Cruz1122)
 Version: 0.1.0
 """
 import re
@@ -54,48 +54,101 @@ def is_o1_notation(notation: str) -> bool:
     return "o(1)" in s or "θ(1)" in s or "theta(1)" in s or "ω(1)" in s or "omega(1)" in s
 
 
+def infer_complexity_class(notation: str) -> str:
+    """
+    Infere una clase de complejidad única a partir de la notación asintótica.
+    
+    Devuelve exactamente una de:
+    constant | log | linear | nlogn | quadratic | cubic | exponential | unknown
+    """
+    if not notation:
+        return "unknown"
+
+    s = notation.strip()
+    # Normalizar: minúsculas, sin backslashes ni espacios
+    s_norm = s.lower().replace("\\", "").replace(" ", "")
+
+    # Extraer expresión interna si viene como O(...), theta(...), omega(...)
+    inner = s_norm
+    for marker in ("o(", "theta(", "ω(", "omega("):
+        idx = inner.find(marker)
+        if idx != -1:
+            start = idx + len(marker)
+            end = inner.rfind(")")
+            if end > start:
+                inner = inner[start:end]
+            else:
+                inner = inner[start:]
+            break
+
+    expr = inner
+    if not expr:
+        return "unknown"
+
+    size_symbols = ["n", "m", "size", "length", "exp", "min"]
+
+    def has_size_var() -> bool:
+        return any(sym in expr for sym in size_symbols)
+
+    has_log = "log" in expr
+
+    # --- Exponential ---
+    # Patrones típicos: 2^n, a^n, exp(n), n^k con k>=4
+    if re.search(r"(2|\d+)\^n", expr) or "exp(" in expr or re.search(r"[a-z]\^\{?n\}?", expr):
+        return "exponential"
+    exp_match = re.search(r"\^\{?(\d+)\}?", expr)
+    if exp_match:
+        try:
+            k = int(exp_match.group(1))
+            if k >= 4:
+                return "exponential"
+        except ValueError:
+            pass
+
+    # --- Cubic ---
+    if re.search(r"[a-z]\^\{?3\}?", expr):
+        return "cubic"
+
+    # --- Quadratic ---
+    # Exponente 2 en alguna variable de tamaño
+    if re.search(r"[a-z]\^\{?2\}?", expr):
+        return "quadratic"
+    # Producto de dos o más variables de tamaño: tratar como al menos cuadrático
+    if has_size_var() and ("*" in expr or "cdot" in expr):
+        count = 0
+        for sym in size_symbols:
+            count += expr.count(sym)
+        if count >= 2:
+            return "quadratic"
+
+    # --- n log n ---
+    if has_log and has_size_var():
+        return "nlogn"
+
+    # --- Solo logarítmico ---
+    if has_log and not has_size_var():
+        return "log"
+
+    # --- Lineal ---
+    if has_size_var():
+        return "linear"
+
+    # --- Constante ---
+    if is_o1_notation(notation):
+        return "constant"
+
+    return "unknown"
+
+
 def _notation_has_complexity(notation: str, level: str) -> bool:
     """
-    True si la notación contiene la complejidad esperada (o mayor).
+    True si la notación tiene exactamente la complejidad esperada.
     level: constant | log | linear | nlogn | quadratic | cubic | exponential
     """
     if not notation:
         return False
-    s = notation.lower().replace("\\", "")
-    if level == "constant":
-        return is_o1_notation(notation)
-    if level == "log":
-        return "log" in s
-    if level == "nlogn":
-        return "log" in s and "n" in s
-    if level == "exponential":
-        return "^n" in s or "**n" in s or "exp(" in s or "2^n" in s or "phi" in s
-    if level == "linear":
-        return any(x in s for x in ["n", "exp", "m", "min"])
-    if level == "quadratic":
-        # Una variable al cuadrado: cualquier letra con exponente >= 2 (genérico)
-        match = re.search(r"[a-z]\^?\{?(\d+)\}?", s)
-        if match:
-            return int(match.group(1)) >= 2
-        if "²" in s or "2" in s:
-            return True
-        # Producto de 2 o más variables (genérico: Θ(a·b), Θ(n*m*k), Θ(n m), etc.)
-        # Variables = letras sueltas entre espacios/parens/*, excluyendo i,j,k
-        single_letter_vars = set(
-            re.findall(r"(?<=[\s\(*])([a-z])(?=[\s\)*])", s)
-        ) - set("ijk")
-        has_mult = "*" in s or "cdot" in s or " " in s
-        if len(single_letter_vars) >= 2 and has_mult:
-            return True
-        return False
-    if level == "cubic":
-        if "n" not in s:
-            return False
-        match = re.search(r"n\^?\{?(\d+)\}?", s)
-        if match:
-            return int(match.group(1)) >= 3
-        return "³" in s or "3" in s
-    return False
+    inferred = infer_complexity_class(notation)
+    return inferred == level
 
 
 # Alias para compatibilidad con código que usaba notation_has_complexity
