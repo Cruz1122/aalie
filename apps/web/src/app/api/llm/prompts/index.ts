@@ -3,7 +3,6 @@
  * Obtiene el prompt adecuado según el job y el locale del usuario.
  */
 
-import { classify } from "./classify";
 import { compare } from "./compare";
 import { generalBase } from "./general";
 import { parserAssistBase } from "./parser_assist";
@@ -28,8 +27,6 @@ export function getPrompt(job: LLMJob, locale?: string): string {
   const loc = normalizeLocale(locale);
 
   switch (job) {
-    case "classify":
-      return classify[loc];
     case "parser_assist":
       return parserAssistBase + getResponseLanguageInstruction(loc);
     case "general":

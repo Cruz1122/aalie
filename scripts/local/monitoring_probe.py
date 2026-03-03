@@ -166,17 +166,6 @@ def make_default_cases(base_url: str, api_key: str | None) -> list[ProbeCase]:
                 ),
                 ProbeCase(
                     method="POST",
-                    endpoint="/api/llm/classify",
-                    operation="llm_classify",
-                    payload={
-                        "source": "factorial(n) BEGIN IF (n <= 1) THEN BEGIN RETURN 1; END RETURN n * factorial(n - 1); END",
-                        "mode": "llm",
-                        "apiKey": api_key,
-                    },
-                    job="classify",
-                ),
-                ProbeCase(
-                    method="POST",
                     endpoint="/api/llm/generate-diagram",
                     operation="llm_generate_diagram",
                     payload={

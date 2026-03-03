@@ -164,23 +164,10 @@ export async function POST(req: NextRequest) {
       (job as string) === "compare",
     );
 
-    // Normalización para intent-classify: eliminar saltos y restringir valores
-    let intent: string | undefined;
-    if ((job as string) === "classify") {
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      const trimmed = typeof text === "string" ? text.trim().toLowerCase() : "";
-      intent = trimmed === "parser_assist" ? "parser_assist" : "general";
-      // Mantener coherencia en data para consumidores existentes
-      if (data?.candidates?.[0]?.content?.parts?.[0]) {
-        data.candidates[0].content.parts[0].text = intent;
-      }
-    }
-
     return new Response(
       JSON.stringify({
         ok: true,
         data,
-        ...(intent ? { intent } : {}),
         model: config.model,
       }),
       {

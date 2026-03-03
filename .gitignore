@@ -29,6 +29,7 @@ __pycache__/
 .venv/
 .env
 .env.*
+!.env.example
 **/*.egg-info/
 
 # Coverage

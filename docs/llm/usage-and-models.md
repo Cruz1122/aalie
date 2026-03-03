@@ -12,14 +12,12 @@ El sistema usa endpoints LLM en `apps/web/src/app/api/llm/*` con configuración 
 
 ```typescript
 export type LLMJob =
-  | "classify"        // Clasificación de intención para el chat
   | "parser_assist"   // Asistencia para generar/corregir código
   | "general"         // Chatbot general
   | "repair"          // Reparación de código con errores
   | "compare";        // Comparación de análisis
 
 export const GEMINI_MODELS = {
-  classify: getEnvOrDefault("LLM_MODEL_CLASSIFY", DEFAULT_GEMINI_MODELS.classify),
   parser_assist: getEnvOrDefault("LLM_MODEL_PARSER_ASSIST", DEFAULT_GEMINI_MODELS.parser_assist),
   general: getEnvOrDefault("LLM_MODEL_GENERAL", DEFAULT_GEMINI_MODELS.general),
   repair: getEnvOrDefault("LLM_MODEL_REPAIR", DEFAULT_GEMINI_MODELS.repair),
@@ -59,25 +57,12 @@ Para más información sobre internacionalización, labels de backend y el flujo
 
 | Job | Propósito | Endpoint | Modelo (env) |
 |-----|-----------|----------|--------------|
-| `classify` | Clasificación de intención del chat (`parser_assist` vs `general`) | `POST /api/llm` | `LLM_MODEL_CLASSIFY` |
 | `parser_assist` | Generación/corrección de pseudocódigo | `POST /api/llm` | `LLM_MODEL_PARSER_ASSIST` |
 | `general` | Respuesta conversacional general | `POST /api/llm` | `LLM_MODEL_GENERAL` |
 | `repair` | Reparación de código con errores | `POST /api/llm` | `LLM_MODEL_REPAIR` |
 | `compare` | Comparación sistema vs LLM | `POST /api/llm` | `LLM_MODEL_COMPARE` |
 | `recursion_diagram` | Diagrama de recursión | `POST /api/llm/recursion-diagram` | `LLM_MODEL_RECURSION_DIAGRAM` |
 | `generate_diagram` | Diagrama de flujo/trace | `POST /api/llm/generate-diagram` | `LLM_MODEL_GENERATE_DIAGRAM` |
-
-### 0. Classify (intención del chat)
-
-**Estado**: Activo en el frontend para enrutar mensajes del chat.
-
-**Propósito**: Clasificar la intención del mensaje entre `parser_assist` y `general`.
-
-**Modelo**: `gemini-2.5-flash-lite` (configurable por `LLM_MODEL_CLASSIFY`).
-
-**Nota**: Este job no reemplaza la clasificación heurística del backend Python para análisis algorítmico (`/classify`); ambos flujos son distintos.
-
----
 
 ### 1. Parser Assist
 
@@ -312,17 +297,6 @@ const response = await fetch("/api/llm/recursion-diagram", {
 - Input: $1.25 por millón de tokens
 - Output: $5.00 por millón de tokens
 
-### Gemini 2.5 Flash Lite
-
-**Usado en**: `classify`
-
-**Características**:
-- Versión ligera y rápida
-- Bueno para generación de diagramas
-- Costo bajo
-
-**Nota**: Se usa para clasificación de intención del chat.
-
 ## Endpoints de LLM
 
 ### Estructura de Endpoints
@@ -340,22 +314,12 @@ const response = await fetch("/api/llm/recursion-diagram", {
 **Request**:
 ```typescript
 {
-  "job": "classify" | "parser_assist" | "general" | "repair" | "compare",
+  "job": "parser_assist" | "general" | "repair" | "compare",
   "prompt": string,
   "chatHistory"?: Array<{ role: string; content: string }>,
   "apiKey"?: string,
   "locale"?: "es" | "en",
   "context"?: string
-}
-```
-
-**Response**:
-```typescript
-{
-  "ok": true,
-  "data": { ...respuesta Gemini... },
-  "model": string,
-  "intent"?: "parser_assist" | "general"  // solo en job classify
 }
 ```
 

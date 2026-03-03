@@ -7,12 +7,7 @@ import {
   DEFAULT_GEMINI_MODELS,
 } from "./llm-defaults";
 
-export type LLMJob =
-  | "classify"
-  | "parser_assist"
-  | "general"
-  | "repair"
-  | "compare";
+export type LLMJob = "parser_assist" | "general" | "repair" | "compare";
 
 function getEnvOrDefault(name: string, fallback: string): string {
   const value = process.env[name];
@@ -25,7 +20,6 @@ function getEnvOrDefault(name: string, fallback: string): string {
 }
 
 export const GEMINI_MODELS = {
-  classify: getEnvOrDefault("LLM_MODEL_CLASSIFY", DEFAULT_GEMINI_MODELS.classify),
   parser_assist: getEnvOrDefault(
     "LLM_MODEL_PARSER_ASSIST",
     DEFAULT_GEMINI_MODELS.parser_assist,
@@ -51,10 +45,6 @@ export const GEMINI_ENDPOINT_BASE =
 
 // Parámetros por job (temperatura, tokens). Los prompts se obtienen de ./prompts según locale.
 export const JOB_CONFIG = {
-  classify: {
-    temperature: 0,
-    maxTokens: 8,
-  },
   parser_assist: {
     temperature: 0.7,
     maxTokens: 16000,

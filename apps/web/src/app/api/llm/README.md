@@ -6,15 +6,15 @@
 
 - La lógica de selección de modelo, prompts, endpoints y helpers vive en `llm-config.ts`.
 - Los endpoints consumen exclusivamente esta configuración, asegurando consistencia y mantenibilidad.
-- El status global de todos los jobs (incluyendo el clasificador) se expone vía `/api/llm/status`.
-- Los jobs ahora son homogéneos: `classify`, `parser_assist`, `general` (puedes agregar más fácilmente).
+- El status global de todos los jobs se expone vía `/api/llm/status`.
+- Los jobs ahora son homogéneos: `parser_assist`, `general`, `repair`, `compare` (puedes agregar más fácilmente).
 - Los modelos y endpoint se controlan por variables `LLM_MODEL_*` y `GEMINI_ENDPOINT_BASE`.
 
 ### Archivos principales
 
 - `llm-config.ts`: fuente única de verdad para config de jobs/modelos/prompts.
 - `route.ts`: endpoint general para asistencia/consulta de LLM (todos los jobs).
-- `classify/route.ts`: endpoint específico para clasificación de código (usa config central como cualquier job).
+- `classify/route.ts`: endpoint específico para clasificación de código (usa backend Python y, opcionalmente, LLM).
 - `status/route.ts`: endpoint **único** de status global LLM.
 - README.md (este archivo): documentación de uso y buenas prácticas.
 
@@ -43,9 +43,8 @@
     "ok": true,
     "status": {
       "timestamp": "2025-11-01T12:00:00.000Z",
-      "config": { ... info extendida ... },
+      "config": { "...": "info extendida" },
       "jobs": {
-        "classify": "gemini-2.5-flash-lite",
         "parser_assist": "gemini-3-flash-preview",
         "general": "gemini-2.5-flash",
         "repair": "gemini-3-flash-preview",
@@ -62,7 +61,6 @@ export const DEFAULT_GEMINI_ENDPOINT_BASE =
   "https://generativelanguage.googleapis.com/v1beta/models";
 
 export const DEFAULT_GEMINI_MODELS = {
-  classify: "gemini-3-flash-preview",
   parser_assist: "gemini-2.5-flash",
   general: "gemini-3-flash-preview",
   repair: "gemini-2.5-flash",
