@@ -1661,7 +1661,11 @@ class WhileRepeatVisitor:
                 # No aplicar a patrones especiales (Euclides/binary search) o símbolos iterativos
                 reason_code_local = closure_info.get("reason_code", "")
                 pattern_local = closure_info.get("pattern")
-                if pattern_local not in ("binary_search",) and reason_code_local != "while_euclid_mod":
+                # Solo construir Sum(1,(var,start,end)) cuando hay un límite explícito.
+                # Si no hay limit (ej. while_flag_aux_increase_bound con WHILE(flag) e i<-i+1),
+                # mantener mult_expr = iterations_expr (ej. n) para no generar Sum(i,1,0)=0.
+                has_explicit_limit = limit and (not isinstance(limit, str) or limit.strip())
+                if pattern_local not in ("binary_search",) and reason_code_local != "while_euclid_mod" and has_explicit_limit:
                     var_sym = Symbol(var_name, integer=True)
                     op = str(change_rule.get("operator", "") or "")
                     const_str = str(change_rule.get("constant", "1") or "1")
