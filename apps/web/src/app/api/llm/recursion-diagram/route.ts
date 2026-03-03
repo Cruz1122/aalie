@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { GEMINI_ENDPOINT_BASE } from "../llm-config";
+import { GEMINI_DIAGRAM_MODELS, GEMINI_ENDPOINT_BASE } from "../llm-config";
 import { getRecursionDiagramSystemPrompt } from "../prompts/recursion-diagram";
 
 export const runtime = "nodejs";
@@ -91,7 +91,7 @@ IMPORTANTE:
 Devuelve SOLO el JSON con la estructura especificada.`;
 
     // Llamar a Gemini (igual que generate-diagram)
-    const model = "gemini-2.0-flash";
+    const model = GEMINI_DIAGRAM_MODELS.recursion_diagram;
     const endpoint = `${GEMINI_ENDPOINT_BASE}/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(geminiApiKey)}`;
 
     const systemInstruction = {

@@ -8,7 +8,7 @@
 - Los endpoints consumen exclusivamente esta configuración, asegurando consistencia y mantenibilidad.
 - El status global de todos los jobs (incluyendo el clasificador) se expone vía `/api/llm/status`.
 - Los jobs ahora son homogéneos: `classify`, `parser_assist`, `general` (puedes agregar más fácilmente).
-- El modo (`LOCAL` o `REMOTE`) se controla con `LLM_MODE` en variables de entorno.
+- Los modelos y endpoint se controlan por variables `LLM_MODEL_*` y `GEMINI_ENDPOINT_BASE`.
 
 ### Archivos principales
 
@@ -26,7 +26,7 @@
   ```ts
   import { getJobConfig } from "./llm-config";
   // ...
-  const config = getJobConfig("parser_assist", "REMOTE");
+  const config = getJobConfig("parser_assist", "es");
   const model = config.model;
   ```
 - Los endpoints nunca almacenan lógica de modelo o prompt localmente.
@@ -42,17 +42,38 @@
   {
     "ok": true,
     "status": {
-      "mode": "REMOTE",   // o "LOCAL"
       "timestamp": "2025-11-01T12:00:00.000Z",
       "config": { ... info extendida ... },
       "jobs": {
-        "classify": "gemini-2.0-flash-lite",
-        "parser_assist": "gemini-2.5-flash",
-        "general": "gemini-2.5-flash"
+        "classify": "gemini-2.5-flash-lite",
+        "parser_assist": "gemini-3-flash-preview",
+        "general": "gemini-2.5-flash",
+        "repair": "gemini-3-flash-preview",
+        "compare": "gemini-3-flash-preview"
       }
     }
   }
   ```
+
+### Fallback por defecto
+
+```ts
+export const DEFAULT_GEMINI_ENDPOINT_BASE =
+  "https://generativelanguage.googleapis.com/v1beta/models";
+
+export const DEFAULT_GEMINI_MODELS = {
+  classify: "gemini-3-flash-preview",
+  parser_assist: "gemini-2.5-flash",
+  general: "gemini-3-flash-preview",
+  repair: "gemini-2.5-flash",
+  compare: "gemini-2.5-flash",
+} as const;
+
+export const DEFAULT_GEMINI_DIAGRAM_MODELS = {
+  recursion_diagram: "gemini-3-flash-preview",
+  generate_diagram: "gemini-3-flash-preview",
+} as const;
+```
 - El frontend puede mostrar siempre el modelo real activo por job leyendo sólo de aquí.
 
 ### ¿Cómo agregar o modificar un job/modelo?
@@ -69,7 +90,7 @@
 - Siempre importa y usa los helpers del config central.
 - Si cambias los modelos o agregas endpoints, solo actualiza la config central y todo quedará sincronizado.
 - Haz las pruebas de status para verificar que todo se orquesta desde un solo punto.
-- Si usas el modo LOCAL, asegúrate que el modelo y endpoint estén correctamente configurados en las variables de entorno.
+- Si cambias variables de entorno en Docker, recrea el servicio para aplicar cambios.
 
 ### Ejemplo de consumo desde frontend
 

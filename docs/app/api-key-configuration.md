@@ -143,8 +143,8 @@ El sistema sigue esta prioridad para determinar qué API key usar:
 
 2. **Variables de entorno del servidor** (fallback)
    - Solo si no hay key en localStorage
-   - Configurada en `.env.local` del servidor Next.js
-   - Variable: `NEXT_PUBLIC_GEMINI_API_KEY`
+  - Configurada en `.env` del servidor Next.js
+  - Variable: `API_KEY`
 
 ### Implementación de Prioridad
 
@@ -156,13 +156,8 @@ function getEffectiveApiKey(): string | null {
     return userKey;
   }
 
-  // 2. Fallback a variable de entorno
-  const envKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-  if (envKey) {
-    return envKey;
-  }
-
-  // 3. No hay API key disponible
+  // 2. No hay API key disponible en cliente.
+  // En producción, el fallback de servidor se resuelve dentro de /api/llm/* usando process.env.API_KEY.
   return null;
 }
 ```
@@ -510,7 +505,7 @@ export async function POST(request: Request) {
   const apiKey = request.headers.get('X-API-Key');
 
   // Fallback a variable de entorno del servidor
-  const effectiveKey = apiKey || process.env.GEMINI_API_KEY;
+  const effectiveKey = apiKey || process.env.API_KEY;
 
   if (!effectiveKey) {
     return Response.json(
@@ -531,20 +526,47 @@ export async function POST(request: Request) {
 ### Frontend (Next.js)
 
 ```env
-# .env.local
+# apps/web/.env
 
-# API key pública (fallback)
-NEXT_PUBLIC_GEMINI_API_KEY=AIza...
+# Endpoint y modelos LLM por job
+GEMINI_ENDPOINT_BASE=https://generativelanguage.googleapis.com/v1beta/models
+LLM_MODEL_CLASSIFY=gemini-2.5-flash-lite
+LLM_MODEL_PARSER_ASSIST=gemini-3-flash-preview
+LLM_MODEL_GENERAL=gemini-2.5-flash
+LLM_MODEL_REPAIR=gemini-3-flash-preview
+LLM_MODEL_COMPARE=gemini-3-flash-preview
+LLM_MODEL_RECURSION_DIAGRAM=gemini-2.5-flash
+LLM_MODEL_GENERATE_DIAGRAM=gemini-2.5-flash
 
-# URL del backend
-NEXT_PUBLIC_API_URL=http://localhost:3001
+# API key de servidor para rutas /api/llm/* (opcional)
+API_KEY=
+```
+
+### Fallback por defecto (si faltan variables)
+
+```typescript
+export const DEFAULT_GEMINI_ENDPOINT_BASE =
+  "https://generativelanguage.googleapis.com/v1beta/models";
+
+export const DEFAULT_GEMINI_MODELS = {
+  classify: "gemini-3-flash-preview",
+  parser_assist: "gemini-2.5-flash",
+  general: "gemini-3-flash-preview",
+  repair: "gemini-2.5-flash",
+  compare: "gemini-2.5-flash",
+} as const;
+
+export const DEFAULT_GEMINI_DIAGRAM_MODELS = {
+  recursion_diagram: "gemini-3-flash-preview",
+  generate_diagram: "gemini-3-flash-preview",
+} as const;
 ```
 
 ### Consideraciones de Seguridad
 
-- `NEXT_PUBLIC_*` variables son expuestas al cliente
-- Solo usar para fallback, preferir API key del usuario
-- No commitear `.env.local` al repositorio
+- No exponer API keys en variables `NEXT_PUBLIC_*`
+- Preferir `API_KEY` del servidor o API key del usuario en localStorage
+- No commitear `.env`/`.env.local` al repositorio
 - Usar `.env.example` para documentar variables necesarias
 
 ## Testing

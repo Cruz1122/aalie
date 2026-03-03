@@ -1,9 +1,78 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { GEMINI_ENDPOINT_BASE } from "../llm-config";
+import { GEMINI_DIAGRAM_MODELS, GEMINI_ENDPOINT_BASE } from "../llm-config";
 import { getGenerateDiagramSystemPrompt } from "../prompts/generate-diagram";
 
 export const runtime = "nodejs";
+
+function stripCodeFences(input: string): string {
+  const fenced = input.match(/```json\s*([\s\S]*?)\s*```/i);
+  if (fenced?.[1]) return fenced[1].trim();
+  return input.trim();
+}
+
+function extractBalancedJsonObject(input: string): string | null {
+  const start = input.indexOf("{");
+  if (start < 0) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < input.length; i++) {
+    const ch = input[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === "\\") {
+        escaped = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (ch === "{") depth++;
+    if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        return input.slice(start, i + 1);
+      }
+    }
+  }
+
+  return null;
+}
+
+function parsePossiblyMalformedJson(text: string): unknown {
+  const direct = text.trim();
+  const attempts = new Set<string>();
+
+  attempts.add(direct);
+  attempts.add(stripCodeFences(direct));
+
+  const balancedDirect = extractBalancedJsonObject(direct);
+  if (balancedDirect) attempts.add(balancedDirect);
+
+  const balancedFenced = extractBalancedJsonObject(stripCodeFences(direct));
+  if (balancedFenced) attempts.add(balancedFenced);
+
+  for (const candidate of attempts) {
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      // continuar probando
+    }
+  }
+
+  throw new Error("No se pudo parsear JSON válido desde la respuesta del LLM");
+}
 
 async function callGeminiLLM(
   systemPrompt: string,
@@ -30,8 +99,7 @@ async function callGeminiLLM(
     generationConfig,
   };
   
-  // Usar el modelo general
-  const model = "gemini-2.0-flash";
+  const model = GEMINI_DIAGRAM_MODELS.generate_diagram;
   const url = `${GEMINI_ENDPOINT_BASE}/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
   
   const response = await fetch(url, {
@@ -63,6 +131,10 @@ function validateApiKey(key: string | undefined): boolean {
 export async function POST(req: NextRequest) {
   try {
     const { trace, source, case: caseType, locale, apiKey: clientApiKeyFromBody } = await req.json();
+    const hasRecursionTree =
+      Boolean(trace) &&
+      typeof trace === "object" &&
+      "recursionTree" in (trace as Record<string, unknown>);
 
     if (!trace || !source) {
       return NextResponse.json(
@@ -107,6 +179,13 @@ ${caseType}
 3) RASTRO DE EJECUCIÓN (trace):
 ${JSON.stringify(trace, null, 2)}
 
+${hasRecursionTree
+? `4) NOTA IMPORTANTE (trace recursivo):
+- El trace incluye recursionTree: úsalo como fuente principal de nodos y aristas.
+- Modela llamadas (call) y retornos (return) de forma explícita y consistente.
+- Si hay múltiples llamadas recursivas desde un nodo, crea múltiples aristas salientes.`
+: ""}
+
 IMPORTANTE: Para cada paso en trace.steps, estima microsegundos y tokens según el tipo de instrucción y su complejidad. Incluye estos valores en el objeto "stepCosts" mapeando step_number a {microseconds, tokens}.
 
 Devuelve ÚNICAMENTE un objeto JSON válido con la estructura { "graph": { "nodes": [...], "edges": [...] }, "stepCosts": { "step_number": { "microseconds": number, "tokens": number } }, "explanation": "..." }.`;
@@ -119,16 +198,30 @@ Devuelve ÚNICAMENTE un objeto JSON válido con la estructura { "graph": { "node
 
     let result: unknown;
     try {
-      result = typeof text === "string" ? JSON.parse(text) : text;
+      result = typeof text === "string" ? parsePossiblyMalformedJson(text) : text;
     } catch {
-      // Si no es JSON válido, devolver un grafo vacío y la respuesta cruda como explicación
-      result = {
-        graph: { nodes: [], edges: [] },
-        explanation:
-          typeof text === "string"
-            ? text
-            : "No se pudo interpretar la respuesta del modelo como JSON.",
-      };
+      try {
+        const normalizePrompt = `Convierte el siguiente contenido en JSON RFC8259 VÁLIDO.\n\nDevuelve SOLO JSON, sin explicación, sin markdown, sin comentarios.\n\nContenido:\n${text}`;
+        const normalized = await callGeminiLLM(
+          "Eres un normalizador de JSON. Solo devuelves JSON estricto RFC8259.",
+          normalizePrompt,
+          geminiApiKey,
+        );
+        const normalizedText = normalized?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+        result =
+          typeof normalizedText === "string"
+            ? parsePossiblyMalformedJson(normalizedText)
+            : normalizedText;
+      } catch {
+        // Si no se pudo normalizar, devolver grafo vacío y respuesta cruda
+        result = {
+          graph: { nodes: [], edges: [] },
+          explanation:
+            typeof text === "string"
+              ? text
+              : "No se pudo interpretar la respuesta del modelo como JSON.",
+        };
+      }
     }
 
     // Normalizar y validar el grafo devuelto por el modelo

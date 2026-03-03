@@ -14,6 +14,15 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ### Changed
 
 ## [1.2.0]
+### Added
+- Plantilla de entorno de ejemplo para configurar fácilmente los modelos LLM del frontend sin tocar código.
+- Documentación y script de monitoreo local para registrar rendimiento y errores de las operaciones LLM.
+- Configuración base centralizada de LLM en el frontend para unificar modelos y endpoint y evitar fallos por variables ausentes.
+
+### Fixed
+- El endpoint de trazas devuelve también información completa para algoritmos recursivos e híbridos, y los diagramas recursivos en el frontend ya no se quedan bloqueados ni fallan por respuestas JSON mal formadas del LLM.
+- El flujo de monitoreo corrige el manejo de métodos HTTP y amplía la cobertura de endpoints LLM, reduciendo errores silenciosos.
+- El frontend deja de depender de modelos LLM hardcodeados y se comporta de forma resiliente cuando faltan variables de entorno.
 
 ### Changed
 - **Prompts LLM (parser_assist y general):** Reglas de estilo canónico al generar pseudocódigo: una sola solución (1 procedimiento, 1 bloque \`pseudocode\`), versión canónica por defecto sin optimizaciones salvo petición explícita, variables convencionales (i, j, k, n, temp, etc.), máximo 3-5 comentarios cortos en el bloque, explicación breve fuera del bloque. Prioridad de bucles ajustada a "canónico" (FOR/WHILE según el algoritmo) en lugar de evitar WHILE.
@@ -22,6 +31,9 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - **Bucles WHILE:** Se determina si un bucle está acotado según la condición y cómo se actualizan las variables, y se aplican nuevos patrones para inferir la complejidad.
 - **Casos concretos:** Ajustes para que algoritmos como Bubble Sort (mejor caso) y otros con detección de tamaño y heurísticas específicas den el resultado esperado.
 - **Tests:** Más pruebas para algoritmos con límites decrecientes y bucles anidados con reinicio de variable interna, que validan las nuevas mejoras.
+
+### Removed
+- Job `simplifier` eliminado del flujo LLM (tipos, configuración y documentación asociada), junto con su prompt y las claves de i18n obsoletas, para simplificar la superficie de configuración.
 
 ## [1.1.5]
 

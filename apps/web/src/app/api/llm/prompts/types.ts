@@ -8,7 +8,6 @@ export type LLMJob =
   | "classify"
   | "parser_assist"
   | "general"
-  | "simplifier"
   | "repair"
   | "compare";
 

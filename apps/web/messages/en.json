@@ -86,9 +86,7 @@
       "finalizing": "Finalizing analysis...",
       "complete": "Analysis complete",
       "errorOccurred": "An error occurred",
-      "generatingPolynomial": "Generating polynomial form...",
-      "simplifyingMath": "Simplifying mathematical expressions...",
-      "analyzingWithoutLLM": "Analyzing (without LLM simplification)..."
+      "generatingPolynomial": "Generating polynomial form..."
     },
     "algorithmType": {
       "iterative": "Iterative",
