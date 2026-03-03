@@ -43,6 +43,25 @@ COMPLEX_INDEXED_ARRAY = """doubleLoop(n) BEGIN
 END
 """
 
+# Bubble sort mejorado con bandera en condición AND usando igualdad explícita
+BUBBLE_SORT_FLAG_EQ = """ordenamientoBurbujaMejorado(A, n) BEGIN
+  i <- 1;
+  intercambiado <- VERDADERO;
+  WHILE (i < n AND intercambiado = VERDADERO) DO BEGIN
+    intercambiado <- FALSO;
+    FOR j <- 1 TO n - i DO BEGIN
+      IF (A[j] > A[j+1]) THEN BEGIN
+        temp <- A[j];
+        A[j] <- A[j+1];
+        A[j+1] <- temp;
+        intercambiado <- VERDADERO;
+      END
+    END
+    i <- i + 1;
+  END
+END
+"""
+
 # FOR con IF anidados (3 ramas) → O(n)
 NESTED_IF_IN_FOR = """nestedIf(A, n) BEGIN
   FOR i <- 1 TO n DO BEGIN
@@ -58,6 +77,60 @@ NESTED_IF_IN_FOR = """nestedIf(A, n) BEGIN
       x <- 0;
     END
   END
+END
+"""
+
+# Bubble sort mejorado con bandera de intercambio
+BUBBLE_SORT_MEJORADO = """bubbleSortMejorado(A, n) BEGIN
+  intercambiado <- VERDADERO;
+  i <- 1;
+  WHILE (i < n AND intercambiado) DO BEGIN
+    intercambiado <- FALSO;
+    FOR j <- 1 TO n - i DO BEGIN
+      IF (A[j] > A[j+1]) THEN BEGIN
+        temp <- A[j];
+        A[j] <- A[j+1];
+        A[j+1] <- temp;
+        intercambiado <- VERDADERO;
+      END
+    END
+    i <- i + 1;
+  END
+END
+"""
+
+# WHILE con múltiples condiciones AND (control + datos1 + datos2)
+MULTI_AND_DATA_WHILE = """multiAndData(A, B, n) BEGIN
+  i <- 1;
+  WHILE (i <= n AND A[i] > 0 AND B[i] > 0) DO BEGIN
+    x <- A[i] + B[i];
+    i <- i + 1;
+  END
+END
+"""
+
+# WHILE con múltiples límites simbólicos sobre la misma variable de control
+MULTI_LIMIT_WHILE = """multiLimit(A, n, m) BEGIN
+  i <- 1;
+  WHILE (i <= n AND i <= m) DO BEGIN
+    x <- A[i];
+    i <- i + 1;
+  END
+END
+"""
+
+# WHILE anidado con reinicio de variable interna: Σ_{i=1}^{n} i → Θ(n²)
+RESET_INNER_WHILE = """reinicioInterno(n) BEGIN
+    i <- 1;
+    j <- 1;
+    WHILE (i <= n) DO BEGIN
+        j <- 1;
+        WHILE (j <= i) DO BEGIN
+            x <- x + 1;
+            j <- j + 1;
+        END
+        i <- i + 1;
+    END
 END
 """
 
@@ -129,3 +202,67 @@ class TestComplexAlgorithms:
                 data = result.get("worst")
             if isinstance(data, dict):
                 assert data.get("ok") and "byLine" in data and "totals" in data
+
+    def test_bubble_sort_mejorado_all_cases(self):
+        """Bubble sort mejorado: worst/avg Θ(n²), best Θ(n)."""
+        result = analyze_algorithm(BUBBLE_SORT_MEJORADO, mode="all")
+        assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
+        assert_all_cases_complexity(
+            result,
+            "quadratic",
+            expected_best="linear",
+            expected_avg="quadratic",
+            name="BubbleSortMejorado",
+        )
+        # Sanity check: estructura mínima por caso
+        for case in ("worst", "best", "avg"):
+            data = result.get(case)
+            if data == "same_as_worst":
+                data = result.get("worst")
+            if isinstance(data, dict):
+                assert data.get("ok") and "byLine" in data and "totals" in data
+
+    def test_bubble_sort_flag_eq_best_linear(self):
+        """Bubble sort con bandera en condición AND (intercambiado = VERDADERO) debe ser lineal en best."""
+        result = analyze_algorithm(BUBBLE_SORT_FLAG_EQ, mode="all")
+        assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
+        # Peor caso cuadrático, mejor caso lineal, promedio cuadrático.
+        assert_all_cases_complexity(
+            result,
+            "quadratic",
+            expected_best="linear",
+            expected_avg="quadratic",
+            name="BubbleSortFlagEq",
+        )
+
+    def test_multi_and_data_while_cases(self):
+        """WHILE con i<=n AND A[i]>0 AND B[i]>0: worst/avg O(n), best O(1) (salida temprana)."""
+        result = analyze_algorithm(MULTI_AND_DATA_WHILE, mode="all")
+        assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
+        # Worst lineal; best constante (caso prefijo positivo), avg lineal en el motor actual
+        assert_all_cases_complexity(
+            result,
+            "linear",
+            expected_best="constant",
+            expected_avg="linear",
+            name="Multi AND data WHILE",
+        )
+
+    def test_multi_limit_while_linear_all_cases(self):
+        """WHILE con i<=n AND i<=m: worst/avg O(min(n,m)) ~ lineal; best O(1) (salida temprana)."""
+        result = analyze_algorithm(MULTI_LIMIT_WHILE, mode="all")
+        assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
+        # No asumimos que solo exista n: basta con que la clase sea lineal para worst/avg
+        assert_all_cases_complexity(
+            result,
+            "linear",
+            expected_best="constant",
+            expected_avg="linear",
+            name="Multi limit WHILE",
+        )
+
+    def test_reset_inner_while_quadratic(self):
+        """WHILE externo i<=n y WHILE interno j<=i con reinicio: Θ(n²)."""
+        result = analyze_algorithm(RESET_INNER_WHILE, mode="all")
+        assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
+        assert_all_cases_complexity(result, "quadratic", name="Reset inner while")

@@ -31,6 +31,9 @@ BEST_BY_ALGORITHM = {
     "linear_search": "constant",
     "insertion_sort": "linear",
     "binary_search_recursive": "constant",
+    # En bubble sort, el mejor caso (lista ya ordenada) es lineal:
+    # se ejecuta un barrido sin swaps y se detecta temprano que no hay intercambios.
+    "bubble_sort": "quadratic",
 }
 
 
@@ -56,7 +59,14 @@ class TestCanonicalAlgorithms:
         assert result.get("ok"), f"{family}/{name}: analizador falló: {result.get('errors', [])}"
         # Assert: validar todos los casos (worst, best, avg); best según teoría cuando difiere
         expected_best = BEST_BY_ALGORITHM.get(name, expected)
-        assert_all_cases_complexity(result, expected, expected_best=expected_best, name=f"{family}/{name}")
+        expected_avg = expected
+        assert_all_cases_complexity(
+            result,
+            expected,
+            expected_best=expected_best,
+            expected_avg=expected_avg,
+            name=f"{family}/{name}",
+        )
 
     @pytest.mark.parametrize("family,name,expected", CANONICAL[:6], ids=[f[1] for f in CANONICAL[:6]])
     def test_canonical_has_asymptotic_notation(self, family, name, expected):

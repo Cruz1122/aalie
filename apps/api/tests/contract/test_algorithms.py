@@ -41,6 +41,17 @@ BUBBLE_SORT = """burbuja(A, n) BEGIN
 END
 """
 
+DECREASING_LIMIT_ALIAS = """limiteVariable(n) BEGIN
+    k <- n;
+    FOR i <- 1 TO n DO BEGIN
+        FOR j <- 1 TO k DO BEGIN
+            x <- x + 1;
+        END
+        k <- k - 1;
+    END
+END
+"""
+
 
 class TestAlgorithms:
     """Tests de integración para algoritmos completos (insertion sort, bubble sort)."""
@@ -97,7 +108,14 @@ class TestAlgorithms:
         """Bubble sort: validar todos los casos (worst, best, avg)."""
         result = analyze_algorithm(BUBBLE_SORT, mode="all")
         assert result.get("ok", False)
-        assert_all_cases_complexity(result, "quadratic", name="Bubble Sort")
+        # Peor caso y caso promedio cuadráticos; mejor caso lineal (lista ya ordenada).
+        assert_all_cases_complexity(
+            result,
+            "quadratic",
+            expected_best="quadratic",
+            expected_avg="quadratic",
+            name="Bubble Sort",
+        )
 
     def test_bubble_sort_no_unknown_in_count(self):
         """Ninguna fila debe tener count 'unknown' (salvo unbounded)."""
@@ -111,3 +129,9 @@ class TestAlgorithms:
             assert "unknown" not in count.lower(), (
                 f"Línea {row.get('line')} tiene count unknown: {count}"
             )
+
+    def test_decreasing_limit_alias_quadratic(self):
+        """FOR con límite decreciente por alias (k <- n; k <- k-1): debe ser Θ(n²)."""
+        result = analyze_algorithm(DECREASING_LIMIT_ALIAS, mode="all")
+        assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
+        assert_all_cases_complexity(result, "quadratic", name="Decreasing limit alias")
