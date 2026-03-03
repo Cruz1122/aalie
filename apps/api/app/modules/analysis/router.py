@@ -106,14 +106,13 @@ def analyze_dummy() -> Dict[str, Any]:
 def analyze_trace(payload: TraceRequest = Body(...)) -> Dict[str, Any]:
     """
     Genera un rastro de ejecución paso a paso del pseudocódigo.
-    Para algoritmos iterativos: devuelve trace completo con pasos.
-    Para algoritmos recursivos/híbridos: devuelve metadatos mínimos sin trace detallado.
+    Devuelve trace completo con pasos para iterativos, recursivos e híbridos.
     
     Args:
         payload: Solicitud con código fuente, caso y tamaño de entrada
         
     Returns:
-        Rastro de ejecución con pasos detallados (iterativos) o metadatos (recursivos/híbridos)
+        Rastro de ejecución con pasos detallados y metadatos de apoyo
         
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
@@ -137,43 +136,36 @@ def analyze_trace(payload: TraceRequest = Body(...)) -> Dict[str, Any]:
         classification_result = classify_algo(ast=ast)
         algorithm_kind = classification_result.get("kind", "unknown")
         
-        # 3) Determinar si construir trace detallado
-        is_recursive_or_hybrid = algorithm_kind in ["recursive", "hybrid"]
-        
-        # 4) Ejecutar y generar rastro
-        if is_recursive_or_hybrid:
-            # Para recursivos/híbridos: no construir trace detallado
-            # Solo devolver metadatos básicos
-            return {
-                "ok": True,
-                "algorithmKind": algorithm_kind,
-                "trace": None,
-                "metadata": {
-                    "pseudocode": payload.source,
-                    "inputSize": payload.input_size,
-                    "case": payload.case,
-                    "message": "Para algoritmos recursivos e híbridos, el diagrama se genera en el frontend mediante LLM"
-                }
-            }
-        else:
-            # Para iterativos: trace completo como siempre
-            locale_val = (payload.locale or "en").lower()[:2]
-            if locale_val not in ("en", "es"):
-                locale_val = "en"
-            executor = CodeExecutor(
-                ast,
-                payload.input_size,
-                payload.case,
-                initial_variables=payload.initial_variables,
-                locale=locale_val,
-            )
-            trace = executor.execute()
-            
-            return {
-                "ok": True,
-                "trace": trace,
-                "algorithmKind": algorithm_kind
-            }
+        # 3) Ejecutar y generar rastro para cualquier tipo de algoritmo
+        locale_val = (payload.locale or "en").lower()[:2]
+        if locale_val not in ("en", "es"):
+            locale_val = "en"
+        executor = CodeExecutor(
+            ast,
+            payload.input_size,
+            payload.case,
+            initial_variables=payload.initial_variables,
+            locale=locale_val,
+        )
+        trace = executor.execute()
+
+        metadata_message = (
+            "Para algoritmos recursivos e híbridos, también puedes usar /api/llm/recursion-diagram para una visualización de árbol de llamadas por LLM"
+            if algorithm_kind in ["recursive", "hybrid"]
+            else "Trace generado correctamente"
+        )
+
+        return {
+            "ok": True,
+            "trace": trace,
+            "algorithmKind": algorithm_kind,
+            "metadata": {
+                "pseudocode": payload.source,
+                "inputSize": payload.input_size,
+                "case": payload.case,
+                "message": metadata_message,
+            },
+        }
         
     except Exception as e:
         return {

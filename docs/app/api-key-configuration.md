@@ -530,17 +530,36 @@ export async function POST(request: Request) {
 
 # Endpoint y modelos LLM por job
 GEMINI_ENDPOINT_BASE=https://generativelanguage.googleapis.com/v1beta/models
-LLM_MODEL_CLASSIFY=gemini-2.0-flash-lite
-LLM_MODEL_PARSER_ASSIST=gemini-2.5-flash
+LLM_MODEL_CLASSIFY=gemini-2.5-flash-lite
+LLM_MODEL_PARSER_ASSIST=gemini-3-flash-preview
 LLM_MODEL_GENERAL=gemini-2.5-flash
-LLM_MODEL_SIMPLIFIER=gemini-2.5-flash
-LLM_MODEL_REPAIR=gemini-2.5-flash
-LLM_MODEL_COMPARE=gemini-2.5-pro
-LLM_MODEL_RECURSION_DIAGRAM=gemini-2.0-flash
-LLM_MODEL_GENERATE_DIAGRAM=gemini-2.0-flash
+LLM_MODEL_REPAIR=gemini-3-flash-preview
+LLM_MODEL_COMPARE=gemini-3-flash-preview
+LLM_MODEL_RECURSION_DIAGRAM=gemini-2.5-flash
+LLM_MODEL_GENERATE_DIAGRAM=gemini-2.5-flash
 
 # API key de servidor para rutas /api/llm/* (opcional)
 API_KEY=
+```
+
+### Fallback por defecto (si faltan variables)
+
+```typescript
+export const DEFAULT_GEMINI_ENDPOINT_BASE =
+  "https://generativelanguage.googleapis.com/v1beta/models";
+
+export const DEFAULT_GEMINI_MODELS = {
+  classify: "gemini-3-flash-preview",
+  parser_assist: "gemini-2.5-flash",
+  general: "gemini-3-flash-preview",
+  repair: "gemini-2.5-flash",
+  compare: "gemini-2.5-flash",
+} as const;
+
+export const DEFAULT_GEMINI_DIAGRAM_MODELS = {
+  recursion_diagram: "gemini-3-flash-preview",
+  generate_diagram: "gemini-3-flash-preview",
+} as const;
 ```
 
 ### Consideraciones de Seguridad

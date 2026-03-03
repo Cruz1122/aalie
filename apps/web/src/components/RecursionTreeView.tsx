@@ -52,7 +52,6 @@ export default function RecursionTreeView({
     // Generar diagrama solo una vez al montar, evitando spam por StrictMode o re-renders
     if (!hasGeneratedRef.current && pseudocode && !isGeneratingRef.current) {
       hasGeneratedRef.current = true;
-      isGeneratingRef.current = true;
       generateDiagram();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -13,6 +13,23 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Changed
 
+## [Unreleased] <-- Por Asignar Version (Trace/Diagramas + Config LLM)
+
+### Added
+
+- Archivo de ejemplo de entorno `apps/web/.env_example` con variables `GEMINI_ENDPOINT_BASE` y `LLM_MODEL_*` para facilitar la configuración inicial del frontend.
+
+### Fixed
+
+- Endpoint de trace `apps/api/app/modules/analysis/router.py`: ahora devuelve `trace` también para algoritmos recursivos e híbridos (antes podía regresar `trace: null`), incluyendo metadatos de apoyo.
+- Generación de diagramas recursivos en frontend `apps/web/src/components/RecursionTreeView.tsx`: corregido el bloqueo de generación para evitar que el flujo quedara marcado como "generando" antes de iniciar la solicitud.
+- Endpoint `apps/web/src/app/api/llm/generate-diagram/route.ts`: reforzado el parseo de respuestas LLM (limpieza de code fences, extracción de JSON balanceado y reintento de normalización) para reducir fallos por JSON malformado.
+
+### Changed
+
+- Monitoreo local actualizado para registrar el modelo usado por operación: se añadió la columna `Modelo` (junto con `Job`) en `docs/development/basic-monitoring-log.md` y en la escritura automática de `scripts/local/monitoring_probe.py`.
+- Fallbacks de modelos Gemini ajustados en `apps/web/src/app/api/llm/llm-defaults.ts`: se reemplazaron valores legacy `2.0` por `3-flash-preview` en clasificación y diagramas (`classify`, `recursion_diagram`, `generate_diagram`).
+
 ## [Unreleased] <-- Por Asignar Version (Monitoreo básico)
 
 ### Added

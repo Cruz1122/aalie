@@ -34,6 +34,8 @@ class ProbeCase:
     endpoint: str
     operation: str
     payload: dict[str, Any] | None = None
+    job: str = "-"
+    timeout_s: float | None = None
 
 
 @dataclass
@@ -41,6 +43,8 @@ class ProbeResult:
     timestamp: datetime
     endpoint: str
     operation: str
+    job: str
+    model: str
     duration_ms: int
     status: str  # OK | ERROR
     error_code: str
@@ -54,7 +58,7 @@ def detect_error_code(raw_message: str, status_code: int, payload: Any) -> str:
         return "LLM_QUOTA_EXCEEDED"
     if "LLM_RATE_LIMIT" in message or "RATE_LIMIT" in message or status_code == 429:
         return "LLM_RATE_LIMIT"
-    if "LLM_TIMEOUT" in message or "TIMEOUT" in message or status_code in (408, 504):
+    if "LLM_TIMEOUT" in message or "TIMEOUT" in message or "TIMED OUT" in message or status_code in (408, 504):
         return "LLM_TIMEOUT"
     if "JSON" in message and ("PARSE" in message or "INVALID" in message):
         return "JSON_PARSE"
@@ -121,6 +125,7 @@ def make_default_cases(base_url: str, api_key: str | None) -> list[ProbeCase]:
                         "locale": "es",
                         "apiKey": api_key,
                     },
+                    job="general",
                 ),
                 ProbeCase(
                     method="POST",
@@ -132,6 +137,7 @@ def make_default_cases(base_url: str, api_key: str | None) -> list[ProbeCase]:
                         "locale": "es",
                         "apiKey": api_key,
                     },
+                    job="parser_assist",
                 ),
                 ProbeCase(
                     method="POST",
@@ -143,6 +149,8 @@ def make_default_cases(base_url: str, api_key: str | None) -> list[ProbeCase]:
                         "locale": "es",
                         "apiKey": api_key,
                     },
+                    job="repair",
+                    timeout_s=65.0,
                 ),
                 ProbeCase(
                     method="POST",
@@ -154,6 +162,7 @@ def make_default_cases(base_url: str, api_key: str | None) -> list[ProbeCase]:
                         "locale": "es",
                         "apiKey": api_key,
                     },
+                    job="compare",
                 ),
                 ProbeCase(
                     method="POST",
@@ -164,6 +173,7 @@ def make_default_cases(base_url: str, api_key: str | None) -> list[ProbeCase]:
                         "mode": "llm",
                         "apiKey": api_key,
                     },
+                    job="classify",
                 ),
                 ProbeCase(
                     method="POST",
@@ -182,6 +192,7 @@ def make_default_cases(base_url: str, api_key: str | None) -> list[ProbeCase]:
                             ]
                         },
                     },
+                    job="generate_diagram",
                 ),
                 ProbeCase(
                     method="POST",
@@ -195,6 +206,7 @@ def make_default_cases(base_url: str, api_key: str | None) -> list[ProbeCase]:
                         "locale": "es",
                         "apiKey": api_key,
                     },
+                    job="recursion_diagram",
                 ),
                 ProbeCase(
                     method="GET",
@@ -206,6 +218,36 @@ def make_default_cases(base_url: str, api_key: str | None) -> list[ProbeCase]:
         )
 
     return cases
+
+
+def fetch_model_by_job(base_url: str, timeout_s: float) -> dict[str, str]:
+    status_case = ProbeCase(method="GET", endpoint="/api/llm/status", operation="llm_status")
+    status_code, _raw, parsed, _duration = send_request(base_url, status_case, timeout_s)
+    if not (200 <= status_code < 300) or not isinstance(parsed, dict):
+        return {}
+
+    status_obj = parsed.get("status")
+    if not isinstance(status_obj, dict):
+        return {}
+
+    config = status_obj.get("config")
+    if not isinstance(config, dict):
+        return {}
+
+    model_by_job: dict[str, str] = {}
+    jobs = config.get("jobs")
+    if isinstance(jobs, dict):
+        for job, model in jobs.items():
+            if isinstance(job, str) and isinstance(model, str) and model.strip():
+                model_by_job[job] = model.strip()
+
+    diagram_jobs = config.get("diagramJobs")
+    if isinstance(diagram_jobs, dict):
+        for job, model in diagram_jobs.items():
+            if isinstance(job, str) and isinstance(model, str) and model.strip():
+                model_by_job[job] = model.strip()
+
+    return model_by_job
 
 
 def send_request(base_url: str, case: ProbeCase, timeout_s: float) -> tuple[int, str, Any, int]:
@@ -244,10 +286,12 @@ def send_request(base_url: str, case: ProbeCase, timeout_s: float) -> tuple[int,
 def run_probes(base_url: str, env_name: str, timeout_s: float, iterations: int, api_key: str | None) -> list[ProbeResult]:
     results: list[ProbeResult] = []
     cases = make_default_cases(base_url, api_key)
+    model_by_job = fetch_model_by_job(base_url, timeout_s)
 
     for _ in range(iterations):
         for case in cases:
-            status_code, raw, parsed, duration_ms = send_request(base_url, case, timeout_s)
+            effective_timeout_s = case.timeout_s if case.timeout_s is not None else timeout_s
+            status_code, raw, parsed, duration_ms = send_request(base_url, case, effective_timeout_s)
             ok = False
             if 200 <= status_code < 300:
                 if isinstance(parsed, dict) and "ok" in parsed:
@@ -275,6 +319,8 @@ def run_probes(base_url: str, env_name: str, timeout_s: float, iterations: int, 
                     timestamp=datetime.now(),
                     endpoint=case.endpoint,
                     operation=case.operation,
+                    job=case.job,
+                    model=model_by_job.get(case.job, "-") if case.job != "-" else "-",
                     duration_ms=duration_ms,
                     status=status,
                     error_code=error_code,
@@ -321,7 +367,7 @@ def append_daily_rows(md_text: str, results: list[ProbeResult]) -> str:
     for r in results:
         dt = r.timestamp.strftime("%Y-%m-%d %H:%M")
         new_rows.append(
-            f"| {dt} | {r.endpoint} | {r.operation} | {r.duration_ms} | {r.status} | {r.error_code} | {r.message} | {r.env} |"
+            f"| {dt} | {r.endpoint} | {r.operation} | {r.job} | {r.model} | {r.duration_ms} | {r.status} | {r.error_code} | {r.message} | {r.env} |"
         )
 
     updated = lines[:table_end] + new_rows + lines[table_end:]
@@ -343,20 +389,38 @@ def read_daily_rows(md_text: str) -> list[dict[str, str]]:
     parsed: list[dict[str, str]] = []
     for row in data_rows:
         parts = [c.strip() for c in row.strip().strip("|").split("|")]
-        if len(parts) != 8:
+        if len(parts) == 10:
+            parsed.append(
+                {
+                    "datetime": parts[0],
+                    "endpoint": parts[1],
+                    "operation": parts[2],
+                    "job": parts[3],
+                    "model": parts[4],
+                    "duration": parts[5],
+                    "status": parts[6],
+                    "error_code": parts[7],
+                    "message": parts[8],
+                    "env": parts[9],
+                }
+            )
             continue
-        parsed.append(
-            {
-                "datetime": parts[0],
-                "endpoint": parts[1],
-                "operation": parts[2],
-                "duration": parts[3],
-                "status": parts[4],
-                "error_code": parts[5],
-                "message": parts[6],
-                "env": parts[7],
-            }
-        )
+
+        if len(parts) == 8:
+            parsed.append(
+                {
+                    "datetime": parts[0],
+                    "endpoint": parts[1],
+                    "operation": parts[2],
+                    "job": "-",
+                    "model": "-",
+                    "duration": parts[3],
+                    "status": parts[4],
+                    "error_code": parts[5],
+                    "message": parts[6],
+                    "env": parts[7],
+                }
+            )
     return parsed
 
 
@@ -453,7 +517,7 @@ def main() -> int:
     print(f"[INFO] Eventos recolectados: {len(results)}")
     for r in results:
         print(
-            f"- {r.timestamp:%Y-%m-%d %H:%M:%S} | {r.endpoint} | {r.duration_ms}ms | {r.status} | {r.error_code}"
+            f"- {r.timestamp:%Y-%m-%d %H:%M:%S} | {r.endpoint} | {r.operation} | {r.job} | {r.model} | {r.duration_ms}ms | {r.status} | {r.error_code}"
         )
 
     if args.dry_run:

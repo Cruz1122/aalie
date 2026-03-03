@@ -73,7 +73,7 @@ Para más información sobre internacionalización, labels de backend y el flujo
 
 **Propósito**: Clasificar la intención del mensaje entre `parser_assist` y `general`.
 
-**Modelo**: `gemini-2.0-flash-lite` (configurable por `LLM_MODEL_CLASSIFY`).
+**Modelo**: `gemini-2.5-flash-lite` (configurable por `LLM_MODEL_CLASSIFY`).
 
 **Nota**: Este job no reemplaza la clasificación heurística del backend Python para análisis algorítmico (`/classify`); ambos flujos son distintos.
 
@@ -83,7 +83,7 @@ Para más información sobre internacionalización, labels de backend y el flujo
 
 **Propósito**: Generar código de algoritmos y asistir en corrección de sintaxis
 
-**Modelo**: `gemini-2.5-flash`
+**Modelo**: `gemini-3-flash-preview`
 
 **Configuración**:
 - `maxTokens`: 16000
@@ -155,7 +155,7 @@ const response = await fetch("/api/llm", {
 
 **Propósito**: Reparar código con errores de sintaxis
 
-**Modelo**: `gemini-2.5-flash`
+**Modelo**: `gemini-3-flash-preview`
 
 **Configuración**:
 - `maxTokens`: 16000
@@ -200,7 +200,7 @@ const response = await fetch("/api/llm", {
 
 **Propósito**: Comparar análisis del sistema con análisis del LLM
 
-**Modelo**: `gemini-2.5-pro` (modelo más potente para análisis preciso)
+**Modelo**: `gemini-3-flash-preview` (modelo configurado para análisis preciso)
 
 **Configuración**:
 - `maxTokens`: 8000
@@ -254,7 +254,7 @@ const response = await fetch('/api/llm', {
 
 **Propósito**: Generar diagramas de árbol de recursión
 
-**Modelo**: `gemini-2.0-flash` (usado en endpoint específico)
+**Modelo**: `gemini-2.5-flash` (usado en endpoint específico)
 
 **Uso**:
 ```typescript
@@ -284,9 +284,9 @@ const response = await fetch("/api/llm/recursion-diagram", {
 
 ## Modelos de Gemini Usados
 
-### Gemini 2.5 Flash
+### Gemini 3 Flash Preview
 
-**Usado en**: `parser_assist`, `general`, `repair`
+**Usado en**: `parser_assist`, `repair`, `compare`
 
 **Características**:
 - Rápido y eficiente
@@ -298,9 +298,9 @@ const response = await fetch("/api/llm/recursion-diagram", {
 - Input: $0.075 por millón de tokens
 - Output: $0.30 por millón de tokens
 
-### Gemini 2.5 Pro
+### Gemini 2.5 Flash
 
-**Usado en**: `compare`
+**Usado en**: `general`, `recursion_diagram`, `generate_diagram`
 
 **Características**:
 - Más potente y preciso
@@ -312,16 +312,16 @@ const response = await fetch("/api/llm/recursion-diagram", {
 - Input: $1.25 por millón de tokens
 - Output: $5.00 por millón de tokens
 
-### Gemini 2.0 Flash (Lite)
+### Gemini 2.5 Flash Lite
 
-**Usado en**: `recursion-diagram` (endpoint específico)
+**Usado en**: `classify`
 
 **Características**:
 - Versión ligera y rápida
 - Bueno para generación de diagramas
 - Costo bajo
 
-**Nota**: Este modelo también se usa para `classify` (clasificación de intención del chat).
+**Nota**: Se usa para clasificación de intención del chat.
 
 ## Endpoints de LLM
 
@@ -458,13 +458,13 @@ Retorna visualización
 GEMINI_ENDPOINT_BASE=https://generativelanguage.googleapis.com/v1beta/models
 
 # Modelos por job
-LLM_MODEL_CLASSIFY=gemini-2.0-flash-lite
-LLM_MODEL_PARSER_ASSIST=gemini-2.5-flash
+LLM_MODEL_CLASSIFY=gemini-2.5-flash-lite
+LLM_MODEL_PARSER_ASSIST=gemini-3-flash-preview
 LLM_MODEL_GENERAL=gemini-2.5-flash
-LLM_MODEL_REPAIR=gemini-2.5-flash
-LLM_MODEL_COMPARE=gemini-2.5-pro
-LLM_MODEL_RECURSION_DIAGRAM=gemini-2.0-flash
-LLM_MODEL_GENERATE_DIAGRAM=gemini-2.0-flash
+LLM_MODEL_REPAIR=gemini-3-flash-preview
+LLM_MODEL_COMPARE=gemini-3-flash-preview
+LLM_MODEL_RECURSION_DIAGRAM=gemini-2.5-flash
+LLM_MODEL_GENERATE_DIAGRAM=gemini-2.5-flash
 
 # API key opcional del servidor Next.js para /api/llm/*
 API_KEY=
@@ -474,6 +474,26 @@ API_KEY=
 
 1. **API key del servidor** (`API_KEY` en env) - Prioridad más alta
 2. **API key del usuario** (enviada en body como `apiKey`) - Fallback
+
+### Fallback por defecto (si faltan env)
+
+```typescript
+export const DEFAULT_GEMINI_ENDPOINT_BASE =
+  "https://generativelanguage.googleapis.com/v1beta/models";
+
+export const DEFAULT_GEMINI_MODELS = {
+  classify: "gemini-3-flash-preview",
+  parser_assist: "gemini-2.5-flash",
+  general: "gemini-3-flash-preview",
+  repair: "gemini-2.5-flash",
+  compare: "gemini-2.5-flash",
+} as const;
+
+export const DEFAULT_GEMINI_DIAGRAM_MODELS = {
+  recursion_diagram: "gemini-3-flash-preview",
+  generate_diagram: "gemini-3-flash-preview",
+} as const;
+```
 
 ## Monitoreo y Logging
 
@@ -575,11 +595,13 @@ export function checkRateLimit(apiKey: string): boolean {
 
 | Job | Modelo | Uso | Endpoint |
 |-----|--------|-----|----------|
-| `parser_assist` | gemini-2.5-flash | Generación de código | `/api/llm` |
+| `classify` | gemini-2.5-flash-lite | Clasificación de intención | `/api/llm` |
+| `parser_assist` | gemini-3-flash-preview | Generación de código | `/api/llm` |
 | `general` | gemini-2.5-flash | Chatbot general | `/api/llm` |
-| `repair` | gemini-2.5-flash | Reparación de código | `/api/llm` |
-| `compare` | gemini-2.5-pro | Comparación de análisis | `/api/llm` |
-| (recursion_diagram) | gemini-2.0-flash | Diagramas recursivos | `/api/llm/recursion-diagram` |
+| `repair` | gemini-3-flash-preview | Reparación de código | `/api/llm` |
+| `compare` | gemini-3-flash-preview | Comparación de análisis | `/api/llm` |
+| `recursion_diagram` | gemini-2.5-flash | Diagramas recursivos | `/api/llm/recursion-diagram` |
+| `generate_diagram` | gemini-2.5-flash | Diagramas de trace | `/api/llm/generate-diagram` |
 
 ### ℹ️ Clasificación heurística del backend
 

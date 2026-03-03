@@ -293,4 +293,5 @@ export const LLM_EXPORTABLE_CONFIG = {
   models: Object.values(GEMINI_MODELS),
   description: "Modelos Gemini Google AI Studio",
   jobs: GEMINI_MODELS,
+  diagramJobs: GEMINI_DIAGRAM_MODELS,
 };
