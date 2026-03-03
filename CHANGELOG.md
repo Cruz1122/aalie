@@ -13,6 +13,15 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Changed
 
+## [1.2.0]
+
+### Changed
+
+- **Motor de análisis (iterativo y recursivo):** El motor calcula la complejidad con más precisión gracias a un mejor manejo de variables y tamaños. El analizador base admite más tipos de expresiones (mínimo, máximo) y sustituye alias cuando una variable es una copia del tamaño (por ejemplo `k <- n`). En algoritmos iterativos se identifican mejor las variables que controlan los bucles y los alias de tamaño, de modo que se analizan bien bucles anidados y límites que cambian (por ejemplo un bucle interno cuyo tope decrece). En recursivos se tienen en cuenta varios tamaños de subproblemas en divide y vencerás. Las utilidades de clases de complejidad normalizan mejor la variable de tamaño.
+- **Bucles WHILE:** Se determina si un bucle está acotado según la condición y cómo se actualizan las variables, y se aplican nuevos patrones para inferir la complejidad.
+- **Casos concretos:** Ajustes para que algoritmos como Bubble Sort (mejor caso) y otros con detección de tamaño y heurísticas específicas den el resultado esperado.
+- **Tests:** Más pruebas para algoritmos con límites decrecientes y bucles anidados con reinicio de variable interna, que validan las nuevas mejoras.
+
 ## [1.1.5]
 
 ### Added

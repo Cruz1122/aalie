@@ -123,13 +123,15 @@ class WhileRepeatVisitor:
         expr_str = expr_str.replace("\\cdot", "*")
 
         try:
-            from sympy import log as sympy_log
+            from sympy import log as sympy_log, Min as sympy_Min, Max as sympy_Max
 
             variable = getattr(self, "variable", "n")
             n = Symbol(variable, integer=True, positive=True)
             i = Symbol("i", integer=True)
             j = Symbol("j", integer=True)
             k = Symbol("k", integer=True)
+            # Evitar colisión con sympy.N (evalf). Tratar N como símbolo.
+            N_sym = Symbol("N", integer=True, positive=True)
             # Símbolos para parámetros de tamaño habituales (evitar fallo en log(exp), log(e_0), etc.)
             exp_sym = Symbol("exp", integer=True, positive=True)
             m_sym = Symbol("m", integer=True, positive=True)
@@ -140,7 +142,10 @@ class WhileRepeatVisitor:
                 "i": i,
                 "j": j,
                 "k": k,
+                "N": N_sym,
                 "log": sympy_log,
+                "Min": sympy_Min,
+                "Max": sympy_Max,
                 "exp": exp_sym,
                 "m": m_sym,
                 "e_0": e0_sym,
@@ -333,14 +338,20 @@ class WhileRepeatVisitor:
                 last_assign = assignments[-1]
                 value = last_assign.get("value")
                 if value:
-                    initial_expr = self._expr_to_str(value)
-                    return initial_expr
+                    return self._expr_to_str(value)
         
-        # Si hay un loop_stack activo (FOR anidado), la variable podría depender
-        # de la variable del FOR. Por ejemplo: j <- i - 1 dentro de FOR i
-        # En este caso, el valor inicial se debería encontrar en el bloque padre,
-        # pero si no se encuentra, podríamos considerar la variable del FOR
-        # como parte del contexto (esto se maneja implícitamente en la expresión)
+        # Fallback: buscar en todo el AST raíz si está disponible
+        root_ast = getattr(self, 'root_ast', None)
+        if root_ast:
+            assignments = []
+            self._find_assignments_before_line(root_ast, var_name, while_line, assignments)
+            if assignments:
+                last_assign = assignments[-1]
+                value = last_assign.get("value")
+                if value:
+                    return self._expr_to_str(value)
+                    
+        # Si hay un loop_stack activo (FOR anidado)...
         
         return None
     
@@ -643,6 +654,74 @@ class WhileRepeatVisitor:
         
         return False
     
+    def _is_positive_prefix_guard(self, test: Dict[str, Any], var_name: str) -> bool:
+        """
+        Detecta el patrón específico de prefijo positivo:
+        WHILE (i <= n AND A[i] > 0)
+        
+        En este caso, bajo un modelo razonable donde la probabilidad de A[i] > 0
+        no tiende a 1 con n, la esperanza de iteraciones es O(1).
+        """
+        if not isinstance(test, dict):
+            return False
+        
+        test_type = test.get("type", "").lower()
+        op = (test.get("op", "") or test.get("operator", "")).lower()
+        if test_type not in ("binary", "binaryop") or op not in ("and", "&&"):
+            return False
+        
+        left = test.get("left", {})
+        right = test.get("right", {})
+        
+        def is_var_leq_limit(node: Dict[str, Any]) -> bool:
+            if not isinstance(node, dict):
+                return False
+            nt = node.get("type", "").lower()
+            if nt not in ("binary", "binaryop"):
+                return False
+            op2 = node.get("op", "") or node.get("operator", "")
+            if op2 not in ("<", "<="):
+                return False
+            l = node.get("left", {})
+            if not (isinstance(l, dict) and l.get("type", "").lower() == "identifier"):
+                return False
+            return l.get("name", "") == var_name
+        
+        def is_array_gt_zero(node: Dict[str, Any]) -> bool:
+            if not isinstance(node, dict):
+                return False
+            nt = node.get("type", "").lower()
+            if nt not in ("binary", "binaryop"):
+                return False
+            op3 = node.get("op", "") or node.get("operator", "")
+            if op3 not in (">", ">="):
+                return False
+            l = node.get("left", {})
+            r = node.get("right", {})
+            # Lado izquierdo: acceso a array A[i]
+            if not (isinstance(l, dict) and l.get("type", "").lower() == "index"):
+                return False
+            index = l.get("index", {})
+            if not (isinstance(index, dict) and index.get("type", "").lower() == "identifier"):
+                return False
+            if index.get("name", "") != var_name:
+                return False
+            # Lado derecho: constante 0
+            if not isinstance(r, dict):
+                return False
+            rt = r.get("type", "").lower()
+            if rt not in ("number", "literal"):
+                return False
+            val = r.get("value", 0)
+            try:
+                return float(val) == 0.0
+            except Exception:
+                return False
+        
+        return (is_var_leq_limit(left) and is_array_gt_zero(right)) or (
+            is_var_leq_limit(right) and is_array_gt_zero(left)
+        )
+    
     def _has_non_control_comparison(self, node: Dict[str, Any], var_name: str) -> bool:
         """
         Verifica si un nodo contiene una comparación que no es solo con la variable de control.
@@ -942,11 +1021,199 @@ class WhileRepeatVisitor:
         if isinstance(body, list):
             body = {"type": "Block", "body": body}
         L = node.get("pos", {}).get("line", 0)
+        condition_info_pre = self._extract_condition_info(test)
         
-        # 0) NUEVO CLASIFICADOR: GuardInfo + UpdateSummary + classify_while
+        # 1) VERIFICAR BEST CASE PRIMERO: Si es best case y hay condición AND con array/variable diferente
+        # Para insertion sort: WHILE (j > 0 AND A[j] > key)
+        # En best case: A[j] <= key desde el inicio, entonces la condición es falsa, 0 iteraciones.
+        # IMPORTANTE: no aplicar este early-exit cuando la segunda parte es un flag booleano
+        # fijado justo antes del WHILE (ej: intercambiado <- VERDADERO; WHILE (i < n AND intercambiado)...).
+        test_op = test.get("op", "") or test.get("operator", "")
+        test_type = test.get("type", "").lower()
+        
+        if mode == "best" and test_type in ("binary", "binaryop") and test_op.lower() in ("and", "&&"):
+            # Verificar si hay una parte que no depende solo de la variable de control
+            left = test.get("left", {})
+            right = test.get("right", {})
+            
+            # Primero extraer información para obtener var_name (necesitamos saber cuál es la variable de control)
+            condition_info = condition_info_pre
+            if condition_info:
+                var_name = condition_info.get("variable")
+            else:
+                # Si no se puede extraer, intentar detectar var_name de otra manera
+                # Por ejemplo, buscar en la parte izquierda que suele ser la comparación con la variable
+                if isinstance(left, dict):
+                    left_left = left.get("left", {})
+                    if isinstance(left_left, dict) and left_left.get("type", "").lower() == "identifier":
+                        var_name = left_left.get("name", "")
+                    else:
+                        var_name = None
+                else:
+                    var_name = None
+            
+            if var_name:
+                # Verificar si alguna parte tiene acceso a array u otra variable
+                left_result = self._has_non_control_comparison(left, var_name)
+                right_result = self._has_non_control_comparison(right, var_name)
+                has_array_or_other_var = left_result or right_result
+
+                # Si la parte "no de control" es un flag booleano fijado antes del WHILE,
+                # NO debemos aplicar early-exit a 0 iteraciones. Ejemplo:
+                #   intercambiado <- VERDADERO;
+                #   WHILE (i < n AND intercambiado) ...
+                #   WHILE (i < n AND intercambiado = VERDADERO) ...
+                def _is_bool_flag_fixed_before(var_node: Dict[str, Any]) -> bool:
+                    if not isinstance(var_node, Dict):
+                        return False
+                    if var_node.get("type", "").lower() != "identifier":
+                        return False
+                    flag_name = var_node.get("name", "")
+                    if not flag_name or flag_name == var_name:
+                        return False
+                    # Buscar valor inicial antes de la línea del while
+                    initial_val = self._find_initial_value_of_var(flag_name, L, parent_context)
+                    if not initial_val:
+                        return False
+                    return initial_val.upper() in ("VERDADERO", "FALSO", "TRUE", "FALSE")
+
+                def _extract_flag_identifier_node(expr: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+                    """
+                    Devuelve un nodo Identifier que represente una bandera booleana en la condición.
+                    
+                    Soporta:
+                    - Uso directo: intercambiado
+                    - Comparación explícita: intercambiado = VERDADERO / TRUE / FALSO / FALSE
+                    """
+                    if not isinstance(expr, Dict):
+                        return None
+                    t = expr.get("type", "").lower()
+
+                    # Caso 1: identificador directo (ej: WHILE (i < n AND intercambiado) ...)
+                    if t == "identifier":
+                        return expr
+
+                    # Caso 2: comparación binaria id = const / const = id / id != 0
+                    if t in ("binary", "binaryop"):
+                        op = (expr.get("op") or expr.get("operator", "")).lower()
+                        if op in ("=", "==", "!=", "<>"):
+                            left_e = expr.get("left", {})
+                            right_e = expr.get("right", {})
+
+                            def _is_bool_const(node: Dict[str, Any]) -> bool:
+                                if not isinstance(node, Dict):
+                                    return False
+                                nt = node.get("type", "").lower()
+                                if nt in ("number", "literal"):
+                                    # Cualquier literal booleano
+                                    val = node.get("value")
+                                    if isinstance(val, str) and val.lower().strip() in (
+                                        "true",
+                                        "false",
+                                        "verdadero",
+                                        "falso",
+                                        "v",
+                                        "f",
+                                    ):
+                                        return True
+                                    if isinstance(val, bool):
+                                        return True
+                                    return False
+                                if nt == "identifier":
+                                    name = (node.get("name", "") or "").lower()
+                                    return name in (
+                                        "true",
+                                        "false",
+                                        "verdadero",
+                                        "falso",
+                                        "v",
+                                        "f",
+                                    )
+                                return False
+
+                            # id = const
+                            if (
+                                isinstance(left_e, Dict)
+                                and left_e.get("type", "").lower() == "identifier"
+                                and _is_bool_const(right_e)
+                            ):
+                                return left_e
+                            # const = id
+                            if (
+                                isinstance(right_e, Dict)
+                                and right_e.get("type", "").lower() == "identifier"
+                                and _is_bool_const(left_e)
+                            ):
+                                return right_e
+
+                    return None
+
+                non_control_is_fixed_flag = False
+                # Detectar posible flag en cada lado (soportando tanto identificador como id=const)
+                left_flag = _extract_flag_identifier_node(left)
+                right_flag = _extract_flag_identifier_node(right)
+
+                if left_flag and left_flag.get("name") != var_name:
+                    non_control_is_fixed_flag = _is_bool_flag_fixed_before(left_flag)
+                if not non_control_is_fixed_flag and right_flag and right_flag.get("name") != var_name:
+                    non_control_is_fixed_flag = _is_bool_flag_fixed_before(right_flag)
+
+                # Early-exit a 0 iteraciones solo aplica cuando:
+                # - hay una comparación no solo de la variable de control, y
+                # - NO se trata de una bandera booleana fijada antes del WHILE.
+                if has_array_or_other_var and not non_control_is_fixed_flag:
+                    # En best case, asumir que la parte con array/variable es falsa desde el inicio
+                    # Por lo tanto, el WHILE solo evalúa la condición una vez y sale (0 iteraciones)
+                    # Retornar información mínima para best case con 0 iteraciones
+                    return {
+                        "variable": var_name,
+                        "initial_value": None,
+                        "change_rule": {"operator": "-", "constant": "1"},
+                        "limit": "0",
+                        "operator": ">",
+                        "iterations": "0",
+                        "success": True,
+                        "mode": mode
+                    }
+        
+        # 1.5) Caso promedio especial: prefijo positivo WHILE (i <= n AND A[i] > 0)
+        # Para este patrón, la esperanza de iteraciones es O(1) (no depende de n).
+        if mode == "avg" and condition_info_pre and condition_info_pre.get("variable"):
+            var_for_avg = condition_info_pre["variable"]
+            if self._is_positive_prefix_guard(test, var_for_avg):
+                return {
+                    "variable": var_for_avg,
+                    "initial_value": None,
+                    "change_rule": {"operator": "+", "constant": "1"},
+                    "limit": condition_info_pre.get("limit", "n"),
+                    "operator": condition_info_pre.get("operator", "<="),
+                    "iterations": "1",
+                    "success": True,
+                    "mode": mode,
+                    "reason_code": "while_positive_prefix_avg",
+                }
+        
+        # 2) NUEVO CLASIFICADOR: GuardInfo + UpdateSummary + classify_while
         try:
             guard = analyze_guard(test)
-            updates = summarize_updates(body, guard.vars_used, guard, parent_context)
+            
+            # Recopilar todas las variables asignadas en el cuerpo para evaluarlas como posibles cotas
+            assigned_vars = set()
+            def _collect_vars(n):
+                if isinstance(n, dict):
+                    if n.get("type", "").lower() == "assign":
+                        t = n.get("target", {})
+                        if isinstance(t, dict) and t.get("type", "").lower() == "identifier":
+                            assigned_vars.add(t.get("name", ""))
+                    for v in n.values():
+                        _collect_vars(v)
+                elif isinstance(n, list):
+                    for item in n:
+                        _collect_vars(item)
+            _collect_vars(body)
+            all_vars = guard.vars_used.union(assigned_vars)
+            
+            updates = summarize_updates(body, all_vars, guard, parent_context)
             result = classify_while(guard, updates, mode, parent_context, L)
             if result.status == "bounded" and result.iterations_expr:
                 ev = result.evidence
@@ -988,56 +1255,8 @@ class WhileRepeatVisitor:
         except Exception as e:
             print(f"[WhileRepeatVisitor] Error en classify_while: {e}")
         
-        # 1) VERIFICAR BEST CASE ANTES: Si es best case y hay condición AND con array/variable diferente
-        # Para insertion sort: WHILE (j > 0 AND A[j] > key)
-        # En best case: A[j] <= key desde el inicio, entonces la condición es falsa, 0 iteraciones
-        test_op = test.get("op", "") or test.get("operator", "")
-        test_type = test.get("type", "").lower()
-        
-        if mode == "best" and test_type in ("binary", "binaryop") and test_op.lower() in ("and", "&&"):
-            # Verificar si hay una parte que no depende solo de la variable de control
-            left = test.get("left", {})
-            right = test.get("right", {})
-            
-            # Primero extraer información para obtener var_name (necesitamos saber cuál es la variable de control)
-            condition_info = self._extract_condition_info(test)
-            if condition_info:
-                var_name = condition_info["variable"]
-            else:
-                # Si no se puede extraer, intentar detectar var_name de otra manera
-                # Por ejemplo, buscar en la parte izquierda que suele ser la comparación con la variable
-                if isinstance(left, dict):
-                    left_left = left.get("left", {})
-                    if isinstance(left_left, dict) and left_left.get("type", "").lower() == "identifier":
-                        var_name = left_left.get("name", "")
-                    else:
-                        var_name = None
-                else:
-                    var_name = None
-            
-            if var_name:
-                # Verificar si alguna parte tiene acceso a array u otra variable
-                left_result = self._has_non_control_comparison(left, var_name)
-                right_result = self._has_non_control_comparison(right, var_name)
-                has_array_or_other_var = left_result or right_result
-                
-                if has_array_or_other_var:
-                    # En best case, asumir que la parte con array/variable es falsa desde el inicio
-                    # Por lo tanto, el WHILE solo evalúa la condición una vez y sale (0 iteraciones)
-                    # Retornar información mínima para best case con 0 iteraciones
-                    return {
-                        "variable": var_name,
-                        "initial_value": None,
-                        "change_rule": {"operator": "-", "constant": "1"},
-                        "limit": "0",
-                        "operator": ">",
-                        "iterations": "0",
-                        "success": True,
-                        "mode": mode
-                    }
-        
-        # 1) Extraer información de la condición (para worst/avg case o si best case no aplica)
-        condition_info = self._extract_condition_info(test)
+        # 3) Extraer información de la condición (para worst/avg case o si best case no aplica)
+        condition_info = condition_info_pre or self._extract_condition_info(test)
         if not condition_info:
             return None
         
@@ -1122,11 +1341,15 @@ class WhileRepeatVisitor:
         if not iterations:
             return None
         
-        # 4.5) Para avg con condición AND que incluye array (ej: i>=1 AND A[i]!=x):
-        # E[iteraciones] ≈ (n+1)/2 en lugar de usar el peor caso
-        if mode == "avg" and self._has_early_exit_condition(test, var_name):
-            initial_expr = initial_value if initial_value else f"{var_name}_0"
-            iterations = f"(({initial_expr}) - ({limit}) + 2) / 2"
+        # 4.5) Ajustes específicos para caso promedio con condiciones AND que incluyen arrays
+        if mode == "avg":
+            # Prefijo positivo: WHILE (i <= n AND A[i] > 0) → esperanza O(1)
+            if self._is_positive_prefix_guard(test, var_name):
+                iterations = "1"
+            # Búsqueda lineal / patrones de early exit clásicos: E[iter] ≈ (n+1)/2
+            elif self._has_early_exit_condition(test, var_name):
+                initial_expr = initial_value if initial_value else f"{var_name}_0"
+                iterations = f"(({limit}) - ({initial_expr}) + 1) / 2"
         
         return {
             "variable": var_name,
@@ -1218,20 +1441,31 @@ class WhileRepeatVisitor:
             if closure_info_pattern:
                 if closure_info_pattern.get("pattern") or closure_info_pattern.get("reason_code") == "while_euclid_mod":
                     skip_geometric = True
+                # Si el clasificador ya determinó que el WHILE es bounded y tiene una expresión
+                # explícita de iteraciones, preferimos reutilizar esa expresión también en avg
+                # en lugar de aplicar un modelo geométrico 1/p genérico. Esto asegura, por ejemplo,
+                # que algoritmos como bubble sort mejorado tengan avg ~ n² (igual que worst) en
+                # vez de colapsar a O(n) por asumir pocas pasadas esperadas del WHILE.
+                elif (
+                    closure_info_pattern.get("success")
+                    and closure_info_pattern.get("iterations")
+                    and closure_info_pattern.get("status") in (None, "bounded")
+                ):
+                    # Por defecto, para WHILE bounded preferimos reutilizar el cierre determinista
+                    # (evita que el modelo geométrico 1/p colapse avg a O(1) indebidamente en
+                    # bucles como el WHILE interno de insertion sort).
+                    #
+                    # EXCEPCIÓN: patrón de prefijo positivo (i<=n AND A[i]>0) → E[iter] = O(1).
+                    var_tmp = closure_info_pattern.get("variable", "")
+                    if not self._is_positive_prefix_guard(test, var_tmp):
+                        skip_geometric = True
                 elif closure_info_pattern.get("status") == "unbounded" and closure_info_pattern.get("reason_code") in (
                     "while_no_progress_must",
                     "while_or_no_progress",
                 ):
                     # Progreso controlado por parámetro/condición: modelo geométrico no aplica
                     skip_geometric = True
-                elif (
-                    closure_info_pattern.get("success")
-                    and closure_info_pattern.get("iterations")
-                    and self._has_early_exit_condition(test, closure_info_pattern.get("variable", ""))
-                ):
-                    # WHILE con AND y acceso a array (ej: i>=1 AND A[i]!=x): modelo geométrico p=1/2 no aplica
-                    # E[iteraciones] ≈ (n+1)/2 para búsqueda lineal con salida aleatoria
-                    skip_geometric = True
+                # Nota: condiciones de salida temprana por datos se manejan arriba (no forzar skip_geometric).
             if skip_geometric:
                 # Saltar análisis probabilístico, ir al paso 2 (manejo unbounded)
                 pass
@@ -1253,17 +1487,6 @@ class WhileRepeatVisitor:
                         
                         # Multiplicador para el cuerpo
                         mult_expr = iterations_expr
-                        
-                        # Si hay multiplicadores externos, integrar
-                        if hasattr(self, 'loop_stack') and self.loop_stack:
-                            outer_mult = self.loop_stack[-1]
-                            if isinstance(outer_mult, Sum):
-                                var_sym = outer_mult.args[1][0]
-                                start_expr = outer_mult.args[1][1]
-                                end_expr = outer_mult.args[1][2]
-                                mult_expr = Sum(iterations_expr, (var_sym, start_expr, end_expr))
-                            else:
-                                mult_expr = iterations_expr * outer_mult
                         
                         # Condición: se evalúa (iterations + 1) veces
                         ck_cond = self.C()
@@ -1385,28 +1608,94 @@ class WhileRepeatVisitor:
                     iterations_expr = ceiling(log(n_sym, 2))
             else:
                 try:
-                    iterations_expr = sympify(iterations)
+                    iterations_expr = self._str_to_sympy(str(iterations))
                 except Exception:
-                    # Fallback: usar string y convertir después
-                    iterations_expr = self._str_to_sympy(iterations)
+                    iterations_expr = self._str_to_sympy(str(iterations))
+
+            # APLICAR SUBSTITUCIÓN DEL LÍMITE:
+            if isinstance(limit, str) and limit and not limit.isdigit():
+                import re
+                if re.match(r'^[a-zA-Z_]\w*$', limit):
+                    # Si el límite es una variable de bucle (outer loop), NO sustituir por su valor inicial.
+                    # Ejemplo: WHILE (j <= i) dentro de WHILE (i <= n). Aquí i cambia; sustituir i->1
+                    # colapsa la sumatoria triangular y rompe Θ(n²).
+                    try:
+                        loop_vars = set(getattr(self, "loop_index_vars", set()) or set())
+                    except Exception:
+                        loop_vars = set()
+                    if limit not in loop_vars:
+                        initial_limit = self._find_initial_value_of_var(limit, L, parent_context)
+                        if initial_limit:
+                            try:
+                                lim_sym = self._str_to_sympy(limit)
+                                init_sym = self._str_to_sympy(initial_limit)
+                                iterations_expr = iterations_expr.subs(lim_sym, init_sym)
+                            except Exception:
+                                pass
+
+            # APLICAR SUBSTITUCIÓN DE ALIAS (ej. N <- n) EN iteraciones:
+            # Si aparecen símbolos libres como N (o cualquier var) y tienen valor inicial antes del while,
+            # sustituirlos para evitar colisiones y mejorar la forma cerrada.
+            try:
+                from sympy import Symbol as SymSymbol
+
+                skip = {var_name, getattr(self, "variable", "n"), "i", "j", "k"}
+                for sym in list(getattr(iterations_expr, "free_symbols", set())):
+                    sname = getattr(sym, "name", "")
+                    if not sname or sname in skip:
+                        continue
+                    init_val = self._find_initial_value_of_var(sname, L, parent_context)
+                    if init_val:
+                        iterations_expr = iterations_expr.subs(SymSymbol(sname), self._str_to_sympy(init_val))
+            except Exception:
+                pass
             
             mult_expr = iterations_expr
-            
-            # Si hay multiplicadores externos (anidado), integrar
-            if hasattr(self, 'loop_stack') and self.loop_stack:
-                # Integrar con multiplicadores externos
-                outer_mult = self.loop_stack[-1]
-                
-                # outer_mult ahora es un objeto SymPy (Sum o Expr)
-                if isinstance(outer_mult, Sum):
-                    # Es una sumatoria, envolver iterations_expr dentro
-                    var_sym = outer_mult.args[1][0]  # Variable de la sumatoria
-                    start_expr = outer_mult.args[1][1]  # Límite inferior
-                    end_expr = outer_mult.args[1][2]  # Límite superior
-                    mult_expr = Sum(iterations_expr, (var_sym, start_expr, end_expr))
-                else:
-                    # Es una expresión multiplicativa
-                    mult_expr = iterations_expr * outer_mult
+
+            # MEJORA: Si el WHILE es lineal simple (±1) y tenemos variable de control,
+            # representar el multiplicador como una sumatoria Σ_{var=start}^{end} 1.
+            # Esto permite cerrar correctamente anidados del tipo:
+            #   WHILE (i <= n) ... WHILE (j <= i) ...
+            # donde el coste es Σ_{i=1}^{n} i = Θ(n²).
+            try:
+                # No aplicar a patrones especiales (Euclides/binary search) o símbolos iterativos
+                reason_code_local = closure_info.get("reason_code", "")
+                pattern_local = closure_info.get("pattern")
+                if pattern_local not in ("binary_search",) and reason_code_local != "while_euclid_mod":
+                    var_sym = Symbol(var_name, integer=True)
+                    op = str(change_rule.get("operator", "") or "")
+                    const_str = str(change_rule.get("constant", "1") or "1")
+                    const_expr = self._str_to_sympy(const_str)
+
+                    # Solo paso unitario
+                    if const_expr == Integer(1) and op in ("+", "-"):
+                        # Inicio: usar inicial_value si existe, si no, default 1 para i/j/k
+                        start_expr = None
+                        if initial_value:
+                            start_expr = self._str_to_sympy(str(initial_value))
+                        else:
+                            if var_name in ("i", "j", "k"):
+                                start_expr = Integer(1)
+
+                        # Fin: depende del operador de la condición
+                        end_expr = None
+                        if isinstance(limit, str) and limit:
+                            end_expr = self._str_to_sympy(limit)
+                        else:
+                            end_expr = self._str_to_sympy(str(limit))
+
+                        cond_op = str(operator or "")
+
+                        # Normalizar bounds según tipo de condición
+                        if op == "+" and cond_op == "<":
+                            end_expr = end_expr - Integer(1)
+                        elif op == "-" and cond_op == ">":
+                            end_expr = end_expr + Integer(1)
+
+                        if start_expr is not None and end_expr is not None:
+                            mult_expr = Sum(Integer(1), (var_sym, start_expr, end_expr))
+            except Exception:
+                pass
             
             # 1) Condición: se evalúa (iterations + 1) veces
             # En best case con 0 iteraciones, la condición se evalúa 1 vez (y sale)
@@ -1511,7 +1800,9 @@ class WhileRepeatVisitor:
             else:
                 # En worst/best, usar símbolo t_while_L
                 t_sym = Symbol(t, real=True)
-                note_text = self._note("while_unbounded", L=L, t=t, mode=mode)
+                # Importante: “desconocido” no implica no-terminación.
+                # No marcar como unbounded a menos que el clasificador tenga evidencia.
+                note_text = self._note("while_unbounded_unknown")
             
             # 1) Condición: se evalúa (t + 1) veces
             ck_cond = self.C()
@@ -1524,8 +1815,6 @@ class WhileRepeatVisitor:
                 ck=ck_cond,
                 count=cond_count,
                 note=note_text,
-                unbounded=True,
-                unbounded_kind="unknown",
                 ops=ops
             )
             

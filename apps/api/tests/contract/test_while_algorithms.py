@@ -295,6 +295,44 @@ END
   END
 END
 """),
+    # 24. Bubble Sort (Burbuja Mejorado)
+    ("Bubble Sort Mejorado", """ordenamientoBurbujaMejorado(A, n) BEGIN
+  i <- 1;
+  intercambiado <- true;
+  WHILE (i < n AND intercambiado = true) DO BEGIN
+    intercambiado <- false;
+    FOR j <- 1 TO n - i DO BEGIN
+      IF (A[j] > A[j+1]) THEN BEGIN
+        temp <- A[j];
+        A[j] <- A[j+1];
+        A[j+1] <- temp;
+        intercambiado <- true;
+      END
+    END
+    i <- i + 1;
+  END
+END
+"""),
+    # 25. Bubble Sort (Variante IndiceLimite)
+    ("Bubble Sort Limite", """burbuja(A, n) BEGIN
+  intercambiado <- true;
+  indiceLimite <- n;
+  WHILE (intercambiado = true) DO BEGIN
+    intercambiado <- false;
+    i <- 1;
+    WHILE (i < indiceLimite) DO BEGIN
+      IF (A[i] > A[i+1]) THEN BEGIN
+        temp <- A[i];
+        A[i] <- A[i+1];
+        A[i+1] <- temp;
+        intercambiado <- true;
+      END
+      i <- i + 1;
+    END
+    indiceLimite <- indiceLimite - 1;
+  END
+END
+"""),
 ]
 
 
@@ -334,6 +372,8 @@ EXPECTED_WORST_COMPLEXITY = {
     "WHILE *3": "log",
     "IF con WHILE": "linear",
     "FOR-FOR-WHILE": "cubic",
+    "Bubble Sort Mejorado": "quadratic",
+    "Bubble Sort Limite": "quadratic",
 }
 
 # Solo algoritmos con expectativa definida (para test_worst_case_matches_expected_complexity).
