@@ -16,7 +16,8 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ## [1.2.0]
 
 ### Changed
-
+- **Prompts LLM (parser_assist y general):** Reglas de estilo canónico al generar pseudocódigo: una sola solución (1 procedimiento, 1 bloque \`pseudocode\`), versión canónica por defecto sin optimizaciones salvo petición explícita, variables convencionales (i, j, k, n, temp, etc.), máximo 3-5 comentarios cortos en el bloque, explicación breve fuera del bloque. Prioridad de bucles ajustada a "canónico" (FOR/WHILE según el algoritmo) en lugar de evitar WHILE.
+- **Prompts LLM (renderizado):** Se refuerza uso de KaTeX con delimitadores $...$ / $$...$$ para complejidad y fórmulas (p.ej. $O(n^2)$) y se pide usar más **negrita** y \`código inline\` en explicaciones sin alargar.
 - **Motor de análisis (iterativo y recursivo):** El motor calcula la complejidad con más precisión gracias a un mejor manejo de variables y tamaños. El analizador base admite más tipos de expresiones (mínimo, máximo) y sustituye alias cuando una variable es una copia del tamaño (por ejemplo `k <- n`). En algoritmos iterativos se identifican mejor las variables que controlan los bucles y los alias de tamaño, de modo que se analizan bien bucles anidados y límites que cambian (por ejemplo un bucle interno cuyo tope decrece). En recursivos se tienen en cuenta varios tamaños de subproblemas en divide y vencerás. Las utilidades de clases de complejidad normalizan mejor la variable de tamaño.
 - **Bucles WHILE:** Se determina si un bucle está acotado según la condición y cómo se actualizan las variables, y se aplican nuevos patrones para inferir la complejidad.
 - **Casos concretos:** Ajustes para que algoritmos como Bubble Sort (mejor caso) y otros con detección de tamaño y heurísticas específicas den el resultado esperado.

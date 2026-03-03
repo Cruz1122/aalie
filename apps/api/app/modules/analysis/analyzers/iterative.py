@@ -160,6 +160,25 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             expr = simplify(expr)
         except Exception:
             pass
+
+        # Sustituir alias de tamaño (ej. indiceLimite <- n en burbuja) para que
+        # T_open y T_polynomial queden en función de variables de tamaño reales.
+        size_aliases = getattr(self, "size_aliases", None) or {}
+        if isinstance(size_aliases, dict) and size_aliases:
+            try:
+                free_syms = list(expr.free_symbols)
+                for alias_name, main_name in size_aliases.items():
+                    if not alias_name or not main_name or alias_name == main_name:
+                        continue
+                    # Buscar símbolos libres cuyo nombre coincida con el alias
+                    for sym in free_syms:
+                        if getattr(sym, "name", "") == alias_name:
+                            main_sym = Symbol(main_name, integer=True)
+                            expr = expr.subs(sym, main_sym)
+                expr = simplify(expr)
+            except Exception:
+                # No dejar que un fallo de sustitución rompa el análisis.
+                pass
         
         # Verificar si quedan variables de iteración
         free_vars = expr.free_symbols
@@ -224,7 +243,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     if getattr(sym, "name", "") in iteration_vars:
                         expr = expr.subs(sym, SymInteger(0))
                 expr = simplify(expr)
-        
+
         return expr
 
     def _collect_for_index_vars(self, node: Any) -> Set[str]:
@@ -267,10 +286,11 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         Recolecta variables de control de bucles WHILE y REPEAT que se comportan
         como índices clásicos (i, j, k).
         
-        Necesario para sanitizar correctamente: en bubble sort mejorado, `i` es
-        variable del WHILE (no de FOR), y debe eliminarse de T_open. En cambio,
-        no debemos tratar `a`, `b`, etc. de Euclides como simples iteradores,
-        ya que expresiones como \\log(min(a,b)) deben conservarse.
+        Incluye:
+        1) Variables que aparecen en la condición del WHILE/REPEAT (ej. i < n).
+        2) Variables que solo se actualizan en el cuerpo con var <- var ± const
+           (ej. bubbleSort con WHILE(swapped) y i <- i+1 en el cuerpo), para que
+           en best case T_open quede en función de n y no de la variable de iteración.
         
         No incluye la variable principal de tamaño (n): en "i < n", n es el límite,
         no la variable de control.
@@ -279,7 +299,55 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         """
         out: Set[str] = set()
         main_var = getattr(self, "variable", "n") or "n"
-        iter_like = {"i", "j", "k"}
+        # Nombres típicos de índices clásicos. Solo se usan como pista cuando
+        # no hay evidencia estructural (update aritmético). La decisión final
+        # se basa en el patrón de actualización, no en el nombre.
+        iter_legacy = {"i", "j", "k"}
+
+        def _assign_is_index_update(stmt: Any) -> Optional[str]:
+            """
+            Si stmt es de la forma id <- id ± const (con const numérica),
+            devuelve el nombre de id (candidato a variable de control).
+            """
+            if not isinstance(stmt, dict) or str(stmt.get("type", "")).lower() != "assign":
+                return None
+            target = stmt.get("target", {})
+            value = stmt.get("value", {})
+            if not isinstance(target, dict) or str(target.get("type", "")).lower() != "identifier":
+                return None
+            var = (target.get("name") or "").strip()
+            # Nunca tratar la variable principal de tamaño como índice de control.
+            if not var or var == main_var:
+                return None
+            if not isinstance(value, dict):
+                return None
+            op = (value.get("op") or value.get("operator") or "").strip()
+            if op not in ("+", "-"):
+                return None
+            left = value.get("left", {})
+            right = value.get("right", {})
+            if isinstance(left, dict) and str(left.get("type", "")).lower() == "identifier" and (left.get("name") or "").strip() == var:
+                if isinstance(right, dict) and str(right.get("type", "")).lower() in ("number", "literal"):
+                    return var
+            if isinstance(right, dict) and str(right.get("type", "")).lower() == "identifier" and (right.get("name") or "").strip() == var:
+                if isinstance(left, dict) and str(left.get("type", "")).lower() in ("number", "literal"):
+                    return var
+            return None
+
+        def _collect_from_body(body_node: Any) -> None:
+            if isinstance(body_node, list):
+                for stmt in body_node:
+                    name = _assign_is_index_update(stmt)
+                    if name:
+                        out.add(name)
+                return
+            if isinstance(body_node, dict) and str(body_node.get("type", "")).lower() == "block":
+                _collect_from_body(body_node.get("body") or [])
+                return
+            if isinstance(body_node, dict):
+                name = _assign_is_index_update(body_node)
+                if name:
+                    out.add(name)
 
         def _walk(n: Any) -> None:
             if isinstance(n, list):
@@ -296,11 +364,18 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     info = self._extract_condition_info(test)
                     if info:
                         v = info.get("variable", "")
-                        if isinstance(v, str) and v and v != main_var and v in iter_like:
-                            out.add(v)
                         v2 = info.get("variable2", "")
-                        if isinstance(v2, str) and v2 and v2 != main_var and v2 in iter_like:
-                            out.add(v2)
+                        # Añadir como control solo si:
+                        # - no es la variable principal de tamaño, y
+                        # - o bien tiene un update aritmético detectado en el cuerpo, o
+                        # - es un índice clásico (i/j/k) usado en la condición.
+                        for cand in (v, v2):
+                            if not isinstance(cand, str) or not cand or cand == main_var:
+                                continue
+                            if cand in out or cand in iter_legacy:
+                                out.add(cand)
+                # Variables que solo aparecen en el cuerpo como var <- var ± const (ej. i o indice en WHILE(...)).
+                _collect_from_body(n.get("body"))
 
             for v in n.values():
                 if isinstance(v, (dict, list)):
@@ -365,14 +440,25 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
 
             if not target or not value:
                 continue
-            if value != main_var:
+
+            # Aceptar alias cuyo valor provenga de:
+            # - la variable principal de tamaño detectada (main_var), o
+            # - el símbolo canónico "n" usado en la notación A(n), incluso si
+            #   main_var es el arreglo (ej. A) en lugar de n.
+            allowed_sources = {main_var}
+            if main_var != "n":
+                allowed_sources.add("n")
+            if value not in allowed_sources:
                 continue
+
             if target == main_var:
                 continue
             if target in loop_index_vars:
                 continue
 
-            aliases[target] = main_var
+            # Mapear el alias al identificador fuente (value), que puede ser
+            # la variable principal de tamaño o el símbolo canónico \"n\".
+            aliases[target] = value
 
         return aliases
 
@@ -719,33 +805,6 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         if t_open_expr is not None:
             t_open_expr = self._sanitize_expression(t_open_expr)
 
-            # region agent log
-            try:
-                import json, time
-                from sympy import latex as sympy_latex
-                log_payload = {
-                    "sessionId": "9e5428",
-                    "id": f"log_{int(time.time() * 1000)}_H3",
-                    "timestamp": int(time.time() * 1000),
-                    "location": "apps/api/app/modules/analysis/analyzers/iterative.py:545",
-                    "message": "t_open_expr_before_complexity",
-                    "runId": "pre-fix",
-                    "hypothesisId": "H3",
-                    "data": {
-                        "t_open_str": sympy_latex(t_open_expr),
-                        "t_open_repr": str(t_open_expr),
-                        "has_size_variable": has_size_variable,
-                        "has_unbounded": has_unbounded,
-                        "mode": self.mode,
-                    },
-                }
-                with open("debug-9e5428.log", "a", encoding="utf-8") as f:
-                    f.write(json.dumps(log_payload) + "\n")
-            except Exception:
-                # Evitar que errores de logging afecten el análisis
-                pass
-            # endregion
-        
         # Calcular T_polynomial: agrupar términos con C_k (para mostrar estructura)
         self._calculate_t_polynomial_fallback()
         # Si hay bucles unbounded, T_polynomial tiende a infinito

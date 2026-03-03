@@ -277,31 +277,6 @@ class ComplexityClasses:
                 expr_str_simple = expr_str
                 return sympify(expr_str_simple, locals=syms)
             except Exception as e2:
-                # region agent log
-                try:
-                    import json, time
-                    log_payload = {
-                        "sessionId": "9e5428",
-                        "id": f"log_{int(time.time() * 1000)}_H1",
-                        "timestamp": int(time.time() * 1000),
-                        "location": "apps/api/app/modules/analysis/utils/complexity_classes.py:265",
-                        "message": "parse_polynomial_failed",
-                        "runId": "pre-fix",
-                        "hypothesisId": "H1",
-                        "data": {
-                            "original_polynomial": polynomial,
-                            "normalized_expr_str": expr_str,
-                            "variable": variable,
-                            "error_primary": str(e),
-                            "error_secondary": str(e2),
-                        },
-                    }
-                    with open("debug-9e5428.log", "a", encoding="utf-8") as f:
-                        f.write(json.dumps(log_payload) + "\n")
-                except Exception:
-                    # No permitir que errores de logging rompan el análisis
-                    pass
-                # endregion
                 raise e2
 
     def _strip_numeric_coefficient(self, expr: 'Expr') -> 'Expr':
@@ -373,30 +348,6 @@ class ComplexityClasses:
 
         # 5) Si aparece la variable sin exponente, devolver n
         if re.search(rf"{re.escape(variable)}", s):
-            # region agent log
-            try:
-                import json, time
-                log_payload = {
-                    "sessionId": "9e5428",
-                    "id": f"log_{int(time.time() * 1000)}_H2",
-                    "timestamp": int(time.time() * 1000),
-                    "location": "apps/api/app/modules/analysis/utils/complexity_classes.py:343",
-                    "message": "fallback_variable_only_dominant",
-                    "runId": "pre-fix",
-                    "hypothesisId": "H2",
-                    "data": {
-                        "polynomial": polynomial,
-                        "normalized_string": s,
-                        "variable": variable,
-                        "chosen_dominant": variable,
-                    },
-                }
-                with open("debug-9e5428.log", "a", encoding="utf-8") as f:
-                    f.write(json.dumps(log_payload) + "\n")
-            except Exception:
-                # Ignorar errores de logging
-                pass
-            # endregion
             return variable
 
         # 6) Si no se encontró el símbolo pedido, pero hay otros símbolos candidatos,

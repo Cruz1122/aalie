@@ -8,7 +8,7 @@
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 import { useTranslations } from "next-intl";
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import rehypeKatex from "rehype-katex";
@@ -246,19 +246,139 @@ const CustomPre = (props: any) => {
   const onAnalyzeCode = (props as { onAnalyzeCode?: (code: string) => void })
     .onAnalyzeCode;
 
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [hasVerticalScroll, setHasVerticalScroll] = useState(false);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const next = el.scrollHeight > el.clientHeight + 1;
+      setHasVerticalScroll(next);
+    };
+
+    update();
+
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [codeContent]);
+
+  const isPseudocode = useMemo(() => {
+    return /BEGIN|END|FOR|WHILE|IF|THEN|ELSE|RETURN|CALL/i.test(codeContent);
+  }, [codeContent]);
+
+  const renderedCode = useMemo(() => {
+    if (!isPseudocode) return codeContent;
+
+    const keywordRe =
+      /\b(BEGIN|END|IF|THEN|ELSE|WHILE|FOR|TO|DO|REPEAT|UNTIL|RETURN|CALL|MOD|DIV|AND|OR|print)\b/g;
+    const numberRe = /\b\d+(\.\d+)?\b/g;
+    const stringRe = /"([^"\\]|\\.)*"/g;
+
+    const renderTokens = (text: string, lineKey: string) => {
+      const tokens: Array<{
+        kind: "keyword" | "number" | "string" | "plain";
+        value: string;
+      }> = [];
+
+      const patterns = [
+        { kind: "string" as const, re: stringRe },
+        { kind: "keyword" as const, re: keywordRe },
+        { kind: "number" as const, re: numberRe },
+      ];
+
+      let i = 0;
+      while (i < text.length) {
+        let best:
+          | { kind: (typeof patterns)[number]["kind"]; start: number; end: number; value: string }
+          | undefined;
+
+        for (const p of patterns) {
+          p.re.lastIndex = i;
+          const m = p.re.exec(text);
+          if (!m) continue;
+          const start = m.index;
+          const end = start + m[0].length;
+          if (start < i) continue;
+          if (!best || start < best.start) {
+            best = { kind: p.kind, start, end, value: m[0] };
+          }
+        }
+
+        if (!best) {
+          tokens.push({ kind: "plain", value: text.slice(i) });
+          break;
+        }
+
+        if (best.start > i) {
+          tokens.push({ kind: "plain", value: text.slice(i, best.start) });
+        }
+        tokens.push({ kind: best.kind, value: best.value });
+        i = best.end;
+      }
+
+      return tokens.map((t, idx) => {
+        const key = `${lineKey}_t${idx}`;
+        switch (t.kind) {
+          case "keyword":
+            return (
+              <span key={key} className="text-fuchsia-300 font-semibold">
+                {t.value}
+              </span>
+            );
+          case "string":
+            return (
+              <span key={key} className="text-emerald-300">
+                {t.value}
+              </span>
+            );
+          case "number":
+            return (
+              <span key={key} className="text-amber-300">
+                {t.value}
+              </span>
+            );
+          default:
+            return <span key={key}>{t.value}</span>;
+        }
+      });
+    };
+
+    return codeContent.split("\n").map((line, lineIdx) => {
+      const lineKey = `l${lineIdx}`;
+      const commentStart = line.indexOf("//");
+      const before = commentStart >= 0 ? line.slice(0, commentStart) : line;
+      const comment = commentStart >= 0 ? line.slice(commentStart) : "";
+
+      return (
+        <div key={lineKey} className="whitespace-pre-wrap break-words">
+          {renderTokens(before, lineKey)}
+          {comment ? (
+            <span className="text-slate-400/70">{comment}</span>
+          ) : null}
+        </div>
+      );
+    });
+  }, [codeContent, isPseudocode]);
+
   return (
     <div className="relative group w-full max-w-full min-w-0">
       <div
+        ref={scrollRef}
         className="bg-slate-800/70 border border-slate-600/40 rounded-md p-2.5 max-h-[300px] overflow-y-auto mb-1.5 max-w-[min(100%,420px)] min-w-0 overflow-hidden"
       >
         <pre
           className="text-slate-200 text-[10px] font-mono whitespace-pre-wrap break-words leading-relaxed m-0"
         >
-          {codeContent}
+          {renderedCode}
         </pre>
       </div>
       {codeContent?.trim() && (
-        <div className="absolute top-2 right-5 flex items-center gap-1.5 opacity-30 hover:opacity-100 transition-opacity">
+        <div
+          className={`absolute top-2 ${hasVerticalScroll ? "right-5" : "right-2"} flex items-center gap-1.5 opacity-30 hover:opacity-100 transition-opacity`}
+        >
           <AnalyzeButton code={codeContent} onAnalyze={onAnalyzeCode} />
           <CopyButton code={codeContent} />
         </div>
