@@ -347,6 +347,7 @@ export interface AnalyzeOpenResponse {
     };
     recursion_tree?: {              // resultado del Método de Árbol de Recursión
       method: "recursion_tree";     // identificador del método
+      recurrence_type?: "divide_conquer" | "linear_shift";  // tipo de recurrencia para visualización
       levels: Array<{               // información de cada nivel del árbol
         level: number;              // índice del nivel (0 = raíz)
         num_nodes: number;          // número de nodos en el nivel (a^i)

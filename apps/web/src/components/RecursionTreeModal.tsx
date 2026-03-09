@@ -12,7 +12,6 @@ import {
   default as ReactFlow,
   Background,
   Controls,
-  MiniMap,
   useNodesState,
   useEdgesState,
   Handle,
@@ -558,10 +557,6 @@ export default function RecursionTreeModal({
     setOrientation((prev) => (prev === "vertical" ? "horizontal" : "vertical"));
   }, []);
 
-  const getNodeColor = useCallback((node: Node) => {
-    return node.data?.isBaseCase ? "#10b981" : "#64748b";
-  }, []);
-
   // Solo mostrar el modal si la recurrencia es válida
   if (!open || !recurrence) {
     return null;
@@ -594,15 +589,15 @@ export default function RecursionTreeModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center">
       <div
-        className="absolute inset-0 glass-modal-overlay"
+        className="absolute -top-8 -left-4 -right-4 -bottom-4 glass-modal-overlay"
         onClick={onClose}
         aria-hidden
       />
-      <div className="relative z-10 w-[min(95vw,1000px)] h-[min(75vh,650px)] max-h-[75vh] rounded-2xl glass-modal-container shadow-2xl flex flex-col overflow-hidden mx-4">
+      <div className="relative z-10 w-[min(95vw,1400px)] h-[min(90vh,850px)] max-h-[90vh] rounded-2xl glass-modal-container !shadow-none flex flex-col overflow-hidden mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 flex-shrink-0 glass-modal-header">
+        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 flex-shrink-0 glass-modal-header !shadow-none">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
             <span className="material-symbols-outlined text-purple-400">
               account_tree
@@ -780,13 +775,6 @@ export default function RecursionTreeModal({
               showZoom={true}
               showFitView={true}
               showInteractive={true}
-            />
-            <MiniMap
-              className="!bg-slate-800/90 !border !border-white/10 !rounded-lg"
-              nodeColor={getNodeColor}
-              maskColor="rgba(0, 0, 0, 0.6)"
-              pannable
-              zoomable
             />
           </ReactFlow>
         </div>

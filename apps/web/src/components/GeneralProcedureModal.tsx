@@ -152,7 +152,7 @@ export default function GeneralProcedureModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
-        className="absolute inset-0 glass-modal-overlay"
+        className="absolute -top-8 -left-4 -right-4 -bottom-4 glass-modal-overlay"
         onClick={onClose}
         aria-hidden
       />

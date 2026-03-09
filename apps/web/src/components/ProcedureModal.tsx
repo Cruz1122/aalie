@@ -606,7 +606,7 @@ export default function ProcedureModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 glass-modal-overlay" />
+      <div className="absolute -top-8 -left-4 -right-4 -bottom-4 glass-modal-overlay" />
       <div className="relative z-10 w-[min(95vw,1200px)] max-h-[90vh] rounded-2xl glass-modal-container shadow-2xl flex flex-col overflow-hidden mx-4">
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 flex-shrink-0 glass-modal-header">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">

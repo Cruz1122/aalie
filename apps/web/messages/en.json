@@ -563,7 +563,7 @@
       "levelLabel": "Level",
       "duplicateSubproblems": "Duplicate subproblems:",
       "zoomHint": "Use mouse to zoom and pan. Press Esc to close.",
-      "irregularTree": "⚠ Irregular tree: nodes are duplicated",
+      "irregularTree": "Tree with duplicate subproblems (e.g. Fibonacci)",
       "duplicateSubproblem": "⚠ Duplicate subproblem ({count}x)",
       "nodeCount": "{count} node{plural}",
       "returns": "Returns"

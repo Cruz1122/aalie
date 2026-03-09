@@ -564,7 +564,7 @@
       "levelLabel": "Nivel",
       "duplicateSubproblems": "Subproblemas duplicados:",
       "zoomHint": "Usa el mouse para hacer zoom y arrastrar. Presiona Esc para cerrar.",
-      "irregularTree": "⚠ Árbol irregular: los nodos se duplican",
+      "irregularTree": "Árbol con subproblemas duplicados (ej. Fibonacci)",
       "duplicateSubproblem": "⚠ Subproblema duplicado ({count}x)",
       "nodeCount": "{count} nodo{plural}",
       "returns": "Retorna"

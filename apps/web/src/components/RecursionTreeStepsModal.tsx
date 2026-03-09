@@ -32,7 +32,7 @@ export default function RecursionTreeStepsModal({
   return (
     <div className="fixed inset-0 z-50">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute -top-8 -left-4 -right-4 -bottom-4 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
         onKeyDown={(e) => {
           if (e.key === "Escape") onClose();

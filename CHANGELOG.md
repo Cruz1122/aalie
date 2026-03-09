@@ -8,6 +8,8 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
+- `docs/recursion-tree-edge-cases.md`: Registro de algoritmos de referencia, patrones problemáticos y casos límite del árbol de recursión para futuros sprints.
+- Tests de estructura del árbol (`test_recursion_tree_structure.py`): Merge sort, búsqueda binaria, Fibonacci, Quicksort peor caso.
 - Reingeniería del motor WHILE: núcleo `ir/` (ast_normalizer, expr_utils, node_identity) unificado.
 - Módulo `semantics/` (symbol_table, type_inference, scope_resolver) para inferencia de roles sin heurísticas por nombre.
 - Motor `while_engine/` con CFG local, guard_analysis, update_analysis, control_variables, progress_proofs, sympy_bridge, iteration_bounds.
@@ -20,6 +22,9 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Test `test_bubble_sort_longitud_correct_complexity` que valida Θ(n²) worst/avg, Θ(n) best y ausencia de símbolos de array en BUBBLE_SORT_LONGITUD.
 
 ### Fixed
+- **Árbol de recursión:** Texto `irregularTree` corregido: "Árbol con subproblemas duplicados (ej. Fibonacci)" en lugar de "los nodos se duplican", alineado con terminología pedagógica (subproblemas vs nodos).
+- **Fibonacci con método árbol:** Rama explícita en `_apply_recursion_tree_method` para recurrencias multi-término (T(n)=T(n-1)+T(n-2)) que evita caer en estructura divide-and-conquer incorrecta. Preservar type=linear_shift en recurrencia cuando method=recursion_tree y has_subtraction con múltiples coeficientes.
+- **Modal árbol de recursión:** Blur del fondo completo (z-[70], glass-modal-overlay-fixed), tamaño mayor (1400px × 90vh), eliminado minimapa.
 - **Bubble sort con i < n AND swapped:** (1) Engine WHILE: en best case, si `classify_while` devuelve `iterations_expr="1"` (flag kill), se prioriza sobre el patrón `linear_counter` que devolvía n, corrigiendo Θ(n²) → Θ(n) en best case. (2) T_polynomial: `powsimp` en coeficientes y en el término completo (coeff·n^degree) antes de LaTeX, evitando "- 4 n n" → "-4 n²". (3) Procedimiento: todos los pasos que generan LaTeX desde SymPy usan `_sympy_to_latex` (ParensLatexPrinter), evitando ambigüedades como `n · - i + n` → `n · (-i + n)`.
 - **Análisis bubble sort mejorado (y genérico):** (1) `detect_size_variables_from_proc` extrae variable de tamaño desde `ArrayParam.start`/`end` (ej. A[n] → n), evitando O(1) incorrecto. (2) Fallback `expr_has_size` en `IterativeAnalyzer`: si `t_open_expr` contiene la variable principal en `free_symbols`, se calcula la complejidad real aunque la heurística falle. (3) Normalización de potencias con `powsimp` antes de LaTeX: productos repetidos (n·n, m·m·m) se muestran como potencias. (4) Sustitución de alias (`longitud`, `tam`, etc.) antes de `close_summation` para que el cierre evalúe correctamente. (5) `_sympy_to_latex` con printer que envuelve Add en paréntesis cuando es factor de Mul (n·(k-1), m·(i+1), etc.).
 - Euclides MCD: `count_str` ya no se corrompe a `n + 1`; se preservan parámetros `a` y `b` en `min(a,b)` gracias a `preserve_symbols` en `_sanitize_expression` cuando la fila tiene `euclid_pattern`.

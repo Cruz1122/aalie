@@ -1105,6 +1105,45 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "method": method,
                     "branching_subset": True
                 }
+            elif method == "recursion_tree" and has_subtraction:
+                # Fibonacci-type: T(n) = T(n-1) + T(n-2) + ... (múltiples términos)
+                linear_info = self._detect_linear_recurrence(proc_def, recursive_calls)
+                if linear_info and len(linear_info.get("coefficients", {})) >= 2:
+                    coeffs = linear_info["coefficients"]
+                    shifts_list = sorted(coeffs.keys())
+                    coeffs_list = [coeffs[s] for s in shifts_list]
+                    g_n_str = linear_info.get("g_n", "0") or "0"
+                    g_n_clean = g_n_str.strip().lower()
+                    is_homogeneous = g_n_clean in ("0", "", "\\theta(0)", "theta(0)")
+                    terms_latex = []
+                    for offset in shifts_list:
+                        c = coeffs[offset]
+                        terms_latex.append(f"{c} \\cdot T(n-{offset})" if c != 1 else f"T(n-{offset})")
+                    form_linear = f"T(n) = {' + '.join(terms_latex)}" + ("" if is_homogeneous else f" + {g_n_str}")
+                    recurrence = {
+                        "type": "linear_shift",
+                        "form": form_linear,
+                        "order": max(shifts_list),
+                        "shifts": shifts_list,
+                        "coefficients": coeffs_list,
+                        "g(n)": "0" if is_homogeneous else g_n_str,
+                        "n0": n0,
+                        "applicable": True,
+                        "notes": ["Recurrencia multi-término (ej. Fibonacci), árbol con subproblemas superpuestos"],
+                        "method": method
+                    }
+                else:
+                    recurrence = {
+                        "type": "divide_conquer",
+                        "form": recurrence_form,
+                        "a": a,
+                        "b": float(b),
+                        "f": f_n,
+                        "n0": n0,
+                        "applicable": True,
+                        "notes": [],
+                        "method": method
+                    }
             elif multi_b_terms:
                 # Divide-and-conquer generalizado: múltiples tamaños n/b_i
                 recurrence = {
@@ -6248,6 +6287,7 @@ FIN FUNCIÓN"""
                 theta = "2^n"
                 recursion_tree = {
                     "method": "recursion_tree",
+                    "recurrence_type": "linear_shift",
                     "levels": [
                         {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "1", "total_cost_latex": "1"},
                         {"level": 1, "num_nodes_latex": "n", "subproblem_size_latex": "n-1", "cost_per_node_latex": "1", "total_cost_latex": "n"},
@@ -6269,6 +6309,7 @@ FIN FUNCIÓN"""
                 theta = "n^2"
                 recursion_tree = {
                     "method": "recursion_tree",
+                    "recurrence_type": "linear_shift",
                     "levels": [
                         {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "n", "total_cost_latex": "n"},
                         {"level": 1, "num_nodes_latex": "1", "subproblem_size_latex": "n-1", "cost_per_node_latex": "n-1", "total_cost_latex": "n-1"},
@@ -6276,6 +6317,35 @@ FIN FUNCIÓN"""
                     "height": "n",
                     "summation": {"expression": "\\sum_{i=0}^{n-1} (n-i) = \\frac{n(n+1)}{2}", "theta": theta},
                     "dominating_level": {"reason": "\\text{Suma aritmética } n + (n-1) + \\ldots + 1 = \\Theta(n^2)"},
+                    "table_by_levels": [],
+                    "theta": f"\\Theta({theta})"
+                }
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                return {"success": True, "recursion_tree": recursion_tree}
+
+            # Fibonacci-type: T(n) = c1*T(n-k1) + c2*T(n-k2) + ... (múltiples términos)
+            # Árbol con subproblemas superpuestos; no usar estructura divide-and-conquer
+            shifts = self.recurrence.get("shifts", [])
+            coefficients = self.recurrence.get("coefficients", [])
+            if len(shifts) >= 2:
+                recurrence_form = self.recurrence.get("form", "T(n) = T(n-1) + T(n-2) + 1")
+                self.proof_steps.append({"id": "tree_extract", "text": f"\\text{{Recurrencia }} {recurrence_form}"})
+                self.proof_steps.append({
+                    "id": "step1_note",
+                    "text": "\\text{Árbol con subproblemas superpuestos: el mismo T(k) se calcula varias veces. Crecimiento exponencial } \\Theta(\\varphi^n)"
+                })
+                theta = "\\varphi^n"
+                recursion_tree = {
+                    "method": "recursion_tree",
+                    "recurrence_type": "linear_shift",
+                    "levels": [
+                        {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "1", "total_cost_latex": "1"},
+                        {"level": 1, "num_nodes_latex": "2", "subproblem_size_latex": "n-1, n-2", "cost_per_node_latex": "1", "total_cost_latex": "2"},
+                        {"level": 2, "num_nodes_latex": "4", "subproblem_size_latex": "n-2, n-3, n-4", "cost_per_node_latex": "1", "total_cost_latex": "4"},
+                    ],
+                    "height": "n",
+                    "summation": {"expression": "\\sum_{i=0}^{n} \\text{(nodos nivel } i) \\approx \\Theta(\\varphi^n)", "theta": theta},
+                    "dominating_level": {"reason": "\\text{Subproblemas superpuestos: crecimiento exponencial } \\Theta(\\varphi^n)"},
                     "table_by_levels": [],
                     "theta": f"\\Theta({theta})"
                 }
@@ -6309,6 +6379,7 @@ FIN FUNCIÓN"""
                 theta = "2^n"
                 recursion_tree = {
                     "method": "recursion_tree",
+                    "recurrence_type": "linear_shift",
                     "levels": [
                         {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "1", "total_cost_latex": "1"},
                         {"level": 1, "num_nodes_latex": "n", "subproblem_size_latex": "n-1", "cost_per_node_latex": "1", "total_cost_latex": "n"},
@@ -6395,6 +6466,7 @@ FIN FUNCIÓN"""
         
         recursion_tree = {
             "method": "recursion_tree",
+            "recurrence_type": "divide_conquer",
             "levels": levels,
             "height": height_expr,
             "summation": summation_result,
