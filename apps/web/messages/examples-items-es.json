@@ -44,7 +44,7 @@
   "9": {
     "name": "Ordenamiento Burbuja (Bubble Sort)",
     "description": "Ordena un array comparando elementos adyacentes e intercambiándolos si están en el orden incorrecto. Es uno de los algoritmos de ordenamiento más simples, pero también uno de los menos eficientes.",
-    "complexity": "Mejor: O(n), Peor: O(n²), Prom: O(n²)"
+    "complexity": "O(n²)"
   },
   "10": {
     "name": "Ordenamiento por Inserción (Insertion Sort)",

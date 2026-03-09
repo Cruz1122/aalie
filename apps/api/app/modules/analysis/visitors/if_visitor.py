@@ -22,54 +22,10 @@ class IfVisitor:
     """
     
     def _expr_to_str(self, expr: Any) -> str:
-        """
-        Convierte una expresión del AST a string.
-        
-        Args:
-            expr: Expresión del AST
-            
-        Returns:
-            String representando la expresión
-            
-        Author: Juan Camilo Cruz Parra (@Cruz1122)
-        """
-        if expr is None:
-            return ""
-        elif isinstance(expr, str):
-            return expr
-        elif isinstance(expr, (int, float)):
-            return str(expr)
-        elif isinstance(expr, dict):
-            expr_type = expr.get("type", "")
-            
-            if expr_type == "identifier":
-                return expr.get("name", "unknown")
-            elif expr_type == "number":
-                return str(expr.get("value", "0"))
-            elif expr_type == "literal":
-                return str(expr.get("value", "0"))
-            elif expr_type == "binary":
-                left = self._expr_to_str(expr.get("left", ""))
-                right = self._expr_to_str(expr.get("right", ""))
-                op = expr.get("operator", "")
-                # Asegurar que el operador no se pierda
-                if not op:
-                    op = "-"  # fallback para operadores perdidos
-                return f"({left}) {op} ({right})"
-            elif expr_type == "index":
-                target = self._expr_to_str(expr.get("target", ""))
-                index = self._expr_to_str(expr.get("index", ""))
-                return f"{target}[{index}]"
-            elif expr_type == "unary":
-                arg = self._expr_to_str(expr.get("arg", ""))
-                op = expr.get("operator", "")
-                return f"{op}({arg})"
-            else:
-                # Fallback para tipos desconocidos
-                return str(expr.get("value", str(expr)))
-        else:
-            return str(expr)
-    
+        """Delega a expr_to_str del módulo ir.expr_utils."""
+        from ..ir.expr_utils import expr_to_str
+        return expr_to_str(expr)
+
     def visitIf(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """
         Visita un nodo IF y aplica las reglas de análisis.

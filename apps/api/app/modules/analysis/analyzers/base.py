@@ -93,11 +93,23 @@ class BaseAnalyzer:
         bool_flags: set[str] = set()
 
         # 1) Parámetros del procedimiento
+        # Excluir ArrayParam y nombres típicos de arrays (A, B, arr, etc.)
+        ARRAY_LIKE_NAMES = {"a", "b", "c", "arr", "array", "lista", "list"}
         params = proc_def.get("params", []) or []
         for p in params:
             if isinstance(p, dict):
                 name = p.get("name")
                 if isinstance(name, str) and name:
+                    if p.get("type") == "ArrayParam":
+                        for field in ("start", "end"):
+                            val = p.get(field)
+                            if isinstance(val, dict) and val.get("type", "").lower() == "identifier":
+                                size_name = val.get("name")
+                                if isinstance(size_name, str) and size_name and size_name.lower() not in ARRAY_LIKE_NAMES:
+                                    scores[size_name] += 5
+                        continue
+                    if name.lower() in ARRAY_LIKE_NAMES:
+                        continue
                     scores[name] += 5
 
         def _gather_ids(node: Any, out: set[str]) -> None:
@@ -225,6 +237,9 @@ class BaseAnalyzer:
             if name in bool_flags:
                 scores[name] -= 5
             if name in forbidden:
+                scores[name] -= 10
+            # Excluir nombres de arrays (A, B, arr, etc.) que pueden venir del cuerpo (ej. A[j])
+            if name.lower() in ARRAY_LIKE_NAMES:
                 scores[name] -= 10
 
         # Filtro: solo candidatos con score positivo

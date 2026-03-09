@@ -44,7 +44,7 @@
   "9": {
     "name": "Bubble Sort",
     "description": "Sorts an array by comparing adjacent elements and swapping them if they are in the wrong order. One of the simplest sorting algorithms, but also one of the least efficient.",
-    "complexity": "Best: O(n), Worst: O(n²), Avg: O(n²)"
+    "complexity": "O(n²)"
   },
   "10": {
     "name": "Insertion Sort",

@@ -10,6 +10,7 @@ Version: 0.1.0
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from ..ir.expr_utils import expr_to_str
 from .guard import GuardInfo
 from .updates import VarUpdateSummary
 
@@ -56,30 +57,10 @@ def _find_initial_value(var_name: str, while_line: int, parent_context: Optional
                         if t in ("number", "literal"):
                             last_val = str(val.get("value", ""))
                         else:
-                            last_val = _expr_to_str(val)  # Identifier, Binary, etc.
+                            last_val = expr_to_str(val)  # Identifier, Binary, etc.
                     elif val:
                         last_val = "?"
     return last_val
-
-
-def _expr_to_str(expr: Any) -> str:
-    """Convierte expresión a string."""
-    if expr is None:
-        return ""
-    if isinstance(expr, (str, int, float)):
-        return str(expr)
-    if isinstance(expr, dict):
-        t = expr.get("type", "").lower()
-        if t == "identifier":
-            return expr.get("name", "unknown")
-        if t in ("number", "literal"):
-            return str(expr.get("value", "0"))
-        if t == "binary":
-            left = _expr_to_str(expr.get("left"))
-            right = _expr_to_str(expr.get("right"))
-            op = expr.get("op", "") or expr.get("operator", "")
-            return f"({left}) {op} ({right})"
-    return str(expr)
 
 
 def _classify_bool_guard(guard: GuardInfo, updates: Dict[str, VarUpdateSummary], parent_context: Optional[Dict], while_line: int, mode: str) -> Optional[ClassifyResult]:
@@ -241,7 +222,7 @@ def classify_while(
     # --- Relacionales numéricos ---
     if guard.kind == "rel" and guard.atoms:
         atom = guard.atoms[0]
-        if atom.get("two_variables"):
+        if atom.get("two_vars"):
             return ClassifyResult(status="unknown", reason_code="while_two_vars")
         # Si este "atom" representa una igualdad booleana (var == true/false), no tratarlo como rel.
         if atom.get("bool_desired") is not None:
@@ -376,14 +357,14 @@ def classify_while(
         if getattr(guard, "or_bool_vars", None):
              for bvar in guard.or_bool_vars:
                  components.append(GuardInfo(kind="bool_var", bool_var=bvar, desired=True, vars_used=guard.vars_used))
-        
+
         if not components:
             return ClassifyResult(status="unknown", reason_code="while_or_empty")
 
         for comp in components:
             res = classify_while(comp, updates, mode, parent_context, while_line, compound=True, compound_op="or")
             sub_results.append(res)
-            
+
         if all(r.status == "bounded" for r in sub_results):
             exprs = [str(r.iterations_expr) for r in sub_results if r.iterations_expr]
             if not exprs:
@@ -396,11 +377,11 @@ def classify_while(
                 reason_code="while_or_bounded_sum",
                 evidence={"sub_results": len(sub_results)},
             )
-        
+
         if any(r.status == "unbounded" for r in sub_results):
             unb = next(r for r in sub_results if r.status == "unbounded")
             return ClassifyResult(status="unbounded", reason_code=unb.reason_code, evidence=unb.evidence)
-            
+
         return ClassifyResult(status="unknown", reason_code="while_or_unknown")
 
     # --- AND: Bounded si AL MENOS uno está acotado ---
@@ -420,7 +401,7 @@ def classify_while(
                     )
                 else:
                     components.append(GuardInfo(kind="rel", atoms=[atom], vars_used=guard.vars_used))
-        
+
         # En AND, recopilar variables booleanas también (si existen)
         if hasattr(guard, "and_bool_vars"):
             for bvar in guard.and_bool_vars:

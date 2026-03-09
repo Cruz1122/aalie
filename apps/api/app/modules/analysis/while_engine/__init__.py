@@ -1,17 +1,19 @@
 """
-Módulo de análisis de guards y clasificación de bucles WHILE.
+Motor WHILE reingenierado.
 
-Proporciona GuardInfo, UpdateSummary, classify_while para distinguir
-bounded/unbounded/unknown en bucles WHILE.
+Análisis estructural sin heurísticas por nombre.
+Control variables, progress proofs, patrones.
 
-Author: Juan Camilo Cruz Parra (@Cruz1122)
+Author: @Cruz1122
 Version: 0.1.0
 """
+from .diagnostics import REASON_CODES
 from .guard import GuardInfo, analyze_guard
 from .updates import VarUpdateSummary, summarize_updates
 from .classifier import ClassifyResult, classify_while
 
 __all__ = [
+    "REASON_CODES",
     "GuardInfo",
     "analyze_guard",
     "VarUpdateSummary",

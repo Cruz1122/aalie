@@ -355,12 +355,16 @@ class ComplexityClasses:
         import re as _re2
         token_vars = _re2.findall(r"[a-zA-Z]+", s)
         # Filtrar tokens obvios que no representan tamaño (log, C, t, etc.)
+        # y nombres típicos de arrays (A, B, arr, etc.) que no deben aparecer en complejidad
+        ARRAY_LIKE_NAMES = {"a", "b", "c", "arr", "array", "lista", "list"}
         filtered = []
         for tok in token_vars:
             low = tok.lower()
             if low in ("log", "cdot", "frac", "text"):
                 continue
             if low.startswith("c_") or low.startswith("t_"):
+                continue
+            if low in ARRAY_LIKE_NAMES:
                 continue
             filtered.append(tok)
         # Evitar recursión infinita: solo reintentar si encontramos algo distinto

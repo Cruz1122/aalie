@@ -37,63 +37,7 @@ class GuardInfo:
     and_bool_vars: Set[str] = field(default_factory=set)  # Vars que son bool en disyuntos de AND
 
 
-def _expr_to_str(expr: Any) -> str:
-    """Convierte expresión del AST a string."""
-    if expr is None:
-        return ""
-    if isinstance(expr, str):
-        return expr
-    if isinstance(expr, (int, float)):
-        return str(expr)
-    if isinstance(expr, dict):
-        expr_type = expr.get("type", "").lower()
-        if expr_type == "identifier":
-            return expr.get("name", "unknown")
-        if expr_type in ("number", "literal"):
-            return str(expr.get("value", "0"))
-        if expr_type == "binary":
-            left = _expr_to_str(expr.get("left", ""))
-            right = _expr_to_str(expr.get("right", ""))
-            op = expr.get("op", "") or expr.get("operator", "")
-            return f"({left}) {op} ({right})"
-        if expr_type == "index":
-            target = _expr_to_str(expr.get("target", ""))
-            index = _expr_to_str(expr.get("index", ""))
-            return f"{target}[{index}]"
-        if expr_type == "unary":
-            arg = _expr_to_str(expr.get("arg", ""))
-            op = expr.get("operator", "")
-            return f"{op}({arg})"
-        return str(expr.get("value", str(expr)))
-    return str(expr)
-
-
-def _is_literal_true(node: Dict[str, Any]) -> bool:
-    """True si expr es literal True (Literal, Number o Identifier 'true')."""
-    if not node: return False
-    if node.get("type", "").lower() == "literal":
-        val = node.get("value")
-        if isinstance(val, bool): return val is True
-        if isinstance(val, str):
-            return val.lower().strip() in ("true", "verdadero", "verdad", "v")
-    # Parser puede producir Identifier name="VERDADERO"
-    if node.get("type", "").lower() == "identifier":
-        return node.get("name", "").lower() in ("true", "verdadero", "verdad", "v")
-    return False
-
-
-def _is_literal_false(node: Dict[str, Any]) -> bool:
-    """True si expr es literal False (Literal, Number o Identifier 'false')."""
-    if not node: return False
-    if node.get("type", "").lower() == "literal":
-        val = node.get("value")
-        if isinstance(val, bool): return val is False
-        if isinstance(val, str):
-            return val.lower().strip() in ("false", "falso", "f")
-    # Parser puede producir Identifier name="false" para constantes booleanas
-    if node.get("type", "").lower() == "identifier":
-        return node.get("name", "").lower() in ("false", "f", "falso")
-    return False
+from ..ir.expr_utils import expr_to_str, is_literal_true as _is_literal_true, is_literal_false as _is_literal_false
 
 
 def _collect_bool_vars(expr: Any) -> Set[str]:
@@ -108,7 +52,7 @@ def _collect_bool_vars(expr: Any) -> Set[str]:
     et = expr.get("type", "").lower()
     op = (expr.get("op") or expr.get("operator") or "").lower()
     if et == "identifier":
-        # Considerar cualquier identificador “suelto” dentro del guard como candidato a flag booleano.
+        # Considerar cualquier identificador "suelto" dentro del guard como candidato a flag booleano.
         # Esto permite detectar patrones como (i < n AND intercambiado) sin exigir intercambiado==VERDADERO.
         name = expr.get("name", "")
         if name:
@@ -178,11 +122,11 @@ def _normalize_relational(left: Dict, right: Dict, op: str) -> Optional[Dict[str
     op_map = {">": "<", ">=": "<=", "<": ">", "<=": ">="}
     if left_is_var and not right_is_var:
         var_name = left.get("name", "")
-        limit = _expr_to_str(right)
+        limit = expr_to_str(right)
         return {"var": var_name, "limit": limit, "op": op}
     if right_is_var and not left_is_var:
         var_name = right.get("name", "")
-        limit = _expr_to_str(left)
+        limit = expr_to_str(left)
         op_norm = op_map.get(op, op)
         return {"var": var_name, "limit": limit, "op": op_norm}
     if left_is_var and right_is_var:
@@ -278,7 +222,7 @@ def analyze_guard(test: Any) -> GuardInfo:
 
     # Identificar clase de guard recursivamente
     kind = _analyze_guard_rec(test, atoms, vars_used, has_array)
-    
+
     or_bools = set()
     and_bools = set()
     if kind == "or":

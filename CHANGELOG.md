@@ -8,10 +8,35 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
+- Reingeniería del motor WHILE: núcleo `ir/` (ast_normalizer, expr_utils, node_identity) unificado.
+- Módulo `semantics/` (symbol_table, type_inference, scope_resolver) para inferencia de roles sin heurísticas por nombre.
+- Motor `while_engine/` con CFG local, guard_analysis, update_analysis, control_variables, progress_proofs, sympy_bridge, iteration_bounds.
+- Patrones estructurales: linear_counter, flag_kill, euclid_mod, binary_search_interval.
+- WhileEngine.analyze() integrado en el visitor; delegación al engine antes del clasificador legacy.
+- Pruebas metamórficas (test_while_metamorphic.py): renombrar variables no cambia clasificación.
+- Marcador pytest `while_domain` para tests del dominio WHILE.
+- Test de regresión para bubble sort con variable `longitud` decreciente (BUBBLE_SORT_LONGITUD) que valida ausencia de conteos negativos.
+- `assert_notation_no_array_symbols` en assertions.py para validar que la notación no contenga símbolos de arrays.
+- Test `test_bubble_sort_longitud_correct_complexity` que valida Θ(n²) worst/avg, Θ(n) best y ausencia de símbolos de array en BUBBLE_SORT_LONGITUD.
 
 ### Fixed
+- **Bubble sort con i < n AND swapped:** (1) Engine WHILE: en best case, si `classify_while` devuelve `iterations_expr="1"` (flag kill), se prioriza sobre el patrón `linear_counter` que devolvía n, corrigiendo Θ(n²) → Θ(n) en best case. (2) T_polynomial: `powsimp` en coeficientes y en el término completo (coeff·n^degree) antes de LaTeX, evitando "- 4 n n" → "-4 n²". (3) Procedimiento: todos los pasos que generan LaTeX desde SymPy usan `_sympy_to_latex` (ParensLatexPrinter), evitando ambigüedades como `n · - i + n` → `n · (-i + n)`.
+- **Análisis bubble sort mejorado (y genérico):** (1) `detect_size_variables_from_proc` extrae variable de tamaño desde `ArrayParam.start`/`end` (ej. A[n] → n), evitando O(1) incorrecto. (2) Fallback `expr_has_size` en `IterativeAnalyzer`: si `t_open_expr` contiene la variable principal en `free_symbols`, se calcula la complejidad real aunque la heurística falle. (3) Normalización de potencias con `powsimp` antes de LaTeX: productos repetidos (n·n, m·m·m) se muestran como potencias. (4) Sustitución de alias (`longitud`, `tam`, etc.) antes de `close_summation` para que el cierre evalúe correctamente. (5) `_sympy_to_latex` con printer que envuelve Add en paréntesis cuando es factor de Mul (n·(k-1), m·(i+1), etc.).
+- Euclides MCD: `count_str` ya no se corrompe a `n + 1`; se preservan parámetros `a` y `b` en `min(a,b)` gracias a `preserve_symbols` en `_sanitize_expression` cuando la fila tiene `euclid_pattern`.
+- Parámetros de tipo array (A, B, arr, etc.) ya no aparecen en la notación de complejidad: se excluyen en `detect_size_variables_from_proc` (ArrayParam, nombres típicos y penalización cuando vienen del cuerpo), en `_fallback_dominant_from_string` (tokens alternativos) y en `_sanitize_expression` (sustitución por variable principal).
+- Variables de control en límites de Sum (ej. `longitud` en `FOR j=1..longitud-1`) ya no se sustituyen por 0, evitando conteos negativos como `-n` en algoritmos tipo bubble sort mejorado.
+- `_sanitize_expression` e `IterativeAnalyzer`: no sustituir por 0 cuando el resultado sería negativo; usar variable principal (n) como cota conservadora.
+- `SummationCloser`: sustitución segura de variables de iteración (i, j, k) que evita resultados negativos mediante `_safe_substitute_iteration_var`.
 
 ### Changed
+- Página de ejemplos: notación asintótica teórica de Bubble Sort actualizada a O(n²) en todos los casos (versión canónica con FOR anidado).
+- Prompts LLM (general y parser_assist): menos comentarios en código (preferir sin comentarios; máx 1-2 si se usan, ≤30 caracteres). Reforzada sección GRAMÁTICA: referencia explícita a packages/grammar/grammar/Language.g4 como fuente de verdad.
+- Motor WHILE: migración de `while_analysis/` a `while_engine/`; guard, updates y classifier ahora en `while_engine/`.
+- Eliminada duplicidad de carpetas; visitor e engine importan desde `while_engine`.
+
+### Removed
+- Carpeta `while_analysis/` (guard.py, updates.py, classifier.py migrados a while_engine).
+- `while_engine/average_models.py`, `cfg.py`, `iteration_bounds.py` (código muerto no usado).
 
 ## [1.2.0]
 ### Added

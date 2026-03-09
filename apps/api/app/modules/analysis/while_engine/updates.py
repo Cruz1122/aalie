@@ -9,7 +9,8 @@ Version: 0.1.0
 """
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set
-from .guard import _is_literal_true, _is_literal_false
+
+from ..ir.expr_utils import expr_to_str, is_literal_true, is_literal_false, is_simple_constant
 
 
 @dataclass
@@ -31,42 +32,6 @@ class VarUpdateSummary:
     monotone_progress_must: bool = False
 
 
-def _expr_to_str(expr: Any) -> str:
-    """Convierte expresión del AST a string."""
-    if expr is None:
-        return ""
-    if isinstance(expr, str):
-        return expr
-    if isinstance(expr, (int, float)):
-        return str(expr)
-    if isinstance(expr, dict):
-        t = expr.get("type", "").lower()
-        if t == "identifier":
-            return expr.get("name", "unknown")
-        if t in ("number", "literal"):
-            return str(expr.get("value", "0"))
-        if t == "binary":
-            left = _expr_to_str(expr.get("left", ""))
-            right = _expr_to_str(expr.get("right", ""))
-            op = expr.get("op", "") or expr.get("operator", "")
-            return f"({left}) {op} ({right})"
-        if t == "unary":
-            arg = _expr_to_str(expr.get("arg", ""))
-            op = expr.get("operator", "")
-            return f"{op}({arg})"
-        return str(expr.get("value", str(expr)))
-    return str(expr)
-
-
-def _is_simple_constant(s: str) -> bool:
-    """True si s es constante numérica simple."""
-    try:
-        float(s)
-        return True
-    except (ValueError, TypeError):
-        return False
-
-
 def _parse_update(value: Any, var_name: str) -> Optional[Dict[str, Any]]:
     """
     Parsea una asignación value y retorna tipo de update si aplica.
@@ -79,9 +44,9 @@ def _parse_update(value: Any, var_name: str) -> Optional[Dict[str, Any]]:
     op = value.get("op", "") or value.get("operator", "")
 
     # Boolean: flag <- false / flag <- true (Literal, Number o Identifier)
-    if _is_literal_false(value):
+    if is_literal_false(value):
         return {"type": "bool_assign", "value": False, "kills_guard": True}
-    if _is_literal_true(value):
+    if is_literal_true(value):
         return {"type": "bool_assign", "value": True, "kills_guard": False}
 
     # Unary: flag <- not flag
@@ -98,7 +63,7 @@ def _parse_update(value: Any, var_name: str) -> Optional[Dict[str, Any]]:
         right = value.get("right", {})
         if isinstance(right, dict) and right.get("type", "").lower() == "identifier":
             if right.get("name", "") == var_name:
-                other = _expr_to_str(left) if left else "?"
+                other = expr_to_str(left) if left else "?"
                 return {"type": "mod_decrease", "other_var": other, "monotone": True}
 
     # Binary: i <- i + c, i - c, i * c, i / c
@@ -108,8 +73,8 @@ def _parse_update(value: Any, var_name: str) -> Optional[Dict[str, Any]]:
 
         if isinstance(left, dict) and left.get("type", "").lower() == "identifier":
             if left.get("name", "") == var_name:
-                const = _expr_to_str(right)
-                if _is_simple_constant(const):
+                const = expr_to_str(right)
+                if is_simple_constant(const):
                     if op == "+":
                         return {"type": "num", "operator": "+", "constant": const, "monotone": True}
                     if op == "-":
@@ -118,8 +83,8 @@ def _parse_update(value: Any, var_name: str) -> Optional[Dict[str, Any]]:
                         return {"type": "num", "operator": op, "constant": const, "monotone": True}
         if isinstance(right, dict) and right.get("type", "").lower() == "identifier":
             if right.get("name", "") == var_name and op in ("+", "*"):
-                const = _expr_to_str(left)
-                if _is_simple_constant(const):
+                const = expr_to_str(left)
+                if is_simple_constant(const):
                     return {"type": "num", "operator": op, "constant": const, "monotone": True}
 
     # Reset: i <- 0, i <- n (asignación a constante u otra expr)
@@ -234,7 +199,7 @@ def _must_may_stmt(node: Any, var_name: str) -> tuple[List[Dict], List[Dict]]:
                 parsed = _parse_update(node.get("value"), var_name)
                 if parsed:
                     return [parsed], [parsed]
-                    
+
     return [], []
 
 
@@ -302,7 +267,7 @@ def summarize_updates(
     for var_name in vars_used:
         if not var_name:
             continue
-        
+
         # Determinar si esta variable es la que controla el bucle como booleano
         desired = None
         if guard_info:
@@ -325,6 +290,6 @@ def summarize_updates(
                         desired = True
                     elif hasattr(guard_info, "or_bool_vars") and var_name in getattr(guard_info, "or_bool_vars", set()):
                         desired = True
-        
+
         result[var_name] = _compute_summary_for_var(body, var_name, desired)
     return result

@@ -66,6 +66,7 @@ markers = [
     "system: system/HTTP endpoint tests",
     "slow: slow tests (e.g. heavy SymPy)",
     "while: tests involving WHILE loops",
+    "while_domain: tests del dominio WHILE (engine, patrones, metamórficos)",
     "recursive: tests involving recursive analysis",
     "dp: tests involving DP algorithms",
 ]
