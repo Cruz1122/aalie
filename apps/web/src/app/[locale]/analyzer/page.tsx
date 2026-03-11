@@ -5,12 +5,12 @@ import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 
+import AAButton from "@/components/AAButton";
 import { AAProgressLoader } from "@/components/AAProgressLoader";
 import { AnalyzerEditor } from "@/components/AnalyzerEditor";
 import { ASTTreeView } from "@/components/ASTTreeView";
 import ChatBot from "@/components/ChatBot";
 import ComparisonModal from "@/components/ComparisonModal";
-import ExecutionTraceModal from "@/components/ExecutionTraceModal";
 import Footer from "@/components/Footer";
 import GeneralProcedureModal from "@/components/GeneralProcedureModal";
 import GPUCPUModal from "@/components/GPUCPUModal";
@@ -20,6 +20,7 @@ import MethodSelector, { MethodType } from "@/components/MethodSelector";
 import ProcedureModal from "@/components/ProcedureModal";
 import RecursiveAnalysisView from "@/components/RecursiveAnalysisView";
 import RepairModal from "@/components/RepairModal";
+import TraceDedicatedView from "@/components/TraceDedicatedView";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
@@ -145,8 +146,10 @@ export default function AnalyzerPage() {
     avg: CoreAnalysisData | null;
   } | null>(null);
   const [llmNote, setLlmNote] = useState<string>("");
-  // Estado para seguimiento de ejecución
-  const [showExecutionTraceModal, setShowExecutionTraceModal] = useState(false);
+  // Estado para vista de seguimiento (dedicada, no modal)
+  const [analyzerViewMode, setAnalyzerViewMode] = useState<"analysis" | "trace">("analysis");
+  const [hasTraceViewMounted, setHasTraceViewMounted] = useState(false);
+  const [isSwitchingTrace, setIsSwitchingTrace] = useState(false);
   const [executionTraceCase, setExecutionTraceCase] = useState<"worst" | "best" | "avg">("worst");
   // Estado para análisis GPU vs CPU
   const [showGPUCPUModal, setShowGPUCPUModal] = useState(false);
@@ -1689,9 +1692,36 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
 
       <Header />
 
-      <main className="flex-1 p-6 z-10">
-        <div className="max-w-7xl mx-auto">
-
+      <main className="flex-1 p-6 z-10 min-h-0 flex flex-col">
+        <div className="max-w-7xl mx-auto flex-1 flex flex-col min-h-0 w-full">
+          {/* Vista trace: montada al abrir y se mantiene para persistir estado al volver */}
+          {hasTraceViewMounted && (
+          <div
+            className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ${
+              analyzerViewMode !== "trace" ? "hidden" : ""
+            } ${isSwitchingTrace ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"}`}
+          >
+            <TraceDedicatedView
+              source={source}
+              ast={ast}
+              caseType={executionTraceCase}
+              onCaseChange={setExecutionTraceCase}
+              onBack={() => {
+                setIsSwitchingTrace(true);
+                setTimeout(() => {
+                  setAnalyzerViewMode("analysis");
+                  setIsSwitchingTrace(false);
+                }, 300);
+              }}
+            />
+          </div>
+          )}
+          {/* Vista análisis */}
+          <div
+            className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ${
+              analyzerViewMode === "trace" ? "hidden" : ""
+            } ${isSwitchingTrace ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"}`}
+          >
           {/* Main layout: código vertical, costos y ecuaciones horizontales */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Columna izquierda: código fuente (vertical) */}
@@ -1702,10 +1732,12 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                     <span className="material-symbols-outlined mr-2 text-blue-400">code</span>{" "}
                     {tView("sourceCode")}
                   </h2>
-                  <button
+                  <AAButton
                     onClick={handleAnalyze}
                     disabled={isButtonDisabled}
-                    className="glass-button px-4 py-2 text-sm font-semibold text-white rounded-lg transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center w-[100px] h-[36px]"
+                    variant="primary"
+                    size="md"
+                    className="w-[100px] h-[36px] min-w-[100px]"
                   >
                     {analyzing ? (
                       <div className="relative">
@@ -1715,7 +1747,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                     ) : (
                       tView("analyze")
                     )}
-                  </button>
+                  </AAButton>
                 </div>
                 <div className="flex-1 overflow-hidden">
                   <AnalyzerEditor
@@ -1762,8 +1794,16 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                         </div>
                       </button>
                       <button
-                        onClick={() => setShowExecutionTraceModal(true)}
-                        disabled={!hasComparableData || !hasApiKey}
+                        onClick={() => {
+                          if (analyzerViewMode === "trace") return;
+                          setHasTraceViewMounted(true);
+                          setIsSwitchingTrace(true);
+                          setTimeout(() => {
+                            setAnalyzerViewMode("trace");
+                            setIsSwitchingTrace(false);
+                          }, 300);
+                        }}
+                        disabled={!hasComparableData || !hasApiKey || isSwitchingTrace}
                         className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-400/50 bg-gradient-to-br from-blue-500/20 to-blue-500/20 border border-blue-500/30 hover:from-blue-500/30 hover:to-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
                       >
                         <span className="material-symbols-outlined text-sm">play_circle</span>
@@ -1871,6 +1911,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
               </div>
             </section>
           </div>
+          </div>
         </div>
       </main>
 
@@ -1973,12 +2014,13 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                   </span>
                   {copied ? tView("astModalCopied") : tView("copyJson")}
                 </button>
-                <button
+                <AAButton
                   onClick={() => setShowAstModal(false)}
-                  className="glass-button px-4 py-2 text-xs font-semibold text-white rounded-lg transition-all hover:scale-105 bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 hover:from-yellow-500/30 hover:to-amber-500/30"
+                  variant="amber"
+                  size="sm"
                 >
                   {tCommon("close")}
-                </button>
+                </AAButton>
               </div>
             </div>
           </div>
@@ -2025,16 +2067,6 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
           onClose={() => setIsComparing(false)}
         />
       )}
-
-      {/* Modal de seguimiento de ejecución */}
-      <ExecutionTraceModal
-        open={showExecutionTraceModal}
-        onClose={() => setShowExecutionTraceModal(false)}
-        source={source}
-        ast={ast}
-        caseType={executionTraceCase}
-        onCaseChange={setExecutionTraceCase}
-      />
 
       {/* Modal de comparación con LLM */}
       <ComparisonModal

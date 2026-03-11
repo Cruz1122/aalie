@@ -32,33 +32,19 @@ CONTEXTO
 SALIDA ESPERADA (MUY IMPORTANTE)
 Debes responder SIEMPRE con un único objeto JSON VÁLIDO, sin texto adicional, sin comentarios, sin Markdown.
 
-Estructura exacta:
+Estructura exacta (OBLIGATORIO incluir nodes Y edges; edges NO puede ser [] si hay 2+ nodos):
 {
   "graph": {
-    "nodes": [
-      {
-        "id": "string único (ej: call_1, call_2)",
-        "type": "default",
-        "position": { "x": number, "y": number },
-        "data": {
-          "label": "nombre_funcion(params) → valor_retorno",
-          "microseconds": number (opcional, tiempo estimado en microsegundos para esta llamada),
-          "tokens": number (opcional, número de operaciones elementales para esta llamada)
-        }
-      }
-    ],
-    "edges": [
-      {
-        "id": "string único",
-        "source": "id del nodo padre",
-        "target": "id del nodo hijo",
-        "label": "descripción de la llamada",
-        "type": "default"
-      }
-    ]
+    "nodes": [ { "id": "...", "type": "default", "position": { "x": n, "y": n }, "data": { "label": "..." } } ],
+    "edges": [ { "id": "e1", "source": "id_padre", "target": "id_hijo", "label": "izq|der|call", "type": "default" } ]
   },
-  "explanation": "${loc === "en" ? "Explanation in Markdown about the recursive process (max. 200 words)" : "Explicación en Markdown sobre el proceso recursivo (máx. 200 palabras)"}"
+  "explanation": "..."
 }
+
+EJEMPLO MÍNIMO (mergeSort con 2 hijos):
+- Nodos: raíz "ms_1_4", hijo izq "ms_1_2", hijo der "ms_3_4"
+- Aristas OBLIGATORIAS: { source: "ms_1_4", target: "ms_1_2", label: "izq" }, { source: "ms_1_4", target: "ms_3_4", label: "der" }
+- Sin estas aristas el diagrama NO funciona. SIEMPRE crea edges por cada relación padre→hijo.
 
 REGLAS PARA NODOS (CRÍTICO)
 - Crea un nodo por cada llamada recursiva
@@ -80,17 +66,13 @@ REGLAS PARA NODOS (CRÍTICO)
 - Si hay más niveles, usa un nodo especial: "... más llamadas"
 - Usa saltos de línea (\\n) para separar información en el label
 
-REGLAS PARA ARISTAS
-- Conecta cada llamada padre → hijo(s)
-- Aristas de LLAMADA (padre → hijo):
-  * Labels descriptivos: "llamada", "f(n-1)", "f(n-2)", "izquierda", "derecha"
-  * Color por defecto (gris)
-- Aristas de RETORNO (hijo → padre):
-  * CRÍTICO: Incluye "return" o "→" en el label
-  * Ejemplos: "return 120", "→ 1", "retorna 2"
-  * Se mostrarán en VERDE para distinguirlas
-- TODA arista DEBE tener source, target y label
-- Crea AMBOS tipos de aristas para mostrar el flujo completo
+REGLAS PARA ARISTAS (CRÍTICO: SIN EDGES EL DIAGRAMA FALLA)
+- OBLIGATORIO: Por cada nodo que NO sea la raíz, crea UNA arista con source=id del padre, target=id de ese nodo.
+- Si creas 3 nodos, debes crear AL MENOS 2 aristas (raíz→hijo1, raíz→hijo2). Si hay más niveles, más aristas.
+- El array "edges" NUNCA debe estar vacío cuando hay 2 o más nodos.
+- Proceso: 1) Crea nodos. 2) Para CADA nodo hijo, añade { id, source: padre.id, target: hijo.id, label, type: "default" }.
+- Labels de llamada: "izq", "der", "izquierda", "derecha", "llamada", etc.
+- Opcional: aristas de RETORNO (hijo→padre) con "return" o "→" en el label para color verde.
 
 LAYOUT EN ÁRBOL
 - Nivel 0 (llamada inicial) arriba: x=400, y=50

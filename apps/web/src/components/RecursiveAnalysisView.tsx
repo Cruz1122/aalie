@@ -752,7 +752,7 @@ const renderRecursionTreeCards = (
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Nivel Dominante */}
-      <div className="glass-card p-3 rounded-lg shadow-[0_8px_32px_0_rgba(6,182,212,0.3)] hover:shadow-[0_12px_40px_0_rgba(6,182,212,0.4)] h-full flex flex-col">
+      <div className="glass-card p-3 rounded-lg h-full flex flex-col">
         <div className="flex flex-col gap-2 flex-1">
           <h3 className="font-semibold text-cyan-300 text-sm flex items-center gap-2">
             <span className="material-symbols-outlined text-base">
@@ -783,7 +783,7 @@ const renderRecursionTreeCards = (
       </div>
 
       {/* Ecuación de Eficiencia */}
-      <div className="glass-card p-3 rounded-lg shadow-[0_8px_32px_0_rgba(6,182,212,0.3)] hover:shadow-[0_12px_40px_0_rgba(6,182,212,0.4)] h-full flex flex-col">
+      <div className="glass-card p-3 rounded-lg h-full flex flex-col">
         <div className="flex flex-col gap-2 flex-1">
           <h3 className="font-semibold text-cyan-300 text-sm flex items-center gap-2">
             <span className="material-symbols-outlined text-base">
@@ -852,7 +852,7 @@ const renderEfficiencyCard = (
   props: EfficiencyCardProps,
 ): React.JSX.Element => {
   return (
-    <div className="glass-card p-4 sm:p-7 rounded-lg shadow-[0_8px_32px_0_rgba(59,130,246,0.3)] hover:shadow-[0_12px_40px_0_rgba(59,130,246,0.4)] border border-blue-500/20 flex-shrink-0 min-w-0">
+    <div className="glass-card p-4 sm:p-7 rounded-lg border border-blue-500/20 flex-shrink-0 min-w-0">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 min-w-0">
         <h3 className="text-white font-semibold text-sm flex items-center gap-2 flex-wrap min-w-0">
           <span className="material-symbols-outlined text-base text-blue-400 flex-shrink-0">

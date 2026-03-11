@@ -8,6 +8,12 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
+- `AAButton`: componente reutilizable con variantes de color (primary, amber, purple, blue, cyan, secondary) alineado al estilo de las cards de ejemplos (`bg-{color}/25 border-{color}/40 hover:bg-{color}/35`).
+- Vista dedicada de seguimiento de pseudocódigo (iterativo y recursivo): reemplaza el modal por una vista full-page con patrón de cambio tipo homepage (animación opacity/translate-y). Panel izquierdo tipo chat bloqueado con pseudocódigo y progreso por línea; área principal con árbol/diagrama, tablas y explicación.
+- `TraceDedicatedView` y `TraceChatPanel`: componentes para la vista de seguimiento con layout responsive (mobile: columna única; desktop: panel chat + contenido).
+- Persistencia del trace en sessionStorage (TTL 5 min) para evitar recargas al volver a la vista.
+- Tests de sistema para `/analyze/trace`: factorial, búsqueda binaria, Fibonacci, búsqueda lineal.
+- `docs/api/trace-format.md`: documentación del contrato de datos del trace para el frontend.
 - `docs/recursion-tree-edge-cases.md`: Registro de algoritmos de referencia, patrones problemáticos y casos límite del árbol de recursión para futuros sprints.
 - Tests de estructura del árbol (`test_recursion_tree_structure.py`): Merge sort, búsqueda binaria, Fibonacci, Quicksort peor caso.
 - Reingeniería del motor WHILE: núcleo `ir/` (ast_normalizer, expr_utils, node_identity) unificado.
@@ -22,6 +28,8 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Test `test_bubble_sort_longitud_correct_complexity` que valida Θ(n²) worst/avg, Θ(n) best y ausencia de símbolos de array en BUBBLE_SORT_LONGITUD.
 
 ### Fixed
+- **Trace iterativo:** El contenido ya no desaparece al cambiar de caso (best/avg/worst). Solo se resetea `algorithmKind` cuando cambia el código fuente; al cambiar solo caso o tamaño de entrada se mantiene la vista iterativa con estado de carga.
+- **recursion-diagram:** (1) Aceptar respuestas con `nodes`/`edges` en raíz o dentro de `graph`. (2) Fallback: si edges vacío pero hay nodos con posición, inferir aristas desde layout (árbol por Y). (3) Prompt reforzado: edges obligatorios. (4) Evitar spam; JSON malformado con jsonrepair.
 - **Árbol de recursión:** Texto `irregularTree` corregido: "Árbol con subproblemas duplicados (ej. Fibonacci)" en lugar de "los nodos se duplican", alineado con terminología pedagógica (subproblemas vs nodos).
 - **Fibonacci con método árbol:** Rama explícita en `_apply_recursion_tree_method` para recurrencias multi-término (T(n)=T(n-1)+T(n-2)) que evita caer en estructura divide-and-conquer incorrecta. Preservar type=linear_shift en recurrencia cuando method=recursion_tree y has_subtraction con múltiples coeficientes.
 - **Modal árbol de recursión:** Blur del fondo completo (z-[70], glass-modal-overlay-fixed), tamaño mayor (1400px × 90vh), eliminado minimapa.
@@ -34,12 +42,29 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - `SummationCloser`: sustitución segura de variables de iteración (i, j, k) que evita resultados negativos mediante `_safe_substitute_iteration_var`.
 
 ### Changed
+- **Trace iterativo (vista dedicada):** Rediseño completo: layout grid 2 columnas (lg:grid-cols-2) con glass-card; columna izquierda: seguimiento paso a paso; columna derecha: controles, variables y diagrama. Eliminadas alturas fijas; secciones flexibles con min-h-0 overflow-hidden. Selector de caso (best/avg/worst) integrado en header de la tarjeta de seguimiento.
+- **Trace iterativo (componentes):** StepInfo con grid responsive (grid-cols-2 sm:grid-cols-3 lg:grid-cols-5); StepControls compacto en fila horizontal; DiagramSection con altura flexible (min-h-[200px] h-[min(400px,50vh)]); VariablesPanel e InputSizeControl con orden y espaciado mejorados. Mejoras aplicadas también al variant modal.
+- **Accesibilidad trace:** StepInfo con aria-live="polite" y aria-atomic; StepControls con aria-label en todos los botones.
+- Botones del analyzer y ManualModeView: reemplazo de `glass-button` por `AAButton` con variantes primary/amber.
+- ExampleCard: botón Analizar migrado a `AAButton` variant="primary".
+- LoaderDemo: hover de cards usa `hover:bg-primary/25 hover:border-primary/40` en lugar de `hover:glass-button`.
+- Eliminada clase `.glass-button` de globals.css; usar `AAButton` en su lugar.
+- Vista trace: persistencia al volver (TraceDedicatedView se mantiene montada tras abrir); sin flash de versión iterativa (placeholder cuando algorithmKind es null); modal diagrama fullscreen con fondo opaco y sin fragmentos de contenido previo.
+- Vista trace: eliminado botón recargar; sin loader al cambiar a vista de seguimiento (se muestra layout directamente).
+- Vista trace recursivo (dedicated): Diagrama y Explicación apilados verticalmente (uno encima del otro) en lugar de columnas; eliminados labels repetidos (Diagrama de Recursión / Árbol de Recursión); eliminadas líneas divisorias largas entre columnas; `MarkdownRenderer` con prop `hideHorizontalRules` para ocultar `---`/`***` en explicaciones.
+- Botón "Ver seguimiento" abre vista dedicada en lugar del modal; botón "Volver" en esquina superior izquierda restaura la vista de análisis.
+- `IterativeTraceContent` y `RecursiveTraceContent`: prop `variant` ("modal" | "dedicated") para layout de 2 o 3 columnas.
+- `TraceFlowDiagram`: zoom mejorado (minZoom 0.15, maxZoom 2), nodos más compactos, fitView con padding 0.35, textos i18n.
+- `DiagramSection`: altura del diagrama iterativo aumentada a min-h-[350px] h-[400px].
+- Microcopys y secuencia explicativa: setupIntro, stepShows, complexitySummary en executionTrace.
+- `PseudocodeViewer`: prop `hideHeader` para uso dentro de TraceChatPanel.
 - Página de ejemplos: notación asintótica teórica de Bubble Sort actualizada a O(n²) en todos los casos (versión canónica con FOR anidado).
 - Prompts LLM (general y parser_assist): menos comentarios en código (preferir sin comentarios; máx 1-2 si se usan, ≤30 caracteres). Reforzada sección GRAMÁTICA: referencia explícita a packages/grammar/grammar/Language.g4 como fuente de verdad.
 - Motor WHILE: migración de `while_analysis/` a `while_engine/`; guard, updates y classifier ahora en `while_engine/`.
 - Eliminada duplicidad de carpetas; visitor e engine importan desde `while_engine`.
 
 ### Removed
+- `ExecutionTraceModal` del analyzer: reemplazado por TraceDedicatedView integrada en la página.
 - Carpeta `while_analysis/` (guard.py, updates.py, classifier.py migrados a while_engine).
 - `while_engine/average_models.py`, `cfg.py`, `iteration_bounds.py` (código muerto no usado).
 

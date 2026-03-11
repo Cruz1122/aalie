@@ -25,6 +25,7 @@
     "@monaco-editor/react": "^4.7.0",
     "country-flag-icons": "^1.6.13",
     "dagre": "^0.8.5",
+    "jsonrepair": "^3.13.2",
     "katex": "0.16.10",
     "lucide-react": "^0.544.0",
     "mermaid": "^11.12.1",

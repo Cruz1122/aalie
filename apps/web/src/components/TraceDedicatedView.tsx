@@ -3,6 +3,7 @@
 import type { Program } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import ReactDOM from "react-dom";
 
 import type {
   CaseType,
@@ -14,36 +15,43 @@ import type {
 
 import IterativeTraceContent from "./trace/IterativeTraceContent";
 import RecursiveTraceContent from "./trace/RecursiveTraceContent";
+import TraceChatPanel from "./trace/TraceChatPanel";
 import TraceFlowDiagram from "./TraceFlowDiagram";
 
-
-interface ExecutionTraceModalProps {
-  open: boolean;
-  onClose: () => void;
+/**
+ * Vista dedicada de seguimiento de pseudocódigo (iterativo y recursivo).
+ * Layout: panel izquierdo tipo chat (pseudocódigo con progreso) + área principal.
+ *
+ * @author AALIE
+ * @version 0.1.0
+ */
+interface TraceDedicatedViewProps {
   source: string;
   ast: Program | null;
   caseType: CaseType;
   onCaseChange: (caseType: CaseType) => void;
+  onBack: () => void;
 }
 
-export default function ExecutionTraceModal({
-  open,
-  onClose,
+const TRACE_CACHE_KEY = "analyzerTraceCache";
+const TRACE_CACHE_TTL_MS = 5 * 60 * 1000; // 5 min
+
+export default function TraceDedicatedView({
   source,
   ast: _ast,
   caseType,
   onCaseChange,
-}: ExecutionTraceModalProps) {
+  onBack,
+}: TraceDedicatedViewProps) {
   const locale = useLocale();
   const t = useTranslations("analyzer.executionTrace");
-  const tAlgorithm = useTranslations("analyzer.algorithmType");
   const [inputSize, setInputSize] = useState<number>(4);
   const [debouncedInputSize, setDebouncedInputSize] = useState<number>(4);
   const [trace, setTrace] = useState<TraceApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [playSpeed] = useState(1000); // ms entre pasos
+  const [playSpeed] = useState(1000);
   const [graph, setGraph] = useState<TraceGraph | null>(null);
   const [explanation, setExplanation] = useState<string>("");
   const [loadingDiagram, setLoadingDiagram] = useState(false);
@@ -54,8 +62,8 @@ export default function ExecutionTraceModal({
   } | null>(null);
   const [algorithmKind, setAlgorithmKind] = useState<string | null>(null);
   const [exampleArray, setExampleArray] = useState<number[]>([1, 2, 3, 4]);
+  const isLoadingRef = useRef(false);
 
-  // Configuración de seguimiento derivada del tipo de algoritmo
   const traceConfig: TraceConfig = useMemo(() => {
     if (algorithmKind === "recursive") {
       return {
@@ -77,18 +85,12 @@ export default function ExecutionTraceModal({
         },
       };
     }
-
-    // Por defecto, tratamos como iterativo
     const makeBaseArray = (n: number): number[] =>
       Array.from({ length: Math.max(1, n) }, (_, idx) => idx + 1);
-
-    // Detectar si el algoritmo tiene condiciones que verifican n = 0
-    // Esto es una heurística simple: buscar patrones como "n = 0", "n == 0", "n <= 0", etc.
-    const hasZeroCheck = /n\s*[=<>]=\s*0|n\s*=\s*0|IF\s*\(\s*n\s*[=<>]=\s*0/i.test(source);
-
+    const hasZeroCheck =
+      /n\s*[=<>]=\s*0|n\s*=\s*0|IF\s*\(\s*n\s*[=<>]=\s*0/i.test(source);
     const generators = {
       best: (n: number): InternalInput => {
-        // Para best case, si hay verificación de n=0, usar n > 0 (no entra a la condición)
         const actualN = hasZeroCheck ? Math.max(1, n) : n;
         const arr = makeBaseArray(actualN);
         const x = arr[0];
@@ -102,18 +104,14 @@ export default function ExecutionTraceModal({
         return { n: actualN, array: arr, x };
       },
       worst: (n: number): InternalInput => {
-        // Para worst case, si hay verificación de n=0, usar n = 0 (entra a la condición)
         if (hasZeroCheck) {
-          // Si el algoritmo verifica n = 0, el worst case es cuando n = 0
           return { n: 0, array: [], x: undefined };
         }
-        // Caso normal: worst case es el último elemento
         const arr = makeBaseArray(n);
         const x = arr[arr.length - 1];
         return { n, array: arr, x };
       },
     };
-
     return {
       kind: "iterative",
       controls: {
@@ -125,19 +123,41 @@ export default function ExecutionTraceModal({
     };
   }, [algorithmKind, source]);
 
-  // Cargar rastro cuando cambia el caso o tamaño de entrada (debounced)
   const loadTrace = useCallback(async () => {
+    if (isLoadingRef.current) return;
+    isLoadingRef.current = true;
     setLoading(true);
     setCurrentStep(0);
     setIsPlaying(false);
-    // No resetear graph aquí para evitar parpadeo - se reseteará cuando realmente cambie el trace
     setExplanation("");
     setRecursionDiagram(null);
 
     const scenario: CaseType = caseType;
     const n = debouncedInputSize || inputSize || 1;
 
-    // Generar input interno sólo para iterativos
+    const cacheKey = `${TRACE_CACHE_KEY}:${btoa(encodeURIComponent(source.substring(0, 200)))}:${scenario}:${n}`;
+    if (typeof window !== "undefined") {
+      try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          const { data: cachedData, ts } = JSON.parse(cached) as {
+            data: TraceApiResponse;
+            ts: number;
+          };
+          if (Date.now() - ts < TRACE_CACHE_TTL_MS && cachedData?.ok) {
+            setAlgorithmKind(cachedData.algorithmKind ?? null);
+            setGraph(null);
+            setTrace(cachedData);
+            setLoading(false);
+            isLoadingRef.current = false;
+            return;
+          }
+        }
+      } catch {
+        // Ignorar errores de cache
+      }
+    }
+
     let initialVariables: Record<string, unknown> | null = null;
     if (traceConfig.kind === "iterative" && traceConfig.inputGenerator) {
       const generator =
@@ -145,7 +165,8 @@ export default function ExecutionTraceModal({
           ? traceConfig.inputGenerator.best
           : scenario === "avg"
             ? traceConfig.inputGenerator.avg
-            : traceConfig.inputGenerator.worst) || traceConfig.inputGenerator.worst;
+            : traceConfig.inputGenerator.worst) ||
+        traceConfig.inputGenerator.worst;
 
       if (generator) {
         const internalInput = generator(n);
@@ -180,16 +201,23 @@ export default function ExecutionTraceModal({
 
       const data: TraceApiResponse = await response.json();
 
-      // Store algorithm kind FIRST before setting trace
       if (data.algorithmKind) {
         setAlgorithmKind(data.algorithmKind);
       }
 
-      // Resetear graph cuando el trace realmente cambia
       setGraph(null);
-      
-      // Then set the trace data
       setTrace(data);
+
+      if (typeof window !== "undefined" && data?.ok) {
+        try {
+          sessionStorage.setItem(
+            cacheKey,
+            JSON.stringify({ data, ts: Date.now() }),
+          );
+        } catch {
+          // Ignorar si sessionStorage está lleno
+        }
+      }
     } catch (error) {
       console.error("Error loading trace:", error);
       setTrace({
@@ -201,101 +229,68 @@ export default function ExecutionTraceModal({
     }
   }, [caseType, debouncedInputSize, inputSize, source, traceConfig, t, locale]);
 
+  const loadedParamsRef = useRef<string | null>(null);
   const previousSourceKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    if (open && source) {
-      const sourceKey = source.substring(0, 100);
-      if (previousSourceKeyRef.current !== sourceKey) {
-        previousSourceKeyRef.current = sourceKey;
-        setAlgorithmKind(null);
-      }
-      loadTrace();
+    if (!source) return;
+    const paramsKey = `${caseType}-${debouncedInputSize}-${source.substring(0, 100)}`;
+    if (loadedParamsRef.current === paramsKey) return;
+    loadedParamsRef.current = paramsKey;
+    const sourceKey = source.substring(0, 100);
+    if (previousSourceKeyRef.current !== sourceKey) {
+      previousSourceKeyRef.current = sourceKey;
+      setAlgorithmKind(null);
     }
+    loadTrace();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, caseType, debouncedInputSize, source, locale]);
+  }, [caseType, debouncedInputSize, source, locale]);
 
-  // Bloquear scroll del body y html mientras el modal esté abierto
+  // Bloquear scroll del body cuando el modal está abierto
   useEffect(() => {
-    if (!open && !isDiagramExpanded) return;
-
-    const prevBodyOverflow = document.body.style.overflow;
-    const prevBodyPosition = document.body.style.position;
-    const prevHtmlOverflow = document.documentElement.style.overflow;
-    document.body.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.documentElement.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = prevBodyOverflow;
-      document.body.style.position = prevBodyPosition;
-      document.documentElement.style.overflow = prevHtmlOverflow;
-    };
-  }, [open, isDiagramExpanded]);
+    if (isDiagramExpanded && (graph || recursionDiagram)) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isDiagramExpanded, graph, recursionDiagram]);
 
   const isRecursiveOrHybrid =
     algorithmKind === "recursive" || algorithmKind === "hybrid";
 
-  if (!open) return null;
+  const stepsToUse =
+    trace?.ok && trace?.trace?.steps ? trace.trace.steps : [];
+  const currentStepData =
+    stepsToUse.length > 0 && currentStep < stepsToUse.length
+      ? stepsToUse[currentStep]
+      : null;
+  const currentLine = currentStepData?.line || 0;
+  const totalSteps = stepsToUse.length;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center">
-      {/* Overlay */}
-      <div
-        className="absolute inset-0 glass-modal-overlay"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div className="relative z-10 glass-modal-container rounded-2xl p-4 sm:p-6 w-[95vw] max-w-[95vw] sm:max-w-6xl h-[90vh] max-h-[90dvh] mx-2 sm:mx-4 shadow-2xl flex flex-col overflow-hidden">
-        {/* Show initial loader while determining algorithm type */}
-        {loading && algorithmKind === null ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            <div className="relative flex items-center justify-center">
-              <div className="w-16 h-16 bg-blue-500/20 rounded-full animate-ping" />
-              <div className="absolute w-8 h-8 bg-blue-500 rounded-full" />
+    <div className="flex flex-col h-full min-h-0">
+      {/* Content - misma estructura de grid y cards que la pantalla de análisis; sin loader al cambiar de vista */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Columna izquierda: pseudocódigo - misma estructura que análisis (glass-card) */}
+          <section className="lg:col-span-4 h-full">
+            <div className="glass-card !shadow-none p-4 rounded-lg h-full flex flex-col">
+              <TraceChatPanel
+                source={source}
+                currentLine={isRecursiveOrHybrid ? undefined : currentLine}
+                currentStep={currentStep}
+                totalSteps={isRecursiveOrHybrid ? 0 : totalSteps}
+                onBack={onBack}
+              />
             </div>
-            <p className="text-sm text-slate-300">{t("detectingAlgorithm")}</p>
-          </div>
-        ) : (
-          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            {/* Header: título a la izquierda, X a la derecha (estilo DocumentationModal) */}
-            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-3 flex-shrink-0 min-w-0">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <h2 className="text-lg font-semibold text-white flex items-center gap-2 truncate">
-                  <span className="material-symbols-outlined text-blue-400 text-xl flex-shrink-0">
-                    play_circle
-                  </span>
-                  <span className="truncate">{t("title")}</span>
-                </h2>
-                {trace?.algorithmKind && (
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${trace.algorithmKind === "recursive"
-                      ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
-                      : trace.algorithmKind === "hybrid"
-                        ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/40"
-                        : "bg-blue-500/20 text-blue-300 border border-blue-500/40"
-                      }`}
-                  >
-                    {trace.algorithmKind === "recursive"
-                      ? tAlgorithm("recursive")
-                      : trace.algorithmKind === "hybrid"
-                        ? tAlgorithm("hybrid")
-                        : tAlgorithm("iterative")}
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={onClose}
-                className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg flex-shrink-0"
-                aria-label={t("close")}
-              >
-                ✕
-              </button>
-            </div>
+          </section>
 
-            {/* Contenido - scroll en cada columna, no aquí */}
-            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            {isRecursiveOrHybrid ? (
+          {/* Columna derecha: contenido principal - misma estructura que análisis */}
+          <section className="lg:col-span-8 h-full">
+            <div className="glass-card !shadow-none p-4 rounded-lg h-full flex flex-col min-h-0 overflow-hidden">
+            {algorithmKind === null ? (
+              <div className="flex-1 min-h-[200px]" aria-hidden />
+            ) : isRecursiveOrHybrid ? (
               <RecursiveTraceContent
                 source={source}
                 algorithmKind={algorithmKind || "recursive"}
@@ -309,6 +304,7 @@ export default function ExecutionTraceModal({
                 isDiagramExpanded={isDiagramExpanded}
                 setIsDiagramExpanded={setIsDiagramExpanded}
                 onLoadTrace={loadTrace}
+                variant="dedicated"
               />
             ) : (
               <IterativeTraceContent
@@ -338,47 +334,62 @@ export default function ExecutionTraceModal({
                 isDiagramExpanded={isDiagramExpanded}
                 setIsDiagramExpanded={setIsDiagramExpanded}
                 onLoadTrace={loadTrace}
+                variant="dedicated"
               />
             )}
             </div>
+          </section>
+        </div>
 
-            {/* Expanded diagram modal (shared) */}
-            {isDiagramExpanded && (graph || recursionDiagram) && (
-              <div className="fixed inset-0 z-[80] flex items-center justify-center">
-                <div
-                  className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+      {/* Expanded diagram modal - portal a body para overlay en toda la pantalla (evita cuadrado de blur por transform en ancestros) */}
+      {isDiagramExpanded &&
+        (graph || recursionDiagram) &&
+        typeof document !== "undefined" &&
+        ReactDOM.createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+            <div
+              className="absolute inset-0 glass-modal-overlay"
+              onClick={() => setIsDiagramExpanded(false)}
+              role="button"
+              tabIndex={0}
+              aria-label={t("closeExpandedDiagram")}
+            />
+            <div className="relative z-10 w-[96vw] max-w-[96vw] h-[96vh] max-h-[96dvh] rounded-xl glass-modal-container !shadow-none flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between flex-shrink-0 px-4 py-3 glass-modal-header !shadow-none rounded-t-xl">
+                <h3 className="text-base font-semibold text-slate-100 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sky-400 text-lg">
+                    {isRecursiveOrHybrid ? "account_tree" : "schema"}
+                  </span>
+                  <span>
+                    {isRecursiveOrHybrid
+                      ? t("recursionTreeTitle")
+                      : t("flowDiagramTitle")}
+                  </span>
+                </h3>
+                <button
+                  type="button"
                   onClick={() => setIsDiagramExpanded(false)}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={t("closeExpandedDiagram")}
-                />
-                <div className="relative z-10 w-[98vw] max-w-[98vw] h-[98vh] max-h-[98dvh] rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col p-4 gap-3 overflow-hidden">
-                  <div className="flex items-center justify-between flex-shrink-0">
-                    <h3 className="text-base font-semibold text-slate-100 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-sky-400 text-lg">
-                        {isRecursiveOrHybrid ? "account_tree" : "schema"}
-                      </span>
-                      <span>{isRecursiveOrHybrid ? t("recursionTreeTitle") : t("flowDiagramTitle")}</span>
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => setIsDiagramExpanded(false)}
-                      className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
-                      title={t("close")}
-                      aria-label={t("close")}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <div className="flex-1 glass-card rounded-lg overflow-hidden">
-                    <TraceFlowDiagram graph={(isRecursiveOrHybrid ? recursionDiagram?.graph : graph) || { nodes: [], edges: [] }} />
-                  </div>
-                </div>
+                  className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
+                  title={t("close")}
+                  aria-label={t("close")}
+                >
+                  ✕
+                </button>
               </div>
-            )}
-          </div>
+              <div className="flex-1 min-h-0 p-3 bg-slate-900/80">
+                <TraceFlowDiagram
+                  graph={
+                    (isRecursiveOrHybrid ? recursionDiagram?.graph : graph) || {
+                      nodes: [],
+                      edges: [],
+                    }
+                  }
+                />
+              </div>
+            </div>
+          </div>,
+          document.body,
         )}
-      </div>
     </div>
   );
 }

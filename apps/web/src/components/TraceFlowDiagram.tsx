@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { useMemo, useEffect } from "react";
 import {
   ReactFlow,
@@ -70,7 +71,7 @@ const TraceNode = ({ data }: { data: { label: string; isReturn?: boolean; type?:
   };
 
   return (
-    <div className={`relative rounded-lg border ${borderColor} ${bgColor} text-slate-50 text-base px-6 py-4 shadow-md ${shadowColor} backdrop-blur-sm min-w-[280px] max-w-[600px]`}>
+    <div className={`relative rounded-lg border ${borderColor} ${bgColor} text-slate-50 text-sm sm:text-base px-5 py-3 shadow-md ${shadowColor} backdrop-blur-sm min-w-[240px] max-w-[500px]`}>
       {/* Handles de entrada (target) en los cuatro lados */}
       {type !== "input" && (
         <>
@@ -214,8 +215,6 @@ function mapEdges(
     // Detectar si es una arista de retorno por el label
     const isReturnEdge = e.label && (/return/i.test(e.label) || /→/i.test(e.label) || /retorna/i.test(e.label));
 
-    console.log(`Edge ${e.id}: label="${e.label}", isReturn=${isReturnEdge}`);
-
     const edgeStyle = {
       stroke: isReturnEdge ? "#10b981" : "#94a3b8",
       strokeWidth: isReturnEdge ? "2.5px" : "1.5px",
@@ -246,6 +245,7 @@ function mapEdges(
 }
 
 export default function TraceFlowDiagram({ graph }: TraceFlowDiagramProps) {
+  const t = useTranslations("analyzer.executionTrace");
   const layoutedGraph = useMemo(
     () => getLayoutedGraph(graph, { direction: "TB" }),
     [graph],
@@ -283,7 +283,7 @@ export default function TraceFlowDiagram({ graph }: TraceFlowDiagramProps) {
   if (!layoutedGraph || !layoutedGraph.nodes || layoutedGraph.nodes.length === 0) {
     return (
       <div className="text-slate-400 text-sm p-4 text-center">
-        No se pudo generar un grafo a partir del rastro.
+        {t("noGraphFromTrace")}
       </div>
     );
   }
@@ -296,7 +296,7 @@ export default function TraceFlowDiagram({ graph }: TraceFlowDiagramProps) {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         fitView
-        fitViewOptions={{ padding: 0.25 }}
+        fitViewOptions={{ padding: 0.35, minZoom: 0.3, maxZoom: 1.2 }}
         proOptions={{ hideAttribution: true }}
         nodeTypes={nodeTypes}
         nodesDraggable={true}
@@ -308,8 +308,8 @@ export default function TraceFlowDiagram({ graph }: TraceFlowDiagramProps) {
         zoomOnScroll
         zoomOnPinch
         zoomOnDoubleClick={false}
-        minZoom={0.2}
-        maxZoom={1.5}
+        minZoom={0.15}
+        maxZoom={2}
       >
         <Background color="#334155" gap={16} size={1} />
         <Controls
@@ -320,7 +320,7 @@ export default function TraceFlowDiagram({ graph }: TraceFlowDiagramProps) {
         />
         {!hasEdges && (
           <div className="absolute top-2 right-3 px-2 py-1 rounded bg-red-500/80 text-[10px] text-white font-semibold shadow">
-            El grafo recibido no contiene aristas
+            {t("graphNoEdges")}
           </div>
         )}
       </ReactFlow>

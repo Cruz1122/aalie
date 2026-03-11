@@ -26,6 +26,8 @@ interface MarkdownRendererProps {
   readonly className?: string;
   /** Callback opcional para analizar código cuando se detecta pseudocódigo */
   readonly onAnalyzeCode?: (code: string) => void;
+  /** Si true, no renderiza líneas horizontales (---, ***) como saltos de página */
+  readonly hideHorizontalRules?: boolean;
 }
 
 interface CopyButtonProps {
@@ -488,6 +490,7 @@ export default function MarkdownRenderer({
   content,
   className,
   onAnalyzeCode,
+  hideHorizontalRules = false,
 }: MarkdownRendererProps) {
   const PreWithAnalyze = createPreWithAnalyze(onAnalyzeCode);
 
@@ -515,6 +518,7 @@ export default function MarkdownRenderer({
           tr: CustomTr,
           th: CustomTh,
           td: CustomTd,
+          ...(hideHorizontalRules && { hr: () => null }),
         }}
       >
         {content}

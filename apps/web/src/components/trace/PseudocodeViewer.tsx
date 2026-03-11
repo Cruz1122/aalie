@@ -5,21 +5,26 @@ import { useTranslations } from "next-intl";
 interface PseudocodeViewerProps {
   source: string;
   currentLine?: number;
+  /** Oculta el encabezado cuando se usa dentro de TraceChatPanel */
+  hideHeader?: boolean;
 }
 
 export default function PseudocodeViewer({
   source,
   currentLine,
+  hideHeader = false,
 }: PseudocodeViewerProps) {
   const t = useTranslations("analyzer.executionTrace");
   const codeLines = source.split("\n");
 
   return (
-    <div className="flex flex-col border-r border-slate-700 pr-4 overflow-hidden">
-      <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0">
-        {t("pseudocode")}
-      </h3>
-      <div className="flex-1 overflow-y-auto scrollbar-custom">
+    <div className={`flex flex-col overflow-hidden ${!hideHeader ? "border-r border-slate-700 pr-4" : ""}`}>
+      {!hideHeader && (
+        <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0">
+          {t("pseudocode")}
+        </h3>
+      )}
+      <div className="flex-1 overflow-y-auto scrollbar-custom min-h-0">
         <pre className="text-xs font-mono text-slate-300">
           {codeLines.map((line, idx) => {
             const lineNum = idx + 1;

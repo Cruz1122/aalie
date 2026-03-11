@@ -1,11 +1,11 @@
 // Configuración centralizada para modelos LLM de Gemini
 
-import { getPrompt as getPromptByLocale } from "./prompts";
 import {
   DEFAULT_GEMINI_DIAGRAM_MODELS,
   DEFAULT_GEMINI_ENDPOINT_BASE,
   DEFAULT_GEMINI_MODELS,
 } from "./llm-defaults";
+import { getPrompt as getPromptByLocale } from "./prompts";
 
 export type LLMJob = "parser_assist" | "general" | "repair" | "compare";
 

@@ -1,3 +1,4 @@
+import { jsonrepair } from "jsonrepair";
 import { NextRequest, NextResponse } from "next/server";
 
 import { GEMINI_DIAGRAM_MODELS, GEMINI_ENDPOINT_BASE } from "../llm-config";
@@ -44,7 +45,9 @@ export async function POST(req: NextRequest) {
     // Construir el prompt para el LLM según el idioma del usuario
     const systemPrompt = getRecursionDiagramSystemPrompt(locale, depth_limit || 10);
 
-    const userPrompt = `Genera un árbol de llamadas recursivas en formato React Flow para este algoritmo ${kind || "recursivo"}:
+    const userPrompt = `Genera un árbol de llamadas recursivas en formato React Flow para este algoritmo ${kind || "recursivo"}.
+
+⚠️ CRÍTICO - EDGES: Por cada nodo hijo que crees, DEBES añadir una arista en "edges" con source=id del padre, target=id del hijo. Sin aristas el diagrama no se dibuja. Ejemplo: si tienes nodos ms_1_4 (raíz), ms_1_2, ms_3_4, entonces edges: [{source:"ms_1_4",target:"ms_1_2",label:"izq"},{source:"ms_1_4",target:"ms_3_4",label:"der"}].
 
 \`\`\`pseudocode
 ${pseudocode}
@@ -67,7 +70,8 @@ IMPORTANTE:
 - NO uses notación genérica como "factorial(n)" o "factorial(n-1)"
 - Calcula y muestra los valores concretos de retorno
 - Marca claramente el caso base con "(base)" en el label
-- Crea aristas de RETORNO (con "return" o "→" en el label) además de las de llamada
+- EDGES OBLIGATORIOS: por cada nodo hijo, añade una arista { source: padre, target: hijo, label }. Array "edges" nunca vacío si hay 2+ nodos.
+- Opcional: aristas de RETORNO (hijo→padre) con "return" o "→" en el label
 - Las aristas de retorno se mostrarán en VERDE automáticamente
 - CRÍTICO SOBRE EL ARREGLO A (SI EL ALGORITMO USA ARRAYS):
   * Si el pseudocódigo tiene un parámetro tipo A[n] o un arreglo A, DEBES elegir un arreglo ordenado concreto y mostrarlo explícitamente en el label de la llamada raíz.
@@ -88,7 +92,7 @@ IMPORTANTE:
   * Esta arista final DEBE tener label "→ valor_final" o "return valor_final" para verse en verde
   * El nodo FIN debe estar claramente visible y accesible
 
-Devuelve SOLO el JSON con la estructura especificada.`;
+Devuelve SOLO el JSON. Verifica que "edges" tenga al menos una arista por cada nodo hijo (source=padre, target=hijo).`;
 
     // Llamar a Gemini (igual que generate-diagram)
     const model = GEMINI_DIAGRAM_MODELS.recursion_diagram;
@@ -162,29 +166,67 @@ Devuelve SOLO el JSON con la estructura especificada.`;
       );
     }
 
-    // Extraer JSON de la respuesta (igual que generate-diagram)
+    // Extraer y reparar JSON (LLM a veces devuelve trailing commas, etc.)
     let result;
-    try {
-      // Intentar parsear directamente
-      result = JSON.parse(text);
-    } catch {
-      // Si falla, buscar JSON entre ```json y ```
-      const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
-      if (jsonMatch) {
-        result = JSON.parse(jsonMatch[1]);
-      } else {
-        // Último intento: buscar cualquier objeto JSON
-        const objMatch = text.match(/\{[\s\S]*\}/);
-        if (objMatch) {
-          result = JSON.parse(objMatch[0]);
-        } else {
-          throw new Error("No se encontró JSON en la respuesta");
+    const stripCodeFences = (input: string): string => {
+      const fenced = input.match(/```json\s*([\s\S]*?)\s*```/i);
+      if (fenced?.[1]) return fenced[1].trim();
+      return input.trim();
+    };
+    const repairJson = (raw: string): string =>
+      raw.replace(/,(\s*[}\]])/g, "$1");
+
+    const parseAttempts = [
+      text.trim(),
+      stripCodeFences(text),
+      repairJson(text.trim()),
+      repairJson(stripCodeFences(text)),
+    ];
+
+    for (const candidate of parseAttempts) {
+      try {
+        result = JSON.parse(candidate);
+        break;
+      } catch {
+        continue;
+      }
+    }
+
+    if (!result) {
+      const objMatch = text.match(/\{[\s\S]*\}/);
+      if (objMatch) {
+        try {
+          result = JSON.parse(repairJson(objMatch[0]));
+        } catch {
+          // fallthrough
         }
       }
     }
 
-    // Validar que tenga la estructura esperada
-    if (!result.graph || !result.graph.nodes || !result.graph.edges) {
+    if (!result) {
+      try {
+        result = JSON.parse(jsonrepair(text));
+      } catch {
+        // fallthrough
+      }
+    }
+
+    if (!result) {
+      throw new Error("No se encontró JSON válido en la respuesta del LLM");
+    }
+
+    // Normalizar: aceptar graph.nodes/edges o nodes/edges en raíz
+    const rawGraph = result.graph ?? result;
+    const rawNodes = rawGraph?.nodes ?? result.nodes ?? [];
+    const rawEdges = rawGraph?.edges ?? result.edges ?? [];
+
+    if (!Array.isArray(rawNodes)) {
+      console.warn("recursion-diagram: estructura inesperada", {
+        hasGraph: !!result.graph,
+        hasNodes: !!rawNodes,
+        hasEdges: !!rawEdges,
+        keys: Object.keys(result),
+      });
       return NextResponse.json(
         {
           ok: false,
@@ -193,30 +235,66 @@ Devuelve SOLO el JSON con la estructura especificada.`;
         { status: 500 }
       );
     }
+    let safeEdges = Array.isArray(rawEdges) ? rawEdges : [];
+
+    // Fallback: si no hay aristas pero sí nodos, inferir desde posiciones (árbol: root arriba, hijos abajo)
+    if (safeEdges.length === 0 && rawNodes.length > 1) {
+      const nodesWithPos = rawNodes.filter(
+        (n: { id?: string; position?: { x?: number; y?: number } }) =>
+          n.id && typeof n.position?.x === "number" && typeof n.position?.y === "number"
+      ) as Array<{ id: string; position: { x: number; y: number } }>;
+      if (nodesWithPos.length > 1) {
+        const byY = [...nodesWithPos].sort((a, b) => a.position.y - b.position.y);
+        const root = byY[0];
+        const inferred: Array<{ id: string; source: string; target: string; label?: string }> = [];
+        for (let i = 1; i < byY.length; i++) {
+          const child = byY[i];
+          let bestParent = root;
+          let bestDist = Infinity;
+          for (let j = 0; j < i; j++) {
+            const p = byY[j];
+            const dx = child.position.x - p.position.x;
+            const dy = child.position.y - p.position.y;
+            if (dy <= 0) continue;
+            const dist = dx * dx + dy * dy;
+            if (dist < bestDist) {
+              bestDist = dist;
+              bestParent = p;
+            }
+          }
+          inferred.push({
+            id: `e_${bestParent.id}_${child.id}`,
+            source: bestParent.id,
+            target: child.id,
+            label: "call",
+            type: "default",
+          });
+        }
+        safeEdges = inferred;
+      }
+    }
 
     // Preservar microseconds y tokens de los nodos si existen
     const processedGraph = {
-      ...result.graph,
-      nodes: Array.isArray(result.graph.nodes)
-        ? result.graph.nodes.map((node: { data?: { label?: string; microseconds?: number; tokens?: number }; [key: string]: unknown }) => ({
-            ...node,
-            data: {
-              label: node.data?.label || "",
-              microseconds:
-                typeof node.data?.microseconds === "number"
-                  ? node.data.microseconds
-                  : undefined,
-              tokens:
-                typeof node.data?.tokens === "number" ? node.data.tokens : undefined,
-            },
-          }))
-        : [],
+      nodes: rawNodes.map((node: { data?: { label?: string; microseconds?: number; tokens?: number }; [key: string]: unknown }) => ({
+        ...node,
+        data: {
+          label: node.data?.label || "",
+          microseconds:
+            typeof node.data?.microseconds === "number"
+              ? node.data.microseconds
+              : undefined,
+          tokens:
+            typeof node.data?.tokens === "number" ? node.data.tokens : undefined,
+        },
+      })),
+      edges: safeEdges,
     };
 
     return NextResponse.json({
       ok: true,
       graph: processedGraph,
-      explanation: result.explanation || "",
+      explanation: (result.explanation ?? result.graph?.explanation ?? "") || "",
     });
   } catch (error) {
     console.error("Error en recursion-diagram:", error);

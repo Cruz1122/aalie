@@ -40,6 +40,8 @@ interface IterativeTraceContentProps {
   isDiagramExpanded: boolean;
   setIsDiagramExpanded: (expanded: boolean) => void;
   onLoadTrace: () => void;
+  /** "modal" = 3 cols con PseudocodeViewer; "dedicated" = 2 cols sin PseudocodeViewer */
+  variant?: "modal" | "dedicated";
 }
 
 export default function IterativeTraceContent({
@@ -68,12 +70,12 @@ export default function IterativeTraceContent({
   setExampleArray: _setExampleArray,
   isDiagramExpanded: _isDiagramExpanded,
   setIsDiagramExpanded,
-  onLoadTrace,
+  onLoadTrace: _onLoadTrace,
+  variant = "modal",
 }: IterativeTraceContentProps) {
   const locale = useLocale();
   const t = useTranslations("analyzer.executionTrace");
   const tCases = useTranslations("analyzer.cases");
-  const tCommon = useTranslations("common");
   const tMessages = useTranslations("analyzer.messages");
   const playIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const inputSizeDebounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -288,128 +290,183 @@ export default function IterativeTraceContent({
     ? stepsToUse[stepsToUse.length - 1]?.variables || {}
     : {};
 
+  const caseSelector = traceConfig.controls.scenario && (
+    <div className="flex items-center gap-1 bg-slate-800/60 border border-white/10 rounded-lg p-1 flex-shrink-0">
+      <button
+        onClick={() => onCaseChange("best")}
+        className={`px-2 py-1 text-xs rounded-md transition-colors font-semibold ${caseType === "best"
+            ? "bg-green-500/30 text-green-200 border border-green-500/50"
+            : "text-slate-400 hover:text-slate-200"
+        }`}
+      >
+        {tCases("bestShort")}
+      </button>
+      <button
+        onClick={() => onCaseChange("avg")}
+        className={`px-2 py-1 text-xs rounded-md transition-colors font-semibold ${caseType === "avg"
+            ? "bg-yellow-500/30 text-yellow-200 border border-yellow-500/50"
+            : "text-slate-400 hover:text-slate-200"
+        }`}
+      >
+        {tCases("avgShort")}
+      </button>
+      <button
+        onClick={() => onCaseChange("worst")}
+        className={`px-2 py-1 text-xs rounded-md transition-colors font-semibold ${caseType === "worst"
+            ? "bg-red-500/30 text-red-200 border border-red-500/50"
+            : "text-slate-400 hover:text-slate-200"
+        }`}
+      >
+        {tCases("worstShort")}
+      </button>
+    </div>
+  );
+
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-      {/* Controles superiores */}
-      <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-2 flex-shrink-0">
-        {/* Case Switcher */}
-        {traceConfig.controls.scenario && (
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-slate-300">{t("case")}</label>
-            <div className="flex items-center gap-1 bg-slate-800/60 border border-white/10 rounded-lg p-1">
-              <button
-                onClick={() => onCaseChange("best")}
-                className={`px-2 py-1 text-xs rounded-md transition-colors font-semibold ${caseType === "best"
-                    ? "bg-green-500/30 text-green-200 border border-green-500/50"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                {tCases("bestShort")}
-              </button>
-              <button
-                onClick={() => onCaseChange("avg")}
-                className={`px-2 py-1 text-xs rounded-md transition-colors font-semibold ${caseType === "avg"
-                    ? "bg-yellow-500/30 text-yellow-200 border border-yellow-500/50"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                {tCases("avgShort")}
-              </button>
-              <button
-                onClick={() => onCaseChange("worst")}
-                className={`px-2 py-1 text-xs rounded-md transition-colors font-semibold ${caseType === "worst"
-                    ? "bg-red-500/30 text-red-200 border border-red-500/50"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                {tCases("worstShort")}
-              </button>
+      {/* Contenido: variant modal = 3 cols; dedicated = grid 2 cols con glass-card */}
+      {variant === "dedicated" ? (
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-custom">
+          {/* Columna izquierda: Seguimiento Paso a Paso */}
+          <div className="glass-card p-4 rounded-lg flex flex-col min-h-0 min-w-0 overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 flex-shrink-0 min-w-0">
+              <h3 className="text-sm font-semibold text-slate-300 truncate">
+                {t("stepByStepTrace")}
+              </h3>
+              {caseSelector}
+            </div>
+            <StepControls
+              currentStep={currentStep}
+              totalSteps={stepsToUse.length}
+              isPlaying={isPlaying}
+              loading={loading}
+              onPlay={handlePlay}
+              onPause={handlePause}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+              onReset={handleReset}
+            />
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-custom">
+              <StepInfo
+                stepData={currentStepData}
+                loading={loading}
+                trace={trace}
+                currentStep={currentStep}
+                loadingDiagram={loadingDiagram}
+              />
             </div>
           </div>
-        )}
 
-        {/* Reload Button */}
-        <button
-          onClick={onLoadTrace}
-          disabled={loading}
-          className="w-9 h-9 flex items-center justify-center rounded-lg bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 disabled:opacity-40 transition-colors"
-          title={loading ? tCommon("loading") : t("reloadTrace")}
-        >
-          <span className="material-symbols-outlined text-base leading-none">
-            {loading ? "progress_activity" : "refresh"}
-          </span>
-        </button>
-      </div>
-
-      {/* Texto aclaratorio global para iterativos */}
-      <p className="text-xs text-slate-400 mb-2 flex-shrink-0">
-        {t("iterativeCaseNote")}
-      </p>
-
-      {/* Contenido: 1 col mobile, 2 cols tablet, 3 cols desktop - scroll en el wrapper padre */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-h-0 min-w-0">
-        {/* Columna izquierda: Pseudocódigo */}
-        <PseudocodeViewer source={source} currentLine={currentLine} />
-
-        {/* Columna centro: Seguimiento Paso a Paso - scroll en toda la sección */}
-        <div className="flex flex-col border-r-0 md:border-r border-slate-700 md:pr-4 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-custom">
-          <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0 truncate">
-            {t("stepByStepTrace")}
-          </h3>
-
-          <StepControls
-            currentStep={currentStep}
-            totalSteps={stepsToUse.length}
-            isPlaying={isPlaying}
-            loading={loading}
-            onPlay={handlePlay}
-            onPause={handlePause}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-            onReset={handleReset}
-          />
-
-          <StepInfo
-            stepData={currentStepData}
-            loading={loading}
-            trace={trace}
-            currentStep={currentStep}
-            loadingDiagram={loadingDiagram}
-          />
+          {/* Columna derecha: InputSize + Variables + Diagrama */}
+          <div className="glass-card p-4 rounded-lg flex flex-col min-h-0 min-w-0 overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 flex-shrink-0 min-w-0">
+              <h3 className="text-sm font-semibold text-slate-300 truncate">
+                {t("controlsAndVariables")}
+              </h3>
+            </div>
+            <div className="flex-shrink-0">
+              <InputSizeControl
+                value={inputSize}
+                min={1}
+                max={20}
+                onChange={(value) => setInputSize(value)}
+                debounceMs={800}
+                noMargin
+              />
+              <VariablesPanel
+                mode="iterative"
+                initialVariables={initialVariables}
+                finalVariables={Object.keys(finalVariables).length > 0 ? finalVariables : undefined}
+              />
+            </div>
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden mt-3">
+              <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0 truncate">
+                {t("flowDiagramSection")}
+              </h3>
+              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-custom">
+                <DiagramSection
+                  mode="iterative"
+                  graph={graph}
+                  loading={loadingDiagram}
+                  explanation={explanation}
+                  onRegenerate={loadDiagram}
+                  onExpand={() => setIsDiagramExpanded(true)}
+                />
+              </div>
+            </div>
+          </div>
         </div>
+      ) : (
+        <div className="flex-1 grid gap-4 min-h-0 min-w-0 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {/* Columna izquierda: Pseudocódigo (solo en modal) */}
+          <PseudocodeViewer source={source} currentLine={currentLine} />
 
-        {/* Columna derecha: Diagrama de flujo - scroll en toda la sección */}
-        <div className="flex flex-col min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-custom">
-          <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0 truncate">
-            {t("flowDiagramSection")}
-          </h3>
+          {/* Columna centro: Seguimiento Paso a Paso */}
+          <div className="flex flex-col min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-custom">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2 flex-shrink-0 min-w-0">
+              <h3 className="text-sm font-semibold text-slate-300 truncate">
+                {t("stepByStepTrace")}
+              </h3>
+              {caseSelector}
+            </div>
+            <StepControls
+              currentStep={currentStep}
+              totalSteps={stepsToUse.length}
+              isPlaying={isPlaying}
+              loading={loading}
+              onPlay={handlePlay}
+              onPause={handlePause}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+              onReset={handleReset}
+            />
+            <StepInfo
+              stepData={currentStepData}
+              loading={loading}
+              trace={trace}
+              currentStep={currentStep}
+              loadingDiagram={loadingDiagram}
+            />
+          </div>
 
-          <InputSizeControl
-            value={inputSize}
-            min={1}
-            max={20}
-            onChange={(value) => {
-              setInputSize(value);
-            }}
-            debounceMs={800}
-          />
-
-          <VariablesPanel
-            mode="iterative"
-            initialVariables={initialVariables}
-            finalVariables={Object.keys(finalVariables).length > 0 ? finalVariables : undefined}
-          />
-
-          <DiagramSection
-            mode="iterative"
-            graph={graph}
-            loading={loadingDiagram}
-            explanation={explanation}
-            onRegenerate={loadDiagram}
-            onExpand={() => setIsDiagramExpanded(true)}
-          />
+          {/* Columna derecha: Controles + Diagrama de flujo */}
+          <div className="flex flex-col min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-custom">
+            <div className="flex-shrink-0 mb-3">
+              <h3 className="text-sm font-semibold text-slate-300 mb-2 truncate">
+                {t("controlsAndVariables")}
+              </h3>
+              <InputSizeControl
+                value={inputSize}
+                min={1}
+                max={20}
+                onChange={(value) => setInputSize(value)}
+                debounceMs={800}
+                noMargin
+              />
+              <VariablesPanel
+                mode="iterative"
+                initialVariables={initialVariables}
+                finalVariables={Object.keys(finalVariables).length > 0 ? finalVariables : undefined}
+              />
+            </div>
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+              <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0 truncate">
+                {t("flowDiagramSection")}
+              </h3>
+              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-custom">
+                <DiagramSection
+                  mode="iterative"
+                  graph={graph}
+                  loading={loadingDiagram}
+                  explanation={explanation}
+                  onRegenerate={loadDiagram}
+                  onExpand={() => setIsDiagramExpanded(true)}
+                />
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

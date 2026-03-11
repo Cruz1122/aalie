@@ -161,17 +161,14 @@ export default function DiagramSection({
                 )}
               </div>
             </div>
-            {/* Diagram content */}
-            <div className="p-3 h-[300px]">
+            {/* Diagram content - altura flexible, mínima para legibilidad */}
+            <div className="p-3 min-h-[200px] h-[min(400px,50vh)]">
               <TraceFlowDiagram graph={graph} />
             </div>
           </div>
           {explanation && (
             <div className="glass-card p-3 rounded-lg">
-              <div className="text-xs text-slate-400 mb-2">
-                {t("explanationLabel")}
-              </div>
-              <MarkdownRenderer content={explanation} />
+              <MarkdownRenderer content={explanation} hideHorizontalRules />
             </div>
           )}
         </>

@@ -8,6 +8,10 @@ import type { TraceGraph } from "@/types/trace";
 
 import TraceFlowDiagram from "./TraceFlowDiagram";
 
+/** Cache de requests recientes para evitar spam (persiste entre mounts por StrictMode) */
+const recentRecursionDiagramRequests = new Map<string, number>();
+const RECURSION_DIAGRAM_DEBOUNCE_MS = 5_000;
+
 interface RecursionCall {
   id: string;
   depth: number;
@@ -45,17 +49,19 @@ export default function RecursionTreeView({
   const [diagram, setDiagram] = useState<RecursionDiagram | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
-  const hasGeneratedRef = useRef(false);
   const isGeneratingRef = useRef(false);
 
   useEffect(() => {
-    // Generar diagrama solo una vez al montar, evitando spam por StrictMode o re-renders
-    if (!hasGeneratedRef.current && pseudocode && !isGeneratingRef.current) {
-      hasGeneratedRef.current = true;
-      generateDiagram();
-    }
+    if (!pseudocode) return;
+    const requestKey = `${pseudocode.substring(0, 80)}-${inputSize || 5}-${algorithmKind || "recursive"}`;
+    const now = Date.now();
+    const lastRequest = recentRecursionDiagramRequests.get(requestKey);
+    if (lastRequest && now - lastRequest < RECURSION_DIAGRAM_DEBOUNCE_MS) return;
+    if (isGeneratingRef.current) return;
+    recentRecursionDiagramRequests.set(requestKey, now);
+    generateDiagram();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [pseudocode, inputSize, algorithmKind]);
 
   const generateDiagram = async () => {
     if (!pseudocode) {
@@ -65,6 +71,7 @@ export default function RecursionTreeView({
     if (isGeneratingRef.current) return;
     isGeneratingRef.current = true;
 
+    const requestKey = `${pseudocode.substring(0, 80)}-${inputSize || 5}-${algorithmKind || "recursive"}`;
     setLoading(true);
     setError("");
 
@@ -105,12 +112,14 @@ export default function RecursionTreeView({
         }
       } else {
         setError(data.error ? tMessages(translateLlmError(data.error)) : t("diagramError"));
+        recentRecursionDiagramRequests.delete(requestKey);
       }
     } catch (err) {
       console.error("Error generando diagrama de recursión:", err);
       const errMsg = err instanceof Error ? err.message : String(err);
       const key = translateLlmError(errMsg);
       setError(key === "unknownLlmError" ? t("diagramConnectionError") : tMessages(key));
+      recentRecursionDiagramRequests.delete(requestKey);
     } finally {
       isGeneratingRef.current = false;
       setLoading(false);

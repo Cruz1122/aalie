@@ -29,6 +29,8 @@ interface RecursiveTraceContentProps {
   isDiagramExpanded: boolean;
   setIsDiagramExpanded: (expanded: boolean) => void;
   onLoadTrace: () => void;
+  /** "modal" = 3 cols con PseudocodeViewer; "dedicated" = 2 cols sin PseudocodeViewer */
+  variant?: "modal" | "dedicated";
 }
 
 export default function RecursiveTraceContent({
@@ -44,6 +46,7 @@ export default function RecursiveTraceContent({
   isDiagramExpanded: _isDiagramExpanded,
   setIsDiagramExpanded,
   onLoadTrace,
+  variant = "modal",
 }: RecursiveTraceContentProps) {
   const t = useTranslations("analyzer.executionTrace");
   const inputSizeDebounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -72,22 +75,18 @@ export default function RecursiveTraceContent({
 
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-      {/* Controles superiores - vacío para recursivos */}
-      <div className="flex items-center gap-4 mb-2 flex-shrink-0">
-        {/* No hay controles superiores para recursivos */}
-      </div>
+      {/* Contenido: variant dedicated = apilado (diagrama arriba, explicación abajo); modal = 3 cols */}
+      <div
+        className={`flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-custom ${
+          variant === "dedicated"
+            ? "flex flex-col gap-4"
+            : "grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+        }`}
+      >
+        {variant === "modal" && <PseudocodeViewer source={source} />}
 
-      {/* Contenido: 1 col mobile, 2 cols tablet, 3 cols desktop - scroll en el wrapper padre */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-h-0 min-w-0">
-        {/* Columna izquierda: Pseudocódigo */}
-        <PseudocodeViewer source={source} />
-
-        {/* Columna centro: Diagrama de Recursión - scroll en toda la sección */}
-        <div className="flex flex-col border-r-0 md:border-r border-slate-700 md:pr-4 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-custom">
-          <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0 truncate">
-            {t("recursionDiagram")}
-          </h3>
-
+        {/* Diagrama (dedicated: arriba; modal: columna centro) */}
+        <div className="flex flex-col min-w-0 flex-1 min-h-[280px] overflow-hidden">
           <DiagramSection
             mode="recursive"
             recursionDiagram={recursionDiagram}
@@ -101,12 +100,8 @@ export default function RecursiveTraceContent({
           />
         </div>
 
-        {/* Columna derecha: Explicación - scroll en toda la sección */}
-        <div className="flex flex-col min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-custom">
-          <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0 truncate">
-            {t("explanation")}
-          </h3>
-
+        {/* Explicación (dedicated: abajo; modal: columna derecha) */}
+        <div className="flex flex-col min-h-0 min-w-0 flex-1">
           <InputSizeControl
             value={inputSize}
             min={1}
@@ -123,10 +118,10 @@ export default function RecursiveTraceContent({
           <div className="flex-1 overflow-y-auto scrollbar-custom mt-2">
             {recursionDiagram?.explanation ? (
               <div className="glass-card p-4 rounded-lg">
-                <MarkdownRenderer content={recursionDiagram.explanation} />
+                <MarkdownRenderer content={recursionDiagram.explanation} hideHorizontalRules />
               </div>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center gap-3">
+              <div className="h-full min-h-[120px] flex flex-col items-center justify-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-slate-800/50 flex items-center justify-center">
                   <span className="material-symbols-outlined text-2xl text-slate-500/50">
                     description

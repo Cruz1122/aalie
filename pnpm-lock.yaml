@@ -53,6 +53,9 @@ importers:
       dagre:
         specifier: ^0.8.5
         version: 0.8.5
+      jsonrepair:
+        specifier: ^3.13.2
+        version: 3.13.2
       katex:
         specifier: 0.16.10
         version: 0.16.10
@@ -2068,6 +2071,10 @@ packages:
 
   json5@1.0.2:
     resolution: {integrity: sha512-g1MWMLBiz8FKi1e4w0UyVL3w+iJceWAFBAaBnnGKOpNa5f8TLktkbre1+s6oICydWAm+HRUGTmI+//xv2hvXYA==}
+    hasBin: true
+
+  jsonrepair@3.13.2:
+    resolution: {integrity: sha512-Leuly0nbM4R+S5SVJk3VHfw1oxnlEK9KygdZvfUtEtTawNDyzB4qa1xWTmFt1aeoA7sXZkVTRuIixJ8bAvqVUg==}
     hasBin: true
 
   jsx-ast-utils@3.3.5:
@@ -5326,6 +5333,8 @@ snapshots:
   json5@1.0.2:
     dependencies:
       minimist: 1.2.8
+
+  jsonrepair@3.13.2: {}
 
   jsx-ast-utils@3.3.5:
     dependencies:
