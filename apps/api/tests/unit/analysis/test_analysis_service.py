@@ -430,3 +430,39 @@ class TestDetectMethods:
             # Debe aceptar hybrid
             assert result["ok"]
 
+    @patch('app.modules.analysis.service.parse_source')
+    @patch('app.modules.analysis.service.detect_algorithm_kind')
+    @patch('app.modules.analysis.service.RecursiveAnalyzer')
+    def test_detect_methods_returns_dp_validation_metadata(self, mock_analyzer_class, mock_detect, mock_parse):
+        """Test: detect_methods propaga metadata de validación de PD."""
+        mock_parse.return_value = {
+            "ok": True,
+            "ast": {"type": "Program", "body": []}
+        }
+        mock_detect.return_value = "recursive"
+
+        mock_analyzer = MagicMock()
+        mock_analyzer.detect_applicable_methods.return_value = {
+            "ok": True,
+            "applicable_methods": ["characteristic_equation"],
+            "default_method": "characteristic_equation",
+            "recurrence_info": {
+                "type": "linear_shift",
+                "dp_validation": {
+                    "status": "clear",
+                    "applicable": True,
+                    "confidence": "high",
+                    "primary_pattern": "tabulation",
+                    "supported_patterns": ["tabulation", "memoization"],
+                    "reasons": ["La recurrencia reutiliza subproblemas equivalentes."],
+                },
+            },
+        }
+        mock_analyzer_class.return_value = mock_analyzer
+
+        result = detect_methods("code")
+
+        assert result["ok"]
+        assert result["recurrence_info"]["dp_validation"]["primary_pattern"] == "tabulation"
+        assert "memoization" in result["recurrence_info"]["dp_validation"]["supported_patterns"]
+

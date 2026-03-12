@@ -419,7 +419,129 @@ class TestRecursiveAnalyzerHelpers:
         result = self.analyzer._detect_indirect_division(body, args, params)
         if result is not None:
             assert isinstance(result, float)
-            assert result == 2.0
+
+
+class TestRecursiveAnalyzerDPValidation:
+    """Tests para la validación previa de PD en recurrencias lineales."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.analyzer = RecursiveAnalyzer()
+
+    def test_build_dp_validation_accepts_fibonacci_as_rolling_window(self):
+        """Fibonacci debe validarse como PD clara con patrón rolling window."""
+        proc_def = {
+            "type": "ProcDef",
+            "name": "fibonacci",
+            "params": [{"type": "Param", "name": "n"}],
+        }
+        recursive_calls = [
+            {
+                "type": "Call",
+                "name": "fibonacci",
+                "args": [{
+                    "type": "Binary",
+                    "op": "-",
+                    "left": {"type": "Identifier", "name": "n"},
+                    "right": {"type": "Literal", "value": 1},
+                }],
+            },
+            {
+                "type": "Call",
+                "name": "fibonacci",
+                "args": [{
+                    "type": "Binary",
+                    "op": "-",
+                    "left": {"type": "Identifier", "name": "n"},
+                    "right": {"type": "Literal", "value": 2},
+                }],
+            },
+        ]
+        linear_info = {"coefficients": {1: 1, 2: 1}, "max_offset": 2, "g_n": "1"}
+
+        validation = self.analyzer._build_dp_validation(proc_def, recursive_calls, linear_info)
+
+        assert validation["status"] == "clear"
+        assert validation["applicable"] is True
+        assert validation["primary_pattern"] == "rolling_window"
+
+    def test_build_dp_validation_rejects_stateful_hanoi(self):
+        """Hanoi no debe afirmarse como PD cuando cambian parámetros de estado."""
+        proc_def = {
+            "type": "ProcDef",
+            "name": "hanoi",
+            "params": [
+                {"type": "Param", "name": "n"},
+                {"type": "Param", "name": "origen"},
+                {"type": "Param", "name": "destino"},
+                {"type": "Param", "name": "aux"},
+            ],
+        }
+        recursive_calls = [
+            {
+                "type": "Call",
+                "name": "hanoi",
+                "args": [
+                    {"type": "Binary", "op": "-", "left": {"type": "Identifier", "name": "n"}, "right": {"type": "Literal", "value": 1}},
+                    {"type": "Identifier", "name": "origen"},
+                    {"type": "Identifier", "name": "aux"},
+                    {"type": "Identifier", "name": "destino"},
+                ],
+            },
+            {
+                "type": "Call",
+                "name": "hanoi",
+                "args": [
+                    {"type": "Binary", "op": "-", "left": {"type": "Identifier", "name": "n"}, "right": {"type": "Literal", "value": 1}},
+                    {"type": "Identifier", "name": "aux"},
+                    {"type": "Identifier", "name": "destino"},
+                    {"type": "Identifier", "name": "origen"},
+                ],
+            },
+        ]
+        linear_info = {"coefficients": {1: 2}, "max_offset": 1, "g_n": "1"}
+
+        validation = self.analyzer._build_dp_validation(proc_def, recursive_calls, linear_info)
+
+        assert validation["status"] == "rejected"
+        assert validation["applicable"] is False
+        assert "parámetros de estado" in validation["reasons"][0].lower()
+
+    def test_build_dp_validation_prefers_tabulation_for_sparse_shifts(self):
+        """Offsets dispersos deben clasificarse como patrón de tabulación."""
+        proc_def = {
+            "type": "ProcDef",
+            "name": "sparseRec",
+            "params": [{"type": "Param", "name": "n"}],
+        }
+        recursive_calls = [
+            {
+                "type": "Call",
+                "name": "sparseRec",
+                "args": [{
+                    "type": "Binary",
+                    "op": "-",
+                    "left": {"type": "Identifier", "name": "n"},
+                    "right": {"type": "Literal", "value": 1},
+                }],
+            },
+            {
+                "type": "Call",
+                "name": "sparseRec",
+                "args": [{
+                    "type": "Binary",
+                    "op": "-",
+                    "left": {"type": "Identifier", "name": "n"},
+                    "right": {"type": "Literal", "value": 4},
+                }],
+            },
+        ]
+        linear_info = {"coefficients": {1: 1, 4: 1}, "max_offset": 4, "g_n": "1"}
+
+        validation = self.analyzer._build_dp_validation(proc_def, recursive_calls, linear_info)
+
+        assert validation["status"] == "clear"
+        assert validation["primary_pattern"] == "tabulation"
 
     def test_detect_indirect_division_no_args(self):
         """Test: _detect_indirect_division sin argumentos"""

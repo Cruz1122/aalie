@@ -8,15 +8,53 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
-- Mensaje localizado para reportar la complejidad recursiva detectada en el modal de versión DP.
-- Catálogo de etiquetas de tipo de complejidad (constante, lineal, cuadrática, exponencial, etc.) en i18n para inglés y español.
-- Mensaje localizado para indicar cuando la complejidad temporal de la versión DP se mantiene sin cambios.
+- Backend (`recursive.py`): Sistema de validación previa de Programación Dinámica:
+  - Detección de forma de recurrencia (ventana deslizante, memoización, tabulación, none)
+  - Rechazo explícito para divide-and-conquer estilo Master (T(n) = aT(n/b) + O(n^k))
+  - Validación de solapamiento entre subproblemas
+  - Detección de parámetros de estado mutables que invalidan DP
+  - Registro de eventos (`dp_validation_events`) con razones finales de aceptación/rechazo
+  - Métodos helpers internos: `_build_dp_validation()`, `_build_non_dp_validation()`, análisis de parámetros y estado
+- Metadatos en respuesta API (`dp_validation`): estado (`clear|doubtful|rejected`), patrón primario, patrones soportados, lista completa de razones de descarte
+- Frontend (`DPVersionModal.tsx`): 
+  - Consumo de metadatos del backend prioritario sobre heurísticas locales
+  - Visualización de estado de aplicabilidad con badge (clara/dudosa/descartada)
+  - Patrón DP sugerido y patrones alternativos soportados
+  - Razones textuales cuando DP es rechazada o dudosa
+  - Control: botón DP deshabilitado para recurrencias descartadas
+- Frontend (`RecursiveAnalysisView.tsx`):
+  - Inferencia de aplicabilidad DP desde metadatos backend
+  - Visualización condicional de patrones y razones de validación
+  - Renderizado de niveles de confianza (clara/dudosa/descartada)
+- i18n (`en.json`, `es.json`): 
+  - Nuevas claves: `dpApplicability.*`, `dpPattern.*`, `dpValidationReasons.*`, `supportedPatterns`
+  - Lenguaje de "hipótesis DP" en lugar de afirmaciones categóricas
+  - Textos para niveles de confianza
+- Examples (`[locale]/examples/page.tsx`): Descriptores suavizados en tono hipotético sobre DP
+- Types (`packages/types/src/index.ts`): 
+  - Nuevo tipo `DPValidation` con `status`, `primary_pattern`, `supported_patterns`, `reasons`
+  - Nuevo tipo `DPValidationEvent` para agregar en `totals`
+  - Extensión de `CharacteristicEquation` y `DPVersion` con campo `dp_validation`
+  - Pattern enum: `tabulation|memoization|rolling_window|none`
+- Tests nuevos (unit/contract/service/system):
+  - `test_recursive_analyzer.py`: Casos Fibonacci (rolling window DP), Hanoi (rechazo por estado), Factorial (rechazo sin overlap), recursión dispersa (prefer tabulation)
+  - `test_recursive_algorithms.py`: Master-style recurrences, solapamiento en spanning tree
+  - `test_analysis_service.py`: Propagación de `dp_validation` en detect_methods
+  - `test_analysis_endpoints.py`: Endpoint devuelve `dp_validation_metadata` completo
+- Mensaje localizado para complejidad recursiva detectada en modal DP
+- Catálogo de etiquetas de complejidad (constante, lineal, cuadrática, exponencial, etc.) en i18n
 
 ### Fixed
+- La UI deja de afirmar de forma categórica que siempre aplica DP en recurrencias ambiguas o no aplicables.
+- Casos de divide y vencerás estilo Master, ausencia de solapamiento y parámetros de estado mutables ya no se marcan erróneamente como DP aplicable.
+- El patrón "ventana deslizante" ya no aparece por defecto en todos los casos; se detecta basado en estructura real de recurrencia.
 
 ### Changed
 - El modal de versión DP ahora infiere el tipo de complejidad recursiva a partir de la notación recibida y muestra una descripción específica en lugar de una etiqueta fija.
 - El resumen de ventajas de DP diferencia entre mejora real de complejidad temporal y escenarios donde la complejidad permanece igual.
+- La vista de análisis recursivo y el modal DP priorizan metadatos del backend (`dp_validation`) para mostrar estado de aplicabilidad, razones y patrón sugerido.
+- Mensajería i18n de ejemplos y modal ajustada a lenguaje de "hipótesis DP" con niveles de confianza (clara, dudosa, descartada).
+- Backend analyzer registra internamente todo evento de validación DP (aceptación/rechazo/motivos) en `dp_validation_events` para trazabilidad completa.
 
 ## [1.2.0]
 ### Added

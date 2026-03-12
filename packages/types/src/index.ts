@@ -254,6 +254,22 @@ export interface AnalyzeOpenResponse {
     procedure?: string[];            // pasos (KaTeX) para construir T_open (legacy, puede estar vacío)
     symbols?: Record<string,string>;// p.ej.: { n: "length(A)" }
     notes?: string[];               // reglas usadas (for, while, if) o pasos de procedimiento para promedio
+    dp_validation_events?: Array<{
+      status: "clear" | "doubtful" | "rejected";
+      applicable: boolean;
+      confidence: "high" | "medium" | "low";
+      primary_pattern: "tabulation" | "memoization" | "rolling_window" | "none";
+      supported_patterns: Array<"tabulation" | "memoization" | "rolling_window">;
+      reasons: string[];
+      debug?: {
+        size_parameter?: string;
+        recursive_call_count?: number;
+        distinct_shifts?: number[];
+        max_offset?: number;
+        contiguous_shifts?: boolean;
+        changed_non_size_params?: string[];
+      };
+    }>;
     T_polynomial?: string;          // forma polinómica T(n) = an² + bn + c (KaTeX) - simplificado con SymPy
     big_o?: string;                 // Notación Big-O calculada con SymPy (ej: "O(n^2)")
     big_omega?: string;             // Notación Big-Omega calculada con SymPy (ej: "Ω(n^2)")
@@ -306,16 +322,34 @@ export interface AnalyzeOpenResponse {
       general_solution?: string;            // solución general completa (homogénea + particular) en LaTeX
       base_cases?: Record<string, number>;  // casos base detectados (ej: {"T(0)": 0, "T(1)": 1})
       closed_form: string;                  // forma cerrada simplificada en LaTeX
+      dp_validation?: {
+        status: "clear" | "doubtful" | "rejected";
+        applicable: boolean;
+        confidence: "high" | "medium" | "low";
+        primary_pattern: "tabulation" | "memoization" | "rolling_window" | "none";
+        supported_patterns: Array<"tabulation" | "memoization" | "rolling_window">;
+        reasons: string[];
+        debug?: {
+          size_parameter?: string;
+          recursive_call_count?: number;
+          distinct_shifts?: number[];
+          max_offset?: number;
+          contiguous_shifts?: boolean;
+          changed_non_size_params?: string[];
+        };
+      };
       dp_version?: {                        // versión DP básica si aplica
         code: string;                       // pseudocódigo DP
         time_complexity: string;             // complejidad temporal DP (ej: "O(n)")
         space_complexity: string;            // complejidad espacial DP (ej: "O(n)")
         recursive_complexity: string;        // complejidad versión recursiva (ej: "O(2^n)")
+        pattern?: "tabulation" | "memoization" | "rolling_window";
       };
       dp_optimized_version?: {              // versión DP optimizada O(1) espacio si aplica
         code: string;                       // pseudocódigo DP optimizado
         time_complexity: string;             // complejidad temporal DP (ej: "O(n)")
         space_complexity: string;            // complejidad espacial DP optimizada (ej: "O(1)" o "O(k)")
+        pattern?: "tabulation" | "memoization" | "rolling_window";
       };
       dp_equivalence: string;               // explicación de equivalencia entre ecuación característica y DP
       theta: string;                        // resultado final Θ(...) en LaTeX

@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect } from "react";
 
+import { translateBackendContent } from "@/lib/backend-content-translator";
 import { translatePseudocode } from "@/lib/pseudocode-translator";
 
 import Formula from "./Formula";
@@ -19,6 +20,17 @@ type ComplexityKind =
   | "exponential"
   | "factorial"
   | "unknown";
+
+type DPApplicabilityLevel = "clear" | "doubtful";
+type DPPatternKind = "table" | "memoization" | "rolling_window";
+
+function mapBackendPatternToUI(
+  pattern: "tabulation" | "memoization" | "rolling_window",
+): DPPatternKind {
+  if (pattern === "tabulation") return "table";
+  if (pattern === "memoization") return "memoization";
+  return "rolling_window";
+}
 
 function inferComplexityKind(complexity: string): ComplexityKind {
   const normalized = complexity.toLowerCase().replace(/\s+/g, "");
@@ -45,6 +57,51 @@ function inferComplexityKind(complexity: string): ComplexityKind {
   return "unknown";
 }
 
+function inferDPApplicabilityLevel(
+  backendStatus: "clear" | "doubtful" | "rejected" | undefined,
+  recursiveComplexity: string,
+  dpTimeComplexity: string,
+): DPApplicabilityLevel {
+  if (backendStatus === "clear" || backendStatus === "doubtful") {
+    return backendStatus;
+  }
+
+  const recursive = recursiveComplexity.toLowerCase();
+  const dpTime = dpTimeComplexity.toLowerCase();
+  const hasImprovement = recursiveComplexity.trim() !== dpTimeComplexity.trim();
+  const exponentialLike =
+    recursive.includes("^n") ||
+    recursive.includes("2^n") ||
+    recursive.includes("n!") ||
+    recursive.includes("phi^n") ||
+    recursive.includes("φ^");
+
+  if (hasImprovement && exponentialLike && dpTime.includes("o(n)")) {
+    return "clear";
+  }
+
+  return "doubtful";
+}
+
+function inferDPPatternKind(
+  backendPattern: "tabulation" | "memoization" | "rolling_window" | "none" | undefined,
+  code: string,
+  optimizedSpaceComplexity?: string,
+): DPPatternKind {
+  if (backendPattern === "tabulation") return "table";
+  if (backendPattern === "memoization") return "memoization";
+  if (backendPattern === "rolling_window") return "rolling_window";
+
+  const normalized = code.toLowerCase();
+  if (normalized.includes("memo") || normalized.includes("cache")) {
+    return "memoization";
+  }
+  if ((optimizedSpaceComplexity ?? "").trim() === "O(1)") {
+    return "rolling_window";
+  }
+  return "table";
+}
+
 interface DPVersionModalProps {
   open: boolean;
   onClose: () => void;
@@ -60,11 +117,26 @@ interface DPVersionModalProps {
         homogeneous_solution: string;
         particular_solution?: string;
         closed_form: string;
+        dp_validation?: {
+          status: "clear" | "doubtful" | "rejected";
+          applicable: boolean;
+          confidence: "high" | "medium" | "low";
+          primary_pattern: "tabulation" | "memoization" | "rolling_window" | "none";
+          supported_patterns: Array<"tabulation" | "memoization" | "rolling_window">;
+          reasons: string[];
+        };
         dp_version?: {
           code: string;
           time_complexity: string;
           space_complexity: string;
           recursive_complexity: string;
+          pattern?: "tabulation" | "memoization" | "rolling_window";
+        };
+        dp_optimized_version?: {
+          code: string;
+          time_complexity: string;
+          space_complexity: string;
+          pattern?: "tabulation" | "memoization" | "rolling_window";
         };
         dp_equivalence: string;
         theta: string;
@@ -113,6 +185,20 @@ export default function DPVersionModal({
   const dpTimeComplexity = dpVersion.time_complexity.trim();
   const hasTimeImprovement = recursiveComplexity !== dpTimeComplexity;
   const recursiveComplexityKind = inferComplexityKind(recursiveComplexity);
+  const dpApplicability = inferDPApplicabilityLevel(
+    characteristicEquation.dp_validation?.status,
+    recursiveComplexity,
+    dpTimeComplexity,
+  );
+  const dpPattern = inferDPPatternKind(
+    characteristicEquation.dp_validation?.primary_pattern ?? dpVersion.pattern,
+    dpVersion.code,
+    characteristicEquation.dp_optimized_version?.space_complexity,
+  );
+  const alternativePatterns =
+    characteristicEquation.dp_validation?.supported_patterns
+      ?.filter((pattern) => pattern !== characteristicEquation.dp_validation?.primary_pattern)
+      .map(mapBackendPatternToUI) ?? [];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -141,6 +227,56 @@ export default function DPVersionModal({
         </div>
         <div className="flex-1 overflow-y-auto p-6 scrollbar-custom">
           <div className="space-y-4">
+            <div
+              className={`p-4 rounded-xl border ${dpApplicability === "clear" ? "bg-green-500/10 border-green-500/30" : "bg-amber-500/10 border-amber-500/30"}`}
+            >
+              <h4 className="text-white font-semibold mb-2 text-sm flex items-center gap-2">
+                <span
+                  className={`material-symbols-outlined text-lg ${dpApplicability === "clear" ? "text-green-400" : "text-amber-400"}`}
+                >
+                  {dpApplicability === "clear" ? "check_circle" : "help"}
+                </span>
+                {t("applicabilityTitle")}
+              </h4>
+              <p className="text-slate-200 text-xs">
+                {dpApplicability === "clear"
+                  ? t("applicability.clear")
+                  : t("applicability.doubtful")}
+              </p>
+              <p className="text-slate-300 text-xs mt-2">
+                {t("patternUsed", { pattern: t(`patternType.${dpPattern}`) })}
+              </p>
+              <p className="text-slate-400 text-xs mt-1">
+                {t(`patternExplanation.${dpPattern}`)}
+              </p>
+              {alternativePatterns.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-slate-400 text-[11px] mb-1">{t("supportedPatterns")}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {alternativePatterns.map((pattern) => (
+                      <span
+                        key={pattern}
+                        className="inline-flex items-center rounded-full border border-slate-500/30 bg-slate-500/10 px-2 py-0.5 text-[11px] text-slate-200"
+                      >
+                        {t(`patternType.${pattern}`)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {characteristicEquation.dp_validation?.reasons?.[0] && (
+                <p className="text-slate-300 text-xs mt-2">
+                  {translateBackendContent(
+                    characteristicEquation.dp_validation.reasons[0],
+                    locale as "en" | "es",
+                  )}
+                </p>
+              )}
+              {dpApplicability === "doubtful" && (
+                <p className="text-amber-200 text-xs mt-2">{t("doubtfulDisclaimer")}</p>
+              )}
+            </div>
+
             {/* Comparación de Complejidades */}
             <div className="p-4 rounded-xl glass-card border border-white/10">
               <h4 className="text-white font-semibold mb-3 text-sm flex items-center gap-2">
