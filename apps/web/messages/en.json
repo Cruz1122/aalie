@@ -472,6 +472,20 @@
       "recursiveVersion": "Recursive Version",
       "dpVersion": "DP Version",
       "exponentialComplexity": "Exponential complexity",
+      "recursiveComplexityDetected": "Detected recursive complexity: {type}",
+      "complexityType": {
+        "constant": "constant",
+        "logarithmic": "logarithmic",
+        "sublinear": "sublinear",
+        "linear": "linear",
+        "linearithmic": "linearithmic",
+        "quadratic": "quadratic",
+        "cubic": "cubic",
+        "polynomial": "polynomial",
+        "exponential": "exponential",
+        "factorial": "factorial",
+        "unknown": "undetermined"
+      },
       "time": "Time:",
       "space": "Space:",
       "pseudocodeTitle": "Dynamic Programming Pseudocode",
@@ -481,6 +495,7 @@
       "dpEquivalenceDefault": "The roots of the characteristic equation correspond to the eigenvalues of the linear transition of the DP system. The closed-form mathematical solution is equivalent to the iterative solution via dynamic programming.",
       "dpAdvantages": "DP Version Advantages",
       "improvedTime": "Improved time complexity: From {recursive} to {dp}",
+      "sameTime": "Unchanged time complexity: Remains {complexity}",
       "noRecalc": "No recalculations: Each subproblem is solved only once",
       "bottomUp": "Bottom-up: Iterative construction from base cases",
       "spaceOpt": "Space optimization: Can be reduced to {space} with optimization"

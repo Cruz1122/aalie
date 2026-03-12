@@ -8,10 +8,15 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
+- Mensaje localizado para reportar la complejidad recursiva detectada en el modal de versión DP.
+- Catálogo de etiquetas de tipo de complejidad (constante, lineal, cuadrática, exponencial, etc.) en i18n para inglés y español.
+- Mensaje localizado para indicar cuando la complejidad temporal de la versión DP se mantiene sin cambios.
 
 ### Fixed
 
 ### Changed
+- El modal de versión DP ahora infiere el tipo de complejidad recursiva a partir de la notación recibida y muestra una descripción específica en lugar de una etiqueta fija.
+- El resumen de ventajas de DP diferencia entre mejora real de complejidad temporal y escenarios donde la complejidad permanece igual.
 
 ## [1.2.0]
 ### Added

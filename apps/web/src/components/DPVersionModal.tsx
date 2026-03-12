@@ -7,6 +7,44 @@ import { translatePseudocode } from "@/lib/pseudocode-translator";
 
 import Formula from "./Formula";
 
+type ComplexityKind =
+  | "constant"
+  | "logarithmic"
+  | "sublinear"
+  | "linear"
+  | "linearithmic"
+  | "quadratic"
+  | "cubic"
+  | "polynomial"
+  | "exponential"
+  | "factorial"
+  | "unknown";
+
+function inferComplexityKind(complexity: string): ComplexityKind {
+  const normalized = complexity.toLowerCase().replace(/\s+/g, "");
+
+  if (/^[oθ]\(1\)$/.test(normalized)) return "constant";
+  if (normalized.includes("n!")) return "factorial";
+  if (/\^n\)?$/.test(normalized) || /\([0-9.]+\^n\)/.test(normalized)) {
+    return "exponential";
+  }
+  if (normalized.includes("nlogn") || normalized.includes("n*log") || normalized.includes("n\log")) {
+    return "linearithmic";
+  }
+  if (normalized.includes("log(n)") || normalized.includes("logn")) {
+    return "logarithmic";
+  }
+  if (normalized.includes("sqrt(n)") || /n\^0\.[0-9]+/.test(normalized)) {
+    return "sublinear";
+  }
+  if (/^[oθ]\(n\)$/.test(normalized)) return "linear";
+  if (/n\^2/.test(normalized)) return "quadratic";
+  if (/n\^3/.test(normalized)) return "cubic";
+  if (/n\^\d+/.test(normalized)) return "polynomial";
+
+  return "unknown";
+}
+
 interface DPVersionModalProps {
   open: boolean;
   onClose: () => void;
@@ -71,6 +109,10 @@ export default function DPVersionModal({
   const dpVersion = characteristicEquation.dp_version;
   const localeCode = locale === "es" ? "es" : "en";
   const translatedCode = translatePseudocode(dpVersion.code, localeCode);
+  const recursiveComplexity = dpVersion.recursive_complexity.trim();
+  const dpTimeComplexity = dpVersion.time_complexity.trim();
+  const hasTimeImprovement = recursiveComplexity !== dpTimeComplexity;
+  const recursiveComplexityKind = inferComplexityKind(recursiveComplexity);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -117,7 +159,9 @@ export default function DPVersionModal({
                     <Formula latex={dpVersion.recursive_complexity} display />
                   </div>
                   <div className="text-slate-400 text-xs mt-1">
-                    {t("exponentialComplexity")}
+                    {t("recursiveComplexityDetected", {
+                      type: t(`complexityType.${recursiveComplexityKind}`),
+                    })}
                   </div>
                 </div>
                 <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
@@ -187,10 +231,14 @@ export default function DPVersionModal({
                     check_circle
                   </span>
                   <span>
-                    {t("improvedTime", {
-                      recursive: dpVersion.recursive_complexity,
-                      dp: dpVersion.time_complexity,
-                    })}
+                    {hasTimeImprovement
+                      ? t("improvedTime", {
+                          recursive: recursiveComplexity,
+                          dp: dpTimeComplexity,
+                        })
+                      : t("sameTime", {
+                          complexity: dpTimeComplexity,
+                        })}
                   </span>
                 </li>
                 <li className="flex items-start gap-2">

@@ -473,6 +473,20 @@
       "recursiveVersion": "Versión Recursiva",
       "dpVersion": "Versión DP",
       "exponentialComplexity": "Complejidad exponencial",
+      "recursiveComplexityDetected": "Complejidad recursiva detectada: {type}",
+      "complexityType": {
+        "constant": "constante",
+        "logarithmic": "logarítmica",
+        "sublinear": "sublineal",
+        "linear": "lineal",
+        "linearithmic": "linealítmica",
+        "quadratic": "cuadrática",
+        "cubic": "cúbica",
+        "polynomial": "polinómica",
+        "exponential": "exponencial",
+        "factorial": "factorial",
+        "unknown": "no determinada"
+      },
       "time": "Tiempo:",
       "space": "Espacio:",
       "pseudocodeTitle": "Pseudocódigo de Programación Dinámica",
@@ -482,6 +496,7 @@
       "dpEquivalenceDefault": "Las raíces de la ecuación característica corresponden a los valores propios de la transición lineal del sistema DP. La solución cerrada matemática equivale a la solución iterativa mediante programación dinámica.",
       "dpAdvantages": "Ventajas de la Versión DP",
       "improvedTime": "Complejidad temporal mejorada: De {recursive} a {dp}",
+      "sameTime": "Complejidad temporal sin cambios: Se mantiene en {complexity}",
       "noRecalc": "Sin recálculos: Cada subproblema se resuelve una sola vez",
       "bottomUp": "Bottom-up: Construcción iterativa desde casos base",
       "spaceOpt": "Optimización de espacio: Puede reducirse a {space} con optimización"
