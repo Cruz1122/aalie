@@ -8,6 +8,25 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
+- **Trace recursivo:** Tokens y microsegundos por nodo en el árbol de llamadas (suma de steps por callId). Formato de llamadas `funcion(a, b, c)` en lugar de `fn(k=v)`. Explicación determinista `explain_recursion_tree` para el árbol de recursión. Botón recargar invalida cache (forceRefresh). Layout del call tree con nodos más grandes y mayor separación para evitar solapamiento.
+
+### Fixed
+- **buscarLista y árbol de llamadas:** (1) `_execute_return` ejecuta llamadas recursivas en RETURN (ej. `RETURN buscarLista(nodo.siguiente, valor)`) para registrar el árbol. (2) `_evaluate_condition` no sobrescribe condiciones con valores concretos (nodo==null) con heurística best/worst. (3) Comparación explícita con None para listas enlazadas. (4) `_has_recursive_call` considera `callee` además de `name` en nodos Call. (5) `call_tree_builder` maneja `base_case` nulo. (6) `environment`: Literal con dict/None se devuelve sin SymPy; Field con base Literal resuelve campos; Identifier con dict/None se resuelve a Literal.
+- **Vista trace recursiva:** La columna derecha (diagrama, controles) ahora tiene altura mínima visible (`min-h-[420px]`). Loader mientras se detecta el algoritmo. Mensaje `callTreeUnavailable` cuando el árbol de llamadas no se puede generar (ej. factorial con retorno en expresión).
+
+### Removed
+- **LLM de diagramas eliminado por completo:** Rutas `/api/llm/generate-diagram` y `/api/llm/recursion-diagram`, prompts asociados, `CallTreeView`, `RecursionTreeView`. Los diagramas (iterativo y árbol de llamadas recursivas) provienen exclusivamente del backend determinista vía `/api/analyze/trace` con `include_execution_diagram` e `include_call_tree`. Eliminados `GEMINI_DIAGRAM_MODELS`, `DiagramGraphResponse`, probes de monitoring para esos endpoints.
+
+### Added
+- Traducciones i18n para eventKind en StepInfo: `eventKind_assign`, `eventKind_return_emit`, `eventKind_condition_eval`, etc. (es/en).
+- Estimación determinista de tokens y microsegundos en TraceBuilder: `_estimate_step_cost()` por tipo de paso; propagación a nodos del diagrama de seguimiento.
+- `DiagramKind` en tipos trace: `execution_diagram` | `call_tree` | `recurrence_tree` para distinguir semánticamente los diagramas.
+- Generadores deterministas de diagramas (sin LLM): `execution_diagram_builder`, `call_tree_builder`, `recurrence_tree_builder`.
+- Flags en `/analyze/trace`: `include_execution_diagram`, `include_call_tree` para artefactos opcionales.
+- Feature flag `NEXT_PUBLIC_USE_DETERMINISTIC_DIAGRAMS` para migración progresiva.
+- Componentes: `ExecutionGraphView`, `CallTreeView`, `RecurrenceTreeView`.
+- `explanation_templates.py` para explicaciones deterministas por plantillas.
+- Tests oráculo: `test_execution_diagram_builder`, `test_call_tree_builder`.
 - `AAButton`: componente reutilizable con variantes de color (primary, amber, purple, blue, cyan, secondary) alineado al estilo de las cards de ejemplos (`bg-{color}/25 border-{color}/40 hover:bg-{color}/35`).
 - Vista dedicada de seguimiento de pseudocódigo (iterativo y recursivo): reemplaza el modal por una vista full-page con patrón de cambio tipo homepage (animación opacity/translate-y). Panel izquierdo tipo chat bloqueado con pseudocódigo y progreso por línea; área principal con árbol/diagrama, tablas y explicación.
 - `TraceDedicatedView` y `TraceChatPanel`: componentes para la vista de seguimiento con layout responsive (mobile: columna única; desktop: panel chat + contenido).
@@ -28,6 +47,10 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Test `test_bubble_sort_longitud_correct_complexity` que valida Θ(n²) worst/avg, Θ(n) best y ausencia de símbolos de array en BUBBLE_SORT_LONGITUD.
 
 ### Fixed
+- **StepInfo:** El tipo de paso (eventKind) se muestra traducido (ej. "Retorno" en lugar de "return_emit").
+- **Executor:** Soporte para `callee` en nodos Call (gramática usa `callee`, no `name`).
+- **Árbol de llamadas:** Logging cuando `build_call_tree` falla; test `test_trace_with_call_tree_deterministic` para validar callTree con include_call_tree.
+- **Árbol de llamadas determinista:** Con `NEXT_PUBLIC_USE_DETERMINISTIC_DIAGRAMS=true`, ya no se usa LLM como fallback; se muestra placeholder si no hay callTree. Cache de trace aplica graph/recursionDiagram deterministas.
 - **Trace iterativo:** El contenido ya no desaparece al cambiar de caso (best/avg/worst). Solo se resetea `algorithmKind` cuando cambia el código fuente; al cambiar solo caso o tamaño de entrada se mantiene la vista iterativa con estado de carga.
 - **recursion-diagram:** (1) Aceptar respuestas con `nodes`/`edges` en raíz o dentro de `graph`. (2) Fallback: si edges vacío pero hay nodos con posición, inferir aristas desde layout (árbol por Y). (3) Prompt reforzado: edges obligatorios. (4) Evitar spam; JSON malformado con jsonrepair.
 - **Árbol de recursión:** Texto `irregularTree` corregido: "Árbol con subproblemas duplicados (ej. Fibonacci)" en lugar de "los nodos se duplican", alineado con terminología pedagógica (subproblemas vs nodos).
@@ -42,6 +65,9 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - `SummationCloser`: sustitución segura de variables de iteración (i, j, k) que evita resultados negativos mediante `_safe_substitute_iteration_var`.
 
 ### Changed
+- **TraceBuilder y CodeExecutor enriquecidos (Fase 3):** eventKind semántico (assign, condition_eval, loop_iter_enter, call_enter, return_emit, print), decision en steps (conditionText, result), RecursionCall con parent_id, return_value, base_case, function_name, entry_line. record_return_value y record_base_case.
+- **TraceFlowDiagram** renombrado a `ExecutionGraphView`; `RecursionTreeView` separado en `CallTreeView` (llamadas) y `RecurrenceTreeView` (analítico).
+- **Corrección terminológica global (Fase 0):** Traza de ejecución, diagrama de seguimiento, árbol de llamadas recursivas, árbol de recurrencia. i18n: `callTreeTitle`, `recurrenceTreeTitle`, `executionDiagram`, `executionDiagramSection`, `generatingExecutionDiagram`, `generatingCallTree`. Docs: `trace-format.md` con glosario. Tipos: `DiagramKind`.
 - **Trace iterativo (vista dedicada):** Rediseño completo: layout grid 2 columnas (lg:grid-cols-2) con glass-card; columna izquierda: seguimiento paso a paso; columna derecha: controles, variables y diagrama. Eliminadas alturas fijas; secciones flexibles con min-h-0 overflow-hidden. Selector de caso (best/avg/worst) integrado en header de la tarjeta de seguimiento.
 - **Trace iterativo (componentes):** StepInfo con grid responsive (grid-cols-2 sm:grid-cols-3 lg:grid-cols-5); StepControls compacto en fila horizontal; DiagramSection con altura flexible (min-h-[200px] h-[min(400px,50vh)]); VariablesPanel e InputSizeControl con orden y espaciado mejorados. Mejoras aplicadas también al variant modal.
 - **Accesibilidad trace:** StepInfo con aria-live="polite" y aria-atomic; StepControls con aria-label en todos los botones.

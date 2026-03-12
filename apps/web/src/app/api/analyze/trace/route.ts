@@ -21,7 +21,15 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { source, case: caseType, input_size, initial_variables, locale } = body;
+    const {
+      source,
+      case: caseType,
+      input_size,
+      initial_variables,
+      locale,
+      include_execution_diagram,
+      include_call_tree,
+    } = body;
     
     if (!source) {
       return NextResponse.json(
@@ -50,6 +58,8 @@ export async function POST(request: NextRequest) {
         input_size: input_size || null,
         initial_variables: initial_variables || null,
         locale: locale || "en",
+        include_execution_diagram: include_execution_diagram ?? false,
+        include_call_tree: include_call_tree ?? false,
       }),
       cache: "no-store",
     });

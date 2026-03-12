@@ -14,7 +14,7 @@ import type {
 
 import IterativeTraceContent from "./trace/IterativeTraceContent";
 import RecursiveTraceContent from "./trace/RecursiveTraceContent";
-import TraceFlowDiagram from "./TraceFlowDiagram";
+import ExecutionGraphView from "./ExecutionGraphView";
 
 
 interface ExecutionTraceModalProps {
@@ -126,7 +126,7 @@ export default function ExecutionTraceModal({
   }, [algorithmKind, source]);
 
   // Cargar rastro cuando cambia el caso o tamaño de entrada (debounced)
-  const loadTrace = useCallback(async () => {
+  const loadTrace = useCallback(async (_forceRefresh?: boolean) => {
     setLoading(true);
     setCurrentStep(0);
     setIsPlaying(false);
@@ -175,20 +175,33 @@ export default function ExecutionTraceModal({
           input_size: n,
           initial_variables: initialVariables,
           locale: locale === "es" ? "es" : "en",
+          include_execution_diagram: true,
+          include_call_tree: true,
         }),
       });
 
       const data: TraceApiResponse = await response.json();
 
-      // Store algorithm kind FIRST before setting trace
       if (data.algorithmKind) {
         setAlgorithmKind(data.algorithmKind);
       }
 
-      // Resetear graph cuando el trace realmente cambia
-      setGraph(null);
-      
-      // Then set the trace data
+      if (data.executionDiagram?.graph) {
+        setGraph(data.executionDiagram.graph);
+        setRecursionDiagram(null);
+      } else if (data.callTree?.graph && (data.algorithmKind === "recursive" || data.algorithmKind === "hybrid")) {
+        setGraph(null);
+        setRecursionDiagram({
+          graph: data.callTree.graph,
+          explanation: data.callTree?.explanation ?? "",
+        });
+      } else {
+        setGraph(null);
+        if (!(data.algorithmKind === "recursive" || data.algorithmKind === "hybrid")) {
+          setRecursionDiagram(null);
+        }
+      }
+
       setTrace(data);
     } catch (error) {
       console.error("Error loading trace:", error);
@@ -358,7 +371,7 @@ export default function ExecutionTraceModal({
                       <span className="material-symbols-outlined text-sky-400 text-lg">
                         {isRecursiveOrHybrid ? "account_tree" : "schema"}
                       </span>
-                      <span>{isRecursiveOrHybrid ? t("recursionTreeTitle") : t("flowDiagramTitle")}</span>
+                      <span>{isRecursiveOrHybrid ? t("callTreeTitle") : t("executionDiagramTitle")}</span>
                     </h3>
                     <button
                       type="button"
@@ -371,7 +384,7 @@ export default function ExecutionTraceModal({
                     </button>
                   </div>
                   <div className="flex-1 glass-card rounded-lg overflow-hidden">
-                    <TraceFlowDiagram graph={(isRecursiveOrHybrid ? recursionDiagram?.graph : graph) || { nodes: [], edges: [] }} />
+                    <ExecutionGraphView graph={(isRecursiveOrHybrid ? recursionDiagram?.graph : graph) || { nodes: [], edges: [] }} />
                   </div>
                 </div>
               </div>

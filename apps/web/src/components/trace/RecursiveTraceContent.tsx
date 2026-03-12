@@ -28,7 +28,7 @@ interface RecursiveTraceContentProps {
   loading: boolean;
   isDiagramExpanded: boolean;
   setIsDiagramExpanded: (expanded: boolean) => void;
-  onLoadTrace: () => void;
+  onLoadTrace: (forceRefresh?: boolean) => void;
   /** "modal" = 3 cols con PseudocodeViewer; "dedicated" = 2 cols sin PseudocodeViewer */
   variant?: "modal" | "dedicated";
 }
@@ -70,7 +70,7 @@ export default function RecursiveTraceContent({
 
   const handleRegenerate = () => {
     setRecursionDiagram(null);
-    onLoadTrace();
+    onLoadTrace(true);
   };
 
   return (
@@ -90,11 +90,8 @@ export default function RecursiveTraceContent({
           <DiagramSection
             mode="recursive"
             recursionDiagram={recursionDiagram}
-            pseudocode={source}
-            algorithmKind={algorithmKind}
-            inputSize={inputSize}
-            onDiagramGenerated={(diagram) => setRecursionDiagram(diagram)}
             loadingRecursion={loading}
+            inputSize={inputSize}
             onRegenerate={handleRegenerate}
             onExpand={() => setIsDiagramExpanded(true)}
           />

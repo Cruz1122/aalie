@@ -3,7 +3,7 @@ Ejecutor principal que recorre el AST y genera pasos de ejecución.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from ..analysis.translations import get_trace_step_labels
 from .environment import ExecutionEnvironment
 from .trace_builder import TraceBuilder
@@ -119,9 +119,24 @@ class CodeExecutor:
         
         return result
     
+    def _build_linked_list_from_array(self, arr: List[Any]) -> Optional[Dict[str, Any]]:
+        """Construye una lista enlazada desde un array para algoritmos tipo buscarLista."""
+        if not arr:
+            return None
+        head: Dict[str, Any] = {"valor": arr[0], "siguiente": None}
+        current = head
+        for v in arr[1:]:
+            node = {"valor": v, "siguiente": None}
+            current["siguiente"] = node
+            current = node
+        return head
+
     def _map_procedure_params(self, proc_def: Dict[str, Any]) -> Dict[str, Any]:
         """
         Mapea los parámetros del procedimiento usando las variables iniciales disponibles.
+        
+        Incluye fallback para algoritmos de lista enlazada: si los params son (nodo, valor)
+        y el environment tiene A (array) y x, construye una lista enlazada desde A.
         
         Args:
             proc_def: Nodo ProcDef del AST
@@ -133,10 +148,11 @@ class CodeExecutor:
         """
         params_map = {}
         formal_params = proc_def.get("params", [])
-        
+        param_names: List[str] = []
+
         for param in formal_params:
             param_name = None
-            
+
             # Extraer el nombre del parámetro según su tipo
             if isinstance(param, dict):
                 if param.get("type") == "Param":
@@ -146,17 +162,31 @@ class CodeExecutor:
                 elif param.get("type") == "ObjectParam":
                     param_name = param.get("name")
                 else:
-                    # Intentar obtener el nombre directamente
                     param_name = param.get("name")
             elif isinstance(param, str):
                 param_name = param
-            
-            # Si encontramos un nombre de parámetro, buscar su valor en las variables iniciales
+
             if param_name:
+                param_names.append(param_name)
                 value = self.environment.get_variable(param_name)
                 if value is not None:
                     params_map[param_name] = value
-        
+
+        # Fallback: algoritmos de lista enlazada (buscarLista, etc.) con A y x
+        if len(params_map) < len(param_names) and len(param_names) >= 2:
+            arr = self.environment.get_variable("A")
+            x_val = self.environment.get_variable("x")
+            if isinstance(arr, list) and x_val is not None:
+                first = (param_names[0] or "").lower()
+                second = (param_names[1] or "").lower()
+                node_like = first in ("nodo", "node", "head", "list", "raiz", "root")
+                value_like = second in ("valor", "value", "key", "x", "target")
+                if node_like and value_like:
+                    linked = self._build_linked_list_from_array(arr)
+                    if linked is not None:
+                        params_map[param_names[0]] = linked
+                        params_map[param_names[1]] = x_val
+
         return params_map
     
     def _execute_procedure(self, proc_def: Dict[str, Any], params: Dict[str, Any], return_value: Optional[Any] = None) -> Any:
@@ -204,9 +234,14 @@ class CodeExecutor:
             self.call_stack.append(frame)
             
             # Registrar entrada a recursión
-            self.trace_builder.enter_recursion(call_id, depth, params)
+            entry_line = proc_def.get("pos", {}).get("line", 0)
+            self.trace_builder.enter_recursion(
+                call_id, depth, params,
+                function_name=proc_name,
+                entry_line=entry_line,
+            )
             
-            # Agregar paso de entrada
+            # Agregar paso de entrada (call_enter)
             line = proc_def.get("pos", {}).get("line", 0)
             self.current_line = line
             self.trace_builder.add_step(
@@ -217,23 +252,23 @@ class CodeExecutor:
                     "depth": depth,
                     "callId": call_id,
                     "params": params,
-                    "procedure": proc_name
+                    "procedure": proc_name,
                 },
                 description=self._trace_labels["recursive_call"].format(
                     proc_name=proc_name, depth=depth
-                )
+                ),
+                event_kind="call_enter",
             )
         
-        # Si no es recursivo, aún necesitamos establecer los parámetros en el environment
-        # Crear scope nuevo solo si no es recursivo (para recursivos, el scope ya se maneja en _execute_call)
+        # Establecer parámetros en el scope para que el cuerpo pueda usarlos
         created_scope = False
         if not is_recursive and params:
             self.environment.push_scope()
             created_scope = True
-            # Establecer variables de parámetros en el nuevo scope
+        if params:
             for param_name, param_value in params.items():
                 self.environment.set_variable(param_name, param_value)
-        
+
         # Ejecutar el cuerpo
         if body.get("type") == "Block":
             self._execute_block(body)
@@ -245,7 +280,10 @@ class CodeExecutor:
         if is_recursive and self.call_stack:
             current_frame = self.call_stack[-1]
             result = current_frame.get("return_value")
-            
+            call_id = current_frame.get("call_id")
+            if call_id:
+                self.trace_builder.record_return_value(call_id, result)
+
             # Registrar salida de recursión
             self.trace_builder.exit_recursion()
             
@@ -410,7 +448,8 @@ class CodeExecutor:
             line=node.get("pos", {}).get("line", 0),
             kind="assign",
             variables=self.environment.get_variables_snapshot(),
-            description=description
+            description=description,
+            event_kind="assign",
         )
     
     def _execute_for(self, node: Dict[str, Any]) -> None:
@@ -449,7 +488,7 @@ class CodeExecutor:
                 # Establecer variable del bucle
                 self.environment.set_variable(var_name, i)
                 
-                # Agregar paso de iteración
+                # Agregar paso de iteración (loop_iter_enter)
                 self.trace_builder.add_step(
                     line=node.get("pos", {}).get("line", 0),
                     kind="for",
@@ -458,11 +497,12 @@ class CodeExecutor:
                         "loopVar": var_name,
                         "currentValue": i,
                         "maxValue": end_int,
-                        "iteration": iteration_count
+                        "iteration": iteration_count,
                     },
                     description=self._trace_labels["for_iteration"].format(
                         iteration_count=iteration_count, var_name=var_name, value=i
-                    )
+                    ),
+                    event_kind="loop_iter_enter",
                 )
                 
                 # Ejecutar cuerpo
@@ -559,12 +599,11 @@ class CodeExecutor:
                 line=node.get("pos", {}).get("line", 0),
                 kind="repeat",
                 variables=self.environment.get_variables_snapshot(),
-                iteration={
-                    "iteration": iteration_count
-                },
+                iteration={"iteration": iteration_count},
                 description=self._trace_labels["repeat_iteration"].format(
                     iteration_count=iteration_count
-                )
+                ),
+                event_kind="loop_iter_enter",
             )
             
             # Ejecutar cuerpo
@@ -632,22 +671,24 @@ class CodeExecutor:
         # Decidir qué rama ejecutar según el caso
         execute_then = condition_val
 
-        if has_return_in_then:
-            # Para ramas con RETURN, forzar mejor/peor caso de forma explícita
+        # Solo aplicar heurística best/worst cuando no hay evaluación concreta
+        # (evitar sobrescribir condiciones con valores concretos como nodo==null)
+        if has_return_in_then and condition_val not in (True, False):
             if self.case == "best":
-                # Mejor caso: se cumple la condición y entramos al then
                 execute_then = True
             elif self.case == "worst":
-                # Peor caso: nunca se cumple la condición, se evita el then
                 execute_then = False
         
+        condition_text = self._condition_to_string(condition)
         self.trace_builder.add_step(
             line=node.get("pos", {}).get("line", 0),
             kind="if",
             variables=self.environment.get_variables_snapshot(),
             description=self._trace_labels["if_condition"].format(
                 condition_val=condition_val
-            )
+            ),
+            event_kind="condition_eval",
+            decision={"conditionText": condition_text, "result": execute_then},
         )
         
         if execute_then:
@@ -666,25 +707,35 @@ class CodeExecutor:
     def _execute_return(self, node: Dict[str, Any]) -> None:
         """Ejecuta un RETURN y marca la ejecución como terminada."""
         value_expr = node.get("value")
-        value = self.environment.evaluate_expression(value_expr) if value_expr else None
-        value_str = self.environment.evaluate_to_string(value_expr) if value_expr else "None"
-        
+        # Si el valor es una llamada a procedimiento (ej. RETURN buscarLista(nodo.siguiente, valor)),
+        # ejecutarla para que la recursión se registre en el árbol de llamadas
+        if value_expr and isinstance(value_expr, dict) and value_expr.get("type") == "Call":
+            value = self._execute_call(value_expr)
+            value_str = str(value) if value is not None else "None"
+        else:
+            value = self.environment.evaluate_expression(value_expr) if value_expr else None
+            value_str = self.environment.evaluate_to_string(value_expr) if value_expr else "None"
+
         # Guardar valor de retorno en el frame actual si estamos en recursión
         if self.call_stack:
             self.call_stack[-1]["return_value"] = value
-        
+            call_id = self.call_stack[-1].get("call_id")
+            if call_id:
+                self.trace_builder.record_return_value(call_id, value)
+
         self.trace_builder.add_step(
             line=node.get("pos", {}).get("line", 0),
             kind="return",
             variables=self.environment.get_variables_snapshot(),
-            description=self._trace_labels["return_val"].format(value_str=value_str)
+            description=self._trace_labels["return_val"].format(value_str=value_str),
+            event_kind="return_emit",
         )
         # Marcar como terminado para no ejecutar más sentencias después del return
         self.terminated = True
     
     def _execute_call(self, node: Dict[str, Any]) -> Any:
         """Ejecuta una llamada a procedimiento con soporte recursivo."""
-        proc_name = node.get("name", "unknown")
+        proc_name = node.get("name") or node.get("callee", "unknown")
         args = node.get("args", [])
         
         # Evaluar argumentos
@@ -742,7 +793,8 @@ class CodeExecutor:
                 line=node.get("pos", {}).get("line", 0),
                 kind="call",
                 variables=self.environment.get_variables_snapshot(),
-                description=self._trace_labels["call_proc"].format(proc_name=proc_name)
+                description=self._trace_labels["call_proc"].format(proc_name=proc_name),
+                event_kind="call_enter",
             )
             return None
     
@@ -750,15 +802,16 @@ class CodeExecutor:
         """Ejecuta un PRINT."""
         args = node.get("args", [])
         arg_strs = [self.environment.evaluate_to_string(arg) for arg in args]
-        
+
         self.trace_builder.add_step(
-            line=node.get("pos", {}).get("line", 0),
-            kind="print",
-            variables=self.environment.get_variables_snapshot(),
-            description=self._trace_labels["print_args"].format(
-                args=", ".join(arg_strs)
+                line=node.get("pos", {}).get("line", 0),
+                kind="print",
+                variables=self.environment.get_variables_snapshot(),
+                description=self._trace_labels["print_args"].format(
+                    args=", ".join(arg_strs)
+                ),
+                event_kind="print",
             )
-        )
     
     def _execute_block(self, node: Dict[str, Any]) -> None:
         """Ejecuta un bloque."""
@@ -773,6 +826,22 @@ class CodeExecutor:
         # Las declaraciones no generan pasos de ejecución significativos
         pass
     
+    def _condition_to_string(self, condition: Any) -> str:
+        """Convierte una condición del AST a string legible para decision.conditionText."""
+        if not isinstance(condition, dict):
+            return str(condition)
+        cond_type = condition.get("type", "").lower()
+        if cond_type == "binary":
+            left = self.environment.evaluate_to_string(condition.get("left"))
+            right = self.environment.evaluate_to_string(condition.get("right"))
+            op = condition.get("operator") or condition.get("op") or "?"
+            return f"{left} {op} {right}"
+        if cond_type == "unary":
+            arg = self.environment.evaluate_to_string(condition.get("arg"))
+            op = condition.get("operator", "not")
+            return f"{op} {arg}"
+        return self.environment.evaluate_to_string(condition)
+
     def _evaluate_condition(self, condition: Any) -> bool:
         """
         Evalúa una condición booleana.
@@ -795,6 +864,13 @@ class CodeExecutor:
             right = self.environment.evaluate_expression(condition.get("right"))
             op = condition.get("operator", "") or condition.get("op", "")
             
+            # Comparaciones con None (ej. nodo == null en listas enlazadas)
+            if left is None or right is None:
+                if op in ("=", "=="):
+                    return left is None and right is None
+                if op in ("<>", "!="):
+                    return left is not None or right is not None
+
             # Convertir a valores numéricos si es posible
             try:
                 if isinstance(left, (int, float)) and isinstance(right, (int, float)):
@@ -864,7 +940,7 @@ class CodeExecutor:
         node_type = node.get("type", "").lower()
         
         if node_type == "call":
-            call_name = node.get("name", "")
+            call_name = node.get("name") or node.get("callee", "")
             if call_name == proc_name:
                 return True
         

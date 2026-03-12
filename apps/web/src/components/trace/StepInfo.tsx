@@ -125,8 +125,12 @@ export default function StepInfo({
             <div className="glass-card p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 flex flex-col min-w-0 min-h-[72px]">
               <div className="text-xs text-purple-300 mb-1.5 font-semibold text-center truncate">{t("type")}</div>
               <div className="flex-1 flex items-center justify-center min-h-[28px]">
-                <span className="text-white font-semibold text-base capitalize">
-                  {stepData.kind}
+                <span className="text-white font-semibold text-base">
+                  {(() => {
+                    const key = `eventKind_${stepData.kind}` as const;
+                    const translated = t(key);
+                    return translated === key ? t("eventKind_other") : translated;
+                  })()}
                 </span>
               </div>
             </div>

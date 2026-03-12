@@ -1202,7 +1202,7 @@ function renderRecursiveData(
                   account_tree
                 </span>
                 <div className="text-sm font-semibold text-green-300">
-                  {t.view("recursionTree")}
+                  {t.view("recurrenceTree")}
                 </div>
               </div>
             </div>

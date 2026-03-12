@@ -2,6 +2,14 @@
 
 Documentación del contrato de datos expuesto por `POST /analyze/trace` para el frontend.
 
+## Terminología
+
+- **Traza de ejecución** (execution trace): Secuencia temporal de eventos reales de ejecución.
+- **Paso de ejecución** (execution step): Un evento individual en la traza.
+- **Diagrama de seguimiento** (execution diagram): Representación visual del flujo ejecutado (iterativo).
+- **Árbol de llamadas recursivas** (call tree): Representación jerárquica de llamadas reales ejecutadas.
+- **Árbol de recurrencia** (recurrence tree): Representación analítica del costo según la recurrencia (no ejecución).
+
 ## Request
 
 ```json
@@ -10,9 +18,14 @@ Documentación del contrato de datos expuesto por `POST /analyze/trace` para el 
   "case": "worst" | "best" | "avg",
   "input_size": number | null,
   "initial_variables": object | null,
-  "locale": "en" | "es"
+  "locale": "en" | "es",
+  "include_execution_diagram": false,
+  "include_call_tree": false
 }
 ```
+
+- **include_execution_diagram**: Si true, el backend genera diagrama de seguimiento determinista (iterativos).
+- **include_call_tree**: Si true, el backend genera árbol de llamadas como grafo (recursivos).
 
 - **source**: Código fuente en pseudocódigo (obligatorio).
 - **case**: Escenario de ejecución (worst, best, avg). Por defecto `"worst"`.
@@ -30,14 +43,14 @@ Documentación del contrato de datos expuesto por `POST /analyze/trace` para el 
     "recursionTree": { "calls": [...], "root_calls": [...] }
   },
   "algorithmKind": "iterative" | "recursive" | "hybrid" | "unknown",
-  "metadata": {
-    "pseudocode": "...",
-    "inputSize": 4,
-    "case": "worst",
-    "message": "..."
-  }
+  "metadata": { "pseudocode": "...", "inputSize": 4, "case": "worst", "message": "..." },
+  "executionDiagram": { "graph": { "nodes": [...], "edges": [...] }, "diagramKind": "execution_diagram" },
+  "callTree": { "graph": { "nodes": [...], "edges": [...] }, "diagramKind": "call_tree" }
 }
 ```
+
+- **executionDiagram**: Presente cuando `include_execution_diagram=true` y algoritmo iterativo.
+- **callTree**: Presente cuando `include_call_tree=true` y algoritmo recursivo/híbrido.
 
 ## ExecutionStep
 
@@ -69,7 +82,9 @@ interface ExecutionStep {
 }
 ```
 
-## RecursionTreeCall (algoritmos recursivos)
+## RecursionTreeCall (árbol de llamadas recursivas)
+
+El campo `recursionTree` en la respuesta contiene el **árbol de llamadas recursivas** (call tree), no el árbol de recurrencia analítico.
 
 ```typescript
 interface RecursionTreeCall {
@@ -85,8 +100,7 @@ interface RecursionTreeCall {
 
 ## Uso para diagramas
 
-- **Iterativos**: El frontend llama a `/api/llm/generate-diagram` con el trace para obtener un `TraceGraph` (nodos y edges) para React Flow.
-- **Recursivos**: El frontend llama a `/api/llm/recursion-diagram` con pseudocode, kind, input_size para generar el árbol de recursión (TraceGraph + explanation).
+- **Iterativos y recursivos**: El frontend obtiene el diagrama de seguimiento o árbol de llamadas recursivas directamente en la respuesta de `/api/analyze/trace` cuando se envían `include_execution_diagram: true` e `include_call_tree: true`. Los diagramas se generan de forma determinista en el backend.
 
 ## Response de error
 

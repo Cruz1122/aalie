@@ -1,7 +1,6 @@
 // Configuración centralizada para modelos LLM de Gemini
 
 import {
-  DEFAULT_GEMINI_DIAGRAM_MODELS,
   DEFAULT_GEMINI_ENDPOINT_BASE,
   DEFAULT_GEMINI_MODELS,
 } from "./llm-defaults";
@@ -27,17 +26,6 @@ export const GEMINI_MODELS = {
   general: getEnvOrDefault("LLM_MODEL_GENERAL", DEFAULT_GEMINI_MODELS.general),
   repair: getEnvOrDefault("LLM_MODEL_REPAIR", DEFAULT_GEMINI_MODELS.repair),
   compare: getEnvOrDefault("LLM_MODEL_COMPARE", DEFAULT_GEMINI_MODELS.compare),
-};
-
-export const GEMINI_DIAGRAM_MODELS = {
-  recursion_diagram: getEnvOrDefault(
-    "LLM_MODEL_RECURSION_DIAGRAM",
-    DEFAULT_GEMINI_DIAGRAM_MODELS.recursion_diagram,
-  ),
-  generate_diagram: getEnvOrDefault(
-    "LLM_MODEL_GENERATE_DIAGRAM",
-    DEFAULT_GEMINI_DIAGRAM_MODELS.generate_diagram,
-  ),
 };
 
 export const GEMINI_ENDPOINT_BASE =
@@ -283,5 +271,4 @@ export const LLM_EXPORTABLE_CONFIG = {
   models: Object.values(GEMINI_MODELS),
   description: "Modelos Gemini Google AI Studio",
   jobs: GEMINI_MODELS,
-  diagramJobs: GEMINI_DIAGRAM_MODELS,
 };

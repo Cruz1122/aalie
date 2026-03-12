@@ -459,6 +459,161 @@ export interface LLMCompareResponse {
   diffSummary: string;     // resumen de coincidencias/diferencias y causas
 }
 
+/** ---- TRACE (Traza de ejecución y diagramas) ---- */
+
+/** Tipo de diagrama según su semántica */
+export type DiagramKind =
+  | "execution_diagram"   // Diagrama de seguimiento (flujo iterativo)
+  | "call_tree"           // Árbol de llamadas recursivas
+  | "recurrence_tree";    // Árbol de recurrencia (analítico)
+
+/** Tipos de evento semántico en un paso de ejecución */
+export type ExecutionEventKind =
+  | "enter_block"
+  | "assign"
+  | "condition_eval"
+  | "loop_iter_enter"
+  | "loop_iter_exit"
+  | "call_enter"
+  | "call_spawn_child"
+  | "call_resume"
+  | "return_emit"
+  | "call_exit"
+  | "print"
+  | "end";
+
+/** Paso de ejecución canónico (modelo enriquecido) */
+export interface ExecutionStepCanonical {
+  id: string;
+  stepNumber: number;
+  line: number | null;
+  eventKind: ExecutionEventKind;
+  description: string;
+  variablesSnapshot: Record<string, unknown>;
+  iteration?: {
+    loopId: string;
+    index?: number;
+  };
+  recursion?: {
+    callId: string;
+    depth: number;
+    parentCallId?: string;
+  };
+  decision?: {
+    conditionText: string;
+    result: boolean;
+  };
+  cost?: {
+    primitiveOps?: number;
+    microseconds?: number;
+    tokens?: number;
+  };
+  sourceSpan?: {
+    startLine: number;
+    endLine: number;
+  };
+}
+
+/** Nodo del árbol de llamadas recursivas */
+export interface CallNodeCanonical {
+  id: string;
+  functionName: string;
+  depth: number;
+  parentCallId?: string;
+  childCallIds: string[];
+  argumentsSnapshot: Record<string, unknown>;
+  localStateOnEnter?: Record<string, unknown>;
+  localStateOnExit?: Record<string, unknown>;
+  entryLine?: number;
+  baseCase?: {
+    detected: boolean;
+    conditionText?: string;
+    matched?: boolean;
+  };
+  returnValue?: unknown;
+  localCost?: { primitiveOps?: number };
+  aggregateCost?: { primitiveOps?: number };
+}
+
+/** Árbol de llamadas recursivas */
+export interface CallTreeCanonical {
+  rootCallIds: string[];
+  calls: CallNodeCanonical[];
+}
+
+/** Resumen de la traza */
+export interface TraceSummary {
+  totalSteps: number;
+  kind: "iterative" | "recursive" | "hybrid";
+}
+
+/** Traza de ejecución canónica */
+export interface ExecutionTraceCanonical {
+  kind: "iterative" | "recursive" | "hybrid";
+  steps: ExecutionStepCanonical[];
+  summary: TraceSummary;
+  callTree?: CallTreeCanonical;
+}
+
+/** Bloque de explicación */
+export interface ExplanationBlock {
+  stepId?: string;
+  text: string;
+  kind?: string;
+}
+
+/** Nodo del grafo visual (React Flow) */
+export interface TraceGraphNode {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  data: {
+    label: string;
+    microseconds?: number;
+    tokens?: number;
+    [key: string]: unknown;
+  };
+  parentId?: string;
+}
+
+/** Arista del grafo visual */
+export interface TraceGraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  label: string;
+  type: string;
+}
+
+/** Grafo visual para renderizado */
+export interface TraceGraphCanonical {
+  nodes: TraceGraphNode[];
+  edges: TraceGraphEdge[];
+}
+
+/** Payload de diagrama (salida de builders deterministas) */
+export interface DiagramPayload {
+  diagramKind: DiagramKind;
+  graph: TraceGraphCanonical;
+  explanationBlocks?: ExplanationBlock[];
+}
+
+/** Nodo del árbol de recurrencia (analítico) */
+export interface RecurrenceNode {
+  id: string;
+  subproblem: string;
+  sizeExpr: string;
+  workExpr: string;
+  level: number;
+  childIds: string[];
+}
+
+/** Expansión de recurrencia para árbol analítico */
+export interface RecurrenceExpansion {
+  root: RecurrenceNode;
+  depthLimit: number;
+}
+
 /** ---- Documentación ---- */
 export interface DocumentationSection {
   id: string;

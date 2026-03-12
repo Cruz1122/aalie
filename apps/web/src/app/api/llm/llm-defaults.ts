@@ -7,8 +7,3 @@ export const DEFAULT_GEMINI_MODELS = {
   repair: "gemini-2.5-flash",
   compare: "gemini-2.5-flash",
 } as const;
-
-export const DEFAULT_GEMINI_DIAGRAM_MODELS = {
-  recursion_diagram: "gemini-3-flash-preview",
-  generate_diagram: "gemini-3-flash-preview",
-} as const;

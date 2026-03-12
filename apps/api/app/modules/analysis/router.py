@@ -11,6 +11,9 @@ from .schemas import AnalyzeRequest, TraceRequest, TraceResponse
 from ..parsing.service import parse_source
 from ..classification.service import classify_algorithm as classify_algo
 from ..execution.executor import CodeExecutor
+from ..execution.execution_diagram_builder import build_execution_diagram
+from ..execution.call_tree_builder import build_call_tree
+from ..execution.explanation_templates import explain_recursion_tree
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
@@ -149,13 +152,9 @@ def analyze_trace(payload: TraceRequest = Body(...)) -> Dict[str, Any]:
         )
         trace = executor.execute()
 
-        metadata_message = (
-            "Para algoritmos recursivos e híbridos, también puedes usar /api/llm/recursion-diagram para una visualización de árbol de llamadas por LLM"
-            if algorithm_kind in ["recursive", "hybrid"]
-            else "Trace generado correctamente"
-        )
+        metadata_message = "Trace generado correctamente"
 
-        return {
+        result: Dict[str, Any] = {
             "ok": True,
             "trace": trace,
             "algorithmKind": algorithm_kind,
@@ -166,6 +165,45 @@ def analyze_trace(payload: TraceRequest = Body(...)) -> Dict[str, Any]:
                 "message": metadata_message,
             },
         }
+
+        # Artefactos deterministas opcionales
+        if payload.include_execution_diagram and algorithm_kind == "iterative":
+            try:
+                diagram = build_execution_diagram(trace)
+                result["executionDiagram"] = {
+                    "graph": {
+                        "nodes": [n.model_dump() for n in diagram.graph.nodes],
+                        "edges": [e.model_dump() for e in diagram.graph.edges],
+                    },
+                    "diagramKind": diagram.diagramKind,
+                }
+            except Exception:
+                pass
+
+        if payload.include_call_tree and trace.get("recursionTree"):
+            try:
+                diagram = build_call_tree(
+                    trace["recursionTree"],
+                    steps=trace.get("steps", []),
+                )
+                explanation = explain_recursion_tree(
+                    trace, locale_val
+                )
+                result["callTree"] = {
+                    "graph": {
+                        "nodes": [n.model_dump() for n in diagram.graph.nodes],
+                        "edges": [e.model_dump() for e in diagram.graph.edges],
+                    },
+                    "diagramKind": diagram.diagramKind,
+                    "explanation": explanation,
+                }
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(
+                    "build_call_tree failed: %s", str(e), exc_info=True
+                )
+
+        return result
         
     except Exception as e:
         return {

@@ -165,39 +165,6 @@ def make_default_cases(base_url: str, api_key: str | None) -> list[ProbeCase]:
                     job="compare",
                 ),
                 ProbeCase(
-                    method="POST",
-                    endpoint="/api/llm/generate-diagram",
-                    operation="llm_generate_diagram",
-                    payload={
-                        "source": "suma(n) BEGIN acc <- 0; FOR i <- 1 TO n DO BEGIN acc <- acc + i; END RETURN acc; END",
-                        "case": "worst",
-                        "locale": "es",
-                        "apiKey": api_key,
-                        "trace": {
-                            "steps": [
-                                {"step_number": 1, "line": 1, "operation": "init"},
-                                {"step_number": 2, "line": 2, "operation": "loop"},
-                                {"step_number": 3, "line": 3, "operation": "return"}
-                            ]
-                        },
-                    },
-                    job="generate_diagram",
-                ),
-                ProbeCase(
-                    method="POST",
-                    endpoint="/api/llm/recursion-diagram",
-                    operation="recursion_diagram",
-                    payload={
-                        "pseudocode": "factorial(n) BEGIN\n IF (n <= 1) THEN BEGIN RETURN 1; END\n RETURN n * factorial(n - 1);\nEND",
-                        "kind": "recursive",
-                        "depth_limit": 6,
-                        "input_size": 5,
-                        "locale": "es",
-                        "apiKey": api_key,
-                    },
-                    job="recursion_diagram",
-                ),
-                ProbeCase(
                     method="GET",
                     endpoint="/api/llm/status",
                     operation="llm_status",

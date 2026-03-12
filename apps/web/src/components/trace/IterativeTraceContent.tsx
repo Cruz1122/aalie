@@ -1,10 +1,9 @@
 "use client";
 
-import { useLocale, useTranslations } from "next-intl";
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
+import { useRef, useEffect, useMemo } from "react";
 
-import { translateLlmError } from "@/lib/llm-error-translator";
-import type { CaseType, TraceApiResponse, TraceGraph, TraceConfig, DiagramGraphResponse, ExecutionStep } from "@/types/trace";
+import type { CaseType, TraceApiResponse, TraceGraph, TraceConfig } from "@/types/trace";
 
 import DiagramSection from "./DiagramSection";
 import InputSizeControl from "./InputSizeControl";
@@ -39,7 +38,7 @@ interface IterativeTraceContentProps {
   setExampleArray: (arr: number[]) => void;
   isDiagramExpanded: boolean;
   setIsDiagramExpanded: (expanded: boolean) => void;
-  onLoadTrace: () => void;
+  onLoadTrace: (forceRefresh?: boolean) => void;
   /** "modal" = 3 cols con PseudocodeViewer; "dedicated" = 2 cols sin PseudocodeViewer */
   variant?: "modal" | "dedicated";
 }
@@ -61,27 +60,23 @@ export default function IterativeTraceContent({
   setIsPlaying,
   playSpeed,
   graph,
-  setGraph,
+  setGraph: _setGraph,
   explanation,
-  setExplanation,
-  loadingDiagram,
-  setLoadingDiagram,
+  setExplanation: _setExplanation,
+  loadingDiagram: _loadingDiagram,
+  setLoadingDiagram: _setLoadingDiagram,
   exampleArray: _exampleArray,
   setExampleArray: _setExampleArray,
   isDiagramExpanded: _isDiagramExpanded,
   setIsDiagramExpanded,
-  onLoadTrace: _onLoadTrace,
+  onLoadTrace,
   variant = "modal",
 }: IterativeTraceContentProps) {
-  const locale = useLocale();
   const t = useTranslations("analyzer.executionTrace");
   const tCases = useTranslations("analyzer.cases");
-  const tMessages = useTranslations("analyzer.messages");
   const playIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const inputSizeDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const currentStepRef = useRef<number>(currentStep);
-  const loadedTraceIdRef = useRef<string | null>(null);
-  const [stepsWithCosts, setStepsWithCosts] = useState<ExecutionStep[]>([]);
 
   // Sincronizar currentStepRef con currentStep
   useEffect(() => {
@@ -114,117 +109,10 @@ export default function IterativeTraceContent({
     };
   }, []);
 
-  const loadDiagram = async () => {
-    if (!trace?.ok || !trace.trace) return;
-    
-    // No cargar diagrama si no hay steps
-    if (!trace.trace.steps || trace.trace.steps.length === 0) {
-      return;
-    }
-
-    // Crear un ID único para este trace basado en su contenido
-    const traceId = JSON.stringify({
-      steps: trace.trace.steps?.length || 0,
-      case: caseType,
-      source: source.substring(0, 50), // Solo primeros 50 caracteres para el ID
-    });
-
-    // Si ya se cargó el diagrama para este trace y el graph existe, no volver a cargar
-    if (loadedTraceIdRef.current === traceId && graph) {
-      return;
-    }
-
-    // Si el trace cambió, resetear la referencia
-    if (loadedTraceIdRef.current !== traceId) {
-      loadedTraceIdRef.current = null;
-    }
-
-    setLoadingDiagram(true);
-    try {
-      // Obtener API_KEY del localStorage
-      const { getApiKey } = await import("@/hooks/useApiKey");
-      const apiKey = getApiKey();
-
-      const response = await fetch("/api/llm/generate-diagram", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          trace: trace.trace,
-          source,
-          case: caseType,
-          locale,
-          apiKey: apiKey || undefined, // Enviar API_KEY si está disponible
-        }),
-      });
-
-      const data: DiagramGraphResponse = await response.json();
-      if (data.ok && data.graph) {
-        setGraph(data.graph);
-        setExplanation(data.explanation || "");
-        loadedTraceIdRef.current = traceId; // Marcar como cargado
-
-        // Mapear stepCosts a los steps del trace
-        if (data.stepCosts && trace?.ok && trace.trace) {
-          const updatedSteps = trace.trace.steps.map((step) => {
-            const stepCost = data.stepCosts?.[step.step_number.toString()];
-            if (stepCost) {
-              return {
-                ...step,
-                microseconds: stepCost.microseconds,
-                tokens: stepCost.tokens,
-              };
-            }
-            return step;
-          });
-          setStepsWithCosts(updatedSteps);
-        } else if (trace?.ok && trace.trace) {
-          // Si no hay stepCosts, usar los steps originales
-          setStepsWithCosts(trace.trace.steps);
-        }
-      } else {
-        setGraph(null);
-        setExplanation(
-          data.error ? tMessages(translateLlmError(data.error)) : (data.explanation || "")
-        );
-        if (trace?.ok && trace.trace) {
-          setStepsWithCosts(trace.trace.steps);
-        }
-      }
-    } catch (error) {
-      console.error("Error loading diagram:", error);
-    } finally {
-      setLoadingDiagram(false);
-    }
-  };
-
-  // Load diagram when trace is available (solo una vez por trace)
-  useEffect(() => {
-    if (
-      trace?.ok && 
-      trace.trace && 
-      trace.trace.steps && 
-      trace.trace.steps.length > 0 &&
-      !graph && 
-      !loadingDiagram
-    ) {
-      loadDiagram();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trace?.ok, trace?.trace?.steps?.length, caseType]);
-
-  // Inicializar stepsWithCosts cuando cambia el trace
-  useEffect(() => {
-    if (trace?.ok && trace.trace) {
-      setStepsWithCosts(trace.trace.steps);
-    } else {
-      setStepsWithCosts([]);
-    }
-  }, [trace]);
-
-  // Usar stepsWithCosts si están disponibles, sino usar los steps originales
+  // El diagrama viene del backend vía executionDiagram en la respuesta de /api/analyze/trace
   const stepsToUse = useMemo(() => {
-    return stepsWithCosts.length > 0 ? stepsWithCosts : (trace?.ok && trace.trace ? trace.trace.steps : []);
-  }, [stepsWithCosts, trace]);
+    return trace?.ok && trace.trace ? trace.trace.steps : [];
+  }, [trace]);
 
   const handlePlay = () => {
     if (stepsToUse.length === 0) return;
@@ -352,7 +240,7 @@ export default function IterativeTraceContent({
                 loading={loading}
                 trace={trace}
                 currentStep={currentStep}
-                loadingDiagram={loadingDiagram}
+                loadingDiagram={loading}
               />
             </div>
           </div>
@@ -381,15 +269,15 @@ export default function IterativeTraceContent({
             </div>
             <div className="flex-1 min-h-0 flex flex-col overflow-hidden mt-3">
               <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0 truncate">
-                {t("flowDiagramSection")}
+                {t("executionDiagramSection")}
               </h3>
               <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-custom">
                 <DiagramSection
                   mode="iterative"
                   graph={graph}
-                  loading={loadingDiagram}
+                  loading={loading}
                   explanation={explanation}
-                  onRegenerate={loadDiagram}
+                  onRegenerate={() => onLoadTrace(true)}
                   onExpand={() => setIsDiagramExpanded(true)}
                 />
               </div>
@@ -425,7 +313,7 @@ export default function IterativeTraceContent({
               loading={loading}
               trace={trace}
               currentStep={currentStep}
-              loadingDiagram={loadingDiagram}
+              loadingDiagram={loading}
             />
           </div>
 
@@ -451,15 +339,15 @@ export default function IterativeTraceContent({
             </div>
             <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
               <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0 truncate">
-                {t("flowDiagramSection")}
+                {t("executionDiagramSection")}
               </h3>
               <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-custom">
                 <DiagramSection
                   mode="iterative"
                   graph={graph}
-                  loading={loadingDiagram}
+                  loading={loading}
                   explanation={explanation}
-                  onRegenerate={loadDiagram}
+                  onRegenerate={() => onLoadTrace(true)}
                   onExpand={() => setIsDiagramExpanded(true)}
                 />
               </div>

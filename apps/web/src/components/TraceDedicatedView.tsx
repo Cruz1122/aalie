@@ -16,7 +16,7 @@ import type {
 import IterativeTraceContent from "./trace/IterativeTraceContent";
 import RecursiveTraceContent from "./trace/RecursiveTraceContent";
 import TraceChatPanel from "./trace/TraceChatPanel";
-import TraceFlowDiagram from "./TraceFlowDiagram";
+import ExecutionGraphView from "./ExecutionGraphView";
 
 /**
  * Vista dedicada de seguimiento de pseudocódigo (iterativo y recursivo).
@@ -123,7 +123,7 @@ export default function TraceDedicatedView({
     };
   }, [algorithmKind, source]);
 
-  const loadTrace = useCallback(async () => {
+  const loadTrace = useCallback(async (forceRefresh?: boolean) => {
     if (isLoadingRef.current) return;
     isLoadingRef.current = true;
     setLoading(true);
@@ -135,8 +135,9 @@ export default function TraceDedicatedView({
     const scenario: CaseType = caseType;
     const n = debouncedInputSize || inputSize || 1;
 
+    // Diagramas siempre desde backend (LLM de diagramas eliminado)
     const cacheKey = `${TRACE_CACHE_KEY}:${btoa(encodeURIComponent(source.substring(0, 200)))}:${scenario}:${n}`;
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && !forceRefresh) {
       try {
         const cached = sessionStorage.getItem(cacheKey);
         if (cached) {
@@ -146,7 +147,30 @@ export default function TraceDedicatedView({
           };
           if (Date.now() - ts < TRACE_CACHE_TTL_MS && cachedData?.ok) {
             setAlgorithmKind(cachedData.algorithmKind ?? null);
-            setGraph(null);
+            if (cachedData.executionDiagram?.graph) {
+              setGraph(cachedData.executionDiagram.graph);
+              setRecursionDiagram(null);
+            } else if (
+              cachedData.callTree?.graph &&
+              (cachedData.algorithmKind === "recursive" ||
+                cachedData.algorithmKind === "hybrid")
+            ) {
+              setGraph(null);
+              setRecursionDiagram({
+                graph: cachedData.callTree.graph,
+                explanation: cachedData.callTree?.explanation ?? "",
+              });
+            } else {
+              setGraph(null);
+              if (
+                !(
+                  cachedData.algorithmKind === "recursive" ||
+                  cachedData.algorithmKind === "hybrid"
+                )
+              ) {
+                setRecursionDiagram(null);
+              }
+            }
             setTrace(cachedData);
             setLoading(false);
             isLoadingRef.current = false;
@@ -196,6 +220,8 @@ export default function TraceDedicatedView({
           input_size: n,
           initial_variables: initialVariables,
           locale: locale === "es" ? "es" : "en",
+          include_execution_diagram: true,
+          include_call_tree: true,
         }),
       });
 
@@ -205,7 +231,21 @@ export default function TraceDedicatedView({
         setAlgorithmKind(data.algorithmKind);
       }
 
-      setGraph(null);
+      if (data.executionDiagram?.graph) {
+        setGraph(data.executionDiagram.graph);
+        setRecursionDiagram(null);
+      } else if (data.callTree?.graph && (data.algorithmKind === "recursive" || data.algorithmKind === "hybrid")) {
+        setGraph(null);
+        setRecursionDiagram({
+          graph: data.callTree.graph,
+          explanation: data.callTree?.explanation ?? "",
+        });
+      } else {
+        setGraph(null);
+        if (!(data.algorithmKind === "recursive" || data.algorithmKind === "hybrid")) {
+          setRecursionDiagram(null);
+        }
+      }
       setTrace(data);
 
       if (typeof window !== "undefined" && data?.ok) {
@@ -286,10 +326,16 @@ export default function TraceDedicatedView({
           </section>
 
           {/* Columna derecha: contenido principal - misma estructura que análisis */}
-          <section className="lg:col-span-8 h-full">
+          <section className="lg:col-span-8 h-full min-h-[420px]">
             <div className="glass-card !shadow-none p-4 rounded-lg h-full flex flex-col min-h-0 overflow-hidden">
             {algorithmKind === null ? (
-              <div className="flex-1 min-h-[200px]" aria-hidden />
+              <div className="flex-1 min-h-[200px] flex flex-col items-center justify-center gap-4">
+                <div className="relative flex items-center justify-center">
+                  <div className="w-12 h-12 bg-purple-500/20 rounded-full animate-ping" />
+                  <div className="absolute w-6 h-6 bg-purple-500 rounded-full" />
+                </div>
+                <p className="text-xs text-slate-400">{t("detectingAlgorithm")}</p>
+              </div>
             ) : isRecursiveOrHybrid ? (
               <RecursiveTraceContent
                 source={source}
@@ -362,8 +408,8 @@ export default function TraceDedicatedView({
                   </span>
                   <span>
                     {isRecursiveOrHybrid
-                      ? t("recursionTreeTitle")
-                      : t("flowDiagramTitle")}
+                      ? t("callTreeTitle")
+                      : t("executionDiagramTitle")}
                   </span>
                 </h3>
                 <button
@@ -377,7 +423,7 @@ export default function TraceDedicatedView({
                 </button>
               </div>
               <div className="flex-1 min-h-0 p-3 bg-slate-900/80">
-                <TraceFlowDiagram
+                <ExecutionGraphView
                   graph={
                     (isRecursiveOrHybrid ? recursionDiagram?.graph : graph) || {
                       nodes: [],

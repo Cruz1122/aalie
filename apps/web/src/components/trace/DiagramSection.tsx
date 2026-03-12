@@ -5,8 +5,7 @@ import { useTranslations } from "next-intl";
 import type { TraceGraph } from "@/types/trace";
 
 import MarkdownRenderer from "../MarkdownRenderer";
-import RecursionTreeView from "../RecursionTreeView";
-import TraceFlowDiagram from "../TraceFlowDiagram";
+import ExecutionGraphView from "../ExecutionGraphView";
 
 
 interface RecursionDiagram {
@@ -23,11 +22,8 @@ interface DiagramSectionProps {
   onExpand?: () => void;
   // Para modo recursivo
   recursionDiagram?: RecursionDiagram | null;
-  pseudocode?: string;
-  algorithmKind?: string;
-  inputSize?: number;
-  onDiagramGenerated?: (diagram: RecursionDiagram) => void;
   loadingRecursion?: boolean;
+  inputSize?: number;
 }
 
 export default function DiagramSection({
@@ -38,11 +34,8 @@ export default function DiagramSection({
   onRegenerate,
   onExpand,
   recursionDiagram,
-  pseudocode,
-  algorithmKind,
-  inputSize,
-  onDiagramGenerated,
   loadingRecursion = false,
+  inputSize,
 }: DiagramSectionProps) {
   const t = useTranslations("analyzer.executionTrace");
   if (mode === "recursive") {
@@ -54,7 +47,7 @@ export default function DiagramSection({
             <span className="material-symbols-outlined text-base">
               account_tree
             </span>
-            {t("recursionTreeTitle")}
+            {t("callTreeTitle")}
           </h3>
           <div className="flex items-center gap-2">
             {onRegenerate && (
@@ -89,7 +82,7 @@ export default function DiagramSection({
         )}
         
         {/* Diagrama en contenedor con altura completa */}
-        <div className="flex-1 overflow-hidden glass-card rounded-lg">
+        <div className="flex-1 min-h-[240px] overflow-hidden glass-card rounded-lg">
           {loadingRecursion ? (
             <div className="h-full flex flex-col items-center justify-center gap-4">
               <div className="relative flex items-center justify-center">
@@ -97,18 +90,22 @@ export default function DiagramSection({
                 <div className="absolute w-6 h-6 bg-purple-500 rounded-full" />
               </div>
               <p className="text-xs text-slate-300">
-                {t("generatingRecursionDiagram")}
+                {t("generatingCallTree")}
               </p>
             </div>
+          ) : recursionDiagram?.graph ? (
+            <ExecutionGraphView graph={recursionDiagram.graph} />
           ) : (
-            <RecursionTreeView
-              calls={[]}
-              rootCalls={[]}
-              pseudocode={pseudocode}
-              algorithmKind={algorithmKind}
-              inputSize={inputSize}
-              onDiagramGenerated={onDiagramGenerated}
-            />
+            <div className="h-full min-h-[200px] flex flex-col items-center justify-center gap-3 p-4">
+              <div className="w-12 h-12 rounded-full bg-slate-800/50 flex items-center justify-center">
+                <span className="material-symbols-outlined text-2xl text-slate-500/50">
+                  account_tree
+                </span>
+              </div>
+              <div className="text-sm font-medium text-slate-400 text-center px-4">
+                {t("callTreeUnavailable")}
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -125,7 +122,7 @@ export default function DiagramSection({
             <div className="absolute w-6 h-6 bg-blue-500 rounded-full" />
           </div>
           <p className="text-xs text-slate-300">
-            {t("generatingFlowDiagram")}
+            {t("generatingExecutionDiagram")}
           </p>
         </div>
       ) : graph ? (
@@ -133,7 +130,7 @@ export default function DiagramSection({
           <div className="glass-card rounded-lg overflow-hidden">
             {/* Header with title and actions */}
             <div className="flex items-center justify-between p-3 border-b border-white/5 bg-slate-800/30">
-              <div className="text-sm font-semibold text-slate-300">{t("flowDiagram")}</div>
+              <div className="text-sm font-semibold text-slate-300">{t("executionDiagram")}</div>
               <div className="flex items-center gap-2">
                 {onRegenerate && (
                   <button
@@ -163,7 +160,7 @@ export default function DiagramSection({
             </div>
             {/* Diagram content - altura flexible, mínima para legibilidad */}
             <div className="p-3 min-h-[200px] h-[min(400px,50vh)]">
-              <TraceFlowDiagram graph={graph} />
+              <ExecutionGraphView graph={graph} />
             </div>
           </div>
           {explanation && (

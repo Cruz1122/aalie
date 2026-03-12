@@ -1,3 +1,6 @@
+import type { DiagramKind } from "@aa/types";
+
+export type { DiagramKind };
 export type CaseType = "worst" | "best" | "avg";
 
 // Escenarios de seguimiento para algoritmos iterativos
@@ -85,6 +88,10 @@ export interface TraceApiResponse {
   trace?: ExecutionTrace;
   algorithmKind?: string;
   errors?: Array<{ message: string; line?: number; column?: number }>;
+  /** Diagrama de seguimiento determinista (cuando include_execution_diagram) */
+  executionDiagram?: { graph: TraceGraph; diagramKind?: string };
+  /** Árbol de llamadas como grafo (cuando include_call_tree) */
+  callTree?: { graph: TraceGraph; diagramKind?: string };
 }
 
 export interface GraphNodeData {
@@ -114,10 +121,3 @@ export interface TraceGraph {
   edges: GraphEdge[];
 }
 
-export interface DiagramGraphResponse {
-  ok: boolean;
-  graph?: TraceGraph;
-  explanation?: string;
-  error?: string;
-  stepCosts?: Record<string, { microseconds: number; tokens: number }>;
-}
