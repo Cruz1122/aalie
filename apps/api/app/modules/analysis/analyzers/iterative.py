@@ -453,7 +453,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
 
         stop_types = {"for", "while", "if", "repeat"}
         aliases: Dict[str, str] = {}
-        loop_index_vars = set(getattr(self, "loop_index_vars", set()) or set())
+        for_index_vars = set(getattr(self, "for_index_vars", set()) or set())
         main_var = getattr(self, "variable", "n") or "n"
 
         def _id_name(n: Any) -> Optional[str]:
@@ -491,7 +491,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
 
             if target == main_var:
                 continue
-            if target in loop_index_vars:
+            if target in for_index_vars:
                 continue
 
             # Mapear el alias al identificador fuente (value), que puede ser
@@ -615,6 +615,13 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             self.size_aliases = self._collect_size_aliases_from_prefix(main_proc)
         except Exception:
             self.size_aliases = {}
+
+        # No tratar aliases de tamaño como variables de iteración removibles.
+        # Ejemplo: longitud <- n en bubble sort mejorado.
+        if isinstance(self.size_aliases, dict) and self.size_aliases:
+            self.loop_index_vars = {
+                v for v in self.loop_index_vars if v not in set(self.size_aliases.keys())
+            }
 
         # Crear instancia de AvgModel si mode == "avg"
         if mode == "avg":

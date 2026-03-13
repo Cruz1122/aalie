@@ -14,13 +14,22 @@ class FlagKillPattern(WhilePattern):
     def matches(self, while_ctx: Dict[str, Any]) -> bool:
         guard = while_ctx.get("guard_info")
         updates = while_ctx.get("updates", {})
+        mode = while_ctx.get("mode", "worst")
         if not guard or not updates:
             return False
         bool_var = getattr(guard, "bool_var", None)
         if not bool_var:
             return False
         summary = updates.get(bool_var)
-        return summary is not None and getattr(summary, "kills_guard_must", False)
+        if summary is None or not getattr(summary, "kills_guard_must", False):
+            return False
+
+        # Si el flag puede revivir en algún camino, solo es cota de 1 iteración
+        # válida para best case; en worst/avg no aplicar este patrón.
+        if getattr(summary, "revives_guard_may", False) and mode != "best":
+            return False
+
+        return True
 
     def derive_termination(self, while_ctx: Dict[str, Any]) -> TerminationResult:
         return TerminationResult(

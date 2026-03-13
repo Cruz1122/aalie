@@ -167,15 +167,6 @@ def classify_structural_trace(trace: Dict[str, Any]) -> StructuralTraceClassific
 
     # Caso iterativo
     if kind == "iterative":
-        if _has_auxiliary_operation_iterative(steps):
-            return StructuralTraceClassification(
-                patternKind="iterative_with_auxiliary_operation",
-                confidence="medium",
-                evidence=[
-                    "trace.kind == iterative",
-                    "multiple assigns in loop context (auxiliary operation)",
-                ],
-            )
         return StructuralTraceClassification(
             patternKind="generic_iterative",
             confidence="high",

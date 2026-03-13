@@ -409,11 +409,15 @@ class ComplexityClasses:
                 var_symbol = sym
                 break
         
-        # Si no se encuentra el símbolo de la variable, intentar usar el primer símbolo
-        # (esto puede ser útil para casos donde la variable tiene otro nombre)
+        # Si no se encuentra el símbolo de la variable pedida, usar una variable libre
+        # disponible como fallback (evita colapsar indebidamente a O(1)).
         if var_symbol is None:
-            # Si no hay símbolo con el nombre de la variable, es constante
-            return Integer(1)
+            if free_symbols:
+                # Preferir nombres canónicos de tamaño cuando existan.
+                preferred = [s for s in free_symbols if getattr(s, "name", "") in ("n", "m", "N")]
+                var_symbol = preferred[0] if preferred else next(iter(free_symbols))
+            else:
+                return Integer(1)
         
         # Intentar crear Poly y extraer término líder
         # Este es el método principal para polinomios

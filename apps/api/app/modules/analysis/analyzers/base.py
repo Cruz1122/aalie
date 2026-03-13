@@ -256,7 +256,9 @@ class BaseAnalyzer:
                 bonus += 1
             return (base + bonus, name)
 
-        candidates.sort(key=_tie_break_key, reverse=True)
+        # Orden estable: mayor score primero, y en empate nombre ascendente.
+        # Evita elegir variables no tamaño (p.ej. `x`) sobre `n` por orden lexicográfico inverso.
+        candidates.sort(key=lambda name: (-_tie_break_key(name)[0], _tie_break_key(name)[1]))
         return candidates
 
     # --- util 1: agregar fila ---

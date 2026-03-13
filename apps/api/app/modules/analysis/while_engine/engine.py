@@ -86,6 +86,27 @@ class WhileEngine:
         guard = analyze_guard_for_engine(test)
         vars_used = getattr(guard, "vars_used", set()) or set()
 
+        # Incluir variables asignadas en el cuerpo para permitir cotas auxiliares
+        # en guards booleanos (ej. WHILE(swapped) con longitud <- longitud - 1).
+        assigned_vars: set[str] = set()
+
+        def _collect_assigned(node_obj: Any) -> None:
+            if isinstance(node_obj, dict):
+                if str(node_obj.get("type", "")).lower() == "assign":
+                    target = node_obj.get("target", {})
+                    if isinstance(target, dict) and str(target.get("type", "")).lower() == "identifier":
+                        name = target.get("name", "")
+                        if isinstance(name, str) and name:
+                            assigned_vars.add(name)
+                for child in node_obj.values():
+                    _collect_assigned(child)
+            elif isinstance(node_obj, list):
+                for item in node_obj:
+                    _collect_assigned(item)
+
+        _collect_assigned(body)
+        vars_used = set(vars_used).union(assigned_vars)
+
         # 2) Updates
         updates = analyze_updates(node, vars_used, guard, parent)
 
@@ -128,6 +149,7 @@ class WhileEngine:
             "updates": updates,
             "control_variables": control,
             "progress_proof": progress,
+            "mode": mode,
         }
         for pattern_name, pattern in _PATTERNS:
             if pattern.matches(while_ctx):

@@ -44,6 +44,8 @@ def _step_to_label(step: Dict[str, Any]) -> str:
     if kind == "loop_iter_enter":
         loop_var = it.get("loopVar", "iter")
         val = it.get("currentValue") if it.get("currentValue") is not None else it.get("iteration", "?")
+        if step_kind == "for":
+            return f"FOR {loop_var} = {val}"
         return f"{loop_var} = {val}"
     if kind == "loop_iter_exit":
         loop_var = it.get("loopVar", "iter")
@@ -145,14 +147,26 @@ def build_generic_iterative(
         step_num = step.get("step_number", idx + 1)
 
         if event_kind == "loop_enter":
+            desc_upper = str(step.get("description", "") or "").upper()
+            loop_var = (step.get("iteration") or {}).get("loopVar", "iter")
+            loop_kind = "for"
+            loop_label = f"FOR {loop_var}"
+            if "WHILE" in desc_upper:
+                loop_kind = "while"
+                loop_label = "WHILE"
+            elif "REPEAT" in desc_upper:
+                loop_kind = "repeat"
+                loop_label = "REPEAT"
+
             loop_stack.append(
                 {
                     "iter_index": 0,
                     "first_edge_done": False,
-                    "kind": step_kind,
+                    "kind": loop_kind,
                 }
             )
             active_iterations.append(None)
+            _add_node(f"loop_enter_{step_num}", loop_label, "state_summary")
             _add_costs(step)
             _update_vars(step)
             continue
@@ -173,6 +187,12 @@ def build_generic_iterative(
             iter_suffix = path.replace(".", "_")
             node_id = f"iter_{iter_suffix}_{step_num}"
             label = _step_to_label(step)
+            if loop_stack:
+                loop_kind = loop_stack[-1].get("kind")
+                if loop_kind == "for" and not label.startswith("FOR "):
+                    label = f"FOR {label}"
+                elif loop_kind == "while" and "WHILE" not in label:
+                    label = f"WHILE {label}"
             it = step.get("iteration", {})
             data: Dict[str, Any] = {
                 "tokens": 0,
@@ -226,6 +246,11 @@ def build_generic_iterative(
         if event_kind == "loop_iter_exit":
             _add_costs(step)
             _update_vars(step)
+            path = _iteration_path() or str(step.get("iteration", {}).get("iteration", "?"))
+            iter_suffix = path.replace(".", "_")
+            node_id = f"iter_end_{iter_suffix}_{step_num}"
+            label = _step_to_label(step)
+            _add_node(node_id, label, "state_summary")
             if active_iterations:
                 active_iterations[-1] = None
             continue
@@ -233,6 +258,11 @@ def build_generic_iterative(
         if loop_stack:
             _add_costs(step)
             _update_vars(step)
+            if event_kind in ("condition_eval", "return_emit"):
+                role = "branch_decision" if event_kind == "condition_eval" else "result"
+                label = _step_to_label(step)
+                in_loop_node_id = f"{step.get('id') or 'step'}_{step_num}"
+                _add_node(in_loop_node_id, label, role)
             continue
 
         label = _step_to_label(step)

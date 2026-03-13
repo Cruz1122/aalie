@@ -162,7 +162,8 @@ def _classify_bool_guard(guard: GuardInfo, updates: Dict[str, VarUpdateSummary],
                             )
 
                 return ClassifyResult(
-                    status="unknown",
+                    status="bounded",
+                    iterations_expr="1",
                     reason_code="while_bool_revived",
                     evidence={"var": guard.bool_var},
                 )
@@ -223,7 +224,25 @@ def classify_while(
     if guard.kind == "rel" and guard.atoms:
         atom = guard.atoms[0]
         if atom.get("two_vars"):
-            return ClassifyResult(status="unknown", reason_code="while_two_vars")
+            # Caso común: i < n, ambos son identificadores pero solo i se actualiza.
+            # Si la "variable límite" no cambia dentro del while, tratarla como cota fija.
+            limit_var = atom.get("limit")
+            limit_summary = updates.get(limit_var) if isinstance(limit_var, str) else None
+            limit_has_updates = bool(
+                limit_summary
+                and (
+                    getattr(limit_summary, "must_updates", None)
+                    or getattr(limit_summary, "may_updates", None)
+                )
+            )
+            if not limit_has_updates:
+                atom = {
+                    "var": atom.get("var"),
+                    "limit": atom.get("limit"),
+                    "op": atom.get("op", ""),
+                }
+            else:
+                return ClassifyResult(status="unknown", reason_code="while_two_vars")
         # Si este "atom" representa una igualdad booleana (var == true/false), no tratarlo como rel.
         if atom.get("bool_desired") is not None:
             desired = bool(atom.get("bool_desired"))
