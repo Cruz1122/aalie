@@ -11,9 +11,7 @@ from .schemas import AnalyzeRequest, TraceRequest, TraceResponse
 from ..parsing.service import parse_source
 from ..classification.service import classify_algorithm as classify_algo
 from ..execution.executor import CodeExecutor
-from ..execution.execution_diagram_builder import build_execution_diagram
-from ..execution.call_tree_builder import build_call_tree
-from ..execution.explanation_templates import explain_recursion_tree
+from ..execution.derivations.structured_trace_builder import build_structured_trace_result
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
@@ -154,10 +152,60 @@ def analyze_trace(payload: TraceRequest = Body(...)) -> Dict[str, Any]:
 
         metadata_message = "Trace generado correctamente"
 
+        # Enriquecer trace con kind, summary, diagnostics y callTreeSource
+        steps = trace.get("steps", [])
+        recursion_tree = trace.get("recursionTree", {})
+        calls = recursion_tree.get("calls", [])
+        max_depth = max((c.get("depth", 0) for c in calls), default=0)
+        trace_enriched: Dict[str, Any] = {
+            **trace,
+            "callTreeSource": recursion_tree if recursion_tree else None,
+            "kind": algorithm_kind,
+            "summary": {
+                "totalSteps": len(steps),
+                "totalCalls": len(calls),
+                "maxRecursionDepth": max_depth,
+                "algorithmKind": algorithm_kind,
+            },
+            "diagnostics": {
+                "truncated": trace.get("recursion_truncated", False),
+                "truncationReason": "max_depth" if trace.get("recursion_truncated") else None,
+                "warnings": [],
+            },
+        }
+
+        # Artefactos derivados: structuredTrace (única fuente)
+        import logging as _logging
+        derived: Dict[str, Any] = {}
+        try:
+            st = build_structured_trace_result(trace_enriched)
+            derived["structuredTrace"] = {
+                "patternKind": st["patternKind"],
+                "graph": st["graph"],
+                "classification": st["classification"],
+            }
+        except Exception as e:
+            _logging.getLogger(__name__).warning(
+                "build_structured_trace_result failed: %s", str(e), exc_info=True
+            )
+            # Siempre devolver structuredTrace para que el frontend pueda distinguir
+            # entre "aún no cargado" y "cargado pero el builder falló".
+            derived["structuredTrace"] = {
+                "patternKind": "unknown",
+                "graph": {"nodes": [], "edges": []},
+                "classification": {
+                    "patternKind": "unknown",
+                    "confidence": 0.0,
+                    "evidence": [],
+                },
+                "buildError": str(e),
+            }
+
         result: Dict[str, Any] = {
             "ok": True,
-            "trace": trace,
+            "trace": trace_enriched,
             "algorithmKind": algorithm_kind,
+            "derived": derived,
             "metadata": {
                 "pseudocode": payload.source,
                 "inputSize": payload.input_size,
@@ -165,43 +213,6 @@ def analyze_trace(payload: TraceRequest = Body(...)) -> Dict[str, Any]:
                 "message": metadata_message,
             },
         }
-
-        # Artefactos deterministas opcionales
-        if payload.include_execution_diagram and algorithm_kind == "iterative":
-            try:
-                diagram = build_execution_diagram(trace)
-                result["executionDiagram"] = {
-                    "graph": {
-                        "nodes": [n.model_dump() for n in diagram.graph.nodes],
-                        "edges": [e.model_dump() for e in diagram.graph.edges],
-                    },
-                    "diagramKind": diagram.diagramKind,
-                }
-            except Exception:
-                pass
-
-        if payload.include_call_tree and trace.get("recursionTree"):
-            try:
-                diagram = build_call_tree(
-                    trace["recursionTree"],
-                    steps=trace.get("steps", []),
-                )
-                explanation = explain_recursion_tree(
-                    trace, locale_val
-                )
-                result["callTree"] = {
-                    "graph": {
-                        "nodes": [n.model_dump() for n in diagram.graph.nodes],
-                        "edges": [e.model_dump() for e in diagram.graph.edges],
-                    },
-                    "diagramKind": diagram.diagramKind,
-                    "explanation": explanation,
-                }
-            except Exception as e:
-                import logging
-                logging.getLogger(__name__).warning(
-                    "build_call_tree failed: %s", str(e), exc_info=True
-                )
 
         return result
         

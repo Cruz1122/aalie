@@ -1,0 +1,9 @@
+{
+  "input_size": 24,
+  "initial_variables": {"a": 24, "b": 18},
+  "case": "worst",
+  "patternKind": "generic_iterative",
+  "minNodes": 3,
+  "minEdges": 2,
+  "nodeLabelsContain": ["RETURN"]
+}

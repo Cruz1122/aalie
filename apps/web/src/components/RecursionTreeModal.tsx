@@ -1,15 +1,7 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-  useRef,
-  useCallback,
-} from "react";
 import {
-  default as ReactFlow,
+  ReactFlow,
   Background,
   Controls,
   useNodesState,
@@ -22,8 +14,16 @@ import {
   type Edge,
   type EdgeProps,
   type ReactFlowInstance,
-} from "reactflow";
-import "reactflow/dist/style.css";
+} from "@xyflow/react";
+import { useTranslations } from "next-intl";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  useCallback,
+} from "react";
+import "@xyflow/react/dist/style.css";
 
 import {
   generateRecursionTree,
@@ -85,6 +85,7 @@ interface RecursionTreeModalProps {
 }
 
 interface TreeNodeData {
+  [key: string]: unknown;
   label: string;
   size: number;
   level: number;
@@ -278,10 +279,14 @@ export default function RecursionTreeModal({
     "vertical",
   );
   const [initialN, setInitialN] = useState<number>(3); // Por defecto n=3 (profundidad más baja)
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<TreeNodeData>>(
+    [],
+  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
-  const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
+  const reactFlowInstance = useRef<
+    ReactFlowInstance<Node<TreeNodeData>, Edge> | null
+  >(null);
 
   // Detectar tipo de recurrencia
   const isLinearRecurrence = recurrence?.type === "linear_shift";
@@ -387,7 +392,7 @@ export default function RecursionTreeModal({
         return;
       }
 
-      const formattedNodes = treeLayout.nodes as Node[];
+      const formattedNodes = treeLayout.nodes as Node<TreeNodeData>[];
       // Asegurar que las aristas tengan el formato mínimo requerido
       const formattedEdges: Edge[] = treeLayout.edges.map((edge) => ({
         id: edge.id,
@@ -501,7 +506,7 @@ export default function RecursionTreeModal({
   }, [open, nodes.length]);
 
   const onInit = useCallback(
-    (instance: ReactFlowInstance) => {
+    (instance: ReactFlowInstance<Node<TreeNodeData>, Edge>) => {
       reactFlowInstance.current = instance;
       // Si el modal está abierto y hay nodos, centrar inmediatamente después de inicializar
       if (open && nodes.length > 0) {
@@ -763,7 +768,6 @@ export default function RecursionTreeModal({
               stroke: "#64748b",
               strokeWidth: 3,
             }}
-            edgesUpdatable={false}
             edgesFocusable={false}
             nodesConnectable={false}
             nodesDraggable={false}

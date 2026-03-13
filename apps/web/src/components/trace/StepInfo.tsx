@@ -16,15 +16,15 @@ interface StepInfoProps {
 }
 
 // Helper function to format microseconds with appropriate units
-const formatMicroseconds = (microseconds: number): string => {
+const formatMicroseconds = (microseconds: number, t: (key: string) => string): string => {
   if (microseconds < 1) {
-    return `${(microseconds * 1000).toFixed(2)} ns`;
+    return `${(microseconds * 1000).toFixed(2)} ${t("timeUnitNs")}`;
   } else if (microseconds < 1000) {
-    return `${microseconds.toFixed(2)} μs`;
+    return `${microseconds.toFixed(2)} ${t("timeUnitUs")}`;
   } else if (microseconds < 1000000) {
-    return `${(microseconds / 1000).toFixed(2)} ms`;
+    return `${(microseconds / 1000).toFixed(2)} ${t("timeUnitMs")}`;
   } else {
-    return `${(microseconds / 1000000).toFixed(2)} s`;
+    return `${(microseconds / 1000000).toFixed(2)} ${t("timeUnitS")}`;
   }
 };
 
@@ -159,7 +159,7 @@ export default function StepInfo({
                   <div className="w-5 h-5 border-2 border-green-300/50 border-t-green-300 rounded-full animate-spin" />
                 ) : stepData?.microseconds !== undefined ? (
                   <span className="text-white font-semibold text-sm tabular-nums">
-                    {formatMicroseconds(stepData.microseconds)}
+                    {formatMicroseconds(stepData.microseconds, t)}
                   </span>
                 ) : (
                   <span className="text-slate-500 text-sm">-</span>

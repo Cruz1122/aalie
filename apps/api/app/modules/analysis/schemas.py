@@ -49,8 +49,6 @@ class TraceRequest(BaseModel):
     input_size: Optional[int] = None  # Tamaño de entrada concreto (ej: n=4)
     initial_variables: Optional[Dict[str, Any]] = None  # Variables iniciales (ej: arrays)
     locale: Optional[str] = None  # "en" | "es" - idioma para descripciones de pasos
-    include_execution_diagram: bool = False  # Incluir diagrama de seguimiento determinista
-    include_call_tree: bool = False  # Incluir árbol de llamadas como grafo
 
 
 class TraceResponse(BaseModel):

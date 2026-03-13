@@ -2,21 +2,21 @@
 
 import type { Program } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
-import type {
-  CaseType,
-  TraceApiResponse,
-  TraceGraph,
-  TraceConfig,
-  InternalInput,
-} from "@/types/trace";
+import { useTraceController } from "@/hooks/trace/useTraceController";
+import type { CaseType } from "@/types/trace";
 
-import IterativeTraceContent from "./trace/IterativeTraceContent";
-import RecursiveTraceContent from "./trace/RecursiveTraceContent";
 import ExecutionGraphView from "./ExecutionGraphView";
+import StructuredTraceContent from "./trace/StructuredTraceContent";
 
-
+/**
+ * Modal de seguimiento de ejecución (traza estructurada).
+ * Usa useTraceController + StructuredTraceContent.
+ *
+ * @author AALIE - Plan Sistema Traza Estructural
+ * @version 0.1.0
+ */
 interface ExecutionTraceModalProps {
   open: boolean;
   onClose: () => void;
@@ -30,7 +30,7 @@ export default function ExecutionTraceModal({
   open,
   onClose,
   source,
-  ast: _ast,
+  ast,
   caseType,
   onCaseChange,
 }: ExecutionTraceModalProps) {
@@ -39,195 +39,55 @@ export default function ExecutionTraceModal({
   const tAlgorithm = useTranslations("analyzer.algorithmType");
   const [inputSize, setInputSize] = useState<number>(4);
   const [debouncedInputSize, setDebouncedInputSize] = useState<number>(4);
-  const [trace, setTrace] = useState<TraceApiResponse | null>(null);
-  const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [playSpeed] = useState(1000); // ms entre pasos
-  const [graph, setGraph] = useState<TraceGraph | null>(null);
-  const [explanation, setExplanation] = useState<string>("");
-  const [loadingDiagram, setLoadingDiagram] = useState(false);
+  const [playSpeed] = useState(1000);
   const [isDiagramExpanded, setIsDiagramExpanded] = useState(false);
-  const [recursionDiagram, setRecursionDiagram] = useState<{
-    graph: TraceGraph;
-    explanation: string;
-  } | null>(null);
-  const [algorithmKind, setAlgorithmKind] = useState<string | null>(null);
-  const [exampleArray, setExampleArray] = useState<number[]>([1, 2, 3, 4]);
+  const [initialVariablesOverride] = useState<Record<string, unknown> | null>(null);
 
-  // Configuración de seguimiento derivada del tipo de algoritmo
-  const traceConfig: TraceConfig = useMemo(() => {
-    if (algorithmKind === "recursive") {
-      return {
-        kind: "recursive",
-        controls: {
-          scenario: false,
-          n: true,
-          arrayEditable: false,
-        },
-      };
-    }
-    if (algorithmKind === "hybrid") {
-      return {
-        kind: "hybrid",
-        controls: {
-          scenario: false,
-          n: true,
-          arrayEditable: false,
-        },
-      };
-    }
+  const {
+    trace,
+    loading,
+    structuredDiagram,
+    algorithmKind,
+    traceConfig,
+    loadTrace,
+    setAlgorithmKind,
+    setExampleArray,
+    exampleArray,
+  fetchCompleted,
+  } = useTraceController(
+    {
+      source,
+      caseType,
+      inputSize,
+      debouncedInputSize,
+      locale: locale === "es" ? "es" : "en",
+      initialVariablesOverride,
+    },
+    t,
+  );
 
-    // Por defecto, tratamos como iterativo
-    const makeBaseArray = (n: number): number[] =>
-      Array.from({ length: Math.max(1, n) }, (_, idx) => idx + 1);
-
-    // Detectar si el algoritmo tiene condiciones que verifican n = 0
-    // Esto es una heurística simple: buscar patrones como "n = 0", "n == 0", "n <= 0", etc.
-    const hasZeroCheck = /n\s*[=<>]=\s*0|n\s*=\s*0|IF\s*\(\s*n\s*[=<>]=\s*0/i.test(source);
-
-    const generators = {
-      best: (n: number): InternalInput => {
-        // Para best case, si hay verificación de n=0, usar n > 0 (no entra a la condición)
-        const actualN = hasZeroCheck ? Math.max(1, n) : n;
-        const arr = makeBaseArray(actualN);
-        const x = arr[0];
-        return { n: actualN, array: arr, x };
-      },
-      avg: (n: number): InternalInput => {
-        const actualN = hasZeroCheck ? Math.max(1, n) : n;
-        const arr = makeBaseArray(actualN);
-        const midIndex = Math.floor(Math.max(1, actualN) / 2);
-        const x = arr[midIndex] ?? arr[arr.length - 1];
-        return { n: actualN, array: arr, x };
-      },
-      worst: (n: number): InternalInput => {
-        // Para worst case, si hay verificación de n=0, usar n = 0 (entra a la condición)
-        if (hasZeroCheck) {
-          // Si el algoritmo verifica n = 0, el worst case es cuando n = 0
-          return { n: 0, array: [], x: undefined };
-        }
-        // Caso normal: worst case es el último elemento
-        const arr = makeBaseArray(n);
-        const x = arr[arr.length - 1];
-        return { n, array: arr, x };
-      },
-    };
-
-    return {
-      kind: "iterative",
-      controls: {
-        scenario: true,
-        n: true,
-        arrayEditable: false,
-      },
-      inputGenerator: generators,
-    };
-  }, [algorithmKind, source]);
-
-  // Cargar rastro cuando cambia el caso o tamaño de entrada (debounced)
-  const loadTrace = useCallback(async (_forceRefresh?: boolean) => {
-    setLoading(true);
-    setCurrentStep(0);
-    setIsPlaying(false);
-    // No resetear graph aquí para evitar parpadeo - se reseteará cuando realmente cambie el trace
-    setExplanation("");
-    setRecursionDiagram(null);
-
-    const scenario: CaseType = caseType;
-    const n = debouncedInputSize || inputSize || 1;
-
-    // Generar input interno sólo para iterativos
-    let initialVariables: Record<string, unknown> | null = null;
-    if (traceConfig.kind === "iterative" && traceConfig.inputGenerator) {
-      const generator =
-        (scenario === "best"
-          ? traceConfig.inputGenerator.best
-          : scenario === "avg"
-            ? traceConfig.inputGenerator.avg
-            : traceConfig.inputGenerator.worst) || traceConfig.inputGenerator.worst;
-
-      if (generator) {
-        const internalInput = generator(n);
-        const arr = internalInput.array ?? [];
-        const x = internalInput.x;
-        const variables: Record<string, unknown> = {};
-        if (arr.length > 0) {
-          variables.A = arr;
-        }
-        if (typeof x !== "undefined") {
-          variables.x = x;
-        }
-        initialVariables = Object.keys(variables).length > 0 ? variables : null;
-        if (arr.length > 0) {
-          setExampleArray(arr);
-        }
-      }
-    }
-
-    try {
-      const response = await fetch("/api/analyze/trace", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          source,
-          case: scenario,
-          input_size: n,
-          initial_variables: initialVariables,
-          locale: locale === "es" ? "es" : "en",
-          include_execution_diagram: true,
-          include_call_tree: true,
-        }),
-      });
-
-      const data: TraceApiResponse = await response.json();
-
-      if (data.algorithmKind) {
-        setAlgorithmKind(data.algorithmKind);
-      }
-
-      if (data.executionDiagram?.graph) {
-        setGraph(data.executionDiagram.graph);
-        setRecursionDiagram(null);
-      } else if (data.callTree?.graph && (data.algorithmKind === "recursive" || data.algorithmKind === "hybrid")) {
-        setGraph(null);
-        setRecursionDiagram({
-          graph: data.callTree.graph,
-          explanation: data.callTree?.explanation ?? "",
-        });
-      } else {
-        setGraph(null);
-        if (!(data.algorithmKind === "recursive" || data.algorithmKind === "hybrid")) {
-          setRecursionDiagram(null);
-        }
-      }
-
-      setTrace(data);
-    } catch (error) {
-      console.error("Error loading trace:", error);
-      setTrace({
-        ok: false,
-        errors: [{ message: t("loadError") }],
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [caseType, debouncedInputSize, inputSize, source, traceConfig, t, locale]);
+  const loadTraceWithReset = useCallback(
+    async (forceRefresh?: boolean) => {
+      setCurrentStep(0);
+      setIsPlaying(false);
+      await loadTrace(forceRefresh);
+    },
+    [loadTrace],
+  );
 
   const previousSourceKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    if (open && source) {
-      const sourceKey = source.substring(0, 100);
-      if (previousSourceKeyRef.current !== sourceKey) {
-        previousSourceKeyRef.current = sourceKey;
-        setAlgorithmKind(null);
-      }
-      loadTrace();
+    if (!open || !source) return;
+    const sourceKey = source.substring(0, 100);
+    if (previousSourceKeyRef.current !== sourceKey) {
+      previousSourceKeyRef.current = sourceKey;
+      setAlgorithmKind(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, caseType, debouncedInputSize, source, locale]);
+    loadTraceWithReset();
+  }, [open, caseType, debouncedInputSize, source, locale]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Bloquear scroll del body y html mientras el modal esté abierto
   useEffect(() => {
     if (!open && !isDiagramExpanded) return;
 
@@ -252,15 +112,12 @@ export default function ExecutionTraceModal({
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center">
-      {/* Overlay */}
       <div
         className="absolute inset-0 glass-modal-overlay"
         onClick={onClose}
       />
 
-      {/* Modal */}
       <div className="relative z-10 glass-modal-container rounded-2xl p-4 sm:p-6 w-[95vw] max-w-[95vw] sm:max-w-6xl h-[90vh] max-h-[90dvh] mx-2 sm:mx-4 shadow-2xl flex flex-col overflow-hidden">
-        {/* Show initial loader while determining algorithm type */}
         {loading && algorithmKind === null ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
             <div className="relative flex items-center justify-center">
@@ -271,7 +128,6 @@ export default function ExecutionTraceModal({
           </div>
         ) : (
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            {/* Header: título a la izquierda, X a la derecha (estilo DocumentationModal) */}
             <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-3 flex-shrink-0 min-w-0">
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 <h2 className="text-lg font-semibold text-white flex items-center gap-2 truncate">
@@ -282,12 +138,13 @@ export default function ExecutionTraceModal({
                 </h2>
                 {trace?.algorithmKind && (
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${trace.algorithmKind === "recursive"
-                      ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
-                      : trace.algorithmKind === "hybrid"
-                        ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/40"
-                        : "bg-blue-500/20 text-blue-300 border border-blue-500/40"
-                      }`}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${
+                      trace.algorithmKind === "recursive"
+                        ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
+                        : trace.algorithmKind === "hybrid"
+                          ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/40"
+                          : "bg-blue-500/20 text-blue-300 border border-blue-500/40"
+                    }`}
                   >
                     {trace.algorithmKind === "recursive"
                       ? tAlgorithm("recursive")
@@ -306,25 +163,9 @@ export default function ExecutionTraceModal({
               </button>
             </div>
 
-            {/* Contenido - scroll en cada columna, no aquí */}
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            {isRecursiveOrHybrid ? (
-              <RecursiveTraceContent
-                source={source}
-                algorithmKind={algorithmKind || "recursive"}
-                inputSize={inputSize}
-                setInputSize={setInputSize}
-                debouncedInputSize={debouncedInputSize}
-                setDebouncedInputSize={setDebouncedInputSize}
-                recursionDiagram={recursionDiagram}
-                setRecursionDiagram={setRecursionDiagram}
-                loading={loading}
-                isDiagramExpanded={isDiagramExpanded}
-                setIsDiagramExpanded={setIsDiagramExpanded}
-                onLoadTrace={loadTrace}
-              />
-            ) : (
-              <IterativeTraceContent
+              <StructuredTraceContent
+                ast={ast}
                 source={source}
                 caseType={caseType}
                 onCaseChange={onCaseChange}
@@ -335,28 +176,23 @@ export default function ExecutionTraceModal({
                 setDebouncedInputSize={setDebouncedInputSize}
                 trace={trace}
                 loading={loading}
+                structuredDiagram={structuredDiagram}
                 currentStep={currentStep}
                 setCurrentStep={setCurrentStep}
                 isPlaying={isPlaying}
                 setIsPlaying={setIsPlaying}
                 playSpeed={playSpeed}
-                graph={graph}
-                setGraph={setGraph}
-                explanation={explanation}
-                setExplanation={setExplanation}
-                loadingDiagram={loadingDiagram}
-                setLoadingDiagram={setLoadingDiagram}
-                exampleArray={exampleArray}
-                setExampleArray={setExampleArray}
                 isDiagramExpanded={isDiagramExpanded}
                 setIsDiagramExpanded={setIsDiagramExpanded}
-                onLoadTrace={loadTrace}
+                onLoadTrace={loadTraceWithReset}
+                exampleArray={exampleArray}
+                setExampleArray={setExampleArray}
+                variant="modal"
+              fetchCompleted={fetchCompleted}
               />
-            )}
             </div>
 
-            {/* Expanded diagram modal (shared) */}
-            {isDiagramExpanded && (graph || recursionDiagram) && (
+            {isDiagramExpanded && structuredDiagram && (
               <div className="fixed inset-0 z-[80] flex items-center justify-center">
                 <div
                   className="absolute inset-0 bg-black/80 backdrop-blur-sm"
@@ -371,7 +207,11 @@ export default function ExecutionTraceModal({
                       <span className="material-symbols-outlined text-sky-400 text-lg">
                         {isRecursiveOrHybrid ? "account_tree" : "schema"}
                       </span>
-                      <span>{isRecursiveOrHybrid ? t("callTreeTitle") : t("executionDiagramTitle")}</span>
+                      <span>
+                        {isRecursiveOrHybrid
+                          ? t("callTreeTitle")
+                          : t("executionDiagramTitle")}
+                      </span>
                     </h3>
                     <button
                       type="button"
@@ -384,7 +224,9 @@ export default function ExecutionTraceModal({
                     </button>
                   </div>
                   <div className="flex-1 glass-card rounded-lg overflow-hidden">
-                    <ExecutionGraphView graph={(isRecursiveOrHybrid ? recursionDiagram?.graph : graph) || { nodes: [], edges: [] }} />
+                    <ExecutionGraphView
+                      graph={structuredDiagram.graph}
+                    />
                   </div>
                 </div>
               </div>

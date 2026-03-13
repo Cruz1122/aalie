@@ -21,6 +21,7 @@ import ProcedureModal from "@/components/ProcedureModal";
 import RecursiveAnalysisView from "@/components/RecursiveAnalysisView";
 import RepairModal from "@/components/RepairModal";
 import TraceDedicatedView from "@/components/TraceDedicatedView";
+import { requestTraceRefresh } from "@/hooks/trace/useTraceRefreshOnAnalysis";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
@@ -504,6 +505,7 @@ export default function AnalyzerPage() {
       // 7) Mostrar completado y cerrar de forma suave
       setAnalysisMessage(t("completeWithMethod", { method: tMethods(methodKey) }));
       setIsAnalysisComplete(true);
+      requestTraceRefresh();
       
       // Animar a 100% antes de cerrar
       await animateProgress(95, 100, 300, setAnalysisProgress);
@@ -1713,6 +1715,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                   setIsSwitchingTrace(false);
                 }, 300);
               }}
+              hasApiKey={hasApiKey}
             />
           </div>
           )}
@@ -1803,15 +1806,13 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                             setIsSwitchingTrace(false);
                           }, 300);
                         }}
-                        disabled={!hasComparableData || !hasApiKey || isSwitchingTrace}
+                        disabled={!hasComparableData || isSwitchingTrace}
                         className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-400/50 bg-gradient-to-br from-blue-500/20 to-blue-500/20 border border-blue-500/30 hover:from-blue-500/30 hover:to-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
                       >
                         <span className="material-symbols-outlined text-sm">play_circle</span>
-                        {(!hasComparableData || !hasApiKey) ? (
+                        {!hasComparableData ? (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                            {!hasComparableData
-                              ? tView("noCompleteAnalysis")
-                              : tView("apiKeyRequiredForTrace")}
+                            {tView("noCompleteAnalysis")}
                           </div>
                         ) : (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">

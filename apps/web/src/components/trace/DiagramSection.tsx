@@ -4,200 +4,169 @@ import { useTranslations } from "next-intl";
 
 import type { TraceGraph } from "@/types/trace";
 
-import MarkdownRenderer from "../MarkdownRenderer";
 import ExecutionGraphView from "../ExecutionGraphView";
 
-
-interface RecursionDiagram {
+interface StructuredDiagram {
   graph: TraceGraph;
-  explanation: string;
+  patternKind: string;
+  classification: { evidence: string[] };
 }
 
 interface DiagramSectionProps {
-  mode: "iterative" | "recursive";
-  graph?: TraceGraph | null;
+  structuredDiagram?: StructuredDiagram | null;
   loading?: boolean;
-  explanation?: string;
+  inputSize?: number;
+  initialVariablesSummary?: string;
+  hasN?: boolean;
   onRegenerate?: () => void;
   onExpand?: () => void;
-  // Para modo recursivo
-  recursionDiagram?: RecursionDiagram | null;
-  loadingRecursion?: boolean;
-  inputSize?: number;
+  traceConfig?: { kind: string };
+  fetchCompleted?: boolean;
+  frameStyle?: "card" | "border";
 }
 
-export default function DiagramSection({
-  mode,
-  graph,
-  loading = false,
-  explanation,
-  onRegenerate,
-  onExpand,
-  recursionDiagram,
-  loadingRecursion = false,
-  inputSize,
-}: DiagramSectionProps) {
+export default function DiagramSection(props: Readonly<DiagramSectionProps>) {
+  const {
+    structuredDiagram,
+    loading = false,
+    inputSize,
+    initialVariablesSummary,
+    hasN = false,
+    onRegenerate,
+    onExpand,
+    traceConfig,
+    fetchCompleted = false,
+    frameStyle = "card",
+  } = props;
   const t = useTranslations("analyzer.executionTrace");
-  if (mode === "recursive") {
-    return (
-      <div className="flex-1 overflow-hidden flex flex-col">
-        {/* Header con título y botones */}
-        <div className="flex items-center justify-between mb-2 flex-shrink-0">
-          <h3 className="text-sm font-semibold text-purple-300 flex items-center gap-2">
-            <span className="material-symbols-outlined text-base">
-              account_tree
-            </span>
-            {t("callTreeTitle")}
-          </h3>
-          <div className="flex items-center gap-2">
-            {onRegenerate && (
-              <button
-                onClick={onRegenerate}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/70 hover:bg-slate-600/80 border border-slate-600/60 transition-colors"
-                title={t("regenerateDiagram")}
-              >
-                <span className="material-symbols-outlined text-sm text-slate-200 leading-none">
-                  refresh
-                </span>
-              </button>
-            )}
-            {recursionDiagram && onExpand && (
-              <button
-                onClick={onExpand}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/70 hover:bg-slate-600/80 border border-slate-600/60 transition-colors"
-                title={t("expandDiagram")}
-              >
-                <span className="material-symbols-outlined text-sm text-slate-200 leading-none">
-                  fullscreen
-                </span>
-              </button>
-            )}
+  const graph = structuredDiagram?.graph;
+  const isIterative = traceConfig?.kind === "iterative";
+
+  let diagramNote: string | null = null;
+  if (!isIterative) {
+    if (hasN && inputSize !== undefined) {
+      diagramNote = t("diagramNote", { n: inputSize });
+    } else if (initialVariablesSummary) {
+      diagramNote = t("diagramNoteVariables", { vars: initialVariablesSummary });
+    }
+  }
+
+  const frameHeightPx = frameStyle === "border" ? 500 : 700;
+  const canvasSlotClass = "absolute inset-0 w-full h-full";
+
+  const renderCanvasContent = () => {
+    if (loading) {
+      return (
+        <div className={`${canvasSlotClass} flex flex-col items-center justify-center gap-4`}>
+          <div className="relative flex items-center justify-center">
+            <div
+              className={`w-12 h-12 rounded-full animate-ping ${
+                isIterative ? "bg-blue-500/20" : "bg-purple-500/20"
+              }`}
+            />
+            <div
+              className={`absolute w-6 h-6 rounded-full ${
+                isIterative ? "bg-blue-500" : "bg-purple-500"
+              }`}
+            />
+          </div>
+          <p className="text-xs text-slate-300">
+            {isIterative
+              ? t("generatingExecutionDiagram")
+              : t("generatingCallTree")}
+          </p>
+        </div>
+      );
+    }
+
+    if (graph?.nodes?.length) {
+      return (
+        <div className={canvasSlotClass}>
+          <ExecutionGraphView graph={graph} />
+        </div>
+      );
+    }
+
+    if (fetchCompleted) {
+      return (
+        <div className={`${canvasSlotClass} flex flex-col items-center justify-center gap-3`}>
+          <span className="material-symbols-outlined text-3xl text-amber-500/60">
+            info
+          </span>
+          <div className="text-sm text-slate-400 text-center px-4">
+            {isIterative
+              ? t("diagramFailed")
+              : t("callTreeUnavailable")}
           </div>
         </div>
-        {/* Advertencia contextual sobre el caso mostrado */}
-        {inputSize !== undefined && (
-          <p className="text-xs text-slate-400 mb-2">
-            {t("diagramNote", { n: inputSize })}
-          </p>
-        )}
-        
-        {/* Diagrama en contenedor con altura completa */}
-        <div className="flex-1 min-h-[240px] overflow-hidden glass-card rounded-lg">
-          {loadingRecursion ? (
-            <div className="h-full flex flex-col items-center justify-center gap-4">
-              <div className="relative flex items-center justify-center">
-                <div className="w-12 h-12 bg-purple-500/20 rounded-full animate-ping" />
-                <div className="absolute w-6 h-6 bg-purple-500 rounded-full" />
-              </div>
-              <p className="text-xs text-slate-300">
-                {t("generatingCallTree")}
-              </p>
-            </div>
-          ) : recursionDiagram?.graph ? (
-            <ExecutionGraphView graph={recursionDiagram.graph} />
-          ) : (
-            <div className="h-full min-h-[200px] flex flex-col items-center justify-center gap-3 p-4">
-              <div className="w-12 h-12 rounded-full bg-slate-800/50 flex items-center justify-center">
-                <span className="material-symbols-outlined text-2xl text-slate-500/50">
-                  account_tree
-                </span>
-              </div>
-              <div className="text-sm font-medium text-slate-400 text-center px-4">
-                {t("callTreeUnavailable")}
-              </div>
-            </div>
-          )}
+      );
+    }
+
+    return (
+      <div className={`${canvasSlotClass} flex flex-col items-center justify-center gap-3`}>
+        <span className="material-symbols-outlined text-3xl text-slate-500/50">
+          {isIterative ? "schema" : "account_tree"}
+        </span>
+        <div className="text-sm text-slate-400 text-center px-4">
+          {t("diagramPlaceholder")}
         </div>
       </div>
     );
-  }
+  };
 
-  // Modo iterativo
   return (
-    <div className="flex-1 overflow-y-auto scrollbar-custom space-y-4">
-      {loading ? (
-        <div className="h-full flex flex-col items-center justify-center gap-4">
-          <div className="relative flex items-center justify-center">
-            <div className="w-12 h-12 bg-blue-500/20 rounded-full animate-ping" />
-            <div className="absolute w-6 h-6 bg-blue-500 rounded-full" />
-          </div>
-          <p className="text-xs text-slate-300">
-            {t("generatingExecutionDiagram")}
-          </p>
-        </div>
-      ) : graph ? (
-        <>
-          <div className="glass-card rounded-lg overflow-hidden">
-            {/* Header with title and actions */}
-            <div className="flex items-center justify-between p-3 border-b border-white/5 bg-slate-800/30">
-              <div className="text-sm font-semibold text-slate-300">{t("executionDiagram")}</div>
-              <div className="flex items-center gap-2">
-                {onRegenerate && (
-                  <button
-                    type="button"
-                    onClick={onRegenerate}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/70 hover:bg-slate-600/80 border border-slate-600/60 transition-colors"
-                    title={t("regenerateDiagram")}
-                  >
-                    <span className="material-symbols-outlined text-sm text-slate-200 leading-none">
-                      refresh
-                    </span>
-                  </button>
-                )}
-                {onExpand && (
-                  <button
-                    type="button"
-                    onClick={onExpand}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/70 hover:bg-slate-600/80 border border-slate-600/60 transition-colors"
-                    title={t("expandDiagram")}
-                  >
-                    <span className="material-symbols-outlined text-sm text-slate-200 leading-none">
-                      fullscreen
-                    </span>
-                  </button>
-                )}
-              </div>
-            </div>
-            {/* Diagram content - altura flexible, mínima para legibilidad */}
-            <div className="p-3 min-h-[200px] h-[min(400px,50vh)]">
-              <ExecutionGraphView graph={graph} />
-            </div>
-          </div>
-          {explanation && (
-            <div className="glass-card p-3 rounded-lg">
-              <MarkdownRenderer content={explanation} hideHorizontalRules />
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="h-full flex flex-col items-center justify-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-slate-800/50 flex items-center justify-center">
-            <span className="material-symbols-outlined text-2xl text-slate-500/50">
-              schema
-            </span>
-          </div>
-          <div className="text-sm font-medium text-slate-400 text-center px-4">
-            {explanation || t("diagramPlaceholder")}
-          </div>
-          {/* Show retry button ONLY if there is an error explanation or if we have trace data but no graph */}
-          {onRegenerate && (explanation || graph === null) && (
+    <div className="flex flex-col w-full min-h-0 overflow-hidden">
+      <div className="flex items-center justify-between h-[40px] px-1 flex-shrink-0">
+        <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+          <span className="material-symbols-outlined text-base">
+            {isIterative ? "schema" : "account_tree"}
+          </span>
+          {isIterative ? t("executionDiagram") : t("callTreeTitle")}
+        </h3>
+
+        <div className="flex items-center gap-2">
+          {onRegenerate && (
             <button
               type="button"
               onClick={onRegenerate}
-              disabled={loading}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-300 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/70 hover:bg-slate-600/80 border border-slate-600/60"
             >
-              <span className="material-symbols-outlined text-sm">
+              <span className="material-symbols-outlined text-sm text-slate-200">
                 refresh
               </span>
-              {t("retry")}
+            </button>
+          )}
+
+          {structuredDiagram && onExpand && (
+            <button
+              type="button"
+              onClick={onExpand}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/70 hover:bg-slate-600/80 border border-slate-600/60"
+            >
+              <span className="material-symbols-outlined text-sm text-slate-200">
+                fullscreen
+              </span>
             </button>
           )}
         </div>
-      )}
+      </div>
+
+      <div className="h-[28px] flex items-center px-1 flex-shrink-0">
+        <p className="text-xs text-slate-400 truncate">
+          {diagramNote ?? " "}
+        </p>
+      </div>
+
+      <div
+        className={`relative flex-none shrink-0 overflow-hidden rounded-lg ${
+          frameStyle === "border"
+            ? "border border-slate-700/60"
+            : "glass-card"
+        }`}
+        style={{ height: `${frameHeightPx}px`, minHeight: `${frameHeightPx}px` }}
+      >
+        {renderCanvasContent()}
+      </div>
     </div>
   );
 }
-
-
-

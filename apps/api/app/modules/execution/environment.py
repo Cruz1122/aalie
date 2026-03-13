@@ -131,9 +131,10 @@ class ExecutionEnvironment:
             if node_type == "Identifier":
                 # Resolver a valor concreto cuando es None o dict (lista enlazada)
                 name = expr.get("name", "")
-                val = self.get_variable(name)
-                if val is None or isinstance(val, dict):
-                    return {"type": "Literal", "value": val}
+                if self.has_variable(name):
+                    val = self.get_variable(name)
+                    if val is None or isinstance(val, (dict, list)):
+                        return {"type": "Literal", "value": val}
             
             if node_type == "Field":
                 # Acceso a campo: nodo.valor, nodo.siguiente
@@ -225,11 +226,11 @@ class ExecutionEnvironment:
         # Resolver índices primero
         resolved_expr = self._resolve_indices(expr)
 
-        # Literal con valor no numérico (dict, None): devolver directamente
-        # para soportar nodo.siguiente en listas enlazadas
+        # Literal con valor no numérico: devolver directamente
+        # (soporta strings en PRINT y nodo.siguiente en listas enlazadas)
         if isinstance(resolved_expr, dict) and resolved_expr.get("type") == "Literal":
             val = resolved_expr.get("value")
-            if val is None or isinstance(val, dict):
+            if val is None or isinstance(val, dict) or isinstance(val, str):
                 return val
 
         # Convertir a SymPy
@@ -238,15 +239,16 @@ class ExecutionEnvironment:
         # Si tenemos input_size concreto, intentar evaluar
         if self.input_size is not None:
             try:
-                # Sustituir símbolos conocidos
-                evaluated = sympy_expr.subs({
-                    self.expr_converter.get_symbol(self.variable_name): self.input_size
-                })
-                
-                # Sustituir variables del environment
+                # Construir dict de sustitución: PRIORIZAR variables del scope actual
+                # (crítico en recursión: fact(3) debe evaluar n-1 = 2, no usar input_size=4)
+                subs_dict = {}
                 for var_name, var_value in self.variables.items():
                     if isinstance(var_value, (int, float)):
-                        evaluated = evaluated.subs(self.expr_converter.get_symbol(var_name), var_value)
+                        subs_dict[self.expr_converter.get_symbol(var_name)] = var_value
+                # Fallback: variable principal no en scope (ej. llamada inicial)
+                if self.variable_name not in self.variables and self.input_size is not None:
+                    subs_dict[self.expr_converter.get_symbol(self.variable_name)] = self.input_size
+                evaluated = sympy_expr.subs(subs_dict)
                 
                 # Intentar evaluar numéricamente
                 if evaluated.is_number:

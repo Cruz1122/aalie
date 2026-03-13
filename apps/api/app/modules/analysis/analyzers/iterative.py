@@ -147,7 +147,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             return expr
 
         # Variables de iteración a eliminar: FOR + WHILE/REPEAT (self.loop_index_vars).
-        # Fallback legacy: i, j, k
+        # Incluir t_while_X, t_repeat_X (símbolos iterativos no resueltos) → sustituir por main_var
         iteration_vars = list(getattr(self, "loop_index_vars", None) or ["i", "j", "k"])
         main_var = getattr(self, "variable", "n") or "n"
         main_sym = Symbol(main_var, integer=True)
@@ -193,6 +193,14 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             except Exception:
                 # No dejar que un fallo de sustitución rompa el análisis.
                 pass
+
+        # Sustituir símbolos iterativos no resueltos (t_while_X, t_repeat_X) por variable principal
+        import re as _re
+        for sym in list(expr.free_symbols):
+            sname = getattr(sym, "name", "")
+            if sname and (_re.match(r't_(?:while|repeat)_\d+', sname) or _re.match(r't_\{while_\d+\}', sname) or _re.match(r't_\{repeat_\d+\}', sname)):
+                expr = expr.subs(sym, main_sym)
+        expr = simplify(expr)
 
         # Verificar si quedan variables de iteración
         free_vars = expr.free_symbols

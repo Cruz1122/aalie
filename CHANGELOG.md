@@ -7,92 +7,32 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
-### Added
-- **Trace recursivo:** Tokens y microsegundos por nodo en el árbol de llamadas (suma de steps por callId). Formato de llamadas `funcion(a, b, c)` en lugar de `fn(k=v)`. Explicación determinista `explain_recursion_tree` para el árbol de recursión. Botón recargar invalida cache (forceRefresh). Layout del call tree con nodos más grandes y mayor separación para evitar solapamiento.
+No hay cambios publicados todavía.
 
-### Fixed
-- **buscarLista y árbol de llamadas:** (1) `_execute_return` ejecuta llamadas recursivas en RETURN (ej. `RETURN buscarLista(nodo.siguiente, valor)`) para registrar el árbol. (2) `_evaluate_condition` no sobrescribe condiciones con valores concretos (nodo==null) con heurística best/worst. (3) Comparación explícita con None para listas enlazadas. (4) `_has_recursive_call` considera `callee` además de `name` en nodos Call. (5) `call_tree_builder` maneja `base_case` nulo. (6) `environment`: Literal con dict/None se devuelve sin SymPy; Field con base Literal resuelve campos; Identifier con dict/None se resuelve a Literal.
-- **Vista trace recursiva:** La columna derecha (diagrama, controles) ahora tiene altura mínima visible (`min-h-[420px]`). Loader mientras se detecta el algoritmo. Mensaje `callTreeUnavailable` cuando el árbol de llamadas no se puede generar (ej. factorial con retorno en expresión).
-
-### Removed
-- **LLM de diagramas eliminado por completo:** Rutas `/api/llm/generate-diagram` y `/api/llm/recursion-diagram`, prompts asociados, `CallTreeView`, `RecursionTreeView`. Los diagramas (iterativo y árbol de llamadas recursivas) provienen exclusivamente del backend determinista vía `/api/analyze/trace` con `include_execution_diagram` e `include_call_tree`. Eliminados `GEMINI_DIAGRAM_MODELS`, `DiagramGraphResponse`, probes de monitoring para esos endpoints.
+## [1.2.1]
 
 ### Added
-- Traducciones i18n para eventKind en StepInfo: `eventKind_assign`, `eventKind_return_emit`, `eventKind_condition_eval`, etc. (es/en).
-- Estimación determinista de tokens y microsegundos en TraceBuilder: `_estimate_step_cost()` por tipo de paso; propagación a nodos del diagrama de seguimiento.
-- `DiagramKind` en tipos trace: `execution_diagram` | `call_tree` | `recurrence_tree` para distinguir semánticamente los diagramas.
-- Generadores deterministas de diagramas (sin LLM): `execution_diagram_builder`, `call_tree_builder`, `recurrence_tree_builder`.
-- Flags en `/analyze/trace`: `include_execution_diagram`, `include_call_tree` para artefactos opcionales.
-- Feature flag `NEXT_PUBLIC_USE_DETERMINISTIC_DIAGRAMS` para migración progresiva.
-- Componentes: `ExecutionGraphView`, `CallTreeView`, `RecurrenceTreeView`.
-- `explanation_templates.py` para explicaciones deterministas por plantillas.
-- Tests oráculo: `test_execution_diagram_builder`, `test_call_tree_builder`.
-- `AAButton`: componente reutilizable con variantes de color (primary, amber, purple, blue, cyan, secondary) alineado al estilo de las cards de ejemplos (`bg-{color}/25 border-{color}/40 hover:bg-{color}/35`).
-- Vista dedicada de seguimiento de pseudocódigo (iterativo y recursivo): reemplaza el modal por una vista full-page con patrón de cambio tipo homepage (animación opacity/translate-y). Panel izquierdo tipo chat bloqueado con pseudocódigo y progreso por línea; área principal con árbol/diagrama, tablas y explicación.
-- `TraceDedicatedView` y `TraceChatPanel`: componentes para la vista de seguimiento con layout responsive (mobile: columna única; desktop: panel chat + contenido).
-- Persistencia del trace en sessionStorage (TTL 5 min) para evitar recargas al volver a la vista.
-- Tests de sistema para `/analyze/trace`: factorial, búsqueda binaria, Fibonacci, búsqueda lineal.
-- `docs/api/trace-format.md`: documentación del contrato de datos del trace para el frontend.
-- `docs/recursion-tree-edge-cases.md`: Registro de algoritmos de referencia, patrones problemáticos y casos límite del árbol de recursión para futuros sprints.
-- Tests de estructura del árbol (`test_recursion_tree_structure.py`): Merge sort, búsqueda binaria, Fibonacci, Quicksort peor caso.
-- Reingeniería del motor WHILE: núcleo `ir/` (ast_normalizer, expr_utils, node_identity) unificado.
-- Módulo `semantics/` (symbol_table, type_inference, scope_resolver) para inferencia de roles sin heurísticas por nombre.
-- Motor `while_engine/` con CFG local, guard_analysis, update_analysis, control_variables, progress_proofs, sympy_bridge, iteration_bounds.
-- Patrones estructurales: linear_counter, flag_kill, euclid_mod, binary_search_interval.
-- WhileEngine.analyze() integrado en el visitor; delegación al engine antes del clasificador legacy.
-- Pruebas metamórficas (test_while_metamorphic.py): renombrar variables no cambia clasificación.
-- Marcador pytest `while_domain` para tests del dominio WHILE.
-- Test de regresión para bubble sort con variable `longitud` decreciente (BUBBLE_SORT_LONGITUD) que valida ausencia de conteos negativos.
-- `assert_notation_no_array_symbols` en assertions.py para validar que la notación no contenga símbolos de arrays.
-- Test `test_bubble_sort_longitud_correct_complexity` que valida Θ(n²) worst/avg, Θ(n) best y ausencia de símbolos de array en BUBBLE_SORT_LONGITUD.
+- Nueva vista de seguimiento más clara y cómoda, tanto para escritorio como para móvil.
+- Sistema de trazas unificado para mostrar mejor el recorrido de algoritmos iterativos y recursivos.
+- Más pruebas automáticas y documentación para asegurar resultados consistentes en diagramas y complejidad.
+- Mejoras de internacionalización en mensajes y etiquetas del seguimiento.
 
 ### Fixed
-- **StepInfo:** El tipo de paso (eventKind) se muestra traducido (ej. "Retorno" en lugar de "return_emit").
-- **Executor:** Soporte para `callee` en nodos Call (gramática usa `callee`, no `name`).
-- **Árbol de llamadas:** Logging cuando `build_call_tree` falla; test `test_trace_with_call_tree_deterministic` para validar callTree con include_call_tree.
-- **Árbol de llamadas determinista:** Con `NEXT_PUBLIC_USE_DETERMINISTIC_DIAGRAMS=true`, ya no se usa LLM como fallback; se muestra placeholder si no hay callTree. Cache de trace aplica graph/recursionDiagram deterministas.
-- **Trace iterativo:** El contenido ya no desaparece al cambiar de caso (best/avg/worst). Solo se resetea `algorithmKind` cuando cambia el código fuente; al cambiar solo caso o tamaño de entrada se mantiene la vista iterativa con estado de carga.
-- **recursion-diagram:** (1) Aceptar respuestas con `nodes`/`edges` en raíz o dentro de `graph`. (2) Fallback: si edges vacío pero hay nodos con posición, inferir aristas desde layout (árbol por Y). (3) Prompt reforzado: edges obligatorios. (4) Evitar spam; JSON malformado con jsonrepair.
-- **Árbol de recursión:** Texto `irregularTree` corregido: "Árbol con subproblemas duplicados (ej. Fibonacci)" en lugar de "los nodos se duplican", alineado con terminología pedagógica (subproblemas vs nodos).
-- **Fibonacci con método árbol:** Rama explícita en `_apply_recursion_tree_method` para recurrencias multi-término (T(n)=T(n-1)+T(n-2)) que evita caer en estructura divide-and-conquer incorrecta. Preservar type=linear_shift en recurrencia cuando method=recursion_tree y has_subtraction con múltiples coeficientes.
-- **Modal árbol de recursión:** Blur del fondo completo (z-[70], glass-modal-overlay-fixed), tamaño mayor (1400px × 90vh), eliminado minimapa.
-- **Bubble sort con i < n AND swapped:** (1) Engine WHILE: en best case, si `classify_while` devuelve `iterations_expr="1"` (flag kill), se prioriza sobre el patrón `linear_counter` que devolvía n, corrigiendo Θ(n²) → Θ(n) en best case. (2) T_polynomial: `powsimp` en coeficientes y en el término completo (coeff·n^degree) antes de LaTeX, evitando "- 4 n n" → "-4 n²". (3) Procedimiento: todos los pasos que generan LaTeX desde SymPy usan `_sympy_to_latex` (ParensLatexPrinter), evitando ambigüedades como `n · - i + n` → `n · (-i + n)`.
-- **Análisis bubble sort mejorado (y genérico):** (1) `detect_size_variables_from_proc` extrae variable de tamaño desde `ArrayParam.start`/`end` (ej. A[n] → n), evitando O(1) incorrecto. (2) Fallback `expr_has_size` en `IterativeAnalyzer`: si `t_open_expr` contiene la variable principal en `free_symbols`, se calcula la complejidad real aunque la heurística falle. (3) Normalización de potencias con `powsimp` antes de LaTeX: productos repetidos (n·n, m·m·m) se muestran como potencias. (4) Sustitución de alias (`longitud`, `tam`, etc.) antes de `close_summation` para que el cierre evalúe correctamente. (5) `_sympy_to_latex` con printer que envuelve Add en paréntesis cuando es factor de Mul (n·(k-1), m·(i+1), etc.).
-- Euclides MCD: `count_str` ya no se corrompe a `n + 1`; se preservan parámetros `a` y `b` en `min(a,b)` gracias a `preserve_symbols` en `_sanitize_expression` cuando la fila tiene `euclid_pattern`.
-- Parámetros de tipo array (A, B, arr, etc.) ya no aparecen en la notación de complejidad: se excluyen en `detect_size_variables_from_proc` (ArrayParam, nombres típicos y penalización cuando vienen del cuerpo), en `_fallback_dominant_from_string` (tokens alternativos) y en `_sanitize_expression` (sustitución por variable principal).
-- Variables de control en límites de Sum (ej. `longitud` en `FOR j=1..longitud-1`) ya no se sustituyen por 0, evitando conteos negativos como `-n` en algoritmos tipo bubble sort mejorado.
-- `_sanitize_expression` e `IterativeAnalyzer`: no sustituir por 0 cuando el resultado sería negativo; usar variable principal (n) como cota conservadora.
-- `SummationCloser`: sustitución segura de variables de iteración (i, j, k) que evita resultados negativos mediante `_safe_substitute_iteration_var`.
+- Correcciones en recursividad para evitar llamadas repetidas o árboles de llamadas incorrectos.
+- Solucionados bloqueos ocasionales al detectar el tipo de algoritmo.
+- Arreglos en casos límite de diagramas (por ejemplo, árboles con un solo nodo).
+- Mejoras en el análisis de bucles y expresiones para evitar resultados negativos o notaciones confusas.
+- Ajustes en Bubble Sort, Euclides y otros casos donde la complejidad podía salir mal en escenarios concretos.
 
 ### Changed
-- **TraceBuilder y CodeExecutor enriquecidos (Fase 3):** eventKind semántico (assign, condition_eval, loop_iter_enter, call_enter, return_emit, print), decision en steps (conditionText, result), RecursionCall con parent_id, return_value, base_case, function_name, entry_line. record_return_value y record_base_case.
-- **TraceFlowDiagram** renombrado a `ExecutionGraphView`; `RecursionTreeView` separado en `CallTreeView` (llamadas) y `RecurrenceTreeView` (analítico).
-- **Corrección terminológica global (Fase 0):** Traza de ejecución, diagrama de seguimiento, árbol de llamadas recursivas, árbol de recurrencia. i18n: `callTreeTitle`, `recurrenceTreeTitle`, `executionDiagram`, `executionDiagramSection`, `generatingExecutionDiagram`, `generatingCallTree`. Docs: `trace-format.md` con glosario. Tipos: `DiagramKind`.
-- **Trace iterativo (vista dedicada):** Rediseño completo: layout grid 2 columnas (lg:grid-cols-2) con glass-card; columna izquierda: seguimiento paso a paso; columna derecha: controles, variables y diagrama. Eliminadas alturas fijas; secciones flexibles con min-h-0 overflow-hidden. Selector de caso (best/avg/worst) integrado en header de la tarjeta de seguimiento.
-- **Trace iterativo (componentes):** StepInfo con grid responsive (grid-cols-2 sm:grid-cols-3 lg:grid-cols-5); StepControls compacto en fila horizontal; DiagramSection con altura flexible (min-h-[200px] h-[min(400px,50vh)]); VariablesPanel e InputSizeControl con orden y espaciado mejorados. Mejoras aplicadas también al variant modal.
-- **Accesibilidad trace:** StepInfo con aria-live="polite" y aria-atomic; StepControls con aria-label en todos los botones.
-- Botones del analyzer y ManualModeView: reemplazo de `glass-button` por `AAButton` con variantes primary/amber.
-- ExampleCard: botón Analizar migrado a `AAButton` variant="primary".
-- LoaderDemo: hover de cards usa `hover:bg-primary/25 hover:border-primary/40` en lugar de `hover:glass-button`.
-- Eliminada clase `.glass-button` de globals.css; usar `AAButton` en su lugar.
-- Vista trace: persistencia al volver (TraceDedicatedView se mantiene montada tras abrir); sin flash de versión iterativa (placeholder cuando algorithmKind es null); modal diagrama fullscreen con fondo opaco y sin fragmentos de contenido previo.
-- Vista trace: eliminado botón recargar; sin loader al cambiar a vista de seguimiento (se muestra layout directamente).
-- Vista trace recursivo (dedicated): Diagrama y Explicación apilados verticalmente (uno encima del otro) en lugar de columnas; eliminados labels repetidos (Diagrama de Recursión / Árbol de Recursión); eliminadas líneas divisorias largas entre columnas; `MarkdownRenderer` con prop `hideHorizontalRules` para ocultar `---`/`***` en explicaciones.
-- Botón "Ver seguimiento" abre vista dedicada en lugar del modal; botón "Volver" en esquina superior izquierda restaura la vista de análisis.
-- `IterativeTraceContent` y `RecursiveTraceContent`: prop `variant` ("modal" | "dedicated") para layout de 2 o 3 columnas.
-- `TraceFlowDiagram`: zoom mejorado (minZoom 0.15, maxZoom 2), nodos más compactos, fitView con padding 0.35, textos i18n.
-- `DiagramSection`: altura del diagrama iterativo aumentada a min-h-[350px] h-[400px].
-- Microcopys y secuencia explicativa: setupIntro, stepShows, complexitySummary en executionTrace.
-- `PseudocodeViewer`: prop `hideHeader` para uso dentro de TraceChatPanel.
-- Página de ejemplos: notación asintótica teórica de Bubble Sort actualizada a O(n²) en todos los casos (versión canónica con FOR anidado).
-- Prompts LLM (general y parser_assist): menos comentarios en código (preferir sin comentarios; máx 1-2 si se usan, ≤30 caracteres). Reforzada sección GRAMÁTICA: referencia explícita a packages/grammar/grammar/Language.g4 como fuente de verdad.
-- Motor WHILE: migración de `while_analysis/` a `while_engine/`; guard, updates y classifier ahora en `while_engine/`.
-- Eliminada duplicidad de carpetas; visitor e engine importan desde `while_engine`.
+- Se simplificó la experiencia de seguimiento: menos pasos innecesarios y vista más directa.
+- El seguimiento recursivo ahora muestra explicaciones más legibles y parámetros más claros.
+- Se renovaron componentes de interfaz para mantener una apariencia más consistente.
+- Reorganización interna del motor de análisis para hacerlo más mantenible.
 
 ### Removed
-- `ExecutionTraceModal` del analyzer: reemplazado por TraceDedicatedView integrada en la página.
-- Carpeta `while_analysis/` (guard.py, updates.py, classifier.py migrados a while_engine).
-- `while_engine/average_models.py`, `cfg.py`, `iteration_bounds.py` (código muerto no usado).
+- Se retiró el sistema antiguo de diagramas y código obsoleto relacionado.
+- Se eliminaron rutas y piezas heredadas que ya no se usan en el flujo actual.
 
 ## [1.2.0]
 ### Added

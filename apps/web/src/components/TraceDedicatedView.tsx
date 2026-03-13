@@ -2,21 +2,18 @@
 
 import type { Program } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import ReactDOM from "react-dom";
 
-import type {
-  CaseType,
-  TraceApiResponse,
-  TraceGraph,
-  TraceConfig,
-  InternalInput,
-} from "@/types/trace";
+import { useTraceController } from "@/hooks/trace/useTraceController";
+import { useTraceRefreshOnAnalysis } from "@/hooks/trace/useTraceRefreshOnAnalysis";
+import type { CaseType } from "@/types/trace";
 
-import IterativeTraceContent from "./trace/IterativeTraceContent";
-import RecursiveTraceContent from "./trace/RecursiveTraceContent";
-import TraceChatPanel from "./trace/TraceChatPanel";
+
 import ExecutionGraphView from "./ExecutionGraphView";
+import StructuredTraceContent from "./trace/StructuredTraceContent";
+import TraceChatPanel from "./trace/TraceChatPanel";
+import TraceStatusBanner from "./trace/TraceStatusBanner";
 
 /**
  * Vista dedicada de seguimiento de pseudocódigo (iterativo y recursivo).
@@ -31,243 +28,68 @@ interface TraceDedicatedViewProps {
   caseType: CaseType;
   onCaseChange: (caseType: CaseType) => void;
   onBack: () => void;
+  hasApiKey?: boolean;
 }
-
-const TRACE_CACHE_KEY = "analyzerTraceCache";
-const TRACE_CACHE_TTL_MS = 5 * 60 * 1000; // 5 min
 
 export default function TraceDedicatedView({
   source,
-  ast: _ast,
+  ast,
   caseType,
   onCaseChange,
   onBack,
+  hasApiKey: _hasApiKey = false,
 }: TraceDedicatedViewProps) {
   const locale = useLocale();
   const t = useTranslations("analyzer.executionTrace");
   const [inputSize, setInputSize] = useState<number>(4);
   const [debouncedInputSize, setDebouncedInputSize] = useState<number>(4);
-  const [trace, setTrace] = useState<TraceApiResponse | null>(null);
-  const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playSpeed] = useState(1000);
-  const [graph, setGraph] = useState<TraceGraph | null>(null);
-  const [explanation, setExplanation] = useState<string>("");
-  const [loadingDiagram, setLoadingDiagram] = useState(false);
   const [isDiagramExpanded, setIsDiagramExpanded] = useState(false);
-  const [recursionDiagram, setRecursionDiagram] = useState<{
-    graph: TraceGraph;
-    explanation: string;
-  } | null>(null);
-  const [algorithmKind, setAlgorithmKind] = useState<string | null>(null);
-  const [exampleArray, setExampleArray] = useState<number[]>([1, 2, 3, 4]);
-  const isLoadingRef = useRef(false);
+  const [initialVariablesOverride, setInitialVariablesOverride] = useState<
+    Record<string, unknown> | null
+  >(null);
 
-  const traceConfig: TraceConfig = useMemo(() => {
-    if (algorithmKind === "recursive") {
-      return {
-        kind: "recursive",
-        controls: {
-          scenario: false,
-          n: true,
-          arrayEditable: false,
-        },
-      };
-    }
-    if (algorithmKind === "hybrid") {
-      return {
-        kind: "hybrid",
-        controls: {
-          scenario: false,
-          n: true,
-          arrayEditable: false,
-        },
-      };
-    }
-    const makeBaseArray = (n: number): number[] =>
-      Array.from({ length: Math.max(1, n) }, (_, idx) => idx + 1);
-    const hasZeroCheck =
-      /n\s*[=<>]=\s*0|n\s*=\s*0|IF\s*\(\s*n\s*[=<>]=\s*0/i.test(source);
-    const generators = {
-      best: (n: number): InternalInput => {
-        const actualN = hasZeroCheck ? Math.max(1, n) : n;
-        const arr = makeBaseArray(actualN);
-        const x = arr[0];
-        return { n: actualN, array: arr, x };
-      },
-      avg: (n: number): InternalInput => {
-        const actualN = hasZeroCheck ? Math.max(1, n) : n;
-        const arr = makeBaseArray(actualN);
-        const midIndex = Math.floor(Math.max(1, actualN) / 2);
-        const x = arr[midIndex] ?? arr[arr.length - 1];
-        return { n: actualN, array: arr, x };
-      },
-      worst: (n: number): InternalInput => {
-        if (hasZeroCheck) {
-          return { n: 0, array: [], x: undefined };
-        }
-        const arr = makeBaseArray(n);
-        const x = arr[arr.length - 1];
-        return { n, array: arr, x };
-      },
-    };
-    return {
-      kind: "iterative",
-      controls: {
-        scenario: true,
-        n: true,
-        arrayEditable: false,
-      },
-      inputGenerator: generators,
-    };
-  }, [algorithmKind, source]);
+  const {
+    trace,
+    loading,
+    error,
+    truncated,
+    truncationReason,
+    structuredDiagram,
+    algorithmKind,
+    traceConfig,
+    loadTrace,
+    setAlgorithmKind,
+    setExampleArray,
+    exampleArray,
+  fetchCompleted,
+  } = useTraceController(
+    {
+      source,
+      caseType,
+      inputSize,
+      debouncedInputSize,
+      locale: locale === "es" ? "es" : "en",
+      initialVariablesOverride,
+    },
+    t,
+  );
 
-  const loadTrace = useCallback(async (forceRefresh?: boolean) => {
-    if (isLoadingRef.current) return;
-    isLoadingRef.current = true;
-    setLoading(true);
-    setCurrentStep(0);
-    setIsPlaying(false);
-    setExplanation("");
-    setRecursionDiagram(null);
+  const loadTraceWithReset = useCallback(
+    async (
+      forceRefresh?: boolean,
+      effectiveOverride?: Record<string, unknown> | null,
+    ) => {
+      setCurrentStep(0);
+      setIsPlaying(false);
+      await loadTrace(forceRefresh, effectiveOverride);
+    },
+    [loadTrace],
+  );
 
-    const scenario: CaseType = caseType;
-    const n = debouncedInputSize || inputSize || 1;
-
-    // Diagramas siempre desde backend (LLM de diagramas eliminado)
-    const cacheKey = `${TRACE_CACHE_KEY}:${btoa(encodeURIComponent(source.substring(0, 200)))}:${scenario}:${n}`;
-    if (typeof window !== "undefined" && !forceRefresh) {
-      try {
-        const cached = sessionStorage.getItem(cacheKey);
-        if (cached) {
-          const { data: cachedData, ts } = JSON.parse(cached) as {
-            data: TraceApiResponse;
-            ts: number;
-          };
-          if (Date.now() - ts < TRACE_CACHE_TTL_MS && cachedData?.ok) {
-            setAlgorithmKind(cachedData.algorithmKind ?? null);
-            if (cachedData.executionDiagram?.graph) {
-              setGraph(cachedData.executionDiagram.graph);
-              setRecursionDiagram(null);
-            } else if (
-              cachedData.callTree?.graph &&
-              (cachedData.algorithmKind === "recursive" ||
-                cachedData.algorithmKind === "hybrid")
-            ) {
-              setGraph(null);
-              setRecursionDiagram({
-                graph: cachedData.callTree.graph,
-                explanation: cachedData.callTree?.explanation ?? "",
-              });
-            } else {
-              setGraph(null);
-              if (
-                !(
-                  cachedData.algorithmKind === "recursive" ||
-                  cachedData.algorithmKind === "hybrid"
-                )
-              ) {
-                setRecursionDiagram(null);
-              }
-            }
-            setTrace(cachedData);
-            setLoading(false);
-            isLoadingRef.current = false;
-            return;
-          }
-        }
-      } catch {
-        // Ignorar errores de cache
-      }
-    }
-
-    let initialVariables: Record<string, unknown> | null = null;
-    if (traceConfig.kind === "iterative" && traceConfig.inputGenerator) {
-      const generator =
-        (scenario === "best"
-          ? traceConfig.inputGenerator.best
-          : scenario === "avg"
-            ? traceConfig.inputGenerator.avg
-            : traceConfig.inputGenerator.worst) ||
-        traceConfig.inputGenerator.worst;
-
-      if (generator) {
-        const internalInput = generator(n);
-        const arr = internalInput.array ?? [];
-        const x = internalInput.x;
-        const variables: Record<string, unknown> = {};
-        if (arr.length > 0) {
-          variables.A = arr;
-        }
-        if (typeof x !== "undefined") {
-          variables.x = x;
-        }
-        initialVariables = Object.keys(variables).length > 0 ? variables : null;
-        if (arr.length > 0) {
-          setExampleArray(arr);
-        }
-      }
-    }
-
-    try {
-      const response = await fetch("/api/analyze/trace", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          source,
-          case: scenario,
-          input_size: n,
-          initial_variables: initialVariables,
-          locale: locale === "es" ? "es" : "en",
-          include_execution_diagram: true,
-          include_call_tree: true,
-        }),
-      });
-
-      const data: TraceApiResponse = await response.json();
-
-      if (data.algorithmKind) {
-        setAlgorithmKind(data.algorithmKind);
-      }
-
-      if (data.executionDiagram?.graph) {
-        setGraph(data.executionDiagram.graph);
-        setRecursionDiagram(null);
-      } else if (data.callTree?.graph && (data.algorithmKind === "recursive" || data.algorithmKind === "hybrid")) {
-        setGraph(null);
-        setRecursionDiagram({
-          graph: data.callTree.graph,
-          explanation: data.callTree?.explanation ?? "",
-        });
-      } else {
-        setGraph(null);
-        if (!(data.algorithmKind === "recursive" || data.algorithmKind === "hybrid")) {
-          setRecursionDiagram(null);
-        }
-      }
-      setTrace(data);
-
-      if (typeof window !== "undefined" && data?.ok) {
-        try {
-          sessionStorage.setItem(
-            cacheKey,
-            JSON.stringify({ data, ts: Date.now() }),
-          );
-        } catch {
-          // Ignorar si sessionStorage está lleno
-        }
-      }
-    } catch (error) {
-      console.error("Error loading trace:", error);
-      setTrace({
-        ok: false,
-        errors: [{ message: t("loadError") }],
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [caseType, debouncedInputSize, inputSize, source, traceConfig, t, locale]);
+  useTraceRefreshOnAnalysis(() => loadTraceWithReset(true));
 
   const loadedParamsRef = useRef<string | null>(null);
   const previousSourceKeyRef = useRef<string | null>(null);
@@ -281,20 +103,26 @@ export default function TraceDedicatedView({
       previousSourceKeyRef.current = sourceKey;
       setAlgorithmKind(null);
     }
-    loadTrace();
+    loadTraceWithReset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseType, debouncedInputSize, source, locale]);
+  // Cuando hay error, resetear el guard para que el usuario pueda reintentar
+  useEffect(() => {
+    if (error) {
+      loadedParamsRef.current = null;
+    }
+  }, [error]);
 
   // Bloquear scroll del body cuando el modal está abierto
   useEffect(() => {
-    if (isDiagramExpanded && (graph || recursionDiagram)) {
+    if (isDiagramExpanded && structuredDiagram) {
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
       return () => {
         document.body.style.overflow = originalOverflow;
       };
     }
-  }, [isDiagramExpanded, graph, recursionDiagram]);
+  }, [isDiagramExpanded, structuredDiagram]);
 
   const isRecursiveOrHybrid =
     algorithmKind === "recursive" || algorithmKind === "hybrid";
@@ -328,6 +156,13 @@ export default function TraceDedicatedView({
           {/* Columna derecha: contenido principal - misma estructura que análisis */}
           <section className="lg:col-span-8 h-full min-h-[420px]">
             <div className="glass-card !shadow-none p-4 rounded-lg h-full flex flex-col min-h-0 overflow-hidden">
+            <TraceStatusBanner
+              loading={loading}
+              error={error}
+              truncated={truncated}
+              truncationReason={truncationReason}
+              showLoading={false}
+            />
             {algorithmKind === null ? (
               <div className="flex-1 min-h-[200px] flex flex-col items-center justify-center gap-4">
                 <div className="relative flex items-center justify-center">
@@ -336,24 +171,9 @@ export default function TraceDedicatedView({
                 </div>
                 <p className="text-xs text-slate-400">{t("detectingAlgorithm")}</p>
               </div>
-            ) : isRecursiveOrHybrid ? (
-              <RecursiveTraceContent
-                source={source}
-                algorithmKind={algorithmKind || "recursive"}
-                inputSize={inputSize}
-                setInputSize={setInputSize}
-                debouncedInputSize={debouncedInputSize}
-                setDebouncedInputSize={setDebouncedInputSize}
-                recursionDiagram={recursionDiagram}
-                setRecursionDiagram={setRecursionDiagram}
-                loading={loading}
-                isDiagramExpanded={isDiagramExpanded}
-                setIsDiagramExpanded={setIsDiagramExpanded}
-                onLoadTrace={loadTrace}
-                variant="dedicated"
-              />
             ) : (
-              <IterativeTraceContent
+              <StructuredTraceContent
+                ast={ast}
                 source={source}
                 caseType={caseType}
                 onCaseChange={onCaseChange}
@@ -364,23 +184,28 @@ export default function TraceDedicatedView({
                 setDebouncedInputSize={setDebouncedInputSize}
                 trace={trace}
                 loading={loading}
+                structuredDiagram={structuredDiagram}
                 currentStep={currentStep}
                 setCurrentStep={setCurrentStep}
                 isPlaying={isPlaying}
                 setIsPlaying={setIsPlaying}
                 playSpeed={playSpeed}
-                graph={graph}
-                setGraph={setGraph}
-                explanation={explanation}
-                setExplanation={setExplanation}
-                loadingDiagram={loadingDiagram}
-                setLoadingDiagram={setLoadingDiagram}
-                exampleArray={exampleArray}
-                setExampleArray={setExampleArray}
                 isDiagramExpanded={isDiagramExpanded}
                 setIsDiagramExpanded={setIsDiagramExpanded}
-                onLoadTrace={loadTrace}
+                onLoadTrace={loadTraceWithReset}
+                initialVariablesOverride={initialVariablesOverride}
+                onVariablesChange={(vars) => {
+                  setInitialVariablesOverride(vars);
+                  loadTraceWithReset(true, vars);
+                }}
+                onResetToAuto={() => {
+                  setInitialVariablesOverride(null);
+                  loadTraceWithReset(true, null);
+                }}
+                exampleArray={exampleArray}
+                setExampleArray={setExampleArray}
                 variant="dedicated"
+              fetchCompleted={fetchCompleted}
               />
             )}
             </div>
@@ -389,7 +214,7 @@ export default function TraceDedicatedView({
 
       {/* Expanded diagram modal - portal a body para overlay en toda la pantalla (evita cuadrado de blur por transform en ancestros) */}
       {isDiagramExpanded &&
-        (graph || recursionDiagram) &&
+        structuredDiagram &&
         typeof document !== "undefined" &&
         ReactDOM.createPortal(
           <div className="fixed inset-0 z-[9999] flex items-center justify-center">
@@ -423,14 +248,7 @@ export default function TraceDedicatedView({
                 </button>
               </div>
               <div className="flex-1 min-h-0 p-3 bg-slate-900/80">
-                <ExecutionGraphView
-                  graph={
-                    (isRecursiveOrHybrid ? recursionDiagram?.graph : graph) || {
-                      nodes: [],
-                      edges: [],
-                    }
-                  }
-                />
+                <ExecutionGraphView graph={structuredDiagram.graph} />
               </div>
             </div>
           </div>,

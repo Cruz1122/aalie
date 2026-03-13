@@ -18,6 +18,7 @@ from .patterns.linear_counter import LinearCounterPattern
 from .patterns.flag_kill import FlagKillPattern
 from .patterns.euclid_mod import EuclidModPattern
 from .patterns.binary_search_interval import BinarySearchIntervalPattern
+from .patterns.geometric_growth import GeometricGrowthPattern
 
 
 @dataclass
@@ -58,6 +59,7 @@ class WhileAnalysisResult:
 # Patrones en orden de prioridad
 _PATTERNS = [
     ("linear_counter", LinearCounterPattern()),
+    ("geometric_growth", GeometricGrowthPattern()),
     ("flag_kill", FlagKillPattern()),
     ("euclid_mod", EuclidModPattern()),
     ("binary_search_interval", BinarySearchIntervalPattern()),
@@ -139,8 +141,10 @@ class WhileEngine:
                     asymptotic_class = "O(1)"
                 else:
                     asymptotic_class = iter_result.asymptotic_bound
+                # Patrón acotado: marcar status como bounded para que el visitor use el resultado
+                effective_status = "bounded" if iter_result.exact_symbolic_bound else status
                 return WhileAnalysisResult(
-                    status=status,
+                    status=effective_status,
                     termination="proven_terminating" if progress.proven else "not_proven",
                     iterations_expr=iterations_expr,
                     asymptotic_class=asymptotic_class,

@@ -931,15 +931,24 @@ class SummationCloser:
         expr_normalized = expr_normalized.replace('\\substack', '')
         expr_normalized = expr_normalized.replace('\\\\', '')
         expr_normalized = expr_normalized.replace(' ', '')
+
+        # Normalizar t_{while_X} y t_{repeat_X} a t_while_X, t_repeat_X (SymPy no parsea llaves)
+        expr_normalized = re.sub(r't_\{while_(\d+)\}', r't_while_\1', expr_normalized)
+        expr_normalized = re.sub(r't_\{repeat_(\d+)\}', r't_repeat_\1', expr_normalized)
         
         # Simplificar paréntesis redundantes: ((x)) → x, pero mantener estructura necesaria
         # Primero, detectar y crear símbolos para variables con subíndices
         constant_pattern = r'(\w+)_(\d+)'
         constants = {}
         for match in re.finditer(constant_pattern, expr_normalized):
-            const_name = match.group(0)  # ej: "j_0"
+            const_name = match.group(0)  # ej: "j_0", "t_while_3"
             if const_name not in constants:
                 constants[const_name] = Symbol(const_name, real=True)
+        # Símbolos iterativos t_while_X, t_repeat_X (ya normalizados arriba)
+        for match in re.finditer(r't_(?:while|repeat)_\d+', expr_normalized):
+            name = match.group(0)
+            if name not in constants:
+                constants[name] = Symbol(name, real=True, positive=True)
         
         # Crear contexto de símbolos
         syms = {variable: n}

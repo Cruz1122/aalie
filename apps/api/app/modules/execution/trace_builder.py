@@ -6,6 +6,8 @@ Author: Juan Camilo Cruz Parra (@Cruz1122)
 from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, asdict
 import json
+from sympy import Expr
+import copy
 
 # Estimación de coste por operación primitiva (μs). Heurística basada en operaciones típicas.
 MICROSECONDS_PER_TOKEN = 3.0
@@ -17,8 +19,10 @@ def _estimate_step_cost(event_kind: str) -> Tuple[int, float]:
     token_map = {
         "assign": 1,
         "condition_eval": 2,
+        "loop_enter": 1,
         "loop_iter_enter": 1,
         "loop_iter_exit": 1,
+        "loop_exit": 1,
         "call_enter": 2,
         "call_spawn_child": 2,
         "call_resume": 1,
@@ -27,21 +31,38 @@ def _estimate_step_cost(event_kind: str) -> Tuple[int, float]:
         "print": 2,
         "end": 0,
         "enter_block": 0,
+        "operation_enter": 2,
+        "operation_exit": 1,
+        "state_mutation": 1,
+        "result_emit": 1,
     }
     tokens = token_map.get(event_kind, 1)
     microseconds = tokens * MICROSECONDS_PER_TOKEN
     return (tokens, microseconds)
 
 
+def _serialize_value(value: Any) -> Any:
+    """Convierte valores no serializables (ej. SymPy) a formas seguras."""
+    if isinstance(value, Expr):
+        return str(value)
+    if isinstance(value, dict):
+        return {k: _serialize_value(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_serialize_value(v) for v in value]
+    return value
+
+
 @dataclass
 class ExecutionStep:
     """Un paso de ejecución individual."""
+    id: str
     step_number: int
-    line: int
-    kind: str  # eventKind: "assign" | "condition_eval" | "loop_iter_enter" | "call_enter" | "return_emit" | ...
-    variables: Dict[str, Any]
+    line: Optional[int]
+    kind: str  # eventKind: "assign" | "condition_eval" | "loop_enter" | ...
+    variables: Dict[str, Any]  # variablesSnapshot
+    variables_changed: Optional[Dict[str, Any]] = None  # Diff respecto al paso anterior
     iteration: Optional[Dict[str, Any]] = None  # Para bucles: {loopVar, currentValue, maxValue}
-    recursion: Optional[Dict[str, Any]] = None  # Para recursión: {depth, callId, params}
+    recursion: Optional[Dict[str, Any]] = None  # Para recursión: {depth, callId, params, parentCallId}
     cost: Optional[str] = None  # "C1", "C2", etc.
     accumulated_cost: Optional[str] = None  # Expresión acumulada
     description: Optional[str] = None  # Descripción del paso
@@ -90,6 +111,7 @@ class TraceBuilder:
         self.call_id_counter = 0
         self.cost_counter = 0
         self.accumulated_cost_parts: List[str] = []
+        self._prev_variables: Optional[Dict[str, Any]] = None
     
     def add_step(
         self,
@@ -102,6 +124,7 @@ class TraceBuilder:
         description: Optional[str] = None,
         event_kind: Optional[str] = None,
         decision: Optional[Dict[str, Any]] = None,
+        variables_changed: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Agrega un paso de ejecución.
@@ -138,12 +161,25 @@ class TraceBuilder:
         # Estimar tokens y microsegundos (heurística determinista)
         effective_kind = event_kind if event_kind else kind
         est_tokens, est_microseconds = _estimate_step_cost(effective_kind)
-        
+
+        # Calcular variablesChanged si no se proporciona
+        vchanged = variables_changed
+        if vchanged is None and self._prev_variables is not None:
+            vchanged = {
+                k: v for k, v in variables.items()
+                if k not in self._prev_variables or self._prev_variables.get(k) != v
+            }
+            if not vchanged:
+                vchanged = None
+        self._prev_variables = variables.copy()
+
         step = ExecutionStep(
+            id=f"step_{self.step_counter}",
             step_number=self.step_counter,
-            line=line,
+            line=line if line else None,
             kind=effective_kind,
             variables=variables.copy(),
+            variables_changed=vchanged,
             iteration=iteration,
             recursion=recursion,
             cost=cost,
@@ -162,18 +198,19 @@ class TraceBuilder:
         params: Dict[str, Any],
         function_name: Optional[str] = None,
         entry_line: Optional[int] = None,
+        parent_call_id: Optional[str] = None,
     ) -> None:
         """
         Registra el inicio de una llamada recursiva.
 
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        parent_id = self.recursion_stack[-1] if self.recursion_stack else None
+        parent_id = parent_call_id or (self.recursion_stack[-1] if self.recursion_stack else None)
 
         call = RecursionCall(
             id=call_id,
             depth=depth,
-            params=params.copy(),
+            params=copy.deepcopy(params),
             children=[],
             parent_id=parent_id,
             function_name=function_name,
@@ -237,8 +274,19 @@ class TraceBuilder:
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
+        def _step_to_dict(s: ExecutionStep) -> Dict[str, Any]:
+            d = asdict(s)
+            if d.get("variables_changed") is None:
+                d.pop("variables_changed", None)
+            if d.get("recursion") and isinstance(d["recursion"], dict):
+                d["recursion"]["params"] = _serialize_value(
+                    d["recursion"].get("params", {})
+                )
+            d["eventKind"] = d.get("kind", "")
+            return d
+
         result: Dict[str, Any] = {
-            "steps": [asdict(step) for step in self.steps]
+            "steps": [_step_to_dict(step) for step in self.steps]
         }
         
         # Agregar árbol de recursión si hay llamadas recursivas
@@ -253,6 +301,8 @@ class TraceBuilder:
             for call_id in sorted(self.recursion_calls.keys()):
                 c = self.recursion_calls[call_id]
                 d = asdict(c)
+                d["params"] = _serialize_value(d.get("params", {}))
+                d["return_value"] = _serialize_value(d.get("return_value"))
                 if c.base_case is not None:
                     d["is_base_case"] = bool(
                         c.base_case.get("detected", False) and c.base_case.get("matched", False)
@@ -281,4 +331,5 @@ class TraceBuilder:
         self.call_id_counter = 0
         self.cost_counter = 0
         self.accumulated_cost_parts.clear()
+        self._prev_variables = None
 

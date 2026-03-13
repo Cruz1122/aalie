@@ -10,6 +10,32 @@ Version: 0.1.0
 from typing import Any, Dict, List
 
 
+def _format_param_for_explanation(v: Any) -> str:
+    """Formatea valor para explicación legible (listas enlazadas como 1→2→3)."""
+    if v is None:
+        return "null"
+    if isinstance(v, (int, float, str)):
+        return str(v)
+    if isinstance(v, list):
+        if len(v) <= 4:
+            return "[" + ", ".join(str(x) for x in v) + "]"
+        return f"[{len(v)} elementos]"
+    if isinstance(v, dict) and ("siguiente" in v or "valor" in v):
+        parts = []
+        node = v
+        for _ in range(6):
+            if not node:
+                break
+            val = node.get("valor") or node.get("value")
+            if val is not None:
+                parts.append(str(val))
+            node = node.get("siguiente") or node.get("next")
+        return "→".join(parts) if parts else "lista"
+    if isinstance(v, dict):
+        return "[...]"
+    return str(v)
+
+
 def _t(key: str, **kwargs: Any) -> str:
     """Plantilla simple con placeholders {key}."""
     templates = {
@@ -74,7 +100,7 @@ def explain_step(step: Dict[str, Any], locale: str = "en") -> str:
         rec = step.get("recursion", {})
         proc = rec.get("procedure", "?")
         params = rec.get("params", {})
-        pstr = ", ".join(f"{k}={v}" for k, v in params.items())
+        pstr = ", ".join(f"{k}={_format_param_for_explanation(v)}" for k, v in params.items())
         if locale == "en":
             return f"Entering call {proc}({pstr})"
         return _t("call_enter", proc=proc, params=pstr)
@@ -92,65 +118,158 @@ def explain_steps(steps: List[Dict[str, Any]], locale: str = "en") -> List[str]:
     return [explain_step(s, locale) for s in steps]
 
 
+def _call_to_explanation_line(call: Dict[str, Any], locale: str) -> str:
+    """Línea legible para una llamada: fn(nodo=1→2→3, valor=4) → resultado."""
+    fn = call.get("function_name") or "proc"
+    params = call.get("params", {})
+    pstr = ", ".join(f"{k}={_format_param_for_explanation(v)}" for k, v in params.items())
+    ret = call.get("return_value")
+    base = call.get("is_base_case", False)
+    if locale == "es":
+        line = f"{fn}({pstr})"
+        if base:
+            line += " — caso base"
+        if ret is not None:
+            line += f" → {ret}"
+    else:
+        line = f"{fn}({pstr})"
+        if base:
+            line += " — base case"
+        if ret is not None:
+            line += f" → {ret}"
+    return line
+
+
 def explain_recursion_tree(trace: Dict[str, Any], locale: str = "en") -> str:
     """
-    Genera explicación determinista para el árbol de llamadas recursivas.
+    Explicación clara del árbol de llamadas recursivas.
+    Usa nombres de parámetros (nodo, valor, n) y formato legible.
 
-    Usa explain_steps para los pasos de call_enter y return_emit, o un resumen
-    basado en recursionTree.calls si no hay steps detallados.
-
-    Args:
-        trace: Trace completo con steps y/o recursionTree
-        locale: "en" | "es"
-
-    Returns:
-        Texto de explicación
+    Author: Mejora UX explicaciones (Bloque I)
+    Version: 0.2.0
     """
-    steps = trace.get("steps", [])
     recursion_tree = trace.get("recursionTree", {})
     calls = recursion_tree.get("calls", [])
 
     if not calls:
         return ""
 
-    # Resumen del árbol
     n_calls = len(calls)
     base_calls = [c for c in calls if c.get("is_base_case")]
     n_base = len(base_calls)
 
     if locale == "es":
-        intro = f"Árbol de llamadas con {n_calls} nodo(s)."
+        intro = f"El algoritmo realiza {n_calls} llamada(s) recursiva(s)."
         if n_base > 0:
-            intro += f" {n_base} caso(s) base."
+            intro += f" {n_base} de ellas son caso(s) base."
+        intro += "\n\nFlujo de ejecución:"
     else:
-        intro = f"Call tree with {n_calls} node(s)."
+        intro = f"The algorithm makes {n_calls} recursive call(s)."
         if n_base > 0:
-            intro += f" {n_base} base case(s)."
+            intro += f" {n_base} are base case(s)."
+        intro += "\n\nExecution flow:"
 
-    # Explicaciones de pasos significativos (call_enter, return_emit)
-    rec_steps = [
-        s for s in steps
-        if s.get("kind") in ("call_enter", "return_emit")
-        and s.get("recursion")
-    ]
-    if rec_steps:
-        explanations = [explain_step(s, locale) for s in rec_steps[:20]]
-        body = "\n\n".join(explanations)
-        return f"{intro}\n\n{body}"
+    lines = [intro]
+    for i, c in enumerate(calls[:15], 1):
+        lines.append(f"{i}. {_call_to_explanation_line(c, locale)}")
 
-    # Fallback: descripción por llamadas
-    parts = [intro]
-    for c in calls[:10]:
-        fn = c.get("function_name") or "proc"
-        params = c.get("params", {})
-        pstr = ", ".join(str(v) for v in params.values())
-        ret = c.get("return_value")
-        base = c.get("is_base_case", False)
-        line = f"- {fn}({pstr})"
-        if base:
-            line += " (base)"
-        if ret is not None:
-            line += f" → {ret}"
-        parts.append(line)
+    return "\n".join(lines)
 
-    return "\n".join(parts)
+
+def explain_minimal(trace: Dict[str, Any], locale: str = "en") -> str:
+    """
+    Nivel 1: explicación muy corta (1-2 frases).
+    Ej: "Se entra a factorial(4)."
+
+    Author: Plan refactor subsistema trace (Bloque I)
+    Version: 0.1.0
+    """
+    recursion_tree = trace.get("recursionTree", {})
+    calls = recursion_tree.get("calls", [])
+
+    if not calls:
+        return ""
+
+    root_ids = recursion_tree.get("root_calls", [])
+    root_id = root_ids[0] if root_ids else None
+    root = (
+        next((c for c in calls if c.get("id") == root_id), None)
+        or next((c for c in calls if c.get("parent_id") is None), calls[0])
+    )
+    proc = root.get("function_name") or "proc"
+    params = root.get("params", {})
+    pstr = ", ".join(str(v) for v in params.values())
+
+    if locale == "es":
+        return f"Se entra a {proc}({pstr})."
+    return f"Entering {proc}({pstr})."
+
+
+def build_explanation_summary(trace: Dict[str, Any], locale: str = "en") -> str:
+    """
+    Resumen global del árbol de llamadas (1-2 frases).
+
+    Author: Plan refactor subsistema trace (Bloque I)
+    Version: 0.1.0
+    """
+    return explain_recursion_tree(trace, locale).split("\n\n")[0]
+
+
+def build_explanation_events(
+    trace: Dict[str, Any], locale: str = "en"
+) -> List[Dict[str, Any]]:
+    """
+    Lista de eventos relevantes (call_enter, return_emit, condition_eval).
+
+    Author: Plan refactor subsistema trace (Bloque I)
+    Version: 0.1.0
+    """
+    steps = trace.get("steps", [])
+    events: List[Dict[str, Any]] = []
+    for s in steps:
+        kind = s.get("kind", "")
+        if kind in ("call_enter", "return_emit", "condition_eval"):
+            events.append(
+                {
+                    "stepId": s.get("step_number"),
+                    "kind": kind,
+                    "text": explain_step(s, locale),
+                }
+            )
+    return events[:30]
+
+
+def explain_node(
+    trace: Dict[str, Any], node_id: str, locale: str = "en"
+) -> str:
+    """
+    Texto corto por nodo (para tooltip/panel futuro).
+
+    Author: Plan refactor subsistema trace (Bloque I)
+    Version: 0.1.0
+    """
+    recursion_tree = trace.get("recursionTree", {})
+    calls = recursion_tree.get("calls", [])
+
+    for c in calls:
+        cid = c.get("call_id") or c.get("id")
+        if str(cid) == str(node_id) or f"call_{cid}" == str(node_id):
+            fn = c.get("function_name") or "proc"
+            params = c.get("params", {})
+            pstr = ", ".join(f"{k}={_format_param_for_explanation(v)}" for k, v in params.items())
+            ret = c.get("return_value")
+            base = c.get("is_base_case", False)
+            if locale == "es":
+                line = f"{fn}({pstr})"
+                if base:
+                    line += " (caso base)"
+                if ret is not None:
+                    line += f" → {ret}"
+            else:
+                line = f"{fn}({pstr})"
+                if base:
+                    line += " (base case)"
+                if ret is not None:
+                    line += f" → {ret}"
+            return line
+    return ""

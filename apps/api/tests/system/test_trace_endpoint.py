@@ -46,8 +46,8 @@ END
                     assert "calls" in rt
                     assert "root_calls" in rt
 
-    def test_trace_with_call_tree_deterministic(self):
-        """Con include_call_tree=true, el backend devuelve callTree cuando hay recursionTree."""
+    def test_trace_with_structured_trace_deterministic(self):
+        """El backend devuelve derived.structuredTrace con graph y patternKind."""
         source = """
 binarySearch(A, low, high, x) BEGIN
     IF (low > high) THEN BEGIN
@@ -71,18 +71,19 @@ END
                 "case": "worst",
                 "input_size": 8,
                 "initial_variables": {"A": [1, 2, 3, 4, 5, 6, 7, 8], "x": 9},
-                "include_call_tree": True,
             },
         )
         assert response.status_code == 200
         data = response.json()
         assert data.get("ok") is True
-        if data.get("algorithmKind") in ("recursive", "hybrid") and data.get("trace", {}).get("recursionTree"):
-            assert "callTree" in data
-            ct = data["callTree"]
-            assert "graph" in ct
-            assert "nodes" in ct["graph"]
-            assert len(ct["graph"]["nodes"]) > 0
+        derived = data.get("derived", {})
+        assert "structuredTrace" in derived
+        st = derived["structuredTrace"]
+        assert "graph" in st
+        assert "patternKind" in st
+        assert "classification" in st
+        assert "nodes" in st["graph"]
+        assert len(st["graph"]["nodes"]) > 0
 
     def test_trace_binary_search_recursive(self):
         """Búsqueda binaria recursiva."""
@@ -162,7 +163,6 @@ END
                 "case": "worst",
                 "input_size": 4,
                 "initial_variables": {"A": [1, 2, 3, 4], "x": 4},
-                "include_call_tree": True,
             },
         )
         assert response.status_code == 200
@@ -172,8 +172,9 @@ END
         assert "recursionTree" in data.get("trace", {})
         rt = data["trace"]["recursionTree"]
         assert len(rt.get("calls", [])) > 0
-        assert "callTree" in data
-        assert len(data["callTree"]["graph"]["nodes"]) > 0
+        st = data.get("derived", {}).get("structuredTrace", {})
+        assert "graph" in st
+        assert len(st["graph"]["nodes"]) > 0
 
     def test_trace_iterative_algorithm(self):
         """Algoritmo iterativo: búsqueda lineal."""
@@ -220,3 +221,34 @@ END
         """Falta source: 422."""
         response = client.post("/analyze/trace", json={"case": "worst"})
         assert response.status_code == 422
+
+    def test_trace_canonical_structure(self):
+        """Valida contrato canónico: kind, summary, diagnostics en trace."""
+        source = """
+fact(n) BEGIN
+    IF (n <= 1) THEN BEGIN
+        RETURN 1;
+    END;
+    RETURN n * fact(n - 1);
+END
+"""
+        response = client.post(
+            "/analyze/trace",
+            json={"source": source, "case": "worst", "input_size": 3},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("ok") is True
+        trace = data.get("trace", {})
+        assert "kind" in trace
+        assert trace["kind"] in ("iterative", "recursive", "hybrid", "unknown")
+        assert "summary" in trace
+        summary = trace["summary"]
+        assert "totalSteps" in summary
+        assert "totalCalls" in summary
+        assert "maxRecursionDepth" in summary
+        assert "algorithmKind" in summary
+        assert "diagnostics" in trace
+        diag = trace["diagnostics"]
+        assert "truncated" in diag
+        assert "warnings" in diag

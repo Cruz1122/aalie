@@ -27,8 +27,6 @@ export async function POST(request: NextRequest) {
       input_size,
       initial_variables,
       locale,
-      include_execution_diagram,
-      include_call_tree,
     } = body;
     
     if (!source) {
@@ -58,8 +56,6 @@ export async function POST(request: NextRequest) {
         input_size: input_size || null,
         initial_variables: initial_variables || null,
         locale: locale || "en",
-        include_execution_diagram: include_execution_diagram ?? false,
-        include_call_tree: include_call_tree ?? false,
       }),
       cache: "no-store",
     });

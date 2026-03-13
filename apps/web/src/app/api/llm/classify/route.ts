@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { GEMINI_ENDPOINT_BASE } from "../llm-config";
-
 export const runtime = "nodejs";
-
-// Validar formato de API_KEY de Gemini
-function validateApiKey(key: string | undefined): boolean {
-  if (!key || typeof key !== "string") {
-    return false;
-  }
-  const API_KEY_REGEX = /^AIza[0-9A-Za-z_-]{35,40}$/;
-  return API_KEY_REGEX.test(key.trim());
-}
 
 type ClassifyResponse = {
   kind: "iterative" | "recursive" | "hybrid" | "unknown";
@@ -94,9 +83,7 @@ async function classifyWithBackend(
 
 export async function POST(req: NextRequest) {
   try {
-    const { source, mode, apiKey } = (await req.json()) as ClassifyRequest & {
-      apiKey?: string;
-    };
+    const { source, mode } = (await req.json()) as ClassifyRequest;
     if (!source || typeof source !== "string") {
       return NextResponse.json(
         { error: "Source code is required" },

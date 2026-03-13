@@ -22,8 +22,8 @@ export default {
         xs: "2px",
       },
       boxShadow: {
-        glass: "0 8px 32px 0 rgba(31, 38, 135, 0.37)",
-        "glass-hover": "0 12px 40px 0 rgba(31, 38, 135, 0.4)",
+        glass: "none",
+        "glass-hover": "none",
         primary: "0 4px 20px 0 rgba(13, 127, 242, 0.3)",
         "primary-hover": "0 6px 25px 0 rgba(13, 127, 242, 0.4)",
       },
