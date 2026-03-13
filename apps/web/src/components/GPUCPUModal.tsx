@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { GPUCPUAnalysisResult, GPUCPUMetrics } from "@/types/gpu-cpu";
 
