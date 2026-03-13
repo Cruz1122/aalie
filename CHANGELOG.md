@@ -7,32 +7,20 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
-No hay cambios publicados todavía.
-
-## [1.2.1]
-
 ### Added
-- Nueva vista de seguimiento más clara y cómoda, tanto para escritorio como para móvil.
-- Sistema de trazas unificado para mostrar mejor el recorrido de algoritmos iterativos y recursivos.
-- Más pruebas automáticas y documentación para asegurar resultados consistentes en diagramas y complejidad.
-- Mejoras de internacionalización en mensajes y etiquetas del seguimiento.
-
-### Fixed
-- Correcciones en recursividad para evitar llamadas repetidas o árboles de llamadas incorrectos.
-- Solucionados bloqueos ocasionales al detectar el tipo de algoritmo.
-- Arreglos en casos límite de diagramas (por ejemplo, árboles con un solo nodo).
-- Mejoras en el análisis de bucles y expresiones para evitar resultados negativos o notaciones confusas.
-- Ajustes en Bubble Sort, Euclides y otros casos donde la complejidad podía salir mal en escenarios concretos.
+- Validación previa de Programación Dinámica (PD) para recurrencias lineales en backend, incluyendo metadatos `dp_validation` con estado, patrón sugerido, patrones soportados y razones.
+- Registro de eventos `dp_validation_events` para trazabilidad de aceptación/rechazo de PD.
+- Nuevas pruebas unitarias, de contrato, de servicio y de sistema para cubrir casos representativos (Fibonacci, Hanoi, factorial y recurrencias dispersas).
+- Nuevas claves i18n (`en`/`es`) para estado de aplicabilidad, patrón y mensajes explicativos de PD.
 
 ### Changed
-- Se simplificó la experiencia de seguimiento: menos pasos innecesarios y vista más directa.
-- El seguimiento recursivo ahora muestra explicaciones más legibles y parámetros más claros.
-- Se renovaron componentes de interfaz para mantener una apariencia más consistente.
-- Reorganización interna del motor de análisis para hacerlo más mantenible.
+- La UI de análisis recursivo y modal de DP ahora prioriza metadatos del backend y usa lenguaje de "hipótesis DP" en lugar de afirmaciones categóricas.
+- Los ejemplos y textos relacionados con PD se ajustaron para reflejar niveles de confianza (clara, dudosa, descartada).
+- Se refinó la presentación del modal de DP para mostrar mejor el patrón detectado, alternativas y complejidad recursiva inferida.
 
-### Removed
-- Se retiró el sistema antiguo de diagramas y código obsoleto relacionado.
-- Se eliminaron rutas y piezas heredadas que ya no se usan en el flujo actual.
+### Fixed
+- Se evita marcar como PD aplicable casos donde no corresponde (divide-and-conquer estilo Master, falta de solapamiento o parámetros de estado mutables).
+- Se corrige la sugerencia de patrón DP para que "ventana deslizante" solo aparezca cuando la estructura de la recurrencia realmente lo permite.
 
 ## [1.2.0]
 ### Added

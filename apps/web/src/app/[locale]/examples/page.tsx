@@ -232,7 +232,7 @@ END`,
     id: 12,
     name: "Fibonacci Recursivo",
     description:
-      "Calcula el n-ésimo número de Fibonacci usando recursión directa. Ahora analizado con el método de Ecuación Característica porque T(n) = T(n-1) + T(n-2) es una recurrencia lineal con desplazamientos constantes. Detecta automáticamente que es un caso de Programación Dinámica lineal.",
+      "Calcula el n-ésimo número de Fibonacci usando recursión directa. Se analiza con Ecuación Característica porque T(n) = T(n-1) + T(n-2) es una recurrencia lineal con desplazamientos constantes, y se sugiere una versión DP como hipótesis de optimización.",
     complexity: "O(φⁿ) donde φ = (1+√5)/2 ≈ 1.618",
     code: `fibonacci(n) BEGIN
     IF (n <= 1) THEN BEGIN
@@ -243,14 +243,14 @@ END`,
     END
 END`,
     category: "recursive_characteristic",
-    note: "Se analiza con Ecuación Característica (DP lineal detectada)",
+    note: "Se analiza con Ecuación Característica (hipótesis DP lineal)",
     isHomogeneous: true, // T(n) = T(n-1) + T(n-2) es homogénea
   },
   {
     id: 13,
     name: "Torres de Hanoi",
     description:
-      "Resuelve el problema clásico de las Torres de Hanoi usando recursión. Analizado con el método de Ecuación Característica porque T(n) = 2T(n-1) + 1 es una recurrencia lineal. Detecta automáticamente que es un caso de Programación Dinámica lineal.",
+      "Resuelve el problema clásico de las Torres de Hanoi usando recursión. Se analiza con Ecuación Característica porque T(n) = 2T(n-1) + 1 es una recurrencia lineal, y la versión DP se presenta como opción sujeta a validación.",
     complexity: "Best: O(1), Worst: O(2ⁿ), Avg: O(2ⁿ)",
     code: `hanoi(n, origen, destino, auxiliar) BEGIN
     IF (n = 1) THEN BEGIN
@@ -264,7 +264,7 @@ END`,
     END
 END`,
     category: "recursive_characteristic",
-    note: "Se analiza con Ecuación Característica (DP lineal detectada)",
+    note: "Se analiza con Ecuación Característica (DP lineal sugerida)",
     isHomogeneous: false, // T(n) = 2T(n-1) + 1 es no homogénea (tiene +1)
   },
   {

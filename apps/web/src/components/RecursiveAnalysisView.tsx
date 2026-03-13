@@ -24,6 +24,110 @@ type MasterType = AnalyzeOpenResponse["totals"]["master"];
 type ProofType = AnalyzeOpenResponse["totals"]["proof"];
 
 type CaseType = "worst" | "best" | "average";
+type DPApplicabilityStatus = "clear" | "doubtful" | "rejected";
+type DPPatternType = "table" | "memoization" | "rolling_window" | "none";
+
+interface DPApplicabilityInfo {
+  status: DPApplicabilityStatus;
+  pattern: DPPatternType;
+  reasonKey: string;
+  reasonText?: string;
+}
+
+function inferDPPattern(
+  characteristicEquation: CharacteristicEquationType,
+): DPPatternType {
+  const backendPattern = characteristicEquation?.dp_validation?.primary_pattern;
+  if (backendPattern === "tabulation") return "table";
+  if (backendPattern === "memoization") return "memoization";
+  if (backendPattern === "rolling_window") return "rolling_window";
+
+  const dpCode = characteristicEquation?.dp_version?.code?.toLowerCase() ?? "";
+  const optimizedSpace =
+    characteristicEquation?.dp_optimized_version?.space_complexity ?? "";
+
+  if (dpCode.includes("memo") || dpCode.includes("cache")) {
+    return "memoization";
+  }
+  if (optimizedSpace.trim() === "O(1)") {
+    return "rolling_window";
+  }
+  if (characteristicEquation?.dp_version) {
+    return "table";
+  }
+  return "none";
+}
+
+function inferDPApplicability(
+  characteristicEquation: CharacteristicEquationType,
+  recurrence: RecurrenceType,
+): DPApplicabilityInfo {
+  const backendValidation = characteristicEquation?.dp_validation;
+  if (backendValidation) {
+    return {
+      status:
+        backendValidation.status === "clear"
+          ? "clear"
+          : backendValidation.status === "doubtful"
+            ? "doubtful"
+            : "rejected",
+      pattern: inferDPPattern(characteristicEquation),
+      reasonKey: backendValidation.applicable
+        ? backendValidation.status === "clear"
+          ? "dpReasonStrongReduction"
+          : "dpReasonNoStrongGain"
+        : recurrence?.type === "divide_conquer"
+          ? "dpReasonMasterPreferred"
+          : "dpReasonValidationRejected",
+      reasonText: backendValidation.reasons?.[0],
+    };
+  }
+
+  const hasDPVersion = Boolean(characteristicEquation?.dp_version);
+  if (!characteristicEquation?.is_dp_linear || !hasDPVersion) {
+    if (recurrence?.type === "divide_conquer") {
+      return {
+        status: "rejected",
+        pattern: "none",
+        reasonKey: "dpReasonMasterPreferred",
+      };
+    }
+    return {
+      status: "rejected",
+      pattern: "none",
+      reasonKey: "dpReasonValidationRejected",
+    };
+  }
+
+  const recursive =
+    characteristicEquation.dp_version?.recursive_complexity?.toLowerCase() ?? "";
+  const dpTime =
+    characteristicEquation.dp_version?.time_complexity?.toLowerCase() ?? "";
+  const hasImprovement =
+    characteristicEquation.dp_version?.recursive_complexity?.trim() !==
+    characteristicEquation.dp_version?.time_complexity?.trim();
+  const exponentialLike =
+    recursive.includes("^n") ||
+    recursive.includes("2^n") ||
+    recursive.includes("n!") ||
+    recursive.includes("phi^n") ||
+    recursive.includes("φ^");
+
+  const pattern = inferDPPattern(characteristicEquation);
+  if (hasImprovement && exponentialLike && dpTime.includes("o(n)")) {
+    return {
+      status: "clear",
+      pattern,
+      reasonKey: "dpReasonStrongReduction",
+    };
+  }
+
+  return {
+    status: "doubtful",
+    pattern,
+    reasonKey: "dpReasonNoStrongGain",
+  };
+}
 
 /**
  * Obtiene las clases CSS para el badge de un tipo de caso.
@@ -471,9 +575,31 @@ const renderProcedureModal = (
  */
 const renderCharacteristicBadges = (
   characteristicEquation: CharacteristicEquationType,
+  recurrence: RecurrenceType,
+  locale: "en" | "es",
   tView: (key: string) => string,
 ): React.JSX.Element | null => {
   if (!characteristicEquation) return null;
+
+  const dpApplicability = inferDPApplicability(characteristicEquation, recurrence);
+  const dpBadgeClass =
+    dpApplicability.status === "clear"
+      ? "bg-green-500/20 text-green-300 border-green-500/30"
+      : dpApplicability.status === "doubtful"
+        ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
+        : "bg-red-500/20 text-red-300 border-red-500/30";
+  const dpBadgeIcon =
+    dpApplicability.status === "clear"
+      ? "check_circle"
+      : dpApplicability.status === "doubtful"
+        ? "help"
+        : "cancel";
+  const dpStatusLabel =
+    dpApplicability.status === "clear"
+      ? tView("dpApplicabilityClear")
+      : dpApplicability.status === "doubtful"
+        ? tView("dpApplicabilityDoubtful")
+        : tView("dpApplicabilityRejected");
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -493,13 +619,32 @@ const renderCharacteristicBadges = (
           {tView("homogeneous")}
         </span>
       )}
-      {/* Badge de DP si aplica */}
-      {characteristicEquation.is_dp_linear && (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold border bg-green-500/20 text-green-300 border-green-500/30">
-          <span className="material-symbols-outlined text-xs mr-1">memory</span>{" "}
-          {tView("dpLinearDetected")}
+      <span
+        className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold border ${dpBadgeClass}`}
+      >
+        <span className="material-symbols-outlined text-xs mr-1">{dpBadgeIcon}</span>{" "}
+        {dpStatusLabel}
+      </span>
+
+      {dpApplicability.pattern !== "none" && (
+        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold border bg-cyan-500/20 text-cyan-300 border-cyan-500/30">
+          <span className="material-symbols-outlined text-xs mr-1">schema</span>{" "}
+          {tView(
+            dpApplicability.pattern === "table"
+              ? "dpPatternTable"
+              : dpApplicability.pattern === "memoization"
+                ? "dpPatternMemoization"
+                : "dpPatternRollingWindow",
+          )}
         </span>
       )}
+
+      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-medium border bg-slate-500/20 text-slate-300 border-slate-500/30">
+        <span className="material-symbols-outlined text-xs mr-1">info</span>{" "}
+        {dpApplicability.reasonText
+          ? translateBackendContent(dpApplicability.reasonText, locale)
+          : tView(dpApplicability.reasonKey)}
+      </span>
     </div>
   );
 };
@@ -582,6 +727,7 @@ interface ActionButtonsProps {
   readonly setShowStepsModal: (show: boolean) => void;
   readonly setShowDPModal: (show: boolean) => void;
   readonly characteristicEquation: CharacteristicEquationType;
+  readonly dpApplicability: DPApplicabilityInfo;
 }
 
 /**
@@ -622,7 +768,8 @@ const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
         </button>
       )}
       {props.isCharacteristicMethod &&
-        props.characteristicEquation?.is_dp_linear && (
+        props.dpApplicability.status !== "rejected" &&
+        props.characteristicEquation?.dp_version && (
           <button
             onClick={() => props.setShowDPModal(true)}
             className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-green-500/20 transition-colors min-w-0"
@@ -1079,6 +1226,10 @@ export default function RecursiveAnalysisView({
     !isIterationMethod &&
     !isRecursionTreeMethod &&
     !!master;
+  const dpApplicability = useMemo(
+    () => inferDPApplicability(characteristicEquation, recurrence),
+    [characteristicEquation, recurrence],
+  );
 
   // Obtener T_open para cada caso
   const bestT =
@@ -1208,7 +1359,12 @@ export default function RecursiveAnalysisView({
 
             {/* Badges de información (solo para ecuación característica) */}
             {isCharacteristicMethod &&
-              renderCharacteristicBadges(characteristicEquation, tView)}
+              renderCharacteristicBadges(
+                characteristicEquation,
+                recurrence,
+                locale,
+                tView,
+              )}
           </div>
         </div>
 
@@ -1244,7 +1400,9 @@ export default function RecursiveAnalysisView({
 
           // Si es ecuación característica y hay botón de árbol, mostrar los tres botones en la misma línea
           if (isCharacteristicMethod && showTreeButton) {
-            const hasDPButton = characteristicEquation?.is_dp_linear;
+            const hasDPButton =
+              dpApplicability.status !== "rejected" &&
+              Boolean(characteristicEquation?.dp_version);
             return (
               <div
                 className={`mb-4 grid gap-3 grid-cols-1 sm:grid-cols-2 ${hasDPButton ? "lg:grid-cols-3" : ""}`}
@@ -1321,6 +1479,7 @@ export default function RecursiveAnalysisView({
                 setShowStepsModal,
                 setShowDPModal,
                 characteristicEquation,
+                dpApplicability,
               })}
               {showTreeButton && (
                 <div className="mb-4">
@@ -1395,7 +1554,9 @@ export default function RecursiveAnalysisView({
       })}
 
       {/* Modal de versión DP */}
-      {isCharacteristicMethod && characteristicEquation?.is_dp_linear && (
+      {isCharacteristicMethod &&
+        dpApplicability.status !== "rejected" &&
+        characteristicEquation?.dp_version && (
         <DPVersionModal
           open={showDPModal}
           onClose={() => setShowDPModal(false)}
