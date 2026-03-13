@@ -7,20 +7,38 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
-### Added
-- Validación previa de Programación Dinámica (PD) para recurrencias lineales en backend, incluyendo metadatos `dp_validation` con estado, patrón sugerido, patrones soportados y razones.
-- Registro de eventos `dp_validation_events` para trazabilidad de aceptación/rechazo de PD.
-- Nuevas pruebas unitarias, de contrato, de servicio y de sistema para cubrir casos representativos (Fibonacci, Hanoi, factorial y recurrencias dispersas).
-- Nuevas claves i18n (`en`/`es`) para estado de aplicabilidad, patrón y mensajes explicativos de PD.
+No hay cambios publicados todavía.
 
-### Changed
-- La UI de análisis recursivo y modal de DP ahora prioriza metadatos del backend y usa lenguaje de "hipótesis DP" en lugar de afirmaciones categóricas.
-- Los ejemplos y textos relacionados con PD se ajustaron para reflejar niveles de confianza (clara, dudosa, descartada).
-- Se refinó la presentación del modal de DP para mostrar mejor el patrón detectado, alternativas y complejidad recursiva inferida.
+## [1.2.1]
+
+### Added
+- Nueva vista de seguimiento más clara y cómoda, tanto para escritorio como para móvil.
+- Sistema de trazas unificado para mostrar mejor el recorrido de algoritmos iterativos y recursivos.
+- Más pruebas automáticas y documentación para asegurar resultados consistentes en diagramas y complejidad.
+- Mejoras de internacionalización en mensajes y etiquetas del seguimiento.
+- Se añadieron más pruebas para casos recursivos donde antes podían salir recomendaciones confusas.
+- Se agregaron mensajes más claros en español e inglés para explicar cuándo conviene usar Programación Dinámica.
 
 ### Fixed
-- Se evita marcar como PD aplicable casos donde no corresponde (divide-and-conquer estilo Master, falta de solapamiento o parámetros de estado mutables).
-- Se corrige la sugerencia de patrón DP para que "ventana deslizante" solo aparezca cuando la estructura de la recurrencia realmente lo permite.
+- Correcciones en recursividad para evitar llamadas repetidas o árboles de llamadas incorrectos.
+- Solucionados bloqueos ocasionales al detectar el tipo de algoritmo.
+- Arreglos en casos límite de diagramas (por ejemplo, árboles con un solo nodo).
+- Mejoras en el análisis de bucles y expresiones para evitar resultados negativos o notaciones confusas.
+- Ajustes en Bubble Sort, Euclides y otros casos donde la complejidad podía salir mal en escenarios concretos.
+- Se evitó recomendar Programación Dinámica en situaciones donde no aplica o no aporta mejora real.
+- Se corrigió cuándo sugerir la optimización de "ventana deslizante" para no mostrarla donde no corresponde.
+
+### Changed
+- Se simplificó la experiencia de seguimiento: menos pasos innecesarios y vista más directa.
+- El seguimiento recursivo ahora muestra explicaciones más legibles y parámetros más claros.
+- Se renovaron componentes de interfaz para mantener una apariencia más consistente.
+- Reorganización interna del motor de análisis para hacerlo más mantenible.
+- En la interfaz se cambió el tono para hablar de "hipótesis" en vez de afirmaciones absolutas al sugerir Programación Dinámica.
+- Se ajustaron ejemplos y modal para explicar mejor el nivel de confianza de cada sugerencia.
+
+### Removed
+- Se retiró el sistema antiguo de diagramas y código obsoleto relacionado.
+- Se eliminaron rutas y piezas heredadas que ya no se usan en el flujo actual.
 
 ## [1.2.0]
 ### Added
