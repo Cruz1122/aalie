@@ -8,6 +8,7 @@ import { useTraceController } from "@/hooks/trace/useTraceController";
 import type { CaseType } from "@/types/trace";
 
 import ExecutionGraphView from "./ExecutionGraphView";
+import BaseModalContainer from "./modals/BaseModalContainer";
 import StructuredTraceContent from "./trace/StructuredTraceContent";
 
 /**
@@ -33,7 +34,7 @@ export default function ExecutionTraceModal({
   ast,
   caseType,
   onCaseChange,
-}: ExecutionTraceModalProps) {
+}: Readonly<ExecutionTraceModalProps>) {
   const locale = useLocale();
   const t = useTranslations("analyzer.executionTrace");
   const tAlgorithm = useTranslations("analyzer.algorithmType");
@@ -111,13 +112,19 @@ export default function ExecutionTraceModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center">
-      <div
-        className="absolute inset-0 glass-modal-overlay"
-        onClick={onClose}
-      />
-
-      <div className="relative z-10 glass-modal-container rounded-2xl p-4 sm:p-6 w-[95vw] max-w-[95vw] sm:max-w-6xl h-[90vh] max-h-[90dvh] mx-2 sm:mx-4 shadow-2xl flex flex-col overflow-hidden">
+    <BaseModalContainer
+      open={open}
+      onClose={onClose}
+      title={t("title")}
+      titleIcon="play_circle"
+      closeAriaLabel={t("close")}
+      zIndexClassName="z-[70]"
+      sizeClassName="w-[95vw] max-w-[95vw] sm:max-w-6xl h-[90vh] max-h-[90dvh]"
+      panelClassName="p-4 sm:p-6 mx-2 sm:mx-4"
+      showHeader={false}
+      contentClassName="p-0"
+      lockBodyScroll={false}
+    >
         {loading && algorithmKind === null ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
             <div className="relative flex items-center justify-center">
@@ -233,7 +240,6 @@ export default function ExecutionTraceModal({
             )}
           </div>
         )}
-      </div>
-    </div>
+    </BaseModalContainer>
   );
 }

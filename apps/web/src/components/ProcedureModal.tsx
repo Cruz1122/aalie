@@ -11,6 +11,7 @@ import React, {
 } from "react";
 
 import Formula from "./Formula";
+import BaseModalContainer from "./modals/BaseModalContainer";
 
 /**
  * Helper para renderizar variables con KaTeX (memoizado).
@@ -578,57 +579,34 @@ export default function ProcedureModal({
   );
 
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-
-    if (open) {
-      // Bloquear scroll de la página
-      document.body.style.overflow = "hidden";
-      document.addEventListener("keydown", onKey);
-    } else {
-      // Restaurar scroll de la página
-      document.body.style.overflow = "unset";
-    }
-
     return () => {
-      document.body.style.overflow = "unset";
-      document.removeEventListener("keydown", onKey);
       if (scrollDebounce) {
         clearTimeout(scrollDebounce);
       }
     };
-  }, [open, onClose, scrollDebounce]);
+  }, [scrollDebounce]);
 
   if (!open) return null;
 
   const isLineProcedure = selectedLine !== null && selectedLine !== undefined;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute -top-8 -left-4 -right-4 -bottom-4 glass-modal-overlay" />
-      <div className="relative z-10 w-[min(95vw,1200px)] max-h-[90vh] rounded-2xl glass-modal-container shadow-2xl flex flex-col overflow-hidden mx-4">
-        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 flex-shrink-0 glass-modal-header">
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <span className="material-symbols-outlined text-blue-400">description</span>
-            {modalTitle}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
-            aria-label={t("closeModal")}
-          >
-            ✕
-          </button>
-        </div>
-        <div
-          className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-custom"
-          onScroll={handleScroll}
-          style={{
-            scrollBehavior: "smooth",
-            willChange: "scroll-position",
-          }}
-        >
+    <BaseModalContainer
+      open={open}
+      onClose={onClose}
+      title={modalTitle}
+      titleIcon="description"
+      closeAriaLabel={t("closeModal")}
+      sizeClassName="w-[min(95vw,1200px)] max-h-[90vh]"
+      contentClassName="space-y-6"
+      contentProps={{
+        onScroll: handleScroll,
+        style: {
+          scrollBehavior: "smooth",
+          willChange: "scroll-position",
+        },
+      }}
+    >
           {isLineProcedure ? (
             // Contenido específico para una línea
             <div className="space-y-4">
@@ -1110,8 +1088,6 @@ export default function ProcedureModal({
               )}
             </>
           )}
-        </div>
-      </div>
-    </div>
+    </BaseModalContainer>
   );
 }

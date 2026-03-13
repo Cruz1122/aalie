@@ -244,7 +244,7 @@ END`,
 END`,
     category: "recursive_characteristic",
     note: "Se analiza con Ecuación Característica (hipótesis DP lineal)",
-    isHomogeneous: true, // T(n) = T(n-1) + T(n-2) es homogénea
+    isHomogeneous: false, // En el modelo de costo T(n), el trabajo local aporta g(n)=1
   },
   {
     id: 13,
@@ -265,7 +265,7 @@ END`,
 END`,
     category: "recursive_characteristic",
     note: "Se analiza con Ecuación Característica (DP lineal sugerida)",
-    isHomogeneous: false, // T(n) = 2T(n-1) + 1 es no homogénea (tiene +1)
+    isHomogeneous: false, // En el modelo de costo T(n), el trabajo local aporta g(n)=1
   },
   {
     id: 14,
@@ -462,7 +462,7 @@ END`,
 END`,
     category: "recursive_characteristic",
     note: "Se analiza con Ecuación Característica (DP lineal detectada)",
-    isHomogeneous: true, // T(n) = T(n-1) + T(n-2) es homogénea
+    isHomogeneous: false, // En el modelo de costo T(n), el trabajo local aporta g(n)=1
   },
   {
     id: 21,
@@ -487,7 +487,7 @@ END`,
 END`,
     category: "recursive_characteristic",
     note: "Se analiza con Ecuación Característica (DP lineal detectada)",
-    isHomogeneous: true, // T(n) = T(n-1) + T(n-2) es homogénea
+    isHomogeneous: false, // En el modelo de costo T(n), el trabajo local aporta g(n)=1
   },
   {
     id: 22,
@@ -505,7 +505,7 @@ END`,
 END`,
     category: "recursive_characteristic",
     note: "Se analiza con Ecuación Característica (DP lineal detectada)",
-    isHomogeneous: true, // T(n) = T(n-1) + T(n-2) es homogénea
+    isHomogeneous: false, // En el modelo de costo T(n), el trabajo local aporta g(n)=1
   },
   {
     id: 23,
@@ -529,13 +529,13 @@ END`,
 END`,
     category: "recursive_characteristic",
     note: "Se analiza con Ecuación Característica (DP lineal detectada)",
-    isHomogeneous: true, // T(n) = T(n-1) + T(n-2) + T(n-3) es homogénea
+    isHomogeneous: false, // En el modelo de costo T(n), el trabajo local aporta g(n)=1
   },
   {
     id: 24,
     name: "Pell Numbers",
     description:
-      "Calcula el n-ésimo número de Pell usando la recurrencia P(n) = 2P(n-1) + P(n-2). Recurrencia lineal homogénea. Analizado con Ecuación Característica.",
+      "Calcula el n-ésimo número de Pell usando la recurrencia P(n) = 2P(n-1) + P(n-2). En el modelo de costo temporal, se analiza como no homogénea (g(n)=1). Analizado con Ecuación Característica.",
     complexity: "O((1+√2)ⁿ)",
     code: `pell(n) BEGIN
     IF (n <= 1) THEN BEGIN
@@ -547,7 +547,7 @@ END`,
 END`,
     category: "recursive_characteristic",
     note: "Se analiza con Ecuación Característica (DP lineal detectada)",
-    isHomogeneous: true, // P(n) = 2P(n-1) + P(n-2) es homogénea (sin término constante)
+    isHomogeneous: false, // En el modelo de costo T(n), el trabajo local aporta g(n)=1
   },
 
   // ========== Recursivos (Únicamente Teorema Maestro) ==========
@@ -711,7 +711,7 @@ export default function ExamplesPage() {
     finishNavigation();
   }, [finishNavigation]);
 
-  // Scroll spy: actualizar activeSection al hacer scroll
+  // Scroll spy: usa IntersectionObserver para evitar reflow por frame durante scroll.
   useEffect(() => {
     const categories = [
       "simple",
@@ -721,26 +721,84 @@ export default function ExamplesPage() {
       "recursive_tree",
       "recursive_characteristic",
     ] as ExampleCategory[];
-    const onScroll = () => {
-      const headerOffset = 100;
-      const sections = categories
-        .map((cat) => ({
-          id: cat,
-          el: document.getElementById(`category-${cat}`),
-        }))
-        .filter((s) => s.el)
-        .map((s) => ({
-          id: s.id,
-          top: s.el!.getBoundingClientRect().top,
-        }));
-      const passed = sections.filter((s) => s.top <= headerOffset);
-      const toSet =
-        passed.length > 0 ? passed[passed.length - 1].id : sections[0]?.id ?? categories[0];
-      setActiveSection(toSet);
+
+    const sectionElements = categories
+      .map((category) => ({
+        id: category,
+        el: document.getElementById(`category-${category}`),
+      }))
+      .filter(
+        (section): section is { id: ExampleCategory; el: HTMLElement } =>
+          section.el instanceof HTMLElement,
+      );
+
+    if (sectionElements.length === 0) return;
+
+    let rafId: number | null = null;
+    const visible = new Map<ExampleCategory, number>();
+
+    const getNearestVisibleCategory = (): ExampleCategory => {
+      let nearestCategory = sectionElements[0].id;
+      let nearestDistance = Number.POSITIVE_INFINITY;
+
+      for (const [category, top] of visible.entries()) {
+        const distance = Math.abs(top);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestCategory = category;
+        }
+      }
+
+      return nearestCategory;
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const category = entry.target.id.replace(
+            "category-",
+            "",
+          ) as ExampleCategory;
+
+          if (entry.isIntersecting) {
+            visible.set(category, entry.boundingClientRect.top);
+          } else {
+            visible.delete(category);
+          }
+        }
+
+        if (rafId !== null) return;
+        rafId = globalThis.requestAnimationFrame(() => {
+          rafId = null;
+
+          if (visible.size === 0) {
+            setActiveSection(sectionElements[0].id);
+            return;
+          }
+
+          setActiveSection(getNearestVisibleCategory());
+        });
+      },
+      {
+        root: null,
+        rootMargin: "-15% 0px -70% 0px",
+        threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
+      },
+    );
+
+    for (const section of sectionElements) {
+      observer.observe(section.el);
+    }
+
+    setActiveSection(sectionElements[0].id);
+
+    return () => {
+      if (rafId !== null) {
+        globalThis.cancelAnimationFrame(rafId);
+      }
+      observer.disconnect();
+      visible.clear();
+    };
   }, []);
 
   const handleCopy = async (code: string, id: number) => {
@@ -773,7 +831,7 @@ export default function ExamplesPage() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8 mt-6">
             {/* TOC lateral - primero en mobile, lateral en desktop */}
             <aside className="lg:col-span-1 order-1 lg:order-1">
-              <div className="glass-card p-4 sticky top-4 rounded-xl border border-white/5">
+              <div className="glass-card p-4 sticky top-4 z-10 rounded-xl border border-white/5">
                 <div className="flex items-center gap-2 mb-4">
                   <span className="material-symbols-outlined text-primary text-xl">
                     list

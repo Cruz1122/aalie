@@ -83,7 +83,7 @@ const SUB_ICONS: Record<string, string> = {
 export function UserGuideTableOfContents({
   sections,
   onSectionClick,
-}: UserGuideTableOfContentsProps) {
+}: Readonly<UserGuideTableOfContentsProps>) {
   const t = useTranslations("userGuide");
   const sectionMap = new Map(sections.map((s) => [s.id, s]));
   const [activeSection, setActiveSection] = useState<string>(sections[0]?.id ?? "");
@@ -120,7 +120,7 @@ export function UserGuideTableOfContents({
 
   return (
     <aside className="lg:col-span-1">
-      <div className="glass-card p-5 sticky top-4 rounded-xl border border-white/5">
+      <div className="glass-card p-5 sticky top-4 z-10 rounded-xl border border-white/5">
         <div className="flex items-center gap-2 mb-4">
           <span className="material-symbols-outlined text-primary text-xl">
             list

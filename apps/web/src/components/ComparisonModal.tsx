@@ -8,6 +8,7 @@ import { translateBackendContent } from "@/lib/backend-content-translator";
 import type { CoreAnalysisData } from "@/lib/extract-core-data";
 
 import Formula from "./Formula";
+import BaseModalContainer from "./modals/BaseModalContainer";
 
 interface ComparisonModalProps {
   open: boolean;
@@ -1452,12 +1453,18 @@ export default function ComparisonModal({
   const { icon, text, color, bgColor, borderColor } = parseNote(note);
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center">
-      {/* Overlay */}
-      <div className="absolute inset-0 glass-modal-overlay" onClick={onClose} />
-
-      {/* Modal */}
-      <div className="relative z-10 glass-modal-container rounded-2xl p-6 w-[90vw] max-w-7xl h-[85vh] mx-4 shadow-2xl flex flex-col">
+    <BaseModalContainer
+      open={open}
+      onClose={onClose}
+      title={tView("comparisonWithLlm")}
+      titleIcon="compare_arrows"
+      closeAriaLabel={tCommon("close")}
+      zIndexClassName="z-[70]"
+      sizeClassName="w-[90vw] max-w-7xl h-[85vh]"
+      panelClassName="p-6"
+      showHeader={false}
+      contentClassName="p-0"
+    >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
@@ -1523,7 +1530,6 @@ export default function ComparisonModal({
             </div>
           </div>
         </div>
-      </div>
-    </div>
+    </BaseModalContainer>
   );
 }

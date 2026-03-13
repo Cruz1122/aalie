@@ -1,12 +1,13 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import React, { useEffect } from "react";
+import React from "react";
 
 import { translateBackendContent } from "@/lib/backend-content-translator";
 import { translatePseudocode } from "@/lib/pseudocode-translator";
 
 import Formula from "./Formula";
+import BaseModalContainer from "./modals/BaseModalContainer";
 
 type ComplexityKind =
   | "constant"
@@ -160,22 +161,6 @@ export default function DPVersionModal({
   const t = useTranslations("analyzer.dpVersionModal");
   const locale = useLocale() as "en" | "es";
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    if (open) {
-      document.body.style.overflow = "hidden";
-      document.addEventListener("keydown", onKey);
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open, onClose]);
-
   if (!open || !characteristicEquation?.dp_version) return null;
 
   const dpVersion = characteristicEquation.dp_version;
@@ -201,31 +186,14 @@ export default function DPVersionModal({
       .map(mapBackendPatternToUI) ?? [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div
-        className="absolute inset-0 glass-modal-overlay"
-        onClick={onClose}
-        aria-hidden
-      />
-      <div
-        className={`relative z-10 ${MODAL_SIZE} rounded-2xl glass-modal-container shadow-2xl flex flex-col overflow-hidden mx-4`}
-      >
-        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 flex-shrink-0 glass-modal-header">
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <span className="material-symbols-outlined text-green-400">
-              memory
-            </span>
-            {t("title")}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
-            aria-label={t("closeModal")}
-          >
-            ✕
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-custom">
+    <BaseModalContainer
+      open={open}
+      onClose={onClose}
+      title={t("title")}
+      titleIcon="memory"
+      closeAriaLabel={t("closeModal")}
+      sizeClassName={MODAL_SIZE}
+    >
           <div className="space-y-4">
             <div
               className={`p-4 rounded-xl border ${dpApplicability === "clear" ? "bg-green-500/10 border-green-500/30" : "bg-amber-500/10 border-amber-500/30"}`}
@@ -405,8 +373,6 @@ export default function DPVersionModal({
               </ul>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+    </BaseModalContainer>
   );
 }

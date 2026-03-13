@@ -130,7 +130,7 @@
   },
   "24": {
     "name": "Pell Numbers",
-    "description": "Computes the nth Pell number using the recurrence P(n) = 2P(n-1) + P(n-2). Homogeneous linear recurrence. Analyzed with Characteristic Equation.",
+    "description": "Computes the nth Pell number using the recurrence P(n) = 2P(n-1) + P(n-2). Under the runtime-cost model, it is analyzed as non-homogeneous (g(n)=1). Analyzed with Characteristic Equation.",
     "complexity": "O((1+√2)ⁿ)",
     "note": "Analyzed with Characteristic Equation (linear DP detected)"
   },

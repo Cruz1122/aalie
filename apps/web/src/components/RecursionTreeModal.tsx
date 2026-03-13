@@ -33,6 +33,7 @@ import {
 } from "@/lib/recursion-tree-generator";
 
 import Formula from "./Formula";
+import BaseModalContainer from "./modals/BaseModalContainer";
 
 interface RecursionTreeModalProps {
   open: boolean;
@@ -466,20 +467,6 @@ export default function RecursionTreeModal({
 
   const t = useTranslations("analyzer.recursionTreeModal");
 
-  // Manejar tecla Escape y scroll
-  useEffect(() => {
-    if (!open) return;
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.body.style.overflow = "hidden";
-    document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.body.style.overflow = "";
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [open, onClose]);
-
   // Centrar el árbol cuando se abre el modal (solo si ya hay nodos generados)
   useEffect(() => {
     if (!open || nodes.length === 0) return;
@@ -594,30 +581,19 @@ export default function RecursionTreeModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center">
-      <div
-        className="absolute -top-8 -left-4 -right-4 -bottom-4 glass-modal-overlay"
-        onClick={onClose}
-        aria-hidden
-      />
-      <div className="relative z-10 w-[min(95vw,1400px)] h-[min(90vh,850px)] max-h-[90vh] rounded-2xl glass-modal-container !shadow-none flex flex-col overflow-hidden mx-4">
+    <BaseModalContainer
+      open={open}
+      onClose={onClose}
+      title={t("title")}
+      titleIcon="account_tree"
+      closeAriaLabel={t("closeModal")}
+      zIndexClassName="z-[70]"
+      sizeClassName="w-[min(95vw,1400px)] h-[min(90vh,850px)] max-h-[90vh]"
+      panelClassName="!shadow-none"
+      headerClassName="!shadow-none"
+      contentClassName="p-0 flex flex-col min-h-0 overflow-hidden"
+    >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 flex-shrink-0 glass-modal-header !shadow-none">
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <span className="material-symbols-outlined text-purple-400">
-              account_tree
-            </span>
-            {t("title")}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
-            aria-label={t("closeModal")}
-          >
-            ✕
-          </button>
-        </div>
-
         {/* Controles de configuración */}
         <div className="border-b border-white/10 p-4 flex-shrink-0 bg-slate-800/50">
           <div className="flex flex-wrap items-center gap-4">
@@ -836,7 +812,6 @@ export default function RecursionTreeModal({
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </BaseModalContainer>
   );
 }

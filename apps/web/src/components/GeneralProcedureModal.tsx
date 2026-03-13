@@ -9,9 +9,10 @@
  */
 import type { AnalyzeOpenResponse } from "@aa/types";
 import { useTranslations } from "next-intl";
-import React, { useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 
 import Formula from "./Formula";
+import BaseModalContainer from "./modals/BaseModalContainer";
 
 /**
  * Propiedades del componente GeneralProcedureModal.
@@ -88,22 +89,6 @@ export default function GeneralProcedureModal({
   // Detectar si es caso promedio
   const isAvgCase = data?.totals?.avg_model_info !== undefined;
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    if (open) {
-      document.body.style.overflow = "hidden";
-      document.addEventListener("keydown", onKey);
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open, onClose]);
-
   const tOpen = data?.totals?.A_of_n || data?.totals?.T_open || "";
   const rawPoly = (data?.totals as { T_polynomial?: string })?.T_polynomial;
   const normPoly = normalizePolynomial(rawPoly);
@@ -150,29 +135,15 @@ export default function GeneralProcedureModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div
-        className="absolute -top-8 -left-4 -right-4 -bottom-4 glass-modal-overlay"
-        onClick={onClose}
-        aria-hidden
-      />
-      <div className="relative z-10 w-[min(95vw,1000px)] max-h-[90vh] rounded-2xl glass-modal-container shadow-2xl flex flex-col overflow-hidden mx-4">
-        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 flex-shrink-0 glass-modal-header">
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <span className="material-symbols-outlined text-blue-400">
-              science
-            </span>
-            {t("title")}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
-            aria-label={t("closeModal")}
-          >
-            ✕
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-custom">
+    <BaseModalContainer
+      open={open}
+      onClose={onClose}
+      title={t("title")}
+      titleIcon="science"
+      closeAriaLabel={t("closeModal")}
+      sizeClassName="w-[min(95vw,1000px)] max-h-[90vh]"
+      contentClassName="space-y-6"
+    >
           {/* T_open o A(n) */}
           <div className="p-4 rounded-xl glass-card border border-white/10 space-y-3">
             <h4 className="text-white font-semibold flex items-center gap-2">
@@ -284,8 +255,6 @@ export default function GeneralProcedureModal({
                 </div>
               )}
           </div>
-        </div>
-      </div>
-    </div>
+    </BaseModalContainer>
   );
 }
