@@ -294,7 +294,10 @@ function IterativeEditableVariables({
           </label>
           {lengthParamNames.length > 0 && (
             <p className="text-[10px] text-slate-500">
-              {t("lengthFixedHint", { names: lengthParamNames.join(", "), array: arrayKey })}
+              {(t as (key: string, values?: Record<string, string>) => string)("lengthFixedHint", {
+                names: lengthParamNames.join(", "),
+                array: arrayKey,
+              })}
             </p>
           )}
           {scalarParamNames.map((key) => (
