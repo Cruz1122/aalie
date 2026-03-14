@@ -5,7 +5,9 @@ from typing import Any, Dict, List, Optional
 from sympy import Symbol, Integer, Expr, sympify, Sum, Rational
 import re
 
-from ..while_analysis import analyze_guard, summarize_updates, classify_while
+from ..ir.expr_utils import expr_to_str
+from ..while_engine import analyze_guard, summarize_updates, classify_while
+from ..while_engine.engine import WhileEngine, WhileAnalysisInput, WhileAnalysisResult
 
 
 class WhileRepeatVisitor:
@@ -36,51 +38,9 @@ class WhileRepeatVisitor:
         return rf"t_{{{kind}_{line}}}"
     
     def _expr_to_str(self, expr: Any) -> str:
-        """
-        Convierte una expresión del AST a string.
-        
-        Args:
-            expr: Expresión del AST
-            
-        Returns:
-            String representando la expresión
-            
-        Author: Juan Camilo Cruz Parra (@Cruz1122)
-        """
-        if expr is None:
-            return ""
-        elif isinstance(expr, str):
-            return expr
-        elif isinstance(expr, (int, float)):
-            return str(expr)
-        elif isinstance(expr, dict):
-            expr_type = expr.get("type", "")
-            
-            if expr_type.lower() == "identifier":
-                return expr.get("name", "unknown")
-            elif expr_type.lower() in ("number", "literal"):
-                return str(expr.get("value", "0"))
-            elif expr_type.lower() == "binary":
-                left = self._expr_to_str(expr.get("left", ""))
-                right = self._expr_to_str(expr.get("right", ""))
-                # El AST usa 'op' no 'operator'
-                op = expr.get("op", "") or expr.get("operator", "")
-                if not op:
-                    op = "-"
-                return f"({left}) {op} ({right})"
-            elif expr_type.lower() == "index":
-                target = self._expr_to_str(expr.get("target", ""))
-                index = self._expr_to_str(expr.get("index", ""))
-                return f"{target}[{index}]"
-            elif expr_type.lower() == "unary":
-                arg = self._expr_to_str(expr.get("arg", ""))
-                op = expr.get("operator", "")
-                return f"{op}({arg})"
-            else:
-                return str(expr.get("value", str(expr)))
-        else:
-            return str(expr)
-    
+        """Delega a expr_to_str del módulo ir.expr_utils."""
+        return expr_to_str(expr)
+
     def _str_to_sympy(self, expr_str: str) -> Expr:
         """
         Convierte un string a expresión SymPy.
@@ -1193,10 +1153,9 @@ class WhileRepeatVisitor:
                     "reason_code": "while_positive_prefix_avg",
                 }
         
-        # 2) NUEVO CLASIFICADOR: GuardInfo + UpdateSummary + classify_while
+        # 2) Motor WHILE (engine) o clasificador legacy
         try:
             guard = analyze_guard(test)
-            
             # Recopilar todas las variables asignadas en el cuerpo para evaluarlas como posibles cotas
             assigned_vars = set()
             def _collect_vars(n):
@@ -1214,6 +1173,45 @@ class WhileRepeatVisitor:
             all_vars = guard.vars_used.union(assigned_vars)
             
             updates = summarize_updates(body, all_vars, guard, parent_context)
+            # Intentar engine primero
+            try:
+                engine = WhileEngine()
+                engine_input = WhileAnalysisInput(
+                    while_node=node,
+                    parent_context=parent_context,
+                    procedure_context=getattr(self, "root_ast", None),
+                    mode=mode,
+                )
+                engine_result = engine.analyze(engine_input)
+                if engine_result.status == "bounded" and engine_result.iterations_expr:
+                    return {
+                        "variable": engine_result.variable or "",
+                        "initial_value": None,
+                        "change_rule": engine_result.change_rule or {"operator": "+", "constant": "1"},
+                        "limit": engine_result.limit or "n",
+                        "operator": engine_result.operator or "<",
+                        "iterations": engine_result.iterations_expr,
+                        "success": True,
+                        "mode": mode,
+                        "reason_code": engine_result.reason_code,
+                        "pattern": engine_result.pattern_used,
+                    }
+                if engine_result.status == "unbounded":
+                    if mode == "best" and engine_result.reason_code == "while_no_progress_must":
+                        param_bounded = self._try_param_controlled_best_case(
+                            body, guard, updates,
+                            (engine_result.evidence or {}).get("var"), L, parent_context
+                        )
+                        if param_bounded:
+                            return param_bounded
+                    return {
+                        "success": True,
+                        "status": "unbounded",
+                        "reason_code": engine_result.reason_code or "while_unbounded_unknown",
+                        "evidence": engine_result.evidence or {},
+                    }
+            except Exception:
+                pass
             result = classify_while(guard, updates, mode, parent_context, L)
             if result.status == "bounded" and result.iterations_expr:
                 ev = result.evidence
@@ -1253,7 +1251,8 @@ class WhileRepeatVisitor:
                     "evidence": result.evidence,
                 }
         except Exception as e:
-            print(f"[WhileRepeatVisitor] Error en classify_while: {e}")
+            import logging
+            logging.exception("[WhileRepeatVisitor] Error en classify_while: %s", e)
         
         # 3) Extraer información de la condición (para worst/avg case o si best case no aplica)
         condition_info = condition_info_pre or self._extract_condition_info(test)

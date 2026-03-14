@@ -1,0 +1,9 @@
+{
+  "input_size": 4,
+  "initial_variables": {"A": [4, 3, 2, 1], "izq": 1, "der": 4},
+  "case": "worst",
+  "patternKindAlternatives": ["divide_merge_recurse", "generic_recursive"],
+  "minNodes": 3,
+  "minEdges": 2,
+  "nodeLabelsContain": ["mergeSort"]
+}

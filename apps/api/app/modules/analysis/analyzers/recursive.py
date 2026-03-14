@@ -35,6 +35,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         self.recursion_tree: Optional[Dict[str, Any]] = None
         self.proof: List[Dict[str, str]] = []
         self.proof_steps: List[Dict[str, str]] = []
+        self.dp_validation_events: List[Dict[str, Any]] = []
         # Inicializar expr_converter si no está en BaseAnalyzer
         if not hasattr(self, 'expr_converter'):
             from .expr_converter import ExprConverter
@@ -125,6 +126,11 @@ class RecursiveAnalyzer(BaseAnalyzer):
             }
         
         self.recurrence = extraction_result["recurrence"]
+
+        if self.recurrence.get("type") == "divide_conquer":
+            self._build_non_dp_validation(
+                "La recurrencia es divide-and-conquer; debe priorizarse Teorema Maestro, iteración o árbol de recursión antes que PD."
+            )
         
         # Si no es aplicable ningún método, retornar error
         if not self.recurrence.get("applicable", False):
@@ -326,12 +332,23 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "b": recurrence.get("b"),
                     "f": recurrence.get("f")
                 })
+                recurrence_info["dp_validation"] = self._build_non_dp_validation(
+                    "La recurrencia es divide-and-conquer; debe priorizarse Teorema Maestro, iteración o árbol de recursión antes que PD."
+                )
             elif recurrence.get("type") == "linear_shift":
                 recurrence_info.update({
                     "order": recurrence.get("order"),
                     "shifts": recurrence.get("shifts"),
                     "g(n)": recurrence.get("g(n)")
                 })
+
+                linear_info = self._detect_linear_recurrence(proc_def, recursive_calls)
+                if linear_info:
+                    recurrence_info["dp_validation"] = self._build_dp_validation(
+                        proc_def,
+                        recursive_calls,
+                        linear_info,
+                    )
             
             return {
                 "ok": True,
@@ -1105,6 +1122,45 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "method": method,
                     "branching_subset": True
                 }
+            elif method == "recursion_tree" and has_subtraction:
+                # Fibonacci-type: T(n) = T(n-1) + T(n-2) + ... (múltiples términos)
+                linear_info = self._detect_linear_recurrence(proc_def, recursive_calls)
+                if linear_info and len(linear_info.get("coefficients", {})) >= 2:
+                    coeffs = linear_info["coefficients"]
+                    shifts_list = sorted(coeffs.keys())
+                    coeffs_list = [coeffs[s] for s in shifts_list]
+                    g_n_str = linear_info.get("g_n", "0") or "0"
+                    g_n_clean = g_n_str.strip().lower()
+                    is_homogeneous = g_n_clean in ("0", "", "\\theta(0)", "theta(0)")
+                    terms_latex = []
+                    for offset in shifts_list:
+                        c = coeffs[offset]
+                        terms_latex.append(f"{c} \\cdot T(n-{offset})" if c != 1 else f"T(n-{offset})")
+                    form_linear = f"T(n) = {' + '.join(terms_latex)}" + ("" if is_homogeneous else f" + {g_n_str}")
+                    recurrence = {
+                        "type": "linear_shift",
+                        "form": form_linear,
+                        "order": max(shifts_list),
+                        "shifts": shifts_list,
+                        "coefficients": coeffs_list,
+                        "g(n)": "0" if is_homogeneous else g_n_str,
+                        "n0": n0,
+                        "applicable": True,
+                        "notes": ["Recurrencia multi-término (ej. Fibonacci), árbol con subproblemas superpuestos"],
+                        "method": method
+                    }
+                else:
+                    recurrence = {
+                        "type": "divide_conquer",
+                        "form": recurrence_form,
+                        "a": a,
+                        "b": float(b),
+                        "f": f_n,
+                        "n0": n0,
+                        "applicable": True,
+                        "notes": [],
+                        "method": method
+                    }
             elif multi_b_terms:
                 # Divide-and-conquer generalizado: múltiples tamaños n/b_i
                 recurrence = {
@@ -3774,6 +3830,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
             "symbols": self.symbols if self.symbols else None,
             "notes": self.notes if self.notes else None
         }
+
+        if self.dp_validation_events:
+            totals["dp_validation_events"] = self.dp_validation_events.copy()
         
         # Agregar información de recurrencia
         if self.recurrence:
@@ -3830,6 +3889,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         self.iteration = None
         self.recursion_tree = None
         self.characteristic_equation = None
+        self.dp_validation_events = []
     
     # ============================================================================
     # MÉTODO DE ECUACIÓN CARACTERÍSTICA (LINEAL CON DESPLAZAMIENTOS CONSTANTES)
@@ -3920,6 +3980,169 @@ class RecursiveAnalyzer(BaseAnalyzer):
             "max_offset": max_offset,
             "g_n": f_n
         }
+
+    def _get_proc_param_names(self, proc_def: Dict[str, Any]) -> List[str]:
+        """Extrae los nombres de parámetros declarados en el procedimiento."""
+        names: List[str] = []
+        for param in proc_def.get("params", []) or []:
+            if isinstance(param, dict):
+                name = param.get("name") or param.get("id")
+            else:
+                name = str(param)
+            if isinstance(name, str) and name:
+                names.append(name)
+        return names
+
+    def _resolve_size_parameter_name(self, proc_def: Dict[str, Any]) -> Optional[str]:
+        """Determina el parámetro que modela el tamaño principal del subproblema."""
+        param_names = self._get_proc_param_names(proc_def)
+        if not param_names:
+            return None
+
+        size_candidates = [name.lower() for name in self.detect_size_variables_from_proc(proc_def)]
+        for param_name in param_names:
+            if param_name.lower() in size_candidates:
+                return param_name
+
+        common_size_names = {"n", "size", "length", "len", "tam", "tamaño", "tamanio"}
+        for param_name in param_names:
+            if param_name.lower() in common_size_names:
+                return param_name
+
+        if len(param_names) > 1:
+            return param_names[1]
+
+        return param_names[0]
+
+    def _argument_preserves_parameter_identity(self, arg: Any, param_name: str) -> bool:
+        """True si el argumento conserva exactamente el mismo parámetro de entrada."""
+        if not isinstance(arg, dict):
+            return False
+
+        node_type = arg.get("type", "").lower()
+        if node_type == "identifier":
+            arg_name = arg.get("name") or arg.get("id") or ""
+            return isinstance(arg_name, str) and arg_name.lower() == param_name.lower()
+
+        return False
+
+    def _find_changed_non_size_params(
+        self,
+        proc_def: Dict[str, Any],
+        recursive_calls: List[Dict[str, Any]],
+        size_param_name: Optional[str],
+    ) -> List[str]:
+        """Lista parámetros auxiliares cuyo valor cambia entre llamadas recursivas."""
+        changed: List[str] = []
+        param_names = self._get_proc_param_names(proc_def)
+
+        for index, param_name in enumerate(param_names):
+            if size_param_name and param_name.lower() == size_param_name.lower():
+                continue
+
+            for call in recursive_calls:
+                args = call.get("args", []) or []
+                if index >= len(args):
+                    continue
+                if not self._argument_preserves_parameter_identity(args[index], param_name):
+                    changed.append(param_name)
+                    break
+
+        return sorted(set(changed))
+
+    def _build_dp_validation(
+        self,
+        proc_def: Dict[str, Any],
+        recursive_calls: List[Dict[str, Any]],
+        linear_info: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Valida si una recurrencia lineal encaja bien como caso de programación dinámica."""
+        coefficients = linear_info.get("coefficients", {})
+        shifts = sorted(coefficients.keys())
+        max_offset = int(linear_info.get("max_offset", 0) or 0)
+        total_calls = sum(coefficients.values())
+        contiguous_shifts = bool(shifts) and shifts == list(range(1, max_offset + 1))
+        size_param_name = self._resolve_size_parameter_name(proc_def)
+        changed_non_size_params = self._find_changed_non_size_params(
+            proc_def,
+            recursive_calls,
+            size_param_name,
+        )
+
+        status = "rejected"
+        confidence = "low"
+        primary_pattern = "none"
+        supported_patterns: List[str] = []
+        reasons: List[str] = []
+
+        if total_calls < 2:
+            reasons.append(
+                "Solo hay una rama recursiva efectiva por estado; no hay suficiente solapamiento de subproblemas para justificar PD."
+            )
+        elif changed_non_size_params:
+            reasons.append(
+                "Los parámetros de estado cambian entre llamadas recursivas ("
+                + ", ".join(changed_non_size_params)
+                + "), por lo que los subproblemas no son equivalentes."
+            )
+        else:
+            status = "clear"
+            confidence = "high"
+            supported_patterns = ["tabulation", "memoization"]
+            if contiguous_shifts and max_offset <= 3:
+                primary_pattern = "rolling_window"
+                supported_patterns.append("rolling_window")
+                reasons.append(
+                    "La recurrencia depende solo de los últimos estados contiguos y puede optimizarse con memoria acotada."
+                )
+            else:
+                primary_pattern = "tabulation"
+                reasons.append(
+                    "La recurrencia requiere conservar estados no contiguos o un historial más largo que una ventana pequeña."
+                )
+
+            reasons.append(
+                "Las llamadas recursivas reutilizan subproblemas definidos por el mismo parámetro de tamaño."
+            )
+
+        validation = {
+            "status": status,
+            "applicable": status != "rejected",
+            "confidence": confidence,
+            "primary_pattern": primary_pattern,
+            "supported_patterns": supported_patterns,
+            "reasons": reasons,
+            "debug": {
+                "size_parameter": size_param_name,
+                "recursive_call_count": total_calls,
+                "distinct_shifts": shifts,
+                "max_offset": max_offset,
+                "contiguous_shifts": contiguous_shifts,
+                "changed_non_size_params": changed_non_size_params,
+            },
+        }
+
+        self.dp_validation_events.append(validation)
+        for reason in reasons:
+            prefix = "DP validada" if validation["applicable"] else "DP descartada"
+            self.add_note(f"{prefix}: {reason}")
+
+        return validation
+
+    def _build_non_dp_validation(self, reason: str) -> Dict[str, Any]:
+        """Registra el descarte explícito de PD para recurrencias fuera del perfil esperado."""
+        validation = {
+            "status": "rejected",
+            "applicable": False,
+            "confidence": "high",
+            "primary_pattern": "none",
+            "supported_patterns": [],
+            "reasons": [reason],
+            "debug": {},
+        }
+        self.dp_validation_events.append(validation)
+        self.add_note(f"DP descartada: {reason}")
+        return validation
     
     def _detect_characteristic_equation_method(self, proc_def: Dict[str, Any], recursive_calls: List[Dict[str, Any]]) -> bool:
         """
@@ -4490,8 +4713,12 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 
                 closed_form = " + ".join(terms) if terms else "c_1"
             
-            # Detectar si es caso de DP lineal
-            is_dp_linear = max_offset <= 3 and all(offset <= 3 for offset in coefficients.keys())
+            dp_validation = self._build_dp_validation(
+                self.proc_def,
+                self._find_recursive_calls(self.proc_def),
+                linear_info,
+            )
+            is_dp_linear = dp_validation.get("applicable", False)
             
             # Generar versión DP si aplica
             dp_version = None
@@ -4519,13 +4746,15 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "code": dp_code,
                     "time_complexity": dp_time,
                     "space_complexity": dp_space,
-                    "recursive_complexity": recursive_complexity
+                    "recursive_complexity": recursive_complexity,
+                    "pattern": dp_validation.get("primary_pattern", "tabulation")
                 }
                 
                 dp_optimized_version = {
                     "code": dp_code_optimized,
                     "time_complexity": dp_time,
-                    "space_complexity": dp_space_optimized
+                    "space_complexity": dp_space_optimized,
+                    "pattern": "rolling_window" if dp_validation.get("primary_pattern") == "rolling_window" else "tabulation"
                 }
                 
                 dp_equivalence = (
@@ -4639,6 +4868,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "general_solution": general_solution,
                 "base_cases": base_cases if base_cases else None,
                 "closed_form": closed_form,
+                "dp_validation": dp_validation,
                 "dp_version": dp_version,
                 "dp_optimized_version": dp_optimized_version,
                 "dp_equivalence": dp_equivalence,
@@ -4654,7 +4884,12 @@ class RecursiveAnalyzer(BaseAnalyzer):
             if is_dp_linear:
                 self.proof_steps.append({
                     "id": "dp_detection",
-                    "text": "\\text{Esta recurrencia corresponde a un caso de Programación Dinámica Lineal}"
+                    "text": "\\text{La validación previa confirma que esta recurrencia encaja como caso de Programación Dinámica}"
+                })
+            else:
+                self.proof_steps.append({
+                    "id": "dp_rejected",
+                    "text": "\\text{La validación previa descarta presentar esta recurrencia como Programación Dinámica}"
                 })
             
             return {
@@ -6248,6 +6483,7 @@ FIN FUNCIÓN"""
                 theta = "2^n"
                 recursion_tree = {
                     "method": "recursion_tree",
+                    "recurrence_type": "linear_shift",
                     "levels": [
                         {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "1", "total_cost_latex": "1"},
                         {"level": 1, "num_nodes_latex": "n", "subproblem_size_latex": "n-1", "cost_per_node_latex": "1", "total_cost_latex": "n"},
@@ -6269,6 +6505,7 @@ FIN FUNCIÓN"""
                 theta = "n^2"
                 recursion_tree = {
                     "method": "recursion_tree",
+                    "recurrence_type": "linear_shift",
                     "levels": [
                         {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "n", "total_cost_latex": "n"},
                         {"level": 1, "num_nodes_latex": "1", "subproblem_size_latex": "n-1", "cost_per_node_latex": "n-1", "total_cost_latex": "n-1"},
@@ -6276,6 +6513,35 @@ FIN FUNCIÓN"""
                     "height": "n",
                     "summation": {"expression": "\\sum_{i=0}^{n-1} (n-i) = \\frac{n(n+1)}{2}", "theta": theta},
                     "dominating_level": {"reason": "\\text{Suma aritmética } n + (n-1) + \\ldots + 1 = \\Theta(n^2)"},
+                    "table_by_levels": [],
+                    "theta": f"\\Theta({theta})"
+                }
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                return {"success": True, "recursion_tree": recursion_tree}
+
+            # Fibonacci-type: T(n) = c1*T(n-k1) + c2*T(n-k2) + ... (múltiples términos)
+            # Árbol con subproblemas superpuestos; no usar estructura divide-and-conquer
+            shifts = self.recurrence.get("shifts", [])
+            coefficients = self.recurrence.get("coefficients", [])
+            if len(shifts) >= 2:
+                recurrence_form = self.recurrence.get("form", "T(n) = T(n-1) + T(n-2) + 1")
+                self.proof_steps.append({"id": "tree_extract", "text": f"\\text{{Recurrencia }} {recurrence_form}"})
+                self.proof_steps.append({
+                    "id": "step1_note",
+                    "text": "\\text{Árbol con subproblemas superpuestos: el mismo T(k) se calcula varias veces. Crecimiento exponencial } \\Theta(\\varphi^n)"
+                })
+                theta = "\\varphi^n"
+                recursion_tree = {
+                    "method": "recursion_tree",
+                    "recurrence_type": "linear_shift",
+                    "levels": [
+                        {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "1", "total_cost_latex": "1"},
+                        {"level": 1, "num_nodes_latex": "2", "subproblem_size_latex": "n-1, n-2", "cost_per_node_latex": "1", "total_cost_latex": "2"},
+                        {"level": 2, "num_nodes_latex": "4", "subproblem_size_latex": "n-2, n-3, n-4", "cost_per_node_latex": "1", "total_cost_latex": "4"},
+                    ],
+                    "height": "n",
+                    "summation": {"expression": "\\sum_{i=0}^{n} \\text{(nodos nivel } i) \\approx \\Theta(\\varphi^n)", "theta": theta},
+                    "dominating_level": {"reason": "\\text{Subproblemas superpuestos: crecimiento exponencial } \\Theta(\\varphi^n)"},
                     "table_by_levels": [],
                     "theta": f"\\Theta({theta})"
                 }
@@ -6309,6 +6575,7 @@ FIN FUNCIÓN"""
                 theta = "2^n"
                 recursion_tree = {
                     "method": "recursion_tree",
+                    "recurrence_type": "linear_shift",
                     "levels": [
                         {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "1", "total_cost_latex": "1"},
                         {"level": 1, "num_nodes_latex": "n", "subproblem_size_latex": "n-1", "cost_per_node_latex": "1", "total_cost_latex": "n"},
@@ -6395,6 +6662,7 @@ FIN FUNCIÓN"""
         
         recursion_tree = {
             "method": "recursion_tree",
+            "recurrence_type": "divide_conquer",
             "levels": levels,
             "height": height_expr,
             "summation": summation_result,

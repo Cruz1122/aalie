@@ -16,6 +16,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useRunAnalysis } from "@/hooks/useRunAnalysis";
 import { GrammarApiService } from "@/services/grammar-api";
 
+import AAButton from "./AAButton";
 import { AnalyzerEditor } from "./AnalyzerEditor";
 import { ASTTreeView } from "./ASTTreeView";
 
@@ -448,12 +449,14 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
               />
             </div>
 
-            {/* Botón Analizar - 25% en desktop, 100% en mobile; azul con icono play como ejemplos */}
+            {/* Botón Analizar - 25% en desktop, 100% en mobile; AAButton primary como cards de ejemplos */}
             <div className="w-full lg:w-[25%] flex flex-col gap-3 relative z-10">
-              <button
+              <AAButton
                 onClick={handleAnalyzeComplexity}
                 disabled={isAnalyzing || !localParseOk || code.trim() === ""}
-                className="flex items-center justify-center gap-2 py-2.5 px-4 sm:px-6 rounded-lg text-white text-xs sm:text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-400/50 bg-primary/25 border border-primary/40 hover:bg-primary/35 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+                variant="primary"
+                size="lg"
+                className="w-full py-2.5 px-4 sm:px-6 text-xs sm:text-sm"
               >
                 {isAnalyzing ? (
                   <>
@@ -470,7 +473,7 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                     {tManual("analyzeComplexity")}
                   </>
                 )}
-              </button>
+              </AAButton>
             </div>
           </div>
 
@@ -565,12 +568,13 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                       </span>
                       {copied ? tView("astModalCopied") : tView("copyJson")}
                     </button>
-                    <button
+                    <AAButton
                       onClick={() => setShowAstModal(false)}
-                      className="glass-button px-4 py-2 text-xs font-semibold text-white rounded-lg transition-all hover:scale-105 bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 hover:from-yellow-500/30 hover:to-amber-500/30"
+                      variant="amber"
+                      size="sm"
                     >
                       {tCommon("close")}
-                    </button>
+                    </AAButton>
                   </div>
                 </div>
               </div>

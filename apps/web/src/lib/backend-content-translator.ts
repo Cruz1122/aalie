@@ -175,6 +175,32 @@ const BACKEND_CONTENT_TRANSLATIONS: [string, string][] = [
     "Análisis complejo (término dominante ",
     "Complex analysis (dominant term ",
   ],
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DP VALIDATION REASONS
+  // ═══════════════════════════════════════════════════════════════════════════
+  [
+    "La recurrencia es divide-and-conquer; debe priorizarse Teorema Maestro, iteración o árbol de recursión antes que PD.",
+    "The recurrence is divide-and-conquer; prioritize Master Theorem, iteration, or recursion tree over DP.",
+  ],
+  [
+    "La recurrencia requiere conservar estados no contiguos o un historial más largo que una ventana pequeña.",
+    "The recurrence requires preserving non-contiguous states or a history longer than a small window.",
+  ],
+  [
+    "La recurrencia requiere conservar estados no contiguos o un historial más largo que una ventana pequeña",
+    "The recurrence requires preserving non-contiguous states or a history longer than a small window",
+  ],
+  [
+    "La recurrencia depende solo de los últimos estados contiguos y puede optimizarse con memoria acotada.",
+    "The recurrence depends only on the last contiguous states and can be optimized with bounded memory.",
+  ],
+  [
+    "Las llamadas recursivas reutilizan subproblemas definidos por el mismo parámetro de tamaño.",
+    "Recursive calls reuse subproblems defined by the same size parameter.",
+  ],
+  ["DP validada: ", "DP validated: "],
+  ["DP descartada: ", "DP rejected: "],
 ];
 
 /**
@@ -191,8 +217,19 @@ export function translateBackendContent(
 ): string {
   if (locale === "es" || !content) return content ?? "";
 
-  let result = content;
+  let result = content.normalize("NFC");
+
+  const escapeRegex = (value: string): string =>
+    value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  const toFlexibleWhitespacePattern = (value: string): RegExp => {
+    const escaped = escapeRegex(value);
+    const flexible = escaped.replace(/\s+/g, "\\s+");
+    return new RegExp(flexible, "g");
+  };
+
   for (const [es, en] of BACKEND_CONTENT_TRANSLATIONS) {
+    result = result.replace(toFlexibleWhitespacePattern(es), en);
     result = result.split(es).join(en);
   }
   return result;

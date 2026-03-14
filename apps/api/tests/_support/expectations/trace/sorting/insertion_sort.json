@@ -1,0 +1,9 @@
+{
+  "input_size": 4,
+  "initial_variables": {"arr": [4, 3, 2, 1], "n": 4},
+  "case": "worst",
+  "patternKindAlternatives": ["generic_iterative", "iterative_with_auxiliary_operation"],
+  "minNodes": 5,
+  "minEdges": 4,
+  "nodeLabelsContain": ["FOR i", "key"]
+}

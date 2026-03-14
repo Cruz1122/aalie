@@ -83,7 +83,37 @@ class SummationCloser:
                 return True
         
         return False
-    
+
+    def _safe_substitute_iteration_var(
+        self, expr: Expr, var_symbol: Symbol, var_name: str, variable: str
+    ) -> Expr:
+        """
+        Sustituye variable de iteración por 0 o por variable principal.
+        No sustituye por 0 si el resultado sería negativo (evita bugs como n*(j-1)→-n).
+
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        Version: 0.1.0
+        """
+        from sympy import Integer as SymInteger, simplify
+
+        main_sym = Symbol(variable, integer=True)
+        candidate_zero = expr.subs(var_symbol, SymInteger(0))
+        use_main_instead = False
+        try:
+            if main_sym in candidate_zero.free_symbols:
+                test_val = candidate_zero.subs(main_sym, 10)
+            else:
+                test_val = candidate_zero
+            if getattr(test_val, "is_negative", None) is True:
+                use_main_instead = True
+            elif getattr(test_val, "is_number", False) and test_val < 0:
+                use_main_instead = True
+        except Exception:
+            use_main_instead = True
+        if use_main_instead:
+            return simplify(expr.subs(var_symbol, main_sym))
+        return simplify(expr.subs(var_symbol, SymInteger(0)))
+
     def close_summation(self, expr: Union[str, Expr], variable: str = "n") -> Tuple[str, List[str]]:
         """
         Cierra una sumatoria y genera pasos educativos.
@@ -175,7 +205,9 @@ class SummationCloser:
                 
                 # Verificar y eliminar variables de iteración que no deberían estar en el resultado final
                 # Las variables i, j, k son variables de iteración que deben ser eliminadas
+                # IMPORTANTE: No sustituir por 0 si el resultado sería negativo (ej. n*(j-1) con j=0 → -n)
                 iteration_vars = ['i', 'j', 'k']
+                main_sym = Symbol(variable, integer=True)
                 for var_name in iteration_vars:
                     var_symbol = Symbol(var_name, integer=True)
                     if result_expr.has(var_symbol):
@@ -196,21 +228,42 @@ class SummationCloser:
                                         result_expr = result_expr.doit()
                                         result_expr = expand(result_expr)
                                         result_expr = simplify(result_expr)
-                                    # Si todavía queda después de todo, sustituir por 0
-                                    if result_expr.has(var_symbol):
+                                # Si todavía queda después de todo, sustituir (0 o variable principal)
+                                if result_expr.has(var_symbol):
+                                    from sympy import Integer as SymInteger
+                                    candidate_zero = result_expr.subs(var_symbol, SymInteger(0))
+                                    use_main_instead = False
+                                    try:
+                                        if main_sym in candidate_zero.free_symbols:
+                                            test_val = candidate_zero.subs(main_sym, 10)
+                                        else:
+                                            test_val = candidate_zero
+                                        if getattr(test_val, "is_negative", None) is True:
+                                            use_main_instead = True
+                                        elif getattr(test_val, "is_number", False) and test_val < 0:
+                                            use_main_instead = True
+                                    except Exception:
+                                        use_main_instead = True
+                                    if use_main_instead:
+                                        print(f"[SummationCloser] Advertencia: Variable {var_name} sustituida por {variable} (evitar resultado negativo)")
+                                        result_expr = result_expr.subs(var_symbol, main_sym)
+                                    else:
                                         print(f"[SummationCloser] Advertencia: Variable de iteración {var_name} todavía presente en resultado final, sustituyendo por 0")
-                                        from sympy import Integer as SymInteger
                                         result_expr = result_expr.subs(var_symbol, SymInteger(0))
-                                        result_expr = simplify(result_expr)
+                                    result_expr = simplify(result_expr)
                         except Exception as e:
                             print(f"[SummationCloser] Error eliminando variable de iteración {var_name}: {e}")
-                            # Fallback: sustituir por 0
+                            # Fallback: sustituir por variable principal (más seguro que 0)
                             try:
-                                from sympy import Integer as SymInteger
-                                result_expr = result_expr.subs(var_symbol, SymInteger(0))
+                                result_expr = result_expr.subs(var_symbol, main_sym)
                                 result_expr = simplify(result_expr)
-                            except:
-                                pass
+                            except Exception:
+                                try:
+                                    from sympy import Integer as SymInteger
+                                    result_expr = result_expr.subs(var_symbol, SymInteger(0))
+                                    result_expr = simplify(result_expr)
+                                except Exception:
+                                    pass
                 
                 # Convertir a LaTeX
                 closed_latex = self._sympy_to_latex(result_expr)
@@ -234,7 +287,7 @@ class SummationCloser:
                 import traceback
                 traceback.print_exc()
                 # Fallback: convertir a string y procesar normalmente
-                expr = latex(expr) if hasattr(expr, '__str__') else str(expr)
+                expr = self._sympy_to_latex(expr) if hasattr(expr, '__str__') else str(expr)
         
         # Asegurar que expr sea un string
         if not isinstance(expr, str):
@@ -878,15 +931,24 @@ class SummationCloser:
         expr_normalized = expr_normalized.replace('\\substack', '')
         expr_normalized = expr_normalized.replace('\\\\', '')
         expr_normalized = expr_normalized.replace(' ', '')
+
+        # Normalizar t_{while_X} y t_{repeat_X} a t_while_X, t_repeat_X (SymPy no parsea llaves)
+        expr_normalized = re.sub(r't_\{while_(\d+)\}', r't_while_\1', expr_normalized)
+        expr_normalized = re.sub(r't_\{repeat_(\d+)\}', r't_repeat_\1', expr_normalized)
         
         # Simplificar paréntesis redundantes: ((x)) → x, pero mantener estructura necesaria
         # Primero, detectar y crear símbolos para variables con subíndices
         constant_pattern = r'(\w+)_(\d+)'
         constants = {}
         for match in re.finditer(constant_pattern, expr_normalized):
-            const_name = match.group(0)  # ej: "j_0"
+            const_name = match.group(0)  # ej: "j_0", "t_while_3"
             if const_name not in constants:
                 constants[const_name] = Symbol(const_name, real=True)
+        # Símbolos iterativos t_while_X, t_repeat_X (ya normalizados arriba)
+        for match in re.finditer(r't_(?:while|repeat)_\d+', expr_normalized):
+            name = match.group(0)
+            if name not in constants:
+                constants[name] = Symbol(name, real=True, positive=True)
         
         # Crear contexto de símbolos
         syms = {variable: n}
@@ -1052,6 +1114,7 @@ class SummationCloser:
     def _sympy_to_latex(self, expr: 'Expr') -> str:
         """
         Convierte una expresión SymPy a LaTeX.
+        Asegura paréntesis en productos a·b cuando b es suma/resta (Add/Sub).
         
         Args:
             expr: Expresión SymPy
@@ -1078,12 +1141,39 @@ class SummationCloser:
                     except Exception:
                         pass
             
-            latex_str = latex(cleaned_expr)
+            # Usar printer que envuelve Add/Sub en paréntesis cuando son factores de Mul
+            latex_str = self._latex_with_mul_parens(cleaned_expr)
             # Normalizar formato
             latex_str = latex_str.replace('*', ' \\cdot ')
             return latex_str
         except Exception:
             return str(expr)
+
+    def _latex_with_mul_parens(self, expr: 'Expr') -> str:
+        """
+        Convierte a LaTeX asegurando paréntesis en Mul cuando un factor es Add.
+        Genérico: funciona para n·(k-1), m·(i+1), c·(a+b), etc.
+        """
+        try:
+            from sympy import Add as SymAdd
+            from sympy.printing.latex import LatexPrinter
+
+            class ParensLatexPrinter(LatexPrinter):
+                def _print_Mul(self, expr):
+                    parts = []
+                    for arg in expr.args:
+                        s = self._print(arg)
+                        if isinstance(arg, SymAdd):
+                            s = f"\\left({s}\\right)"
+                        parts.append(s)
+                    return " \\cdot ".join(parts)
+                # Heredar resto del comportamiento por defecto
+                def _print_Add(self, expr):
+                    return super()._print_Add(expr)
+
+            return ParensLatexPrinter().doprint(expr)
+        except Exception:
+            return latex(expr)
     
     def _evaluate_all_sums_sympy(self, expr: Expr) -> Expr:
         """
@@ -1432,11 +1522,11 @@ class SummationCloser:
                         start = limits[1]
                         end = limits[2]
                     
-                    # Convertir a LaTeX para mostrar
-                    var_latex = latex(sum_var)
-                    start_latex = latex(start)
-                    end_latex = latex(end)
-                    body_latex = latex(body)
+                    # Convertir a LaTeX para mostrar (ParensLatexPrinter evita ambigüedad n·-i+n)
+                    var_latex = self._sympy_to_latex(sum_var)
+                    start_latex = self._sympy_to_latex(start)
+                    end_latex = self._sympy_to_latex(end)
+                    body_latex = self._sympy_to_latex(body)
                     sum_latex = f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {body_latex}"
                     
                     steps.append(sum_latex)
@@ -1464,11 +1554,11 @@ class SummationCloser:
                         from sympy import simplify
                         result_expr = end - start + Int(1)
                         result_simplified = simplify(result_expr)
-                        result_latex = latex(result_simplified)
+                        result_latex = self._sympy_to_latex(result_simplified)
                         
                         # Calcular también la expresión sin simplificar para mostrar el paso
                         formula_expr = end - start + Int(1)
-                        formula_latex = latex(formula_expr)
+                        formula_latex = self._sympy_to_latex(formula_expr)
                         
                         steps.append(
                             f"\\text{{{self._labels['applying_constant_formula']} }} "
@@ -1505,7 +1595,7 @@ class SummationCloser:
                                     result_simplified = factor(result_simplified)
                                     result_simplified = simplify(result_simplified)
                             
-                            result_latex = latex(result_simplified)
+                            result_latex = self._sympy_to_latex(result_simplified)
                             
                             # Generar paso explicativo
                             if start == Int(1) or (isinstance(start, Integer) and int(start) == 1):
@@ -1521,7 +1611,7 @@ class SummationCloser:
                                 # Caso general: suma desde a hasta b
                                 # Mostrar fórmula: Σ_{i=a}^{b} i = Σ_{i=1}^{b} i - Σ_{i=1}^{a-1} i
                                 start_minus_one = simplify(start - Int(1))
-                                start_minus_one_latex = latex(start_minus_one)
+                                start_minus_one_latex = self._sympy_to_latex(start_minus_one)
                                 
                                 # Calcular manualmente para mostrar los pasos correctos
                                 try:
@@ -1532,7 +1622,7 @@ class SummationCloser:
                                         from sympy import Integer as IntSym
                                         result_manual = (end * (end + IntSym(1))) / IntSym(2) - (IntSym(start_val - 1) * IntSym(start_val)) / IntSym(2)
                                         result_manual = simplify(result_manual)
-                                        result_manual_latex = latex(result_manual)
+                                        result_manual_latex = self._sympy_to_latex(result_manual)
                                         
                                         steps.append(
                                             f"\\text{{{self._labels['applying_arithmetic_formula']} }} "
@@ -1582,7 +1672,7 @@ class SummationCloser:
                                 sum_expr = Sum(body, (sum_var, start, end))
                                 result_expr = sum_expr.doit()
                                 result_simplified = simplify(result_expr)
-                                result_latex = latex(result_simplified)
+                                result_latex = self._sympy_to_latex(result_simplified)
                                 
                                 if start == Int(1) or (isinstance(start, Integer) and int(start) == 1):
                                     steps.append(
@@ -1592,7 +1682,7 @@ class SummationCloser:
                                     )
                                 else:
                                     start_minus_one = simplify(start - Int(1))
-                                    start_minus_one_latex = latex(start_minus_one)
+                                    start_minus_one_latex = self._sympy_to_latex(start_minus_one)
                                     steps.append(
                                         f"\\text{{{self._labels['applying_arithmetic_formula']} }} "
                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
@@ -1627,8 +1717,8 @@ class SummationCloser:
                         from sympy import simplify
                         result_expr = body * (end - start + Int(1))
                         result_simplified = simplify(result_expr)
-                        result_latex = latex(result_simplified)
-                        body_latex_display = latex(body)
+                        result_latex = self._sympy_to_latex(result_simplified)
+                        body_latex_display = self._sympy_to_latex(body)
                         
                         steps.append(
                             f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {body_latex_display} = "
@@ -1640,7 +1730,7 @@ class SummationCloser:
                         # Simplificar si es necesario
                         const_count_expr = end - start + Int(1)
                         const_count_simplified = simplify(const_count_expr)
-                        const_count_latex = latex(const_count_simplified)
+                        const_count_latex = self._sympy_to_latex(const_count_simplified)
                         if const_count_latex != f"{end_latex} - {start_latex} + 1":
                             steps.append(
                                 f"{end_latex} - {start_latex} + 1 = {const_count_latex}"
@@ -1672,8 +1762,8 @@ class SummationCloser:
                             # Si hay términos que dependen de la variable y términos constantes
                             if terms_with_var and constant_terms:
                                 # Generar pasos explicativos usando propiedad de linealidad
-                                terms_var_latex = latex(SymAdd(*terms_with_var))
-                                const_terms_latex = latex(SymAdd(*constant_terms))
+                                terms_var_latex = self._sympy_to_latex(SymAdd(*terms_with_var))
+                                const_terms_latex = self._sympy_to_latex(SymAdd(*constant_terms))
                                 
                                 steps.append(
                                     f"\\text{{{self._labels['applying_linearity']} }} "
@@ -1693,7 +1783,7 @@ class SummationCloser:
                                     try:
                                         const_result = const_sum.doit()
                                         const_result_simplified = simplify(const_result)
-                                        const_result_latex = latex(const_result_simplified)
+                                        const_result_latex = self._sympy_to_latex(const_result_simplified)
                                         steps.append(
                                             f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {const_terms_latex} = {const_result_latex}"
                                         )
@@ -1729,13 +1819,13 @@ class SummationCloser:
                                                 try:
                                                     var_sum_result = var_sum.doit()
                                                     var_sum_simplified = simplify(var_sum_result)
-                                                    var_sum_latex = latex(var_sum_simplified)
+                                                    var_sum_latex = self._sympy_to_latex(var_sum_simplified)
                                                     
                                                     if coeff != 1:
-                                                        coeff_latex = latex(coeff)
+                                                        coeff_latex = self._sympy_to_latex(coeff)
                                                         total_result = coeff * var_sum_result
                                                         total_simplified = simplify(total_result)
-                                                        total_latex = latex(total_simplified)
+                                                        total_latex = self._sympy_to_latex(total_simplified)
                                                         
                                                         steps.append(
                                                             f"\\text{{{self._labels['applying_arithmetic_formula']} }} "
@@ -1761,7 +1851,7 @@ class SummationCloser:
                                                 try:
                                                     var_sum_result = var_sum.doit()
                                                     var_sum_simplified = simplify(var_sum_result)
-                                                    var_sum_latex = latex(var_sum_simplified)
+                                                    var_sum_latex = self._sympy_to_latex(var_sum_simplified)
                                                     steps.append(
                                                         f"\\text{{{self._labels['evaluating_summation']} }} "
                                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = {var_sum_latex}"
@@ -1779,7 +1869,7 @@ class SummationCloser:
                                                 try:
                                                     var_sum_result = var_sum.doit()
                                                     var_sum_simplified = simplify(var_sum_result)
-                                                    var_sum_latex = latex(var_sum_simplified)
+                                                    var_sum_latex = self._sympy_to_latex(var_sum_simplified)
                                                     steps.append(
                                                         f"\\text{{{self._labels['applying_arithmetic_formula']} }} "
                                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = {var_sum_latex}"
@@ -1796,7 +1886,7 @@ class SummationCloser:
                                                 try:
                                                     var_sum_result = var_sum.doit()
                                                     var_sum_simplified = simplify(var_sum_result)
-                                                    var_sum_latex = latex(var_sum_simplified)
+                                                    var_sum_latex = self._sympy_to_latex(var_sum_simplified)
                                                     steps.append(
                                                         f"\\text{{{self._labels['evaluating_summation']} }} "
                                                         f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = {var_sum_latex}"
@@ -1813,7 +1903,7 @@ class SummationCloser:
                                         try:
                                             var_sum_result = var_sum.doit()
                                             var_sum_simplified = simplify(var_sum_result)
-                                            var_sum_latex = latex(var_sum_simplified)
+                                            var_sum_latex = self._sympy_to_latex(var_sum_simplified)
                                             steps.append(
                                                 f"\\text{{{self._labels['evaluating_summation']} }} "
                                                 f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = {var_sum_latex}"
@@ -1849,7 +1939,7 @@ class SummationCloser:
                                     from sympy import sympify
                                     total_expr = sympify(var_result_latex.replace('\\', '')) + sympify(const_result_latex.replace('\\', ''))
                                     total_simplified = simplify(total_expr)
-                                    total_latex = latex(total_simplified)
+                                    total_latex = self._sympy_to_latex(total_simplified)
                                     steps.append(
                                         f"\\text{{{self._labels['combining_results']} }} {var_result_latex} + {const_result_latex} = {total_latex}"
                                     )
@@ -1860,7 +1950,7 @@ class SummationCloser:
                         try:
                             evaluated = sum_expr.doit()
                             evaluated_simplified = simplify(evaluated)
-                            evaluated_latex = latex(evaluated_simplified)
+                            evaluated_latex = self._sympy_to_latex(evaluated_simplified)
                             # Solo agregar si no está ya en los pasos
                             if evaluated_latex not in " ".join(steps):
                                 steps.append(evaluated_latex)
@@ -1869,7 +1959,7 @@ class SummationCloser:
                 except (TypeError, IndexError, AttributeError):
                     # No se puede acceder a limits como secuencia o tiene estructura inesperada
                     try:
-                        sum_latex = latex(sum_expr)
+                        sum_latex = self._sympy_to_latex(sum_expr)
                         steps.append(sum_latex)
                     except Exception:
                         steps.append(f"\\text{{{self._labels['error_processing']}}}")
@@ -1878,7 +1968,7 @@ class SummationCloser:
             import traceback
             traceback.print_exc()
             try:
-                sum_latex = latex(sum_expr)
+                sum_latex = self._sympy_to_latex(sum_expr)
                 steps.append(sum_latex)
             except Exception:
                 steps.append(f"\\text{{{self._labels['error_processing']}}}")
@@ -1921,13 +2011,13 @@ class SummationCloser:
                     inner_end = inner_limits[2]
                     
                     # Convertir a LaTeX
-                    outer_var_latex = latex(outer_var)
-                    outer_start_latex = latex(outer_start)
-                    outer_end_latex = latex(outer_end)
-                    inner_var_latex = latex(inner_var)
-                    inner_start_latex = latex(inner_start)
-                    inner_end_latex = latex(inner_end)
-                    inner_body_latex = latex(inner_body)
+                    outer_var_latex = self._sympy_to_latex(outer_var)
+                    outer_start_latex = self._sympy_to_latex(outer_start)
+                    outer_end_latex = self._sympy_to_latex(outer_end)
+                    inner_var_latex = self._sympy_to_latex(inner_var)
+                    inner_start_latex = self._sympy_to_latex(inner_start)
+                    inner_end_latex = self._sympy_to_latex(inner_end)
+                    inner_body_latex = self._sympy_to_latex(inner_body)
                     
                     # Mostrar estructura anidada
                     steps.append(
@@ -1948,7 +2038,7 @@ class SummationCloser:
                             from sympy import simplify
                             inner_result_expr = inner_end - inner_start + Int(1)
                             inner_result_simplified = simplify(inner_result_expr)
-                            inner_result_latex = latex(inner_result_simplified)
+                            inner_result_latex = self._sympy_to_latex(inner_result_simplified)
                             
                             steps.append(
                                 f"\\text{{{self._labels['simplifying']} }} {inner_end_latex} - {inner_start_latex} + 1 = {inner_result_latex}"
@@ -1999,14 +2089,14 @@ class SummationCloser:
                                                         outer_result = outer_result.doit()
                                                         outer_result = expand(outer_result)
                                                         outer_result = simplify(outer_result)
-                                                    # Si todavía tiene la variable después de todo, eliminarla sustituyendo por 0
+                                                    # Si todavía tiene la variable después de todo, eliminarla (evitar resultado negativo)
                                                     if outer_result.has(var_symbol):
-                                                        print(f"[SummationCloser] Advertencia: Variable de iteración {var_name} todavía presente después de evaluar sumatoria, sustituyendo por 0")
-                                                        from sympy import Integer as SymInteger
-                                                        outer_result = outer_result.subs(var_symbol, SymInteger(0))
-                                                        outer_result = simplify(outer_result)
+                                                        print(f"[SummationCloser] Advertencia: Variable de iteración {var_name} todavía presente después de evaluar sumatoria")
+                                                        outer_result = self._safe_substitute_iteration_var(
+                                                            outer_result, var_symbol, var_name, variable
+                                                        )
                                     
-                                    outer_result_latex = latex(outer_result)
+                                    outer_result_latex = self._sympy_to_latex(outer_result)
                                     # Validar que el resultado no contenga variables de iteración en LaTeX
                                     if 'i' in outer_result_latex or 'j' in outer_result_latex or 'k' in outer_result_latex:
                                         # Intentar evaluar de nuevo si el LaTeX todavía tiene variables
@@ -2020,7 +2110,7 @@ class SummationCloser:
         else:
             # Una sola sumatoria o ninguna
             for i, sum_expr in enumerate(sums):
-                sum_latex = latex(sum_expr)
+                sum_latex = self._sympy_to_latex(sum_expr)
                 steps.append(sum_latex)
         
         return steps
@@ -2080,14 +2170,14 @@ class SummationCloser:
                             'var': var,
                             'start': start,
                             'end': end,
-                            'var_latex': latex(var),
-                            'start_latex': latex(start),
-                            'end_latex': latex(end)
+                            'var_latex': self._sympy_to_latex(var),
+                            'start_latex': self._sympy_to_latex(start),
+                            'end_latex': self._sympy_to_latex(end)
                         })
                 
                 if not limits_info:
                     # No se pudieron extraer los límites
-                    sum_latex = latex(sum_expr)
+                    sum_latex = self._sympy_to_latex(sum_expr)
                     steps.append(sum_latex)
                     return steps
                 
@@ -2095,7 +2185,7 @@ class SummationCloser:
                 # all_limits está ordenado de externo a interno
                 # all_limits[0] es el más externo, all_limits[-1] es el más interno
                 # Para mostrar correctamente en LaTeX: construir envolviendo desde el más interno hacia el más externo
-                body_latex = latex(body)
+                body_latex = self._sympy_to_latex(body)
                 
                 # Construir cadena de sumatorias anidadas envolviendo desde interno a externo
                 # limits_info[-1] es el más interno, limits_info[0] es el más externo
@@ -2133,11 +2223,11 @@ class SummationCloser:
                     # Calcular la expresión usando SymPy primero
                     inner_result_expr = expand(inner_end - inner_start + Int(1))
                     inner_result_simplified = simplify(inner_result_expr)
-                    inner_result_latex = latex(inner_result_simplified)
+                    inner_result_latex = self._sympy_to_latex(inner_result_simplified)
                     
                     # Calcular también la expresión sin simplificar para mostrar el paso
                     inner_result_unsimplified = inner_end - inner_start + Int(1)
-                    inner_result_unsimplified_latex = latex(inner_result_unsimplified)
+                    inner_result_unsimplified_latex = self._sympy_to_latex(inner_result_unsimplified)
                     
                     steps.append(
                         f"\\text{{{self._labels['evaluating_inner']} }} "
@@ -2197,23 +2287,23 @@ class SummationCloser:
                                             evaluated_simplified = evaluated_simplified.doit()
                                             evaluated_simplified = expand(evaluated_simplified)
                                             evaluated_simplified = simplify(evaluated_simplified)
-                                        # Si todavía queda, sustituir por 0 (error - no debería estar)
+                                        # Si todavía queda, sustituir (evitar resultado negativo)
                                         if evaluated_simplified.has(var_symbol):
-                                            print(f"[SummationCloser] Advertencia: Variable de iteración {var_name} todavía presente después de evaluar sumatoria con doit(), sustituyendo por 0")
-                                            from sympy import Integer as SymInteger
-                                            evaluated_simplified = evaluated_simplified.subs(var_symbol, SymInteger(0))
-                                            evaluated_simplified = simplify(evaluated_simplified)
+                                            print(f"[SummationCloser] Advertencia: Variable de iteración {var_name} todavía presente después de evaluar sumatoria con doit()")
+                                            evaluated_simplified = self._safe_substitute_iteration_var(
+                                                evaluated_simplified, var_symbol, var_name, variable
+                                            )
                             except Exception as e:
                                 print(f"[SummationCloser] Error eliminando variable de iteración {var_name}: {e}")
-                                # Fallback: sustituir por 0
+                                # Fallback: sustituir por variable principal (más seguro que 0)
                                 try:
-                                    from sympy import Integer as SymInteger
-                                    evaluated_simplified = evaluated_simplified.subs(var_symbol, SymInteger(0))
-                                    evaluated_simplified = simplify(evaluated_simplified)
-                                except:
+                                    evaluated_simplified = self._safe_substitute_iteration_var(
+                                        evaluated_simplified, var_symbol, var_name, variable
+                                    )
+                                except Exception:
                                     pass
                     
-                    evaluated_latex = latex(evaluated_simplified)
+                    evaluated_latex = self._sympy_to_latex(evaluated_simplified)
                     # Validar que el resultado no contenga variables de iteración en LaTeX
                     if any(var in evaluated_latex for var in ['\\left(i', '(i', 'i)', '\\left(j', '(j', 'j)', '\\left(k', '(k', 'k)']):
                         print(f"[SummationCloser] Advertencia: Resultado LaTeX todavía contiene variables de iteración: {evaluated_latex}")

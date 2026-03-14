@@ -7,7 +7,7 @@ Incluye tests auténticos con pseudocode y expectativas de complejidad.
 
 import pytest
 from app.modules.analysis.analyzers.recursive import RecursiveAnalyzer
-from app.modules.analysis.service import analyze_algorithm
+from app.modules.analysis.service import analyze_algorithm, detect_methods
 from tests._support.assertions import (
     assert_all_cases_complexity,
     get_notation_from_totals,
@@ -39,6 +39,38 @@ BINARY_SEARCH_RECURSIVE_PSEUDOCODE = """busquedaBinaria(A, x, inicio, fin) BEGIN
   ELSE BEGIN
     RETURN busquedaBinaria(A, x, mitad + 1, fin);
   END
+END
+"""
+
+FIBONACCI_RECURSIVE_PSEUDOCODE = """fibonacci(n) BEGIN
+    IF (n <= 1) THEN BEGIN
+        RETURN n;
+    END
+    RETURN fibonacci(n - 1) + fibonacci(n - 2);
+END
+"""
+
+HANOI_RECURSIVE_PSEUDOCODE = """hanoi(n, origen, destino, aux) BEGIN
+    IF (n = 1) THEN BEGIN
+        RETURN 1;
+    END
+    RETURN hanoi(n - 1, origen, aux, destino) + 1 + hanoi(n - 1, aux, destino, origen);
+END
+"""
+
+FACTORIAL_RECURSIVE_PSEUDOCODE = """factorial(n) BEGIN
+    IF (n <= 1) THEN BEGIN
+        RETURN 1;
+    END
+    RETURN n * factorial(n - 1);
+END
+"""
+
+SPARSE_LINEAR_RECURSIVE_PSEUDOCODE = """sparseRec(n) BEGIN
+    IF (n <= 3) THEN BEGIN
+        RETURN 1;
+    END
+    RETURN sparseRec(n - 1) + sparseRec(n - 4);
 END
 """
 
@@ -81,6 +113,108 @@ class TestRecursiveAlgorithmsPseudocode:
         assert_all_cases_complexity(
             result, "log", expected_best="constant", name="Binary search rec"
         )
+
+
+class TestDynamicProgrammingValidation:
+    """Regresiones para evitar afirmaciones incorrectas sobre PD."""
+
+    def test_fibonacci_confirms_dp_with_rolling_window(self):
+        """Fibonacci debe confirmar PD y reportar patrón rolling window."""
+        result = analyze_algorithm(
+            FIBONACCI_RECURSIVE_PSEUDOCODE,
+            mode="worst",
+            preferred_method="characteristic_equation",
+        )
+
+        assert result.get("ok"), result.get("errors", [])
+        char_eq = result.get("totals", {}).get("characteristic_equation", {})
+
+        assert char_eq.get("dp_validation", {}).get("status") == "clear"
+        assert char_eq.get("dp_version", {}).get("pattern") == "rolling_window"
+        assert char_eq.get("dp_optimized_version", {}).get("space_complexity") == "O(1)"
+
+    def test_hanoi_rejects_dp_due_to_stateful_parameters(self):
+        """Hanoi no debe afirmarse como PD porque cambia parámetros de estado."""
+        result = analyze_algorithm(
+            HANOI_RECURSIVE_PSEUDOCODE,
+            mode="worst",
+            preferred_method="characteristic_equation",
+        )
+
+        assert result.get("ok"), result.get("errors", [])
+        char_eq = result.get("totals", {}).get("characteristic_equation", {})
+
+        assert char_eq.get("is_dp_linear") is False
+        assert char_eq.get("dp_validation", {}).get("status") == "rejected"
+        assert char_eq.get("dp_version") is None
+        assert "parámetros de estado" in char_eq.get("dp_validation", {}).get("reasons", [""])[0].lower()
+
+    def test_factorial_rejects_dp_without_overlap(self):
+        """Factorial no debe presentarse como PD al no tener solapamiento."""
+        result = analyze_algorithm(
+            FACTORIAL_RECURSIVE_PSEUDOCODE,
+            mode="worst",
+            preferred_method="characteristic_equation",
+        )
+
+        assert result.get("ok"), result.get("errors", [])
+        char_eq = result.get("totals", {}).get("characteristic_equation", {})
+
+        assert char_eq.get("dp_validation", {}).get("status") == "rejected"
+        assert char_eq.get("dp_version") is None
+        assert "solapamiento" in char_eq.get("dp_validation", {}).get("reasons", [""])[0].lower()
+
+    def test_sparse_linear_recurrence_prefers_tabulation(self):
+        """Recurrencias lineales de mayor orden deben usar tabulación, no ventana deslizante."""
+        result = analyze_algorithm(
+            SPARSE_LINEAR_RECURSIVE_PSEUDOCODE,
+            mode="worst",
+            preferred_method="characteristic_equation",
+        )
+
+        assert result.get("ok"), result.get("errors", [])
+        char_eq = result.get("totals", {}).get("characteristic_equation", {})
+
+        assert char_eq.get("dp_validation", {}).get("status") == "clear"
+        assert char_eq.get("dp_validation", {}).get("primary_pattern") == "tabulation"
+        assert char_eq.get("dp_version", {}).get("pattern") == "tabulation"
+        assert char_eq.get("dp_optimized_version", {}).get("space_complexity") == "O(4)"
+
+    def test_fibonacci_reports_supported_patterns_besides_rolling_window(self):
+        """Fibonacci debe reportar métodos DP alternativos además de rolling window."""
+        result = analyze_algorithm(
+            FIBONACCI_RECURSIVE_PSEUDOCODE,
+            mode="worst",
+            preferred_method="characteristic_equation",
+        )
+
+        assert result.get("ok"), result.get("errors", [])
+        validation = result.get("totals", {}).get("characteristic_equation", {}).get("dp_validation", {})
+
+        assert validation.get("primary_pattern") == "rolling_window"
+        assert "tabulation" in validation.get("supported_patterns", [])
+        assert "memoization" in validation.get("supported_patterns", [])
+
+    def test_detect_methods_rejects_dp_for_master_style_recurrence(self):
+        """Detect-methods debe informar descarte de PD para merge sort."""
+        result = detect_methods(MERGE_SORT_PSEUDOCODE, algorithm_kind="recursive")
+
+        assert result.get("ok"), result.get("errors", [])
+        dp_validation = result.get("recurrence_info", {}).get("dp_validation", {})
+
+        assert dp_validation.get("status") == "rejected"
+        assert "Teorema Maestro" in dp_validation.get("reasons", [""])[0]
+
+    def test_detect_methods_reports_tabulation_for_sparse_linear_recurrence(self):
+        """Detect-methods debe propagar metadata de tabulación en recurrencias lineales dispersas."""
+        result = detect_methods(SPARSE_LINEAR_RECURSIVE_PSEUDOCODE, algorithm_kind="recursive")
+
+        assert result.get("ok"), result.get("errors", [])
+        dp_validation = result.get("recurrence_info", {}).get("dp_validation", {})
+
+        assert dp_validation.get("status") == "clear"
+        assert dp_validation.get("primary_pattern") == "tabulation"
+        assert "memoization" in dp_validation.get("supported_patterns", [])
 
 
 class TestRecursiveAlgorithms:

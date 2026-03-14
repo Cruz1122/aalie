@@ -1,18 +1,9 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-  useRef,
-  useCallback,
-} from "react";
 import {
-  default as ReactFlow,
+  ReactFlow,
   Background,
   Controls,
-  MiniMap,
   useNodesState,
   useEdgesState,
   Handle,
@@ -23,8 +14,16 @@ import {
   type Edge,
   type EdgeProps,
   type ReactFlowInstance,
-} from "reactflow";
-import "reactflow/dist/style.css";
+} from "@xyflow/react";
+import { useTranslations } from "next-intl";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  useCallback,
+} from "react";
+import "@xyflow/react/dist/style.css";
 
 import {
   generateRecursionTree,
@@ -34,6 +33,7 @@ import {
 } from "@/lib/recursion-tree-generator";
 
 import Formula from "./Formula";
+import BaseModalContainer from "./modals/BaseModalContainer";
 
 interface RecursionTreeModalProps {
   open: boolean;
@@ -86,6 +86,7 @@ interface RecursionTreeModalProps {
 }
 
 interface TreeNodeData {
+  [key: string]: unknown;
   label: string;
   size: number;
   level: number;
@@ -279,10 +280,14 @@ export default function RecursionTreeModal({
     "vertical",
   );
   const [initialN, setInitialN] = useState<number>(3); // Por defecto n=3 (profundidad más baja)
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<TreeNodeData>>(
+    [],
+  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
-  const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
+  const reactFlowInstance = useRef<
+    ReactFlowInstance<Node<TreeNodeData>, Edge> | null
+  >(null);
 
   // Detectar tipo de recurrencia
   const isLinearRecurrence = recurrence?.type === "linear_shift";
@@ -388,7 +393,7 @@ export default function RecursionTreeModal({
         return;
       }
 
-      const formattedNodes = treeLayout.nodes as Node[];
+      const formattedNodes = treeLayout.nodes as Node<TreeNodeData>[];
       // Asegurar que las aristas tengan el formato mínimo requerido
       const formattedEdges: Edge[] = treeLayout.edges.map((edge) => ({
         id: edge.id,
@@ -462,20 +467,6 @@ export default function RecursionTreeModal({
 
   const t = useTranslations("analyzer.recursionTreeModal");
 
-  // Manejar tecla Escape y scroll
-  useEffect(() => {
-    if (!open) return;
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.body.style.overflow = "hidden";
-    document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.body.style.overflow = "";
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [open, onClose]);
-
   // Centrar el árbol cuando se abre el modal (solo si ya hay nodos generados)
   useEffect(() => {
     if (!open || nodes.length === 0) return;
@@ -502,7 +493,7 @@ export default function RecursionTreeModal({
   }, [open, nodes.length]);
 
   const onInit = useCallback(
-    (instance: ReactFlowInstance) => {
+    (instance: ReactFlowInstance<Node<TreeNodeData>, Edge>) => {
       reactFlowInstance.current = instance;
       // Si el modal está abierto y hay nodos, centrar inmediatamente después de inicializar
       if (open && nodes.length > 0) {
@@ -558,10 +549,6 @@ export default function RecursionTreeModal({
     setOrientation((prev) => (prev === "vertical" ? "horizontal" : "vertical"));
   }, []);
 
-  const getNodeColor = useCallback((node: Node) => {
-    return node.data?.isBaseCase ? "#10b981" : "#64748b";
-  }, []);
-
   // Solo mostrar el modal si la recurrencia es válida
   if (!open || !recurrence) {
     return null;
@@ -594,30 +581,19 @@ export default function RecursionTreeModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div
-        className="absolute inset-0 glass-modal-overlay"
-        onClick={onClose}
-        aria-hidden
-      />
-      <div className="relative z-10 w-[min(95vw,1000px)] h-[min(75vh,650px)] max-h-[75vh] rounded-2xl glass-modal-container shadow-2xl flex flex-col overflow-hidden mx-4">
+    <BaseModalContainer
+      open={open}
+      onClose={onClose}
+      title={t("title")}
+      titleIcon="account_tree"
+      closeAriaLabel={t("closeModal")}
+      zIndexClassName="z-[70]"
+      sizeClassName="w-[min(95vw,1400px)] h-[min(90vh,850px)] max-h-[90vh]"
+      panelClassName="!shadow-none"
+      headerClassName="!shadow-none"
+      contentClassName="p-0 flex flex-col min-h-0 overflow-hidden"
+    >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 flex-shrink-0 glass-modal-header">
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <span className="material-symbols-outlined text-purple-400">
-              account_tree
-            </span>
-            {t("title")}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
-            aria-label={t("closeModal")}
-          >
-            ✕
-          </button>
-        </div>
-
         {/* Controles de configuración */}
         <div className="border-b border-white/10 p-4 flex-shrink-0 bg-slate-800/50">
           <div className="flex flex-wrap items-center gap-4">
@@ -768,7 +744,6 @@ export default function RecursionTreeModal({
               stroke: "#64748b",
               strokeWidth: 3,
             }}
-            edgesUpdatable={false}
             edgesFocusable={false}
             nodesConnectable={false}
             nodesDraggable={false}
@@ -780,13 +755,6 @@ export default function RecursionTreeModal({
               showZoom={true}
               showFitView={true}
               showInteractive={true}
-            />
-            <MiniMap
-              className="!bg-slate-800/90 !border !border-white/10 !rounded-lg"
-              nodeColor={getNodeColor}
-              maskColor="rgba(0, 0, 0, 0.6)"
-              pannable
-              zoomable
             />
           </ReactFlow>
         </div>
@@ -844,7 +812,6 @@ export default function RecursionTreeModal({
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </BaseModalContainer>
   );
 }

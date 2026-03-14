@@ -21,7 +21,13 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { source, case: caseType, input_size, initial_variables, locale } = body;
+    const {
+      source,
+      case: caseType,
+      input_size,
+      initial_variables,
+      locale,
+    } = body;
     
     if (!source) {
       return NextResponse.json(

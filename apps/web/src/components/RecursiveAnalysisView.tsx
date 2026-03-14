@@ -24,6 +24,161 @@ type MasterType = AnalyzeOpenResponse["totals"]["master"];
 type ProofType = AnalyzeOpenResponse["totals"]["proof"];
 
 type CaseType = "worst" | "best" | "average";
+type DPApplicabilityStatus = "clear" | "doubtful" | "rejected";
+type DPPatternType = "table" | "memoization" | "rolling_window" | "none";
+
+interface DPApplicabilityInfo {
+  status: DPApplicabilityStatus;
+  pattern: DPPatternType;
+  reasonKey: string;
+  reasonText?: string;
+}
+
+const THETA_ZERO_LATEX = String.raw`\theta(0)`;
+
+const isHomogeneousLinearShift = (recurrence: RecurrenceType): boolean | null => {
+  if (recurrence?.type !== "linear_shift") return null;
+
+  const recurrenceGN = recurrence["g(n)"]?.trim().toLowerCase() ?? "";
+  return (
+    recurrenceGN === "" ||
+    recurrenceGN === "0" ||
+    recurrenceGN === THETA_ZERO_LATEX ||
+    recurrenceGN === "theta(0)"
+  );
+};
+
+const getDPBadgeVisual = (
+  status: DPApplicabilityStatus,
+  tView: (key: string) => string,
+): { badgeClass: string; badgeIcon: string; statusLabel: string } => {
+  if (status === "clear") {
+    return {
+      badgeClass: "bg-green-500/20 text-green-300 border-green-500/30",
+      badgeIcon: "check_circle",
+      statusLabel: tView("dpApplicabilityClear"),
+    };
+  }
+
+  if (status === "doubtful") {
+    return {
+      badgeClass: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+      badgeIcon: "help",
+      statusLabel: tView("dpApplicabilityDoubtful"),
+    };
+  }
+
+  return {
+    badgeClass: "bg-red-500/20 text-red-300 border-red-500/30",
+    badgeIcon: "cancel",
+    statusLabel: tView("dpApplicabilityRejected"),
+  };
+};
+
+const getDPPatternLabel = (
+  pattern: DPPatternType,
+  tView: (key: string) => string,
+): string | null => {
+  if (pattern === "table") return tView("dpPatternTable");
+  if (pattern === "memoization") return tView("dpPatternMemoization");
+  if (pattern === "rolling_window") return tView("dpPatternRollingWindow");
+  return null;
+};
+
+function inferDPPattern(
+  characteristicEquation: CharacteristicEquationType,
+): DPPatternType {
+  const backendPattern = characteristicEquation?.dp_validation?.primary_pattern;
+  if (backendPattern === "tabulation") return "table";
+  if (backendPattern === "memoization") return "memoization";
+  if (backendPattern === "rolling_window") return "rolling_window";
+
+  const dpCode = characteristicEquation?.dp_version?.code?.toLowerCase() ?? "";
+  const optimizedSpace =
+    characteristicEquation?.dp_optimized_version?.space_complexity ?? "";
+
+  if (dpCode.includes("memo") || dpCode.includes("cache")) {
+    return "memoization";
+  }
+  if (optimizedSpace.trim() === "O(1)") {
+    return "rolling_window";
+  }
+  if (characteristicEquation?.dp_version) {
+    return "table";
+  }
+  return "none";
+}
+
+function inferDPApplicability(
+  characteristicEquation: CharacteristicEquationType,
+  recurrence: RecurrenceType,
+): DPApplicabilityInfo {
+  const backendValidation = characteristicEquation?.dp_validation;
+  if (backendValidation) {
+    return {
+      status:
+        backendValidation.status === "clear"
+          ? "clear"
+          : backendValidation.status === "doubtful"
+            ? "doubtful"
+            : "rejected",
+      pattern: inferDPPattern(characteristicEquation),
+      reasonKey: backendValidation.applicable
+        ? backendValidation.status === "clear"
+          ? "dpReasonStrongReduction"
+          : "dpReasonNoStrongGain"
+        : recurrence?.type === "divide_conquer"
+          ? "dpReasonMasterPreferred"
+          : "dpReasonValidationRejected",
+      reasonText: backendValidation.reasons?.[0],
+    };
+  }
+
+  const hasDPVersion = Boolean(characteristicEquation?.dp_version);
+  if (!characteristicEquation?.is_dp_linear || !hasDPVersion) {
+    if (recurrence?.type === "divide_conquer") {
+      return {
+        status: "rejected",
+        pattern: "none",
+        reasonKey: "dpReasonMasterPreferred",
+      };
+    }
+    return {
+      status: "rejected",
+      pattern: "none",
+      reasonKey: "dpReasonValidationRejected",
+    };
+  }
+
+  const recursive =
+    characteristicEquation.dp_version?.recursive_complexity?.toLowerCase() ?? "";
+  const dpTime =
+    characteristicEquation.dp_version?.time_complexity?.toLowerCase() ?? "";
+  const hasImprovement =
+    characteristicEquation.dp_version?.recursive_complexity?.trim() !==
+    characteristicEquation.dp_version?.time_complexity?.trim();
+  const exponentialLike =
+    recursive.includes("^n") ||
+    recursive.includes("2^n") ||
+    recursive.includes("n!") ||
+    recursive.includes("phi^n") ||
+    recursive.includes("φ^");
+
+  const pattern = inferDPPattern(characteristicEquation);
+  if (hasImprovement && exponentialLike && dpTime.includes("o(n)")) {
+    return {
+      status: "clear",
+      pattern,
+      reasonKey: "dpReasonStrongReduction",
+    };
+  }
+
+  return {
+    status: "doubtful",
+    pattern,
+    reasonKey: "dpReasonNoStrongGain",
+  };
+}
 
 /**
  * Obtiene las clases CSS para el badge de un tipo de caso.
@@ -106,25 +261,23 @@ const getMethodIconName = (
 };
 
 /**
- * Obtiene las clases CSS para el badge del método de análisis.
+ * Obtiene la clase de color para el nombre del método de análisis.
  * @param isCharacteristicMethod - Indica si es método de ecuación característica
  * @param isIterationMethod - Indica si es método de iteración
  * @param isRecursionTreeMethod - Indica si es método de árbol de recursión
- * @returns String con las clases CSS para el badge
+ * @returns String con la clase CSS del color de texto
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
-const getMethodBadgeStyle = (
+const getMethodTextColor = (
   isCharacteristicMethod: boolean,
   isIterationMethod: boolean,
   isRecursionTreeMethod: boolean,
 ): string => {
-  if (isCharacteristicMethod)
-    return "bg-blue-500/20 text-blue-300 border-blue-500/30";
-  if (isIterationMethod)
-    return "bg-purple-500/20 text-purple-300 border-purple-500/30";
-  if (isRecursionTreeMethod)
-    return "bg-cyan-500/20 text-cyan-300 border-cyan-500/30";
-  return "bg-orange-500/20 text-orange-300 border-orange-500/30";
+  return getMethodIconColor(
+    isCharacteristicMethod,
+    isIterationMethod,
+    isRecursionTreeMethod,
+  );
 };
 
 /**
@@ -471,35 +624,60 @@ const renderProcedureModal = (
  */
 const renderCharacteristicBadges = (
   characteristicEquation: CharacteristicEquationType,
+  recurrence: RecurrenceType,
+  locale: "en" | "es",
   tView: (key: string) => string,
 ): React.JSX.Element | null => {
   if (!characteristicEquation) return null;
 
+  const dpApplicability = inferDPApplicability(characteristicEquation, recurrence);
+  const homogeneousByGN = isHomogeneousLinearShift(recurrence);
+  const isHomogeneous =
+    homogeneousByGN ?? !characteristicEquation.particular_solution;
+  const dpVisual = getDPBadgeVisual(dpApplicability.status, tView);
+  const dpPatternLabel = getDPPatternLabel(dpApplicability.pattern, tView);
+  const dpReasonLabel = dpApplicability.reasonText
+    ? translateBackendContent(dpApplicability.reasonText, locale)
+    : tView(dpApplicability.reasonKey);
+
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="absolute top-0 right-0 z-20 flex items-center justify-end gap-1.5 whitespace-nowrap sm:top-1">
       {/* Badge de Homogénea/No Homogénea */}
-      {characteristicEquation.particular_solution ? (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold border bg-yellow-500/20 text-yellow-300 border-yellow-500/30">
-          <span className="material-symbols-outlined text-xs mr-1">
+      {isHomogeneous ? (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[9px] leading-none font-semibold border bg-blue-500/20 text-blue-300 border-blue-500/30">
+          <span className="material-symbols-outlined shrink-0 text-[12px] leading-none">
             functions
-          </span>{" "}
-          {tView("nonHomogeneous")}
-        </span>
-      ) : (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold border bg-blue-500/20 text-blue-300 border-blue-500/30">
-          <span className="material-symbols-outlined text-xs mr-1">
-            functions
-          </span>{" "}
+          </span>
           {tView("homogeneous")}
         </span>
-      )}
-      {/* Badge de DP si aplica */}
-      {characteristicEquation.is_dp_linear && (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold border bg-green-500/20 text-green-300 border-green-500/30">
-          <span className="material-symbols-outlined text-xs mr-1">memory</span>{" "}
-          {tView("dpLinearDetected")}
+      ) : (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[9px] leading-none font-semibold border bg-yellow-500/20 text-yellow-300 border-yellow-500/30">
+          <span className="material-symbols-outlined shrink-0 text-[12px] leading-none">
+            functions
+          </span>
+          {tView("nonHomogeneous")}
         </span>
       )}
+      <div className="relative inline-flex items-center">
+        <span
+          className={`peer inline-flex cursor-help items-center gap-1 px-1.5 py-0.5 rounded-sm text-[9px] leading-none font-semibold border ${dpVisual.badgeClass}`}
+        >
+          <span className="material-symbols-outlined shrink-0 text-[12px] leading-none">
+            {dpVisual.badgeIcon}
+          </span>
+          {dpVisual.statusLabel}
+        </span>
+        <div className="pointer-events-none absolute right-0 top-full mt-1 w-56 whitespace-normal break-words rounded-md border border-slate-700 bg-slate-900/95 p-2 text-[10px] text-slate-100 shadow-lg opacity-0 transition-opacity peer-hover:opacity-100 peer-focus-visible:opacity-100">
+          {dpPatternLabel && (
+            <p className="mb-1 whitespace-normal break-words font-semibold text-cyan-300">
+              {dpPatternLabel}
+            </p>
+          )}
+          <p className="whitespace-normal break-words text-slate-200">
+            {dpReasonLabel}
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
@@ -582,6 +760,7 @@ interface ActionButtonsProps {
   readonly setShowStepsModal: (show: boolean) => void;
   readonly setShowDPModal: (show: boolean) => void;
   readonly characteristicEquation: CharacteristicEquationType;
+  readonly dpApplicability: DPApplicabilityInfo;
 }
 
 /**
@@ -622,7 +801,8 @@ const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
         </button>
       )}
       {props.isCharacteristicMethod &&
-        props.characteristicEquation?.is_dp_linear && (
+        props.dpApplicability.status !== "rejected" &&
+        props.characteristicEquation?.dp_version && (
           <button
             onClick={() => props.setShowDPModal(true)}
             className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-green-500/20 transition-colors min-w-0"
@@ -752,7 +932,7 @@ const renderRecursionTreeCards = (
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Nivel Dominante */}
-      <div className="glass-card p-3 rounded-lg shadow-[0_8px_32px_0_rgba(6,182,212,0.3)] hover:shadow-[0_12px_40px_0_rgba(6,182,212,0.4)] h-full flex flex-col">
+      <div className="glass-card p-3 rounded-lg h-full flex flex-col">
         <div className="flex flex-col gap-2 flex-1">
           <h3 className="font-semibold text-cyan-300 text-sm flex items-center gap-2">
             <span className="material-symbols-outlined text-base">
@@ -783,7 +963,7 @@ const renderRecursionTreeCards = (
       </div>
 
       {/* Ecuación de Eficiencia */}
-      <div className="glass-card p-3 rounded-lg shadow-[0_8px_32px_0_rgba(6,182,212,0.3)] hover:shadow-[0_12px_40px_0_rgba(6,182,212,0.4)] h-full flex flex-col">
+      <div className="glass-card p-3 rounded-lg h-full flex flex-col">
         <div className="flex flex-col gap-2 flex-1">
           <h3 className="font-semibold text-cyan-300 text-sm flex items-center gap-2">
             <span className="material-symbols-outlined text-base">
@@ -852,7 +1032,7 @@ const renderEfficiencyCard = (
   props: EfficiencyCardProps,
 ): React.JSX.Element => {
   return (
-    <div className="glass-card p-4 sm:p-7 rounded-lg shadow-[0_8px_32px_0_rgba(59,130,246,0.3)] hover:shadow-[0_12px_40px_0_rgba(59,130,246,0.4)] border border-blue-500/20 flex-shrink-0 min-w-0">
+    <div className="glass-card p-4 sm:p-7 rounded-lg border border-blue-500/20 flex-shrink-0 min-w-0">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 min-w-0">
         <h3 className="text-white font-semibold text-sm flex items-center gap-2 flex-wrap min-w-0">
           <span className="material-symbols-outlined text-base text-blue-400 flex-shrink-0">
@@ -1079,6 +1259,10 @@ export default function RecursiveAnalysisView({
     !isIterationMethod &&
     !isRecursionTreeMethod &&
     !!master;
+  const dpApplicability = useMemo(
+    () => inferDPApplicability(characteristicEquation, recurrence),
+    [characteristicEquation, recurrence],
+  );
 
   // Obtener T_open para cada caso
   const bestT =
@@ -1183,32 +1367,47 @@ export default function RecursiveAnalysisView({
       {/* Card principal: Método y Parámetros */}
       <div className="glass-card p-6 rounded-lg">
         <div className="mb-4">
-          <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
-            <h2 className="text-white font-semibold flex items-center gap-3">
-              <span
-                className={`material-symbols-outlined ${getMethodIconColor(isCharacteristicMethod, isIterationMethod, isRecursionTreeMethod)}`}
-              >
-                {getMethodIconName(
-                  isCharacteristicMethod,
-                  isIterationMethod,
-                  isRecursionTreeMethod,
-                )}
+          <div
+            className={`relative flex items-start justify-between flex-wrap gap-2 mb-3 ${isCharacteristicMethod ? "pr-56 sm:pr-72" : ""}`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-10 w-10 items-center justify-center">
+                <span
+                  className={`material-symbols-outlined block text-[28px] leading-none ${getMethodIconColor(isCharacteristicMethod, isIterationMethod, isRecursionTreeMethod)}`}
+                >
+                  {getMethodIconName(
+                    isCharacteristicMethod,
+                    isIterationMethod,
+                    isRecursionTreeMethod,
+                  )}
+                </span>
               </span>
-              <span>{tView("analysisMethod")}</span>
               <span
-                className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide ${getMethodBadgeStyle(isCharacteristicMethod, isIterationMethod, isRecursionTreeMethod)}`}
+                className="flex flex-col justify-center leading-tight"
               >
-                {getMethodBadgeText(
-                  isCharacteristicMethod,
-                  isIterationMethod,
-                  isRecursionTreeMethod,
-                )}
+                <span className="text-[11px] font-medium tracking-wide text-slate-400">
+                  {tView("analysisMethod")}
+                </span>
+                <span
+                  className={`text-xl font-bold ${getMethodTextColor(isCharacteristicMethod, isIterationMethod, isRecursionTreeMethod)}`}
+                >
+                  {getMethodBadgeText(
+                    isCharacteristicMethod,
+                    isIterationMethod,
+                    isRecursionTreeMethod,
+                  )}
+                </span>
               </span>
-            </h2>
+            </div>
 
             {/* Badges de información (solo para ecuación característica) */}
             {isCharacteristicMethod &&
-              renderCharacteristicBadges(characteristicEquation, tView)}
+              renderCharacteristicBadges(
+                characteristicEquation,
+                recurrence,
+                locale,
+                tView,
+              )}
           </div>
         </div>
 
@@ -1244,7 +1443,9 @@ export default function RecursiveAnalysisView({
 
           // Si es ecuación característica y hay botón de árbol, mostrar los tres botones en la misma línea
           if (isCharacteristicMethod && showTreeButton) {
-            const hasDPButton = characteristicEquation?.is_dp_linear;
+            const hasDPButton =
+              dpApplicability.status !== "rejected" &&
+              Boolean(characteristicEquation?.dp_version);
             return (
               <div
                 className={`mb-4 grid gap-3 grid-cols-1 sm:grid-cols-2 ${hasDPButton ? "lg:grid-cols-3" : ""}`}
@@ -1321,6 +1522,7 @@ export default function RecursiveAnalysisView({
                 setShowStepsModal,
                 setShowDPModal,
                 characteristicEquation,
+                dpApplicability,
               })}
               {showTreeButton && (
                 <div className="mb-4">
@@ -1395,7 +1597,9 @@ export default function RecursiveAnalysisView({
       })}
 
       {/* Modal de versión DP */}
-      {isCharacteristicMethod && characteristicEquation?.is_dp_linear && (
+      {isCharacteristicMethod &&
+        dpApplicability.status !== "rejected" &&
+        characteristicEquation?.dp_version && (
         <DPVersionModal
           open={showDPModal}
           onClose={() => setShowDPModal(false)}

@@ -7,6 +7,7 @@ import React from "react";
 import { translateBackendContent } from "@/lib/backend-content-translator";
 
 import Formula from "./Formula";
+import BaseModalContainer from "./modals/BaseModalContainer";
 
 /**
  * Redondea los valores numéricos en una expresión LaTeX a 3 decimales.
@@ -88,29 +89,16 @@ export default function IterationProcedureModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") onClose();
-        }}
-        role="button"
-        tabIndex={0}
-        aria-label={t("closeModal")}
-      />
-      <div className="absolute left-1/2 top-1/2 w-[min(95vw,1400px)] max-h-[75vh] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 ring-1 ring-white/10 shadow-2xl flex flex-col">
-        <div className="flex items-center justify-between border-b border-white/10 p-4 flex-shrink-0">
-          <h3 className="text-lg font-semibold text-white">{t("title")}</h3>
-          <button
-            onClick={onClose}
-            className="text-slate-300 hover:text-white transition-colors p-1 hover:bg-white/10 rounded"
-            aria-label={t("closeModal")}
-          >
-            ✕
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-custom">
+    <BaseModalContainer
+      open={open}
+      onClose={onClose}
+      title={t("title")}
+      closeAriaLabel={t("closeModal")}
+      sizeClassName="w-[min(95vw,1400px)] max-h-[75vh]"
+      panelClassName="rounded-xl bg-slate-900 ring-1 ring-white/10"
+      headerClassName="p-4"
+      contentClassName="p-6"
+    >
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             {/* Columna izquierda: Ecuación de Recurrencia y Expansiones */}
             <div className="space-y-6 lg:col-span-3">
@@ -364,8 +352,6 @@ export default function IterationProcedureModal({
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+    </BaseModalContainer>
   );
 }

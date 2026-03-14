@@ -1,9 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect } from "react";
 
 import AALIEIcon from "@/components/AALIEIcon";
+import BaseModalContainer from "@/components/modals/BaseModalContainer";
 import NavigationLink from "@/components/NavigationLink";
 import {
   UserGuideBlock,
@@ -89,50 +89,23 @@ export default function UserGuideModal({
 }: UserGuideModalProps) {
   const t = useTranslations("userGuide");
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    if (open) document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
-  useEffect(() => {
-    if (open) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
-  }, [open]);
-
   if (!open || !section) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className="absolute left-1/2 top-1/2 w-[min(90vw,800px)] max-h-[80vh] overflow-y-auto scrollbar-custom -translate-x-1/2 -translate-y-1/2 rounded-xl bg-slate-900 p-6 ring-1 ring-white/10 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
-          <h3 className="text-lg font-semibold text-white">
-            {t(section.titleKey)}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
-            aria-label={t("modalClose")}
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="mt-6 space-y-6">
-          {section.content.blocks.map((block, idx) => (
-            <BlockRenderer key={idx} block={block} t={t} />
-          ))}
-        </div>
+    <BaseModalContainer
+      open={open}
+      onClose={onClose}
+      title={t(section.titleKey)}
+      closeAriaLabel={t("modalClose")}
+      sizeClassName="w-[min(90vw,800px)] max-h-[80vh]"
+      panelClassName="rounded-xl bg-slate-900 ring-1 ring-white/10"
+    >
+      <div className="space-y-6">
+        {section.content.blocks.map((block, idx) => (
+          <BlockRenderer key={idx} block={block} t={t} />
+        ))}
       </div>
-    </div>
+    </BaseModalContainer>
   );
 }
 

@@ -80,7 +80,7 @@ export const useDocumentationSections = (): DocumentationSection[] => {
             {
               title: "React Flow",
               content:
-                "TraceFlowDiagram, RecursionTreeModal, RecursiveTraceContent. Layout Dagre, zoom/pan, virtualización. Convierte trace data en nodos y edges.",
+                "TraceFlowDiagram, StructuredTraceContent. Layout Dagre, zoom/pan, virtualización. Convierte trace data en nodos y edges.",
             },
           ],
         },

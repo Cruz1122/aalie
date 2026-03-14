@@ -196,6 +196,10 @@ class ComplexityClasses:
         
         # Eliminar espacios
         expr_str = re.sub(r'\s+', '', expr_str)
+
+        # Normalizar t_{while_X} y t_{repeat_X} a t_while_X (SymPy no parsea llaves)
+        expr_str = re.sub(r't_\{while_(\d+)\}', r't_while_\1', expr_str)
+        expr_str = re.sub(r't_\{repeat_(\d+)\}', r't_repeat_\1', expr_str)
         
         # Reemplazar operadores LaTeX
         expr_str = expr_str.replace('\\cdot', '*')
@@ -264,9 +268,12 @@ class ComplexityClasses:
         # Crear símbolo para la variable
         n = Symbol(variable, integer=True, positive=True)
         
-        # Crear contexto con símbolos comunes
+        # Crear contexto con símbolos comunes + t_while_X, t_repeat_X
         from sympy import log
         syms = {variable: n, 'log': log}
+        for m in re.finditer(r't_(?:while|repeat)_\d+', expr_str):
+            name = m.group(0)
+            syms[name] = n  # Sustituir por n como cota conservadora cuando no hay bound explícito
         
         try:
             return sympify(expr_str, locals=syms)
@@ -355,12 +362,16 @@ class ComplexityClasses:
         import re as _re2
         token_vars = _re2.findall(r"[a-zA-Z]+", s)
         # Filtrar tokens obvios que no representan tamaño (log, C, t, etc.)
+        # y nombres típicos de arrays (A, B, arr, etc.) que no deben aparecer en complejidad
+        ARRAY_LIKE_NAMES = {"a", "b", "c", "arr", "array", "lista", "list"}
         filtered = []
         for tok in token_vars:
             low = tok.lower()
             if low in ("log", "cdot", "frac", "text"):
                 continue
             if low.startswith("c_") or low.startswith("t_"):
+                continue
+            if low in ARRAY_LIKE_NAMES:
                 continue
             filtered.append(tok)
         # Evitar recursión infinita: solo reintentar si encontramos algo distinto
@@ -398,11 +409,15 @@ class ComplexityClasses:
                 var_symbol = sym
                 break
         
-        # Si no se encuentra el símbolo de la variable, intentar usar el primer símbolo
-        # (esto puede ser útil para casos donde la variable tiene otro nombre)
+        # Si no se encuentra el símbolo de la variable pedida, usar una variable libre
+        # disponible como fallback (evita colapsar indebidamente a O(1)).
         if var_symbol is None:
-            # Si no hay símbolo con el nombre de la variable, es constante
-            return Integer(1)
+            if free_symbols:
+                # Preferir nombres canónicos de tamaño cuando existan.
+                preferred = [s for s in free_symbols if getattr(s, "name", "") in ("n", "m", "N")]
+                var_symbol = preferred[0] if preferred else next(iter(free_symbols))
+            else:
+                return Integer(1)
         
         # Intentar crear Poly y extraer término líder
         # Este es el método principal para polinomios

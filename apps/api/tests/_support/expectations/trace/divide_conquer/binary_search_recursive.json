@@ -1,0 +1,9 @@
+{
+  "input_size": 8,
+  "initial_variables": {"A": [1, 2, 3, 4, 5, 6, 7, 8], "x": 9, "inicio": 1, "fin": 8},
+  "case": "worst",
+  "patternKindAlternatives": ["single_branch_recursive_search", "binary_branch_recursive"],
+  "minNodes": 5,
+  "minEdges": 4,
+  "nodeLabelsContain": ["busquedaBinaria"]
+}

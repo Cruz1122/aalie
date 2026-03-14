@@ -23,7 +23,7 @@ export const LoaderDemo: React.FC = () => {
         {/* Loader simple */}
         <button
           onClick={showSimpleLoader}
-          className="glass-secondary hover:glass-button p-4 rounded-lg transition-all duration-300 text-left group focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+          className="glass-secondary hover:bg-primary/25 hover:border-primary/40 p-4 rounded-lg transition-all duration-300 text-left group focus:outline-none focus:ring-2 focus:ring-blue-400/50"
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full group-hover:animate-spin" />
@@ -37,7 +37,7 @@ export const LoaderDemo: React.FC = () => {
         {/* Loader de progreso */}
         <button
           onClick={analyzeAlgorithm}
-          className="glass-secondary hover:glass-button p-4 rounded-lg transition-all duration-300 text-left group focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+          className="glass-secondary hover:bg-primary/25 hover:border-primary/40 p-4 rounded-lg transition-all duration-300 text-left group focus:outline-none focus:ring-2 focus:ring-blue-400/50"
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="w-6 h-2 bg-slate-600 rounded-full overflow-hidden">
@@ -53,7 +53,7 @@ export const LoaderDemo: React.FC = () => {
         {/* Loader dots */}
         <button
           onClick={quickOperation}
-          className="glass-secondary hover:glass-button p-4 rounded-lg transition-all duration-300 text-left group focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+          className="glass-secondary hover:bg-primary/25 hover:border-primary/40 p-4 rounded-lg transition-all duration-300 text-left group focus:outline-none focus:ring-2 focus:ring-blue-400/50"
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="flex gap-1">
@@ -75,7 +75,7 @@ export const LoaderDemo: React.FC = () => {
         {/* Loader pulse */}
         <button
           onClick={waitingLoader}
-          className="glass-secondary hover:glass-button p-4 rounded-lg transition-all duration-300 text-left group focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+          className="glass-secondary hover:bg-primary/25 hover:border-primary/40 p-4 rounded-lg transition-all duration-300 text-left group focus:outline-none focus:ring-2 focus:ring-blue-400/50"
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="relative flex items-center justify-center">

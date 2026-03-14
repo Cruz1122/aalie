@@ -82,6 +82,9 @@ class ExecutionEnvironment:
         elif isinstance(value, list):
             # Almacenar listas (arrays/matrices) directamente
             self.variables[name] = value
+        elif isinstance(value, dict) and "type" not in value:
+            # Objetos/lista enlazada (ej. {valor: 1, siguiente: {...}})
+            self.variables[name] = value
         else:
             # Intentar convertir usando expr_converter
             try:
@@ -125,6 +128,30 @@ class ExecutionEnvironment:
         if isinstance(expr, dict):
             node_type = expr.get("type", "")
             
+            if node_type == "Identifier":
+                # Resolver a valor concreto cuando es None o dict (lista enlazada)
+                name = expr.get("name", "")
+                if self.has_variable(name):
+                    val = self.get_variable(name)
+                    if val is None or isinstance(val, (dict, list)):
+                        return {"type": "Literal", "value": val}
+            
+            if node_type == "Field":
+                # Acceso a campo: nodo.valor, nodo.siguiente
+                target_node = expr.get("target")
+                field_name = expr.get("name", "")
+                base = self._resolve_indices(target_node)
+                if isinstance(base, dict) and base.get("type") == "Literal":
+                    val = base.get("value")
+                    if isinstance(val, dict) and field_name in val:
+                        return {"type": "Literal", "value": val[field_name]}
+                    return base
+                if isinstance(base, dict) and base.get("type") == "Identifier":
+                    obj = self.get_variable(base.get("name", ""))
+                    if isinstance(obj, dict) and field_name in obj:
+                        return {"type": "Literal", "value": obj[field_name]}
+                return expr
+
             if node_type == "Index":
                 # Resolver array[index] -> valor
                 target_node = expr.get("target")
@@ -199,21 +226,29 @@ class ExecutionEnvironment:
         # Resolver índices primero
         resolved_expr = self._resolve_indices(expr)
 
+        # Literal con valor no numérico: devolver directamente
+        # (soporta strings en PRINT y nodo.siguiente en listas enlazadas)
+        if isinstance(resolved_expr, dict) and resolved_expr.get("type") == "Literal":
+            val = resolved_expr.get("value")
+            if val is None or isinstance(val, dict) or isinstance(val, str):
+                return val
+
         # Convertir a SymPy
         sympy_expr = self.expr_converter.ast_to_sympy(resolved_expr)
         
         # Si tenemos input_size concreto, intentar evaluar
         if self.input_size is not None:
             try:
-                # Sustituir símbolos conocidos
-                evaluated = sympy_expr.subs({
-                    self.expr_converter.get_symbol(self.variable_name): self.input_size
-                })
-                
-                # Sustituir variables del environment
+                # Construir dict de sustitución: PRIORIZAR variables del scope actual
+                # (crítico en recursión: fact(3) debe evaluar n-1 = 2, no usar input_size=4)
+                subs_dict = {}
                 for var_name, var_value in self.variables.items():
                     if isinstance(var_value, (int, float)):
-                        evaluated = evaluated.subs(self.expr_converter.get_symbol(var_name), var_value)
+                        subs_dict[self.expr_converter.get_symbol(var_name)] = var_value
+                # Fallback: variable principal no en scope (ej. llamada inicial)
+                if self.variable_name not in self.variables and self.input_size is not None:
+                    subs_dict[self.expr_converter.get_symbol(self.variable_name)] = self.input_size
+                evaluated = sympy_expr.subs(subs_dict)
                 
                 # Intentar evaluar numéricamente
                 if evaluated.is_number:

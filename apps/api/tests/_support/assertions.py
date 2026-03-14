@@ -265,6 +265,28 @@ def assert_expected_symbols(
         )
 
 
+# Símbolos típicos de arrays que no deben aparecer en la notación de complejidad
+_ARRAY_LIKE_SYMBOLS = {"a", "b", "c", "arr", "array", "lista", "list"}
+
+
+def assert_notation_no_array_symbols(result: Dict[str, Any], case: str = "worst") -> None:
+    """
+    Verifica que la notación asintótica no contenga símbolos de arrays (A, B, arr, etc.).
+    La complejidad debe expresarse solo en términos de tamaño (n, m, etc.).
+    """
+    totals = get_totals(result, case)
+    notation = get_notation_from_totals(totals)
+    if not notation:
+        return
+    # Buscar símbolos de array como palabras/tokens (evitar falsos positivos en "log", "frac")
+    tokens = set(re.findall(r"[a-zA-Z]+", notation.lower()))
+    for bad in _ARRAY_LIKE_SYMBOLS:
+        assert bad not in tokens, (
+            f"Caso {case}: la notación no debe contener símbolos de array como {bad!r}, "
+            f"obtenido: {notation!r}"
+        )
+
+
 # --- Aserciones legacy (compatibilidad) ---
 
 
