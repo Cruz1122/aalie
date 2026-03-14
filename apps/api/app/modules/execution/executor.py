@@ -10,6 +10,88 @@ from .environment import ExecutionEnvironment
 from .trace_builder import TraceBuilder
 
 
+def _is_literal_zero(node: Any) -> bool:
+    """Verifica si un nodo AST representa el literal 0."""
+    if not isinstance(node, dict):
+        return False
+    t = node.get("type", "").lower()
+    if t in ("literal", "number"):
+        val = node.get("value")
+        return val == 0
+    return False
+
+
+def _get_assign_target_name(node: Any) -> Optional[str]:
+    """Obtiene el nombre del target si es Assign a Identifier."""
+    if not isinstance(node, dict) or node.get("type") != "Assign":
+        return None
+    target = node.get("target", {})
+    if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
+        return target.get("name")
+    return None
+
+
+def _expr_uses_identifier(expr: Any, name: str) -> bool:
+    """Verifica si la expresión usa el identificador dado."""
+    if isinstance(expr, dict):
+        if expr.get("type", "").lower() == "identifier" and expr.get("name") == name:
+            return True
+        for key, value in expr.items():
+            if key != "type" and _expr_uses_identifier(value, name):
+                return True
+    elif isinstance(expr, list):
+        return any(_expr_uses_identifier(item, name) for item in expr)
+    return False
+
+
+def _detect_zero_based_indexing(ast: Dict[str, Any]) -> bool:
+    """
+    Detecta si el algoritmo usa indexación 0-based (i <- 0 antes de WHILE, o FOR i <- 0).
+    Si no se detecta, se asume 1-based por compatibilidad con pseudocódigo clásico.
+    """
+    def walk(node: Any) -> bool:
+        if isinstance(node, dict):
+            t = node.get("type", "")
+            if t == "For":
+                start = node.get("start", {})
+                if _is_literal_zero(start):
+                    return True
+            if t == "While":
+                return False  # Se detecta por Assign previo en el bloque
+            if t == "Block":
+                body = node.get("body", [])
+                if not isinstance(body, list):
+                    body = [body] if body else []
+                for i, stmt in enumerate(body):
+                    if isinstance(stmt, dict) and stmt.get("type") == "Assign":
+                        target_name = _get_assign_target_name(stmt)
+                        if target_name and _is_literal_zero(stmt.get("value", {})):
+                            for j in range(i + 1, len(body)):
+                                s = body[j]
+                                if isinstance(s, dict) and s.get("type") == "While":
+                                    if _expr_uses_identifier(s.get("test", {}), target_name):
+                                        return True
+                                    break
+                                if isinstance(s, dict) and s.get("type") in ("For", "If", "Call"):
+                                    break
+            if t == "ProcDef":
+                body = node.get("body", {})
+                if isinstance(body, dict) and walk(body):
+                    return True
+            if t == "Program":
+                for item in node.get("body", []):
+                    if walk(item):
+                        return True
+            for key, value in node.items():
+                if key != "type" and walk(value):
+                    return True
+        elif isinstance(node, list):
+            return any(walk(item) for item in node)
+        return False
+
+    return walk(ast)
+
+
 class MaxRecursionDepthExceeded(Exception):
     """Excepción lanzada cuando se excede el límite de profundidad recursiva."""
     pass
@@ -51,7 +133,10 @@ class CodeExecutor:
         self.case = case
         self.locale = locale if locale in ("en", "es") else "en"
         self._trace_labels = get_trace_step_labels(self.locale)
-        self.environment = ExecutionEnvironment(input_size)
+        use_zero_based = _detect_zero_based_indexing(ast)
+        self.environment = ExecutionEnvironment(
+            input_size, variable_name="n", use_zero_based_indexing=use_zero_based
+        )
         
         # Cargar variables iniciales si existen
         if initial_variables:
@@ -600,7 +685,10 @@ class CodeExecutor:
                         current_array = [0] * (index_val + 1)
                     
                     if isinstance(current_array, list) and isinstance(index_val, int):
-                        idx = index_val - 1 if index_val > 0 else 0
+                        if self.environment.use_zero_based_indexing:
+                            idx = max(0, index_val)
+                        else:
+                            idx = index_val - 1 if index_val > 0 else 0
                         # Asegurar tamaño
                         if idx >= len(current_array):
                             # Extender array si es necesario (comportamiento dinámico para pseudocódigo)
@@ -802,6 +890,7 @@ class CodeExecutor:
         
         iteration_count = 0
         max_iterations = self._infer_loop_max_iterations()
+        exit_condition_text: Optional[str] = None  # Condición que provocó la salida
 
         # loop_enter: inicio del bucle WHILE
         self.trace_builder.add_step(
@@ -816,8 +905,8 @@ class CodeExecutor:
         while iteration_count < max_iterations:
             # Evaluar condición
             condition_val = self._evaluate_condition(condition)
-            
             if not condition_val:
+                exit_condition_text = self._condition_to_string(condition)
                 break
             
             iteration_count += 1
@@ -844,10 +933,6 @@ class CodeExecutor:
                     self._execute_statement(stmt)
             else:
                 self._execute_statement(body)
-            
-            # En best case, salir después de primera iteración
-            if self.case == "best" and iteration_count == 1:
-                break
 
             # loop_iter_exit: fin de iteración
             self.trace_builder.add_step(
@@ -878,15 +963,23 @@ class CodeExecutor:
                 description=desc,
             )
 
-        # loop_exit: salida del bucle WHILE
+        # loop_exit: salida del bucle WHILE (incluir condición si salió por comparación)
+        exit_desc = self._trace_labels.get("for_exit", "Salida de FOR").format(var_name="iter")
+        if exit_condition_text:
+            exit_desc = self._trace_labels.get("loop_exit_condition", "Exit: {condition} = false").format(
+                condition=exit_condition_text
+            )
         self.trace_builder.add_step(
             line=node.get("pos", {}).get("line", 0),
             kind="while",
             variables=self.environment.get_variables_snapshot(),
-            iteration={"loopVar": "iter", "currentValue": iteration_count, "maxValue": max_iterations},
-            description=self._trace_labels.get("for_exit", "Salida de FOR").format(
-                var_name="iter"
-            ) if isinstance(self._trace_labels.get("for_exit"), str) else "Salida WHILE",
+            iteration={
+                "loopVar": "iter",
+                "currentValue": iteration_count,
+                "maxValue": max_iterations,
+                "exitCondition": exit_condition_text,
+            },
+            description=exit_desc,
             event_kind="loop_exit",
         )
 
@@ -898,6 +991,7 @@ class CodeExecutor:
         
         iteration_count = 0
         max_iterations = self._infer_loop_max_iterations()
+        exit_condition_text: Optional[str] = None  # Condición que provocó la salida
 
         # loop_enter: inicio del bucle REPEAT
         self.trace_builder.add_step(
@@ -943,6 +1037,8 @@ class CodeExecutor:
             # Evaluar condición (REPEAT evalúa al final)
             condition_val = self._evaluate_condition(condition)
             if condition_val or getattr(self, "terminated", False):
+                if condition_val:
+                    exit_condition_text = self._condition_to_string(condition)
                 break
 
             # loop_iter_exit: fin de iteración
@@ -973,15 +1069,23 @@ class CodeExecutor:
                 description=desc,
             )
 
-        # loop_exit: salida del bucle REPEAT
+        # loop_exit: salida del bucle REPEAT (incluir condición si salió por comparación)
+        exit_desc = self._trace_labels.get("for_exit", "Salida de FOR").format(var_name="iter")
+        if exit_condition_text:
+            exit_desc = self._trace_labels.get("loop_exit_condition_repeat", "Exit: {condition} = true").format(
+                condition=exit_condition_text
+            )
         self.trace_builder.add_step(
             line=node.get("pos", {}).get("line", 0),
             kind="repeat",
             variables=self.environment.get_variables_snapshot(),
-            iteration={"loopVar": "iter", "currentValue": iteration_count, "maxValue": max_iterations},
-            description=self._trace_labels.get("for_exit", "Salida de FOR").format(
-                var_name="iter"
-            ) if isinstance(self._trace_labels.get("for_exit"), str) else "Salida REPEAT",
+            iteration={
+                "loopVar": "iter",
+                "currentValue": iteration_count,
+                "maxValue": max_iterations,
+                "exitCondition": exit_condition_text,
+            },
+            description=exit_desc,
             event_kind="loop_exit",
         )
 
@@ -1127,6 +1231,28 @@ class CodeExecutor:
         if isinstance(v, (int, float)):
             return v
         return 0
+
+    def _condition_value_to_python(self, v: Any) -> Optional[Union[int, float]]:
+        """Convierte valor a número Python para comparaciones (incluye SymPy)."""
+        if v is None:
+            return None
+        if isinstance(v, (int, float)):
+            return v
+        if isinstance(v, bool):
+            return 1 if v else 0
+        try:
+            from sympy import Expr
+            if isinstance(v, Expr):
+                if getattr(v, "is_number", False):
+                    return float(v) if getattr(v, "is_Float", lambda: False)() else int(v)
+                # SymPy Boolean o Relational: convertir a bool Python
+                return 1 if bool(v) else 0
+        except Exception:
+            pass
+        try:
+            return 1 if v else 0
+        except Exception:
+            return None
 
     def _execute_return(self, node: Dict[str, Any]) -> None:
         """Ejecuta un RETURN y marca la ejecución como terminada."""
@@ -1315,15 +1441,20 @@ class CodeExecutor:
         if not isinstance(condition, dict):
             return str(condition)
         cond_type = condition.get("type", "").lower()
+        op = (condition.get("operator") or condition.get("op") or "?").upper()
+        if op in ("AND", "OR", "&&", "||"):
+            left_s = self._condition_to_string(condition.get("left"))
+            right_s = self._condition_to_string(condition.get("right"))
+            return f"({left_s}) {op} ({right_s})"
         if cond_type == "binary":
             left = self.environment.evaluate_to_string(condition.get("left"))
             right = self.environment.evaluate_to_string(condition.get("right"))
-            op = condition.get("operator") or condition.get("op") or "?"
-            return f"{left} {op} {right}"
+            op_raw = condition.get("operator") or condition.get("op") or "?"
+            return f"{left} {op_raw} {right}"
         if cond_type == "unary":
             arg = self.environment.evaluate_to_string(condition.get("arg"))
-            op = condition.get("operator", "not")
-            return f"{op} {arg}"
+            op_arg = condition.get("operator", "not")
+            return f"{op_arg} {arg}"
         return self.environment.evaluate_to_string(condition)
 
     def _evaluate_condition(self, condition: Any) -> bool:
@@ -1365,24 +1496,26 @@ class CodeExecutor:
                 if op in ("<>", "!="):
                     return left is not None or right is not None
 
-            # Convertir a valores numéricos si es posible
+            # Convertir a valores numéricos (incluye SymPy Integer/Float)
             try:
-                if isinstance(left, (int, float)) and isinstance(right, (int, float)):
+                l_num = self._condition_value_to_python(left)
+                r_num = self._condition_value_to_python(right)
+                if l_num is not None and r_num is not None:
                     if op == "=" or op == "==":
-                        return left == right
+                        return l_num == r_num
                     elif op == "<>" or op == "!=":
-                        return left != right
+                        return l_num != r_num
                     elif op == "<":
-                        return left < right
+                        return l_num < r_num
                     elif op == ">":
-                        return left > right
+                        return l_num > r_num
                     elif op == "<=" or op == "≤":
-                        return left <= right
+                        return l_num <= r_num
                     elif op == ">=" or op == "≥":
-                        return left >= right
+                        return l_num >= r_num
             except Exception:
                 pass
-            
+
             # Por defecto, asumir verdadero en worst case
             return self.case == "worst"
         

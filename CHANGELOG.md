@@ -7,7 +7,22 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
-No hay cambios publicados todavía.
+### Changed
+- Comparación con LLM: etiquetas tOpen/tPolynomial sustituidas por "Ecuación de eficiencia completa" y "Forma polinómica"; prompt de compare actualizado para que el LLM genere notas en lenguaje amigable.
+
+### Fixed
+- Procedimientos con WHILE de crecimiento geométrico (ej. `i <- i*2`, `i < n`): ya no se muestra infinito (∞). Si el motor WHILE lanza, se usa el clasificador como respaldo; cuando el guard tiene dos variables y no hay patrón binary search/flag, se reutiliza un resultado bounded del clasificador en lugar de retornar None. Además, el cuerpo del WHILE se normaliza a bloque cuando el parser devuelve una lista de sentencias, evitando must_updates vacío y la clasificación incorrecta como unbounded.
+- T_polynomial: cuando la expresión de una fila contiene `log(n)` y no es polinómica, `Poly` falla y el fallback hacía `subs(n,0)`, que en SymPy da `zoo` y se renderizaba como `\tilde{\infty}`. Ahora las expresiones que dan valor infinito se tratan como términos no polinomiales y se añaden como `(C_k) · expr` sin sustituir n por 0.
+- LaTeX en comparación con LLM: se extraen delimitadores `$...$` y `$$...$$` antes de renderizar con KaTeX.
+- VariablesPanel: se eliminó `onBlur` que aplicaba cambios al salir del campo; ahora solo se aplica al pulsar el botón Aplicar.
+- Indexación 0-based: el executor detecta algoritmos con `i <- 0` y usa indexación 0-based para arrays (A[0]=array[0], A[1]=array[1]).
+- Mejor caso Θ(1) en búsqueda lineal con flag: WHILE (i < n AND encontrado = false) con IF (A[i] = x) THEN encontrado <- true.
+- Sincronización n/array: al editar el array manualmente, n se actualiza a len(A) y la petición usa valores consistentes.
+- Trace WHILE best case: se resuelven `false`/`true` como constantes booleanas (Identifier→Literal) para que la condición `encontrado = false` evalúe correctamente; el trace entra al WHILE, ejecuta el cuerpo y asigna `encontrado <- true` antes de salir.
+- Análisis best case: se corrige `_is_flag_eq_false` para no devolver False al primer identificador; se evita construir Sum cuando iterations=1 (búsqueda lineal best case).
+- Análisis avg case: búsqueda lineal con flag usa E[iteraciones]=(n+1)/2 en lugar del modelo geométrico 1/p que devolvía Θ(1) incorrectamente.
+- Diagrama iterativo: al salir del WHILE/REPEAT por comparación, se muestra la condición exacta (ej. "(0 < 4) AND (True == False) = false") en lugar de solo "Fin bucle".
+- Panel de variables: n (y length/size/len) se tratan como longitud del array (fijos = len(A)); se muestran inputs para todos los escalares editables (ej. x); n no es editable.
 
 ## [1.2.1]
 

@@ -22,6 +22,8 @@ interface VariablesPanelProps {
   paramNames?: string[];
   arrayParamNames?: string[];
   scalarParamNames?: string[];
+  /** Parámetros que son longitud del array (n, length, etc.): no editables, se fijan a len(A) */
+  lengthParamNames?: string[];
 }
 
 export default function VariablesPanel({
@@ -35,6 +37,7 @@ export default function VariablesPanel({
   paramNames = [],
   arrayParamNames = [],
   scalarParamNames = [],
+  lengthParamNames = [],
 }: VariablesPanelProps) {
   const t = useTranslations("analyzer.executionTrace");
   if (mode === "recursive") {
@@ -114,6 +117,7 @@ export default function VariablesPanel({
         t={t}
         arrayParamNames={arrayParamNames}
         scalarParamNames={scalarParamNames}
+        lengthParamNames={lengthParamNames}
       />
     );
   }
@@ -197,6 +201,7 @@ function IterativeEditableVariables({
   t,
   arrayParamNames,
   scalarParamNames,
+  lengthParamNames = [],
 }: {
   initialVariables: Record<string, unknown>;
   onVariablesChange: (vars: Record<string, unknown>) => void;
@@ -204,6 +209,7 @@ function IterativeEditableVariables({
   t: (key: string) => string;
   arrayParamNames: string[];
   scalarParamNames: string[];
+  lengthParamNames?: string[];
 }) {
   const variableEntries = Object.entries(initialVariables);
   const arrayKey = arrayParamNames[0] ?? variableEntries.find(([, value]) => Array.isArray(value))?.[0] ?? "A";
@@ -214,26 +220,30 @@ function IterativeEditableVariables({
     : typeof arrVal === "string"
       ? arrVal
       : "";
-  const preferredScalar = scalarParamNames[0];
-  const scalarKey = (preferredScalar && Object.hasOwn(initialVariables, preferredScalar))
-    ? preferredScalar
-    : variableEntries.find(([key, value]) => {
-      if (key === arrayKey || key === "n") return false;
-      return typeof value === "number" || typeof value === "string";
-    })?.[0];
-  const scalarEntry = scalarKey
-    ? variableEntries.find(([key]) => key === scalarKey)
-    : undefined;
-  const xVal = scalarEntry?.[1];
-  const xStr = typeof xVal === "number" ? String(xVal) : typeof xVal === "string" ? xVal : "";
 
   const [arrayInput, setArrayInput] = useState(arrStr);
-  const [xInput, setXInput] = useState(xStr);
+  const scalarInputs = scalarParamNames.reduce(
+    (acc, name) => {
+      const val = initialVariables[name];
+      acc[name] = typeof val === "number" ? String(val) : typeof val === "string" ? val : "";
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
+  const [scalarState, setScalarState] = useState<Record<string, string>>(scalarInputs);
 
   useEffect(() => {
     setArrayInput(arrStr);
-    setXInput(xStr);
-  }, [arrStr, xStr]);
+  }, [arrStr]);
+
+  useEffect(() => {
+    const next: Record<string, string> = {};
+    scalarParamNames.forEach((name) => {
+      const val = initialVariables[name];
+      next[name] = typeof val === "number" ? String(val) : typeof val === "string" ? val : "";
+    });
+    setScalarState(next);
+  }, [initialVariables, scalarParamNames]);
 
   const handleApply = () => {
     const vars: Record<string, unknown> = {};
@@ -242,12 +252,19 @@ function IterativeEditableVariables({
       .map((s) => s.trim())
       .filter(Boolean)
       .map((s) => parseFloat(s))
-      .filter((n) => !Number.isNaN(n));
-    if (parsed.length > 0) vars[arrayKey] = parsed;
-    if (scalarKey) {
-      const xNum = parseFloat(xInput);
-      if (!Number.isNaN(xNum)) vars[scalarKey] = xNum;
+      .filter((num) => !Number.isNaN(num));
+    const arr = parsed.length > 0 ? parsed : (Array.isArray(initialVariables[arrayKey]) ? (initialVariables[arrayKey] as number[]) : []);
+    if (arr.length > 0) {
+      vars[arrayKey] = arr;
+      lengthParamNames.forEach((lenKey) => {
+        vars[lenKey] = arr.length;
+      });
     }
+    scalarParamNames.forEach((key) => {
+      const str = scalarState[key] ?? "";
+      const num = parseFloat(str);
+      if (!Number.isNaN(num)) vars[key] = num;
+    });
     if (Object.keys(vars).length > 0) {
       onVariablesChange(vars);
     }
@@ -271,24 +288,27 @@ function IterativeEditableVariables({
               type="text"
               value={arrayInput}
               onChange={(e) => setArrayInput(e.target.value)}
-              onBlur={handleApply}
               className="ml-1 w-full max-w-[200px] bg-slate-900/80 border border-slate-600 rounded px-2 py-1 text-[11px] font-mono text-slate-200"
               placeholder="1, 2, 3, 4"
             />
           </label>
-          {scalarKey && (
-            <label className="text-[11px] text-slate-400">
-              {scalarKey}:
+          {lengthParamNames.length > 0 && (
+            <p className="text-[10px] text-slate-500">
+              {t("lengthFixedHint", { names: lengthParamNames.join(", "), array: arrayKey })}
+            </p>
+          )}
+          {scalarParamNames.map((key) => (
+            <label key={key} className="text-[11px] text-slate-400">
+              {key}:
               <input
                 type="text"
-                value={xInput}
-                onChange={(e) => setXInput(e.target.value)}
-                onBlur={handleApply}
+                value={scalarState[key] ?? ""}
+                onChange={(e) => setScalarState((s) => ({ ...s, [key]: e.target.value }))}
                 className="ml-1 w-full max-w-[80px] bg-slate-900/80 border border-slate-600 rounded px-2 py-1 text-[11px] font-mono text-slate-200"
                 placeholder="1"
               />
             </label>
-          )}
+          ))}
           <div className="flex gap-2 mt-1">
             <button
               type="button"

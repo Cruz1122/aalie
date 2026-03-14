@@ -18,19 +18,26 @@ class ExecutionEnvironment:
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     
-    def __init__(self, input_size: Optional[int] = None, variable_name: str = "n"):
+    def __init__(
+        self,
+        input_size: Optional[int] = None,
+        variable_name: str = "n",
+        use_zero_based_indexing: bool = False,
+    ):
         """
         Inicializa el environment.
-        
+
         Args:
             input_size: Tamaño de entrada concreto (ej: n=4). Si es None, se usa evaluación simbólica.
             variable_name: Nombre de la variable principal (por defecto "n")
-            
+            use_zero_based_indexing: Si True, A[i] usa array[i]; si False, A[i] usa array[i-1] (1-based).
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self.variables: Dict[str, Union[int, float, str, Expr, List[Any]]] = {}
         self.input_size = input_size
         self.variable_name = variable_name
+        self.use_zero_based_indexing = use_zero_based_indexing
         self.expr_converter = ExprConverter(variable_name)
         
         # Stack de scopes para manejar llamadas recursivas
@@ -129,8 +136,13 @@ class ExecutionEnvironment:
             node_type = expr.get("type", "")
             
             if node_type == "Identifier":
-                # Resolver a valor concreto cuando es None o dict (lista enlazada)
                 name = expr.get("name", "")
+                # Constantes booleanas del pseudocódigo (parser las trata como Identifier)
+                if name == "false":
+                    return {"type": "Literal", "value": False}
+                if name == "true":
+                    return {"type": "Literal", "value": True}
+                # Resolver a valor concreto cuando es None o dict (lista enlazada)
                 if self.has_variable(name):
                     val = self.get_variable(name)
                     if val is None or isinstance(val, (dict, list)):
@@ -187,11 +199,13 @@ class ExecutionEnvironment:
                     array = self.get_variable(array_name)
                     if isinstance(array, list) and isinstance(index_val, int):
                         try:
-                            # Ajuste para índices base 1 (pseudocódigo)
-                            if index_val > 0:
-                                val = array[index_val - 1]
+                            if self.use_zero_based_indexing:
+                                idx = index_val if 0 <= index_val < len(array) else -1
+                            else:
+                                idx = (index_val - 1) if index_val > 0 else -1
+                            if idx >= 0:
+                                val = array[idx]
                                 return {"type": "Literal", "value": val}
-                            # Si está fuera de límites, retornar 0
                             return {"type": "Literal", "value": 0}
                         except IndexError:
                             return {"type": "Literal", "value": 0}
@@ -227,10 +241,10 @@ class ExecutionEnvironment:
         resolved_expr = self._resolve_indices(expr)
 
         # Literal con valor no numérico: devolver directamente
-        # (soporta strings en PRINT y nodo.siguiente en listas enlazadas)
+        # (soporta strings, bool, None, dict en PRINT/listas enlazadas)
         if isinstance(resolved_expr, dict) and resolved_expr.get("type") == "Literal":
             val = resolved_expr.get("value")
-            if val is None or isinstance(val, dict) or isinstance(val, str):
+            if val is None or isinstance(val, (dict, str, bool)):
                 return val
 
         # Convertir a SymPy
@@ -338,13 +352,17 @@ class ExecutionEnvironment:
     def copy(self) -> 'ExecutionEnvironment':
         """
         Crea una copia del environment (útil para recursión).
-        
+
         Returns:
             Nueva instancia con las mismas variables
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        new_env = ExecutionEnvironment(self.input_size, self.variable_name)
+        new_env = ExecutionEnvironment(
+            self.input_size,
+            self.variable_name,
+            use_zero_based_indexing=self.use_zero_based_indexing,
+        )
         new_env.variables = self.variables.copy()
         return new_env
 
