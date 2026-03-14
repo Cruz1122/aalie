@@ -710,6 +710,43 @@ class TestWhileAlgorithms:
             f"WHILE multiplicación debe ser Θ(log n): {totals.get('big_theta')}"
         )
 
+    def test_revisar_saltos_geometric_growth_not_unbounded(self):
+        """WHILE i<n con i<-i*2 y print(A[i]) debe ser bounded O(log n); procedimientos no deben mostrar infinito."""
+        source = """revisarSaltos(A[n], n) BEGIN
+    i <- 1;
+    WHILE (i < n) DO BEGIN
+        print(A[i]);
+        i <- i * 2;
+    END;
+END
+"""
+        result = analyze_algorithm(source, mode="all")
+        assert result.get("ok", False), f"Parse/analyze failed: {result.get('errors', result)}"
+        worst = result.get("worst", {})
+        by_line = worst.get("byLine", [])
+        for row in by_line:
+            assert not row.get("unbounded", False), (
+                f"Línea {row.get('line')} no debe ser unbounded (revisarSaltos es O(log n))"
+            )
+        totals = _get_totals(result, "worst")
+        notation = (totals.get("big_theta", "") + " " + totals.get("big_o", "")).lower()
+        assert "log" in notation, (
+            f"revisarSaltos debe ser Θ(log n): big_theta={totals.get('big_theta')}, big_o={totals.get('big_o')}"
+        )
+        proc_steps = totals.get("procedure") or []
+        proc_str = " ".join(proc_steps) if isinstance(proc_steps, list) else str(proc_steps)
+        assert "infty" not in proc_str, (
+            "El procedimiento general no debe mostrar infinito para revisarSaltos"
+        )
+        for row in by_line:
+            line_proc = row.get("procedure")
+            if line_proc and isinstance(line_proc, list):
+                for step in line_proc:
+                    if step and "infty" in step:
+                        pytest.fail(
+                            f"Procedimiento de línea {row.get('line')} no debe mostrar infinito"
+                        )
+
     def test_whilen_anidados_quadratic_output(self):
         """Dos WHILE anidados i<n, j<n deben dar Θ(n²)."""
         source = ALGORITHMS[8][1]  # WHILE anidados

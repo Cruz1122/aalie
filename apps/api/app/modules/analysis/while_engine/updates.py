@@ -263,6 +263,9 @@ def summarize_updates(
 
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
+    # Normalizar cuerpo como bloque si el parser devuelve una lista de sentencias
+    if isinstance(body, list):
+        body = {"type": "block", "body": body}
     result: Dict[str, VarUpdateSummary] = {}
     for var_name in vars_used:
         if not var_name:

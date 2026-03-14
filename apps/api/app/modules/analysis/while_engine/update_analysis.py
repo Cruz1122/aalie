@@ -22,4 +22,7 @@ def analyze_updates(
     Usa summarize_updates.
     """
     body = while_node.get("body")
+    # Normalizar cuerpo como bloque si viene como lista (parser puede devolver body así)
+    if isinstance(body, list):
+        body = {"type": "block", "body": body}
     return summarize_updates(body, vars_used, guard_info, parent_context)

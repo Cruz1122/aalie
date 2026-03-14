@@ -1101,7 +1101,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        from sympy import Symbol, Integer, latex, expand, simplify, Poly, powsimp
+        from sympy import Symbol, Integer, latex, expand, simplify, Poly, powsimp, oo, zoo
         from ..utils.summation_closer import SummationCloser
         import re
         
@@ -1118,6 +1118,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # {degree: {coeff_tuple: [lista de C_k strings]}}
         # coeff_tuple es una tupla normalizada para comparación determinista
         degree_to_coeffs = {}  # {degree: {coeff_tuple: [C_k strings]}}
+        # Términos no polinomiales (log(n), etc.) para no usar subs(n,0) que da zoo
+        non_poly_terms = []  # [(ck_str, count_expr), ...]
         
         closer = SummationCloser(locale=self.locale)
         
@@ -1206,34 +1208,40 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                             degree_to_coeffs[degree][coeff_key]['cks'].append(ck_str)
                             
                 except Exception:
-                    # Si Poly falla (p.ej., expresión con log/sqrt no es polinómica), tratar como constante
-                    # Esto puede pasar con expresiones complejas, pero intentamos manejarlo
+                    # Si Poly falla (p.ej., expresión con log(n) no es polinómica)
                     try:
-                        # Intentar extraer como constante (grado 0)
+                        # subs(n,0) en log(n)+1 da zoo → latex(zoo) = \tilde{\infty}. Evitar eso.
                         const_value = simplify(count_expr.subs(n_sym, 0))
-                        
+                        is_infinite = (
+                            const_value in (oo, -oo, zoo)
+                            or (getattr(const_value, "is_infinite", None) and const_value.is_infinite)
+                            or (getattr(const_value, "is_zero", None) and str(const_value) == "zoo")
+                        )
+                        if is_infinite:
+                            # No usar constante infinita; añadir como término no polinómico (C_k) * expr
+                            non_poly_terms.append((ck_str, count_expr))
+                            continue
                         # Verificar si la constante es cero
                         try:
                             if const_value.is_zero if hasattr(const_value, 'is_zero') else (const_value == 0 or const_value == Integer(0)):
                                 continue
-                        except:
+                        except Exception:
                             pass
-                        
                         const_key = str(const_value)
-                        
                         if 0 not in degree_to_coeffs:
                             degree_to_coeffs[0] = {}
-                        
                         if const_key not in degree_to_coeffs[0]:
                             degree_to_coeffs[0][const_key] = {
                                 'coeff': const_value,
                                 'cks': []
                             }
-                        
                         degree_to_coeffs[0][const_key]['cks'].append(ck_str)
-                    except:
-                        # Si todo falla, ignorar esta fila
-                        continue
+                    except Exception:
+                        # Si todo falla, intentar añadir como término no polinómico para no perder la fila
+                        try:
+                            non_poly_terms.append((ck_str, count_expr))
+                        except Exception:
+                            continue
         
         if not degree_to_coeffs:
             self.t_polynomial = "0"
@@ -1318,6 +1326,21 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     else:
                         term_latex = latex(term_expr)
                         polynomial_terms.append(f"({ck_combined}) \\cdot {term_latex}")
+        
+        # Añadir términos no polinomiales (log(n), etc.) sin usar subs(n,0) que daría zoo
+        def get_ck_number(ck_s):
+            m = re.search(r'C_\{(\d+)\}', ck_s)
+            return int(m.group(1)) if m else 0
+        for ck_str, expr in non_poly_terms:
+            parsed = parse_ck_string(ck_str)
+            all_cks = sorted(parsed, key=get_ck_number)
+            ck_combined = " + ".join(all_cks) if len(all_cks) > 1 else (all_cks[0] if all_cks else "")
+            if ck_combined:
+                try:
+                    expr_latex = latex(expr)
+                    polynomial_terms.append(f"({ck_combined}) \\cdot {expr_latex}")
+                except Exception:
+                    pass
         
         if polynomial_terms:
             result = " + ".join(polynomial_terms)

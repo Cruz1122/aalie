@@ -137,13 +137,20 @@ export function useTraceController(
       setStructuredDiagram(null);
 
       const scenario: CaseType = caseType;
-      const n = debouncedInputSize || inputSize || 1;
-
       const overrideToUse =
         effectiveOverride !== undefined ? effectiveOverride : initialVariablesOverride;
 
+      const nFromOverride =
+        overrideToUse &&
+        Array.isArray(overrideToUse.A) &&
+        overrideToUse.A.length > 0
+          ? overrideToUse.A.length
+          : null;
+      const nFromSelector = debouncedInputSize || inputSize || 1;
+      const n = nFromOverride ?? nFromSelector;
+
       let variablesFromGenerator: Record<string, unknown> | null = null;
-      const nVal = debouncedInputSize || inputSize || 1;
+      const nVal = n;
       const makeBaseArray = (size: number) =>
         Array.from({ length: Math.max(1, size) }, (_, idx) => idx + 1);
       if (traceConfig.kind === "iterative" && traceConfig.inputGenerator) {

@@ -7,7 +7,25 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
-No hay cambios publicados todavía.
+## [1.2.2] — 2026-03-14
+
+### Cambios
+- **Comparación con IA:** Las etiquetas técnicas se sustituyeron por "Ecuación de eficiencia completa" y "Forma polinómica". Al comparar con el asistente, las notas se generan en un lenguaje más claro y comprensible.
+
+### Correcciones
+- **Panel de variables:** Se corrigió un fallo que impedía compilar la aplicación; el aviso que indica que el tamaño (n) es la longitud del array se muestra correctamente.
+- **Bucles que crecen muy rápido:** En algoritmos donde el índice se multiplica o crece de forma explosiva, ya no se muestra "infinito" cuando no corresponde; el sistema elige mejor el respaldo y evita clasificaciones erróneas.
+- **Fórmulas con log(n):** Se evita mostrar símbolos de infinito incorrectos en expresiones que incluyen logaritmos; esos términos se muestran de forma adecuada.
+- **Fórmulas matemáticas en la comparación:** Las expresiones entre $ se procesan bien antes de mostrarlas en pantalla.
+- **Panel de variables:** Los cambios solo se aplican al pulsar el botón "Aplicar", no al salir del campo con el cursor.
+- **Arrays que empiezan en 0:** El ejecutor interpreta correctamente cuando el primer elemento del array está en la posición 0.
+- **Búsqueda lineal con "encontrado":** El mejor caso (encontrar el elemento al primer intento) se reconoce bien y se muestra como tiempo constante.
+- **Editar el array a mano:** Al modificar la lista de valores, el tamaño n se actualiza solo y los datos enviados quedan coherentes.
+- **Seguimiento de bucles con bandera:** Cuando se usa una variable tipo "encontrado", las condiciones se evalúan bien y el seguimiento paso a paso muestra el flujo correcto.
+- **Análisis del mejor caso:** Se corrige la detección en búsqueda con bandera para no confundir el primer elemento.
+- **Caso promedio en búsqueda lineal:** Se usa la fórmula correcta del número de pasos esperados.
+- **Diagrama de ejecución:** Al salir de un bucle se muestra la condición exacta que hizo que terminara (por ejemplo la comparación que dio falso), no solo "Fin bucle".
+- **Panel de variables (n y tamaño):** El tamaño del array (n, length, size, len) se trata como fijo y no es editable; sí se pueden editar el resto de valores (por ejemplo el valor a buscar).
 
 ## [1.2.1]
 

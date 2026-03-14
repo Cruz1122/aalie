@@ -17,13 +17,13 @@ Validar que el análisis del sistema sea matemáticamente correcto dentro de su 
 # ANÁLISIS REQUERIDO
 
 ## Iterativos
-Proporciona worst/best/avg con:
-- **T_open**: Σ(C_k · count_k) en LaTeX
-- **T_polynomial**: agrupado por potencias de n, preservando C_k
+Proporciona worst/best/avg con (schema: T_open, T_polynomial; en la nota usa términos amigables):
+- **T_open** (ecuación de eficiencia completa): Σ(C_k · count_k) en LaTeX
+- **T_polynomial** (forma polinómica): agrupado por potencias de n, preservando C_k
 - **Cotas**: big_o, big_omega, big_theta en LaTeX
 - Complejidades big_o/big_omega/big_theta SIEMPRE como $O(n^2)$, $\\Omega(n)$, $\\Theta(n \\log n)$ (KaTeX con $...$), con O mayúscula y variable explícita. Nunca escribas solo "o^2".
 
-Ejemplo T_polynomial correcto: "(C_3)·n² + (C_2 - C_3)·n + (C_1 + C_4)"
+Ejemplo forma polinómica correcta: "(C_3)·n² + (C_2 - C_3)·n + (C_1 + C_4)"
 
 ## Recursivos
 Proporciona:
@@ -53,12 +53,12 @@ const noteRulesEs = `
 - "debería usar", "simplificación en lugar de" (críticas al modelo)
 
 ## SOLO MENCIONA
-- Iterativos: T_open, T_polynomial, cotas
+- Iterativos: ecuación de eficiencia completa, forma polinómica, cotas
 - Recursivos: recurrence, method, big_theta
 - Errores matemáticos: cálculos incorrectos, cotas mal aplicadas
 
 ## EJEMPLOS VÁLIDOS
-- "Excelente, T_open y cotas correctas"
+- "Excelente, ecuación de eficiencia y cotas correctas"
 - "big_omega incorrecto en promedio"
 
 ## EJEMPLOS PROHIBIDOS
@@ -81,12 +81,12 @@ const noteRulesEn = `
 - "should use", "simplification instead of" (model criticism)
 
 ## ONLY MENTION
-- Iterative: T_open, T_polynomial, bounds
+- Iterative: complete efficiency equation, polynomial form, bounds
 - Recursive: recurrence, method, big_theta
 - Mathematical errors: incorrect calculations, misapplied bounds
 
 ## VALID EXAMPLES
-- "Excellent, T_open and bounds correct"
+- "Excellent, efficiency equation and bounds correct"
 - "big_omega incorrect in average case"
 
 ## PROHIBITED EXAMPLES

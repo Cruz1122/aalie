@@ -52,6 +52,9 @@ def _step_to_label(step: Dict[str, Any]) -> str:
         val = it.get("currentValue") if it.get("currentValue") is not None else it.get("iteration", "?")
         return f"Fin iter {loop_var}={val}"
     if kind == "loop_exit":
+        exit_cond = it.get("exitCondition")
+        if exit_cond:
+            return f"Salida: {exit_cond}"
         if step_kind in ("while", "repeat"):
             return "Fin bucle"
         loop_var = it.get("loopVar", "i")

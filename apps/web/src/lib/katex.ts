@@ -32,11 +32,32 @@ export function complexityToLatex(content: string): string {
     .replace(/\bmin\s*\(/g, "\\min(");
 }
 
+/**
+ * Extrae el contenido LaTeX de delimitadores $...$ o $$...$$.
+ * El LLM y otros orígenes pueden devolver "$\Theta(n)$" en lugar de "\Theta(n)".
+ *
+ * @param latex - Cadena que puede contener delimitadores $ o $$
+ * @returns Contenido interno listo para KaTeX
+ * @author Plan corrección bugs trace
+ */
+export function extractLatexFromDelimiters(latex: string): string {
+  if (!latex || typeof latex !== "string") return latex;
+  let s = latex.trim();
+  if (s.startsWith("$$") && s.endsWith("$$") && s.length > 4) {
+    return s.slice(2, -2).trim();
+  }
+  if (s.startsWith("$") && s.endsWith("$") && s.length > 2) {
+    return s.slice(1, -1).trim();
+  }
+  return s;
+}
+
 export function renderLatexToHtml(
   latex: string,
   opts?: Partial<katex.KatexOptions>,
 ): string {
-  return katex.renderToString(latex, {
+  const cleaned = extractLatexFromDelimiters(latex);
+  return katex.renderToString(cleaned, {
     displayMode: !!opts?.displayMode,
     throwOnError: false,
     trust: false,

@@ -124,11 +124,11 @@ export default function StructuredTraceContent({
   );
 
   const paramNames = useMemo(() => {
-    if (!ast) return { all: [] as string[], array: [] as string[], scalar: [] as string[] };
+    if (!ast) return { all: [] as string[], array: [] as string[], scalar: [] as string[], length: [] as string[], editableScalar: [] as string[] };
     const proc = ast.body.find(
       (node): node is ProcDef => node.type === "ProcDef",
     );
-    if (!proc) return { all: [] as string[], array: [] as string[], scalar: [] as string[] };
+    if (!proc) return { all: [] as string[], array: [] as string[], scalar: [] as string[], length: [] as string[], editableScalar: [] as string[] };
 
     const all: string[] = [];
     const array: string[] = [];
@@ -143,7 +143,10 @@ export default function StructuredTraceContent({
         scalar.push(name);
       }
     });
-    return { all, array, scalar };
+    // n (o length, size) como longitud del array: no editable, se fija a len(A)
+    const lengthNames = array.length > 0 ? scalar.filter((s) => ["n", "length", "size", "len"].includes(s.toLowerCase())) : [];
+    const editableScalar = scalar.filter((s) => !lengthNames.includes(s));
+    return { all, array, scalar, length: lengthNames, editableScalar };
   }, [ast]);
 
   const initialVariablesForNote = useMemo(() => {
@@ -310,7 +313,8 @@ export default function StructuredTraceContent({
                       onResetToAuto={onResetToAuto}
                       paramNames={paramNames.all}
                       arrayParamNames={paramNames.array}
-                      scalarParamNames={paramNames.scalar}
+                      scalarParamNames={paramNames.editableScalar}
+                      lengthParamNames={paramNames.length}
                       initialVariables={
                         trace?.ok && trace.trace?.steps?.[0]?.variables
                           ? (trace.trace.steps[0].variables as Record<string, unknown>)
@@ -394,7 +398,8 @@ export default function StructuredTraceContent({
                   onResetToAuto={onResetToAuto}
                   paramNames={paramNames.all}
                   arrayParamNames={paramNames.array}
-                  scalarParamNames={paramNames.scalar}
+                  scalarParamNames={paramNames.editableScalar}
+                  lengthParamNames={paramNames.length}
                   initialVariables={
                     trace?.ok && trace.trace?.steps?.[0]?.variables
                       ? (trace.trace.steps[0].variables as Record<string, unknown>)
@@ -472,7 +477,8 @@ export default function StructuredTraceContent({
                     onResetToAuto={onResetToAuto}
                     paramNames={paramNames.all}
                     arrayParamNames={paramNames.array}
-                    scalarParamNames={paramNames.scalar}
+                    scalarParamNames={paramNames.editableScalar}
+                    lengthParamNames={paramNames.length}
                     initialVariables={
                       trace?.ok && trace.trace?.steps?.[0]?.variables
                         ? (trace.trace.steps[0].variables as Record<string, unknown>)

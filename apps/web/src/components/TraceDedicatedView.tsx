@@ -196,6 +196,11 @@ export default function TraceDedicatedView({
                 initialVariablesOverride={initialVariablesOverride}
                 onVariablesChange={(vars) => {
                   setInitialVariablesOverride(vars);
+                  if (vars.A && Array.isArray(vars.A) && vars.A.length > 0) {
+                    const len = vars.A.length;
+                    setInputSize(len);
+                    setDebouncedInputSize(len);
+                  }
                   loadTraceWithReset(true, vars);
                 }}
                 onResetToAuto={() => {
