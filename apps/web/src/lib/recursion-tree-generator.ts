@@ -475,19 +475,26 @@ function generateLinearTreeNodes(
     }
     nodeMap.get(current.argument)!.push(node);
 
-    // Generar hijos según los desplazamientos
-    // Para Fibonacci: shifts=[1,2], entonces T(n) -> T(n-1), T(n-2)
+    // Generar hijos según desplazamientos y coeficientes.
+    // Ejemplo Hanoi: 2*T(n-1)+1 => shifts=[1], coefficients=[2] (dos hijos T(n-1)).
+    // Ejemplo Fibonacci: shifts=[1,2], coefficients=[1,1] => T(n-1), T(n-2).
+    let nextChildIndex = 0;
     for (let i = 0; i < recurrence.shifts.length; i++) {
       const shift = recurrence.shifts[i];
+      const coefficient = recurrence.coefficients[i] ?? 1;
       const childArgument = current.argument - shift;
+      const branchCount = Math.max(0, Math.floor(coefficient));
 
-      if (childArgument >= 0) {
-        queue.push({
-          argument: childArgument,
-          level: current.level + 1,
-          parentId: nodeId,
-          childIndex: i,
-        });
+      if (childArgument >= 0 && branchCount > 0) {
+        for (let replica = 0; replica < branchCount; replica++) {
+          queue.push({
+            argument: childArgument,
+            level: current.level + 1,
+            parentId: nodeId,
+            childIndex: nextChildIndex,
+          });
+          nextChildIndex++;
+        }
       }
     }
   }

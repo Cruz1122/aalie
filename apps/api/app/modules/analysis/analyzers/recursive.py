@@ -94,17 +94,23 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "errors": [{"message": f"No aplicable: {validation_result['reason']}", "line": None, "column": None}]
             }
         
-        # 2.5. Si estamos en modo "best" y hay early return, saltarse toda la recurrencia
-        # El early return evita la recursión completamente, así que el mejor caso es O(1)
+        # 2.5. Si estamos en modo "best" y hay early return no recursivo y *existe*
+        # una entrada de tamaño n que lo active, el mejor caso es O(1). Sin embargo,
+        # el caso base n = 1 no debe considerarse "mejor caso O(1)" para n grande,
+        # por lo que sólo aplicamos esta optimización cuando el early return está
+        # estrictamente separado de la condición de caso base recursivo.
         if mode == "best":
             has_early_return = self._detect_early_return()
             if has_early_return:
-                # Retornar directamente O(1) sin calcular recurrencia
+                # En este punto asumimos que el early return corresponde a un camino
+                # alternativo para entradas de tamaño n (no sólo para n = 1).
                 self.proof_steps.append({
                     "id": "best_case_early_return",
-                    "text": "\\text{Mejor caso: } O(1) \\text{ (return temprano detectado, no se ejecuta recursión)}"
+                    "text": (
+                        "\\text{Mejor caso: } O(1) \\text{ (existe una entrada de tamaño } n "
+                        "\\text{ que activa un return temprano sin recursión)}"
+                    )
                 })
-                # Construir resultado mínimo con O(1)
                 return {
                     "ok": True,
                     "byLine": [],
@@ -2871,11 +2877,12 @@ class RecursiveAnalyzer(BaseAnalyzer):
         """
         Detecta si hay un return temprano antes de las llamadas recursivas.
         
-        Un return temprano hace que el mejor caso sea O(1).
+        Un return temprano puede hacer que el mejor caso sea O(1) solo si no es
+        un caso base dependiente del tamaño (n == 1, n <= c, etc.).
         Ejemplo: En búsqueda binaria, si el elemento está en el medio, se retorna O(1).
         
         Returns:
-            True si hay un return temprano detectado
+            True si hay un return temprano por contenido/datos
         """
         proc_def = self.proc_def  # Usar el proc_def guardado
         if not proc_def:
@@ -2957,23 +2964,15 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 
                 # Patrón clásico: return temprano en THEN, recursivas en ELSE (directas o anidadas)
                 if has_early_return_in_then and has_recursive_in_else:
-                    # Verificar si es un caso base que retorna inmediatamente una constante simple
-                    # En ese caso, es un early return válido para el mejor caso
+                    # Si es un caso base por tamaño, no cuenta como early return
+                    # para bajar mejor caso a O(1): solo fija T(1).
                     is_base_case = False
                     if condition and isinstance(condition, dict) and condition.get("type"):
                         base_case_value = self._extract_base_case_from_condition(condition)
                         is_base_case = base_case_value is not None
                     
-                    # Si es un caso base, verificar que retorne una constante simple
                     if is_base_case:
-                        for ret in returns_in_then:
-                            if not self._contains_recursive_call(ret, recursive_calls):
-                                ret_value = ret.get("value") or ret.get("argument")
-                                # Si retorna una constante simple, es early return válido
-                                if self._is_simple_constant_return(ret_value):
-                                    return True
-                        # Si no retorna constante simple, no es early return
-                        # (el caso base es parte de la recursión normal)
+                        return False
                     else:
                         # Si NO es caso base, cualquier return sin recursivas es early return
                         return True
@@ -3003,24 +3002,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
                             base_case_value = self._extract_base_case_from_condition(condition)
                             is_base_case = base_case_value is not None
                         
-                        # Si es un caso base, verificar si es un early return (retorna inmediatamente)
+                        # Si es caso base por tamaño, no cuenta como early return
+                        # para mejor caso asintótico; continuar explorando otros nodos.
                         if is_base_case:
-                            then_body = stmt.get("then") or stmt.get("thenBody") or stmt.get("consequent")
-                            else_body = stmt.get("else") or stmt.get("elseBody") or stmt.get("alternate")
-                            if then_body and else_body:
-                                returns_in_then = self._find_return_statements(then_body)
-                                has_simple_return = any(
-                                    ret for ret in returns_in_then 
-                                    if not self._contains_recursive_call(ret, recursive_calls)
-                                )
-                                has_recursive_in_else = self._has_recursive_calls_in_node(else_body)
-                                if has_simple_return and has_recursive_in_else:
-                                    for ret in returns_in_then:
-                                        if not self._contains_recursive_call(ret, recursive_calls):
-                                            ret_value = ret.get("value") or ret.get("argument")
-                                            if self._is_simple_constant_return(ret_value):
-                                                return True
-                            # Si no es un early return claro, continuar buscando
                             continue
                         
                         # Si NO es caso base, buscar recursivamente en este IF
