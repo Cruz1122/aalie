@@ -42,7 +42,7 @@ export function complexityToLatex(content: string): string {
  */
 export function extractLatexFromDelimiters(latex: string): string {
   if (!latex || typeof latex !== "string") return latex;
-  let s = latex.trim();
+  const s = latex.trim();
   if (s.startsWith("$$") && s.endsWith("$$") && s.length > 4) {
     return s.slice(2, -2).trim();
   }

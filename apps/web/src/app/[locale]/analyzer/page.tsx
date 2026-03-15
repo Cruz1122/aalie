@@ -1759,7 +1759,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                     onAstChange={setAst}
                     onParseStatusChange={handleParseStatusChange}
                     onErrorsChange={handleErrorsChange}
-                    height="430px"
+                    height="408px"
                   />
                 </div>
 
