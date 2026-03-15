@@ -255,6 +255,7 @@
       "executionDiagramSection": "Execution Diagram",
       "controlsAndVariables": "Controls and Variables",
       "explanation": "Explanation",
+      "explanationPrompt": "Do you want a clearer explanation of how this algorithm works?",
       "recursionDiagram": "Recursion Diagram",
       "explanationPlaceholder": "The explanation will appear here when the diagram is generated",
       "regenerateDiagram": "Regenerate diagram",
@@ -344,7 +345,10 @@
       "apply": "Apply",
       "explanationLevelMinimal": "Minimal",
       "explanationLevelStructured": "Structured",
-      "explainWithAI": "Explain step with AI"
+      "explainWithAI": "Explain with AI",
+      "explainingWithAI": "Generating AI explanation...",
+      "regenerateAIExplanation": "Regenerate AI explanation",
+      "explanationAIFallback": "Could not generate the AI explanation. Please try again."
     },
     "comparisonLoader": {
       "errorTitle": "Comparison error",

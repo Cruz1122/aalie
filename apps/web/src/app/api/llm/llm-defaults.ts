@@ -6,4 +6,5 @@ export const DEFAULT_GEMINI_MODELS = {
   general: "gemini-3-flash-preview",
   repair: "gemini-2.5-flash",
   compare: "gemini-2.5-flash",
+  explain: "gemini-2.5-flash",
 } as const;

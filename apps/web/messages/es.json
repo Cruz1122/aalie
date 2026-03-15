@@ -256,6 +256,7 @@
       "executionDiagramSection": "Diagrama de Seguimiento",
       "controlsAndVariables": "Controles y Variables",
       "explanation": "Explicación",
+      "explanationPrompt": "¿Quieres saber más sobre cómo funciona este algoritmo?",
       "recursionDiagram": "Diagrama de Recursión",
       "explanationPlaceholder": "La explicación aparecerá aquí cuando se genere el diagrama",
       "regenerateDiagram": "Regenerar diagrama",
@@ -345,7 +346,10 @@
       "apply": "Aplicar",
       "explanationLevelMinimal": "Mínima",
       "explanationLevelStructured": "Estructurada",
-      "explainWithAI": "Explicar paso con IA"
+      "explainWithAI": "Explica con IA",
+      "explainingWithAI": "Generando explicación con IA...",
+      "regenerateAIExplanation": "Regenerar explicación IA",
+      "explanationAIFallback": "No se pudo generar la explicación con IA. Inténtalo de nuevo."
     },
     "comparisonLoader": {
       "errorTitle": "Error en la comparación",
