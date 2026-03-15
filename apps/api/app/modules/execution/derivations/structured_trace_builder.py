@@ -56,7 +56,30 @@ def _append_output_node_if_missing(view: Any, trace: Dict[str, Any]) -> Any:
             return view
 
     steps = trace.get("steps", [])
-    if not _should_append_output_node(steps):
+    should_append = _should_append_output_node(steps)
+
+    # #region agent log
+    try:
+        import json as _json, time as _time
+        _log_payload = {
+            "sessionId": "1b7cca",
+            "runId": "initial",
+            "hypothesisId": "H2",
+            "location": "execution/structured_trace_builder.py:_append_output_node_if_missing",
+            "message": "output_node_decision",
+            "data": {
+                "shouldAppend": bool(should_append),
+                "hasSteps": bool(steps),
+            },
+            "timestamp": int(_time.time() * 1000),
+        }
+        with open("c:\\dev\\algorithmic-analysis\\debug-1b7cca.log", "a", encoding="utf-8") as _f:
+            _f.write(_json.dumps(_log_payload) + "\n")
+    except Exception:
+        pass
+    # #endregion agent log
+
+    if not should_append:
         return view
 
     last_vars = _get_last_variables_snapshot(steps)
@@ -120,7 +143,11 @@ def _get_last_variables_snapshot(steps: Any) -> Optional[Dict[str, Any]]:
 
 
 def _should_append_output_node(steps: Any) -> bool:
-    """Solo agrega salida cuando hay mutaciones de arrays en la traza."""
+    """Solo agrega salida cuando hay mutaciones de arrays en la traza.
+
+    Considera tanto diffs (`variables_changed` / `variablesChanged`) como snapshots
+    (`variables` / `variablesSnapshot`) para ser robusto frente a cambios de modelo.
+    """
     if not steps:
         return False
 
@@ -128,12 +155,21 @@ def _should_append_output_node(steps: Any) -> bool:
     for step in steps:
         if not isinstance(step, dict):
             continue
-        vars_changed = step.get("variables_changed")
+        vars_changed = step.get("variables_changed") or step.get("variablesChanged")
+        vars_snapshot = step.get("variables") or step.get("variablesSnapshot")
+
+        # Revisar primero diffs de variables si existen
         if isinstance(vars_changed, dict):
-            for key, value in vars_changed.items():
-                if key in preferred_keys and isinstance(value, list):
+            for key in vars_changed.keys():
+                # Si alguna clave relevante cambia, asumimos que hay mutación de estructura de salida
+                if key in preferred_keys:
                     return True
-                if isinstance(value, list):
+
+        # Fallback: revisar snapshot completo de variables por si no hay diff disponible
+        if isinstance(vars_snapshot, dict):
+            for key in vars_snapshot.keys():
+                # Si existe alguna clave relevante en el snapshot, asumimos que representa la estructura de salida
+                if key in preferred_keys:
                     return True
     return False
 

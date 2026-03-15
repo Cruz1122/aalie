@@ -94,23 +94,29 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "errors": [{"message": f"No aplicable: {validation_result['reason']}", "line": None, "column": None}]
             }
         
-        # 2.5. Si estamos en modo "best" y hay early return, saltarse toda la recurrencia
-        # El early return evita la recursión completamente, así que el mejor caso es O(1)
+        # 2.5. Si estamos en modo "best" y hay early return no recursivo y *existe*
+        # una entrada de tamaño n que lo active, el mejor caso es Θ(1). Sin embargo,
+        # el caso base n = 1 no debe considerarse "mejor caso O(1)" para n grande,
+        # por lo que sólo aplicamos esta optimización cuando el early return está
+        # estrictamente separado de la condición de caso base recursivo.
         if mode == "best":
             has_early_return = self._detect_early_return()
             if has_early_return:
-                # Retornar directamente O(1) sin calcular recurrencia
+                # En este punto asumimos que el early return corresponde a un camino
+                # alternativo para entradas de tamaño n (no sólo para n = 1).
                 self.proof_steps.append({
                     "id": "best_case_early_return",
-                    "text": "\\text{Mejor caso: } O(1) \\text{ (return temprano detectado, no se ejecuta recursión)}"
+                    "text": (
+                        "\\text{Mejor caso: } \\Theta(1) \\text{ (existe una entrada de tamaño } n "
+                        "\\text{ que activa un return temprano sin recursión)}"
+                    )
                 })
-                # Construir resultado mínimo con O(1)
                 return {
                     "ok": True,
                     "byLine": [],
                     "totals": {
-                        "T_open": "O(1)",
-                        "big_theta": "O(1)",
+                        "T_open": "\\Theta(1)",
+                        "big_theta": "\\Theta(1)",
                         "symbols": None,
                         "notes": None,
                         "proof": self.proof_steps.copy()
@@ -2835,15 +2841,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Calcular theta (worst/average case)
         theta_worst_avg = self._calculate_theta(case, g_n_expr, f_n_str, log_b_a)
         
-        # Calcular mejor caso: siempre usar O (big-O) en lugar de Θ para best case
-        # Si hay return temprano, es O(1), sino es O del mismo valor que worst/average
+        # Calcular mejor caso: usar cota ajustada Θ cuando está disponible.
+        # Si hay return temprano dependiente de datos, el mejor caso es Θ(1).
         if has_early_return:
-            theta_best = "O(1)"
-            self.proof_steps.append({"id": "best_case", "text": "\\text{Mejor caso: } O(1) \\text{ (return temprano detectado)}"})
+            theta_best = "\\Theta(1)"
+            self.proof_steps.append({"id": "best_case", "text": "\\text{Mejor caso: } \\Theta(1) \\text{ (return temprano detectado)}"})
         else:
-            # Convertir Θ(...) a O(...) para best case
-            # Reemplazar \Theta por O en la expresión LaTeX
-            theta_best = theta_worst_avg.replace("\\Theta", "O")
+            # Sin retorno temprano, el mejor caso coincide con la cota ajustada obtenida.
+            theta_best = theta_worst_avg
             best_case_text = f"\\text{{Mejor caso: }} {theta_best}"
             self.proof_steps.append({"id": "best_case", "text": best_case_text})
         
@@ -2871,11 +2876,12 @@ class RecursiveAnalyzer(BaseAnalyzer):
         """
         Detecta si hay un return temprano antes de las llamadas recursivas.
         
-        Un return temprano hace que el mejor caso sea O(1).
+        Un return temprano puede hacer que el mejor caso sea O(1) solo si no es
+        un caso base dependiente del tamaño (n == 1, n <= c, etc.).
         Ejemplo: En búsqueda binaria, si el elemento está en el medio, se retorna O(1).
         
         Returns:
-            True si hay un return temprano detectado
+            True si hay un return temprano por contenido/datos
         """
         proc_def = self.proc_def  # Usar el proc_def guardado
         if not proc_def:
@@ -2957,23 +2963,15 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 
                 # Patrón clásico: return temprano en THEN, recursivas en ELSE (directas o anidadas)
                 if has_early_return_in_then and has_recursive_in_else:
-                    # Verificar si es un caso base que retorna inmediatamente una constante simple
-                    # En ese caso, es un early return válido para el mejor caso
+                    # Si es un caso base por tamaño, no cuenta como early return
+                    # para bajar mejor caso a O(1): solo fija T(1).
                     is_base_case = False
                     if condition and isinstance(condition, dict) and condition.get("type"):
                         base_case_value = self._extract_base_case_from_condition(condition)
                         is_base_case = base_case_value is not None
                     
-                    # Si es un caso base, verificar que retorne una constante simple
                     if is_base_case:
-                        for ret in returns_in_then:
-                            if not self._contains_recursive_call(ret, recursive_calls):
-                                ret_value = ret.get("value") or ret.get("argument")
-                                # Si retorna una constante simple, es early return válido
-                                if self._is_simple_constant_return(ret_value):
-                                    return True
-                        # Si no retorna constante simple, no es early return
-                        # (el caso base es parte de la recursión normal)
+                        return False
                     else:
                         # Si NO es caso base, cualquier return sin recursivas es early return
                         return True
@@ -3003,24 +3001,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
                             base_case_value = self._extract_base_case_from_condition(condition)
                             is_base_case = base_case_value is not None
                         
-                        # Si es un caso base, verificar si es un early return (retorna inmediatamente)
+                        # Si es caso base por tamaño, no cuenta como early return
+                        # para mejor caso asintótico; continuar explorando otros nodos.
                         if is_base_case:
-                            then_body = stmt.get("then") or stmt.get("thenBody") or stmt.get("consequent")
-                            else_body = stmt.get("else") or stmt.get("elseBody") or stmt.get("alternate")
-                            if then_body and else_body:
-                                returns_in_then = self._find_return_statements(then_body)
-                                has_simple_return = any(
-                                    ret for ret in returns_in_then 
-                                    if not self._contains_recursive_call(ret, recursive_calls)
-                                )
-                                has_recursive_in_else = self._has_recursive_calls_in_node(else_body)
-                                if has_simple_return and has_recursive_in_else:
-                                    for ret in returns_in_then:
-                                        if not self._contains_recursive_call(ret, recursive_calls):
-                                            ret_value = ret.get("value") or ret.get("argument")
-                                            if self._is_simple_constant_return(ret_value):
-                                                return True
-                            # Si no es un early return claro, continuar buscando
                             continue
                         
                         # Si NO es caso base, buscar recursivamente en este IF
@@ -3802,11 +3785,11 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         # Determinar T_open según el método usado y el modo (PRIORIDAD: characteristic_equation > iteration > recursion_tree > master)
         if self.characteristic_equation:
-            # Para characteristic_equation, si hay early return y estamos en modo best, usar O(1)
+            # Para characteristic_equation, si hay early return y estamos en modo best, usar Θ(1)
             # El theta ya debería estar ajustado en _apply_characteristic_equation_method, pero verificamos por seguridad
             if (self.mode == "best" and 
                 self.characteristic_equation.get("has_early_return", False)):
-                t_open = "O(1)"
+                t_open = "\\Theta(1)"
             else:
                 t_open = self.characteristic_equation.get("theta", "N/A")
         elif self.iteration:
@@ -4311,6 +4294,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "success": False,
                 "reason": "No hay recurrencia extraída"
             }
+
+        def _pow_n(base: str) -> str:
+            return f"\\left({base}\\right)^n"
         
         # Obtener información de recurrencia lineal
         linear_info = self._detect_linear_recurrence(self.proc_def, self._find_recursive_calls(self.proc_def))
@@ -4527,15 +4513,15 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 # Caso simple: una raíz única
                 r_val = roots_info[0]["root"]
                 if is_homogeneous:
-                    homogeneous_sol = f"A \\cdot {r_val}^n"
+                    homogeneous_sol = f"A \\cdot {_pow_n(r_val)}"
                 else:
                     # Necesitamos solución particular
-                    homogeneous_sol = f"A \\cdot {r_val}^n"
+                    homogeneous_sol = f"A \\cdot {_pow_n(r_val)}"
             elif len(roots_info) == 2 and all(r["multiplicity"] == 1 for r in roots_info):
                 # Dos raíces distintas (ej: Fibonacci)
                 r1 = roots_info[0]["root"]
                 r2 = roots_info[1]["root"]
-                homogeneous_sol = f"A_1 \\cdot {r1}^n + A_2 \\cdot {r2}^n"
+                homogeneous_sol = f"A_1 \\cdot {_pow_n(r1)} + A_2 \\cdot {_pow_n(r2)}"
             else:
                 # Caso general con múltiples raíces
                 terms = []
@@ -4543,11 +4529,11 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     r_val = root_info["root"]
                     mult = root_info["multiplicity"]
                     if mult == 1:
-                        terms.append(f"A_{i+1} \\cdot {r_val}^n")
+                        terms.append(f"A_{i+1} \\cdot {_pow_n(r_val)}")
                     else:
                         # Raíz múltiple: agregar términos con potencias de n
                         for j in range(mult):
-                            terms.append(f"A_{i+1}{j+1} \\cdot n^{j} \\cdot {r_val}^n")
+                            terms.append(f"A_{i+1}{j+1} \\cdot n^{j} \\cdot {_pow_n(r_val)}")
                 homogeneous_sol = " + ".join(terms)
             
             # Construir solución general (homogénea + particular si aplica)
@@ -4666,9 +4652,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
                             closed_form = "c_1"
                     else:
                         # Caso r != 1: T(n) = c_1 * r^n
-                        closed_form = f"c_1 \\cdot {r_val}^n"
+                        closed_form = f"c_1 \\cdot {_pow_n(r_val)}"
                 except:
-                    closed_form = f"c_1 \\cdot {r_val}^n"
+                    closed_form = f"c_1 \\cdot {_pow_n(r_val)}"
             elif len(roots_info) == 2:
                 # Dos raíces distintas: T(n) = c_1 * r1^n + c_2 * r2^n
                 r1_val = roots_info[0]["root"]
@@ -4683,14 +4669,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     if not is_homogeneous and particular_sol:
                         # Incluir solución particular
                         if "n" in particular_sol:
-                            closed_form = f"c_1 \\cdot {r1_val}^n + c_2 \\cdot {r2_val}^n + c_3 \\cdot n"
+                            closed_form = f"c_1 \\cdot {_pow_n(r1_val)} + c_2 \\cdot {_pow_n(r2_val)} + c_3 \\cdot n"
                         else:
-                            closed_form = f"c_1 \\cdot {r1_val}^n + c_2 \\cdot {r2_val}^n + c_3"
+                            closed_form = f"c_1 \\cdot {_pow_n(r1_val)} + c_2 \\cdot {_pow_n(r2_val)} + c_3"
                     else:
-                        closed_form = f"c_1 \\cdot {r1_val}^n + c_2 \\cdot {r2_val}^n"
+                        closed_form = f"c_1 \\cdot {_pow_n(r1_val)} + c_2 \\cdot {_pow_n(r2_val)}"
                 except:
                     # Fallback: usar ambas raíces
-                    closed_form = f"c_1 \\cdot {r1_val}^n + c_2 \\cdot {r2_val}^n"
+                    closed_form = f"c_1 \\cdot {_pow_n(r1_val)} + c_2 \\cdot {_pow_n(r2_val)}"
             else:
                 # Caso general: múltiples raíces
                 terms = []
@@ -4698,11 +4684,11 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     r_val = root_info["root"]
                     mult = root_info["multiplicity"]
                     if mult == 1:
-                        terms.append(f"c_{i+1} \\cdot {r_val}^n")
+                        terms.append(f"c_{i+1} \\cdot {_pow_n(r_val)}")
                     else:
                         # Raíz múltiple: agregar términos con potencias de n
                         for j in range(mult):
-                            terms.append(f"c_{i+1}{j+1} \\cdot n^{j} \\cdot {r_val}^n")
+                            terms.append(f"c_{i+1}{j+1} \\cdot n^{j} \\cdot {_pow_n(r_val)}")
                 
                 if not is_homogeneous and particular_sol:
                     # Agregar solución particular
@@ -4782,13 +4768,13 @@ class RecursiveAnalyzer(BaseAnalyzer):
                             theta_result = "\\Theta(1)"
                     elif r_num > 1:
                         # Caso r > 1: exponencial creciente
-                        theta_result = f"\\Theta({r_val}^n)"
+                        theta_result = f"\\Theta({_pow_n(r_val)})"
                     else:
                         # Caso r < 1: exponencial decreciente
-                        theta_result = f"\\Theta({r_val}^n)"
+                        theta_result = f"\\Theta({_pow_n(r_val)})"
                 except:
                     # Fallback: usar r^n
-                    theta_result = f"\\Theta({r_val}^n)"
+                    theta_result = f"\\Theta({_pow_n(r_val)})"
             elif len(roots_info) == 2:
                 # Dos raíces: usar la raíz dominante (mayor valor absoluto)
                 r1_val = roots_info[0]["root"]
@@ -4801,18 +4787,18 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     # Usar la raíz con mayor valor absoluto (raíz dominante)
                     r_max_num = max(abs(r1_num), abs(r2_num))
                     r_max_val = r1_val if abs(r1_num) >= abs(r2_num) else r2_val
-                    theta_result = f"\\Theta({r_max_val}^n)"
+                    theta_result = f"\\Theta({_pow_n(r_max_val)})"
                 except:
                     # Fallback: usar la primera raíz
-                    theta_result = f"\\Theta({r1_val}^n)"
+                    theta_result = f"\\Theta({_pow_n(r1_val)})"
             else:
                 # Caso general: encontrar la raíz con mayor valor absoluto
                 try:
                     r_max = max(roots_info, key=lambda r: abs(float(sympify(r["root"]).evalf())) if sympify(r["root"]).is_real else 0)
-                    theta_result = f"\\Theta({r_max['root']}^n)"
+                    theta_result = f"\\Theta({_pow_n(r_max['root'])})"
                 except:
                     # Fallback: usar la primera raíz
-                    theta_result = f"\\Theta({roots_info[0]['root']}^n)"
+                    theta_result = f"\\Theta({_pow_n(roots_info[0]['root'])})"
             
             # Si no se pudo calcular theta, usar fallback
             if not theta_result:
@@ -4840,14 +4826,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
             has_early_return = self._detect_early_return()
             
             # Calcular theta para worst/average y best case
-            # Si hay early return y estamos en modo best, el mejor caso es O(1)
+            # Si hay early return y estamos en modo best, el mejor caso es Θ(1)
             if has_early_return and self.mode == "best":
-                theta_best = "O(1)"
+                theta_best = "\\Theta(1)"
                 self.proof_steps.append({
                     "id": "best_case",
-                    "text": "\\text{Mejor caso: } O(1) \\text{ (return temprano detectado)}"
+                    "text": "\\text{Mejor caso: } \\Theta(1) \\text{ (return temprano detectado)}"
                 })
-                # Para best case con early return, usar O(1) en lugar del theta calculado
+                # Para best case con early return, usar Θ(1) en lugar del theta calculado
                 theta_result = theta_best
             else:
                 # Para worst/average case, usar el theta calculado normalmente
@@ -6695,31 +6681,37 @@ FIN FUNCIÓN"""
         # h ≈ log_b(n), pero generamos suficientes niveles para llenar el modal
         max_levels = 10  # Generar 10 niveles para visualización
         
-        # Detectar si f(n) es constante para simplificar notación
+        # Detectar tipo de f(n) para simplificar notación
         f_simplified = f_n.strip().lower()
         is_constant = f_simplified == "1" or f_simplified == "c" or f_simplified.replace(" ", "") == "c_1"
         
         for i in range(max_levels + 1):
             # Número de nodos en el nivel i: a^i
             num_nodes = a ** i
-            num_nodes_latex = f"{a}^{i}" if i > 0 else "1"
+            # Usar llaves en el exponente para que KaTeX/Tex interpreten correctamente valores de más de un dígito (ej. 2^{10})
+            num_nodes_latex = f"{a}^{{{i}}}" if i > 0 else "1"
             
             # Tamaño del subproblema en el nivel i: n/b^i
             if i == 0:
                 subproblem_size_latex = "n"
             else:
                 b_str = self._simplify_number_latex(b)
-                subproblem_size_latex = f"n/{b_str}^{i}"
+                subproblem_size_latex = f"n/{b_str}^{{{i}}}"
             
-            # Costo por nodo: f(n/b^i)
-            # Si f(n) es constante, no usar notación de evaluación
+            # Costo por nodo: ajustar según el tipo de f(n)
+            # - Si f(n) es constante: mostrar la constante
+            # - Si f(n) = n: mostrar explícitamente n/b^i
+            # - En otros casos: notación genérica f(n/b^i)
             if is_constant:
                 cost_per_node_latex = f_n
             elif i == 0:
                 cost_per_node_latex = f_n
             else:
                 b_str = self._simplify_number_latex(b)
-                cost_per_node_latex = f"{f_n}|_{{n/{b_str}^{i}}}"
+                if f_simplified == "n":
+                    cost_per_node_latex = f"n/{b_str}^{{{i}}}"
+                else:
+                    cost_per_node_latex = f"f(n/{b_str}^{i})"
             
             # Costo total del nivel: a^i · f(n/b^i)
             # Si f(n) es constante, simplificar a^i · c
@@ -6732,8 +6724,11 @@ FIN FUNCIÓN"""
                 total_cost_latex = f_n
             else:
                 b_str = self._simplify_number_latex(b)
-                total_cost_latex = f"{a}^{i} \\cdot {f_n}|_{{n/{b_str}^{i}}}"
-            
+                if f_simplified == "n":
+                    total_cost_latex = f"{a}^{{{i}}} \\cdot n/{b_str}^{{{i}}}"
+                else:
+                    total_cost_latex = f"{a}^{{{i}}} \\cdot f(n/{b_str}^{{{i}}})"
+
             levels.append({
                 "level": i,
                 "num_nodes": num_nodes,
@@ -6769,7 +6764,8 @@ FIN FUNCIÓN"""
             # Si f(n) es constante, no usar notación de evaluación
             expression = f"\\sum_{{i=0}}^{{{height_expr}}} {a}^i \\cdot {f_n}"
         else:
-            expression = f"\\sum_{{i=0}}^{{{height_expr}}} {a}^i \\cdot {f_n}|_{{n/{b_str}^i}}"
+            # Notación más legible: f(n/b^i) en lugar de f(n)|_{n/b^i}
+            expression = f"\\sum_{{i=0}}^{{{height_expr}}} {a}^i \\cdot f(n/{b_str}^i)"
         
         # Caso 1: f(n) = constante (1, c)
         if f_simplified == "1" or f_simplified == "c" or f_simplified.replace(" ", "") == "c_1":
