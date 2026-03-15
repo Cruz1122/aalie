@@ -4295,6 +4295,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "success": False,
                 "reason": "No hay recurrencia extraída"
             }
+
+        def _pow_n(base: str) -> str:
+            return f"\\left({base}\\right)^n"
         
         # Obtener información de recurrencia lineal
         linear_info = self._detect_linear_recurrence(self.proc_def, self._find_recursive_calls(self.proc_def))
@@ -4511,15 +4514,15 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 # Caso simple: una raíz única
                 r_val = roots_info[0]["root"]
                 if is_homogeneous:
-                    homogeneous_sol = f"A \\cdot {r_val}^n"
+                    homogeneous_sol = f"A \\cdot {_pow_n(r_val)}"
                 else:
                     # Necesitamos solución particular
-                    homogeneous_sol = f"A \\cdot {r_val}^n"
+                    homogeneous_sol = f"A \\cdot {_pow_n(r_val)}"
             elif len(roots_info) == 2 and all(r["multiplicity"] == 1 for r in roots_info):
                 # Dos raíces distintas (ej: Fibonacci)
                 r1 = roots_info[0]["root"]
                 r2 = roots_info[1]["root"]
-                homogeneous_sol = f"A_1 \\cdot {r1}^n + A_2 \\cdot {r2}^n"
+                homogeneous_sol = f"A_1 \\cdot {_pow_n(r1)} + A_2 \\cdot {_pow_n(r2)}"
             else:
                 # Caso general con múltiples raíces
                 terms = []
@@ -4527,11 +4530,11 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     r_val = root_info["root"]
                     mult = root_info["multiplicity"]
                     if mult == 1:
-                        terms.append(f"A_{i+1} \\cdot {r_val}^n")
+                        terms.append(f"A_{i+1} \\cdot {_pow_n(r_val)}")
                     else:
                         # Raíz múltiple: agregar términos con potencias de n
                         for j in range(mult):
-                            terms.append(f"A_{i+1}{j+1} \\cdot n^{j} \\cdot {r_val}^n")
+                            terms.append(f"A_{i+1}{j+1} \\cdot n^{j} \\cdot {_pow_n(r_val)}")
                 homogeneous_sol = " + ".join(terms)
             
             # Construir solución general (homogénea + particular si aplica)
@@ -4650,9 +4653,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
                             closed_form = "c_1"
                     else:
                         # Caso r != 1: T(n) = c_1 * r^n
-                        closed_form = f"c_1 \\cdot {r_val}^n"
+                        closed_form = f"c_1 \\cdot {_pow_n(r_val)}"
                 except:
-                    closed_form = f"c_1 \\cdot {r_val}^n"
+                    closed_form = f"c_1 \\cdot {_pow_n(r_val)}"
             elif len(roots_info) == 2:
                 # Dos raíces distintas: T(n) = c_1 * r1^n + c_2 * r2^n
                 r1_val = roots_info[0]["root"]
@@ -4667,14 +4670,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     if not is_homogeneous and particular_sol:
                         # Incluir solución particular
                         if "n" in particular_sol:
-                            closed_form = f"c_1 \\cdot {r1_val}^n + c_2 \\cdot {r2_val}^n + c_3 \\cdot n"
+                            closed_form = f"c_1 \\cdot {_pow_n(r1_val)} + c_2 \\cdot {_pow_n(r2_val)} + c_3 \\cdot n"
                         else:
-                            closed_form = f"c_1 \\cdot {r1_val}^n + c_2 \\cdot {r2_val}^n + c_3"
+                            closed_form = f"c_1 \\cdot {_pow_n(r1_val)} + c_2 \\cdot {_pow_n(r2_val)} + c_3"
                     else:
-                        closed_form = f"c_1 \\cdot {r1_val}^n + c_2 \\cdot {r2_val}^n"
+                        closed_form = f"c_1 \\cdot {_pow_n(r1_val)} + c_2 \\cdot {_pow_n(r2_val)}"
                 except:
                     # Fallback: usar ambas raíces
-                    closed_form = f"c_1 \\cdot {r1_val}^n + c_2 \\cdot {r2_val}^n"
+                    closed_form = f"c_1 \\cdot {_pow_n(r1_val)} + c_2 \\cdot {_pow_n(r2_val)}"
             else:
                 # Caso general: múltiples raíces
                 terms = []
@@ -4682,11 +4685,11 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     r_val = root_info["root"]
                     mult = root_info["multiplicity"]
                     if mult == 1:
-                        terms.append(f"c_{i+1} \\cdot {r_val}^n")
+                        terms.append(f"c_{i+1} \\cdot {_pow_n(r_val)}")
                     else:
                         # Raíz múltiple: agregar términos con potencias de n
                         for j in range(mult):
-                            terms.append(f"c_{i+1}{j+1} \\cdot n^{j} \\cdot {r_val}^n")
+                            terms.append(f"c_{i+1}{j+1} \\cdot n^{j} \\cdot {_pow_n(r_val)}")
                 
                 if not is_homogeneous and particular_sol:
                     # Agregar solución particular
@@ -4766,13 +4769,13 @@ class RecursiveAnalyzer(BaseAnalyzer):
                             theta_result = "\\Theta(1)"
                     elif r_num > 1:
                         # Caso r > 1: exponencial creciente
-                        theta_result = f"\\Theta({r_val}^n)"
+                        theta_result = f"\\Theta({_pow_n(r_val)})"
                     else:
                         # Caso r < 1: exponencial decreciente
-                        theta_result = f"\\Theta({r_val}^n)"
+                        theta_result = f"\\Theta({_pow_n(r_val)})"
                 except:
                     # Fallback: usar r^n
-                    theta_result = f"\\Theta({r_val}^n)"
+                    theta_result = f"\\Theta({_pow_n(r_val)})"
             elif len(roots_info) == 2:
                 # Dos raíces: usar la raíz dominante (mayor valor absoluto)
                 r1_val = roots_info[0]["root"]
@@ -4785,18 +4788,18 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     # Usar la raíz con mayor valor absoluto (raíz dominante)
                     r_max_num = max(abs(r1_num), abs(r2_num))
                     r_max_val = r1_val if abs(r1_num) >= abs(r2_num) else r2_val
-                    theta_result = f"\\Theta({r_max_val}^n)"
+                    theta_result = f"\\Theta({_pow_n(r_max_val)})"
                 except:
                     # Fallback: usar la primera raíz
-                    theta_result = f"\\Theta({r1_val}^n)"
+                    theta_result = f"\\Theta({_pow_n(r1_val)})"
             else:
                 # Caso general: encontrar la raíz con mayor valor absoluto
                 try:
                     r_max = max(roots_info, key=lambda r: abs(float(sympify(r["root"]).evalf())) if sympify(r["root"]).is_real else 0)
-                    theta_result = f"\\Theta({r_max['root']}^n)"
+                    theta_result = f"\\Theta({_pow_n(r_max['root'])})"
                 except:
                     # Fallback: usar la primera raíz
-                    theta_result = f"\\Theta({roots_info[0]['root']}^n)"
+                    theta_result = f"\\Theta({_pow_n(roots_info[0]['root'])})"
             
             # Si no se pudo calcular theta, usar fallback
             if not theta_result:
