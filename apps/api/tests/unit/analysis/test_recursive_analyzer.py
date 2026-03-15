@@ -2059,8 +2059,8 @@ class TestRecursiveAnalyzerDPValidation:
                 assert not result.get("ok")
                 assert "errors" in result
 
-    def test_analyze_best_shortcuts_o1_for_data_dependent_early_return(self):
-        """Test: best-case retorna O(1) cuando el return temprano depende de datos."""
+    def test_analyze_best_shortcuts_theta1_for_data_dependent_early_return(self):
+        """Test: best-case retorna Θ(1) cuando el return temprano depende de datos."""
         analyzer = RecursiveAnalyzer()
         ast = {
             "type": "Program",
@@ -2098,8 +2098,8 @@ class TestRecursiveAnalyzerDPValidation:
             }):
                 result = analyzer.analyze(ast, mode="best")
                 assert result.get("ok")
-                assert result.get("totals", {}).get("T_open") == "O(1)"
-                assert result.get("totals", {}).get("big_theta") == "O(1)"
+                assert result.get("totals", {}).get("T_open") == "\\Theta(1)"
+                assert result.get("totals", {}).get("big_theta") == "\\Theta(1)"
 
     # === Tests para detect_applicable_methods() ===
     

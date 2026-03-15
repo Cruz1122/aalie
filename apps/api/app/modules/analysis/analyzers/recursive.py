@@ -95,7 +95,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             }
         
         # 2.5. Si estamos en modo "best" y hay early return no recursivo y *existe*
-        # una entrada de tamaño n que lo active, el mejor caso es O(1). Sin embargo,
+        # una entrada de tamaño n que lo active, el mejor caso es Θ(1). Sin embargo,
         # el caso base n = 1 no debe considerarse "mejor caso O(1)" para n grande,
         # por lo que sólo aplicamos esta optimización cuando el early return está
         # estrictamente separado de la condición de caso base recursivo.
@@ -107,7 +107,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 self.proof_steps.append({
                     "id": "best_case_early_return",
                     "text": (
-                        "\\text{Mejor caso: } O(1) \\text{ (existe una entrada de tamaño } n "
+                        "\\text{Mejor caso: } \\Theta(1) \\text{ (existe una entrada de tamaño } n "
                         "\\text{ que activa un return temprano sin recursión)}"
                     )
                 })
@@ -115,8 +115,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "ok": True,
                     "byLine": [],
                     "totals": {
-                        "T_open": "O(1)",
-                        "big_theta": "O(1)",
+                        "T_open": "\\Theta(1)",
+                        "big_theta": "\\Theta(1)",
                         "symbols": None,
                         "notes": None,
                         "proof": self.proof_steps.copy()
@@ -2841,15 +2841,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Calcular theta (worst/average case)
         theta_worst_avg = self._calculate_theta(case, g_n_expr, f_n_str, log_b_a)
         
-        # Calcular mejor caso: siempre usar O (big-O) en lugar de Θ para best case
-        # Si hay return temprano, es O(1), sino es O del mismo valor que worst/average
+        # Calcular mejor caso: usar cota ajustada Θ cuando está disponible.
+        # Si hay return temprano dependiente de datos, el mejor caso es Θ(1).
         if has_early_return:
-            theta_best = "O(1)"
-            self.proof_steps.append({"id": "best_case", "text": "\\text{Mejor caso: } O(1) \\text{ (return temprano detectado)}"})
+            theta_best = "\\Theta(1)"
+            self.proof_steps.append({"id": "best_case", "text": "\\text{Mejor caso: } \\Theta(1) \\text{ (return temprano detectado)}"})
         else:
-            # Convertir Θ(...) a O(...) para best case
-            # Reemplazar \Theta por O en la expresión LaTeX
-            theta_best = theta_worst_avg.replace("\\Theta", "O")
+            # Sin retorno temprano, el mejor caso coincide con la cota ajustada obtenida.
+            theta_best = theta_worst_avg
             best_case_text = f"\\text{{Mejor caso: }} {theta_best}"
             self.proof_steps.append({"id": "best_case", "text": best_case_text})
         
@@ -3786,11 +3785,11 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         # Determinar T_open según el método usado y el modo (PRIORIDAD: characteristic_equation > iteration > recursion_tree > master)
         if self.characteristic_equation:
-            # Para characteristic_equation, si hay early return y estamos en modo best, usar O(1)
+            # Para characteristic_equation, si hay early return y estamos en modo best, usar Θ(1)
             # El theta ya debería estar ajustado en _apply_characteristic_equation_method, pero verificamos por seguridad
             if (self.mode == "best" and 
                 self.characteristic_equation.get("has_early_return", False)):
-                t_open = "O(1)"
+                t_open = "\\Theta(1)"
             else:
                 t_open = self.characteristic_equation.get("theta", "N/A")
         elif self.iteration:
@@ -4827,14 +4826,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
             has_early_return = self._detect_early_return()
             
             # Calcular theta para worst/average y best case
-            # Si hay early return y estamos en modo best, el mejor caso es O(1)
+            # Si hay early return y estamos en modo best, el mejor caso es Θ(1)
             if has_early_return and self.mode == "best":
-                theta_best = "O(1)"
+                theta_best = "\\Theta(1)"
                 self.proof_steps.append({
                     "id": "best_case",
-                    "text": "\\text{Mejor caso: } O(1) \\text{ (return temprano detectado)}"
+                    "text": "\\text{Mejor caso: } \\Theta(1) \\text{ (return temprano detectado)}"
                 })
-                # Para best case con early return, usar O(1) en lugar del theta calculado
+                # Para best case con early return, usar Θ(1) en lugar del theta calculado
                 theta_result = theta_best
             else:
                 # Para worst/average case, usar el theta calculado normalmente

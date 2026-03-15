@@ -11,6 +11,9 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ### Cambios
 - **Comparación con IA:** Las etiquetas técnicas se sustituyeron por "Ecuación de eficiencia completa" y "Forma polinómica". Al comparar con el asistente, las notas se generan en un lenguaje más claro y comprensible.
+- **Fórmulas con potencias en recursión:** Se reorganizó la forma en que se muestran y calculan expresiones con exponentes para que los resultados sean más claros y consistentes.
+- **Detección temprana en recursión:** Cuando un algoritmo termina antes de lo esperado en algún camino, ahora se reconoce mejor ese caso y se evita contar pasos de más.
+- **Parámetros y seguimiento de ejecución:** Se mejoró cómo se deducen los datos de entrada y cómo se registran los pasos internos, para dar explicaciones más fiables durante la ejecución.
 
 ### Correcciones
 - **Panel de variables:** Se corrigió un fallo que impedía compilar la aplicación; el aviso que indica que el tamaño (n) es la longitud del array se muestra correctamente.

@@ -1365,7 +1365,7 @@ export default function RecursiveAnalysisView({
   return (
     <div className="h-full flex flex-col space-y-6">
       {/* Card principal: Método y Parámetros */}
-      <div className="glass-card p-6 rounded-lg">
+      <div className="glass-card px-6 pt-6 pb-0 rounded-lg">
         <div className="mb-4">
           <div
             className={`relative flex items-start justify-between flex-wrap gap-2 mb-3 ${isCharacteristicMethod ? "pr-56 sm:pr-72" : ""}`}
