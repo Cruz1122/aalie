@@ -6695,31 +6695,37 @@ FIN FUNCIÓN"""
         # h ≈ log_b(n), pero generamos suficientes niveles para llenar el modal
         max_levels = 10  # Generar 10 niveles para visualización
         
-        # Detectar si f(n) es constante para simplificar notación
+        # Detectar tipo de f(n) para simplificar notación
         f_simplified = f_n.strip().lower()
         is_constant = f_simplified == "1" or f_simplified == "c" or f_simplified.replace(" ", "") == "c_1"
         
         for i in range(max_levels + 1):
             # Número de nodos en el nivel i: a^i
             num_nodes = a ** i
-            num_nodes_latex = f"{a}^{i}" if i > 0 else "1"
+            # Usar llaves en el exponente para que KaTeX/Tex interpreten correctamente valores de más de un dígito (ej. 2^{10})
+            num_nodes_latex = f"{a}^{{{i}}}" if i > 0 else "1"
             
             # Tamaño del subproblema en el nivel i: n/b^i
             if i == 0:
                 subproblem_size_latex = "n"
             else:
                 b_str = self._simplify_number_latex(b)
-                subproblem_size_latex = f"n/{b_str}^{i}"
+                subproblem_size_latex = f"n/{b_str}^{{{i}}}"
             
-            # Costo por nodo: f(n/b^i)
-            # Si f(n) es constante, no usar notación de evaluación
+            # Costo por nodo: ajustar según el tipo de f(n)
+            # - Si f(n) es constante: mostrar la constante
+            # - Si f(n) = n: mostrar explícitamente n/b^i
+            # - En otros casos: notación genérica f(n/b^i)
             if is_constant:
                 cost_per_node_latex = f_n
             elif i == 0:
                 cost_per_node_latex = f_n
             else:
                 b_str = self._simplify_number_latex(b)
-                cost_per_node_latex = f"{f_n}|_{{n/{b_str}^{i}}}"
+                if f_simplified == "n":
+                    cost_per_node_latex = f"n/{b_str}^{{{i}}}"
+                else:
+                    cost_per_node_latex = f"f(n/{b_str}^{i})"
             
             # Costo total del nivel: a^i · f(n/b^i)
             # Si f(n) es constante, simplificar a^i · c
@@ -6732,8 +6738,11 @@ FIN FUNCIÓN"""
                 total_cost_latex = f_n
             else:
                 b_str = self._simplify_number_latex(b)
-                total_cost_latex = f"{a}^{i} \\cdot {f_n}|_{{n/{b_str}^{i}}}"
-            
+                if f_simplified == "n":
+                    total_cost_latex = f"{a}^{{{i}}} \\cdot n/{b_str}^{{{i}}}"
+                else:
+                    total_cost_latex = f"{a}^{{{i}}} \\cdot f(n/{b_str}^{{{i}}})"
+
             levels.append({
                 "level": i,
                 "num_nodes": num_nodes,
@@ -6769,7 +6778,8 @@ FIN FUNCIÓN"""
             # Si f(n) es constante, no usar notación de evaluación
             expression = f"\\sum_{{i=0}}^{{{height_expr}}} {a}^i \\cdot {f_n}"
         else:
-            expression = f"\\sum_{{i=0}}^{{{height_expr}}} {a}^i \\cdot {f_n}|_{{n/{b_str}^i}}"
+            # Notación más legible: f(n/b^i) en lugar de f(n)|_{n/b^i}
+            expression = f"\\sum_{{i=0}}^{{{height_expr}}} {a}^i \\cdot f(n/{b_str}^i)"
         
         # Caso 1: f(n) = constante (1, c)
         if f_simplified == "1" or f_simplified == "c" or f_simplified.replace(" ", "") == "c_1":

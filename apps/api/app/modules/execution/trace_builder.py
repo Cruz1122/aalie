@@ -173,6 +173,28 @@ class TraceBuilder:
                 vchanged = None
         self._prev_variables = variables.copy()
 
+        # #region agent log
+        try:
+            import json as _json, time as _time
+            _log_payload = {
+                "sessionId": "1b7cca",
+                "runId": "initial",
+                "hypothesisId": "H1",
+                "location": "execution/trace_builder.py:add_step",
+                "message": "execution_step_added",
+                "data": {
+                    "stepNumber": self.step_counter,
+                    "eventKind": effective_kind,
+                    "variablesChangedKeys": list(vchanged.keys()) if isinstance(vchanged, dict) else None,
+                },
+                "timestamp": int(_time.time() * 1000),
+            }
+            with open("c:\\dev\\algorithmic-analysis\\debug-1b7cca.log", "a", encoding="utf-8") as _f:
+                _f.write(_json.dumps(_log_payload) + "\n")
+        except Exception:
+            pass
+        # #endregion agent log
+
         step = ExecutionStep(
             id=f"step_{self.step_counter}",
             step_number=self.step_counter,
