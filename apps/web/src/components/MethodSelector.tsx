@@ -7,7 +7,7 @@
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 import { useTranslations } from "next-intl";
-import React from "react";
+import React, { useEffect, useMemo } from "react";
 
 /**
  * Tipos de métodos de análisis disponibles.
@@ -17,6 +17,24 @@ export type MethodType =
   | "iteration"
   | "recursion_tree"
   | "master";
+
+export type MethodPrecision = "high" | "medium" | "low";
+
+export interface MethodMetadata {
+  applicable: boolean;
+  recommended: boolean;
+  precision: MethodPrecision;
+  reason: string;
+}
+
+export type MethodMetadataMap = Record<MethodType, MethodMetadata>;
+
+export const ALL_METHODS: MethodType[] = [
+  "characteristic_equation",
+  "iteration",
+  "recursion_tree",
+  "master",
+];
 
 interface MethodInfo {
   id: MethodType;
@@ -65,10 +83,14 @@ interface MethodSelectorProps {
   applicableMethods: MethodType[];
   /** Método seleccionado por defecto */
   defaultMethod: MethodType;
+  /** Metadatos por método para renderizado completo de la cuadrícula */
+  methodMetadata?: MethodMetadataMap | null;
   /** Callback cuando se confirma la selección */
   onSelect: (method: MethodType) => void;
   /** Callback opcional para cancelar la selección */
   onCancel?: () => void;
+  /** Render embebido dentro del loader (sin overlay exterior propio). */
+  embeddedInLoader?: boolean;
 }
 
 /**
@@ -92,118 +114,175 @@ interface MethodSelectorProps {
 export default function MethodSelector({
   applicableMethods,
   defaultMethod,
+  methodMetadata,
   onSelect,
   onCancel,
+  embeddedInLoader = false,
 }: MethodSelectorProps) {
   const t = useTranslations("analyzer.methodSelector");
   const [selectedMethod, setSelectedMethod] =
     React.useState<MethodType>(defaultMethod);
 
+  const normalizedMetadata = useMemo<MethodMetadataMap>(() => {
+    return ALL_METHODS.reduce(
+      (acc, methodId) => {
+        const fallbackReason = t("reasons.fallback");
+        const fallbackItem: MethodMetadata = {
+          applicable: applicableMethods.includes(methodId),
+          recommended: methodId === defaultMethod,
+          precision: methodId === defaultMethod ? "high" : "medium",
+          reason: fallbackReason,
+        };
+        acc[methodId] = methodMetadata?.[methodId] ?? fallbackItem;
+        return acc;
+      },
+      {} as MethodMetadataMap,
+    );
+  }, [applicableMethods, defaultMethod, methodMetadata, t]);
+
+  useEffect(() => {
+    if (normalizedMetadata[selectedMethod]?.applicable) return;
+    const firstApplicable = ALL_METHODS.find(
+      (methodId) => normalizedMetadata[methodId]?.applicable,
+    );
+    if (firstApplicable) {
+      setSelectedMethod(firstApplicable);
+    }
+  }, [normalizedMetadata, selectedMethod]);
+
   const handleConfirm = () => {
     onSelect(selectedMethod);
   };
 
-  return (
-    <div
-      className="fixed inset-0 z-[70] flex items-center justify-center"
-      style={{ pointerEvents: "auto" }}
-    >
-      {/* Overlay con z-index más alto que el loader */}
-      <div
-        className="absolute inset-0 glass-modal-overlay"
-        onClick={onCancel}
-        style={{ pointerEvents: "auto" }}
-      />
+  const selectedMethodData =
+    normalizedMetadata[selectedMethod] ??
+    ({
+      applicable: false,
+      recommended: false,
+      precision: "low",
+      reason: t("reasons.fallback"),
+    } as MethodMetadata);
+  const isSelectionApplicable = selectedMethodData?.applicable ?? false;
 
+  const precisionTextColor = (precision: MethodPrecision) => {
+    if (precision === "high") return "text-blue-300";
+    if (precision === "medium") return "text-slate-300";
+    return "text-slate-400";
+  };
+  const rootClass = embeddedInLoader
+    ? "absolute inset-0 z-20 flex items-center justify-center transition-opacity duration-300 opacity-100"
+    : "fixed inset-0 z-[70] flex items-center justify-center transition-opacity duration-300 opacity-100";
+
+  return (
+    <div className={rootClass} style={{ pointerEvents: "none" }}>
       {/* Contenedor del selector con z-index más alto */}
       <div
-        className="relative z-10 glass-modal-container rounded-2xl p-6 w-[700px] max-w-[90vw] max-h-[90vh] overflow-y-auto mx-4 shadow-2xl"
-        style={{ pointerEvents: "auto" }}
+        className="relative z-10 glass-modal-container rounded-2xl px-8 py-10 w-[600px] h-[400px] mx-4 shadow-2xl flex flex-col justify-start"
+        style={{
+          pointerEvents: "auto",
+          backdropFilter: "none",
+          WebkitBackdropFilter: "none",
+        }}
       >
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-white mb-2 flex items-center gap-2">
-            <span className="material-symbols-outlined text-2xl text-blue-400">
-              settings
-            </span>
+        <div className="flex-1 flex flex-col justify-center">
+        <div className="mb-5">
+          <p className="text-[11px] text-slate-400/70 tracking-wide uppercase text-center">
             {t("title")}
+          </p>
+          <h2 className="mt-1 text-xl font-semibold text-white text-center">
+            {t(`methods.${selectedMethod}.name`)}
           </h2>
-          <p className="text-sm text-slate-400">{t("subtitle")}</p>
+          <p className="mt-2 text-xs text-slate-300 text-center">
+            {t(`methods.${selectedMethod}.description`)}
+          </p>
+          <p className={`mt-1 text-xs text-center ${precisionTextColor(selectedMethodData.precision)}`}>
+            {t(`precisionExplanation.${selectedMethodData.precision}`)}
+          </p>
         </div>
 
-        {/* Lista de métodos */}
-        <div className="space-y-3 mb-6">
-          {applicableMethods.map((methodId) => {
+        {/* Cuadrícula fija de métodos */}
+        <div className="grid grid-cols-4 gap-2 mb-6">
+          {ALL_METHODS.map((methodId) => {
             const method = methods[methodId];
+            const metadata = normalizedMetadata[methodId];
             const isSelected = selectedMethod === methodId;
-            const isDefault = defaultMethod === methodId;
+            const isApplicable = metadata.applicable;
 
             return (
               <button
                 key={methodId}
-                onClick={() => setSelectedMethod(methodId)}
-                className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+                onClick={() => {
+                  if (isApplicable) {
+                    setSelectedMethod(methodId);
+                  }
+                }}
+                className={`relative w-full p-2 rounded-lg border-2 transition-all text-left h-full ${
                   isSelected
                     ? `${method.borderColor} ${method.bgColor} border-2`
-                    : "border-slate-700/50 bg-slate-800/30 hover:bg-slate-800/50"
-                }`}
+                    : isApplicable
+                      ? "border-slate-700/50 bg-slate-800/30 hover:bg-slate-800/50"
+                      : "border-slate-700/60 bg-slate-900/40"
+                } hover:z-40 focus-within:z-40`}
+                aria-disabled={!isApplicable}
+                aria-label={t(`methods.${methodId}.name`)}
               >
-                <div className="flex items-start gap-4">
-                  {/* Radio button visual */}
-                  <div
-                    className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                      isSelected
-                        ? `${method.borderColor} ${method.bgColor}`
-                        : "border-slate-600"
-                    }`}
-                  >
-                    {isSelected && (
-                      <div
-                        className={`w-3 h-3 rounded-full ${method.color.replace("text-", "bg-")}`}
-                      />
-                    )}
-                  </div>
-
+                <div className="flex flex-col items-center justify-center h-full min-h-[64px] gap-1">
                   {/* Icono */}
                   <div
-                    className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
-                      isSelected ? method.bgColor : "bg-slate-700/50"
+                    className={`relative z-20 flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
+                      isSelected
+                        ? `${method.bgColor} border ${method.borderColor}`
+                        : isApplicable
+                          ? "bg-slate-700/50 border border-slate-600/50"
+                          : "bg-slate-700/30 border border-slate-700/50"
                     }`}
                   >
+                    {metadata.recommended && (
+                      <div className="absolute -left-2 -top-2 group/star">
+                        <div className="h-5 w-5 rounded-full border border-white/50 bg-white/15 flex items-center justify-center">
+                          <span className="text-[10px] leading-none text-white">★</span>
+                        </div>
+                        <div className="absolute left-0 top-6 z-[9999] w-44 rounded-lg border border-white/30 bg-slate-950 p-2 text-xs text-slate-100 shadow-xl opacity-0 invisible transition-opacity pointer-events-none group-hover/star:opacity-100 group-hover/star:visible">
+                          {t("recommendedTooltip")}
+                        </div>
+                      </div>
+                    )}
                     <span
-                      className={`material-symbols-outlined ${isSelected ? method.color : "text-slate-400"}`}
+                      className={`material-symbols-outlined ${isSelected ? method.color : isApplicable ? "text-slate-400" : "text-slate-500"}`}
                     >
                       {method.icon}
                     </span>
+                    {!isApplicable && (
+                      <div className="absolute -right-2 -top-2 group/help">
+                        <div className="h-5 w-5 rounded-full border border-amber-500/40 bg-amber-500/20 text-amber-300 text-xs font-bold flex items-center justify-center">
+                          ?
+                        </div>
+                        <div className="absolute right-0 top-6 z-[9999] w-56 rounded-lg border border-amber-500/30 bg-slate-950 p-2 text-xs text-amber-100 shadow-xl opacity-0 invisible transition-opacity pointer-events-none group-hover/help:opacity-100 group-hover/help:visible">
+                          {metadata.reason}
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  {/* Contenido */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3
-                        className={`font-semibold ${isSelected ? method.color : "text-white"}`}
-                      >
-                        {t(`methods.${methodId}.name`)}
-                      </h3>
-                      {isDefault && (
-                        <span className="text-xs px-2 py-0.5 rounded-md bg-slate-700/50 text-slate-300 border border-slate-600">
-                          {t("default")}
-                        </span>
-                      )}
-                    </div>
-                    <p
-                      className={`text-sm ${isSelected ? "text-slate-300" : "text-slate-400"}`}
-                    >
-                      {t(`methods.${methodId}.description`)}
-                    </p>
-                  </div>
+                  <span
+                    className={`text-[11px] leading-tight text-center ${
+                      isSelected
+                        ? method.color
+                        : isApplicable
+                          ? "text-slate-300/90"
+                          : "text-slate-500/90"
+                    }`}
+                  >
+                    {t(`methods.${methodId}.name`)}
+                  </span>
                 </div>
               </button>
             );
           })}
         </div>
+        </div>
 
         {/* Botones de acción */}
-        <div className="flex gap-3 justify-end">
+        <div className="absolute z-10 left-8 right-8 bottom-10 flex gap-3 justify-end">
           {onCancel && (
             <button
               onClick={onCancel}
@@ -214,7 +293,8 @@ export default function MethodSelector({
           )}
           <button
             onClick={handleConfirm}
-            className="px-6 py-2 rounded-lg bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 transition-colors text-sm font-semibold flex items-center gap-2"
+            disabled={!isSelectionApplicable}
+            className="px-6 py-2 rounded-lg bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 transition-colors text-sm font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500/20"
           >
             <span className="material-symbols-outlined text-base">check</span>
             {t("confirm")}

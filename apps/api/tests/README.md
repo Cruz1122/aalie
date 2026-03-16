@@ -72,7 +72,14 @@ python -m pytest tests/system/steps/ -v
 
 ## Baseline y métricas
 
-- Cobertura objetivo > 71% (referencia pre-reforma). Medir: `python -m pytest tests/ --cov=app --cov-report=term`.
+- **Cobertura objetivo**: mantener la cobertura global de `app/` en el rango **70–75% o más**.
+- **Cómo medir localmente**:
+  - `python -m pytest tests/ --cov=app --cov-report=term-missing`
+  - Desde la raíz del monorepo: `pnpm test:api:cov`
+  - Revisa el resumen final y las secciones `MISS`/`missing` por archivo para priorizar módulos con menos cobertura (en especial WHILE, recursión y PD).
+- **Regla de equipo**:
+  - Ningún cambio debe reducir la cobertura global por debajo del umbral configurado en CI (`--cov-fail-under=70` en `.github/workflows/ci.yaml`).
+  - Toda nueva funcionalidad debe venir con sus tests (unit/component/contract/system según corresponda).
 - Prohibido: `import unittest` o `unittest.TestCase`; aserciones ad hoc de complejidad (usar `_support.assertions`).
 
 ## Algoritmos de estrés (stress/)

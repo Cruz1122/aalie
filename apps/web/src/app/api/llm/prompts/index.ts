@@ -4,6 +4,7 @@
  */
 
 import { compare } from "./compare";
+import { explain } from "./explain";
 import { generalBase } from "./general";
 import { parserAssistBase } from "./parser_assist";
 import { repair } from "./repair";
@@ -35,6 +36,8 @@ export function getPrompt(job: LLMJob, locale?: string): string {
       return repair[loc];
     case "compare":
       return compare[loc];
+    case "explain":
+      return explain[loc];
     default:
       return parserAssistBase + getResponseLanguageInstruction(loc);
   }

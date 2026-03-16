@@ -7,6 +7,20 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Added
+- Documentación de supuestos del caso promedio (`docs/average-case-assumptions.md`) y auditoría (`docs/average-case-audit.md`)
+- Bandera `avg_foundation` (well_founded/approximate) en el análisis de caso promedio
+- Tests de verificación de fórmulas y `avg_foundation` en `test_avg_case.py` y `test_avg_formulas.py`
+- Narrativa pedagógica en el modal de procedimiento general: explicación del caso promedio, qué se promedia, cuándo es representativo
+- Etiquetas descriptivas en tarjetas de casos (mejor: salida temprana, promedio: E[ejecuciones], peor: máximo de iteraciones)
+- Badge "Bien fundamentado" / "Aproximado" según el modelo del caso promedio
+- Tabla alineada para notaciones O/Ω/Θ en el modal de procedimiento general
+- Columnas con anchos fijos en LineTable y CostsTable para alinear fórmulas
+
+### Changed
+- GeneralProcedureModal: bloque de narrativa para caso promedio, advertencia cuando es aproximado, mini-notas de supuestos
+- IterativeAnalysisView: hints descriptivos en cada tarjeta de caso
+
 ## [1.2.2] — 2026-03-14
 
 ### Cambios

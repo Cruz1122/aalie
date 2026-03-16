@@ -6,7 +6,12 @@ import {
 } from "./llm-defaults";
 import { getPrompt as getPromptByLocale } from "./prompts";
 
-export type LLMJob = "parser_assist" | "general" | "repair" | "compare";
+export type LLMJob =
+  | "parser_assist"
+  | "general"
+  | "repair"
+  | "compare"
+  | "explain";
 
 function getEnvOrDefault(name: string, fallback: string): string {
   const value = process.env[name];
@@ -26,6 +31,7 @@ export const GEMINI_MODELS = {
   general: getEnvOrDefault("LLM_MODEL_GENERAL", DEFAULT_GEMINI_MODELS.general),
   repair: getEnvOrDefault("LLM_MODEL_REPAIR", DEFAULT_GEMINI_MODELS.repair),
   compare: getEnvOrDefault("LLM_MODEL_COMPARE", DEFAULT_GEMINI_MODELS.compare),
+  explain: getEnvOrDefault("LLM_MODEL_EXPLAIN", DEFAULT_GEMINI_MODELS.explain),
 };
 
 export const GEMINI_ENDPOINT_BASE =
@@ -212,6 +218,10 @@ export const JOB_CONFIG = {
       },
       required: ["analysis", "note"],
     },
+  },
+  explain: {
+    temperature: 0.35,
+    maxTokens: 1800,
   },
 };
 

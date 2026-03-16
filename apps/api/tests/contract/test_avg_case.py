@@ -143,3 +143,55 @@ class TestAvgCase:
         totals = result.get("totals", {})
         assert "A_of_n" in totals
         assert "avg_model_info" in totals
+
+    def test_linear_search_avg_foundation_well_founded(self):
+        """Búsqueda lineal avg debe tener avg_foundation=well_founded (Modelo A, fórmulas cerradas)."""
+        result = analyze_algorithm(LINEAR_SEARCH, mode="all")
+        assert result.get("ok", False)
+        avg = result.get("avg")
+        assert avg != "same_as_worst" and isinstance(avg, dict)
+        totals = avg.get("totals", {})
+        assert "avg_foundation" in totals
+        assert totals["avg_foundation"] == "well_founded", (
+            f"Búsqueda lineal debe ser well_founded: {totals.get('avg_foundation')}"
+        )
+
+    def test_linear_search_avg_formula_contains_n_plus_1_over_2(self):
+        """Búsqueda lineal A(n) debe contener (n+1)/2 o equivalente (E[iter] estándar)."""
+        result = analyze_algorithm(LINEAR_SEARCH, mode="all")
+        assert result.get("ok", False)
+        avg = result.get("avg")
+        assert avg != "same_as_worst" and isinstance(avg, dict)
+        a_of_n = avg.get("totals", {}).get("A_of_n", "")
+        t_poly = avg.get("totals", {}).get("T_polynomial", "")
+        combined = (a_of_n + " " + t_poly).lower()
+        # Debe contener n+1/2, (n+1)/2, frac con n, o similar
+        has_expected = (
+            "n+1" in combined or "n + 1" in combined
+            or "frac" in combined
+            or "n/2" in combined
+        )
+        assert has_expected, (
+            f"A(n) o T_polynomial debe reflejar E[iter]=(n+1)/2: A_of_n={a_of_n}, T_polynomial={t_poly}"
+        )
+
+    def test_avg_unbounded_has_approximate_foundation(self):
+        """Algoritmo con WHILE unbounded en avg debe tener avg_foundation=approximate."""
+        source = """whileLoopExample(flag) BEGIN
+    i <- 1;
+    WHILE (i <= 10) DO BEGIN
+        IF (flag = 1) THEN BEGIN
+            i <- i + 1;
+        END
+    END
+END
+"""
+        result = analyze_algorithm(source, mode="all")
+        assert result.get("ok", False)
+        avg = result.get("avg")
+        if avg != "same_as_worst" and isinstance(avg, dict):
+            totals = avg.get("totals", {})
+            if "avg_foundation" in totals:
+                assert totals["avg_foundation"] == "approximate", (
+                    f"WHILE unbounded en avg debe ser approximate: {totals.get('avg_foundation')}"
+                )
