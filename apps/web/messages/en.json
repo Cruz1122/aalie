@@ -100,7 +100,12 @@
       "average": "Average case",
       "bestShort": "Best",
       "avgShort": "Average",
-      "worstShort": "Worst"
+      "worstShort": "Worst",
+      "bestHint": "Minimum executions",
+      "averageHint": "Expected executions",
+      "worstHint": "Maximum executions",
+      "foundationWellFounded": "Well-founded",
+      "foundationApproximate": "Approximate"
     },
     "methods": {
       "characteristicEquation": "Characteristic Equation",
@@ -467,7 +472,13 @@
       "bigOmegaLower": "Big-Omega (lower bound):",
       "bigThetaTight": "Big-Theta (tight bound):",
       "hypotheses": "Hypotheses:",
-      "modelLabel": "Model:"
+      "modelLabel": "Model:",
+      "averageCaseExplanation": "The number of executions is averaged over all inputs of size n, assuming the indicated model. Represents typical behavior.",
+      "whatIsAveraged": "What is averaged: the number of times each line of code is executed.",
+      "assumptions": "Assumptions",
+      "whenRepresentative": "When it is representative: inputs with uniform or random distribution (e.g. linear search with success, sorting random data).",
+      "whenNotRepresentative": "When it is not: adversarial inputs, skewed distributions, or when the model does not capture reality.",
+      "approximateWarning": "This average case is approximate; exact analysis requires more information about the input distribution."
     },
     "gpuCpuModal": {
       "title": "GPU vs CPU Analysis",

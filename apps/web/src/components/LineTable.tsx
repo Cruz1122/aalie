@@ -109,20 +109,20 @@ export default function LineTable({
 
   return (
     <div className="overflow-auto min-w-0" style={{ WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
-      <table className="w-full text-sm min-w-[280px]">
+      <table className="w-full text-sm min-w-[320px]">
         <thead className="sticky top-0 bg-white/5 backdrop-blur-sm">
           <tr>
-            <th className="text-center p-2 font-semibold text-slate-300">#</th>
-            <th className="text-center p-2 font-semibold text-slate-300">
+            <th className="text-center p-2 font-semibold text-slate-300 w-10">#</th>
+            <th className="text-center p-2 font-semibold text-slate-300 w-24">
               {t("type")}
             </th>
-            <th className="text-center p-2 font-semibold text-slate-300">
+            <th className="text-center p-2 font-semibold text-slate-300 w-14">
               C<sub>k</sub>
             </th>
-            <th className="text-center p-2 font-semibold text-slate-300">
+            <th className="text-center p-2 font-semibold text-slate-300 w-12">
               {t("elementaryOps")}
             </th>
-            <th className="text-center p-2 font-semibold text-slate-300">
+            <th className="text-center p-2 font-semibold text-slate-300 min-w-[100px]">
               {isAvgMode ? (
                 <Formula latex="E[\# \text{ ejecuciones}]" />
               ) : (

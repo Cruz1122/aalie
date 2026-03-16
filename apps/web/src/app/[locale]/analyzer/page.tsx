@@ -1712,7 +1712,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
 
       <Header />
 
-      <main className="flex-1 p-6 z-10 min-h-0 flex flex-col">
+      <main className="flex-1 px-6 py-4 z-10 min-h-0 flex flex-col">
         <div className="max-w-7xl mx-auto flex-1 flex flex-col min-h-0 w-full">
           {/* Vista trace: montada al abrir y se mantiene para persistir estado al volver */}
           {hasTraceViewMounted && (

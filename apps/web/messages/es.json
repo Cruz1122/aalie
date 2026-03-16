@@ -100,7 +100,12 @@
       "average": "Caso promedio",
       "bestShort": "Mejor",
       "avgShort": "Promedio",
-      "worstShort": "Peor"
+      "worstShort": "Peor",
+      "bestHint": "Mínimo de ejecuciones",
+      "averageHint": "Esperanza de ejecuciones",
+      "worstHint": "Máximo de ejecuciones",
+      "foundationWellFounded": "Bien fundamentado",
+      "foundationApproximate": "Aproximado"
     },
     "methods": {
       "characteristicEquation": "Ecuación Característica",
@@ -468,7 +473,13 @@
       "bigOmegaLower": "Big-Omega (cota inferior):",
       "bigThetaTight": "Big-Theta (cota ajustada):",
       "hypotheses": "Hipótesis:",
-      "modelLabel": "Modelo:"
+      "modelLabel": "Modelo:",
+      "averageCaseExplanation": "Se promedia el número de ejecuciones sobre todas las entradas de tamaño n, asumiendo el modelo indicado. Representa el comportamiento típico.",
+      "whatIsAveraged": "Qué se promedia: número de veces que se ejecuta cada línea de código.",
+      "assumptions": "Supuestos",
+      "whenRepresentative": "Cuándo es representativo: entradas con distribución uniforme o aleatoria (ej. búsqueda lineal con éxito, ordenamiento de datos aleatorios).",
+      "whenNotRepresentative": "Cuándo no lo es: entradas adversarias, distribuciones sesgadas o cuando el modelo no captura la realidad.",
+      "approximateWarning": "Este caso promedio es aproximado; el análisis exacto requiere más información sobre la distribución de entradas."
     },
     "gpuCpuModal": {
       "title": "Análisis GPU vs CPU",
