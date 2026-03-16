@@ -232,7 +232,7 @@
       "masterTheorem": "Master Theorem",
       "caseNumber": "Case {number}",
       "parameters": "Parameters:",
-      "gnCalculation": "Calculation of g(n) = n<sup>log<sub>b</sub> a</sup>:",
+      "gnCalculation": "Calculation of g(n):",
       "comparison": "Comparison:",
       "case1Desc": "→ Case 1: f(n) is polynomially smaller than g(n)",
       "case2Desc": "→ Case 2: f(n) equals g(n)",

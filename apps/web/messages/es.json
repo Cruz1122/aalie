@@ -233,7 +233,7 @@
       "masterTheorem": "Teorema Maestro",
       "caseNumber": "Caso {number}",
       "parameters": "Parámetros:",
-      "gnCalculation": "Cálculo de g(n) = n<sup>log<sub>b</sub> a</sup>:",
+      "gnCalculation": "Cálculo de g(n):",
       "comparison": "Comparación:",
       "case1Desc": "→ Caso 1: f(n) es polinomialmente menor que g(n)",
       "case2Desc": "→ Caso 2: f(n) es igual a g(n)",
