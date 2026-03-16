@@ -16,7 +16,10 @@ import GeneralProcedureModal from "@/components/GeneralProcedureModal";
 import GPUCPUModal from "@/components/GPUCPUModal";
 import Header from "@/components/Header";
 import IterativeAnalysisView from "@/components/IterativeAnalysisView";
-import MethodSelector, { MethodType } from "@/components/MethodSelector";
+import MethodSelector, {
+  MethodMetadataMap,
+  MethodType,
+} from "@/components/MethodSelector";
 import ProcedureModal from "@/components/ProcedureModal";
 import RecursiveAnalysisView from "@/components/RecursiveAnalysisView";
 import RepairModal from "@/components/RepairModal";
@@ -66,9 +69,12 @@ export default function AnalyzerPage() {
   const [showMethodSelector, setShowMethodSelector] = useState(false);
   const [applicableMethods, setApplicableMethods] = useState<MethodType[]>([]);
   const [defaultMethod, setDefaultMethod] = useState<MethodType>("master");
+  const [methodMetadata, setMethodMetadata] = useState<MethodMetadataMap | null>(
+    null,
+  );
   const methodSelectionPromiseRef = useRef<{
     resolve: (method: MethodType) => void;
-    reject: () => void;
+    reject: (reason?: unknown) => void;
   } | null>(null);
   const minProgressRef = useRef<number>(0);
   
@@ -331,7 +337,7 @@ export default function AnalyzerPage() {
       const isRecursive = kind === "recursive" || kind === "hybrid";
       
       let progressBeforeAnalysis: number;
-      let selectedMethod: MethodType | undefined = undefined;
+      let selectedMethod: MethodType | undefined | null = undefined;
       
       if (isRecursive) {
         setAnalysisMessage(getMessage("verifyingConditions"));
@@ -350,17 +356,27 @@ export default function AnalyzerPage() {
         selectedMethod = await detectAndSelectMethod(
           source,
           kind,
+          locale === "es" ? "es" : "en",
           progressBeforeMethodSelection,
           setAnalysisMessage,
           setAnalysisProgress,
           setApplicableMethods,
           setDefaultMethod,
+          setMethodMetadata,
           setShowMethodSelector,
           minProgressRef,
           methodSelectionPromiseRef,
           animateProgress,
           getMessage
         );
+        if (selectedMethod === null) {
+          setAnalysisMessage(getMessage("analysisStopped"));
+          setShowMethodSelector(false);
+          setAnalyzing(false);
+          setAnalysisProgress(0);
+          setAlgorithmType(undefined);
+          return;
+        }
         
         progressBeforeAnalysis = 90;
       } else {
@@ -1668,27 +1684,29 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
             setIsAnalysisComplete(false);
             setAnalysisError(null);
           }}
-        />
-      )}
-
-      {/* Selector de método - debe aparecer sobre el loader */}
-      {showMethodSelector && applicableMethods.length > 0 && analyzing && (
-        <MethodSelector
-          applicableMethods={applicableMethods}
-          defaultMethod={defaultMethod}
-          onSelect={(method) => {
-            console.log('[MethodSelector] Método seleccionado:', method);
-            if (methodSelectionPromiseRef.current) {
-              methodSelectionPromiseRef.current.resolve(method);
-            }
-          }}
-          onCancel={() => {
-            // Si cancela, usar método por defecto
-            console.log('[MethodSelector] Cancelado, usando método por defecto:', defaultMethod);
-            if (methodSelectionPromiseRef.current) {
-              methodSelectionPromiseRef.current.resolve(defaultMethod);
-            }
-          }}
+          allowPointerEvents={showMethodSelector}
+          overlayContent={
+            showMethodSelector && applicableMethods.length > 0 ? (
+              <MethodSelector
+                applicableMethods={applicableMethods}
+                defaultMethod={defaultMethod}
+                methodMetadata={methodMetadata}
+                embeddedInLoader
+                onSelect={(method) => {
+                  console.log('[MethodSelector] Método seleccionado:', method);
+                  if (methodSelectionPromiseRef.current) {
+                    methodSelectionPromiseRef.current.resolve(method);
+                  }
+                }}
+                onCancel={() => {
+                  setShowMethodSelector(false);
+                  if (methodSelectionPromiseRef.current) {
+                    methodSelectionPromiseRef.current.reject("METHOD_SELECTION_CANCELLED");
+                  }
+                }}
+              />
+            ) : undefined
+          }
         />
       )}
 

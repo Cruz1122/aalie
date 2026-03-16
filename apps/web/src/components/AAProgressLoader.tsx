@@ -27,6 +27,10 @@ interface AAProgressLoaderProps {
   onClose?: () => void;
   /** Alcance del blur: full (todo el fondo) o container (solo el contenedor) */
   blurScope?: BlurScope;
+  /** Contenido opcional a renderizar encima del loader (ej. selector de método). */
+  overlayContent?: React.ReactNode;
+  /** Habilita interacciones aunque el loader siga en progreso. */
+  allowPointerEvents?: boolean;
 }
 
 /**
@@ -66,6 +70,8 @@ export const AAProgressLoader: React.FC<AAProgressLoaderProps> = ({
   error = null,
   onClose,
   blurScope = "full",
+  overlayContent,
+  allowPointerEvents = false,
 }) => {
   const t = useTranslations("analyzer");
   const tLoader = useTranslations("analyzer.loader");
@@ -130,14 +136,17 @@ export const AAProgressLoader: React.FC<AAProgressLoaderProps> = ({
   };
 
   const overlayClass =
-    blurScope === "container"
+    overlayContent
+      ? "absolute inset-0 glass-modal-overlay transition-opacity duration-300"
+      : blurScope === "container"
       ? "absolute inset-0 glass-modal-overlay-container-only transition-opacity duration-300"
       : "absolute inset-0 glass-modal-overlay transition-opacity duration-300";
+  const isOverlayMode = Boolean(overlayContent);
 
   return (
     <div
       className={`fixed inset-0 z-[60] flex items-center justify-center transition-opacity duration-300 ${isClosing ? "opacity-0" : "opacity-100"}`}
-      style={{ pointerEvents: isComplete || error ? "auto" : "none" }}
+      style={{ pointerEvents: isComplete || error || allowPointerEvents ? "auto" : "none" }}
     >
       <div
         className={`${overlayClass} ${isClosing ? "opacity-0" : "opacity-100"}`}
@@ -145,122 +154,125 @@ export const AAProgressLoader: React.FC<AAProgressLoaderProps> = ({
       />
 
       {/* Modal único: icono, mensaje, badge y barra. Contenido arriba; barra más alta al inicio, fixed abajo al clasificar. */}
-      <div
-        className={`relative z-10 glass-modal-container rounded-2xl px-8 py-10 w-[600px] h-[400px] mx-4 shadow-2xl flex flex-col justify-start transition-opacity duration-300 ${mode === "comparison" ? "shadow-[0_0_60px_-15px_rgba(168,85,247,0.4)]" : ""} ${isClosing ? "opacity-0 scale-95" : "opacity-100 scale-100"}`}
-      >
-        {/* Contenido: icono, mensaje, badge */}
-        <div className="flex flex-col items-center shrink-0 pt-8">
-        {/* Icono de estado */}
-        <div className="flex justify-center mb-6 shrink-0">
-            {hasError ? (
-            <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center border-2 border-red-500/30">
-              <span className="material-symbols-outlined text-4xl text-red-400">
-                error
-              </span>
-            </div>
-          ) : isComplete ? (
-            <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center border-2 border-green-500/30">
-              <span className="material-symbols-outlined text-4xl text-green-400">
-                check_circle
-              </span>
-            </div>
-          ) : (
-            <div
-              className={`w-16 h-16 rounded-full flex items-center justify-center border-2 ${iconColor}`}
-            >
-              <span
-                className={`material-symbols-outlined text-4xl animate-spin ${mode === "comparison" ? "text-purple-400" : "text-blue-400"}`}
-              >
-                progress_activity
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Mensaje principal */}
-        <div className="text-center mb-6">
-          <h3
-              className={`text-xl font-semibold mb-2 ${hasError ? "text-red-300" : "text-white"}`}
-            >
-            {hasError ? errorTitle : message}
-          </h3>
-
-          {hasError && (
-            <>
-              <div className="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-                <p className="text-sm text-red-300 whitespace-pre-wrap">{error}</p>
+      {!isOverlayMode && (
+        <div
+          className={`relative z-10 glass-modal-container rounded-2xl px-8 py-10 w-[600px] h-[400px] mx-4 shadow-2xl flex flex-col justify-start transition-opacity duration-300 ${mode === "comparison" ? "shadow-[0_0_60px_-15px_rgba(168,85,247,0.4)]" : ""} ${isClosing ? "opacity-0 scale-95" : "opacity-100 scale-100"}`}
+        >
+          {/* Contenido: icono, mensaje, badge */}
+          <div className="flex flex-col items-center shrink-0 pt-8">
+          {/* Icono de estado */}
+          <div className="flex justify-center mb-6 shrink-0">
+              {hasError ? (
+              <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center border-2 border-red-500/30">
+                <span className="material-symbols-outlined text-4xl text-red-400">
+                  error
+                </span>
               </div>
-              <div className="text-center mt-4">
-                <button
-                  onClick={handleClose}
-                  className="px-4 py-2 rounded-lg bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition-colors text-sm font-semibold"
-                >
-                  {closeLabel}
-                </button>
+            ) : isComplete ? (
+              <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center border-2 border-green-500/30">
+                <span className="material-symbols-outlined text-4xl text-green-400">
+                  check_circle
+                </span>
               </div>
-            </>
-          )}
-
-          {/* Badge: espacio reservado solo cuando no hay error para no empujar el botón abajo */}
-          {!hasError && (
-            <div className="min-h-[40px] flex items-center justify-center mt-6">
-              {mode === "analysis" && algorithmType && (
-                <div
-                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium ${getAlgorithmTypeColor(algorithmType)} animate-[pop_0.5s_ease-out]`}
-                >
-                  <span className="material-symbols-outlined text-base">
-                    category
-                  </span>
-                  <span>
-                    {tLoader("algorithmLabel")}:{" "}
-                    {getAlgorithmTypeLabel(algorithmType)}
-                  </span>
-                </div>
-              )}
-              {mode === "comparison" && (
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium bg-purple-500/20 text-purple-400 border-purple-500/30 animate-[pop_0.5s_ease-out]">
-                  <span className="material-symbols-outlined text-base">
-                    compare_arrows
-                  </span>
-                  <span>{tComparison("comparingWithLlm")}</span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-        </div>
-
-        {/* Barra de progreso: absoluta; más alta al inicio (!algorithmType), fixed abajo al clasificar */}
-        {!hasError && (
-          <div
-            className={`absolute left-8 right-8 transition-[bottom] duration-300 ${
-              algorithmType || mode === "comparison" ? "bottom-10" : "bottom-24"
-            }`}
-          >
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-slate-300">{progressLabel}</span>
-              <span className="text-sm font-semibold text-white">
-                {Math.round(progress)}%
-              </span>
-            </div>
-            <div className="w-full h-3 bg-slate-700/50 rounded-full overflow-hidden">
+            ) : (
               <div
-                className={`h-full w-full bg-gradient-to-r ${barGradient} rounded-full origin-left`}
-                style={{
-                  transform: `scaleX(${Math.min(1, Math.max(0, progress / 100))})`,
-                  transition: "transform 150ms ease-out",
-                }}
-              />
-            </div>
-            <p
-              className="text-xs text-slate-400 mt-2 text-center min-h-[1.25rem]"
-              title={tooltipText}
-            >
-              {tooltipText}
-            </p>
+                className={`w-16 h-16 rounded-full flex items-center justify-center border-2 ${iconColor}`}
+              >
+                <span
+                  className={`material-symbols-outlined text-4xl animate-spin ${mode === "comparison" ? "text-purple-400" : "text-blue-400"}`}
+                >
+                  progress_activity
+                </span>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+
+          {/* Mensaje principal */}
+          <div className="text-center mb-6">
+            <h3
+                className={`text-xl font-semibold mb-2 ${hasError ? "text-red-300" : "text-white"}`}
+              >
+              {hasError ? errorTitle : message}
+            </h3>
+
+            {hasError && (
+              <>
+                <div className="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+                  <p className="text-sm text-red-300 whitespace-pre-wrap">{error}</p>
+                </div>
+                <div className="text-center mt-4">
+                  <button
+                    onClick={handleClose}
+                    className="px-4 py-2 rounded-lg bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition-colors text-sm font-semibold"
+                  >
+                    {closeLabel}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Badge: espacio reservado solo cuando no hay error para no empujar el botón abajo */}
+            {!hasError && (
+              <div className="min-h-[40px] flex items-center justify-center mt-6">
+                {mode === "analysis" && algorithmType && (
+                  <div
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium ${getAlgorithmTypeColor(algorithmType)} animate-[pop_0.5s_ease-out]`}
+                  >
+                    <span className="material-symbols-outlined text-base">
+                      category
+                    </span>
+                    <span>
+                      {tLoader("algorithmLabel")}:{" "}
+                      {getAlgorithmTypeLabel(algorithmType)}
+                    </span>
+                  </div>
+                )}
+                {mode === "comparison" && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium bg-purple-500/20 text-purple-400 border-purple-500/30 animate-[pop_0.5s_ease-out]">
+                    <span className="material-symbols-outlined text-base">
+                      compare_arrows
+                    </span>
+                    <span>{tComparison("comparingWithLlm")}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          </div>
+
+          {/* Barra de progreso: absoluta; más alta al inicio (!algorithmType), fixed abajo al clasificar */}
+          {!hasError && (
+            <div
+              className={`absolute left-8 right-8 transition-[bottom] duration-300 ${
+                algorithmType || mode === "comparison" ? "bottom-10" : "bottom-24"
+              }`}
+            >
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm text-slate-300">{progressLabel}</span>
+                <span className="text-sm font-semibold text-white">
+                  {Math.round(progress)}%
+                </span>
+              </div>
+              <div className="w-full h-3 bg-slate-700/50 rounded-full overflow-hidden">
+                <div
+                  className={`h-full w-full bg-gradient-to-r ${barGradient} rounded-full origin-left`}
+                  style={{
+                    transform: `scaleX(${Math.min(1, Math.max(0, progress / 100))})`,
+                    transition: "transform 150ms ease-out",
+                  }}
+                />
+              </div>
+              <p
+                className="text-xs text-slate-400 mt-2 text-center min-h-[1.25rem]"
+                title={tooltipText}
+              >
+                {tooltipText}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+      {overlayContent}
     </div>
   );
 };

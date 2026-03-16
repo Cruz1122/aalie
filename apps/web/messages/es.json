@@ -111,10 +111,26 @@
     },
     "methodSelector": {
       "title": "Seleccionar Método de Análisis",
-      "subtitle": "Este algoritmo puede resolverse con múltiples métodos. Selecciona el método que deseas usar:",
+      "subtitle": "Este algoritmo puede resolverse con múltiples métodos. Selecciona el que prefieras y revisa su nivel de precisión.",
+      "selectedMethodLabel": "Método seleccionado actualmente",
       "default": "Por defecto",
+      "recommended": "Recomendado",
+      "recommendedTooltip": "Este es el método sugerido por el sistema para este patrón de recurrencia.",
       "cancel": "Cancelar",
       "confirm": "Confirmar",
+      "precision": {
+        "high": "Precisión alta",
+        "medium": "Precisión media",
+        "low": "Precisión baja"
+      },
+      "precisionExplanation": {
+        "high": "Muy buena elección para este algoritmo: encaja muy bien y suele dar un resultado confiable.",
+        "medium": "Puede funcionar bien en este caso, pero depende de algunos detalles de la forma de la recurrencia.",
+        "low": "Es una opción menos adecuada aquí: puede funcionar, pero normalmente no es la forma más clara de resolverlo."
+      },
+      "reasons": {
+        "fallback": "Este método no cumple las condiciones detectadas para este patrón de recurrencia."
+      },
       "methods": {
         "characteristic_equation": {
           "name": "Ecuación Característica",
