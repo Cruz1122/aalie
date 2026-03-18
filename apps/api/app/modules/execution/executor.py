@@ -3,7 +3,7 @@ Ejecutor principal que recorre el AST y genera pasos de ejecución.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Tuple
 import copy
 from ..analysis.translations import get_trace_step_labels
 from .environment import ExecutionEnvironment
@@ -400,14 +400,28 @@ class CodeExecutor:
                 except Exception:
                     array_len = None
 
+            # Inferir inicio/fin usando patrones estructurales del AST (independiente del nombre)
+            lower_bound_param: Optional[str] = None
+            upper_bound_param: Optional[str] = None
+            if array_len is not None:
+                lower_bound_param, upper_bound_param = self._infer_bounds_from_ast(
+                    proc_def, param_names
+                )
+                if lower_bound_param and lower_bound_param in param_names and lower_bound_param not in params_map:
+                    params_map[lower_bound_param] = 1
+                if upper_bound_param and upper_bound_param in param_names and upper_bound_param not in params_map:
+                    params_map[upper_bound_param] = array_len
+
             if missing_index_params and array_len is not None:
                 ordered_missing = [p for p in param_names if p in missing_index_params]
                 if len(ordered_missing) >= 2:
-                    params_map[ordered_missing[0]] = 1
-                    params_map[ordered_missing[1]] = array_len
-                elif len(ordered_missing) == 1:
+                    if ordered_missing[0] not in params_map:
+                        params_map[ordered_missing[0]] = 1
+                    if ordered_missing[1] not in params_map:
+                        params_map[ordered_missing[1]] = array_len
+                elif len(ordered_missing) == 1 and ordered_missing[0] not in params_map:
                     name = ordered_missing[0].lower()
-                    end_like = {"fin", "end", "right", "high", "r", "last", "final"}
+                    end_like = {"fin", "end", "right", "high", "r", "last", "final", "der"}
                     params_map[ordered_missing[0]] = array_len if name in end_like else 1
 
             # Inferir inicio/fin aunque no aparezcan como índice explícito
@@ -462,7 +476,120 @@ class CodeExecutor:
                         params_map[param_names[0]] = linked
                         params_map[param_names[1]] = x_val
 
+        # #region agent log
+        try:
+            import json as _json, time as _time
+            _log_payload = {
+                "sessionId": "1b7cca",
+                "runId": "initial",
+                "hypothesisId": "Q1",
+                "location": "execution/executor.py:_map_procedure_params",
+                "message": "mapped_procedure_params",
+                "data": {
+                    "procedure": proc_def.get("name"),
+                    "paramNames": param_names,
+                    "paramsMap": params_map,
+                    "arrayParamNames": array_param_names,
+                },
+                "timestamp": int(_time.time() * 1000),
+            }
+            with open("c:\\dev\\algorithmic-analysis\\debug-1b7cca.log", "a", encoding="utf-8") as _f:
+                _f.write(_json.dumps(_log_payload) + "\n")
+        except Exception:
+            pass
+        # #endregion agent log
+
         return params_map
+
+    def _infer_bounds_from_ast(
+        self, proc_def: Dict[str, Any], param_names: List[str]
+    ) -> Tuple[Optional[str], Optional[str]]:
+        """
+        Intenta inferir parámetros de límite inferior / superior a partir de patrones
+        estructurales en el AST (condición base + llamadas recursivas).
+
+        No depende de nombres concretos; se guía por comparaciones entre parámetros
+        y cómo se pasan en las llamadas recursivas al mismo procedimiento.
+        """
+        try:
+            body = proc_def.get("body", {})
+            proc_name = proc_def.get("name")
+
+            base_if = self._find_base_condition_if(body)
+            if not base_if:
+                return (None, None)
+
+            test = base_if.get("test", {})
+            if not isinstance(test, dict) or test.get("type") != "Binary":
+                return (None, None)
+
+            op = test.get("op")
+            left = test.get("left")
+            right = test.get("right")
+
+            def _get_ident_name(node: Any) -> Optional[str]:
+                if isinstance(node, dict) and node.get("type") == "Identifier":
+                    return node.get("name")
+                return None
+
+            left_name = _get_ident_name(left)
+            right_name = _get_ident_name(right)
+            if not left_name or not right_name:
+                return (None, None)
+            if left_name not in param_names or right_name not in param_names:
+                return (None, None)
+
+            # Heurística básica: para op con sentido de "menor que", left es límite inferior
+            # y right límite superior; para "mayor que", al revés.
+            lower, upper = None, None
+            if op in ("<", "<="):
+                lower, upper = left_name, right_name
+            elif op in (">", ">="):
+                lower, upper = right_name, left_name
+            else:
+                return (None, None)
+
+            # Validar contra llamadas recursivas: buscar al menos una llamada al mismo proc
+            calls = self._find_recursive_calls(proc_def)
+            for call in calls:
+                args = call.get("args", [])
+                if not isinstance(args, list) or len(args) != len(param_names):
+                    continue
+                # Mapear param -> arg
+                mapping = {
+                    param_names[i]: args[i] for i in range(len(param_names))
+                }
+
+                def _is_same_or_offset(node: Any, base_name: str) -> bool:
+                    """Devuelve True si node es el identificador base_name o base_name +/- c."""
+                    if isinstance(node, dict):
+                        if node.get("type") == "Identifier" and node.get("name") == base_name:
+                            return True
+                        if node.get("type") == "Binary" and node.get("op") in ("+", "-"):
+                            left_node = node.get("left")
+                            right_node = node.get("right")
+                            if (
+                                isinstance(right_node, dict)
+                                and right_node.get("type") == "Literal"
+                            ):
+                                return _is_same_or_offset(left_node, base_name)
+                    return False
+
+                lower_arg = mapping.get(lower)
+                upper_arg = mapping.get(upper)
+                if lower_arg is None or upper_arg is None:
+                    continue
+
+                # Aceptamos si al menos una llamada respeta el patrón "igual o +/- c"
+                if _is_same_or_offset(lower_arg, lower) and _is_same_or_offset(
+                    upper_arg, upper
+                ):
+                    return (lower, upper)
+
+            # Si no se pudo validar con llamadas, devolver la inferencia de la condición base
+            return (lower, upper)
+        except Exception:
+            return (None, None)
     
     def _execute_procedure(self, proc_def: Dict[str, Any], params: Dict[str, Any], return_value: Optional[Any] = None, pregenerated_call_id: Optional[str] = None) -> Any:
         """

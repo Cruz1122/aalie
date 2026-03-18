@@ -100,7 +100,12 @@
       "average": "Caso promedio",
       "bestShort": "Mejor",
       "avgShort": "Promedio",
-      "worstShort": "Peor"
+      "worstShort": "Peor",
+      "bestHint": "Mínimo de ejecuciones",
+      "averageHint": "Esperanza de ejecuciones",
+      "worstHint": "Máximo de ejecuciones",
+      "foundationWellFounded": "Bien fundamentado",
+      "foundationApproximate": "Aproximado"
     },
     "methods": {
       "characteristicEquation": "Ecuación Característica",
@@ -111,10 +116,26 @@
     },
     "methodSelector": {
       "title": "Seleccionar Método de Análisis",
-      "subtitle": "Este algoritmo puede resolverse con múltiples métodos. Selecciona el método que deseas usar:",
+      "subtitle": "Este algoritmo puede resolverse con múltiples métodos. Selecciona el que prefieras y revisa su nivel de precisión.",
+      "selectedMethodLabel": "Método seleccionado actualmente",
       "default": "Por defecto",
+      "recommended": "Recomendado",
+      "recommendedTooltip": "Este es el método sugerido por el sistema para este patrón de recurrencia.",
       "cancel": "Cancelar",
       "confirm": "Confirmar",
+      "precision": {
+        "high": "Precisión alta",
+        "medium": "Precisión media",
+        "low": "Precisión baja"
+      },
+      "precisionExplanation": {
+        "high": "Muy buena elección para este algoritmo: encaja muy bien y suele dar un resultado confiable.",
+        "medium": "Puede funcionar bien en este caso, pero depende de algunos detalles de la forma de la recurrencia.",
+        "low": "Es una opción menos adecuada aquí: puede funcionar, pero normalmente no es la forma más clara de resolverlo."
+      },
+      "reasons": {
+        "fallback": "Este método no cumple las condiciones detectadas para este patrón de recurrencia."
+      },
       "methods": {
         "characteristic_equation": {
           "name": "Ecuación Característica",
@@ -212,7 +233,7 @@
       "masterTheorem": "Teorema Maestro",
       "caseNumber": "Caso {number}",
       "parameters": "Parámetros:",
-      "gnCalculation": "Cálculo de g(n) = n<sup>log<sub>b</sub> a</sup>:",
+      "gnCalculation": "Cálculo de g(n):",
       "comparison": "Comparación:",
       "case1Desc": "→ Caso 1: f(n) es polinomialmente menor que g(n)",
       "case2Desc": "→ Caso 2: f(n) es igual a g(n)",
@@ -256,6 +277,7 @@
       "executionDiagramSection": "Diagrama de Seguimiento",
       "controlsAndVariables": "Controles y Variables",
       "explanation": "Explicación",
+      "explanationPrompt": "¿Quieres saber más sobre cómo funciona este algoritmo?",
       "recursionDiagram": "Diagrama de Recursión",
       "explanationPlaceholder": "La explicación aparecerá aquí cuando se genere el diagrama",
       "regenerateDiagram": "Regenerar diagrama",
@@ -345,7 +367,10 @@
       "apply": "Aplicar",
       "explanationLevelMinimal": "Mínima",
       "explanationLevelStructured": "Estructurada",
-      "explainWithAI": "Explicar paso con IA"
+      "explainWithAI": "Explica con IA",
+      "explainingWithAI": "Generando explicación con IA...",
+      "regenerateAIExplanation": "Regenerar explicación IA",
+      "explanationAIFallback": "No se pudo generar la explicación con IA. Inténtalo de nuevo."
     },
     "comparisonLoader": {
       "errorTitle": "Error en la comparación",
@@ -448,7 +473,13 @@
       "bigOmegaLower": "Big-Omega (cota inferior):",
       "bigThetaTight": "Big-Theta (cota ajustada):",
       "hypotheses": "Hipótesis:",
-      "modelLabel": "Modelo:"
+      "modelLabel": "Modelo:",
+      "averageCaseExplanation": "Se promedia el número de ejecuciones sobre todas las entradas de tamaño n, asumiendo el modelo indicado. Representa el comportamiento típico.",
+      "whatIsAveraged": "Qué se promedia: número de veces que se ejecuta cada línea de código.",
+      "assumptions": "Supuestos",
+      "whenRepresentative": "Cuándo es representativo: entradas con distribución uniforme o aleatoria (ej. búsqueda lineal con éxito, ordenamiento de datos aleatorios).",
+      "whenNotRepresentative": "Cuándo no lo es: entradas adversarias, distribuciones sesgadas o cuando el modelo no captura la realidad.",
+      "approximateWarning": "Este caso promedio es aproximado; el análisis exacto requiere más información sobre la distribución de entradas."
     },
     "gpuCpuModal": {
       "title": "Análisis GPU vs CPU",

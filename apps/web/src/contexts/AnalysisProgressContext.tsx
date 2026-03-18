@@ -17,7 +17,10 @@ import type {
   BlurScope,
   ProgressLoaderMode,
 } from "@/components/AAProgressLoader";
-import MethodSelector, { MethodType } from "@/components/MethodSelector";
+import MethodSelector, {
+  MethodMetadataMap,
+  MethodType,
+} from "@/components/MethodSelector";
 
 export interface AnalysisProgressState {
   visible: boolean;
@@ -31,6 +34,7 @@ export interface AnalysisProgressState {
   showMethodSelector: boolean;
   applicableMethods: MethodType[];
   defaultMethod: MethodType;
+  methodMetadata: MethodMetadataMap | null;
 }
 
 export interface AnalysisProgressContextType {
@@ -45,9 +49,10 @@ export interface AnalysisProgressContextType {
   setShowMethodSelector: (show: boolean) => void;
   setApplicableMethods: (methods: MethodType[]) => void;
   setDefaultMethod: (method: MethodType) => void;
+  setMethodMetadata: (metadata: MethodMetadataMap | null) => void;
   methodSelectionPromiseRef: React.MutableRefObject<{
     resolve: (method: MethodType) => void;
-    reject: () => void;
+    reject: (reason?: unknown) => void;
   } | null>;
   minProgressRef: React.MutableRefObject<number>;
 }
@@ -64,6 +69,7 @@ const initialState: AnalysisProgressState = {
   showMethodSelector: false,
   applicableMethods: [],
   defaultMethod: "master",
+  methodMetadata: null,
 };
 
 const AnalysisProgressContext =
@@ -86,7 +92,7 @@ export const AnalysisProgressProvider: React.FC<
   const [state, setState] = useState<AnalysisProgressState>(initialState);
   const methodSelectionPromiseRef = useRef<{
     resolve: (method: MethodType) => void;
-    reject: () => void;
+    reject: (reason?: unknown) => void;
   } | null>(null);
   const minProgressRef = useRef<number>(0);
 
@@ -148,6 +154,10 @@ export const AnalysisProgressProvider: React.FC<
     setState((prev) => ({ ...prev, defaultMethod: method }));
   }, []);
 
+  const setMethodMetadata = useCallback((metadata: MethodMetadataMap | null) => {
+    setState((prev) => ({ ...prev, methodMetadata: metadata }));
+  }, []);
+
   const handleClose = useCallback(() => {
     setState(initialState);
   }, []);
@@ -162,11 +172,11 @@ export const AnalysisProgressProvider: React.FC<
 
   const handleMethodCancel = useCallback(() => {
     if (methodSelectionPromiseRef.current) {
-      methodSelectionPromiseRef.current.resolve(state.defaultMethod);
+      methodSelectionPromiseRef.current.reject("METHOD_SELECTION_CANCELLED");
       methodSelectionPromiseRef.current = null;
     }
     setState((prev) => ({ ...prev, showMethodSelector: false }));
-  }, [state.defaultMethod]);
+  }, []);
 
   // Mantener progreso mínimo cuando el selector está visible
   useEffect(() => {
@@ -201,6 +211,7 @@ export const AnalysisProgressProvider: React.FC<
       setShowMethodSelector,
       setApplicableMethods,
       setDefaultMethod,
+      setMethodMetadata,
       methodSelectionPromiseRef,
       minProgressRef,
     }),
@@ -216,6 +227,7 @@ export const AnalysisProgressProvider: React.FC<
       setShowMethodSelector,
       setApplicableMethods,
       setDefaultMethod,
+      setMethodMetadata,
     ],
   );
 
@@ -232,18 +244,21 @@ export const AnalysisProgressProvider: React.FC<
           error={state.error}
           onClose={handleClose}
           blurScope={state.blurScope}
+          allowPointerEvents={state.showMethodSelector}
+          overlayContent={
+            state.showMethodSelector && state.applicableMethods.length > 0 ? (
+              <MethodSelector
+                applicableMethods={state.applicableMethods}
+                defaultMethod={state.defaultMethod}
+                methodMetadata={state.methodMetadata}
+                onSelect={handleMethodSelect}
+                onCancel={handleMethodCancel}
+                embeddedInLoader
+              />
+            ) : undefined
+          }
         />
       )}
-      {state.showMethodSelector &&
-        state.applicableMethods.length > 0 &&
-        state.visible && (
-          <MethodSelector
-            applicableMethods={state.applicableMethods}
-            defaultMethod={state.defaultMethod}
-            onSelect={handleMethodSelect}
-            onCancel={handleMethodCancel}
-          />
-        )}
     </AnalysisProgressContext.Provider>
   );
 };

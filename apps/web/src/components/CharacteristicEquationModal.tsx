@@ -151,9 +151,9 @@ export default function CharacteristicEquationModal({
       closeAriaLabel={t("closeModal")}
       sizeClassName={MODAL_SIZE}
     >
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 min-w-0">
             {/* Columna izquierda: Ecuación de Recurrencia y Solución */}
-            <div className="space-y-4 lg:col-span-3">
+            <div className="space-y-4 lg:col-span-3 min-w-0">
               {/* Ecuación de Recurrencia */}
               {recurrence && (
                 <div className="p-4 rounded-xl glass-card border border-white/10">
@@ -400,7 +400,7 @@ export default function CharacteristicEquationModal({
             </div>
 
             {/* Columna derecha: Resultado Final y Pasos */}
-            <div className="space-y-4 lg:col-span-2">
+            <div className="space-y-4 lg:col-span-2 min-w-0">
               {/* Resultado Final */}
               <div className="p-4 rounded-xl glass-card bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30">
                 <h4 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
@@ -438,13 +438,13 @@ export default function CharacteristicEquationModal({
                       return (
                         <div
                           key={idx}
-                          className="bg-slate-900/50 p-2 rounded border border-white/10"
+                          className="bg-slate-900/50 p-2 rounded border border-white/10 min-w-0"
                         >
                           <div className="text-xs text-slate-400 mb-1">
                             {t("step")} {idx + 1}
                           </div>
-                          <div className="scale-90 origin-top-left">
-                            <Formula latex={stepText} />
+                          <div className="w-full max-w-full overflow-x-auto overflow-y-hidden">
+                            <Formula latex={stepText} display />
                           </div>
                         </div>
                       );

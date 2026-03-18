@@ -1092,7 +1092,22 @@ class BaseAnalyzer:
             else:
                 model_info = self.avg_model.get_model_info(locale=self.locale)
             totals["avg_model_info"] = model_info
-            
+
+            # Bandera avg_foundation: "well_founded" vs "approximate"
+            # well_founded: Modelo A, fórmulas cerradas estándar, predicados explícitos
+            # approximate: WHILE unbounded, t_while/t_repeat, heurísticas
+            has_unbounded = any(r.get("unbounded") for r in clean_rows)
+            has_unbounded_symbols = False
+            for r in clean_rows:
+                count_str = str(r.get("expectedRuns", "") or r.get("count", ""))
+                if "t_while" in count_str or "t_repeat" in count_str or "t_{while" in count_str or "t_{repeat" in count_str:
+                    has_unbounded_symbols = True
+                    break
+            if has_unbounded or has_unbounded_symbols:
+                totals["avg_foundation"] = "approximate"
+            else:
+                totals["avg_foundation"] = "well_founded"
+
             # Agregar hipótesis si hay símbolos
             if self.avg_model.has_symbols():
                 hypotheses = []

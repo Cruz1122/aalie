@@ -100,7 +100,12 @@
       "average": "Average case",
       "bestShort": "Best",
       "avgShort": "Average",
-      "worstShort": "Worst"
+      "worstShort": "Worst",
+      "bestHint": "Minimum executions",
+      "averageHint": "Expected executions",
+      "worstHint": "Maximum executions",
+      "foundationWellFounded": "Well-founded",
+      "foundationApproximate": "Approximate"
     },
     "methods": {
       "characteristicEquation": "Characteristic Equation",
@@ -111,10 +116,26 @@
     },
     "methodSelector": {
       "title": "Select Analysis Method",
-      "subtitle": "This algorithm can be solved with multiple methods. Select the method you want to use:",
+      "subtitle": "This algorithm can be solved with multiple methods. Pick the one you prefer and review its precision level.",
+      "selectedMethodLabel": "Currently selected method",
       "default": "Default",
+      "recommended": "Recommended",
+      "recommendedTooltip": "This is the method suggested by the system for this recurrence pattern.",
       "cancel": "Cancel",
       "confirm": "Confirm",
+      "precision": {
+        "high": "High precision",
+        "medium": "Medium precision",
+        "low": "Low precision"
+      },
+      "precisionExplanation": {
+        "high": "Great fit for this algorithm: it matches the pattern well and usually gives a reliable result.",
+        "medium": "It can work well here, but the final fit depends on some details of the recurrence shape.",
+        "low": "This is a weaker fit in this case: it may work, but it is usually not the clearest approach."
+      },
+      "reasons": {
+        "fallback": "This method does not meet the detected conditions for this recurrence pattern."
+      },
       "methods": {
         "characteristic_equation": {
           "name": "Characteristic Equation",
@@ -211,7 +232,7 @@
       "masterTheorem": "Master Theorem",
       "caseNumber": "Case {number}",
       "parameters": "Parameters:",
-      "gnCalculation": "Calculation of g(n) = n<sup>log<sub>b</sub> a</sup>:",
+      "gnCalculation": "Calculation of g(n):",
       "comparison": "Comparison:",
       "case1Desc": "→ Case 1: f(n) is polynomially smaller than g(n)",
       "case2Desc": "→ Case 2: f(n) equals g(n)",
@@ -255,6 +276,7 @@
       "executionDiagramSection": "Execution Diagram",
       "controlsAndVariables": "Controls and Variables",
       "explanation": "Explanation",
+      "explanationPrompt": "Do you want a clearer explanation of how this algorithm works?",
       "recursionDiagram": "Recursion Diagram",
       "explanationPlaceholder": "The explanation will appear here when the diagram is generated",
       "regenerateDiagram": "Regenerate diagram",
@@ -344,7 +366,10 @@
       "apply": "Apply",
       "explanationLevelMinimal": "Minimal",
       "explanationLevelStructured": "Structured",
-      "explainWithAI": "Explain step with AI"
+      "explainWithAI": "Explain with AI",
+      "explainingWithAI": "Generating AI explanation...",
+      "regenerateAIExplanation": "Regenerate AI explanation",
+      "explanationAIFallback": "Could not generate the AI explanation. Please try again."
     },
     "comparisonLoader": {
       "errorTitle": "Comparison error",
@@ -447,7 +472,13 @@
       "bigOmegaLower": "Big-Omega (lower bound):",
       "bigThetaTight": "Big-Theta (tight bound):",
       "hypotheses": "Hypotheses:",
-      "modelLabel": "Model:"
+      "modelLabel": "Model:",
+      "averageCaseExplanation": "The number of executions is averaged over all inputs of size n, assuming the indicated model. Represents typical behavior.",
+      "whatIsAveraged": "What is averaged: the number of times each line of code is executed.",
+      "assumptions": "Assumptions",
+      "whenRepresentative": "When it is representative: inputs with uniform or random distribution (e.g. linear search with success, sorting random data).",
+      "whenNotRepresentative": "When it is not: adversarial inputs, skewed distributions, or when the model does not capture reality.",
+      "approximateWarning": "This average case is approximate; exact analysis requires more information about the input distribution."
     },
     "gpuCpuModal": {
       "title": "GPU vs CPU Analysis",

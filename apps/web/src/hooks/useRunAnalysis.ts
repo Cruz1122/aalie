@@ -51,6 +51,7 @@ export function useRunAnalysis(options?: {
     setShowMethodSelector,
     setApplicableMethods,
     setDefaultMethod,
+    setMethodMetadata,
     methodSelectionPromiseRef,
     minProgressRef,
   } = useAnalysisProgressContext();
@@ -189,7 +190,7 @@ export function useRunAnalysis(options?: {
         }
 
         const isRecursive = kind === "recursive" || kind === "hybrid";
-        let selectedMethod: MethodType | undefined = undefined;
+        let selectedMethod: MethodType | undefined | null = undefined;
 
         if (isRecursive) {
           updateMessage(getMessage("verifyingConditions"));
@@ -205,17 +206,24 @@ export function useRunAnalysis(options?: {
           selectedMethod = await detectAndSelectMethod(
             sourceCode,
             kind,
+            locale === "es" ? "es" : "en",
             progressBeforeMethodSelection,
             updateMessage,
             updateProgress,
             setApplicableMethods,
             setDefaultMethod,
+            setMethodMetadata,
             setShowMethodSelector,
             minProgressRef,
             methodSelectionPromiseRef,
             animateProgress,
             getMessage,
           );
+          if (selectedMethod === null) {
+            updateMessage(getMessage("analysisStopped"));
+            setTimeout(resetAndHide, 150);
+            return null;
+          }
         } else {
           updateMessage(getMessage("findingSums"));
           await animateProgress(40, 50, 200, updateProgress);
@@ -327,6 +335,7 @@ export function useRunAnalysis(options?: {
       setError,
       setShowMethodSelector,
       show,
+      setMethodMetadata,
       tMessages,
       tProgress,
       updateMessage,
