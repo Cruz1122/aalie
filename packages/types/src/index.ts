@@ -293,6 +293,20 @@ export interface AnalyzeOpenResponse {
           notes: string[];
           method?: "master" | "iteration" | "recursion_tree";
         }
+      | {                      // Recurrencia divide-and-conquer generalizada: T(n)=Σ a_i*T(n/b_i)+f(n)
+          type: "divide_conquer_multi";
+          form: string;
+          terms: Array<{
+            a: number;
+            b: number;
+          }>;
+          a: number;            // suma de subproblemas
+          f: string;
+          n0: number;
+          applicable: boolean;
+          notes: string[];
+          method?: "master" | "iteration" | "recursion_tree";
+        }
       | {                      // Recurrencia lineal por desplazamiento: T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n)
           type: "linear_shift";
           form: string;         // forma LaTeX: "T(n) = T(n-1) + T(n-2) + g(n)"
@@ -437,6 +451,32 @@ export interface AnalyzeAllCasesResponse {
 
 // Tipos legacy mantenidos para compatibilidad
 export type CaseMode = "best" | "avg" | "worst" | "all";
+export type AnalyzeCaseAlias = "best" | "avg" | "average" | "worst";
+
+/** Normaliza alias de caso entre frontend y backend. */
+export function normalizeAnalyzeCaseAlias(caseType: AnalyzeCaseAlias): AnalyzeMode {
+  if (caseType === "average") return "avg";
+  return caseType;
+}
+
+/** Resuelve best/avg cuando vienen como "same_as_worst" en respuestas mode=all. */
+export function resolveAnalyzeCaseResult(
+  allCases: {
+    worst: AnalyzeOpenResponse | null;
+    best: AnalyzeOpenResponse | "same_as_worst" | null;
+    avg?: AnalyzeOpenResponse | "same_as_worst" | null;
+  } | null,
+  caseType: AnalyzeCaseAlias,
+): AnalyzeOpenResponse | null {
+  if (!allCases) return null;
+  const normalized = normalizeAnalyzeCaseAlias(caseType);
+  if (normalized === "worst") return allCases.worst;
+  if (normalized === "best") {
+    return allCases.best === "same_as_worst" ? allCases.worst : allCases.best;
+  }
+  const avgCase = allCases.avg ?? null;
+  return avgCase === "same_as_worst" ? allCases.worst : avgCase;
+}
 
 export interface AnalyzeOptions {
   mode?: CaseMode;
@@ -661,3 +701,5 @@ export interface DocumentationSection {
     caption?: string;
   };
 }
+
+export * from "./export-snapshot";

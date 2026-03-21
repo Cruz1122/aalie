@@ -1,5 +1,6 @@
 "use client";
 
+import type { AnalyzeOpenResponse } from "@aa/types";
 import {
   ReactFlow,
   Background,
@@ -35,28 +36,12 @@ import {
 import Formula from "./Formula";
 import BaseModalContainer from "./modals/BaseModalContainer";
 
+type RecurrenceType = AnalyzeOpenResponse["totals"]["recurrence"];
+
 interface RecursionTreeModalProps {
   open: boolean;
   onClose: () => void;
-  recurrence:
-    | (
-        | {
-            type: "divide_conquer";
-            a: number;
-            b: number;
-            f: string;
-            n0: number;
-          }
-        | {
-            type: "linear_shift";
-            shifts: number[];
-            coefficients: number[];
-            "g(n)"?: string;
-            n0: number;
-          }
-      )
-    | null
-    | undefined;
+  recurrence: RecurrenceType | null | undefined;
   recursionTreeData?:
     | {
         method: "recursion_tree";

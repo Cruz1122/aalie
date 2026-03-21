@@ -1,5 +1,6 @@
 "use client";
 
+import type { AnalyzeOpenResponse } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
 import React from "react";
 
@@ -34,34 +35,7 @@ function roundLatexNumbers(latex: string): string {
 interface CharacteristicEquationModalProps {
   open: boolean;
   onClose: () => void;
-  recurrence:
-    | (
-        | {
-            type: "divide_conquer";
-            form: string;
-            a: number;
-            b: number;
-            f: string;
-            n0: number;
-            applicable: boolean;
-            notes: string[];
-            method?: "master" | "iteration" | "recursion_tree";
-          }
-        | {
-            type: "linear_shift";
-            form: string;
-            order: number;
-            shifts: number[];
-            coefficients: number[];
-            "g(n)"?: string;
-            n0: number;
-            applicable: boolean;
-            notes: string[];
-            method?: "characteristic_equation";
-          }
-      )
-    | null
-    | undefined;
+  recurrence: AnalyzeOpenResponse["totals"]["recurrence"] | null | undefined;
   characteristicEquation:
     | {
         method: "characteristic_equation";

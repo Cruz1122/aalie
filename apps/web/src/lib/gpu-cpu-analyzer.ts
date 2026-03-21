@@ -373,7 +373,9 @@ function generateRecommendation(
   metrics: GPUCPUMetrics,
   locale: GpuCpuLocale
 ): string {
-  const pool = GPU_CPU_TEXTS[locale].recommendations[profile.toLowerCase() as "gpu" | "cpu" | "mixed"];
+  const profileKey =
+    profile === "GPU" ? "gpu" : profile === "CPU" ? "cpu" : "mixed";
+  const pool = GPU_CPU_TEXTS[locale].recommendations[profileKey];
   const seed = metrics.totalLoops + metrics.recursiveCallCount + metrics.arrayAccessCount;
   const index = seed % pool.length;
   return pool[index];
@@ -427,4 +429,3 @@ export function analyzeASTForGPUCPU(
     cpuScore: Math.round(cpuScore),
   };
 }
-
