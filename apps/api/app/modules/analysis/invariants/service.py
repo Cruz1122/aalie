@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 from .classifier import classify_loop_pattern
 from .schemas import SUPPORTED_PATTERNS, empty_loop_invariant, normalize_locale
 from .selector import select_significant_loop
-from .templates import build_invariant_text, resolve_template_variant
+from .templates import build_invariant_text, resolve_template_variant, generate_behaviour
 
 
 _SPANISH_ACCENT_REPLACEMENTS: tuple[tuple[str, str], ...] = (
@@ -182,6 +182,7 @@ def generate_loop_invariant(ast: Optional[Dict[str, Any]], locale: Optional[str]
             "finalization": text.finalization,
         },
         "didacticSummary": text.didactic_summary,
+        "behaviour": generate_behaviour(output_pattern, locale_value),
         "evidence": {
             "conditionReads": selected.condition_reads,
             "bodyWrites": selected.body_writes,

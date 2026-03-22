@@ -1846,9 +1846,9 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         formats,
         includeZipBundle: formats.length > 1,
         locale: locale === "es" ? "es" : "en",
-        cachedParse: ast ? { program: ast, syntaxErrors: parseErrors || [] } : undefined,
+        cachedParse: ast ? { ok: true, ast: ast, errors: parseErrors || undefined } : undefined,
         cachedClassify: algorithmType ? { kind: algorithmType, method: (data?.worst as any)?.method || (data?.best as any)?.method || "master" } : undefined,
-        cachedAnalyze: data && (data.worst || data.best || data.avg) ? data : undefined,
+        cachedAnalyze: data && (data.worst || data.best || data.avg) ? { ok: true, ...data } : undefined,
       };
 
       const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");

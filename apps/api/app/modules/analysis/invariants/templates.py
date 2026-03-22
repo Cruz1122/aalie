@@ -7,6 +7,34 @@ from typing import List, Optional, Set
 from .schemas import InvariantText, LoopFacts, PatternType, normalize_locale
 
 
+def generate_behaviour(pattern: str, locale: str) -> str:
+    if locale == "es":
+        if pattern == "binary_search_interval": return "El algoritmo {} busca un elemento en un arreglo de forma eficiente dividiendo el rango de búsqueda a la mitad en cada paso."
+        if pattern == "euclidean_gcd": return "El algoritmo {} calcula el máximo común divisor de dos números reemplazando iterativamente el mayor por el residuo de la división."
+        if pattern == "partition_by_pivot": return "El algoritmo {} reorganiza un arreglo alrededor de un pivote, agrupando los elementos menores a un lado y los mayores al otro."
+        if pattern == "merge_progress": return "El algoritmo {} combina o compara elementos de múltiples arreglos avanzando de manera coordinada a través de ellos."
+        if pattern == "insertion_prefix_sorted": return "El algoritmo {} ordena un arreglo insertando gradualmente cada elemento en su posición correcta respecto a los anteriores."
+        if pattern == "selection_prefix_sorted": return "El algoritmo {} ordena un arreglo buscando repetidamente el elemento extremo en la parte no ordenada y colocándolo en su lugar."
+        if pattern == "search": return "El algoritmo {} recorre un conjunto de datos linealmente hasta encontrar un elemento o condición particular."
+        if pattern == "accumulation": return "El algoritmo {} procesa elementos secuencialmente para calcular un valor acumulado agregado (como una suma o producto total)."
+        if pattern == "extrema": return "El algoritmo {} inspecciona un conjunto de valores para identificar el elemento más grande o más pequeño."
+        if pattern == "two_pointer_like": return "El algoritmo {} utiliza dos posiciones de referencia simultáneas que se acercan o avanzan juntas para procesar elementos extremos o relacionados de la colección."
+        if pattern == "sorting_pass": return "El algoritmo {} realiza un pase sobre el arreglo, intercambiando o reposicionando elementos para ordenarlo progresivamente."
+        return "El algoritmo {} repite un procedimiento iterativo para procesar la entrada de forma progresiva."
+    
+    if pattern == "binary_search_interval": return "The algorithm {} efficiently searches for an element in an array by repeatedly halving the search range."
+    if pattern == "euclidean_gcd": return "The algorithm {} computes the greatest common divisor of two numbers by iteratively replacing the larger with the division remainder."
+    if pattern == "partition_by_pivot": return "The algorithm {} reorganizes an array around a pivot, gathering smaller elements on one side and larger ones on the other."
+    if pattern == "merge_progress": return "The algorithm {} combines or compares elements from multiple arrays by progressing coordinately across them."
+    if pattern == "insertion_prefix_sorted": return "The algorithm {} sorts an array by gradually inserting each element into its correct position relative to the preceding ones."
+    if pattern == "selection_prefix_sorted": return "The algorithm {} sorts an array by repeatedly finding the extreme element in the unsorted portion and placing it in place."
+    if pattern == "search": return "The algorithm {} traverses a dataset linearly until finding a particular element or condition."
+    if pattern == "accumulation": return "The algorithm {} sequentially processes elements to compute an aggregate accumulated value (like a total sum)."
+    if pattern == "extrema": return "The algorithm {} inspects a set of values to identify the largest or smallest element."
+    if pattern == "two_pointer_like": return "The algorithm {} uses two simultaneous reference positions that approach each other or advance together to process elements."
+    if pattern == "sorting_pass": return "The algorithm {} makes a pass over the array, swapping or repositioning elements to progressively sort it."
+    return "The algorithm {} repeats an iterative procedure to progressively process the input."
+
 def _first(values: List[str], default: str) -> str:
     return values[0] if values else default
 

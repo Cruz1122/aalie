@@ -113,21 +113,21 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
     if (onAstChange && parseResult.ast) {
       onAstChange(parseResult.ast);
     }
-  }, [parseResult.ast, onAstChange]);
+  }, [parseResult.ast]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Notificar cambios de estado de parsing
   useEffect(() => {
     if (onParseStatusChange) {
       onParseStatusChange(parseResult.ok, parseResult.isParsing);
     }
-  }, [parseResult.ok, parseResult.isParsing, onParseStatusChange]);
+  }, [parseResult.ok, parseResult.isParsing]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Notificar cambios de errores
   useEffect(() => {
     if (onErrorsChange) {
       onErrorsChange(parseResult.errors);
     }
-  }, [parseResult.errors, onErrorsChange]);
+  }, [parseResult.errors]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Maneja el montaje del editor y configura el lenguaje pseudocódigo.

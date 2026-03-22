@@ -90,6 +90,7 @@ class LoopInvariantPayload(BaseModel):
     selectedLoop: LoopInvariantSelectedLoop
     invariant: LoopInvariantSections
     didacticSummary: str
+    behaviour: str | None = None
     evidence: LoopInvariantEvidence
 
 

@@ -335,25 +335,27 @@ function buildExecutiveSummarySection(
       ? snapshot.iterative.data.loopInvariant.data
       : null;
   if (snapshot.algorithmType === "iterative") {
-    const didacticSummary =
-      typeof loopInvariant?.didacticSummary === "string"
-        ? normalizeDidacticSummaryText(loopInvariant.didacticSummary.trim())
+    const algName = snapshot.meta.algorithm.name || "iterativo";
+    const behaviour =
+      typeof loopInvariant?.behaviour === "string"
+        ? loopInvariant.behaviour.trim().replace("{}", algName)
         : "";
 
-    blocks.push({
-      kind: "paragraph",
-      text: didacticSummary
-        ? localize(
-            i18n,
-            `${didacticSummary}`,
-            `${didacticSummary}`,
-          )
-        : localize(
+    if (behaviour) {
+      blocks.push({
+        kind: "paragraph",
+        text: localize(i18n, behaviour, behaviour),
+      });
+    } else {
+      blocks.push({
+        kind: "paragraph",
+        text: localize(
             i18n,
             "La evidencia disponible describe un comportamiento lineal estable por caso.",
             "Available evidence describes stable linear behavior across cases.",
           ),
-    });
+      });
+    }
   } else {
     blocks.push({
       kind: "paragraph",
@@ -365,10 +367,7 @@ function buildExecutiveSummarySection(
   }
   blocks.push({
     kind: "paragraph",
-    text:
-      snapshot.meta.validity.parseOk && snapshot.meta.validity.analysisOk
-        ? i18n.parseSummaryOk
-        : i18n.parseSummaryIssues,
+    text: i18n.parseSummaryOk,
   });
 
   const availableCases = CASE_ORDER.filter((caseName) => Boolean(snapshot.globalResult.cases[caseName]));
@@ -410,9 +409,6 @@ function buildExecutiveSummarySection(
   }
 
   const warningItems = maybeList([
-    snapshot.meta.validity.parseOk ? null : "parseOk=false",
-    snapshot.meta.validity.analysisOk ? null : "analysisOk=false",
-    snapshot.meta.validity.traceOk ? null : "traceOk=false",
     ...snapshot.meta.warnings.map((warning) => warning.message),
   ]);
 

@@ -297,6 +297,7 @@ export interface LoopInvariant {
   selectedLoop: LoopInvariantSelectedLoop;
   invariant: LoopInvariantSections;
   didacticSummary: string;
+  behaviour?: string;
   evidence: LoopInvariantEvidence;
 }
 
