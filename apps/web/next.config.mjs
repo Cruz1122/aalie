@@ -8,6 +8,14 @@ const nextConfig = {
   experimental: {
     typedRoutes: true,
   },
+  outputFileTracingExcludes: {
+    "/api/export/report": [
+      "**/.next/**",
+      "../api/tests/**",
+      "../../apps/api/tests/**",
+      "**/apps/api/tests/**",
+    ],
+  },
   transpilePackages: ["@aa/grammar", "@aa/types", "@aa/exporter"],
 
   // Configuración para Web Workers
