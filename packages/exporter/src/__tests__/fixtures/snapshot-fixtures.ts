@@ -1,6 +1,11 @@
-import type { AnalyzeOpenResponse, Program, SnapshotRecursiveMethod } from "@aa/types";
+import type {
+  AnalyzeOpenResponse,
+  LoopInvariant,
+  Program,
+  SnapshotRecursiveMethod,
+} from "@aa/types";
 
-import { buildSnapshot } from "../../domain/snapshot-builder";
+import { buildSnapshot, type TraceResponseLike } from "../../domain/snapshot-builder";
 
 const FIXTURE_CREATED_AT = "2026-03-19T12:00:00.000Z";
 
@@ -51,6 +56,329 @@ function baseCase(theta: string): AnalyzeOpenResponse {
       big_theta: theta,
       procedure: ["Paso 1", "Paso 2"],
       notes: ["Nota 1"],
+    },
+  };
+}
+
+function iterativeFactorialCase(): AnalyzeOpenResponse {
+  return {
+    ok: true,
+    byLine: [
+      {
+        line: 2,
+        kind: "assign",
+        ck: "C_{1}",
+        count: "1",
+        count_raw: "1",
+        ops: 1,
+        procedure: ["1"],
+      },
+      {
+        line: 3,
+        kind: "for",
+        ck: "C_{2}",
+        count: "n",
+        count_raw: "n",
+        note: "Cabecera de for i=2..n",
+        ops: 3,
+        procedure: ["n"],
+      },
+      {
+        line: 4,
+        kind: "assign",
+        ck: "C_{3}",
+        count: "n - 1",
+        count_raw: "\\sum_{i=2}^{n} 1",
+        ops: 2,
+        procedure: [
+          "\\sum_{i=2}^{n} 1",
+          "\\text{Aplicando fórmula de sumatoria constante: } \\sum_{i=2}^{n} 1 = n - 1",
+        ],
+      },
+      {
+        line: 6,
+        kind: "return",
+        ck: "C_{4}",
+        count: "1",
+        count_raw: "1",
+        ops: 1,
+        procedure: ["1"],
+      },
+    ],
+    totals: {
+      T_open: "5 n",
+      T_polynomial:
+        "(C_{3}) \\cdot 2 n + (C_{2}) \\cdot 3 n + (C_{3}) \\cdot -2 + (C_{1} + C_{4})",
+      big_o: "O(n)",
+      big_omega: "\\Omega(n)",
+      big_theta: "\\Theta(n)",
+      procedure: [
+        "Se suman los aportes por línea y se obtiene T(n)=5n.",
+        "El término dominante es lineal en n.",
+      ],
+      notes: ["El crecimiento asintótico es lineal."],
+    },
+  };
+}
+
+const ITERATIVE_LOOP_INVARIANT: LoopInvariant = {
+  status: "ok",
+  reason: null,
+  selectedLoop: {
+    nodeType: "FOR",
+    lineStart: 3,
+    lineEnd: 4,
+    depth: 0,
+    score: 1.7,
+    patternType: "accumulation",
+    controlVariables: ["i"],
+    stateVariables: ["resultado"],
+    boundVariables: ["n"],
+    collectionVariables: [],
+    targetVariables: [],
+    keyUpdates: [
+      "i <- i + 1 (implicit FOR update)",
+      "resultado <- (resultado) * (i)",
+    ],
+    keyConditions: ["i <= n"],
+  },
+  invariant: {
+    propertyStatement:
+      "Al inicio de cada iteración, resultado contiene el producto correcto de los valores ya incorporados por el ciclo.",
+    initialization:
+      "Inicialización: resultado = 1, el neutro multiplicativo para comenzar sin contribuciones previas.",
+    maintenance:
+      "Mantenimiento: en cada paso, resultado se multiplica por el siguiente valor del rango, y así preserva el producto parcial correcto.",
+    finalization:
+      "Finalización: al terminar el ciclo, resultado coincide con el producto final de todos los valores procesados.",
+  },
+  didacticSummary:
+    "El ciclo mantiene en resultado un producto parcial exacto, sin depender de acceso a arreglos.",
+  evidence: {
+    conditionReads: ["i", "n"],
+    bodyWrites: ["resultado"],
+    bodyReads: ["i", "resultado"],
+    detectedFeatures: [
+      "confidence:0.840",
+      "has_accumulator_update",
+      "has_multiplicative_accumulator",
+      "pattern:accumulation",
+      "rule:partial aggregate maintained each iteration",
+      "rule:self-referential accumulator update",
+      "template:product_scalar",
+    ],
+    classificationConfidence: 0.84,
+    templateVariant: "product_scalar",
+  },
+};
+
+const ITERATIVE_TRACE_STEPS = [
+  {
+    id: "step_1",
+    step_number: 1,
+    line: 2,
+    kind: "assign",
+    variables: { n: 4, resultado: 1 },
+    cost: "C_1",
+    accumulated_cost: "C_1",
+    description: "Assignment: resultado = 1",
+    microseconds: 3.0,
+    tokens: 1,
+    eventKind: "assign",
+  },
+  {
+    id: "step_2",
+    step_number: 2,
+    line: 3,
+    kind: "loop_enter",
+    variables: { n: 4, resultado: 1 },
+    iteration: { loopVar: "i", currentValue: 2, maxValue: 4 },
+    cost: "C_2",
+    accumulated_cost: "C_1 + C_2",
+    description: "FOR i = 2..4",
+    microseconds: 3.0,
+    tokens: 1,
+    eventKind: "loop_enter",
+  },
+  {
+    id: "step_3",
+    step_number: 3,
+    line: 3,
+    kind: "loop_iter_enter",
+    variables: { n: 4, resultado: 1, i: 2 },
+    variables_changed: { i: 2 },
+    iteration: { loopVar: "i", currentValue: 2, maxValue: 4, iteration: 1 },
+    cost: "C_3",
+    accumulated_cost: "C_1 + C_2 + C_3",
+    description: "Iteration 1: i = 2",
+    microseconds: 3.0,
+    tokens: 1,
+    eventKind: "loop_iter_enter",
+  },
+  {
+    id: "step_4",
+    step_number: 4,
+    line: 4,
+    kind: "assign",
+    variables: { n: 4, resultado: 2, i: 2 },
+    variables_changed: { resultado: 2 },
+    cost: "C_4",
+    accumulated_cost: "C_1 + C_2 + C_3 + C_4",
+    description: "Assignment: resultado = 2",
+    microseconds: 3.0,
+    tokens: 1,
+    eventKind: "assign",
+  },
+  {
+    id: "step_5",
+    step_number: 5,
+    line: 3,
+    kind: "loop_iter_exit",
+    variables: { n: 4, resultado: 2, i: 2 },
+    iteration: { loopVar: "i", currentValue: 2, maxValue: 4, iteration: 1 },
+    cost: "C_5",
+    accumulated_cost: "C_1 + C_2 + C_3 + C_4 + C_5",
+    description: "Fin iter 1",
+    microseconds: 3.0,
+    tokens: 1,
+    eventKind: "loop_iter_exit",
+  },
+  {
+    id: "step_6",
+    step_number: 6,
+    line: 3,
+    kind: "loop_iter_enter",
+    variables: { n: 4, resultado: 2, i: 3 },
+    variables_changed: { i: 3 },
+    iteration: { loopVar: "i", currentValue: 3, maxValue: 4, iteration: 2 },
+    cost: "C_6",
+    accumulated_cost: "C_1 + C_2 + C_3 + C_4 + C_5 + C_6",
+    description: "Iteration 2: i = 3",
+    microseconds: 3.0,
+    tokens: 1,
+    eventKind: "loop_iter_enter",
+  },
+  {
+    id: "step_7",
+    step_number: 7,
+    line: 4,
+    kind: "assign",
+    variables: { n: 4, resultado: 6, i: 3 },
+    variables_changed: { resultado: 6 },
+    cost: "C_7",
+    accumulated_cost: "C_1 + C_2 + C_3 + C_4 + C_5 + C_6 + C_7",
+    description: "Assignment: resultado = 6",
+    microseconds: 3.0,
+    tokens: 1,
+    eventKind: "assign",
+  },
+  {
+    id: "step_8",
+    step_number: 8,
+    line: 3,
+    kind: "loop_iter_exit",
+    variables: { n: 4, resultado: 6, i: 3 },
+    iteration: { loopVar: "i", currentValue: 3, maxValue: 4, iteration: 2 },
+    cost: "C_8",
+    accumulated_cost: "C_1 + C_2 + C_3 + C_4 + C_5 + C_6 + C_7 + C_8",
+    description: "Fin iter 2",
+    microseconds: 3.0,
+    tokens: 1,
+    eventKind: "loop_iter_exit",
+  },
+  {
+    id: "step_9",
+    step_number: 9,
+    line: 3,
+    kind: "loop_iter_enter",
+    variables: { n: 4, resultado: 6, i: 4 },
+    variables_changed: { i: 4 },
+    iteration: { loopVar: "i", currentValue: 4, maxValue: 4, iteration: 3 },
+    cost: "C_9",
+    accumulated_cost: "C_1 + C_2 + C_3 + C_4 + C_5 + C_6 + C_7 + C_8 + C_9",
+    description: "Iteration 3: i = 4",
+    microseconds: 3.0,
+    tokens: 1,
+    eventKind: "loop_iter_enter",
+  },
+  {
+    id: "step_10",
+    step_number: 10,
+    line: 4,
+    kind: "assign",
+    variables: { n: 4, resultado: 24, i: 4 },
+    variables_changed: { resultado: 24 },
+    cost: "C_10",
+    accumulated_cost:
+      "C_1 + C_2 + C_3 + C_4 + C_5 + C_6 + C_7 + C_8 + C_9 + C_10",
+    description: "Assignment: resultado = 24",
+    microseconds: 3.0,
+    tokens: 1,
+    eventKind: "assign",
+  },
+  {
+    id: "step_11",
+    step_number: 11,
+    line: 3,
+    kind: "loop_iter_exit",
+    variables: { n: 4, resultado: 24, i: 4 },
+    iteration: { loopVar: "i", currentValue: 4, maxValue: 4, iteration: 3 },
+    cost: "C_11",
+    accumulated_cost:
+      "C_1 + C_2 + C_3 + C_4 + C_5 + C_6 + C_7 + C_8 + C_9 + C_10 + C_11",
+    description: "Fin iter 3",
+    microseconds: 3.0,
+    tokens: 1,
+    eventKind: "loop_iter_exit",
+  },
+  {
+    id: "step_12",
+    step_number: 12,
+    line: 3,
+    kind: "loop_exit",
+    variables: { n: 4, resultado: 24, i: 4 },
+    iteration: { loopVar: "i", currentValue: 4, maxValue: 4 },
+    cost: "C_12",
+    accumulated_cost:
+      "C_1 + C_2 + C_3 + C_4 + C_5 + C_6 + C_7 + C_8 + C_9 + C_10 + C_11 + C_12",
+    description: "Salida FOR i",
+    microseconds: 3.0,
+    tokens: 1,
+    eventKind: "loop_exit",
+  },
+  {
+    id: "step_13",
+    step_number: 13,
+    line: 6,
+    kind: "return_emit",
+    variables: { n: 4, resultado: 24, i: 4 },
+    cost: "C_13",
+    accumulated_cost:
+      "C_1 + C_2 + C_3 + C_4 + C_5 + C_6 + C_7 + C_8 + C_9 + C_10 + C_11 + C_12 + C_13",
+    description: "RETURN 24",
+    microseconds: 3.0,
+    tokens: 1,
+    eventKind: "return_emit",
+  },
+];
+
+function iterativeTraceFixture(): TraceResponseLike {
+  return {
+    ok: true,
+    algorithmKind: "iterative",
+    trace: {
+      kind: "iterative",
+      steps: ITERATIVE_TRACE_STEPS,
+      summary: {
+        totalSteps: 13,
+        totalCalls: 0,
+        maxRecursionDepth: 0,
+        algorithmKind: "iterative",
+      },
+      diagnostics: {
+        truncated: false,
+        warnings: [],
+      },
     },
   };
 }
@@ -223,8 +551,18 @@ function snapshotId(seed: string): string {
 }
 
 export function createIterativeSnapshot() {
+  const source = [
+    "factorial(n) BEGIN",
+    "    resultado <- 1;",
+    "    FOR i <- 2 TO n DO BEGIN",
+    "        resultado <- resultado * i;",
+    "    END;",
+    "    RETURN resultado;",
+    "END",
+  ].join("\n");
+
   return buildSnapshot({
-    source: "iterative(n) BEGIN FOR i <- 1 TO n DO PRINT i; END",
+    source,
     locale: "es",
     sourceOrigin: "editor",
     analysisId: "fixture-iterative",
@@ -234,18 +572,54 @@ export function createIterativeSnapshot() {
       ok: true,
       available: true,
       runtime: "python",
-      ast: makeProgram("iterative"),
+      ast: makeProgram("factorial"),
       errors: [],
     },
     classify: { kind: "iterative", method: "ast" },
     analyze: {
       ok: true,
       has_case_variability: false,
-      worst: baseCase("\\Theta(n)"),
+      loopInvariant: ITERATIVE_LOOP_INVARIANT,
+      worst: iterativeFactorialCase(),
       best: "same_as_worst",
       avg: "same_as_worst",
     },
-    traceByCase: {},
+    traceByCase: {
+      worst: iterativeTraceFixture(),
+      best: iterativeTraceFixture(),
+      avg: iterativeTraceFixture(),
+    },
+    llm: {
+      raw: { provider: "fixture", model: "fixture-llm" },
+      normalized: {
+        verdict: "coincide",
+        confidence: 0.93,
+        matches: [
+          "Coincide en Theta(n)",
+          "Coincide en la recurrencia iterativa por acumulación",
+        ],
+        differences: ["Sin diferencias críticas."],
+        note: "Comparación LLM de fixture.",
+      },
+    },
+    gpuCpu: {
+      profile: "CPU",
+      summary: "La versión secuencial favorece CPU para n pequeño y control simple.",
+      explanation:
+        "El algoritmo usa un único ciclo con dependencia acumulativa en resultado, lo cual limita paralelización efectiva en GPU.",
+      recommendation: "Ejecutar en CPU salvo lotes masivos y versión paralela explícita.",
+      gpuScore: 44,
+      cpuScore: 78,
+      metrics: {
+        totalLoops: 1,
+        maxLoopDepth: 1,
+        conditionalsInLoops: 0,
+        isRecursive: false,
+        recursiveCallCount: 0,
+        arrayAccessCount: 0,
+        callsInsideLoops: 0,
+      },
+    },
   });
 }
 

@@ -81,7 +81,12 @@ beforeEach(() => {
     }
 
     if (href.endsWith("/classify")) {
-      return buildResponse({ ok: true, kind: "recursive", method: "ast" });
+      const source = String((body as { source?: unknown } | null)?.source || "");
+      const kind =
+        source.includes("factorial") || source.includes("bubbleSort")
+          ? "iterative"
+          : "recursive";
+      return buildResponse({ ok: true, kind, method: "ast" });
     }
 
     if (href.endsWith("/analyze/open")) {
@@ -199,5 +204,32 @@ describe("export-service integration", () => {
       typeof latex?.content === "string" &&
         latex.content.includes(report.snapshot.snapshotId),
     );
+  });
+
+  it("usa trazas de los 3 casos por defecto para algoritmos iterativos", async () => {
+    await createSnapshotFromSource({
+      source: "factorial(n) BEGIN RETURN 1; END",
+      locale: "es",
+    });
+
+    const traceCalls = calls
+      .filter((call) => call.url.endsWith("/analyze/trace"))
+      .map((call) => (call.body as { case?: unknown } | null)?.case);
+
+    assert.deepStrictEqual(traceCalls, ["worst", "best", "avg"]);
+  });
+
+  it("usa trazas de los 3 casos por defecto para bubble sort iterativo", async () => {
+    await createSnapshotFromSource({
+      source:
+        "bubbleSort(A, n) BEGIN FOR i <- 1 TO n-1 DO BEGIN FOR j <- 1 TO n-i DO BEGIN IF A[j] > A[j+1] THEN SWAP(A[j], A[j+1]); END; END; RETURN A; END",
+      locale: "es",
+    });
+
+    const traceCalls = calls
+      .filter((call) => call.url.endsWith("/analyze/trace"))
+      .map((call) => (call.body as { case?: unknown } | null)?.case);
+
+    assert.deepStrictEqual(traceCalls, ["worst", "best", "avg"]);
   });
 });

@@ -32,7 +32,11 @@ function createInitialMetrics(): GPUCPUMetrics {
 /**
  * Recorre recursivamente el AST para extraer métricas
  */
-function analyzeNode(node: AstNode, context: AnalysisContext): void {
+function analyzeNode(node: AstNode | null | undefined, context: AnalysisContext): void {
+  if (!node || typeof node !== "object" || !("type" in node)) {
+    return;
+  }
+
   switch (node.type) {
     case "For":
     case "While":

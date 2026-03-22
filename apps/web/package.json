@@ -13,6 +13,7 @@
     "test": "echo \"(tests se agregarán más adelante)\" && exit 0",
     "test:trace-cache": "node --import tsx --test src/lib/__tests__/trace-cache-utils.test.ts",
     "test:export": "node --import tsx --test src/server/export/__tests__/*.test.ts",
+    "generate:iterative-famous": "node --import tsx scripts/generate-iterative-famous-reports.ts",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
     "format": "prettier --check .",

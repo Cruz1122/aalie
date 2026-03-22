@@ -3,6 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import type {
   AalieAnalysisSnapshotV1,
   AnalyzeOpenResponse,
+  LoopInvariant,
   Program,
   SnapshotCase,
   SnapshotGpuCpuComparative,
@@ -41,6 +42,7 @@ export interface ParseResponseLike {
 export interface AnalyzeAllResponseLike {
   ok: boolean;
   has_case_variability?: boolean;
+  loopInvariant?: LoopInvariant | null;
   worst?: AnalyzeOpenResponse | null;
   best?: AnalyzeOpenResponse | "same_as_worst" | null;
   avg?: AnalyzeOpenResponse | "same_as_worst" | null;
@@ -233,6 +235,7 @@ export function buildSnapshot(input: BuildSnapshotInput): AalieAnalysisSnapshotV
   });
 
   const selectedCase = pickFirstAvailableCase(normalizedCases);
+  const loopInvariant = input.analyze?.loopInvariant || selectedCase?.loopInvariant || null;
   const normalizedRecurrence = normalizeRecurrence(selectedCase?.totals?.recurrence);
 
   const methodDetails = [
@@ -428,7 +431,9 @@ export function buildSnapshot(input: BuildSnapshotInput): AalieAnalysisSnapshotV
                 : null,
             })
           : createSection("not_requested"),
-      loopInvariant: markNotImplemented(SNAPSHOT_NOT_IMPLEMENTED_TODOS.loopInvariant),
+      loopInvariant: loopInvariant
+        ? createSection("available", loopInvariant)
+        : markNotImplemented(SNAPSHOT_NOT_IMPLEMENTED_TODOS.loopInvariant),
     }),
     recursive: normalizedRecurrence
       ? createSection("available", {

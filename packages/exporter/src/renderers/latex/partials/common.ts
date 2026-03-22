@@ -24,10 +24,27 @@ export function escapeLatexText(text: string): string {
   return text.replace(/[\\&%$#_{}~^]/g, (token) => LATEX_TEXT_ESCAPE_MAP[token] || token);
 }
 
+function normalizeLatexMathExpression(value: string): string {
+  return value.replace(/([A-Za-z])_([0-9]+)\b/g, "$1_{$2}");
+}
+
+function isNarrativeEquation(value: string): boolean {
+  const normalized = value.trim();
+  if (!normalized.includes("=")) return false;
+  if (normalized.includes("\\")) return false;
+  if (/[{}_^]/.test(normalized)) return false;
+  if (/^T\(n\)\s*=/.test(normalized)) return false;
+  if (/^[A-Za-z](?:_[0-9{}]+)?\s*=/.test(normalized)) return false;
+  return /[A-Za-zÀ-ÿ]{3,}/.test(normalized);
+}
+
 function renderLatexTextWithInlineMath(value: string): string {
   const normalized = value.trim();
   if (!normalized) {
     return "";
+  }
+  if (isNarrativeEquation(normalized)) {
+    return escapeLatexText(normalized);
   }
   if (normalized.includes(";")) {
     return escapeLatexText(normalized);
@@ -38,12 +55,12 @@ function renderLatexTextWithInlineMath(value: string): string {
     const left = normalized.slice(0, separatorIndex + 1);
     const right = normalized.slice(separatorIndex + 1).trim();
     if (!/[;,]/.test(right) && isLikelyMathExpression(right)) {
-      return `${escapeLatexText(left)} $${right}$`;
+      return `${escapeLatexText(left)} $${normalizeLatexMathExpression(right)}$`;
     }
   }
 
   if (isLikelyMathExpression(normalized)) {
-    return `$${normalized}$`;
+    return `$${normalizeLatexMathExpression(normalized)}$`;
   }
 
   return escapeLatexText(normalized);
@@ -54,9 +71,12 @@ function renderLatexCellValue(value: string): string {
   if (!normalized) {
     return "";
   }
+  if (isNarrativeEquation(normalized)) {
+    return escapeLatexText(normalized);
+  }
 
   if (isLikelyMathExpression(normalized)) {
-    return `$${normalized}$`;
+    return `$${normalizeLatexMathExpression(normalized)}$`;
   }
 
   if (isTechnicalToken(normalized)) {
@@ -66,40 +86,149 @@ function renderLatexCellValue(value: string): string {
   return escapeLatexText(normalized);
 }
 
+function renderInstitutionalCodeBlock(
+  title: string | undefined,
+  lines: Array<{ lineNumber?: number; text: string }>,
+): string {
+  const renderedLines = lines.map((line, index) => {
+    const tone = index % 2 === 0 ? "ucaldasBlue" : "ingColor";
+    const prefix = typeof line.lineNumber === "number" ? `${line.lineNumber}: ` : "";
+    return `\\textcolor{${tone}}{${escapeLatexText(`${prefix}${line.text}`)}}\\\\`;
+  });
+
+  const output: string[] = [];
+  if (title) {
+    output.push(`\\GraySubsection{${escapeLatexText(title)}}`);
+  }
+
+  output.push("\\begin{center}");
+  output.push("\\begin{minipage}{0.90\\linewidth}");
+  output.push("\\begingroup");
+  output.push("\\setlength{\\fboxsep}{6pt}");
+  output.push("\\fcolorbox{aalieCodeFrame}{aalieCodeBg}{%");
+  output.push("\\parbox{\\dimexpr\\linewidth-2\\fboxsep-2\\fboxrule\\relax}{%");
+  output.push("\\ttfamily\\small");
+  output.push(...renderedLines);
+  output.push("}%");
+  output.push("}");
+  output.push("\\endgroup");
+  output.push("\\end{minipage}");
+  output.push("\\end{center}");
+
+  return output.join("\n");
+}
+
+function isTraceTable(headers: string[]): boolean {
+  if (headers.length !== 7) return false;
+  const normalized = headers.map((header) => header.toLowerCase());
+  const hasStep = normalized.some((header) => header.includes("paso") || header.includes("step"));
+  const hasContext = normalized.some((header) => header.includes("contexto") || header.includes("context"));
+  const hasCost = normalized.some((header) => header.includes("costo") || header.includes("cost"));
+  return hasStep && hasContext && hasCost;
+}
+
+function buildLatexTableColumnSpec(headers: string[]): string {
+  if (isTraceTable(headers)) {
+    return [
+      ">{\\raggedright\\arraybackslash}p{0.055\\linewidth}",
+      ">{\\raggedright\\arraybackslash}p{0.06\\linewidth}",
+      ">{\\raggedright\\arraybackslash}p{0.125\\linewidth}",
+      ">{\\raggedright\\arraybackslash}p{0.185\\linewidth}",
+      ">{\\raggedright\\arraybackslash}p{0.16\\linewidth}",
+      ">{\\raggedright\\arraybackslash}p{0.205\\linewidth}",
+      ">{\\raggedright\\arraybackslash}p{0.095\\linewidth}",
+    ].join("");
+  }
+
+  const columnCount = Math.max(1, headers.length);
+  const columns = Array.from({ length: columnCount }, (_, index) =>
+    index === 0
+      ? ">{\\raggedright\\arraybackslash}p{0.12\\linewidth}"
+      : ">{\\raggedright\\arraybackslash}X"
+  );
+  return columns.join("");
+}
+
 function renderLatexTable(table: DocumentTable, i18n: ExportI18nBundle): string {
   const columnCount = Math.max(1, table.headers.length);
-  const width = Math.max(0.95 / columnCount, 0.15).toFixed(3);
-  const spec = Array(columnCount).fill(`p{${width}\\linewidth}`).join("|");
+  const traceTable = isTraceTable(table.headers);
+  const spec = buildLatexTableColumnSpec(table.headers);
   const lines: string[] = [];
 
   if (table.title) {
-    lines.push(`\\paragraph{${escapeLatexText(table.title)}}`);
+    lines.push(`\\GraySubsection{${escapeLatexText(table.title)}}`);
+  }
+
+  if (traceTable) {
+    const continuedLabel =
+      i18n.locale === "es" ? "Continúa en la siguiente página" : "Continued on next page";
+
+    lines.push("\\begingroup");
+    lines.push("\\footnotesize");
+    lines.push("\\setlength{\\tabcolsep}{3pt}");
+    lines.push("\\renewcommand{\\arraystretch}{1.15}");
+    lines.push(`\\begin{longtable}{${spec}}`);
+    lines.push("\\toprule");
+    lines.push(
+      `\\rowcolor{aalieSubsectionBg}${table.headers.map((header) => `\\textbf{${escapeLatexText(header)}}`).join(" & ")} \\\\`,
+    );
+    lines.push("\\midrule");
+    lines.push("\\endfirsthead");
+    lines.push("\\toprule");
+    lines.push(
+      `\\rowcolor{aalieSubsectionBg}${table.headers.map((header) => `\\textbf{${escapeLatexText(header)}}`).join(" & ")} \\\\`,
+    );
+    lines.push("\\midrule");
+    lines.push("\\endhead");
+    lines.push("\\midrule");
+    lines.push(
+      `\\multicolumn{${columnCount}}{r}{\\footnotesize\\color{aalieGray}${escapeLatexText(continuedLabel)}} \\\\`,
+    );
+    lines.push("\\endfoot");
+    lines.push("\\bottomrule");
+    lines.push("\\endlastfoot");
+
+    if (table.rows.length === 0) {
+      lines.push(
+        `\\multicolumn{${columnCount}}{>{\\raggedright\\arraybackslash}p{0.95\\linewidth}}{${escapeLatexText(i18n.notAvailable)}} \\\\`,
+      );
+    } else {
+      for (const row of table.rows) {
+        const normalizedRow = Array.from({ length: columnCount }, (_, index) => row[index] || "");
+        lines.push(`${normalizedRow.map((cell) => renderLatexCellValue(cell)).join(" & ")} \\\\`);
+      }
+    }
+
+    lines.push("\\end{longtable}");
+    lines.push("\\endgroup");
+    return lines.join("\n");
   }
 
   lines.push("\\begin{center}");
   lines.push("\\begingroup");
   lines.push("\\footnotesize");
-  lines.push("\\setlength{\\tabcolsep}{3pt}");
-  lines.push("\\renewcommand{\\arraystretch}{1.12}");
-  lines.push("\\resizebox{\\linewidth}{!}{%");
-  lines.push(`\\begin{tabular}{|${spec}|}`);
-  lines.push("\\hline");
-  lines.push(`${table.headers.map((header) => escapeLatexText(header)).join(" & ")} \\\\`);
-  lines.push("\\hline");
+  lines.push("\\setlength{\\tabcolsep}{5pt}");
+  lines.push("\\renewcommand{\\arraystretch}{1.15}");
+  lines.push(`\\begin{tabularx}{0.98\\linewidth}{${spec}}`);
+  lines.push("\\toprule");
+  lines.push(
+    `\\rowcolor{aalieSubsectionBg}${table.headers.map((header) => `\\textbf{${escapeLatexText(header)}}`).join(" & ")} \\\\`,
+  );
+  lines.push("\\midrule");
 
   if (table.rows.length === 0) {
-    lines.push(`\\multicolumn{${columnCount}}{|l|}{${escapeLatexText(i18n.notAvailable)}} \\\\`);
-    lines.push("\\hline");
+    lines.push(
+      `\\multicolumn{${columnCount}}{>{\\raggedright\\arraybackslash}p{0.95\\linewidth}}{${escapeLatexText(i18n.notAvailable)}} \\\\`,
+    );
   } else {
     for (const row of table.rows) {
       const normalizedRow = Array.from({ length: columnCount }, (_, index) => row[index] || "");
       lines.push(`${normalizedRow.map((cell) => renderLatexCellValue(cell)).join(" & ")} \\\\`);
-      lines.push("\\hline");
     }
   }
 
-  lines.push("\\end{tabular}%");
-  lines.push("}");
+  lines.push("\\bottomrule");
+  lines.push("\\end{tabularx}");
   lines.push("\\endgroup");
   lines.push("\\end{center}");
   return lines.join("\n");
@@ -123,6 +252,14 @@ function renderLatexStatus(status: DocumentBlockStatus, i18n: ExportI18nBundle):
 }
 
 export function renderLatexBlock(block: DocumentBlock, i18n: ExportI18nBundle): string {
+  if (block.kind === "heading") {
+    return `\\paragraph{${escapeLatexText(block.text)}}`;
+  }
+
+  if (block.kind === "emphasis") {
+    return `\\textbf{\\textit{${escapeLatexText(block.text)}}}`;
+  }
+
   if (block.kind === "paragraph") {
     return renderLatexTextWithInlineMath(block.text);
   }
@@ -138,10 +275,22 @@ export function renderLatexBlock(block: DocumentBlock, i18n: ExportI18nBundle): 
 
   if (block.kind === "code") {
     return [
+      "\\begin{center}",
+      "\\begin{minipage}{0.90\\linewidth}",
       "\\begin{aaliecodeblock}",
       block.code,
       "\\end{aaliecodeblock}",
+      "\\end{minipage}",
+      "\\end{center}",
     ].join("\n");
+  }
+
+  if (block.kind === "subsection") {
+    return `\\GraySubsection{${escapeLatexText(block.title)}}`;
+  }
+
+  if (block.kind === "institutionalCode") {
+    return renderInstitutionalCodeBlock(block.title, block.lines);
   }
 
   if (block.kind === "formula") {

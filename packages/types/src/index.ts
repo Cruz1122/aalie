@@ -250,6 +250,7 @@ export type LoopInvariantPatternType =
   | "traversal"
   | "search"
   | "accumulation"
+  | "field_assignment_progress"
   | "counting"
   | "extrema"
   | "prefix_progress"

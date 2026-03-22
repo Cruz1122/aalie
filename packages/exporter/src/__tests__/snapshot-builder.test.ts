@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import { buildSnapshot } from "../domain/snapshot-builder";
 import {
   createHybridSnapshot,
+  createIterativeSnapshot,
   createRecursiveSnapshot,
 } from "./fixtures/snapshot-fixtures";
 
@@ -62,14 +63,15 @@ describe("snapshot-builder", () => {
     assert.strictEqual(characteristic.internal.recurrence.data?.type, "linear_shift");
   });
 
-  it("marca secciones not_implemented para pseudocodigo normalizado e invariante", () => {
-    const snapshot = createRecursiveSnapshot("master");
+  it("mantiene pseudocodigo normalizado pendiente y conserva invariante cuando existe", () => {
+    const snapshot = createIterativeSnapshot();
 
     assert.strictEqual(snapshot.input.normalizedPseudocode.status, "not_implemented");
     assert.strictEqual(snapshot.iterative.status, "available");
     if (snapshot.iterative.status !== "available" || !snapshot.iterative.data) {
       assert.fail("iterative section should be available");
     }
-    assert.strictEqual(snapshot.iterative.data.loopInvariant.status, "not_implemented");
+    assert.strictEqual(snapshot.iterative.data.loopInvariant.status, "available");
+    assert.strictEqual(snapshot.iterative.data.loopInvariant.data?.status, "ok");
   });
 });

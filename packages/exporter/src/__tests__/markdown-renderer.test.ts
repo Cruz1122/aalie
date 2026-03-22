@@ -18,7 +18,34 @@ describe("markdown-renderer", () => {
     assert.doesNotMatch(markdown, /Advertencia Institucional/);
     assert.match(markdown, /snapshotId:/);
     assert.match(markdown, /Pseudocodigo Analizado/);
-    assert.match(markdown, /Desarrollo Del Analisis/);
+    assert.match(markdown, /Invariante del Ciclo/);
+    assert.match(markdown, /Analisis por Casos/);
+    assert.match(markdown, /Seguimiento De Ejecucion/);
+  });
+
+  it("ubica el invariante antes del analisis por casos y renderiza seguimiento en 3 capas una sola vez", () => {
+    const snapshot = createIterativeSnapshot();
+    const model = buildDocumentModel(snapshot);
+    const markdown = renderMarkdownReport({ snapshot, documentModel: model });
+
+    const invariantIndex = markdown.indexOf("## Invariante del Ciclo");
+    const caseAnalysisIndex = markdown.indexOf("## Analisis por Casos");
+    const traceSectionIndex = markdown.indexOf("## Seguimiento De Ejecucion");
+    assert.ok(invariantIndex >= 0);
+    assert.ok(caseAnalysisIndex >= 0);
+    assert.ok(traceSectionIndex >= 0);
+    assert.ok(invariantIndex < caseAnalysisIndex);
+    assert.ok(caseAnalysisIndex < traceSectionIndex);
+
+    const traceSection = markdown.slice(traceSectionIndex);
+    const layerOneMatches = traceSection.match(/### Capa 1: Resumen ejecutivo/g) || [];
+    const layerTwoMatches = traceSection.match(/### Capa 2: Tabla cronológica pedagógica/g) || [];
+    const layerThreeMatches = traceSection.match(/### Capa 3: Vista agrupada por estructura de control/g) || [];
+
+    assert.strictEqual(layerOneMatches.length, 1);
+    assert.strictEqual(layerTwoMatches.length, 1);
+    assert.strictEqual(layerThreeMatches.length, 1);
+    assert.match(traceSection, /Caso analizado en detalle: Peor caso\./);
   });
 
   it("renderiza seccion recursiva por metodo", () => {

@@ -15,6 +15,21 @@ function renderMarkdownCell(value: string): string {
   return toMarkdownInlineMath(value);
 }
 
+function renderInstitutionalCodeBlock(
+  title: string | undefined,
+  lines: Array<{ lineNumber?: number; text: string }>,
+): string {
+  const rendered = lines.map((line) => {
+    const prefix = typeof line.lineNumber === "number" ? `${line.lineNumber}: ` : "";
+    return `${prefix}${line.text}`;
+  });
+  const codeBlock = `\`\`\`text\n${rendered.join("\n")}\n\`\`\``;
+  if (!title) {
+    return codeBlock;
+  }
+  return `**${title}**\n\n${codeBlock}`;
+}
+
 export function renderMarkdownTable(table: DocumentTable): string {
   const headers = table.headers.map((header) => escapePipes(header));
   const lines: string[] = [];
@@ -54,6 +69,14 @@ export function renderMarkdownBlock(
   block: DocumentBlock,
   i18n: ExportI18nBundle,
 ): string {
+  if (block.kind === "heading") {
+    return `**${block.text}**`;
+  }
+
+  if (block.kind === "emphasis") {
+    return `***${block.text}***`;
+  }
+
   if (block.kind === "paragraph") {
     return toMarkdownTextWithInlineMath(block.text);
   }
@@ -64,8 +87,16 @@ export function renderMarkdownBlock(
       .join("\n");
   }
 
+  if (block.kind === "subsection") {
+    return `### ${block.title}`;
+  }
+
   if (block.kind === "code") {
     return `\`\`\`${block.language || "text"}\n${block.code}\n\`\`\``;
+  }
+
+  if (block.kind === "institutionalCode") {
+    return renderInstitutionalCodeBlock(block.title, block.lines);
   }
 
   if (block.kind === "formula") {

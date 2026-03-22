@@ -27,15 +27,13 @@ function renderSection(section: DocumentSection, locale: "es" | "en"): string {
 }
 
 function renderFrontMatter(model: DocumentModel): string {
+  const hiddenMeta = `<!-- snapshotId: ${model.snapshotId}; contentHash: ${model.contentHash}; analysisId: ${model.analysisId}; createdAt: ${model.createdAt} -->`;
   const frontMatterLines = [
     `# ${model.title}`,
     "",
-    `- snapshotId: ${model.snapshotId}`,
-    `- contentHash: ${model.contentHash}`,
-    `- analysisId: ${model.analysisId}`,
-    `- createdAt: ${model.createdAt}`,
-    "",
     `> ${model.disclaimer}`,
+    "",
+    hiddenMeta,
   ];
 
   return frontMatterLines.join("\n");

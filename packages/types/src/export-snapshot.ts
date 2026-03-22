@@ -1,4 +1,4 @@
-import type { AnalyzeOpenResponse, Program } from "./index";
+import type { AnalyzeOpenResponse, LoopInvariant, Program } from "./index";
 
 export const SNAPSHOT_SCHEMA_VERSION = "1.0.0" as const;
 
@@ -201,9 +201,7 @@ export interface IterativeSnapshotSection {
       callTreeSource?: unknown;
     } | null>
   >;
-  loopInvariant: SnapshotSection<{
-    description?: string;
-  }>;
+  loopInvariant: SnapshotSection<LoopInvariant>;
 }
 
 export interface RecursiveSnapshotSection {

@@ -2,6 +2,7 @@ import type {
   AalieAnalysisSnapshotV1,
   AnalyzeOpenResponse,
   LineCost,
+  LoopInvariant,
   SnapshotCase,
   SnapshotRecursiveMethodDetail,
   SnapshotSection,
@@ -22,6 +23,11 @@ export interface DocumentKeyValueEntry {
   value: string;
 }
 
+export interface DocumentInstitutionalCodeLine {
+  lineNumber?: number;
+  text: string;
+}
+
 export interface DocumentBlockStatus {
   label: string;
   status: SnapshotSection<unknown>["status"];
@@ -35,6 +41,18 @@ export type DocumentBlock =
       text: string;
     }
   | {
+      kind: "heading";
+      text: string;
+    }
+  | {
+      kind: "emphasis";
+      text: string;
+    }
+  | {
+      kind: "subsection";
+      title: string;
+    }
+  | {
       kind: "list";
       items: string[];
     }
@@ -42,6 +60,11 @@ export type DocumentBlock =
       kind: "code";
       code: string;
       language?: string;
+    }
+  | {
+      kind: "institutionalCode";
+      title?: string;
+      lines: DocumentInstitutionalCodeLine[];
     }
   | {
       kind: "formula";
@@ -159,6 +182,13 @@ function maybeList(items: Array<string | null | undefined>): string[] {
   return items
     .map((item) => String(item || "").trim())
     .filter((item) => item.length > 0);
+}
+
+function normalizeDidacticSummaryText(text: string): string {
+  return text
+    .replace(/una\s+frontera de revisión/gi, "un límite de elementos revisados")
+    .replace(/frontera de revisión/gi, "un límite de elementos revisados")
+    .replace(/review boundary/gi, "reviewed-items boundary");
 }
 
 function pickCaseComplexity(snapshot: AalieAnalysisSnapshotV1, caseName: SnapshotCase): string {
@@ -297,40 +327,86 @@ function buildExecutiveSummarySection(
   snapshot: AalieAnalysisSnapshotV1,
   i18n: ExportI18nBundle,
 ): DocumentSection {
-  const blocks: DocumentBlock[] = [
-    {
+  const blocks: DocumentBlock[] = [];
+  const loopInvariant =
+    snapshot.algorithmType === "iterative" &&
+    isSectionAvailable(snapshot.iterative) &&
+    isSectionAvailable(snapshot.iterative.data.loopInvariant)
+      ? snapshot.iterative.data.loopInvariant.data
+      : null;
+  if (snapshot.algorithmType === "iterative") {
+    const didacticSummary =
+      typeof loopInvariant?.didacticSummary === "string"
+        ? normalizeDidacticSummaryText(loopInvariant.didacticSummary.trim())
+        : "";
+
+    blocks.push({
+      kind: "paragraph",
+      text: didacticSummary
+        ? localize(
+            i18n,
+            `${didacticSummary}`,
+            `${didacticSummary}`,
+          )
+        : localize(
+            i18n,
+            "La evidencia disponible describe un comportamiento lineal estable por caso.",
+            "Available evidence describes stable linear behavior across cases.",
+          ),
+    });
+  } else {
+    blocks.push({
       kind: "paragraph",
       text:
         i18n.locale === "es"
           ? `Este reporte describe de forma pedagógica el análisis de ${snapshot.meta.algorithm.name}.`
           : `This report presents a pedagogical walkthrough of the analysis for ${snapshot.meta.algorithm.name}.`,
-    },
-    {
-      kind: "paragraph",
-      text:
-        snapshot.meta.validity.parseOk && snapshot.meta.validity.analysisOk
-          ? i18n.parseSummaryOk
-          : i18n.parseSummaryIssues,
-    },
-  ];
+    });
+  }
+  blocks.push({
+    kind: "paragraph",
+    text:
+      snapshot.meta.validity.parseOk && snapshot.meta.validity.analysisOk
+        ? i18n.parseSummaryOk
+        : i18n.parseSummaryIssues,
+  });
 
   const availableCases = CASE_ORDER.filter((caseName) => Boolean(snapshot.globalResult.cases[caseName]));
   if (availableCases.length > 0) {
     blocks.push({
-      kind: "paragraph",
-      text: localize(
-        i18n,
-        "Complejidad por caso (resumen):",
-        "Complexity by case (summary):",
-      ),
+      kind: "table",
+      table: {
+        title: localize(i18n, "Resumen comparativo por caso", "Comparative summary by case"),
+        headers: [
+          localize(i18n, "Caso", "Case"),
+          localize(i18n, "Costo total", "Total cost"),
+          localize(i18n, "Complejidad final", "Final complexity"),
+        ],
+        rows: availableCases.map((caseName) => {
+          const result = snapshot.globalResult.cases[caseName];
+          return [
+            caseLabel(caseName, i18n),
+            result?.T_open || result?.T_polynomial || i18n.notAvailable,
+            pickCaseComplexity(snapshot, caseName) || i18n.notAvailable,
+          ];
+        }),
+      },
     });
 
-    blocks.push({
-      kind: "list",
-      items: availableCases.map(
-        (caseName) => `${caseLabel(caseName, i18n)}: ${pickCaseComplexity(snapshot, caseName) || i18n.notAvailable}`,
-      ),
-    });
+    const complexitySet = new Set(
+      availableCases.map((caseName) => pickCaseComplexity(snapshot, caseName) || i18n.notAvailable),
+    );
+    if (complexitySet.size === 1) {
+      const value = [...complexitySet][0];
+      blocks.push({
+        kind: "paragraph",
+        text: localize(
+          i18n,
+          `Los tres casos convergen en la misma complejidad final: ${value}.`,
+          `All cases converge to the same final complexity: ${value}.`,
+        ),
+      });
+    }
   }
 
   const warningItems = maybeList([
@@ -559,63 +635,1156 @@ function buildGlobalResultSection(
   };
 }
 
-function buildLineCostNarrative(line: LineCost, i18n: ExportI18nBundle): string {
-  const lineLabel = localize(i18n, "Línea", "Line");
-  const parts = maybeList([
-    `${lineLabel} ${line.line}${line.kind ? ` (${line.kind})` : ""}`,
-    line.ck ? `${localize(i18n, "costo base", "base cost")}: ${line.ck}` : null,
-    line.count ? `${localize(i18n, "repeticiones", "repetitions")}: ${line.count}` : null,
-    line.count_raw
-      ? localize(
-          i18n,
-          "la sumatoria detallada se desarrolla en la expresion de costo",
-          "the detailed summation is developed in the cost expression",
-        )
-      : null,
-    line.note ? `${localize(i18n, "nota", "note")}: ${line.note}` : null,
-  ]);
-
-  return parts.join("; ");
+interface IterativeTraceStep {
+  stepNumber: number;
+  line: number | null;
+  eventKind: string;
+  description: string;
+  variables: Record<string, unknown>;
+  variablesChanged: Record<string, unknown> | null;
+  iteration: {
+    loopVar?: string;
+    currentValue?: number;
+    maxValue?: number;
+    iteration?: number;
+  } | null;
+  cost?: string;
 }
 
-function buildIterativeTraceSummary(
-  trace:
-    | Record<
-        SnapshotCase,
-        {
-          steps: unknown[];
-          summary?: {
-            totalSteps?: number;
-            totalCalls?: number;
-            maxRecursionDepth?: number;
-            algorithmKind?: string;
-          };
-          diagnostics?: {
-            truncated?: boolean;
-          };
-        } | null
-      >
-    | undefined,
-  i18n: ExportI18nBundle,
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+}
+
+function asNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function normalizeIterativeTraceSteps(steps: unknown[]): IterativeTraceStep[] {
+  const normalized: IterativeTraceStep[] = [];
+  for (let index = 0; index < steps.length; index += 1) {
+    const raw = asRecord(steps[index]);
+    if (!raw) continue;
+
+    const iterationRaw = asRecord(raw.iteration);
+    let iteration: IterativeTraceStep["iteration"] = null;
+    if (iterationRaw) {
+      const iterationData: NonNullable<IterativeTraceStep["iteration"]> = {};
+      if (typeof iterationRaw.loopVar === "string" && iterationRaw.loopVar.trim()) {
+        iterationData.loopVar = iterationRaw.loopVar;
+      }
+      const currentValue = asNumber(iterationRaw.currentValue);
+      if (currentValue !== null) {
+        iterationData.currentValue = currentValue;
+      }
+      const maxValue = asNumber(iterationRaw.maxValue);
+      if (maxValue !== null) {
+        iterationData.maxValue = maxValue;
+      }
+      const iterationIndex = asNumber(iterationRaw.iteration ?? iterationRaw.index);
+      if (iterationIndex !== null) {
+        iterationData.iteration = iterationIndex;
+      }
+      iteration = iterationData;
+    }
+
+    const step: IterativeTraceStep = {
+      stepNumber: asNumber(raw.step_number || raw.stepNumber) ?? index + 1,
+      line: asNumber(raw.line),
+      eventKind: String(raw.eventKind || raw.kind || "other"),
+      description: String(raw.description || "").trim(),
+      variables: asRecord(raw.variablesSnapshot || raw.variables) || {},
+      variablesChanged: asRecord(raw.variables_changed || raw.variablesChanged) || null,
+      iteration,
+      cost: typeof raw.cost === "string" ? raw.cost : undefined,
+    };
+    normalized.push(step);
+  }
+
+  return normalized.sort((a, b) => a.stepNumber - b.stepNumber);
+}
+
+function formatStateValue(value: unknown): string {
+  if (value === null) return "null";
+  if (typeof value === "undefined") return "-";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) {
+    const preview = value.slice(0, 5).map((item) => formatStateValue(item));
+    const suffix = value.length > 5 ? ", ..." : "";
+    return `[${preview.join(", ")}${suffix}]`;
+  }
+  if (typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>).slice(0, 3);
+    const preview = entries.map(([key, nested]) => `${key}:${formatStateValue(nested)}`);
+    const suffix = Object.keys(value as Record<string, unknown>).length > 3 ? ", ..." : "";
+    return `{${preview.join(", ")}${suffix}}`;
+  }
+  return String(value);
+}
+
+function eventLabel(eventKind: string, i18n: ExportI18nBundle): string {
+  const labels: Record<string, [string, string]> = {
+    assign: ["Actualización", "Assignment"],
+    condition_eval: ["Evaluación de condición", "Condition evaluation"],
+    loop_enter: ["Entrada al ciclo", "Loop entry"],
+    loop_iter_enter: ["Inicio de iteración", "Iteration start"],
+    loop_iter_exit: ["Fin de iteración", "Iteration end"],
+    loop_exit: ["Salida del ciclo", "Loop exit"],
+    return_emit: ["Return", "Return"],
+    call_enter: ["Entrada a llamada", "Call enter"],
+    call_exit: ["Salida de llamada", "Call exit"],
+    print: ["Impresión", "Print"],
+    enter_block: ["Entrada a bloque", "Block entry"],
+    end: ["Fin", "End"],
+  };
+  const picked = labels[eventKind];
+  if (!picked) {
+    return eventKind;
+  }
+  return localize(i18n, picked[0], picked[1]);
+}
+
+function buildChanges(
+  step: IterativeTraceStep,
+  previous: IterativeTraceStep | null,
+): Array<{ name: string; before: unknown; after: unknown }> {
+  const changesRaw: Record<string, unknown> = step.variablesChanged || {};
+  const entries = Object.entries(changesRaw);
+  if (entries.length > 0) {
+    return entries.map(([name, after]) => ({
+      name,
+      before: previous?.variables[name],
+      after,
+    }));
+  }
+  return [];
+}
+
+function pickRelevantStateVariableNames(
+  selectedLoop: Record<string, unknown> | null,
+  steps: IterativeTraceStep[],
 ): string[] {
-  if (!trace) return [];
+  const preferred = new Set<string>();
+  const controlVariables = Array.isArray(selectedLoop?.controlVariables)
+    ? selectedLoop.controlVariables
+    : [];
+  const stateVariables = Array.isArray(selectedLoop?.stateVariables)
+    ? selectedLoop.stateVariables
+    : [];
 
-  return CASE_ORDER.flatMap((caseName) => {
-    const data = trace[caseName];
-    if (!data) return [];
+  for (const name of [...controlVariables, ...stateVariables]) {
+    if (typeof name === "string" && name.trim()) {
+      preferred.add(name.trim());
+    }
+  }
 
-    const truncatedText = data.diagnostics?.truncated
-      ? localize(i18n, "trazado truncado", "trace truncated")
-      : localize(i18n, "trazado completo", "trace complete");
+  const changeFrequency = new Map<string, number>();
+  for (let index = 0; index < steps.length; index += 1) {
+    const previous = index > 0 ? steps[index - 1] : null;
+    const changes = buildChanges(steps[index], previous);
+    for (const change of changes) {
+      changeFrequency.set(change.name, (changeFrequency.get(change.name) || 0) + 1);
+    }
+  }
 
-    return [
-      localize(
+  const orderedByChange = [...changeFrequency.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([name]) => name);
+
+  for (const name of orderedByChange) {
+    preferred.add(name);
+    if (preferred.size >= 3) break;
+  }
+
+  if (preferred.size === 0 && steps.length > 0) {
+    for (const name of Object.keys(steps[0].variables)) {
+      preferred.add(name);
+      if (preferred.size >= 2) break;
+    }
+  }
+
+  return [...preferred].slice(0, 3);
+}
+
+function buildRelevantStateSnapshot(
+  step: IterativeTraceStep,
+  relevantNames: string[],
+  previous: IterativeTraceStep | null,
+): string {
+  const values = relevantNames
+    .filter((name) => Object.prototype.hasOwnProperty.call(step.variables, name))
+    .map((name) => `${name}=${formatStateValue(step.variables[name])}`);
+  if (values.length === 0) return "-";
+  const current = values.join(", ");
+  if (!previous) return current;
+
+  const previousValues = relevantNames
+    .filter((name) => Object.prototype.hasOwnProperty.call(previous.variables, name))
+    .map((name) => `${name}=${formatStateValue(previous.variables[name])}`);
+  const previousSnapshot = previousValues.join(", ");
+  return current === previousSnapshot ? "-" : current;
+}
+
+function stableValueFingerprint(value: unknown): string {
+  if (typeof value === "undefined") return "__undefined__";
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function pickStableTraceInputs(
+  steps: IterativeTraceStep[],
+  excludedNames: Set<string>,
+): Array<{ name: string; value: unknown }> {
+  if (steps.length === 0) return [];
+  const firstVariables = steps[0].variables || {};
+  const keys = Object.keys(firstVariables);
+  const stable: Array<{ name: string; value: unknown }> = [];
+
+  for (const key of keys) {
+    if (excludedNames.has(key)) continue;
+    const initialValue = firstVariables[key];
+    const fingerprint = stableValueFingerprint(initialValue);
+    let isStable = true;
+    for (const step of steps) {
+      if (!Object.prototype.hasOwnProperty.call(step.variables, key)) {
+        isStable = false;
+        break;
+      }
+      if (stableValueFingerprint(step.variables[key]) !== fingerprint) {
+        isStable = false;
+        break;
+      }
+    }
+    if (isStable) {
+      stable.push({ name: key, value: initialValue });
+    }
+  }
+
+  return stable;
+}
+
+function buildStepContext(
+  step: IterativeTraceStep,
+  i18n: ExportI18nBundle,
+): string {
+  if (step.eventKind === "loop_enter" && step.iteration?.loopVar) {
+    const min = typeof step.iteration.currentValue === "number"
+      ? String(step.iteration.currentValue)
+      : "?";
+    const max = typeof step.iteration.maxValue === "number"
+      ? String(step.iteration.maxValue)
+      : "?";
+    return `${step.iteration.loopVar}=${min}..${max}`;
+  }
+  if (
+    (step.eventKind === "loop_iter_enter" || step.eventKind === "loop_iter_exit") &&
+    step.iteration?.loopVar
+  ) {
+    const iterationLabel = step.iteration.iteration
+      ? String(step.iteration.iteration)
+      : "?";
+    const currentValue = typeof step.iteration.currentValue === "number"
+      ? String(step.iteration.currentValue)
+      : "?";
+    return localize(
+      i18n,
+      `iteración ${iterationLabel} (${step.iteration.loopVar}=${currentValue})`,
+      `iteration ${iterationLabel} (${step.iteration.loopVar}=${currentValue})`,
+    );
+  }
+  if (step.description) return step.description;
+  return "-";
+}
+
+function buildStateChangeText(
+  step: IterativeTraceStep,
+  previous: IterativeTraceStep | null,
+  i18n: ExportI18nBundle,
+): string {
+  const changes = buildChanges(step, previous)
+    .slice(0, 3)
+    .map((change) =>
+      `${change.name}: ${formatStateValue(change.before)} -> ${formatStateValue(change.after)}`,
+    );
+  return changes.length > 0 ? changes.join(", ") : "-";
+}
+
+function buildCaseTraceExecutiveItems(
+  snapshot: AalieAnalysisSnapshotV1,
+  steps: IterativeTraceStep[],
+  selectedLoop: Record<string, unknown> | null,
+  caseName: SnapshotCase,
+  i18n: ExportI18nBundle,
+): { header: string; items: string[] } {
+  const firstStepN = asNumber(steps[0]?.variables.n);
+  const inputN = typeof firstStepN === "number" ? String(firstStepN) : i18n.notAvailable;
+
+  const loopEnterStep = steps.find((step) => step.eventKind === "loop_enter");
+  const iterationSteps = steps.filter((step) => step.eventKind === "loop_iter_enter");
+  const firstIteration = iterationSteps[0];
+  const lastIteration = iterationSteps[iterationSteps.length - 1];
+  const controlVariable =
+    (typeof loopEnterStep?.iteration?.loopVar === "string" && loopEnterStep.iteration.loopVar) ||
+    (typeof firstIteration?.iteration?.loopVar === "string" && firstIteration.iteration.loopVar) ||
+    (Array.isArray(selectedLoop?.controlVariables) && typeof selectedLoop?.controlVariables[0] === "string"
+      ? String(selectedLoop.controlVariables[0])
+      : i18n.notAvailable);
+
+  const minControl =
+    loopEnterStep?.iteration?.currentValue ?? firstIteration?.iteration?.currentValue;
+  const maxControl =
+    loopEnterStep?.iteration?.maxValue ??
+    lastIteration?.iteration?.currentValue ??
+    firstIteration?.iteration?.maxValue;
+  const controlRange =
+    typeof minControl === "number" && typeof maxControl === "number"
+      ? localize(i18n, `${controlVariable} de ${minControl} a ${maxControl}`, `${controlVariable} from ${minControl} to ${maxControl}`)
+      : i18n.notAvailable;
+
+  const returnStep = [...steps].reverse().find((step) => step.eventKind === "return_emit");
+  const returnValue = returnStep?.description
+    ? returnStep.description.replace(/^RETURN\s*/i, "").trim() || returnStep.description
+    : i18n.notAvailable;
+
+  const excludedNames = new Set<string>();
+  if (controlVariable && controlVariable !== i18n.notAvailable) {
+    excludedNames.add(controlVariable);
+  }
+  const stableInputs = pickStableTraceInputs(steps, excludedNames);
+  const scalarInputs = stableInputs.filter(
+    (entry) =>
+      !Array.isArray(entry.value) &&
+      (entry.value === null || typeof entry.value !== "object"),
+  );
+  const tabulatedInputs = stableInputs.filter((entry) => Array.isArray(entry.value));
+  const scalarInputSummary =
+    scalarInputs.length > 0
+      ? scalarInputs.map((entry) => `${entry.name}=${formatStateValue(entry.value)}`).join(", ")
+      : i18n.notAvailable;
+  const tabulatedSummary =
+    tabulatedInputs.length > 0
+      ? tabulatedInputs
+          .map((entry) => `${entry.name}=${formatStateValue(entry.value)}`)
+          .join(", ")
+      : localize(i18n, "no reportados en el trace", "not reported in trace");
+
+  const header = localize(
+    i18n,
+    `Seguimiento de ejecución (caso ${caseLabel(caseName, i18n)}, entrada n=${inputN})`,
+    `Execution trace (${caseLabel(caseName, i18n)} case, input n=${inputN})`,
+  );
+
+  return {
+    header,
+    items: [
+      `${localize(i18n, "Algoritmo", "Algorithm")}: ${snapshot.meta.algorithm.name}`,
+      `${localize(i18n, "Total de pasos observados", "Total observed steps")}: ${String(steps.length)}`,
+      `${localize(i18n, "Total de iteraciones observadas del FOR", "Observed FOR iterations")}: ${String(iterationSteps.length)}`,
+      `${localize(i18n, "Variable de control", "Control variable")}: ${controlRange}`,
+      `${localize(i18n, "Valores de entrada detectados", "Detected input values")}: ${scalarInputSummary}`,
+      `${localize(i18n, "Valores tabulados detectados", "Detected tabulated values")}: ${tabulatedSummary}`,
+      `${localize(i18n, "Valor retornado", "Returned value")}: ${returnValue}`,
+    ],
+  };
+}
+
+function buildIterativeTraceTable(
+  steps: IterativeTraceStep[],
+  relevantStateVariables: string[],
+  lineCostByLine: Map<number, string>,
+  i18n: ExportI18nBundle,
+): DocumentTable {
+  const headers = i18n.locale === "es"
+    ? ["Paso", "Línea", "Evento", "Contexto", "Cambio de estado", "Estado relevante", "Costo"]
+    : ["Step", "Line", "Event", "Context", "State change", "Relevant state", "Cost"];
+
+  return {
+    headers,
+    rows: steps.map((step, index) => {
+      const previous = index > 0 ? steps[index - 1] : null;
+      return [
+        String(step.stepNumber),
+        step.line === null ? "-" : String(step.line),
+        eventLabel(step.eventKind, i18n),
+        buildStepContext(step, i18n),
+        buildStateChangeText(step, previous, i18n),
+        buildRelevantStateSnapshot(step, relevantStateVariables, previous),
+        step.line !== null && lineCostByLine.has(step.line)
+          ? (lineCostByLine.get(step.line) as string)
+          : (step.cost || "-"),
+      ];
+    }),
+  };
+}
+
+function buildLineCostMap(
+  lineCosts: Array<{ line?: number | null; ck?: string | null }>,
+): Map<number, string> {
+  const map = new Map<number, string>();
+  for (const row of lineCosts) {
+    const line = typeof row.line === "number" ? row.line : null;
+    const ck = typeof row.ck === "string" ? row.ck.trim() : "";
+    if (line === null || !ck) continue;
+    if (!map.has(line)) {
+      map.set(line, ck);
+    }
+  }
+  return map;
+}
+
+function summarizeStepForTimeline(
+  step: IterativeTraceStep,
+  previous: IterativeTraceStep | null,
+): string | null {
+  if (step.eventKind === "assign") {
+    const changes = buildChanges(step, previous);
+    if (changes.length > 0) {
+      const head = changes[0];
+      return `${head.name} <- ${formatStateValue(head.after)}`;
+    }
+  }
+  if (step.eventKind === "return_emit") {
+    return step.description || "RETURN";
+  }
+  if (step.eventKind === "condition_eval") {
+    return step.description || null;
+  }
+  return null;
+}
+
+function buildIterativeGroupedTimelineBlocks(
+  steps: IterativeTraceStep[],
+  i18n: ExportI18nBundle,
+): DocumentBlock[] {
+  if (steps.length === 0) return [];
+
+  const blocks: DocumentBlock[] = [];
+  const firstLoopEnterIndex = steps.findIndex((step) => step.eventKind === "loop_enter");
+  const initializationSlice =
+    firstLoopEnterIndex > 0 ? steps.slice(0, firstLoopEnterIndex) : [];
+
+  const initializationItems: string[] = [];
+  if (initializationSlice.length > 0) {
+    for (let index = 0; index < initializationSlice.length; index += 1) {
+      const step = initializationSlice[index];
+      const previous = index > 0 ? initializationSlice[index - 1] : null;
+      const summary = summarizeStepForTimeline(step, previous);
+      if (summary) initializationItems.push(summary);
+    }
+    if (initializationItems.length > 0) {
+      blocks.push({
+        kind: "heading",
+        text: localize(i18n, "Nivel 1: Inicialización", "Level 1: Initialization"),
+      });
+      blocks.push({ kind: "list", items: initializationItems });
+    }
+  }
+
+  const loopEnterStep = firstLoopEnterIndex >= 0 ? steps[firstLoopEnterIndex] : null;
+  if (loopEnterStep) {
+    const loopVar = loopEnterStep.iteration?.loopVar || "i";
+    const min = typeof loopEnterStep.iteration?.currentValue === "number"
+      ? String(loopEnterStep.iteration?.currentValue)
+      : "?";
+    const max = typeof loopEnterStep.iteration?.maxValue === "number"
+      ? String(loopEnterStep.iteration?.maxValue)
+      : "?";
+    blocks.push({
+      kind: "heading",
+      text: localize(
         i18n,
-        `${caseLabel(caseName, i18n)}: ${safe(data.summary?.totalSteps, "0")} pasos, ${safe(data.summary?.totalCalls, "0")} llamadas, profundidad máxima ${safe(data.summary?.maxRecursionDepth, "0")} (${truncatedText}).`,
-        `${caseLabel(caseName, i18n)}: ${safe(data.summary?.totalSteps, "0")} steps, ${safe(data.summary?.totalCalls, "0")} calls, max depth ${safe(data.summary?.maxRecursionDepth, "0")} (${truncatedText}).`,
+        `Nivel 1: Bucle FOR ${loopVar} <- ${min} TO ${max}`,
+        `Level 1: FOR loop ${loopVar} <- ${min} TO ${max}`,
       ),
-    ];
+    });
+
+    const outerLoopBodyItems: string[] = [];
+    const iterationGroups: Array<{ title: string; items: string[] }> = [];
+    let currentIteration: { title: string; items: string[] } | null = null;
+
+    for (let index = firstLoopEnterIndex + 1; index < steps.length; index += 1) {
+      const step = steps[index];
+      if (step.eventKind === "loop_iter_enter") {
+        if (currentIteration) {
+          iterationGroups.push(currentIteration);
+        }
+        const iterationLabel = step.iteration?.iteration ?? "?";
+        const controlValue = step.iteration?.currentValue ?? "?";
+        currentIteration = {
+          title: localize(
+            i18n,
+            `Nivel 2: Iteración ${iterationLabel} (${step.iteration?.loopVar || "i"} = ${String(controlValue)})`,
+            `Level 2: Iteration ${iterationLabel} (${step.iteration?.loopVar || "i"} = ${String(controlValue)})`,
+          ),
+          items: [],
+        };
+        continue;
+      }
+      if (step.eventKind === "loop_iter_exit" || step.eventKind === "loop_exit") {
+        continue;
+      }
+      if (step.eventKind === "return_emit") {
+        break;
+      }
+      const summary = summarizeStepForTimeline(step, index > 0 ? steps[index - 1] : null);
+      if (!summary) continue;
+      if (currentIteration) {
+        currentIteration.items.push(summary);
+      } else {
+        outerLoopBodyItems.push(summary);
+      }
+    }
+
+    if (currentIteration) {
+      iterationGroups.push(currentIteration);
+    }
+
+    if (outerLoopBodyItems.length > 0) {
+      blocks.push({
+        kind: "heading",
+        text: localize(
+          i18n,
+          "Nivel 2: Cuerpo general del ciclo",
+          "Level 2: General loop body",
+        ),
+      });
+      blocks.push({ kind: "list", items: outerLoopBodyItems });
+    }
+
+    for (const iterationGroup of iterationGroups) {
+      blocks.push({ kind: "heading", text: iterationGroup.title });
+      blocks.push({
+        kind: "list",
+        items:
+          iterationGroup.items.length > 0
+            ? iterationGroup.items
+            : [localize(i18n, "Sin cambios relevantes", "No relevant changes")],
+      });
+    }
+  }
+
+  const returnStep = [...steps].reverse().find((step) => step.eventKind === "return_emit");
+  if (returnStep) {
+    blocks.push({
+      kind: "heading",
+      text: localize(i18n, "Nivel 1: Retorno", "Level 1: Return"),
+    });
+    blocks.push({
+      kind: "list",
+      items: [returnStep.description || "RETURN"],
+    });
+  }
+
+  return blocks;
+}
+
+function buildLineCostTable(lineCosts: LineCost[], i18n: ExportI18nBundle): DocumentTable {
+  const headers = i18n.locale === "es"
+    ? ["Línea", "Tipo", "Costo base", "Conteo (sumatoria)", "Conteo simplificado"]
+    : ["Line", "Kind", "Base cost", "Count (summation)", "Simplified count"];
+
+  return {
+    headers,
+    rows: lineCosts.map((line) => [
+      String(line.line),
+      line.kind,
+      line.ck,
+      line.count_raw || "-",
+      line.count || "-",
+    ]),
+  };
+}
+
+function normalizeMathExpression(expression: string): string {
+  return expression.replace(/\s+/g, " ").trim();
+}
+
+function wrapSummationTerm(expression: string): string {
+  const normalized = normalizeMathExpression(expression);
+  if (!normalized) return "0";
+  if (/^[A-Za-z0-9_{}\\]+$/.test(normalized)) {
+    return normalized;
+  }
+  return `(${normalized})`;
+}
+
+type LinearInN = { nCoeff: number; constant: number };
+
+function parseLinearCountExpression(rawExpression: string): LinearInN | null {
+  let expression = rawExpression.trim();
+  if (!expression) return null;
+
+  while (expression.startsWith("(") && expression.endsWith(")")) {
+    const inner = expression.slice(1, -1).trim();
+    if (!inner || inner === expression) break;
+    expression = inner;
+  }
+
+  const compact = expression.replace(/\s+/g, "");
+  if (/^[-+]?\d+$/.test(compact)) {
+    return { nCoeff: 0, constant: Number(compact) };
+  }
+  if (compact === "n" || compact === "+n") {
+    return { nCoeff: 1, constant: 0 };
+  }
+  if (compact === "-n") {
+    return { nCoeff: -1, constant: 0 };
+  }
+  const coeffOnly = compact.match(/^([-+]?\d*)\*?n$/);
+  if (coeffOnly) {
+    const token = coeffOnly[1];
+    const coeff = token === "" || token === "+" ? 1 : token === "-" ? -1 : Number(token);
+    if (!Number.isNaN(coeff)) {
+      return { nCoeff: coeff, constant: 0 };
+    }
+  }
+  const coeffAndConstant = compact.match(/^([-+]?\d*)\*?n([+-]\d+)$/);
+  if (coeffAndConstant) {
+    const coeffToken = coeffAndConstant[1];
+    const coeff =
+      coeffToken === "" || coeffToken === "+" ? 1 : coeffToken === "-" ? -1 : Number(coeffToken);
+    const constant = Number(coeffAndConstant[2]);
+    if (!Number.isNaN(coeff) && !Number.isNaN(constant)) {
+      return { nCoeff: coeff, constant };
+    }
+  }
+  const nLeading = compact.match(/^n([+-]\d+)$/);
+  if (nLeading) {
+    const constant = Number(nLeading[1]);
+    if (!Number.isNaN(constant)) {
+      return { nCoeff: 1, constant };
+    }
+  }
+  return null;
+}
+
+function formatLinearExpression(value: LinearInN): string {
+  const pieces: string[] = [];
+  if (value.nCoeff !== 0) {
+    if (value.nCoeff === 1) {
+      pieces.push("n");
+    } else if (value.nCoeff === -1) {
+      pieces.push("-n");
+    } else {
+      pieces.push(`${value.nCoeff}n`);
+    }
+  }
+  if (value.constant !== 0 || pieces.length === 0) {
+    const constant = String(Math.abs(value.constant));
+    if (pieces.length === 0) {
+      pieces.push(value.constant < 0 ? `-${constant}` : constant);
+    } else {
+      pieces.push(value.constant < 0 ? `- ${constant}` : `+ ${constant}`);
+    }
+  }
+  return pieces.join(" ");
+}
+
+function buildCountSummationExpression(lineCosts: LineCost[]): { structural: string; simplified: string | null } {
+  const terms = lineCosts.map((line) => normalizeMathExpression(line.count || line.count_raw || "0"));
+  const structural = terms.length > 0 ? terms.map((term) => wrapSummationTerm(term)).join(" + ") : "0";
+  const parsed = terms.map((term) => parseLinearCountExpression(term));
+  if (parsed.some((item) => item === null)) {
+    return { structural, simplified: null };
+  }
+  const linear = parsed.reduce(
+    (acc, item) => ({
+      nCoeff: acc.nCoeff + (item?.nCoeff || 0),
+      constant: acc.constant + (item?.constant || 0),
+    }),
+    { nCoeff: 0, constant: 0 },
+  );
+  const simplified = formatLinearExpression(linear);
+  return { structural, simplified: simplified === structural ? null : simplified };
+}
+
+function buildTotalCostExpression(lineCosts: LineCost[]): string {
+  if (lineCosts.length === 0) {
+    return "T(n) = 0";
+  }
+  const terms = lineCosts.map((line) => {
+    const count = normalizeMathExpression(line.count || line.count_raw || "0");
+    const baseCost = normalizeMathExpression(line.ck || "C");
+    return `${baseCost}\\left(${count}\\right)`;
   });
+  return `T(n) = ${terms.join(" + ")}`;
+}
+
+function ensureTnPrefix(expression: string): string {
+  const normalized = expression.trim();
+  if (!normalized) return normalized;
+  if (/^T\s*\(\s*n\s*\)\s*=/.test(normalized)) {
+    return normalized;
+  }
+  return `T(n) = ${normalized}`;
+}
+
+function extractSelectedLoopLines(
+  pseudocode: string,
+  selectedLoop: Record<string, unknown> | null,
+): DocumentInstitutionalCodeLine[] {
+  const lineStart = asNumber(selectedLoop?.lineStart);
+  const lineEnd = asNumber(selectedLoop?.lineEnd);
+  if (lineStart === null || lineEnd === null || lineEnd < lineStart) {
+    return [];
+  }
+
+  const lines = pseudocode.split(/\r?\n/);
+  const picked: DocumentInstitutionalCodeLine[] = [];
+  for (let line = lineStart; line <= lineEnd; line += 1) {
+    const source = lines[line - 1];
+    if (typeof source !== "string") continue;
+    picked.push({
+      lineNumber: line,
+      text: source.trimEnd(),
+    });
+  }
+  return picked;
+}
+
+function stripLeadingLabel(value: string, labels: string[]): string {
+  let normalized = value.trim();
+  for (const label of labels) {
+    const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    normalized = normalized.replace(new RegExp(`^${escaped}\\s*:\\s*`, "i"), "");
+  }
+  return normalized.trim();
+}
+
+function buildIterativeInvariantBlocks(
+  snapshot: AalieAnalysisSnapshotV1,
+  loopInvariantSection: SnapshotSection<LoopInvariant>,
+  i18n: ExportI18nBundle,
+): DocumentBlock[] {
+  const blocks: DocumentBlock[] = [];
+
+  if (!isSectionAvailable(loopInvariantSection)) {
+    pushBlockIfPresent(blocks, buildStatusBlock("iterative.loopInvariant", loopInvariantSection, i18n));
+    return blocks;
+  }
+
+  const payload = loopInvariantSection.data;
+  const selectedLoop = asRecord(payload.selectedLoop);
+  const selectedLoopLines = extractSelectedLoopLines(
+    snapshot.input.originalPseudocode,
+    selectedLoop,
+  );
+
+  blocks.push({
+    kind: "subsection",
+    title: localize(i18n, "Ciclo seleccionado", "Selected loop"),
+  });
+
+  if (selectedLoopLines.length > 0) {
+    blocks.push({
+      kind: "institutionalCode",
+      lines: selectedLoopLines,
+    });
+  } else {
+    blocks.push({
+      kind: "paragraph",
+      text: localize(
+        i18n,
+        "No fue posible serializar el ciclo seleccionado con las líneas esperadas.",
+        "The selected loop could not be serialized with the expected line range.",
+      ),
+    });
+  }
+
+  blocks.push({
+    kind: "subsection",
+    title: localize(i18n, "Propiedad del invariante", "Invariant property"),
+  });
+  blocks.push({
+    kind: "paragraph",
+    text: safe(payload.invariant?.propertyStatement, i18n.notAvailable),
+  });
+
+  blocks.push({
+    kind: "subsection",
+    title: localize(i18n, "Demostración pedagógica", "Pedagogical proof"),
+  });
+  const initializationLabel = localize(i18n, "Inicialización", "Initialization");
+  const maintenanceLabel = localize(i18n, "Mantenimiento", "Maintenance");
+  const finalizationLabel = localize(i18n, "Finalización", "Finalization");
+  blocks.push({
+    kind: "list",
+    items: [
+      `${initializationLabel}: ${stripLeadingLabel(
+        safe(payload.invariant?.initialization, i18n.notAvailable),
+        ["Inicialización", "Initialization"],
+      )}`,
+      `${maintenanceLabel}: ${stripLeadingLabel(
+        safe(payload.invariant?.maintenance, i18n.notAvailable),
+        ["Mantenimiento", "Maintenance"],
+      )}`,
+      `${finalizationLabel}: ${stripLeadingLabel(
+        safe(payload.invariant?.finalization, i18n.notAvailable),
+        ["Finalización", "Finalization"],
+      )}`,
+    ],
+  });
+
+  blocks.push({
+    kind: "emphasis",
+    text: normalizeDidacticSummaryText(safe(payload.didacticSummary, i18n.notAvailable)),
+  });
+
+  const evidence = payload.evidence;
+  blocks.push({
+    kind: "subsection",
+    title: localize(i18n, "Resumen técnico", "Technical summary"),
+  });
+  blocks.push({
+    kind: "list",
+    items: [
+      `${localize(i18n, "Patrón detectado", "Detected pattern")}: ${safe(selectedLoop?.patternType, i18n.notAvailable)}`,
+      `${localize(i18n, "Tipo de ciclo", "Loop type")}: ${safe(selectedLoop?.nodeType, i18n.notAvailable)}`,
+      `${localize(i18n, "Líneas seleccionadas", "Selected lines")}: ${safe(selectedLoop?.lineStart, "?")} - ${safe(selectedLoop?.lineEnd, "?")}`,
+      `${localize(i18n, "Variante", "Variant")}: ${safe(evidence.templateVariant, i18n.notAvailable)}`,
+      `${localize(i18n, "Confianza", "Confidence")}: ${safe(evidence.classificationConfidence, i18n.notAvailable)}`,
+    ],
+  });
+
+  return blocks;
+}
+
+function buildIterativeInvariantSection(
+  snapshot: AalieAnalysisSnapshotV1,
+  i18n: ExportI18nBundle,
+): DocumentSection | null {
+  if (!isSectionAvailable(snapshot.iterative)) {
+    const statusBlock = buildStatusBlock("iterative", snapshot.iterative, i18n);
+    if (!statusBlock) return null;
+    return {
+      id: "iterative-invariant",
+      title: localize(i18n, "Invariante del Ciclo", "Loop Invariant"),
+      blocks: [statusBlock],
+    };
+  }
+
+  const blocks = buildIterativeInvariantBlocks(snapshot, snapshot.iterative.data.loopInvariant, i18n);
+  if (blocks.length === 0) {
+    blocks.push({ kind: "paragraph", text: i18n.pedagogicalNoData });
+  }
+
+  return {
+    id: "iterative-invariant",
+    title: localize(i18n, "Invariante del Ciclo", "Loop Invariant"),
+    blocks,
+  };
+}
+
+function buildIterativeCaseAnalysisBlocks(
+  caseName: SnapshotCase,
+  lineCosts: LineCost[],
+  globalCase:
+    | {
+        T_open?: string;
+        T_polynomial?: string;
+        big_theta?: string;
+        big_o?: string;
+        big_omega?: string;
+      }
+    | null
+    | undefined,
+  asymptoticProcedure: string[],
+  i18n: ExportI18nBundle,
+): DocumentBlock[] {
+  const blocks: DocumentBlock[] = [];
+  const normalizedLineCosts = lineCosts || [];
+  const countSum = buildCountSummationExpression(normalizedLineCosts);
+  const countFormula = countSum.simplified
+    ? `${countSum.structural} = ${countSum.simplified}`
+    : countSum.structural;
+  const finalComplexity = globalCase?.big_theta || globalCase?.big_o || globalCase?.big_omega || null;
+  const simplifiedCost = globalCase?.T_polynomial || globalCase?.T_open || null;
+
+  blocks.push({
+    kind: "subsection",
+    title: caseLabel(caseName, i18n),
+  });
+
+  blocks.push({
+    kind: "heading",
+    text: localize(
+      i18n,
+      "Conteo por línea y procedimiento",
+      "Per-line count and procedure",
+    ),
+  });
+  if (normalizedLineCosts.length === 0) {
+    blocks.push({ kind: "paragraph", text: i18n.pedagogicalNoData });
+  } else {
+    blocks.push({ kind: "table", table: buildLineCostTable(normalizedLineCosts, i18n) });
+  }
+
+  blocks.push({
+    kind: "heading",
+    text: localize(
+      i18n,
+      "Suma de conteos por línea",
+      "Sum of per-line counts",
+    ),
+  });
+  blocks.push({
+    kind: "formula",
+    formula: countFormula,
+  });
+
+  blocks.push({
+    kind: "heading",
+    text: localize(
+      i18n,
+      "Costo total T(n)",
+      "Total cost T(n)",
+    ),
+  });
+  blocks.push({
+    kind: "formula",
+    formula: buildTotalCostExpression(normalizedLineCosts),
+  });
+
+  blocks.push({
+    kind: "heading",
+    text: localize(
+      i18n,
+      "Forma simplificada del costo",
+      "Simplified cost form",
+    ),
+  });
+  blocks.push({
+    kind: "formula",
+    formula: simplifiedCost ? ensureTnPrefix(simplifiedCost) : i18n.notAvailable,
+  });
+
+  blocks.push({
+    kind: "heading",
+    text: localize(
+      i18n,
+      "Paso a complejidad asintótica",
+      "Asymptotic transition",
+    ),
+  });
+  const asymptoticSteps = asymptoticProcedure.length > 0
+    ? asymptoticProcedure
+    : [
+        localize(
+          i18n,
+          "Se identifica el término dominante del costo simplificado para obtener la clase asintótica.",
+          "The dominant term from the simplified cost determines the asymptotic class.",
+        ),
+      ];
+  blocks.push({ kind: "list", items: asymptoticSteps });
+
+  blocks.push({
+    kind: "heading",
+    text: localize(
+      i18n,
+      "Complejidad final",
+      "Final complexity",
+    ),
+  });
+  blocks.push({
+    kind: "formula",
+    formula: finalComplexity ? ensureTnPrefix(finalComplexity) : i18n.notAvailable,
+  });
+
+  return blocks;
+}
+
+function buildIterativeCaseAnalysisSection(
+  snapshot: AalieAnalysisSnapshotV1,
+  i18n: ExportI18nBundle,
+): DocumentSection | null {
+  if (!isSectionAvailable(snapshot.iterative)) {
+    const statusBlock = buildStatusBlock("iterative", snapshot.iterative, i18n);
+    if (!statusBlock) return null;
+    return {
+      id: "iterative-cases",
+      title: localize(i18n, "Analisis por Casos", "Case Analysis"),
+      blocks: [statusBlock],
+    };
+  }
+
+  const data = snapshot.iterative.data;
+  const blocks: DocumentBlock[] = [];
+
+  for (const caseName of CASE_ORDER) {
+    const lineCosts = data.lineCostTable[caseName] || [];
+    const asymptoticProcedure = maybeList(data.asymptoticProcedure[caseName] || []);
+    const globalCase = snapshot.globalResult.cases[caseName];
+    if (!globalCase && lineCosts.length === 0 && asymptoticProcedure.length === 0) {
+      continue;
+    }
+
+    blocks.push(
+      ...buildIterativeCaseAnalysisBlocks(
+        caseName,
+        lineCosts,
+        globalCase,
+        asymptoticProcedure,
+        i18n,
+      ),
+    );
+  }
+
+  if (blocks.length === 0) {
+    blocks.push({ kind: "paragraph", text: i18n.pedagogicalNoData });
+  }
+
+  return {
+    id: "iterative-cases",
+    title: localize(i18n, "Analisis por Casos", "Case Analysis"),
+    blocks,
+  };
+}
+
+function buildIterativeTraceSection(
+  snapshot: AalieAnalysisSnapshotV1,
+  i18n: ExportI18nBundle,
+): DocumentSection | null {
+  if (!isSectionAvailable(snapshot.iterative)) {
+    const statusBlock = buildStatusBlock("iterative", snapshot.iterative, i18n);
+    if (!statusBlock) return null;
+    return {
+      id: "iterative-trace",
+      title: i18n.traceTitle,
+      blocks: [statusBlock],
+    };
+  }
+
+  const data = snapshot.iterative.data;
+  const blocks: DocumentBlock[] = [];
+
+  if (!isSectionAvailable(data.trace)) {
+    pushBlockIfPresent(blocks, buildStatusBlock("iterative.trace", data.trace, i18n));
+    return {
+      id: "iterative-trace",
+      title: i18n.traceTitle,
+      blocks: blocks.length > 0 ? blocks : [{ kind: "paragraph", text: i18n.pedagogicalNoData }],
+    };
+  }
+
+  const traceCases = CASE_ORDER
+    .map((caseName) => ({
+      caseName,
+      trace: data.trace.data?.[caseName],
+    }))
+    .filter((entry) => Boolean(entry.trace?.steps && entry.trace.steps.length > 0))
+    .map((entry) => ({
+      caseName: entry.caseName,
+      steps: normalizeIterativeTraceSteps(entry.trace?.steps || []),
+    }));
+
+  if (traceCases.length === 0) {
+    blocks.push({ kind: "paragraph", text: i18n.pedagogicalNoData });
+    return {
+      id: "iterative-trace",
+      title: i18n.traceTitle,
+      blocks,
+    };
+  }
+
+  const representative = traceCases.find((entry) => entry.caseName === "worst");
+  if (!representative) {
+    blocks.push({
+      kind: "paragraph",
+      text: localize(
+        i18n,
+        "Seguimiento del peor caso no disponible.",
+        "Worst-case trace is not available.",
+      ),
+    });
+    return {
+      id: "iterative-trace",
+      title: i18n.traceTitle,
+      blocks,
+    };
+  }
+  const loopInvariantPayload = isSectionAvailable(data.loopInvariant)
+    ? data.loopInvariant.data
+    : null;
+  const selectedLoop = asRecord(loopInvariantPayload?.selectedLoop);
+  const relevantStateVariables = pickRelevantStateVariableNames(selectedLoop, representative.steps);
+  const worstLineCosts = data.lineCostTable?.worst || [];
+  const lineCostByLine = buildLineCostMap(worstLineCosts);
+  const executive = buildCaseTraceExecutiveItems(
+    snapshot,
+    representative.steps,
+    selectedLoop,
+    representative.caseName,
+    i18n,
+  );
+
+  blocks.push({
+    kind: "subsection",
+    title: localize(i18n, "Capa 1: Resumen ejecutivo", "Layer 1: Executive summary"),
+  });
+  blocks.push({
+    kind: "paragraph",
+    text: localize(
+      i18n,
+      `Caso analizado en detalle: ${caseLabel("worst", i18n)}.`,
+      `Case analyzed in detail: ${caseLabel("worst", i18n)}.`,
+    ),
+  });
+  blocks.push({ kind: "list", items: executive.items });
+
+  blocks.push({
+    kind: "subsection",
+    title: localize(
+      i18n,
+      "Capa 2: Tabla cronológica pedagógica",
+      "Layer 2: Pedagogical chronological table",
+    ),
+  });
+  blocks.push({
+    kind: "table",
+    table: buildIterativeTraceTable(
+      representative.steps,
+      relevantStateVariables,
+      lineCostByLine,
+      i18n,
+    ),
+  });
+
+  blocks.push({
+    kind: "subsection",
+    title: localize(
+      i18n,
+      "Capa 3: Vista agrupada por estructura de control",
+      "Layer 3: Control-structure grouped view",
+    ),
+  });
+  blocks.push({
+    kind: "paragraph",
+    text: localize(
+      i18n,
+      "La vista agrupada organiza la ejecución por inicialización, iteraciones y retorno para facilitar la trazabilidad.",
+      "The grouped view organizes execution by initialization, iterations, and return for traceability.",
+    ),
+  });
+  blocks.push(...buildIterativeGroupedTimelineBlocks(representative.steps, i18n));
+
+  return {
+    id: "iterative-trace",
+    title: i18n.traceTitle,
+    blocks,
+  };
 }
 
 function buildIterativeSection(
@@ -634,39 +1803,83 @@ function buildIterativeSection(
 
   const data = snapshot.iterative.data;
   const blocks: DocumentBlock[] = [];
+  const loopInvariantPayload = isSectionAvailable(data.loopInvariant)
+    ? data.loopInvariant.data
+    : null;
+  const selectedLoop = asRecord(loopInvariantPayload?.selectedLoop);
+
+  blocks.push(...buildIterativeInvariantBlocks(snapshot, data.loopInvariant, i18n));
 
   for (const caseName of CASE_ORDER) {
     const lineCosts = data.lineCostTable[caseName] || [];
     const summation = data.summations[caseName];
     const simplification = maybeList(data.simplificationSteps[caseName] || []);
     const asymptoticProcedure = maybeList(data.asymptoticProcedure[caseName] || []);
+    const globalCase = snapshot.globalResult.cases[caseName];
+    const caseTrace =
+      isSectionAvailable(data.trace) && data.trace.data
+        ? data.trace.data[caseName]
+        : null;
 
-    if (!lineCosts.length && !summation && simplification.length === 0 && asymptoticProcedure.length === 0) {
+    if (
+      !lineCosts.length &&
+      !summation &&
+      simplification.length === 0 &&
+      asymptoticProcedure.length === 0 &&
+      !globalCase &&
+      !caseTrace
+    ) {
       continue;
     }
 
     blocks.push({
       kind: "paragraph",
-      text: localize(
-        i18n,
-        `Desarrollo del ${caseLabel(caseName, i18n).toLowerCase()}.`,
-        `${caseLabel(caseName, i18n)} development.`,
-      ),
+      text: `${i18n.pedagogicalCaseTitle}: ${caseLabel(caseName, i18n)}.`,
     });
 
     if (lineCosts.length > 0) {
       blocks.push({
         kind: "paragraph",
-        text: i18n.pedagogicalLineCostTitle,
+        text: localize(
+          i18n,
+          "Costos por línea (sumatorias y procedimiento):",
+          "Per-line costs (summations and procedure):",
+        ),
       });
-      blocks.push({ kind: "list", items: lineCosts.map((line) => buildLineCostNarrative(line, i18n)) });
+      blocks.push({ kind: "table", table: buildLineCostTable(lineCosts, i18n) });
     }
 
     if (summation) {
       blocks.push({
         kind: "formula",
-        label: `${i18n.pedagogicalCostLabel} (${caseLabel(caseName, i18n)})`,
+        label: localize(
+          i18n,
+          `Suma final de costos (${caseLabel(caseName, i18n)})`,
+          `Final cost sum (${caseLabel(caseName, i18n)})`,
+        ),
         formula: summation,
+      });
+    }
+
+    if (globalCase?.T_polynomial) {
+      blocks.push({
+        kind: "formula",
+        label: localize(
+          i18n,
+          `Forma polinómica (${caseLabel(caseName, i18n)})`,
+          `Polynomial form (${caseLabel(caseName, i18n)})`,
+        ),
+        formula: globalCase.T_polynomial,
+      });
+    }
+
+    const finalComplexity =
+      globalCase?.big_theta || globalCase?.big_o || globalCase?.big_omega || null;
+    if (finalComplexity) {
+      blocks.push({
+        kind: "formula",
+        label: `${i18n.pedagogicalFinalComplexityLabel} (${caseLabel(caseName, i18n)})`,
+        formula: finalComplexity,
       });
     }
 
@@ -679,19 +1892,86 @@ function buildIterativeSection(
       blocks.push({ kind: "paragraph", text: i18n.pedagogicalAsymptoticTitle });
       blocks.push({ kind: "list", items: asymptoticProcedure });
     }
+
+    if (caseTrace?.steps && caseTrace.steps.length > 0) {
+      const normalizedSteps = normalizeIterativeTraceSteps(caseTrace.steps);
+      const relevantStateVariables = pickRelevantStateVariableNames(
+        selectedLoop,
+        normalizedSteps,
+      );
+      const lineCostByLine = buildLineCostMap(lineCosts);
+      const executive = buildCaseTraceExecutiveItems(
+        snapshot,
+        normalizedSteps,
+        selectedLoop,
+        caseName,
+        i18n,
+      );
+      blocks.push({
+        kind: "paragraph",
+        text: localize(i18n, "Seguimiento en 3 capas", "Trace in 3 layers"),
+      });
+      blocks.push({
+        kind: "paragraph",
+        text: localize(i18n, "Capa 1: Resumen ejecutivo", "Layer 1: Executive summary"),
+      });
+      blocks.push({ kind: "paragraph", text: executive.header });
+      blocks.push({ kind: "list", items: executive.items });
+
+      blocks.push({
+        kind: "paragraph",
+        text: localize(
+          i18n,
+          "Capa 2: Tabla cronológica pedagógica",
+          "Layer 2: Pedagogical chronological table",
+        ),
+      });
+      blocks.push({
+        kind: "table",
+        table: buildIterativeTraceTable(
+          normalizedSteps,
+          relevantStateVariables,
+          lineCostByLine,
+          i18n,
+        ),
+      });
+
+      const groupedTimelineBlocks = buildIterativeGroupedTimelineBlocks(normalizedSteps, i18n);
+      if (groupedTimelineBlocks.length > 0) {
+        blocks.push({
+          kind: "paragraph",
+          text: localize(
+            i18n,
+            "Capa 3: Vista agrupada por estructura de control",
+            "Layer 3: Control-structure grouped view",
+          ),
+        });
+        blocks.push(...groupedTimelineBlocks);
+      }
+    } else {
+      blocks.push({
+        kind: "paragraph",
+        text: localize(
+          i18n,
+          `Seguimiento de ejecución (${caseLabel(caseName, i18n)}): no disponible.`,
+          `Execution trace (${caseLabel(caseName, i18n)}): not available.`,
+        ),
+      });
+    }
   }
 
-  if (isSectionAvailable(data.trace)) {
-    const traceItems = buildIterativeTraceSummary(data.trace.data, i18n);
-    if (traceItems.length > 0) {
-      blocks.push({ kind: "paragraph", text: i18n.pedagogicalTraceTitle });
-      blocks.push({ kind: "list", items: traceItems });
-    }
-  } else {
+  if (!isSectionAvailable(data.trace)) {
     pushBlockIfPresent(blocks, buildStatusBlock("iterative.trace", data.trace, i18n));
   }
 
-  pushBlockIfPresent(blocks, buildStatusBlock("iterative.loopInvariant", data.loopInvariant, i18n));
+  blocks.push({
+    kind: "paragraph",
+    text: localize(
+      i18n,
+      "Comparación GPU/CPU y comparación con LLM: consulte la sección Análisis Comparativo.",
+      "GPU/CPU and LLM comparisons: see Comparative Analysis section.",
+    ),
+  });
 
   if (blocks.length === 0) {
     return null;
@@ -1166,11 +2446,46 @@ function buildComparativeSection(
 ): DocumentSection | null {
   const blocks: DocumentBlock[] = [];
 
+  if (isSectionAvailable(snapshot.comparative.gpuCpu)) {
+    const gpuCpu = snapshot.comparative.gpuCpu.data;
+    blocks.push({
+      kind: "subsection",
+      title: localize(i18n, "Comparación GPU/CPU", "GPU/CPU comparison"),
+    });
+    blocks.push({
+      kind: "list",
+      items: [
+        `${localize(i18n, "Resumen", "Summary")}: ${stripLeadingLabel(gpuCpu.summary, ["Resumen", "Summary"])}`,
+        `${localize(i18n, "Recomendación", "Recommendation")}: ${stripLeadingLabel(gpuCpu.recommendation, ["Recomendación", "Recommendation"])}`,
+      ],
+    });
+
+    blocks.push({
+      kind: "subsection",
+      title: localize(i18n, "Métricas de soporte", "Supporting metrics"),
+    });
+
+    blocks.push({
+      kind: "list",
+      items: [
+        `${localize(i18n, "Total de ciclos", "Total loops")}: ${String(gpuCpu.metrics.totalLoops)}`,
+        `${localize(i18n, "Profundidad máxima de ciclos", "Maximum loop depth")}: ${String(gpuCpu.metrics.maxLoopDepth)}`,
+        `${localize(i18n, "Condicionales en ciclos", "Conditionals in loops")}: ${String(gpuCpu.metrics.conditionalsInLoops)}`,
+        `${localize(i18n, "Es recursivo", "Is recursive")}: ${String(gpuCpu.metrics.isRecursive)}`,
+        `${localize(i18n, "Cantidad de llamadas recursivas", "Recursive call count")}: ${String(gpuCpu.metrics.recursiveCallCount)}`,
+        `${localize(i18n, "Accesos a arreglos", "Array access count")}: ${String(gpuCpu.metrics.arrayAccessCount)}`,
+        `${localize(i18n, "Llamadas dentro de ciclos", "Calls inside loops")}: ${String(gpuCpu.metrics.callsInsideLoops)}`,
+      ],
+    });
+  } else {
+    pushBlockIfPresent(blocks, buildStatusBlock("comparative.gpuCpu", snapshot.comparative.gpuCpu, i18n));
+  }
+
   if (isSectionAvailable(snapshot.comparative.llm)) {
     const llmData = snapshot.comparative.llm.data;
     blocks.push({
-      kind: "paragraph",
-      text: localize(i18n, "Comparación con LLM:", "LLM comparison:"),
+      kind: "subsection",
+      title: localize(i18n, "Comparación con LLM", "LLM comparison"),
     });
 
     if (llmData.normalized) {
@@ -1194,7 +2509,7 @@ function buildComparativeSection(
       if (normalized.matches && normalized.matches.length > 0) {
         blocks.push({
           kind: "paragraph",
-          text: localize(i18n, "Coincidencias:", "Matches:"),
+          text: localize(i18n, "Coincidencias principales:", "Main matches:"),
         });
         blocks.push({ kind: "list", items: normalized.matches });
       }
@@ -1202,58 +2517,15 @@ function buildComparativeSection(
       if (normalized.differences && normalized.differences.length > 0) {
         blocks.push({
           kind: "paragraph",
-          text: localize(i18n, "Diferencias:", "Differences:"),
+          text: localize(i18n, "Diferencias principales:", "Main differences:"),
         });
         blocks.push({ kind: "list", items: normalized.differences });
       }
     } else {
-      blocks.push({
-        kind: "paragraph",
-        text: i18n.pedagogicalNoData,
-      });
+      blocks.push({ kind: "paragraph", text: i18n.pedagogicalNoData });
     }
   } else {
     pushBlockIfPresent(blocks, buildStatusBlock("comparative.llm", snapshot.comparative.llm, i18n));
-  }
-
-  if (isSectionAvailable(snapshot.comparative.gpuCpu)) {
-    const gpuCpu = snapshot.comparative.gpuCpu.data;
-    blocks.push({
-      kind: "paragraph",
-      text: localize(i18n, "Análisis GPU vs CPU:", "GPU vs CPU analysis:"),
-    });
-    blocks.push({
-      kind: "list",
-      items: [
-        `${localize(i18n, "Perfil recomendado", "Recommended profile")}: ${gpuCpu.profile}`,
-        `${localize(i18n, "Resumen", "Summary")}: ${gpuCpu.summary}`,
-        `${localize(i18n, "Recomendación", "Recommendation")}: ${gpuCpu.recommendation}`,
-        `${localize(i18n, "Puntaje GPU", "GPU score")}: ${String(gpuCpu.gpuScore)}`,
-        `${localize(i18n, "Puntaje CPU", "CPU score")}: ${String(gpuCpu.cpuScore)}`,
-      ],
-    });
-
-    blocks.push({ kind: "paragraph", text: gpuCpu.explanation });
-
-    blocks.push({
-      kind: "paragraph",
-      text: localize(i18n, "Métricas de soporte:", "Supporting metrics:"),
-    });
-
-    blocks.push({
-      kind: "list",
-      items: [
-        `${localize(i18n, "Total de ciclos", "Total loops")}: ${String(gpuCpu.metrics.totalLoops)}`,
-        `${localize(i18n, "Profundidad máxima de ciclos", "Maximum loop depth")}: ${String(gpuCpu.metrics.maxLoopDepth)}`,
-        `${localize(i18n, "Condicionales en ciclos", "Conditionals in loops")}: ${String(gpuCpu.metrics.conditionalsInLoops)}`,
-        `${localize(i18n, "Es recursivo", "Is recursive")}: ${String(gpuCpu.metrics.isRecursive)}`,
-        `${localize(i18n, "Cantidad de llamadas recursivas", "Recursive call count")}: ${String(gpuCpu.metrics.recursiveCallCount)}`,
-        `${localize(i18n, "Accesos a arreglos", "Array access count")}: ${String(gpuCpu.metrics.arrayAccessCount)}`,
-        `${localize(i18n, "Llamadas dentro de ciclos", "Calls inside loops")}: ${String(gpuCpu.metrics.callsInsideLoops)}`,
-      ],
-    });
-  } else {
-    pushBlockIfPresent(blocks, buildStatusBlock("comparative.gpuCpu", snapshot.comparative.gpuCpu, i18n));
   }
 
   if (blocks.length === 0) {
@@ -1271,6 +2543,71 @@ function buildConclusionsSection(
   snapshot: AalieAnalysisSnapshotV1,
   i18n: ExportI18nBundle,
 ): DocumentSection {
+  if (snapshot.algorithmType === "iterative") {
+    const items: string[] = [];
+    const complexityItems = CASE_ORDER
+      .map((caseName) => {
+        const complexity = pickCaseComplexity(snapshot, caseName);
+        return complexity ? `${caseLabel(caseName, i18n)}: ${complexity}` : null;
+      })
+      .filter((item): item is string => Boolean(item));
+    if (complexityItems.length > 0) {
+      items.push(...complexityItems);
+    }
+
+    const invariantAvailable =
+      isSectionAvailable(snapshot.iterative) && isSectionAvailable(snapshot.iterative.data.loopInvariant);
+    items.push(
+      invariantAvailable
+        ? localize(
+            i18n,
+            "El invariante del ciclo es consistente con la evolución del estado y respalda la corrección del recorrido.",
+            "The loop invariant is consistent with state evolution and supports traversal correctness.",
+          )
+        : localize(
+            i18n,
+            "La validación del invariante quedó limitada por disponibilidad de datos.",
+            "Invariant validation remained limited due to data availability.",
+          ),
+    );
+
+    const traceAvailable =
+      isSectionAvailable(snapshot.iterative) && isSectionAvailable(snapshot.iterative.data.trace);
+    items.push(
+      traceAvailable
+        ? localize(
+            i18n,
+            "El seguimiento de ejecución mantiene trazabilidad completa mediante resumen, cronología y vista agrupada.",
+            "Execution tracing preserves full traceability through summary, chronology, and grouped view.",
+          )
+        : localize(
+            i18n,
+            "No fue posible construir un seguimiento completo de ejecución para todos los casos.",
+            "A full execution trace could not be built for all cases.",
+          ),
+    );
+
+    if (isSectionAvailable(snapshot.comparative.gpuCpu)) {
+      const recommendation = stripLeadingLabel(
+        snapshot.comparative.gpuCpu.data.recommendation,
+        ["Recomendación", "Recommendation"],
+      );
+      items.push(
+        localize(
+          i18n,
+          `Recomendación comparativa: ${recommendation}`,
+          `Comparative recommendation: ${recommendation}`,
+        ),
+      );
+    }
+
+    return {
+      id: "conclusions",
+      title: i18n.conclusionsTitle,
+      blocks: items.length > 0 ? [{ kind: "list", items }] : [{ kind: "paragraph", text: i18n.pedagogicalNoData }],
+    };
+  }
+
   const items = CASE_ORDER
     .map((caseName) => {
       const complexity = pickCaseComplexity(snapshot, caseName);
@@ -1308,17 +2645,26 @@ export function buildDocumentModel(snapshot: AalieAnalysisSnapshotV1): DocumentM
     reportDate: parseDateForReport(snapshot.locale, snapshot.createdAt),
   };
 
-  const sections: Array<DocumentSection | null> = [
-    buildMetadataSection(snapshot, i18n),
-    buildExecutiveSummarySection(snapshot, i18n),
-    buildPseudocodeSection(snapshot, i18n),
-    buildParsingSection(snapshot, i18n),
-    buildGlobalResultSection(snapshot, i18n),
-    shouldIncludeIterative(snapshot) ? buildIterativeSection(snapshot, i18n) : null,
-    shouldIncludeRecursive(snapshot) ? buildRecursiveSection(snapshot, i18n) : null,
-    buildComparativeSection(snapshot, i18n),
-    buildConclusionsSection(snapshot, i18n),
-  ];
+  const sections: Array<DocumentSection | null> =
+    snapshot.algorithmType === "iterative"
+      ? [
+          buildExecutiveSummarySection(snapshot, i18n),
+          buildPseudocodeSection(snapshot, i18n),
+          buildIterativeInvariantSection(snapshot, i18n),
+          buildIterativeCaseAnalysisSection(snapshot, i18n),
+          buildIterativeTraceSection(snapshot, i18n),
+          buildComparativeSection(snapshot, i18n),
+          buildConclusionsSection(snapshot, i18n),
+        ]
+      : [
+          buildExecutiveSummarySection(snapshot, i18n),
+          buildPseudocodeSection(snapshot, i18n),
+          buildGlobalResultSection(snapshot, i18n),
+          shouldIncludeIterative(snapshot) ? buildIterativeSection(snapshot, i18n) : null,
+          shouldIncludeRecursive(snapshot) ? buildRecursiveSection(snapshot, i18n) : null,
+          buildComparativeSection(snapshot, i18n),
+          buildConclusionsSection(snapshot, i18n),
+        ];
 
   return {
     title: i18n.documentTitle,

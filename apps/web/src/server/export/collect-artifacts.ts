@@ -70,14 +70,56 @@ function normalizeAlgorithmKind(kind: unknown): AlgorithmKind {
   return "unknown";
 }
 
+function buildTraceInputs(
+  source: string,
+  caseName: SnapshotCase,
+): { inputSize: number; initialVariables: Record<string, unknown> | null } {
+  const defaultN = 5;
+  const usesX = /(^|[^A-Za-z0-9_])x([^A-Za-z0-9_]|$)/i.test(source);
+  const usesArrayA = /(^|[^A-Za-z0-9_])A\s*\[/.test(source);
+  const hasZeroCheck =
+    /n\s*[=<>]=\s*0|n\s*=\s*0|IF\s*\(\s*n\s*[=<>]=\s*0/i.test(source);
+  const isSortingLike =
+    /(merge|quick|heap|bubble|insertion|selection|sort|ordenar|mezclar|particionar)/i.test(
+      source,
+    );
+
+  const n = caseName === "worst" && hasZeroCheck ? 0 : defaultN;
+  const safeN = Math.max(1, n);
+  const ascArray = Array.from({ length: safeN }, (_, index) => index + 1);
+  const descArray = [...ascArray].reverse();
+  const selectedArray = isSortingLike
+    ? caseName === "best"
+      ? ascArray
+      : descArray
+    : ascArray;
+
+  const variables: Record<string, unknown> = {};
+  if (usesArrayA && n > 0) {
+    variables.A = selectedArray;
+  }
+
+  if (usesX && n > 0) {
+    if (caseName === "best") {
+      variables.x = selectedArray[0];
+    } else if (caseName === "avg") {
+      variables.x = selectedArray[Math.floor(selectedArray.length / 2)];
+    } else {
+      // Worst-case aligned with frontend trace logic: match on the last iteration.
+      variables.x = selectedArray[selectedArray.length - 1];
+    }
+  }
+
+  return {
+    inputSize: n,
+    initialVariables: Object.keys(variables).length > 0 ? variables : null,
+  };
+}
+
 export async function collectArtifactsForSnapshot(
   input: CollectArtifactsInput,
 ): Promise<BuildSnapshotInput> {
   const apiBase = getApiBase();
-  const traceCases: SnapshotCase[] =
-    input.includeTraceCases && input.includeTraceCases.length > 0
-      ? input.includeTraceCases
-      : ["worst"];
 
   const parse = await postJson<BuildSnapshotInput["parse"]>(apiBase, "/grammar/parse", {
     source: input.source,
@@ -90,6 +132,12 @@ export async function collectArtifactsForSnapshot(
   const algorithmKind = normalizeAlgorithmKind(
     input.algorithmKindHint || classify?.kind,
   );
+  const traceCases: SnapshotCase[] =
+    input.includeTraceCases && input.includeTraceCases.length > 0
+      ? input.includeTraceCases
+      : algorithmKind === "iterative" || algorithmKind === "hybrid"
+        ? ["worst", "best", "avg"]
+        : ["worst"];
 
   const analyze = await postJson<BuildSnapshotInput["analyze"]>(apiBase, "/analyze/open", {
     source: input.source,
@@ -115,12 +163,15 @@ export async function collectArtifactsForSnapshot(
   const traceByCase: BuildSnapshotInput["traceByCase"] = {};
   await Promise.all(
     traceCases.map(async (caseName) => {
+      const traceInput = buildTraceInputs(input.source, caseName);
       const trace = await postJson<NonNullable<BuildSnapshotInput["traceByCase"]>[SnapshotCase]>(
         apiBase,
         "/analyze/trace",
         {
           source: input.source,
           case: caseName,
+          input_size: traceInput.inputSize,
+          initial_variables: traceInput.initialVariables,
           locale: input.locale,
         },
       );

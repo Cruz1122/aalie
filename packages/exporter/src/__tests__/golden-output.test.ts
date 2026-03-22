@@ -4,6 +4,7 @@ import path from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
+import { compileLatexToPdf, isPdflatexAvailable } from "../infrastructure/pdf/latex-compiler";
 import { buildDocumentModel } from "../renderers/document-model-builder";
 import { renderLatexReport } from "../renderers/latex";
 import { renderMarkdownReport } from "../renderers/markdown";
@@ -33,6 +34,24 @@ function ensureGoldenFile(filePath: string, content: string): string {
   return readFileSync(filePath, "utf8");
 }
 
+function regenerateAndReadGoldenPdf(filePath: string, latex: string): Buffer | null {
+  if (!isPdflatexAvailable()) {
+    return null;
+  }
+
+  if (!existsSync(GOLDEN_DIR)) {
+    mkdirSync(GOLDEN_DIR, { recursive: true });
+  }
+
+  const compiled = compileLatexToPdf({
+    texContent: latex,
+    cleanup: true,
+    jobName: "golden-report",
+  });
+  writeFileSync(filePath, compiled.pdfBuffer);
+  return readFileSync(filePath);
+}
+
 const goldenCases: GoldenCase[] = [
   { name: "iterative", snapshotFactory: createIterativeSnapshot },
   { name: "recursive-master", snapshotFactory: () => createRecursiveSnapshot("master") },
@@ -59,12 +78,18 @@ describe("golden-output", () => {
 
       const mdPath = path.join(GOLDEN_DIR, `${testCase.name}.golden.md`);
       const texPath = path.join(GOLDEN_DIR, `${testCase.name}.golden.tex`);
+      const pdfPath = path.join(GOLDEN_DIR, `${testCase.name}.golden.pdf`);
 
       const expectedMd = ensureGoldenFile(mdPath, markdown);
       const expectedTex = ensureGoldenFile(texPath, latex);
+      const expectedPdf = regenerateAndReadGoldenPdf(pdfPath, latex);
 
       assert.strictEqual(markdown, expectedMd);
       assert.strictEqual(latex, expectedTex);
+      if (expectedPdf) {
+        assert.ok(expectedPdf.length > 1024, "golden PDF should have meaningful size");
+        assert.strictEqual(expectedPdf.subarray(0, 5).toString("utf8"), "%PDF-");
+      }
 
       const criticalTokens = [
         snapshot.snapshotId,

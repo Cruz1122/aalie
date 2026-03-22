@@ -20,7 +20,6 @@ import {
 } from "./collect-artifacts";
 
 const DEFAULT_FORMATS: ExportFormat[] = ["markdown", "latex"];
-const DEFAULT_TRACE_CASES: SnapshotCase[] = ["worst"];
 
 export interface ExportSnapshotRequest {
   source: string;
@@ -48,14 +47,14 @@ function normalizeLocale(locale: string | undefined): "es" | "en" {
   return String(locale || "en").toLowerCase().startsWith("es") ? "es" : "en";
 }
 
-function normalizeTraceCases(cases: unknown): SnapshotCase[] {
+function normalizeTraceCases(cases: unknown): SnapshotCase[] | undefined {
   if (!Array.isArray(cases) || cases.length === 0) {
-    return DEFAULT_TRACE_CASES;
+    return undefined;
   }
   const normalized = cases.filter(
     (item): item is SnapshotCase => item === "worst" || item === "best" || item === "avg",
   );
-  return normalized.length > 0 ? Array.from(new Set(normalized)) : DEFAULT_TRACE_CASES;
+  return normalized.length > 0 ? Array.from(new Set(normalized)) : undefined;
 }
 
 function normalizeFormats(formats: unknown): ExportFormat[] {

@@ -51,4 +51,28 @@ describe("export-orchestrator", () => {
         error instanceof LatexCompilationError && error.kind === "compiler_missing",
     );
   });
+
+  it("genera artefacto PDF cuando pdflatex está disponible", async () => {
+    if (!isPdflatexAvailable()) {
+      return;
+    }
+
+    const snapshot = createIterativeSnapshot();
+    const result = await buildExportReport({
+      snapshot,
+      formats: ["pdf"],
+      includeSnapshotJson: false,
+      includeZipBundle: false,
+    });
+
+    const pdf = result.artifacts.find((item) => item.format === "pdf");
+    assert.ok(pdf, "PDF artifact should be present");
+    assert.strictEqual(pdf?.mimeType, "application/pdf");
+    assert.ok(Buffer.isBuffer(pdf?.content), "PDF content should be a Buffer");
+    if (!pdf || !Buffer.isBuffer(pdf.content)) {
+      assert.fail("PDF artifact content is not a Buffer");
+    }
+    assert.ok(pdf.content.length > 1024, "PDF should not be empty");
+    assert.strictEqual(pdf.content.subarray(0, 5).toString("utf8"), "%PDF-");
+  });
 });

@@ -6,6 +6,12 @@ pnpm-debug.log*
 # Fixtures for exporter tests
 packages/exporter/src/__tests__/fixtures/golden/
 
+# Builds for exporter
+packages/exporter/build/
+
+# Reports
+reports/
+
 # Builds
 dist/
 .next/

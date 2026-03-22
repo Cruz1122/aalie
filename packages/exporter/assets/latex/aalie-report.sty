@@ -11,7 +11,7 @@
 % Dependencias (pdfLaTeX)
 % ------------------------------------------------------
 \RequirePackage{graphicx}
-\RequirePackage{xcolor}
+\RequirePackage[table]{xcolor}
 \RequirePackage{geometry}
 \RequirePackage{fancyhdr}
 \RequirePackage{tikz}
@@ -20,6 +20,10 @@
 \RequirePackage{titlesec}
 \RequirePackage{parskip}
 \RequirePackage{enumitem}
+\RequirePackage{array}
+\RequirePackage{booktabs}
+\RequirePackage{tabularx}
+\RequirePackage{longtable}
 \RequirePackage{listings}
 \RequirePackage{courier}
 \setkeys{Gin}{draft=false}
@@ -41,7 +45,18 @@
 % ------------------------------------------------------
 \setlength{\parskip}{0.35em}
 \setlength{\parindent}{0pt}
-\setlist{nosep,leftmargin=1.4em}
+\setlist{
+  leftmargin=1.35em,
+  itemsep=0.22em,
+  topsep=0.4em,
+  parsep=0pt,
+  partopsep=0pt
+}
+\setlength{\abovedisplayskip}{8pt}
+\setlength{\belowdisplayskip}{8pt}
+\setlength{\abovedisplayshortskip}{6pt}
+\setlength{\belowdisplayshortskip}{6pt}
+\renewcommand{\arraystretch}{1.15}
 
 % ------------------------------------------------------
 % Colores
@@ -52,6 +67,7 @@
 \definecolor{aalieLightGray}{RGB}{135,135,135}
 \definecolor{aalieCodeBg}{RGB}{246,248,250}
 \definecolor{aalieCodeFrame}{RGB}{210,218,226}
+\definecolor{aalieSubsectionBg}{RGB}{238,242,246}
 
 % ------------------------------------------------------
 % Variables configurables
@@ -69,7 +85,7 @@
 \newcommand{\aalie@reportDate}{\today}
 \newcommand{\aalie@labelVersion}{Versión}
 \newcommand{\aalie@labelDate}{Fecha}
-\newcommand{\aalie@wmOpacity}{0.22}
+\newcommand{\aalie@wmOpacity}{0.15}
 \newcommand{\aalie@wmWidth}{0.42\paperwidth}
 \newcommand{\aalie@wmGraphic}{%
   \includegraphics[width=\aalie@wmWidth,keepaspectratio]{\aalie@wmLogo}%
@@ -222,17 +238,31 @@ No sustituye criterio profesional ni garantiza exactitud total. Valide los resul
 }
 
 \newcommand{\aalie@subsectionband}[1]{%
-  \aalie@fullband{#1}%
-  \vspace{0.14em}%
+  \GraySubsection{#1}%
 }
 
 \newcommand{\AALIEExecutiveSummary}[1]{%
-  \vspace{0.35em}%
-  \noindent
-  {\Large\bfseries\color{ucaldasBlue}#1\par}%
+  \vspace{0.25em}%
+  \aalie@sectionband{#1}%
   \vspace{0.45em}%
-  {\color{ingColor}\rule{\textwidth}{0.8pt}\par}%
-  \vspace{0.55em}%
+}
+
+\newcommand{\GraySubsection}[1]{%
+  \vspace{1.0em}%
+  \noindent
+  \begingroup
+  \setlength{\fboxsep}{0pt}%
+  \hspace*{-\dimexpr 1in+\hoffset+\oddsidemargin\relax}%
+  \colorbox{aalieSubsectionBg}{%
+    \parbox[c][0.62cm][c]{\paperwidth}{%
+      \hspace*{1.45cm}%
+      \parbox{\dimexpr\paperwidth-2.90cm\relax}{%
+        \raggedright\bfseries\color{ucaldasBlue} #1%
+      }%
+    }%
+  }%
+  \endgroup
+  \par\vspace{0.55em}%
 }
 
 % ------------------------------------------------------
@@ -252,8 +282,8 @@ No sustituye criterio profesional ni garantiza exactitud total. Valide los resul
   {0pt}
   {\aalie@subsectionband}
 
-\titlespacing*{\section}{0pt}{1.7em}{0.18em}
-\titlespacing*{\subsection}{0pt}{1.3em}{0.14em}
+\titlespacing*{\section}{0pt}{1.95em}{0.42em}
+\titlespacing*{\subsection}{0pt}{1.1em}{0.35em}
 
 % ------------------------------------------------------
 % Bloques de código institucionales
