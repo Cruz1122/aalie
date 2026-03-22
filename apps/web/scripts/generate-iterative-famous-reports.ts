@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import type { ExportArtifact } from "@aa/exporter";
 
@@ -148,7 +149,9 @@ function assertDeterministicLiveData(result: Awaited<ReturnType<typeof createRep
 }
 
 async function main(): Promise<void> {
-  const root = path.resolve(process.cwd(), "reports", "iterative-famous");
+  const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+  const repoRoot = path.resolve(scriptDir, "..", "..", "..");
+  const root = path.join(repoRoot, "reports", "iterative-famous");
   mkdirSync(root, { recursive: true });
 
   for (const algorithm of FAMOUS_ITERATIVE_ALGORITHMS) {

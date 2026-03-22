@@ -461,6 +461,28 @@ class CodeExecutor:
                     elif lowered in end_like:
                         params_map[param_name] = array_len
 
+        # Fallback final para parámetros escalares sin valor:
+        # asignar valores concretos estables para evitar ejecución simbólica infinita
+        # en bucles dependientes de parámetros (ej. Euclides con b != 0).
+        unresolved_params = [p for p in param_names if p not in params_map]
+        if unresolved_params:
+            base_size = (
+                int(self.input_size)
+                if isinstance(self.input_size, int) and self.input_size > 0
+                else 10
+            )
+            for idx, param_name in enumerate(unresolved_params):
+                lowered = param_name.lower()
+                if lowered in {"n", "size", "len", "length", "tam", "tamano"}:
+                    params_map[param_name] = base_size
+                    continue
+                if idx == 0:
+                    params_map[param_name] = base_size
+                elif idx == 1:
+                    params_map[param_name] = max(1, base_size // 2)
+                else:
+                    params_map[param_name] = max(1, base_size - idx)
+
         # Fallback: algoritmos de lista enlazada (buscarLista, etc.) con A y x
         if len(params_map) < len(param_names) and len(param_names) >= 2:
             arr = self.environment.get_variable("A")
@@ -1711,4 +1733,3 @@ class CodeExecutor:
                         return True
         
         return False
-

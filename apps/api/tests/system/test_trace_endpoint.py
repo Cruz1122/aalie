@@ -206,6 +206,29 @@ END
                 assert len(steps) > 0
                 assert all("line" in s for s in steps)
 
+    def test_trace_euclides_without_initial_variables(self):
+        """Euclides con input_size (sin initial_variables) no debe truncarse por loop infinito simbólico."""
+        source = """
+mcd(a, b) BEGIN
+    WHILE (b != 0) DO BEGIN
+        temp <- b;
+        b <- a MOD b;
+        a <- temp;
+    END
+    RETURN a;
+END
+"""
+        response = client.post(
+            "/analyze/trace",
+            json={"source": source, "case": "worst", "input_size": 24},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("ok") is True
+        steps = data.get("trace", {}).get("steps", [])
+        assert len(steps) > 0
+        assert not any((s.get("iteration") or {}).get("truncated") for s in steps)
+
     def test_trace_invalid_source(self):
         """Source inválido retorna error."""
         response = client.post(
