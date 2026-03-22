@@ -1,19 +1,18 @@
 import type {
-  AalieAnalysisSnapshotV1,
-  SnapshotCase,
-  SnapshotRecursiveMethod,
-  SnapshotSourceOrigin,
-} from "@aa/types";
-import type {
   BuildExportReportResult,
   ExportFormat,
 } from "@aa/exporter";
-
 import {
   assertValidSnapshot,
   buildExportReport,
   buildSnapshot,
 } from "@aa/exporter";
+import type {
+  AalieAnalysisSnapshotV1,
+  SnapshotCase,
+  SnapshotRecursiveMethod,
+  SnapshotSourceOrigin,
+} from "@aa/types";
 
 import {
   collectArtifactsForSnapshot,

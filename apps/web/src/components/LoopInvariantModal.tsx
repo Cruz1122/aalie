@@ -50,6 +50,8 @@ function fallbackInvariant(t: ReturnType<typeof useTranslations>): LoopInvariant
       bodyWrites: [],
       bodyReads: [],
       detectedFeatures: [],
+      classificationConfidence: null,
+      templateVariant: null,
     },
   };
 }

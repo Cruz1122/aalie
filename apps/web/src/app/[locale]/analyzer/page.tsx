@@ -1936,14 +1936,14 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                     </AAButton>
                   </div>
                 </div>
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 min-h-0 overflow-hidden">
                   <AnalyzerEditor
                     initialValue={source}
                     onChange={setSource}
                     onAstChange={setAst}
                     onParseStatusChange={handleParseStatusChange}
                     onErrorsChange={handleErrorsChange}
-                    height="408px"
+                    height="100%"
                   />
                   <input
                     ref={txtInputRef}

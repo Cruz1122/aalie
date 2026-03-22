@@ -1,8 +1,8 @@
-import type { SnapshotCase, SnapshotRecursiveMethod } from "@aa/types";
 import type { BuildSnapshotInput } from "@aa/exporter";
+import type { SnapshotCase, SnapshotRecursiveMethod } from "@aa/types";
 
-import { normalizeLlmComparativePayload, requestLlmComparison } from "./llm-adapter";
 import { buildGpuCpuComparative } from "./gpu-cpu-adapter";
+import { normalizeLlmComparativePayload, requestLlmComparison } from "./llm-adapter";
 
 type AlgorithmKind = "iterative" | "recursive" | "hybrid" | "dummy" | "unknown";
 
