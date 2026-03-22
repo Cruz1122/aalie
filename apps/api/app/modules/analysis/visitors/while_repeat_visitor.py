@@ -538,7 +538,7 @@ class WhileRepeatVisitor:
                             # Verificar estructura del nodo directamente
                             if isinstance(value, dict) and value.get("type", "").lower() == "binary":
                                 op = value.get("op", "")
-                                if op in ("/", "//"):
+                                if op in ("/", "//", "div"):
                                     left_part = value.get("left", {})
                                     right_part = value.get("right", {})
                                     

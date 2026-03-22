@@ -67,7 +67,7 @@ def _parse_update(value: Any, var_name: str) -> Optional[Dict[str, Any]]:
                 return {"type": "mod_decrease", "other_var": other, "monotone": True}
 
     # Binary: i <- i + c, i - c, i * c, i / c
-    if t == "binary" and op in ("+", "-", "*", "/", "//"):
+    if t == "binary" and op in ("+", "-", "*", "/", "//", "div"):
         left = value.get("left", {})
         right = value.get("right", {})
 
@@ -79,7 +79,7 @@ def _parse_update(value: Any, var_name: str) -> Optional[Dict[str, Any]]:
                         return {"type": "num", "operator": "+", "constant": const, "monotone": True}
                     if op == "-":
                         return {"type": "num", "operator": "-", "constant": const, "monotone": True}
-                    if op in ("*", "/", "//"):
+                    if op in ("*", "/", "//", "div"):
                         return {"type": "num", "operator": op, "constant": const, "monotone": True}
         if isinstance(right, dict) and right.get("type", "").lower() == "identifier":
             if right.get("name", "") == var_name and op in ("+", "*"):

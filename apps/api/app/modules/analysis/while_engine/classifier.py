@@ -313,7 +313,7 @@ def classify_while(
                         reason_code="while_decrement",
                         evidence={"var": var_name, "limit": limit, "op": op, "change": f"-{const}"},
                     )
-                if change_op in ("*", "/", "//") and op in ("<", "<="):
+                if change_op in ("*", "/", "//", "div") and op in ("<", "<="):
                     iterations = f"\\log_{{{const}}}(({limit}) / ({initial_expr}))"
                     return ClassifyResult(
                         status="bounded",
@@ -327,7 +327,7 @@ def classify_while(
                         },
                     )
                 # var > 0 (o var >= cte) con var <- var / c → iteraciones log_c(initial) o log(initial/limit) (genérico)
-                if change_op in ("/", "//") and op in (">", ">="):
+                if change_op in ("/", "//", "div") and op in (">", ">="):
                     try:
                         is_zero = limit in ("0", "0.0") or (isinstance(limit, str) and limit.isdigit() and int(limit) == 0)
                     except (ValueError, TypeError):

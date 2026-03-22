@@ -333,6 +333,24 @@ END
   END
 END
 """),
+    # 26. Búsqueda binaria con DIV (división entera)
+    ("Búsqueda binaria DIV", """binarySearch(A[n], n, x) BEGIN
+    low <- 1;
+    high <- n;
+    WHILE (low <= high) DO BEGIN
+        mid <- (low + high) DIV 2;
+        IF (A[mid] = x) THEN BEGIN
+            RETURN mid;
+        END;
+        IF (A[mid] < x) THEN BEGIN
+            low <- mid + 1;
+        END ELSE BEGIN
+            high <- mid - 1;
+        END;
+    END;
+    RETURN -1;
+END
+"""),
 ]
 
 
@@ -374,6 +392,7 @@ EXPECTED_WORST_COMPLEXITY = {
     "FOR-FOR-WHILE": "cubic",
     "Bubble Sort Mejorado": "quadratic",
     "Bubble Sort Limite": "quadratic",
+    "Búsqueda binaria DIV": "log",
 }
 
 # Solo algoritmos con expectativa definida (para test_worst_case_matches_expected_complexity).
