@@ -84,7 +84,6 @@
       "classifyError": "Could not classify algorithm",
       "analysisStopped": "Analysis stopped",
       "finalizing": "Finalizing analysis...",
-      "complete": "Analysis complete",
       "errorOccurred": "An error occurred",
       "generatingPolynomial": "Generating polynomial form..."
     },
@@ -154,6 +153,17 @@
           "description": "For standard divide-and-conquer recurrences T(n) = a·T(n/b) + f(n)."
         }
       }
+    },
+    "exportSelector": {
+      "title": "Choose download method",
+      "description": "Select the formats in which you want to download the analysis report.",
+      "formats": {
+        "markdown": "Markdown (MD)",
+        "pdf": "PDF Document"
+      },
+      "download": "Download",
+      "progress": "Generating report...",
+      "pleaseWait": "It may take a few seconds."
     },
     "view": {
       "sourceCode": "Source Code",

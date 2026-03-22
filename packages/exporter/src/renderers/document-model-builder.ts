@@ -1302,12 +1302,12 @@ function buildCountSummationExpression(lineCosts: LineCost[]): { structural: str
   }
   const linear = parsed.reduce(
     (acc, item) => ({
-      nCoeff: acc.nCoeff + (item?.nCoeff || 0),
-      constant: acc.constant + (item?.constant || 0),
+      nCoeff: (acc?.nCoeff || 0) + (item?.nCoeff || 0),
+      constant: (acc?.constant || 0) + (item?.constant || 0),
     }),
-    { nCoeff: 0, constant: 0 },
+    { nCoeff: 0, constant: 0 } as LinearInN,
   );
-  const simplified = formatLinearExpression(linear);
+  const simplified = formatLinearExpression(linear as LinearInN);
   return { structural, simplified: simplified === structural ? null : simplified };
 }
 

@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
 
-export type ProgressLoaderMode = "analysis" | "comparison";
+export type ProgressLoaderMode = "analysis" | "comparison" | "export";
 export type AlgorithmType = "iterative" | "recursive" | "hybrid" | "unknown";
 export type BlurScope = "full" | "container";
 
@@ -31,6 +31,8 @@ interface AAProgressLoaderProps {
   overlayContent?: React.ReactNode;
   /** Habilita interacciones aunque el loader siga en progreso. */
   allowPointerEvents?: boolean;
+  /** Formatos de exportación seleccionados (solo de uso cuando mode="export") */
+  exportFormats?: string[];
 }
 
 /**
@@ -72,6 +74,7 @@ export const AAProgressLoader: React.FC<AAProgressLoaderProps> = ({
   blurScope = "full",
   overlayContent,
   allowPointerEvents = false,
+  exportFormats,
 }) => {
   const t = useTranslations("analyzer");
   const tLoader = useTranslations("analyzer.loader");
@@ -85,10 +88,9 @@ export const AAProgressLoader: React.FC<AAProgressLoaderProps> = ({
     return t(`algorithmType.${type}`);
   };
 
-  const progressLabel = mode === "analysis" ? tLoader("progress") : tComparison("progress");
-  const errorTitle =
-    mode === "analysis" ? tLoader("errorTitle") : tComparison("errorTitle");
-  const closeLabel = mode === "analysis" ? tCommon("close") : tComparison("close");
+  const progressLabel = mode === "analysis" ? tLoader("progress") : mode === "comparison" ? tComparison("progress") : t("exportSelector.progress");
+  const errorTitle = mode === "analysis" ? tLoader("errorTitle") : mode === "comparison" ? tComparison("errorTitle") : "Error";
+  const closeLabel = mode === "analysis" ? tCommon("close") : mode === "comparison" ? tComparison("close") : tCommon("close");
 
   const tooltipText =
     !isComplete && !hasError
@@ -96,18 +98,36 @@ export const AAProgressLoader: React.FC<AAProgressLoaderProps> = ({
         ? tLoader("analyzingRecurrence")
         : mode === "analysis"
           ? tLoader("pleaseWait")
-          : tComparison("pleaseWait")
+          : mode === "comparison"
+            ? tComparison("pleaseWait")
+            : t("exportSelector.pleaseWait")
       : "";
+
+  const isExportGroup = mode === "export" && exportFormats && exportFormats.length > 1;
+  const isExportPdf = mode === "export" && exportFormats?.includes("pdf") && (!exportFormats || exportFormats.length === 1);
+  const isExportMarkdown = mode === "export" && exportFormats?.includes("markdown") && (!exportFormats || exportFormats.length === 1);
 
   const barGradient =
     mode === "comparison"
       ? "from-purple-500 to-purple-400"
-      : "from-blue-500 to-blue-400";
+      : isExportMarkdown
+        ? "from-blue-500 to-blue-400"
+      : isExportPdf
+        ? "from-red-500 to-red-400"
+      : isExportGroup
+        ? "from-slate-300 to-slate-100"
+        : "from-blue-500 to-blue-400";
 
   const iconColor =
     mode === "comparison"
       ? "bg-purple-500/20 border-purple-500/30 text-purple-400"
-      : "bg-blue-500/20 border-blue-500/30 text-blue-400";
+      : isExportMarkdown
+        ? "bg-blue-500/20 border-blue-500/30 text-blue-400"
+      : isExportPdf
+        ? "bg-red-500/20 border-red-500/30 text-red-400"
+      : isExportGroup
+        ? "bg-slate-500/20 border-slate-500/30 text-slate-300"
+        : "bg-blue-500/20 border-blue-500/30 text-blue-400";
 
   // Timer post-completado: 1.5-2s mostrando mensaje final antes de cerrar
   useEffect(() => {
@@ -179,7 +199,7 @@ export const AAProgressLoader: React.FC<AAProgressLoaderProps> = ({
                 className={`w-16 h-16 rounded-full flex items-center justify-center border-2 ${iconColor}`}
               >
                 <span
-                  className={`material-symbols-outlined text-4xl animate-spin ${mode === "comparison" ? "text-purple-400" : "text-blue-400"}`}
+                  className={`material-symbols-outlined text-4xl animate-spin ${mode === "comparison" ? "text-purple-400" : isExportMarkdown ? "text-blue-400" : isExportPdf ? "text-red-400" : isExportGroup ? "text-slate-300" : "text-blue-400"}`}
                 >
                   progress_activity
                 </span>
@@ -235,6 +255,30 @@ export const AAProgressLoader: React.FC<AAProgressLoaderProps> = ({
                     <span>{tComparison("comparingWithLlm")}</span>
                   </div>
                 )}
+                {isExportMarkdown && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium bg-blue-500/20 text-blue-400 border-blue-500/30 animate-[pop_0.5s_ease-out]">
+                    <span className="material-symbols-outlined text-base">
+                      markdown
+                    </span>
+                    <span>Markdown (MD)</span>
+                  </div>
+                )}
+                {isExportPdf && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium bg-red-500/20 text-red-400 border-red-500/30 animate-[pop_0.5s_ease-out]">
+                    <span className="material-symbols-outlined text-base">
+                      picture_as_pdf
+                    </span>
+                    <span>{t("exportSelector.formats.pdf")}</span>
+                  </div>
+                )}
+                {isExportGroup && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium bg-slate-500/20 text-slate-300 border-slate-500/30 animate-[pop_0.5s_ease-out]">
+                    <span className="material-symbols-outlined text-base">
+                      folder_zip
+                    </span>
+                    <span>Markdown & PDF (ZIP)</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -244,7 +288,7 @@ export const AAProgressLoader: React.FC<AAProgressLoaderProps> = ({
           {!hasError && (
             <div
               className={`absolute left-8 right-8 transition-[bottom] duration-300 ${
-                algorithmType || mode === "comparison" ? "bottom-10" : "bottom-24"
+                algorithmType || mode === "comparison" || mode === "export" ? "bottom-10" : "bottom-24"
               }`}
             >
               <div className="flex justify-between items-center mb-2">

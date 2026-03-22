@@ -17,6 +17,7 @@ import { AnalyzerEditor } from "@/components/AnalyzerEditor";
 import { ASTTreeView } from "@/components/ASTTreeView";
 import ChatBot from "@/components/ChatBot";
 import ComparisonModal from "@/components/ComparisonModal";
+import ExportFormatSelector, { ExportFormatType } from "@/components/ExportFormatSelector";
 import Footer from "@/components/Footer";
 import GeneralProcedureModal from "@/components/GeneralProcedureModal";
 import GPUCPUModal from "@/components/GPUCPUModal";
@@ -75,6 +76,7 @@ export default function AnalyzerPage() {
   const tAlgorithmType = useTranslations("analyzer.algorithmType");
   const tView = useTranslations("analyzer.view");
   const tMessages = useTranslations("analyzer.messages");
+  const tExport = useTranslations("analyzer.exportSelector");
   const tCommon = useTranslations("common");
   const getMessage = (key: string) => t(key);
 
@@ -190,6 +192,12 @@ export default function AnalyzerPage() {
   const [showGPUCPUModal, setShowGPUCPUModal] = useState(false);
   const [gpuCpuAnalysis, setGpuCpuAnalysis] = useState<GPUCPUAnalysisResult | null>(null);
   const [showLoopInvariantModal, setShowLoopInvariantModal] = useState(false);
+
+  // Estados de exportación de reporte
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [exportFormats, setExportFormats] = useState<ExportFormatType[]>([]);
 
   // Refs para evitar memory leaks con timeouts
   const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -1807,8 +1815,83 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
     }
   }, [selectedCase, isHydrated]);
 
+  const handleExport = async (formats: ExportFormatType[]) => {
+    setShowExportModal(false);
+    setExportFormats(formats);
+    setIsExporting(true);
+    setExportProgress(0);
+
+    const animateExport = async (from: number, to: number, ms: number) => {
+      return new Promise<void>((resolve) => {
+        let current = from;
+        const step = (to - from) / (ms / 50);
+        const interval = setInterval(() => {
+          current += step;
+          if (current >= to) {
+            clearInterval(interval);
+            setExportProgress(to);
+            resolve();
+          } else {
+            setExportProgress(current);
+          }
+        }, 50);
+      });
+    };
+
+    animateExport(0, 90, 2000);
+
+    try {
+      const reqBody = {
+        source,
+        formats,
+        includeZipBundle: formats.length > 1,
+        locale: locale === "es" ? "es" : "en",
+        cachedParse: ast ? { program: ast, syntaxErrors: parseErrors || [] } : undefined,
+        cachedClassify: algorithmType ? { kind: algorithmType, method: (data?.worst as any)?.method || (data?.best as any)?.method || "master" } : undefined,
+        cachedAnalyze: data && (data.worst || data.best || data.avg) ? data : undefined,
+      };
+
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      const algoName = algorithmType || "algorithm";
+      const reportWord = locale === "es" ? "reporte" : "report";
+
+      const res = await fetch("/api/export/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(reqBody)
+      });
+
+      if (!res.ok) throw new Error("Export failed");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+
+      if (formats.length > 1) {
+        a.download = `${dateStr}-${algoName}-${reportWord}.zip`;
+      } else if (formats[0] === "markdown") {
+        a.download = `${dateStr}-${algoName}-${reportWord}.md`;
+      } else {
+        a.download = `${dateStr}-${algoName}-${reportWord}.pdf`;
+      }
+
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      await animateExport(90, 100, 200);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsExporting(false);
+      setExportProgress(0);
+    }
+  };
+
   // Computar si el botón debe estar deshabilitado
-  const isButtonDisabled = analyzing || !source.trim() || !localParseOk;
+  const isButtonDisabled = analyzing || !source.trim() || !localParseOk || isExporting;
   const loopInvariantData = data?.loopInvariant || data?.worst?.loopInvariant || null;
 
   return (
@@ -1853,6 +1936,39 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
               />
             ) : undefined
           }
+        />
+      )}
+
+      {/* Loader de comparación con LLM */}
+      {isComparing && (
+        <AAProgressLoader
+          mode="comparison"
+          progress={comparisonProgress}
+          message={comparisonMessage}
+          isComplete={false}
+          error={comparisonMessage.startsWith("Error:") ? comparisonMessage : null}
+          onClose={() => setIsComparing(false)}
+        />
+      )}
+
+      {/* Loader de exportación */}
+      {isExporting && (
+        <AAProgressLoader
+          mode="export"
+          progress={exportProgress}
+          message={tExport("progress")}
+          isComplete={false}
+          error={null}
+          exportFormats={exportFormats}
+          onClose={() => setIsExporting(false)}
+        />
+      )}
+
+      {/* Modal de exportación */}
+      {showExportModal && (
+        <ExportFormatSelector
+          onSelect={handleExport}
+          onCancel={() => setShowExportModal(false)}
         />
       )}
 
@@ -1904,7 +2020,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                       type="button"
                       onClick={() => txtInputRef.current?.click()}
                       disabled={isImportingTxt}
-                      className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-cyan-400/50 bg-gradient-to-br from-cyan-500/20 to-cyan-500/20 border border-cyan-500/30 hover:from-cyan-500/30 hover:to-cyan-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
+                      className="flex items-center justify-center w-8 h-8 rounded-md text-[13px] font-medium transition-all hover:scale-[1.05] focus:outline-none focus:ring-1 focus:ring-slate-400/50 bg-slate-500/10 border border-slate-500/20 hover:bg-slate-500/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group text-slate-300"
                       title={isImportingTxt ? tView("importingTxt") : tView("importTxt")}
                     >
                       {isImportingTxt ? (
@@ -1912,23 +2028,35 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                           progress_activity
                         </span>
                       ) : (
-                        <span className="material-symbols-outlined text-sm">upload_file</span>
+                        <span className="material-symbols-outlined text-[18px]">upload</span>
                       )}
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
                         {tView("importTxt")}
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowExportModal(true)}
+                      disabled={!data || (!data.worst && !data.best && !data.avg) || analyzing || isExporting}
+                      className="flex items-center justify-center w-8 h-8 rounded-md text-[13px] font-medium transition-all hover:scale-[1.05] focus:outline-none focus:ring-1 focus:ring-slate-400/50 bg-slate-500/10 border border-slate-500/20 hover:bg-slate-500/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group text-slate-300"
+                      title={tView("exportReport")}
+                    >
+                      <span className="material-symbols-outlined text-[18px]">download</span>
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                        {tView("exportReport")}
                       </div>
                     </button>
                     <AAButton
                       onClick={handleAnalyze}
                       disabled={isButtonDisabled}
                       variant="primary"
-                      size="md"
-                      className="w-[100px] h-[36px] min-w-[100px]"
+                      size="sm"
+                      className="w-[95px] h-[32px] min-w-[95px] text-xs font-semibold px-2"
                     >
                       {analyzing ? (
                         <div className="relative">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping absolute" />
-                          <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-ping absolute" />
+                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
                         </div>
                       ) : (
                         tView("analyze")
@@ -2303,19 +2431,6 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         }}
       />
 
-      {/* Loader de comparación con LLM */}
-      {isComparing && (
-        <AAProgressLoader
-          mode="comparison"
-          progress={comparisonProgress}
-          message={comparisonMessage}
-          isComplete={false}
-          error={comparisonMessage.startsWith("Error:") ? comparisonMessage : null}
-          onClose={() => setIsComparing(false)}
-        />
-      )}
-
-      {/* Modal de comparación con LLM */}
       <ComparisonModal
         open={showComparisonModal}
         onClose={() => setShowComparisonModal(false)}

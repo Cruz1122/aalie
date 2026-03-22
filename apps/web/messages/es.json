@@ -84,7 +84,6 @@
       "classifyError": "No se pudo clasificar el algoritmo",
       "analysisStopped": "Análisis detenido",
       "finalizing": "Finalizando análisis...",
-      "complete": "Análisis completo",
       "errorOccurred": "Ocurrió un error",
       "generatingPolynomial": "Generando forma polinómica..."
     },
@@ -154,6 +153,17 @@
           "description": "Para recurrencias divide-and-conquer estándar T(n) = a·T(n/b) + f(n)."
         }
       }
+    },
+    "exportSelector": {
+      "title": "Elige método de descarga",
+      "description": "Selecciona los formatos en los que deseas descargar el reporte de análisis.",
+      "formats": {
+        "markdown": "Markdown (MD)",
+        "pdf": "Documento PDF"
+      },
+      "download": "Descargar",
+      "progress": "Generando reporte...",
+      "pleaseWait": "Puede tardar unos segundos."
     },
     "view": {
       "sourceCode": "Código Fuente",
@@ -274,7 +284,10 @@
       "dominatingLevel": "Nivel Dominante:",
       "leavesLevel": "Hojas (último nivel)",
       "rootLevel": "Raíz (primer nivel)",
-      "levelN": "Nivel {level}"
+      "levelN": "Nivel {level}",
+      "exportReport": "Descargar reporte",
+      "exportingReport": "Descargando reporte...",
+      "exportNoData": "No hay análisis para exportar"
     },
     "loopInvariant": {
       "title": "Loop Invariant Determinista",
@@ -845,6 +858,27 @@
       "progress": "Progreso",
       "analyzingRecurrence": "Analizando recurrencia...",
       "pleaseWait": "Por favor, espera mientras se completa el análisis..."
+    },
+    "exportModal": {
+      "title": "Elige método de descarga",
+      "subtitle": "Selecciona el/los formato(s) que deseas incluir en tu exportación.",
+      "markdownLabel": "Markdown",
+      "markdownDesc": "Formato estándar de fácil lectura",
+      "pdfLabel": "PDF",
+      "pdfDesc": "Documento formateado (requiere compilación)",
+      "confirm": "Descargar",
+      "cancel": "Cancelar",
+      "generating": "Generando reporte...",
+      "generatingMd": "Generando Markdown...",
+      "generatingPdf": "Generando PDF...",
+      "complete": "Reporte listo",
+      "errorTitle": "Error al generar reporte",
+      "progress": "Progreso",
+      "pleaseWait": "Por favor espera mientras se genera el reporte...",
+      "reportWord": "reporte",
+      "errorPdfTimeout": "La generación de PDF excedió el tiempo límite. Intenta de nuevo o descarga solo Markdown.",
+      "errorPdfCompilation": "Error compilando PDF: {message}",
+      "pdfDisclaimer": "La generación de PDF puede tardar unos segundos."
     }
   },
   "documentation": {

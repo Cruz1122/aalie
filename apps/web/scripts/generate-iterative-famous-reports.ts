@@ -126,18 +126,18 @@ function assertDeterministicLiveData(result: Awaited<ReturnType<typeof createRep
       throw new Error("Iterative section is not available in snapshot.");
     }
 
-    const invariantSection = result.snapshot.iterative.data.loopInvariant;
-    if (invariantSection.status !== "available") {
+    const invariantSection = result.snapshot.iterative?.data?.loopInvariant;
+    if (!invariantSection || invariantSection.status !== "available") {
       throw new Error("Loop invariant is missing; expected deterministic /analyze/open loopInvariant.");
     }
 
-    const traceSection = result.snapshot.iterative.data.trace;
-    if (traceSection.status !== "available") {
+    const traceSection = result.snapshot.iterative?.data?.trace;
+    if (!traceSection || traceSection.status !== "available") {
       throw new Error("Trace section is missing; expected deterministic /analyze/trace data.");
     }
 
     const missingCases = ["worst", "best", "avg"].filter((caseName) => {
-      const trace = traceSection.data[caseName as "worst" | "best" | "avg"];
+      const trace = traceSection?.data?.[caseName as "worst" | "best" | "avg"];
       return !trace || !Array.isArray(trace.steps) || trace.steps.length === 0;
     });
     if (missingCases.length > 0) {

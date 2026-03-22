@@ -34,6 +34,10 @@ export interface ExportSnapshotRequest {
   algorithmKind?: "iterative" | "recursive" | "hybrid" | "dummy" | "unknown";
   apiKey?: string;
   requestOrigin?: string;
+  cachedParse?: any;
+  cachedClassify?: any;
+  cachedAnalyze?: any;
+  cachedTraceByCase?: any;
 }
 
 export interface ExportReportRequest extends ExportSnapshotRequest {
@@ -82,6 +86,10 @@ function toCollectInput(input: ExportSnapshotRequest): CollectArtifactsInput {
     algorithmKindHint: input.algorithmKind,
     apiKey: input.apiKey,
     requestOrigin: input.requestOrigin,
+    cachedParse: input.cachedParse,
+    cachedClassify: input.cachedClassify,
+    cachedAnalyze: input.cachedAnalyze,
+    cachedTraceByCase: input.cachedTraceByCase,
   };
 }
 

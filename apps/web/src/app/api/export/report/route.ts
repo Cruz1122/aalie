@@ -43,33 +43,29 @@ export async function POST(request: NextRequest) {
       ...body,
       source,
       requestOrigin: request.nextUrl.origin,
+      cachedParse: body.cachedParse,
+      cachedClassify: body.cachedClassify,
+      cachedAnalyze: body.cachedAnalyze,
+      cachedTraceByCase: body.cachedTraceByCase,
     });
 
-    return NextResponse.json(
-      {
-        ok: true,
-        snapshotMeta: {
-          snapshotId: result.snapshot.snapshotId,
-          contentHash: result.snapshot.contentHash,
-          schemaVersion: result.snapshot.schemaVersion,
-          createdAt: result.snapshot.createdAt,
-        },
-        files: result.artifacts.map((artifact) => ({
-          format: artifact.format,
-          filename: artifact.filename,
-          mimeType: artifact.mimeType,
-          ...encodeContent(artifact.content),
-        })),
-        bundle: result.bundle
-          ? {
-              filename: result.bundle.filename,
-              encoding: "base64",
-              content: result.bundle.content.toString("base64"),
-            }
-          : null,
+    const isBundle = !!result.bundle;
+    const outputMatch = result.bundle || result.artifacts[0];
+    if (!outputMatch) {
+      throw new Error("No artifacts were generated.");
+    }
+
+    const mimeType = isBundle ? "application/zip" : (outputMatch as any).mimeType;
+
+    return new NextResponse(outputMatch.content as unknown as BodyInit, {
+      status: 200,
+      headers: {
+        "Content-Type": mimeType,
+        "Content-Disposition": `attachment; filename="${outputMatch.filename}"`,
+        "X-Snapshot-Id": result.snapshot.snapshotId,
+        "X-Content-Hash": result.snapshot.contentHash,
       },
-      { status: 200 },
-    );
+    });
   } catch (error) {
     if (error instanceof LatexCompilationError) {
       return NextResponse.json(

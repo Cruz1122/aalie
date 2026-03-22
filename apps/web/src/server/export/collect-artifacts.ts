@@ -19,6 +19,10 @@ export interface CollectArtifactsInput {
   algorithmKindHint?: AlgorithmKind;
   apiKey?: string;
   requestOrigin?: string;
+  cachedParse?: any;
+  cachedClassify?: any;
+  cachedAnalyze?: any;
+  cachedTraceByCase?: any;
 }
 
 function getApiBase(): string {
@@ -121,11 +125,11 @@ export async function collectArtifactsForSnapshot(
 ): Promise<BuildSnapshotInput> {
   const apiBase = getApiBase();
 
-  const parse = await postJson<BuildSnapshotInput["parse"]>(apiBase, "/grammar/parse", {
+  const parse = input.cachedParse || await postJson<BuildSnapshotInput["parse"]>(apiBase, "/grammar/parse", {
     source: input.source,
   });
 
-  const classify = await postJson<BuildSnapshotInput["classify"]>(apiBase, "/classify", {
+  const classify = input.cachedClassify || await postJson<BuildSnapshotInput["classify"]>(apiBase, "/classify", {
     source: input.source,
   });
 
@@ -139,7 +143,7 @@ export async function collectArtifactsForSnapshot(
         ? ["worst", "best", "avg"]
         : ["worst"];
 
-  const analyze = await postJson<BuildSnapshotInput["analyze"]>(apiBase, "/analyze/open", {
+  const analyze = input.cachedAnalyze || await postJson<BuildSnapshotInput["analyze"]>(apiBase, "/analyze/open", {
     source: input.source,
     mode: "all",
     avgModel: { mode: "uniform", predicates: {} },
@@ -160,24 +164,26 @@ export async function collectArtifactsForSnapshot(
     );
   }
 
-  const traceByCase: BuildSnapshotInput["traceByCase"] = {};
-  await Promise.all(
-    traceCases.map(async (caseName) => {
-      const traceInput = buildTraceInputs(input.source, caseName);
-      const trace = await postJson<NonNullable<BuildSnapshotInput["traceByCase"]>[SnapshotCase]>(
-        apiBase,
-        "/analyze/trace",
-        {
-          source: input.source,
-          case: caseName,
-          input_size: traceInput.inputSize,
-          initial_variables: traceInput.initialVariables,
-          locale: input.locale,
-        },
-      );
-      traceByCase[caseName] = trace || null;
-    }),
-  );
+  const traceByCase: NonNullable<BuildSnapshotInput["traceByCase"]> = input.cachedTraceByCase || {};
+  if (!input.cachedTraceByCase) {
+    await Promise.all(
+      traceCases.map(async (caseName) => {
+        const traceInput = buildTraceInputs(input.source, caseName);
+        const trace = await postJson<NonNullable<BuildSnapshotInput["traceByCase"]>[SnapshotCase]>(
+          apiBase,
+          "/analyze/trace",
+          {
+            source: input.source,
+            case: caseName,
+            input_size: traceInput.inputSize,
+            initial_variables: traceInput.initialVariables,
+            locale: input.locale,
+          },
+        );
+        traceByCase[caseName] = trace || null;
+      }),
+    );
+  }
 
   const llmSourcePayload =
     typeof input.llmPayload !== "undefined"

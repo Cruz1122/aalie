@@ -600,7 +600,7 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                 ) : (
                   <>
                     <span className="material-symbols-outlined text-base">
-                      upload_file
+                      upload
                     </span>
                     {tView("importTxt")}
                   </>
