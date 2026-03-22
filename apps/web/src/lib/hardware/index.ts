@@ -1,11 +1,12 @@
 import type { Program } from "@aa/types";
-import type { HardwareSuitabilityReport } from "./types";
 
-import { extractFeatures } from "./features/extractor";
+
 import { analyzeDependencies } from "./dependencies/analyzer";
+import { buildExplanations } from "./explanations/builder";
+import { extractFeatures } from "./features/extractor";
 import { detectPatterns } from "./patterns/detector";
 import { runEngine } from "./scoring/engine";
-import { buildExplanations } from "./explanations/builder";
+import type { HardwareSuitabilityReport } from "./types";
 
 type Locale = "en" | "es";
 

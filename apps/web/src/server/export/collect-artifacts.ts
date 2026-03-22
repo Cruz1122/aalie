@@ -19,10 +19,10 @@ export interface CollectArtifactsInput {
   algorithmKindHint?: AlgorithmKind;
   apiKey?: string;
   requestOrigin?: string;
-  cachedParse?: any;
-  cachedClassify?: any;
-  cachedAnalyze?: any;
-  cachedTraceByCase?: any;
+  cachedParse?: BuildSnapshotInput["parse"];
+  cachedClassify?: BuildSnapshotInput["classify"];
+  cachedAnalyze?: BuildSnapshotInput["analyze"];
+  cachedTraceByCase?: BuildSnapshotInput["traceByCase"];
 }
 
 function getApiBase(): string {

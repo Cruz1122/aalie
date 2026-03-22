@@ -1,5 +1,6 @@
 import type {
   BuildExportReportResult,
+  BuildSnapshotInput,
   ExportFormat,
 } from "@aa/exporter";
 import {
@@ -34,10 +35,10 @@ export interface ExportSnapshotRequest {
   algorithmKind?: "iterative" | "recursive" | "hybrid" | "dummy" | "unknown";
   apiKey?: string;
   requestOrigin?: string;
-  cachedParse?: any;
-  cachedClassify?: any;
-  cachedAnalyze?: any;
-  cachedTraceByCase?: any;
+  cachedParse?: BuildSnapshotInput["parse"];
+  cachedClassify?: BuildSnapshotInput["classify"];
+  cachedAnalyze?: BuildSnapshotInput["analyze"];
+  cachedTraceByCase?: BuildSnapshotInput["traceByCase"];
 }
 
 export interface ExportReportRequest extends ExportSnapshotRequest {

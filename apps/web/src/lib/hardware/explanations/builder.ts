@@ -1,5 +1,5 @@
-import type { HardwareFeatures, DependencyProfile, PatternCandidate, HardwareSuitabilityReport, EvidenceItem } from "../types";
 import type { EngineOutput } from "../scoring/engine";
+import type { HardwareFeatures, DependencyProfile, PatternCandidate, HardwareSuitabilityReport, EvidenceItem } from "../types";
 
 type Locale = "en" | "es";
 

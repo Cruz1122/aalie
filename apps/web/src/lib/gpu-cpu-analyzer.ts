@@ -3,6 +3,7 @@
  * Shim: delegates to the new deterministic hardware analyzer (hardware/index.ts).
  */
 import type { Program } from "@aa/types";
+
 import type { GpuCpuLocale } from "./gpu-cpu-texts";
 import { analyzeASTForHardware } from "./hardware/index";
 import type { HardwareSuitabilityReport } from "./hardware/types";

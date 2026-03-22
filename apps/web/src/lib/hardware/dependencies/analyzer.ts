@@ -13,6 +13,7 @@ import type {
   Index,
   Identifier,
 } from "@aa/types";
+
 import type { DependencyProfile, LoopDependencySummary, RecursionDependencySummary } from "../types";
 
 interface LoopScope {

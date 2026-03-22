@@ -1,4 +1,4 @@
-import { LatexCompilationError } from "@aa/exporter";
+import { ExportArtifact, LatexCompilationError } from "@aa/exporter";
 import { NextRequest, NextResponse } from "next/server";
 
 import {
@@ -8,21 +8,6 @@ import {
 
 export const runtime = "nodejs";
 
-function encodeContent(
-  value: string | Buffer,
-): { encoding: "utf8" | "base64"; content: string } {
-  if (typeof value === "string") {
-    return {
-      encoding: "utf8",
-      content: value,
-    };
-  }
-
-  return {
-    encoding: "base64",
-    content: value.toString("base64"),
-  };
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,7 +40,7 @@ export async function POST(request: NextRequest) {
       throw new Error("No artifacts were generated.");
     }
 
-    const mimeType = isBundle ? "application/zip" : (outputMatch as any).mimeType;
+    const mimeType = isBundle ? "application/zip" : (outputMatch as ExportArtifact).mimeType;
 
     return new NextResponse(outputMatch.content as unknown as BodyInit, {
       status: 200,

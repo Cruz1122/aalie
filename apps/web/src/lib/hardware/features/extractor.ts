@@ -14,8 +14,8 @@ import type {
   Index,
   Field,
   Identifier,
-  Literal,
 } from "@aa/types";
+
 import type { HardwareFeatures } from "../types";
 
 interface ExtractionCtx {
@@ -43,6 +43,7 @@ interface ExtractionCtx {
   recursiveCalls: number;
   recursiveFanOut: number;
   hasDivideAndConquer: boolean;
+  hasRecursion: boolean;
   // for stencil detection: track last written targets
   _writtenTargets: Set<string>;
 }
@@ -72,6 +73,7 @@ function mkCtx(functionName: string): ExtractionCtx {
     recursiveCalls: 0,
     recursiveFanOut: 0,
     hasDivideAndConquer: false,
+    hasRecursion: false,
     _writtenTargets: new Set(),
   };
 }
@@ -112,7 +114,7 @@ function detectScalarReduction(assign: Assign): boolean {
 }
 
 /** Check if the assignment is loop-carried: A[i] = f(A[i-1]) — target has same base as a stencil-read */
-function detectLoopCarried(assign: Assign, ctx: ExtractionCtx): boolean {
+function detectLoopCarried(assign: Assign, _ctx: ExtractionCtx): boolean {
   const target = assign.target;
   if (target.type !== "Index") return false;
   const targetName = indexTargetName(target as Index);
@@ -334,10 +336,6 @@ function classifyDependencyStrength(ctx: ExtractionCtx): "none" | "weak" | "medi
   return "none";
 }
 
-// Used below
-interface ExtractionCtxWithRecursion extends ExtractionCtx {
-  hasRecursion: boolean;
-}
 
 export function extractFeatures(ast: Program): HardwareFeatures {
   // Determine algo kind
@@ -386,11 +384,13 @@ export function extractFeatures(ast: Program): HardwareFeatures {
       acc.loopCarried += c.loopCarried;
       acc.sequentialUpdates += c.sequentialUpdates;
       acc.recursiveCalls += c.recursiveCalls;
+      acc.hasRecursion = acc.hasRecursion || c.hasRecursion;
       return acc;
     },
     mkCtx("")
   );
 
+  merged.hasRecursion = hasRecursion;
   const algorithmKind: HardwareFeatures["algorithmKind"] =
     hasRecursion && merged.loopCount > 0
       ? "hybrid"
