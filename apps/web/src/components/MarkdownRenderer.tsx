@@ -28,6 +28,8 @@ interface MarkdownRendererProps {
   readonly onAnalyzeCode?: (code: string) => void;
   /** Si true, no renderiza líneas horizontales (---, ***) como saltos de página */
   readonly hideHorizontalRules?: boolean;
+  /** Clases opcionales para código inline (`code`) */
+  readonly inlineCodeClassName?: string;
 }
 
 interface CopyButtonProps {
@@ -192,24 +194,28 @@ const CustomLi = (props: any) => (
   </li>
 );
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CustomCode = (props: any) => {
-  const isInline = !props.className;
-  if (isInline) {
+const createCustomCode = (inlineCodeClassName?: string) => {
+  const inlineClass =
+    inlineCodeClassName || "bg-slate-700 text-cyan-300 px-1 py-0.5 rounded text-[10px] font-mono";
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const CustomCodeComponent = (props: any) => {
+    const isInline = !props.className;
+    if (isInline) {
+      return (
+        <code className={inlineClass} {...props}>
+          {props.children}
+        </code>
+      );
+    }
     return (
-      <code
-        className="bg-slate-700 text-cyan-300 px-1 py-0.5 rounded text-[10px] font-mono"
-        {...props}
-      >
+      <code className={props.className} {...props}>
         {props.children}
       </code>
     );
-  }
-  return (
-    <code className={props.className} {...props}>
-      {props.children}
-    </code>
-  );
+  };
+  CustomCodeComponent.displayName = "CustomCode";
+  return CustomCodeComponent;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -491,8 +497,10 @@ export default function MarkdownRenderer({
   className,
   onAnalyzeCode,
   hideHorizontalRules = false,
+  inlineCodeClassName,
 }: MarkdownRendererProps) {
   const PreWithAnalyze = createPreWithAnalyze(onAnalyzeCode);
+  const CustomCode = createCustomCode(inlineCodeClassName);
 
   return (
     <div className={`min-w-0 max-w-full overflow-hidden ${className ?? ""}`.trim()}>
