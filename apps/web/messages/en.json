@@ -172,6 +172,8 @@
       "noCompleteAnalysis": "No complete analysis",
       "apiKeyRequiredForTrace": "API Key required for tracing (AI functions)",
       "viewExecutionTrace": "View execution analysis",
+      "viewLoopInvariant": "View loop invariant",
+      "loopInvariantUnavailable": "No loop invariant available",
       "noInfoToCompare": "No information to compare",
       "compareWithLLM": "Compare with LLM",
       "noAstAvailable": "No AST available",
@@ -257,6 +259,85 @@
       "leavesLevel": "Leaves (last level)",
       "rootLevel": "Root (first level)",
       "levelN": "Level {level}"
+    },
+    "loopInvariant": {
+      "title": "Deterministic Loop Invariant",
+      "modal": {
+        "title": "Loop Invariant"
+      },
+      "status": {
+        "ok": "Reliable",
+        "low_confidence": "Low confidence",
+        "unavailable": "Unavailable"
+      },
+      "reason": {
+        "no_supported_loop": "No compatible FOR/WHILE/REPEAT loop was detected.",
+        "insufficient_evidence": "Local AST evidence is not enough for a reliable specific property.",
+        "pattern_not_supported": "The detected pattern does not yet have a supported formal template."
+      },
+      "patterns": {
+        "binary_exponentiation_state": "Binary exponentiation state",
+        "binary_search_interval": "Binary-search interval",
+        "euclidean_gcd": "Euclidean GCD",
+        "partition_by_pivot": "Pivot partition",
+        "merge_progress": "Merge progress",
+        "filter_progress": "Filter progress",
+        "insertion_prefix_sorted": "Insertion-sorted prefix",
+        "selection_prefix_sorted": "Selection-sorted prefix",
+        "loop_progress_only": "Monotonic loop progress",
+        "traversal": "Traversal",
+        "search": "Search",
+        "accumulation": "Accumulation",
+        "counting": "Counting",
+        "extrema": "Minimum / Maximum",
+        "prefix_progress": "Prefix progression",
+        "two_pointer_like": "Two pointers",
+        "sorting_pass": "Sorting pattern",
+        "state_refinement": "State refinement",
+        "unknown": "Unknown"
+      },
+      "sections": {
+        "property": "Invariant Property",
+        "initialization": "Initialization",
+        "maintenance": "Maintenance",
+        "finalization": "Finalization"
+      },
+      "labels": {
+        "pattern": "Detected pattern",
+        "selectedLoop": "Selected loop",
+        "loopRange": "{nodeType} loop that starts at line {lineStart} and ends at line {lineEnd}.",
+        "loopStartOnly": "{nodeType} loop detected from line {lineStart}.",
+        "loopNoLines": "{nodeType} loop detected (line range unavailable).",
+        "noLoop": "No selected loop",
+        "depth": "Depth",
+        "score": "Score",
+        "reason": "Reason",
+        "variables": "Relevant variables",
+        "evidence": "Structured evidence",
+        "none": "None"
+      },
+      "variables": {
+        "control": "Control",
+        "state": "State",
+        "bounds": "Bounds",
+        "collections": "Collections",
+        "targets": "Targets"
+      },
+      "evidence": {
+        "keyUpdates": "Key updates",
+        "keyConditions": "Key conditions",
+        "conditionReads": "Condition reads",
+        "bodyWrites": "Body writes",
+        "bodyReads": "Body reads",
+        "features": "Detected features"
+      },
+      "fallback": {
+        "property": "No invariant result is available yet.",
+        "initialization": "Initialization is unavailable.",
+        "maintenance": "Maintenance is unavailable.",
+        "finalization": "Finalization is unavailable.",
+        "summary": "Run an analysis to generate a deterministic loop invariant."
+      }
     },
     "executionTrace": {
       "title": "Execution Analysis",
@@ -345,8 +426,8 @@
       "eventKind_end": "End",
       "eventKind_enter_block": "Block enter",
       "eventKind_call": "Call",
-      "eventKind_for": "For Loop",
-      "eventKind_while": "While Loop",
+      "eventKind_for": "for",
+      "eventKind_while": "while",
       "eventKind_other": "Other",
       "complexitySummary": "Complexity summary",
       "complexityBest": "Best case",
@@ -396,9 +477,9 @@
       "view": "View",
       "assign": "Assignment",
       "if": "Conditional",
-      "for": "For Loop",
-      "while": "While Loop",
-      "repeat": "Repeat Loop",
+      "for": "for",
+      "while": "while",
+      "repeat": "repeat",
       "call": "Call",
       "print": "Print",
       "return": "Return",

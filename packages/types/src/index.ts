@@ -209,7 +209,7 @@ export function isGrammarParseResponse(obj: unknown): obj is GrammarParseRespons
 /** ---- ANALYZE ---- */
 
 /** Modo de análisis de complejidad */
-export type AnalyzeMode = "worst" | "best" | "avg";
+export type AnalyzeMode = "worst" | "best" | "avg" | "all";
 
 /** Tipos de operaciones por línea */
 export type LineKind =
@@ -231,6 +231,74 @@ export interface LineCost {
   unbounded_kind?: "non_terminating" | "unknown";  // clasificación del unbounded
 }
 
+export type LoopInvariantStatus = "ok" | "unavailable" | "low_confidence";
+export type LoopInvariantReason =
+  | "no_supported_loop"
+  | "insufficient_evidence"
+  | "pattern_not_supported";
+
+export type LoopInvariantPatternType =
+  | "binary_exponentiation_state"
+  | "binary_search_interval"
+  | "euclidean_gcd"
+  | "partition_by_pivot"
+  | "merge_progress"
+  | "filter_progress"
+  | "insertion_prefix_sorted"
+  | "selection_prefix_sorted"
+  | "loop_progress_only"
+  | "traversal"
+  | "search"
+  | "accumulation"
+  | "counting"
+  | "extrema"
+  | "prefix_progress"
+  | "two_pointer_like"
+  | "sorting_pass"
+  | "state_refinement"
+  | "unknown";
+
+export interface LoopInvariantSelectedLoop {
+  nodeType: "FOR" | "WHILE" | "REPEAT" | null;
+  lineStart: number | null;
+  lineEnd: number | null;
+  depth: number;
+  score: number;
+  patternType: LoopInvariantPatternType;
+  controlVariables: string[];
+  stateVariables: string[];
+  boundVariables: string[];
+  collectionVariables: string[];
+  targetVariables: string[];
+  keyUpdates: string[];
+  keyConditions: string[];
+}
+
+export interface LoopInvariantSections {
+  propertyStatement: string;
+  initialization: string;
+  maintenance: string;
+  finalization: string;
+}
+
+export interface LoopInvariantEvidence {
+  conditionReads: string[];
+  bodyWrites: string[];
+  bodyReads: string[];
+  detectedFeatures: string[];
+  classificationConfidence: number | null;
+  templateVariant: string | null;
+}
+
+export interface LoopInvariant {
+  status: LoopInvariantStatus;
+  reason: LoopInvariantReason | null;
+  selectedLoop: LoopInvariantSelectedLoop;
+  invariant: LoopInvariantSections;
+  didacticSummary: string;
+  evidence: LoopInvariantEvidence;
+}
+
 /** Modelo probabilístico para caso promedio */
 export interface AvgModelConfig {
   mode: "uniform" | "symbolic";  // modo del modelo
@@ -249,6 +317,7 @@ export interface AnalyzeRequest {
 export interface AnalyzeOpenResponse {
   ok: true;
   byLine: LineCost[];   // tabla por línea
+  loopInvariant?: LoopInvariant;
   totals: {
     T_open: string;                 // Σ C_k · count_k (KaTeX) - simplificado con SymPy (o A(n) para promedio)
     procedure?: string[];            // pasos (KaTeX) para construir T_open (legacy, puede estar vacío)
@@ -444,9 +513,10 @@ export type AnalyzeResponse = AnalyzeOpenResponse | AnalyzeError;
 export interface AnalyzeAllCasesResponse {
   ok: true;
   has_case_variability?: boolean;  // si worst/best/avg difieren (false si son idénticos)
+  loopInvariant?: LoopInvariant;
   worst: AnalyzeOpenResponse;
-  best: AnalyzeOpenResponse;
-  avg?: AnalyzeOpenResponse;
+  best: AnalyzeOpenResponse | "same_as_worst";
+  avg?: AnalyzeOpenResponse | "same_as_worst";
 }
 
 // Tipos legacy mantenidos para compatibilidad

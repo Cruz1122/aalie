@@ -1,6 +1,12 @@
 "use client";
 
-import type { AnalyzeOpenResponse, ParseError, ParseResponse, Program } from "@aa/types";
+import type {
+  AnalyzeOpenResponse,
+  LoopInvariant,
+  ParseError,
+  ParseResponse,
+  Program,
+} from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactDOM from "react-dom";
@@ -16,6 +22,7 @@ import GeneralProcedureModal from "@/components/GeneralProcedureModal";
 import GPUCPUModal from "@/components/GPUCPUModal";
 import Header from "@/components/Header";
 import IterativeAnalysisView from "@/components/IterativeAnalysisView";
+import LoopInvariantModal from "@/components/LoopInvariantModal";
 import MethodSelector, {
   MethodMetadataMap,
   MethodType,
@@ -113,6 +120,7 @@ export default function AnalyzerPage() {
     best: AnalyzeOpenResponse | "same_as_worst" | null;
     avg?: AnalyzeOpenResponse | "same_as_worst" | null;
     has_case_variability?: boolean;
+    loopInvariant?: LoopInvariant | null;
   } | null>(null);
 
   const hasComparableData = useMemo(() => {
@@ -161,6 +169,7 @@ export default function AnalyzerPage() {
   // Estado para análisis GPU vs CPU
   const [showGPUCPUModal, setShowGPUCPUModal] = useState(false);
   const [gpuCpuAnalysis, setGpuCpuAnalysis] = useState<GPUCPUAnalysisResult | null>(null);
+  const [showLoopInvariantModal, setShowLoopInvariantModal] = useState(false);
 
   // Refs para evitar memory leaks con timeouts
   const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -195,12 +204,18 @@ export default function AnalyzerPage() {
         globalThis.window.sessionStorage.removeItem('analyzerResults');
         globalThis.window.sessionStorage.removeItem('analyzerCode');
         if (parsed && !parsed.worst && !parsed.best) {
-          setData({ worst: parsed, best: null, avg: null });
+          setData({
+            worst: parsed,
+            best: null,
+            avg: null,
+            loopInvariant: parsed.loopInvariant || null,
+          });
         } else if (parsed && (parsed.worst || parsed.best)) {
           setData({
             worst: parsed.worst || null,
             best: parsed.best || null,
-            avg: parsed.avg || null
+            avg: parsed.avg || null,
+            loopInvariant: parsed.loopInvariant || null,
           });
         }
       } catch (error) {
@@ -439,6 +454,7 @@ export default function AnalyzerPage() {
         worst?: AnalyzeOpenResponse;
         best?: AnalyzeOpenResponse | "same_as_worst";
         avg?: AnalyzeOpenResponse | "same_as_worst";
+        loopInvariant?: LoopInvariant;
         errors?: Array<{ message: string; line?: number; column?: number }>;
       };
 
@@ -488,7 +504,8 @@ export default function AnalyzerPage() {
         worst: analyzeRes.worst, 
         best: analyzeRes.best,
         avg: analyzeRes.avg,  // Puede ser undefined si falló, pero el frontend lo maneja
-        has_case_variability: analyzeRes.has_case_variability  // Incluir variabilidad de casos
+        has_case_variability: analyzeRes.has_case_variability,  // Incluir variabilidad de casos
+        loopInvariant: analyzeRes.loopInvariant || null,
       });
       
       // Asegurar que algorithmType se mantenga usando la variable local 'kind'
@@ -1664,6 +1681,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
 
   // Computar si el botón debe estar deshabilitado
   const isButtonDisabled = analyzing || !source.trim() || !localParseOk;
+  const loopInvariantData = data?.loopInvariant || data?.worst?.loopInvariant || null;
 
   return (
     <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">
@@ -1851,6 +1869,22 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                         ) : (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
                             {tView("compareWithLLM")}
+                          </div>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setShowLoopInvariantModal(true)}
+                        disabled={!loopInvariantData}
+                        className="flex items-center justify-center py-1.5 px-3 rounded-lg text-white text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-red-400/50 bg-gradient-to-br from-red-500/20 to-rose-500/20 border border-red-500/30 hover:from-red-500/30 hover:to-rose-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group"
+                      >
+                        <span className="material-symbols-outlined text-sm">verified_user</span>
+                        {!loopInvariantData ? (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                            {tView("loopInvariantUnavailable")}
+                          </div>
+                        ) : (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                            {tView("viewLoopInvariant")}
                           </div>
                         )}
                       </button>
@@ -2111,6 +2145,12 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         open={showGPUCPUModal}
         onClose={() => setShowGPUCPUModal(false)}
         analysis={gpuCpuAnalysis}
+      />
+
+      <LoopInvariantModal
+        open={showLoopInvariantModal}
+        onClose={() => setShowLoopInvariantModal(false)}
+        loopInvariant={loopInvariantData}
       />
 
       <Footer />

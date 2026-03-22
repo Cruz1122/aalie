@@ -8,6 +8,8 @@ from .analyzers.registry import AnalyzerRegistry
 from .analyzers.iterative import IterativeAnalyzer
 from .analyzers.recursive import RecursiveAnalyzer
 from .analyzers.dummy import create_dummy_analysis
+from .invariants import generate_loop_invariant
+from .invariants.schemas import empty_loop_invariant
 from ..classification.classifier import detect_algorithm_kind
 from ..parsing.service import parse_source
 
@@ -44,20 +46,36 @@ def analyze_algorithm(
         True
     """
     try:
+        locale_val = (locale or "en").lower()[:2]  # "en" | "es"
+        if locale_val not in ("en", "es"):
+            locale_val = "en"
+
         # 1) Parsear el código fuente
         parse_result = parse_source(source)
         if not parse_result.get("ok", False):
             return {
                 "ok": False,
-                "errors": parse_result.get("errors", [])
+                "errors": parse_result.get("errors", []),
+                "loopInvariant": empty_loop_invariant(
+                    locale=locale_val,
+                    status="unavailable",
+                    reason="no_supported_loop",
+                ),
             }
         
         ast = parse_result.get("ast")
         if not ast:
             return {
                 "ok": False,
-                "errors": [{"message": "No se pudo obtener el AST del código", "line": None, "column": None}]
+                "errors": [{"message": "No se pudo obtener el AST del código", "line": None, "column": None}],
+                "loopInvariant": empty_loop_invariant(
+                    locale=locale_val,
+                    status="unavailable",
+                    reason="no_supported_loop",
+                ),
             }
+
+        loop_invariant = generate_loop_invariant(ast, locale=locale_val)
         
         # 2) Determinar el tipo de algoritmo
         if not algorithm_kind:
@@ -70,10 +88,6 @@ def analyze_algorithm(
         
         # 3) Determinar si debemos analizar todos los casos
         analyze_all = mode == "all"
-        
-        locale_val = (locale or "en").lower()[:2]  # "en" | "es"
-        if locale_val not in ("en", "es"):
-            locale_val = "en"
 
         if analyze_all:
             # Analizar todos los casos (worst, best y avg)
@@ -90,9 +104,27 @@ def analyze_algorithm(
                 result_best = analyzer_best.analyze(ast, "best")
             
             if not result_worst.get("ok", False):
-                return result_worst
+                if isinstance(result_worst, dict):
+                    return {
+                        **result_worst,
+                        "loopInvariant": loop_invariant,
+                    }
+                return {
+                    "ok": False,
+                    "errors": [{"message": "Fallo en el análisis del peor caso", "line": None, "column": None}],
+                    "loopInvariant": loop_invariant,
+                }
             if not result_best.get("ok", False):
-                return result_best
+                if isinstance(result_best, dict):
+                    return {
+                        **result_best,
+                        "loopInvariant": loop_invariant,
+                    }
+                return {
+                    "ok": False,
+                    "errors": [{"message": "Fallo en el análisis del mejor caso", "line": None, "column": None}],
+                    "loopInvariant": loop_invariant,
+                }
 
             # Ajuste estructural: patrón FOR-WHILE-FOR (FOR externo, WHILE interno, FOR interno)
             # Complejidad teórica: Θ(n^3) en el peor caso.
@@ -202,14 +234,16 @@ def analyze_algorithm(
                     "has_case_variability": False,
                     "worst": result_worst,
                     "best": "same_as_worst",
-                    "avg": "same_as_worst"  # Determinístico: avg = worst (no modelo probabilístico)
+                    "avg": "same_as_worst",  # Determinístico: avg = worst (no modelo probabilístico)
+                    "loopInvariant": loop_invariant,
                 }
             else:
                 response = {
                     "ok": True,
                     "has_case_variability": True,
                     "worst": result_worst,
-                    "best": result_best
+                    "best": result_best,
+                    "loopInvariant": loop_invariant,
                 }
                 if result_avg:
                     response["avg"] = result_avg
@@ -232,6 +266,9 @@ def analyze_algorithm(
                 result = analyzer.analyze(ast, mode, api_key=api_key, avg_model=avg_model_dict, preferred_method=preferred_method)
             else:
                 result = analyzer.analyze(ast, mode, api_key=api_key, avg_model=avg_model_dict)
+
+            if isinstance(result, dict):
+                result["loopInvariant"] = loop_invariant
             return result
         
     except Exception as e:
@@ -243,7 +280,12 @@ def analyze_algorithm(
                     "line": None,
                     "column": None
                 }
-            ]
+            ],
+            "loopInvariant": empty_loop_invariant(
+                locale=locale,
+                status="unavailable",
+                reason="no_supported_loop",
+            ),
         }
 
 
@@ -320,4 +362,3 @@ def detect_methods(
                 }
             ]
         }
-

@@ -7,6 +7,12 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Removed
+- Benchmark de invariantes de ciclo basado en oráculo JSON: carpeta `tests/_support/algorithms/oracle/`, `loop_invariant_oracle.json`, runner, script de generación de informe, test de contrato asociado y `docs/loop-invariants-benchmark.md`.
+
+### Changed
+- Documentación de `loopInvariant` en `docs/api/loop-invariant-deterministic.md`: alcance actual, módulos, flujo, orden de reglas del clasificador, política de confianza y pruebas mantenidas.
+
 ### Added
 - Documentación de supuestos del caso promedio (`docs/average-case-assumptions.md`) y auditoría (`docs/average-case-audit.md`)
 - Bandera `avg_foundation` (well_founded/approximate) en el análisis de caso promedio

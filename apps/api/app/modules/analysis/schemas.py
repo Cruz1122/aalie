@@ -1,8 +1,8 @@
 """
 Modelos Pydantic para el módulo de analysis.
 """
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel
+from typing import Any, Dict, List, Literal, Optional
+from pydantic import BaseModel, Field
 
 
 class AvgModelConfig(BaseModel):
@@ -32,10 +32,72 @@ class LineCost(BaseModel):
     unbounded_kind: Optional[str] = None  # "non_terminating" | "unknown"
 
 
+class LoopInvariantSelectedLoop(BaseModel):
+    nodeType: Optional[Literal["FOR", "WHILE", "REPEAT"]] = None
+    lineStart: Optional[int] = None
+    lineEnd: Optional[int] = None
+    depth: int = 0
+    score: float = 0.0
+    patternType: Literal[
+        "binary_exponentiation_state",
+        "binary_search_interval",
+        "euclidean_gcd",
+        "partition_by_pivot",
+        "merge_progress",
+        "filter_progress",
+        "insertion_prefix_sorted",
+        "selection_prefix_sorted",
+        "loop_progress_only",
+        "traversal",
+        "search",
+        "accumulation",
+        "counting",
+        "extrema",
+        "prefix_progress",
+        "two_pointer_like",
+        "sorting_pass",
+        "state_refinement",
+        "unknown",
+    ] = "unknown"
+    controlVariables: List[str] = Field(default_factory=list)
+    stateVariables: List[str] = Field(default_factory=list)
+    boundVariables: List[str] = Field(default_factory=list)
+    collectionVariables: List[str] = Field(default_factory=list)
+    targetVariables: List[str] = Field(default_factory=list)
+    keyUpdates: List[str] = Field(default_factory=list)
+    keyConditions: List[str] = Field(default_factory=list)
+
+
+class LoopInvariantSections(BaseModel):
+    propertyStatement: str
+    initialization: str
+    maintenance: str
+    finalization: str
+
+
+class LoopInvariantEvidence(BaseModel):
+    conditionReads: List[str] = Field(default_factory=list)
+    bodyWrites: List[str] = Field(default_factory=list)
+    bodyReads: List[str] = Field(default_factory=list)
+    detectedFeatures: List[str] = Field(default_factory=list)
+    classificationConfidence: Optional[float] = None
+    templateVariant: Optional[str] = None
+
+
+class LoopInvariantPayload(BaseModel):
+    status: Literal["ok", "unavailable", "low_confidence"]
+    reason: Optional[Literal["no_supported_loop", "insufficient_evidence", "pattern_not_supported"]] = None
+    selectedLoop: LoopInvariantSelectedLoop
+    invariant: LoopInvariantSections
+    didacticSummary: str
+    evidence: LoopInvariantEvidence
+
+
 class AnalyzeOpenResponse(BaseModel):
     ok: bool = True
     byLine: List[LineCost]
     totals: Dict[str, Any]
+    loopInvariant: Optional[LoopInvariantPayload] = None
 
 
 class AnalyzeError(BaseModel):
@@ -54,5 +116,3 @@ class TraceRequest(BaseModel):
 class TraceResponse(BaseModel):
     ok: bool = True
     trace: Dict[str, Any]  # Rastro de ejecución completo
-
-
