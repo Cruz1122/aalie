@@ -23,6 +23,10 @@ export type LlmErrorKey =
 
 /** Patrones que mapean a claves de traducción (orden: más específicos primero) */
 const ERROR_PATTERNS: { pattern: RegExp | ((s: string) => boolean); key: LlmErrorKey }[] = [
+  { pattern: /LLM_QUOTA_EXCEEDED/i, key: "llmErrorQuota" },
+  { pattern: /LLM_RATE_LIMIT/i, key: "llmErrorRateLimit" },
+  { pattern: /LLM_TIMEOUT/i, key: "llmErrorTimeout" },
+  { pattern: /LLM_SERVER_ERROR/i, key: "llmErrorServer" },
   { pattern: /API_KEY|API key|api key|invalid.*key|missing.*key/i, key: "llmErrorApiKey" },
   { pattern: /quota|resource exhausted|RESOURCE_EXHAUSTED|billing/i, key: "llmErrorQuota" },
   { pattern: /rate limit|rate_limit|429|too many requests/i, key: "llmErrorRateLimit" },

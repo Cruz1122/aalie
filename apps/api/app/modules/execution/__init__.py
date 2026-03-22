@@ -7,7 +7,11 @@ from .environment import ExecutionEnvironment
 from .executor import CodeExecutor
 from .trace_builder import TraceBuilder
 
-__all__ = ["ExecutionEnvironment", "CodeExecutor", "TraceBuilder"]
+__all__ = [
+    "ExecutionEnvironment",
+    "CodeExecutor",
+    "TraceBuilder",
+]
 
 
 

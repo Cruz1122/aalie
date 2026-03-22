@@ -48,57 +48,33 @@ interface ChatBotProps {
 // ============== FUNCIONES API ==============
 
 /**
- * Clasifica la intención del mensaje del usuario usando Gemini.
- * @param message - Mensaje del usuario a clasificar
- * @param apiKey - API Key de Gemini (opcional, el backend usará la de variables de entorno si no se proporciona)
- * @returns Tipo de intención: 'parser_assist' para ayuda con código o 'general' para consultas generales
- * @author Juan Camilo Cruz Parra (@Cruz1122)
+ * Inferencia local de intención a partir del contenido del mensaje.
+ * No usa ningún job LLM específico.
  */
-async function classifyIntent(
+function inferIntentFromMessage(
   message: string,
-  apiKey: string | null,
-  locale?: string,
-): Promise<"parser_assist" | "general"> {
-  try {
-    const body: { job: string; prompt: string; apiKey?: string; locale?: string } = {
-      job: "classify",
-      prompt: message,
-    };
+): "parser_assist" | "general" {
+  const text = message.toLowerCase();
 
-    // Solo enviar apiKey si hay una del cliente
-    // Si no hay apiKey, el backend usará la de variables de entorno
-    if (apiKey) {
-      body.apiKey = apiKey;
-    }
-    if (locale) {
-      body.locale = locale;
-    }
+  const codeKeywords = [
+    "begin",
+    "end",
+    "for ",
+    "while",
+    "repeat",
+    "until",
+    "código",
+    "codigo",
+    "pseudocódigo",
+    "pseudocodigo",
+    "syntax",
+    "sintaxis",
+    "implementación",
+    "implementacion",
+  ];
 
-    const response = await fetch("/api/llm", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      console.error("Error clasificando intención, usando general por defecto");
-      return "general";
-    }
-
-    const result = await response.json();
-    // Backend ahora normaliza e incluye 'intent'
-    const intentField = result?.intent as string | undefined;
-    if (intentField === "parser_assist" || intentField === "general") {
-      return intentField;
-    }
-    // Fallback: leer texto de Gemini
-    const text = result?.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const classification = String(text).trim().toLowerCase();
-    return classification === "parser_assist" ? "parser_assist" : "general";
-  } catch (error) {
-    console.error("Error en clasificación:", error);
-    return "general"; // Fallback a general si hay error
-  }
+  const isCodeRelated = codeKeywords.some((kw) => text.includes(kw));
+  return isCodeRelated ? "parser_assist" : "general";
 }
 
 /**
@@ -327,13 +303,8 @@ export default function ChatBot({
           return;
         }
 
-        // Paso 1: Clasificar intención
-        // Si no hay API_KEY del cliente, el backend usará la de variables de entorno
-        const intent = await classifyIntent(
-          lastUserMessage.content,
-          currentApiKey,
-          locale,
-        );
+        // Paso 1: Inferir intención localmente sin job classify
+        const intent = inferIntentFromMessage(lastUserMessage.content);
 
         // Paso 2: Obtener respuesta con el modelo apropiado (incluyendo historial)
         // Si no hay API_KEY del cliente, el backend usará la de variables de entorno

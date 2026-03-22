@@ -4,15 +4,24 @@ import type { GraphNode, GraphEdge, TraceGraph } from "@/types/trace";
 
 const nodeWidth = 180;
 const nodeHeight = 48;
+const callTreeNodeWidth = 220;
+const callTreeNodeHeight = 80;
 
-const createGraph = (direction: "TB" | "LR") => {
+function isCallTree(graph: TraceGraph): boolean {
+  return graph.nodes?.some((n) => n.id?.startsWith("call_")) ?? false;
+}
+
+const createGraph = (
+  direction: "TB" | "LR",
+  nodesep: number,
+  ranksep: number,
+) => {
   const g = new dagre.graphlib.Graph();
   g.setDefaultEdgeLabel(() => ({}));
   g.setGraph({
     rankdir: direction,
-    // Aumentar separación horizontal y vertical para reducir solapamientos
-    nodesep: 80,
-    ranksep: 100,
+    nodesep,
+    ranksep,
   });
   return g;
 };
@@ -30,13 +39,18 @@ export function getLayoutedGraph(
   }
 
   const direction = options.direction ?? "TB";
-  const dagreGraph = createGraph(direction);
+  const callTree = isCallTree(graph);
+  const w = callTree ? callTreeNodeWidth : nodeWidth;
+  const h = callTree ? callTreeNodeHeight : nodeHeight;
+  const nodesep = callTree ? 100 : 80;
+  const ranksep = callTree ? 140 : 100;
+  const dagreGraph = createGraph(direction, nodesep, ranksep);
 
   // Registrar nodos en dagre
   for (const node of graph.nodes) {
     dagreGraph.setNode(node.id, {
-      width: nodeWidth,
-      height: nodeHeight,
+      width: w,
+      height: h,
     });
   }
 
@@ -57,8 +71,8 @@ export function getLayoutedGraph(
     return {
       ...node,
       position: {
-        x: dagreNode.x - nodeWidth / 2,
-        y: dagreNode.y - nodeHeight / 2,
+        x: dagreNode.x - w / 2,
+        y: dagreNode.y - h / 2,
       },
     };
   });

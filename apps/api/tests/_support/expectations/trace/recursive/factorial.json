@@ -1,0 +1,10 @@
+{
+  "source": "fact(n) BEGIN\n    IF (n <= 1) THEN BEGIN\n        RETURN 1;\n    END;\n    RETURN n * fact(n - 1);\nEND",
+  "input_size": 4,
+  "case": "worst",
+  "patternKindAlternatives": ["tail_recursive_linear", "single_branch_recursive_search"],
+  "minNodes": 4,
+  "maxNodes": 8,
+  "minEdges": 3,
+  "nodeLabelsContain": ["fact("]
+}

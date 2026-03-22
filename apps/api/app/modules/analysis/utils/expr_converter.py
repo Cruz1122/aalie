@@ -90,7 +90,7 @@ class ExprConverter:
                 left = self.ast_to_sympy(expr.get("left"))
                 right = self.ast_to_sympy(expr.get("right"))
                 # Intentar obtener el operador de múltiples campos posibles
-                op = expr.get("operator", "") or expr.get("op", "")
+                op = (expr.get("operator", "") or expr.get("op", "")).lower()
                 
                 if op == "+":
                     return left + right
@@ -100,6 +100,10 @@ class ExprConverter:
                     return left * right
                 elif op == "/":
                     return left / right
+                elif op == "div" or op == "//":
+                    return left // right
+                elif op == "mod":
+                    return left % right
                 elif op == "**" or op == "^":
                     return left ** right
                 elif op == "%":

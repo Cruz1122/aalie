@@ -13,6 +13,7 @@ Esta carpeta contiene la documentación técnica completa de la API backend del 
 
 ### Documentación Técnica Detallada
 
+- [Loop Invariant Determinista](./loop-invariant-deterministic.md) - Selección de ciclo principal, clasificación local y plantillas formales
 - [Trace Endpoint](./trace-endpoint.md) - Funcionamiento del endpoint `/trace` y variables de entorno
 - [Análisis Recursivo](./recursive-analysis.md) - Detección de métodos y análisis de complejidad recursiva
 - [Integración de SymPy](./sympy-integration.md) - Uso de SymPy para manipulación matemática simbólica
@@ -133,4 +134,3 @@ Para más información sobre testing, ver [apps/api/tests/README.md](../../apps/
 ## Más Información
 
 Para detalles específicos, consulta los documentos individuales en esta carpeta.
-

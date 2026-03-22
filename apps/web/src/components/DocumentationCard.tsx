@@ -37,7 +37,7 @@ export const DocumentationCard = memo<DocumentationCardProps>(
 
     return (
       <article
-        className="documentation-card glass-card p-4 rounded-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-xl border border-white/10 h-[300px] flex flex-col min-w-0 max-w-full overflow-hidden"
+        className="documentation-card glass-card p-4 rounded-lg transition-all duration-200 hover:scale-[1.02] border border-white/10 h-[300px] flex flex-col min-w-0 max-w-full overflow-hidden"
         aria-labelledby={`doc-card-${section.id}-title`}
       >
         <div className="documentation-card-content flex-1 flex flex-col items-center justify-center text-center min-h-0 min-w-0 w-full overflow-hidden px-1">

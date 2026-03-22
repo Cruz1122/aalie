@@ -1,0 +1,8 @@
+{
+  "input_size": 16,
+  "case": "worst",
+  "patternKind": "generic_iterative",
+  "minNodes": 3,
+  "minEdges": 2,
+  "nodeLabelsContain": ["WHILE"]
+}

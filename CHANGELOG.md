@@ -5,22 +5,123 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
-## [Unreleased]
+## [Unreleased] - 2026-03-18
 
 ### Added
+- Importación de algoritmos desde archivo `.txt` en modo manual (`/es`) y en la vista del analizador (`/es/analyzer`).
+- Modal dedicado para validación de importación TXT con mensajes por tipo de error (archivo inválido, no algoritmo, gramática inválida).
+- Flujo de reparación con IA tras importación fallida por gramática, manteniendo edición final en Monaco antes de analizar.
+- Utilidades de validación y normalización de TXT en frontend (`apps/web/src/lib/txt-import.ts`).
+- Normalización de entrada en backend de parsing (BOM + saltos de línea) y tests unitarios asociados.
+
+### Changed
+- El botón de importación en `/es/analyzer` se ajusta a estilo de icono con tooltip (consistente con el resto de acciones).
+- El flujo de importación ahora solo pega contenido en Monaco cuando la validación completa es exitosa.
+- Si la importación falla, el editor conserva el contenido previo; si el usuario confirma reparar con IA, recién entonces se usa el contenido importado.
 
 ### Fixed
+- Corrección de clasificación errónea durante importación: algoritmos con error de gramática ahora se reportan como "gramática inválida" y no como "no parece algoritmo".
+- Unificación del parse de importación entre `/es` y `/es/analyzer` usando el mismo servicio (`GrammarApiService`) para evitar respuestas inconsistentes.
+- Solapamiento visual de modales (importación y reparación IA): ambos modales se renderizan por portal a `document.body` con z-index alto.
+- Reparación IA: se endurece el prompt y se normaliza salida para evitar prefijos incompatibles con la gramática (p. ej. `PROCEDURE ...`).
+
+## [Unreleased]
+
+### Removed
+- Benchmark de invariantes de ciclo basado en oráculo JSON: carpeta `tests/_support/algorithms/oracle/`, `loop_invariant_oracle.json`, runner, script de generación de informe, test de contrato asociado y `docs/loop-invariants-benchmark.md`.
 
 ### Changed
+- Documentación de `loopInvariant` en `docs/api/loop-invariant-deterministic.md`: alcance actual, módulos, flujo, orden de reglas del clasificador, política de confianza y pruebas mantenidas.
+
+### Added
+- Documentación de supuestos del caso promedio (`docs/average-case-assumptions.md`) y auditoría (`docs/average-case-audit.md`)
+- Bandera `avg_foundation` (well_founded/approximate) en el análisis de caso promedio
+- Tests de verificación de fórmulas y `avg_foundation` en `test_avg_case.py` y `test_avg_formulas.py`
+- Narrativa pedagógica en el modal de procedimiento general: explicación del caso promedio, qué se promedia, cuándo es representativo
+- Etiquetas descriptivas en tarjetas de casos (mejor: salida temprana, promedio: E[ejecuciones], peor: máximo de iteraciones)
+- Badge "Bien fundamentado" / "Aproximado" según el modelo del caso promedio
+- Tabla alineada para notaciones O/Ω/Θ en el modal de procedimiento general
+- Columnas con anchos fijos en LineTable y CostsTable para alinear fórmulas
+
+### Changed
+- GeneralProcedureModal: bloque de narrativa para caso promedio, advertencia cuando es aproximado, mini-notas de supuestos
+- IterativeAnalysisView: hints descriptivos en cada tarjeta de caso
+
+## [1.2.2] — 2026-03-14
+
+### Cambios
+- **Comparación con IA:** Las etiquetas técnicas se sustituyeron por "Ecuación de eficiencia completa" y "Forma polinómica". Al comparar con el asistente, las notas se generan en un lenguaje más claro y comprensible.
+- **Fórmulas con potencias en recursión:** Se reorganizó la forma en que se muestran y calculan expresiones con exponentes para que los resultados sean más claros y consistentes.
+- **Detección temprana en recursión:** Cuando un algoritmo termina antes de lo esperado en algún camino, ahora se reconoce mejor ese caso y se evita contar pasos de más.
+- **Parámetros y seguimiento de ejecución:** Se mejoró cómo se deducen los datos de entrada y cómo se registran los pasos internos, para dar explicaciones más fiables durante la ejecución.
+
+### Correcciones
+- **Panel de variables:** Se corrigió un fallo que impedía compilar la aplicación; el aviso que indica que el tamaño (n) es la longitud del array se muestra correctamente.
+- **Bucles que crecen muy rápido:** En algoritmos donde el índice se multiplica o crece de forma explosiva, ya no se muestra "infinito" cuando no corresponde; el sistema elige mejor el respaldo y evita clasificaciones erróneas.
+- **Fórmulas con log(n):** Se evita mostrar símbolos de infinito incorrectos en expresiones que incluyen logaritmos; esos términos se muestran de forma adecuada.
+- **Fórmulas matemáticas en la comparación:** Las expresiones entre $ se procesan bien antes de mostrarlas en pantalla.
+- **Panel de variables:** Los cambios solo se aplican al pulsar el botón "Aplicar", no al salir del campo con el cursor.
+- **Arrays que empiezan en 0:** El ejecutor interpreta correctamente cuando el primer elemento del array está en la posición 0.
+- **Búsqueda lineal con "encontrado":** El mejor caso (encontrar el elemento al primer intento) se reconoce bien y se muestra como tiempo constante.
+- **Editar el array a mano:** Al modificar la lista de valores, el tamaño n se actualiza solo y los datos enviados quedan coherentes.
+- **Seguimiento de bucles con bandera:** Cuando se usa una variable tipo "encontrado", las condiciones se evalúan bien y el seguimiento paso a paso muestra el flujo correcto.
+- **Análisis del mejor caso:** Se corrige la detección en búsqueda con bandera para no confundir el primer elemento.
+- **Caso promedio en búsqueda lineal:** Se usa la fórmula correcta del número de pasos esperados.
+- **Diagrama de ejecución:** Al salir de un bucle se muestra la condición exacta que hizo que terminara (por ejemplo la comparación que dio falso), no solo "Fin bucle".
+- **Panel de variables (n y tamaño):** El tamaño del array (n, length, size, len) se trata como fijo y no es editable; sí se pueden editar el resto de valores (por ejemplo el valor a buscar).
+
+## [1.2.1]
+
+### Added
+- Nueva vista de seguimiento más clara y cómoda, tanto para escritorio como para móvil.
+- Sistema de trazas unificado para mostrar mejor el recorrido de algoritmos iterativos y recursivos.
+- Más pruebas automáticas y documentación para asegurar resultados consistentes en diagramas y complejidad.
+- Mejoras de internacionalización en mensajes y etiquetas del seguimiento.
+- Se añadieron más pruebas para casos recursivos donde antes podían salir recomendaciones confusas.
+- Se agregaron mensajes más claros en español e inglés para explicar cuándo conviene usar Programación Dinámica.
+
+### Fixed
+- Correcciones en recursividad para evitar llamadas repetidas o árboles de llamadas incorrectos.
+- Solucionados bloqueos ocasionales al detectar el tipo de algoritmo.
+- Arreglos en casos límite de diagramas (por ejemplo, árboles con un solo nodo).
+- Mejoras en el análisis de bucles y expresiones para evitar resultados negativos o notaciones confusas.
+- Ajustes en Bubble Sort, Euclides y otros casos donde la complejidad podía salir mal en escenarios concretos.
+- Se evitó recomendar Programación Dinámica en situaciones donde no aplica o no aporta mejora real.
+- Se corrigió cuándo sugerir la optimización de "ventana deslizante" para no mostrarla donde no corresponde.
+
+### Changed
+- Se simplificó la experiencia de seguimiento: menos pasos innecesarios y vista más directa.
+- El seguimiento recursivo ahora muestra explicaciones más legibles y parámetros más claros.
+- Se renovaron componentes de interfaz para mantener una apariencia más consistente.
+- Reorganización interna del motor de análisis para hacerlo más mantenible.
+- En la interfaz se cambió el tono para hablar de "hipótesis" en vez de afirmaciones absolutas al sugerir Programación Dinámica.
+- Se ajustaron ejemplos y modal para explicar mejor el nivel de confianza de cada sugerencia.
+
+### Removed
+- Se retiró el sistema antiguo de diagramas y código obsoleto relacionado.
+- Se eliminaron rutas y piezas heredadas que ya no se usan en el flujo actual.
 
 ## [1.2.0]
+### Added
+- Plantilla de entorno de ejemplo para configurar fácilmente los modelos LLM del frontend sin tocar código.
+- Documentación y script de monitoreo local para registrar rendimiento y errores de las operaciones LLM.
+- Configuración base centralizada de LLM en el frontend para unificar modelos y endpoint y evitar fallos por variables ausentes.
+
+### Fixed
+- El endpoint de trazas devuelve también información completa para algoritmos recursivos e híbridos, y los diagramas recursivos en el frontend ya no se quedan bloqueados ni fallan por respuestas JSON mal formadas del LLM.
+- El flujo de monitoreo corrige el manejo de métodos HTTP y amplía la cobertura de endpoints LLM, reduciendo errores silenciosos.
+- El frontend deja de depender de modelos LLM hardcodeados y se comporta de forma resiliente cuando faltan variables de entorno.
 
 ### Changed
-
+- **Prompts LLM (parser_assist y general):** Reglas de estilo canónico al generar pseudocódigo: una sola solución (1 procedimiento, 1 bloque \`pseudocode\`), versión canónica por defecto sin optimizaciones salvo petición explícita, variables convencionales (i, j, k, n, temp, etc.), máximo 3-5 comentarios cortos en el bloque, explicación breve fuera del bloque. Prioridad de bucles ajustada a "canónico" (FOR/WHILE según el algoritmo) en lugar de evitar WHILE.
+- **Prompts LLM (renderizado):** Se refuerza uso de KaTeX con delimitadores $...$ / $$...$$ para complejidad y fórmulas (p.ej. $O(n^2)$) y se pide usar más **negrita** y \`código inline\` en explicaciones sin alargar.
 - **Motor de análisis (iterativo y recursivo):** El motor calcula la complejidad con más precisión gracias a un mejor manejo de variables y tamaños. El analizador base admite más tipos de expresiones (mínimo, máximo) y sustituye alias cuando una variable es una copia del tamaño (por ejemplo `k <- n`). En algoritmos iterativos se identifican mejor las variables que controlan los bucles y los alias de tamaño, de modo que se analizan bien bucles anidados y límites que cambian (por ejemplo un bucle interno cuyo tope decrece). En recursivos se tienen en cuenta varios tamaños de subproblemas en divide y vencerás. Las utilidades de clases de complejidad normalizan mejor la variable de tamaño.
 - **Bucles WHILE:** Se determina si un bucle está acotado según la condición y cómo se actualizan las variables, y se aplican nuevos patrones para inferir la complejidad.
 - **Casos concretos:** Ajustes para que algoritmos como Bubble Sort (mejor caso) y otros con detección de tamaño y heurísticas específicas den el resultado esperado.
 - **Tests:** Más pruebas para algoritmos con límites decrecientes y bucles anidados con reinicio de variable interna, que validan las nuevas mejoras.
+
+### Removed
+- Job `simplifier` eliminado del flujo LLM (tipos, configuración y documentación asociada), junto con su prompt y las claves de i18n obsoletas, para simplificar la superficie de configuración.
 
 ## [1.1.5]
 

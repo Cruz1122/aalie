@@ -9,9 +9,10 @@
  */
 import type { AnalyzeOpenResponse } from "@aa/types";
 import { useTranslations } from "next-intl";
-import React, { useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 
 import Formula from "./Formula";
+import BaseModalContainer from "./modals/BaseModalContainer";
 
 /**
  * Propiedades del componente GeneralProcedureModal.
@@ -88,22 +89,6 @@ export default function GeneralProcedureModal({
   // Detectar si es caso promedio
   const isAvgCase = data?.totals?.avg_model_info !== undefined;
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    if (open) {
-      document.body.style.overflow = "hidden";
-      document.addEventListener("keydown", onKey);
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open, onClose]);
-
   const tOpen = data?.totals?.A_of_n || data?.totals?.T_open || "";
   const rawPoly = (data?.totals as { T_polynomial?: string })?.T_polynomial;
   const normPoly = normalizePolynomial(rawPoly);
@@ -116,11 +101,16 @@ export default function GeneralProcedureModal({
         big_omega?: string;
         big_theta?: string;
         avg_model_info?: { mode: string; note: string };
+        avg_foundation?: "well_founded" | "approximate";
         hypotheses?: string[];
         notes?: string[];
         procedure?: string[]; // Pasos del procedimiento (para caso promedio)
       }
     | undefined;
+
+  const tCases = useTranslations("analyzer.cases");
+  const avgFoundation = totals?.avg_foundation;
+  const isApproximate = avgFoundation === "approximate";
 
   const bigO =
     totals?.big_o ||
@@ -150,29 +140,33 @@ export default function GeneralProcedureModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div
-        className="absolute inset-0 glass-modal-overlay"
-        onClick={onClose}
-        aria-hidden
-      />
-      <div className="relative z-10 w-[min(95vw,1000px)] max-h-[90vh] rounded-2xl glass-modal-container shadow-2xl flex flex-col overflow-hidden mx-4">
-        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 flex-shrink-0 glass-modal-header">
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <span className="material-symbols-outlined text-blue-400">
-              science
-            </span>
-            {t("title")}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
-            aria-label={t("closeModal")}
-          >
-            ✕
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-custom">
+    <BaseModalContainer
+      open={open}
+      onClose={onClose}
+      title={t("title")}
+      titleIcon="science"
+      closeAriaLabel={t("closeModal")}
+      sizeClassName="w-[min(95vw,1000px)] max-h-[90vh]"
+      contentClassName="space-y-6"
+    >
+          {/* Narrativa caso promedio (solo cuando isAvgCase) */}
+          {isAvgCase && (
+            <div className="p-4 rounded-xl glass-card border border-yellow-500/20 bg-yellow-500/5 space-y-3">
+              <div className="text-slate-200 text-sm space-y-2">
+                <p>{t("averageCaseExplanation")}</p>
+                <p className="text-slate-300">{t("whatIsAveraged")}</p>
+              </div>
+              {isApproximate && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                  <span className="material-symbols-outlined text-amber-400 text-lg shrink-0 mt-0.5">
+                    warning
+                  </span>
+                  <p className="text-amber-200 text-sm">{t("approximateWarning")}</p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* T_open o A(n) */}
           <div className="p-4 rounded-xl glass-card border border-white/10 space-y-3">
             <h4 className="text-white font-semibold flex items-center gap-2">
@@ -185,10 +179,25 @@ export default function GeneralProcedureModal({
               <Formula latex={tOpen} display />
             </div>
             {isAvgCase && totals?.avg_model_info && (
-              <p className="text-slate-300 text-sm flex items-center gap-2">
-                <span className="text-slate-400">{t("modelLabel")}</span>
-                {totals.avg_model_info.note}
-              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-slate-300 text-sm flex items-center gap-2">
+                  <span className="text-slate-400">{t("modelLabel")}</span>
+                  {totals.avg_model_info.note}
+                </p>
+                {avgFoundation && (
+                  <span
+                    className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
+                      isApproximate
+                        ? "bg-amber-500/20 text-amber-200 border border-amber-500/30"
+                        : "bg-green-500/20 text-green-200 border border-green-500/30"
+                    }`}
+                  >
+                    {isApproximate
+                      ? tCases("foundationApproximate")
+                      : tCases("foundationWellFounded")}
+                  </span>
+                )}
+              </div>
             )}
           </div>
 
@@ -243,25 +252,35 @@ export default function GeneralProcedureModal({
               </span>
               {t("asymptoticNotation")}
             </h4>
-            <div className="space-y-3">
-              <div className="p-3 bg-slate-900/50 rounded-lg border border-white/10 overflow-x-auto">
-                <div className="text-sm text-slate-400 mb-1.5">
-                  {t("bigOUpper")}
-                </div>
-                <Formula latex={bigO} display />
-              </div>
-              <div className="p-3 bg-slate-900/50 rounded-lg border border-white/10 overflow-x-auto">
-                <div className="text-sm text-slate-400 mb-1.5">
-                  {t("bigOmegaLower")}
-                </div>
-                <Formula latex={bigOmega} display />
-              </div>
-              <div className="p-3 bg-slate-900/50 rounded-lg border border-white/10 overflow-x-auto">
-                <div className="text-sm text-slate-400 mb-1.5">
-                  {t("bigThetaTight")}
-                </div>
-                <Formula latex={bigTheta} display />
-              </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[280px] text-sm">
+                <tbody className="divide-y divide-white/10">
+                  <tr className="border-b border-white/10">
+                    <td className="py-3 pr-4 text-slate-400 w-48 shrink-0 align-top">
+                      {t("bigOUpper")}
+                    </td>
+                    <td className="py-3 overflow-x-auto">
+                      <Formula latex={bigO} display />
+                    </td>
+                  </tr>
+                  <tr className="border-b border-white/10">
+                    <td className="py-3 pr-4 text-slate-400 w-48 shrink-0 align-top">
+                      {t("bigOmegaLower")}
+                    </td>
+                    <td className="py-3 overflow-x-auto">
+                      <Formula latex={bigOmega} display />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="py-3 pr-4 text-slate-400 w-48 shrink-0 align-top">
+                      {t("bigThetaTight")}
+                    </td>
+                    <td className="py-3 overflow-x-auto">
+                      <Formula latex={bigTheta} display />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
             {isAvgCase &&
               totals?.hypotheses &&
@@ -283,9 +302,20 @@ export default function GeneralProcedureModal({
                   </ul>
                 </div>
               )}
+            {/* Mini-notas: cuándo el caso promedio es representativo */}
+            {isAvgCase && (
+              <div className="mt-4 p-4 bg-slate-800/50 border border-white/10 rounded-lg space-y-2">
+                <div className="text-sm text-slate-300 font-semibold flex items-center gap-2">
+                  <span className="material-symbols-outlined text-lg text-blue-400">
+                    lightbulb
+                  </span>
+                  {t("assumptions")}
+                </div>
+                <p className="text-sm text-slate-400">{t("whenRepresentative")}</p>
+                <p className="text-sm text-slate-400">{t("whenNotRepresentative")}</p>
+              </div>
+            )}
           </div>
-        </div>
-      </div>
-    </div>
+    </BaseModalContainer>
   );
 }

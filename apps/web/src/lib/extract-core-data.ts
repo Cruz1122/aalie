@@ -13,10 +13,11 @@ export interface CoreAnalysisData {
 
   // Datos específicos de recursivo
   recurrence?: {
-    type: "divide_conquer" | "linear_shift";
+    type: "divide_conquer" | "divide_conquer_multi" | "linear_shift";
     form: string;
     a?: number;
     b?: number;
+    terms?: Array<{ a: number; b: number }>;
     f?: string;
     order?: number;
     shifts?: number[];
@@ -140,6 +141,10 @@ export function extractCoreData(
       if (totals.recurrence.type === "divide_conquer") {
         coreData.recurrence.a = totals.recurrence.a;
         coreData.recurrence.b = totals.recurrence.b;
+        coreData.recurrence.f = totals.recurrence.f;
+      } else if (totals.recurrence.type === "divide_conquer_multi") {
+        coreData.recurrence.terms = totals.recurrence.terms;
+        coreData.recurrence.a = totals.recurrence.a;
         coreData.recurrence.f = totals.recurrence.f;
       } else if (totals.recurrence.type === "linear_shift") {
         coreData.recurrence.order = totals.recurrence.order;

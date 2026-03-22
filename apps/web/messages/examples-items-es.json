@@ -44,7 +44,7 @@
   "9": {
     "name": "Ordenamiento Burbuja (Bubble Sort)",
     "description": "Ordena un array comparando elementos adyacentes e intercambiándolos si están en el orden incorrecto. Es uno de los algoritmos de ordenamiento más simples, pero también uno de los menos eficientes.",
-    "complexity": "Mejor: O(n), Peor: O(n²), Prom: O(n²)"
+    "complexity": "O(n²)"
   },
   "10": {
     "name": "Ordenamiento por Inserción (Insertion Sort)",
@@ -130,7 +130,7 @@
   },
   "24": {
     "name": "Pell Numbers",
-    "description": "Calcula el n-ésimo número de Pell usando la recurrencia P(n) = 2P(n-1) + P(n-2). Recurrencia lineal homogénea. Analizado con Ecuación Característica.",
+    "description": "Calcula el n-ésimo número de Pell usando la recurrencia P(n) = 2P(n-1) + P(n-2). En el modelo de costo temporal, se analiza como no homogénea (g(n)=1). Analizado con Ecuación Característica.",
     "complexity": "O((1+√2)ⁿ)",
     "note": "Se analiza con Ecuación Característica (DP lineal detectada)"
   },

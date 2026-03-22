@@ -54,6 +54,25 @@ END
         assert data.get("ok") is False
         assert "errors" in data
 
+    def test_detect_methods_includes_dp_validation_metadata(self):
+        """Test: El endpoint incluye metadata de validación de DP cuando aplica."""
+        source = """
+sparseRec(n) BEGIN
+    IF (n <= 3) THEN BEGIN
+        RETURN 1;
+    END
+    RETURN sparseRec(n - 1) + sparseRec(n - 4);
+END
+"""
+        response = client.post(
+            "/analyze/detect-methods",
+            json={"source": source, "algorithm_kind": "recursive"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("ok") is True
+        assert data.get("recurrence_info", {}).get("dp_validation", {}).get("primary_pattern") == "tabulation"
+
 
 class TestDummyEndpoint:
     """Tests para el endpoint /analyze/dummy."""

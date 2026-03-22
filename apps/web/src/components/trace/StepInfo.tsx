@@ -16,15 +16,15 @@ interface StepInfoProps {
 }
 
 // Helper function to format microseconds with appropriate units
-const formatMicroseconds = (microseconds: number): string => {
+const formatMicroseconds = (microseconds: number, t: (key: string) => string): string => {
   if (microseconds < 1) {
-    return `${(microseconds * 1000).toFixed(2)} ns`;
+    return `${(microseconds * 1000).toFixed(2)} ${t("timeUnitNs")}`;
   } else if (microseconds < 1000) {
-    return `${microseconds.toFixed(2)} μs`;
+    return `${microseconds.toFixed(2)} ${t("timeUnitUs")}`;
   } else if (microseconds < 1000000) {
-    return `${(microseconds / 1000).toFixed(2)} ms`;
+    return `${(microseconds / 1000).toFixed(2)} ${t("timeUnitMs")}`;
   } else {
-    return `${(microseconds / 1000000).toFixed(2)} s`;
+    return `${(microseconds / 1000000).toFixed(2)} ${t("timeUnitS")}`;
   }
 };
 
@@ -99,71 +99,86 @@ export default function StepInfo({
           </p>
         </div>
       ) : trace?.ok && stepData ? (
-        <div className="space-y-3 animate-fade-in" key={currentStep}>
-          {/* Grid for Line, Type, Cost, Microseconds, Tokens */}
-          <div className={`grid gap-2 ${stepData.cost ? 'grid-cols-5' : 'grid-cols-4'}`}>
-            <div className="glass-card p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 flex flex-col min-w-0">
-              <div className="text-xs text-blue-300 mb-2 font-bold text-center truncate">{t("line")}</div>
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-white font-semibold text-sm">
+        <div
+          className="space-y-3 animate-fade-in"
+          key={currentStep}
+          role="region"
+          aria-live="polite"
+          aria-atomic="true"
+          aria-label={t("stepShows", { line: stepData.line })}
+        >
+          {/* Microcopy: qué muestra este paso */}
+          <p className="text-xs text-slate-400">
+            {t("stepShows", { line: stepData.line })}
+          </p>
+          {/* Grid for Line, Type, Cost, Microseconds, Tokens - max 3 cols para que no se aprieten */}
+          <div className="grid gap-3 grid-cols-2 sm:grid-cols-3">
+            <div className="glass-card p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 flex flex-col min-w-0 min-h-[72px]">
+              <div className="text-xs text-blue-300 mb-1.5 font-semibold text-center truncate">{t("line")}</div>
+              <div className="flex-1 flex items-center justify-center min-h-[28px]">
+                <span className="text-white font-semibold text-base tabular-nums">
                   {stepData.line}
-                </div>
+                </span>
               </div>
             </div>
 
-            <div className="glass-card p-2 rounded-lg bg-purple-500/10 border border-purple-500/20 flex flex-col min-w-0">
-              <div className="text-xs text-purple-300 mb-2 font-bold text-center truncate">{t("type")}</div>
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-white font-semibold capitalize text-sm">
-                  {stepData.kind}
-                </div>
+            <div className="glass-card p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 flex flex-col min-w-0 min-h-[72px]">
+              <div className="text-xs text-purple-300 mb-1.5 font-semibold text-center truncate">{t("type")}</div>
+              <div className="flex-1 flex items-center justify-center min-h-[28px]">
+                <span className="text-white font-semibold text-base">
+                  {(() => {
+                    const key = `eventKind_${stepData.kind}` as const;
+                    const translated = t(key);
+                    return translated === key ? t("eventKind_other") : translated;
+                  })()}
+                </span>
               </div>
             </div>
 
             {stepData.cost && (
-              <div className="glass-card p-2 rounded-lg bg-orange-500/10 border border-orange-500/20 flex flex-col min-w-0">
-                <div className="text-xs text-orange-300 mb-2 font-bold text-center truncate">{t("cost")}</div>
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="text-white text-sm text-center">
+              <div className={`glass-card p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 flex flex-col min-w-0 ${stepData.accumulated_cost ? 'min-h-[88px]' : 'min-h-[72px]'}`}>
+                <div className="text-xs text-orange-300 mb-1.5 font-semibold text-center truncate">{t("cost")}</div>
+                <div className="flex-1 flex flex-col items-center justify-center min-h-[28px] gap-0.5">
+                  <div className="text-white text-sm text-center min-w-0">
                     <Formula latex={stepData.cost} />
-                    {stepData.accumulated_cost && (
-                      <div className="text-slate-400 text-xs mt-1">
-                        {t("accumulated")} <Formula latex={formatAccumulatedCost(stepData.accumulated_cost)} />
-                      </div>
-                    )}
                   </div>
+                  {stepData.accumulated_cost && (
+                    <div className="text-slate-400 text-xs text-center mt-0.5">
+                      {t("accumulated")} <Formula latex={formatAccumulatedCost(stepData.accumulated_cost)} />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
             {/* Microsegundos - mostrar siempre, con loader si está cargando */}
-            <div className="glass-card p-2 rounded-lg bg-green-500/10 border border-green-500/20 flex flex-col min-w-0">
-              <div className="text-xs text-green-300 mb-2 font-bold text-center truncate">{t("microseconds")}</div>
-              <div className="flex-1 flex items-center justify-center">
+            <div className="glass-card p-3 rounded-lg bg-green-500/10 border border-green-500/20 flex flex-col min-w-0 min-h-[72px]">
+              <div className="text-xs text-green-300 mb-1.5 font-semibold text-center truncate">{t("microseconds")}</div>
+              <div className="flex-1 flex items-center justify-center min-h-[28px]">
                 {loadingDiagram && stepData?.microseconds === undefined ? (
-                  <div className="w-4 h-4 border-2 border-green-300/50 border-t-green-300 rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-green-300/50 border-t-green-300 rounded-full animate-spin" />
                 ) : stepData?.microseconds !== undefined ? (
-                  <div className="text-white font-semibold text-sm">
-                    {formatMicroseconds(stepData.microseconds)}
-                  </div>
+                  <span className="text-white font-semibold text-sm tabular-nums">
+                    {formatMicroseconds(stepData.microseconds, t)}
+                  </span>
                 ) : (
-                  <div className="text-slate-500 text-xs">-</div>
+                  <span className="text-slate-500 text-sm">-</span>
                 )}
               </div>
             </div>
 
             {/* Tokens - mostrar siempre, con loader si está cargando */}
-            <div className="glass-card p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex flex-col min-w-0">
-              <div className="text-xs text-cyan-300 mb-2 font-bold text-center truncate">{t("tokens")}</div>
-              <div className="flex-1 flex items-center justify-center">
+            <div className="glass-card p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex flex-col min-w-0 min-h-[72px]">
+              <div className="text-xs text-cyan-300 mb-1.5 font-semibold text-center truncate">{t("tokens")}</div>
+              <div className="flex-1 flex items-center justify-center min-h-[28px]">
                 {loadingDiagram && stepData?.tokens === undefined ? (
-                  <div className="w-4 h-4 border-2 border-cyan-300/50 border-t-cyan-300 rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-cyan-300/50 border-t-cyan-300 rounded-full animate-spin" />
                 ) : stepData?.tokens !== undefined ? (
-                  <div className="text-white font-semibold text-sm">
+                  <span className="text-white font-semibold text-sm tabular-nums">
                     {stepData.tokens}
-                  </div>
+                  </span>
                 ) : (
-                  <div className="text-slate-500 text-xs">-</div>
+                  <span className="text-slate-500 text-sm">-</span>
                 )}
               </div>
             </div>

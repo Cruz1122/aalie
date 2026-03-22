@@ -1,9 +1,11 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import type { GPUCPUAnalysisResult, GPUCPUMetrics } from "@/types/gpu-cpu";
+
+import BaseModalContainer from "./modals/BaseModalContainer";
 
 interface GPUCPUModalProps {
   open: boolean;
@@ -389,28 +391,6 @@ export default function GPUCPUModal({
 }: Readonly<GPUCPUModalProps>) {
   const t = useTranslations("analyzer.gpuCpuModal");
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    if (open) {
-      const prevBodyOverflow = document.body.style.overflow;
-      const prevBodyPosition = document.body.style.position;
-      const prevHtmlOverflow = document.documentElement.style.overflow;
-      document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.documentElement.style.overflow = "hidden";
-      document.addEventListener("keydown", onKey);
-      return () => {
-        document.body.style.overflow = prevBodyOverflow;
-        document.body.style.position = prevBodyPosition;
-        document.documentElement.style.overflow = prevHtmlOverflow;
-        document.removeEventListener("keydown", onKey);
-      };
-    }
-    return undefined;
-  }, [open, onClose]);
-
   if (!open || !analysis) return null;
 
   return (
@@ -440,32 +420,16 @@ export default function GPUCPUModal({
           transform: rotateY(180deg);
         }
       `}</style>
-      <div className="fixed inset-0 z-[70] flex items-center justify-center">
-      {/* Overlay */}
-      <div
-        className="absolute inset-0 glass-modal-overlay"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div className="relative z-10 glass-modal-container rounded-2xl w-[95vw] sm:w-[85vw] max-w-4xl h-[85vh] max-h-[85dvh] mx-2 sm:mx-4 shadow-2xl flex flex-col overflow-hidden overscroll-contain">
-        {/* Header con estilo glass */}
-        <div className="flex items-center justify-between border-b border-white/10 px-4 sm:px-6 py-4 flex-shrink-0 glass-modal-header">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-            <span className="material-symbols-outlined text-blue-400 text-xl">
-              speed
-            </span>
-            {t("title")}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
-            aria-label={t("closeModal")}
-          >
-            ✕
-          </button>
-        </div>
-
+      <BaseModalContainer
+        open={open}
+        onClose={onClose}
+        title={t("title")}
+        titleIcon="speed"
+        closeAriaLabel={t("closeModal")}
+        zIndexClassName="z-[70]"
+        sizeClassName="w-[95vw] sm:w-[85vw] max-w-4xl h-[85vh] max-h-[85dvh]"
+        panelClassName="mx-2 sm:mx-4 overscroll-contain"
+      >
         {/* Contenido */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col min-h-0 scrollbar-custom">
           <GPUCPUContent
@@ -490,8 +454,7 @@ export default function GPUCPUModal({
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </BaseModalContainer>
     </>
   );
 }

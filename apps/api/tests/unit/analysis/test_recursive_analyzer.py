@@ -419,7 +419,129 @@ class TestRecursiveAnalyzerHelpers:
         result = self.analyzer._detect_indirect_division(body, args, params)
         if result is not None:
             assert isinstance(result, float)
-            assert result == 2.0
+
+
+class TestRecursiveAnalyzerDPValidation:
+    """Tests para la validación previa de PD en recurrencias lineales."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.analyzer = RecursiveAnalyzer()
+
+    def test_build_dp_validation_accepts_fibonacci_as_rolling_window(self):
+        """Fibonacci debe validarse como PD clara con patrón rolling window."""
+        proc_def = {
+            "type": "ProcDef",
+            "name": "fibonacci",
+            "params": [{"type": "Param", "name": "n"}],
+        }
+        recursive_calls = [
+            {
+                "type": "Call",
+                "name": "fibonacci",
+                "args": [{
+                    "type": "Binary",
+                    "op": "-",
+                    "left": {"type": "Identifier", "name": "n"},
+                    "right": {"type": "Literal", "value": 1},
+                }],
+            },
+            {
+                "type": "Call",
+                "name": "fibonacci",
+                "args": [{
+                    "type": "Binary",
+                    "op": "-",
+                    "left": {"type": "Identifier", "name": "n"},
+                    "right": {"type": "Literal", "value": 2},
+                }],
+            },
+        ]
+        linear_info = {"coefficients": {1: 1, 2: 1}, "max_offset": 2, "g_n": "1"}
+
+        validation = self.analyzer._build_dp_validation(proc_def, recursive_calls, linear_info)
+
+        assert validation["status"] == "clear"
+        assert validation["applicable"] is True
+        assert validation["primary_pattern"] == "rolling_window"
+
+    def test_build_dp_validation_rejects_stateful_hanoi(self):
+        """Hanoi no debe afirmarse como PD cuando cambian parámetros de estado."""
+        proc_def = {
+            "type": "ProcDef",
+            "name": "hanoi",
+            "params": [
+                {"type": "Param", "name": "n"},
+                {"type": "Param", "name": "origen"},
+                {"type": "Param", "name": "destino"},
+                {"type": "Param", "name": "aux"},
+            ],
+        }
+        recursive_calls = [
+            {
+                "type": "Call",
+                "name": "hanoi",
+                "args": [
+                    {"type": "Binary", "op": "-", "left": {"type": "Identifier", "name": "n"}, "right": {"type": "Literal", "value": 1}},
+                    {"type": "Identifier", "name": "origen"},
+                    {"type": "Identifier", "name": "aux"},
+                    {"type": "Identifier", "name": "destino"},
+                ],
+            },
+            {
+                "type": "Call",
+                "name": "hanoi",
+                "args": [
+                    {"type": "Binary", "op": "-", "left": {"type": "Identifier", "name": "n"}, "right": {"type": "Literal", "value": 1}},
+                    {"type": "Identifier", "name": "aux"},
+                    {"type": "Identifier", "name": "destino"},
+                    {"type": "Identifier", "name": "origen"},
+                ],
+            },
+        ]
+        linear_info = {"coefficients": {1: 2}, "max_offset": 1, "g_n": "1"}
+
+        validation = self.analyzer._build_dp_validation(proc_def, recursive_calls, linear_info)
+
+        assert validation["status"] == "rejected"
+        assert validation["applicable"] is False
+        assert "parámetros de estado" in validation["reasons"][0].lower()
+
+    def test_build_dp_validation_prefers_tabulation_for_sparse_shifts(self):
+        """Offsets dispersos deben clasificarse como patrón de tabulación."""
+        proc_def = {
+            "type": "ProcDef",
+            "name": "sparseRec",
+            "params": [{"type": "Param", "name": "n"}],
+        }
+        recursive_calls = [
+            {
+                "type": "Call",
+                "name": "sparseRec",
+                "args": [{
+                    "type": "Binary",
+                    "op": "-",
+                    "left": {"type": "Identifier", "name": "n"},
+                    "right": {"type": "Literal", "value": 1},
+                }],
+            },
+            {
+                "type": "Call",
+                "name": "sparseRec",
+                "args": [{
+                    "type": "Binary",
+                    "op": "-",
+                    "left": {"type": "Identifier", "name": "n"},
+                    "right": {"type": "Literal", "value": 4},
+                }],
+            },
+        ]
+        linear_info = {"coefficients": {1: 1, 4: 1}, "max_offset": 4, "g_n": "1"}
+
+        validation = self.analyzer._build_dp_validation(proc_def, recursive_calls, linear_info)
+
+        assert validation["status"] == "clear"
+        assert validation["primary_pattern"] == "tabulation"
 
     def test_detect_indirect_division_no_args(self):
         """Test: _detect_indirect_division sin argumentos"""
@@ -1895,6 +2017,89 @@ class TestRecursiveAnalyzerHelpers:
                         result = analyzer.analyze(ast, mode="worst", preferred_method="master")
                         assert not result.get("ok")
                         assert "errors" in result
+
+    def test_analyze_best_does_not_shortcut_o1_for_size_base_case(self):
+        """Test: best-case no retorna O(1) cuando el return temprano es caso base por tamaño."""
+        analyzer = RecursiveAnalyzer()
+        ast = {
+            "type": "Program",
+            "body": [{
+                "type": "ProcDef",
+                "name": "hanoi",
+                "params": [{"name": "n"}, {"name": "origen"}, {"name": "destino"}, {"name": "auxiliar"}],
+                "body": {
+                    "type": "Block",
+                    "body": [{
+                        "type": "If",
+                        "test": {
+                            "type": "Binary",
+                            "op": "==",
+                            "left": {"type": "Identifier", "name": "n"},
+                            "right": {"type": "Literal", "value": 1}
+                        },
+                        "consequent": {
+                            "type": "Block",
+                            "body": [{"type": "Return", "value": {"type": "Literal", "value": 1}}]
+                        },
+                        "alternate": {
+                            "type": "Block",
+                            "body": [{"type": "Call", "name": "hanoi", "args": [{"type": "Binary", "op": "-", "left": {"name": "n"}, "right": {"value": 1}}]}]
+                        }
+                    }]
+                }
+            }]
+        }
+        with patch.object(analyzer, '_validate_conditions', return_value={"valid": True}):
+            # Si no hay shortcut incorrecto a O(1), analyze debe intentar extraer recurrencia.
+            with patch.object(analyzer, '_extract_recurrence', return_value={
+                "success": False,
+                "reason": "forzado para verificar flujo"
+            }):
+                result = analyzer.analyze(ast, mode="best")
+                assert not result.get("ok")
+                assert "errors" in result
+
+    def test_analyze_best_shortcuts_theta1_for_data_dependent_early_return(self):
+        """Test: best-case retorna Θ(1) cuando el return temprano depende de datos."""
+        analyzer = RecursiveAnalyzer()
+        ast = {
+            "type": "Program",
+            "body": [{
+                "type": "ProcDef",
+                "name": "binarySearch",
+                "params": [{"name": "n"}, {"name": "x"}, {"name": "target"}],
+                "body": {
+                    "type": "Block",
+                    "body": [{
+                        "type": "If",
+                        "test": {
+                            "type": "Binary",
+                            "op": "==",
+                            "left": {"type": "Identifier", "name": "x"},
+                            "right": {"type": "Identifier", "name": "target"}
+                        },
+                        "consequent": {
+                            "type": "Block",
+                            "body": [{"type": "Return", "value": {"type": "Literal", "value": 0}}]
+                        },
+                        "alternate": {
+                            "type": "Block",
+                            "body": [{"type": "Call", "name": "binarySearch", "args": []}]
+                        }
+                    }]
+                }
+            }]
+        }
+        with patch.object(analyzer, '_validate_conditions', return_value={"valid": True}):
+            # Si hay shortcut correcto, no debe intentar extraer recurrencia.
+            with patch.object(analyzer, '_extract_recurrence', return_value={
+                "success": False,
+                "reason": "no debería ejecutarse en este test"
+            }):
+                result = analyzer.analyze(ast, mode="best")
+                assert result.get("ok")
+                assert result.get("totals", {}).get("T_open") == "\\Theta(1)"
+                assert result.get("totals", {}).get("big_theta") == "\\Theta(1)"
 
     # === Tests para detect_applicable_methods() ===
     

@@ -10,11 +10,18 @@ export const runtime = "nodejs";
 
 type ChatMessage = { role: string; content: string };
 
+function isQuotaLikeError(message: string): boolean {
+  return /quota|resource exhausted|resource_exhausted|billing|insufficient quota/i.test(
+    message,
+  );
+}
+
 async function callGeminiLLM(
   config: JobResolvedConfig,
   messages: Array<ChatMessage>,
   apiKey: string,
   schema?: { type: string },
+  disableThinking = false,
 ) {
   const systemInstruction = {
     parts: [{ text: config.systemPrompt }],
@@ -29,25 +36,66 @@ async function callGeminiLLM(
     temperature: config.temperature,
     maxOutputTokens: config.maxTokens,
     ...(schema ? { responseMimeType: "application/json" } : {}),
+    ...(disableThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
   };
   const body = {
     system_instruction: systemInstruction,
     contents,
     generationConfig,
   };
+  const bodyWithoutThinking = {
+    system_instruction: systemInstruction,
+    contents,
+    generationConfig: {
+      temperature: config.temperature,
+      maxOutputTokens: config.maxTokens,
+      ...(schema ? { responseMimeType: "application/json" } : {}),
+    },
+  };
   const url = `${GEMINI_ENDPOINT_BASE}/${encodeURIComponent(config.model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-  const response = await fetch(url, {
+  let response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
   });
+  if (!response.ok && disableThinking && response.status === 400) {
+    response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(bodyWithoutThinking),
+    });
+  }
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     const errorMsg =
       (errorData && (errorData.error?.message || errorData.message)) ||
       `HTTP ${response.status}`;
+    const providerStatus = String(errorData?.error?.status || "");
+    const rawCombined = `${providerStatus} ${errorMsg}`.trim();
+
+    if (response.status === 429) {
+      if (isQuotaLikeError(rawCombined)) {
+        throw new Error(`LLM_QUOTA_EXCEEDED: ${errorMsg}`);
+      }
+      throw new Error(`LLM_RATE_LIMIT: ${errorMsg}`);
+    }
+
+    if (response.status === 403 && isQuotaLikeError(rawCombined)) {
+      throw new Error(`LLM_QUOTA_EXCEEDED: ${errorMsg}`);
+    }
+
+    if (response.status === 408 || response.status === 504) {
+      throw new Error(`LLM_TIMEOUT: ${errorMsg}`);
+    }
+
+    if (response.status >= 500) {
+      throw new Error(`LLM_SERVER_ERROR: ${errorMsg}`);
+    }
+
     throw new Error(`Gemini Error ${response.status}: ${errorMsg}`);
   }
   return await response.json();
@@ -113,25 +161,13 @@ export async function POST(req: NextRequest) {
       messages,
       geminiApiKey,
       finalSchema,
+      (job as string) === "compare",
     );
-
-    // Normalización para intent-classify: eliminar saltos y restringir valores
-    let intent: string | undefined;
-    if ((job as string) === "classify") {
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      const trimmed = typeof text === "string" ? text.trim().toLowerCase() : "";
-      intent = trimmed === "parser_assist" ? "parser_assist" : "general";
-      // Mantener coherencia en data para consumidores existentes
-      if (data?.candidates?.[0]?.content?.parts?.[0]) {
-        data.candidates[0].content.parts[0].text = intent;
-      }
-    }
 
     return new Response(
       JSON.stringify({
         ok: true,
         data,
-        ...(intent ? { intent } : {}),
         model: config.model,
       }),
       {

@@ -93,11 +93,23 @@ class BaseAnalyzer:
         bool_flags: set[str] = set()
 
         # 1) Parámetros del procedimiento
+        # Excluir ArrayParam y nombres típicos de arrays (A, B, arr, etc.)
+        ARRAY_LIKE_NAMES = {"a", "b", "c", "arr", "array", "lista", "list"}
         params = proc_def.get("params", []) or []
         for p in params:
             if isinstance(p, dict):
                 name = p.get("name")
                 if isinstance(name, str) and name:
+                    if p.get("type") == "ArrayParam":
+                        for field in ("start", "end"):
+                            val = p.get(field)
+                            if isinstance(val, dict) and val.get("type", "").lower() == "identifier":
+                                size_name = val.get("name")
+                                if isinstance(size_name, str) and size_name and size_name.lower() not in ARRAY_LIKE_NAMES:
+                                    scores[size_name] += 5
+                        continue
+                    if name.lower() in ARRAY_LIKE_NAMES:
+                        continue
                     scores[name] += 5
 
         def _gather_ids(node: Any, out: set[str]) -> None:
@@ -226,6 +238,9 @@ class BaseAnalyzer:
                 scores[name] -= 5
             if name in forbidden:
                 scores[name] -= 10
+            # Excluir nombres de arrays (A, B, arr, etc.) que pueden venir del cuerpo (ej. A[j])
+            if name.lower() in ARRAY_LIKE_NAMES:
+                scores[name] -= 10
 
         # Filtro: solo candidatos con score positivo
         candidates = [name for name, sc in scores.items() if sc > 0]
@@ -241,7 +256,9 @@ class BaseAnalyzer:
                 bonus += 1
             return (base + bonus, name)
 
-        candidates.sort(key=_tie_break_key, reverse=True)
+        # Orden estable: mayor score primero, y en empate nombre ascendente.
+        # Evita elegir variables no tamaño (p.ej. `x`) sobre `n` por orden lexicográfico inverso.
+        candidates.sort(key=lambda name: (-_tie_break_key(name)[0], _tie_break_key(name)[1]))
         return candidates
 
     # --- util 1: agregar fila ---
@@ -1075,7 +1092,22 @@ class BaseAnalyzer:
             else:
                 model_info = self.avg_model.get_model_info(locale=self.locale)
             totals["avg_model_info"] = model_info
-            
+
+            # Bandera avg_foundation: "well_founded" vs "approximate"
+            # well_founded: Modelo A, fórmulas cerradas estándar, predicados explícitos
+            # approximate: WHILE unbounded, t_while/t_repeat, heurísticas
+            has_unbounded = any(r.get("unbounded") for r in clean_rows)
+            has_unbounded_symbols = False
+            for r in clean_rows:
+                count_str = str(r.get("expectedRuns", "") or r.get("count", ""))
+                if "t_while" in count_str or "t_repeat" in count_str or "t_{while" in count_str or "t_{repeat" in count_str:
+                    has_unbounded_symbols = True
+                    break
+            if has_unbounded or has_unbounded_symbols:
+                totals["avg_foundation"] = "approximate"
+            else:
+                totals["avg_foundation"] = "well_founded"
+
             # Agregar hipótesis si hay símbolos
             if self.avg_model.has_symbols():
                 hypotheses = []

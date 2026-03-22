@@ -3,6 +3,7 @@
 import type { ParseError } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 import { translateLlmError } from "@/lib/llm-error-translator";
 
@@ -32,6 +33,16 @@ export default function RepairModal({
   const [addedLines, setAddedLines] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showComparison, setShowComparison] = useState(false);
+
+  const normalizeToAnalyzerGrammar = (code: string): string => {
+    const cleaned = code.trim();
+    // La gramática del analizador espera: nombreProcedimiento(args) BEGIN ... END
+    // Si el LLM antepone palabras clave tipo PROCEDURE/FUNCTION, se eliminan.
+    return cleaned.replace(
+      /^\s*(?:PROCEDURE|FUNCTION|FUNCION|PROCEDIMIENTO)\s+([A-Za-z_][\w]*)\s*\(/i,
+      "$1(",
+    );
+  };
 
   // Resetear estado cuando se abre el modal
   useEffect(() => {
@@ -80,6 +91,17 @@ ${errorMessages}
 **SOLICITUD:**
 Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE el código corregido en un bloque \`\`\`pseudocode, sin explicaciones adicionales.`;
 
+  const strictGrammarRules = `
+
+**RESTRICCIONES DE GRAMÁTICA (OBLIGATORIAS):**
+1) NO uses prefijos como PROCEDURE, FUNCTION, FUNCION o PROCEDIMIENTO.
+2) La primera línea DEBE iniciar directamente con este formato: nombreProcedimiento(parametros) BEGIN
+3) Conserva el estilo de asignación con <-
+4) No agregues texto fuera del código.
+`;
+
+  const finalPrompt = `${prompt}${strictGrammarRules}`;
+
       // Obtener API_KEY
       const { getApiKey } = await import("@/hooks/useApiKey");
       const apiKey = getApiKey();
@@ -90,7 +112,7 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           job: "repair",
-          prompt,
+          prompt: finalPrompt,
           locale,
           apiKey: apiKey || undefined,
         }),
@@ -135,7 +157,7 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
             repairData = JSON.parse(match[1].trim());
           } catch {
             // Si aún falla, usar el contenido como código sin diff
-            setRepairedCode(String(content).trim());
+            setRepairedCode(normalizeToAnalyzerGrammar(String(content)));
             setRemovedLines([]);
             setAddedLines([]);
             setIsRepairing(false);
@@ -152,7 +174,7 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
         throw new Error(t("invalidCodeResponse"));
       }
 
-      setRepairedCode(repairData.code);
+      setRepairedCode(normalizeToAnalyzerGrammar(repairData.code));
       setRemovedLines(
         Array.isArray(repairData.removedLines) ? repairData.removedLines : [],
       );
@@ -266,9 +288,10 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
   }
 
   if (!open) return null;
+  if (typeof document === "undefined") return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center glass-modal-overlay glass-modal-overlay-fixed modal-animate-in">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center glass-modal-overlay glass-modal-overlay-fixed modal-animate-in">
       <div className="glass-modal-container rounded-2xl shadow-xl max-w-6xl w-[95vw] h-[85vh] flex flex-col m-4 modal-animate-in">
         {/* Header */}
         <div className="glass-modal-header flex items-center justify-between px-6 py-4 rounded-t-2xl border-b border-white/10">
@@ -410,6 +433,7 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

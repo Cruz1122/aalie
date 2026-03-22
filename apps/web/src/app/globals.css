@@ -13,7 +13,7 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  box-shadow: none;
   transform: translateZ(0);
   isolation: isolate;
 }
@@ -34,9 +34,8 @@
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+  box-shadow: none;
   transition: all 0.3s ease;
-  transform: translateZ(0);
   isolation: isolate;
   position: relative;
   z-index: 1;
@@ -45,8 +44,7 @@
 .glass-card:hover {
   background: rgba(24, 36, 49, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.4);
-  transform: translateY(-2px);
+  box-shadow: none;
 }
 
 /* Editor: sin efecto hover (sombra difuminada); z-index bajo; sin sombra azul debajo */
@@ -58,29 +56,15 @@
   background: rgba(24, 36, 49, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: none;
-  transform: translateZ(0);
 }
 
-.glass-button {
-  background: rgba(13, 127, 242, 0.9);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(13, 127, 242, 0.3);
-  box-shadow: 0 4px 20px 0 rgba(13, 127, 242, 0.3);
-  transform: translateZ(0);
-}
-
-.glass-button:hover {
-  background: rgba(13, 127, 242, 1);
-  box-shadow: 0 6px 25px 0 rgba(13, 127, 242, 0.4);
-}
+/* glass-button eliminado: usar AAButton con variant="primary" (estilo de cards de ejemplos) */
 
 .glass-secondary {
   background: rgba(34, 54, 73, 0.6);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  transform: translateZ(0);
   isolation: isolate;
   position: relative;
   z-index: 1;
@@ -129,7 +113,7 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.3);
+  box-shadow: none;
   transform: translateZ(0);
   isolation: isolate;
   position: relative;
@@ -141,7 +125,7 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 60px 0 rgba(31, 38, 135, 0.4);
+  box-shadow: none;
   transform: translateZ(0);
   isolation: isolate;
   position: relative;
@@ -528,6 +512,31 @@ kbd {
   background-color: #64748b; /* slate-500 */
 }
 
+/* Slider de tamaño de entrada - thumb visible y accesible */
+.input-size-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: #3b82f6; /* blue-500 */
+  border: 2px solid rgba(96, 165, 250, 0.5); /* blue-400/50 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.input-size-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+.input-size-slider::-moz-range-thumb {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 2px solid rgba(96, 165, 250, 0.5);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
 /* Animaciones específicas para el loader global */
 @keyframes loader-pulse {
   0%,
@@ -628,7 +637,37 @@ dialog::backdrop {
 }
 
 .katex-display {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
   margin: 1em 0 !important;
+  padding-bottom: 0.25rem;
+  scrollbar-width: thin;
+  scrollbar-color: #475569 #1e293b;
+}
+
+.katex-display::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.katex-display::-webkit-scrollbar-track {
+  background: #1e293b;
+  border-radius: 4px;
+}
+
+.katex-display::-webkit-scrollbar-thumb {
+  background-color: #475569;
+  border-radius: 4px;
+}
+
+.katex-display::-webkit-scrollbar-thumb:hover {
+  background-color: #64748b;
+}
+
+.katex-display > .katex {
+  min-width: max-content;
 }
 
 .katex .katex-mathml {

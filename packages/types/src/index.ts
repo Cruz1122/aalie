@@ -209,7 +209,7 @@ export function isGrammarParseResponse(obj: unknown): obj is GrammarParseRespons
 /** ---- ANALYZE ---- */
 
 /** Modo de análisis de complejidad */
-export type AnalyzeMode = "worst" | "best" | "avg";
+export type AnalyzeMode = "worst" | "best" | "avg" | "all";
 
 /** Tipos de operaciones por línea */
 export type LineKind =
@@ -231,6 +231,74 @@ export interface LineCost {
   unbounded_kind?: "non_terminating" | "unknown";  // clasificación del unbounded
 }
 
+export type LoopInvariantStatus = "ok" | "unavailable" | "low_confidence";
+export type LoopInvariantReason =
+  | "no_supported_loop"
+  | "insufficient_evidence"
+  | "pattern_not_supported";
+
+export type LoopInvariantPatternType =
+  | "binary_exponentiation_state"
+  | "binary_search_interval"
+  | "euclidean_gcd"
+  | "partition_by_pivot"
+  | "merge_progress"
+  | "filter_progress"
+  | "insertion_prefix_sorted"
+  | "selection_prefix_sorted"
+  | "loop_progress_only"
+  | "traversal"
+  | "search"
+  | "accumulation"
+  | "counting"
+  | "extrema"
+  | "prefix_progress"
+  | "two_pointer_like"
+  | "sorting_pass"
+  | "state_refinement"
+  | "unknown";
+
+export interface LoopInvariantSelectedLoop {
+  nodeType: "FOR" | "WHILE" | "REPEAT" | null;
+  lineStart: number | null;
+  lineEnd: number | null;
+  depth: number;
+  score: number;
+  patternType: LoopInvariantPatternType;
+  controlVariables: string[];
+  stateVariables: string[];
+  boundVariables: string[];
+  collectionVariables: string[];
+  targetVariables: string[];
+  keyUpdates: string[];
+  keyConditions: string[];
+}
+
+export interface LoopInvariantSections {
+  propertyStatement: string;
+  initialization: string;
+  maintenance: string;
+  finalization: string;
+}
+
+export interface LoopInvariantEvidence {
+  conditionReads: string[];
+  bodyWrites: string[];
+  bodyReads: string[];
+  detectedFeatures: string[];
+  classificationConfidence: number | null;
+  templateVariant: string | null;
+}
+
+export interface LoopInvariant {
+  status: LoopInvariantStatus;
+  reason: LoopInvariantReason | null;
+  selectedLoop: LoopInvariantSelectedLoop;
+  invariant: LoopInvariantSections;
+  didacticSummary: string;
+  evidence: LoopInvariantEvidence;
+}
+
 /** Modelo probabilístico para caso promedio */
 export interface AvgModelConfig {
   mode: "uniform" | "symbolic";  // modo del modelo
@@ -249,11 +317,28 @@ export interface AnalyzeRequest {
 export interface AnalyzeOpenResponse {
   ok: true;
   byLine: LineCost[];   // tabla por línea
+  loopInvariant?: LoopInvariant;
   totals: {
     T_open: string;                 // Σ C_k · count_k (KaTeX) - simplificado con SymPy (o A(n) para promedio)
     procedure?: string[];            // pasos (KaTeX) para construir T_open (legacy, puede estar vacío)
     symbols?: Record<string,string>;// p.ej.: { n: "length(A)" }
     notes?: string[];               // reglas usadas (for, while, if) o pasos de procedimiento para promedio
+    dp_validation_events?: Array<{
+      status: "clear" | "doubtful" | "rejected";
+      applicable: boolean;
+      confidence: "high" | "medium" | "low";
+      primary_pattern: "tabulation" | "memoization" | "rolling_window" | "none";
+      supported_patterns: Array<"tabulation" | "memoization" | "rolling_window">;
+      reasons: string[];
+      debug?: {
+        size_parameter?: string;
+        recursive_call_count?: number;
+        distinct_shifts?: number[];
+        max_offset?: number;
+        contiguous_shifts?: boolean;
+        changed_non_size_params?: string[];
+      };
+    }>;
     T_polynomial?: string;          // forma polinómica T(n) = an² + bn + c (KaTeX) - simplificado con SymPy
     big_o?: string;                 // Notación Big-O calculada con SymPy (ej: "O(n^2)")
     big_omega?: string;             // Notación Big-Omega calculada con SymPy (ej: "Ω(n^2)")
@@ -273,6 +358,20 @@ export interface AnalyzeOpenResponse {
           b: number;            // factor de reducción (> 1)
           f: string;            // trabajo no recursivo f(n) (LaTeX)
           n0: number;           // umbral base
+          applicable: boolean;
+          notes: string[];
+          method?: "master" | "iteration" | "recursion_tree";
+        }
+      | {                      // Recurrencia divide-and-conquer generalizada: T(n)=Σ a_i*T(n/b_i)+f(n)
+          type: "divide_conquer_multi";
+          form: string;
+          terms: Array<{
+            a: number;
+            b: number;
+          }>;
+          a: number;            // suma de subproblemas
+          f: string;
+          n0: number;
           applicable: boolean;
           notes: string[];
           method?: "master" | "iteration" | "recursion_tree";
@@ -306,16 +405,34 @@ export interface AnalyzeOpenResponse {
       general_solution?: string;            // solución general completa (homogénea + particular) en LaTeX
       base_cases?: Record<string, number>;  // casos base detectados (ej: {"T(0)": 0, "T(1)": 1})
       closed_form: string;                  // forma cerrada simplificada en LaTeX
+      dp_validation?: {
+        status: "clear" | "doubtful" | "rejected";
+        applicable: boolean;
+        confidence: "high" | "medium" | "low";
+        primary_pattern: "tabulation" | "memoization" | "rolling_window" | "none";
+        supported_patterns: Array<"tabulation" | "memoization" | "rolling_window">;
+        reasons: string[];
+        debug?: {
+          size_parameter?: string;
+          recursive_call_count?: number;
+          distinct_shifts?: number[];
+          max_offset?: number;
+          contiguous_shifts?: boolean;
+          changed_non_size_params?: string[];
+        };
+      };
       dp_version?: {                        // versión DP básica si aplica
         code: string;                       // pseudocódigo DP
         time_complexity: string;             // complejidad temporal DP (ej: "O(n)")
         space_complexity: string;            // complejidad espacial DP (ej: "O(n)")
         recursive_complexity: string;        // complejidad versión recursiva (ej: "O(2^n)")
+        pattern?: "tabulation" | "memoization" | "rolling_window";
       };
       dp_optimized_version?: {              // versión DP optimizada O(1) espacio si aplica
         code: string;                       // pseudocódigo DP optimizado
         time_complexity: string;             // complejidad temporal DP (ej: "O(n)")
         space_complexity: string;            // complejidad espacial DP optimizada (ej: "O(1)" o "O(k)")
+        pattern?: "tabulation" | "memoization" | "rolling_window";
       };
       dp_equivalence: string;               // explicación de equivalencia entre ecuación característica y DP
       theta: string;                        // resultado final Θ(...) en LaTeX
@@ -347,6 +464,7 @@ export interface AnalyzeOpenResponse {
     };
     recursion_tree?: {              // resultado del Método de Árbol de Recursión
       method: "recursion_tree";     // identificador del método
+      recurrence_type?: "divide_conquer" | "linear_shift";  // tipo de recurrencia para visualización
       levels: Array<{               // información de cada nivel del árbol
         level: number;              // índice del nivel (0 = raíz)
         num_nodes: number;          // número de nodos en el nivel (a^i)
@@ -395,13 +513,40 @@ export type AnalyzeResponse = AnalyzeOpenResponse | AnalyzeError;
 export interface AnalyzeAllCasesResponse {
   ok: true;
   has_case_variability?: boolean;  // si worst/best/avg difieren (false si son idénticos)
+  loopInvariant?: LoopInvariant;
   worst: AnalyzeOpenResponse;
-  best: AnalyzeOpenResponse;
-  avg?: AnalyzeOpenResponse;
+  best: AnalyzeOpenResponse | "same_as_worst";
+  avg?: AnalyzeOpenResponse | "same_as_worst";
 }
 
 // Tipos legacy mantenidos para compatibilidad
 export type CaseMode = "best" | "avg" | "worst" | "all";
+export type AnalyzeCaseAlias = "best" | "avg" | "average" | "worst";
+
+/** Normaliza alias de caso entre frontend y backend. */
+export function normalizeAnalyzeCaseAlias(caseType: AnalyzeCaseAlias): AnalyzeMode {
+  if (caseType === "average") return "avg";
+  return caseType;
+}
+
+/** Resuelve best/avg cuando vienen como "same_as_worst" en respuestas mode=all. */
+export function resolveAnalyzeCaseResult(
+  allCases: {
+    worst: AnalyzeOpenResponse | null;
+    best: AnalyzeOpenResponse | "same_as_worst" | null;
+    avg?: AnalyzeOpenResponse | "same_as_worst" | null;
+  } | null,
+  caseType: AnalyzeCaseAlias,
+): AnalyzeOpenResponse | null {
+  if (!allCases) return null;
+  const normalized = normalizeAnalyzeCaseAlias(caseType);
+  if (normalized === "worst") return allCases.worst;
+  if (normalized === "best") {
+    return allCases.best === "same_as_worst" ? allCases.worst : allCases.best;
+  }
+  const avgCase = allCases.avg ?? null;
+  return avgCase === "same_as_worst" ? allCases.worst : avgCase;
+}
 
 export interface AnalyzeOptions {
   mode?: CaseMode;
@@ -458,6 +603,161 @@ export interface LLMCompareResponse {
   diffSummary: string;     // resumen de coincidencias/diferencias y causas
 }
 
+/** ---- TRACE (Traza de ejecución y diagramas) ---- */
+
+/** Tipo de diagrama según su semántica */
+export type DiagramKind =
+  | "execution_diagram"   // Diagrama de seguimiento (flujo iterativo)
+  | "call_tree"           // Árbol de llamadas recursivas
+  | "recurrence_tree";    // Árbol de recurrencia (analítico)
+
+/** Tipos de evento semántico en un paso de ejecución */
+export type ExecutionEventKind =
+  | "enter_block"
+  | "assign"
+  | "condition_eval"
+  | "loop_iter_enter"
+  | "loop_iter_exit"
+  | "call_enter"
+  | "call_spawn_child"
+  | "call_resume"
+  | "return_emit"
+  | "call_exit"
+  | "print"
+  | "end";
+
+/** Paso de ejecución canónico (modelo enriquecido) */
+export interface ExecutionStepCanonical {
+  id: string;
+  stepNumber: number;
+  line: number | null;
+  eventKind: ExecutionEventKind;
+  description: string;
+  variablesSnapshot: Record<string, unknown>;
+  iteration?: {
+    loopId: string;
+    index?: number;
+  };
+  recursion?: {
+    callId: string;
+    depth: number;
+    parentCallId?: string;
+  };
+  decision?: {
+    conditionText: string;
+    result: boolean;
+  };
+  cost?: {
+    primitiveOps?: number;
+    microseconds?: number;
+    tokens?: number;
+  };
+  sourceSpan?: {
+    startLine: number;
+    endLine: number;
+  };
+}
+
+/** Nodo del árbol de llamadas recursivas */
+export interface CallNodeCanonical {
+  id: string;
+  functionName: string;
+  depth: number;
+  parentCallId?: string;
+  childCallIds: string[];
+  argumentsSnapshot: Record<string, unknown>;
+  localStateOnEnter?: Record<string, unknown>;
+  localStateOnExit?: Record<string, unknown>;
+  entryLine?: number;
+  baseCase?: {
+    detected: boolean;
+    conditionText?: string;
+    matched?: boolean;
+  };
+  returnValue?: unknown;
+  localCost?: { primitiveOps?: number };
+  aggregateCost?: { primitiveOps?: number };
+}
+
+/** Árbol de llamadas recursivas */
+export interface CallTreeCanonical {
+  rootCallIds: string[];
+  calls: CallNodeCanonical[];
+}
+
+/** Resumen de la traza */
+export interface TraceSummary {
+  totalSteps: number;
+  kind: "iterative" | "recursive" | "hybrid";
+}
+
+/** Traza de ejecución canónica */
+export interface ExecutionTraceCanonical {
+  kind: "iterative" | "recursive" | "hybrid";
+  steps: ExecutionStepCanonical[];
+  summary: TraceSummary;
+  callTree?: CallTreeCanonical;
+}
+
+/** Bloque de explicación */
+export interface ExplanationBlock {
+  stepId?: string;
+  text: string;
+  kind?: string;
+}
+
+/** Nodo del grafo visual (React Flow) */
+export interface TraceGraphNode {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  data: {
+    label: string;
+    microseconds?: number;
+    tokens?: number;
+    [key: string]: unknown;
+  };
+  parentId?: string;
+}
+
+/** Arista del grafo visual */
+export interface TraceGraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  label: string;
+  type: string;
+}
+
+/** Grafo visual para renderizado */
+export interface TraceGraphCanonical {
+  nodes: TraceGraphNode[];
+  edges: TraceGraphEdge[];
+}
+
+/** Payload de diagrama (salida de builders deterministas) */
+export interface DiagramPayload {
+  diagramKind: DiagramKind;
+  graph: TraceGraphCanonical;
+  explanationBlocks?: ExplanationBlock[];
+}
+
+/** Nodo del árbol de recurrencia (analítico) */
+export interface RecurrenceNode {
+  id: string;
+  subproblem: string;
+  sizeExpr: string;
+  workExpr: string;
+  level: number;
+  childIds: string[];
+}
+
+/** Expansión de recurrencia para árbol analítico */
+export interface RecurrenceExpansion {
+  root: RecurrenceNode;
+  depthLimit: number;
+}
+
 /** ---- Documentación ---- */
 export interface DocumentationSection {
   id: string;
@@ -471,3 +771,5 @@ export interface DocumentationSection {
     caption?: string;
   };
 }
+
+export * from "./export-snapshot";

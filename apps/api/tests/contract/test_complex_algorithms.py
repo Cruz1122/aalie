@@ -10,6 +10,7 @@ import pytest
 from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import (
     assert_all_cases_complexity,
+    assert_notation_no_array_symbols,
     get_totals,
 )
 
@@ -46,9 +47,9 @@ END
 # Bubble sort mejorado con bandera en condición AND usando igualdad explícita
 BUBBLE_SORT_FLAG_EQ = """ordenamientoBurbujaMejorado(A, n) BEGIN
   i <- 1;
-  intercambiado <- VERDADERO;
-  WHILE (i < n AND intercambiado = VERDADERO) DO BEGIN
-    intercambiado <- FALSO;
+  intercambiado <- TRUE;
+  WHILE (i < n AND intercambiado = TRUE) DO BEGIN
+    intercambiado <- FALSE;
     FOR j <- 1 TO n - i DO BEGIN
       IF (A[j] > A[j+1]) THEN BEGIN
         temp <- A[j];
@@ -82,20 +83,40 @@ END
 
 # Bubble sort mejorado con bandera de intercambio
 BUBBLE_SORT_MEJORADO = """bubbleSortMejorado(A, n) BEGIN
-  intercambiado <- VERDADERO;
+  intercambiado <- TRUE;
   i <- 1;
   WHILE (i < n AND intercambiado) DO BEGIN
-    intercambiado <- FALSO;
+    intercambiado <- FALSE;
     FOR j <- 1 TO n - i DO BEGIN
       IF (A[j] > A[j+1]) THEN BEGIN
         temp <- A[j];
         A[j] <- A[j+1];
         A[j+1] <- temp;
-        intercambiado <- VERDADERO;
+        intercambiado <- TRUE;
       END
     END
     i <- i + 1;
   END
+END
+"""
+
+# Bubble sort con longitud decreciente (variable en límite del FOR interno)
+# Regresión: evita conteos negativos por sustitución incorrecta de "longitud"
+BUBBLE_SORT_LONGITUD = """bubbleSortMejorado(A, n) BEGIN
+    longitud <- n;
+    swapped <- TRUE;
+    WHILE (swapped = TRUE) DO BEGIN
+        swapped <- FALSE;
+        FOR j <- 1 TO longitud - 1 DO BEGIN
+            IF (A[j] > A[j + 1]) THEN BEGIN
+                temp <- A[j];
+                A[j] <- A[j + 1];
+                A[j + 1] <- temp;
+                swapped <- TRUE;
+            END
+        END
+        longitud <- longitud - 1;
+    END
 END
 """
 
@@ -222,8 +243,41 @@ class TestComplexAlgorithms:
             if isinstance(data, dict):
                 assert data.get("ok") and "byLine" in data and "totals" in data
 
+    def test_bubble_sort_longitud_no_negative_counts(self):
+        """Bubble sort con longitud decreciente: no debe haber conteos negativos (regresión)."""
+        result = analyze_algorithm(BUBBLE_SORT_LONGITUD, mode="all")
+        assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
+        for case in ("worst", "best", "avg"):
+            data = result.get(case)
+            if data == "same_as_worst":
+                data = result.get("worst")
+            if not isinstance(data, dict) or not data.get("ok"):
+                continue
+            for row in data.get("byLine", []):
+                count = str(row.get("count", ""))
+                # Regresión: count no debe ser "- n", "-n" ni expresiones negativas
+                assert count != "- n" and count != "-n", (
+                    f"Caso {case} línea {row.get('line')}: count negativo '{count}'"
+                )
+                if count.startswith("-") and "n" in count:
+                    pytest.fail(f"Caso {case} línea {row.get('line')}: count negativo '{count}'")
+
+    def test_bubble_sort_longitud_correct_complexity(self):
+        """Bubble sort con longitud decreciente: Θ(n²) worst/avg, Θ(n) best; sin símbolos de array."""
+        result = analyze_algorithm(BUBBLE_SORT_LONGITUD, mode="all")
+        assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
+        assert_all_cases_complexity(
+            result,
+            "quadratic",
+            expected_best="linear",
+            expected_avg="quadratic",
+            name="BubbleSortLongitud",
+        )
+        for case in ("worst", "best", "avg"):
+            assert_notation_no_array_symbols(result, case)
+
     def test_bubble_sort_flag_eq_best_linear(self):
-        """Bubble sort con bandera en condición AND (intercambiado = VERDADERO) debe ser lineal en best."""
+        """Bubble sort con bandera en condición AND (intercambiado = TRUE) debe ser lineal en best."""
         result = analyze_algorithm(BUBBLE_SORT_FLAG_EQ, mode="all")
         assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
         # Peor caso cuadrático, mejor caso lineal, promedio cuadrático.

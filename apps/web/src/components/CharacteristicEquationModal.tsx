@@ -1,11 +1,13 @@
 "use client";
 
+import type { AnalyzeOpenResponse } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
-import React, { useEffect } from "react";
+import React from "react";
 
 import { translateBackendContent } from "@/lib/backend-content-translator";
 
 import Formula from "./Formula";
+import BaseModalContainer from "./modals/BaseModalContainer";
 
 /**
  * Redondea los valores numéricos en una expresión LaTeX a 3 decimales.
@@ -33,34 +35,7 @@ function roundLatexNumbers(latex: string): string {
 interface CharacteristicEquationModalProps {
   open: boolean;
   onClose: () => void;
-  recurrence:
-    | (
-        | {
-            type: "divide_conquer";
-            form: string;
-            a: number;
-            b: number;
-            f: string;
-            n0: number;
-            applicable: boolean;
-            notes: string[];
-            method?: "master" | "iteration" | "recursion_tree";
-          }
-        | {
-            type: "linear_shift";
-            form: string;
-            order: number;
-            shifts: number[];
-            coefficients: number[];
-            "g(n)"?: string;
-            n0: number;
-            applicable: boolean;
-            notes: string[];
-            method?: "characteristic_equation";
-          }
-      )
-    | null
-    | undefined;
+  recurrence: AnalyzeOpenResponse["totals"]["recurrence"] | null | undefined;
   characteristicEquation:
     | {
         method: "characteristic_equation";
@@ -139,53 +114,20 @@ export default function CharacteristicEquationModal({
   const t = useTranslations("analyzer.characteristicEquationModal");
   const locale = useLocale();
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    if (open) {
-      document.body.style.overflow = "hidden";
-      document.addEventListener("keydown", onKey);
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open, onClose]);
-
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div
-        className="absolute inset-0 glass-modal-overlay"
-        onClick={onClose}
-        aria-hidden
-      />
-      <div
-        className={`relative z-10 ${MODAL_SIZE} rounded-2xl glass-modal-container shadow-2xl flex flex-col overflow-hidden mx-4`}
-      >
-        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 flex-shrink-0 glass-modal-header">
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <span className="material-symbols-outlined text-blue-400">
-              calculate
-            </span>
-            {t("title")}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
-            aria-label={t("closeModal")}
-          >
-            ✕
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-custom">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+    <BaseModalContainer
+      open={open}
+      onClose={onClose}
+      title={t("title")}
+      titleIcon="calculate"
+      closeAriaLabel={t("closeModal")}
+      sizeClassName={MODAL_SIZE}
+    >
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 min-w-0">
             {/* Columna izquierda: Ecuación de Recurrencia y Solución */}
-            <div className="space-y-4 lg:col-span-3">
+            <div className="space-y-4 lg:col-span-3 min-w-0">
               {/* Ecuación de Recurrencia */}
               {recurrence && (
                 <div className="p-4 rounded-xl glass-card border border-white/10">
@@ -432,7 +374,7 @@ export default function CharacteristicEquationModal({
             </div>
 
             {/* Columna derecha: Resultado Final y Pasos */}
-            <div className="space-y-4 lg:col-span-2">
+            <div className="space-y-4 lg:col-span-2 min-w-0">
               {/* Resultado Final */}
               <div className="p-4 rounded-xl glass-card bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30">
                 <h4 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
@@ -470,13 +412,13 @@ export default function CharacteristicEquationModal({
                       return (
                         <div
                           key={idx}
-                          className="bg-slate-900/50 p-2 rounded border border-white/10"
+                          className="bg-slate-900/50 p-2 rounded border border-white/10 min-w-0"
                         >
                           <div className="text-xs text-slate-400 mb-1">
                             {t("step")} {idx + 1}
                           </div>
-                          <div className="scale-90 origin-top-left">
-                            <Formula latex={stepText} />
+                          <div className="w-full max-w-full overflow-x-auto overflow-y-hidden">
+                            <Formula latex={stepText} display />
                           </div>
                         </div>
                       );
@@ -527,8 +469,6 @@ export default function CharacteristicEquationModal({
                 )}
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+    </BaseModalContainer>
   );
 }

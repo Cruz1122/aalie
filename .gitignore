@@ -3,6 +3,9 @@ node_modules/
 .pnpm-store/
 pnpm-debug.log*
 
+# Fixtures for exporter tests
+packages/exporter/src/__tests__/fixtures/golden/
+
 # Builds
 dist/
 .next/
@@ -29,6 +32,7 @@ __pycache__/
 .venv/
 .env
 .env.*
+!.env.example
 **/*.egg-info/
 
 # Coverage

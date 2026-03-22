@@ -1,0 +1,9 @@
+{
+  "input_size": 5,
+  "initial_variables": {"A": [1, 2, 3, 4, 5], "x": 5},
+  "case": "worst",
+  "patternKind": "generic_iterative",
+  "minNodes": 10,
+  "minEdges": 9,
+  "nodeLabelsContain": ["FOR i", "RETURN"]
+}

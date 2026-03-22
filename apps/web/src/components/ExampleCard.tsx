@@ -1,5 +1,6 @@
 "use client";
 
+import AAButton from "@/components/AAButton";
 import Formula from "@/components/Formula";
 import { complexityToLatex } from "@/lib/katex";
 
@@ -142,7 +143,7 @@ export function ExampleCard({
   return (
     <div
       id={`example-${example.id}`}
-      className={`glass-card p-4 flex flex-col h-[380px] overflow-hidden border border-white/10 rounded-xl border-l-4 ${CATEGORY_ACCENT[category]} transition-all duration-200 hover:border-white/20 hover:shadow-lg hover:shadow-primary/5 scroll-mt-24 relative`}
+      className={`glass-card p-4 flex flex-col h-[330px] overflow-hidden border border-white/10 rounded-xl border-l-4 ${CATEGORY_ACCENT[category]} transition-all duration-200 hover:border-white/20 scroll-mt-24 relative`}
     >
       {/* Homogeneous/Non-homogeneous: tooltip en esquina (como card de caso promedio) */}
       {example.category === "recursive_characteristic" &&
@@ -227,18 +228,6 @@ export function ExampleCard({
         )}
       </div>
 
-      {/* Notas amarillas: fijas abajo, encima de los botones */}
-      {example.note && !isViewing && (
-        <div className="shrink-0 flex items-center gap-2 py-1.5 px-2 rounded-lg bg-amber-500/10 border border-amber-500/20 mt-2">
-          <span className="material-symbols-outlined text-amber-400 text-sm shrink-0">
-            info
-          </span>
-          <p className="text-[11px] text-amber-200/90 leading-snug">
-            {t("note")}: {t(`items.${example.id}.note`)}
-          </p>
-        </div>
-      )}
-
       {/* Botones siempre fijos abajo */}
       <div className="shrink-0 flex flex-col gap-2 pt-3">
         <button
@@ -267,10 +256,12 @@ export function ExampleCard({
             </span>
             {isCopied ? t("copied") : t("copy")}
           </button>
-          <button
+          <AAButton
             onClick={() => onAnalyze(example.code, example.id)}
             disabled={isDisabled}
-            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium bg-primary/25 border border-primary/40 hover:bg-primary/35 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            variant="primary"
+            size="sm"
+            className="flex-1"
           >
             <span
               className={`material-symbols-outlined text-sm ${
@@ -280,7 +271,7 @@ export function ExampleCard({
               {isAnalyzing ? "progress_activity" : "play_arrow"}
             </span>
             {isAnalyzing ? t("analyzing") : t("analyze")}
-          </button>
+          </AAButton>
         </div>
       </div>
     </div>

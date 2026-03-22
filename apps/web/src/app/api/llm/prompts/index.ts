@@ -3,13 +3,12 @@
  * Obtiene el prompt adecuado según el job y el locale del usuario.
  */
 
-import { classify } from "./classify";
 import { compare } from "./compare";
+import { explain } from "./explain";
 import { generalBase } from "./general";
 import { parserAssistBase } from "./parser_assist";
 import { repair } from "./repair";
 import { getResponseLanguageInstruction } from "./response-language";
-import { simplifier } from "./simplifier";
 import type { LLMJob, SupportedLocale } from "./types";
 
 const SUPPORTED_LOCALES: SupportedLocale[] = ["es", "en"];
@@ -29,18 +28,16 @@ export function getPrompt(job: LLMJob, locale?: string): string {
   const loc = normalizeLocale(locale);
 
   switch (job) {
-    case "classify":
-      return classify[loc];
     case "parser_assist":
       return parserAssistBase + getResponseLanguageInstruction(loc);
     case "general":
       return generalBase + getResponseLanguageInstruction(loc);
-    case "simplifier":
-      return simplifier[loc];
     case "repair":
       return repair[loc];
     case "compare":
       return compare[loc];
+    case "explain":
+      return explain[loc];
     default:
       return parserAssistBase + getResponseLanguageInstruction(loc);
   }

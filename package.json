@@ -1,13 +1,13 @@
 {
   "name": "algoritmos-monorepo",
   "private": true,
-  "version": "1.1.5",
+  "version": "1.2.0",
   "description": "Monorepo para AALIE - Analizador de Complejidades (Next.js + FastAPI)",
   "packageManager": "pnpm@9.15.0",
   "engines": {"node": ">=20 <23"},
   "scripts": {
     "dev": "pnpm -r dev",
-    "dev:api": "cd apps/api && python -m uvicorn app.main:app --reload --port 8000",
+    "dev:api": "cd apps/api && python3 -m uvicorn app.main:app --reload --port 8000",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint:web": "pnpm -C apps/web lint",
@@ -23,7 +23,8 @@
     "test:api:contract": "cd apps/api && python -m pytest -m contract -q",
     "test:api:cov": "cd apps/api && python -m pytest tests/ --cov=app --cov-report=term",
     "test:api:unit": "cd apps/api && python -m pytest tests/unit/ -v",
-    "test:api:stress": "cd apps/api && python -m pytest tests/contract/test_stress_algorithms.py -v"
+    "test:api:stress": "cd apps/api && python -m pytest tests/contract/test_stress_algorithms.py -v",
+    "test:api:while": "cd apps/api && python -m pytest -m while_domain -v"
   },
   "dependencies": {
     "antlr4ts": "0.5.0-alpha.4",

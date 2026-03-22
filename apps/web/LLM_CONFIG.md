@@ -1,167 +1,79 @@
-# Configuración de LLM - Modos LOCAL y REMOTE
+# Configuración de LLM para Despliegue
 
-## Variables de Entorno Requeridas
+## Variables de Entorno
 
-Agregar estas variables a tu archivo `.env.local`:
+Definir en `apps/web/.env` (desarrollo) o en variables del entorno del contenedor/servidor (deploy):
 
-```bash
-# ============== CONFIGURACIÓN DE LLM ==============
+```env
+# Endpoint base del proveedor Gemini
+GEMINI_ENDPOINT_BASE=https://generativelanguage.googleapis.com/v1beta/models
 
-# Modo de LLM: 'LOCAL' para LM Studio o 'REMOTE' para GitHub Models
-LLM_MODE=REMOTE
+# Modelos por job
+LLM_MODEL_PARSER_ASSIST=gemini-3-flash-preview
+LLM_MODEL_GENERAL=gemini-2.5-flash
+LLM_MODEL_REPAIR=gemini-3-flash-preview
+LLM_MODEL_COMPARE=gemini-3-flash-preview
+LLM_MODEL_RECURSION_DIAGRAM=gemini-2.5-flash
+LLM_MODEL_GENERATE_DIAGRAM=gemini-2.5-flash
 
-# ============== CONFIGURACIÓN REMOTE (GitHub Models) ==============
-# Token de GitHub para usar GitHub Models
-GITHUB_TOKEN=your_github_token_here
-
-# ============== CONFIGURACIÓN LOCAL (LM Studio) ==============
-# URL del endpoint de LM Studio (por defecto: http://localhost:1234/v1)
-LM_STUDIO_ENDPOINT=http://localhost:1234/v1
-
-# API Key para LM Studio (por defecto: lm-studio)
-LM_STUDIO_API_KEY=lm-studio
+# API key de Gemini*
+API_KEY=
 ```
 
-## Modos Disponibles
+### Fallbacks por defecto (si faltan env)
 
-### 1. Modo LOCAL (LM Studio)
+```typescript
+export const DEFAULT_GEMINI_ENDPOINT_BASE =
+	"https://generativelanguage.googleapis.com/v1beta/models";
 
-- **Uso**: Para desarrollo local con modelos ejecutándose en tu máquina
-- **Modelo**: gpt-oss-20b
-- **Ventajas**: Más rápido, sin dependencia de internet, privacidad total
-- **Desventajas**: Requiere recursos locales, configuración inicial
+export const DEFAULT_GEMINI_MODELS = {
+	parser_assist: "gemini-2.5-flash",
+	general: "gemini-3-flash-preview",
+	repair: "gemini-2.5-flash",
+	compare: "gemini-2.5-flash",
+} as const;
 
-**Configuración:**
-
-1. Instalar LM Studio
-2. Descargar el modelo `openai/gpt-oss-20b`
-3. Cargar el modelo en LM Studio
-4. Iniciar el servidor local en LM Studio (puerto 1234)
-5. Establecer `LLM_MODE=LOCAL`
-6. Verificar que el endpoint esté en `http://localhost:1234/v1`
-
-**Curl de prueba:**
-
-```bash
-curl http://localhost:1234/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "openai/gpt-oss-20b",
-    "messages": [
-      { "role": "system", "content": "Always answer in rhymes. Today is Thursday" },
-      { "role": "user", "content": "What day is it today?" }
-    ],
-    "temperature": 0.7,
-    "max_tokens": 100,
-    "stream": false
-}'
+export const DEFAULT_GEMINI_DIAGRAM_MODELS = {
+	recursion_diagram: "gemini-3-flash-preview",
+	generate_diagram: "gemini-3-flash-preview",
+} as const;
 ```
 
-### 2. Modo REMOTE (GitHub Models)
+## Comportamiento ante variables faltantes
 
-- **Uso**: Para producción y cuando no tienes recursos locales
-- **Modelos**: gpt-5-nano, grok-3-mini
-- **Ventajas**: Confiable, sin configuración local, modelos potentes
-- **Desventajas**: Depende de internet, requiere token de GitHub
+- La configuración lee primero `process.env`.
+- Si falta una variable de modelo o endpoint, se usa un valor por defecto centralizado en `src/app/api/llm/llm-defaults.ts`.
+- Esto evita que el sistema crashee por env incompleto.
 
-**Configuración:**
+## Docker / Deploy
 
-1. Obtener token de GitHub
-2. Establecer `LLM_MODE=REMOTE`
-3. Configurar `GITHUB_TOKEN`
+### Aplicar cambios en variables
 
-## Configuración de Modelos por Modo
-
-### Modo LOCAL
-
-- **Clasificación**: lmstudio-community/Llama-3.2-1B-Instruct-GGUF (temp: 0.1)
-- **Parser Assist**: lmstudio-community/Llama-3.2-1B-Instruct-GGUF (temp: 0.7)
-- **General**: lmstudio-community/Llama-3.2-1B-Instruct-GGUF (temp: 0.7)
-
-### Modo REMOTE
-
-- **Clasificación**: grok-3-mini (temp: 0)
-- **Parser Assist**: gpt-5-nano (temp: 1)
-- **General**: gpt-5-nano (temp: 1)
-
-## Cambio de Modo
-
-Para cambiar entre modos, simplemente modifica la variable `LLM_MODE`:
+Cuando cambies variables de entorno, recrea el servicio web:
 
 ```bash
-# Para modo local
-LLM_MODE=LOCAL
-
-# Para modo remoto
-LLM_MODE=REMOTE
+docker compose up -d --force-recreate web
 ```
 
-Reinicia el servidor después de cambiar el modo.
-
-## Troubleshooting
-
-### Modo LOCAL
-
-#### Problema: "ECONNREFUSED 127.0.0.1:1234"
-
-**Causa**: Docker no puede acceder a LM Studio en el host.
-
-**Soluciones**:
-
-1. **Para Docker Compose** (Recomendado):
-
-   ```bash
-   # En tu .env.local o docker-compose.yml
-   LM_STUDIO_ENDPOINT=http://host.docker.internal:1234/v1
-   ```
-
-2. **Para Docker run**:
-
-   ```bash
-   # Usar host.docker.internal en lugar de localhost
-   docker run -e LM_STUDIO_ENDPOINT=http://host.docker.internal:1234/v1 ...
-   ```
-
-3. **Verificar LM Studio**:
-   - Asegúrate de que LM Studio esté ejecutándose
-   - Verifica que el puerto 1234 esté disponible
-   - Confirma que el modelo esté cargado en LM Studio
-
-4. **Fallback Automático**:
-   - El sistema detecta automáticamente si LM Studio no está disponible
-   - Hace fallback automático a modo REMOTE
-   - Muestra warnings en los logs
-
-#### Verificación Manual:
+Si también cambiaste `Dockerfile` o dependencias:
 
 ```bash
-# Desde el contenedor Docker
-curl http://host.docker.internal:1234/v1/models
-
-# Desde tu máquina host
-curl http://localhost:1234/v1/models
+docker compose up -d --build web
 ```
 
-### Modo REMOTE
+## Verificación post-deploy
 
-- Verificar que el token de GitHub sea válido
-- Comprobar conectividad a internet
-- Revisar límites de API de GitHub
+Valida modelos y endpoint activos en runtime:
 
-### Fallback Automático
+```bash
+curl http://localhost:3000/api/llm/status
+```
 
-El sistema incluye un mecanismo de fallback automático:
+Revisa en la respuesta:
 
-- Si `LLM_MODE=LOCAL` pero LM Studio no está disponible
-- Automáticamente cambia a modo REMOTE
-- Registra el fallback en los logs
-- Continúa funcionando sin interrupciones
+- `status.config.endpoint`
+- `status.jobs.classify`
+- `status.jobs.parser_assist`
+- `status.jobs.general`
 
-## Logs
-
-El sistema registra en consola:
-
-- Modo actual (`LOCAL` o `REMOTE`)
-- Tipo de trabajo (`classify`, `parser_assist`, `general`)
-- Modelo utilizado
-- Errores específicos por modo
+Si esos valores coinciden con tu configuración esperada, el despliegue tomó correctamente las nuevas variables.

@@ -80,7 +80,7 @@ export const useDocumentationSections = (): DocumentationSection[] => {
             {
               title: "React Flow",
               content:
-                "TraceFlowDiagram, RecursionTreeModal, RecursiveTraceContent. Layout Dagre, zoom/pan, virtualización. Convierte trace data en nodos y edges.",
+                "TraceFlowDiagram, StructuredTraceContent. Layout Dagre, zoom/pan, virtualización. Convierte trace data en nodos y edges.",
             },
           ],
         },
@@ -106,7 +106,7 @@ export const useDocumentationSections = (): DocumentationSection[] => {
         descriptionKey: "llm",
         title: "Integración con LLM",
         description:
-          "Corrección de gramática, análisis desde chat, simplificación matemática, generación de procedimientos. Jobs: parser_assist, general, simplifier, repair, compare.",
+          "Corrección de gramática, análisis desde chat y generación de procedimientos. Jobs: parser_assist, general, repair, compare.",
         image: {
           src: "/docs/llm.webp",
           alt: "Flujo de uso de LLM",
@@ -120,12 +120,12 @@ export const useDocumentationSections = (): DocumentationSection[] => {
             {
               title: "Usos en el flujo",
               content:
-                "(1) Corrección de gramática en errores de sintaxis. (2) Análisis directo desde bloques de código en el chat. (3) Simplificación matemática con SymPy. (4) Generación de procedimientos en LaTeX. BFF /api/llm/* invoca Gemini u OpenAI por env.",
+                "(1) Corrección de gramática en errores de sintaxis. (2) Análisis directo desde bloques de código en el chat. (3) Generación de procedimientos en LaTeX. BFF /api/llm/* invoca Gemini u OpenAI por env.",
             },
             {
               title: "Jobs y modelos",
               content:
-                "parser_assist, general, simplifier, repair: Gemini 2.5 Flash. compare: Gemini 2.5 Pro. recursion-diagram: Gemini 2.0 Flash. NOTA: classify está DEPRECADO; la clasificación es por heurística en /classify (backend), NO usa LLM.",
+                "parser_assist, general, repair: Gemini 2.5 Flash. compare: Gemini 2.5 Pro. recursion-diagram y generate-diagram: Gemini 2.0 Flash. classify se usa en chat para intención; la clasificación de algoritmos en backend sigue siendo heurística en /classify.",
             },
           ],
         },
@@ -153,7 +153,7 @@ export const useDocumentationSections = (): DocumentationSection[] => {
             {
               title: "Prompts por Idioma",
               content:
-                "apps/web/src/app/api/llm/prompts/index.ts: getPrompt(job, locale). Jobs con prompts localizados: classify, parser_assist, general, simplifier, repair, compare. response-language.ts: getResponseLanguageInstruction, getExplanationLanguageInstruction. Prompts de diagramas: getGenerateDiagramSystemPrompt(locale), getRecursionDiagramSystemPrompt(locale). Parámetro locale en requests a /api/llm.",
+                "apps/web/src/app/api/llm/prompts/index.ts: getPrompt(job, locale). Jobs con prompts localizados: classify, parser_assist, general, repair, compare. response-language.ts: getResponseLanguageInstruction, getExplanationLanguageInstruction. Prompts de diagramas: getGenerateDiagramSystemPrompt(locale), getRecursionDiagramSystemPrompt(locale). Parámetro locale en requests a /api/llm.",
             },
           ],
         },

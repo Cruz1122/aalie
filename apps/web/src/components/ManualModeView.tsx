@@ -1,4 +1,4 @@
-import type { Program } from "@aa/types";
+import type { ParseError, Program } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
 import {
   forwardRef,
@@ -14,10 +14,18 @@ import { useAnalysisProgressContext } from "@/contexts/AnalysisProgressContext";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useRunAnalysis } from "@/hooks/useRunAnalysis";
+import {
+  MAX_TXT_IMPORT_BYTES,
+  looksLikeAlgorithmSourceText,
+  readAndValidateTxtFile,
+} from "@/lib/txt-import";
 import { GrammarApiService } from "@/services/grammar-api";
 
+import AAButton from "./AAButton";
 import { AnalyzerEditor } from "./AnalyzerEditor";
 import { ASTTreeView } from "./ASTTreeView";
+import RepairModal from "./RepairModal";
+import TxtImportModal from "./TxtImportModal";
 
 // Constantes
 const COPY_FEEDBACK_DURATION = 2000; // 2 segundos
@@ -29,6 +37,13 @@ type Message = {
   timestamp: Date;
   isError?: boolean;
   retryMessageId?: string;
+};
+
+type TxtImportModalState = {
+  title: string;
+  description: string;
+  details?: string[];
+  showRepairAction?: boolean;
 };
 
 
@@ -126,6 +141,19 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     const [ast, setAst] = useState<Program | null>(null);
     const [showAstModal, setShowAstModal] = useState(false);
     const [localParseOk, setLocalParseOk] = useState(false);
+    const [parseErrors, setParseErrors] = useState<ParseError[] | undefined>(
+      undefined,
+    );
+    const [isImportingTxt, setIsImportingTxt] = useState(false);
+    const txtInputRef = useRef<HTMLInputElement | null>(null);
+    const [txtImportModal, setTxtImportModal] = useState<TxtImportModalState | null>(
+      null,
+    );
+    const [showRepairModal, setShowRepairModal] = useState(false);
+    const [pendingImportSourceForRepair, setPendingImportSourceForRepair] =
+      useState<string | null>(null);
+    const [pendingImportErrorsForRepair, setPendingImportErrorsForRepair] =
+      useState<ParseError[] | undefined>(undefined);
     const [copied, setCopied] = useState(false);
     const [viewMode, setViewMode] = useState<"tree" | "json">("tree");
     const [isVerifyingParse, setIsVerifyingParse] = useState(false);
@@ -346,6 +374,112 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
       void runAnalysis(code);
     };
 
+    const handleTxtImport = async (
+      event: React.ChangeEvent<HTMLInputElement>,
+    ) => {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+      if (!file) {
+        return;
+      }
+
+      setTxtImportModal(null);
+      setIsImportingTxt(true);
+
+      const validation = await readAndValidateTxtFile(file);
+      if (!validation.ok) {
+        setIsImportingTxt(false);
+        if (validation.reason === "invalidExtension") {
+          setTxtImportModal({
+            title: tView("txtImportInvalidFileTitle"),
+            description: tView("txtImportOnlyTxt"),
+          });
+        } else if (validation.reason === "empty") {
+          setTxtImportModal({
+            title: tView("txtImportInvalidFileTitle"),
+            description: tView("txtImportEmpty"),
+          });
+        } else if (validation.reason === "tooLarge") {
+          setTxtImportModal({
+            title: tView("txtImportInvalidFileTitle"),
+            description: tView("txtImportTooLarge", {
+              maxKb: Math.floor(MAX_TXT_IMPORT_BYTES / 1024),
+            }),
+          });
+        } else if (validation.reason === "invalidFormat") {
+          setTxtImportModal({
+            title: tView("txtImportInvalidFileTitle"),
+            description: tView("txtImportInvalidFormat"),
+          });
+        } else {
+          setTxtImportModal({
+            title: tView("txtImportInvalidFileTitle"),
+            description: tView("txtImportReadError"),
+          });
+        }
+        return;
+      }
+
+      try {
+        const parseRes = await GrammarApiService.parseCode(
+          validation.normalizedSource,
+        );
+
+        if (parseRes.ok) {
+          setCode(validation.normalizedSource);
+          setParseErrors(undefined);
+          setLocalParseOk(true);
+          setPendingImportSourceForRepair(null);
+          setPendingImportErrorsForRepair(undefined);
+          setTxtImportModal({
+            title: tView("txtImportSuccessTitle"),
+            description: tView("txtImportSuccess"),
+          });
+          return;
+        }
+
+        const errors = parseRes.errors || undefined;
+        setParseErrors(errors);
+        setLocalParseOk(false);
+
+        if (!looksLikeAlgorithmSourceText(validation.normalizedSource)) {
+          setTxtImportModal({
+            title: tView("txtImportInvalidAlgorithmTitle"),
+            description: tView("txtImportNotAlgorithm"),
+          });
+          return;
+        }
+
+        const errorDetails = (errors || []).slice(0, 3).map((e) =>
+          t("lineErrorFormat", {
+            line: e.line ?? 0,
+            column: e.column ?? 0,
+            message: e.message ?? "",
+          }),
+        );
+
+        setTxtImportModal({
+          title: tView("txtImportGrammarTitle"),
+          description: hasValidApiKey
+            ? tView("txtImportParseFailed")
+            : tView("txtImportParseFailedNoAi"),
+          details: errorDetails,
+          showRepairAction: hasValidApiKey,
+        });
+        setPendingImportSourceForRepair(validation.normalizedSource);
+        setPendingImportErrorsForRepair(errors);
+      } catch {
+        setPendingImportSourceForRepair(null);
+        setPendingImportErrorsForRepair(undefined);
+        setTxtImportModal({
+          title: tView("txtImportInvalidFileTitle"),
+          description: tView("txtImportReadError"),
+        });
+      } finally {
+        setIsImportingTxt(false);
+      }
+    };
+
     useImperativeHandle(
       ref,
       () => ({
@@ -448,12 +582,43 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
               />
             </div>
 
-            {/* Botón Analizar - 25% en desktop, 100% en mobile; azul con icono play como ejemplos */}
+            {/* Botón Analizar - 25% en desktop, 100% en mobile; AAButton primary como cards de ejemplos */}
             <div className="w-full lg:w-[25%] flex flex-col gap-3 relative z-10">
               <button
+                type="button"
+                onClick={() => txtInputRef.current?.click()}
+                disabled={isImportingTxt}
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 sm:px-6 rounded-xl text-white text-xs sm:text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-cyan-400/50 bg-gradient-to-br from-cyan-500/20 to-cyan-500/20 border border-cyan-500/30 hover:from-cyan-500/30 hover:to-cyan-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                {isImportingTxt ? (
+                  <>
+                    <span className="material-symbols-outlined text-base animate-spin">
+                      progress_activity
+                    </span>
+                    {tView("importingTxt")}
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-base">
+                      upload_file
+                    </span>
+                    {tView("importTxt")}
+                  </>
+                )}
+              </button>
+              <input
+                ref={txtInputRef}
+                type="file"
+                accept=".txt,text/plain"
+                className="hidden"
+                onChange={handleTxtImport}
+              />
+              <AAButton
                 onClick={handleAnalyzeComplexity}
                 disabled={isAnalyzing || !localParseOk || code.trim() === ""}
-                className="flex items-center justify-center gap-2 py-2.5 px-4 sm:px-6 rounded-lg text-white text-xs sm:text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-400/50 bg-primary/25 border border-primary/40 hover:bg-primary/35 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+                variant="primary"
+                size="lg"
+                className="w-full py-2.5 px-4 sm:px-6 text-xs sm:text-sm"
               >
                 {isAnalyzing ? (
                   <>
@@ -470,7 +635,7 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                     {tManual("analyzeComplexity")}
                   </>
                 )}
-              </button>
+              </AAButton>
             </div>
           </div>
 
@@ -565,18 +730,76 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                       </span>
                       {copied ? tView("astModalCopied") : tView("copyJson")}
                     </button>
-                    <button
+                    <AAButton
                       onClick={() => setShowAstModal(false)}
-                      className="glass-button px-4 py-2 text-xs font-semibold text-white rounded-lg transition-all hover:scale-105 bg-gradient-to-br from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 hover:from-yellow-500/30 hover:to-amber-500/30"
+                      variant="amber"
+                      size="sm"
                     >
                       {tCommon("close")}
-                    </button>
+                    </AAButton>
                   </div>
                 </div>
               </div>
             </div>,
               document.body,
             )}
+
+          <RepairModal
+            open={showRepairModal}
+            onClose={() => {
+              setShowRepairModal(false);
+              setPendingImportSourceForRepair(null);
+              setPendingImportErrorsForRepair(undefined);
+            }}
+            onAccept={(repairedCode) => {
+              setCode(repairedCode);
+              setParseErrors(undefined);
+              setLocalParseOk(false);
+              setShowRepairModal(false);
+              setPendingImportSourceForRepair(null);
+              setPendingImportErrorsForRepair(undefined);
+            }}
+            originalCode={pendingImportSourceForRepair ?? code}
+            parseErrors={pendingImportErrorsForRepair ?? parseErrors}
+          />
+
+          <TxtImportModal
+            open={txtImportModal !== null}
+            title={txtImportModal?.title || ""}
+            description={txtImportModal?.description || ""}
+            details={txtImportModal?.details}
+            confirmLabel={
+              txtImportModal?.showRepairAction
+                ? tView("repairWithAI")
+                : tCommon("close")
+            }
+            cancelLabel={
+              txtImportModal?.showRepairAction ? tCommon("cancel") : undefined
+            }
+            onCancel={
+              txtImportModal?.showRepairAction
+                ? () => {
+                    setTxtImportModal(null);
+                    setPendingImportSourceForRepair(null);
+                    setPendingImportErrorsForRepair(undefined);
+                  }
+                : undefined
+            }
+            onConfirm={() => {
+              const mustRepair = txtImportModal?.showRepairAction === true;
+              setTxtImportModal(null);
+              if (mustRepair) {
+                if (pendingImportSourceForRepair) {
+                  setCode(pendingImportSourceForRepair);
+                }
+                setParseErrors(pendingImportErrorsForRepair);
+                setShowRepairModal(true);
+              } else {
+                setPendingImportSourceForRepair(null);
+                setPendingImportErrorsForRepair(undefined);
+              }
+            }}
+          />
         </div>
       </div>
     );

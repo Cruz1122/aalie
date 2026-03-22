@@ -5,7 +5,9 @@ from typing import Any, Dict, List, Optional
 from sympy import Symbol, Integer, Expr, sympify, Sum, Rational
 import re
 
-from ..while_analysis import analyze_guard, summarize_updates, classify_while
+from ..ir.expr_utils import expr_to_str
+from ..while_engine import analyze_guard, summarize_updates, classify_while
+from ..while_engine.engine import WhileEngine, WhileAnalysisInput, WhileAnalysisResult
 
 
 class WhileRepeatVisitor:
@@ -36,51 +38,9 @@ class WhileRepeatVisitor:
         return rf"t_{{{kind}_{line}}}"
     
     def _expr_to_str(self, expr: Any) -> str:
-        """
-        Convierte una expresión del AST a string.
-        
-        Args:
-            expr: Expresión del AST
-            
-        Returns:
-            String representando la expresión
-            
-        Author: Juan Camilo Cruz Parra (@Cruz1122)
-        """
-        if expr is None:
-            return ""
-        elif isinstance(expr, str):
-            return expr
-        elif isinstance(expr, (int, float)):
-            return str(expr)
-        elif isinstance(expr, dict):
-            expr_type = expr.get("type", "")
-            
-            if expr_type.lower() == "identifier":
-                return expr.get("name", "unknown")
-            elif expr_type.lower() in ("number", "literal"):
-                return str(expr.get("value", "0"))
-            elif expr_type.lower() == "binary":
-                left = self._expr_to_str(expr.get("left", ""))
-                right = self._expr_to_str(expr.get("right", ""))
-                # El AST usa 'op' no 'operator'
-                op = expr.get("op", "") or expr.get("operator", "")
-                if not op:
-                    op = "-"
-                return f"({left}) {op} ({right})"
-            elif expr_type.lower() == "index":
-                target = self._expr_to_str(expr.get("target", ""))
-                index = self._expr_to_str(expr.get("index", ""))
-                return f"{target}[{index}]"
-            elif expr_type.lower() == "unary":
-                arg = self._expr_to_str(expr.get("arg", ""))
-                op = expr.get("operator", "")
-                return f"{op}({arg})"
-            else:
-                return str(expr.get("value", str(expr)))
-        else:
-            return str(expr)
-    
+        """Delega a expr_to_str del módulo ir.expr_utils."""
+        return expr_to_str(expr)
+
     def _str_to_sympy(self, expr_str: str) -> Expr:
         """
         Convierte un string a expresión SymPy.
@@ -721,7 +681,79 @@ class WhileRepeatVisitor:
         return (is_var_leq_limit(left) and is_array_gt_zero(right)) or (
             is_var_leq_limit(right) and is_array_gt_zero(left)
         )
-    
+
+    def _is_linear_search_flag_pattern(
+        self, test: Dict[str, Any], body: Any, var_name: str
+    ) -> bool:
+        """
+        Detecta búsqueda lineal con flag: WHILE (i < n AND encontrado = false)
+        con IF (A[i] = x) THEN encontrado <- true en el cuerpo.
+        En best case: 1 iteración (encuentra x en la primera posición).
+        """
+        if not isinstance(test, dict) or not body:
+            return False
+        op = (test.get("op") or test.get("operator", "")).lower()
+        if op not in ("and", "&&"):
+            return False
+        left = test.get("left", {})
+        right = test.get("right", {})
+
+        def _is_flag_eq_false(expr: Dict[str, Any]) -> bool:
+            """True si expr es una comparación (id = false) o (false = id)."""
+            if not isinstance(expr, dict):
+                return False
+            t = expr.get("type", "").lower()
+            if t not in ("binary", "binaryop"):
+                return False
+            op2 = (expr.get("op") or expr.get("operator", "")).lower()
+            if op2 not in ("=", "=="):
+                return False
+            l, r = expr.get("left", {}), expr.get("right", {})
+            for node in (l, r):
+                if not isinstance(node, dict):
+                    continue
+                nt = node.get("type", "").lower()
+                if nt in ("literal", "number"):
+                    if node.get("value") is False or node.get("value") == 0:
+                        return True
+                elif nt == "identifier":
+                    if (node.get("name") or "").lower() in ("false", "falso", "f"):
+                        return True
+            return False
+
+        if not (_is_flag_eq_false(left) or _is_flag_eq_false(right)):
+            return False
+
+        def _body_has_array_find_then_assign_flag(node: Any) -> bool:
+            if isinstance(node, dict):
+                if node.get("type", "").lower() == "if":
+                    t = node.get("test", {})
+                    cons = node.get("consequent", {})
+                    if isinstance(cons, list):
+                        cons_body = cons
+                    elif isinstance(cons, dict) and cons.get("type") == "Block":
+                        cons_body = cons.get("body", [])
+                    else:
+                        cons_body = [cons] if cons else []
+                    if self._has_non_control_comparison(t, var_name):
+                        for stmt in cons_body:
+                            if isinstance(stmt, dict) and stmt.get("type", "").lower() == "assign":
+                                target = stmt.get("target", {})
+                                if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
+                                    return True
+                for v in node.values():
+                    if _body_has_array_find_then_assign_flag(v):
+                        return True
+            elif isinstance(node, list):
+                return any(_body_has_array_find_then_assign_flag(item) for item in node)
+            return False
+
+        body_node = body if isinstance(body, dict) else {"body": body}
+        body_list = body_node.get("body", [])
+        if not body_list and body_node.get("type") != "Block":
+            body_list = [body_node]
+        return _body_has_array_find_then_assign_flag(body_list)
+
     def _has_non_control_comparison(self, node: Dict[str, Any], var_name: str) -> bool:
         """
         Verifica si un nodo contiene una comparación que no es solo con la variable de control.
@@ -1175,6 +1207,26 @@ class WhileRepeatVisitor:
                         "success": True,
                         "mode": mode
                     }
+
+                # Búsqueda lineal con flag: WHILE (i < n AND encontrado = false) con
+                # IF (A[i] = x) THEN encontrado <- true. La bandera empieza en false,
+                # entramos al bucle; en best case encontramos x en la primera iteración → 1 iter.
+                if (
+                    mode == "best"
+                    and non_control_is_fixed_flag
+                    and self._is_linear_search_flag_pattern(test, body, var_name)
+                ):
+                    return {
+                        "variable": var_name,
+                        "initial_value": None,
+                        "change_rule": {"operator": "+", "constant": "1"},
+                        "limit": condition_info_pre.get("limit", "n") if condition_info_pre else "n",
+                        "operator": condition_info_pre.get("operator", "<") if condition_info_pre else "<",
+                        "iterations": "1",
+                        "success": True,
+                        "mode": mode,
+                        "reason_code": "while_linear_search_flag_best",
+                    }
         
         # 1.5) Caso promedio especial: prefijo positivo WHILE (i <= n AND A[i] > 0)
         # Para este patrón, la esperanza de iteraciones es O(1) (no depende de n).
@@ -1193,10 +1245,10 @@ class WhileRepeatVisitor:
                     "reason_code": "while_positive_prefix_avg",
                 }
         
-        # 2) NUEVO CLASIFICADOR: GuardInfo + UpdateSummary + classify_while
+        # 2) Motor WHILE (engine) o clasificador legacy
+        result = None
         try:
             guard = analyze_guard(test)
-            
             # Recopilar todas las variables asignadas en el cuerpo para evaluarlas como posibles cotas
             assigned_vars = set()
             def _collect_vars(n):
@@ -1214,6 +1266,86 @@ class WhileRepeatVisitor:
             all_vars = guard.vars_used.union(assigned_vars)
             
             updates = summarize_updates(body, all_vars, guard, parent_context)
+            # Intentar engine primero
+            try:
+                engine = WhileEngine()
+                engine_input = WhileAnalysisInput(
+                    while_node=node,
+                    parent_context=parent_context,
+                    procedure_context=getattr(self, "root_ast", None),
+                    mode=mode,
+                )
+                engine_result = engine.analyze(engine_input)
+                if engine_result.status == "bounded" and engine_result.iterations_expr:
+                    return {
+                        "variable": engine_result.variable or "",
+                        "initial_value": None,
+                        "change_rule": engine_result.change_rule or {"operator": "+", "constant": "1"},
+                        "limit": engine_result.limit or "n",
+                        "operator": engine_result.operator or "<",
+                        "iterations": engine_result.iterations_expr,
+                        "success": True,
+                        "mode": mode,
+                        "reason_code": engine_result.reason_code,
+                        "pattern": engine_result.pattern_used,
+                    }
+                if engine_result.status == "unbounded":
+                    if mode == "best" and engine_result.reason_code == "while_no_progress_must":
+                        param_bounded = self._try_param_controlled_best_case(
+                            body, guard, updates,
+                            (engine_result.evidence or {}).get("var"), L, parent_context
+                        )
+                        if param_bounded:
+                            return param_bounded
+                    return {
+                        "success": True,
+                        "status": "unbounded",
+                        "reason_code": engine_result.reason_code or "while_unbounded_unknown",
+                        "evidence": engine_result.evidence or {},
+                    }
+            except Exception:
+                # Si el engine falla, usar el clasificador para no perder bounded/unbounded
+                result_fallback = classify_while(guard, updates, mode, parent_context, L)
+                if result_fallback.status == "bounded" and result_fallback.iterations_expr:
+                    ev = result_fallback.evidence
+                    op_rule = ev.get("change_operator") if ev else None
+                    const_rule = ev.get("change_constant") if ev else None
+                    if op_rule is None or const_rule is None:
+                        ch = (ev.get("change") or "+1").strip() if ev else "+1"
+                        if ch.startswith("+") or ch.startswith("-"):
+                            op_rule = ch[0]
+                            const_rule = ch[1:] or "1"
+                        else:
+                            op_rule = "+"
+                            const_rule = "1"
+                    else:
+                        op_rule = str(op_rule)
+                        const_rule = str(const_rule)
+                    return {
+                        "variable": ev.get("var", "") if ev else "",
+                        "initial_value": None,
+                        "change_rule": {"operator": op_rule, "constant": const_rule},
+                        "limit": ev.get("limit", "") if ev else "n",
+                        "operator": ev.get("op", "<") if ev else "<",
+                        "iterations": result_fallback.iterations_expr,
+                        "success": True,
+                        "mode": mode,
+                        "reason_code": result_fallback.reason_code,
+                    }
+                if result_fallback.status == "unbounded":
+                    if mode == "best" and result_fallback.reason_code == "while_no_progress_must":
+                        param_bounded = self._try_param_controlled_best_case(
+                            body, guard, updates,
+                            (result_fallback.evidence or {}).get("var"), L, parent_context
+                        )
+                        if param_bounded:
+                            return param_bounded
+                    return {
+                        "success": True,
+                        "status": "unbounded",
+                        "reason_code": result_fallback.reason_code or "while_unbounded_unknown",
+                        "evidence": result_fallback.evidence or {},
+                    }
             result = classify_while(guard, updates, mode, parent_context, L)
             if result.status == "bounded" and result.iterations_expr:
                 ev = result.evidence
@@ -1253,7 +1385,8 @@ class WhileRepeatVisitor:
                     "evidence": result.evidence,
                 }
         except Exception as e:
-            print(f"[WhileRepeatVisitor] Error en classify_while: {e}")
+            import logging
+            logging.exception("[WhileRepeatVisitor] Error en classify_while: %s", e)
         
         # 3) Extraer información de la condición (para worst/avg case o si best case no aplica)
         condition_info = condition_info_pre or self._extract_condition_info(test)
@@ -1293,6 +1426,44 @@ class WhileRepeatVisitor:
                     "mode": mode,
                     "pattern": pattern_info["pattern"],
                     "pattern_note": pattern_info.get("note", "")
+                }
+            # Búsqueda lineal con flag en avg: E[iteraciones] ≈ (n+1)/2 (no usar modelo geométrico)
+            if mode == "avg" and self._is_linear_search_flag_pattern(test, body, var_name):
+                initial_val = self._find_initial_value_of_var(var_name, L, parent_context) or "0"
+                return {
+                    "variable": var_name,
+                    "initial_value": initial_val,
+                    "change_rule": {"operator": "+", "constant": "1"},
+                    "limit": limit,
+                    "operator": operator,
+                    "iterations": f"(({limit}) - ({initial_val}) + 1) / 2",
+                    "success": True,
+                    "mode": mode,
+                    "reason_code": "while_linear_search_flag_avg",
+                }
+            # Si no se detectó patrón pero el clasificador ya dio bounded (ej. crecimiento geométrico), usarlo
+            if result and result.status == "bounded" and result.iterations_expr:
+                ev = result.evidence or {}
+                op_rule = ev.get("change_operator")
+                const_rule = ev.get("change_constant")
+                if op_rule is None or const_rule is None:
+                    ch = (ev.get("change") or "+1").strip()
+                    if ch.startswith("+") or ch.startswith("-"):
+                        op_rule = ch[0]
+                        const_rule = ch[1:] or "1"
+                    else:
+                        op_rule = "+"
+                        const_rule = "1"
+                return {
+                    "variable": ev.get("var", ""),
+                    "initial_value": None,
+                    "change_rule": {"operator": str(op_rule), "constant": str(const_rule)},
+                    "limit": ev.get("limit", limit),
+                    "operator": ev.get("op", operator),
+                    "iterations": result.iterations_expr,
+                    "success": True,
+                    "mode": mode,
+                    "reason_code": result.reason_code,
                 }
             # Si no se detecta patrón, retornar None
             return None
@@ -1661,7 +1832,18 @@ class WhileRepeatVisitor:
                 # No aplicar a patrones especiales (Euclides/binary search) o símbolos iterativos
                 reason_code_local = closure_info.get("reason_code", "")
                 pattern_local = closure_info.get("pattern")
-                if pattern_local not in ("binary_search",) and reason_code_local != "while_euclid_mod":
+                # No construir Sum cuando iterations=1 (ej. búsqueda lineal best case)
+                iterations_is_one = iterations == "1" or iterations_expr == Integer(1)
+                # Solo construir Sum(1,(var,start,end)) cuando hay un límite explícito.
+                # Si no hay limit (ej. while_flag_aux_increase_bound con WHILE(flag) e i<-i+1),
+                # mantener mult_expr = iterations_expr (ej. n) para no generar Sum(i,1,0)=0.
+                has_explicit_limit = limit and (not isinstance(limit, str) or limit.strip())
+                if (
+                    not iterations_is_one
+                    and pattern_local not in ("binary_search",)
+                    and reason_code_local != "while_euclid_mod"
+                    and has_explicit_limit
+                ):
                     var_sym = Symbol(var_name, integer=True)
                     op = str(change_rule.get("operator", "") or "")
                     const_str = str(change_rule.get("constant", "1") or "1")

@@ -174,7 +174,7 @@ export default function IterativeAnalysisView({
   };
 
   return (
-    <>
+    <div className="flex flex-col gap-4 min-w-0">
       {/* Card de costos por línea */}
       <div className="glass-card p-4 rounded-lg h-full flex flex-col min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 min-w-0">
@@ -238,7 +238,8 @@ export default function IterativeAnalysisView({
                 </div>
               );
             })()}
-            <h3 className="font-semibold text-green-300 mb-1">{getCaseLabel("best")}</h3>
+            <h3 className="font-semibold text-green-300 mb-0.5">{getCaseLabel("best")}</h3>
+            <p className="text-[10px] text-green-400/80 italic -mt-3 mb-1">{t("bestHint")}</p>
             {getBestAsymptoticNotation("best", 
               data?.best === "same_as_worst" 
                 ? data?.worst?.totals || {} 
@@ -332,9 +333,10 @@ export default function IterativeAnalysisView({
                 </div>
               );
             })()}
-            <h3 className="font-semibold text-yellow-300 mb-1">
+            <h3 className="font-semibold text-yellow-300 mb-0.5">
               {getCaseLabel("average")}
             </h3>
+            <p className="text-[10px] text-yellow-400/80 italic -mt-3 mb-1">{t("averageHint")}</p>
             <button
               onClick={() => onViewGeneralProcedure("average")}
               disabled={!(data?.avg === "same_as_worst" ? data?.worst?.ok : data?.avg?.ok)}
@@ -376,7 +378,8 @@ export default function IterativeAnalysisView({
                 </div>
               );
             })()}
-            <h3 className="font-semibold text-red-300 mb-1">{getCaseLabel("worst")}</h3>
+            <h3 className="font-semibold text-red-300 mb-0.5">{getCaseLabel("worst")}</h3>
+            <p className="text-[10px] text-red-400/80 italic -mt-3 mb-1">{t("worstHint")}</p>
             {getBestAsymptoticNotation("worst", data?.worst?.totals || {}).chips
               .length > 0 && (
               <div className="flex flex-wrap gap-1 justify-center mt-1">
@@ -426,6 +429,6 @@ export default function IterativeAnalysisView({
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

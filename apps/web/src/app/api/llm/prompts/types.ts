@@ -8,9 +8,9 @@ export type LLMJob =
   | "classify"
   | "parser_assist"
   | "general"
-  | "simplifier"
   | "repair"
-  | "compare";
+  | "compare"
+  | "explain";
 
 export interface RecursionDiagramParams {
   depth_limit?: number;

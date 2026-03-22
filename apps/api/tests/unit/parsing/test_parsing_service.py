@@ -3,8 +3,8 @@ Tests unitarios para app.modules.parsing.service.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
-from unittest.mock import patch, MagicMock
-from app.modules.parsing.service import parse_source
+from unittest.mock import patch
+from app.modules.parsing.service import parse_source, normalize_source_text
 
 
 class TestParseSource:
@@ -92,3 +92,21 @@ class TestParseSource:
         assert len(result["errors"]) == 2
         assert result["errors"][0]["message"] == "Error 1"
         assert result["errors"][1]["message"] == "Error 2"
+
+    @patch('app.modules.parsing.service.is_grammar_available')
+    @patch('app.modules.parsing.service.parse_to_ast_adapter')
+    def test_normalizes_bom_and_line_endings_before_parse(self, mock_adapter, mock_available):
+        mock_available.return_value = True
+        mock_adapter.return_value = ({"type": "Program", "body": []}, [])
+
+        parse_source("\ufeffalgo(n) BEGIN\r\n  RETURN 1;\rEND")
+
+        mock_adapter.assert_called_once_with("algo(n) BEGIN\n  RETURN 1;\nEND")
+
+
+class TestNormalizeSourceText:
+    def test_removes_utf8_bom(self):
+        assert normalize_source_text("\ufeffabc") == "abc"
+
+    def test_normalizes_crlf_and_cr_to_lf(self):
+        assert normalize_source_text("a\r\nb\rc") == "a\nb\nc"

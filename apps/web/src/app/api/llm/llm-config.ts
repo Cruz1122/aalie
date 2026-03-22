@@ -1,33 +1,44 @@
 // Configuración centralizada para modelos LLM de Gemini
 
+import {
+  DEFAULT_GEMINI_ENDPOINT_BASE,
+  DEFAULT_GEMINI_MODELS,
+} from "./llm-defaults";
 import { getPrompt as getPromptByLocale } from "./prompts";
 
 export type LLMJob =
-  | "classify"
   | "parser_assist"
   | "general"
-  | "simplifier"
   | "repair"
-  | "compare";
+  | "compare"
+  | "explain";
+
+function getEnvOrDefault(name: string, fallback: string): string {
+  const value = process.env[name];
+  if (!value) {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : fallback;
+}
 
 export const GEMINI_MODELS = {
-  classify: "gemini-2.0-flash-lite",
-  parser_assist: "gemini-2.5-flash",
-  general: "gemini-2.5-flash",
-  simplifier: "gemini-2.5-flash",
-  repair: "gemini-2.5-flash",
-  compare: "gemini-2.5-pro",
+  parser_assist: getEnvOrDefault(
+    "LLM_MODEL_PARSER_ASSIST",
+    DEFAULT_GEMINI_MODELS.parser_assist,
+  ),
+  general: getEnvOrDefault("LLM_MODEL_GENERAL", DEFAULT_GEMINI_MODELS.general),
+  repair: getEnvOrDefault("LLM_MODEL_REPAIR", DEFAULT_GEMINI_MODELS.repair),
+  compare: getEnvOrDefault("LLM_MODEL_COMPARE", DEFAULT_GEMINI_MODELS.compare),
+  explain: getEnvOrDefault("LLM_MODEL_EXPLAIN", DEFAULT_GEMINI_MODELS.explain),
 };
 
 export const GEMINI_ENDPOINT_BASE =
-  "https://generativelanguage.googleapis.com/v1beta/models";
+  getEnvOrDefault("GEMINI_ENDPOINT_BASE", DEFAULT_GEMINI_ENDPOINT_BASE);
 
 // Parámetros por job (temperatura, tokens). Los prompts se obtienen de ./prompts según locale.
 export const JOB_CONFIG = {
-  classify: {
-    temperature: 0,
-    maxTokens: 8,
-  },
   parser_assist: {
     temperature: 0.7,
     maxTokens: 16000,
@@ -35,10 +46,6 @@ export const JOB_CONFIG = {
   general: {
     temperature: 0.7,
     maxTokens: 16000,
-  },
-  simplifier: {
-    temperature: 0,
-    maxTokens: 8000,
   },
   repair: {
     temperature: 0.5,
@@ -211,6 +218,10 @@ export const JOB_CONFIG = {
       },
       required: ["analysis", "note"],
     },
+  },
+  explain: {
+    temperature: 0.35,
+    maxTokens: 1800,
   },
 };
 

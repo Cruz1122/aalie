@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional, Set
-from sympy import Expr, latex, Integer
+from sympy import Expr, latex, Integer, Sum
+from ..ir.expr_utils import expr_to_str
 from .base import BaseAnalyzer
 from ..visitors.for_visitor import ForVisitor
 from ..visitors.if_visitor import IfVisitor
@@ -51,53 +52,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         return super().build_t_open()
     
     def _expr_to_str(self, expr: Any) -> str:
-        """
-        Convierte una expresión del AST a string.
-        
-        Args:
-            expr: Expresión del AST
-            
-        Returns:
-            String representando la expresión
-            
-        Author: Juan Camilo Cruz Parra (@Cruz1122)
-        """
-        if expr is None:
-            return ""
-        elif isinstance(expr, str):
-            return expr
-        elif isinstance(expr, (int, float)):
-            return str(expr)
-        elif isinstance(expr, dict):
-            expr_type = expr.get("type", "")
-            
-            if expr_type.lower() == "identifier":
-                return expr.get("name", "unknown")
-            elif expr_type.lower() == "number":
-                return str(expr.get("value", "0"))
-            elif expr_type.lower() == "literal":
-                return str(expr.get("value", "0"))
-            elif expr_type.lower() == "binary":
-                left = self._expr_to_str(expr.get("left", ""))
-                right = self._expr_to_str(expr.get("right", ""))
-                op = expr.get("operator", "")
-                # Asegurar que el operador no se pierda
-                if not op:
-                    op = "-"  # fallback para operadores perdidos
-                return f"({left}) {op} ({right})"
-            elif expr_type.lower() == "index":
-                target = self._expr_to_str(expr.get("target", ""))
-                index = self._expr_to_str(expr.get("index", ""))
-                return f"{target}[{index}]"
-            elif expr_type.lower() == "unary":
-                arg = self._expr_to_str(expr.get("arg", ""))
-                op = expr.get("operator", "")
-                return f"{op}({arg})"
-            else:
-                # Fallback para tipos desconocidos
-                return str(expr.get("value", str(expr)))
-        else:
-            return str(expr)
+        """Delega a expr_to_str del módulo ir.expr_utils."""
+        return expr_to_str(expr)
 
     def _str_to_sympy(self, expr_str: str) -> Expr:
         """
@@ -130,101 +86,202 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         
         return s
 
-    def _sanitize_expression(self, expr: Expr) -> Expr:
+    def _collect_vars_in_sum_bounds(self, expr: Expr) -> Set[str]:
+        """
+        Recolecta variables que aparecen en los límites (bounds) de Sum.
+        Estas variables son parámetros de cota y NO deben sustituirse por 0,
+        ya que producirían resultados negativos (ej. longitud en Sum(1,(j,1,longitud-1))).
+
+        Author: Juan Camilo Cruz Parra (@Cruz1122)
+        Version: 0.1.0
+        """
+        from sympy import preorder_traversal, Symbol
+
+        bound_vars: Set[str] = set()
+        main_var = getattr(self, "variable", "n") or "n"
+
+        for subexpr in preorder_traversal(expr):
+            if isinstance(subexpr, Sum):
+                for arg in subexpr.args[1:]:
+                    # SymPy usa Tuple, no tuple de Python; soportar ambos
+                    if hasattr(arg, "__len__") and len(arg) >= 3:
+                        start, end = arg[1], arg[2]
+                        for s in (start, end):
+                            for sym in getattr(s, "free_symbols", set()) or set():
+                                name = getattr(sym, "name", "")
+                                if name and name != main_var:
+                                    bound_vars.add(name)
+        return bound_vars
+
+    def _sanitize_expression(
+        self,
+        expr: Expr,
+        orig_expr: Optional[Expr] = None,
+        preserve_symbols: Optional[Set[str]] = None,
+    ) -> Expr:
         """
         Elimina variables de iteración (i, j, k) de una expresión SymPy.
-        
+
         Si después de simplificar quedan variables de iteración, las sustituye
         por su valor máximo (típicamente n) o las elimina según el contexto.
-        
+
+        IMPORTANTE: No sustituye por 0 variables que aparecen en límites de Sum
+        (parámetros de cota como longitud, indiceLimite), ni cuando la sustitución
+        por 0 produciría resultados negativos. En esos casos usa la variable
+        principal (n) como cota conservadora.
+
         Args:
-            expr: Expresión SymPy a limpiar
-            
+            expr: Expresión SymPy a limpiar (puede estar ya evaluada, sin Sum)
+            orig_expr: Expresión original con Sum (para recolectar bound_vars)
+            preserve_symbols: Símbolos a no sustituir por n (ej. parámetros de mcd(a,b))
+
         Returns:
             Expresión SymPy sin variables de iteración
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
+        Version: 0.1.0
         """
-        from sympy import Symbol, simplify, expand, preorder_traversal
-        
+        from sympy import Symbol, simplify, expand, preorder_traversal, Integer as SymInteger
+
         if expr is None:
             return expr
-        
+
         # Variables de iteración a eliminar: FOR + WHILE/REPEAT (self.loop_index_vars).
-        # Fallback legacy: i, j, k
+        # Incluir t_while_X, t_repeat_X (símbolos iterativos no resueltos) → sustituir por main_var
         iteration_vars = list(getattr(self, "loop_index_vars", None) or ["i", "j", "k"])
-        
+        main_var = getattr(self, "variable", "n") or "n"
+        main_sym = Symbol(main_var, integer=True)
+
+        # Recolectar variables en límites de Sum desde orig_expr (tiene Sum antes de evaluar)
+        bound_vars: Set[str] = set()
+        if orig_expr is not None:
+            bound_vars = self._collect_vars_in_sum_bounds(orig_expr)
+
         # Expandir y simplificar primero
         try:
             expr = expand(expr)
             expr = simplify(expr)
         except Exception:
             pass
-        
+
+        # Sustituir símbolos de arrays (A, B, arr, etc.) por variable principal.
+        # Nunca deben aparecer en la complejidad; provienen de accesos A[j] en el cuerpo.
+        # No sustituir símbolos en preserve_symbols (ej. a, b en mcd(a,b) para Euclides).
+        preserve = preserve_symbols or set()
+        ARRAY_LIKE_NAMES = {"a", "b", "c", "arr", "array", "lista", "list"}
+        for sym in list(expr.free_symbols):
+            name = getattr(sym, "name", "").lower()
+            if name in ARRAY_LIKE_NAMES and name not in preserve:
+                expr = expr.subs(sym, main_sym)
+        expr = simplify(expr)
+
+        # Sustituir alias de tamaño (ej. indiceLimite <- n en burbuja) para que
+        # T_open y T_polynomial queden en función de variables de tamaño reales.
+        size_aliases = getattr(self, "size_aliases", None) or {}
+        if isinstance(size_aliases, dict) and size_aliases:
+            try:
+                free_syms = list(expr.free_symbols)
+                for alias_name, main_name in size_aliases.items():
+                    if not alias_name or not main_name or alias_name == main_name:
+                        continue
+                    # Buscar símbolos libres cuyo nombre coincida con el alias
+                    for sym in free_syms:
+                        if getattr(sym, "name", "") == alias_name:
+                            main_sym_alias = Symbol(main_name, integer=True)
+                            expr = expr.subs(sym, main_sym_alias)
+                expr = simplify(expr)
+            except Exception:
+                # No dejar que un fallo de sustitución rompa el análisis.
+                pass
+
+        # Sustituir símbolos iterativos no resueltos (t_while_X, t_repeat_X) por variable principal
+        import re as _re
+        for sym in list(expr.free_symbols):
+            sname = getattr(sym, "name", "")
+            if sname and (_re.match(r't_(?:while|repeat)_\d+', sname) or _re.match(r't_\{while_\d+\}', sname) or _re.match(r't_\{repeat_\d+\}', sname)):
+                expr = expr.subs(sym, main_sym)
+        expr = simplify(expr)
+
         # Verificar si quedan variables de iteración
         free_vars = expr.free_symbols
         has_iteration_vars = False
-        
+
         for var_name in iteration_vars:
-            var_symbol = Symbol(var_name, integer=True)
             for free_var in free_vars:
                 if free_var.name == var_name:
                     has_iteration_vars = True
                     break
             if has_iteration_vars:
                 break
-        
+
         if not has_iteration_vars:
             return expr
-        
+
         # Intentar simplificar más agresivamente
         from ..utils.summation_closer import SummationCloser
         closer = SummationCloser(locale=self.locale)
-        
+
         # Evaluar todas las sumatorias
         expr = closer._evaluate_all_sums_sympy(expr)
         expr = expand(expr)
         expr = simplify(expr)
-        
+
         # Verificar de nuevo
         free_vars = expr.free_symbols
         has_iteration_vars = False
-        iteration_var_found = None
-        
+
         for var_name in iteration_vars:
             for free_var in free_vars:
                 if free_var.name == var_name:
                     has_iteration_vars = True
-                    iteration_var_found = var_name
                     break
             if has_iteration_vars:
                 break
-        
+
         if has_iteration_vars:
-            # Si aún quedan variables de iteración libres, eliminarlas completamente
-            # En T_polynomial, las variables de iteración NO deben aparecer como variables libres.
-            # Sustituir usando los símbolos que realmente están en la expresión (subs con Symbol('i')
-            # creado aquí puede no hacer match si la expresión tiene otro contexto/atributo).
-            from sympy import Integer as SymInteger
             try:
                 expr = expand(expr)
                 expr = simplify(expr)
                 free_vars_after = expr.free_symbols
                 replaced = []
                 for sym in list(free_vars_after):
-                    if getattr(sym, "name", "") in iteration_vars:
+                    sym_name = getattr(sym, "name", "")
+                    if sym_name not in iteration_vars:
+                        continue
+                    # Variables en bounds de Sum: usar main_var, nunca 0
+                    if sym_name in bound_vars:
+                        expr = expr.subs(sym, main_sym)
+                        replaced.append(sym_name)
+                        continue
+                    # Sustituir por 0 solo si el resultado NO sería negativo
+                    candidate_zero = expr.subs(sym, SymInteger(0))
+                    use_main_instead = False
+                    try:
+                        if main_sym in candidate_zero.free_symbols:
+                            test_val = candidate_zero.subs(main_sym, 10)
+                        else:
+                            test_val = candidate_zero
+                        if getattr(test_val, "is_negative", None) is True:
+                            use_main_instead = True
+                        elif getattr(test_val, "is_number", False) and test_val < 0:
+                            use_main_instead = True
+                    except Exception:
+                        use_main_instead = True
+                    if use_main_instead:
+                        expr = expr.subs(sym, main_sym)
+                    else:
                         expr = expr.subs(sym, SymInteger(0))
-                        replaced.append(getattr(sym, "name", str(sym)))
+                    replaced.append(sym_name)
                 expr = simplify(expr)
                 if replaced:
-                    print(f"[IterativeAnalyzer] Advertencia: Variables de iteración {replaced} eliminadas de expresión final (sustituidas por 0)")
+                    print(f"[IterativeAnalyzer] Advertencia: Variables de iteración {replaced} eliminadas de expresión final")
             except Exception as e:
                 print(f"[IterativeAnalyzer] Error al limpiar variables de iteración: {e}")
                 for sym in list(expr.free_symbols):
                     if getattr(sym, "name", "") in iteration_vars:
-                        expr = expr.subs(sym, SymInteger(0))
+                        expr = expr.subs(sym, main_sym)
                 expr = simplify(expr)
-        
+
         return expr
 
     def _collect_for_index_vars(self, node: Any) -> Set[str]:
@@ -267,10 +324,11 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         Recolecta variables de control de bucles WHILE y REPEAT que se comportan
         como índices clásicos (i, j, k).
         
-        Necesario para sanitizar correctamente: en bubble sort mejorado, `i` es
-        variable del WHILE (no de FOR), y debe eliminarse de T_open. En cambio,
-        no debemos tratar `a`, `b`, etc. de Euclides como simples iteradores,
-        ya que expresiones como \\log(min(a,b)) deben conservarse.
+        Incluye:
+        1) Variables que aparecen en la condición del WHILE/REPEAT (ej. i < n).
+        2) Variables que solo se actualizan en el cuerpo con var <- var ± const
+           (ej. bubbleSort con WHILE(swapped) y i <- i+1 en el cuerpo), para que
+           en best case T_open quede en función de n y no de la variable de iteración.
         
         No incluye la variable principal de tamaño (n): en "i < n", n es el límite,
         no la variable de control.
@@ -279,7 +337,55 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         """
         out: Set[str] = set()
         main_var = getattr(self, "variable", "n") or "n"
-        iter_like = {"i", "j", "k"}
+        # Nombres típicos de índices clásicos. Solo se usan como pista cuando
+        # no hay evidencia estructural (update aritmético). La decisión final
+        # se basa en el patrón de actualización, no en el nombre.
+        iter_legacy = {"i", "j", "k"}
+
+        def _assign_is_index_update(stmt: Any) -> Optional[str]:
+            """
+            Si stmt es de la forma id <- id ± const (con const numérica),
+            devuelve el nombre de id (candidato a variable de control).
+            """
+            if not isinstance(stmt, dict) or str(stmt.get("type", "")).lower() != "assign":
+                return None
+            target = stmt.get("target", {})
+            value = stmt.get("value", {})
+            if not isinstance(target, dict) or str(target.get("type", "")).lower() != "identifier":
+                return None
+            var = (target.get("name") or "").strip()
+            # Nunca tratar la variable principal de tamaño como índice de control.
+            if not var or var == main_var:
+                return None
+            if not isinstance(value, dict):
+                return None
+            op = (value.get("op") or value.get("operator") or "").strip()
+            if op not in ("+", "-"):
+                return None
+            left = value.get("left", {})
+            right = value.get("right", {})
+            if isinstance(left, dict) and str(left.get("type", "")).lower() == "identifier" and (left.get("name") or "").strip() == var:
+                if isinstance(right, dict) and str(right.get("type", "")).lower() in ("number", "literal"):
+                    return var
+            if isinstance(right, dict) and str(right.get("type", "")).lower() == "identifier" and (right.get("name") or "").strip() == var:
+                if isinstance(left, dict) and str(left.get("type", "")).lower() in ("number", "literal"):
+                    return var
+            return None
+
+        def _collect_from_body(body_node: Any) -> None:
+            if isinstance(body_node, list):
+                for stmt in body_node:
+                    name = _assign_is_index_update(stmt)
+                    if name:
+                        out.add(name)
+                return
+            if isinstance(body_node, dict) and str(body_node.get("type", "")).lower() == "block":
+                _collect_from_body(body_node.get("body") or [])
+                return
+            if isinstance(body_node, dict):
+                name = _assign_is_index_update(body_node)
+                if name:
+                    out.add(name)
 
         def _walk(n: Any) -> None:
             if isinstance(n, list):
@@ -296,11 +402,18 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     info = self._extract_condition_info(test)
                     if info:
                         v = info.get("variable", "")
-                        if isinstance(v, str) and v and v != main_var and v in iter_like:
-                            out.add(v)
                         v2 = info.get("variable2", "")
-                        if isinstance(v2, str) and v2 and v2 != main_var and v2 in iter_like:
-                            out.add(v2)
+                        # Añadir como control solo si:
+                        # - no es la variable principal de tamaño, y
+                        # - o bien tiene un update aritmético detectado en el cuerpo, o
+                        # - es un índice clásico (i/j/k) usado en la condición.
+                        for cand in (v, v2):
+                            if not isinstance(cand, str) or not cand or cand == main_var:
+                                continue
+                            if cand in out or cand in iter_legacy:
+                                out.add(cand)
+                # Variables que solo aparecen en el cuerpo como var <- var ± const (ej. i o indice en WHILE(...)).
+                _collect_from_body(n.get("body"))
 
             for v in n.values():
                 if isinstance(v, (dict, list)):
@@ -340,7 +453,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
 
         stop_types = {"for", "while", "if", "repeat"}
         aliases: Dict[str, str] = {}
-        loop_index_vars = set(getattr(self, "loop_index_vars", set()) or set())
+        for_index_vars = set(getattr(self, "for_index_vars", set()) or set())
         main_var = getattr(self, "variable", "n") or "n"
 
         def _id_name(n: Any) -> Optional[str]:
@@ -365,14 +478,25 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
 
             if not target or not value:
                 continue
-            if value != main_var:
-                continue
-            if target == main_var:
-                continue
-            if target in loop_index_vars:
+
+            # Aceptar alias cuyo valor provenga de:
+            # - la variable principal de tamaño detectada (main_var), o
+            # - el símbolo canónico "n" usado en la notación A(n), incluso si
+            #   main_var es el arreglo (ej. A) en lugar de n.
+            allowed_sources = {main_var}
+            if main_var != "n":
+                allowed_sources.add("n")
+            if value not in allowed_sources:
                 continue
 
-            aliases[target] = main_var
+            if target == main_var:
+                continue
+            if target in for_index_vars:
+                continue
+
+            # Mapear el alias al identificador fuente (value), que puede ser
+            # la variable principal de tamaño o el símbolo canónico \"n\".
+            aliases[target] = value
 
         return aliases
 
@@ -492,6 +616,13 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         except Exception:
             self.size_aliases = {}
 
+        # No tratar aliases de tamaño como variables de iteración removibles.
+        # Ejemplo: longitud <- n en bubble sort mejorado.
+        if isinstance(self.size_aliases, dict) and self.size_aliases:
+            self.loop_index_vars = {
+                v for v in self.loop_index_vars if v not in set(self.size_aliases.keys())
+            }
+
         # Crear instancia de AvgModel si mode == "avg"
         if mode == "avg":
             if avg_model:
@@ -573,25 +704,43 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     except Exception:
                         pass  # Si falla, mantener count_raw original
                     
+                    # Sustituir alias de tamaño (longitud, tam, etc.) antes del cierre
+                    expr_for_close = count_raw_expr
+                    size_aliases = getattr(self, "size_aliases", None) or {}
+                    if size_aliases:
+                        from sympy import Symbol as SymSymbol
+                        main_var_s = variable or "n"
+                        for alias_name, main_name in size_aliases.items():
+                            if alias_name and main_name and alias_name != main_name:
+                                alias_sym = SymSymbol(alias_name, integer=True)
+                                main_sym = SymSymbol(main_name, integer=True)
+                                if expr_for_close.has(alias_sym):
+                                    expr_for_close = expr_for_close.subs(alias_sym, main_sym)
+                    
                     # Pasar el objeto SymPy directamente a close_summation
-                    closed_count, steps = closer.close_summation(count_raw_expr, variable or "n")
+                    closed_count, steps = closer.close_summation(expr_for_close, variable or "n")
                     
                     # Guardar la expresión SymPy evaluada para usar en build_t_open_expr
                     from sympy import simplify, latex as sympy_latex
                     import re
                     # Si contiene símbolos iterativos, no intentar evaluar sumatorias
                     # (ya se manejan en close_summation)
-                    if closer._has_iterative_symbols(count_raw_expr) and not closer._has_summations(count_raw_expr):
+                    preserve = {"a", "b"} if row.get("euclid_pattern") else None
+                    if closer._has_iterative_symbols(expr_for_close) and not closer._has_summations(expr_for_close):
                         # Es un símbolo iterativo puro, simplificar y limpiar variables de iteración
-                        count_evaluated = simplify(count_raw_expr)
+                        count_evaluated = simplify(expr_for_close)
                         # IMPORTANTE: Eliminar variables de iteración que no deberían estar
-                        count_evaluated = self._sanitize_expression(count_evaluated)
+                        count_evaluated = self._sanitize_expression(
+                            count_evaluated, orig_expr=expr_for_close, preserve_symbols=preserve
+                        )
                     else:
-                        # Evaluar sumatorias si las hay
-                        count_evaluated = closer._evaluate_all_sums_sympy(count_raw_expr)
+                        # Evaluar sumatorias si las hay (usar expr_for_close con alias ya sustituidos)
+                        count_evaluated = closer._evaluate_all_sums_sympy(expr_for_close)
                         count_evaluated = simplify(count_evaluated)
-                        # IMPORTANTE: Eliminar variables de iteración que no deberían estar
-                        count_evaluated = self._sanitize_expression(count_evaluated)
+                        # IMPORTANTE: Eliminar variables de iteración que no deberían estar (orig_expr tiene Sum para bound_vars)
+                        count_evaluated = self._sanitize_expression(
+                            count_evaluated, orig_expr=expr_for_close, preserve_symbols=preserve
+                        )
                     row["count_expr"] = count_evaluated  # Expresión SymPy evaluada
                     
                     # Para el costo de línea mostrado, usar SIEMPRE la versión simplificada
@@ -674,9 +823,17 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 else:
                     count_raw_latex = str(count_raw_latex) if count_raw_latex is not None else "1"
             
+            # Sustituir alias en LaTeX cuando no hay expr SymPy (para cierre por string)
+            latex_for_close = count_raw_latex
+            size_aliases_str = getattr(self, "size_aliases", None) or {}
+            if size_aliases_str:
+                for alias_name, main_name in size_aliases_str.items():
+                    if alias_name and main_name and alias_name != main_name:
+                        latex_for_close = latex_for_close.replace(alias_name, main_name)
+            
             # Cerrar sumatoria (trabaja con LaTeX por ahora, pero recibe SymPy internamente)
             try:
-                closed_count, steps = closer.close_summation(count_raw_latex, variable or "n")
+                closed_count, steps = closer.close_summation(latex_for_close, variable or "n")
                 row["count"] = closed_count
                 
                 # En modo promedio, actualizar expectedRuns con la expresión cerrada
@@ -715,37 +872,15 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Obtener expresión SymPy de T_open directamente (más robusto que parsear LaTeX)
         t_open_expr = self.build_t_open_expr()
         
-        # PASO 2: Limpiar variables de iteración de t_open_expr
+        # PASO 2: Limpiar variables de iteración y normalizar potencias (n*n -> n**2, etc.)
         if t_open_expr is not None:
             t_open_expr = self._sanitize_expression(t_open_expr)
-
-            # region agent log
             try:
-                import json, time
-                from sympy import latex as sympy_latex
-                log_payload = {
-                    "sessionId": "9e5428",
-                    "id": f"log_{int(time.time() * 1000)}_H3",
-                    "timestamp": int(time.time() * 1000),
-                    "location": "apps/api/app/modules/analysis/analyzers/iterative.py:545",
-                    "message": "t_open_expr_before_complexity",
-                    "runId": "pre-fix",
-                    "hypothesisId": "H3",
-                    "data": {
-                        "t_open_str": sympy_latex(t_open_expr),
-                        "t_open_repr": str(t_open_expr),
-                        "has_size_variable": has_size_variable,
-                        "has_unbounded": has_unbounded,
-                        "mode": self.mode,
-                    },
-                }
-                with open("debug-9e5428.log", "a", encoding="utf-8") as f:
-                    f.write(json.dumps(log_payload) + "\n")
+                from sympy import powsimp
+                t_open_expr = powsimp(t_open_expr)
             except Exception:
-                # Evitar que errores de logging afecten el análisis
                 pass
-            # endregion
-        
+
         # Calcular T_polynomial: agrupar términos con C_k (para mostrar estructura)
         self._calculate_t_polynomial_fallback()
         # Si hay bucles unbounded, T_polynomial tiende a infinito
@@ -770,21 +905,22 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
 
                 # Bucles unbounded: complejidad tiende a infinito
                 has_unbounded = any(r.get("unbounded") for r in self.rows)
+                main_var = getattr(self, "variable", "n") or "n"
+                expr_has_size = any(
+                    getattr(s, "name", "") == main_var for s in t_open_expr.free_symbols
+                )
                 if has_unbounded:
                     self.big_o = "\\infty"
                     self.big_omega = "\\Omega(1)"
                     self.big_theta = "\\infty"
-                elif not has_size_variable and not has_unbounded:
+                elif not has_size_variable and not expr_has_size and not has_unbounded:
                     # Caso sin variable de tamaño y bucle acotado (ej. best case param-controlled)
                     self.big_o = "O(1)"
                     self.big_omega = "\\Omega(1)"
                     self.big_theta = "\\Theta(1)"
                 else:
                     # Delegar el cálculo de la notación asintótica a ComplexityClasses.
-                    # Para la notación usamos siempre 'n' como variable canónica,
-                    # independientemente del nombre real del parámetro en el pseudocódigo.
                     t_open_latex = sympy_latex(t_open_expr)
-                    main_var = "n"
                     self.big_o = complexity.calculate_big_o(t_open_latex, main_var)
                     self.big_omega = complexity.calculate_big_omega(t_open_latex, main_var)
                     self.big_theta = complexity.calculate_big_theta(t_open_latex, main_var)
@@ -965,7 +1101,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        from sympy import Symbol, Integer, latex, expand, simplify, Poly
+        from sympy import Symbol, Integer, latex, expand, simplify, Poly, powsimp, oo, zoo
         from ..utils.summation_closer import SummationCloser
         import re
         
@@ -982,6 +1118,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # {degree: {coeff_tuple: [lista de C_k strings]}}
         # coeff_tuple es una tupla normalizada para comparación determinista
         degree_to_coeffs = {}  # {degree: {coeff_tuple: [C_k strings]}}
+        # Términos no polinomiales (log(n), etc.) para no usar subs(n,0) que da zoo
+        non_poly_terms = []  # [(ck_str, count_expr), ...]
         
         closer = SummationCloser(locale=self.locale)
         
@@ -1020,7 +1158,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                         coeff_idx = max_degree - degree
                         if coeff_idx < len(all_coeffs):
                             coeff = all_coeffs[coeff_idx]
-                            coeff = simplify(coeff)
+                            coeff = simplify(powsimp(coeff))
                             
                             # IMPORTANTE: Eliminar variables de iteración del coeficiente
                             coeff = self._sanitize_expression(coeff)
@@ -1041,7 +1179,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                             # Normalizar coeficiente para comparación determinista
                             # Usar una representación canónica (expandida y simplificada)
                             coeff_normalized = expand(coeff)
-                            coeff_normalized = simplify(coeff_normalized)
+                            coeff_normalized = simplify(powsimp(coeff_normalized))
                             # Asegurar que no queden variables de iteración
                             coeff_normalized = self._sanitize_expression(coeff_normalized)
                             
@@ -1070,34 +1208,40 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                             degree_to_coeffs[degree][coeff_key]['cks'].append(ck_str)
                             
                 except Exception:
-                    # Si Poly falla (p.ej., expresión con log/sqrt no es polinómica), tratar como constante
-                    # Esto puede pasar con expresiones complejas, pero intentamos manejarlo
+                    # Si Poly falla (p.ej., expresión con log(n) no es polinómica)
                     try:
-                        # Intentar extraer como constante (grado 0)
+                        # subs(n,0) en log(n)+1 da zoo → latex(zoo) = \tilde{\infty}. Evitar eso.
                         const_value = simplify(count_expr.subs(n_sym, 0))
-                        
+                        is_infinite = (
+                            const_value in (oo, -oo, zoo)
+                            or (getattr(const_value, "is_infinite", None) and const_value.is_infinite)
+                            or (getattr(const_value, "is_zero", None) and str(const_value) == "zoo")
+                        )
+                        if is_infinite:
+                            # No usar constante infinita; añadir como término no polinómico (C_k) * expr
+                            non_poly_terms.append((ck_str, count_expr))
+                            continue
                         # Verificar si la constante es cero
                         try:
                             if const_value.is_zero if hasattr(const_value, 'is_zero') else (const_value == 0 or const_value == Integer(0)):
                                 continue
-                        except:
+                        except Exception:
                             pass
-                        
                         const_key = str(const_value)
-                        
                         if 0 not in degree_to_coeffs:
                             degree_to_coeffs[0] = {}
-                        
                         if const_key not in degree_to_coeffs[0]:
                             degree_to_coeffs[0][const_key] = {
                                 'coeff': const_value,
                                 'cks': []
                             }
-                        
                         degree_to_coeffs[0][const_key]['cks'].append(ck_str)
-                    except:
-                        # Si todo falla, ignorar esta fila
-                        continue
+                    except Exception:
+                        # Si todo falla, intentar añadir como término no polinómico para no perder la fila
+                        try:
+                            non_poly_terms.append((ck_str, count_expr))
+                        except Exception:
+                            continue
         
         if not degree_to_coeffs:
             self.t_polynomial = "0"
@@ -1152,6 +1296,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     continue
                 
                 # Formatear término según el grado y coeficiente
+                # Aplicar powsimp al término completo para "-4 n·n" → "-4 n²"
+                term_expr = coeff * (n_sym**degree)
+                term_expr = powsimp(term_expr)
                 if degree == 0:
                     # Término constante
                     if coeff == Integer(1):
@@ -1159,7 +1306,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     elif coeff == Integer(-1):
                         polynomial_terms.append(f"-({ck_combined})")
                     else:
-                        coeff_latex = latex(coeff)
+                        coeff_latex = latex(term_expr)
                         polynomial_terms.append(f"({ck_combined}) \\cdot {coeff_latex}")
                 elif degree == 1:
                     # Término lineal
@@ -1168,8 +1315,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     elif coeff == Integer(-1):
                         polynomial_terms.append(f"-({ck_combined}) \\cdot n")
                     else:
-                        coeff_latex = latex(coeff)
-                        polynomial_terms.append(f"({ck_combined}) \\cdot {coeff_latex} \\cdot n")
+                        term_latex = latex(term_expr)
+                        polynomial_terms.append(f"({ck_combined}) \\cdot {term_latex}")
                 else:
                     # Términos de grado superior (n², n³, etc.)
                     if coeff == Integer(1):
@@ -1177,8 +1324,23 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     elif coeff == Integer(-1):
                         polynomial_terms.append(f"-({ck_combined}) \\cdot n^{{{degree}}}")
                     else:
-                        coeff_latex = latex(coeff)
-                        polynomial_terms.append(f"({ck_combined}) \\cdot {coeff_latex} \\cdot n^{{{degree}}}")
+                        term_latex = latex(term_expr)
+                        polynomial_terms.append(f"({ck_combined}) \\cdot {term_latex}")
+        
+        # Añadir términos no polinomiales (log(n), etc.) sin usar subs(n,0) que daría zoo
+        def get_ck_number(ck_s):
+            m = re.search(r'C_\{(\d+)\}', ck_s)
+            return int(m.group(1)) if m else 0
+        for ck_str, expr in non_poly_terms:
+            parsed = parse_ck_string(ck_str)
+            all_cks = sorted(parsed, key=get_ck_number)
+            ck_combined = " + ".join(all_cks) if len(all_cks) > 1 else (all_cks[0] if all_cks else "")
+            if ck_combined:
+                try:
+                    expr_latex = latex(expr)
+                    polynomial_terms.append(f"({ck_combined}) \\cdot {expr_latex}")
+                except Exception:
+                    pass
         
         if polynomial_terms:
             result = " + ".join(polynomial_terms)

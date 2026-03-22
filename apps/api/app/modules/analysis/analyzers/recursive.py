@@ -35,6 +35,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         self.recursion_tree: Optional[Dict[str, Any]] = None
         self.proof: List[Dict[str, str]] = []
         self.proof_steps: List[Dict[str, str]] = []
+        self.dp_validation_events: List[Dict[str, Any]] = []
         # Inicializar expr_converter si no está en BaseAnalyzer
         if not hasattr(self, 'expr_converter'):
             from .expr_converter import ExprConverter
@@ -93,23 +94,29 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "errors": [{"message": f"No aplicable: {validation_result['reason']}", "line": None, "column": None}]
             }
         
-        # 2.5. Si estamos en modo "best" y hay early return, saltarse toda la recurrencia
-        # El early return evita la recursión completamente, así que el mejor caso es O(1)
+        # 2.5. Si estamos en modo "best" y hay early return no recursivo y *existe*
+        # una entrada de tamaño n que lo active, el mejor caso es Θ(1). Sin embargo,
+        # el caso base n = 1 no debe considerarse "mejor caso O(1)" para n grande,
+        # por lo que sólo aplicamos esta optimización cuando el early return está
+        # estrictamente separado de la condición de caso base recursivo.
         if mode == "best":
             has_early_return = self._detect_early_return()
             if has_early_return:
-                # Retornar directamente O(1) sin calcular recurrencia
+                # En este punto asumimos que el early return corresponde a un camino
+                # alternativo para entradas de tamaño n (no sólo para n = 1).
                 self.proof_steps.append({
                     "id": "best_case_early_return",
-                    "text": "\\text{Mejor caso: } O(1) \\text{ (return temprano detectado, no se ejecuta recursión)}"
+                    "text": (
+                        "\\text{Mejor caso: } \\Theta(1) \\text{ (existe una entrada de tamaño } n "
+                        "\\text{ que activa un return temprano sin recursión)}"
+                    )
                 })
-                # Construir resultado mínimo con O(1)
                 return {
                     "ok": True,
                     "byLine": [],
                     "totals": {
-                        "T_open": "O(1)",
-                        "big_theta": "O(1)",
+                        "T_open": "\\Theta(1)",
+                        "big_theta": "\\Theta(1)",
                         "symbols": None,
                         "notes": None,
                         "proof": self.proof_steps.copy()
@@ -125,6 +132,11 @@ class RecursiveAnalyzer(BaseAnalyzer):
             }
         
         self.recurrence = extraction_result["recurrence"]
+
+        if self.recurrence.get("type") == "divide_conquer":
+            self._build_non_dp_validation(
+                "La recurrencia es divide-and-conquer; debe priorizarse Teorema Maestro, iteración o árbol de recursión antes que PD."
+            )
         
         # Si no es aplicable ningún método, retornar error
         if not self.recurrence.get("applicable", False):
@@ -326,12 +338,23 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "b": recurrence.get("b"),
                     "f": recurrence.get("f")
                 })
+                recurrence_info["dp_validation"] = self._build_non_dp_validation(
+                    "La recurrencia es divide-and-conquer; debe priorizarse Teorema Maestro, iteración o árbol de recursión antes que PD."
+                )
             elif recurrence.get("type") == "linear_shift":
                 recurrence_info.update({
                     "order": recurrence.get("order"),
                     "shifts": recurrence.get("shifts"),
                     "g(n)": recurrence.get("g(n)")
                 })
+
+                linear_info = self._detect_linear_recurrence(proc_def, recursive_calls)
+                if linear_info:
+                    recurrence_info["dp_validation"] = self._build_dp_validation(
+                        proc_def,
+                        recursive_calls,
+                        linear_info,
+                    )
             
             return {
                 "ok": True,
@@ -1105,6 +1128,45 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "method": method,
                     "branching_subset": True
                 }
+            elif method == "recursion_tree" and has_subtraction:
+                # Fibonacci-type: T(n) = T(n-1) + T(n-2) + ... (múltiples términos)
+                linear_info = self._detect_linear_recurrence(proc_def, recursive_calls)
+                if linear_info and len(linear_info.get("coefficients", {})) >= 2:
+                    coeffs = linear_info["coefficients"]
+                    shifts_list = sorted(coeffs.keys())
+                    coeffs_list = [coeffs[s] for s in shifts_list]
+                    g_n_str = linear_info.get("g_n", "0") or "0"
+                    g_n_clean = g_n_str.strip().lower()
+                    is_homogeneous = g_n_clean in ("0", "", "\\theta(0)", "theta(0)")
+                    terms_latex = []
+                    for offset in shifts_list:
+                        c = coeffs[offset]
+                        terms_latex.append(f"{c} \\cdot T(n-{offset})" if c != 1 else f"T(n-{offset})")
+                    form_linear = f"T(n) = {' + '.join(terms_latex)}" + ("" if is_homogeneous else f" + {g_n_str}")
+                    recurrence = {
+                        "type": "linear_shift",
+                        "form": form_linear,
+                        "order": max(shifts_list),
+                        "shifts": shifts_list,
+                        "coefficients": coeffs_list,
+                        "g(n)": "0" if is_homogeneous else g_n_str,
+                        "n0": n0,
+                        "applicable": True,
+                        "notes": ["Recurrencia multi-término (ej. Fibonacci), árbol con subproblemas superpuestos"],
+                        "method": method
+                    }
+                else:
+                    recurrence = {
+                        "type": "divide_conquer",
+                        "form": recurrence_form,
+                        "a": a,
+                        "b": float(b),
+                        "f": f_n,
+                        "n0": n0,
+                        "applicable": True,
+                        "notes": [],
+                        "method": method
+                    }
             elif multi_b_terms:
                 # Divide-and-conquer generalizado: múltiples tamaños n/b_i
                 recurrence = {
@@ -2779,15 +2841,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Calcular theta (worst/average case)
         theta_worst_avg = self._calculate_theta(case, g_n_expr, f_n_str, log_b_a)
         
-        # Calcular mejor caso: siempre usar O (big-O) en lugar de Θ para best case
-        # Si hay return temprano, es O(1), sino es O del mismo valor que worst/average
+        # Calcular mejor caso: usar cota ajustada Θ cuando está disponible.
+        # Si hay return temprano dependiente de datos, el mejor caso es Θ(1).
         if has_early_return:
-            theta_best = "O(1)"
-            self.proof_steps.append({"id": "best_case", "text": "\\text{Mejor caso: } O(1) \\text{ (return temprano detectado)}"})
+            theta_best = "\\Theta(1)"
+            self.proof_steps.append({"id": "best_case", "text": "\\text{Mejor caso: } \\Theta(1) \\text{ (return temprano detectado)}"})
         else:
-            # Convertir Θ(...) a O(...) para best case
-            # Reemplazar \Theta por O en la expresión LaTeX
-            theta_best = theta_worst_avg.replace("\\Theta", "O")
+            # Sin retorno temprano, el mejor caso coincide con la cota ajustada obtenida.
+            theta_best = theta_worst_avg
             best_case_text = f"\\text{{Mejor caso: }} {theta_best}"
             self.proof_steps.append({"id": "best_case", "text": best_case_text})
         
@@ -2815,11 +2876,12 @@ class RecursiveAnalyzer(BaseAnalyzer):
         """
         Detecta si hay un return temprano antes de las llamadas recursivas.
         
-        Un return temprano hace que el mejor caso sea O(1).
+        Un return temprano puede hacer que el mejor caso sea O(1) solo si no es
+        un caso base dependiente del tamaño (n == 1, n <= c, etc.).
         Ejemplo: En búsqueda binaria, si el elemento está en el medio, se retorna O(1).
         
         Returns:
-            True si hay un return temprano detectado
+            True si hay un return temprano por contenido/datos
         """
         proc_def = self.proc_def  # Usar el proc_def guardado
         if not proc_def:
@@ -2901,23 +2963,15 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 
                 # Patrón clásico: return temprano en THEN, recursivas en ELSE (directas o anidadas)
                 if has_early_return_in_then and has_recursive_in_else:
-                    # Verificar si es un caso base que retorna inmediatamente una constante simple
-                    # En ese caso, es un early return válido para el mejor caso
+                    # Si es un caso base por tamaño, no cuenta como early return
+                    # para bajar mejor caso a O(1): solo fija T(1).
                     is_base_case = False
                     if condition and isinstance(condition, dict) and condition.get("type"):
                         base_case_value = self._extract_base_case_from_condition(condition)
                         is_base_case = base_case_value is not None
                     
-                    # Si es un caso base, verificar que retorne una constante simple
                     if is_base_case:
-                        for ret in returns_in_then:
-                            if not self._contains_recursive_call(ret, recursive_calls):
-                                ret_value = ret.get("value") or ret.get("argument")
-                                # Si retorna una constante simple, es early return válido
-                                if self._is_simple_constant_return(ret_value):
-                                    return True
-                        # Si no retorna constante simple, no es early return
-                        # (el caso base es parte de la recursión normal)
+                        return False
                     else:
                         # Si NO es caso base, cualquier return sin recursivas es early return
                         return True
@@ -2947,24 +3001,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
                             base_case_value = self._extract_base_case_from_condition(condition)
                             is_base_case = base_case_value is not None
                         
-                        # Si es un caso base, verificar si es un early return (retorna inmediatamente)
+                        # Si es caso base por tamaño, no cuenta como early return
+                        # para mejor caso asintótico; continuar explorando otros nodos.
                         if is_base_case:
-                            then_body = stmt.get("then") or stmt.get("thenBody") or stmt.get("consequent")
-                            else_body = stmt.get("else") or stmt.get("elseBody") or stmt.get("alternate")
-                            if then_body and else_body:
-                                returns_in_then = self._find_return_statements(then_body)
-                                has_simple_return = any(
-                                    ret for ret in returns_in_then 
-                                    if not self._contains_recursive_call(ret, recursive_calls)
-                                )
-                                has_recursive_in_else = self._has_recursive_calls_in_node(else_body)
-                                if has_simple_return and has_recursive_in_else:
-                                    for ret in returns_in_then:
-                                        if not self._contains_recursive_call(ret, recursive_calls):
-                                            ret_value = ret.get("value") or ret.get("argument")
-                                            if self._is_simple_constant_return(ret_value):
-                                                return True
-                            # Si no es un early return claro, continuar buscando
                             continue
                         
                         # Si NO es caso base, buscar recursivamente en este IF
@@ -3746,11 +3785,11 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         # Determinar T_open según el método usado y el modo (PRIORIDAD: characteristic_equation > iteration > recursion_tree > master)
         if self.characteristic_equation:
-            # Para characteristic_equation, si hay early return y estamos en modo best, usar O(1)
+            # Para characteristic_equation, si hay early return y estamos en modo best, usar Θ(1)
             # El theta ya debería estar ajustado en _apply_characteristic_equation_method, pero verificamos por seguridad
             if (self.mode == "best" and 
                 self.characteristic_equation.get("has_early_return", False)):
-                t_open = "O(1)"
+                t_open = "\\Theta(1)"
             else:
                 t_open = self.characteristic_equation.get("theta", "N/A")
         elif self.iteration:
@@ -3774,6 +3813,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
             "symbols": self.symbols if self.symbols else None,
             "notes": self.notes if self.notes else None
         }
+
+        if self.dp_validation_events:
+            totals["dp_validation_events"] = self.dp_validation_events.copy()
         
         # Agregar información de recurrencia
         if self.recurrence:
@@ -3830,6 +3872,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         self.iteration = None
         self.recursion_tree = None
         self.characteristic_equation = None
+        self.dp_validation_events = []
     
     # ============================================================================
     # MÉTODO DE ECUACIÓN CARACTERÍSTICA (LINEAL CON DESPLAZAMIENTOS CONSTANTES)
@@ -3920,6 +3963,169 @@ class RecursiveAnalyzer(BaseAnalyzer):
             "max_offset": max_offset,
             "g_n": f_n
         }
+
+    def _get_proc_param_names(self, proc_def: Dict[str, Any]) -> List[str]:
+        """Extrae los nombres de parámetros declarados en el procedimiento."""
+        names: List[str] = []
+        for param in proc_def.get("params", []) or []:
+            if isinstance(param, dict):
+                name = param.get("name") or param.get("id")
+            else:
+                name = str(param)
+            if isinstance(name, str) and name:
+                names.append(name)
+        return names
+
+    def _resolve_size_parameter_name(self, proc_def: Dict[str, Any]) -> Optional[str]:
+        """Determina el parámetro que modela el tamaño principal del subproblema."""
+        param_names = self._get_proc_param_names(proc_def)
+        if not param_names:
+            return None
+
+        size_candidates = [name.lower() for name in self.detect_size_variables_from_proc(proc_def)]
+        for param_name in param_names:
+            if param_name.lower() in size_candidates:
+                return param_name
+
+        common_size_names = {"n", "size", "length", "len", "tam", "tamaño", "tamanio"}
+        for param_name in param_names:
+            if param_name.lower() in common_size_names:
+                return param_name
+
+        if len(param_names) > 1:
+            return param_names[1]
+
+        return param_names[0]
+
+    def _argument_preserves_parameter_identity(self, arg: Any, param_name: str) -> bool:
+        """True si el argumento conserva exactamente el mismo parámetro de entrada."""
+        if not isinstance(arg, dict):
+            return False
+
+        node_type = arg.get("type", "").lower()
+        if node_type == "identifier":
+            arg_name = arg.get("name") or arg.get("id") or ""
+            return isinstance(arg_name, str) and arg_name.lower() == param_name.lower()
+
+        return False
+
+    def _find_changed_non_size_params(
+        self,
+        proc_def: Dict[str, Any],
+        recursive_calls: List[Dict[str, Any]],
+        size_param_name: Optional[str],
+    ) -> List[str]:
+        """Lista parámetros auxiliares cuyo valor cambia entre llamadas recursivas."""
+        changed: List[str] = []
+        param_names = self._get_proc_param_names(proc_def)
+
+        for index, param_name in enumerate(param_names):
+            if size_param_name and param_name.lower() == size_param_name.lower():
+                continue
+
+            for call in recursive_calls:
+                args = call.get("args", []) or []
+                if index >= len(args):
+                    continue
+                if not self._argument_preserves_parameter_identity(args[index], param_name):
+                    changed.append(param_name)
+                    break
+
+        return sorted(set(changed))
+
+    def _build_dp_validation(
+        self,
+        proc_def: Dict[str, Any],
+        recursive_calls: List[Dict[str, Any]],
+        linear_info: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Valida si una recurrencia lineal encaja bien como caso de programación dinámica."""
+        coefficients = linear_info.get("coefficients", {})
+        shifts = sorted(coefficients.keys())
+        max_offset = int(linear_info.get("max_offset", 0) or 0)
+        total_calls = sum(coefficients.values())
+        contiguous_shifts = bool(shifts) and shifts == list(range(1, max_offset + 1))
+        size_param_name = self._resolve_size_parameter_name(proc_def)
+        changed_non_size_params = self._find_changed_non_size_params(
+            proc_def,
+            recursive_calls,
+            size_param_name,
+        )
+
+        status = "rejected"
+        confidence = "low"
+        primary_pattern = "none"
+        supported_patterns: List[str] = []
+        reasons: List[str] = []
+
+        if total_calls < 2:
+            reasons.append(
+                "Solo hay una rama recursiva efectiva por estado; no hay suficiente solapamiento de subproblemas para justificar PD."
+            )
+        elif changed_non_size_params:
+            reasons.append(
+                "Los parámetros de estado cambian entre llamadas recursivas ("
+                + ", ".join(changed_non_size_params)
+                + "), por lo que los subproblemas no son equivalentes."
+            )
+        else:
+            status = "clear"
+            confidence = "high"
+            supported_patterns = ["tabulation", "memoization"]
+            if contiguous_shifts and max_offset <= 3:
+                primary_pattern = "rolling_window"
+                supported_patterns.append("rolling_window")
+                reasons.append(
+                    "La recurrencia depende solo de los últimos estados contiguos y puede optimizarse con memoria acotada."
+                )
+            else:
+                primary_pattern = "tabulation"
+                reasons.append(
+                    "La recurrencia requiere conservar estados no contiguos o un historial más largo que una ventana pequeña."
+                )
+
+            reasons.append(
+                "Las llamadas recursivas reutilizan subproblemas definidos por el mismo parámetro de tamaño."
+            )
+
+        validation = {
+            "status": status,
+            "applicable": status != "rejected",
+            "confidence": confidence,
+            "primary_pattern": primary_pattern,
+            "supported_patterns": supported_patterns,
+            "reasons": reasons,
+            "debug": {
+                "size_parameter": size_param_name,
+                "recursive_call_count": total_calls,
+                "distinct_shifts": shifts,
+                "max_offset": max_offset,
+                "contiguous_shifts": contiguous_shifts,
+                "changed_non_size_params": changed_non_size_params,
+            },
+        }
+
+        self.dp_validation_events.append(validation)
+        for reason in reasons:
+            prefix = "DP validada" if validation["applicable"] else "DP descartada"
+            self.add_note(f"{prefix}: {reason}")
+
+        return validation
+
+    def _build_non_dp_validation(self, reason: str) -> Dict[str, Any]:
+        """Registra el descarte explícito de PD para recurrencias fuera del perfil esperado."""
+        validation = {
+            "status": "rejected",
+            "applicable": False,
+            "confidence": "high",
+            "primary_pattern": "none",
+            "supported_patterns": [],
+            "reasons": [reason],
+            "debug": {},
+        }
+        self.dp_validation_events.append(validation)
+        self.add_note(f"DP descartada: {reason}")
+        return validation
     
     def _detect_characteristic_equation_method(self, proc_def: Dict[str, Any], recursive_calls: List[Dict[str, Any]]) -> bool:
         """
@@ -4088,6 +4294,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "success": False,
                 "reason": "No hay recurrencia extraída"
             }
+
+        def _pow_n(base: str) -> str:
+            return f"\\left({base}\\right)^n"
         
         # Obtener información de recurrencia lineal
         linear_info = self._detect_linear_recurrence(self.proc_def, self._find_recursive_calls(self.proc_def))
@@ -4304,15 +4513,15 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 # Caso simple: una raíz única
                 r_val = roots_info[0]["root"]
                 if is_homogeneous:
-                    homogeneous_sol = f"A \\cdot {r_val}^n"
+                    homogeneous_sol = f"A \\cdot {_pow_n(r_val)}"
                 else:
                     # Necesitamos solución particular
-                    homogeneous_sol = f"A \\cdot {r_val}^n"
+                    homogeneous_sol = f"A \\cdot {_pow_n(r_val)}"
             elif len(roots_info) == 2 and all(r["multiplicity"] == 1 for r in roots_info):
                 # Dos raíces distintas (ej: Fibonacci)
                 r1 = roots_info[0]["root"]
                 r2 = roots_info[1]["root"]
-                homogeneous_sol = f"A_1 \\cdot {r1}^n + A_2 \\cdot {r2}^n"
+                homogeneous_sol = f"A_1 \\cdot {_pow_n(r1)} + A_2 \\cdot {_pow_n(r2)}"
             else:
                 # Caso general con múltiples raíces
                 terms = []
@@ -4320,11 +4529,11 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     r_val = root_info["root"]
                     mult = root_info["multiplicity"]
                     if mult == 1:
-                        terms.append(f"A_{i+1} \\cdot {r_val}^n")
+                        terms.append(f"A_{i+1} \\cdot {_pow_n(r_val)}")
                     else:
                         # Raíz múltiple: agregar términos con potencias de n
                         for j in range(mult):
-                            terms.append(f"A_{i+1}{j+1} \\cdot n^{j} \\cdot {r_val}^n")
+                            terms.append(f"A_{i+1}{j+1} \\cdot n^{j} \\cdot {_pow_n(r_val)}")
                 homogeneous_sol = " + ".join(terms)
             
             # Construir solución general (homogénea + particular si aplica)
@@ -4443,9 +4652,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
                             closed_form = "c_1"
                     else:
                         # Caso r != 1: T(n) = c_1 * r^n
-                        closed_form = f"c_1 \\cdot {r_val}^n"
+                        closed_form = f"c_1 \\cdot {_pow_n(r_val)}"
                 except:
-                    closed_form = f"c_1 \\cdot {r_val}^n"
+                    closed_form = f"c_1 \\cdot {_pow_n(r_val)}"
             elif len(roots_info) == 2:
                 # Dos raíces distintas: T(n) = c_1 * r1^n + c_2 * r2^n
                 r1_val = roots_info[0]["root"]
@@ -4460,14 +4669,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     if not is_homogeneous and particular_sol:
                         # Incluir solución particular
                         if "n" in particular_sol:
-                            closed_form = f"c_1 \\cdot {r1_val}^n + c_2 \\cdot {r2_val}^n + c_3 \\cdot n"
+                            closed_form = f"c_1 \\cdot {_pow_n(r1_val)} + c_2 \\cdot {_pow_n(r2_val)} + c_3 \\cdot n"
                         else:
-                            closed_form = f"c_1 \\cdot {r1_val}^n + c_2 \\cdot {r2_val}^n + c_3"
+                            closed_form = f"c_1 \\cdot {_pow_n(r1_val)} + c_2 \\cdot {_pow_n(r2_val)} + c_3"
                     else:
-                        closed_form = f"c_1 \\cdot {r1_val}^n + c_2 \\cdot {r2_val}^n"
+                        closed_form = f"c_1 \\cdot {_pow_n(r1_val)} + c_2 \\cdot {_pow_n(r2_val)}"
                 except:
                     # Fallback: usar ambas raíces
-                    closed_form = f"c_1 \\cdot {r1_val}^n + c_2 \\cdot {r2_val}^n"
+                    closed_form = f"c_1 \\cdot {_pow_n(r1_val)} + c_2 \\cdot {_pow_n(r2_val)}"
             else:
                 # Caso general: múltiples raíces
                 terms = []
@@ -4475,11 +4684,11 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     r_val = root_info["root"]
                     mult = root_info["multiplicity"]
                     if mult == 1:
-                        terms.append(f"c_{i+1} \\cdot {r_val}^n")
+                        terms.append(f"c_{i+1} \\cdot {_pow_n(r_val)}")
                     else:
                         # Raíz múltiple: agregar términos con potencias de n
                         for j in range(mult):
-                            terms.append(f"c_{i+1}{j+1} \\cdot n^{j} \\cdot {r_val}^n")
+                            terms.append(f"c_{i+1}{j+1} \\cdot n^{j} \\cdot {_pow_n(r_val)}")
                 
                 if not is_homogeneous and particular_sol:
                     # Agregar solución particular
@@ -4490,8 +4699,12 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 
                 closed_form = " + ".join(terms) if terms else "c_1"
             
-            # Detectar si es caso de DP lineal
-            is_dp_linear = max_offset <= 3 and all(offset <= 3 for offset in coefficients.keys())
+            dp_validation = self._build_dp_validation(
+                self.proc_def,
+                self._find_recursive_calls(self.proc_def),
+                linear_info,
+            )
+            is_dp_linear = dp_validation.get("applicable", False)
             
             # Generar versión DP si aplica
             dp_version = None
@@ -4519,13 +4732,15 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "code": dp_code,
                     "time_complexity": dp_time,
                     "space_complexity": dp_space,
-                    "recursive_complexity": recursive_complexity
+                    "recursive_complexity": recursive_complexity,
+                    "pattern": dp_validation.get("primary_pattern", "tabulation")
                 }
                 
                 dp_optimized_version = {
                     "code": dp_code_optimized,
                     "time_complexity": dp_time,
-                    "space_complexity": dp_space_optimized
+                    "space_complexity": dp_space_optimized,
+                    "pattern": "rolling_window" if dp_validation.get("primary_pattern") == "rolling_window" else "tabulation"
                 }
                 
                 dp_equivalence = (
@@ -4553,13 +4768,13 @@ class RecursiveAnalyzer(BaseAnalyzer):
                             theta_result = "\\Theta(1)"
                     elif r_num > 1:
                         # Caso r > 1: exponencial creciente
-                        theta_result = f"\\Theta({r_val}^n)"
+                        theta_result = f"\\Theta({_pow_n(r_val)})"
                     else:
                         # Caso r < 1: exponencial decreciente
-                        theta_result = f"\\Theta({r_val}^n)"
+                        theta_result = f"\\Theta({_pow_n(r_val)})"
                 except:
                     # Fallback: usar r^n
-                    theta_result = f"\\Theta({r_val}^n)"
+                    theta_result = f"\\Theta({_pow_n(r_val)})"
             elif len(roots_info) == 2:
                 # Dos raíces: usar la raíz dominante (mayor valor absoluto)
                 r1_val = roots_info[0]["root"]
@@ -4572,18 +4787,18 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     # Usar la raíz con mayor valor absoluto (raíz dominante)
                     r_max_num = max(abs(r1_num), abs(r2_num))
                     r_max_val = r1_val if abs(r1_num) >= abs(r2_num) else r2_val
-                    theta_result = f"\\Theta({r_max_val}^n)"
+                    theta_result = f"\\Theta({_pow_n(r_max_val)})"
                 except:
                     # Fallback: usar la primera raíz
-                    theta_result = f"\\Theta({r1_val}^n)"
+                    theta_result = f"\\Theta({_pow_n(r1_val)})"
             else:
                 # Caso general: encontrar la raíz con mayor valor absoluto
                 try:
                     r_max = max(roots_info, key=lambda r: abs(float(sympify(r["root"]).evalf())) if sympify(r["root"]).is_real else 0)
-                    theta_result = f"\\Theta({r_max['root']}^n)"
+                    theta_result = f"\\Theta({_pow_n(r_max['root'])})"
                 except:
                     # Fallback: usar la primera raíz
-                    theta_result = f"\\Theta({roots_info[0]['root']}^n)"
+                    theta_result = f"\\Theta({_pow_n(roots_info[0]['root'])})"
             
             # Si no se pudo calcular theta, usar fallback
             if not theta_result:
@@ -4611,14 +4826,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
             has_early_return = self._detect_early_return()
             
             # Calcular theta para worst/average y best case
-            # Si hay early return y estamos en modo best, el mejor caso es O(1)
+            # Si hay early return y estamos en modo best, el mejor caso es Θ(1)
             if has_early_return and self.mode == "best":
-                theta_best = "O(1)"
+                theta_best = "\\Theta(1)"
                 self.proof_steps.append({
                     "id": "best_case",
-                    "text": "\\text{Mejor caso: } O(1) \\text{ (return temprano detectado)}"
+                    "text": "\\text{Mejor caso: } \\Theta(1) \\text{ (return temprano detectado)}"
                 })
-                # Para best case con early return, usar O(1) en lugar del theta calculado
+                # Para best case con early return, usar Θ(1) en lugar del theta calculado
                 theta_result = theta_best
             else:
                 # Para worst/average case, usar el theta calculado normalmente
@@ -4639,6 +4854,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "general_solution": general_solution,
                 "base_cases": base_cases if base_cases else None,
                 "closed_form": closed_form,
+                "dp_validation": dp_validation,
                 "dp_version": dp_version,
                 "dp_optimized_version": dp_optimized_version,
                 "dp_equivalence": dp_equivalence,
@@ -4654,7 +4870,12 @@ class RecursiveAnalyzer(BaseAnalyzer):
             if is_dp_linear:
                 self.proof_steps.append({
                     "id": "dp_detection",
-                    "text": "\\text{Esta recurrencia corresponde a un caso de Programación Dinámica Lineal}"
+                    "text": "\\text{La validación previa confirma que esta recurrencia encaja como caso de Programación Dinámica}"
+                })
+            else:
+                self.proof_steps.append({
+                    "id": "dp_rejected",
+                    "text": "\\text{La validación previa descarta presentar esta recurrencia como Programación Dinámica}"
                 })
             
             return {
@@ -6248,6 +6469,7 @@ FIN FUNCIÓN"""
                 theta = "2^n"
                 recursion_tree = {
                     "method": "recursion_tree",
+                    "recurrence_type": "linear_shift",
                     "levels": [
                         {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "1", "total_cost_latex": "1"},
                         {"level": 1, "num_nodes_latex": "n", "subproblem_size_latex": "n-1", "cost_per_node_latex": "1", "total_cost_latex": "n"},
@@ -6269,6 +6491,7 @@ FIN FUNCIÓN"""
                 theta = "n^2"
                 recursion_tree = {
                     "method": "recursion_tree",
+                    "recurrence_type": "linear_shift",
                     "levels": [
                         {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "n", "total_cost_latex": "n"},
                         {"level": 1, "num_nodes_latex": "1", "subproblem_size_latex": "n-1", "cost_per_node_latex": "n-1", "total_cost_latex": "n-1"},
@@ -6276,6 +6499,35 @@ FIN FUNCIÓN"""
                     "height": "n",
                     "summation": {"expression": "\\sum_{i=0}^{n-1} (n-i) = \\frac{n(n+1)}{2}", "theta": theta},
                     "dominating_level": {"reason": "\\text{Suma aritmética } n + (n-1) + \\ldots + 1 = \\Theta(n^2)"},
+                    "table_by_levels": [],
+                    "theta": f"\\Theta({theta})"
+                }
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                return {"success": True, "recursion_tree": recursion_tree}
+
+            # Fibonacci-type: T(n) = c1*T(n-k1) + c2*T(n-k2) + ... (múltiples términos)
+            # Árbol con subproblemas superpuestos; no usar estructura divide-and-conquer
+            shifts = self.recurrence.get("shifts", [])
+            coefficients = self.recurrence.get("coefficients", [])
+            if len(shifts) >= 2:
+                recurrence_form = self.recurrence.get("form", "T(n) = T(n-1) + T(n-2) + 1")
+                self.proof_steps.append({"id": "tree_extract", "text": f"\\text{{Recurrencia }} {recurrence_form}"})
+                self.proof_steps.append({
+                    "id": "step1_note",
+                    "text": "\\text{Árbol con subproblemas superpuestos: el mismo T(k) se calcula varias veces. Crecimiento exponencial } \\Theta(\\varphi^n)"
+                })
+                theta = "\\varphi^n"
+                recursion_tree = {
+                    "method": "recursion_tree",
+                    "recurrence_type": "linear_shift",
+                    "levels": [
+                        {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "1", "total_cost_latex": "1"},
+                        {"level": 1, "num_nodes_latex": "2", "subproblem_size_latex": "n-1, n-2", "cost_per_node_latex": "1", "total_cost_latex": "2"},
+                        {"level": 2, "num_nodes_latex": "4", "subproblem_size_latex": "n-2, n-3, n-4", "cost_per_node_latex": "1", "total_cost_latex": "4"},
+                    ],
+                    "height": "n",
+                    "summation": {"expression": "\\sum_{i=0}^{n} \\text{(nodos nivel } i) \\approx \\Theta(\\varphi^n)", "theta": theta},
+                    "dominating_level": {"reason": "\\text{Subproblemas superpuestos: crecimiento exponencial } \\Theta(\\varphi^n)"},
                     "table_by_levels": [],
                     "theta": f"\\Theta({theta})"
                 }
@@ -6309,6 +6561,7 @@ FIN FUNCIÓN"""
                 theta = "2^n"
                 recursion_tree = {
                     "method": "recursion_tree",
+                    "recurrence_type": "linear_shift",
                     "levels": [
                         {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "1", "total_cost_latex": "1"},
                         {"level": 1, "num_nodes_latex": "n", "subproblem_size_latex": "n-1", "cost_per_node_latex": "1", "total_cost_latex": "n"},
@@ -6395,6 +6648,7 @@ FIN FUNCIÓN"""
         
         recursion_tree = {
             "method": "recursion_tree",
+            "recurrence_type": "divide_conquer",
             "levels": levels,
             "height": height_expr,
             "summation": summation_result,
@@ -6427,31 +6681,37 @@ FIN FUNCIÓN"""
         # h ≈ log_b(n), pero generamos suficientes niveles para llenar el modal
         max_levels = 10  # Generar 10 niveles para visualización
         
-        # Detectar si f(n) es constante para simplificar notación
+        # Detectar tipo de f(n) para simplificar notación
         f_simplified = f_n.strip().lower()
         is_constant = f_simplified == "1" or f_simplified == "c" or f_simplified.replace(" ", "") == "c_1"
         
         for i in range(max_levels + 1):
             # Número de nodos en el nivel i: a^i
             num_nodes = a ** i
-            num_nodes_latex = f"{a}^{i}" if i > 0 else "1"
+            # Usar llaves en el exponente para que KaTeX/Tex interpreten correctamente valores de más de un dígito (ej. 2^{10})
+            num_nodes_latex = f"{a}^{{{i}}}" if i > 0 else "1"
             
             # Tamaño del subproblema en el nivel i: n/b^i
             if i == 0:
                 subproblem_size_latex = "n"
             else:
                 b_str = self._simplify_number_latex(b)
-                subproblem_size_latex = f"n/{b_str}^{i}"
+                subproblem_size_latex = f"n/{b_str}^{{{i}}}"
             
-            # Costo por nodo: f(n/b^i)
-            # Si f(n) es constante, no usar notación de evaluación
+            # Costo por nodo: ajustar según el tipo de f(n)
+            # - Si f(n) es constante: mostrar la constante
+            # - Si f(n) = n: mostrar explícitamente n/b^i
+            # - En otros casos: notación genérica f(n/b^i)
             if is_constant:
                 cost_per_node_latex = f_n
             elif i == 0:
                 cost_per_node_latex = f_n
             else:
                 b_str = self._simplify_number_latex(b)
-                cost_per_node_latex = f"{f_n}|_{{n/{b_str}^{i}}}"
+                if f_simplified == "n":
+                    cost_per_node_latex = f"n/{b_str}^{{{i}}}"
+                else:
+                    cost_per_node_latex = f"f(n/{b_str}^{i})"
             
             # Costo total del nivel: a^i · f(n/b^i)
             # Si f(n) es constante, simplificar a^i · c
@@ -6464,8 +6724,11 @@ FIN FUNCIÓN"""
                 total_cost_latex = f_n
             else:
                 b_str = self._simplify_number_latex(b)
-                total_cost_latex = f"{a}^{i} \\cdot {f_n}|_{{n/{b_str}^{i}}}"
-            
+                if f_simplified == "n":
+                    total_cost_latex = f"{a}^{{{i}}} \\cdot n/{b_str}^{{{i}}}"
+                else:
+                    total_cost_latex = f"{a}^{{{i}}} \\cdot f(n/{b_str}^{{{i}}})"
+
             levels.append({
                 "level": i,
                 "num_nodes": num_nodes,
@@ -6501,7 +6764,8 @@ FIN FUNCIÓN"""
             # Si f(n) es constante, no usar notación de evaluación
             expression = f"\\sum_{{i=0}}^{{{height_expr}}} {a}^i \\cdot {f_n}"
         else:
-            expression = f"\\sum_{{i=0}}^{{{height_expr}}} {a}^i \\cdot {f_n}|_{{n/{b_str}^i}}"
+            # Notación más legible: f(n/b^i) en lugar de f(n)|_{n/b^i}
+            expression = f"\\sum_{{i=0}}^{{{height_expr}}} {a}^i \\cdot f(n/{b_str}^i)"
         
         # Caso 1: f(n) = constante (1, c)
         if f_simplified == "1" or f_simplified == "c" or f_simplified.replace(" ", "") == "c_1":

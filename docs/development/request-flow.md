@@ -603,7 +603,6 @@ sequenceDiagram
 | Endpoint | Método | Propósito | Llama a |
 |----------|--------|-----------|---------|
 | `/api/llm` | POST | Llamadas a Gemini LLM | Gemini API |
-| `/api/llm/recursion-diagram` | POST | Generar diagramas recursivos | Gemini API |
 | `/api/llm/status` | POST | Validar API key | Gemini API |
 
 ## Referencias
