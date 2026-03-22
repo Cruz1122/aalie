@@ -5,7 +5,33 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [Unreleased] - 2026-03-18
+
+### Added
+- Importación de algoritmos desde archivo `.txt` en modo manual (`/es`) y en la vista del analizador (`/es/analyzer`).
+- Modal dedicado para validación de importación TXT con mensajes por tipo de error (archivo inválido, no algoritmo, gramática inválida).
+- Flujo de reparación con IA tras importación fallida por gramática, manteniendo edición final en Monaco antes de analizar.
+- Utilidades de validación y normalización de TXT en frontend (`apps/web/src/lib/txt-import.ts`).
+- Normalización de entrada en backend de parsing (BOM + saltos de línea) y tests unitarios asociados.
+
+### Changed
+- El botón de importación en `/es/analyzer` se ajusta a estilo de icono con tooltip (consistente con el resto de acciones).
+- El flujo de importación ahora solo pega contenido en Monaco cuando la validación completa es exitosa.
+- Si la importación falla, el editor conserva el contenido previo; si el usuario confirma reparar con IA, recién entonces se usa el contenido importado.
+
+### Fixed
+- Corrección de clasificación errónea durante importación: algoritmos con error de gramática ahora se reportan como "gramática inválida" y no como "no parece algoritmo".
+- Unificación del parse de importación entre `/es` y `/es/analyzer` usando el mismo servicio (`GrammarApiService`) para evitar respuestas inconsistentes.
+- Solapamiento visual de modales (importación y reparación IA): ambos modales se renderizan por portal a `document.body` con z-index alto.
+- Reparación IA: se endurece el prompt y se normaliza salida para evitar prefijos incompatibles con la gramática (p. ej. `PROCEDURE ...`).
+
 ## [Unreleased]
+
+### Removed
+- Benchmark de invariantes de ciclo basado en oráculo JSON: carpeta `tests/_support/algorithms/oracle/`, `loop_invariant_oracle.json`, runner, script de generación de informe, test de contrato asociado y `docs/loop-invariants-benchmark.md`.
+
+### Changed
+- Documentación de `loopInvariant` en `docs/api/loop-invariant-deterministic.md`: alcance actual, módulos, flujo, orden de reglas del clasificador, política de confianza y pruebas mantenidas.
 
 ### Added
 - Documentación de supuestos del caso promedio (`docs/average-case-assumptions.md`) y auditoría (`docs/average-case-audit.md`)

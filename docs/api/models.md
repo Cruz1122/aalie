@@ -103,6 +103,7 @@ class AnalyzeOpenResponse(BaseModel):
     ok: bool = True
     byLine: List[LineCost]
     totals: Dict[str, Any]
+    loopInvariant: Optional[LoopInvariantPayload] = None
 ```
 
 **TypeScript:**
@@ -120,6 +121,7 @@ interface LineCost {
 interface AnalyzeOpenResponse {
   ok: boolean;
   byLine: LineCost[];
+  loopInvariant?: LoopInvariant;
   totals: {
     T_open: string;
     procedure?: Array<{
@@ -206,6 +208,74 @@ interface AnalyzeOpenResponse {
 }
 ```
 
+### LoopInvariantPayload
+
+Estructura fija del invariante de ciclo determinista.
+
+```typescript
+type LoopInvariantStatus = "ok" | "unavailable" | "low_confidence";
+type LoopInvariantReason =
+  | "no_supported_loop"
+  | "insufficient_evidence"
+  | "pattern_not_supported";
+
+type LoopInvariantPatternType =
+  | "binary_exponentiation_state"
+  | "binary_search_interval"
+  | "euclidean_gcd"
+  | "partition_by_pivot"
+  | "merge_progress"
+  | "filter_progress"
+  | "insertion_prefix_sorted"
+  | "selection_prefix_sorted"
+  | "loop_progress_only"
+  | "traversal"
+  | "search"
+  | "accumulation"
+  | "counting"
+  | "extrema"
+  | "prefix_progress"
+  | "two_pointer_like"
+  | "sorting_pass"
+  | "state_refinement"
+  | "unknown";
+
+interface LoopInvariant {
+  status: LoopInvariantStatus;
+  reason: LoopInvariantReason | null;
+  selectedLoop: {
+    nodeType: "FOR" | "WHILE" | "REPEAT" | null;
+    lineStart: number | null;
+    lineEnd: number | null;
+    depth: number;
+    score: number;
+    patternType: LoopInvariantPatternType;
+    controlVariables: string[];
+    stateVariables: string[];
+    boundVariables: string[];
+    collectionVariables: string[];
+    targetVariables: string[];
+    keyUpdates: string[];
+    keyConditions: string[];
+  };
+  invariant: {
+    propertyStatement: string;
+    initialization: string;
+    maintenance: string;
+    finalization: string;
+  };
+  didacticSummary: string;
+  evidence: {
+    conditionReads: string[];
+    bodyWrites: string[];
+    bodyReads: string[];
+    detectedFeatures: string[];
+    classificationConfidence: number | null;
+    templateVariant: string | null;
+  };
+}
+```
+
 ---
 
 ### AnalyzeAllResponse
@@ -218,11 +288,14 @@ Respuesta del endpoint `/analyze/open` cuando `mode="all"`.
 interface AnalyzeAllResponse {
   ok: boolean;
   has_case_variability: boolean;
+  loopInvariant?: LoopInvariant;
   worst: AnalyzeOpenResponse;
   best: AnalyzeOpenResponse | "same_as_worst";
   avg?: AnalyzeOpenResponse | "same_as_worst" | null;
 }
 ```
+
+En `mode="all"`, `loopInvariant` se publica solo en top-level.
 
 ---
 
@@ -366,4 +439,3 @@ Los valores posibles para `LineCost.kind`:
 3. **Compatibilidad**: Los modelos TypeScript están definidos en `packages/types/src/index.ts` y se exportan como `@aa/types`.
 
 4. **Validación**: Los modelos Pydantic validan automáticamente los tipos y valores en el backend.
-

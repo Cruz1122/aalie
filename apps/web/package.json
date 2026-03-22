@@ -12,12 +12,14 @@
     "start": "next start -p 3000",
     "test": "echo \"(tests se agregarán más adelante)\" && exit 0",
     "test:trace-cache": "node --import tsx --test src/lib/__tests__/trace-cache-utils.test.ts",
+    "test:export": "node --import tsx --test src/server/export/__tests__/*.test.ts",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
     "format": "prettier --check .",
     "format:write": "prettier --write ."
   },
   "dependencies": {
+    "@aa/exporter": "workspace:^",
     "@aa/grammar": "workspace:^",
     "@aa/types": "workspace:^",
     "@azure-rest/ai-inference": "1.0.0-beta.6",

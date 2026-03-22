@@ -9,6 +9,7 @@ interface BaseModalContainerProps {
   children: React.ReactNode;
   title?: React.ReactNode;
   titleIcon?: string;
+  titleIconClassName?: string;
   closeAriaLabel?: string;
   sizeClassName?: string;
   zIndexClassName?: string;
@@ -30,6 +31,7 @@ export default function BaseModalContainer({
   children,
   title,
   titleIcon,
+  titleIconClassName = "text-blue-400",
   closeAriaLabel = "Close modal",
   sizeClassName = DEFAULT_SIZE,
   zIndexClassName = "z-50",
@@ -88,7 +90,7 @@ export default function BaseModalContainer({
           >
             <h3 className="text-lg font-semibold text-white flex items-center gap-2">
               {titleIcon ? (
-                <span className="material-symbols-outlined text-blue-400">{titleIcon}</span>
+                <span className={`material-symbols-outlined ${titleIconClassName}`}>{titleIcon}</span>
               ) : null}
               {title}
             </h3>

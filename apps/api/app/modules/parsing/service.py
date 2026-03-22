@@ -7,6 +7,19 @@ from typing import Dict, Any
 from .adapter import parse_to_ast_adapter, is_grammar_available
 
 
+def normalize_source_text(source: str) -> str:
+    """
+    Normaliza texto fuente para evitar diferencias entre pegado manual e importación desde archivo.
+
+    - Elimina BOM UTF-8 al inicio
+    - Normaliza saltos de línea a LF
+    """
+    normalized = str(source or "")
+    if normalized.startswith("\ufeff"):
+        normalized = normalized[1:]
+    return normalized.replace("\r\n", "\n").replace("\r", "\n")
+
+
 def parse_source(source: str) -> Dict[str, Any]:
     """
     Función auxiliar para parsear código fuente y devolver AST o errores.
@@ -26,8 +39,9 @@ def parse_source(source: str) -> Dict[str, Any]:
             "errors": [{"line": 0, "column": 0, "message": "aa_grammar no disponible"}],
         }
 
-    # Parsear el código
-    ast, raw_errors = parse_to_ast_adapter(source)
+    # Parsear el código normalizado
+    normalized_source = normalize_source_text(source)
+    ast, raw_errors = parse_to_ast_adapter(normalized_source)
     ok = len(raw_errors) == 0
     
     # Convertir errores al formato estándar

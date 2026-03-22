@@ -162,7 +162,7 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
   }
 
   return (
-    <div className="flex flex-col relative">
+    <div className="relative flex h-full min-h-0 flex-col">
       {/* Botones fuera del overflow-hidden para que los tooltips no se recorten */}
       {(onVerifyParse != null || onViewAst != null || showAIHelpButton) && (
         <div className="absolute top-2 right-5 flex gap-1 z-20">
@@ -234,7 +234,7 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
           </div>
         )}
       {/* Editor: glass-card-editor sin hover difuminado */}
-      <div className="glass-card glass-card-editor rounded-xl overflow-hidden relative !z-0">
+      <div className="glass-card glass-card-editor relative !z-0 flex-1 min-h-0 overflow-hidden rounded-xl">
         <MonacoEditor
           height={height || "300px"}
           defaultLanguage="pseudocode"

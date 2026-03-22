@@ -157,7 +157,22 @@
     },
     "view": {
       "sourceCode": "Código Fuente",
+      "importTxt": "Importar .txt",
+      "importingTxt": "Importando .txt...",
       "analyze": "Analizar",
+      "txtImportInvalidFileTitle": "Archivo inválido",
+      "txtImportInvalidAlgorithmTitle": "No parece un algoritmo válido",
+      "txtImportGrammarTitle": "El algoritmo no cumple la gramática",
+      "txtImportSuccessTitle": "Archivo importado",
+      "txtImportOnlyTxt": "Solo se permite importar archivos .txt",
+      "txtImportEmpty": "El archivo está vacío o no contiene texto útil",
+      "txtImportTooLarge": "El archivo supera el tamaño máximo permitido ({maxKb} KB)",
+      "txtImportInvalidFormat": "El archivo tiene un formato no válido o caracteres de control",
+      "txtImportReadError": "No se pudo leer el archivo seleccionado",
+      "txtImportNotAlgorithm": "El contenido se pudo leer, pero no tiene la estructura esperada de un algoritmo (por ejemplo, definición de procedimiento).",
+      "txtImportSuccess": "El algoritmo se cargó correctamente en el editor. Puedes editarlo antes de analizar complejidad.",
+      "txtImportParseFailed": "El archivo parece un algoritmo, pero no cumple la gramática del analizador. ¿Deseas repararlo con IA?",
+      "txtImportParseFailedNoAi": "El archivo se importó, pero tiene errores de sintaxis y necesitas API Key para repararlo con IA.",
       "costsPerLine": "Costos por Línea",
       "runAnalysisToSeeCosts": "Ejecuta el análisis para ver los costos",
       "caseAvailableSoon": "El caso \"{case}\" estará disponible próximamente",
@@ -173,6 +188,8 @@
       "noCompleteAnalysis": "No hay análisis completo",
       "apiKeyRequiredForTrace": "Se requiere API Key para el seguimiento (funciones con IA)",
       "viewExecutionTrace": "Ver seguimiento de ejecución",
+      "viewLoopInvariant": "Ver loop invariant",
+      "loopInvariantUnavailable": "No hay loop invariant disponible",
       "noInfoToCompare": "No hay información para comparar",
       "compareWithLLM": "Comparar con LLM",
       "noAstAvailable": "No hay AST disponible",
@@ -258,6 +275,85 @@
       "leavesLevel": "Hojas (último nivel)",
       "rootLevel": "Raíz (primer nivel)",
       "levelN": "Nivel {level}"
+    },
+    "loopInvariant": {
+      "title": "Loop Invariant Determinista",
+      "modal": {
+        "title": "Loop Invariant"
+      },
+      "status": {
+        "ok": "Confiable",
+        "low_confidence": "Baja confianza",
+        "unavailable": "No disponible"
+      },
+      "reason": {
+        "no_supported_loop": "No se detectó un ciclo FOR/WHILE/REPEAT compatible.",
+        "insufficient_evidence": "La evidencia local del AST no alcanza para una propiedad específica confiable.",
+        "pattern_not_supported": "El patrón detectado aún no tiene plantilla formal soportada."
+      },
+      "patterns": {
+        "binary_exponentiation_state": "Estado de exponenciación binaria",
+        "binary_search_interval": "Intervalo de búsqueda binaria",
+        "euclidean_gcd": "MCD euclidiano",
+        "partition_by_pivot": "Partición por pivote",
+        "merge_progress": "Progreso de mezcla",
+        "filter_progress": "Progreso de filtrado",
+        "insertion_prefix_sorted": "Prefijo ordenado por inserción",
+        "selection_prefix_sorted": "Prefijo ordenado por selección",
+        "loop_progress_only": "Progreso monótono del ciclo",
+        "traversal": "Recorrido",
+        "search": "Búsqueda",
+        "accumulation": "Acumulación",
+        "counting": "Conteo",
+        "extrema": "Mínimo / Máximo",
+        "prefix_progress": "Construcción de prefijo",
+        "two_pointer_like": "Dos punteros",
+        "sorting_pass": "Patrón de ordenamiento",
+        "state_refinement": "Refinamiento de estado",
+        "unknown": "Desconocido"
+      },
+      "sections": {
+        "property": "Propiedad del Invariante",
+        "initialization": "Inicialización",
+        "maintenance": "Mantenimiento",
+        "finalization": "Finalización"
+      },
+      "labels": {
+        "pattern": "Patrón detectado",
+        "selectedLoop": "Ciclo seleccionado",
+        "loopRange": "Ciclo {nodeType} que empieza en la línea {lineStart} y termina en la línea {lineEnd}.",
+        "loopStartOnly": "Ciclo {nodeType} detectado desde la línea {lineStart}.",
+        "loopNoLines": "Ciclo {nodeType} detectado (sin rango de líneas disponible).",
+        "noLoop": "Sin ciclo seleccionado",
+        "depth": "Profundidad",
+        "score": "Puntaje",
+        "reason": "Razón",
+        "variables": "Variables relevantes",
+        "evidence": "Evidencia estructural",
+        "none": "Ninguna"
+      },
+      "variables": {
+        "control": "Control",
+        "state": "Estado",
+        "bounds": "Fronteras",
+        "collections": "Colecciones",
+        "targets": "Objetivos"
+      },
+      "evidence": {
+        "keyUpdates": "Actualizaciones clave",
+        "keyConditions": "Condiciones clave",
+        "conditionReads": "Lecturas en condición",
+        "bodyWrites": "Escrituras en cuerpo",
+        "bodyReads": "Lecturas en cuerpo",
+        "features": "Features detectadas"
+      },
+      "fallback": {
+        "property": "No hay resultado de invariante disponible para mostrar.",
+        "initialization": "Inicialización no disponible.",
+        "maintenance": "Mantenimiento no disponible.",
+        "finalization": "Finalización no disponible.",
+        "summary": "Ejecuta un análisis para generar un loop invariant determinista."
+      }
     },
     "executionTrace": {
       "title": "Seguimiento de Ejecución",
@@ -346,8 +442,8 @@
       "eventKind_end": "Fin",
       "eventKind_enter_block": "Entrada a bloque",
       "eventKind_call": "Llamada",
-      "eventKind_for": "Bucle For",
-      "eventKind_while": "Bucle While",
+      "eventKind_for": "For",
+      "eventKind_while": "While",
       "eventKind_other": "Otro",
       "complexitySummary": "Resumen de complejidad",
       "complexityBest": "Mejor caso",
@@ -397,9 +493,9 @@
       "view": "Ver",
       "assign": "Asignación",
       "if": "Condicional",
-      "for": "Bucle For",
-      "while": "Bucle While",
-      "repeat": "Bucle Repeat",
+      "for": "For",
+      "while": "While",
+      "repeat": "Repeat",
       "call": "Llamada",
       "print": "Impresión",
       "return": "Retorno",

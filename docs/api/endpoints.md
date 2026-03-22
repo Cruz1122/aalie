@@ -168,6 +168,38 @@ Analiza un algoritmo y devuelve el análisis de complejidad temporal (forma abie
         "formula": "T(n) = 1 + (n - 1)"
       }
     ]
+  },
+  "loopInvariant": {
+    "status": "ok",
+    "reason": null,
+    "selectedLoop": {
+      "nodeType": "FOR",
+      "lineStart": 3,
+      "lineEnd": 5,
+      "depth": 0,
+      "score": 9.15,
+      "patternType": "accumulation",
+      "controlVariables": ["i"],
+      "stateVariables": ["resultado"],
+      "boundVariables": ["n"],
+      "collectionVariables": [],
+      "targetVariables": [],
+      "keyUpdates": ["resultado <- resultado * i"],
+      "keyConditions": ["i <= n"]
+    },
+    "invariant": {
+      "propertyStatement": "Before each iteration, resultado stores the partial aggregate...",
+      "initialization": "Initialization: ...",
+      "maintenance": "Maintenance: ...",
+      "finalization": "Finalization: ..."
+    },
+    "didacticSummary": "The loop maintains a partial aggregate that becomes complete at termination.",
+    "evidence": {
+      "conditionReads": ["i", "n"],
+      "bodyWrites": ["resultado"],
+      "bodyReads": ["resultado", "i"],
+      "detectedFeatures": ["has_monotonic_control_update", "pattern:accumulation"]
+    }
   }
 }
 ```
@@ -178,6 +210,7 @@ Analiza un algoritmo y devuelve el análisis de complejidad temporal (forma abie
 {
   "ok": true,
   "has_case_variability": false,
+  "loopInvariant": { "...": "shape fijo de loop invariant" },
   "worst": {
     "ok": true,
     "byLine": [...],
@@ -197,11 +230,17 @@ O si hay variabilidad:
 {
   "ok": true,
   "has_case_variability": true,
+  "loopInvariant": { "...": "shape fijo de loop invariant" },
   "worst": { ... },
   "best": { ... },
   "avg": { ... }
 }
 ```
+
+Notas para `mode="all"`:
+- `loopInvariant` se expone solo a nivel top-level.
+- `worst`, `best` y `avg` mantienen su payload actual sin duplicar `loopInvariant`.
+- Si no hay evidencia suficiente, `loopInvariant` conserva el mismo shape con `status="low_confidence"` o `status="unavailable"` y `reason` explícito.
 
 **Códigos de estado:**
 - `200 OK`: Análisis completado
@@ -337,4 +376,3 @@ Endpoint de prueba que devuelve un análisis dummy con datos de ejemplo.
 4. **Caso promedio**: Requiere `avgModel` cuando `mode` es `"avg"` o `"all"`. Por defecto usa modelo uniforme.
 
 5. **Compatibilidad**: El endpoint `/grammar/parse` acepta tanto `"source"` como `"input"` para compatibilidad con versiones anteriores.
-
