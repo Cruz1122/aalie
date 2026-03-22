@@ -280,7 +280,7 @@ function buildMetadataSection(
       value: i18n.algorithmTypeLabels[snapshot.algorithmType],
     },
     {
-      label: localize(i18n, "Nombre del algoritmo", "Algorithm name"),
+      label: localize(i18n, "Algoritmo", "Algorithm"),
       value: snapshot.meta.algorithm.name,
     },
     {
@@ -433,7 +433,7 @@ function buildPseudocodeSection(
 ): DocumentSection {
   return {
     id: "pseudocode",
-    title: i18n.pseudocodeTitle,
+    title: snapshot.meta.algorithm.name,
     blocks: [
       {
         kind: "code",
@@ -986,7 +986,7 @@ function buildCaseTraceExecutiveItems(
   return {
     header,
     items: [
-      `${localize(i18n, "Algoritmo", "Algorithm")}: ${snapshot.meta.algorithm.name}`,
+      snapshot.meta.algorithm.name,
       `${localize(i18n, "Total de pasos observados", "Total observed steps")}: ${String(steps.length)}`,
       `${localize(i18n, "Total de iteraciones observadas del FOR", "Observed FOR iterations")}: ${String(iterationSteps.length)}`,
       `${localize(i18n, "Variable de control", "Control variable")}: ${controlRange}`,
@@ -2444,35 +2444,42 @@ function buildComparativeSection(
 
   if (isSectionAvailable(snapshot.comparative.gpuCpu)) {
     const gpuCpu = snapshot.comparative.gpuCpu.data;
+    const confidenceLabel = { high: localize(i18n, "Alta", "High"), medium: localize(i18n, "Media", "Medium"), low: localize(i18n, "Baja", "Low") }[gpuCpu.confidence] ?? gpuCpu.confidence;
+    const recommendationLabel = { cpu: "CPU", gpu: "GPU", hybrid: localize(i18n, "Híbrido", "Hybrid") }[gpuCpu.primaryRecommendation] ?? gpuCpu.primaryRecommendation;
     blocks.push({
       kind: "subsection",
-      title: localize(i18n, "Comparación GPU/CPU", "GPU/CPU comparison"),
+      title: localize(i18n, "Análisis de Idoneidad Hardware (GPU vs CPU)", "Hardware Suitability Analysis (GPU vs CPU)"),
     });
     blocks.push({
       kind: "list",
       items: [
-        `${localize(i18n, "Resumen", "Summary")}: ${stripLeadingLabel(gpuCpu.summary, ["Resumen", "Summary"])}`,
-        `${localize(i18n, "Recomendación", "Recommendation")}: ${stripLeadingLabel(gpuCpu.recommendation, ["Recomendación", "Recommendation"])}`,
+        `${localize(i18n, "Recomendación", "Recommendation")}: ${recommendationLabel}`,
+        `${localize(i18n, "Confianza", "Confidence")}: ${confidenceLabel}`,
+        `${localize(i18n, "Resumen", "Summary")}: ${gpuCpu.summary}`,
+        `${localize(i18n, "Scores", "Scores")}: CPU ${gpuCpu.scores.cpu}, GPU ${gpuCpu.scores.gpu}, ${localize(i18n, "Híbrido", "Hybrid")} ${gpuCpu.scores.hybrid}`,
       ],
     });
 
-    blocks.push({
-      kind: "subsection",
-      title: localize(i18n, "Métricas de soporte", "Supporting metrics"),
-    });
-
-    blocks.push({
-      kind: "list",
-      items: [
-        `${localize(i18n, "Total de ciclos", "Total loops")}: ${String(gpuCpu.metrics.totalLoops)}`,
-        `${localize(i18n, "Profundidad máxima de ciclos", "Maximum loop depth")}: ${String(gpuCpu.metrics.maxLoopDepth)}`,
-        `${localize(i18n, "Condicionales en ciclos", "Conditionals in loops")}: ${String(gpuCpu.metrics.conditionalsInLoops)}`,
-        `${localize(i18n, "Es recursivo", "Is recursive")}: ${String(gpuCpu.metrics.isRecursive)}`,
-        `${localize(i18n, "Cantidad de llamadas recursivas", "Recursive call count")}: ${String(gpuCpu.metrics.recursiveCallCount)}`,
-        `${localize(i18n, "Accesos a arreglos", "Array access count")}: ${String(gpuCpu.metrics.arrayAccessCount)}`,
-        `${localize(i18n, "Llamadas dentro de ciclos", "Calls inside loops")}: ${String(gpuCpu.metrics.callsInsideLoops)}`,
-      ],
-    });
+    if (gpuCpu.reasons.blockers.length > 0) {
+      blocks.push({ kind: "paragraph", text: localize(i18n, "Bloqueadores de paralelización:", "Parallelization blockers:") });
+      blocks.push({ kind: "list", items: gpuCpu.reasons.blockers });
+    }
+    if (gpuCpu.reasons.positive.length > 0) {
+      blocks.push({ kind: "paragraph", text: localize(i18n, "Señales favorables:", "Favorable signals:") });
+      blocks.push({ kind: "list", items: gpuCpu.reasons.positive });
+    }
+    if (gpuCpu.reasons.negative.length > 0) {
+      blocks.push({ kind: "paragraph", text: localize(i18n, "Señales desfavorables:", "Unfavorable signals:") });
+      blocks.push({ kind: "list", items: gpuCpu.reasons.negative });
+    }
+    if (gpuCpu.reasons.opportunities.length > 0) {
+      blocks.push({ kind: "paragraph", text: localize(i18n, "Oportunidades de transformación:", "Transformation opportunities:") });
+      blocks.push({ kind: "list", items: gpuCpu.reasons.opportunities });
+    }
+    if (gpuCpu.detectedPatterns.length > 0) {
+      blocks.push({ kind: "paragraph", text: localize(i18n, "Patrones detectados:", "Detected patterns:") });
+      blocks.push({ kind: "list", items: gpuCpu.detectedPatterns.map((p) => `${p.name} (${(p.confidence * 100).toFixed(0)}%)`) });
+    }
   } else {
     pushBlockIfPresent(blocks, buildStatusBlock("comparative.gpuCpu", snapshot.comparative.gpuCpu, i18n));
   }
@@ -2584,15 +2591,14 @@ function buildConclusionsSection(
     );
 
     if (isSectionAvailable(snapshot.comparative.gpuCpu)) {
-      const recommendation = stripLeadingLabel(
-        snapshot.comparative.gpuCpu.data.recommendation,
-        ["Recomendación", "Recommendation"],
-      );
+      const hw = snapshot.comparative.gpuCpu.data;
+      const recLabel = { cpu: "CPU", gpu: "GPU", hybrid: localize(i18n, "Híbrido", "Hybrid") }[hw.primaryRecommendation] ?? hw.primaryRecommendation;
+      const confLabel = { high: localize(i18n, "alta", "high"), medium: localize(i18n, "media", "medium"), low: localize(i18n, "baja", "low") }[hw.confidence] ?? hw.confidence;
       items.push(
         localize(
           i18n,
-          `Recomendación comparativa: ${recommendation}`,
-          `Comparative recommendation: ${recommendation}`,
+          `Recomendación de hardware: ${recLabel} (confianza ${confLabel})`,
+          `Hardware recommendation: ${recLabel} (confidence: ${confLabel})`,
         ),
       );
     }
@@ -2663,7 +2669,7 @@ export function buildDocumentModel(snapshot: AalieAnalysisSnapshotV1): DocumentM
         ];
 
   return {
-    title: i18n.documentTitle,
+    title: snapshot.meta.algorithm.name || i18n.documentTitle,
     locale: snapshot.locale,
     snapshotId: snapshot.snapshotId,
     contentHash: snapshot.contentHash,

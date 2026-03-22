@@ -252,20 +252,39 @@ export interface SnapshotLlmComparative {
 }
 
 export interface SnapshotGpuCpuComparative {
-  profile: "GPU" | "CPU" | "Mixto";
+  primaryRecommendation: "cpu" | "gpu" | "hybrid";
+  internalVerdict: "cpu" | "gpu" | "hybrid" | "inconclusive";
+  confidence: "high" | "medium" | "low";
+  scores: {
+    cpu: number;
+    gpu: number;
+    hybrid: number;
+  };
   summary: string;
-  explanation: string;
-  recommendation: string;
-  gpuScore: number;
-  cpuScore: number;
-  metrics: {
-    totalLoops: number;
-    maxLoopDepth: number;
-    conditionalsInLoops: number;
-    isRecursive: boolean;
-    recursiveCallCount: number;
-    arrayAccessCount: number;
-    callsInsideLoops: number;
+  reasons: {
+    positive: string[];
+    negative: string[];
+    blockers: string[];
+    opportunities: string[];
+  };
+  detectedPatterns: {
+    name: string;
+    confidence: number;
+    evidence: string[];
+  }[];
+  evidence: {
+    kind: string;
+    message: string;
+    location?: {
+      line?: number;
+      nodeId?: string;
+    };
+  }[];
+  diagnostics: {
+    controlRegularity: "regular" | "mixed" | "irregular" | "unknown";
+    memoryRegularity: "regular" | "mixed" | "irregular" | "unknown";
+    dependencyStrength: "none" | "weak" | "medium" | "strong" | "unknown";
+    parallelismType: "data" | "task" | "mixed" | "limited" | "unknown";
   };
 }
 

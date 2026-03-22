@@ -8,22 +8,18 @@ export function buildGpuCpuComparative(
 ): SnapshotGpuCpuComparative | null {
   if (!ast) return null;
 
-  const result = analyzeASTForGPUCPU(ast, locale);
+  const r = analyzeASTForGPUCPU(ast, locale);
+
+  // Map HardwareSuitabilityReport → SnapshotGpuCpuComparative
   return {
-    profile: result.profile,
-    summary: result.summary,
-    explanation: result.explanation,
-    recommendation: result.recommendation,
-    gpuScore: result.gpuScore,
-    cpuScore: result.cpuScore,
-    metrics: {
-      totalLoops: result.metrics.totalLoops,
-      maxLoopDepth: result.metrics.maxLoopDepth,
-      conditionalsInLoops: result.metrics.conditionalsInLoops,
-      isRecursive: result.metrics.isRecursive,
-      recursiveCallCount: result.metrics.recursiveCallCount,
-      arrayAccessCount: result.metrics.arrayAccessCount,
-      callsInsideLoops: result.metrics.callsInsideLoops,
-    },
+    primaryRecommendation: r.primaryRecommendation,
+    internalVerdict: r.internalVerdict,
+    confidence: r.confidence,
+    scores: r.scores,
+    summary: r.summary,
+    reasons: r.reasons,
+    detectedPatterns: r.detectedPatterns,
+    evidence: r.evidence,
+    diagnostics: r.diagnostics,
   };
 }

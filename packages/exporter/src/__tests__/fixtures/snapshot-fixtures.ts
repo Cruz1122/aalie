@@ -603,21 +603,28 @@ export function createIterativeSnapshot() {
       },
     },
     gpuCpu: {
-      profile: "CPU",
-      summary: "La versión secuencial favorece CPU para n pequeño y control simple.",
-      explanation:
-        "El algoritmo usa un único ciclo con dependencia acumulativa en resultado, lo cual limita paralelización efectiva en GPU.",
-      recommendation: "Ejecutar en CPU salvo lotes masivos y versión paralela explícita.",
-      gpuScore: 44,
-      cpuScore: 78,
-      metrics: {
-        totalLoops: 1,
-        maxLoopDepth: 1,
-        conditionalsInLoops: 0,
-        isRecursive: false,
-        recursiveCallCount: 0,
-        arrayAccessCount: 0,
-        callsInsideLoops: 0,
+      primaryRecommendation: "cpu",
+      internalVerdict: "cpu",
+      confidence: "high",
+      scores: { cpu: 78, gpu: 35, hybrid: 48 },
+      summary: "The algorithm accumulates state between iterations, introducing sequential dependency. CPU is recommended.",
+      reasons: {
+        positive: [],
+        negative: ["The algorithm accumulates state between iterations, introducing sequential dependency."],
+        blockers: ["Loop-carried dependency: 1 occurrence(s) — iteration N+1 depends on N"],
+        opportunities: ["Scalar reduction detected; parallelizable with a parallel reduction scheme."],
+      },
+      detectedPatterns: [
+        { name: "reduction", confidence: 0.8, evidence: ["1 scalar reduction(s) detected", "Accumulator pattern in loop body"] },
+      ],
+      evidence: [
+        { kind: "veto", message: "Loop-carried dependency: 1 occurrence(s) — iteration N+1 depends on N" },
+      ],
+      diagnostics: {
+        controlRegularity: "regular",
+        memoryRegularity: "unknown",
+        dependencyStrength: "weak",
+        parallelismType: "limited",
       },
     },
   });
