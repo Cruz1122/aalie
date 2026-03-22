@@ -35,21 +35,6 @@ function collectCandidateRoots(): string[] {
   const moduleDir = path.dirname(fileURLToPath(import.meta.url));
   candidates.push(path.resolve(moduleDir, "../../../assets/latex"));
 
-  const cwd = process.cwd();
-  candidates.push(path.resolve(cwd, "packages/exporter/assets/latex"));
-  candidates.push(path.resolve(cwd, "../packages/exporter/assets/latex"));
-  candidates.push(path.resolve(cwd, "../../packages/exporter/assets/latex"));
-
-  let current = cwd;
-  for (let depth = 0; depth < 8; depth += 1) {
-    candidates.push(path.resolve(current, "packages/exporter/assets/latex"));
-    const parent = path.dirname(current);
-    if (parent === current) {
-      break;
-    }
-    current = parent;
-  }
-
   return Array.from(new Set(candidates));
 }
 
