@@ -13,7 +13,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .core.config import get_dev_allowed_origins, get_dev_cors_enabled
+from .core.config import get_cors_allowed_origins, get_cors_enabled
 from .modules.analysis.router import router as analyze_router
 from .modules.classification.router import router as classify_router
 from .modules.parsing.router import router as parse_router
@@ -26,10 +26,10 @@ load_dotenv(env_path)
 app = FastAPI(title="algorithmic-analysis API", version="0.1.0")
 
 # --- CORS SOLO DEV ---
-if get_dev_cors_enabled():
+if get_cors_enabled():
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=get_dev_allowed_origins(),
+        allow_origins=get_cors_allowed_origins(),
         allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],

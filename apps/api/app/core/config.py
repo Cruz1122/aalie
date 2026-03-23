@@ -37,6 +37,25 @@ def get_dev_cors_enabled() -> bool:
     return _as_bool(os.getenv("DEV_CORS_ENABLED", "1"))
 
 
+def get_cors_enabled() -> bool:
+    """
+    Habilita CORS en cualquier ambiente.
+
+    - Si `CORS_ENABLED` está definida, se usa.
+    - Si no, se mantiene compatibilidad con `DEV_CORS_ENABLED`.
+    """
+
+    return _as_bool(os.getenv("CORS_ENABLED", os.getenv("DEV_CORS_ENABLED", "1")))
+
+
+def _parse_allowed_origins(raw: str) -> list[str]:
+    raw = (raw or "").strip()
+    if raw == "*":
+        return ["*"]
+    items = [s.strip() for s in raw.split(",") if s.strip()]
+    return items
+
+
 def get_dev_allowed_origins() -> list[str]:
     """
     Obtiene los orígenes permitidos para CORS en modo desarrollo.
@@ -52,5 +71,19 @@ def get_dev_allowed_origins() -> list[str]:
     """
     raw = os.getenv("DEV_ALLOWED_ORIGINS", "")
     defaults = ["http://localhost:3000", "http://127.0.0.1:3000"]
-    items = [s.strip() for s in raw.split(",") if s.strip()]
+    items = _parse_allowed_origins(raw)
     return items if items else defaults
+
+
+def get_cors_allowed_origins() -> list[str]:
+    """
+    Orígenes permitidos para CORS.
+
+    - Primero intenta `CORS_ALLOWED_ORIGINS`.
+    - Si no está, intenta `DEV_ALLOWED_ORIGINS`.
+    - Si no hay ninguno definido, habilita acceso desde cualquier origen (`*`).
+    """
+
+    raw = os.getenv("CORS_ALLOWED_ORIGINS") or os.getenv("DEV_ALLOWED_ORIGINS") or ""
+    items = _parse_allowed_origins(raw)
+    return items if items else ["*"]
