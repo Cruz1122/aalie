@@ -2,9 +2,9 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import type { ExportArtifact } from "@aa/exporter";
+import type { ExportArtifact } from "@aa/report-export-engine";
 
-import { createReportFromSource } from "../src/server/export/export-service";
+import { createReportFromSource } from "@aa/report-export-orchestrator";
 
 type FamousIterativeAlgorithm = {
   slug: string;

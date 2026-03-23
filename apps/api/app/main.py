@@ -17,6 +17,7 @@ from .core.config import get_dev_allowed_origins, get_dev_cors_enabled
 from .modules.analysis.router import router as analyze_router
 from .modules.classification.router import router as classify_router
 from .modules.parsing.router import router as parse_router
+from .modules.export.router import router as export_router
 
 # Cargar variables de entorno desde .env
 env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
@@ -32,6 +33,7 @@ if get_dev_cors_enabled():
         allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["Content-Disposition", "X-Snapshot-Id", "X-Content-Hash"],
         max_age=600,
     )
 
@@ -54,3 +56,4 @@ def health():
 app.include_router(parse_router)
 app.include_router(analyze_router)
 app.include_router(classify_router)
+app.include_router(export_router)

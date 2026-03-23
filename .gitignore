@@ -3,11 +3,11 @@ node_modules/
 .pnpm-store/
 pnpm-debug.log*
 
-# Fixtures for exporter tests
-packages/exporter/src/__tests__/fixtures/golden/
+# Fixtures for report export engine tests
+packages/report-export-engine/src/__tests__/fixtures/golden/
 
-# Builds for exporter
-packages/exporter/build/
+# Builds for report export engine
+packages/report-export-engine/build/
 
 # Reports
 reports/

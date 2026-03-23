@@ -4,16 +4,18 @@ Este documento consolida la implementación de exportación de reportes (`markdo
 
 ## 1) Mapa de archivos (implementación de reports)
 
-- `apps/web/src/app/api/export/report/route.ts`
-- `apps/web/src/server/export/export-service.ts`
-- `packages/exporter/src/application/export-orchestrator.ts`
-- `packages/exporter/src/renderers/document-model-builder.ts`
-- `packages/exporter/src/renderers/markdown/index.ts`
-- `packages/exporter/src/renderers/latex/index.ts`
-- `packages/exporter/assets/latex/templates/main.template.tex`
-- `packages/exporter/assets/latex/aalie-report.sty`
-- `packages/exporter/src/infrastructure/assets/asset-registry.ts`
-- `packages/exporter/src/infrastructure/pdf/latex-compiler.ts`
+- `apps/api/app/modules/export/router.py`
+- `apps/api/app/exporter/worker.ts`
+- `packages/report-export-orchestrator/src/export-service.ts`
+- `packages/report-export-orchestrator/src/collect-artifacts.ts`
+- `packages/report-export-engine/src/application/export-orchestrator.ts`
+- `packages/report-export-engine/src/renderers/document-model-builder.ts`
+- `packages/report-export-engine/src/renderers/markdown/index.ts`
+- `packages/report-export-engine/src/renderers/latex/index.ts`
+- `packages/report-export-engine/assets/latex/templates/main.template.tex`
+- `packages/report-export-engine/assets/latex/aalie-report.sty`
+- `packages/report-export-engine/src/infrastructure/assets/asset-registry.ts`
+- `packages/report-export-engine/src/infrastructure/pdf/latex-compiler.ts`
 
 ## 2) Flujo end-to-end de generación de reportes
 
@@ -30,11 +32,11 @@ Este documento consolida la implementación de exportación de reportes (`markdo
 ### 3.1 API de export (`route.ts`)
 
 ```ts
-// apps/web/src/app/api/export/report/route.ts
+// apps/api/app/modules/export/router.py (FastAPI) + apps/api/app/exporter/worker.ts (Node)
 const result = await createReportFromSource({
   ...body,
-  source,
-  requestOrigin: request.nextUrl.origin,
+  source: body.source,
+  requestOrigin: request.headers.origin,
 });
 
 return NextResponse.json({
@@ -53,7 +55,7 @@ return NextResponse.json({
 ### 3.2 Service de export (`export-service.ts`)
 
 ```ts
-// apps/web/src/server/export/export-service.ts
+// packages/report-export-orchestrator/src/export-service.ts
 export async function createReportFromSource(
   input: ExportReportRequest,
 ): Promise<BuildExportReportResult> {
@@ -72,7 +74,7 @@ export async function createReportFromSource(
 ### 3.3 Orquestador (`export-orchestrator.ts`)
 
 ```ts
-// packages/exporter/src/application/export-orchestrator.ts
+// packages/report-export-engine/src/application/export-orchestrator.ts
 if (formats.includes("markdown")) {
   const markdown = renderMarkdownReport({ snapshot: options.snapshot, documentModel: model });
   artifacts.push({ format: "markdown", filename: MARKDOWN_FILENAME, mimeType: artifactMimeType("markdown"), content: markdown });
@@ -95,7 +97,7 @@ if (formats.includes("pdf")) {
 ### 3.4 Modelo del documento (`document-model-builder.ts`)
 
 ```ts
-// packages/exporter/src/renderers/document-model-builder.ts
+// packages/report-export-engine/src/renderers/document-model-builder.ts
 const institution: DocumentInstitutionInfo = {
   institutionLineA: i18n.institutionLineA,
   institutionLineB: i18n.institutionLineB,
@@ -109,7 +111,7 @@ const institution: DocumentInstitutionInfo = {
 ### 3.5 Renderer Markdown (`renderers/markdown/index.ts`)
 
 ```ts
-// packages/exporter/src/renderers/markdown/index.ts
+// packages/report-export-engine/src/renderers/markdown/index.ts
 export function renderMarkdownReport(options: RenderMarkdownOptions): string {
   const model = options.documentModel || buildDocumentModel(options.snapshot);
   const sections = model.sections
@@ -122,7 +124,7 @@ export function renderMarkdownReport(options: RenderMarkdownOptions): string {
 ### 3.6 Renderer LaTeX (`renderers/latex/index.ts`)
 
 ```ts
-// packages/exporter/src/renderers/latex/index.ts
+// packages/report-export-engine/src/renderers/latex/index.ts
 const replacements: Record<string, string> = {
   "%%__LANGUAGE_PACKAGE__%%": languagePackage(model.locale),
   "%%__REPORT_CODE__%%": escapeLatexText(model.institution.reportCode),
@@ -140,7 +142,7 @@ for (const [token, value] of Object.entries(replacements)) {
 ### 3.7 Plantilla LaTeX (`main.template.tex`) - activación watermark
 
 ```tex
-% packages/exporter/assets/latex/templates/main.template.tex
+% packages/report-export-engine/assets/latex/templates/main.template.tex
 \AALIESetLogos{logos/ucaldas.pdf}{logos/aalie.pdf}{logos/aalie.pdf}
 ...
 \AALIEEnableWatermark{0.10}{0.42\paperwidth}
@@ -149,7 +151,7 @@ for (const [token, value] of Object.entries(replacements)) {
 ### 3.8 Estilo LaTeX (`aalie-report.sty`) - definición watermark
 
 ```tex
-% packages/exporter/assets/latex/aalie-report.sty
+% packages/report-export-engine/assets/latex/aalie-report.sty
 \newcommand{\aalie@wmOpacity}{0.10}
 \newcommand{\aalie@wmWidth}{0.42\paperwidth}
 \newcommand{\aalie@wmGraphic}{%
@@ -178,7 +180,7 @@ for (const [token, value] of Object.entries(replacements)) {
 ### 3.9 Resolución de assets (`asset-registry.ts`)
 
 ```ts
-// packages/exporter/src/infrastructure/assets/asset-registry.ts
+// packages/report-export-engine/src/infrastructure/assets/asset-registry.ts
 return {
   assetRoot: candidate,
   styleFilePath: path.join(candidate, "aalie-report.sty"),
@@ -192,7 +194,7 @@ return {
 ### 3.10 Compilación PDF (`latex-compiler.ts`)
 
 ```ts
-// packages/exporter/src/infrastructure/pdf/latex-compiler.ts
+// packages/report-export-engine/src/infrastructure/pdf/latex-compiler.ts
 copyFileSync(assets.styleFilePath, path.join(workDir, "aalie-report.sty"));
 copyFileSync(assets.ucaldasLogoPath, path.join(logosOutputDir, "ucaldas.pdf"));
 copyFileSync(assets.aalieLogoPath, path.join(logosOutputDir, "aalie.pdf"));
@@ -220,7 +222,7 @@ Si visualmente sale negro sólido, los puntos de auditoría son:
 
 ## 5) Checklist de auditoría rápida
 
-- Verificar hash y tamaño de `packages/exporter/assets/latex/logos/aalie.pdf`.
+- Verificar hash y tamaño de `packages/report-export-engine/assets/latex/logos/aalie.pdf`.
 - Exportar solo `.tex` y revisar que exista `\AALIEEnableWatermark{0.10}{0.42\paperwidth}`.
 - En el `.tex` final, buscar `opacity=\aalie@wmOpacity` (debe mantenerse).
 - Compilar el mismo `.tex` con otro motor/entorno para descartar problema de renderer.

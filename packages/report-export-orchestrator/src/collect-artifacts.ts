@@ -1,4 +1,4 @@
-import type { BuildSnapshotInput } from "@aa/exporter";
+import type { BuildSnapshotInput } from "@aa/report-export-engine";
 import type { SnapshotCase, SnapshotRecursiveMethod } from "@aa/types";
 
 import { buildGpuCpuComparative } from "./gpu-cpu-adapter";
@@ -53,7 +53,6 @@ async function postJson<T>(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-      cache: "no-store",
     });
     return (await response.json().catch(() => null)) as T | null;
   } catch {
@@ -125,17 +124,24 @@ export async function collectArtifactsForSnapshot(
 ): Promise<BuildSnapshotInput> {
   const apiBase = getApiBase();
 
-  const parse = input.cachedParse || await postJson<BuildSnapshotInput["parse"]>(apiBase, "/grammar/parse", {
-    source: input.source,
-  });
-
-  const classify = input.cachedClassify || await postJson<BuildSnapshotInput["classify"]>(apiBase, "/classify", {
-    source: input.source,
-  });
-
-  const algorithmKind = normalizeAlgorithmKind(
-    input.algorithmKindHint || classify?.kind,
+  const parse = input.cachedParse || await postJson<BuildSnapshotInput["parse"]>(
+    apiBase,
+    "/grammar/parse",
+    {
+      source: input.source,
+    },
   );
+
+  const classify = input.cachedClassify || await postJson<BuildSnapshotInput["classify"]>(
+    apiBase,
+    "/classify",
+    {
+      source: input.source,
+    },
+  );
+
+  const algorithmKind = normalizeAlgorithmKind(input.algorithmKindHint || classify?.kind);
+
   const traceCases: SnapshotCase[] =
     input.includeTraceCases && input.includeTraceCases.length > 0
       ? input.includeTraceCases
@@ -143,25 +149,28 @@ export async function collectArtifactsForSnapshot(
         ? ["worst", "best", "avg"]
         : ["worst"];
 
-  const analyze = input.cachedAnalyze || await postJson<BuildSnapshotInput["analyze"]>(apiBase, "/analyze/open", {
-    source: input.source,
-    mode: "all",
-    avgModel: { mode: "uniform", predicates: {} },
-    algorithm_kind: algorithmKind,
-    preferred_method: input.preferredMethod,
-    locale: input.locale,
-  });
+  const analyze =
+    input.cachedAnalyze ||
+    (await postJson<BuildSnapshotInput["analyze"]>(apiBase, "/analyze/open", {
+      source: input.source,
+      mode: "all",
+      avgModel: { mode: "uniform", predicates: {} },
+      algorithm_kind: algorithmKind,
+      preferred_method: input.preferredMethod,
+      locale: input.locale,
+    }));
 
   let detectMethods: BuildSnapshotInput["detectMethods"] = null;
   if (algorithmKind === "recursive" || algorithmKind === "hybrid") {
-    detectMethods = await postJson<BuildSnapshotInput["detectMethods"]>(
-      apiBase,
-      "/analyze/detect-methods",
-      {
-        source: input.source,
-        algorithm_kind: algorithmKind,
-      },
-    );
+    detectMethods =
+      await postJson<BuildSnapshotInput["detectMethods"]>(
+        apiBase,
+        "/analyze/detect-methods",
+        {
+          source: input.source,
+          algorithm_kind: algorithmKind,
+        },
+      );
   }
 
   const traceByCase: NonNullable<BuildSnapshotInput["traceByCase"]> = input.cachedTraceByCase || {};
@@ -169,17 +178,18 @@ export async function collectArtifactsForSnapshot(
     await Promise.all(
       traceCases.map(async (caseName) => {
         const traceInput = buildTraceInputs(input.source, caseName);
-        const trace = await postJson<NonNullable<BuildSnapshotInput["traceByCase"]>[SnapshotCase]>(
-          apiBase,
-          "/analyze/trace",
-          {
-            source: input.source,
-            case: caseName,
-            input_size: traceInput.inputSize,
-            initial_variables: traceInput.initialVariables,
-            locale: input.locale,
-          },
-        );
+        const trace =
+          await postJson<NonNullable<BuildSnapshotInput["traceByCase"]>[SnapshotCase]>(
+            apiBase,
+            "/analyze/trace",
+            {
+              source: input.source,
+              case: caseName,
+              input_size: traceInput.inputSize,
+              initial_variables: traceInput.initialVariables,
+              locale: input.locale,
+            },
+          );
         traceByCase[caseName] = trace || null;
       }),
     );
@@ -202,9 +212,10 @@ export async function collectArtifactsForSnapshot(
     ? normalizeLlmComparativePayload(llmSourcePayload)
     : null;
 
-  const gpuCpu = input.includeGpuCpu !== false
-    ? buildGpuCpuComparative(parse?.ok ? parse.ast : null, input.locale)
-    : null;
+  const gpuCpu =
+    input.includeGpuCpu !== false
+      ? buildGpuCpuComparative(parse?.ok ? parse.ast : null, input.locale)
+      : null;
 
   return {
     source: input.source,
@@ -220,3 +231,4 @@ export async function collectArtifactsForSnapshot(
     gpuCpu,
   };
 }
+

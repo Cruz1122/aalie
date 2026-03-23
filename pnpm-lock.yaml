@@ -29,12 +29,15 @@ importers:
 
   apps/web:
     dependencies:
-      '@aa/exporter':
-        specifier: workspace:^
-        version: link:../../packages/exporter
       '@aa/grammar':
         specifier: workspace:^
         version: link:../../packages/grammar
+      '@aa/report-export-engine':
+        specifier: workspace:^
+        version: link:../../packages/report-export-engine
+      '@aa/report-export-orchestrator':
+        specifier: workspace:^
+        version: link:../../packages/report-export-orchestrator
       '@aa/types':
         specifier: workspace:^
         version: link:../../packages/types
@@ -157,7 +160,26 @@ importers:
         specifier: 5.5.4
         version: 5.5.4
 
-  packages/exporter:
+  packages/grammar:
+    dependencies:
+      '@aa/types':
+        specifier: workspace:^
+        version: link:../types
+      antlr4ts:
+        specifier: 0.5.0-alpha.4
+        version: 0.5.0-alpha.4
+    devDependencies:
+      antlr4ts-cli:
+        specifier: 0.5.0-alpha.4
+        version: 0.5.0-alpha.4
+      rimraf:
+        specifier: 5.0.10
+        version: 5.0.10
+      typescript:
+        specifier: 5.5.4
+        version: 5.5.4
+
+  packages/report-export-engine:
     dependencies:
       '@aa/types':
         specifier: workspace:^
@@ -176,21 +198,21 @@ importers:
         specifier: 5.5.4
         version: 5.5.4
 
-  packages/grammar:
+  packages/report-export-orchestrator:
     dependencies:
+      '@aa/report-export-engine':
+        specifier: workspace:^
+        version: link:../report-export-engine
       '@aa/types':
         specifier: workspace:^
         version: link:../types
-      antlr4ts:
-        specifier: 0.5.0-alpha.4
-        version: 0.5.0-alpha.4
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
     devDependencies:
-      antlr4ts-cli:
-        specifier: 0.5.0-alpha.4
-        version: 0.5.0-alpha.4
-      rimraf:
-        specifier: 5.0.10
-        version: 5.0.10
+      '@types/node':
+        specifier: 20.14.9
+        version: 20.14.9
       typescript:
         specifier: 5.5.4
         version: 5.5.4

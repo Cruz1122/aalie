@@ -1,0 +1,33 @@
+{
+  "name": "@aa/report-export-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Motor de exportación de reportes AALIE (Markdown, LaTeX, PDF) + bundling",
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": {
+      "import": "./index.ts",
+      "require": "./index.ts",
+      "types": "./index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test src/__tests__/*.test.ts",
+    "golden:pdf": "node --import tsx src/examples/export-golden-pdfs.ts"
+  },
+  "dependencies": {
+    "@aa/types": "workspace:^",
+    "jszip": "^3.10.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.9",
+    "tsx": "^4.21.0",
+    "typescript": "5.5.4"
+  },
+  "engines": {
+    "node": ">=20 <23"
+  }
+}

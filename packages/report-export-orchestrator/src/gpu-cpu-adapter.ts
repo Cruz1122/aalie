@@ -1,6 +1,6 @@
 import type { Program, SnapshotGpuCpuComparative } from "@aa/types";
 
-import { analyzeASTForGPUCPU } from "@/lib/gpu-cpu-analyzer";
+import { analyzeASTForGPUCPU } from "./gpu-cpu/gpu-cpu-analyzer";
 
 export function buildGpuCpuComparative(
   ast: Program | null | undefined,
@@ -23,3 +23,4 @@ export function buildGpuCpuComparative(
     diagnostics: r.diagnostics,
   };
 }
+

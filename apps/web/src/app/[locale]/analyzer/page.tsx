@@ -1856,11 +1856,13 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         cachedAnalyze: data && (data.worst || data.best || data.avg) ? { ok: true, ...data } : undefined,
       };
 
+      const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
+
       const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
       const algoName = algorithmType || "algorithm";
       const reportWord = locale === "es" ? "reporte" : "report";
 
-      const res = await fetch("/api/export/report", {
+      const res = await fetch(`${apiBaseUrl}/export/report`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(reqBody)

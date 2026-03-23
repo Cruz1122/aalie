@@ -115,7 +115,6 @@ export async function requestLlmComparison(
         apiKey: input.apiKey,
         locale: input.locale,
       }),
-      cache: "no-store",
     });
 
     const data = await response.json().catch(() => null);
@@ -135,3 +134,4 @@ export async function requestLlmComparison(
     };
   }
 }
+

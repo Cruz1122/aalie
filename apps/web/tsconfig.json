@@ -17,7 +17,7 @@
       "@/*": ["./src/*"],
       "@aa/types": ["../../packages/types/src"],
       "@aa/grammar": ["../../packages/grammar/ts/src"],
-      "@aa/exporter": ["../../packages/exporter/src"]
+      "@aa/report-export-engine": ["../../packages/report-export-engine/src"]
     },
     "skipLibCheck": true,
     "esModuleInterop": true,

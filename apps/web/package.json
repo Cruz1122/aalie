@@ -20,7 +20,8 @@
     "format:write": "prettier --write ."
   },
   "dependencies": {
-    "@aa/exporter": "workspace:^",
+    "@aa/report-export-engine": "workspace:^",
+    "@aa/report-export-orchestrator": "workspace:^",
     "@aa/grammar": "workspace:^",
     "@aa/types": "workspace:^",
     "@azure-rest/ai-inference": "1.0.0-beta.6",
