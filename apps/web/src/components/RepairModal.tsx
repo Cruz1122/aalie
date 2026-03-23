@@ -2,9 +2,10 @@
 
 import type { ParseError } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { AAProgressLoader } from "@/components/AAProgressLoader";
 import { translateLlmError } from "@/lib/llm-error-translator";
 
 interface RepairModalProps {
@@ -28,11 +29,16 @@ export default function RepairModal({
   const tRepair = useTranslations("analyzer.repairModal");
   const tCommon = useTranslations("common");
   const [isRepairing, setIsRepairing] = useState(false);
+  const [repairProgress, setRepairProgress] = useState(0);
   const [repairedCode, setRepairedCode] = useState<string | null>(null);
   const [removedLines, setRemovedLines] = useState<number[]>([]);
   const [addedLines, setAddedLines] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showComparison, setShowComparison] = useState(false);
+
+  const repairAbortRef = useRef<AbortController | null>(null);
+  const repairProgressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const repairRequestIdRef = useRef(0);
 
   const normalizeToAnalyzerGrammar = (code: string): string => {
     const cleaned = code.trim();
@@ -44,24 +50,68 @@ export default function RepairModal({
     );
   };
 
+  const clearRepairProgressAnimation = () => {
+    if (repairProgressIntervalRef.current) {
+      clearInterval(repairProgressIntervalRef.current);
+      repairProgressIntervalRef.current = null;
+    }
+  };
+
+  const startRepairProgressAnimation = () => {
+    clearRepairProgressAnimation();
+    setRepairProgress(5);
+
+    // Animación aproximada sin progreso granular del backend.
+    // Ajustada para durar ~15s hasta un máximo de 90%.
+    const DURATION_MS = 15000;
+    const start = Date.now();
+
+    repairProgressIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - start;
+      const ratio = Math.min(1, elapsed / DURATION_MS);
+      const next = 5 + (90 - 5) * ratio;
+
+      setRepairProgress(next);
+
+      if (ratio >= 1) {
+        clearRepairProgressAnimation();
+        setRepairProgress(90);
+      }
+    }, 100);
+  };
+
   // Resetear estado cuando se abre el modal
   useEffect(() => {
     if (open) {
       setIsRepairing(true);
+      setRepairProgress(0);
       setRepairedCode(null);
       setRemovedLines([]);
       setAddedLines([]);
       setError(null);
       setShowComparison(false);
+      startRepairProgressAnimation();
       repairCode();
     }
+    return () => {
+      repairAbortRef.current?.abort();
+      repairAbortRef.current = null;
+      clearRepairProgressAnimation();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const repairCode = async () => {
+    // Cancelación real: AbortController para cortar la llamada al LLM si el usuario cierra.
+    repairAbortRef.current?.abort();
+    const abortController = new AbortController();
+    repairAbortRef.current = abortController;
+    const requestId = ++repairRequestIdRef.current;
+
     try {
       setIsRepairing(true);
       setError(null);
+      startRepairProgressAnimation();
 
       // Construir prompt con código y errores
       const errorMessages = parseErrors
@@ -110,6 +160,7 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
       const response = await fetch("/api/llm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: abortController.signal,
         body: JSON.stringify({
           job: "repair",
           prompt: finalPrompt,
@@ -136,6 +187,16 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
       const content =
         result?.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
+      if (
+        abortController.signal.aborted ||
+        repairRequestIdRef.current !== requestId
+      ) {
+        if (repairRequestIdRef.current === requestId) {
+          clearRepairProgressAnimation();
+        }
+        return;
+      }
+
       if (!content || String(content).trim().length === 0) {
         throw new Error(t("emptyLlmResponse"));
       }
@@ -157,10 +218,21 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
             repairData = JSON.parse(match[1].trim());
           } catch {
             // Si aún falla, usar el contenido como código sin diff
+            if (
+              abortController.signal.aborted ||
+              repairRequestIdRef.current !== requestId
+            ) {
+              if (repairRequestIdRef.current === requestId) {
+                clearRepairProgressAnimation();
+              }
+              return;
+            }
             setRepairedCode(normalizeToAnalyzerGrammar(String(content)));
             setRemovedLines([]);
             setAddedLines([]);
             setIsRepairing(false);
+            clearRepairProgressAnimation();
+            setRepairProgress(100);
             setShowComparison(true);
             return;
           }
@@ -174,6 +246,16 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
         throw new Error(t("invalidCodeResponse"));
       }
 
+      if (
+        abortController.signal.aborted ||
+        repairRequestIdRef.current !== requestId
+      ) {
+        if (repairRequestIdRef.current === requestId) {
+          clearRepairProgressAnimation();
+        }
+        return;
+      }
+
       setRepairedCode(normalizeToAnalyzerGrammar(repairData.code));
       setRemovedLines(
         Array.isArray(repairData.removedLines) ? repairData.removedLines : [],
@@ -183,8 +265,17 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
       );
 
       setIsRepairing(false);
+      clearRepairProgressAnimation();
+      setRepairProgress(100);
       setShowComparison(true);
     } catch (err) {
+      if (
+        abortController.signal.aborted ||
+        repairRequestIdRef.current !== requestId
+      ) {
+        clearRepairProgressAnimation();
+        return;
+      }
       console.error("Error reparando código:", err);
       const rawMsg = err instanceof Error ? err.message : String(err);
       const key = translateLlmError(rawMsg);
@@ -192,6 +283,8 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
         key === "unknownLlmError" ? t("repairUnknownError") : t(key),
       );
       setIsRepairing(false);
+      clearRepairProgressAnimation();
+      setRepairProgress(0);
     }
   };
 
@@ -290,6 +383,30 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
   if (!open) return null;
   if (typeof document === "undefined") return null;
 
+  // Durante la reparación mostramos un overlay propio (nuevo modal) con el loader unificado.
+  if (isRepairing) {
+    const handleCloseRepairOverlay = () => {
+      repairAbortRef.current?.abort();
+      repairAbortRef.current = null;
+      clearRepairProgressAnimation();
+      onClose();
+    };
+
+    return createPortal(
+      <AAProgressLoader
+        mode="repair"
+        progress={repairProgress}
+        message={tRepair("repairing")}
+        isComplete={false}
+        error={null}
+        onClose={handleCloseRepairOverlay}
+        showCloseButton
+        allowPointerEvents={true}
+      />,
+      document.body,
+    );
+  }
+
   return createPortal(
     <div className="fixed inset-0 z-[99999] flex items-center justify-center glass-modal-overlay glass-modal-overlay-fixed modal-animate-in">
       <div className="glass-modal-container rounded-2xl shadow-xl max-w-6xl w-[95vw] h-[85vh] flex flex-col m-4 modal-animate-in">
@@ -306,25 +423,6 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
 
         {/* Content */}
         <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-          {isRepairing && (
-            <div className="flex-1 flex items-center justify-center p-6">
-              <div className="flex flex-col items-center justify-center">
-                <span
-                  className="material-symbols-outlined text-purple-400 animate-pulse mb-6"
-                  style={{ fontSize: "128px", width: "128px", height: "128px" }}
-                >
-                  auto_awesome
-                </span>
-                <p className="text-2xl text-slate-300 font-medium mb-2">
-                  {tRepair("repairing")}
-                </p>
-                <p className="text-sm text-slate-400">
-                  {tRepair("mayTakeSeconds")}
-                </p>
-              </div>
-            </div>
-          )}
-
           {error && (
             <div className="flex-1 flex items-center justify-center p-6">
               <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 max-w-2xl w-full">

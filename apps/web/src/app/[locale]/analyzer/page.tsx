@@ -50,6 +50,15 @@ import {
 import { GrammarApiService } from "@/services/grammar-api";
 import type { GPUCPUAnalysisResult } from "@/types/gpu-cpu";
 
+function extractProcedureNameFromSource(src: string): string | null {
+  // Common format: `procedureName(param1, param2) BEGIN`
+  // We only need something stable for filenames.
+  const match = src.match(/(^|\n)\s*([A-Za-z_][A-Za-z0-9_]*)\s*\(/);
+  if (!match) return null;
+  const name = match[2] || "";
+  return name.trim() ? name.trim() : null;
+}
+
 import {
   extractParseError,
   extractAnalysisError,
@@ -1859,8 +1868,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
       const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 
       const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-      const algoName = algorithmType || "algorithm";
-      const reportWord = locale === "es" ? "reporte" : "report";
+      const procedureName = extractProcedureNameFromSource(source) || algorithmType || "algorithm";
 
       const res = await fetch(`${apiBaseUrl}/export/report`, {
         method: "POST",
@@ -1876,11 +1884,11 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
       a.href = url;
 
       if (formats.length > 1) {
-        a.download = `${dateStr}-${algoName}-${reportWord}.zip`;
+        a.download = `${dateStr}-${procedureName}-report.zip`.replaceAll("--", "-");
       } else if (formats[0] === "markdown") {
-        a.download = `${dateStr}-${algoName}-${reportWord}.md`;
+        a.download = `${dateStr}-${procedureName}-report.md`.replaceAll("--", "-");
       } else {
-        a.download = `${dateStr}-${algoName}-${reportWord}.pdf`;
+        a.download = `${dateStr}-${procedureName}-report.pdf`.replaceAll("--", "-");
       }
 
       document.body.appendChild(a);
@@ -2013,7 +2021,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
             } ${isSwitchingTrace ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"}`}
           >
           {/* Main layout: código vertical, costos y ecuaciones horizontales */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-0">
             {/* Columna izquierda: código fuente (vertical) */}
             <section className="lg:col-span-4 h-full">
               <div className="glass-card p-4 rounded-lg h-full flex flex-col">

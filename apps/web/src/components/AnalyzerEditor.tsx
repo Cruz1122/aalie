@@ -79,6 +79,14 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
   const tManual = useTranslations("analyzer.manualMode");
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<MonacoReact | null>(null);
+  const editorContainerRef = useRef<HTMLDivElement | null>(null);
+  const rafLayoutRef = useRef<number | null>(null);
+  const [isEditorReady, setIsEditorReady] = useState(false);
+  const [monacoMountKey, setMonacoMountKey] = useState(0);
+  const didRemountAfterZeroHeightRef = useRef(false);
+  const [measuredHeight, setMeasuredHeight] = useState<number | null>(null);
+  const lastMeasuredHeightRef = useRef<number | null>(null);
+  const hasFrozenMeasuredHeightRef = useRef(false);
 
   // Sincronizar cambios externos del código
   useEffect(() => {
@@ -86,6 +94,17 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
     if (editorRef.current && editorRef.current.getValue() !== initialValue) {
       editorRef.current.setValue(initialValue);
     }
+  }, [initialValue]);
+
+  // Si el editor se montó antes de que el layout final estuviera listo (reload responsive),
+  // los cambios posteriores de contenido/estado pueden coincidir con recalculo de tamaños.
+  // Forzamos un layout adicional para asegurar consistencia.
+  useEffect(() => {
+    if (!editorRef.current) return;
+    const id = requestAnimationFrame(() => {
+      editorRef.current?.layout();
+    });
+    return () => cancelAnimationFrame(id);
   }, [initialValue]);
 
   // Parsear código con worker
@@ -141,13 +160,81 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
   ) {
     editorRef.current = editor;
     monacoRef.current = monaco;
+    setIsEditorReady(true);
 
     // Registrar lenguaje pseudocódigo
     registerPseudocodeLanguage(monaco);
 
     // Aplicar tema
     monaco.editor.setTheme("pseudocode-theme");
+
+    // Monaco a veces monta con tamaño incorrecto en contenedores flex/percent
+    // (p.ej. al recargar en modo responsive). Fuerza un layout tras el paint.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        try {
+          editor.layout();
+        } catch {
+          // Monaco puede lanzar si todavía no está listo; en ese caso el RO lo reintentará.
+        }
+      });
+    });
   }
+
+  // Recalcula el layout del editor cuando el tamaño del contenedor cambia.
+  useEffect(() => {
+    if (!isEditorReady) return;
+    if (!editorRef.current) return;
+    const container = editorContainerRef.current;
+    if (!container) return;
+
+    const ro = new ResizeObserver(() => {
+      if (!editorRef.current) return;
+      const height = container.getBoundingClientRect().height;
+
+      // Congelar una sola vez la altura "real" para romper el feedback
+      // altura -> Monaco -> altura (evita crecer hasta el clamp del viewport).
+      if (!hasFrozenMeasuredHeightRef.current && height > 120) {
+        const viewportH = globalThis.window?.innerHeight ?? 0;
+        const next = Math.round(height);
+        const clamped =
+          viewportH > 0
+            ? Math.max(120, Math.min(next, Math.round(viewportH)))
+            : Math.max(120, next);
+
+        if (lastMeasuredHeightRef.current !== clamped) {
+          lastMeasuredHeightRef.current = clamped;
+          hasFrozenMeasuredHeightRef.current = true;
+          setMeasuredHeight(clamped);
+        }
+      }
+      // Si el primer montaje vino "con altura 0" (comprimido), un remount
+      // asegura que el wrapper interno de Monaco calcule tamaño bien.
+      if (!didRemountAfterZeroHeightRef.current && height > 0) {
+        didRemountAfterZeroHeightRef.current = true;
+        setMonacoMountKey((k) => k + 1);
+      }
+      if (rafLayoutRef.current != null) cancelAnimationFrame(rafLayoutRef.current);
+      rafLayoutRef.current = requestAnimationFrame(() => {
+        editorRef.current?.layout();
+      });
+    });
+
+    ro.observe(container);
+    return () => {
+      ro.disconnect();
+      if (rafLayoutRef.current != null) cancelAnimationFrame(rafLayoutRef.current);
+      rafLayoutRef.current = null;
+    };
+  }, [isEditorReady]);
+
+  const shouldUseMeasuredHeight = height == null || height === "100%";
+  const monacoHeightProp =
+    shouldUseMeasuredHeight
+      ? measuredHeight == null
+        ? "100%"
+        : measuredHeight
+      : height ?? "300px";
 
   /**
    * Maneja los cambios en el contenido del editor.
@@ -234,9 +321,13 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
           </div>
         )}
       {/* Editor: glass-card-editor sin hover difuminado */}
-      <div className="glass-card glass-card-editor relative !z-0 flex-1 min-h-0 overflow-hidden rounded-xl">
+      <div
+        ref={editorContainerRef}
+        className="glass-card glass-card-editor relative !z-0 flex-1 min-h-0 h-full w-full overflow-hidden rounded-xl"
+      >
         <MonacoEditor
-          height={height || "300px"}
+          key={monacoMountKey}
+          height={monacoHeightProp}
           defaultLanguage="pseudocode"
           defaultValue={initialValue}
           onChange={handleEditorChange}
