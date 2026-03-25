@@ -6,7 +6,7 @@ import AAAnalysisStepCard from "./AAAnalysisStepCard";
 
 interface AAAnalysisStepTimelineProps {
   steps: RecursiveAnalysisStep[];
-  accent?: "blue" | "purple" | "orange";
+  accent?: "blue" | "purple" | "orange" | "cyan";
 }
 
 export default function AAAnalysisStepTimeline({
@@ -16,6 +16,8 @@ export default function AAAnalysisStepTimeline({
   const lineClassName =
     accent === "purple"
       ? "pointer-events-none absolute bottom-4 left-4 top-4 z-0 w-px bg-gradient-to-b from-violet-400/40 via-violet-300/20 to-transparent"
+      : accent === "cyan"
+        ? "pointer-events-none absolute bottom-4 left-4 top-4 z-0 w-px bg-gradient-to-b from-cyan-400/45 via-cyan-300/25 to-transparent"
       : accent === "orange"
         ? "pointer-events-none absolute bottom-4 left-4 top-4 z-0 w-px bg-gradient-to-b from-orange-400/45 via-orange-300/25 to-transparent"
       : "pointer-events-none absolute bottom-4 left-4 top-4 z-0 w-px bg-gradient-to-b from-blue-400/40 via-blue-300/20 to-transparent";

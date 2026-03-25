@@ -357,9 +357,34 @@ export type MasterStepKind =
   | "master_applicability_decided"
   | "asymptotic_conclusion";
 
-export type RecursiveStepKind = CharacteristicStepKind | IterationStepKind | MasterStepKind;
-export type RecursiveMethodId = "characteristic_equation" | "iteration" | "master";
-export type RecursiveStepBundleVersion = "ceq_steps_v1" | "iter_steps_v1" | "master_steps_v1";
+export type RecursionTreeStepKind =
+  | "recurrence_detected"
+  | "recursion_tree_applicability_check"
+  | "tree_parameters_extracted"
+  | "level_model_built"
+  | "level_cost_computed"
+  | "tree_height_determined"
+  | "leaf_cost_computed"
+  | "total_tree_sum_built"
+  | "total_tree_sum_simplified"
+  | "dominant_term_identified"
+  | "asymptotic_conclusion";
+
+export type RecursiveStepKind =
+  | CharacteristicStepKind
+  | IterationStepKind
+  | MasterStepKind
+  | RecursionTreeStepKind;
+export type RecursiveMethodId =
+  | "characteristic_equation"
+  | "iteration"
+  | "master"
+  | "recursion_tree";
+export type RecursiveStepBundleVersion =
+  | "ceq_steps_v1"
+  | "iter_steps_v1"
+  | "master_steps_v1"
+  | "rt_steps_v1";
 
 export interface RecursiveStepMathItem {
   id: string;
@@ -593,6 +618,7 @@ export interface AnalyzeOpenResponse {
         total_cost: string;         // costo total del nivel en LaTeX
       }>;
       theta: string;                // resultado final Θ(...) en LaTeX
+      step_by_step?: RecursiveMethodStepBundle;
     };
     proof?: Array<{                 // pasos de prueba del análisis
       id: string;                   // identificador del paso (extract, critical, compare, iteration_start, etc.)

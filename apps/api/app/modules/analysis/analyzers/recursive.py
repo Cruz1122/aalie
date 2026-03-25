@@ -34,6 +34,10 @@ from .base import BaseAnalyzer
 from .characteristic_steps import StepContext, build_characteristic_step_bundle
 from .iteration_steps import IterationStepContext, build_iteration_step_bundle
 from .master_steps import MasterStepContext, build_master_step_bundle
+from .recursion_tree_steps import (
+    RecursionTreeStepContext,
+    build_recursion_tree_step_bundle,
+)
 
 
 class RecursiveAnalyzer(BaseAnalyzer):
@@ -6765,6 +6769,118 @@ FIN FUNCIÓN"""
                 "success": False,
                 "reason": "No hay recurrencia extraída"
             }
+
+        def _with_tree_steps(
+            recursion_tree_payload: Dict[str, Any],
+            *,
+            support_code: Optional[str] = None,
+            summation_partial: bool = False,
+            tree_inconsistent: bool = False,
+            asymptotic_partial: bool = False,
+        ) -> Dict[str, Any]:
+            recurrence_form = str(self.recurrence.get("form", "T(n)=aT(n/b)+f(n)"))
+            recurrence_type = str(self.recurrence.get("type", ""))
+            raw_a = self.recurrence.get("a")
+            raw_b = self.recurrence.get("b")
+            raw_n0 = self.recurrence.get("n0", 1)
+            f_n = str(
+                self.recurrence.get("f", self.recurrence.get("g(n)", "0"))
+            ).strip() or "0"
+
+            a_value: Optional[int]
+            b_value: Optional[float]
+            n0_value: Optional[int]
+            try:
+                a_value = int(raw_a) if raw_a is not None else None
+            except Exception:
+                a_value = None
+            try:
+                b_value = float(raw_b) if raw_b is not None else None
+            except Exception:
+                b_value = None
+            try:
+                n0_value = int(raw_n0) if raw_n0 is not None else 1
+            except Exception:
+                n0_value = 1
+
+            if support_code is None:
+                if recurrence_type != "divide_conquer":
+                    support_code = "RT_UNSUPPORTED_FORM"
+                elif (
+                    a_value is None
+                    or b_value is None
+                    or a_value < 1
+                    or b_value <= 1
+                ):
+                    support_code = "RT_INVALID_PARAMETERS"
+
+            is_supported = support_code is None
+            b_display = (
+                self._simplify_number_latex(b_value)
+                if isinstance(b_value, (float, int)) and b_value > 0
+                else "b"
+            )
+            a_display = str(a_value) if a_value is not None else "a"
+            n0_display = n0_value if n0_value is not None else 1
+
+            summation_data = recursion_tree_payload.get("summation", {})
+            total_expression = summation_data.get("expression")
+            simplified_expression = summation_data.get("evaluated") or total_expression
+            dominant_data = recursion_tree_payload.get("dominating_level", {}) or {}
+            dominant_reason = dominant_data.get("reason")
+            dominant_level = dominant_data.get("level")
+            theta_raw = recursion_tree_payload.get("theta")
+            theta_latex = None
+            if isinstance(theta_raw, str) and theta_raw.strip():
+                theta_latex = (
+                    theta_raw
+                    if "T(n)" in theta_raw
+                    else f"T(n) = {theta_raw}"
+                )
+
+            if isinstance(dominant_level, str) and dominant_level.lower() == "unknown":
+                tree_inconsistent = True
+                asymptotic_partial = True
+
+            level_model = (
+                f"N_i={a_display}^i,\\;n_i=\\frac{{n}}{{{b_display}^i}},\\;c_i=f\\left(\\frac{{n}}{{{b_display}^i}}\\right)"
+            )
+            level_cost = (
+                f"C_i={a_display}^i\\cdot f\\left(\\frac{{n}}{{{b_display}^i}}\\right)"
+            )
+            height_latex = (
+                recursion_tree_payload.get("height")
+                or f"\\frac{{n}}{{{b_display}^h}}={n0_display}\\Rightarrow h=\\log_{{{b_display}}}\\left(\\frac{{n}}{{{n0_display}}}\\right)"
+            )
+            leaf_count = f"L={a_display}^h=n^{{\\log_{{{b_display}}} {a_display}}}"
+            leaf_cost = f"C_{{\\text{{hojas}}}}=L\\cdot T({n0_display})"
+
+            step_ctx = RecursionTreeStepContext(
+                locale=self.locale,
+                recurrence_form=recurrence_form,
+                recurrence_type=recurrence_type,
+                a=a_value,
+                b=b_value,
+                f_n=f_n,
+                n0=n0_value,
+                is_supported=is_supported,
+                support_code=support_code,
+                level_model_latex=level_model if is_supported else None,
+                level_cost_latex=level_cost if is_supported else None,
+                height_latex=height_latex if is_supported else None,
+                leaf_count_latex=leaf_count if is_supported else None,
+                leaf_cost_latex=leaf_cost if is_supported else None,
+                total_expression_latex=total_expression if is_supported else None,
+                simplified_expression_latex=simplified_expression if is_supported else None,
+                dominant_level=str(dominant_level) if dominant_level is not None else None,
+                dominant_reason_latex=dominant_reason if is_supported else None,
+                theta_latex=theta_latex if is_supported else None,
+                summation_partial=summation_partial,
+                tree_inconsistent=tree_inconsistent,
+                asymptotic_partial=asymptotic_partial,
+            )
+            recursion_tree_payload["step_by_step"] = build_recursion_tree_step_bundle(step_ctx)
+            return recursion_tree_payload
         
         self.proof_steps.append({"id": "tree_start", "text": "\\text{Aplicando Método de Árbol de Recursión}"})
         
@@ -6812,6 +6928,11 @@ FIN FUNCIÓN"""
                     "theta": f"\\Theta({theta})"
                 }
                 self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                recursion_tree = _with_tree_steps(
+                    recursion_tree,
+                    support_code="RT_UNSUPPORTED_FORM",
+                    asymptotic_partial=True,
+                )
                 return {"success": True, "recursion_tree": recursion_tree}
             if g_n and g_n.strip().lower() == "n":
                 # Árbol lineal: nivel i tiene 1 nodo con costo (n-i), total = n+(n-1)+...+1 = n(n+1)/2 = Θ(n²)
@@ -6834,6 +6955,11 @@ FIN FUNCIÓN"""
                     "theta": f"\\Theta({theta})"
                 }
                 self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                recursion_tree = _with_tree_steps(
+                    recursion_tree,
+                    support_code="RT_UNSUPPORTED_FORM",
+                    asymptotic_partial=True,
+                )
                 return {"success": True, "recursion_tree": recursion_tree}
 
             # Fibonacci-type: T(n) = c1*T(n-k1) + c2*T(n-k2) + ... (múltiples términos)
@@ -6863,6 +6989,11 @@ FIN FUNCIÓN"""
                     "theta": f"\\Theta({theta})"
                 }
                 self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                recursion_tree = _with_tree_steps(
+                    recursion_tree,
+                    support_code="RT_UNSUPPORTED_FORM",
+                    asymptotic_partial=True,
+                )
                 return {"success": True, "recursion_tree": recursion_tree}
 
             # Recursión dentro de FOR (generación de subconjuntos): ramificación → Θ(2^n)
@@ -6904,6 +7035,11 @@ FIN FUNCIÓN"""
                     "theta": f"\\Theta({theta})"
                 }
                 self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
+                recursion_tree = _with_tree_steps(
+                    recursion_tree,
+                    support_code="RT_UNSUPPORTED_FORM",
+                    asymptotic_partial=True,
+                )
                 return {"success": True, "recursion_tree": recursion_tree}
         
         # Paso 1: Extraer parámetros de la recurrencia (divide-and-conquer)
@@ -6987,6 +7123,24 @@ FIN FUNCIÓN"""
             "table_by_levels": table_by_levels,
             "theta": theta
         }
+        evaluated_expr = str(summation_result.get("evaluated", "") or "")
+        raw_expr = str(summation_result.get("expression", "") or "")
+        summation_partial = (
+            not evaluated_expr
+            or evaluated_expr.strip() == raw_expr.strip()
+            or ("\\sum" in evaluated_expr and "\\Theta" not in evaluated_expr and "=" not in evaluated_expr)
+        )
+        f_n_normalized = str(f_n).replace(" ", "").lower()
+        if "log" in f_n_normalized:
+            summation_partial = True
+        tree_inconsistent = str(dominating_level.get("level", "")).lower() == "unknown"
+        asymptotic_partial = summation_partial or tree_inconsistent or not theta
+        recursion_tree = _with_tree_steps(
+            recursion_tree,
+            summation_partial=summation_partial,
+            tree_inconsistent=tree_inconsistent,
+            asymptotic_partial=asymptotic_partial,
+        )
         
         return {
             "success": True,

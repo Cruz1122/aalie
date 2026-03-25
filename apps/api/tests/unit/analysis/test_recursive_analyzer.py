@@ -1828,35 +1828,74 @@ class TestRecursiveAnalyzerDPValidation:
         assert "MASTER_INTERMEDIATE_GAP" in bundle["steps"][5]["audit"]["codes"]
 
     def test_apply_recursion_tree_method_merge_sort(self):
-        """Test: _apply_recursion_tree_method aplica método de árbol de recursión"""
+        """Test: _apply_recursion_tree_method aplica método y construye step_by_step tipado."""
         self.analyzer.proof_steps = []
         self.analyzer.recurrence = {
+            "type": "divide_conquer",
             "form": "T(n) = 2T(n/2) + n",
             "a": 2,
             "b": 2.0,
             "f": "n",
             "n0": 1,
-            "applicable": True
+            "applicable": True,
+            "method": "recursion_tree",
         }
-        
-        # Mock métodos helper necesarios
-        with patch.object(self.analyzer, '_build_tree_levels', return_value=[
-            {"level": 0, "num_nodes_latex": "1", "subproblem_size_latex": "n", "cost_per_node_latex": "n", "total_cost_latex": "n"},
-            {"level": 1, "num_nodes_latex": "2", "subproblem_size_latex": "n/2", "cost_per_node_latex": "n/2", "total_cost_latex": "n"}
-        ]):
-            with patch.object(self.analyzer, '_calculate_tree_sum', return_value={
-                "expression": "\\sum_{i=0}^{\\log_2(n)} 2^i \\cdot n/2^i",
-                "evaluated": "n \\log n",
-                "theta": "\\Theta(n \\log n)"
-            }):
-                with patch.object(self.analyzer, '_identify_dominating_level', return_value={
-                    "level": "todos",
-                    "reason": "Todos los niveles tienen el mismo costo"
-                }):
-                    result = self.analyzer._apply_recursion_tree_method()
-                    
-                    assert result.get("success")
-                    assert "recursion_tree" in result
+
+        result = self.analyzer._apply_recursion_tree_method()
+        assert result.get("success")
+        assert "recursion_tree" in result
+
+        recursion_tree = result["recursion_tree"]
+        bundle = recursion_tree.get("step_by_step", {})
+        steps = bundle.get("steps", [])
+        assert bundle.get("method") == "recursion_tree"
+        assert bundle.get("version") == "rt_steps_v1"
+        assert len(steps) == 11
+        assert steps[0]["kind"] == "recurrence_detected"
+        assert steps[1]["kind"] == "recursion_tree_applicability_check"
+        assert steps[4]["kind"] == "level_cost_computed"
+        assert steps[10]["kind"] == "asymptotic_conclusion"
+        assert "\\Theta(n \\log n)" in recursion_tree.get("theta", "")
+
+    def test_apply_recursion_tree_method_constant_non_recursive_cost(self):
+        """Árbol: T(n)=2T(n/2)+1 debe quedar con theta lineal y bundle completo."""
+        self.analyzer.recurrence = {
+            "type": "divide_conquer",
+            "form": "T(n)=2T(n/2)+1",
+            "a": 2,
+            "b": 2.0,
+            "f": "1",
+            "n0": 1,
+            "applicable": True,
+            "method": "recursion_tree",
+        }
+        result = self.analyzer._apply_recursion_tree_method()
+        assert result.get("success")
+        recursion_tree = result["recursion_tree"]
+        assert recursion_tree.get("theta") == "\\Theta(n)"
+        bundle = recursion_tree.get("step_by_step", {})
+        assert bundle.get("overallStatus") == "complete"
+        assert len(bundle.get("steps", [])) == 11
+
+    def test_apply_recursion_tree_method_marks_partial_for_log_families(self):
+        """Árbol: familias con log en f(n) deben quedar explícitamente parciales en simplificación."""
+        self.analyzer.recurrence = {
+            "type": "divide_conquer",
+            "form": "T(n)=2T(n/2)+n\\log n",
+            "a": 2,
+            "b": 2.0,
+            "f": "n\\log n",
+            "n0": 1,
+            "applicable": True,
+            "method": "recursion_tree",
+        }
+        result = self.analyzer._apply_recursion_tree_method()
+        assert result.get("success")
+        bundle = result["recursion_tree"].get("step_by_step", {})
+        assert len(bundle.get("steps", [])) == 11
+        assert bundle["steps"][8]["kind"] == "total_tree_sum_simplified"
+        assert bundle["steps"][8]["status"] == "partial"
+        assert "RT_SUMMATION_PARTIAL" in bundle["steps"][8]["audit"]["codes"]
 
     def test_apply_recursion_tree_method_no_recurrence(self):
         """Test: _apply_recursion_tree_method falla sin recurrencia"""

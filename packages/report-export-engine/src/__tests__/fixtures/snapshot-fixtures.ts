@@ -3,6 +3,7 @@ import type {
   CharacteristicStepKind,
   IterationStepKind,
   MasterStepKind,
+  RecursionTreeStepKind,
   LoopInvariant,
   Program,
   RecursiveMethodStepBundle,
@@ -566,6 +567,51 @@ function recursiveCase(
   }
 
   if (method === "recursion_tree") {
+    const treeStepKinds: RecursionTreeStepKind[] = [
+      "recurrence_detected",
+      "recursion_tree_applicability_check",
+      "tree_parameters_extracted",
+      "level_model_built",
+      "level_cost_computed",
+      "tree_height_determined",
+      "leaf_cost_computed",
+      "total_tree_sum_built",
+      "total_tree_sum_simplified",
+      "dominant_term_identified",
+      "asymptotic_conclusion",
+    ];
+    const treeStepBundle: RecursiveMethodStepBundle = {
+      method: "recursion_tree",
+      version: "rt_steps_v1",
+      overallStatus: "complete",
+      steps: treeStepKinds.map((kind, index) => ({
+        id: `rt_s${index + 1}`,
+        index: index + 1,
+        kind,
+        title: `Tree Step ${index + 1}`,
+        status: "complete",
+        math: {
+          primaryLatex: index === 10 ? "T(n)=\\Theta(n \\log n)" : undefined,
+          items: [],
+        },
+        summary: `Fixture summary for recursion tree step ${index + 1}`,
+        conceptNote: `Fixture concept for ${kind}`,
+        teachingNote: `Fixture concept for ${kind}`,
+        warning: null,
+        confidence: "high",
+        payload: {},
+        template: {
+          summaryKey: "fixture.summary",
+          conceptKey: "fixture.concept",
+          params: {},
+        },
+        audit: {
+          codes: [],
+          assumptions: [],
+          blockedBy: [],
+        },
+      })),
+    };
     totals.recursion_tree = {
       method: "recursion_tree",
       recurrence_type: "divide_conquer",
@@ -607,6 +653,7 @@ function recursiveCase(
         },
       ],
       theta: "\\Theta(n \\log n)",
+      step_by_step: treeStepBundle,
     };
     totals.big_theta = "\\Theta(n \\log n)";
   }

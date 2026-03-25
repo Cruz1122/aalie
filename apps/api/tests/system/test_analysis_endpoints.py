@@ -16,13 +16,11 @@ class TestDetectMethodsEndpoint:
     def test_detect_methods_recursive_algorithm(self):
         """Test: Detecta métodos para algoritmo recursivo"""
         source = """
-mergesort(A, p, r) BEGIN
-    IF p < r THEN BEGIN
-        q <- (p + r) / 2;
-        mergesort(A, p, q);
-        mergesort(A, q + 1, r);
-        merge(A, p, q, r);
+masterExample(n) BEGIN
+    IF (n <= 1) THEN BEGIN
+        RETURN 1;
     END
+    RETURN masterExample(n / 2) + 1;
 END
 """
         response = client.post("/analyze/detect-methods", json={"source": source})
@@ -300,6 +298,40 @@ END
         assert len(steps) == 10
         assert steps[0]["kind"] == "recurrence_detected"
         assert steps[9]["kind"] == "asymptotic_conclusion"
+
+    def test_open_endpoint_recursion_tree_step_bundle_contract(self):
+        """Test: /open devuelve step_by_step tipado (11 pasos) para Árbol de Recursión."""
+        source = """
+masterExample(n) BEGIN
+    IF (n <= 1) THEN BEGIN
+        RETURN 1;
+    END
+    RETURN masterExample(n / 2) + 1;
+END
+"""
+        payload = {
+            "source": source,
+            "mode": "worst",
+            "preferred_method": "recursion_tree",
+            "locale": "es",
+        }
+        response = client.post("/analyze/open", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("ok") is True
+
+        recursion_tree = data.get("totals", {}).get("recursion_tree", {})
+        step_bundle = recursion_tree.get("step_by_step")
+        assert isinstance(step_bundle, dict)
+        assert step_bundle.get("method") == "recursion_tree"
+        assert step_bundle.get("version") == "rt_steps_v1"
+        assert step_bundle.get("overallStatus") in {"complete", "partial", "unsupported", "error"}
+
+        steps = step_bundle.get("steps", [])
+        assert isinstance(steps, list)
+        assert len(steps) == 11
+        assert steps[0]["kind"] == "recurrence_detected"
+        assert steps[10]["kind"] == "asymptotic_conclusion"
 
     def test_open_endpoint_with_algorithm_kind(self):
         """Test: Endpoint /open con algorithm_kind"""

@@ -369,6 +369,30 @@ class TestDynamicProgrammingValidation:
         assert steps[9].get("kind") == "asymptotic_conclusion"
         assert steps[9].get("math", {}).get("primaryLatex", "").startswith("T(n)")
 
+    def test_recursion_tree_step_bundle_contract_for_merge_sort(self):
+        """Árbol de recursión debe entregar bundle tipado de 11 pasos y conclusión con T(n)."""
+        result = analyze_algorithm(
+            MERGE_SORT_PSEUDOCODE,
+            mode="worst",
+            preferred_method="recursion_tree",
+        )
+
+        assert result.get("ok"), result.get("errors", [])
+        recursion_tree = result.get("totals", {}).get("recursion_tree", {})
+        bundle = recursion_tree.get("step_by_step")
+        assert isinstance(bundle, dict)
+        assert bundle.get("method") == "recursion_tree"
+        assert bundle.get("version") == "rt_steps_v1"
+        assert bundle.get("overallStatus") in {"complete", "partial", "unsupported", "error"}
+
+        steps = bundle.get("steps", [])
+        assert len(steps) == 11
+        assert [step.get("index") for step in steps] == list(range(1, 12))
+        assert steps[1].get("kind") == "recursion_tree_applicability_check"
+        assert steps[8].get("kind") == "total_tree_sum_simplified"
+        assert steps[10].get("kind") == "asymptotic_conclusion"
+        assert steps[10].get("math", {}).get("primaryLatex", "").startswith("T(n)")
+
 
 class TestRecursiveAlgorithms:
     """Tests de integración para algoritmos recursivos con Teorema Maestro."""

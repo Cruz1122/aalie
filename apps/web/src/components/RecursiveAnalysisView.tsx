@@ -13,7 +13,6 @@ import IterationProcedureModal from "./IterationProcedureModal";
 import MasterTheoremModal from "./MasterTheoremModal";
 import RecursionTreeModal from "./RecursionTreeModal";
 import RecursionTreeProcedureModal from "./RecursionTreeProcedureModal";
-import RecursionTreeStepsModal from "./RecursionTreeStepsModal";
 
 type RecurrenceType = AnalyzeOpenResponse["totals"]["recurrence"];
 type CharacteristicEquationType =
@@ -444,8 +443,6 @@ interface ProcedureModalProps {
   readonly recursionTree: RecursionTreeType;
   readonly master: MasterType;
   readonly currentMaster: MasterType;
-  readonly proof: ProofType;
-  readonly currentProof: ProofType;
   readonly theta: string | null | undefined;
   readonly T_open: string | null | undefined;
   readonly selectedCase: CaseType;
@@ -500,30 +497,12 @@ const renderIterationModal = (
 const renderRecursionTreeModal = (
   props: ProcedureModalProps,
 ): React.JSX.Element => {
-  const divideConquerRecurrence =
-    props.recurrence?.type === "divide_conquer"
-      ? extractDivideConquerRecurrenceWithoutMethod(
-          props.recurrence as {
-            type: "divide_conquer";
-            form: string;
-            a: number;
-            b: number;
-            f: string;
-            n0: number;
-            applicable: boolean;
-            notes: string[];
-          },
-        )
-      : null;
-
   return (
     <RecursionTreeProcedureModal
       open={props.showProcedureModal}
       onClose={() => props.setShowProcedureModal(false)}
-      data={props.worstData || props.bestData || props.avgData}
-      recurrence={divideConquerRecurrence}
+      recurrence={props.recurrence}
       recursionTree={props.recursionTree}
-      proof={props.proof}
       theta={props.theta || props.T_open}
     />
   );
@@ -721,10 +700,8 @@ interface ActionButtonsProps {
   readonly isCharacteristicMethod: boolean;
   readonly isIterationMethod: boolean;
   readonly isRecursionTreeMethod: boolean;
-  readonly proof: ProofType;
   readonly setShowCharacteristicModal: (show: boolean) => void;
   readonly setShowProcedureModal: (show: boolean) => void;
-  readonly setShowStepsModal: (show: boolean) => void;
   readonly setShowDPModal: (show: boolean) => void;
   readonly characteristicEquation: CharacteristicEquationType;
   readonly dpApplicability: DPApplicabilityInfo;
@@ -737,9 +714,7 @@ interface ActionButtonsProps {
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
-  const showGrid =
-    (props.isRecursionTreeMethod && props.proof && props.proof.length > 0) ||
-    props.isCharacteristicMethod;
+  const showGrid = props.isCharacteristicMethod;
 
   const handleDetailsClick = () => {
     if (props.isCharacteristicMethod) {
@@ -758,25 +733,16 @@ const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
             ? "hover:bg-blue-500/20"
             : props.isIterationMethod
               ? "hover:bg-violet-500/20"
-              : "hover:bg-orange-500/20"
+              : props.isRecursionTreeMethod
+                ? "hover:bg-cyan-500/20"
+                : "hover:bg-orange-500/20"
         } ${showGrid ? "" : "w-full"}`}
       >
         <span className="material-symbols-outlined text-sm flex-shrink-0">info</span>
         <span className="truncate">
-          {props.isCharacteristicMethod || props.isIterationMethod || !props.isRecursionTreeMethod
-            ? props.tView("viewStepByStep")
-            : props.tView("viewDetails")}
+          {props.tView("viewStepByStep")}
         </span>
       </button>
-      {props.isRecursionTreeMethod && props.proof && props.proof.length > 0 && (
-        <button
-          onClick={() => props.setShowStepsModal(true)}
-          className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors min-w-0"
-        >
-          <span className="material-symbols-outlined text-sm flex-shrink-0">description</span>
-          <span className="truncate">{props.tView("viewStepByStep")}</span>
-        </button>
-      )}
       {props.isCharacteristicMethod &&
         props.dpApplicability.status !== "rejected" &&
         props.characteristicEquation?.dp_version && (
@@ -909,7 +875,7 @@ const renderRecursionTreeCards = (
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Nivel Dominante */}
-      <div className="glass-card p-3 rounded-lg h-full flex flex-col">
+      <div className="glass-card p-3 rounded-lg h-full flex flex-col border border-cyan-500/20">
         <div className="flex flex-col gap-2 flex-1">
           <h3 className="font-semibold text-cyan-300 text-sm flex items-center gap-2">
             <span className="material-symbols-outlined text-base">
@@ -940,7 +906,7 @@ const renderRecursionTreeCards = (
       </div>
 
       {/* Ecuación de Eficiencia */}
-      <div className="glass-card p-3 rounded-lg h-full flex flex-col">
+      <div className="glass-card p-3 rounded-lg h-full flex flex-col border border-cyan-500/30">
         <div className="flex flex-col gap-2 flex-1">
           <h3 className="font-semibold text-cyan-300 text-sm flex items-center gap-2">
             <span className="material-symbols-outlined text-base">
@@ -948,7 +914,7 @@ const renderRecursionTreeCards = (
             </span>
             <span>{tRT("efficiencyEquation")}</span>
           </h3>
-          <div className="bg-slate-800/60 p-3 rounded border border-white/10 flex flex-col items-center justify-center gap-3 overflow-x-auto overflow-y-auto max-h-[40vh] flex-1 min-h-[120px] min-w-0">
+          <div className="bg-slate-800/60 p-3 rounded border border-cyan-500/25 flex flex-col items-center justify-center gap-3 overflow-x-auto overflow-y-auto max-h-[40vh] flex-1 min-h-[120px] min-w-0">
             <div className="w-full min-w-0 overflow-auto [&_.katex]:!text-[0.8em] sm:[&_.katex]:!text-[0.95em] md:[&_.katex]:!text-[1em]">
               {props.hasDifferentComplexities ? (
                 <div className="flex flex-row gap-4 items-center justify-center flex-wrap">
@@ -1234,7 +1200,6 @@ export default function RecursiveAnalysisView({
     T_open,
   } = analysisData;
   const [showProcedureModal, setShowProcedureModal] = useState(false);
-  const [showStepsModal, setShowStepsModal] = useState(false);
   const [showTreeModal, setShowTreeModal] = useState(false);
   const [showCharacteristicModal, setShowCharacteristicModal] = useState(false);
   const [showDPModal, setShowDPModal] = useState(false);
@@ -1292,19 +1257,6 @@ export default function RecursiveAnalysisView({
         return avgData?.totals?.master || master;
     }
   }, [selectedCase, isMasterMethod, worstData, bestData, avgData, master]);
-
-  const currentProof = useMemo(() => {
-    switch (selectedCase) {
-      case "worst":
-        return worstData?.totals?.proof || undefined;
-      case "best":
-        return bestData?.totals?.proof || undefined;
-      case "average":
-        return avgData?.totals?.proof || undefined;
-      default:
-        return worstData?.totals?.proof || bestData?.totals?.proof || avgData?.totals?.proof || undefined;
-    }
-  }, [selectedCase, worstData, bestData, avgData]);
 
   // Obtener theta según el caso seleccionado (solo para teorema maestro)
   const currentTheta = useMemo(() => {
@@ -1490,7 +1442,7 @@ export default function RecursiveAnalysisView({
                     info
                   </span>
                   <span className="truncate">
-                    {isIterationMethod || isMasterMethod ? tView("viewStepByStep") : tView("viewDetails")}
+                    {tView("viewStepByStep")}
                   </span>
                 </button>
                 <button
@@ -1514,10 +1466,8 @@ export default function RecursiveAnalysisView({
                 isCharacteristicMethod,
                 isIterationMethod,
                 isRecursionTreeMethod,
-                proof,
                 setShowCharacteristicModal,
                 setShowProcedureModal,
-                setShowStepsModal,
                 setShowDPModal,
                 characteristicEquation,
                 dpApplicability,
@@ -1526,7 +1476,9 @@ export default function RecursiveAnalysisView({
                 <div className="mb-4">
                   <button
                     onClick={() => setShowTreeModal(true)}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-purple-500/20 transition-colors min-w-0"
+                    className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary transition-colors min-w-0 ${
+                      isRecursionTreeMethod ? "hover:bg-cyan-500/20" : "hover:bg-purple-500/20"
+                    }`}
                   >
                     <span className="material-symbols-outlined text-sm flex-shrink-0">
                       account_tree
@@ -1586,8 +1538,6 @@ export default function RecursiveAnalysisView({
         recursionTree,
         master,
         currentMaster,
-        proof,
-        currentProof,
         theta,
         T_open,
         selectedCase,
@@ -1619,14 +1569,6 @@ export default function RecursiveAnalysisView({
         />
       )}
 
-      {/* Modal de pasos del método de Árbol de Recursión */}
-      {isRecursionTreeMethod && (
-        <RecursionTreeStepsModal
-          open={showStepsModal}
-          onClose={() => setShowStepsModal(false)}
-          proof={proof}
-        />
-      )}
     </div>
   );
 }

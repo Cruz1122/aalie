@@ -10,7 +10,7 @@ import Formula from "./Formula";
 
 interface AAAnalysisStepCardProps {
   step: RecursiveAnalysisStep;
-  accent?: "blue" | "purple" | "orange";
+  accent?: "blue" | "purple" | "orange" | "cyan";
 }
 
 const statusClassMap: Record<RecursiveStepStatus, string> = {
@@ -99,24 +99,32 @@ export default function AAAnalysisStepCard({
   const stepDotClassName =
     accent === "purple"
       ? "absolute left-0 top-0 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-violet-400/50 bg-slate-900 text-sm font-semibold text-violet-300"
+      : accent === "cyan"
+        ? "absolute left-0 top-0 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-cyan-400/50 bg-slate-900 text-sm font-semibold text-cyan-300"
       : accent === "orange"
         ? "absolute left-0 top-0 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-orange-400/50 bg-slate-900 text-sm font-semibold text-orange-300"
       : "absolute left-0 top-0 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-blue-400/50 bg-slate-900 text-sm font-semibold text-blue-300";
   const actionButtonClassName =
     accent === "purple"
       ? "rounded-md border border-violet-400/40 bg-violet-500/10 px-2 py-1 text-[10px] font-semibold text-violet-200 transition hover:bg-violet-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300"
+      : accent === "cyan"
+        ? "rounded-md border border-cyan-400/40 bg-cyan-500/10 px-2 py-1 text-[10px] font-semibold text-cyan-200 transition hover:bg-cyan-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
       : accent === "orange"
         ? "rounded-md border border-orange-400/40 bg-orange-500/10 px-2 py-1 text-[10px] font-semibold text-orange-200 transition hover:bg-orange-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
       : "rounded-md border border-blue-400/40 bg-blue-500/10 px-2 py-1 text-[10px] font-semibold text-blue-200 transition hover:bg-blue-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300";
   const backCardClassName =
     accent === "purple"
       ? "col-start-1 row-start-1 min-w-0 max-w-full rounded-lg border border-violet-400/30 bg-slate-900/90 p-4 transition-opacity duration-220 ease-out motion-reduce:transition-none"
+      : accent === "cyan"
+        ? "col-start-1 row-start-1 min-w-0 max-w-full rounded-lg border border-cyan-400/30 bg-slate-900/90 p-4 transition-opacity duration-220 ease-out motion-reduce:transition-none"
       : accent === "orange"
         ? "col-start-1 row-start-1 min-w-0 max-w-full rounded-lg border border-orange-400/30 bg-slate-900/90 p-4 transition-opacity duration-220 ease-out motion-reduce:transition-none"
       : "col-start-1 row-start-1 min-w-0 max-w-full rounded-lg border border-blue-400/30 bg-slate-900/90 p-4 transition-opacity duration-220 ease-out motion-reduce:transition-none";
   const backTitleClassName =
     accent === "purple"
       ? "text-sm font-semibold text-violet-200"
+      : accent === "cyan"
+        ? "text-sm font-semibold text-cyan-200"
       : accent === "orange"
         ? "text-sm font-semibold text-orange-200"
         : "text-sm font-semibold text-blue-200";

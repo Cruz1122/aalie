@@ -175,6 +175,9 @@ export interface SnapshotInternal {
       AnalyzeOpenResponse["totals"]["master"]
     >["step_by_step"];
     recursionTree?: AnalyzeOpenResponse["totals"]["recursion_tree"];
+    recursionTreeStepByStep?: NonNullable<
+      AnalyzeOpenResponse["totals"]["recursion_tree"]
+    >["step_by_step"];
   }>;
 }
 
