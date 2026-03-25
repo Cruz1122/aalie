@@ -20,7 +20,6 @@ type CharacteristicEquationType =
 type IterationType = AnalyzeOpenResponse["totals"]["iteration"];
 type RecursionTreeType = AnalyzeOpenResponse["totals"]["recursion_tree"];
 type MasterType = AnalyzeOpenResponse["totals"]["master"];
-type ProofType = AnalyzeOpenResponse["totals"]["proof"];
 
 type CaseType = "worst" | "best" | "average";
 type DPApplicabilityStatus = "clear" | "doubtful" | "rejected";
@@ -277,93 +276,6 @@ const getMethodTextColor = (
     isIterationMethod,
     isRecursionTreeMethod,
   );
-};
-
-/**
- * Obtiene los datos de análisis para el caso seleccionado.
- * @param selectedCase - Tipo de caso seleccionado
- * @param worstData - Datos del peor caso
- * @param bestData - Datos del mejor caso
- * @param avgData - Datos del caso promedio
- * @returns Datos de análisis correspondientes al caso seleccionado, o fallback si no están disponibles
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- */
-const getDataForSelectedCase = (
-  selectedCase: CaseType,
-  worstData: AnalyzeOpenResponse | null | undefined,
-  bestData: AnalyzeOpenResponse | null | undefined,
-  avgData: AnalyzeOpenResponse | null | undefined,
-): AnalyzeOpenResponse | null | undefined => {
-  if (selectedCase === "worst") return worstData;
-  if (selectedCase === "best") return bestData;
-  return avgData || worstData || bestData;
-};
-
-/**
- * Extrae los parámetros de una recurrencia divide-and-conquer con método.
- * @param recurrence - Recurrencia divide-and-conquer con método opcional
- * @returns Objeto con los parámetros de la recurrencia y el método (iteration o master)
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- */
-const extractDivideConquerRecurrence = (recurrence: {
-  type: "divide_conquer";
-  form: string;
-  a: number;
-  b: number;
-  f: string;
-  n0: number;
-  applicable: boolean;
-  notes: string[];
-  method?: "master" | "iteration" | "recursion_tree";
-}): {
-  form: string;
-  a: number;
-  b: number;
-  f: string;
-  n0: number;
-  applicable: boolean;
-  notes: string[];
-  method: "iteration" | "master";
-} => {
-  const method: "iteration" | "master" =
-    recurrence.method === "iteration" ? "iteration" : "master";
-  return {
-    form: recurrence.form,
-    a: recurrence.a,
-    b: recurrence.b,
-    f: recurrence.f,
-    n0: recurrence.n0,
-    applicable: recurrence.applicable,
-    notes: recurrence.notes,
-    method,
-  };
-};
-
-/**
- * Extrae los parámetros de una recurrencia divide-and-conquer sin el método.
- * @param recurrence - Recurrencia divide-and-conquer sin método
- * @returns Objeto con los parámetros de la recurrencia (sin método)
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- */
-const extractDivideConquerRecurrenceWithoutMethod = (recurrence: {
-  type: "divide_conquer";
-  form: string;
-  a: number;
-  b: number;
-  f: string;
-  n0: number;
-  applicable: boolean;
-  notes: string[];
-}) => {
-  return {
-    form: recurrence.form,
-    a: recurrence.a,
-    b: recurrence.b,
-    f: recurrence.f,
-    n0: recurrence.n0,
-    applicable: recurrence.applicable,
-    notes: recurrence.notes,
-  };
 };
 
 /**

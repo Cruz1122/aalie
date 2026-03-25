@@ -1,7 +1,7 @@
 "use client";
 
 import type { ParseError, Program } from "@aa/types";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type {
   ParseWorkerRequest,
@@ -125,83 +125,4 @@ export function useParseWorker(code: string, debounceMs = 150): ParseResult {
   }, [code, debounceMs]);
 
   return result;
-}
-
-/**
- * Hook alternativo para parsear bajo demanda (sin debounce automático).
- * Permite control manual del momento en que se ejecuta el parseo.
- *
- * @returns Objeto con result (ParseResult) y parse (función para ejecutar parseo)
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- *
- * @example
- * ```tsx
- * const { result, parse } = useParseWorkerOnDemand();
- * // ... más tarde
- * parse(code);
- * ```
- */
-export function useParseWorkerOnDemand() {
-  const [result, setResult] = useState<ParseResult>({
-    ok: true,
-    isParsing: false,
-  });
-
-  const workerRef = useRef<Worker | null>(null);
-  const requestIdRef = useRef(0);
-
-  // Inicializar worker
-  useEffect(() => {
-    workerRef.current = new Worker(
-      new URL("../workers/parser.worker.ts", import.meta.url),
-      { type: "module" },
-    );
-
-    workerRef.current.onmessage = (
-      event: MessageEvent<ParseWorkerResponse>,
-    ) => {
-      const response = event.data;
-
-      if (response.id === requestIdRef.current) {
-        setResult({
-          ok: response.ok,
-          ast: response.ast,
-          errors: response.errors,
-          isParsing: false,
-        });
-      }
-    };
-
-    workerRef.current.onerror = (error) => {
-      console.error("Parser worker error:", error);
-      setResult({
-        ok: false,
-        errors: [{ line: 1, column: 0, message: "Worker error" }],
-        isParsing: false,
-      });
-    };
-
-    return () => {
-      if (workerRef.current) {
-        workerRef.current.terminate();
-        workerRef.current = null;
-      }
-    };
-  }, []);
-
-  const parse = useCallback((code: string) => {
-    if (!workerRef.current) return;
-
-    requestIdRef.current += 1;
-    setResult((prev) => ({ ...prev, isParsing: true }));
-
-    const request: ParseWorkerRequest = {
-      id: requestIdRef.current,
-      code,
-    };
-
-    workerRef.current.postMessage(request);
-  }, []);
-
-  return { result, parse };
 }

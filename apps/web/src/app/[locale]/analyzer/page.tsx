@@ -37,7 +37,6 @@ import { requestTraceRefresh } from "@/hooks/trace/useTraceRefreshOnAnalysis";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
 import { useChatHistory } from "@/hooks/useChatHistory";
-import { heuristicKind } from "@/lib/algorithm-classifier";
 import { extractCoreData, isRecursiveAnalysis, type CoreAnalysisData } from "@/lib/extract-core-data";
 import { analyzeASTForGPUCPU } from "@/lib/gpu-cpu-analyzer";
 import { translateLlmError } from "@/lib/llm-error-translator";
@@ -487,10 +486,18 @@ export default function AnalyzerPage() {
           throw new Error(`HTTP ${clsResponse.status}`);
         }
       } catch (error) {
-        console.warn(`[Analyzer] Error en clasificación, usando heurística:`, error);
-        kind = heuristicKind(parseRes.ast);
-        setAlgorithmType(kind);
-        setAnalysisMessage(t("algorithmIdentified", { type: formatAlgorithmKind(kind) }));
+        console.error(`[Analyzer] Error en clasificación:`, error);
+        handleAnalysisError(
+          t("classifyError"),
+          setAnalyzing,
+          setAnalysisProgress,
+          setAnalysisMessage,
+          setAlgorithmType,
+          setIsAnalysisComplete,
+          setAnalysisError,
+          getMessage,
+        );
+        return;
       }
 
       // 3) Realizar el análisis de complejidad (40-80%)

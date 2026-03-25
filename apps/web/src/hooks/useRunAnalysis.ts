@@ -13,7 +13,6 @@ import { useAnalysisProgressContext } from "@/contexts/AnalysisProgressContext";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey } from "@/hooks/useApiKey";
 import { useRouter } from "@/i18n/navigation";
-import { heuristicKind } from "@/lib/algorithm-classifier";
 
 type AlgorithmKind = "iterative" | "recursive" | "hybrid" | "unknown";
 
@@ -179,14 +178,10 @@ export function useRunAnalysis(options?: {
           } else {
             throw new Error(`HTTP ${clsResponse.status}`);
           }
-        } catch {
-          kind = heuristicKind(parseRes.ast ?? null);
-          setAlgorithmType(kind);
-          updateMessage(
-            tProgress("algorithmIdentified", {
-              type: formatAlgorithmKindLabel(kind),
-            }),
-          );
+        } catch (error) {
+          console.error("[useRunAnalysis] Classifier request failed:", error);
+          handleError(tProgress("classifyError"));
+          return null;
         }
 
         const isRecursive = kind === "recursive" || kind === "hybrid";

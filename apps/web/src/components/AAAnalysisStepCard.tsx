@@ -1,8 +1,8 @@
 "use client";
 
 import type { RecursiveAnalysisStep, RecursiveStepConfidence, RecursiveStepStatus } from "@aa/types";
-import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { useMemo, useState } from "react";
 
 import { translateBackendContent } from "@/lib/backend-content-translator";
 

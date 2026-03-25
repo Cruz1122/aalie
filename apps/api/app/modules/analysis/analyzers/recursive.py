@@ -453,6 +453,10 @@ class RecursiveAnalyzer(BaseAnalyzer):
         """
         if recurrence.get("type") != "divide_conquer":
             return False
+        # Requiere evidencia estructural del AST (una sola llamada recursiva).
+        # Sin ProcDef no podemos validar de forma confiable que sea rama única.
+        if not isinstance(self.proc_def, dict):
+            return False
         try:
             a_val = int(recurrence.get("a", 0))
             b_val = float(recurrence.get("b", 0))
@@ -460,6 +464,13 @@ class RecursiveAnalyzer(BaseAnalyzer):
             return False
 
         if a_val != 1 or b_val <= 1:
+            return False
+
+        try:
+            recursive_calls = self._find_recursive_calls(self.proc_def)
+        except Exception:
+            return False
+        if not recursive_calls:
             return False
 
         return self._is_constant_work_term(recurrence.get("f", "1"))
@@ -6202,14 +6213,120 @@ FIN FUNCIÓN"""
                 g_n_raw = None
         g_n_value = _normalize_g(str(g_n_raw or "0"))
 
-        is_unit_shift = (
-            order == 1 and sorted(shifts_as_int) == [1] and coeff_by_shift.get(1, 1) == 1
-        )
-        if not is_unit_shift:
+        is_first_order_unit_decrement = order == 1 and sorted(shifts_as_int) == [1]
+        coeff_n_minus_1 = coeff_by_shift.get(1, 1)
+        if not is_first_order_unit_decrement:
             return _build_unsupported_result(
                 support_code="ITER_UNSUPPORTED_NON_UNIT_SHIFT",
                 g_n_value=g_n_value,
             )
+        if coeff_n_minus_1 <= 0:
+            return _build_unsupported_result(
+                support_code="ITER_UNSUPPORTED_NON_LINEAR_FORM",
+                g_n_value=g_n_value,
+            )
+
+        # Soporte explícito para T(n)=c*T(n-1)+g(n), c>1 (ej: Hanoi: c=2, g(n)=1).
+        if coeff_n_minus_1 > 1:
+            base_idx, base_val, missing_base = _base_case_info()
+            c_val = int(coeff_n_minus_1)
+            c_latex = self._simplify_number_latex(c_val)
+            g_expr_n = _parse_sympy_expr(g_n_value)
+
+            g_n_latex = latex(simplify(g_expr_n)) if g_expr_n is not None else g_n_value
+            g_n_minus_1_latex = (
+                latex(simplify(g_expr_n.subs(n_sym, n_sym - 1)))
+                if g_expr_n is not None
+                else f"({g_n_value})|_{{n-1}}"
+            )
+            g_n_minus_2_latex = (
+                latex(simplify(g_expr_n.subs(n_sym, n_sym - 2)))
+                if g_expr_n is not None
+                else f"({g_n_value})|_{{n-2}}"
+            )
+
+            expansions = [
+                f"T(n)={c_latex}T(n-1)+{g_n_latex}",
+                f"T(n)={c_latex}^2T(n-2)+{c_latex}\\cdot {g_n_minus_1_latex}+{g_n_latex}",
+                f"T(n)={c_latex}^3T(n-3)+{c_latex}^2\\cdot {g_n_minus_2_latex}+{c_latex}\\cdot {g_n_minus_1_latex}+{g_n_latex}",
+            ]
+            general_form = rf"T(n)={c_latex}^kT(n-k)+\sum_{{j=0}}^{{k-1}} {c_latex}^j g(n-j)"
+            k_condition = f"n-k={base_idx}"
+            k_value = "n" if base_idx == 0 else f"n-{base_idx}"
+
+            lower_limit = base_idx + 1
+            summation_expression = (
+                rf"T(n)={c_latex}^{{{k_value}}}T({base_idx})+\sum_{{i={lower_limit}}}^{{n}} {c_latex}^{{n-i}}\,g(i)"
+            )
+
+            summation_evaluated = (
+                rf"\sum_{{i={lower_limit}}}^{{n}} {c_latex}^{{n-i}}\,g(i)"
+            )
+            sum_partial = True
+            asymptotic_partial = True
+            if g_expr_n is not None and g_expr_n.is_number:
+                g_const = simplify(g_expr_n)
+                summation_evaluated = (
+                    rf"\sum_{{j=0}}^{{{k_value}-1}} {c_latex}^j \cdot {latex(g_const)}"
+                    rf"={latex(g_const)}\cdot\frac{{{c_latex}^{{{k_value}}}-1}}{{{c_latex}-1}}"
+                )
+                sum_partial = False
+                asymptotic_partial = False
+
+            if base_val is not None:
+                final_expression = (
+                    rf"T(n)={c_latex}^{{{k_value}}}\cdot {base_val}+{summation_evaluated.split('=')[-1]}"
+                )
+            else:
+                final_expression = (
+                    rf"T(n)={c_latex}^{{{k_value}}}T({base_idx})+{summation_evaluated.split('=')[-1]}"
+                )
+
+            dominant_term = rf"{c_latex}^{{{k_value}}}"
+            theta = rf"\Theta({c_latex}^n)"
+
+            context = IterationStepContext(
+                locale=self.locale,
+                recurrence_form=recurrence_form,
+                g_n=g_n_value,
+                is_supported=True,
+                support_code=None,
+                base_case_index=base_idx,
+                base_case_value=str(base_val) if base_val is not None else None,
+                expansions=expansions,
+                general_form=general_form,
+                k_condition=k_condition,
+                k_value=k_value,
+                summation_expression=summation_expression,
+                summation_evaluated=summation_evaluated,
+                final_expression=final_expression,
+                dominant_term=dominant_term,
+                theta=theta,
+                summation_partial=sum_partial,
+                asymptotic_partial=asymptotic_partial,
+                missing_base_case=missing_base,
+            )
+            step_bundle = build_iteration_step_bundle(context)
+            iteration = {
+                "method": "iteration",
+                "g_function": g_n_value,
+                "expansions": expansions,
+                "general_form": general_form,
+                "base_case": {"condition": k_condition, "k": k_value},
+                "summation": {
+                    "expression": summation_expression,
+                    "evaluated": summation_evaluated,
+                },
+                "theta": theta,
+                "step_by_step": step_bundle,
+            }
+            self.proof_steps.append(
+                {
+                    "id": "iteration_result",
+                    "text": f"\\text{{Resultado por iteración: }} T(n) = {theta}",
+                }
+            )
+            return {"success": True, "iteration": iteration}
 
         base_idx, base_val, missing_base = _base_case_info()
         g_expr_n = _parse_sympy_expr(g_n_value)

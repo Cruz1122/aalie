@@ -72,43 +72,8 @@ END
         assert data.get("recurrence_info", {}).get("dp_validation", {}).get("primary_pattern") == "tabulation"
 
 
-class TestDummyEndpoint:
-    """Tests para el endpoint /analyze/dummy."""
-
-    def test_dummy_returns_analysis(self):
-        """Test: Endpoint /dummy retorna análisis dummy"""
-        response = client.get("/analyze/dummy")
-        assert response.status_code == 200
-        data = response.json()
-        # El endpoint retorna directamente el resultado de create_dummy_analysis()
-        # que incluye ok, byLine y totals
-        assert "ok" in data, "Debe tener campo 'ok'"
-        assert data.get("ok") is True, f"ok debe ser True, obtuvo {data.get('ok')}"
-        assert "byLine" in data, "Debe tener campo 'byLine'"
-        assert "totals" in data, "Debe tener campo 'totals'"
-
-    def test_dummy_method_get(self):
-        """Test: Endpoint /dummy acepta método GET"""
-        response = client.get("/analyze/dummy")
-        assert response.status_code == 200
-
-
-class TestClosedEndpoint:
-    """Tests para el endpoint /analyze/closed."""
-
-    def test_closed_returns_not_implemented(self):
-        """Test: Endpoint /closed retorna error de no implementado"""
-        response = client.post("/analyze/closed", json={"source": "test(n) BEGIN END"})
-        assert response.status_code == 200
-        data = response.json()
-        assert data.get("ok") is False
-        assert "errors" in data
-        assert "no implementado" in data["errors"][0]["message"].lower() or "not implemented" in data["errors"][0]["message"].lower()
-
-    def test_closed_method_post(self):
-        """Test: Endpoint /closed acepta método POST"""
-        response = client.post("/analyze/closed", json={"source": "test"})
-        assert response.status_code == 200
+class TestOpenEndpoint:
+    """Tests de contrato para /analyze/open."""
 
     def test_open_endpoint_invalid_payload(self):
         """Test: Endpoint /open maneja payload inválido"""

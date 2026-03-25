@@ -15,7 +15,9 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
-    "test": "node --import tsx --test src/__tests__/*.test.ts",
+    "test": "node --import tsx --test --test-reporter=spec src/__tests__/*.test.ts",
+    "test:tap": "node --import tsx --test src/__tests__/*.test.ts",
+    "golden:refresh": "node --import tsx src/examples/refresh-golden-text.ts",
     "golden:pdf": "node --import tsx src/examples/export-golden-pdfs.ts"
   },
   "dependencies": {

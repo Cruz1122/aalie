@@ -7,7 +7,6 @@ from typing import Any, Dict, Optional
 from .analyzers.registry import AnalyzerRegistry
 from .analyzers.iterative import IterativeAnalyzer
 from .analyzers.recursive import RecursiveAnalyzer
-from .analyzers.dummy import create_dummy_analysis
 from .invariants import generate_loop_invariant
 from .invariants.schemas import empty_loop_invariant
 from ..classification.classifier import detect_algorithm_kind

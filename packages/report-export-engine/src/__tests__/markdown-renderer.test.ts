@@ -14,10 +14,10 @@ describe("markdown-renderer", () => {
     const model = buildDocumentModel(snapshot);
     const markdown = renderMarkdownReport({ snapshot, documentModel: model });
 
-    assert.match(markdown, /# Reporte Institucional AALIE/);
+    assert.match(markdown, /^# factorial/m);
     assert.doesNotMatch(markdown, /Advertencia Institucional/);
     assert.match(markdown, /snapshotId:/);
-    assert.match(markdown, /Pseudocodigo Analizado/);
+    assert.match(markdown, /## factorial/);
     assert.match(markdown, /Invariante del Ciclo/);
     assert.match(markdown, /Analisis por Casos/);
     assert.match(markdown, /Seguimiento De Ejecucion/);

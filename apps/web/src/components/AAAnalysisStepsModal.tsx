@@ -3,9 +3,9 @@
 import type { RecursiveMethodStepBundle, RecursiveStepStatus } from "@aa/types";
 import { useTranslations } from "next-intl";
 
+import AAAnalysisStepTimeline from "./AAAnalysisStepTimeline";
 import Formula from "./Formula";
 import BaseModalContainer from "./modals/BaseModalContainer";
-import AAAnalysisStepTimeline from "./AAAnalysisStepTimeline";
 
 interface AAAnalysisStepsModalProps {
   open: boolean;
