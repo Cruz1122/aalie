@@ -24,6 +24,7 @@ export default function CharacteristicEquationModal({
       bundle={characteristicEquation?.step_by_step}
       equation={characteristicEquation?.equation}
       theta={theta || characteristicEquation?.theta || null}
+      equationLabelKey="characteristicEquation"
     />
   );
 }

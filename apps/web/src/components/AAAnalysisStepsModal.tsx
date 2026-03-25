@@ -13,6 +13,7 @@ interface AAAnalysisStepsModalProps {
   bundle: RecursiveMethodStepBundle | null | undefined;
   equation?: string | null;
   theta?: string | null;
+  equationLabelKey?: "characteristicEquation" | "recurrenceEquation";
 }
 
 const statusClassMap: Record<RecursiveStepStatus, string> = {
@@ -28,9 +29,18 @@ export default function AAAnalysisStepsModal({
   bundle,
   equation,
   theta,
+  equationLabelKey = "recurrenceEquation",
 }: Readonly<AAAnalysisStepsModalProps>) {
   const t = useTranslations("analyzer.analysisSteps");
   const thetaLatex = theta ? (theta.includes("T(n)") ? theta : `T(n) = ${theta}`) : null;
+  const isIteration = bundle?.method === "iteration";
+  const titleIconClassName = isIteration ? "text-violet-400" : "text-blue-400";
+  const panelClassName = isIteration
+    ? "rounded-xl bg-violet-950/55 ring-1 ring-violet-400/20"
+    : "rounded-xl bg-slate-900 ring-1 ring-white/10";
+  const equationCardClassName = "rounded-lg border border-white/10 bg-slate-800/60 p-3";
+  const overallStatusCardClassName = "flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-slate-800/60 p-3";
+  const accent: "blue" | "purple" = isIteration ? "purple" : "blue";
 
   if (!open) return null;
 
@@ -40,9 +50,10 @@ export default function AAAnalysisStepsModal({
       onClose={onClose}
       title={t("title")}
       titleIcon="list"
+      titleIconClassName={titleIconClassName}
       closeAriaLabel={t("closeModal")}
       sizeClassName="w-[min(95vw,1200px)] max-h-[78vh]"
-      panelClassName="rounded-xl bg-slate-900 ring-1 ring-white/10"
+      panelClassName={panelClassName}
       headerClassName="p-4"
       contentClassName="p-6"
     >
@@ -53,7 +64,7 @@ export default function AAAnalysisStepsModal({
       ) : (
         <div className="space-y-4">
           {bundle.overallStatus !== "complete" && (
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-slate-800/60 p-3">
+            <div className={overallStatusCardClassName}>
               <div className="text-sm font-semibold text-white">
                 {t("overallStatus")}
               </div>
@@ -66,15 +77,15 @@ export default function AAAnalysisStepsModal({
           {(equation || thetaLatex) && (
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
               {equation && (
-                <div className="rounded-lg border border-white/10 bg-slate-800/60 p-3">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{t("characteristicEquation")}</p>
+                <div className={equationCardClassName}>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{t(equationLabelKey)}</p>
                   <div className="overflow-x-auto">
                     <Formula latex={equation} display />
                   </div>
                 </div>
               )}
               {thetaLatex && (
-                <div className="rounded-lg border border-white/10 bg-slate-800/60 p-3">
+                <div className={equationCardClassName}>
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{t("finalTheta")}</p>
                   <div className="overflow-x-auto">
                     <Formula latex={thetaLatex} display />
@@ -84,7 +95,7 @@ export default function AAAnalysisStepsModal({
             </div>
           )}
 
-          <AAAnalysisStepTimeline steps={bundle.steps} />
+          <AAAnalysisStepTimeline steps={bundle.steps} accent={accent} />
         </div>
       )}
     </BaseModalContainer>

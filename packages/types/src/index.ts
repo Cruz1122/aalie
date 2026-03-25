@@ -332,6 +332,23 @@ export type CharacteristicStepKind =
   | "closed_form_simplified"
   | "dominant_term_concluded";
 
+export type IterationStepKind =
+  | "recurrence_detected"
+  | "applicability_validated"
+  | "base_case_identified"
+  | "initial_unrolling_built"
+  | "k_pattern_generalized"
+  | "k_value_solved"
+  | "summation_built"
+  | "summation_simplified"
+  | "final_expression_built"
+  | "dominant_term_identified"
+  | "asymptotic_concluded";
+
+export type RecursiveStepKind = CharacteristicStepKind | IterationStepKind;
+export type RecursiveMethodId = "characteristic_equation" | "iteration";
+export type RecursiveStepBundleVersion = "ceq_steps_v1" | "iter_steps_v1";
+
 export interface RecursiveStepMathItem {
   id: string;
   kind: "equation" | "transformation" | "condition" | "result";
@@ -341,7 +358,7 @@ export interface RecursiveStepMathItem {
 export interface RecursiveAnalysisStep {
   id: string;
   index: number;
-  kind: CharacteristicStepKind;
+  kind: RecursiveStepKind;
   title: string;
   status: RecursiveStepStatus;
   math: {
@@ -354,6 +371,14 @@ export interface RecursiveAnalysisStep {
   warning?: string | null;
   confidence: RecursiveStepConfidence;
   payload: Record<string, unknown>;
+  derivation?: {
+    sourceExpression?: string;
+    derivedExpression?: string;
+    substitutions?: Array<{ symbol: string; value: string }>;
+    symbolicResult?: string;
+    asymptoticResult?: string;
+    supportReason?: string;
+  };
   template: {
     summaryKey: string;
     conceptKey: string;
@@ -368,8 +393,8 @@ export interface RecursiveAnalysisStep {
 }
 
 export interface RecursiveMethodStepBundle {
-  method: "characteristic_equation";
-  version: "ceq_steps_v1";
+  method: RecursiveMethodId;
+  version: RecursiveStepBundleVersion;
   overallStatus: RecursiveStepStatus;
   steps: RecursiveAnalysisStep[];
 }
@@ -447,7 +472,7 @@ export interface AnalyzeOpenResponse {
           n0: number;           // umbral base
           applicable: boolean;
           notes: string[];
-          method?: "characteristic_equation";
+          method?: "characteristic_equation" | "iteration" | "recursion_tree";
         }
     );
     characteristic_equation?: {              // resultado del Método de Ecuación Característica
@@ -523,6 +548,7 @@ export interface AnalyzeOpenResponse {
         evaluated: string;          // resultado evaluado (LaTeX)
       };
       theta: string;                // resultado final Θ(...) en LaTeX
+      step_by_step?: RecursiveMethodStepBundle;
     };
     recursion_tree?: {              // resultado del Método de Árbol de Recursión
       method: "recursion_tree";     // identificador del método

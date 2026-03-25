@@ -55,6 +55,7 @@ describe("snapshot-builder", () => {
   it("mapea recurrencias divide_conquer_multi y linear_shift", () => {
     const hybrid = createHybridSnapshot();
     const characteristic = createRecursiveSnapshot("characteristic_equation");
+    const iteration = createRecursiveSnapshot("iteration");
 
     assert.strictEqual(hybrid.internal.recurrence.status, "available");
     assert.strictEqual(hybrid.internal.recurrence.data?.type, "divide_conquer_multi");
@@ -71,6 +72,15 @@ describe("snapshot-builder", () => {
     }
     assert.strictEqual(characteristic.recursive.data.stepByStep.status, "available");
     assert.strictEqual(characteristic.recursive.data.stepByStep.data?.steps.length, 12);
+
+    assert.strictEqual(iteration.internal.recurrence.status, "available");
+    assert.strictEqual(iteration.internal.recurrence.data?.method, "iteration");
+    assert.strictEqual(iteration.recursive.status, "available");
+    if (iteration.recursive.status !== "available" || !iteration.recursive.data) {
+      assert.fail("recursive section should be available");
+    }
+    assert.strictEqual(iteration.recursive.data.stepByStep.status, "available");
+    assert.strictEqual(iteration.recursive.data.stepByStep.data?.steps.length, 11);
   });
 
   it("mantiene pseudocodigo normalizado pendiente y conserva invariante cuando existe", () => {

@@ -1,6 +1,7 @@
 import type {
   AnalyzeOpenResponse,
   CharacteristicStepKind,
+  IterationStepKind,
   LoopInvariant,
   Program,
   RecursiveMethodStepBundle,
@@ -423,17 +424,18 @@ function recursiveCase(
       method: divideMethod,
     };
   } else {
+    const isIterationLinearShift = method === "iteration";
     totals.recurrence = {
       type: "linear_shift",
-      form: "T(n)=T(n-1)+T(n-2)+1",
-      order: 2,
-      shifts: [1, 2],
-      coefficients: [1, 1],
-      "g(n)": "1",
-      n0: 1,
+      form: isIterationLinearShift ? "T(n)=T(n-1)+n" : "T(n)=T(n-1)+T(n-2)+1",
+      order: isIterationLinearShift ? 1 : 2,
+      shifts: isIterationLinearShift ? [1] : [1, 2],
+      coefficients: isIterationLinearShift ? [1] : [1, 1],
+      "g(n)": isIterationLinearShift ? "n" : "1",
+      n0: isIterationLinearShift ? 0 : 1,
       applicable: true,
       notes: ["linear_shift"],
-      method: "characteristic_equation",
+      method: isIterationLinearShift ? "iteration" : "characteristic_equation",
     };
   }
 
@@ -452,22 +454,68 @@ function recursiveCase(
   }
 
   if (method === "iteration") {
+    const iterationStepKinds: IterationStepKind[] = [
+      "recurrence_detected",
+      "applicability_validated",
+      "base_case_identified",
+      "initial_unrolling_built",
+      "k_pattern_generalized",
+      "k_value_solved",
+      "summation_built",
+      "summation_simplified",
+      "final_expression_built",
+      "dominant_term_identified",
+      "asymptotic_concluded",
+    ];
+    const iterationStepBundle: RecursiveMethodStepBundle = {
+      method: "iteration",
+      version: "iter_steps_v1",
+      overallStatus: "complete",
+      steps: iterationStepKinds.map((kind, index) => ({
+        id: `iter_s${index + 1}`,
+        index: index + 1,
+        kind,
+        title: `Step ${index + 1}`,
+        status: "complete",
+        math: {
+          primaryLatex: index === 10 ? "T(n)=\\Theta(n)" : undefined,
+          items: [],
+        },
+        summary: `Fixture summary for step ${index + 1}`,
+        conceptNote: `Fixture concept for ${kind}`,
+        teachingNote: `Fixture concept for ${kind}`,
+        warning: null,
+        confidence: "high",
+        payload: {},
+        template: {
+          summaryKey: "fixture.summary",
+          conceptKey: "fixture.concept",
+          params: {},
+        },
+        audit: {
+          codes: [],
+          assumptions: [],
+          blockedBy: [],
+        },
+      })),
+    };
     totals.iteration = {
       method: "iteration",
-      g_function: "n/2",
-      expansions: ["T(n)=2T(n/2)+n", "T(n)=4T(n/4)+2n"],
-      general_form: "T(n)=2^k T(n/2^k)+kn",
+      g_function: "n-1",
+      expansions: ["T(n)=T(n-1)+n", "T(n)=T(n-2)+(n-1)+n"],
+      general_form: "T(n)=T(n-k)+\\sum_{j=0}^{k-1} g(n-j)",
       base_case: {
-        condition: "n/2^k=1",
-        k: "\\log_2 n",
+        condition: "n-k=0",
+        k: "n",
       },
       summation: {
-        expression: "\\sum_{i=0}^{k-1} n",
-        evaluated: "n \\log n",
+        expression: "T(n)=T(0)+\\sum_{i=1}^{n} i",
+        evaluated: "\\sum_{i=1}^{n} i=\\frac{n(n+1)}{2}",
       },
-      theta: "\\Theta(n \\log n)",
+      theta: "\\Theta(n^2)",
+      step_by_step: iterationStepBundle,
     };
-    totals.big_theta = "\\Theta(n \\log n)";
+    totals.big_theta = "\\Theta(n^2)";
   }
 
   if (method === "recursion_tree") {
@@ -682,7 +730,9 @@ export function createIterativeSnapshot() {
 
 export function createRecursiveSnapshot(method: SnapshotRecursiveMethod) {
   const recurrenceType =
-    method === "characteristic_equation" ? "linear_shift" : "divide_conquer";
+    method === "characteristic_equation" || method === "iteration"
+      ? "linear_shift"
+      : "divide_conquer";
   return buildSnapshot({
     source: "recursive(n) BEGIN IF n <= 1 THEN RETURN 1; RETURN recursive(n/2)+n; END",
     locale: "en",

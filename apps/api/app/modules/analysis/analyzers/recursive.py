@@ -9,7 +9,9 @@ from sympy import (
     Integer,
     Pow,
     Poly,
+    Rational,
     Symbol,
+    Sum as SymSum,
     expand,
     factor,
     latex,
@@ -17,6 +19,8 @@ from sympy import (
     rsolve,
     simplify,
     solve,
+    sqrt,
+    summation,
     symbols,
     sympify,
     I,
@@ -25,6 +29,7 @@ from sympy import (
 from collections import Counter
 from .base import BaseAnalyzer
 from .characteristic_steps import StepContext, build_characteristic_step_bundle
+from .iteration_steps import IterationStepContext, build_iteration_step_bundle
 
 
 class RecursiveAnalyzer(BaseAnalyzer):
@@ -5049,63 +5054,49 @@ FIN FUNCIÓN"""
     
     def _detect_iteration_method(self, proc_def: Dict[str, Any], recursive_calls: List[Dict[str, Any]]) -> bool:
         """
-        Detecta si debe usarse el Método de Iteración en lugar del Teorema Maestro.
-        
-        Reglas para usar Método de Iteración:
-        1. Llamados recursivos con subproblemas decrease-and-conquer (n-1, n-k, n/c)
-        2. Subproblemas de tipo substracción (n-1, n-2, etc.) o división (n/2, n/c)
-        3. Todos los subproblemas son decrease-and-conquer (no divide-and-conquer uniforme)
-        4. Subproblema estrictamente más pequeño g(n) < n
-        
-        Casos especiales permitidos:
-        - Múltiples llamadas recursivas con substracción (ej: Fibonacci T(n) = T(n-1) + T(n-2))
-        
+        Detecta si debe usarse automáticamente el Método de Iteración (V1).
+
+        Cobertura V1 (estricta):
+        - Solo recurrencias equivalentes a T(n)=T(n-1)+g(n)
+        - Una única llamada recursiva
+        - Desplazamiento unitario (n-1)
+        - Coeficiente 1 para T(n-1)
+
         Args:
             proc_def: Nodo ProcDef del procedimiento
             recursive_calls: Lista de llamadas recursivas encontradas
             
         Returns:
-            True si debe usar Método de Iteración
+            True si la forma cumple la cobertura V1 de Iteración
         """
         if not recursive_calls:
             return False
-        
-        # Verificar que todos los subproblemas son decrease-and-conquer (substracción o división)
-        all_subtraction_or_division = True
-        for call in recursive_calls:
-            subproblem_info = self._analyze_subproblem_type(call, proc_def)
-            if not subproblem_info:
-                all_subtraction_or_division = False
-                break
-            # Permitir substracción y división, pero no otros tipos
-            if subproblem_info["type"] not in ["subtraction", "division"]:
-                all_subtraction_or_division = False
-                break
-        
-        if not all_subtraction_or_division:
+
+        # V1: no soporta múltiples llamadas ni órdenes > 1.
+        if len(recursive_calls) != 1:
             return False
-        
-        # Verificar que no combina múltiples resultados de forma compleja
-        # (esto se verificará más adelante, pero aquí rechazamos casos obviamente complejos)
-        # Para casos como Fibonacci, permitimos múltiples llamadas recursivas
-        
-        return True
-        
-        # Regla 2 y 5: Analizar tipo de subproblema
-        call = recursive_calls[0]
-        subproblem_info = self._analyze_subproblem_type(call, proc_def)
-        
-        if not subproblem_info:
+
+        subproblem_info = self._analyze_subproblem_type(recursive_calls[0], proc_def)
+        if not subproblem_info or subproblem_info.get("type") != "subtraction":
             return False
-        
-        # Debe ser decrease-and-conquer (substracción o división)
-        if subproblem_info["type"] not in ["subtraction", "division"]:
+
+        # Debe ser desplazamiento unitario: n-1.
+        factor = subproblem_info.get("factor")
+        pattern = str(subproblem_info.get("pattern", "")).replace(" ", "")
+        is_unit_shift = factor == 1 or pattern == "n-1"
+        if not is_unit_shift:
             return False
-        
-        # Regla 6: No debe combinar múltiples resultados (verificar que no hay suma de llamadas recursivas)
-        if self._combines_multiple_results(proc_def, recursive_calls):
-            return False
-        
+
+        # Verificación adicional con extractor lineal, cuando está disponible.
+        linear_info = self._detect_linear_recurrence(proc_def, recursive_calls)
+        if linear_info:
+            coefficients = linear_info.get("coefficients", {}) or {}
+            max_offset = int(linear_info.get("max_offset", 1))
+            if max_offset != 1:
+                return False
+            if coefficients.get(1, 1) != 1:
+                return False
+
         return True
     
     def _analyze_subproblem_type(self, call: Dict[str, Any], proc_def: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -5673,16 +5664,12 @@ FIN FUNCIÓN"""
     def _apply_iteration_method(self) -> Dict[str, Any]:
         """
         Aplica el Método de Iteración (Unrolling) a la recurrencia extraída.
-        
-        Implementa los 7 pasos del método:
-        1. Identificar la recurrencia T(n) = T(g(n)) + f(n)
-        2. Expandir una vez
-        3. Expandir k veces (patrón general)
-        4. Determinar k en el caso base
-        5. Sustituir k en la suma
-        6. Evaluar la sumatoria
-        7. Simplificar a Θ(·)
-        
+
+        Cobertura V1:
+        - Soportado: recurrencias lineales por desplazamiento unitario
+          T(n) = T(n-1) + g(n)
+        - No soportado explícito: formas divide-and-conquer o shifts no unitarios.
+
         Returns:
             {"success": bool, "iteration": dict, "reason": str}
         """
@@ -5691,300 +5678,363 @@ FIN FUNCIÓN"""
                 "success": False,
                 "reason": "No hay recurrencia extraída"
             }
-        
-        self.proof_steps.append({"id": "iteration_start", "text": "\\text{Aplicando Método de Iteración (Unrolling)}"})
-        
-        # Paso 1: Identificar la recurrencia
-        # Verificar si es linear_shift o divide_conquer
-        recurrence_type = self.recurrence.get("type", "divide_conquer")
-        
-        if recurrence_type == "linear_shift":
-            # Para linear_shift, usar g(n) en lugar de f(n)
-            f_n_str = self.recurrence.get("g(n)", "0")
-            if f_n_str == "0" or f_n_str is None:
-                f_n_str = "0"
-            # Obtener el orden y los shifts
-            order = self.recurrence.get("order", 1)
-            shifts = self.recurrence.get("shifts", [1])
-            coefficients_list = self.recurrence.get("coefficients", [1])
-            # Para linear_shift: si hay un solo término con coeficiente > 1 (ej: Hanoi 2T(n-1)+1), usar a = coeficiente
-            # Si hay múltiples términos (Fibonacci) o coeficiente 1, a = 1
-            if len(coefficients_list) == 1 and coefficients_list[0] > 1:
-                a = coefficients_list[0]
-            else:
-                a = 1
-        else:
-            # Para divide_conquer, usar a, b, f
-            a = self.recurrence.get("a", 1)
-            f_n_str = self.recurrence.get("f", "0")
-        
-        n0 = self.recurrence.get("n0", 1)
-        
-        # Obtener información del subproblema
-        proc_def = self._find_main_procedure({"body": []})  # Necesitamos acceso al proc_def
-        # Por ahora, inferir g(n) desde la forma de la recurrencia
-        recurrence_form = self.recurrence.get("form", "")
-        
-        # Extraer g(n) de la forma T(n) = T(g(n)) + f(n)
-        g_n_info = self._extract_g_function()
-        if not g_n_info:
-            return {
-                "success": False,
-                "reason": "No se pudo extraer la función g(n)"
-            }
-        
-        g_type = g_n_info["type"]
-        g_pattern = g_n_info["pattern"]
-        has_multiple = g_n_info.get("has_multiple_terms", False)
-        
-        # Recurrencia tipo MOD (Euclides): T(n) = T(b, a mod b) + O(1) → Θ(log n)
-        if g_type == "mod":
-            self.proof_steps.append({"id": "step1", "text": f"\\text{{Paso 1: Recurrencia identificada }} {recurrence_form} \\\\ \\text{{(reducción por módulo, algoritmo tipo Euclides)}}"})
-            self.proof_steps.append({"id": "step2", "text": "\\text{Paso 2: En cada paso el tamaño se reduce al menos a la mitad} \\\\ \\text{(a mod b < b, y en el peor caso a mod b \\leq b/2)}"})
-            self.proof_steps.append({"id": "step3", "text": "\\text{Paso 3: Número de pasos } \\leq 2 \\log_2(\\min(a,b)) = \\Theta(\\log n)"})
-            theta_latex = "\\Theta(\\log n)"
+        self.proof_steps.append(
+            {"id": "iteration_start", "text": "\\text{Aplicando Método de Iteración}"}
+        )
+
+        recurrence_form = str(self.recurrence.get("form") or "T(n)=T(n-1)+g(n)")
+        recurrence_type = str(self.recurrence.get("type") or "")
+        fallback_n0 = self.recurrence.get("n0")
+        if not isinstance(fallback_n0, int):
+            try:
+                fallback_n0 = int(fallback_n0)
+            except Exception:
+                fallback_n0 = 0
+
+        n_sym = Symbol("n", integer=True, nonnegative=True)
+        i_sym = Symbol("i", integer=True, positive=True)
+
+        def _format_n_power(exp: Expr) -> str:
+            exp_simplified = simplify(exp)
+            if exp_simplified == 0:
+                return "1"
+            if exp_simplified == 1:
+                return "n"
+            return f"n^{{{latex(exp_simplified)}}}"
+
+        def _normalize_g(raw_g: Optional[str]) -> str:
+            cleaned = str(raw_g or "").strip()
+            lowered = cleaned.lower().replace(" ", "")
+            if lowered in {"", "0", "\\theta(0)", "theta(0)"}:
+                return "0"
+            if lowered in {"\\theta(1)", "theta(1)"}:
+                return "1"
+            return cleaned
+
+        def _parse_sympy_expr(raw_expr: str) -> Optional[Expr]:
+            normalized = _normalize_g(raw_expr)
+            lowered = normalized.lower().replace(" ", "")
+            if lowered == "0":
+                return Integer(0)
+            if lowered == "1":
+                return Integer(1)
+
+            cleaned = normalized
+            cleaned = cleaned.replace("\\cdot", "*")
+            cleaned = cleaned.replace("\\left", "").replace("\\right", "")
+            cleaned = cleaned.replace("^", "**")
+            cleaned = cleaned.replace("\\sqrt", "sqrt")
+            cleaned = re.sub(r"\\frac\{([^{}]+)\}\{([^{}]+)\}", r"(\1)/(\2)", cleaned)
+            cleaned = cleaned.replace("{", "(").replace("}", ")")
+            cleaned = cleaned.replace("\\", "")
+            try:
+                return sympify(
+                    cleaned,
+                    locals={"n": n_sym, "sqrt": sqrt, "Rational": Rational},
+                )
+            except Exception:
+                return None
+
+        def _base_case_info() -> tuple[int, Optional[int], bool]:
+            base_cases = {}
+            if self.proc_def:
+                try:
+                    base_cases = self._detect_base_cases(self.proc_def)
+                except Exception:
+                    base_cases = {}
+
+            selected_index: Optional[int] = None
+            selected_value: Optional[int] = None
+            for label, value in (base_cases or {}).items():
+                match = re.search(r"T\(([-]?\d+)\)", str(label))
+                if not match:
+                    continue
+                try:
+                    idx = int(match.group(1))
+                    val = int(value)
+                except Exception:
+                    continue
+                if selected_index is None or idx < selected_index:
+                    selected_index = idx
+                    selected_value = val
+
+            if selected_index is None:
+                try:
+                    selected_index = int(fallback_n0)
+                except Exception:
+                    selected_index = 0
+
+            missing = selected_value is None
+            return selected_index, selected_value, missing
+
+        def _build_unsupported_result(
+            support_code: str,
+            g_n_value: str,
+        ) -> Dict[str, Any]:
+            base_idx, base_val, missing_base = _base_case_info()
+            context = IterationStepContext(
+                locale=self.locale,
+                recurrence_form=recurrence_form,
+                g_n=g_n_value,
+                is_supported=False,
+                support_code=support_code,
+                base_case_index=base_idx,
+                base_case_value=str(base_val) if base_val is not None else None,
+                expansions=[],
+                general_form=recurrence_form,
+                k_condition=f"n-k={base_idx}",
+                k_value="N/A",
+                summation_expression="N/A",
+                summation_evaluated="N/A",
+                final_expression="T(n)=\\text{N/A}",
+                dominant_term="\\text{N/A}",
+                theta="N/A",
+                summation_partial=True,
+                asymptotic_partial=True,
+                missing_base_case=missing_base,
+            )
+            step_bundle = build_iteration_step_bundle(context)
             iteration = {
                 "method": "iteration",
-                "recurrence_form": recurrence_form,
+                "g_function": g_n_value,
                 "expansions": [],
-                "general_form": "T(n) = T(b, a \\bmod b) + \\Theta(1)",
-                "summation_result": {"theta": "log n"},
-                "theta": theta_latex,
-                "theta_best": "O(1)"
+                "general_form": recurrence_form,
+                "base_case": {"condition": f"n-k={base_idx}", "k": "N/A"},
+                "summation": {"expression": "N/A", "evaluated": "N/A"},
+                "theta": "N/A",
+                "step_by_step": step_bundle,
             }
-            self.proof_steps.append({"id": "conclude", "text": f"\\text{{Resultado: }} T(n) = {theta_latex}"})
+            self.proof_steps.append(
+                {
+                    "id": "iteration_unsupported",
+                    "text": (
+                        "\\text{Cobertura V1 del método de iteración no soporta esta forma de recurrencia.}"
+                    ),
+                }
+            )
             return {"success": True, "iteration": iteration}
-        
-        # Verificar si la recurrencia tiene coeficiente a > 1 para el mismo término (ej: Torres de Hanoi T(n) = 2T(n-1) + 1)
-        recurrence_form = self.recurrence.get("form", "")
-        has_coefficient = a > 1 and not has_multiple
-        
-        # Si hay múltiples términos recursivos (ej: Fibonacci), usar análisis especial
-        if has_multiple:
-            self.proof_steps.append({"id": "step1", "text": f"\\text{{Paso 1: Recurrencia identificada }} {recurrence_form}"})
-            
-            # Detectar si es Fibonacci (T(n) = T(n-1) + T(n-2) + f(n))
-            all_factors = g_n_info.get("all_factors", [])
-            if all_factors and set(all_factors) == {1, 2}:
-                # Caso Fibonacci: T(n) = T(n-1) + T(n-2) + f(n)
-                self.proof_steps.append({
-                    "id": "step1_note", 
-                    "text": "\\text{Nota: Esta es una recurrencia lineal de segundo orden (tipo Fibonacci). Se requiere análisis especial.}"
-                })
-                
-                # Usar análisis de árbol de recursión aproximado
-                # En el árbol de Fibonacci, cada nodo tiene 2 hijos (T(n-1) y T(n-2))
-                # La altura aproximada es n (cada nivel reduce en 1 o 2)
-                # El número de nodos en el peor caso es O(2^n)
-                self.proof_steps.append({
-                    "id": "step2", 
-                    "text": "\\text{Paso 2: Análisis del árbol de recursión} \\\\ \\text{Cada llamada genera 2 subproblemas (T(n-1) y T(n-2))}"
-                })
-                self.proof_steps.append({
-                    "id": "step3", 
-                    "text": "\\text{Paso 3: Número de nodos} \\\\ \\text{En el nivel i, hay aproximadamente 2^i nodos}"
-                })
-                self.proof_steps.append({
-                    "id": "step4", 
-                    "text": "\\text{Paso 4: Altura del árbol} \\\\ \\text{La altura aproximada es } \\Theta(n) \\text{ (cada nivel reduce en 1 o 2)}"
-                })
-                self.proof_steps.append({
-                    "id": "step5", 
-                    "text": "\\text{Paso 5: Cálculo del costo total} \\\\ \\sum_{i=0}^{n} 2^i = 2^{n+1} - 1 = O(2^n)"
-                })
-                
-                # Para Fibonacci, la complejidad exacta es Θ(φ^n) donde φ es el número áureo
-                # Pero comúnmente se usa O(2^n) como cota superior
-                theta = "2^n"
-                summation_result = {
-                    "expression": "T(n) = \\sum_{i=0}^{n} 2^i",
-                    "evaluated": "2^{n+1} - 1",
-                    "theta": theta
-                }
-                
-                self.proof_steps.append({
-                    "id": "step6", 
-                    "text": f"\\text{{Paso 6: Resultado }} T(n) = \\Theta({theta}) \\\\ \\text{{(cota superior. La complejidad exacta es }} \\Theta(\\phi^n) \\text{{ donde }} \\phi \\approx 1.618 \\text{{ es el número áureo)}}"
-                })
-                self.proof_steps.append({"id": "step7", "text": f"\\text{{Paso 7: Resultado final }} T(n) = \\Theta({theta})"})
-                
-                # Construir resultado con expansiones aproximadas
-                expansions = [
-                    "T(n) = T(n-1) + T(n-2) + (1)",
-                    "T(n) = [T(n-2) + T(n-3)] + [T(n-3) + T(n-4)] + (1) + (1)",
-                    "T(n) = [T(n-3) + T(n-4)] + [T(n-4) + T(n-5)] + [T(n-4) + T(n-5)] + [T(n-5) + T(n-6)] + ..."
-                ]
-                general_form = "T(n) = \\sum_{i=0}^{n} 2^i \\approx O(2^n)"
-                
-            else:
-                # Otro tipo de recurrencia con múltiples términos
-                self.proof_steps.append({
-                    "id": "step1_note", 
-                    "text": "\\text{Nota: Esta recurrencia tiene múltiples términos recursivos y requiere técnicas especiales.}"
-                })
-                # Intentar análisis básico
-                theta = "n^2"  # Aproximación conservadora
-                summation_result = {
-                    "expression": recurrence_form,
-                    "evaluated": "Análisis complejo requerido",
-                    "theta": theta
-                }
-                expansions = [recurrence_form]
-                general_form = recurrence_form
-                self.proof_steps.append({"id": "step7", "text": f"\\text{{Paso 7: Resultado aproximado }} T(n) = O({theta})"})
-        elif has_coefficient:
-            # Caso especial: T(n) = aT(n-1) + f(n) con a > 1 (ej: Torres de Hanoi T(n) = 2T(n-1) + 1)
-            self.proof_steps.append({"id": "step1", "text": f"\\text{{Paso 1: Recurrencia identificada }} {recurrence_form}"})
-            self.proof_steps.append({
-                "id": "step1_note", 
-                "text": f"\\text{{Nota: Esta recurrencia tiene coeficiente }} a={a} > 1 \\text{{. Se requiere análisis especial.}}"
-            })
-            
-            # Para T(n) = aT(n-1) + f(n), el método de iteración da:
-            # T(n) = aT(n-1) + f(n)
-            # T(n) = a[aT(n-2) + f(n-1)] + f(n) = a^2T(n-2) + af(n-1) + f(n)
-            # T(n) = a^3T(n-3) + a^2f(n-2) + af(n-1) + f(n)
-            # ...
-            # T(n) = a^kT(n-k) + sum_{i=0}^{k-1} a^i f(n-i)
-            # Cuando n-k = 1 (caso base), k = n-1
-            # T(n) = a^{n-1}T(1) + sum_{i=0}^{n-2} a^i f(n-i)
-            
-            # Si f(n) = 1 (constante):
-            # T(n) = a^{n-1} * 1 + sum_{i=0}^{n-2} a^i * 1
-            # T(n) = a^{n-1} + (a^{n-1} - 1)/(a - 1)
-            # T(n) = a^n/(a-1) - 1/(a-1) + a^{n-1}
-            # Para a > 1, el término dominante es a^n
-            # T(n) = Θ(a^n)
-            
-            self.proof_steps.append({
-                "id": "step2", 
-                "text": f"\\text{{Paso 2: Expansión}} \\\\ T(n) = {a}T(n-1) + {f_n_str} = {a}[{a}T(n-2) + {f_n_str}|_{{n-1}}] + {f_n_str} = {a}^2T(n-2) + {a}{f_n_str}|_{{n-1}} + {f_n_str}"
-            })
-            self.proof_steps.append({
-                "id": "step3", 
-                "text": f"\\text{{Paso 3: Forma general}} \\\\ T(n) = {a}^kT(n-k) + \\sum_{{i=0}}^{{k-1}} {a}^i \\cdot {f_n_str}|_{{n-i}}"
-            })
-            self.proof_steps.append({
-                "id": "step4", 
-                "text": f"\\text{{Paso 4: Caso base}} \\\\ n-k = {n0} \\Rightarrow k = n-{n0}"
-            })
-            
-            # Evaluar según f(n)
-            if f_n_str.strip().lower() == "1" or f_n_str.strip().lower() == "c":
-                # f(n) = 1 (constante)
-                self.proof_steps.append({
-                    "id": "step5", 
-                    "text": f"\\text{{Paso 5: Evaluación de la sumatoria}} \\\\ T(n) = {a}^{{n-{n0}}}T({n0}) + \\sum_{{i=0}}^{{n-{n0}-1}} {a}^i"
-                })
-                self.proof_steps.append({
-                    "id": "step6", 
-                    "text": f"\\text{{Paso 6: Resultado}} \\\\ T(n) = {a}^{{n-{n0}}} + \\frac{{{a}^{{n-{n0}}} - 1}}{{{a} - 1}} = \\frac{{{a}^{{n-{n0}+1}} - 1}}{{{a} - 1}} = \\Theta({a}^n)"
-                })
-                theta = f"{a}^n"
-                summation_result = {
-                    "expression": f"T(n) = {a}^{{n-{n0}}} + \\sum_{{i=0}}^{{n-{n0}-1}} {a}^i",
-                    "evaluated": f"\\frac{{{a}^{{n-{n0}+1}} - 1}}{{{a} - 1}}",
-                    "theta": theta
-                }
-            else:
-                # f(n) no constante - análisis más complejo
-                theta = f"{a}^n"  # Aproximación conservadora
-                summation_result = {
-                    "expression": recurrence_form,
-                    "evaluated": f"Análisis complejo (término dominante {a}^n)",
-                    "theta": theta
-                }
-                self.proof_steps.append({
-                    "id": "step6", 
-                    "text": f"\\text{{Paso 6: Resultado aproximado}} \\\\ T(n) = \\Theta({theta})"
-                })
-            
-            self.proof_steps.append({"id": "step7", "text": f"\\text{{Paso 7: Resultado final }} T(n) = \\Theta({theta})"})
-            
-            # Construir expansiones aproximadas
-            expansions = [
-                f"T(n) = {a}T(n-1) + ({f_n_str})",
-                f"T(n) = {a}^2T(n-2) + {a}({f_n_str}|_{{n-1}}) + ({f_n_str})",
-                f"T(n) = {a}^3T(n-3) + {a}^2({f_n_str}|_{{n-2}}) + {a}({f_n_str}|_{{n-1}}) + ({f_n_str})"
-            ]
-            general_form = f"T(n) = {a}^kT(n-k) + \\sum_{{i=0}}^{{k-1}} {a}^i \\cdot {f_n_str}|_{{n-i}}"
+
+        if recurrence_type != "linear_shift":
+            return _build_unsupported_result(
+                support_code="ITER_UNSUPPORTED_NON_LINEAR_FORM",
+                g_n_value="0",
+            )
+
+        order_raw = self.recurrence.get("order", 1)
+        try:
+            order = int(order_raw)
+        except Exception:
+            order = 1
+        shifts = self.recurrence.get("shifts", [1]) or [1]
+        if not isinstance(shifts, list):
+            shifts = [1]
+        shifts_as_int: List[int] = []
+        for shift in shifts:
+            try:
+                shifts_as_int.append(int(shift))
+            except Exception:
+                continue
+        if not shifts_as_int:
+            shifts_as_int = [1]
+
+        coefficients = self.recurrence.get("coefficients", [1]) or [1]
+        coeff_by_shift: Dict[int, int] = {}
+        if isinstance(coefficients, list):
+            for idx, shift in enumerate(sorted(shifts_as_int)):
+                if idx >= len(coefficients):
+                    continue
+                try:
+                    coeff_by_shift[int(shift)] = int(coefficients[idx])
+                except Exception:
+                    continue
+        elif isinstance(coefficients, dict):
+            for key, value in coefficients.items():
+                try:
+                    coeff_by_shift[int(key)] = int(value)
+                except Exception:
+                    continue
+        if 1 not in coeff_by_shift:
+            coeff_by_shift[1] = 1
+
+        g_n_raw = self.recurrence.get("g(n)")
+        if g_n_raw is None and self.proc_def:
+            try:
+                linear_info = self._detect_linear_recurrence(
+                    self.proc_def,
+                    self._find_recursive_calls(self.proc_def),
+                )
+                if linear_info and linear_info.get("g_n") is not None:
+                    g_n_raw = linear_info.get("g_n")
+            except Exception:
+                g_n_raw = None
+        g_n_value = _normalize_g(str(g_n_raw or "0"))
+
+        is_unit_shift = (
+            order == 1 and sorted(shifts_as_int) == [1] and coeff_by_shift.get(1, 1) == 1
+        )
+        if not is_unit_shift:
+            return _build_unsupported_result(
+                support_code="ITER_UNSUPPORTED_NON_UNIT_SHIFT",
+                g_n_value=g_n_value,
+            )
+
+        base_idx, base_val, missing_base = _base_case_info()
+        g_expr_n = _parse_sympy_expr(g_n_value)
+
+        if g_expr_n is not None:
+            g_n_latex = latex(simplify(g_expr_n))
+            g_n_minus_1_latex = latex(simplify(g_expr_n.subs(n_sym, n_sym - 1)))
+            g_n_minus_2_latex = latex(simplify(g_expr_n.subs(n_sym, n_sym - 2)))
+            g_i_expr = simplify(g_expr_n.subs(n_sym, i_sym))
+            g_i_latex = latex(g_i_expr)
         else:
-            self.proof_steps.append({"id": "step1", "text": f"\\text{{Paso 1: Recurrencia identificada }} T(n) = T({g_pattern}) + f(n)"})
-            
-            # Paso 2: Expandir una vez
-            expansions = self._expand_recurrence(g_n_info, f_n_str, num_expansions=3)
-            
-            if len(expansions) > 0:
-                self.proof_steps.append({"id": "step2", "text": f"\\text{{Paso 2: Primera expansión }} {expansions[0]}"})
-            
-            if len(expansions) > 1:
-                self.proof_steps.append({"id": "step2b", "text": f"\\text{{Segunda expansión }} {expansions[1]}"})
-            
-            # Paso 3: Expresar forma general con k
-            general_form = self._create_general_form(g_n_info, f_n_str)
-            self.proof_steps.append({"id": "step3", "text": f"\\text{{Paso 3: Forma general }} {general_form}"})
-            
-            # Paso 4: Determinar k en el caso base
-            k_expr = self._determine_k_from_base_case(g_n_info, n0)
-            # La condición del caso base es n-k = n0 (no g_pattern = n0)
-            base_condition = f"n-k = {n0}" if g_n_info["type"] == "subtraction" else f"{g_pattern} = {n0}"
-            self.proof_steps.append({"id": "step4", "text": f"\\text{{Paso 4: Caso base }} {base_condition} \\Rightarrow k = {k_expr}"})
-            
-            # Paso 5: Sustituir k en la suma
-            substituted_form = self._substitute_k_in_summation(g_n_info, f_n_str, k_expr, n0)
-            self.proof_steps.append({"id": "step5", "text": f"\\text{{Paso 5: Sustitución }} {substituted_form}"})
-            
-            # Paso 6: Evaluar la sumatoria
-            summation_result = self._solve_summation(g_n_info, f_n_str, k_expr)
-            self.proof_steps.append({"id": "step6", "text": f"\\text{{Paso 6: Evaluación }} {summation_result['evaluated']}"})
-            
-            # Paso 7: Simplificar a notación asintótica
-            theta = summation_result["theta"]
-            self.proof_steps.append({"id": "step7", "text": f"\\text{{Paso 7: Resultado }} T(n) = \\Theta({theta})"})
-        
-        # Construir resultado
-        if has_multiple or has_coefficient:
-            # Para múltiples términos o coeficiente > 1, construir estructura especial
-            if has_coefficient:
-                k_expr = f"n-{n0}"
-            else:
-                k_expr = "n"
-            iteration = {
-                "method": "iteration",
-                "g_function": recurrence_form if has_multiple else g_pattern,
-                "expansions": expansions,
-                "general_form": general_form,
-                "base_case": {
-                    "condition": f"n = {n0}" if has_multiple else f"{g_pattern} = {n0}",
-                    "k": k_expr
-                },
-                "summation": summation_result,
-                "theta": f"\\Theta({theta})"
-            }
+            g_n_latex = g_n_value
+            g_n_minus_1_latex = f"({g_n_value})|_{{n-1}}"
+            g_n_minus_2_latex = f"({g_n_value})|_{{n-2}}"
+            g_i_latex = re.sub(r"\bn\b", "i", g_n_value)
+            if g_i_latex == g_n_value:
+                g_i_latex = "g(i)"
+
+        expansions = [
+            f"T(n)=T(n-1)+{g_n_latex}",
+            f"T(n)=T(n-2)+{g_n_minus_1_latex}+{g_n_latex}",
+            f"T(n)=T(n-3)+{g_n_minus_2_latex}+{g_n_minus_1_latex}+{g_n_latex}",
+        ]
+        general_form = r"T(n)=T(n-k)+\sum_{j=0}^{k-1} g(n-j)"
+
+        lower_limit = base_idx + 1
+        k_condition = f"n-k={base_idx}"
+        k_value = "n" if base_idx == 0 else f"n-{base_idx}"
+        summation_expression = (
+            f"T(n)=T({base_idx})+\\sum_{{i={lower_limit}}}^{{n}} {g_i_latex}"
+        )
+
+        summation_evaluated = f"\\sum_{{i={lower_limit}}}^{{n}} {g_i_latex}"
+        sum_partial = True
+        sum_expr = None
+        if g_expr_n is not None:
+            try:
+                sum_expr = summation(g_i_expr, (i_sym, Integer(lower_limit), n_sym))
+                sum_expr = simplify(sum_expr)
+                sum_partial = bool(sum_expr.has(SymSum))
+                summation_evaluated = (
+                    f"\\sum_{{i={lower_limit}}}^{{n}} {g_i_latex}={latex(sum_expr)}"
+                )
+            except Exception:
+                sum_expr = None
+                sum_partial = True
+
+        if base_val is not None and sum_expr is not None:
+            try:
+                final_expr_obj = simplify(Integer(base_val) + sum_expr)
+                final_expression = f"T(n)={latex(final_expr_obj)}"
+            except Exception:
+                final_expression = f"T(n)={base_val}+{summation_evaluated.split('=')[-1]}"
+        elif base_val is not None:
+            final_expression = f"T(n)={base_val}+{summation_evaluated.split('=')[-1]}"
         else:
-            # Para un solo término, usar estructura normal
-            k_expr = self._determine_k_from_base_case(g_n_info, n0)
-            substituted_form = self._substitute_k_in_summation(g_n_info, f_n_str, k_expr, n0)
-            iteration = {
-                "method": "iteration",
-                "g_function": g_pattern,
-                "expansions": expansions,
-                "general_form": general_form,
-                "base_case": {
-                    "condition": f"n-k = {n0}" if g_n_info["type"] == "subtraction" else f"{g_pattern} = {n0}",
-                    "k": k_expr
-                },
-                "summation": {
-                    "expression": substituted_form,
-                    "evaluated": summation_result["evaluated"]
-                },
-                "theta": f"\\Theta({theta})"
-            }
-        
-        return {
-            "success": True,
-            "iteration": iteration
+            final_expression = f"T(n)=T({base_idx})+{summation_evaluated.split('=')[-1]}"
+
+        theta_core: Optional[str] = None
+        dominant_term = "\\text{N/A}"
+        asymptotic_partial = False
+
+        growth_expr = sum_expr if sum_expr is not None else None
+        if growth_expr is not None and not sum_partial:
+            try:
+                if growth_expr.is_polynomial(n_sym):
+                    degree = int(Poly(expand(growth_expr), n_sym).degree())
+                    theta_core = _format_n_power(Integer(max(degree, 0)))
+                    dominant_term = theta_core
+                else:
+                    lead = simplify(expand(growth_expr).as_leading_term(n_sym))
+                    _, exp = lead.as_coeff_exponent(n_sym)
+                    if exp.is_number:
+                        theta_core = _format_n_power(exp)
+                        dominant_term = theta_core
+            except Exception:
+                theta_core = None
+
+        if theta_core is None and g_expr_n is not None:
+            try:
+                if g_expr_n.is_number:
+                    theta_core = "n"
+                    dominant_term = "n"
+                    asymptotic_partial = sum_partial
+                elif g_expr_n.is_polynomial(n_sym):
+                    g_degree = int(Poly(expand(g_expr_n), n_sym).degree())
+                    theta_core = _format_n_power(Integer(max(g_degree, 0) + 1))
+                    dominant_term = theta_core
+                    asymptotic_partial = True
+                elif isinstance(g_expr_n, Pow) and g_expr_n.base == n_sym and g_expr_n.exp.is_number:
+                    next_exp = simplify(g_expr_n.exp + 1)
+                    theta_core = _format_n_power(next_exp)
+                    dominant_term = theta_core
+                    asymptotic_partial = True
+                elif simplify(g_expr_n - sqrt(n_sym)) == 0:
+                    theta_core = r"n^{\frac{3}{2}}"
+                    dominant_term = theta_core
+                    asymptotic_partial = True
+            except Exception:
+                theta_core = None
+
+        if theta_core is None:
+            theta = "N/A"
+            if dominant_term == "\\text{N/A}":
+                dominant_term = summation_evaluated.split("=")[-1]
+            asymptotic_partial = True
+        else:
+            theta = f"\\Theta({theta_core})"
+            asymptotic_partial = asymptotic_partial or sum_partial
+
+        context = IterationStepContext(
+            locale=self.locale,
+            recurrence_form=recurrence_form,
+            g_n=g_n_value,
+            is_supported=True,
+            support_code=None,
+            base_case_index=base_idx,
+            base_case_value=str(base_val) if base_val is not None else None,
+            expansions=expansions,
+            general_form=general_form,
+            k_condition=k_condition,
+            k_value=k_value,
+            summation_expression=summation_expression,
+            summation_evaluated=summation_evaluated,
+            final_expression=final_expression,
+            dominant_term=dominant_term,
+            theta=theta,
+            summation_partial=sum_partial,
+            asymptotic_partial=asymptotic_partial,
+            missing_base_case=missing_base,
+        )
+        step_bundle = build_iteration_step_bundle(context)
+
+        iteration = {
+            "method": "iteration",
+            "g_function": g_n_value,
+            "expansions": expansions,
+            "general_form": general_form,
+            "base_case": {
+                "condition": k_condition,
+                "k": k_value,
+            },
+            "summation": {
+                "expression": summation_expression,
+                "evaluated": summation_evaluated,
+            },
+            "theta": theta,
+            "step_by_step": step_bundle,
         }
+
+        self.proof_steps.append(
+            {
+                "id": "iteration_result",
+                "text": f"\\text{{Resultado por iteración: }} T(n) = {theta}",
+            }
+        )
+
+        return {"success": True, "iteration": iteration}
     
     def _extract_g_function(self) -> Optional[Dict[str, Any]]:
         """

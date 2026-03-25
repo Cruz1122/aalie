@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Optional
 
-StepStatus = Literal["complete", "partial", "unsupported", "error"]
-StepConfidence = Literal["high", "medium", "low"]
+from .recursive_steps_core import (
+    StepConfidence,
+    StepStatus,
+    compute_overall_status,
+    locale_key,
+    make_recursive_step,
+)
 
 
 _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
@@ -101,21 +106,6 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
     },
 }
 
-
-def _locale_key(locale: str) -> str:
-    return "es" if str(locale).lower().startswith("es") else "en"
-
-
-def _render_template(locale: str, key: str, params: Optional[Dict[str, Any]] = None) -> str:
-    table = _TEMPLATE_STRINGS.get(_locale_key(locale), _TEMPLATE_STRINGS["en"])
-    template = table.get(key, key)
-    safe_params = {k: str(v) for k, v in (params or {}).items()}
-    try:
-        return template.format(**safe_params)
-    except Exception:
-        return template
-
-
 @dataclass
 class StepContext:
     locale: str
@@ -140,17 +130,6 @@ class StepContext:
     required_constants: int = 0
 
 
-def compute_overall_status(steps: List[Dict[str, Any]]) -> StepStatus:
-    statuses = [s.get("status", "complete") for s in steps]
-    if "error" in statuses:
-        return "error"
-    if "unsupported" in statuses:
-        return "unsupported"
-    if "partial" in statuses:
-        return "partial"
-    return "complete"
-
-
 def _make_step(
     *,
     ctx: StepContext,
@@ -171,37 +150,26 @@ def _make_step(
     assumptions: Optional[List[str]] = None,
     blocked_by: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
-    summary = _render_template(ctx.locale, summary_key, params)
-    concept = _render_template(ctx.locale, concept_key, params)
-    warning = _render_template(ctx.locale, warning_key, params) if warning_key else None
-    return {
-        "id": step_id,
-        "index": index,
-        "kind": kind,
-        "title": title,
-        "status": status,
-        "math": {
-            "primaryLatex": primary_latex,
-            "items": items or [],
-        },
-        "summary": summary,
-        "conceptNote": concept,
-        "teachingNote": concept,
-        "warning": warning,
-        "confidence": confidence,
-        "payload": payload or {},
-        "template": {
-            "summaryKey": summary_key,
-            "conceptKey": concept_key,
-            "warningKey": warning_key,
-            "params": params or {},
-        },
-        "audit": {
-            "codes": codes or [],
-            "assumptions": assumptions or [],
-            "blockedBy": blocked_by or [],
-        },
-    }
+    return make_recursive_step(
+        template_strings=_TEMPLATE_STRINGS,
+        locale=ctx.locale,
+        index=index,
+        step_id=step_id,
+        kind=kind,
+        title=title,
+        status=status,
+        confidence=confidence,
+        summary_key=summary_key,
+        concept_key=concept_key,
+        warning_key=warning_key,
+        params=params,
+        primary_latex=primary_latex,
+        items=items,
+        payload=payload,
+        codes=codes,
+        assumptions=assumptions,
+        blocked_by=blocked_by,
+    )
 
 
 def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
@@ -213,7 +181,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=1,
             step_id="ceq_s1",
             kind="recurrence_detected",
-            title="Recurrencia detectada" if _locale_key(ctx.locale) == "es" else "Detected recurrence",
+            title="Recurrencia detectada" if locale_key(ctx.locale) == "es" else "Detected recurrence",
             status="complete",
             confidence="high",
             summary_key="recurrence_detected.linear_shift",
@@ -233,7 +201,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=2,
             step_id="ceq_s2",
             kind="applicability_validated",
-            title="Validación de aplicabilidad" if _locale_key(ctx.locale) == "es" else "Applicability validation",
+            title="Validación de aplicabilidad" if locale_key(ctx.locale) == "es" else "Applicability validation",
             status=step2_status,
             confidence="high" if ctx.is_linear else "low",
             summary_key="applicability_validated.supported" if ctx.is_linear else "applicability_validated.unsupported",
@@ -251,7 +219,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=3,
             step_id="ceq_s3",
             kind="homogeneity_classified",
-            title="Clasificación homogénea" if _locale_key(ctx.locale) == "es" else "Homogeneity classification",
+            title="Clasificación homogénea" if locale_key(ctx.locale) == "es" else "Homogeneity classification",
             status="complete",
             confidence="high",
             summary_key=(
@@ -272,7 +240,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=4,
             step_id="ceq_s4",
             kind="homogeneous_part_extracted",
-            title="Extracción de parte homogénea" if _locale_key(ctx.locale) == "es" else "Homogeneous part extraction",
+            title="Extracción de parte homogénea" if locale_key(ctx.locale) == "es" else "Homogeneous part extraction",
             status="complete",
             confidence="high",
             summary_key="homogeneous_part_extracted.standard",
@@ -288,7 +256,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=5,
             step_id="ceq_s5",
             kind="characteristic_polynomial_built",
-            title="Ecuación característica" if _locale_key(ctx.locale) == "es" else "Characteristic equation",
+            title="Ecuación característica" if locale_key(ctx.locale) == "es" else "Characteristic equation",
             status="complete",
             confidence="high",
             summary_key="characteristic_polynomial_built.standard",
@@ -313,7 +281,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=6,
             step_id="ceq_s6",
             kind="roots_computed",
-            title="Raíces y multiplicidades" if _locale_key(ctx.locale) == "es" else "Roots and multiplicities",
+            title="Raíces y multiplicidades" if locale_key(ctx.locale) == "es" else "Roots and multiplicities",
             status=step6_status,
             confidence="medium" if step6_status == "partial" else "high",
             summary_key=step6_key,
@@ -334,7 +302,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=7,
             step_id="ceq_s7",
             kind="homogeneous_solution_built",
-            title="Solución homogénea" if _locale_key(ctx.locale) == "es" else "Homogeneous solution",
+            title="Solución homogénea" if locale_key(ctx.locale) == "es" else "Homogeneous solution",
             status="complete",
             confidence="high",
             summary_key="homogeneous_solution_built.standard",
@@ -366,7 +334,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=8,
             step_id="ceq_s8",
             kind="particular_solution_built",
-            title="Solución particular" if _locale_key(ctx.locale) == "es" else "Particular solution",
+            title="Solución particular" if locale_key(ctx.locale) == "es" else "Particular solution",
             status=step8_status,
             confidence="high" if step8_status == "complete" else "low",
             summary_key=step8_key,
@@ -397,7 +365,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=9,
             step_id="ceq_s9",
             kind="general_solution_built",
-            title="Solución general" if _locale_key(ctx.locale) == "es" else "General solution",
+            title="Solución general" if locale_key(ctx.locale) == "es" else "General solution",
             status=step9_status,
             confidence="medium" if step9_status == "partial" else "high",
             summary_key=step9_key,
@@ -431,7 +399,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=10,
             step_id="ceq_s10",
             kind="base_conditions_applied",
-            title="Aplicación de condiciones iniciales" if _locale_key(ctx.locale) == "es" else "Initial conditions application",
+            title="Aplicación de condiciones iniciales" if locale_key(ctx.locale) == "es" else "Initial conditions application",
             status=step10_status,
             confidence="high" if step10_status == "complete" else "medium",
             summary_key=step10_summary_key,
@@ -454,7 +422,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=11,
             step_id="ceq_s11",
             kind="closed_form_simplified",
-            title="Simplificación final" if _locale_key(ctx.locale) == "es" else "Final simplification",
+            title="Simplificación final" if locale_key(ctx.locale) == "es" else "Final simplification",
             status=step11_status,
             confidence="medium" if step11_status == "partial" else "high",
             summary_key="closed_form_simplified.partial" if step11_status == "partial" else "closed_form_simplified.complete",
@@ -474,7 +442,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=12,
             step_id="ceq_s12",
             kind="dominant_term_concluded",
-            title="Conclusión asintótica" if _locale_key(ctx.locale) == "es" else "Asymptotic conclusion",
+            title="Conclusión asintótica" if locale_key(ctx.locale) == "es" else "Asymptotic conclusion",
             status=step12_status,
             confidence="medium" if step12_status == "partial" else "high",
             summary_key="dominant_term_concluded.partial" if step12_status == "partial" else "dominant_term_concluded.exponential",

@@ -145,7 +145,7 @@ END
         """Test: Endpoint /open con preferred_method"""
         source = """
 factorial(n) BEGIN
-    IF n <= 1 THEN BEGIN
+    IF (n <= 1) THEN BEGIN
         RETURN 1;
     END
     RETURN n * factorial(n - 1);
@@ -192,6 +192,59 @@ END
         steps = step_bundle.get("steps", [])
         assert isinstance(steps, list)
         assert len(steps) == 12
+
+        required_fields = {
+            "id",
+            "kind",
+            "title",
+            "status",
+            "math",
+            "summary",
+            "teachingNote",
+            "warning",
+            "confidence",
+            "payload",
+            "conceptNote",
+        }
+        valid_status = {"complete", "partial", "unsupported", "error"}
+        for index, step in enumerate(steps, start=1):
+            assert required_fields.issubset(step.keys())
+            assert step.get("index") == index
+            assert step.get("status") in valid_status
+            assert isinstance(step.get("math"), dict)
+            assert isinstance(step.get("payload"), dict)
+
+    def test_open_endpoint_iteration_step_bundle_contract(self):
+        """Test: /open devuelve step_by_step tipado (11 pasos) para método de iteración."""
+        source = """
+factorial(n) BEGIN
+    IF (n <= 1) THEN BEGIN
+        RETURN 1;
+    END
+    RETURN n * factorial(n - 1);
+END
+"""
+        payload = {
+            "source": source,
+            "mode": "worst",
+            "preferred_method": "iteration",
+            "locale": "es",
+        }
+        response = client.post("/analyze/open", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("ok") is True
+
+        iteration = data.get("totals", {}).get("iteration", {})
+        step_bundle = iteration.get("step_by_step")
+        assert isinstance(step_bundle, dict)
+        assert step_bundle.get("method") == "iteration"
+        assert step_bundle.get("version") == "iter_steps_v1"
+        assert step_bundle.get("overallStatus") in {"complete", "partial", "unsupported", "error"}
+
+        steps = step_bundle.get("steps", [])
+        assert isinstance(steps, list)
+        assert len(steps) == 11
 
         required_fields = {
             "id",

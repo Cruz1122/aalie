@@ -863,6 +863,7 @@
       "flipToExplanation": "Ver explicación",
       "flipToResult": "Volver al paso",
       "conceptTitle": "Explicación del paso",
+      "recurrenceEquation": "Ecuación de recurrencia",
       "characteristicEquation": "Ecuación característica",
       "finalTheta": "Conclusión asintótica (Theta)"
     }

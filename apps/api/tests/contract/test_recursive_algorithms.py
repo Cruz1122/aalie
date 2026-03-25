@@ -82,6 +82,14 @@ DOUBLE_CONSTANT_RECURSIVE_PSEUDOCODE = """dobleConstante(n) BEGIN
 END
 """
 
+LINEAR_SUM_RECURSIVE_PSEUDOCODE = """sumaRec(n) BEGIN
+    IF (n <= 0) THEN BEGIN
+        RETURN 0;
+    END
+    RETURN sumaRec(n - 1) + n;
+END
+"""
+
 
 class TestRecursiveAlgorithmsPseudocode:
     """Tests auténticos con pseudocode para algoritmos recursivos."""
@@ -252,6 +260,65 @@ class TestDynamicProgrammingValidation:
         assert step8.get("kind") == "particular_solution_built"
         assert step8.get("status") == "complete"
         assert step8.get("template", {}).get("summaryKey") == "particular_solution_built.constant_supported"
+
+    def test_iteration_step_bundle_contract_for_unit_shift(self):
+        """Iteración debe entregar bundle de 11 pasos para T(n)=T(n-1)+1."""
+        result = analyze_algorithm(
+            FACTORIAL_RECURSIVE_PSEUDOCODE,
+            mode="worst",
+            preferred_method="iteration",
+        )
+
+        assert result.get("ok"), result.get("errors", [])
+        iteration = result.get("totals", {}).get("iteration", {})
+        bundle = iteration.get("step_by_step")
+        assert isinstance(bundle, dict)
+        assert bundle.get("method") == "iteration"
+        assert bundle.get("version") == "iter_steps_v1"
+        assert bundle.get("overallStatus") == "complete"
+
+        steps = bundle.get("steps", [])
+        assert len(steps) == 11
+        assert [step.get("index") for step in steps] == list(range(1, 12))
+        assert steps[1].get("kind") == "applicability_validated"
+        assert steps[1].get("status") == "complete"
+        assert "\\sum" in (steps[6].get("math", {}).get("primaryLatex") or "")
+
+    def test_iteration_step_bundle_contract_for_linear_n(self):
+        """Iteración debe mantener contrato tipado en una recurrencia lineal con término variable."""
+        result = analyze_algorithm(
+            LINEAR_SUM_RECURSIVE_PSEUDOCODE,
+            mode="worst",
+            preferred_method="iteration",
+        )
+
+        assert result.get("ok"), result.get("errors", [])
+        iteration = result.get("totals", {}).get("iteration", {})
+        assert isinstance(iteration.get("theta"), str)
+        assert iteration.get("theta") != "N/A"
+        bundle = iteration.get("step_by_step", {})
+        assert bundle.get("overallStatus") == "complete"
+        steps = bundle.get("steps", [])
+        assert len(steps) == 11
+        assert steps[7].get("kind") == "summation_simplified"
+        assert steps[7].get("status") == "complete"
+
+    def test_iteration_preferred_on_divide_conquer_is_explicitly_unsupported(self):
+        """Si se fuerza iteración sobre divide-and-conquer, el step 2 debe marcar unsupported."""
+        result = analyze_algorithm(
+            BINARY_SEARCH_RECURSIVE_PSEUDOCODE,
+            mode="worst",
+            preferred_method="iteration",
+        )
+
+        assert result.get("ok"), result.get("errors", [])
+        iteration = result.get("totals", {}).get("iteration", {})
+        bundle = iteration.get("step_by_step", {})
+        assert bundle.get("overallStatus") == "unsupported"
+        steps = bundle.get("steps", [])
+        assert len(steps) == 11
+        assert steps[1].get("kind") == "applicability_validated"
+        assert steps[1].get("status") == "unsupported"
 
 
 class TestRecursiveAlgorithms:

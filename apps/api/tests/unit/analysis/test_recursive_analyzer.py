@@ -1640,21 +1640,116 @@ class TestRecursiveAnalyzerDPValidation:
         assert not result.get("success")
         assert "reason" in result
 
-    def test_apply_iteration_method_no_g_function(self):
-        """Test: _apply_iteration_method falla si no puede extraer g(n)"""
+    def test_apply_iteration_method_builds_step_bundle_for_unit_shift(self):
+        """Test: _apply_iteration_method construye bundle tipado para T(n)=T(n-1)+1."""
         self.analyzer.recurrence = {
             "form": "T(n) = T(n-1) + 1",
-            "a": 1,
-            "f": "1",
+            "type": "linear_shift",
+            "order": 1,
+            "shifts": [1],
+            "coefficients": [1],
+            "g(n)": "1",
             "n0": 1,
-            "applicable": True
+            "applicable": True,
+            "method": "iteration",
         }
-        
-        with patch.object(self.analyzer, '_extract_g_function', return_value=None):
+
+        result = self.analyzer._apply_iteration_method()
+
+        assert result.get("success")
+        iteration = result.get("iteration", {})
+        bundle = iteration.get("step_by_step")
+        assert isinstance(bundle, dict)
+        assert bundle.get("method") == "iteration"
+        assert bundle.get("version") == "iter_steps_v1"
+        assert len(bundle.get("steps", [])) == 11
+        assert bundle["steps"][1]["kind"] == "applicability_validated"
+        assert bundle["steps"][1]["status"] == "complete"
+
+    def test_apply_iteration_method_constant_case_complete(self):
+        """Test: T(n)=T(n-1)+1 produce steps completos y Theta lineal."""
+        self.analyzer.recurrence = {
+            "form": "T(n)=T(n-1)+1",
+            "type": "linear_shift",
+            "order": 1,
+            "shifts": [1],
+            "coefficients": [1],
+            "g(n)": "1",
+            "n0": 0,
+            "applicable": True,
+            "method": "iteration",
+        }
+        self.analyzer.proc_def = {"type": "ProcDef", "name": "constante"}
+
+        with patch.object(self.analyzer, "_detect_base_cases", return_value={"T(0)": 1}):
             result = self.analyzer._apply_iteration_method()
-            
-            assert not result.get("success")
-            assert "reason" in result
+
+        assert result.get("success")
+        iteration = result["iteration"]
+        assert iteration.get("theta") == "\\Theta(n)"
+        bundle = iteration.get("step_by_step", {})
+        assert bundle.get("overallStatus") == "complete"
+        steps = bundle.get("steps", [])
+        assert len(steps) == 11
+        assert steps[7]["kind"] == "summation_simplified"
+        assert steps[7]["status"] == "complete"
+        assert "\\sum" in (steps[6]["math"]["primaryLatex"] or "")
+
+    def test_apply_iteration_method_linear_n_case_complete(self):
+        """Test: T(n)=T(n-1)+n produce cierre exacto y Theta cuadrática."""
+        self.analyzer.recurrence = {
+            "form": "T(n)=T(n-1)+n",
+            "type": "linear_shift",
+            "order": 1,
+            "shifts": [1],
+            "coefficients": [1],
+            "g(n)": "n",
+            "n0": 0,
+            "applicable": True,
+            "method": "iteration",
+        }
+        self.analyzer.proc_def = {"type": "ProcDef", "name": "lineal"}
+
+        with patch.object(self.analyzer, "_detect_base_cases", return_value={"T(0)": 0}):
+            result = self.analyzer._apply_iteration_method()
+
+        assert result.get("success")
+        iteration = result["iteration"]
+        assert iteration.get("theta") == "\\Theta(n^{2})"
+        bundle = iteration.get("step_by_step", {})
+        assert bundle.get("overallStatus") == "complete"
+        steps = bundle.get("steps", [])
+        assert steps[7]["status"] == "complete"
+        assert "\\frac{n" in (steps[7]["math"]["primaryLatex"] or "")
+
+    def test_apply_iteration_method_sqrt_case_marks_partial(self):
+        """Test: T(n)=T(n-1)+sqrt(n) mantiene sumatoria simbólica y marca partial."""
+        self.analyzer.recurrence = {
+            "form": "T(n)=T(n-1)+\\sqrt{n}",
+            "type": "linear_shift",
+            "order": 1,
+            "shifts": [1],
+            "coefficients": [1],
+            "g(n)": "\\sqrt{n}",
+            "n0": 0,
+            "applicable": True,
+            "method": "iteration",
+        }
+        self.analyzer.proc_def = {"type": "ProcDef", "name": "sqrt_case"}
+
+        with patch.object(self.analyzer, "_detect_base_cases", return_value={"T(0)": 0}):
+            result = self.analyzer._apply_iteration_method()
+
+        assert result.get("success")
+        iteration = result["iteration"]
+        bundle = iteration.get("step_by_step", {})
+        assert bundle.get("overallStatus") == "partial"
+        steps = bundle.get("steps", [])
+        assert steps[7]["kind"] == "summation_simplified"
+        assert steps[7]["status"] == "partial"
+        assert "ITER_SUMMATION_PARTIAL" in steps[7]["audit"]["codes"]
+        assert steps[10]["kind"] == "asymptotic_concluded"
+        assert steps[10]["status"] == "partial"
 
     def test_apply_recursion_tree_method_merge_sort(self):
         """Test: _apply_recursion_tree_method aplica método de árbol de recursión"""
@@ -3177,19 +3272,28 @@ class TestRecursiveAnalyzerDPValidation:
             result = self.analyzer._apply_characteristic_equation_method()
             assert not result.get("success")
     
-    def test_apply_iteration_method_no_g_function(self):
-        """Test: _apply_iteration_method falla si no puede extraer g(n)"""
+    def test_apply_iteration_method_marks_unsupported_for_non_linear_form(self):
+        """Test: _apply_iteration_method marca unsupported para divide-and-conquer."""
         self.analyzer.recurrence = {
-            "form": "T(n) = T(n-1) + 1",
+            "form": "T(n) = T(n/2) + 1",
+            "type": "divide_conquer",
             "a": 1,
+            "b": 2,
             "f": "1",
             "n0": 1,
-            "applicable": True
+            "applicable": True,
+            "method": "iteration",
         }
-        self.analyzer.proc_def = {"type": "ProcDef", "name": "test"}
-        with patch.object(self.analyzer, '_extract_g_function', return_value=None):
-            result = self.analyzer._apply_iteration_method()
-            assert not result.get("success")
+        result = self.analyzer._apply_iteration_method()
+        assert result.get("success")
+        iteration = result.get("iteration", {})
+        bundle = iteration.get("step_by_step", {})
+        assert bundle.get("overallStatus") == "unsupported"
+        steps = bundle.get("steps", [])
+        assert len(steps) == 11
+        assert steps[1]["kind"] == "applicability_validated"
+        assert steps[1]["status"] == "unsupported"
+        assert "ITER_UNSUPPORTED_NON_LINEAR_FORM" in steps[1]["audit"]["codes"]
     
     def test_apply_recursion_tree_method_no_recurrence(self):
         """Test: _apply_recursion_tree_method falla si no hay recurrencia"""

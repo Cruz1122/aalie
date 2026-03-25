@@ -265,6 +265,16 @@ export function buildSnapshot(input: BuildSnapshotInput): AalieAnalysisSnapshotV
       : null,
   ].filter(Boolean);
 
+  const selectedStepByStep =
+    normalizedRecurrence?.method === "iteration"
+      ? selectedCase?.totals?.iteration?.step_by_step ||
+        selectedCase?.totals?.characteristic_equation?.step_by_step
+      : normalizedRecurrence?.method === "characteristic_equation"
+        ? selectedCase?.totals?.characteristic_equation?.step_by_step ||
+          selectedCase?.totals?.iteration?.step_by_step
+        : selectedCase?.totals?.characteristic_equation?.step_by_step ||
+          selectedCase?.totals?.iteration?.step_by_step;
+
   const methodsApplied = [
     normalizedRecurrence?.method,
     ...methodDetails.map((detail) => detail?.method),
@@ -365,6 +375,7 @@ export function buildSnapshot(input: BuildSnapshotInput): AalieAnalysisSnapshotV
             characteristicEquationStepByStep:
               selectedCase.totals?.characteristic_equation?.step_by_step,
             iteration: selectedCase.totals?.iteration,
+            iterationStepByStep: selectedCase.totals?.iteration?.step_by_step,
             master: selectedCase.totals?.master,
             recursionTree: selectedCase.totals?.recursion_tree,
           })
@@ -454,11 +465,8 @@ export function buildSnapshot(input: BuildSnapshotInput): AalieAnalysisSnapshotV
           rootsAndMultiplicities: selectedCase?.totals?.characteristic_equation?.roots
             ? createSection("available", selectedCase.totals.characteristic_equation.roots)
             : createSection("not_supported"),
-          stepByStep: selectedCase?.totals?.characteristic_equation?.step_by_step
-            ? createSection(
-                "available",
-                selectedCase.totals.characteristic_equation.step_by_step,
-              )
+          stepByStep: selectedStepByStep
+            ? createSection("available", selectedStepByStep)
             : createSection("not_supported"),
           closedForm: selectedCase?.totals?.characteristic_equation
             ? createSection("available", {

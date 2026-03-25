@@ -1,4 +1,9 @@
-import type { AnalyzeOpenResponse, LoopInvariant, Program } from "./index";
+import type {
+  AnalyzeOpenResponse,
+  LoopInvariant,
+  Program,
+  RecursiveMethodStepBundle,
+} from "./index";
 
 export const SNAPSHOT_SCHEMA_VERSION = "1.0.0" as const;
 
@@ -162,6 +167,9 @@ export interface SnapshotInternal {
       AnalyzeOpenResponse["totals"]["characteristic_equation"]
     >["step_by_step"];
     iteration?: AnalyzeOpenResponse["totals"]["iteration"];
+    iterationStepByStep?: NonNullable<
+      AnalyzeOpenResponse["totals"]["iteration"]
+    >["step_by_step"];
     master?: AnalyzeOpenResponse["totals"]["master"];
     recursionTree?: AnalyzeOpenResponse["totals"]["recursion_tree"];
   }>;
@@ -215,9 +223,7 @@ export interface RecursiveSnapshotSection {
   rootsAndMultiplicities: SnapshotSection<
     Array<{ root: string; multiplicity: number }>
   >;
-  stepByStep: SnapshotSection<
-    NonNullable<AnalyzeOpenResponse["totals"]["characteristic_equation"]>["step_by_step"]
-  >;
+  stepByStep: SnapshotSection<RecursiveMethodStepBundle>;
   closedForm: SnapshotSection<{
     homogeneousSolution?: string;
     particularSolution?: string;

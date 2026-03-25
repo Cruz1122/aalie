@@ -480,31 +480,12 @@ const renderCharacteristicModal = (
 const renderIterationModal = (
   props: ProcedureModalProps,
 ): React.JSX.Element => {
-  const divideConquerRecurrence =
-    props.recurrence?.type === "divide_conquer"
-      ? extractDivideConquerRecurrence(
-          props.recurrence as {
-            type: "divide_conquer";
-            form: string;
-            a: number;
-            b: number;
-            f: string;
-            n0: number;
-            applicable: boolean;
-            notes: string[];
-            method?: "master" | "iteration" | "recursion_tree";
-          },
-        )
-      : null;
-
   return (
     <IterationProcedureModal
       open={props.showProcedureModal}
       onClose={() => props.setShowProcedureModal(false)}
-      data={props.worstData || props.bestData || props.avgData}
-      recurrence={divideConquerRecurrence}
+      recurrence={props.recurrence}
       iteration={props.iteration}
-      proof={props.proof}
       theta={props.theta || props.T_open}
     />
   );
@@ -761,6 +742,7 @@ const renderRecurrenceParameters = (
 interface ActionButtonsProps {
   readonly tView: (k: string) => string;
   readonly isCharacteristicMethod: boolean;
+  readonly isIterationMethod: boolean;
   readonly isRecursionTreeMethod: boolean;
   readonly proof: ProofType;
   readonly setShowCharacteristicModal: (show: boolean) => void;
@@ -794,11 +776,19 @@ const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
     <div className={`mb-4 ${showGrid ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : ""}`}>
       <button
         onClick={handleDetailsClick}
-        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary transition-colors min-w-0 ${props.isCharacteristicMethod ? "hover:bg-blue-500/20" : "hover:bg-sky-500/20"} ${showGrid ? "" : "w-full"}`}
+        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary transition-colors min-w-0 ${
+          props.isCharacteristicMethod
+            ? "hover:bg-blue-500/20"
+            : props.isIterationMethod
+              ? "hover:bg-violet-500/20"
+              : "hover:bg-sky-500/20"
+        } ${showGrid ? "" : "w-full"}`}
       >
         <span className="material-symbols-outlined text-sm flex-shrink-0">info</span>
         <span className="truncate">
-          {props.isCharacteristicMethod ? props.tView("viewStepByStep") : props.tView("viewDetails")}
+          {props.isCharacteristicMethod || props.isIterationMethod
+            ? props.tView("viewStepByStep")
+            : props.tView("viewDetails")}
         </span>
       </button>
       {props.isRecursionTreeMethod && props.proof && props.proof.length > 0 && (
@@ -1041,11 +1031,21 @@ interface EfficiencyCardProps {
 const renderEfficiencyCard = (
   props: EfficiencyCardProps,
 ): React.JSX.Element => {
+  const efficiencyBorderClass = props.isIterationMethod
+    ? "!border-violet-500/30"
+    : "border-blue-500/20";
+  const efficiencyIconClass = props.isIterationMethod
+    ? "text-violet-400"
+    : "text-blue-400";
+  const efficiencyInnerBorderClass = props.isIterationMethod
+    ? "!border-violet-500/30"
+    : "border-blue-500/30";
+
   return (
-    <div className="glass-card p-4 sm:p-7 rounded-lg border border-blue-500/20 flex-shrink-0 min-w-0">
+    <div className={`glass-card p-4 sm:p-7 rounded-lg border flex-shrink-0 min-w-0 ${efficiencyBorderClass}`}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 min-w-0">
         <h3 className="text-white font-semibold text-sm flex items-center gap-2 flex-wrap min-w-0">
-          <span className="material-symbols-outlined text-base text-blue-400 flex-shrink-0">
+          <span className={`material-symbols-outlined text-base flex-shrink-0 ${efficiencyIconClass}`}>
             functions
           </span>
           <span className="truncate">{props.tRecursionTree("efficiencyEquation")}</span>
@@ -1082,7 +1082,7 @@ const renderEfficiencyCard = (
         )}
       </div>
       <div
-        className={`rounded-lg bg-slate-800/60 border border-blue-500/30 flex justify-start sm:justify-center items-center overflow-x-auto overflow-y-auto max-h-[40vh] min-w-0 ${
+        className={`rounded-lg bg-slate-800/60 border flex justify-start sm:justify-center items-center overflow-x-auto overflow-y-auto max-h-[40vh] min-w-0 ${efficiencyInnerBorderClass} ${
           props.isIterationMethod ? "p-4 sm:p-7 min-h-[100px] sm:min-h-[140px]" : "p-4 sm:p-6 min-h-[100px] sm:min-h-[120px]"
         }`}
       >
@@ -1499,12 +1499,16 @@ export default function RecursiveAnalysisView({
               <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   onClick={() => setShowProcedureModal(true)}
-                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-sky-500/20 transition-colors min-w-0"
+                  className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary transition-colors min-w-0 ${
+                    isIterationMethod ? "hover:bg-violet-500/20" : "hover:bg-sky-500/20"
+                  }`}
                 >
                   <span className="material-symbols-outlined text-sm flex-shrink-0">
                     info
                   </span>
-                  <span className="truncate">{tView("viewDetails")}</span>
+                  <span className="truncate">
+                    {isIterationMethod ? tView("viewStepByStep") : tView("viewDetails")}
+                  </span>
                 </button>
                 <button
                   onClick={() => setShowTreeModal(true)}
@@ -1525,6 +1529,7 @@ export default function RecursiveAnalysisView({
               {renderActionButtons({
                 tView,
                 isCharacteristicMethod,
+                isIterationMethod,
                 isRecursionTreeMethod,
                 proof,
                 setShowCharacteristicModal,

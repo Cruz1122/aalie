@@ -10,6 +10,7 @@ import Formula from "./Formula";
 
 interface AAAnalysisStepCardProps {
   step: RecursiveAnalysisStep;
+  accent?: "blue" | "purple";
 }
 
 const statusClassMap: Record<RecursiveStepStatus, string> = {
@@ -84,7 +85,10 @@ function MixedLatexText({ text, className }: Readonly<{ text: string; className?
   );
 }
 
-export default function AAAnalysisStepCard({ step }: Readonly<AAAnalysisStepCardProps>) {
+export default function AAAnalysisStepCard({
+  step,
+  accent = "blue",
+}: Readonly<AAAnalysisStepCardProps>) {
   const t = useTranslations("analyzer.analysisSteps");
   const locale = asLocale(useLocale());
   const summary = translateBackendContent(step.summary, locale);
@@ -92,10 +96,24 @@ export default function AAAnalysisStepCard({ step }: Readonly<AAAnalysisStepCard
   const warning = step.warning ? translateBackendContent(step.warning, locale) : null;
   const hasMath = Boolean(step.math.primaryLatex) || step.math.items.length > 0;
   const [isFlipped, setIsFlipped] = useState(false);
+  const stepDotClassName =
+    accent === "purple"
+      ? "absolute left-0 top-0 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-violet-400/50 bg-slate-900 text-sm font-semibold text-violet-300"
+      : "absolute left-0 top-0 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-blue-400/50 bg-slate-900 text-sm font-semibold text-blue-300";
+  const actionButtonClassName =
+    accent === "purple"
+      ? "rounded-md border border-violet-400/40 bg-violet-500/10 px-2 py-1 text-[10px] font-semibold text-violet-200 transition hover:bg-violet-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300"
+      : "rounded-md border border-blue-400/40 bg-blue-500/10 px-2 py-1 text-[10px] font-semibold text-blue-200 transition hover:bg-blue-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300";
+  const backCardClassName =
+    accent === "purple"
+      ? "col-start-1 row-start-1 min-w-0 max-w-full rounded-lg border border-violet-400/30 bg-slate-900/90 p-4 transition-opacity duration-220 ease-out motion-reduce:transition-none"
+      : "col-start-1 row-start-1 min-w-0 max-w-full rounded-lg border border-blue-400/30 bg-slate-900/90 p-4 transition-opacity duration-220 ease-out motion-reduce:transition-none";
+  const backTitleClassName =
+    accent === "purple" ? "text-sm font-semibold text-violet-200" : "text-sm font-semibold text-blue-200";
 
   return (
     <div className="relative z-10 w-full max-w-full pl-10 sm:pl-12">
-      <div className="absolute left-0 top-0 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-blue-400/50 bg-slate-900 text-sm font-semibold text-blue-300">
+      <div className={stepDotClassName}>
         {step.index}
       </div>
       <div className="relative max-w-full">
@@ -125,7 +143,7 @@ export default function AAAnalysisStepCard({ step }: Readonly<AAAnalysisStepCard
                   type="button"
                   aria-label={t("flipToExplanation")}
                   onClick={() => setIsFlipped(true)}
-                  className="rounded-md border border-blue-400/40 bg-blue-500/10 px-2 py-1 text-[10px] font-semibold text-blue-200 transition hover:bg-blue-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+                  className={actionButtonClassName}
                 >
                   {t("flipToExplanation")}
                 </button>
@@ -147,7 +165,6 @@ export default function AAAnalysisStepCard({ step }: Readonly<AAAnalysisStepCard
                   <div className="mt-2 space-y-2">
                     {step.math.items.map((item) => (
                       <div key={item.id} className="overflow-x-auto rounded border border-white/10 bg-slate-950/60 p-2">
-                        <p className="mb-1 text-[10px] uppercase tracking-wide text-slate-500">{item.kind}</p>
                         <Formula latex={item.latex} display />
                       </div>
                     ))}
@@ -166,19 +183,19 @@ export default function AAAnalysisStepCard({ step }: Readonly<AAAnalysisStepCard
 
           <div
             aria-hidden={!isFlipped}
-            className={`col-start-1 row-start-1 min-w-0 max-w-full rounded-lg border border-blue-400/30 bg-slate-900/90 p-4 transition-opacity duration-220 ease-out motion-reduce:transition-none ${
+            className={`${backCardClassName} ${
               isFlipped
                 ? "opacity-100"
                 : "pointer-events-none opacity-0"
             }`}
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
-              <h4 className="text-sm font-semibold text-blue-200">{step.title}</h4>
+              <h4 className={backTitleClassName}>{step.title}</h4>
               <button
                 type="button"
                 aria-label={t("flipToResult")}
                 onClick={() => setIsFlipped(false)}
-                className="rounded-md border border-blue-400/40 bg-blue-500/10 px-2 py-1 text-[10px] font-semibold text-blue-200 transition hover:bg-blue-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+                className={actionButtonClassName}
               >
                 {t("flipToResult")}
               </button>
