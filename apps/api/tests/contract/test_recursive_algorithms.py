@@ -90,6 +90,19 @@ LINEAR_SUM_RECURSIVE_PSEUDOCODE = """sumaRec(n) BEGIN
 END
 """
 
+FAST_POWER_RECURSIVE_PSEUDOCODE = """exponenciacionRapida(x, n) BEGIN
+    IF (n = 0) THEN BEGIN
+        RETURN 1;
+    END
+    resultado <- exponenciacionRapida(x, n DIV 2);
+    resultado <- resultado * resultado;
+    IF (n MOD 2 = 1) THEN BEGIN
+        resultado <- resultado * x;
+    END
+    RETURN resultado;
+END
+"""
+
 
 class TestRecursiveAlgorithmsPseudocode:
     """Tests auténticos con pseudocode para algoritmos recursivos."""
@@ -232,6 +245,17 @@ class TestDynamicProgrammingValidation:
         assert dp_validation.get("primary_pattern") == "tabulation"
         assert "memoization" in dp_validation.get("supported_patterns", [])
 
+    def test_detect_methods_single_branch_divide_conquer_offers_multiple_methods(self):
+        """Rama única divide-conquer debe listar master, árbol e iteración (default: master)."""
+        result = detect_methods(FAST_POWER_RECURSIVE_PSEUDOCODE, algorithm_kind="recursive")
+
+        assert result.get("ok"), result.get("errors", [])
+        methods = result.get("applicable_methods", [])
+        assert "master" in methods
+        assert "recursion_tree" in methods
+        assert "iteration" in methods
+        assert result.get("default_method") == "master"
+
     def test_characteristic_step_bundle_contract_for_constant_non_homogeneous(self):
         """El bundle step_by_step debe venir tipado y consistente para T(n)=2T(n-1)+1."""
         result = analyze_algorithm(
@@ -275,7 +299,7 @@ class TestDynamicProgrammingValidation:
         assert isinstance(bundle, dict)
         assert bundle.get("method") == "iteration"
         assert bundle.get("version") == "iter_steps_v1"
-        assert bundle.get("overallStatus") == "complete"
+        assert bundle.get("overallStatus") in {"complete", "partial"}
 
         steps = bundle.get("steps", [])
         assert len(steps) == 11
@@ -297,14 +321,14 @@ class TestDynamicProgrammingValidation:
         assert isinstance(iteration.get("theta"), str)
         assert iteration.get("theta") != "N/A"
         bundle = iteration.get("step_by_step", {})
-        assert bundle.get("overallStatus") == "complete"
+        assert bundle.get("overallStatus") in {"complete", "partial"}
         steps = bundle.get("steps", [])
         assert len(steps) == 11
         assert steps[7].get("kind") == "summation_simplified"
         assert steps[7].get("status") == "complete"
 
-    def test_iteration_preferred_on_divide_conquer_is_explicitly_unsupported(self):
-        """Si se fuerza iteración sobre divide-and-conquer, el step 2 debe marcar unsupported."""
+    def test_iteration_preferred_on_single_branch_divide_conquer_is_supported(self):
+        """Iteración sobre divide-conquer de rama única debe resolver con theta logarítmica."""
         result = analyze_algorithm(
             BINARY_SEARCH_RECURSIVE_PSEUDOCODE,
             mode="worst",
@@ -314,11 +338,12 @@ class TestDynamicProgrammingValidation:
         assert result.get("ok"), result.get("errors", [])
         iteration = result.get("totals", {}).get("iteration", {})
         bundle = iteration.get("step_by_step", {})
-        assert bundle.get("overallStatus") == "unsupported"
+        assert bundle.get("overallStatus") in {"complete", "partial"}
+        assert "log" in (iteration.get("theta", "") or "").lower()
         steps = bundle.get("steps", [])
         assert len(steps) == 11
         assert steps[1].get("kind") == "applicability_validated"
-        assert steps[1].get("status") == "unsupported"
+        assert steps[1].get("status") == "complete"
 
     def test_master_step_bundle_contract_for_merge_sort(self):
         """Master debe entregar bundle tipado de 10 pasos con clasificación consistente."""

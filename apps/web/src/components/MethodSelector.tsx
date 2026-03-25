@@ -239,11 +239,27 @@ export default function MethodSelector({
                   >
                     {metadata.recommended && (
                       <div className="absolute -left-2 -top-2 group/star">
-                        <div className="h-5 w-5 rounded-full border border-white/50 bg-white/15 flex items-center justify-center">
-                          <span className="text-[10px] leading-none text-white">★</span>
+                        <div className="relative h-5 w-5">
+                          <div className="absolute inset-0 rounded-full bg-[#182431]" />
+                          <div className="absolute inset-0 rounded-full border border-white/50 bg-white/15 flex items-center justify-center">
+                            <span className="text-[10px] leading-none text-white">★</span>
+                          </div>
                         </div>
-                        <div className="absolute left-0 top-6 z-[9999] w-44 rounded-lg border border-white/30 bg-slate-950 p-2 text-xs text-slate-100 shadow-xl opacity-0 invisible transition-opacity pointer-events-none group-hover/star:opacity-100 group-hover/star:visible">
+                        <div className="absolute left-0 top-6 z-[9999] w-44 rounded-lg border border-white bg-slate-950 p-2 text-xs text-slate-100 shadow-xl opacity-0 invisible transition-opacity pointer-events-none group-hover/star:opacity-100 group-hover/star:visible">
                           {t("recommendedTooltip")}
+                        </div>
+                      </div>
+                    )}
+                    {isApplicable && !metadata.recommended && (
+                      <div className="absolute -right-2 -top-2 group/warn">
+                        <div className="relative h-5 w-5">
+                          <div className="absolute inset-0 rounded-full bg-[#182431]" />
+                          <div className="absolute inset-0 rounded-full border border-amber-500/40 bg-amber-500/20 text-white text-[10px] font-bold flex items-center justify-center">
+                            !
+                          </div>
+                        </div>
+                        <div className="absolute right-0 top-6 z-[9999] w-56 rounded-lg border border-amber-500/30 bg-slate-950 p-2 text-xs text-amber-100 shadow-xl opacity-0 invisible transition-opacity pointer-events-none group-hover/warn:opacity-100 group-hover/warn:visible">
+                          {metadata.reason}
                         </div>
                       </div>
                     )}
@@ -254,8 +270,11 @@ export default function MethodSelector({
                     </span>
                     {!isApplicable && (
                       <div className="absolute -right-2 -top-2 group/help">
-                        <div className="h-5 w-5 rounded-full border border-amber-500/40 bg-amber-500/20 text-amber-300 text-xs font-bold flex items-center justify-center">
-                          ?
+                        <div className="relative h-5 w-5">
+                          <div className="absolute inset-0 rounded-full bg-[#182431]" />
+                          <div className="absolute inset-0 rounded-full border border-amber-500/40 bg-amber-500/20 text-white text-xs font-bold flex items-center justify-center">
+                            ?
+                          </div>
                         </div>
                         <div className="absolute right-0 top-6 z-[9999] w-56 rounded-lg border border-amber-500/30 bg-slate-950 p-2 text-xs text-amber-100 shadow-xl opacity-0 invisible transition-opacity pointer-events-none group-hover/help:opacity-100 group-hover/help:visible">
                           {metadata.reason}

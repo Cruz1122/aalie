@@ -77,7 +77,7 @@ const getPrecisionByMethod = (
   if (recommended) return "high";
   if (info?.type === "divide_conquer") {
     if (method === "master" || method === "recursion_tree") return "high";
-    if (method === "iteration") return "medium";
+    if (method === "iteration") return "low";
     return "low";
   }
   if (info?.type === "linear_shift") {
@@ -87,6 +87,49 @@ const getPrecisionByMethod = (
   }
   if (method === "master" || method === "characteristic_equation") return "medium";
   return "low";
+};
+
+const getApplicableReason = (
+  method: MethodType,
+  info: DetectionRecurrenceInfo | undefined,
+  recommended: boolean,
+  locale: SupportedLocale,
+): string => {
+  const divideConquer = info?.type === "divide_conquer";
+  const linearShift = info?.type === "linear_shift";
+  const isSingleBranchDivideConquer = divideConquer && Number(info?.a ?? 0) === 1;
+
+  if (recommended) {
+    return locale === "es"
+      ? "Este es el método recomendado para la recurrencia detectada."
+      : "This is the recommended method for the detected recurrence.";
+  }
+
+  if (divideConquer && method === "recursion_tree") {
+    return locale === "es"
+      ? "Método soportado y útil para visualización; normalmente se recomienda Teorema Maestro para una cota más estable."
+      : "Supported and useful for visualization; Master Theorem is usually preferred for a more stable bound.";
+  }
+
+  if (divideConquer && method === "iteration") {
+    return isSingleBranchDivideConquer
+      ? (locale === "es"
+        ? "Método soportado por despliegue geométrico de rama única, pero suele ser menos robusto que Master/árbol."
+        : "Supported through single-branch geometric unrolling, but usually less robust than Master/tree.")
+      : (locale === "es"
+        ? "Método disponible con menor precisión para esta forma divide-and-conquer; úsalo solo si quieres comparar enfoques."
+        : "Available with lower precision for this divide-and-conquer shape; use it mainly for method comparison.");
+  }
+
+  if (linearShift && method === "iteration") {
+    return locale === "es"
+      ? "Método soportado como alternativa, pero la ecuación característica suele converger más directo en esta recurrencia."
+      : "Supported as an alternative, but characteristic equation is usually more direct for this recurrence.";
+  }
+
+  return locale === "es"
+    ? "Este método es compatible con la forma de recurrencia detectada, aunque no es la opción recomendada."
+    : "This method is compatible with the detected recurrence shape, although it is not the recommended option.";
 };
 
 const getNotApplicableReason = (
@@ -184,9 +227,7 @@ const buildMethodMetadata = (
           ? getPrecisionByMethod(method, recurrenceInfo, recommended)
           : "low",
         reason: applicable
-          ? (locale === "es"
-            ? "Este metodo es compatible con la forma de recurrencia detectada."
-            : "This method is compatible with the detected recurrence shape.")
+          ? getApplicableReason(method, recurrenceInfo, recommended, locale)
           : getNotApplicableReason(method, recurrenceInfo, locale),
       };
       return acc;

@@ -312,29 +312,53 @@ class RecursiveAnalyzer(BaseAnalyzer):
             
             # Detectar cada método INDEPENDIENTEMENTE (sin prioridad)
             applicable_methods = []
-            
-            # Ecuación Característica
-            use_characteristic = self._detect_characteristic_equation_method(proc_def, recursive_calls)
-            if use_characteristic:
-                applicable_methods.append("characteristic_equation")
-            
-            # Método de Iteración (verificar independientemente, aunque típicamente se excluyen)
-            use_iteration = self._detect_iteration_method(proc_def, recursive_calls)
-            if use_iteration:
-                applicable_methods.append("iteration")
-            
-            # Árbol de Recursión
-            use_recursion_tree = self._detect_recursion_tree_method(proc_def, recursive_calls, a, b)
-            if use_recursion_tree:
-                applicable_methods.append("recursion_tree")
-            
-            # Teorema Maestro solo para divide-and-conquer (NO para linear_shift)
-            if recurrence.get("type") == "divide_conquer":
-                applicable_methods.append("master")
+            recurrence_type = recurrence.get("type")
+
+            use_characteristic = False
+            use_iteration = False
+            use_recursion_tree = False
+            use_master = False
+
+            if recurrence_type == "linear_shift":
+                # En linear_shift permitimos ecuación característica e iteración (si cubre V1).
+                use_characteristic = self._detect_characteristic_equation_method(proc_def, recursive_calls)
+                use_iteration = self._detect_iteration_method(proc_def, recursive_calls)
+                use_recursion_tree = self._detect_recursion_tree_method(proc_def, recursive_calls, a, b)
+            elif recurrence_type == "divide_conquer":
+                # En divide_conquer la ecuación característica no aplica de forma directa.
+                use_characteristic = False
+                use_master = True
+                # Permitir árbol también en rama única (a=1) si hay reducción válida por división.
+                use_recursion_tree = self._detect_recursion_tree_method(proc_def, recursive_calls, a, b)
+                # Iteración geométrica para rama única: T(n)=T(n/b)+Theta(1).
+                use_iteration = self._is_single_branch_geometric_divide_conquer_recurrence(recurrence)
+            else:
+                # Fallback conservador para tipos no estandarizados.
+                use_characteristic = self._detect_characteristic_equation_method(proc_def, recursive_calls)
+                use_iteration = self._detect_iteration_method(proc_def, recursive_calls)
+                use_recursion_tree = self._detect_recursion_tree_method(proc_def, recursive_calls, a, b)
+                use_master = recurrence_type == "divide_conquer"
+
+            if recurrence_type == "divide_conquer":
+                if use_master:
+                    applicable_methods.append("master")
+                if use_recursion_tree:
+                    applicable_methods.append("recursion_tree")
+                if use_iteration:
+                    applicable_methods.append("iteration")
+            else:
+                if use_characteristic:
+                    applicable_methods.append("characteristic_equation")
+                if use_iteration:
+                    applicable_methods.append("iteration")
+                if use_recursion_tree:
+                    applicable_methods.append("recursion_tree")
+                if use_master:
+                    applicable_methods.append("master")
             
             # Determinar método por defecto (prioridad)
             # Si es linear_shift, NO usar master como default (master solo es para divide_conquer)
-            if recurrence.get("type") == "linear_shift":
+            if recurrence_type == "linear_shift":
                 # Para linear_shift, prioridad: characteristic_equation > iteration > recursion_tree
                 if "characteristic_equation" in applicable_methods:
                     default_method = "characteristic_equation"
@@ -344,7 +368,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     default_method = "recursion_tree"
                 else:
                     default_method = recurrence.get("method", "iteration")
-            else:
+            elif recurrence_type == "divide_conquer":
                 # Para divide_conquer, prioridad: master > recursion_tree > iteration
                 if "master" in applicable_methods:
                     default_method = "master"
@@ -354,6 +378,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     default_method = "iteration"
                 else:
                     default_method = recurrence.get("method", "master")
+            else:
+                default_method = recurrence.get("method", "master")
             
             # Preparar información básica de la recurrencia
             recurrence_info = {
@@ -392,7 +418,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "default_method": default_method,
                 "recurrence_info": recurrence_info
             }
-            
+
         except Exception as e:
             return {
                 "ok": False,
@@ -404,6 +430,35 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     }
                 ]
             }
+
+    def _is_constant_work_term(self, raw_term: Any) -> bool:
+        """True si el término de trabajo no recursivo equivale a una constante."""
+        cleaned = str(raw_term or "").strip().lower().replace(" ", "")
+        if cleaned in {"", "0", "1", "\\theta(0)", "theta(0)", "\\theta(1)", "theta(1)"}:
+            return True
+        # Constantes numéricas simples.
+        try:
+            _ = float(cleaned)
+            return True
+        except Exception:
+            return False
+
+    def _is_single_branch_geometric_divide_conquer_recurrence(self, recurrence: Dict[str, Any]) -> bool:
+        """
+        Detecta T(n)=T(n/b)+Theta(1), útil para iteración geométrica (caso de rama única).
+        """
+        if recurrence.get("type") != "divide_conquer":
+            return False
+        try:
+            a_val = int(recurrence.get("a", 0))
+            b_val = float(recurrence.get("b", 0))
+        except Exception:
+            return False
+
+        if a_val != 1 or b_val <= 1:
+            return False
+
+        return self._is_constant_work_term(recurrence.get("f", "1"))
     
     def _has_object_field_access_in_recursive_calls(self, recursive_calls: List[Dict[str, Any]]) -> bool:
         """
@@ -5465,7 +5520,7 @@ FIN FUNCIÓN"""
                                 }
                 
                 # Caso: n / 2 o n / c (BinaryExpression con operador /)
-                elif op == "/":
+                elif op in ["/", "div"]:
                     left = size_arg.get("left", {})
                     right = size_arg.get("right", {})
                     
@@ -5531,7 +5586,7 @@ FIN FUNCIÓN"""
                                             "pattern": f"n-{value}",
                                             "factor": value
                                         }
-                        elif op == "/":
+                        elif op in ["/", "div"]:
                             left = second_arg.get("left", {})
                             right = second_arg.get("right", {})
                             if isinstance(left, dict):
@@ -5991,6 +6046,99 @@ FIN FUNCIÓN"""
                     "text": (
                         "\\text{Cobertura V1 del método de iteración no soporta esta forma de recurrencia.}"
                     ),
+                }
+            )
+            return {"success": True, "iteration": iteration}
+
+        if recurrence_type == "divide_conquer":
+            if not self._is_single_branch_geometric_divide_conquer_recurrence(self.recurrence):
+                return _build_unsupported_result(
+                    support_code="ITER_UNSUPPORTED_NON_LINEAR_FORM",
+                    g_n_value=str(self.recurrence.get("f", "1")),
+                )
+
+            base_idx, base_val, missing_base = _base_case_info()
+            base_for_formula = base_idx if isinstance(base_idx, int) and base_idx > 0 else 1
+
+            try:
+                b_value = float(self.recurrence.get("b", 2))
+            except Exception:
+                b_value = 2.0
+            b_display = self._simplify_number_latex(b_value if b_value > 1 else 2.0)
+
+            g_n_value = _normalize_g(str(self.recurrence.get("f", "1")))
+            if g_n_value == "0":
+                theta = "\\Theta(1)"
+                dominant_term = "1"
+                summation_evaluated = "0"
+                final_expression = f"T(n)=T({base_for_formula})"
+            else:
+                theta = "\\Theta(\\log n)"
+                dominant_term = "\\log n"
+                if base_for_formula == 1:
+                    k_value = f"\\log_{{{b_display}}} n"
+                else:
+                    k_value = f"\\log_{{{b_display}}}\\left(\\frac{{n}}{{{base_for_formula}}}\\right)"
+                summation_evaluated = f"\\sum_{{j=0}}^{{k-1}} {g_n_value}={g_n_value}\\cdot {k_value}"
+                final_expression = f"T(n)=T({base_for_formula})+{g_n_value}\\cdot {k_value}"
+
+            k_condition = f"\\frac{{n}}{{{b_display}^k}}={base_for_formula}"
+            if base_for_formula == 1:
+                k_value = f"\\log_{{{b_display}}} n"
+            else:
+                k_value = f"\\log_{{{b_display}}}\\left(\\frac{{n}}{{{base_for_formula}}}\\right)"
+
+            expansions = [
+                f"T(n)=T\\left(\\frac{{n}}{{{b_display}}}\\right)+{g_n_value}",
+                f"T(n)=T\\left(\\frac{{n}}{{{b_display}^2}}\\right)+2\\cdot {g_n_value}",
+                f"T(n)=T\\left(\\frac{{n}}{{{b_display}^3}}\\right)+3\\cdot {g_n_value}",
+            ]
+            general_form = f"T(n)=T\\left(\\frac{{n}}{{{b_display}^k}}\\right)+k\\cdot {g_n_value}"
+            summation_expression = f"T(n)=T({base_for_formula})+\\sum_{{j=0}}^{{k-1}} {g_n_value}"
+
+            context = IterationStepContext(
+                locale=self.locale,
+                recurrence_form=recurrence_form,
+                g_n=g_n_value,
+                is_supported=True,
+                support_code=None,
+                base_case_index=base_for_formula,
+                base_case_value=str(base_val) if base_val is not None else None,
+                expansions=expansions,
+                general_form=general_form,
+                k_condition=k_condition,
+                k_value=k_value,
+                summation_expression=summation_expression,
+                summation_evaluated=summation_evaluated,
+                final_expression=final_expression,
+                dominant_term=dominant_term,
+                theta=theta,
+                summation_partial=False,
+                asymptotic_partial=False,
+                missing_base_case=missing_base,
+            )
+            step_bundle = build_iteration_step_bundle(context)
+
+            iteration = {
+                "method": "iteration",
+                "g_function": g_n_value,
+                "expansions": expansions,
+                "general_form": general_form,
+                "base_case": {
+                    "condition": k_condition,
+                    "k": k_value,
+                },
+                "summation": {
+                    "expression": summation_expression,
+                    "evaluated": summation_evaluated,
+                },
+                "theta": theta,
+                "step_by_step": step_bundle,
+            }
+            self.proof_steps.append(
+                {
+                    "id": "iteration_result",
+                    "text": f"\\text{{Resultado por iteración geométrica: }} T(n) = {theta}",
                 }
             )
             return {"success": True, "iteration": iteration}
@@ -6544,10 +6692,10 @@ FIN FUNCIÓN"""
         Detecta si debe usarse el Método de Árbol de Recursión.
         
         Reglas para usar Método de Árbol de Recursión:
-        1. a ≥ 2: Hay múltiples llamadas recursivas
+        1. a ≥ 1: Hay al menos una llamada recursiva con reducción bien definida
         2. Subproblemas uniformes: Todos tienen el mismo tamaño (mismo b)
         3. Divide-and-conquer: Estructura de dividir y combinar
-        4. NO es recurrencia lineal: a ≠ 1
+        4. NO es recurrencia lineal por desplazamiento: evitar patrones n-1, n-k
         5. Reducción uniforme: Todas las llamadas reciben el mismo g(n)
         6. Combina resultados: El algoritmo suma/combina costos de subproblemas
         7. Útil para visualización: Aunque se pueda usar Teorema Maestro, el árbol aporta intuición
@@ -6561,8 +6709,8 @@ FIN FUNCIÓN"""
         Returns:
             True si debe usar Método de Árbol de Recursión
         """
-        # Regla 1 y 4: a ≥ 2 y a ≠ 1
-        if a < 2:
+        # Regla 1: al menos una llamada recursiva.
+        if a < 1:
             return False
         
         # Regla 2: Verificar que todos los subproblemas tienen el mismo tamaño
