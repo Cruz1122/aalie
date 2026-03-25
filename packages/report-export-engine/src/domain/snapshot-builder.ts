@@ -362,6 +362,8 @@ export function buildSnapshot(input: BuildSnapshotInput): AalieAnalysisSnapshotV
         ? createSection("available", {
             proof: selectedCase.totals?.proof,
             characteristicEquation: selectedCase.totals?.characteristic_equation,
+            characteristicEquationStepByStep:
+              selectedCase.totals?.characteristic_equation?.step_by_step,
             iteration: selectedCase.totals?.iteration,
             master: selectedCase.totals?.master,
             recursionTree: selectedCase.totals?.recursion_tree,
@@ -451,6 +453,12 @@ export function buildSnapshot(input: BuildSnapshotInput): AalieAnalysisSnapshotV
               : createSection("missing_data"),
           rootsAndMultiplicities: selectedCase?.totals?.characteristic_equation?.roots
             ? createSection("available", selectedCase.totals.characteristic_equation.roots)
+            : createSection("not_supported"),
+          stepByStep: selectedCase?.totals?.characteristic_equation?.step_by_step
+            ? createSection(
+                "available",
+                selectedCase.totals.characteristic_equation.step_by_step,
+              )
             : createSection("not_supported"),
           closedForm: selectedCase?.totals?.characteristic_equation
             ? createSection("available", {

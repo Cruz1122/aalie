@@ -74,6 +74,14 @@ SPARSE_LINEAR_RECURSIVE_PSEUDOCODE = """sparseRec(n) BEGIN
 END
 """
 
+DOUBLE_CONSTANT_RECURSIVE_PSEUDOCODE = """dobleConstante(n) BEGIN
+    IF (n <= 1) THEN BEGIN
+        RETURN 1;
+    END
+    RETURN dobleConstante(n - 1) + dobleConstante(n - 1) + 1;
+END
+"""
+
 
 class TestRecursiveAlgorithmsPseudocode:
     """Tests auténticos con pseudocode para algoritmos recursivos."""
@@ -215,6 +223,35 @@ class TestDynamicProgrammingValidation:
         assert dp_validation.get("status") == "clear"
         assert dp_validation.get("primary_pattern") == "tabulation"
         assert "memoization" in dp_validation.get("supported_patterns", [])
+
+    def test_characteristic_step_bundle_contract_for_constant_non_homogeneous(self):
+        """El bundle step_by_step debe venir tipado y consistente para T(n)=2T(n-1)+1."""
+        result = analyze_algorithm(
+            DOUBLE_CONSTANT_RECURSIVE_PSEUDOCODE,
+            mode="worst",
+            preferred_method="characteristic_equation",
+        )
+
+        assert result.get("ok"), result.get("errors", [])
+        char_eq = result.get("totals", {}).get("characteristic_equation", {})
+        bundle = char_eq.get("step_by_step")
+        assert isinstance(bundle, dict)
+        assert bundle.get("method") == "characteristic_equation"
+        assert bundle.get("version") == "ceq_steps_v1"
+        assert bundle.get("overallStatus") in {"complete", "partial", "unsupported", "error"}
+
+        steps = bundle.get("steps", [])
+        assert len(steps) == 12
+        assert [step.get("index") for step in steps] == list(range(1, 13))
+
+        step5 = steps[4]
+        assert step5.get("kind") == "characteristic_polynomial_built"
+        assert "\\sum" not in (step5.get("math", {}).get("primaryLatex") or "")
+
+        step8 = steps[7]
+        assert step8.get("kind") == "particular_solution_built"
+        assert step8.get("status") == "complete"
+        assert step8.get("template", {}).get("summaryKey") == "particular_solution_built.constant_supported"
 
 
 class TestRecursiveAlgorithms:

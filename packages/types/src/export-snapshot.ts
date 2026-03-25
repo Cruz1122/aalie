@@ -158,6 +158,9 @@ export interface SnapshotInternal {
   intermediateMath: SnapshotSection<{
     proof?: NonNullable<AnalyzeOpenResponse["totals"]["proof"]>;
     characteristicEquation?: AnalyzeOpenResponse["totals"]["characteristic_equation"];
+    characteristicEquationStepByStep?: NonNullable<
+      AnalyzeOpenResponse["totals"]["characteristic_equation"]
+    >["step_by_step"];
     iteration?: AnalyzeOpenResponse["totals"]["iteration"];
     master?: AnalyzeOpenResponse["totals"]["master"];
     recursionTree?: AnalyzeOpenResponse["totals"]["recursion_tree"];
@@ -211,6 +214,9 @@ export interface RecursiveSnapshotSection {
   methodDetails: SnapshotSection<SnapshotRecursiveMethodDetail[]>;
   rootsAndMultiplicities: SnapshotSection<
     Array<{ root: string; multiplicity: number }>
+  >;
+  stepByStep: SnapshotSection<
+    NonNullable<AnalyzeOpenResponse["totals"]["characteristic_equation"]>["step_by_step"]
   >;
   closedForm: SnapshotSection<{
     homogeneousSolution?: string;

@@ -61,6 +61,16 @@ describe("snapshot-builder", () => {
 
     assert.strictEqual(characteristic.internal.recurrence.status, "available");
     assert.strictEqual(characteristic.internal.recurrence.data?.type, "linear_shift");
+    assert.strictEqual(
+      characteristic.internal.intermediateMath.data?.characteristicEquationStepByStep?.steps.length,
+      12,
+    );
+    assert.strictEqual(characteristic.recursive.status, "available");
+    if (characteristic.recursive.status !== "available" || !characteristic.recursive.data) {
+      assert.fail("recursive section should be available");
+    }
+    assert.strictEqual(characteristic.recursive.data.stepByStep.status, "available");
+    assert.strictEqual(characteristic.recursive.data.stepByStep.data?.steps.length, 12);
   });
 
   it("mantiene pseudocodigo normalizado pendiente y conserva invariante cuando existe", () => {

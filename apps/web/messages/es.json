@@ -841,6 +841,30 @@
       "errorPdfTimeout": "La generación de PDF excedió el tiempo límite. Intenta de nuevo o descarga solo Markdown.",
       "errorPdfCompilation": "Error compilando PDF: {message}",
       "pdfDisclaimer": "La generación de PDF puede tardar unos segundos."
+    },
+    "analysisSteps": {
+      "title": "Paso a paso",
+      "closeModal": "Cerrar modal",
+      "noSteps": "No hay pasos disponibles para este análisis.",
+      "overallStatus": "Estado global",
+      "status": {
+        "complete": "Completo",
+        "partial": "Parcial",
+        "unsupported": "No soportado",
+        "error": "Error"
+      },
+      "confidence": "Confianza",
+      "confidenceLevels": {
+        "high": "Alta",
+        "medium": "Media",
+        "low": "Baja"
+      },
+      "warning": "Advertencia",
+      "flipToExplanation": "Ver explicación",
+      "flipToResult": "Volver al paso",
+      "conceptTitle": "Explicación del paso",
+      "characteristicEquation": "Ecuación característica",
+      "finalTheta": "Conclusión asintótica (Theta)"
     }
   },
   "documentation": {

@@ -1,9 +1,30 @@
 from typing import Any, Dict, List, Optional, Tuple
 import math
 import re
-from sympy import Expr, latex, Integer, Symbol, sympify, simplify, solve, symbols, I, im, expand, factor
+from sympy import (
+    Abs,
+    Eq,
+    Expr,
+    Function,
+    Integer,
+    Pow,
+    Poly,
+    Symbol,
+    expand,
+    factor,
+    latex,
+    roots as sympy_roots,
+    rsolve,
+    simplify,
+    solve,
+    symbols,
+    sympify,
+    I,
+    im,
+)
 from collections import Counter
 from .base import BaseAnalyzer
+from .characteristic_steps import StepContext, build_characteristic_step_bundle
 
 
 class RecursiveAnalyzer(BaseAnalyzer):
@@ -4295,599 +4316,530 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "reason": "No hay recurrencia extraída"
             }
 
+        def _strip_outer_parentheses(base: str) -> str:
+            cleaned = str(base or "").strip()
+            if cleaned.startswith("\\left(") and cleaned.endswith("\\right)"):
+                return cleaned[len("\\left("):-len("\\right)")].strip()
+            if cleaned.startswith("(") and cleaned.endswith(")"):
+                return cleaned[1:-1].strip()
+            return cleaned
+
+        def _is_atomic_latex_base(base: str) -> bool:
+            cleaned = _strip_outer_parentheses(base)
+            if not cleaned:
+                return False
+
+            atomic_patterns = (
+                r"[-+]?\d+(?:\.\d+)?",
+                r"[A-Za-z](?:_\{?[A-Za-z0-9]+\}?)?",
+                r"\\[A-Za-z]+(?:_\{?[A-Za-z0-9]+\}?)?",
+            )
+            return any(re.fullmatch(pattern, cleaned) for pattern in atomic_patterns)
+
         def _pow_n(base: str) -> str:
-            return f"\\left({base}\\right)^n"
-        
-        # Obtener información de recurrencia lineal
+            cleaned = _strip_outer_parentheses(base)
+            if _is_atomic_latex_base(cleaned):
+                return f"{cleaned}^n"
+            return f"\\left({cleaned}\\right)^n"
+
+        def _is_zero_g(raw_g: Optional[str]) -> bool:
+            cleaned = str(raw_g or "").strip().lower()
+            return cleaned in {"", "0", "\\theta(0)", "theta(0)"}
+
+        def _parse_constant_g(raw_g: Optional[str]) -> Optional[Expr]:
+            cleaned = str(raw_g or "").strip()
+            if not cleaned:
+                return Integer(0)
+            lowered = cleaned.lower().replace(" ", "")
+            if lowered in {"0", "\\theta(0)", "theta(0)"}:
+                return Integer(0)
+            if lowered in {"\\theta(1)", "theta(1)"}:
+                return Integer(1)
+            if re.fullmatch(r"[-+]?\d+", lowered):
+                return Integer(int(lowered))
+            if re.fullmatch(r"[-+]?\d*\.?\d+", lowered):
+                return sympify(lowered)
+            return None
+
+        def _extract_base_case_index(label: str) -> Optional[int]:
+            match = re.search(r"T\(([-]?\d+)\)", str(label))
+            if not match:
+                return None
+            try:
+                return int(match.group(1))
+            except Exception:
+                return None
+
+        def _root_magnitude(root_expr: Expr) -> float:
+            try:
+                return float(Abs(root_expr).evalf())
+            except Exception:
+                try:
+                    return abs(complex(root_expr.evalf()))
+                except Exception:
+                    return 0.0
+
+        def _expression_score(expr: Expr) -> Tuple[int, int, int]:
+            try:
+                op_count = int(expr.count_ops())
+            except Exception:
+                op_count = 10**9
+            try:
+                latex_len = len(latex(expr))
+            except Exception:
+                latex_len = 10**9
+            # Penalizar formas con potencias simbólicas negativas (ej: 2^{-n})
+            negative_symbolic_power_penalty = 0
+            try:
+                for power_expr in expr.atoms(Pow):
+                    exp = getattr(power_expr, "exp", None)
+                    if exp is None:
+                        continue
+                    if exp.free_symbols and exp.could_extract_minus_sign():
+                        negative_symbolic_power_penalty += 1
+            except Exception:
+                negative_symbolic_power_penalty = 10**6
+            return (negative_symbolic_power_penalty, op_count, latex_len)
+
+        def _choose_simplest_expression(expr: Expr, extra_candidates: Optional[List[Expr]] = None) -> Expr:
+            candidates: List[Expr] = [expr]
+            for transform in (simplify, factor, expand):
+                try:
+                    transformed = transform(expr)
+                    if transformed is not None:
+                        candidates.append(transformed)
+                except Exception:
+                    continue
+            for extra in extra_candidates or []:
+                if extra is not None:
+                    candidates.append(extra)
+
+            unique_candidates: List[Expr] = []
+            seen = set()
+            for candidate in candidates:
+                key = str(candidate)
+                if key in seen:
+                    continue
+                seen.add(key)
+                unique_candidates.append(candidate)
+
+            return min(unique_candidates, key=_expression_score) if unique_candidates else expr
+
+        def _try_closed_form_with_rsolve(
+            *,
+            coeffs: Dict[int, int],
+            g_raw: str,
+            base_case_map: Dict[str, Any],
+            order: int,
+        ) -> Optional[Expr]:
+            g_constant = _parse_constant_g(g_raw)
+            if g_constant is None:
+                return None
+
+            t_fn = Function("T")
+            rhs = sum(coeff * t_fn(n - offset) for offset, coeff in coeffs.items()) + g_constant
+            recurrence_eq = Eq(t_fn(n), rhs)
+
+            initial_conditions: Dict[Expr, Expr] = {}
+            for label, value in base_case_map.items():
+                idx = _extract_base_case_index(label)
+                if idx is None:
+                    continue
+                try:
+                    initial_conditions[t_fn(idx)] = sympify(value)
+                except Exception:
+                    continue
+
+            if len(initial_conditions) < max(order, 1):
+                return None
+
+            try:
+                solved = rsolve(recurrence_eq, t_fn(n), initial_conditions)
+            except Exception:
+                return None
+            if solved is None:
+                return None
+
+            # Debe devolver forma cerrada sin constantes libres C_i.
+            unresolved = [sym for sym in solved.free_symbols if str(sym).startswith("C")]
+            if unresolved:
+                return None
+            return solved
+
         linear_info = self._detect_linear_recurrence(self.proc_def, self._find_recursive_calls(self.proc_def))
         if not linear_info or not linear_info.get("is_linear"):
             return {
                 "success": False,
                 "reason": "No es una recurrencia lineal con desplazamientos constantes"
             }
-        
+
         self.proof_steps.append({"id": "characteristic_start", "text": "\\text{Aplicando Método de Ecuación Característica}"})
-        
+
         coefficients = linear_info["coefficients"]
         max_offset = linear_info["max_offset"]
-        g_n_str = linear_info["g_n"]
-        
-        # Detectar casos base del AST
-        base_cases = self._detect_base_cases(self.proc_def)
-        
-        # Construir la ecuación característica
-        # Para T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n)
-        # La ecuación característica es: r^k - c₁r^(k-1) - c₂r^(k-2) - ... - cₖ = 0
-        
-        # Construir ecuación característica en SymPy
-        # NO usar positive=True porque puede excluir raíces negativas (ej: (1-√5)/2 para Fibonacci)
-        r = Symbol('r', real=True)
-        char_eq_terms = []
-        
-        # Término principal: r^k
-        char_eq_terms.append(r**max_offset)
-        
-        # Términos negativos: -cᵢr^(k-i)
-        for offset, coeff in coefficients.items():
-            power = max_offset - offset
-            if power >= 0:
-                char_eq_terms.append(-coeff * r**power)
-        
-        # Construir ecuación: r^k - c₁r^(k-1) - ... = 0
-        char_eq_expr = sum(char_eq_terms)
-        # Simplificar la expresión para evitar r^2 + -r + -1 = 0
-        char_eq_expr_simplified = simplify(char_eq_expr)
-        char_eq_latex = latex(char_eq_expr_simplified) + " = 0"
-        
-        # Construir paso con valores reemplazados
-        # Mostrar cómo se construye la ecuación desde la recurrencia
-        recurrence_terms = []
-        for offset, coeff in sorted(coefficients.items()):
+        g_n_str = str(linear_info.get("g_n", "0"))
+        is_homogeneous = _is_zero_g(g_n_str)
+
+        recurrence_terms: List[str] = []
+        for offset in sorted(coefficients):
+            coeff = coefficients[offset]
             if coeff == 1:
                 recurrence_terms.append(f"T(n-{offset})")
             else:
                 recurrence_terms.append(f"{coeff} \\cdot T(n-{offset})")
-        
-        if g_n_str and g_n_str.strip() and g_n_str.strip() != "0":
-            recurrence_form_expanded = f"T(n) = {' + '.join(recurrence_terms)} + {g_n_str}"
-        else:
-            recurrence_form_expanded = f"T(n) = {' + '.join(recurrence_terms)}"
-        
-        # Mostrar construcción de ecuación característica
-        # NOTA: La ecuación característica NO incluye g(n), solo los términos recursivos
-        # Para T(n) = c₁T(n-1) + c₂T(n-2) + g(n), la ecuación característica es r^k - c₁r^(k-1) - c₂r^(k-2) - ... = 0
-        char_eq_construction = []
-        char_eq_construction.append(f"r^{{{max_offset}}}")
-        for offset, coeff in sorted(coefficients.items()):
-            power = max_offset - offset
-            if power >= 0:
-                if power == 0:
-                    char_eq_construction.append(f"-{coeff}")
-                elif power == 1:
-                    if coeff == 1:
-                        char_eq_construction.append("-r")
-                    else:
-                        char_eq_construction.append(f"-{coeff}r")
-                else:
-                    if coeff == 1:
-                        char_eq_construction.append(f"-r^{{{power}}}")
-                    else:
-                        char_eq_construction.append(f"-{coeff}r^{{{power}}}")
-        
-        char_eq_construction_latex = " + ".join(char_eq_construction) + " = 0"
-        
-        # Construir texto del paso (usar ecuación simplificada directamente)
-        # La ecuación característica ya está simplificada en char_eq_latex (ej: r^2 - r - 1 = 0)
-        # No mostrar la construcción intermedia con r^2 + -r + -1 = 0
-        if g_n_str and g_n_str.strip() and g_n_str.strip() != "0":
-            step_text = f"\\text{{De }} {recurrence_form_expanded} \\text{{, para la ecuación característica homogénea asociada (ignorando }} g(n) = {g_n_str} \\text{{), reemplazando }} T(n) = r^n \\text{{ obtenemos: }} {char_eq_latex}"
-        else:
-            step_text = f"\\text{{De }} {recurrence_form_expanded} \\text{{, reemplazando }} T(n) = r^n \\text{{ obtenemos: }} {char_eq_latex}"
-        
+
+        homogeneous_form = f"T(n) = {' + '.join(recurrence_terms)}"
+        recurrence_form_expanded = homogeneous_form if is_homogeneous else f"{homogeneous_form} + {g_n_str}"
+
+        base_cases = self._detect_base_cases(self.proc_def)
+        x = Symbol("x", real=True)
+        n = Symbol("n", integer=True)
+
+        char_eq_expr = x**max_offset - sum(
+            coeff * x**(max_offset - offset) for offset, coeff in coefficients.items()
+        )
+        char_eq_expr_simplified = simplify(char_eq_expr)
+        char_eq_latex = latex(char_eq_expr_simplified) + " = 0"
+
         self.proof_steps.append({
             "id": "characteristic_eq",
-            "text": step_text
+            "text": (
+                f"\\text{{De }} {recurrence_form_expanded} "
+                f"\\text{{se usa la parte homogénea y se obtiene }} {char_eq_latex}"
+            ),
         })
-        
-        # Resolver ecuación característica
+
         try:
-            # Resolver r^k - c₁r^(k-1) - ... = 0 (usar expresión simplificada)
-            roots = solve(char_eq_expr_simplified, r)
-            
-            # Filtrar raíces reales (incluir todas las raíces reales, no solo positivas)
-            # Para ecuaciones cuadráticas como r^2 - r - 1 = 0, necesitamos ambas raíces
-            # IMPORTANTE: NO evaluar las raíces todavía para mantener su forma simbólica
-            real_roots = []
-            for root in roots:
-                try:
-                    # Verificar si es real sin evaluar numéricamente
-                    if root.is_real:
-                        # Mantener la raíz en forma simbólica para mejor representación
-                        real_roots.append(root)
-                    else:
-                        # Intentar verificar si tiene parte real
-                        try:
-                            if root.real.is_real:
-                                real_roots.append(root)
-                        except:
-                            pass
-                except:
-                    # Si no se puede verificar, incluir de todas formas
-                    real_roots.append(root)
-            
-            if not real_roots:
-                # Si no hay raíces reales, usar todas las raíces
-                real_roots = roots
-            
-            # Ordenar raíces por valor numérico (descendente por valor absoluto), para que la mayor esté primero
-            # Pero mantener la forma simbólica
+            root_mult_map = sympy_roots(char_eq_expr_simplified, x)
+        except Exception:
+            root_mult_map = {}
+
+        if not root_mult_map:
             try:
-                real_roots = sorted(real_roots, key=lambda r: abs(float(r.evalf())) if hasattr(r, 'evalf') else 0, reverse=True)
-            except:
-                try:
-                    # Fallback: ordenar por valor real si es complejo
-                    real_roots = sorted(real_roots, key=lambda r: abs(float(r.real.evalf())) if hasattr(r, 'real') else 0, reverse=True)
-                except:
-                    pass
-            
-            # Procesar raíces con multiplicidad (mantener forma simbólica)
-            # IMPORTANTE: Usar la raíz directamente como clave para evitar problemas de comparación
-            roots_info = []
-            root_counts = Counter()
-            root_map = {}  # Mapa de raíz simplificada -> raíz original
-            
-            for root in real_roots:
-                try:
-                    # Simplificar la raíz manteniendo forma simbólica
-                    root_simplified = simplify(root)
-                    # Usar hash o representación única para evitar problemas de comparación
-                    root_key = str(root_simplified)
-                    
-                    # Si ya existe esta raíz, incrementar contador
-                    if root_key not in root_map:
-                        root_map[root_key] = root_simplified
-                    
-                    root_counts[root_key] += 1
-                except:
-                    root_key = str(root)
-                    if root_key not in root_map:
-                        root_map[root_key] = root
-                    root_counts[root_key] += 1
-            
-            # Procesar cada raíz única con su multiplicidad
-            for root_key, mult in root_counts.items():
-                try:
-                    # Obtener la raíz simplificada del mapa
-                    root_simplified = root_map.get(root_key, sympify(root_key))
-                    
-                    # Intentar simplificar aún más la raíz para mostrar forma algebraica
-                    if not isinstance(root_simplified, (int, float)):
-                        root_simplified = simplify(root_simplified)
-                    
-                    # Intentar factorizar o simplificar aún más
-                    try:
-                        # Si es una fracción o expresión compleja, intentar simplificar
-                        root_factorized = factor(root_simplified)
-                        if root_factorized != root_simplified:
-                            root_simplified = root_factorized
-                    except:
-                        pass
-                    
-                    root_latex = latex(root_simplified)
-                    
-                    # Si la raíz es un número decimal, intentar encontrar forma algebraica
-                    try:
-                        root_num = float(root_simplified.evalf())
-                        # Para casos comunes como (1+√5)/2 ≈ 1.618, intentar reconstruir
-                        if abs(root_num - 1.61803398874989) < 1e-10:
-                            root_latex = "\\frac{1 + \\sqrt{5}}{2}"
-                        elif abs(root_num - -0.618033988749895) < 1e-10:
-                            root_latex = "\\frac{1 - \\sqrt{5}}{2}"
-                    except:
-                        pass
-                except:
-                    root_latex = root_str
-                
-                roots_info.append({
-                    "root": root_latex,
-                    "multiplicity": mult
-                })
-            
-            # Determinar si es homogénea o no homogénea
-            # Una recurrencia es homogénea SI Y SOLO SI g(n) = 0
-            # Si g(n) = 1, \Theta(1), o cualquier constante distinta de 0, es NO homogénea
-            g_n_clean = g_n_str.strip().lower() if g_n_str else ""
-            
-            # Es homogénea solo si g(n) es explícitamente 0 o vacío
-            # Cualquier otra cosa (incluyendo "1", "\theta(1)", constantes, etc.) es NO homogénea
-            is_homogeneous = (g_n_clean == "0" or 
-                             g_n_clean == "\\theta(0)" or 
-                             g_n_clean == "theta(0)" or
-                             (g_n_clean == "" and (not g_n_str or len(g_n_str.strip()) == 0)))
-            
-            # Si g(n) no es 0, es NO homogénea (por defecto)
-            # Esto incluye "1", "\theta(1)", y cualquier otra constante distinta de 0
-            
-            # Construir solución general
-            if len(roots_info) == 1 and roots_info[0]["multiplicity"] == 1:
-                # Caso simple: una raíz única
-                r_val = roots_info[0]["root"]
-                if is_homogeneous:
-                    homogeneous_sol = f"A \\cdot {_pow_n(r_val)}"
-                else:
-                    # Necesitamos solución particular
-                    homogeneous_sol = f"A \\cdot {_pow_n(r_val)}"
-            elif len(roots_info) == 2 and all(r["multiplicity"] == 1 for r in roots_info):
-                # Dos raíces distintas (ej: Fibonacci)
-                r1 = roots_info[0]["root"]
-                r2 = roots_info[1]["root"]
-                homogeneous_sol = f"A_1 \\cdot {_pow_n(r1)} + A_2 \\cdot {_pow_n(r2)}"
-            else:
-                # Caso general con múltiples raíces
-                terms = []
-                for i, root_info in enumerate(roots_info):
-                    r_val = root_info["root"]
-                    mult = root_info["multiplicity"]
-                    if mult == 1:
-                        terms.append(f"A_{i+1} \\cdot {_pow_n(r_val)}")
-                    else:
-                        # Raíz múltiple: agregar términos con potencias de n
-                        for j in range(mult):
-                            terms.append(f"A_{i+1}{j+1} \\cdot n^{j} \\cdot {_pow_n(r_val)}")
-                homogeneous_sol = " + ".join(terms)
-            
-            # Construir solución general (homogénea + particular si aplica)
-            general_solution = homogeneous_sol
-            
-            # Solución particular (si no es homogénea)
-            particular_sol = None
-            if not is_homogeneous:
-                # Calcular solución particular real
-                # Para g(n) = constante C, asumir T_p(n) = K (constante)
-                # Sustituir en la recurrencia: K = c₁K + c₂K + ... + C
-                try:
-                    g_n_clean = g_n_str.strip().lower()
-                    
-                    # Extraer el valor numérico de g(n) si es una constante
-                    g_value = None
-                    if g_n_clean == "1":
-                        g_value = 1
-                    elif g_n_clean == "0":
-                        g_value = 0
-                    elif "theta(1)" in g_n_clean or "\\theta(1)" in g_n_clean:
-                        g_value = 1
-                    elif g_n_clean.isdigit():
-                        g_value = int(g_n_clean)
-                    else:
-                        # Intentar extraer número de expresiones como "\\Theta(1)"
-                        match = re.search(r'(\d+)', g_n_clean)
-                        if match:
-                            g_value = int(match.group(1))
-                    
-                    if g_value is not None and g_value != 0:
-                        # Calcular solución particular según el caso
-                        sum_coeffs = sum(coefficients.values())
-                        denominator = 1 - sum_coeffs
-                        
-                        # Verificar si r=1 es raíz (cuando suma_coeficientes = 1)
-                        if abs(denominator) < 1e-6:
-                            # Si 1 - suma = 0, entonces r=1 es raíz
-                            # En este caso, la solución particular debe ser T_p(n) = A_2 * n (lineal)
-                            # Para T(n) = T(n-1) + g(n) con r=1, T_p(n) = A_2 * n
-                            # Sustituyendo: A_2 * n = A_2 * (n-1) + g_value
-                            # A_2 * n = A_2 * n - A_2 + g_value
-                            # A_2 = g_value
-                            if abs(g_value - 1) < 1e-6:
-                                particular_sol = "A_2 \\cdot n"
-                            else:
-                                # Si g_value != 1, mostrar el coeficiente
-                                try:
-                                    g_sympy = sympify(g_value)
-                                    g_latex = latex(g_sympy)
-                                    particular_sol = f"{g_latex} \\cdot n"
-                                except:
-                                    particular_sol = f"{g_value} \\cdot n"
-                        else:
-                            # Si r != 1, usar solución constante T_p(n) = K
-                            # K = g_value / (1 - suma)
-                            k_value = g_value / denominator
-                            # Simplificar k_value
-                            try:
-                                k_sympy = sympify(k_value)
-                                k_simplified = simplify(k_sympy)
-                                k_latex = latex(k_simplified)
-                                # Usar A_2 en lugar de solo el valor
-                                if abs(k_value - 1) < 1e-6:
-                                    particular_sol = "A_2"
-                                else:
-                                    particular_sol = f"A_2 \\cdot {k_latex}" if abs(k_value) != 1 else "A_2"
-                            except:
-                                # Redondear a 3 decimales si es necesario
-                                if abs(k_value - round(k_value)) < 1e-6:
-                                    k_int = int(round(k_value))
-                                    if k_int == 1:
-                                        particular_sol = "A_2"
-                                    else:
-                                        particular_sol = f"A_2 \\cdot {k_int}"
-                                else:
-                                    k_str = f"{k_value:.3f}".rstrip('0').rstrip('.')
-                                    particular_sol = f"A_2 \\cdot {k_str}"
-                    else:
-                        # Si no se puede extraer constante, usar forma genérica
-                        if "n" in g_n_str.lower():
-                            particular_sol = "P(n)"  # Polinomio
-                        else:
-                            particular_sol = "C"  # Constante genérica
-                except Exception as e:
-                    # En caso de error, usar forma genérica
-                    if "n" in g_n_str.lower():
-                        particular_sol = "P(n)"  # Polinomio
-                    else:
-                        particular_sol = "C"  # Constante genérica
-                
-                # Actualizar solución general con solución particular
-                if particular_sol:
-                    general_solution = f"{homogeneous_sol} + {particular_sol}"
-            
-            # Forma cerrada simplificada (con constantes, NO notación asintótica)
-            # Debe mostrar la forma cerrada con constantes c_1, c_2, etc., no \Theta(...)
-            if len(roots_info) == 1:
-                r_val = roots_info[0]["root"]
-                try:
-                    r_sympy = sympify(r_val)
-                    r_num = float(r_sympy.evalf())
-                    if abs(r_num - 1.0) < 1e-6:
-                        # Caso r = 1: T(n) = c_1 + c_2 * n (o similar según solución particular)
-                        if not is_homogeneous and particular_sol:
-                            # Si hay solución particular, la forma cerrada incluye ambos términos
-                            # Solución general: A_1 + A_2 * n (o similar)
-                            if "n" in particular_sol:
-                                # Solución particular es lineal: c_1 + c_2 * n
-                                closed_form = "c_1 + c_2 \\cdot n"
-                            else:
-                                # Solución particular es constante: c_1 + c_2
-                                closed_form = "c_1 + c_2"
-                        else:
-                            # Homogénea: solo c_1
-                            closed_form = "c_1"
-                    else:
-                        # Caso r != 1: T(n) = c_1 * r^n
-                        closed_form = f"c_1 \\cdot {_pow_n(r_val)}"
-                except:
-                    closed_form = f"c_1 \\cdot {_pow_n(r_val)}"
-            elif len(roots_info) == 2:
-                # Dos raíces distintas: T(n) = c_1 * r1^n + c_2 * r2^n
-                r1_val = roots_info[0]["root"]
-                r2_val = roots_info[1]["root"]
-                try:
-                    r1_sympy = sympify(r1_val)
-                    r2_sympy = sympify(r2_val)
-                    r1_num = float(r1_sympy.evalf())
-                    r2_num = float(r2_sympy.evalf())
-                    
-                    # Construir forma cerrada con ambas raíces
-                    if not is_homogeneous and particular_sol:
-                        # Incluir solución particular
-                        if "n" in particular_sol:
-                            closed_form = f"c_1 \\cdot {_pow_n(r1_val)} + c_2 \\cdot {_pow_n(r2_val)} + c_3 \\cdot n"
-                        else:
-                            closed_form = f"c_1 \\cdot {_pow_n(r1_val)} + c_2 \\cdot {_pow_n(r2_val)} + c_3"
-                    else:
-                        closed_form = f"c_1 \\cdot {_pow_n(r1_val)} + c_2 \\cdot {_pow_n(r2_val)}"
-                except:
-                    # Fallback: usar ambas raíces
-                    closed_form = f"c_1 \\cdot {_pow_n(r1_val)} + c_2 \\cdot {_pow_n(r2_val)}"
-            else:
-                # Caso general: múltiples raíces
-                terms = []
-                for i, root_info in enumerate(roots_info):
-                    r_val = root_info["root"]
-                    mult = root_info["multiplicity"]
-                    if mult == 1:
-                        terms.append(f"c_{i+1} \\cdot {_pow_n(r_val)}")
-                    else:
-                        # Raíz múltiple: agregar términos con potencias de n
-                        for j in range(mult):
-                            terms.append(f"c_{i+1}{j+1} \\cdot n^{j} \\cdot {_pow_n(r_val)}")
-                
-                if not is_homogeneous and particular_sol:
-                    # Agregar solución particular
-                    if "n" in particular_sol:
-                        terms.append("c_p \\cdot n")
-                    else:
-                        terms.append("c_p")
-                
-                closed_form = " + ".join(terms) if terms else "c_1"
-            
-            dp_validation = self._build_dp_validation(
-                self.proc_def,
-                self._find_recursive_calls(self.proc_def),
-                linear_info,
-            )
-            is_dp_linear = dp_validation.get("applicable", False)
-            
-            # Generar versión DP si aplica
-            dp_version = None
-            dp_optimized_version = None
-            dp_equivalence = ""
-            if is_dp_linear:
-                # Generar código DP básico (O(n) espacio)
-                dp_code = self._generate_dp_code(coefficients, max_offset)
-                
-                # Generar código DP optimizado (O(1) espacio o O(k) espacio)
-                dp_code_optimized = self._generate_optimized_dp_code(coefficients, max_offset, g_n_str)
-                
-                # Calcular complejidades
-                recursive_complexity = self._calculate_recursive_complexity(coefficients, max_offset)
-                dp_time = "O(n)"
-                dp_space = "O(n)"  # Versión básica con tabla
-                
-                # Espacio optimizado: O(1) para max_offset <= 3, O(k) para otros casos
-                if max_offset <= 3:
-                    dp_space_optimized = "O(1)"
-                else:
-                    dp_space_optimized = f"O({max_offset})"  # Arreglo circular pequeño
-                
-                dp_version = {
-                    "code": dp_code,
-                    "time_complexity": dp_time,
-                    "space_complexity": dp_space,
-                    "recursive_complexity": recursive_complexity,
-                    "pattern": dp_validation.get("primary_pattern", "tabulation")
+                roots_from_solve = solve(char_eq_expr_simplified, x)
+            except Exception as exc:
+                return {
+                    "success": False,
+                    "reason": f"Error resolviendo ecuación característica: {str(exc)}",
                 }
-                
-                dp_optimized_version = {
-                    "code": dp_code_optimized,
-                    "time_complexity": dp_time,
-                    "space_complexity": dp_space_optimized,
-                    "pattern": "rolling_window" if dp_validation.get("primary_pattern") == "rolling_window" else "tabulation"
-                }
-                
-                dp_equivalence = (
-                    "Las raíces de la ecuación característica corresponden a los valores propios "
-                    "de la transición lineal del sistema DP. La solución cerrada matemática "
-                    "equivale a la solución iterativa mediante programación dinámica."
-                )
-            
-            # Calcular notación asintótica (theta) basándose en la forma cerrada
-            # theta debe ser notación asintótica (\Theta(...)), NO la forma cerrada con constantes
-            theta_result = None
-            if len(roots_info) == 1:
-                r_val = roots_info[0]["root"]
-                try:
-                    r_sympy = sympify(r_val)
-                    r_num = float(r_sympy.evalf())
-                    if abs(r_num - 1.0) < 1e-6:
-                        # Caso r = 1: la forma cerrada es c_1 + c_2*n (o similar)
-                        # La notación asintótica depende del término dominante
-                        if not is_homogeneous and particular_sol and "n" in particular_sol:
-                            # Si hay solución particular lineal, el término dominante es n
-                            theta_result = "\\Theta(n)"
-                        else:
-                            # Si es homogénea o solución particular constante, es constante
-                            theta_result = "\\Theta(1)"
-                    elif r_num > 1:
-                        # Caso r > 1: exponencial creciente
-                        theta_result = f"\\Theta({_pow_n(r_val)})"
-                    else:
-                        # Caso r < 1: exponencial decreciente
-                        theta_result = f"\\Theta({_pow_n(r_val)})"
-                except:
-                    # Fallback: usar r^n
-                    theta_result = f"\\Theta({_pow_n(r_val)})"
-            elif len(roots_info) == 2:
-                # Dos raíces: usar la raíz dominante (mayor valor absoluto)
-                r1_val = roots_info[0]["root"]
-                r2_val = roots_info[1]["root"]
-                try:
-                    r1_sympy = sympify(r1_val)
-                    r2_sympy = sympify(r2_val)
-                    r1_num = float(r1_sympy.evalf())
-                    r2_num = float(r2_sympy.evalf())
-                    # Usar la raíz con mayor valor absoluto (raíz dominante)
-                    r_max_num = max(abs(r1_num), abs(r2_num))
-                    r_max_val = r1_val if abs(r1_num) >= abs(r2_num) else r2_val
-                    theta_result = f"\\Theta({_pow_n(r_max_val)})"
-                except:
-                    # Fallback: usar la primera raíz
-                    theta_result = f"\\Theta({_pow_n(r1_val)})"
-            else:
-                # Caso general: encontrar la raíz con mayor valor absoluto
-                try:
-                    r_max = max(roots_info, key=lambda r: abs(float(sympify(r["root"]).evalf())) if sympify(r["root"]).is_real else 0)
-                    theta_result = f"\\Theta({_pow_n(r_max['root'])})"
-                except:
-                    # Fallback: usar la primera raíz
-                    theta_result = f"\\Theta({_pow_n(roots_info[0]['root'])})"
-            
-            # Si no se pudo calcular theta, usar fallback
-            if not theta_result:
-                theta_result = "\\Theta(1)"
-            
-            # Calcular raíz dominante (mayor valor absoluto) y tasa de crecimiento
-            dominant_root = None
-            growth_rate = None
-            if roots_info:
-                try:
-                    # Encontrar la raíz con mayor valor absoluto
-                    r_max_info = max(roots_info, key=lambda r: abs(float(sympify(r["root"]).evalf())) if sympify(r["root"]).is_real else 0)
-                    dominant_root = r_max_info["root"]
-                    growth_rate = float(sympify(dominant_root).evalf())
-                except:
-                    # Fallback: usar la primera raíz (ya está ordenada)
-                    if roots_info:
-                        dominant_root = roots_info[0]["root"]
-                        try:
-                            growth_rate = float(sympify(dominant_root).evalf())
-                        except:
-                            pass
-            
-            # Detectar early returns para manejar mejor caso
-            has_early_return = self._detect_early_return()
-            
-            # Calcular theta para worst/average y best case
-            # Si hay early return y estamos en modo best, el mejor caso es Θ(1)
-            if has_early_return and self.mode == "best":
-                theta_best = "\\Theta(1)"
-                self.proof_steps.append({
-                    "id": "best_case",
-                    "text": "\\text{Mejor caso: } \\Theta(1) \\text{ (return temprano detectado)}"
-                })
-                # Para best case con early return, usar Θ(1) en lugar del theta calculado
-                theta_result = theta_best
-            else:
-                # Para worst/average case, usar el theta calculado normalmente
-                # Si hay early return pero no estamos en modo best, mantener el theta normal
-                # (el early return solo afecta el mejor caso, no el peor)
-                pass
-            
-            result = {
-                "method": "characteristic_equation",
-                "is_dp_linear": is_dp_linear,
-                "equation": char_eq_latex,
-                "roots": roots_info,
-                "dominant_root": dominant_root,
-                "growth_rate": growth_rate,
-                "solved_by": "characteristic_equation",
-                "homogeneous_solution": homogeneous_sol,
-                "particular_solution": particular_sol,
-                "general_solution": general_solution,
-                "base_cases": base_cases if base_cases else None,
-                "closed_form": closed_form,
-                "dp_validation": dp_validation,
-                "dp_version": dp_version,
-                "dp_optimized_version": dp_optimized_version,
-                "dp_equivalence": dp_equivalence,
-                "theta": theta_result,
-                "has_early_return": has_early_return
-            }
-            
-            self.proof_steps.append({
-                "id": "characteristic_solution",
-                "text": f"\\text{{Solución: }} T(n) = {theta_result}"
-            })
-            
-            if is_dp_linear:
-                self.proof_steps.append({
-                    "id": "dp_detection",
-                    "text": "\\text{La validación previa confirma que esta recurrencia encaja como caso de Programación Dinámica}"
-                })
-            else:
-                self.proof_steps.append({
-                    "id": "dp_rejected",
-                    "text": "\\text{La validación previa descarta presentar esta recurrencia como Programación Dinámica}"
-                })
-            
-            return {
-                "success": True,
-                "characteristic_equation": result
-            }
-            
-        except Exception as e:
+            for root_value in roots_from_solve:
+                root_simplified = simplify(root_value)
+                root_mult_map[root_simplified] = int(root_mult_map.get(root_simplified, 0)) + 1
+
+        if not root_mult_map:
             return {
                 "success": False,
-                "reason": f"Error resolviendo ecuación característica: {str(e)}"
+                "reason": "No se pudieron calcular raíces de la ecuación característica",
             }
+
+        root_entries: List[Dict[str, Any]] = []
+        for root_expr, multiplicity in root_mult_map.items():
+            root_simplified = simplify(root_expr)
+            root_entries.append(
+                {
+                    "root_expr": root_simplified,
+                    "root_latex": latex(root_simplified),
+                    "multiplicity": int(multiplicity),
+                    "magnitude": _root_magnitude(root_simplified),
+                }
+            )
+
+        root_entries.sort(key=lambda item: item["magnitude"], reverse=True)
+        roots_info = [
+            {"root": entry["root_latex"], "multiplicity": entry["multiplicity"]}
+            for entry in root_entries
+        ]
+
+        has_complex_root_representation = any(
+            bool(entry["root_expr"].has(I) or entry["root_expr"].is_real is False)
+            for entry in root_entries
+        )
+
+        # Construcción de solución homogénea general (considera multiplicidades reales).
+        constant_symbols: List[Symbol] = []
+        homogeneous_expr: Expr = Integer(0)
+        constant_index = 1
+        for entry in root_entries:
+            for power in range(entry["multiplicity"]):
+                c_symbol = Symbol(f"C{constant_index}")
+                constant_symbols.append(c_symbol)
+                homogeneous_expr += c_symbol * (n**power) * (entry["root_expr"] ** n)
+                constant_index += 1
+
+        if homogeneous_expr == 0:
+            fallback_constant = Symbol("C1")
+            constant_symbols = [fallback_constant]
+            homogeneous_expr = fallback_constant
+
+        homogeneous_display_expr = _choose_simplest_expression(homogeneous_expr)
+        homogeneous_sol = latex(homogeneous_display_expr)
+
+        particular_supported = is_homogeneous
+        particular_expr: Optional[Expr] = None
+        particular_sol: Optional[str] = None
+
+        if not is_homogeneous:
+            g_constant = _parse_constant_g(g_n_str)
+            if g_constant is not None:
+                multiplicity_at_one = 0
+                for entry in root_entries:
+                    try:
+                        if simplify(entry["root_expr"] - 1) == 0:
+                            multiplicity_at_one = int(entry["multiplicity"])
+                            break
+                    except Exception:
+                        continue
+
+                K = Symbol("K")
+                trial_particular = K * (n ** multiplicity_at_one)
+                recurrence_balance = simplify(
+                    trial_particular
+                    - sum(
+                        coeff * trial_particular.subs(n, n - offset)
+                        for offset, coeff in coefficients.items()
+                    )
+                    - g_constant
+                )
+
+                equations: List[Expr] = []
+                expanded_balance = expand(recurrence_balance)
+                if expanded_balance != 0:
+                    try:
+                        polynomial = Poly(expanded_balance, n)
+                        equations = [Eq(coef, 0) for coef in polynomial.all_coeffs()]
+                    except Exception:
+                        equations = [Eq(expanded_balance, 0)]
+
+                try:
+                    solved_k = solve(equations, [K], dict=True) if equations else [{K: Integer(0)}]
+                except Exception:
+                    solved_k = []
+
+                if solved_k and K in solved_k[0]:
+                    particular_expr = simplify(trial_particular.subs(K, solved_k[0][K]))
+                    particular_sol = latex(particular_expr)
+                    particular_supported = True
+
+        general_expr = homogeneous_expr
+        if not is_homogeneous and particular_supported and particular_expr is not None:
+            general_expr = homogeneous_expr + particular_expr
+        general_display_expr = _choose_simplest_expression(general_expr)
+        general_solution = latex(general_display_expr)
+
+        solved_constants: Dict[str, str] = {}
+        resolved_general_expr = general_expr
+        constants_resolved = False
+        insufficient_base_conditions = False
+
+        if constant_symbols:
+            usable_base_cases: List[Tuple[int, Expr]] = []
+            for key, value in base_cases.items():
+                base_index = _extract_base_case_index(key)
+                if base_index is None:
+                    continue
+                try:
+                    usable_base_cases.append((base_index, sympify(value)))
+                except Exception:
+                    continue
+
+            usable_base_cases.sort(key=lambda item: item[0])
+            if len(usable_base_cases) >= len(constant_symbols):
+                equations = [
+                    Eq(simplify(general_expr.subs(n, base_index)), base_value)
+                    for base_index, base_value in usable_base_cases[: len(constant_symbols)]
+                ]
+                try:
+                    solved_constants_raw = solve(equations, constant_symbols, dict=True)
+                except Exception:
+                    solved_constants_raw = []
+
+                if solved_constants_raw:
+                    solved_map = solved_constants_raw[0]
+                    resolved_general_expr = simplify(general_expr.subs(solved_map))
+                    constants_resolved = True
+                    solved_constants = {
+                        latex(symbol): latex(simplify(value))
+                        for symbol, value in solved_map.items()
+                    }
+                elif usable_base_cases:
+                    insufficient_base_conditions = True
+            elif usable_base_cases:
+                insufficient_base_conditions = True
+
+        closed_form_base_expr = resolved_general_expr if constants_resolved else general_expr
+        rsolve_candidate_expr: Optional[Expr] = None
+        if constants_resolved:
+            rsolve_candidate_expr = _try_closed_form_with_rsolve(
+                coeffs=coefficients,
+                g_raw=g_n_str,
+                base_case_map=base_cases if base_cases else {},
+                order=max_offset,
+            )
+        closed_form_expr = _choose_simplest_expression(
+            closed_form_base_expr,
+            extra_candidates=[rsolve_candidate_expr] if rsolve_candidate_expr is not None else None,
+        )
+        closed_form = latex(closed_form_expr)
+        simplification_partial = (
+            (not is_homogeneous and not particular_supported)
+            or insufficient_base_conditions
+            or (bool(base_cases) and bool(constant_symbols) and not constants_resolved)
+        )
+
+        dominant_root = root_entries[0]["root_latex"] if root_entries else None
+        growth_rate = None
+        if root_entries:
+            try:
+                growth_rate = float(root_entries[0]["root_expr"].evalf())
+            except Exception:
+                growth_rate = None
+
+        theta_result = "\\Theta(1)"
+        if root_entries:
+            dominant_magnitude = root_entries[0]["magnitude"]
+            same_scale_roots = [
+                entry
+                for entry in root_entries
+                if abs(entry["magnitude"] - dominant_magnitude) <= 1e-9
+            ]
+            dominant_multiplicity = max(
+                (entry["multiplicity"] for entry in same_scale_roots), default=1
+            )
+            particular_degree = 0
+            if particular_expr is not None and particular_expr.has(n):
+                try:
+                    particular_degree = max(int(Poly(expand(particular_expr), n).degree()), 0)
+                except Exception:
+                    particular_degree = 1
+
+            if dominant_magnitude > 1 + 1e-9:
+                dominant_abs_latex = latex(simplify(Abs(root_entries[0]["root_expr"])))
+                exponential_term = _pow_n(dominant_abs_latex)
+                if dominant_multiplicity > 1:
+                    theta_result = f"\\Theta(n^{dominant_multiplicity - 1} \\cdot {exponential_term})"
+                else:
+                    theta_result = f"\\Theta({exponential_term})"
+            else:
+                polynomial_degree = max(dominant_multiplicity - 1, particular_degree, 0)
+                if polynomial_degree == 0:
+                    theta_result = "\\Theta(1)"
+                elif polynomial_degree == 1:
+                    theta_result = "\\Theta(n)"
+                else:
+                    theta_result = f"\\Theta(n^{polynomial_degree})"
+
+        dp_validation = self._build_dp_validation(
+            self.proc_def,
+            self._find_recursive_calls(self.proc_def),
+            linear_info,
+        )
+        is_dp_linear = dp_validation.get("applicable", False)
+
+        dp_version = None
+        dp_optimized_version = None
+        dp_equivalence = ""
+        if is_dp_linear:
+            dp_code = self._generate_dp_code(coefficients, max_offset)
+            dp_code_optimized = self._generate_optimized_dp_code(coefficients, max_offset, g_n_str)
+            recursive_complexity = self._calculate_recursive_complexity(coefficients, max_offset)
+            dp_space_optimized = "O(1)" if max_offset <= 3 else f"O({max_offset})"
+
+            dp_version = {
+                "code": dp_code,
+                "time_complexity": "O(n)",
+                "space_complexity": "O(n)",
+                "recursive_complexity": recursive_complexity,
+                "pattern": dp_validation.get("primary_pattern", "tabulation"),
+            }
+            dp_optimized_version = {
+                "code": dp_code_optimized,
+                "time_complexity": "O(n)",
+                "space_complexity": dp_space_optimized,
+                "pattern": "rolling_window"
+                if dp_validation.get("primary_pattern") == "rolling_window"
+                else "tabulation",
+            }
+            dp_equivalence = (
+                "Las raíces de la ecuación característica corresponden a los valores propios "
+                "de la transición lineal del sistema DP. La solución cerrada matemática "
+                "equivale a la solución iterativa mediante programación dinámica."
+            )
+
+        has_early_return = self._detect_early_return()
+        if has_early_return and self.mode == "best":
+            theta_result = "\\Theta(1)"
+            self.proof_steps.append({
+                "id": "best_case",
+                "text": "\\text{Mejor caso: } \\Theta(1) \\text{ (return temprano detectado)}"
+            })
+
+        step_bundle = build_characteristic_step_bundle(
+            StepContext(
+                locale=self.locale,
+                recurrence_form=recurrence_form_expanded,
+                order=max_offset,
+                is_linear=bool(linear_info.get("is_linear")),
+                g_n=g_n_str,
+                is_homogeneous=is_homogeneous,
+                homogeneous_form=homogeneous_form,
+                equation=char_eq_latex,
+                roots=roots_info,
+                homogeneous_solution=homogeneous_sol,
+                particular_solution=particular_sol,
+                particular_supported=particular_supported,
+                general_solution=general_solution,
+                base_cases=base_cases if base_cases else {},
+                closed_form=closed_form,
+                theta=theta_result,
+                has_complex_root_representation=has_complex_root_representation,
+                simplification_partial=simplification_partial,
+                solved_constants=solved_constants,
+                required_constants=len(constant_symbols),
+            )
+        )
+
+        result = {
+            "method": "characteristic_equation",
+            "is_dp_linear": is_dp_linear,
+            "equation": char_eq_latex,
+            "roots": roots_info,
+            "dominant_root": dominant_root,
+            "growth_rate": growth_rate,
+            "solved_by": "characteristic_equation",
+            "homogeneous_solution": homogeneous_sol,
+            "particular_solution": particular_sol,
+            "general_solution": general_solution,
+            "base_cases": base_cases if base_cases else None,
+            "closed_form": closed_form,
+            "dp_validation": dp_validation,
+            "dp_version": dp_version,
+            "dp_optimized_version": dp_optimized_version,
+            "dp_equivalence": dp_equivalence,
+            "theta": theta_result,
+            "has_early_return": has_early_return,
+            "step_by_step": step_bundle,
+        }
+
+        self.proof_steps.append({
+            "id": "characteristic_solution",
+            "text": f"\\text{{Solución: }} T(n) = {theta_result}"
+        })
+
+        if is_dp_linear:
+            self.proof_steps.append({
+                "id": "dp_detection",
+                "text": "\\text{La validación previa confirma que esta recurrencia encaja como caso de Programación Dinámica}"
+            })
+        else:
+            self.proof_steps.append({
+                "id": "dp_rejected",
+                "text": "\\text{La validación previa descarta presentar esta recurrencia como Programación Dinámica}"
+            })
+
+        return {
+            "success": True,
+            "characteristic_equation": result
+        }
     
     def _generate_dp_code(self, coefficients: Dict[int, int], max_offset: int) -> str:
         """
@@ -6868,4 +6820,3 @@ FIN FUNCIÓN"""
         # Caso por defecto
         else:
             return {"level": "unknown", "reason": f"\\text{{Depende de la relación entre }} {f_n} \\text{{ y }} {nlogba}"}
-

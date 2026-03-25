@@ -819,6 +819,30 @@
       "progress": "Progress",
       "analyzingRecurrence": "Analyzing recurrence...",
       "pleaseWait": "Please wait while the analysis completes..."
+    },
+    "analysisSteps": {
+      "title": "Step by step",
+      "closeModal": "Close modal",
+      "noSteps": "No step-by-step data is available for this analysis.",
+      "overallStatus": "Overall status",
+      "status": {
+        "complete": "Complete",
+        "partial": "Partial",
+        "unsupported": "Unsupported",
+        "error": "Error"
+      },
+      "confidence": "Confidence",
+      "confidenceLevels": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "warning": "Warning",
+      "flipToExplanation": "View explanation",
+      "flipToResult": "Back to step",
+      "conceptTitle": "Step explanation",
+      "characteristicEquation": "Characteristic equation",
+      "finalTheta": "Asymptotic conclusion (Theta)"
     }
   },
   "documentation": {

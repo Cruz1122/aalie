@@ -123,6 +123,7 @@ const STATUS_LABEL_MAP: Record<string, keyof ExportI18nBundle["statusLabels"]> =
   "recursive.methodsAvailable": "methodsAvailable",
   "recursive.methodDetails": "methodDetails",
   "recursive.rootsAndMultiplicities": "roots",
+  "recursive.stepByStep": "methodDetails",
   "recursive.closedForm": "closedForm",
   "recursive.recursionTreeSerializable": "recursionTreeSerializable",
   "recursive.callTrace": "callTrace",
@@ -232,6 +233,22 @@ function localizeTodos(todos: string[] | undefined, i18n: ExportI18nBundle): str
       return todo;
     }) || []
   );
+}
+
+function recursiveStepStatusLabel(status: string, i18n: ExportI18nBundle): string {
+  if (status === "complete") {
+    return localize(i18n, "completo", "complete");
+  }
+  if (status === "partial") {
+    return localize(i18n, "parcial", "partial");
+  }
+  if (status === "unsupported") {
+    return localize(i18n, "no soportado", "unsupported");
+  }
+  if (status === "error") {
+    return localize(i18n, "error", "error");
+  }
+  return status;
 }
 
 function buildStatusBlock(
@@ -2348,6 +2365,43 @@ function buildRecursiveSection(
     for (const detail of data.methodDetails.data) {
       blocks.push(...buildRecursiveMethodBlocks(detail, i18n));
     }
+  }
+
+  if (isSectionAvailable(data.stepByStep)) {
+    const walkthrough = data.stepByStep.data;
+    if (walkthrough) {
+      blocks.push({
+        kind: "paragraph",
+        text: localize(
+          i18n,
+          `Procedimiento paso a paso (${safe(walkthrough.version, "v1")}): estado global ${recursiveStepStatusLabel(walkthrough.overallStatus, i18n)}.`,
+          `Step-by-step walkthrough (${safe(walkthrough.version, "v1")}): overall status ${recursiveStepStatusLabel(walkthrough.overallStatus, i18n)}.`,
+        ),
+      });
+
+      if (walkthrough.steps.length > 0) {
+        blocks.push({
+          kind: "list",
+          items: walkthrough.steps.map((step) => {
+            const warningSuffix = step.warning
+              ? localize(i18n, ` Advertencia: ${step.warning}.`, ` Warning: ${step.warning}.`)
+              : "";
+            return `${step.index}. ${step.title} [${recursiveStepStatusLabel(step.status, i18n)}] - ${step.summary}.${warningSuffix}`;
+          }),
+        });
+
+        for (const step of walkthrough.steps) {
+          if (!step.math.primaryLatex) continue;
+          blocks.push({
+            kind: "formula",
+            label: localize(i18n, `Paso ${step.index}: ${step.title}`, `Step ${step.index}: ${step.title}`),
+            formula: step.math.primaryLatex,
+          });
+        }
+      }
+    }
+  } else {
+    pushBlockIfPresent(blocks, buildStatusBlock("recursive.stepByStep", data.stepByStep, i18n));
   }
 
   if (isSectionAvailable(data.rootsAndMultiplicities) && data.rootsAndMultiplicities.data.length > 0) {

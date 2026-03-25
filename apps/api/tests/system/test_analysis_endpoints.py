@@ -161,6 +161,59 @@ END
         data = response.json()
         assert "ok" in data
 
+    def test_open_endpoint_characteristic_step_bundle_contract(self):
+        """Test: /open devuelve step_by_step tipado (12 pasos) para ecuación característica."""
+        source = """
+dobleConstante(n) BEGIN
+    IF (n <= 1) THEN BEGIN
+        RETURN 1;
+    END
+    RETURN dobleConstante(n - 1) + dobleConstante(n - 1) + 1;
+END
+"""
+        payload = {
+            "source": source,
+            "mode": "worst",
+            "preferred_method": "characteristic_equation",
+            "locale": "es",
+        }
+        response = client.post("/analyze/open", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("ok") is True
+
+        char_eq = data.get("totals", {}).get("characteristic_equation", {})
+        step_bundle = char_eq.get("step_by_step")
+        assert isinstance(step_bundle, dict)
+        assert step_bundle.get("method") == "characteristic_equation"
+        assert step_bundle.get("version") == "ceq_steps_v1"
+        assert step_bundle.get("overallStatus") in {"complete", "partial", "unsupported", "error"}
+
+        steps = step_bundle.get("steps", [])
+        assert isinstance(steps, list)
+        assert len(steps) == 12
+
+        required_fields = {
+            "id",
+            "kind",
+            "title",
+            "status",
+            "math",
+            "summary",
+            "teachingNote",
+            "warning",
+            "confidence",
+            "payload",
+            "conceptNote",
+        }
+        valid_status = {"complete", "partial", "unsupported", "error"}
+        for index, step in enumerate(steps, start=1):
+            assert required_fields.issubset(step.keys())
+            assert step.get("index") == index
+            assert step.get("status") in valid_status
+            assert isinstance(step.get("math"), dict)
+            assert isinstance(step.get("payload"), dict)
+
     def test_open_endpoint_with_algorithm_kind(self):
         """Test: Endpoint /open con algorithm_kind"""
         source = """
@@ -223,4 +276,3 @@ END
         assert response.status_code == 200
         data = response.json()
         assert "ok" in data
-

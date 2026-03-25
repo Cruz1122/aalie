@@ -315,6 +315,65 @@ export interface AnalyzeRequest {
   algorithm_kind?: "iterative" | "recursive" | "hybrid" | "unknown";  // tipo de algoritmo (se detecta automáticamente si no se proporciona)
 }
 
+export type RecursiveStepStatus = "complete" | "partial" | "unsupported" | "error";
+export type RecursiveStepConfidence = "high" | "medium" | "low";
+
+export type CharacteristicStepKind =
+  | "recurrence_detected"
+  | "applicability_validated"
+  | "homogeneity_classified"
+  | "homogeneous_part_extracted"
+  | "characteristic_polynomial_built"
+  | "roots_computed"
+  | "homogeneous_solution_built"
+  | "particular_solution_built"
+  | "general_solution_built"
+  | "base_conditions_applied"
+  | "closed_form_simplified"
+  | "dominant_term_concluded";
+
+export interface RecursiveStepMathItem {
+  id: string;
+  kind: "equation" | "transformation" | "condition" | "result";
+  latex: string;
+}
+
+export interface RecursiveAnalysisStep {
+  id: string;
+  index: number;
+  kind: CharacteristicStepKind;
+  title: string;
+  status: RecursiveStepStatus;
+  math: {
+    primaryLatex?: string;
+    items: RecursiveStepMathItem[];
+  };
+  summary: string;
+  conceptNote: string;
+  teachingNote: string;
+  warning?: string | null;
+  confidence: RecursiveStepConfidence;
+  payload: Record<string, unknown>;
+  template: {
+    summaryKey: string;
+    conceptKey: string;
+    warningKey?: string;
+    params: Record<string, string | number | boolean>;
+  };
+  audit: {
+    codes: string[];
+    assumptions: string[];
+    blockedBy?: string[];
+  };
+}
+
+export interface RecursiveMethodStepBundle {
+  method: "characteristic_equation";
+  version: "ceq_steps_v1";
+  overallStatus: RecursiveStepStatus;
+  steps: RecursiveAnalysisStep[];
+}
+
 /** Response exitoso con análisis abierto */
 export interface AnalyzeOpenResponse {
   ok: true;
@@ -438,6 +497,7 @@ export interface AnalyzeOpenResponse {
       };
       dp_equivalence: string;               // explicación de equivalencia entre ecuación característica y DP
       theta: string;                        // resultado final Θ(...) en LaTeX
+      step_by_step?: RecursiveMethodStepBundle; // pasos detallados tipados del método
     };
     master?: {                      // resultado del Teorema Maestro
       case: 1 | 2 | 3 | null;      // caso aplicado (1, 2, 3) o null si no aplicable

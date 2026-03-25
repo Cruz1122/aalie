@@ -465,9 +465,7 @@ const renderCharacteristicModal = (
     <CharacteristicEquationModal
       open={props.showCharacteristicModal}
       onClose={() => props.setShowCharacteristicModal(false)}
-      recurrence={props.recurrence}
       characteristicEquation={props.characteristicEquation}
-      proof={props.proof}
       theta={props.theta || props.T_open}
     />
   );
@@ -641,33 +639,43 @@ const renderCharacteristicBadges = (
     : tView(dpApplicability.reasonKey);
 
   return (
-    <div className="absolute top-0 right-0 z-20 flex items-center justify-end gap-1.5 whitespace-nowrap sm:top-1">
+    <div className="absolute top-0 right-0 z-20 flex max-w-[58%] flex-wrap items-center justify-end gap-1 sm:top-1 sm:max-w-none">
       {/* Badge de Homogénea/No Homogénea */}
       {isHomogeneous ? (
-        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[9px] leading-none font-semibold border bg-blue-500/20 text-blue-300 border-blue-500/30">
+        <span
+          className="inline-flex items-center gap-1 rounded-sm border border-blue-500/30 bg-blue-500/20 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-blue-300"
+          title={tView("homogeneous")}
+          aria-label={tView("homogeneous")}
+        >
           <span className="material-symbols-outlined shrink-0 text-[12px] leading-none">
             functions
           </span>
-          {tView("homogeneous")}
+          <span className="hidden md:inline">{tView("homogeneous")}</span>
         </span>
       ) : (
-        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[9px] leading-none font-semibold border bg-yellow-500/20 text-yellow-300 border-yellow-500/30">
+        <span
+          className="inline-flex items-center gap-1 rounded-sm border border-yellow-500/30 bg-yellow-500/20 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-yellow-300"
+          title={tView("nonHomogeneous")}
+          aria-label={tView("nonHomogeneous")}
+        >
           <span className="material-symbols-outlined shrink-0 text-[12px] leading-none">
             functions
           </span>
-          {tView("nonHomogeneous")}
+          <span className="hidden md:inline">{tView("nonHomogeneous")}</span>
         </span>
       )}
       <div className="relative inline-flex items-center">
         <span
-          className={`peer inline-flex cursor-help items-center gap-1 px-1.5 py-0.5 rounded-sm text-[9px] leading-none font-semibold border ${dpVisual.badgeClass}`}
+          className={`peer inline-flex cursor-help items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[9px] font-semibold leading-none ${dpVisual.badgeClass}`}
+          title={dpVisual.statusLabel}
+          aria-label={dpVisual.statusLabel}
         >
           <span className="material-symbols-outlined shrink-0 text-[12px] leading-none">
             {dpVisual.badgeIcon}
           </span>
-          {dpVisual.statusLabel}
+          <span className="hidden md:inline">{dpVisual.statusLabel}</span>
         </span>
-        <div className="pointer-events-none absolute right-0 top-full mt-1 w-56 whitespace-normal break-words rounded-md border border-slate-700 bg-slate-900/95 p-2 text-[10px] text-slate-100 shadow-lg opacity-0 transition-opacity peer-hover:opacity-100 peer-focus-visible:opacity-100">
+        <div className="pointer-events-none absolute right-0 top-full mt-1 w-48 whitespace-normal break-words rounded-md border border-slate-700 bg-slate-900/95 p-2 text-[10px] text-slate-100 shadow-lg opacity-0 transition-opacity peer-hover:opacity-100 peer-focus-visible:opacity-100 sm:w-56">
           {dpPatternLabel && (
             <p className="mb-1 whitespace-normal break-words font-semibold text-cyan-300">
               {dpPatternLabel}
@@ -786,10 +794,12 @@ const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
     <div className={`mb-4 ${showGrid ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : ""}`}>
       <button
         onClick={handleDetailsClick}
-        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-sky-500/20 transition-colors min-w-0 ${showGrid ? "" : "w-full"}`}
+        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary transition-colors min-w-0 ${props.isCharacteristicMethod ? "hover:bg-blue-500/20" : "hover:bg-sky-500/20"} ${showGrid ? "" : "w-full"}`}
       >
         <span className="material-symbols-outlined text-sm flex-shrink-0">info</span>
-        <span className="truncate">{props.tView("viewDetails")}</span>
+        <span className="truncate">
+          {props.isCharacteristicMethod ? props.tView("viewStepByStep") : props.tView("viewDetails")}
+        </span>
       </button>
       {props.isRecursionTreeMethod && props.proof && props.proof.length > 0 && (
         <button
@@ -1452,12 +1462,12 @@ export default function RecursiveAnalysisView({
               >
                 <button
                   onClick={() => setShowCharacteristicModal(true)}
-                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-sky-500/20 transition-colors min-w-0"
+                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-blue-500/20 transition-colors min-w-0"
                 >
                   <span className="material-symbols-outlined text-sm flex-shrink-0">
                     info
                   </span>
-                  <span className="truncate">{tView("viewDetails")}</span>
+                  <span className="truncate">{tView("viewStepByStep")}</span>
                 </button>
                 {hasDPButton && (
                   <button

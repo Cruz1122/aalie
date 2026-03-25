@@ -1,7 +1,9 @@
 import type {
   AnalyzeOpenResponse,
+  CharacteristicStepKind,
   LoopInvariant,
   Program,
+  RecursiveMethodStepBundle,
   SnapshotRecursiveMethod,
 } from "@aa/types";
 
@@ -515,6 +517,53 @@ function recursiveCase(
   }
 
   if (method === "characteristic_equation") {
+    const characteristicStepKinds: CharacteristicStepKind[] = [
+      "recurrence_detected",
+      "applicability_validated",
+      "homogeneity_classified",
+      "homogeneous_part_extracted",
+      "characteristic_polynomial_built",
+      "roots_computed",
+      "homogeneous_solution_built",
+      "particular_solution_built",
+      "general_solution_built",
+      "base_conditions_applied",
+      "closed_form_simplified",
+      "dominant_term_concluded",
+    ];
+    const stepBundle: RecursiveMethodStepBundle = {
+      method: "characteristic_equation",
+      version: "ceq_steps_v1",
+      overallStatus: "complete",
+      steps: characteristicStepKinds.map((kind, index) => ({
+        id: `ceq_s${index + 1}`,
+        index: index + 1,
+        kind,
+        title: `Step ${index + 1}`,
+        status: "complete",
+        math: {
+          primaryLatex: index === 4 ? "r^2-r-1=0" : undefined,
+          items: [],
+        },
+        summary: `Fixture summary for step ${index + 1}`,
+        conceptNote: `Fixture concept for ${kind}`,
+        teachingNote: `Fixture concept for ${kind}`,
+        warning: null,
+        confidence: "high",
+        payload: {},
+        template: {
+          summaryKey: "fixture.summary",
+          conceptKey: "fixture.concept",
+          params: {},
+        },
+        audit: {
+          codes: [],
+          assumptions: [],
+          blockedBy: [],
+        },
+      })),
+    };
+
     totals.characteristic_equation = {
       method: "characteristic_equation",
       is_dp_linear: true,
@@ -536,6 +585,7 @@ function recursiveCase(
       closed_form: "\\frac{\\phi^n}{\\sqrt{5}}",
       dp_equivalence: "equivalent",
       theta: "\\Theta(\\phi^n)",
+      step_by_step: stepBundle,
     };
     totals.big_theta = "\\Theta(\\phi^n)";
   }

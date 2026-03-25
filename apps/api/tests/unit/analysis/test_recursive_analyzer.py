@@ -1400,6 +1400,204 @@ class TestRecursiveAnalyzerDPValidation:
             assert not result.get("success")
             assert "reason" in result
 
+    def test_characteristic_equation_step_bundle_homogeneous_simple(self):
+        """Valida walkthrough canónico para caso homogéneo simple T(n)=2T(n-1), T(0)=1."""
+        self.analyzer.proc_def = {
+            "type": "ProcDef",
+            "name": "simple",
+            "params": [{"type": "Param", "name": "n"}],
+            "body": {"type": "Block", "body": []},
+        }
+        self.analyzer.recurrence = {
+            "form": "T(n)=2T(n-1)",
+            "applicable": True,
+            "method": "characteristic_equation",
+        }
+
+        linear_info = {"is_linear": True, "coefficients": {1: 2}, "max_offset": 1, "g_n": "0"}
+
+        with patch.object(self.analyzer, "_detect_linear_recurrence", return_value=linear_info), \
+             patch.object(self.analyzer, "_detect_base_cases", return_value={"T(0)": 1}), \
+             patch.object(self.analyzer, "_find_recursive_calls", return_value=[]), \
+             patch.object(
+                 self.analyzer,
+                 "_build_dp_validation",
+                 return_value={
+                     "status": "rejected",
+                     "applicable": False,
+                     "confidence": "low",
+                     "primary_pattern": "none",
+                     "supported_patterns": [],
+                     "reasons": ["fixture"],
+                 },
+             ), \
+             patch.object(self.analyzer, "_detect_early_return", return_value=False):
+            result = self.analyzer._apply_characteristic_equation_method()
+
+        assert result.get("success")
+        char_eq = result["characteristic_equation"]
+        assert char_eq["equation"] == "x - 2 = 0"
+        assert char_eq["roots"] == [{"root": "2", "multiplicity": 1}]
+        assert "2^{n}" in char_eq["homogeneous_solution"]
+        assert char_eq["closed_form"] == "2^{n}"
+        assert char_eq["theta"] == "\\Theta(2^n)"
+
+        steps = char_eq["step_by_step"]["steps"]
+        assert len(steps) == 12
+        assert char_eq["step_by_step"]["overallStatus"] == "complete"
+        assert steps[7]["kind"] == "particular_solution_built"
+        assert steps[7]["status"] == "complete"
+        assert steps[7]["template"]["summaryKey"] == "particular_solution_built.not_applicable"
+        assert steps[9]["kind"] == "base_conditions_applied"
+        assert steps[9]["status"] == "complete"
+
+    def test_characteristic_equation_step_bundle_constant_non_homogeneous(self):
+        """Valida walkthrough para no homogénea con término constante T(n)=2T(n-1)+1."""
+        self.analyzer.proc_def = {
+            "type": "ProcDef",
+            "name": "const",
+            "params": [{"type": "Param", "name": "n"}],
+            "body": {"type": "Block", "body": []},
+        }
+        self.analyzer.recurrence = {
+            "form": "T(n)=2T(n-1)+1",
+            "applicable": True,
+            "method": "characteristic_equation",
+        }
+
+        linear_info = {"is_linear": True, "coefficients": {1: 2}, "max_offset": 1, "g_n": "1"}
+
+        with patch.object(self.analyzer, "_detect_linear_recurrence", return_value=linear_info), \
+             patch.object(self.analyzer, "_detect_base_cases", return_value={"T(0)": 1}), \
+             patch.object(self.analyzer, "_find_recursive_calls", return_value=[]), \
+             patch.object(
+                 self.analyzer,
+                 "_build_dp_validation",
+                 return_value={
+                     "status": "rejected",
+                     "applicable": False,
+                     "confidence": "low",
+                     "primary_pattern": "none",
+                     "supported_patterns": [],
+                     "reasons": ["fixture"],
+                 },
+             ), \
+             patch.object(self.analyzer, "_detect_early_return", return_value=False):
+            result = self.analyzer._apply_characteristic_equation_method()
+
+        assert result.get("success")
+        char_eq = result["characteristic_equation"]
+        assert char_eq["equation"] == "x - 2 = 0"
+        assert char_eq["particular_solution"] == "-1"
+        assert char_eq["general_solution"] == "2^{n} C_{1} - 1"
+        assert char_eq["closed_form"] == "2^{n + 1} - 1"
+        assert char_eq["theta"] == "\\Theta(2^n)"
+
+        steps = char_eq["step_by_step"]["steps"]
+        assert len(steps) == 12
+        assert steps[2]["kind"] == "homogeneity_classified"
+        assert steps[2]["status"] == "complete"
+        assert steps[7]["kind"] == "particular_solution_built"
+        assert steps[7]["status"] == "complete"
+        assert steps[7]["template"]["summaryKey"] == "particular_solution_built.constant_supported"
+        assert steps[9]["status"] == "complete"
+        assert steps[9]["payload"]["solved_constants"]["C_{1}"] == "2"
+
+    def test_characteristic_equation_step_bundle_repeated_root(self):
+        """Valida raíces repetidas y forma homogénea C1 + C2*n."""
+        self.analyzer.proc_def = {
+            "type": "ProcDef",
+            "name": "repeat",
+            "params": [{"type": "Param", "name": "n"}],
+            "body": {"type": "Block", "body": []},
+        }
+        self.analyzer.recurrence = {
+            "form": "T(n)=2T(n-1)-T(n-2)",
+            "applicable": True,
+            "method": "characteristic_equation",
+        }
+
+        linear_info = {"is_linear": True, "coefficients": {1: 2, 2: -1}, "max_offset": 2, "g_n": "0"}
+
+        with patch.object(self.analyzer, "_detect_linear_recurrence", return_value=linear_info), \
+             patch.object(self.analyzer, "_detect_base_cases", return_value={"T(0)": 0, "T(1)": 1}), \
+             patch.object(self.analyzer, "_find_recursive_calls", return_value=[]), \
+             patch.object(
+                 self.analyzer,
+                 "_build_dp_validation",
+                 return_value={
+                     "status": "rejected",
+                     "applicable": False,
+                     "confidence": "low",
+                     "primary_pattern": "none",
+                     "supported_patterns": [],
+                     "reasons": ["fixture"],
+                 },
+             ), \
+             patch.object(self.analyzer, "_detect_early_return", return_value=False):
+            result = self.analyzer._apply_characteristic_equation_method()
+
+        assert result.get("success")
+        char_eq = result["characteristic_equation"]
+        assert char_eq["equation"] == "x^{2} - 2 x + 1 = 0"
+        assert char_eq["roots"] == [{"root": "1", "multiplicity": 2}]
+        assert char_eq["homogeneous_solution"] == "C_{1} + C_{2} n"
+        assert char_eq["closed_form"] == "n"
+        assert char_eq["theta"] == "\\Theta(n)"
+
+        steps = char_eq["step_by_step"]["steps"]
+        assert len(steps) == 12
+        assert steps[5]["kind"] == "roots_computed"
+        assert steps[5]["status"] == "complete"
+        assert steps[5]["template"]["summaryKey"] == "roots_computed.repeated_root"
+        assert steps[6]["kind"] == "homogeneous_solution_built"
+        assert steps[11]["kind"] == "dominant_term_concluded"
+        assert steps[11]["math"]["primaryLatex"] == "T(n) = \\Theta(n)"
+
+    def test_characteristic_equation_step_bundle_unsupported_g_family(self):
+        """Si g(n) no está soportada, Step 8 debe marcarse como unsupported y sin fallback opaco."""
+        self.analyzer.proc_def = {
+            "type": "ProcDef",
+            "name": "unsupported",
+            "params": [{"type": "Param", "name": "n"}],
+            "body": {"type": "Block", "body": []},
+        }
+        self.analyzer.recurrence = {
+            "form": "T(n)=2T(n-1)+n",
+            "applicable": True,
+            "method": "characteristic_equation",
+        }
+
+        linear_info = {"is_linear": True, "coefficients": {1: 2}, "max_offset": 1, "g_n": "n"}
+
+        with patch.object(self.analyzer, "_detect_linear_recurrence", return_value=linear_info), \
+             patch.object(self.analyzer, "_detect_base_cases", return_value={"T(0)": 1}), \
+             patch.object(self.analyzer, "_find_recursive_calls", return_value=[]), \
+             patch.object(
+                 self.analyzer,
+                 "_build_dp_validation",
+                 return_value={
+                     "status": "rejected",
+                     "applicable": False,
+                     "confidence": "low",
+                     "primary_pattern": "none",
+                     "supported_patterns": [],
+                     "reasons": ["fixture"],
+                 },
+             ), \
+             patch.object(self.analyzer, "_detect_early_return", return_value=False):
+            result = self.analyzer._apply_characteristic_equation_method()
+
+        assert result.get("success")
+        char_eq = result["characteristic_equation"]
+        steps = char_eq["step_by_step"]["steps"]
+        assert len(steps) == 12
+        assert char_eq["step_by_step"]["overallStatus"] == "unsupported"
+        assert steps[7]["kind"] == "particular_solution_built"
+        assert steps[7]["status"] == "unsupported"
+        assert "CEQ_UNSUPPORTED_GN_FAMILY" in steps[7]["audit"]["codes"]
+        assert steps[7]["warning"] is not None
+
     def test_apply_iteration_method_factorial(self):
         """Test: _apply_iteration_method aplica método de iteración para Factorial"""
         ast = self.create_factorial_ast()
@@ -3242,4 +3440,3 @@ class TestRecursiveAnalyzerDPValidation:
 
 if __name__ == '__main__':
     unittest.main()
-
