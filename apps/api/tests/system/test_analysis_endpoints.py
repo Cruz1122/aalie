@@ -267,6 +267,40 @@ END
             assert isinstance(step.get("math"), dict)
             assert isinstance(step.get("payload"), dict)
 
+    def test_open_endpoint_master_step_bundle_contract(self):
+        """Test: /open devuelve step_by_step tipado (10 pasos) para Teorema Maestro."""
+        source = """
+masterExample(n) BEGIN
+    IF (n <= 1) THEN BEGIN
+        RETURN 1;
+    END
+    RETURN masterExample(n / 2) + 1;
+END
+"""
+        payload = {
+            "source": source,
+            "mode": "worst",
+            "preferred_method": "master",
+            "locale": "es",
+        }
+        response = client.post("/analyze/open", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("ok") is True
+
+        master = data.get("totals", {}).get("master", {})
+        step_bundle = master.get("step_by_step")
+        assert isinstance(step_bundle, dict)
+        assert step_bundle.get("method") == "master"
+        assert step_bundle.get("version") == "master_steps_v1"
+        assert step_bundle.get("overallStatus") in {"complete", "partial", "unsupported", "error"}
+
+        steps = step_bundle.get("steps", [])
+        assert isinstance(steps, list)
+        assert len(steps) == 10
+        assert steps[0]["kind"] == "recurrence_detected"
+        assert steps[9]["kind"] == "asymptotic_conclusion"
+
     def test_open_endpoint_with_algorithm_kind(self):
         """Test: Endpoint /open con algorithm_kind"""
         source = """

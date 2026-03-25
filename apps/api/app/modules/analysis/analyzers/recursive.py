@@ -25,11 +25,15 @@ from sympy import (
     sympify,
     I,
     im,
+    limit,
+    log as sympy_log,
+    oo,
 )
 from collections import Counter
 from .base import BaseAnalyzer
 from .characteristic_steps import StepContext, build_characteristic_step_bundle
 from .iteration_steps import IterationStepContext, build_iteration_step_bundle
+from .master_steps import MasterStepContext, build_master_step_bundle
 
 
 class RecursiveAnalyzer(BaseAnalyzer):
@@ -2818,85 +2822,262 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 "success": False,
                 "reason": "No hay recurrencia extraída"
             }
-        
-        self.proof_steps.append({"id": "critical", "text": "\\text{Calculando } g(n) = n^{\\log_b a}"})
-        
-        a = self.recurrence["a"]
-        b = self.recurrence["b"]
-        f_n_str = self.recurrence["f"]
-        
-        # Detectar si hay un return temprano (mejor caso O(1))
-        has_early_return = self._detect_early_return()
-        
-        # Calcular g(n) = n^(log_b a)
-        log_b_a = math.log(a, b) if b > 1 else 1
+
+        recurrence_type = self.recurrence.get("type")
+        recurrence_form = self.recurrence.get("form", "")
+        a_raw = self.recurrence.get("a")
+        b_raw = self.recurrence.get("b")
+        f_n_str = str(self.recurrence.get("f", "1")).strip() or "1"
+
+        support_code: Optional[str] = None
+        if recurrence_type != "divide_conquer":
+            support_code = "MASTER_UNSUPPORTED_FORM"
+
+        try:
+            a = int(a_raw)
+            b = float(b_raw)
+        except Exception:
+            a = -1
+            b = -1.0
+            support_code = "MASTER_INVALID_PARAMETERS"
+
+        if support_code is None and (a < 1 or b <= 1):
+            support_code = "MASTER_INVALID_PARAMETERS"
+
         n_sym = Symbol("n", integer=True, positive=True)
-        g_n_expr = n_sym ** log_b_a
-        
-        log_b_a_str = self._simplify_number_latex(log_b_a)
-        
-        # Simplificar n^{1} → n y n^{0} → 1
-        if log_b_a_str == "1":
-            nlogba = "n"
-        elif log_b_a_str == "0":
-            nlogba = "1"
-        else:
-            nlogba = f"n^{{{log_b_a_str}}}"
-        
-        self.proof_steps.append({"id": "critical", "text": f"\\text{{g(n) = }} {nlogba}"})
-        
-        # Comparar f(n) con g(n)
-        comparison_result = self._compare_f_with_g(f_n_str, log_b_a)
-        
-        case = comparison_result["case"]
-        comparison = comparison_result["comparison"]
-        
-        comparison_text = {
-            "smaller": "f(n) < g(n)",
-            "equal": "f(n) = g(n)",
-            "larger": "f(n) > g(n)"
-        }.get(comparison, comparison)
-        self.proof_steps.append({"id": "compare", "text": f"\\text{{Comparando }} f(n) \\text{{ vs }} g(n) \\rightarrow {comparison_text} \\text{{ (Caso }} {case}\\text{{)}}"})
-        
-        # Verificar regularidad si Caso 3
-        regularity = {"checked": False, "note": ""}
-        if case == 3:
-            regularity_result = self._check_regularity(a, b, f_n_str)
-            regularity = regularity_result
-        
-        # Calcular theta (worst/average case)
-        theta_worst_avg = self._calculate_theta(case, g_n_expr, f_n_str, log_b_a)
-        
-        # Calcular mejor caso: usar cota ajustada Θ cuando está disponible.
-        # Si hay return temprano dependiente de datos, el mejor caso es Θ(1).
+        f_expr: Optional[Expr] = None
+        p_expr: Expr = Integer(0)
+        p_latex = "0"
+        reference_growth = "1"
+        relation_type = "undetermined"
+        comparison_code: Optional[str] = None
+        case_candidate: Optional[int] = None
+        comparison_partial = False
+        regularity_holds: Optional[bool] = None
+        regularity_note = ""
+        theta_worst_avg: Optional[str] = None
+        comparison_legacy: Optional[str] = None
+
+        if support_code is None:
+            try:
+                p_expr = simplify(sympy_log(Integer(a), Integer(int(b) if float(b).is_integer() else b)))
+                p_latex = self._simplify_latex_expr(latex(p_expr))
+                reference_growth = self._format_master_n_power(p_expr)
+            except Exception:
+                support_code = "MASTER_INTERNAL_ERROR"
+
+        if support_code is None:
+            f_expr = self._parse_master_f_expression(f_n_str, n_sym)
+            if f_expr is None:
+                relation_type = "undetermined"
+                comparison_partial = True
+                comparison_code = "MASTER_COMPARISON_PARTIAL"
+            else:
+                comparison_data = self._compare_master_growth_structured(f_expr, p_expr, n_sym)
+                relation_type = comparison_data["relation_type"]
+                case_candidate = comparison_data["case_candidate"]
+                comparison_partial = comparison_data["status"] == "partial"
+                comparison_code = comparison_data.get("code")
+                comparison_legacy = comparison_data.get("comparison")
+
+        # Regularidad solo para caso 3
+        if support_code is None and case_candidate == 3 and f_expr is not None:
+            regularity = self._check_master_regularity_structured(a, b, f_expr, n_sym)
+            regularity_holds = regularity["holds"]
+            regularity_note = regularity["note"]
+        elif support_code is None:
+            regularity_note = "\\text{No requerida}"
+
+        if support_code is None:
+            if case_candidate == 1:
+                theta_worst_avg = f"\\Theta({reference_growth})"
+            elif case_candidate == 2:
+                theta_worst_avg = (
+                    "\\Theta(\\log n)"
+                    if simplify(p_expr).is_zero
+                    else f"\\Theta({reference_growth} \\log n)"
+                )
+            elif case_candidate == 3 and regularity_holds is True:
+                theta_worst_avg = f"\\Theta({self._simplify_latex_expr(f_n_str)})"
+
+        has_early_return = self._detect_early_return()
+        theta_best: Optional[str]
         if has_early_return:
             theta_best = "\\Theta(1)"
-            self.proof_steps.append({"id": "best_case", "text": "\\text{Mejor caso: } \\Theta(1) \\text{ (return temprano detectado)}"})
         else:
-            # Sin retorno temprano, el mejor caso coincide con la cota ajustada obtenida.
             theta_best = theta_worst_avg
-            best_case_text = f"\\text{{Mejor caso: }} {theta_best}"
-            self.proof_steps.append({"id": "best_case", "text": best_case_text})
-        
+
+        if support_code is not None:
+            regularity = {"checked": False, "note": self._note("regularity_assumed")}
+        elif case_candidate == 3:
+            regularity = {
+                "checked": regularity_holds is True,
+                "note": regularity_note or (
+                    self._note("regularity_verified")
+                    if regularity_holds is True
+                    else self._note("regularity_assumed")
+                ),
+            }
+        else:
+            regularity = {"checked": False, "note": "No aplica (solo Caso 3)"}
+
+        step_ctx = MasterStepContext(
+            locale=self.locale,
+            recurrence_form=recurrence_form,
+            a=max(a, 0),
+            b=max(b, 0.0),
+            f_n=f_n_str,
+            p_latex=p_latex,
+            reference_growth_latex=reference_growth,
+            relation_type=relation_type,
+            case_candidate=case_candidate,
+            regularity_holds=regularity_holds,
+            regularity_note=regularity_note,
+            theta=theta_worst_avg,
+            support_code=support_code,
+            comparison_partial=comparison_partial,
+        )
+        step_bundle = build_master_step_bundle(step_ctx)
+
+        if comparison_legacy is None:
+            comparison_legacy = (
+                "smaller"
+                if relation_type == "less"
+                else "equal"
+                if relation_type == "equal"
+                else "larger"
+                if relation_type == "greater"
+                else None
+            )
+
         master = {
-            "case": case,
-            "nlogba": nlogba,
-            "comparison": comparison,
+            "case": case_candidate if step_bundle.get("overallStatus") != "unsupported" else None,
+            "nlogba": reference_growth,
+            "comparison": comparison_legacy,
             "regularity": regularity,
             "theta": theta_worst_avg,
             "theta_best": theta_best,
-            "has_early_return": has_early_return
+            "has_early_return": has_early_return,
+            "step_by_step": step_bundle,
         }
-        
-        self.proof_steps.append({"id": "conclude", "text": f"\\text{{Caso }} {case} \\Rightarrow T(n) = {theta_worst_avg}"})
+
+        if theta_worst_avg:
+            self.proof_steps.append({"id": "conclude", "text": f"\\text{{Conclusión maestro: }} T(n) = {theta_worst_avg}"})
+        else:
+            self.proof_steps.append({"id": "conclude", "text": "\\text{El Teorema Maestro no cerró una conclusión completa para este caso.}"})
         if has_early_return:
-            # theta_best ya contiene "O(1)", no necesitamos agregar otro "O"
-            self.proof_steps.append({"id": "conclude_best", "text": f"\\text{{Mejor caso: }} T(n) = {theta_best}"})
-        
+            self.proof_steps.append({"id": "conclude_best", "text": "\\text{Mejor caso: } T(n)=\\Theta(1)"})
+
         return {
             "success": True,
             "master": master
         }
+
+    def _parse_master_f_expression(self, f_n_str: str, n_sym: Symbol) -> Optional[Expr]:
+        raw = f_n_str.strip()
+        if not raw:
+            return Integer(1)
+        normalized = raw.replace("^", "**")
+        normalized = re.sub(r"\bn\s+log\s*\(?n\)?", "n*log(n)", normalized)
+        normalized = re.sub(r"\bn\s*\\log\s*\(?n\)?", "n*log(n)", normalized)
+        normalized = re.sub(r"\\b(log)\\s*n\\b", r"\\1(n)", normalized)
+        normalized = normalized.replace("\\log", "log")
+        normalized = normalized.replace("\\sqrt", "sqrt")
+        normalized = normalized.replace("{", "(").replace("}", ")")
+        normalized = normalized.replace("\\", "")
+        try:
+            return simplify(sympify(normalized, locals={"n": n_sym, "log": sympy_log, "sqrt": sqrt}))
+        except Exception:
+            return None
+
+    def _compare_master_exponents(self, lhs: Expr, rhs: Expr) -> Optional[int]:
+        diff = simplify(lhs - rhs)
+        if diff.is_zero:
+            return 0
+        if diff.is_positive:
+            return 1
+        if diff.is_negative:
+            return -1
+        try:
+            diff_val = float(diff.evalf(50))
+            if diff_val > 0:
+                return 1
+            if diff_val < 0:
+                return -1
+            return 0
+        except Exception:
+            return None
+
+    def _compare_master_growth_structured(self, f_expr: Expr, p_expr: Expr, n_sym: Symbol) -> Dict[str, Any]:
+        expr = simplify(f_expr)
+        from sympy import Wild
+
+        c_wild = Wild("c", exclude=[n_sym])
+        alpha_wild = Wild("alpha")
+        beta_wild = Wild("beta")
+        match = expr.match(c_wild * (n_sym ** alpha_wild) * (sympy_log(n_sym) ** beta_wild))
+        if not match:
+            return {"status": "partial", "relation_type": "undetermined", "case_candidate": None, "code": "MASTER_COMPARISON_PARTIAL", "comparison": None}
+
+        coeff = simplify(match.get(c_wild, Integer(1)))
+        exp = simplify(match.get(alpha_wild, Integer(0)))
+        log_power = simplify(match.get(beta_wild, Integer(0)))
+
+        if coeff.has(n_sym):
+            return {"status": "partial", "relation_type": "undetermined", "case_candidate": None, "code": "MASTER_COMPARISON_PARTIAL", "comparison": None}
+        if not log_power.is_integer:
+            return {"status": "partial", "relation_type": "undetermined", "case_candidate": None, "code": "MASTER_COMPARISON_PARTIAL", "comparison": None}
+
+        exp_cmp = self._compare_master_exponents(exp, p_expr)
+        if exp_cmp is None:
+            return {"status": "partial", "relation_type": "undetermined", "case_candidate": None, "code": "MASTER_COMPARISON_PARTIAL", "comparison": None}
+
+        if exp_cmp < 0:
+            return {"status": "complete", "relation_type": "less", "case_candidate": 1, "comparison": "smaller"}
+        if exp_cmp > 0:
+            return {"status": "complete", "relation_type": "greater", "case_candidate": 3, "comparison": "larger"}
+
+        # exp_cmp == 0
+        if log_power == 0:
+            return {"status": "complete", "relation_type": "equal", "case_candidate": 2, "comparison": "equal"}
+
+        return {"status": "unsupported", "relation_type": "intermediate", "case_candidate": None, "code": "MASTER_INTERMEDIATE_GAP", "comparison": None}
+
+    def _check_master_regularity_structured(self, a: int, b: float, f_expr: Expr, n_sym: Symbol) -> Dict[str, Any]:
+        try:
+            b_term = Integer(int(b)) if float(b).is_integer() else b
+            ratio_expr = simplify((Integer(a) * f_expr.subs(n_sym, n_sym / b_term)) / f_expr)
+        except Exception:
+            return {"holds": None, "note": "\\text{No se pudo construir la razón de regularidad.}"}
+
+        if ratio_expr.is_number:
+            try:
+                ratio_val = float(ratio_expr.evalf(50))
+                if ratio_val < 1:
+                    return {"holds": True, "note": f"a\\,f(n/b)/f(n)={self._simplify_number_latex(ratio_val)}<1"}
+                return {"holds": False, "note": f"a\\,f(n/b)/f(n)={self._simplify_number_latex(ratio_val)}\\ge 1"}
+            except Exception:
+                pass
+
+        try:
+            lim = limit(ratio_expr, n_sym, oo)
+            if lim.is_number:
+                lim_val = float(lim.evalf(50))
+                if lim_val < 1:
+                    return {"holds": True, "note": f"\\lim_{{n\\to\\infty}} a\\,f(n/b)/f(n)={self._simplify_number_latex(lim_val)}<1"}
+                return {"holds": False, "note": f"\\lim_{{n\\to\\infty}} a\\,f(n/b)/f(n)={self._simplify_number_latex(lim_val)}\\ge 1"}
+        except Exception:
+            pass
+
+        return {"holds": None, "note": "\\text{Regularidad no demostrada con cobertura simbólica actual.}"}
+
+    def _format_master_n_power(self, p_expr: Expr) -> str:
+        p_simplified = simplify(p_expr)
+        if p_simplified.is_zero:
+            return "1"
+        if p_simplified == 1:
+            return "n"
+        return f"n^{{{self._simplify_latex_expr(latex(p_simplified))}}}"
     
     def _detect_early_return(self) -> bool:
         """

@@ -146,11 +146,11 @@
         },
         "recursion_tree": {
           "name": "Árbol de Recursión",
-          "description": "Visualiza el árbol de llamadas recursivas para divide-and-conquer con múltiples subproblemas."
+          "description": "Visualiza el árbol de llamadas recursivas para Divide y Vencerás con múltiples subproblemas."
         },
         "master": {
           "name": "Teorema Maestro",
-          "description": "Para recurrencias divide-and-conquer estándar T(n) = a·T(n/b) + f(n)."
+          "description": "Para recurrencias estándar de Divide y Vencerás T(n) = a·T(n/b) + f(n)."
         }
       }
     },
@@ -230,9 +230,9 @@
       "dpPatternRollingWindow": "Patrón: ventana deslizante",
       "dpReasonStrongReduction": "Reducción fuerte entre complejidad recursiva e iterativa.",
       "dpReasonNoStrongGain": "Se detecta recurrencia lineal, pero la ganancia no es concluyente.",
-      "dpReasonMasterPreferred": "La recurrencia es divide-and-conquer: conviene Teorema Maestro o árbol de recursión.",
+      "dpReasonMasterPreferred": "La recurrencia es de Divide y Vencerás: conviene Teorema Maestro o árbol de recursión.",
       "dpReasonValidationRejected": "La validación no confirmó suficiente solapamiento de subproblemas para DP.",
-      "dpReasonDivideConquerPreferred": "La recurrencia es divide-and-conquer; prioriza Teorema Maestro, iteración o árbol de recursión sobre DP.",
+      "dpReasonDivideConquerPreferred": "La recurrencia es de Divide y Vencerás; prioriza Teorema Maestro, iteración o árbol de recursión sobre DP.",
       "dpReasonRollingWindowOptimal": "La recurrencia depende solo de los últimos estados contiguos y puede optimizarse con memoria acotada.",
       "dpReasonTabulationRequired": "La recurrencia requiere conservar estados no contiguos o un historial más largo que una ventana pequeña.",
       "dpReasonSubproblemReuse": "Las llamadas recursivas reutilizan subproblemas definidos por el mismo parámetro de tamaño.",
@@ -708,7 +708,7 @@
       "autoDetection": "Detección Automática",
       "singleRecursiveCall": "Un solo llamado recursivo (a = 1)",
       "decreaseAndConquer": "Subproblema decrease-and-conquer:",
-      "noDivideAndConquer": "No divide-and-conquer (no múltiples subproblemas)",
+      "noDivideAndConquer": "No es Divide y Vencerás (no múltiples subproblemas)",
       "strictlySmaller": "Subproblema estrictamente más pequeño",
       "symbolicExpansions": "Expansiones Simbólicas",
       "generalForm": "Forma General",
@@ -1278,7 +1278,7 @@
       "iterative": "Algoritmos con bucles FOR/WHILE. Totalmente soportados por el analizador iterativo.",
       "recursive_iteration": "Algoritmos recursivos analizados con el método de iteración (unrolling). Se usan cuando la recurrencia no cumple las condiciones del Teorema Maestro, Árbol de Recursión ni Ecuación Característica.",
       "recursive_master": "Algoritmos recursivos analizados con el Teorema Maestro. Se usan cuando la recurrencia tiene la forma T(n) = aT(n/b) + f(n) con a < 2 o no cumple las condiciones del Árbol de Recursión ni Ecuación Característica.",
-      "recursive_tree": "Algoritmos recursivos analizados con el método de Árbol de Recursión. Se usan cuando a ≥ 2, divide uniformemente y es divide-and-conquer. Incluye visualización del árbol y tabla por niveles.",
+      "recursive_tree": "Algoritmos recursivos analizados con el método de Árbol de Recursión. Se usan cuando a ≥ 2, divide uniformemente y es de Divide y Vencerás. Incluye visualización del árbol y tabla por niveles.",
       "recursive_characteristic": "Algoritmos recursivos analizados con el método de Ecuación Característica. Se usan cuando la recurrencia es lineal con desplazamientos constantes T(n) = c₁T(n-1) + c₂T(n-2) + ... + cₖT(n-k) + g(n). Tiene PRIORIDAD sobre el método de iteración. Detecta automáticamente casos de Programación Dinámica lineal y genera versión DP."
     },
     "exampleCount": "{count} ejemplo",

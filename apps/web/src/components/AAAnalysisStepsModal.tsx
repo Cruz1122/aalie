@@ -34,13 +34,24 @@ export default function AAAnalysisStepsModal({
   const t = useTranslations("analyzer.analysisSteps");
   const thetaLatex = theta ? (theta.includes("T(n)") ? theta : `T(n) = ${theta}`) : null;
   const isIteration = bundle?.method === "iteration";
-  const titleIconClassName = isIteration ? "text-violet-400" : "text-blue-400";
+  const isMaster = bundle?.method === "master";
+  const titleIconClassName = isIteration
+    ? "text-violet-400"
+    : isMaster
+      ? "text-orange-400"
+      : "text-blue-400";
   const panelClassName = isIteration
     ? "rounded-xl bg-violet-950/55 ring-1 ring-violet-400/20"
-    : "rounded-xl bg-slate-900 ring-1 ring-white/10";
+    : isMaster
+      ? "rounded-xl bg-orange-950/45 ring-1 ring-orange-400/25"
+      : "rounded-xl bg-slate-900 ring-1 ring-white/10";
   const equationCardClassName = "rounded-lg border border-white/10 bg-slate-800/60 p-3";
   const overallStatusCardClassName = "flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-slate-800/60 p-3";
-  const accent: "blue" | "purple" = isIteration ? "purple" : "blue";
+  const accent: "blue" | "purple" | "orange" = isIteration
+    ? "purple"
+    : isMaster
+      ? "orange"
+      : "blue";
 
   if (!open) return null;
 

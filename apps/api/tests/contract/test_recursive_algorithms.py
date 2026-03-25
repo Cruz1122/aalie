@@ -320,6 +320,30 @@ class TestDynamicProgrammingValidation:
         assert steps[1].get("kind") == "applicability_validated"
         assert steps[1].get("status") == "unsupported"
 
+    def test_master_step_bundle_contract_for_merge_sort(self):
+        """Master debe entregar bundle tipado de 10 pasos con clasificación consistente."""
+        result = analyze_algorithm(
+            MERGE_SORT_PSEUDOCODE,
+            mode="worst",
+            preferred_method="master",
+        )
+
+        assert result.get("ok"), result.get("errors", [])
+        master = result.get("totals", {}).get("master", {})
+        bundle = master.get("step_by_step")
+        assert isinstance(bundle, dict)
+        assert bundle.get("method") == "master"
+        assert bundle.get("version") == "master_steps_v1"
+        assert bundle.get("overallStatus") in {"complete", "partial", "unsupported", "error"}
+
+        steps = bundle.get("steps", [])
+        assert len(steps) == 10
+        assert [step.get("index") for step in steps] == list(range(1, 11))
+        assert steps[1].get("kind") == "master_form_validated"
+        assert steps[5].get("kind") == "growth_comparison_performed"
+        assert steps[9].get("kind") == "asymptotic_conclusion"
+        assert steps[9].get("math", {}).get("primaryLatex", "").startswith("T(n)")
+
 
 class TestRecursiveAlgorithms:
     """Tests de integración para algoritmos recursivos con Teorema Maestro."""

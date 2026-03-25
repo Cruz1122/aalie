@@ -1751,6 +1751,82 @@ class TestRecursiveAnalyzerDPValidation:
         assert steps[10]["kind"] == "asymptotic_concluded"
         assert steps[10]["status"] == "partial"
 
+    def test_apply_master_theorem_builds_step_bundle_case_2(self):
+        """Master: T(n)=2T(n/2)+n debe clasificar Caso 2 con 10 steps tipados."""
+        self.analyzer.recurrence = {
+            "type": "divide_conquer",
+            "form": "T(n)=2T(n/2)+n",
+            "a": 2,
+            "b": 2,
+            "f": "n",
+            "n0": 1,
+            "applicable": True,
+            "method": "master",
+        }
+        with patch.object(self.analyzer, "_detect_early_return", return_value=False):
+            result = self.analyzer._apply_master_theorem()
+
+        assert result.get("success")
+        master = result["master"]
+        assert master.get("case") == 2
+        assert master.get("theta") == "\\Theta(n \\log n)"
+        bundle = master.get("step_by_step", {})
+        assert bundle.get("method") == "master"
+        assert bundle.get("version") == "master_steps_v1"
+        assert len(bundle.get("steps", [])) == 10
+        assert bundle.get("overallStatus") == "complete"
+        assert bundle["steps"][5]["kind"] == "growth_comparison_performed"
+        assert bundle["steps"][5]["payload"]["relationType"] == "equal"
+
+    def test_apply_master_theorem_builds_step_bundle_case_3_with_regularity(self):
+        """Master: T(n)=2T(n/2)+n^2 debe clasificar Caso 3 y verificar regularidad."""
+        self.analyzer.recurrence = {
+            "type": "divide_conquer",
+            "form": "T(n)=2T(n/2)+n^2",
+            "a": 2,
+            "b": 2,
+            "f": "n^2",
+            "n0": 1,
+            "applicable": True,
+            "method": "master",
+        }
+        with patch.object(self.analyzer, "_detect_early_return", return_value=False):
+            result = self.analyzer._apply_master_theorem()
+
+        assert result.get("success")
+        master = result["master"]
+        assert master.get("case") == 3
+        assert master.get("theta") == "\\Theta(n^2)"
+        assert master.get("regularity", {}).get("checked") is True
+        bundle = master.get("step_by_step", {})
+        assert bundle.get("overallStatus") == "complete"
+        assert bundle["steps"][7]["kind"] == "regularity_checked"
+        assert bundle["steps"][7]["status"] == "complete"
+
+    def test_apply_master_theorem_marks_intermediate_gap_unsupported(self):
+        """Master: T(n)=2T(n/2)+n log n debe quedar unsupported por zona intermedia."""
+        self.analyzer.recurrence = {
+            "type": "divide_conquer",
+            "form": "T(n)=2T(n/2)+n log n",
+            "a": 2,
+            "b": 2,
+            "f": "n log n",
+            "n0": 1,
+            "applicable": True,
+            "method": "master",
+        }
+        with patch.object(self.analyzer, "_detect_early_return", return_value=False):
+            result = self.analyzer._apply_master_theorem()
+
+        assert result.get("success")
+        master = result["master"]
+        assert master.get("case") is None
+        assert master.get("theta") is None
+        bundle = master.get("step_by_step", {})
+        assert bundle.get("overallStatus") == "unsupported"
+        assert bundle["steps"][5]["status"] == "unsupported"
+        assert "MASTER_INTERMEDIATE_GAP" in bundle["steps"][5]["audit"]["codes"]
+
     def test_apply_recursion_tree_method_merge_sort(self):
         """Test: _apply_recursion_tree_method aplica método de árbol de recursión"""
         self.analyzer.proof_steps = []

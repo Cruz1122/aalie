@@ -10,10 +10,10 @@ import CharacteristicEquationModal from "./CharacteristicEquationModal";
 import DPVersionModal from "./DPVersionModal";
 import Formula from "./Formula";
 import IterationProcedureModal from "./IterationProcedureModal";
+import MasterTheoremModal from "./MasterTheoremModal";
 import RecursionTreeModal from "./RecursionTreeModal";
 import RecursionTreeProcedureModal from "./RecursionTreeProcedureModal";
 import RecursionTreeStepsModal from "./RecursionTreeStepsModal";
-import RecursiveProcedureModal from "./RecursiveProcedureModal";
 
 type RecurrenceType = AnalyzeOpenResponse["totals"]["recurrence"];
 type CharacteristicEquationType =
@@ -536,35 +536,12 @@ const renderRecursionTreeModal = (
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 const renderMasterModal = (props: ProcedureModalProps): React.JSX.Element => {
-  const divideConquerRecurrence =
-    props.recurrence?.type === "divide_conquer"
-      ? extractDivideConquerRecurrenceWithoutMethod(
-          props.recurrence as {
-            type: "divide_conquer";
-            form: string;
-            a: number;
-            b: number;
-            f: string;
-            n0: number;
-            applicable: boolean;
-            notes: string[];
-          },
-        )
-      : null;
-
   return (
-    <RecursiveProcedureModal
+    <MasterTheoremModal
       open={props.showProcedureModal}
       onClose={() => props.setShowProcedureModal(false)}
-      data={getDataForSelectedCase(
-        props.selectedCase,
-        props.worstData,
-        props.bestData,
-        props.avgData,
-      )}
-      recurrence={divideConquerRecurrence}
+      recurrence={props.recurrence}
       master={props.currentMaster || props.master}
-      proof={props.currentProof ?? props.proof}
       theta={props.currentTheta || props.theta || props.T_open}
     />
   );
@@ -781,12 +758,12 @@ const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
             ? "hover:bg-blue-500/20"
             : props.isIterationMethod
               ? "hover:bg-violet-500/20"
-              : "hover:bg-sky-500/20"
+              : "hover:bg-orange-500/20"
         } ${showGrid ? "" : "w-full"}`}
       >
         <span className="material-symbols-outlined text-sm flex-shrink-0">info</span>
         <span className="truncate">
-          {props.isCharacteristicMethod || props.isIterationMethod
+          {props.isCharacteristicMethod || props.isIterationMethod || !props.isRecursionTreeMethod
             ? props.tView("viewStepByStep")
             : props.tView("viewDetails")}
         </span>
@@ -1033,13 +1010,19 @@ const renderEfficiencyCard = (
 ): React.JSX.Element => {
   const efficiencyBorderClass = props.isIterationMethod
     ? "!border-violet-500/30"
-    : "border-blue-500/20";
+    : props.isMasterMethod
+      ? "!border-orange-500/30"
+      : "border-blue-500/20";
   const efficiencyIconClass = props.isIterationMethod
     ? "text-violet-400"
-    : "text-blue-400";
+    : props.isMasterMethod
+      ? "text-orange-400"
+      : "text-blue-400";
   const efficiencyInnerBorderClass = props.isIterationMethod
     ? "!border-violet-500/30"
-    : "border-blue-500/30";
+    : props.isMasterMethod
+      ? "!border-orange-500/30"
+      : "border-blue-500/30";
 
   return (
     <div className={`glass-card p-4 sm:p-7 rounded-lg border flex-shrink-0 min-w-0 ${efficiencyBorderClass}`}>
@@ -1500,14 +1483,14 @@ export default function RecursiveAnalysisView({
                 <button
                   onClick={() => setShowProcedureModal(true)}
                   className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary transition-colors min-w-0 ${
-                    isIterationMethod ? "hover:bg-violet-500/20" : "hover:bg-sky-500/20"
+                    isIterationMethod ? "hover:bg-violet-500/20" : "hover:bg-orange-500/20"
                   }`}
                 >
                   <span className="material-symbols-outlined text-sm flex-shrink-0">
                     info
                   </span>
                   <span className="truncate">
-                    {isIterationMethod ? tView("viewStepByStep") : tView("viewDetails")}
+                    {isIterationMethod || isMasterMethod ? tView("viewStepByStep") : tView("viewDetails")}
                   </span>
                 </button>
                 <button

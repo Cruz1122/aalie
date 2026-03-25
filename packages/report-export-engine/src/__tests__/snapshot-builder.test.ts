@@ -56,6 +56,7 @@ describe("snapshot-builder", () => {
     const hybrid = createHybridSnapshot();
     const characteristic = createRecursiveSnapshot("characteristic_equation");
     const iteration = createRecursiveSnapshot("iteration");
+    const master = createRecursiveSnapshot("master");
 
     assert.strictEqual(hybrid.internal.recurrence.status, "available");
     assert.strictEqual(hybrid.internal.recurrence.data?.type, "divide_conquer_multi");
@@ -81,6 +82,19 @@ describe("snapshot-builder", () => {
     }
     assert.strictEqual(iteration.recursive.data.stepByStep.status, "available");
     assert.strictEqual(iteration.recursive.data.stepByStep.data?.steps.length, 11);
+
+    assert.strictEqual(master.internal.recurrence.status, "available");
+    assert.strictEqual(master.internal.recurrence.data?.method, "master");
+    assert.strictEqual(
+      master.internal.intermediateMath.data?.masterStepByStep?.steps.length,
+      10,
+    );
+    assert.strictEqual(master.recursive.status, "available");
+    if (master.recursive.status !== "available" || !master.recursive.data) {
+      assert.fail("recursive section should be available for master");
+    }
+    assert.strictEqual(master.recursive.data.stepByStep.status, "available");
+    assert.strictEqual(master.recursive.data.stepByStep.data?.steps.length, 10);
   });
 
   it("mantiene pseudocodigo normalizado pendiente y conserva invariante cuando existe", () => {

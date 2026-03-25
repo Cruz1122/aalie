@@ -34,7 +34,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "iteration.step_blocked.unsupported": "Este paso queda bloqueado porque la recurrencia no cumple la cobertura necesaria del método de iteración.",
 
         "concept.iteration.recurrence_detected": "El método de iteración trabaja desplegando recursivamente una forma concreta de recurrencia. Por eso primero se fija con precisión qué depende de $T(n-1)$ y qué parte corresponde al costo externo $g(n)$.",
-        "concept.iteration.applicability_validated": "Para evitar conclusiones inválidas, la cobertura V1 se restringe a decremento unitario. Si la forma es de divide-and-conquer o tiene desplazamientos no unitarios, este método no se aplica de forma canónica en esta versión.",
+        "concept.iteration.applicability_validated": "Para evitar conclusiones inválidas, la cobertura V1 se restringe a decremento unitario. Si la forma es de Divide y Vencerás o tiene desplazamientos no unitarios, este método no se aplica de forma canónica en esta versión.",
         "concept.iteration.base_case_identified": "El despliegue iterativo necesita un punto de cierre. El caso base define dónde se detiene la expansión y desde qué valor conocido se reconstruye la solución completa.",
         "concept.iteration.initial_unrolling_built": "Desenrollar las primeras iteraciones permite observar la estructura acumulativa real y evita proponer un patrón general sin evidencia algebraica.",
         "concept.iteration.k_pattern_generalized": "Tras observar varias expansiones, se abstrae una forma con $k$ pasos: una parte recursiva residual y una suma de aportes de $g(\\cdot)$. Esta generalización es la base del cierre.",
@@ -47,7 +47,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "concept.iteration.blocked": "Cuando el método no aplica en la cobertura actual, los pasos siguientes se dejan explícitamente bloqueados en vez de fingir continuidad.",
 
         "warning.iteration.unsupported_non_unit_shift": "Cobertura V1: solo se soporta recurrencia de decremento unitario $T(n)=T(n-1)+g(n)$.",
-        "warning.iteration.unsupported_non_linear_form": "La forma detectada corresponde a otra familia de recurrencias (por ejemplo divide-and-conquer) y no se resuelve aquí por iteración V1.",
+        "warning.iteration.unsupported_non_linear_form": "La forma detectada corresponde a otra familia de recurrencias (por ejemplo Divide y Vencerás) y no se resuelve aquí por iteración V1.",
         "warning.iteration.missing_base_case": "No hay suficiente información de caso base para cerrar completamente la solución.",
         "warning.iteration.summation_partial": "La sumatoria no se cerró de forma elemental con las reglas simbólicas actuales.",
         "warning.iteration.asymptotic_partial": "La cota asintótica proviene de una aproximación controlada y se reporta como parcial.",

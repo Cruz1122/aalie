@@ -2,6 +2,7 @@ import type {
   AnalyzeOpenResponse,
   CharacteristicStepKind,
   IterationStepKind,
+  MasterStepKind,
   LoopInvariant,
   Program,
   RecursiveMethodStepBundle,
@@ -440,7 +441,52 @@ function recursiveCase(
   }
 
   if (method === "master") {
+    const masterStepKinds: MasterStepKind[] = [
+      "recurrence_detected",
+      "master_form_validated",
+      "master_parameters_extracted",
+      "critical_exponent_computed",
+      "reference_growth_built",
+      "growth_comparison_performed",
+      "master_case_evaluated",
+      "regularity_checked",
+      "master_applicability_decided",
+      "asymptotic_conclusion",
+    ];
+    const masterStepBundle: RecursiveMethodStepBundle = {
+      method: "master",
+      version: "master_steps_v1",
+      overallStatus: "complete",
+      steps: masterStepKinds.map((kind, index) => ({
+        id: `master_s${index + 1}`,
+        index: index + 1,
+        kind,
+        title: `Master Step ${index + 1}`,
+        status: "complete",
+        math: {
+          primaryLatex: index === 9 ? "T(n)=\\Theta(n \\log n)" : undefined,
+          items: [],
+        },
+        summary: `Fixture summary for master step ${index + 1}`,
+        conceptNote: `Fixture concept for ${kind}`,
+        teachingNote: `Fixture concept for ${kind}`,
+        warning: null,
+        confidence: "high",
+        payload: {},
+        template: {
+          summaryKey: "fixture.summary",
+          conceptKey: "fixture.concept",
+          params: {},
+        },
+        audit: {
+          codes: [],
+          assumptions: [],
+          blockedBy: [],
+        },
+      })),
+    };
     totals.master = {
+      method: "master",
       case: 2,
       nlogba: "n",
       comparison: "equal",
@@ -449,6 +495,7 @@ function recursiveCase(
         note: "ok",
       },
       theta: "\\Theta(n \\log n)",
+      step_by_step: masterStepBundle,
     };
     totals.big_theta = "\\Theta(n \\log n)";
   }

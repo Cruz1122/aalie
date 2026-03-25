@@ -272,8 +272,13 @@ export function buildSnapshot(input: BuildSnapshotInput): AalieAnalysisSnapshotV
       : normalizedRecurrence?.method === "characteristic_equation"
         ? selectedCase?.totals?.characteristic_equation?.step_by_step ||
           selectedCase?.totals?.iteration?.step_by_step
+        : normalizedRecurrence?.method === "master"
+          ? selectedCase?.totals?.master?.step_by_step ||
+            selectedCase?.totals?.characteristic_equation?.step_by_step ||
+            selectedCase?.totals?.iteration?.step_by_step
         : selectedCase?.totals?.characteristic_equation?.step_by_step ||
-          selectedCase?.totals?.iteration?.step_by_step;
+          selectedCase?.totals?.iteration?.step_by_step ||
+          selectedCase?.totals?.master?.step_by_step;
 
   const methodsApplied = [
     normalizedRecurrence?.method,
@@ -377,6 +382,7 @@ export function buildSnapshot(input: BuildSnapshotInput): AalieAnalysisSnapshotV
             iteration: selectedCase.totals?.iteration,
             iterationStepByStep: selectedCase.totals?.iteration?.step_by_step,
             master: selectedCase.totals?.master,
+            masterStepByStep: selectedCase.totals?.master?.step_by_step,
             recursionTree: selectedCase.totals?.recursion_tree,
           })
         : createSection("missing_data"),

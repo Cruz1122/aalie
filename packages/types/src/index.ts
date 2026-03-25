@@ -345,9 +345,21 @@ export type IterationStepKind =
   | "dominant_term_identified"
   | "asymptotic_concluded";
 
-export type RecursiveStepKind = CharacteristicStepKind | IterationStepKind;
-export type RecursiveMethodId = "characteristic_equation" | "iteration";
-export type RecursiveStepBundleVersion = "ceq_steps_v1" | "iter_steps_v1";
+export type MasterStepKind =
+  | "recurrence_detected"
+  | "master_form_validated"
+  | "master_parameters_extracted"
+  | "critical_exponent_computed"
+  | "reference_growth_built"
+  | "growth_comparison_performed"
+  | "master_case_evaluated"
+  | "regularity_checked"
+  | "master_applicability_decided"
+  | "asymptotic_conclusion";
+
+export type RecursiveStepKind = CharacteristicStepKind | IterationStepKind | MasterStepKind;
+export type RecursiveMethodId = "characteristic_equation" | "iteration" | "master";
+export type RecursiveStepBundleVersion = "ceq_steps_v1" | "iter_steps_v1" | "master_steps_v1";
 
 export interface RecursiveStepMathItem {
   id: string;
@@ -525,6 +537,7 @@ export interface AnalyzeOpenResponse {
       step_by_step?: RecursiveMethodStepBundle; // pasos detallados tipados del método
     };
     master?: {                      // resultado del Teorema Maestro
+      method?: "master";
       case: 1 | 2 | 3 | null;      // caso aplicado (1, 2, 3) o null si no aplicable
       nlogba: string;               // expresión LaTeX de n^(log_b a)
       comparison: "smaller" | "equal" | "larger" | null;  // comparación f(n) vs g(n)
@@ -533,6 +546,7 @@ export interface AnalyzeOpenResponse {
         note: string;               // nota sobre la verificación
       };
       theta: string | null;         // resultado Θ(...) en LaTeX
+      step_by_step?: RecursiveMethodStepBundle;
     };
     iteration?: {                   // resultado del Método de Iteración (Unrolling)
       method: "iteration";          // identificador del método
