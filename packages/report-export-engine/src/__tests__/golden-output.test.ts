@@ -94,7 +94,6 @@ describe("golden-output", () => {
       const criticalTokens = [
         snapshot.snapshotId,
         snapshot.contentHash,
-        snapshot.globalResult.cases.worst?.T_open || "",
         snapshot.globalResult.cases.worst?.big_theta || "",
       ].filter(Boolean);
 

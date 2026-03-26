@@ -74,6 +74,8 @@ describe("snapshot-builder", () => {
     }
     assert.strictEqual(characteristic.recursive.data.stepByStep.status, "available");
     assert.strictEqual(characteristic.recursive.data.stepByStep.data?.steps.length, 12);
+    assert.strictEqual(characteristic.recursive.data.presentation?.renderHints?.stepExplanationStyle, "italic");
+    assert.ok(characteristic.recursive.data.presentation?.summary);
 
     assert.strictEqual(iteration.internal.recurrence.status, "available");
     assert.strictEqual(iteration.internal.recurrence.data?.method, "iteration");
@@ -83,6 +85,7 @@ describe("snapshot-builder", () => {
     }
     assert.strictEqual(iteration.recursive.data.stepByStep.status, "available");
     assert.strictEqual(iteration.recursive.data.stepByStep.data?.steps.length, 11);
+    assert.strictEqual(iteration.recursive.data.presentation?.renderHints?.markdownExplanationStyle, "italic");
 
     assert.strictEqual(master.internal.recurrence.status, "available");
     assert.strictEqual(master.internal.recurrence.data?.method, "master");
@@ -96,6 +99,7 @@ describe("snapshot-builder", () => {
     }
     assert.strictEqual(master.recursive.data.stepByStep.status, "available");
     assert.strictEqual(master.recursive.data.stepByStep.data?.steps.length, 10);
+    assert.strictEqual(master.recursive.data.presentation?.renderHints?.latexExplanationSize, "footnotesize");
 
     assert.strictEqual(recursionTree.internal.recurrence.status, "available");
     assert.strictEqual(recursionTree.internal.recurrence.data?.method, "recursion_tree");
@@ -109,6 +113,7 @@ describe("snapshot-builder", () => {
     }
     assert.strictEqual(recursionTree.recursive.data.stepByStep.status, "available");
     assert.strictEqual(recursionTree.recursive.data.stepByStep.data?.steps.length, 11);
+    assert.ok(recursionTree.recursive.data.presentation);
   });
 
   it("mantiene pseudocodigo normalizado pendiente y conserva invariante cuando existe", () => {

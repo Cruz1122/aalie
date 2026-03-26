@@ -5,6 +5,7 @@ import type {
   AnalyzeOpenResponse,
   LoopInvariant,
   Program,
+  RecursiveMethodStepBundle,
   SnapshotCase,
   SnapshotGpuCpuComparative,
   SnapshotLlmComparative,
@@ -219,6 +220,41 @@ function inferAlgorithmType(input: BuildSnapshotInput): AalieAnalysisSnapshotV1[
   return "unknown";
 }
 
+function buildRecursivePresentation(stepByStep: RecursiveMethodStepBundle | null | undefined): {
+  summary?: string;
+  conceptNote?: string;
+  warning?: string;
+  supportReason?: string;
+  renderHints: {
+    stepExplanationStyle: "italic";
+    latexExplanationSize: "footnotesize";
+    markdownExplanationStyle: "italic";
+  };
+} | undefined {
+  if (!stepByStep || !Array.isArray(stepByStep.steps) || stepByStep.steps.length === 0) {
+    return undefined;
+  }
+
+  const firstStep = stepByStep.steps[0];
+  const firstSummary = firstStep?.summary?.trim();
+  const firstConceptNote = firstStep?.conceptNote?.trim();
+  const warningFromSteps = stepByStep.steps.find((step) => step.warning)?.warning?.trim();
+  const supportReason = stepByStep.steps.find((step) => step.derivation?.supportReason)
+    ?.derivation?.supportReason?.trim();
+
+  return {
+    summary: firstSummary || undefined,
+    conceptNote: firstConceptNote || undefined,
+    warning: warningFromSteps || undefined,
+    supportReason: supportReason || undefined,
+    renderHints: {
+      stepExplanationStyle: "italic",
+      latexExplanationSize: "footnotesize",
+      markdownExplanationStyle: "italic",
+    },
+  };
+}
+
 export function buildSnapshot(input: BuildSnapshotInput): AalieAnalysisSnapshotV1 {
   const locale = normalizeLocale(input.locale);
   const analysisId = input.analysisId || randomUUID();
@@ -285,6 +321,7 @@ export function buildSnapshot(input: BuildSnapshotInput): AalieAnalysisSnapshotV
           selectedCase?.totals?.iteration?.step_by_step ||
           selectedCase?.totals?.master?.step_by_step ||
           selectedCase?.totals?.recursion_tree?.step_by_step;
+  const recursivePresentation = buildRecursivePresentation(selectedStepByStep);
 
   const methodsApplied = [
     normalizedRecurrence?.method,
@@ -475,6 +512,7 @@ export function buildSnapshot(input: BuildSnapshotInput): AalieAnalysisSnapshotV
             methodDetails.length > 0
               ? createSection("available", methodDetails)
               : createSection("missing_data"),
+          presentation: recursivePresentation,
           rootsAndMultiplicities: selectedCase?.totals?.characteristic_equation?.roots
             ? createSection("available", selectedCase.totals.characteristic_equation.roots)
             : createSection("not_supported"),

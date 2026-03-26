@@ -66,6 +66,25 @@ function renderLatexTextWithInlineMath(value: string): string {
   return escapeLatexText(normalized);
 }
 
+function renderLatexTextWithEmbeddedMath(value: string): string {
+  const normalized = value.trim();
+  if (!normalized) {
+    return "";
+  }
+  if (!normalized.includes("$")) {
+    return escapeLatexText(normalized);
+  }
+  const parts = normalized.split(/(\$[^$]+\$)/g).filter((part) => part.length > 0);
+  return parts
+    .map((part) => {
+      if (part.startsWith("$") && part.endsWith("$")) {
+        return part;
+      }
+      return escapeLatexText(part);
+    })
+    .join("");
+}
+
 function renderLatexCellValue(value: string): string {
   const normalized = value.trim();
   if (!normalized) {
@@ -127,7 +146,10 @@ function isTraceTable(headers: string[]): boolean {
   return hasStep && hasContext && hasCost;
 }
 
-function buildLatexTableColumnSpec(headers: string[]): string {
+function buildLatexTableColumnSpec(
+  headers: string[],
+  align?: Array<"left" | "center" | "right">,
+): string {
   if (isTraceTable(headers)) {
     return [
       ">{\\raggedright\\arraybackslash}p{0.055\\linewidth}",
@@ -141,18 +163,23 @@ function buildLatexTableColumnSpec(headers: string[]): string {
   }
 
   const columnCount = Math.max(1, headers.length);
-  const columns = Array.from({ length: columnCount }, (_, index) =>
-    index === 0
-      ? ">{\\raggedright\\arraybackslash}p{0.12\\linewidth}"
-      : ">{\\raggedright\\arraybackslash}X"
-  );
+  const columns = Array.from({ length: columnCount }, (_, index) => {
+    const target = align?.[index] || "left";
+    if (target === "center") {
+      return ">{\\centering\\arraybackslash}X";
+    }
+    if (target === "right") {
+      return ">{\\raggedleft\\arraybackslash}X";
+    }
+    return ">{\\raggedright\\arraybackslash}X";
+  });
   return columns.join("");
 }
 
 function renderLatexTable(table: DocumentTable, i18n: ExportI18nBundle): string {
   const columnCount = Math.max(1, table.headers.length);
   const traceTable = isTraceTable(table.headers);
-  const spec = buildLatexTableColumnSpec(table.headers);
+  const spec = buildLatexTableColumnSpec(table.headers, table.align);
   const lines: string[] = [];
 
   if (table.title) {
@@ -289,6 +316,10 @@ export function renderLatexBlock(block: DocumentBlock, i18n: ExportI18nBundle): 
     return `\\GraySubsection{${escapeLatexText(block.title)}}`;
   }
 
+  if (block.kind === "centeredParagraph") {
+    return ["\\begin{center}", renderLatexTextWithEmbeddedMath(block.text), "\\end{center}"].join("\n");
+  }
+
   if (block.kind === "institutionalCode") {
     return renderInstitutionalCodeBlock(block.title, block.lines);
   }
@@ -302,6 +333,31 @@ export function renderLatexBlock(block: DocumentBlock, i18n: ExportI18nBundle): 
     pieces.push(block.formula);
     pieces.push("\\]");
     return pieces.join("\n");
+  }
+
+  if (block.kind === "pedagogicalStep") {
+    const warningLabel = i18n.locale === "es" ? "Advertencia" : "Warning";
+    const supportLabel = i18n.locale === "es" ? "Soporte" : "Support";
+    const lines: string[] = [
+      `\\paragraph{${escapeLatexText(`${block.step.index}. ${block.step.title}`)}}`,
+    ];
+    if (block.step.formula) {
+      lines.push("\\[");
+      lines.push(block.step.formula);
+      lines.push("\\]");
+    }
+    lines.push(`{\\footnotesize\\textit{${renderLatexTextWithEmbeddedMath(block.step.explanation)}}}`);
+    if (block.step.warning) {
+      lines.push(
+        `{\\footnotesize\\textit{${escapeLatexText(warningLabel)}: ${renderLatexTextWithEmbeddedMath(block.step.warning)}}}`,
+      );
+    }
+    if (block.step.supportReason) {
+      lines.push(
+        `{\\footnotesize\\textit{${escapeLatexText(supportLabel)}: ${renderLatexTextWithEmbeddedMath(block.step.supportReason)}}}`,
+      );
+    }
+    return lines.join("\n");
   }
 
   if (block.kind === "table") {

@@ -19,6 +19,8 @@ describe("latex-renderer", () => {
     assert.ok(latex.includes("\\AALIESetMetaLabels{Version}{Date}"));
     assert.match(latex, /characteristic equation/i);
     assert.ok(latex.includes("\\section{Recursive Analysis Step By Step}"));
+    assert.match(latex, /\\paragraph\{1\. Step 1\}/);
+    assert.match(latex, /\\footnotesize\\textit\{Fixture summary for step 1 Fixture concept for recurrence\\_detected\}/);
   });
 
   it("escapa texto plano con caracteres especiales", () => {

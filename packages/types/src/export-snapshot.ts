@@ -226,6 +226,17 @@ export interface RecursiveSnapshotSection {
   selectedMethod: SnapshotSection<SnapshotRecursiveMethod>;
   methodsAvailable: SnapshotSection<SnapshotRecursiveMethod[]>;
   methodDetails: SnapshotSection<SnapshotRecursiveMethodDetail[]>;
+  presentation?: {
+    summary?: string;
+    conceptNote?: string;
+    warning?: string;
+    supportReason?: string;
+    renderHints?: {
+      stepExplanationStyle?: "italic";
+      latexExplanationSize?: "footnotesize";
+      markdownExplanationStyle?: "italic";
+    };
+  };
   rootsAndMultiplicities: SnapshotSection<
     Array<{ root: string; multiplicity: number }>
   >;

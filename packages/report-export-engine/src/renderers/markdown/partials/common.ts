@@ -39,7 +39,13 @@ export function renderMarkdownTable(table: DocumentTable): string {
   }
 
   lines.push(`| ${headers.join(" | ")} |`);
-  lines.push(`| ${headers.map(() => "---").join(" | ")} |`);
+  const alignMarkers = headers.map((_, index) => {
+    const align = table.align?.[index] || "left";
+    if (align === "center") return ":---:";
+    if (align === "right") return "---:";
+    return "---";
+  });
+  lines.push(`| ${alignMarkers.join(" | ")} |`);
 
   for (const row of table.rows) {
     const safeRow = row.map((cell) => escapePipes(renderMarkdownCell(cell)));
@@ -91,6 +97,10 @@ export function renderMarkdownBlock(
     return `### ${block.title}`;
   }
 
+  if (block.kind === "centeredParagraph") {
+    return `<p align="center">${toMarkdownTextWithInlineMath(block.text)}</p>`;
+  }
+
   if (block.kind === "code") {
     return `\`\`\`${block.language || "text"}\n${block.code}\n\`\`\``;
   }
@@ -104,6 +114,22 @@ export function renderMarkdownBlock(
       return `**${block.label}**\n\n$$\n${block.formula}\n$$`;
     }
     return `$$\n${block.formula}\n$$`;
+  }
+
+  if (block.kind === "pedagogicalStep") {
+    const stepHeader = `**${block.step.index}. ${block.step.title}**`;
+    const parts: string[] = [stepHeader];
+    if (block.step.formula) {
+      parts.push(`$$\n${block.step.formula}\n$$`);
+    }
+    parts.push(`*${toMarkdownTextWithInlineMath(block.step.explanation)}*`);
+    if (block.step.warning) {
+      parts.push(`*Warning: ${toMarkdownTextWithInlineMath(block.step.warning)}*`);
+    }
+    if (block.step.supportReason) {
+      parts.push(`*Support: ${toMarkdownTextWithInlineMath(block.step.supportReason)}*`);
+    }
+    return parts.join("\n\n");
   }
 
   if (block.kind === "table") {

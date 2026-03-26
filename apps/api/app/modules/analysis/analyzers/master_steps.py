@@ -105,7 +105,7 @@ class MasterStepContext:
     locale: str
     recurrence_form: str
     a: int
-    b: float
+    b: float | int
     f_n: str
     p_latex: str
     reference_growth_latex: str

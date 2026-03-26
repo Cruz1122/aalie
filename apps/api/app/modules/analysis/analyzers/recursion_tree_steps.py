@@ -15,7 +15,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
     "es": {
         "tree.recurrence_detected.standard": "Se detectó la recurrencia a analizar por árbol de recursión.",
         "tree.applicability.supported": "La recurrencia cumple la forma base del método: $T(n)=aT(n/b)+f(n)$ con parámetros válidos.",
-        "tree.applicability.unsupported": "La recurrencia detectada queda fuera de la cobertura formal V1 del árbol de recursión simbólico.",
+        "tree.applicability.unsupported": "La recurrencia detectada queda fuera de la cobertura formal actual del árbol de recursión simbólico.",
         "tree.parameters.extracted": "Se extrajeron los parámetros estructurales del árbol: ramificación, reducción de tamaño y costo externo.",
         "tree.level_model.built": "Se modeló el nivel $i$ con número de nodos, tamaño de subproblema y costo por nodo.",
         "tree.level_cost.computed": "El costo total del nivel se obtuvo como número de nodos por costo de cada nodo.",
@@ -29,10 +29,10 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "tree.asymptotic_conclusion.complete": "Se concluyó la complejidad asintótica final del método de árbol de recursión.",
         "tree.asymptotic_conclusion.partial": "La conclusión asintótica se reporta como parcial por limitaciones previas en el cierre simbólico.",
         "tree.asymptotic_conclusion.unsupported": "No hay conclusión cerrada del método con la cobertura actual para este caso.",
-        "tree.step_blocked.unsupported": "Este paso queda bloqueado porque la recurrencia no cumple la aplicabilidad formal del método en V1.",
+        "tree.step_blocked.unsupported": "Este paso queda bloqueado porque la recurrencia no cumple la aplicabilidad formal actual del método.",
 
         "concept.tree.recurrence_detected": "Primero fijamos la ecuación exacta que vamos a analizar. Esto evita mezclar fórmulas de otros métodos y deja claro qué estructura matemática se está resolviendo.",
-        "concept.tree.recursion_tree_applicability_check": "El árbol de recursión simbólico V1 se aplica de forma canónica a recurrencias divide y vencerás con reducción uniforme. Si la forma no entra, se declara explícitamente en lugar de forzar una conclusión.",
+        "concept.tree.recursion_tree_applicability_check": "El árbol de recursión simbólico se aplica de forma canónica a recurrencias divide y vencerás con reducción uniforme. Si la forma no entra, se declara explícitamente en lugar de forzar una conclusión.",
         "concept.tree.tree_parameters_extracted": "Los parámetros $a$, $b$ y $f(n)$ determinan la geometría del árbol: cuántos nodos nacen por nivel, cómo cambia el tamaño del subproblema y qué costo local aporta cada nodo.",
         "concept.tree.level_model_built": "Modelar el nivel $i$ permite separar estructura y costo: cuántos subproblemas hay, de qué tamaño son y qué cuesta resolver cada uno. Ese modelo es la base del análisis por niveles.",
         "concept.tree.level_cost_computed": "En árbol de recursión, el costo de un nivel no se adivina: se multiplica nodos por costo por nodo. Esa regla traduce la estructura del árbol en una expresión de costo acumulado.",
@@ -44,7 +44,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "concept.tree.asymptotic_conclusion": "La conclusión asintótica resume el crecimiento de largo plazo de $T(n)$ y debe reflejar el estado real de soporte: completo, parcial o no soportado.",
         "concept.tree.blocked": "Cuando el método no aplica formalmente, los pasos siguientes se marcan como bloqueados para mantener transparencia matemática.",
 
-        "warning.tree.unsupported_form": "Cobertura V1: el walkthrough formal del árbol se soporta para recurrencias tipo $T(n)=aT(n/b)+f(n)$ con reducción uniforme.",
+        "warning.tree.unsupported_form": "Cobertura actual: el walkthrough formal del árbol se soporta para recurrencias tipo $T(n)=aT(n/b)+f(n)$ con reducción uniforme.",
         "warning.tree.invalid_parameters": "Parámetros inválidos para el modelo del árbol: se requiere $a\\ge 1$ y $b>1$.",
         "warning.tree.sum_partial": "No fue posible cerrar completamente la sumatoria con las reglas simbólicas actuales.",
         "warning.tree.tree_inconsistent": "Se detectó inconsistencia entre artefactos del árbol y el modelo simbólico esperado.",
@@ -53,7 +53,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
     "en": {
         "tree.recurrence_detected.standard": "The recurrence to analyze with recursion-tree method was detected.",
         "tree.applicability.supported": "The recurrence matches the base method form: $T(n)=aT(n/b)+f(n)$ with valid parameters.",
-        "tree.applicability.unsupported": "Detected recurrence falls outside formal V1 coverage of symbolic recursion-tree walkthrough.",
+        "tree.applicability.unsupported": "Detected recurrence falls outside formal current coverage of symbolic recursion-tree walkthrough.",
         "tree.parameters.extracted": "Structural parameters were extracted: branching factor, size reduction, and external work.",
         "tree.level_model.built": "Level $i$ model was built with node count, subproblem size, and per-node cost.",
         "tree.level_cost.computed": "Total level cost was computed as node count times per-node cost.",
@@ -67,10 +67,10 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "tree.asymptotic_conclusion.complete": "Final asymptotic complexity was concluded for recursion-tree method.",
         "tree.asymptotic_conclusion.partial": "Asymptotic conclusion is partial due to previous symbolic closure limitations.",
         "tree.asymptotic_conclusion.unsupported": "No closed method conclusion is available under current coverage.",
-        "tree.step_blocked.unsupported": "This step is blocked because recurrence does not meet formal V1 method applicability.",
+        "tree.step_blocked.unsupported": "This step is blocked because recurrence does not meet formal current method applicability.",
 
         "concept.tree.recurrence_detected": "We first pin down the exact recurrence under analysis. This prevents mixing formulas from other methods and keeps the mathematical target explicit.",
-        "concept.tree.recursion_tree_applicability_check": "Symbolic recursion-tree V1 is canonically applied to divide-and-conquer recurrences with uniform reduction. If assumptions fail, we report it explicitly instead of forcing a result.",
+        "concept.tree.recursion_tree_applicability_check": "Symbolic recursion-tree walkthrough is canonically applied to divide-and-conquer recurrences with uniform reduction. If assumptions fail, we report it explicitly instead of forcing a result.",
         "concept.tree.tree_parameters_extracted": "Parameters $a$, $b$, and $f(n)$ define tree geometry: branching per level, subproblem shrink rate, and local work per node.",
         "concept.tree.level_model_built": "Level-$i$ modeling separates structure from cost: how many subproblems exist, what size they have, and what each one costs.",
         "concept.tree.level_cost_computed": "In recursion-tree analysis, level cost is derived, not guessed: node count multiplied by per-node cost.",
@@ -82,7 +82,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "concept.tree.asymptotic_conclusion": "Asymptotic conclusion summarizes long-run growth of $T(n)$ and must reflect real support status: complete, partial, or unsupported.",
         "concept.tree.blocked": "When method assumptions fail, downstream steps are marked blocked to preserve mathematical transparency.",
 
-        "warning.tree.unsupported_form": "V1 coverage: formal walkthrough is supported for recurrences of the form $T(n)=aT(n/b)+f(n)$ with uniform reduction.",
+        "warning.tree.unsupported_form": "Current coverage: formal walkthrough is supported for recurrences of the form $T(n)=aT(n/b)+f(n)$ with uniform reduction.",
         "warning.tree.invalid_parameters": "Invalid tree-model parameters: required $a\\ge 1$ and $b>1$.",
         "warning.tree.sum_partial": "Could not fully close the summation with current symbolic rules.",
         "warning.tree.tree_inconsistent": "An inconsistency was detected between produced tree artifacts and expected symbolic model.",

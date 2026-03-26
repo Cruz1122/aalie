@@ -87,10 +87,10 @@ export const EN_EXPORT_I18N: ExportI18nBundle = {
     gpuCpu: "GPU vs CPU analysis",
   },
   todos: {
-    normalizedPseudocode: "Normalized pseudocode serialization is not implemented in v1.",
-    loopInvariant: "Loop invariant extraction is not implemented in v1.",
+    normalizedPseudocode: "Normalized pseudocode serialization is not implemented.",
+    loopInvariant: "Loop invariant extraction is not implemented.",
     symbolicRecurrenceTree:
-      "Full symbolic recurrence tree reconstruction is not implemented in v1.",
+      "Full symbolic recurrence tree reconstruction is not implemented.",
   },
   headers: {
     caseResults: ["Case", "Cost", "Simplified form", "O", "Omega", "Theta"],

@@ -897,9 +897,12 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     # Construir términos (a_i, b_i) contando cuántas llamadas tienen cada factor
                     from collections import Counter
                     counts = Counter(b_values)
-                    multi_b_terms = [(counts[b_val], float(b_val)) for b_val in unique_b_values]
+                    multi_b_terms = [(counts[b_val], self._canonicalize_numeric(b_val)) for b_val in unique_b_values]
                     # Elegir un b representativo solo para mostrar en proof; no se usará en Master
                     b = unique_b_values[0]
+
+        # Evita arrastrar floats innecesarios como 2.0 cuando el factor es exacto.
+        b = self._canonicalize_numeric(b)
         
         # 3.5. Determinar el valor de 'a' considerando ramas mutuamente excluyentes
         # Si las llamadas recursivas están en un IF-ELSE, solo se ejecuta una rama
@@ -1188,7 +1191,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "type": "divide_conquer",
                     "form": recurrence_form,
                     "a": a,
-                    "b": float(b),
+                    "b": b,
                     "f": f_n,
                     "n0": n0,
                     "applicable": True,
@@ -1260,7 +1263,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                         "type": "divide_conquer",
                         "form": recurrence_form,
                         "a": a,
-                        "b": float(b),
+                        "b": b,
                         "f": f_n,
                         "n0": n0,
                         "applicable": True,
@@ -1285,7 +1288,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "type": "divide_conquer",
                     "form": recurrence_form,
                     "a": a,
-                    "b": float(b),
+                    "b": b,
                     "f": f_n,
                     "n0": n0,
                     "applicable": True,
@@ -1542,7 +1545,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             proc_def: Nodo ProcDef del procedimiento
             
         Returns:
-            {"b": float, "offset": int} o None si no se puede determinar
+            {"b": number, "offset": int} o None si no se puede determinar
         """
         # Obtener parámetros del procedimiento
         params = proc_def.get("params", [])
@@ -1818,7 +1821,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     right_type = right.get("type", "").lower()
                     if right_type in ["number", "literal"]:
                         try:
-                            b = float(right.get("value", 0))
+                            b = self._canonicalize_numeric(right.get("value", 0))
                             if b > 0:
                                 # Verificar que left sea una expresión que represente n
                                 # (puede ser un identificador, suma, etc.)
@@ -1830,7 +1833,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     elif isinstance(right, (int, float)):
                         if right > 0:
                             if self._represents_size_variable(left):
-                                return float(right)
+                                return self._canonicalize_numeric(right)
                     # También verificar si right es una expresión constante evaluable
                     elif right_type == "binary":
                         # Intentar evaluar la expresión del divisor
@@ -1839,7 +1842,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                             right_expr = self.expr_converter.ast_to_sympy(right)
                             # Si no tiene variables, es constante
                             if not right_expr.free_symbols:
-                                b = float(right_expr.evalf())
+                                b = self._canonicalize_numeric(right_expr.evalf())
                                 if b > 0 and self._represents_size_variable(left):
                                     return b
                         except Exception:
@@ -1848,7 +1851,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 elif isinstance(right, (int, float)):
                     if right > 0:
                         if self._represents_size_variable(left):
-                            return float(right)
+                            return self._canonicalize_numeric(right)
             
             # Si es una suma o resta, buscar divisiones dentro de ella
             # Ejemplo: izq + tamaño / 3 → buscar / 3 dentro de la expresión
@@ -1983,7 +1986,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             recursive_calls = self._find_recursive_calls(proc_def)
             if len(recursive_calls) >= 2:
                 # QuickSort y algoritmos similares típicamente dividen por 2
-                return 2.0
+                return 2
         
         return None
     
@@ -2906,6 +2909,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         try:
             a = int(a_raw)
             b = float(b_raw)
+            b = self._canonicalize_numeric(b)
         except Exception:
             a = -1
             b = -1.0
@@ -2995,7 +2999,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             locale=self.locale,
             recurrence_form=recurrence_form,
             a=max(a, 0),
-            b=max(b, 0.0),
+            b=(self._canonicalize_numeric(b) if b > 0 else 0),
             f_n=f_n_str,
             p_latex=p_latex,
             reference_growth_latex=reference_growth,
@@ -3978,6 +3982,20 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         # Aplicar simplificaciones adicionales
         return self._simplify_latex_expr(latex_str)
+
+    def _canonicalize_numeric(self, value: Any) -> float | int:
+        """
+        Normaliza números para mantener exactitud de presentación y evitar ruido de flotante.
+        Convierte x.0 a int y conserva decimales reales.
+        """
+        try:
+            numeric = float(value)
+        except Exception:
+            return value
+
+        if abs(numeric - round(numeric)) < 1e-10:
+            return int(round(numeric))
+        return numeric
     
     def _simplify_number_latex(self, num: float) -> str:
         """
@@ -6059,7 +6077,7 @@ FIN FUNCIÓN"""
                 {
                     "id": "iteration_unsupported",
                     "text": (
-                        "\\text{Cobertura V1 del método de iteración no soporta esta forma de recurrencia.}"
+                        "\\text{La cobertura actual del método de iteración no soporta esta forma de recurrencia.}"
                     ),
                 }
             )

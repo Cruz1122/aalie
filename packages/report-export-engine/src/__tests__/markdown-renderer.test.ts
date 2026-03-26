@@ -19,8 +19,8 @@ describe("markdown-renderer", () => {
     assert.match(markdown, /snapshotId:/);
     assert.match(markdown, /## factorial/);
     assert.match(markdown, /Invariante del Ciclo/);
-    assert.match(markdown, /Analisis por Casos/);
-    assert.match(markdown, /Seguimiento De Ejecucion/);
+    assert.match(markdown, /Análisis por Casos/);
+    assert.match(markdown, /Seguimiento de Ejecución/);
   });
 
   it("ubica el invariante antes del analisis por casos y renderiza seguimiento en 3 capas una sola vez", () => {
@@ -29,8 +29,8 @@ describe("markdown-renderer", () => {
     const markdown = renderMarkdownReport({ snapshot, documentModel: model });
 
     const invariantIndex = markdown.indexOf("## Invariante del Ciclo");
-    const caseAnalysisIndex = markdown.indexOf("## Analisis por Casos");
-    const traceSectionIndex = markdown.indexOf("## Seguimiento De Ejecucion");
+    const caseAnalysisIndex = markdown.indexOf("## Análisis por Casos");
+    const traceSectionIndex = markdown.indexOf("## Seguimiento de Ejecución");
     assert.ok(invariantIndex >= 0);
     assert.ok(caseAnalysisIndex >= 0);
     assert.ok(traceSectionIndex >= 0);
@@ -54,7 +54,10 @@ describe("markdown-renderer", () => {
     const markdown = renderMarkdownReport({ snapshot, documentModel: model });
 
     assert.match(markdown, /Recursive Analysis Step By Step/);
-    assert.match(markdown, /Selected method: Master Theorem/);
+    assert.match(markdown, /### Método seleccionado|### Selected method/);
+    assert.match(markdown, /Master Theorem/);
     assert.match(markdown, /T\(n\)=2T\(n\/2\)\+n/);
+    assert.match(markdown, /\*\*1\. Master Step 1\*\*/);
+    assert.match(markdown, /\*Fixture summary for master step 1 Fixture concept for recurrence_detected\*/);
   });
 });

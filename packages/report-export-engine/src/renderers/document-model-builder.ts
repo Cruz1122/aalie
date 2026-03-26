@@ -16,6 +16,7 @@ export interface DocumentTable {
   title?: string;
   headers: string[];
   rows: string[][];
+  align?: Array<"left" | "center" | "right">;
 }
 
 export interface DocumentKeyValueEntry {
@@ -35,6 +36,16 @@ export interface DocumentBlockStatus {
   todos?: string[];
 }
 
+export interface DocumentPedagogicalStep {
+  index: number;
+  title: string;
+  status: "complete" | "partial" | "unsupported" | "error";
+  formula?: string;
+  explanation: string;
+  warning?: string;
+  supportReason?: string;
+}
+
 export type DocumentBlock =
   | {
       kind: "paragraph";
@@ -51,6 +62,10 @@ export type DocumentBlock =
   | {
       kind: "subsection";
       title: string;
+    }
+  | {
+      kind: "centeredParagraph";
+      text: string;
     }
   | {
       kind: "list";
@@ -82,6 +97,10 @@ export type DocumentBlock =
   | {
       kind: "status";
       status: DocumentBlockStatus;
+    }
+  | {
+      kind: "pedagogicalStep";
+      step: DocumentPedagogicalStep;
     };
 
 export interface DocumentSection {
@@ -235,22 +254,6 @@ function localizeTodos(todos: string[] | undefined, i18n: ExportI18nBundle): str
   );
 }
 
-function recursiveStepStatusLabel(status: string, i18n: ExportI18nBundle): string {
-  if (status === "complete") {
-    return localize(i18n, "completo", "complete");
-  }
-  if (status === "partial") {
-    return localize(i18n, "parcial", "partial");
-  }
-  if (status === "unsupported") {
-    return localize(i18n, "no soportado", "unsupported");
-  }
-  if (status === "error") {
-    return localize(i18n, "error", "error");
-  }
-  return status;
-}
-
 function buildStatusBlock(
   label: string,
   section: SnapshotSection<unknown>,
@@ -389,37 +392,33 @@ function buildExecutiveSummarySection(
 
   const availableCases = CASE_ORDER.filter((caseName) => Boolean(snapshot.globalResult.cases[caseName]));
   if (availableCases.length > 0) {
+    const complexityByCase = availableCases.map((caseName) => ({
+      caseName,
+      complexity: pickCaseComplexity(snapshot, caseName) || i18n.notAvailable,
+    }));
+    const complexitySet = new Set(complexityByCase.map((entry) => entry.complexity));
+
     blocks.push({
       kind: "table",
       table: {
         title: localize(i18n, "Resumen comparativo por caso", "Comparative summary by case"),
         headers: [
           localize(i18n, "Caso", "Case"),
-          localize(i18n, "Costo total", "Total cost"),
           localize(i18n, "Complejidad final", "Final complexity"),
         ],
-        rows: availableCases.map((caseName) => {
-          const result = snapshot.globalResult.cases[caseName];
-          return [
-            caseLabel(caseName, i18n),
-            result?.T_open || result?.T_polynomial || i18n.notAvailable,
-            pickCaseComplexity(snapshot, caseName) || i18n.notAvailable,
-          ];
-        }),
+        rows: complexityByCase.map((entry) => [caseLabel(entry.caseName, i18n), entry.complexity]),
+        align: ["center", "center"],
       },
     });
 
-    const complexitySet = new Set(
-      availableCases.map((caseName) => pickCaseComplexity(snapshot, caseName) || i18n.notAvailable),
-    );
-    if (complexitySet.size === 1) {
+    if (complexitySet.size === 1 && availableCases.length === 3) {
       const value = [...complexitySet][0];
       blocks.push({
         kind: "paragraph",
         text: localize(
           i18n,
-          `Los tres casos convergen en la misma complejidad final: ${value}.`,
-          `All cases converge to the same final complexity: ${value}.`,
+          `La complejidad final es la misma para peor, mejor y promedio: ${value}.`,
+          `Final complexity is the same for worst, best, and average cases: ${value}.`,
         ),
       });
     }
@@ -596,29 +595,59 @@ function buildGlobalResultSection(
   i18n: ExportI18nBundle,
 ): DocumentSection {
   const blocks: DocumentBlock[] = [];
+  const availableCases = CASE_ORDER.filter((caseName) => Boolean(snapshot.globalResult.cases[caseName]));
+  const complexityByCase = availableCases.map((caseName) => ({
+    caseName,
+    complexity: pickCaseComplexity(snapshot, caseName) || i18n.notAvailable,
+  }));
+  const sameComplexityAcrossCases =
+    availableCases.length === 3 &&
+    new Set(complexityByCase.map((entry) => entry.complexity)).size === 1;
+
+  if (sameComplexityAcrossCases) {
+    const value = complexityByCase[0]?.complexity || i18n.notAvailable;
+    blocks.push({
+      kind: "subsection",
+      title: localize(
+        i18n,
+        "Complejidad final (peor/mejor/promedio)",
+        "Final complexity (worst/best/average)",
+      ),
+    });
+    blocks.push({
+      kind: "formula",
+      label: i18n.pedagogicalFinalComplexityLabel,
+      formula: value,
+    });
+    blocks.push({
+      kind: "paragraph",
+      text: localize(
+        i18n,
+        "Esta complejidad aplica por igual a los tres casos.",
+        "This complexity applies equally to all three cases.",
+      ),
+    });
+    return {
+      id: "global-result",
+      title: i18n.globalResultTitle,
+      blocks,
+    };
+  }
 
   for (const caseName of CASE_ORDER) {
     const result = snapshot.globalResult.cases[caseName];
     if (!result) continue;
 
     blocks.push({
-      kind: "paragraph",
-      text: `${i18n.pedagogicalCaseTitle}: ${caseLabel(caseName, i18n)}.`,
+      kind: "subsection",
+      title: `${i18n.pedagogicalCaseTitle}: ${caseLabel(caseName, i18n)}`,
     });
-
-    if (result.T_open) {
-      blocks.push({
-        kind: "formula",
-        label: `${i18n.pedagogicalCostLabel} (${caseLabel(caseName, i18n)})`,
-        formula: result.T_open,
-      });
-    }
 
     const asymptotic = result.big_theta || result.big_o || result.big_omega || result.T_polynomial;
     if (asymptotic) {
       blocks.push({
         kind: "formula",
-        label: `${i18n.pedagogicalFinalComplexityLabel} (${caseLabel(caseName, i18n)})`,
+        label: i18n.pedagogicalFinalComplexityLabel,
         formula: asymptotic,
       });
     }
@@ -1628,7 +1657,7 @@ function buildIterativeCaseAnalysisSection(
     if (!statusBlock) return null;
     return {
       id: "iterative-cases",
-      title: localize(i18n, "Analisis por Casos", "Case Analysis"),
+      title: localize(i18n, "Análisis por Casos", "Case Analysis"),
       blocks: [statusBlock],
     };
   }
@@ -1661,7 +1690,7 @@ function buildIterativeCaseAnalysisSection(
 
   return {
     id: "iterative-cases",
-    title: localize(i18n, "Analisis por Casos", "Case Analysis"),
+    title: localize(i18n, "Análisis por Casos", "Case Analysis"),
     blocks,
   };
 }
@@ -2215,11 +2244,12 @@ function buildCharacteristicBlocks(
       text: localize(i18n, "Raíces encontradas:", "Computed roots:"),
     });
     blocks.push({
-      kind: "list",
-      items: detail.roots.map(
-        (root) =>
-          `${localize(i18n, "raíz", "root")}: ${root.root}; ${localize(i18n, "multiplicidad", "multiplicity")}: ${root.multiplicity}`,
-      ),
+      kind: "table",
+      table: {
+        headers: i18n.headers.roots,
+        rows: detail.roots.map((root) => [safe(root.root, "N/A"), String(root.multiplicity ?? "N/A")]),
+        align: ["left", "center"],
+      },
     });
   }
 
@@ -2314,45 +2344,65 @@ function buildRecursiveCallTraceSummary(
   });
 }
 
+function buildRecursiveStepExplanation(
+  summary: string | undefined,
+  conceptNote: string | undefined,
+  i18n: ExportI18nBundle,
+): string {
+  const summaryText = String(summary || "").trim();
+  const conceptText = String(conceptNote || "").trim();
+  if (summaryText && conceptText) return `${summaryText} ${conceptText}`;
+  if (summaryText) return summaryText;
+  if (conceptText) return conceptText;
+  return i18n.pedagogicalNoData;
+}
+
+function buildRecursiveWarnings(snapshot: AalieAnalysisSnapshotV1): string[] {
+  const sectionWarning = isSectionAvailable(snapshot.recursive)
+    ? snapshot.recursive.data.presentation?.warning
+    : undefined;
+  const metaWarnings = snapshot.meta.warnings.map((warning) => warning.message);
+  const warnings = [sectionWarning, ...metaWarnings]
+    .map((warning) => String(warning || "").trim())
+    .filter((warning) => warning.length > 0);
+  return Array.from(new Set(warnings));
+}
+
 function buildRecursiveSection(
   snapshot: AalieAnalysisSnapshotV1,
   i18n: ExportI18nBundle,
 ): DocumentSection | null {
-  if (!isSectionAvailable(snapshot.recursive)) {
-    const statusBlock = buildStatusBlock("recursive", snapshot.recursive, i18n);
-    if (!statusBlock) return null;
-    return {
-      id: "recursive",
-      title: i18n.recursiveTitle,
-      blocks: [statusBlock],
-    };
-  }
+  if (!isSectionAvailable(snapshot.recursive)) return null;
 
   const data = snapshot.recursive.data;
   const blocks: DocumentBlock[] = [];
 
-  pushBlockIfPresent(blocks, buildStatusBlock("recursive.recurrence", data.recurrence, i18n));
   if (isSectionAvailable(data.recurrence)) {
     blocks.push({
+      kind: "subsection",
+      title: i18n.recurrenceLabel,
+    });
+    blocks.push({
       kind: "formula",
-      label: i18n.recurrenceLabel,
       formula: data.recurrence.data.form,
     });
   }
 
-  pushBlockIfPresent(blocks, buildStatusBlock("recursive.selectedMethod", data.selectedMethod, i18n));
   if (isSectionAvailable(data.selectedMethod)) {
     blocks.push({
-      kind: "paragraph",
-      text: `${i18n.selectedMethodLabel}: ${methodLabel(data.selectedMethod.data, i18n)}`,
+      kind: "subsection",
+      title: localize(i18n, "Método seleccionado", "Selected method"),
+    });
+    blocks.push({
+      kind: "centeredParagraph",
+      text: methodLabel(data.selectedMethod.data, i18n),
     });
   }
 
-  pushBlockIfPresent(blocks, buildStatusBlock("recursive.methodsAvailable", data.methodsAvailable, i18n));
   if (isSectionAvailable(data.methodsAvailable) && data.methodsAvailable.data.length > 0) {
     blocks.push({
-      kind: "paragraph",
-      text: localize(i18n, "Métodos disponibles para este caso:", "Available methods for this case:"),
+      kind: "subsection",
+      title: localize(i18n, "Métodos disponibles", "Available methods"),
     });
     blocks.push({
       kind: "list",
@@ -2360,48 +2410,29 @@ function buildRecursiveSection(
     });
   }
 
-  pushBlockIfPresent(blocks, buildStatusBlock("recursive.methodDetails", data.methodDetails, i18n));
-  if (isSectionAvailable(data.methodDetails)) {
-    for (const detail of data.methodDetails.data) {
-      blocks.push(...buildRecursiveMethodBlocks(detail, i18n));
-    }
-  }
-
   if (isSectionAvailable(data.stepByStep)) {
     const walkthrough = data.stepByStep.data;
-    if (walkthrough) {
+    if (walkthrough && walkthrough.steps.length > 0) {
       blocks.push({
-        kind: "paragraph",
-        text: localize(
-          i18n,
-          `Procedimiento paso a paso (${safe(walkthrough.version, "v1")}): estado global ${recursiveStepStatusLabel(walkthrough.overallStatus, i18n)}.`,
-          `Step-by-step walkthrough (${safe(walkthrough.version, "v1")}): overall status ${recursiveStepStatusLabel(walkthrough.overallStatus, i18n)}.`,
-        ),
+        kind: "subsection",
+        title: localize(i18n, "Desarrollo paso a paso", "Step-by-step walkthrough"),
       });
 
-      if (walkthrough.steps.length > 0) {
+      for (const step of walkthrough.steps) {
         blocks.push({
-          kind: "list",
-          items: walkthrough.steps.map((step) => {
-            const warningSuffix = step.warning
-              ? localize(i18n, ` Advertencia: ${step.warning}.`, ` Warning: ${step.warning}.`)
-              : "";
-            return `${step.index}. ${step.title} [${recursiveStepStatusLabel(step.status, i18n)}] - ${step.summary}.${warningSuffix}`;
-          }),
-        });
-
-        for (const step of walkthrough.steps) {
-          if (!step.math.primaryLatex) continue;
-          blocks.push({
-            kind: "formula",
-            label: localize(i18n, `Paso ${step.index}: ${step.title}`, `Step ${step.index}: ${step.title}`),
+          kind: "pedagogicalStep",
+          step: {
+            index: step.index,
+            title: step.title,
+            status: step.status,
             formula: step.math.primaryLatex,
-          });
-        }
+            explanation: buildRecursiveStepExplanation(step.summary, step.conceptNote, i18n),
+            warning: step.warning || undefined,
+            supportReason: step.derivation?.supportReason || undefined,
+          },
+        });
       }
     }
-  } else {
-    pushBlockIfPresent(blocks, buildStatusBlock("recursive.stepByStep", data.stepByStep, i18n));
   }
 
   if (isSectionAvailable(data.rootsAndMultiplicities) && data.rootsAndMultiplicities.data.length > 0) {
@@ -2410,17 +2441,16 @@ function buildRecursiveSection(
       text: localize(i18n, "Raíces y multiplicidades:", "Roots and multiplicities:"),
     });
     blocks.push({
-      kind: "list",
-      items: data.rootsAndMultiplicities.data.map(
-        (item) =>
-          `${localize(i18n, "raíz", "root")}: ${item.root}; ${localize(i18n, "multiplicidad", "multiplicity")}: ${item.multiplicity}`,
-      ),
+      kind: "table",
+      table: {
+        headers: i18n.headers.roots,
+        rows: data.rootsAndMultiplicities.data.map((item) => [
+          safe(item.root, "N/A"),
+          String(item.multiplicity ?? "N/A"),
+        ]),
+        align: ["left", "center"],
+      },
     });
-  } else {
-    pushBlockIfPresent(
-      blocks,
-      buildStatusBlock("recursive.rootsAndMultiplicities", data.rootsAndMultiplicities, i18n),
-    );
   }
 
   if (isSectionAvailable(data.closedForm)) {
@@ -2460,23 +2490,43 @@ function buildRecursiveSection(
         formula: closedForm.theta,
       });
     }
-  } else {
-    pushBlockIfPresent(blocks, buildStatusBlock("recursive.closedForm", data.closedForm, i18n));
   }
-
-  pushBlockIfPresent(
-    blocks,
-    buildStatusBlock("recursive.recursionTreeSerializable", data.recursionTreeSerializable, i18n),
-  );
 
   if (isSectionAvailable(data.callTrace)) {
     const traceItems = buildRecursiveCallTraceSummary(data.callTrace.data, i18n);
     if (traceItems.length > 0) {
-      blocks.push({ kind: "paragraph", text: i18n.pedagogicalTraceTitle });
+      blocks.push({
+        kind: "subsection",
+        title: i18n.pedagogicalTraceTitle,
+      });
       blocks.push({ kind: "list", items: traceItems });
     }
-  } else {
-    pushBlockIfPresent(blocks, buildStatusBlock("recursive.callTrace", data.callTrace, i18n));
+  }
+
+  const warnings = buildRecursiveWarnings(snapshot);
+  if (warnings.length > 0) {
+    blocks.push({
+      kind: "subsection",
+      title: localize(i18n, "Advertencias", "Warnings"),
+    });
+    blocks.push({
+      kind: "list",
+      items: warnings,
+    });
+  }
+
+  const thetaFromClosedForm = isSectionAvailable(data.closedForm) ? data.closedForm.data.theta : undefined;
+  const finalTheta = thetaFromClosedForm || pickCaseComplexity(snapshot, "worst");
+  if (finalTheta) {
+    blocks.push({
+      kind: "subsection",
+      title: localize(i18n, "Conclusión asintótica", "Asymptotic conclusion"),
+    });
+    blocks.push({
+      kind: "formula",
+      label: i18n.pedagogicalFinalComplexityLabel,
+      formula: finalTheta,
+    });
   }
 
   if (blocks.length === 0) {

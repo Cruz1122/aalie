@@ -32,9 +32,9 @@ export const DEFAULT_GENERAL_LIMITATIONS_EN = [
 ];
 
 export const SNAPSHOT_NOT_IMPLEMENTED_TODOS = {
-  normalizedPseudocode: "Normalized pseudocode serialization is not implemented in v1.",
-  loopInvariant: "Loop invariant extraction is not implemented in v1.",
-  symbolicRecurrenceTree: "Full symbolic recurrence tree reconstruction is not implemented in v1.",
+  normalizedPseudocode: "Normalized pseudocode serialization is not implemented.",
+  loopInvariant: "Loop invariant extraction is not implemented.",
+  symbolicRecurrenceTree: "Full symbolic recurrence tree reconstruction is not implemented.",
 };
 
 export const MARKDOWN_FILENAME = "report.md";
