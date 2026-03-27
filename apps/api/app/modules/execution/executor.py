@@ -563,30 +563,6 @@ class CodeExecutor:
                 else:
                     params_map[param_name] = max(1, base_size - idx)
 
-        # #region agent log
-        try:
-            import json as _json
-            import time as _time
-            _log_payload = {
-                "sessionId": "1b7cca",
-                "runId": "initial",
-                "hypothesisId": "Q1",
-                "location": "execution/executor.py:_map_procedure_params",
-                "message": "mapped_procedure_params",
-                "data": {
-                    "procedure": proc_def.get("name"),
-                    "paramNames": param_names,
-                    "paramsMap": params_map,
-                    "arrayParamNames": array_param_names,
-                },
-                "timestamp": int(_time.time() * 1000),
-            }
-            with open("c:\\dev\\algorithmic-analysis\\debug-1b7cca.log", "a", encoding="utf-8") as _f:
-                _f.write(_json.dumps(_log_payload) + "\n")
-        except Exception:
-            pass
-        # #endregion agent log
-
         return params_map
 
     def _infer_bounds_from_ast(
