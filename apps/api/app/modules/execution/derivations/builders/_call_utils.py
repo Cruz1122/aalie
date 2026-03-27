@@ -4,6 +4,7 @@ Utilidades compartidas para builders que usan árbol de llamadas.
 Author: Plan Sistema Traza Estructural
 Version: 0.1.0
 """
+
 from typing import Any, Dict, List, Optional
 
 
@@ -87,10 +88,7 @@ def call_to_label(call: Dict[str, Any], locale: str = "en") -> str:
     ret = call.get("return_value")
     label_parts = [f"{fn}({pstr})"]
     if isinstance(final_params, dict) and final_params:
-        changed = {
-            k: v for k, v in final_params.items()
-            if params.get(k) != v
-        }
+        changed = {k: v for k, v in final_params.items() if params.get(k) != v}
         if changed:
             final_str = ", ".join(
                 f"{k}={_format_param_value(v)}" for k, v in changed.items()

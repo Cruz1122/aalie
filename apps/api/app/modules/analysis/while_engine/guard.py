@@ -7,6 +7,7 @@ Soporta const, bool_var, rel, and, or, not y normalización de relacionales.
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 Version: 0.1.0
 """
+
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Literal, Optional, Set
 
@@ -37,8 +38,13 @@ class GuardInfo:
     const_value: Optional[bool] = None
     bool_var: Optional[str] = None
     desired: Optional[bool] = None  # True = guard exige var==true para continuar
-    or_bool_vars: Set[str] = field(default_factory=set)  # Vars que son bool en disyuntos de OR
-    and_bool_vars: Set[str] = field(default_factory=set)  # Vars que son bool en disyuntos de AND
+    or_bool_vars: Set[str] = field(
+        default_factory=set
+    )  # Vars que son bool en disyuntos de OR
+    and_bool_vars: Set[str] = field(
+        default_factory=set
+    )  # Vars que son bool en disyuntos de AND
+
 
 def _collect_bool_vars(expr: Any) -> Set[str]:
     """Recolecta variables que actúan como bool (identifier o var==true/false).
@@ -62,15 +68,26 @@ def _collect_bool_vars(expr: Any) -> Set[str]:
         left = expr.get("left")
         right = expr.get("right")
         # Si es una comparación numérica (relacional), no descender: evita recolectar i/n como bool vars.
-        if op in ("<", "<=", ">", ">=",):
+        if op in (
+            "<",
+            "<=",
+            ">",
+            ">=",
+        ):
             return out
         # CASO: bool == true, bool != false, etc.
         if op in ("==", "!=", "="):
             if _is_literal_true(right) or _is_literal_false(right):
-                if isinstance(left, dict) and left.get("type", "").lower() == "identifier":
+                if (
+                    isinstance(left, dict)
+                    and left.get("type", "").lower() == "identifier"
+                ):
                     out.add(left.get("name", ""))
             elif _is_literal_true(left) or _is_literal_false(left):
-                if isinstance(right, dict) and right.get("type", "").lower() == "identifier":
+                if (
+                    isinstance(right, dict)
+                    and right.get("type", "").lower() == "identifier"
+                ):
                     out.add(right.get("name", ""))
         else:
             # Recursión para AND/OR
@@ -79,7 +96,9 @@ def _collect_bool_vars(expr: Any) -> Set[str]:
     return out
 
 
-def _collect_vars_and_array(expr: Any, vars_used: Set[str], has_array: List[bool]) -> None:
+def _collect_vars_and_array(
+    expr: Any, vars_used: Set[str], has_array: List[bool]
+) -> None:
     """Recorre expr y acumula vars_used y si hay array."""
     if not isinstance(expr, dict):
         return
@@ -105,8 +124,12 @@ def _normalize_relational(left: Dict, right: Dict, op: str) -> Optional[Dict[str
     Normaliza relacional: n > i -> i < n; i == true -> bool_var.
     Retorna {var, limit, op} o {var, bool_desired: True/False}.
     """
-    left_is_var = isinstance(left, dict) and left.get("type", "").lower() == "identifier"
-    right_is_var = isinstance(right, dict) and right.get("type", "").lower() == "identifier"
+    left_is_var = (
+        isinstance(left, dict) and left.get("type", "").lower() == "identifier"
+    )
+    right_is_var = (
+        isinstance(right, dict) and right.get("type", "").lower() == "identifier"
+    )
 
     # i == true / i == false
     if left_is_var and _is_literal_true(right):
@@ -136,7 +159,9 @@ def _normalize_relational(left: Dict, right: Dict, op: str) -> Optional[Dict[str
     return None
 
 
-def _analyze_guard_rec(test: Any, atoms: List[Dict], vars_used: Set[str], has_array: List[bool]) -> Optional[str]:
+def _analyze_guard_rec(
+    test: Any, atoms: List[Dict], vars_used: Set[str], has_array: List[bool]
+) -> Optional[str]:
     """
     Analiza recursivamente el guard. Retorna kind o None si unknown.
     Acumula atoms, vars_used, has_array.
@@ -233,18 +258,37 @@ def analyze_guard(test: Any) -> GuardInfo:
         # Caso especial: single variable booleana o var=literall_bool
         # Ya que _analyze_guard_rec puede retornar rel para var=true
         if expr_type == "identifier":
-            return GuardInfo(kind="bool_var", bool_var=test.get("name"), desired=True, vars_used={test.get("name")}, has_array_access=has_array[0])
+            return GuardInfo(
+                kind="bool_var",
+                bool_var=test.get("name"),
+                desired=True,
+                vars_used={test.get("name")},
+                has_array_access=has_array[0],
+            )
         elif expr_type == "binary":
             op = (test.get("op") or test.get("operator") or "").lower()
             if op in ("=", "=="):
                 left_expr = test.get("left", {})
                 right_expr = test.get("right", {})
-                if isinstance(left_expr, dict) and left_expr.get("type", "").lower() == "identifier":
+                if (
+                    isinstance(left_expr, dict)
+                    and left_expr.get("type", "").lower() == "identifier"
+                ):
                     var_name = left_expr.get("name")
                     if _is_literal_true(right_expr):
-                        return GuardInfo(kind="bool_var", bool_var=var_name, desired=True, vars_used={var_name})
+                        return GuardInfo(
+                            kind="bool_var",
+                            bool_var=var_name,
+                            desired=True,
+                            vars_used={var_name},
+                        )
                     if _is_literal_false(right_expr):
-                        return GuardInfo(kind="bool_var", bool_var=var_name, desired=False, vars_used={var_name})
+                        return GuardInfo(
+                            kind="bool_var",
+                            bool_var=var_name,
+                            desired=False,
+                            vars_used={var_name},
+                        )
 
     return GuardInfo(
         kind=kind if kind in ("and", "or", "not", "rel", "bool_var") else "unknown",
@@ -252,5 +296,5 @@ def analyze_guard(test: Any) -> GuardInfo:
         atoms=atoms,
         has_array_access=has_array[0],
         or_bool_vars=or_bools,
-        and_bool_vars=and_bools
+        and_bool_vars=and_bools,
     )

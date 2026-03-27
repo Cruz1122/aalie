@@ -7,6 +7,7 @@ Produce WhileAnalysisResult para consumo del visitor.
 Author: @Cruz1122
 Version: 0.1.0
 """
+
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -81,7 +82,11 @@ class WhileEngine:
         body = node.get("body")
         mode = input_data.mode
         parent = input_data.parent_context
-        L = node.get("pos", {}).get("line", 0) if isinstance(node.get("pos"), dict) else 0
+        L = (
+            node.get("pos", {}).get("line", 0)
+            if isinstance(node.get("pos"), dict)
+            else 0
+        )
 
         # 1) Guard
         guard = analyze_guard_for_engine(test)
@@ -95,7 +100,10 @@ class WhileEngine:
             if isinstance(node_obj, dict):
                 if str(node_obj.get("type", "")).lower() == "assign":
                     target = node_obj.get("target", {})
-                    if isinstance(target, dict) and str(target.get("type", "")).lower() == "identifier":
+                    if (
+                        isinstance(target, dict)
+                        and str(target.get("type", "")).lower() == "identifier"
+                    ):
                         name = target.get("name", "")
                         if isinstance(name, str) and name:
                             assigned_vars.add(name)
@@ -133,14 +141,19 @@ class WhileEngine:
         control = detect_control_variables(guard, updates, input_data.symbol_table)
 
         # Extraer variable, limit, change_rule para visitor
-        var_name = evidence.get("var") or (control.primary_numeric_controller if control else None)
+        var_name = evidence.get("var") or (
+            control.primary_numeric_controller if control else None
+        )
         limit = evidence.get("limit", "n")
         op_rel = evidence.get("op", "<")
         change_rule = {}
         if var_name and updates.get(var_name):
             for u in getattr(updates[var_name], "must_updates", []):
                 if u.get("type") == "num":
-                    change_rule = {"operator": u.get("operator", "+"), "constant": str(u.get("constant", "1"))}
+                    change_rule = {
+                        "operator": u.get("operator", "+"),
+                        "constant": str(u.get("constant", "1")),
+                    }
                     break
         progress = prove_progress(guard, updates, control)
 
@@ -165,13 +178,18 @@ class WhileEngine:
                 else:
                     asymptotic_class = iter_result.asymptotic_bound
                 # Patrón acotado: marcar status como bounded para que el visitor use el resultado
-                effective_status = "bounded" if iter_result.exact_symbolic_bound else status
+                effective_status = (
+                    "bounded" if iter_result.exact_symbolic_bound else status
+                )
                 return WhileAnalysisResult(
                     status=effective_status,
-                    termination="proven_terminating" if progress.proven else "not_proven",
+                    termination=(
+                        "proven_terminating" if progress.proven else "not_proven"
+                    ),
                     iterations_expr=iterations_expr,
                     asymptotic_class=asymptotic_class,
-                    dominant_controller=control.primary_numeric_controller or control.primary_boolean_controller,
+                    dominant_controller=control.primary_numeric_controller
+                    or control.primary_boolean_controller,
                     pattern_used=pattern_name,
                     reason_code=reason_code,
                     diagnostics=pattern.explain(while_ctx),
@@ -187,7 +205,8 @@ class WhileEngine:
             termination="proven_terminating" if progress.proven else "not_proven",
             iterations_expr=iterations_expr,
             asymptotic_class=None,
-            dominant_controller=control.primary_numeric_controller or control.primary_boolean_controller,
+            dominant_controller=control.primary_numeric_controller
+            or control.primary_boolean_controller,
             reason_code=reason_code,
             diagnostics=[],
             variable=var_name,

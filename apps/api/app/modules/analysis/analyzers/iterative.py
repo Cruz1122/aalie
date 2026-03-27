@@ -14,27 +14,29 @@ from ..visitors.while_repeat_visitor import WhileRepeatVisitor
 from .base import BaseAnalyzer
 
 
-class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor, SimpleVisitor):
+class IterativeAnalyzer(
+    BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor, SimpleVisitor
+):
     """
     Analizador iterativo unificado que combina todos los visitors.
-    
+
     Implementa el análisis completo de algoritmos con:
     - Bucles FOR con multiplicadores
     - Condicionales IF con selección de rama dominante
     - Bucles WHILE y REPEAT con símbolos de iteración
     - Líneas simples (asignaciones, llamadas, returns)
     - Dispatcher unificado para todos los tipos de nodos
-    
+
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
-    
+
     def __init__(self, locale: str = "en"):
         """
         Inicializa una instancia de IterativeAnalyzer.
-        
+
         Args:
             locale: Código de idioma para etiquetas del procedimiento ("en" | "es")
-        
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         super().__init__(locale=locale)
@@ -52,7 +54,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 return self._note("proc_a_of_n_tends_infinity")
             return self._note("proc_t_open_tends_infinity")
         return super().build_t_open()
-    
+
     def _expr_to_str(self, expr: Any) -> str:
         """Delega a expr_to_str del módulo ir.expr_utils."""
         return expr_to_str(expr)
@@ -66,26 +68,26 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         """
         # Reutilizar la implementación de BaseAnalyzer (ya incluye Min/Max y N como Symbol).
         return super()._str_to_sympy(expr_str)
-    
+
     def _normalize_string(self, s: str) -> str:
         """
         Normaliza strings con formato básico (solo formato, no simplificación).
-        
+
         Args:
             s: String a normalizar
-            
+
         Returns:
             String normalizado
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if not s:
             return s
-        
+
         # Mejorar formato de rangos
         s = s.replace("i=1\\ldotsn", "i=1..n")
         s = s.replace("i=1\\ldots n", "i=1..n")
-        
+
         return s
 
     def _collect_vars_in_sum_bounds(self, expr: Expr) -> Set[str]:
@@ -199,9 +201,14 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
 
         # Sustituir símbolos iterativos no resueltos (t_while_X, t_repeat_X) por variable principal
         import re as _re
+
         for sym in list(expr.free_symbols):
             sname = getattr(sym, "name", "")
-            if sname and (_re.match(r't_(?:while|repeat)_\d+', sname) or _re.match(r't_\{while_\d+\}', sname) or _re.match(r't_\{repeat_\d+\}', sname)):
+            if sname and (
+                _re.match(r"t_(?:while|repeat)_\d+", sname)
+                or _re.match(r"t_\{while_\d+\}", sname)
+                or _re.match(r"t_\{repeat_\d+\}", sname)
+            ):
                 expr = expr.subs(sym, main_sym)
         expr = simplify(expr)
 
@@ -222,6 +229,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
 
         # Intentar simplificar más agresivamente
         from ..utils.summation_closer import SummationCloser
+
         closer = SummationCloser(locale=self.locale)
 
         # Evaluar todas las sumatorias
@@ -277,9 +285,13 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     replaced.append(sym_name)
                 expr = simplify(expr)
                 if replaced:
-                    print(f"[IterativeAnalyzer] Advertencia: Variables de iteración {replaced} eliminadas de expresión final")
+                    print(
+                        f"[IterativeAnalyzer] Advertencia: Variables de iteración {replaced} eliminadas de expresión final"
+                    )
             except Exception as e:
-                print(f"[IterativeAnalyzer] Error al limpiar variables de iteración: {e}")
+                print(
+                    f"[IterativeAnalyzer] Error al limpiar variables de iteración: {e}"
+                )
                 for sym in list(expr.free_symbols):
                     if getattr(sym, "name", "") in iteration_vars:
                         expr = expr.subs(sym, main_sym)
@@ -310,7 +322,10 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 var = n.get("var", "")
                 if isinstance(var, str) and var:
                     out.add(var)
-                elif isinstance(var, dict) and str(var.get("type", "")).lower() == "identifier":
+                elif (
+                    isinstance(var, dict)
+                    and str(var.get("type", "")).lower() == "identifier"
+                ):
                     name = var.get("name", "")
                     if isinstance(name, str) and name:
                         out.add(name)
@@ -326,16 +341,16 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         """
         Recolecta variables de control de bucles WHILE y REPEAT que se comportan
         como índices clásicos (i, j, k).
-        
+
         Incluye:
         1) Variables que aparecen en la condición del WHILE/REPEAT (ej. i < n).
         2) Variables que solo se actualizan en el cuerpo con var <- var ± const
            (ej. bubbleSort con WHILE(swapped) y i <- i+1 en el cuerpo), para que
            en best case T_open quede en función de n y no de la variable de iteración.
-        
+
         No incluye la variable principal de tamaño (n): en "i < n", n es el límite,
         no la variable de control.
-        
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         out: Set[str] = set()
@@ -350,11 +365,17 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             Si stmt es de la forma id <- id ± const (con const numérica),
             devuelve el nombre de id (candidato a variable de control).
             """
-            if not isinstance(stmt, dict) or str(stmt.get("type", "")).lower() != "assign":
+            if (
+                not isinstance(stmt, dict)
+                or str(stmt.get("type", "")).lower() != "assign"
+            ):
                 return None
             target = stmt.get("target", {})
             value = stmt.get("value", {})
-            if not isinstance(target, dict) or str(target.get("type", "")).lower() != "identifier":
+            if (
+                not isinstance(target, dict)
+                or str(target.get("type", "")).lower() != "identifier"
+            ):
                 return None
             var = (target.get("name") or "").strip()
             # Nunca tratar la variable principal de tamaño como índice de control.
@@ -367,11 +388,25 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 return None
             left = value.get("left", {})
             right = value.get("right", {})
-            if isinstance(left, dict) and str(left.get("type", "")).lower() == "identifier" and (left.get("name") or "").strip() == var:
-                if isinstance(right, dict) and str(right.get("type", "")).lower() in ("number", "literal"):
+            if (
+                isinstance(left, dict)
+                and str(left.get("type", "")).lower() == "identifier"
+                and (left.get("name") or "").strip() == var
+            ):
+                if isinstance(right, dict) and str(right.get("type", "")).lower() in (
+                    "number",
+                    "literal",
+                ):
                     return var
-            if isinstance(right, dict) and str(right.get("type", "")).lower() == "identifier" and (right.get("name") or "").strip() == var:
-                if isinstance(left, dict) and str(left.get("type", "")).lower() in ("number", "literal"):
+            if (
+                isinstance(right, dict)
+                and str(right.get("type", "")).lower() == "identifier"
+                and (right.get("name") or "").strip() == var
+            ):
+                if isinstance(left, dict) and str(left.get("type", "")).lower() in (
+                    "number",
+                    "literal",
+                ):
                     return var
             return None
 
@@ -382,7 +417,10 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     if name:
                         out.add(name)
                 return
-            if isinstance(body_node, dict) and str(body_node.get("type", "")).lower() == "block":
+            if (
+                isinstance(body_node, dict)
+                and str(body_node.get("type", "")).lower() == "block"
+            ):
                 _collect_from_body(body_node.get("body") or [])
                 return
             if isinstance(body_node, dict):
@@ -411,7 +449,11 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                         # - o bien tiene un update aritmético detectado en el cuerpo, o
                         # - es un índice clásico (i/j/k) usado en la condición.
                         for cand in (v, v2):
-                            if not isinstance(cand, str) or not cand or cand == main_var:
+                            if (
+                                not isinstance(cand, str)
+                                or not cand
+                                or cand == main_var
+                            ):
                                 continue
                             if cand in out or cand in iter_legacy:
                                 out.add(cand)
@@ -425,7 +467,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         _walk(node)
         return out
 
-    def _collect_size_aliases_from_prefix(self, main_proc: Optional[Dict[str, Any]]) -> Dict[str, str]:
+    def _collect_size_aliases_from_prefix(
+        self, main_proc: Optional[Dict[str, Any]]
+    ) -> Dict[str, str]:
         """
         Detecta alias simples de tamaño en el prefijo del procedimiento principal.
 
@@ -510,13 +554,17 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             if not isinstance(node, dict) or node.get("type") != "ProcDef":
                 continue
             params = node.get("params", [])
-            param_names = {p.get("name", "") if isinstance(p, dict) else str(p) for p in params}
+            param_names = {
+                p.get("name", "") if isinstance(p, dict) else str(p) for p in params
+            }
             param_names.discard("")
             proc_body = node.get("body") or node.get("block", {})
             self._collect_control_params_from_node(proc_body, param_names, control)
         return control
 
-    def _collect_control_params_from_node(self, node: Any, param_names: Set[str], control: Set[str]) -> None:
+    def _collect_control_params_from_node(
+        self, node: Any, param_names: Set[str], control: Set[str]
+    ) -> None:
         if not isinstance(node, dict):
             return
         nt = node.get("type", "").lower()
@@ -526,7 +574,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             if info and info.get("variable"):
                 if_info = self._find_var_guarded_if(body, info["variable"])
                 if if_info:
-                    id_name = self._extract_id_from_var_eq_const(if_info.get("test", {}))
+                    id_name = self._extract_id_from_var_eq_const(
+                        if_info.get("test", {})
+                    )
                     if id_name and id_name in param_names:
                         control.add(id_name)
         if nt == "block":
@@ -536,29 +586,35 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             if key in node:
                 self._collect_control_params_from_node(node[key], param_names, control)
 
-    def analyze(self, ast: Dict[str, Any], mode: str = "worst", api_key: Optional[str] = None, avg_model: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def analyze(
+        self,
+        ast: Dict[str, Any],
+        mode: str = "worst",
+        api_key: Optional[str] = None,
+        avg_model: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """
         Analiza un AST completo y retorna el resultado.
-        
+
         Args:
             ast: AST del algoritmo a analizar
             mode: Modo de análisis ("worst", "best", "avg")
             api_key: API Key (ignorado, mantenido por compatibilidad)
             avg_model: Diccionario con configuración del modelo probabilístico para caso promedio
                       {"mode": "uniform"|"symbolic", "predicates": {...}}
-            
+
         Returns:
             Resultado del análisis con byLine, T_open, procedure, etc.
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Limpiar estado previo
         self.clear()
-        
+
         # Establecer modo y guardar AST raíz
         self.mode = mode
         self.root_ast = ast
-        
+
         # AST inválido: retornar resultado vacío sin fallar
         if ast is None or not isinstance(ast, dict):
             return self.result()
@@ -579,7 +635,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         has_size_variable = True
         if main_proc is not None:
             try:
-                candidates = self.detect_size_variables_from_proc(main_proc, extra_forbidden=control_params)
+                candidates = self.detect_size_variables_from_proc(
+                    main_proc, extra_forbidden=control_params
+                )
             except Exception:
                 candidates = []
             if candidates:
@@ -603,15 +661,23 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         except Exception:
             self.for_index_vars = set()
         try:
-            self.while_repeat_control_vars = self._collect_while_repeat_control_vars(ast)
+            self.while_repeat_control_vars = self._collect_while_repeat_control_vars(
+                ast
+            )
         except Exception:
             self.while_repeat_control_vars = set()
         main_var = self.variable or "n"
-        self.loop_index_vars = (self.for_index_vars or set()) | (self.while_repeat_control_vars or set())
+        self.loop_index_vars = (self.for_index_vars or set()) | (
+            self.while_repeat_control_vars or set()
+        )
         # Nunca sanitizar la variable principal de tamaño (n)
         self.loop_index_vars = {v for v in self.loop_index_vars if v != main_var}
         if not self.loop_index_vars:
-            self.loop_index_vars = {"i", "j", "k"}  # fallback legacy (excl. n implícito)
+            self.loop_index_vars = {
+                "i",
+                "j",
+                "k",
+            }  # fallback legacy (excl. n implícito)
 
         # Detectar alias de tamaño (k <- n) en el prefijo del procedimiento principal.
         try:
@@ -623,7 +689,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Ejemplo: longitud <- n en bubble sort mejorado.
         if isinstance(self.size_aliases, dict) and self.size_aliases:
             self.loop_index_vars = {
-                v for v in self.loop_index_vars if v not in set(self.size_aliases.keys())
+                v
+                for v in self.loop_index_vars
+                if v not in set(self.size_aliases.keys())
             }
 
         # Crear instancia de AvgModel si mode == "avg"
@@ -631,36 +699,42 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             if avg_model:
                 self.avg_model = AvgModel(
                     mode=avg_model.get("mode", "uniform"),
-                    predicates=avg_model.get("predicates", {})
+                    predicates=avg_model.get("predicates", {}),
                 )
             else:
                 # Por defecto, modelo uniforme sin predicados
                 self.avg_model = AvgModel(mode="uniform", predicates={})
         else:
             self.avg_model = None
-        
+
         # Visitar el AST completo
         self.visit(ast, mode)
-        
+
         # Usar SymPy para cerrar sumatorias y generar procedimientos
         closer = SummationCloser(locale=self.locale)
         complexity = ComplexityClasses()
-        
+
         # Cerrar sumatorias y generar procedimientos para cada fila
         for row in self.rows:
             # Obtener expresión SymPy si está disponible
             count_raw_expr = row.get("count_raw_expr")
             count_raw_latex = row.get("count_raw", "1")
-            
+
             # En caso promedio con early return, ajustar returns ANTES de procesar
             # return i (éxito): siempre ocurre exactamente 1 vez, no E[iter] veces
             # return -1 (fracaso): nunca ocurre (0)
             if mode == "avg" and row.get("kind") == "return":
                 note = row.get("note", "")
                 from sympy import Integer
+
                 # Verificar fracaso PRIMERO (más específico)
                 # return -1: nunca ocurre (0)
-                if note and ("fracaso" in note or "nunca ocurre" in note or "failure" in note or "never occurs" in note):
+                if note and (
+                    "fracaso" in note
+                    or "nunca ocurre" in note
+                    or "failure" in note
+                    or "never occurs" in note
+                ):
                     # return -1: nunca ocurre (0)
                     row["count_raw_expr"] = Integer(0)
                     row["count_raw"] = "0"
@@ -669,12 +743,20 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     # Generar procedimiento
                     row["procedure"] = [
                         f"\\text{{Esperanza de ejecuciones para línea {row.get('line', '?')}: }} E[N_{{{row.get('line', '?')}}}] = 0",
-                        "0"
+                        "0",
                     ]
                     continue  # Saltar procesamiento normal
                 # Verificar éxito (dentro o fuera del bucle)
                 # Verificar que sea éxito real, no "éxito seguro" en contexto de fracaso
-                elif note and ("éxito seguro" in note or "guaranteed success" in note or ("éxito" in note and "siempre ocurre" in note and "fracaso" not in note)):
+                elif note and (
+                    "éxito seguro" in note
+                    or "guaranteed success" in note
+                    or (
+                        "éxito" in note
+                        and "siempre ocurre" in note
+                        and "fracaso" not in note
+                    )
+                ):
                     # return i: siempre ocurre 1 vez, no multiplicado por E[iter]
                     row["count_raw_expr"] = Integer(1)
                     row["count_raw"] = "1"
@@ -683,15 +765,15 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     # Generar procedimiento
                     row["procedure"] = [
                         f"\\text{{Esperanza de ejecuciones para línea {row.get('line', '?')}: }} E[N_{{{row.get('line', '?')}}}] = 1",
-                        "1"
+                        "1",
                     ]
                     continue  # Saltar procesamiento normal
-            
+
             # Filas unbounded: procedimiento indica que tiende a infinito
             if row.get("unbounded"):
                 row["procedure"] = ["\\infty"]
                 continue
-            
+
             # Preferir usar count_raw_expr directamente si está disponible
             if count_raw_expr is not None:
                 try:
@@ -706,54 +788,69 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                                 row["expectedRuns"] = count_raw_latex_from_expr
                     except Exception:
                         pass  # Si falla, mantener count_raw original
-                    
+
                     # Sustituir alias de tamaño (longitud, tam, etc.) antes del cierre
                     expr_for_close = count_raw_expr
                     size_aliases = getattr(self, "size_aliases", None) or {}
                     if size_aliases:
                         from sympy import Symbol as SymSymbol
+
                         for alias_name, main_name in size_aliases.items():
                             if alias_name and main_name and alias_name != main_name:
                                 alias_sym = SymSymbol(alias_name, integer=True)
                                 main_sym = SymSymbol(main_name, integer=True)
                                 if expr_for_close.has(alias_sym):
-                                    expr_for_close = expr_for_close.subs(alias_sym, main_sym)
-                    
+                                    expr_for_close = expr_for_close.subs(
+                                        alias_sym, main_sym
+                                    )
+
                     # Pasar el objeto SymPy directamente a close_summation
-                    closed_count, steps = closer.close_summation(expr_for_close, variable or "n")
-                    
+                    closed_count, steps = closer.close_summation(
+                        expr_for_close, variable or "n"
+                    )
+
                     # Guardar la expresión SymPy evaluada para usar en build_t_open_expr
                     import re
 
                     from sympy import latex as sympy_latex
                     from sympy import simplify
+
                     # Si contiene símbolos iterativos, no intentar evaluar sumatorias
                     # (ya se manejan en close_summation)
                     preserve = {"a", "b"} if row.get("euclid_pattern") else None
-                    if closer._has_iterative_symbols(expr_for_close) and not closer._has_summations(expr_for_close):
+                    if closer._has_iterative_symbols(
+                        expr_for_close
+                    ) and not closer._has_summations(expr_for_close):
                         # Es un símbolo iterativo puro, simplificar y limpiar variables de iteración
                         count_evaluated = simplify(expr_for_close)
                         # IMPORTANTE: Eliminar variables de iteración que no deberían estar
                         count_evaluated = self._sanitize_expression(
-                            count_evaluated, orig_expr=expr_for_close, preserve_symbols=preserve
+                            count_evaluated,
+                            orig_expr=expr_for_close,
+                            preserve_symbols=preserve,
                         )
                     else:
                         # Evaluar sumatorias si las hay (usar expr_for_close con alias ya sustituidos)
-                        count_evaluated = closer._evaluate_all_sums_sympy(expr_for_close)
+                        count_evaluated = closer._evaluate_all_sums_sympy(
+                            expr_for_close
+                        )
                         count_evaluated = simplify(count_evaluated)
                         # IMPORTANTE: Eliminar variables de iteración que no deberían estar (orig_expr tiene Sum para bound_vars)
                         count_evaluated = self._sanitize_expression(
-                            count_evaluated, orig_expr=expr_for_close, preserve_symbols=preserve
+                            count_evaluated,
+                            orig_expr=expr_for_close,
+                            preserve_symbols=preserve,
                         )
                     row["count_expr"] = count_evaluated  # Expresión SymPy evaluada
-                    
+
                     # Para el costo de línea mostrado, usar SIEMPRE la versión simplificada
                     # de SymPy (count_expr), que normaliza productos (n*n → n^{2}, etc.).
                     count_latex = sympy_latex(count_evaluated)
+
                     # En algunos entornos, SymPy puede imprimir productos como "n n" en lugar de "n^{2}".
                     # Comprimir repeticiones consecutivas del mismo símbolo: n n -> n^{2}, n n n -> n^{3}, etc.
                     def _compress_repeated_vars(s: str) -> str:
-                        pattern = r'\b([a-zA-Z](?:_\{\w+\})?)\b(?:\s+\1\b)+'
+                        pattern = r"\b([a-zA-Z](?:_\{\w+\})?)\b(?:\s+\1\b)+"
 
                         def repl(m: re.Match) -> str:
                             sym = m.group(1)
@@ -764,14 +861,21 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                         return re.sub(pattern, repl, s)
 
                     row["count"] = _compress_repeated_vars(count_latex)
-                    
+
                     # En modo promedio, expectedRuns debe reflejar también la expresión cerrada simplificada
                     if mode == "avg":
                         row["expectedRuns"] = row["count"]
-                    
+
                     # Generar procedimiento paso a paso (consistente entre modos)
-                    count_raw_latex_str = row.get("count_raw", latex(count_raw_expr) if hasattr(count_raw_expr, '__str__') else str(count_raw_expr))
-                    
+                    count_raw_latex_str = row.get(
+                        "count_raw",
+                        (
+                            latex(count_raw_expr)
+                            if hasattr(count_raw_expr, "__str__")
+                            else str(count_raw_expr)
+                        ),
+                    )
+
                     if mode == "avg":
                         # Para caso promedio, agregar explicación de E[N_ℓ]
                         procedure_steps = [
@@ -780,7 +884,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                         if steps:
                             procedure_steps.extend(steps)
                         else:
-                            procedure_steps.append(f"E[N_{{{row.get('line', '?')}}}] = {row['count']}")
+                            procedure_steps.append(
+                                f"E[N_{{{row.get('line', '?')}}}] = {row['count']}"
+                            )
                         row["procedure"] = procedure_steps
                     else:
                         # Para worst/best, procedimiento normal
@@ -789,17 +895,17 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                             row["procedure"] = steps
                         else:
                             # Si no hay pasos, generar procedimiento básico
-                            row["procedure"] = [
-                                count_raw_latex_str,
-                                row["count"]
-                            ]
+                            row["procedure"] = [count_raw_latex_str, row["count"]]
                     continue
                 except Exception as e:
-                    print(f"[IterativeAnalyzer] Error cerrando sumatoria con Expr para {count_raw_expr}: {e}")
+                    print(
+                        f"[IterativeAnalyzer] Error cerrando sumatoria con Expr para {count_raw_expr}: {e}"
+                    )
                     import traceback
+
                     traceback.print_exc()
                     # Fallback: convertir a LaTeX y procesar normalmente
-            
+
             # Fallback: procesar desde LaTeX
             # Asegurar que siempre tengamos un string LaTeX para close_summation
             if count_raw_expr is not None:
@@ -810,23 +916,31 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     if not isinstance(count_raw_latex, str):
                         count_raw_latex = str(count_raw_latex)
                 except Exception as e:
-                    print(f"[IterativeAnalyzer] Error convirtiendo count_raw_expr a LaTeX: {e}")
+                    print(
+                        f"[IterativeAnalyzer] Error convirtiendo count_raw_expr a LaTeX: {e}"
+                    )
                     # Fallback: usar count_raw si está disponible
                     if not isinstance(count_raw_latex, str):
                         # Si count_raw_expr es 0, mantener "0"
-                        if count_raw_expr == 0 or (hasattr(count_raw_expr, '__eq__') and count_raw_expr == 0):
+                        if count_raw_expr == 0 or (
+                            hasattr(count_raw_expr, "__eq__") and count_raw_expr == 0
+                        ):
                             count_raw_latex = "0"
                         else:
                             count_raw_latex = "1"
-            
+
             # Asegurar que count_raw_latex sea un string
             # Si count_raw es "0", mantener "0", no convertir a "1"
             if not isinstance(count_raw_latex, str):
-                if count_raw_latex == 0 or (hasattr(count_raw_latex, '__eq__') and count_raw_latex == 0):
+                if count_raw_latex == 0 or (
+                    hasattr(count_raw_latex, "__eq__") and count_raw_latex == 0
+                ):
                     count_raw_latex = "0"
                 else:
-                    count_raw_latex = str(count_raw_latex) if count_raw_latex is not None else "1"
-            
+                    count_raw_latex = (
+                        str(count_raw_latex) if count_raw_latex is not None else "1"
+                    )
+
             # Sustituir alias en LaTeX cuando no hay expr SymPy (para cierre por string)
             latex_for_close = count_raw_latex
             size_aliases_str = getattr(self, "size_aliases", None) or {}
@@ -834,16 +948,18 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 for alias_name, main_name in size_aliases_str.items():
                     if alias_name and main_name and alias_name != main_name:
                         latex_for_close = latex_for_close.replace(alias_name, main_name)
-            
+
             # Cerrar sumatoria (trabaja con LaTeX por ahora, pero recibe SymPy internamente)
             try:
-                closed_count, steps = closer.close_summation(latex_for_close, variable or "n")
+                closed_count, steps = closer.close_summation(
+                    latex_for_close, variable or "n"
+                )
                 row["count"] = closed_count
-                
+
                 # En modo promedio, actualizar expectedRuns con la expresión cerrada
                 if mode == "avg":
                     row["expectedRuns"] = closed_count
-                
+
                 # Generar procedimiento paso a paso
                 if mode == "avg":
                     # Para caso promedio, agregar explicación de E[N_ℓ]
@@ -853,34 +969,37 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     if steps:
                         procedure_steps.extend(steps)
                     else:
-                        procedure_steps.append(f"E[N_{{{row.get('line', '?')}}}] = {closed_count}")
+                        procedure_steps.append(
+                            f"E[N_{{{row.get('line', '?')}}}] = {closed_count}"
+                        )
                     row["procedure"] = procedure_steps
                 else:
                     # Para worst/best, procedimiento normal
                     if steps:
                         row["procedure"] = steps
                     else:
-                        row["procedure"] = [
-                            count_raw_latex,
-                            closed_count
-                        ]
+                        row["procedure"] = [count_raw_latex, closed_count]
             except Exception as e:
-                print(f"[IterativeAnalyzer] Error cerrando sumatoria para {count_raw_latex}: {e}")
+                print(
+                    f"[IterativeAnalyzer] Error cerrando sumatoria para {count_raw_latex}: {e}"
+                )
                 import traceback
+
                 traceback.print_exc()
                 # Fallback: usar expresión original
                 row["count"] = count_raw_latex
                 row["procedure"] = [count_raw_latex]
-        
+
         # Calcular T_polynomial y notaciones asintóticas usando SymPy
         # Obtener expresión SymPy de T_open directamente (más robusto que parsear LaTeX)
         t_open_expr = self.build_t_open_expr()
-        
+
         # PASO 2: Limpiar variables de iteración y normalizar potencias (n*n -> n**2, etc.)
         if t_open_expr is not None:
             t_open_expr = self._sanitize_expression(t_open_expr)
             try:
                 from sympy import powsimp
+
                 t_open_expr = powsimp(t_open_expr)
             except Exception:
                 pass
@@ -895,7 +1014,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Generar procedimiento general para caso promedio
         if mode == "avg":
             self._generate_avg_procedure()
-        
+
         # Calcular notaciones asintóticas usando la expresión SymPy directamente
         # Caso especial: algoritmo de Euclides (mcd) → O(log(min(a,b)))
         has_euclid = any(r.get("euclid_pattern") for r in self.rows)
@@ -926,11 +1045,18 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     # Delegar el cálculo de la notación asintótica a ComplexityClasses.
                     t_open_latex = sympy_latex(t_open_expr)
                     self.big_o = complexity.calculate_big_o(t_open_latex, main_var)
-                    self.big_omega = complexity.calculate_big_omega(t_open_latex, main_var)
-                    self.big_theta = complexity.calculate_big_theta(t_open_latex, main_var)
+                    self.big_omega = complexity.calculate_big_omega(
+                        t_open_latex, main_var
+                    )
+                    self.big_theta = complexity.calculate_big_theta(
+                        t_open_latex, main_var
+                    )
             except Exception as e:
-                print(f"[IterativeAnalyzer] Error calculando notaciones asintóticas desde expresión SymPy: {e}")
+                print(
+                    f"[IterativeAnalyzer] Error calculando notaciones asintóticas desde expresión SymPy: {e}"
+                )
                 import traceback
+
                 traceback.print_exc()
                 # Valores por defecto
                 self.big_o = "O(1)"
@@ -947,7 +1073,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         if isinstance(out, dict) and t_open_expr is not None:
             try:
                 from sympy import latex as sympy_latex
-            
+
                 totals = out.get("totals") or {}
                 # Usar siempre la versión simplificada de SymPy para T_open (sin C_k),
                 # lo que evita artefactos como `n n` y normaliza a potencias `n^{2}`, `n^{3}`, etc.
@@ -987,7 +1113,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 out["totals"] = totals
 
         return out
-    
+
     def _generate_avg_procedure(self):
         """
         Genera los pasos del procedimiento para caso promedio.
@@ -995,38 +1121,32 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         """
         if self.mode != "avg" or not self.avg_model:
             return
-        
+
         procedure_steps = []
-        
+
         # Paso 1: Definición de caso promedio
         procedure_steps.append(self._note("proc_step1_def"))
-        procedure_steps.append(
-            "A(n) = \\sum_{I \\in I_n} T(I) \\cdot p(I)"
-        )
-        
+        procedure_steps.append("A(n) = \\sum_{I \\in I_n} T(I) \\cdot p(I)")
+
         # Paso 2: Si es uniforme, mostrar fórmula uniforme
         if self.avg_model.mode == "uniform":
             procedure_steps.append(self._note("proc_step2_model"))
-            procedure_steps.append(
-                "A(n) = \\frac{1}{|I_n|} \\sum_{I \\in I_n} T(I)"
-            )
-        
+            procedure_steps.append("A(n) = \\frac{1}{|I_n|} \\sum_{I \\in I_n} T(I)")
+
         # Paso 3: Linealidad de la esperanza
         procedure_steps.append(self._note("proc_step3_linearity"))
-        procedure_steps.append(
-            "A(n) = \\sum_{\\ell} C_{\\ell} \\cdot E[N_{\\ell}]"
-        )
-        
+        procedure_steps.append("A(n) = \\sum_{\\ell} C_{\\ell} \\cdot E[N_{\\ell}]")
+
         # Paso 4: Cálculo de E[N_ℓ] por constructo
         procedure_steps.append(self._note("proc_step4_construct"))
-        
+
         # Agregar explicaciones por tipo de constructo encontrado
         constructos_encontrados = set()
         for row in self.rows:
             kind = row.get("kind", "")
             if kind in ["for", "if", "while", "repeat"]:
                 constructos_encontrados.add(kind)
-        
+
         if "for" in constructos_encontrados:
             # Verificar si hay early return para mostrar regla correcta
             has_early_return_avg = False
@@ -1043,7 +1163,14 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             has_early_return_avg = False
             has_success_return = False
             for row in self.rows:
-                if row.get("kind") == "return" and row.get("note") and ("éxito seguro" in row.get("note", "") or "guaranteed success" in row.get("note", "")):
+                if (
+                    row.get("kind") == "return"
+                    and row.get("note")
+                    and (
+                        "éxito seguro" in row.get("note", "")
+                        or "guaranteed success" in row.get("note", "")
+                    )
+                ):
                     has_early_return_avg = True
                     has_success_return = True
                     break
@@ -1054,7 +1181,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 procedure_steps.append(self._note("proc_if_formula", p_str=p_str))
         if "while" in constructos_encontrados:
             procedure_steps.append(self._note("proc_while_formula"))
-        
+
         # Paso 5: Cierre de sumatorias
         procedure_steps.append(self._note("proc_step5_summation"))
         has_unbounded = any(r.get("unbounded") for r in self.rows)
@@ -1063,7 +1190,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         else:
             t_open = self.build_t_open()
             procedure_steps.append(f"A(n) = {t_open}")
-        
+
         # Paso 6: Resultado y modelo
         procedure_steps.append(self._note("proc_step6_result"))
         # Detectar si estamos en Modelo A (éxito seguro con early return)
@@ -1072,147 +1199,183 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         for row in self.rows:
             if row.get("kind") == "return":
                 note = row.get("note", "")
-                if note and ("éxito seguro" in note or "guaranteed success" in note or ("éxito" in note and "siempre ocurre" in note)):
+                if note and (
+                    "éxito seguro" in note
+                    or "guaranteed success" in note
+                    or ("éxito" in note and "siempre ocurre" in note)
+                ):
                     has_success_return = True
-                if note and ("fracaso" in note or "nunca ocurre" in note or "failure" in note or "never occurs" in note):
+                if note and (
+                    "fracaso" in note
+                    or "nunca ocurre" in note
+                    or "failure" in note
+                    or "never occurs" in note
+                ):
                     has_failure_return = True
         # Si hay early return en bucle y éxito seguro, es Modelo A
         if has_success_return and has_failure_return:
             model_note = self._note("model_uniform_success")
         else:
             model_info = self.avg_model.get_model_info(locale=self.locale)
-            model_note = model_info['note']
+            model_note = model_info["note"]
         procedure_steps.append(self._note("proc_model_label", model_note=model_note))
-        
+
         # Agregar hipótesis si hay símbolos
         if self.avg_model.has_symbols():
-            procedure_steps.append(
-                self._note("hypotheses_symbolic")
-            )
-        
+            procedure_steps.append(self._note("hypotheses_symbolic"))
+
         # Almacenar en un campo separado para totals.procedure (no en notes)
         self.procedure_steps = procedure_steps
-    
+
     def _calculate_t_polynomial_fallback(self):
         """
         Calcula T_polynomial de forma determinista usando SymPy Poly.
-        
+
         Agrupa términos por potencias de n (n², n¹, n⁰) preservando las constantes C_k.
         Usa Poly para extraer coeficientes de todas las potencias de n de forma determinista.
-        
+
         Returns:
             None (establece self.t_polynomial)
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         import re
 
-        from sympy import Integer, Poly, Symbol, expand, latex, oo, powsimp, simplify, zoo
+        from sympy import (
+            Integer,
+            Poly,
+            Symbol,
+            expand,
+            latex,
+            oo,
+            powsimp,
+            simplify,
+            zoo,
+        )
 
         from ..utils.summation_closer import SummationCloser
-        
+
         n_sym = Symbol(self.variable, integer=True, positive=True)
-        
+
         # Función auxiliar para parsear ck_str que puede contener múltiples C_k
         def parse_ck_string(ck_str):
             """Parsea un string como 'C_3 + C_4' en una lista de C_k individuales."""
-            ck_pattern = r'C_\{(\d+)\}'
+            ck_pattern = r"C_\{(\d+)\}"
             ck_matches = re.findall(ck_pattern, ck_str)
             return [f"C_{{{num}}}" for num in ck_matches]
-        
+
         # Estructura para agrupar C_k por grado del polinomio
         # {degree: {coeff_tuple: [lista de C_k strings]}}
         # coeff_tuple es una tupla normalizada para comparación determinista
         degree_to_coeffs = {}  # {degree: {coeff_tuple: [C_k strings]}}
         # Términos no polinomiales (log(n), etc.) para no usar subs(n,0) que da zoo
         non_poly_terms = []  # [(ck_str, count_expr), ...]
-        
+
         closer = SummationCloser(locale=self.locale)
-        
+
         # Procesar cada fila y extraer coeficientes polinomiales
         for row in self.rows:
-            if row.get('ck') != "—" and row.get('count') != "—":
-                ck_str = row.get('ck', '')
-                count_expr = row.get('count_expr')
+            if row.get("ck") != "—" and row.get("count") != "—":
+                ck_str = row.get("ck", "")
+                count_expr = row.get("count_expr")
                 if count_expr is None:
-                    count_expr = row.get('count_raw_expr')
+                    count_expr = row.get("count_raw_expr")
                 if count_expr is None:
-                    count_expr = self._str_to_sympy(row.get('count_raw', '1'))
-                
+                    count_expr = self._str_to_sympy(row.get("count_raw", "1"))
+
                 # Evaluar sumatorias y simplificar
                 count_expr = closer._evaluate_all_sums_sympy(count_expr)
                 count_expr = expand(count_expr)
                 count_expr = simplify(count_expr)
-                
+
                 # Aplicar factor de operaciones elementales: C_k · ops · count
-                ops_val = row.get('ops', 1)
+                ops_val = row.get("ops", 1)
                 if ops_val != 1:
                     count_expr = Integer(ops_val) * count_expr
-                
+
                 # IMPORTANTE: Eliminar variables de iteración (i, j, k) que no deberían estar en el resultado final
                 count_expr = self._sanitize_expression(count_expr)
-                
+
                 # Convertir a Poly para extraer coeficientes de todas las potencias
                 try:
                     # Intentar crear Poly (puede fallar si hay símbolos no numéricos)
                     poly = Poly(count_expr, n_sym)
-                    all_coeffs = poly.all_coeffs()  # Lista de coeficientes [coeff_n^max, ..., coeff_n^1, coeff_n^0]
+                    all_coeffs = (
+                        poly.all_coeffs()
+                    )  # Lista de coeficientes [coeff_n^max, ..., coeff_n^1, coeff_n^0]
                     max_degree = poly.degree()
-                    
+
                     # Procesar cada coeficiente (de mayor a menor grado)
                     for degree in range(max_degree, -1, -1):
                         coeff_idx = max_degree - degree
                         if coeff_idx < len(all_coeffs):
                             coeff = all_coeffs[coeff_idx]
                             coeff = simplify(powsimp(coeff))
-                            
+
                             # IMPORTANTE: Eliminar variables de iteración del coeficiente
                             coeff = self._sanitize_expression(coeff)
-                            
+
                             # Verificar si el coeficiente es cero (saltar términos nulos)
                             try:
-                                if coeff.is_zero if hasattr(coeff, 'is_zero') else (coeff == 0 or coeff == Integer(0)):
+                                if (
+                                    coeff.is_zero
+                                    if hasattr(coeff, "is_zero")
+                                    else (coeff == 0 or coeff == Integer(0))
+                                ):
                                     continue
                             except Exception:
                                 # Si hay error, intentar simplificar y verificar de nuevo
                                 try:
                                     coeff = simplify(expand(coeff))
-                                    if coeff.is_zero if hasattr(coeff, 'is_zero') else (coeff == 0 or coeff == Integer(0)):
+                                    if (
+                                        coeff.is_zero
+                                        if hasattr(coeff, "is_zero")
+                                        else (coeff == 0 or coeff == Integer(0))
+                                    ):
                                         continue
                                 except Exception:
                                     pass
-                            
+
                             # Normalizar coeficiente para comparación determinista
                             # Usar una representación canónica (expandida y simplificada)
                             coeff_normalized = expand(coeff)
                             coeff_normalized = simplify(powsimp(coeff_normalized))
                             # Asegurar que no queden variables de iteración
-                            coeff_normalized = self._sanitize_expression(coeff_normalized)
-                            
+                            coeff_normalized = self._sanitize_expression(
+                                coeff_normalized
+                            )
+
                             # Verificar nuevamente después de normalizar (por si se simplificó a 0)
                             try:
-                                if coeff_normalized.is_zero if hasattr(coeff_normalized, 'is_zero') else (coeff_normalized == 0 or coeff_normalized == Integer(0)):
+                                if (
+                                    coeff_normalized.is_zero
+                                    if hasattr(coeff_normalized, "is_zero")
+                                    else (
+                                        coeff_normalized == 0
+                                        or coeff_normalized == Integer(0)
+                                    )
+                                ):
                                     continue
                             except Exception:
                                 pass
-                            
+
                             # Crear tupla para comparación determinista
                             # Convertir a string canónico para evitar problemas de comparación
                             coeff_key = str(coeff_normalized)
-                            
+
                             # Inicializar estructura si es necesario
                             if degree not in degree_to_coeffs:
                                 degree_to_coeffs[degree] = {}
-                            
+
                             if coeff_key not in degree_to_coeffs[degree]:
                                 degree_to_coeffs[degree][coeff_key] = {
-                                    'coeff': coeff_normalized,
-                                    'cks': []
+                                    "coeff": coeff_normalized,
+                                    "cks": [],
                                 }
-                            
+
                             # Agregar C_k a este coeficiente
-                            degree_to_coeffs[degree][coeff_key]['cks'].append(ck_str)
-                            
+                            degree_to_coeffs[degree][coeff_key]["cks"].append(ck_str)
+
                 except Exception:
                     # Si Poly falla (p.ej., expresión con log(n) no es polinómica)
                     try:
@@ -1220,8 +1383,14 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                         const_value = simplify(count_expr.subs(n_sym, 0))
                         is_infinite = (
                             const_value in (oo, -oo, zoo)
-                            or (getattr(const_value, "is_infinite", None) and const_value.is_infinite)
-                            or (getattr(const_value, "is_zero", None) and str(const_value) == "zoo")
+                            or (
+                                getattr(const_value, "is_infinite", None)
+                                and const_value.is_infinite
+                            )
+                            or (
+                                getattr(const_value, "is_zero", None)
+                                and str(const_value) == "zoo"
+                            )
                         )
                         if is_infinite:
                             # No usar constante infinita; añadir como término no polinómico (C_k) * expr
@@ -1229,7 +1398,11 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                             continue
                         # Verificar si la constante es cero
                         try:
-                            if const_value.is_zero if hasattr(const_value, 'is_zero') else (const_value == 0 or const_value == Integer(0)):
+                            if (
+                                const_value.is_zero
+                                if hasattr(const_value, "is_zero")
+                                else (const_value == 0 or const_value == Integer(0))
+                            ):
                                 continue
                         except Exception:
                             pass
@@ -1238,69 +1411,83 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                             degree_to_coeffs[0] = {}
                         if const_key not in degree_to_coeffs[0]:
                             degree_to_coeffs[0][const_key] = {
-                                'coeff': const_value,
-                                'cks': []
+                                "coeff": const_value,
+                                "cks": [],
                             }
-                        degree_to_coeffs[0][const_key]['cks'].append(ck_str)
+                        degree_to_coeffs[0][const_key]["cks"].append(ck_str)
                     except Exception:
                         # Si todo falla, intentar añadir como término no polinómico para no perder la fila
                         try:
                             non_poly_terms.append((ck_str, count_expr))
                         except Exception:
                             continue
-        
+
         if not degree_to_coeffs:
             self.t_polynomial = "0"
             return
-        
+
         # Construir T_polynomial en orden descendente de grado (n², n¹, n⁰)
         polynomial_terms = []
-        
+
         # Ordenar grados de mayor a menor
         sorted_degrees = sorted(degree_to_coeffs.keys(), reverse=True)
-        
+
         for degree in sorted_degrees:
             coeff_dict = degree_to_coeffs[degree]
-            
+
             # Para cada coeficiente único en este grado, crear un término
             # Ordenar coeficientes de forma determinista (por representación string)
             sorted_coeffs = sorted(coeff_dict.items(), key=lambda x: str(x[0]))
-            
+
             for coeff_key, data in sorted_coeffs:
-                coeff = data['coeff']
-                cks_list = data['cks']
-                
+                coeff = data["coeff"]
+                cks_list = data["cks"]
+
                 # Verificar si el coeficiente es cero (eliminar términos nulos)
                 try:
-                    if coeff.is_zero if hasattr(coeff, 'is_zero') else (coeff == 0 or coeff == Integer(0)):
+                    if (
+                        coeff.is_zero
+                        if hasattr(coeff, "is_zero")
+                        else (coeff == 0 or coeff == Integer(0))
+                    ):
                         continue
                 except Exception:
                     # Si hay error al verificar, intentar simplificar y verificar de nuevo
                     try:
                         coeff_simplified = simplify(coeff)
-                        if coeff_simplified.is_zero if hasattr(coeff_simplified, 'is_zero') else (coeff_simplified == 0 or coeff_simplified == Integer(0)):
+                        if (
+                            coeff_simplified.is_zero
+                            if hasattr(coeff_simplified, "is_zero")
+                            else (
+                                coeff_simplified == 0 or coeff_simplified == Integer(0)
+                            )
+                        ):
                             continue
                         coeff = coeff_simplified
                     except Exception:
                         pass
-                
+
                 # Parsear y combinar todas las C_k
                 all_cks = []
                 for ck in cks_list:
                     parsed = parse_ck_string(ck)
                     all_cks.extend(parsed)
-                
+
                 # Ordenar C_k numéricamente para determinismo
                 def get_ck_number(ck_str):
-                    match = re.search(r'C_\{(\d+)\}', ck_str)
+                    match = re.search(r"C_\{(\d+)\}", ck_str)
                     return int(match.group(1)) if match else 0
-                
+
                 all_cks.sort(key=get_ck_number)
-                ck_combined = " + ".join(all_cks) if len(all_cks) > 1 else all_cks[0] if all_cks else ""
-                
+                ck_combined = (
+                    " + ".join(all_cks)
+                    if len(all_cks) > 1
+                    else all_cks[0] if all_cks else ""
+                )
+
                 if not ck_combined:
                     continue
-                
+
                 # Formatear término según el grado y coeficiente
                 # Aplicar powsimp al término completo para "-4 n·n" → "-4 n²"
                 term_expr = coeff * (n_sym**degree)
@@ -1326,57 +1513,68 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 else:
                     # Términos de grado superior (n², n³, etc.)
                     if coeff == Integer(1):
-                        polynomial_terms.append(f"({ck_combined}) \\cdot n^{{{degree}}}")
+                        polynomial_terms.append(
+                            f"({ck_combined}) \\cdot n^{{{degree}}}"
+                        )
                     elif coeff == Integer(-1):
-                        polynomial_terms.append(f"-({ck_combined}) \\cdot n^{{{degree}}}")
+                        polynomial_terms.append(
+                            f"-({ck_combined}) \\cdot n^{{{degree}}}"
+                        )
                     else:
                         term_latex = latex(term_expr)
                         polynomial_terms.append(f"({ck_combined}) \\cdot {term_latex}")
-        
+
         # Añadir términos no polinomiales (log(n), etc.) sin usar subs(n,0) que daría zoo
         def get_ck_number(ck_s):
-            m = re.search(r'C_\{(\d+)\}', ck_s)
+            m = re.search(r"C_\{(\d+)\}", ck_s)
             return int(m.group(1)) if m else 0
+
         for ck_str, expr in non_poly_terms:
             parsed = parse_ck_string(ck_str)
             all_cks = sorted(parsed, key=get_ck_number)
-            ck_combined = " + ".join(all_cks) if len(all_cks) > 1 else (all_cks[0] if all_cks else "")
+            ck_combined = (
+                " + ".join(all_cks)
+                if len(all_cks) > 1
+                else (all_cks[0] if all_cks else "")
+            )
             if ck_combined:
                 try:
                     expr_latex = latex(expr)
                     polynomial_terms.append(f"({ck_combined}) \\cdot {expr_latex}")
                 except Exception:
                     pass
-        
+
         if polynomial_terms:
             result = " + ".join(polynomial_terms)
             result = result.replace("+ -", "- ")
             self.t_polynomial = result
-            
+
             # VALIDACIÓN: Verificar que t_polynomial solo contenga variable de tamaño y C_k
             # Genérico: aceptar cualquier variable de tamaño (n, N, m, etc.), no solo n
             import re
-            symbol_pattern = r'\b([a-zA-Z_]\w*(?:_\{[^}]+\})?)\b'
+
+            symbol_pattern = r"\b([a-zA-Z_]\w*(?:_\{[^}]+\})?)\b"
             found_symbols = re.findall(symbol_pattern, result)
 
             invalid_symbols = []
             iteration_vars_found = []
-            ALLOWED = {'cdot', 'text', 'times', 'left', 'right', 'frac'}
+            ALLOWED = {"cdot", "text", "times", "left", "right", "frac"}
             for sym in found_symbols:
-                clean_sym = sym.replace('_{', '').replace('}', '')
-                if clean_sym in ['i', 'j', 'k']:
+                clean_sym = sym.replace("_{", "").replace("}", "")
+                if clean_sym in ["i", "j", "k"]:
                     iteration_vars_found.append(sym)
                     invalid_symbols.append(sym)
                 elif not (
-                    clean_sym.startswith('C_')
-                    or clean_sym.startswith('t_')
+                    clean_sym.startswith("C_")
+                    or clean_sym.startswith("t_")
                     or clean_sym in ALLOWED
                 ):
                     # Variable de tamaño (n, N, m, etc.): permitir genéricamente
                     pass
-            
+
             if invalid_symbols:
                 import logging
+
                 logger = logging.getLogger(__name__)
                 if iteration_vars_found:
                     logger.error(
@@ -1391,15 +1589,17 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     )
         else:
             self.t_polynomial = "0"
-    
-    def _latex_to_sympy_expr(self, latex_str: str, variable: str = "n") -> Optional[Expr]:
+
+    def _latex_to_sympy_expr(
+        self, latex_str: str, variable: str = "n"
+    ) -> Optional[Expr]:
         """
         Convierte una expresión LaTeX a SymPy Expr.
-        
+
         Args:
             latex_str: Expresión en formato LaTeX
             variable: Variable principal (por defecto "n")
-            
+
         Returns:
             Expresión SymPy o None si hay error
         """
@@ -1407,51 +1607,54 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             import re
 
             from sympy import Symbol, sympify
-            
+
             # Normalizar LaTeX a formato SymPy
             expr_str = latex_str
-            
+
             # Reemplazar operadores LaTeX
-            expr_str = expr_str.replace('\\cdot', '*')
-            expr_str = expr_str.replace(' ', '')
-            
+            expr_str = expr_str.replace("\\cdot", "*")
+            expr_str = expr_str.replace(" ", "")
+
             # Manejar fracciones LaTeX: \frac{a}{b} -> (a)/(b)
-            expr_str = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', r'(\1)/(\2)', expr_str)
-            
+            expr_str = re.sub(r"\\frac\{([^}]+)\}\{([^}]+)\}", r"(\1)/(\2)", expr_str)
+
             # Reemplazar potencias LaTeX: n^2 -> n**2, n^{2} -> n**2
-            expr_str = re.sub(r'(\w+)\^(\d+)', r'\1**\2', expr_str)
-            expr_str = re.sub(r'(\w+)\^\{(\d+)\}', r'\1**\2', expr_str)
-            
+            expr_str = re.sub(r"(\w+)\^(\d+)", r"\1**\2", expr_str)
+            expr_str = re.sub(r"(\w+)\^\{(\d+)\}", r"\1**\2", expr_str)
+
             # Reemplazar logaritmos: \log(n) -> log(n)
-            expr_str = re.sub(r'\\log\((\w+)\)', r'log(\1)', expr_str)
-            expr_str = re.sub(r'\\log\{(\w+)\}', r'log(\1)', expr_str)
-            
+            expr_str = re.sub(r"\\log\((\w+)\)", r"log(\1)", expr_str)
+            expr_str = re.sub(r"\\log\{(\w+)\}", r"log(\1)", expr_str)
+
             # Crear símbolos
             n = Symbol(variable, integer=True, positive=True)
             from sympy import log
-            syms = {variable: n, 'log': log}
-            
+
+            syms = {variable: n, "log": log}
+
             return sympify(expr_str, locals=syms)
         except Exception as e:
-            print(f"[IterativeAnalyzer] Error en _latex_to_sympy_expr para {latex_str}: {e}")
+            print(
+                f"[IterativeAnalyzer] Error en _latex_to_sympy_expr para {latex_str}: {e}"
+            )
             return None
-    
+
     def visit(self, node: Any, mode: str = "worst") -> None:
         """
         Dispatcher principal que visita cualquier nodo del AST.
-        
+
         Args:
             node: Nodo del AST
             mode: Modo de análisis
         """
         if node is None:
             return
-        
+
         if not isinstance(node, dict):
             return
-        
+
         node_type = node.get("type", "unknown")
-        
+
         # Dispatch por tipo de nodo
         if node_type == "Program":
             self.visitProgram(node, mode)
@@ -1479,25 +1682,25 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             self.visitDecl(node, mode)
         else:
             self.visitOther(node, mode)
-    
+
     def visitProgram(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """
         Visita un programa (nodo raíz).
-        
+
         Args:
             node: Nodo Program del AST
             mode: Modo de análisis
         """
         for item in node.get("body", []):
             self.visit(item, mode)
-    
+
     def visitBlock(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """
         Visita un bloque de código con memoización para optimización.
-        
+
         Si el bloque ya fue analizado en el mismo contexto, reutiliza los resultados
         del cache en lugar de analizar nuevamente.
-        
+
         Args:
             node: Nodo Block del AST
             mode: Modo de análisis
@@ -1507,58 +1710,66 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             # Generar clave de memoización
             ctx_hash = self.get_context_hash()
             memo_key = self.memo_key(node, mode, ctx_hash)
-            
+
             # Intentar obtener del cache
             cached_rows = self.memo_get(memo_key)
             if cached_rows is not None:
                 # Usar resultados cacheados
                 self.rows.extend(cached_rows)
                 return
-        
+
         # Si no está en cache, analizar normalmente
         rows_before = len(self.rows)
-        
+
         for stmt in node.get("body", []):
             # Guardar el número de rows antes de visitar el statement
             stmt_rows_before = len(self.rows)
-            
+
             # Si el statement es un While, pasar el bloque actual como contexto padre
             if isinstance(stmt, dict) and stmt.get("type") == "While":
                 self.visitWhile(stmt, mode, parent_context=node)
             else:
                 self.visit(stmt, mode)
-            
+
             # En modo "best", verificar si se ejecutó un return que termina la función
             if mode == "best":
                 should_stop = False
-                
+
                 # Verificar si el statement que acabamos de visitar es un return
                 # y si no hay bucles activos (lo que significa que termina la función)
-                if (isinstance(stmt, dict) and stmt.get("type") == "Return" and 
-                    len(self.loop_stack) == 0):
+                if (
+                    isinstance(stmt, dict)
+                    and stmt.get("type") == "Return"
+                    and len(self.loop_stack) == 0
+                ):
                     # Un return fuera de bucles termina la función
                     should_stop = True
-                
+
                 # Verificar si acabamos de visitar un for que ejecutó un return
                 # Cuando un for tiene un return en su cuerpo y se ejecuta en best case,
                 # el return termina la función después de que el for termina
-                elif (isinstance(stmt, dict) and stmt.get("type") == "For" and 
-                      len(self.loop_stack) == 0):
+                elif (
+                    isinstance(stmt, dict)
+                    and stmt.get("type") == "For"
+                    and len(self.loop_stack) == 0
+                ):
                     # El for terminó (loop_stack está vacío ahora)
                     # Buscar si hay un return reciente con nota "early-exit"
                     # que se agregó durante la visita del for
                     for row in self.rows[stmt_rows_before:]:
-                        if (row.get("kind") == "return" and 
-                            row.get("note") and 
-                            "early-exit" in row.get("note", "").lower()):
+                        if (
+                            row.get("kind") == "return"
+                            and row.get("note")
+                            and "early-exit" in row.get("note", "").lower()
+                        ):
                             # Se ejecutó un return dentro del for que termina la función
                             should_stop = True
                             break
-                
+
                 # Si debemos detener, salir del bucle
                 if should_stop:
                     break
-        
+
         # Guardar resultados en cache si corresponde
         if self._should_memoize(node):
             rows_added = self.rows[rows_before:]
@@ -1566,11 +1777,11 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 ctx_hash = self.get_context_hash()
                 memo_key = self.memo_key(node, mode, ctx_hash)
                 self.memo_set(memo_key, rows_added)
-    
+
     def visitProcDef(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """
         Visita una definición de procedimiento.
-        
+
         Args:
             node: Nodo ProcDef del AST
             mode: Modo de análisis
@@ -1579,23 +1790,23 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         body = node.get("body")
         if body:
             self.visit(body, mode)
-    
+
     def visitOther(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """
         Visita un nodo desconocido (fallback).
-        
+
         Args:
             node: Nodo del AST
             mode: Modo de análisis
         """
         line = node.get("pos", {}).get("line", 0)
         node_type = node.get("type", "unknown")
-        
+
         ck = self.C()
         self.add_row(
             line=line,
             kind="other",
             ck=ck,
             count=Integer(1),  # Usar Integer(1) de SymPy
-            note=self._note("statement", node_type=node_type)
+            note=self._note("statement", node_type=node_type),
         )

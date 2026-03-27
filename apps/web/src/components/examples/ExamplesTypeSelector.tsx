@@ -8,7 +8,10 @@ import {
   EXAMPLE_CATEGORY_ORDER,
   EXAMPLE_CATEGORY_META,
 } from "@/lib/examples/catalog";
-import { CATEGORY_LABEL_KEYS, CATEGORY_OFFTEXT_KEYS } from "@/lib/examples/i18n";
+import {
+  CATEGORY_LABEL_KEYS,
+  CATEGORY_OFFTEXT_KEYS,
+} from "@/lib/examples/i18n";
 
 interface ExamplesTypeSelectorProps {
   ctaLabel: string;

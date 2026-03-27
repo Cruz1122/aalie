@@ -102,7 +102,10 @@ export default function AIModeView({
         className={`mb-4 sm:mb-6 transition-all duration-300 ${isAnimating ? "scale-0" : "scale-100"}`}
       >
         <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center">
-          <AALIEIcon className="text-purple-300 scale-75 sm:scale-100" size={52} />
+          <AALIEIcon
+            className="text-purple-300 scale-75 sm:scale-100"
+            size={52}
+          />
         </div>
       </div>
 
@@ -119,7 +122,9 @@ export default function AIModeView({
       </h2>
 
       {/* Input principal: flex para evitar solapamiento y centrado vertical del icono */}
-      <div className={`w-full max-w-2xl mb-4 sm:mb-8 px-2 sm:px-0 ${fadeClass("delay-150")}`}>
+      <div
+        className={`w-full max-w-2xl mb-4 sm:mb-8 px-2 sm:px-0 ${fadeClass("delay-150")}`}
+      >
         <div className="flex items-center gap-2 min-w-0 rounded-xl border border-slate-600/50 bg-white/5 focus-within:ring-2 focus-within:ring-purple-500/50 focus-within:border-transparent transition-all">
           <input
             type="text"

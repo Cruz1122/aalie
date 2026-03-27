@@ -3,6 +3,7 @@ Tests de sistema para endpoints adicionales de análisis.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
+
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -69,7 +70,12 @@ END
         assert response.status_code == 200
         data = response.json()
         assert data.get("ok") is True
-        assert data.get("recurrence_info", {}).get("dp_validation", {}).get("primary_pattern") == "tabulation"
+        assert (
+            data.get("recurrence_info", {})
+            .get("dp_validation", {})
+            .get("primary_pattern")
+            == "tabulation"
+        )
 
 
 class TestOpenEndpoint:
@@ -94,10 +100,7 @@ END
         payload = {
             "source": source,
             "mode": "avg",
-            "avgModel": {
-                "mode": "uniform",
-                "predicates": {}
-            }
+            "avgModel": {"mode": "uniform", "predicates": {}},
         }
         response = client.post("/analyze/open", json=payload)
         assert response.status_code == 200
@@ -114,11 +117,7 @@ factorial(n) BEGIN
     RETURN n * factorial(n - 1);
 END
 """
-        payload = {
-            "source": source,
-            "mode": "worst",
-            "preferred_method": "iteration"
-        }
+        payload = {"source": source, "mode": "worst", "preferred_method": "iteration"}
         response = client.post("/analyze/open", json=payload)
         assert response.status_code == 200
         data = response.json()
@@ -150,7 +149,12 @@ END
         assert isinstance(step_bundle, dict)
         assert step_bundle.get("method") == "characteristic_equation"
         assert step_bundle.get("version") == "ceq_steps_v1"
-        assert step_bundle.get("overallStatus") in {"complete", "partial", "unsupported", "error"}
+        assert step_bundle.get("overallStatus") in {
+            "complete",
+            "partial",
+            "unsupported",
+            "error",
+        }
 
         steps = step_bundle.get("steps", [])
         assert isinstance(steps, list)
@@ -203,7 +207,12 @@ END
         assert isinstance(step_bundle, dict)
         assert step_bundle.get("method") == "iteration"
         assert step_bundle.get("version") == "iter_steps_v1"
-        assert step_bundle.get("overallStatus") in {"complete", "partial", "unsupported", "error"}
+        assert step_bundle.get("overallStatus") in {
+            "complete",
+            "partial",
+            "unsupported",
+            "error",
+        }
 
         steps = step_bundle.get("steps", [])
         assert isinstance(steps, list)
@@ -256,7 +265,12 @@ END
         assert isinstance(step_bundle, dict)
         assert step_bundle.get("method") == "master"
         assert step_bundle.get("version") == "master_steps_v1"
-        assert step_bundle.get("overallStatus") in {"complete", "partial", "unsupported", "error"}
+        assert step_bundle.get("overallStatus") in {
+            "complete",
+            "partial",
+            "unsupported",
+            "error",
+        }
 
         steps = step_bundle.get("steps", [])
         assert isinstance(steps, list)
@@ -290,7 +304,12 @@ END
         assert isinstance(step_bundle, dict)
         assert step_bundle.get("method") == "recursion_tree"
         assert step_bundle.get("version") == "rt_steps_v1"
-        assert step_bundle.get("overallStatus") in {"complete", "partial", "unsupported", "error"}
+        assert step_bundle.get("overallStatus") in {
+            "complete",
+            "partial",
+            "unsupported",
+            "error",
+        }
 
         steps = step_bundle.get("steps", [])
         assert isinstance(steps, list)
@@ -307,11 +326,7 @@ test(n) BEGIN
     END
 END
 """
-        payload = {
-            "source": source,
-            "mode": "worst",
-            "algorithm_kind": "iterative"
-        }
+        payload = {"source": source, "mode": "worst", "algorithm_kind": "iterative"}
         response = client.post("/analyze/open", json=payload)
         assert response.status_code == 200
         data = response.json()
@@ -326,10 +341,7 @@ test(n) BEGIN
     END
 END
 """
-        payload = {
-            "source": source,
-            "mode": "all"
-        }
+        payload = {"source": source, "mode": "all"}
         response = client.post("/analyze/open", json=payload)
         assert response.status_code == 200
         data = response.json()
@@ -352,10 +364,7 @@ factorial(n) BEGIN
     RETURN n * factorial(n - 1);
 END
 """
-        payload = {
-            "source": source,
-            "algorithm_kind": "recursive"
-        }
+        payload = {"source": source, "algorithm_kind": "recursive"}
         response = client.post("/analyze/detect-methods", json=payload)
         assert response.status_code == 200
         data = response.json()

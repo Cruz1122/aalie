@@ -1,6 +1,5 @@
 import type { Program } from "@aa/types";
 
-
 import { analyzeDependencies } from "./dependencies/analyzer";
 import { buildExplanations } from "./explanations/builder";
 import { extractFeatures } from "./features/extractor";
@@ -15,7 +14,7 @@ type Locale = "en" | "es";
  */
 export function analyzeASTForHardware(
   ast: Program,
-  locale: Locale = "en"
+  locale: Locale = "en",
 ): HardwareSuitabilityReport {
   // Layer 1: Feature extraction
   const features = extractFeatures(ast);
@@ -30,7 +29,13 @@ export function analyzeASTForHardware(
   const engine = runEngine({ features, deps, patterns });
 
   // Layer 5: Explanations
-  const explanations = buildExplanations(features, deps, patterns, engine, locale);
+  const explanations = buildExplanations(
+    features,
+    deps,
+    patterns,
+    engine,
+    locale,
+  );
 
   return {
     primaryRecommendation: engine.primaryRecommendation,

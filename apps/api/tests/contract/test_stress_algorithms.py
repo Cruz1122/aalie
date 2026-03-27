@@ -3,6 +3,7 @@ Contract tests para algoritmos de estrés (Prueba1–Prueba7).
 Suelen exponer fallos como "cannot find subproblems" o análisis incorrecto.
 Objetivo: que el analizador no falle y, cuando exista spec, validar todos los casos (worst, best, avg).
 """
+
 from pathlib import Path
 
 import pytest
@@ -25,7 +26,9 @@ _SUPPORT = Path(__file__).resolve().parent.parent / "_support"
 
 
 @pytest.mark.contract
-@pytest.mark.parametrize("family,name", STRESS_ALGORITHMS, ids=[f"{f}/{n}" for f, n in STRESS_ALGORITHMS])
+@pytest.mark.parametrize(
+    "family,name", STRESS_ALGORITHMS, ids=[f"{f}/{n}" for f, n in STRESS_ALGORITHMS]
+)
 def test_stress_algorithm_parses_and_analyzes(family, name):
     """Cada algoritmo de estrés carga, parsea y el analizador se ejecuta; si hay spec, se validan todos los casos."""
     source = load_algorithm(family, name)

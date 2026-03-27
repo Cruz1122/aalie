@@ -3,6 +3,7 @@ Tests unitarios para app.core.config.
 
 Author: Juan Felipe Henao (@Pipe-1z)
 """
+
 import os
 from unittest.mock import patch
 
@@ -93,17 +94,26 @@ class TestGetDevAllowedOrigins:
         result = get_dev_allowed_origins()
         assert result == ["http://example.com"]
 
-    @patch.dict(os.environ, {"DEV_ALLOWED_ORIGINS": "http://example.com,http://test.com"})
+    @patch.dict(
+        os.environ, {"DEV_ALLOWED_ORIGINS": "http://example.com,http://test.com"}
+    )
     def test_multiple_origins(self):
         result = get_dev_allowed_origins()
         assert result == ["http://example.com", "http://test.com"]
 
-    @patch.dict(os.environ, {"DEV_ALLOWED_ORIGINS": "http://example.com, http://test.com , https://secure.com"})
+    @patch.dict(
+        os.environ,
+        {
+            "DEV_ALLOWED_ORIGINS": "http://example.com, http://test.com , https://secure.com"
+        },
+    )
     def test_origins_with_whitespace(self):
         result = get_dev_allowed_origins()
         assert result == ["http://example.com", "http://test.com", "https://secure.com"]
 
-    @patch.dict(os.environ, {"DEV_ALLOWED_ORIGINS": "http://example.com,,http://test.com"})
+    @patch.dict(
+        os.environ, {"DEV_ALLOWED_ORIGINS": "http://example.com,,http://test.com"}
+    )
     def test_origins_with_empty_items(self):
         result = get_dev_allowed_origins()
         assert result == ["http://example.com", "http://test.com"]

@@ -12,7 +12,10 @@ interface AALIEIconProps {
   readonly size?: number;
 }
 
-export default function AALIEIcon({ className = "", size = 24 }: AALIEIconProps) {
+export default function AALIEIcon({
+  className = "",
+  size = 24,
+}: AALIEIconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

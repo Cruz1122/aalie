@@ -67,5 +67,3 @@ def response_has_byline(response_ctx):
     data = response_ctx["response"].json()
     by_line = data.get("byLine", data.get("worst", {}).get("byLine", []))
     assert isinstance(by_line, list) and len(by_line) > 0
-
-

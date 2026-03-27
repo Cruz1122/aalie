@@ -75,7 +75,9 @@ export default function BaseModalContainer({
   if (!open || !mounted) return null;
 
   return createPortal(
-    <div className={`fixed inset-0 ${zIndexClassName} flex items-center justify-center`}>
+    <div
+      className={`fixed inset-0 ${zIndexClassName} flex items-center justify-center`}
+    >
       <div
         className="absolute inset-0 glass-modal-overlay"
         onClick={closeOnOverlay ? onClose : undefined}
@@ -90,7 +92,11 @@ export default function BaseModalContainer({
           >
             <h3 className="text-lg font-semibold text-white flex items-center gap-2">
               {titleIcon ? (
-                <span className={`material-symbols-outlined ${titleIconClassName}`}>{titleIcon}</span>
+                <span
+                  className={`material-symbols-outlined ${titleIconClassName}`}
+                >
+                  {titleIcon}
+                </span>
               ) : null}
               {title}
             </h3>

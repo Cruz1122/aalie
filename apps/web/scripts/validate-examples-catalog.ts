@@ -32,7 +32,9 @@ async function parseSource(sourceCode: string): Promise<ParseResponse> {
   return (await response.json()) as ParseResponse;
 }
 
-async function detectMethods(sourceCode: string): Promise<DetectMethodsResponse> {
+async function detectMethods(
+  sourceCode: string,
+): Promise<DetectMethodsResponse> {
   const response = await fetch(`${API_BASE}/analyze/detect-methods`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -52,10 +54,14 @@ async function main(): Promise<void> {
       const reason = parseResult.errors?.[0]?.message || "parse failed";
       if (example.enabled) {
         hardFailures += 1;
-        console.error(`ERROR [${example.slug}] enabled example is not parseable: ${reason}`);
+        console.error(
+          `ERROR [${example.slug}] enabled example is not parseable: ${reason}`,
+        );
       } else {
         warnings += 1;
-        console.warn(`WARN  [${example.slug}] disabled example parse issue: ${reason}`);
+        console.warn(
+          `WARN  [${example.slug}] disabled example parse issue: ${reason}`,
+        );
       }
       continue;
     }
@@ -63,20 +69,27 @@ async function main(): Promise<void> {
     if (!isRecursiveCategory(example.category)) {
       if (example.verifiedMethods.length > 0) {
         hardFailures += 1;
-        console.error(`ERROR [${example.slug}] iterative example has verifiedMethods populated`);
+        console.error(
+          `ERROR [${example.slug}] iterative example has verifiedMethods populated`,
+        );
       }
       continue;
     }
 
     const detectResult = await detectMethods(example.sourceCode);
     if (!detectResult.ok || !detectResult.applicable_methods) {
-      const reason = detectResult.errors?.[0]?.message || "detect-methods failed";
+      const reason =
+        detectResult.errors?.[0]?.message || "detect-methods failed";
       if (example.enabled) {
         hardFailures += 1;
-        console.error(`ERROR [${example.slug}] enabled recursive example cannot detect methods: ${reason}`);
+        console.error(
+          `ERROR [${example.slug}] enabled recursive example cannot detect methods: ${reason}`,
+        );
       } else {
         warnings += 1;
-        console.warn(`WARN  [${example.slug}] disabled recursive example detect issue: ${reason}`);
+        console.warn(
+          `WARN  [${example.slug}] disabled recursive example detect issue: ${reason}`,
+        );
       }
       continue;
     }

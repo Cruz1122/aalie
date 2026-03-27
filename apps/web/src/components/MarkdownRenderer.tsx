@@ -189,14 +189,18 @@ const CustomOl = (props: any) => (
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomLi = (props: any) => (
-  <li className="text-white text-[11px] leading-relaxed mb-0.5 break-words min-w-0 max-w-full" {...props}>
+  <li
+    className="text-white text-[11px] leading-relaxed mb-0.5 break-words min-w-0 max-w-full"
+    {...props}
+  >
     {props.children}
   </li>
 );
 
 const createCustomCode = (inlineCodeClassName?: string) => {
   const inlineClass =
-    inlineCodeClassName || "bg-slate-700 text-cyan-300 px-1 py-0.5 rounded text-[10px] font-mono";
+    inlineCodeClassName ||
+    "bg-slate-700 text-cyan-300 px-1 py-0.5 rounded text-[10px] font-mono";
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const CustomCodeComponent = (props: any) => {
@@ -300,7 +304,12 @@ const CustomPre = (props: any) => {
       let i = 0;
       while (i < text.length) {
         let best:
-          | { kind: (typeof patterns)[number]["kind"]; start: number; end: number; value: string }
+          | {
+              kind: (typeof patterns)[number]["kind"];
+              start: number;
+              end: number;
+              value: string;
+            }
           | undefined;
 
         for (const p of patterns) {
@@ -377,9 +386,7 @@ const CustomPre = (props: any) => {
         ref={scrollRef}
         className="bg-slate-800/70 border border-slate-600/40 rounded-md p-2.5 max-h-[300px] overflow-y-auto mb-1.5 max-w-[min(100%,420px)] min-w-0 overflow-hidden"
       >
-        <pre
-          className="text-slate-200 text-[10px] font-mono whitespace-pre-wrap break-words leading-relaxed m-0"
-        >
+        <pre className="text-slate-200 text-[10px] font-mono whitespace-pre-wrap break-words leading-relaxed m-0">
           {renderedCode}
         </pre>
       </div>
@@ -503,7 +510,9 @@ export default function MarkdownRenderer({
   const CustomCode = createCustomCode(inlineCodeClassName);
 
   return (
-    <div className={`min-w-0 max-w-full overflow-hidden ${className ?? ""}`.trim()}>
+    <div
+      className={`min-w-0 max-w-full overflow-hidden ${className ?? ""}`.trim()}
+    >
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeHighlight, rehypeKatex]}

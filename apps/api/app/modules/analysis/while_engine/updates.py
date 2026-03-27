@@ -7,10 +7,16 @@ y monotone_progress_must para clasificación de terminación.
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 Version: 0.1.0
 """
+
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set
 
-from ..ir.expr_utils import expr_to_str, is_literal_false, is_literal_true, is_simple_constant
+from ..ir.expr_utils import (
+    expr_to_str,
+    is_literal_false,
+    is_literal_true,
+    is_simple_constant,
+)
 
 
 @dataclass
@@ -53,7 +59,11 @@ def _parse_update(value: Any, var_name: str) -> Optional[Dict[str, Any]]:
     if t == "unary":
         uop = value.get("operator", "")
         arg = value.get("arg", {})
-        if uop.lower() == "not" and isinstance(arg, dict) and arg.get("type", "").lower() == "identifier":
+        if (
+            uop.lower() == "not"
+            and isinstance(arg, dict)
+            and arg.get("type", "").lower() == "identifier"
+        ):
             if arg.get("name", "") == var_name:
                 return {"type": "toggle", "monotone": False}
 
@@ -76,16 +86,36 @@ def _parse_update(value: Any, var_name: str) -> Optional[Dict[str, Any]]:
                 const = expr_to_str(right)
                 if is_simple_constant(const):
                     if op == "+":
-                        return {"type": "num", "operator": "+", "constant": const, "monotone": True}
+                        return {
+                            "type": "num",
+                            "operator": "+",
+                            "constant": const,
+                            "monotone": True,
+                        }
                     if op == "-":
-                        return {"type": "num", "operator": "-", "constant": const, "monotone": True}
+                        return {
+                            "type": "num",
+                            "operator": "-",
+                            "constant": const,
+                            "monotone": True,
+                        }
                     if op in ("*", "/", "//", "div"):
-                        return {"type": "num", "operator": op, "constant": const, "monotone": True}
+                        return {
+                            "type": "num",
+                            "operator": op,
+                            "constant": const,
+                            "monotone": True,
+                        }
         if isinstance(right, dict) and right.get("type", "").lower() == "identifier":
             if right.get("name", "") == var_name and op in ("+", "*"):
                 const = expr_to_str(left)
                 if is_simple_constant(const):
-                    return {"type": "num", "operator": op, "constant": const, "monotone": True}
+                    return {
+                        "type": "num",
+                        "operator": op,
+                        "constant": const,
+                        "monotone": True,
+                    }
 
     # Reset: i <- 0, i <- n (asignación a constante u otra expr)
     if t in ("number", "literal"):
@@ -114,7 +144,11 @@ def _collect_assignments(node: Any, var_name: str, out: List[Dict[str, Any]]) ->
     elif nt == "if":
         for branch in [node.get("consequent"), node.get("alternate")]:
             if branch:
-                body = branch.get("body", []) if branch.get("type", "").lower() == "block" else [branch]
+                body = (
+                    branch.get("body", [])
+                    if branch.get("type", "").lower() == "block"
+                    else [branch]
+                )
                 for stmt in body:
                     _collect_assignments(stmt, var_name, out)
     elif nt not in ("while", "repeat", "for"):
@@ -134,7 +168,9 @@ def _updates_match(a: Dict, b: Dict) -> bool:
     if a.get("type") != b.get("type"):
         return False
     if a.get("type") == "num":
-        return a.get("operator") == b.get("operator") and a.get("constant") == b.get("constant")
+        return a.get("operator") == b.get("operator") and a.get("constant") == b.get(
+            "constant"
+        )
     if a.get("type") == "bool_assign":
         return a.get("value") == b.get("value")
     if a.get("type") == "mod_decrease":
@@ -223,8 +259,12 @@ def _compute_summary_for_var(
             if u.get("value") is False and guard_desired is True:
                 kills_guard_must = True  # var=true → var<-false mata
             elif u.get("value") is True and guard_desired is False:
-                kills_guard_must = True  # var=false → var<-true mata (bubble sort mejorado)
-        if (u.get("type") == "num" or u.get("type") == "mod_decrease") and u.get("monotone"):
+                kills_guard_must = (
+                    True  # var=false → var<-true mata (bubble sort mejorado)
+                )
+        if (u.get("type") == "num" or u.get("type") == "mod_decrease") and u.get(
+            "monotone"
+        ):
             monotone_progress_must = True
 
     for u in may:
@@ -283,15 +323,22 @@ def summarize_updates(
                 for atom in atoms:
                     if not isinstance(atom, dict):
                         continue
-                    if atom.get("var") == var_name and atom.get("bool_desired") is not None:
+                    if (
+                        atom.get("var") == var_name
+                        and atom.get("bool_desired") is not None
+                    ):
                         desired = bool(atom.get("bool_desired"))
                         break
 
                 # Si aparece como identificador suelto dentro de AND/OR, entonces el guard exige True.
                 if desired is None:
-                    if hasattr(guard_info, "and_bool_vars") and var_name in getattr(guard_info, "and_bool_vars", set()):
+                    if hasattr(guard_info, "and_bool_vars") and var_name in getattr(
+                        guard_info, "and_bool_vars", set()
+                    ):
                         desired = True
-                    elif hasattr(guard_info, "or_bool_vars") and var_name in getattr(guard_info, "or_bool_vars", set()):
+                    elif hasattr(guard_info, "or_bool_vars") and var_name in getattr(
+                        guard_info, "or_bool_vars", set()
+                    ):
                         desired = True
 
         result[var_name] = _compute_summary_for_var(body, var_name, desired)

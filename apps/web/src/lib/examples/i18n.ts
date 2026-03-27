@@ -1,4 +1,8 @@
-import type { ExampleCatalogItem, ExampleCategory, ExampleFamily } from "@/lib/examples/catalog";
+import type {
+  ExampleCatalogItem,
+  ExampleCategory,
+  ExampleFamily,
+} from "@/lib/examples/catalog";
 
 export interface LocalizedExampleCatalogItem {
   title: string;

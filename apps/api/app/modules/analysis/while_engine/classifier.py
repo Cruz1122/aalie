@@ -7,6 +7,7 @@ Reglas conservadoras para unbounded; patrones existentes para bounded.
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 Version: 0.1.0
 """
+
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -33,7 +34,9 @@ class ClassifyResult:
     evidence: Dict[str, Any] = field(default_factory=dict)
 
 
-def _find_initial_value(var_name: str, while_line: int, parent_context: Optional[Dict]) -> Optional[str]:
+def _find_initial_value(
+    var_name: str, while_line: int, parent_context: Optional[Dict]
+) -> Optional[str]:
     """Busca valor inicial de var antes del while en parent_context."""
     if not parent_context or not isinstance(parent_context, dict):
         return None
@@ -49,7 +52,10 @@ def _find_initial_value(var_name: str, while_line: int, parent_context: Optional
             break
         if stmt.get("type", "").lower() == "assign":
             target = stmt.get("target", {})
-            if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
+            if (
+                isinstance(target, dict)
+                and target.get("type", "").lower() == "identifier"
+            ):
                 if target.get("name", "") == var_name:
                     val = stmt.get("value", {})
                     if isinstance(val, dict):
@@ -63,7 +69,13 @@ def _find_initial_value(var_name: str, while_line: int, parent_context: Optional
     return last_val
 
 
-def _classify_bool_guard(guard: GuardInfo, updates: Dict[str, VarUpdateSummary], parent_context: Optional[Dict], while_line: int, mode: str) -> Optional[ClassifyResult]:
+def _classify_bool_guard(
+    guard: GuardInfo,
+    updates: Dict[str, VarUpdateSummary],
+    parent_context: Optional[Dict],
+    while_line: int,
+    mode: str,
+) -> Optional[ClassifyResult]:
     """Lógica específica para guards de tipo bool_var."""
     if guard.bool_var:
         summary = updates.get(guard.bool_var)
@@ -97,7 +109,10 @@ def _classify_bool_guard(guard: GuardInfo, updates: Dict[str, VarUpdateSummary],
                     if v_name == guard.bool_var:
                         continue
                     # Ignorar variables con reset (re-inicialización) en la iteración del while
-                    has_reset = any(u.get("type") == "reset" for u in (v_summary.must_updates + v_summary.may_updates))
+                    has_reset = any(
+                        u.get("type") == "reset"
+                        for u in (v_summary.must_updates + v_summary.may_updates)
+                    )
                     if has_reset:
                         continue
                     # Buscar actualización numérica MUST como cota de pasadas
@@ -106,7 +121,11 @@ def _classify_bool_guard(guard: GuardInfo, updates: Dict[str, VarUpdateSummary],
                             continue
                         op = u.get("operator")
                         const = u.get("constant", "1")
-                        initial_b = _find_initial_value(v_name, while_line, parent_context) if parent_context else None
+                        initial_b = (
+                            _find_initial_value(v_name, while_line, parent_context)
+                            if parent_context
+                            else None
+                        )
                         initial_expr = initial_b if initial_b else f"{v_name}_0"
 
                         # Caso 1: variable auxiliar decreciente (patrones tipo índice límite)
@@ -216,8 +235,17 @@ def classify_while(
         if res:
             # En contexto compuesto (AND), un flag sin kill must no implica no terminación del WHILE completo:
             # la otra parte del AND puede terminar el bucle. En OR, sí puede volver el WHILE no terminante.
-            if compound and compound_op == "and" and res.status == "unbounded" and res.reason_code == "while_bool_no_must_kill":
-                return ClassifyResult(status="unknown", reason_code="while_bool_compound_unknown", evidence=res.evidence)
+            if (
+                compound
+                and compound_op == "and"
+                and res.status == "unbounded"
+                and res.reason_code == "while_bool_no_must_kill"
+            ):
+                return ClassifyResult(
+                    status="unknown",
+                    reason_code="while_bool_compound_unknown",
+                    evidence=res.evidence,
+                )
             return res
 
     # --- Relacionales numéricos ---
@@ -227,7 +255,9 @@ def classify_while(
             # Caso común: i < n, ambos son identificadores pero solo i se actualiza.
             # Si la "variable límite" no cambia dentro del while, tratarla como cota fija.
             limit_var = atom.get("limit")
-            limit_summary = updates.get(limit_var) if isinstance(limit_var, str) else None
+            limit_summary = (
+                updates.get(limit_var) if isinstance(limit_var, str) else None
+            )
             limit_has_updates = bool(
                 limit_summary
                 and (
@@ -247,7 +277,12 @@ def classify_while(
         if atom.get("bool_desired") is not None:
             desired = bool(atom.get("bool_desired"))
             return classify_while(
-                GuardInfo(kind="bool_var", bool_var=atom.get("var"), desired=desired, vars_used={atom.get("var", "")}),
+                GuardInfo(
+                    kind="bool_var",
+                    bool_var=atom.get("var"),
+                    desired=desired,
+                    vars_used={atom.get("var", "")},
+                ),
                 updates,
                 mode,
                 parent_context,
@@ -275,7 +310,11 @@ def classify_while(
             if u.get("type") == "mod_decrease" and op in (">", ">=", "!=", "<>"):
                 # Euclid: var <- expr MOD var → var disminuye, bucle acotado
                 other_var = u.get("other_var", "?")
-                initial_b = _find_initial_value(var_name, while_line, parent_context) if parent_context else None
+                initial_b = (
+                    _find_initial_value(var_name, while_line, parent_context)
+                    if parent_context
+                    else None
+                )
                 initial_b = initial_b if initial_b else var_name
                 # min(a,b) es cota superior conservadora para iteraciones de Euclides
                 iterations = f"Min({other_var}, {initial_b})"
@@ -283,12 +322,21 @@ def classify_while(
                     status="bounded",
                     iterations_expr=iterations,
                     reason_code="while_euclid_mod",
-                    evidence={"var": var_name, "other_var": other_var, "limit": limit, "op": op},
+                    evidence={
+                        "var": var_name,
+                        "other_var": other_var,
+                        "limit": limit,
+                        "op": op,
+                    },
                 )
             if u.get("type") == "num":
                 change_op = u.get("operator", "")
                 const = u.get("constant", "1")
-                initial = _find_initial_value(var_name, while_line, parent_context) if parent_context else None
+                initial = (
+                    _find_initial_value(var_name, while_line, parent_context)
+                    if parent_context
+                    else None
+                )
                 initial_expr = initial if initial else f"{var_name}_0"
 
                 if change_op == "+" and op in ("<", "<="):
@@ -300,7 +348,12 @@ def classify_while(
                         status="bounded",
                         iterations_expr=iterations,
                         reason_code="while_linear",
-                        evidence={"var": var_name, "limit": limit, "op": op, "change": f"+{const}"},
+                        evidence={
+                            "var": var_name,
+                            "limit": limit,
+                            "op": op,
+                            "change": f"+{const}",
+                        },
                     )
                 if change_op == "-" and op in (">", ">=", "!=", "<>"):
                     if const == "1":
@@ -311,7 +364,12 @@ def classify_while(
                         status="bounded",
                         iterations_expr=iterations,
                         reason_code="while_decrement",
-                        evidence={"var": var_name, "limit": limit, "op": op, "change": f"-{const}"},
+                        evidence={
+                            "var": var_name,
+                            "limit": limit,
+                            "op": op,
+                            "change": f"-{const}",
+                        },
                     )
                 if change_op in ("*", "/", "//", "div") and op in ("<", "<="):
                     iterations = f"\\log_{{{const}}}(({limit}) / ({initial_expr}))"
@@ -329,7 +387,11 @@ def classify_while(
                 # var > 0 (o var >= cte) con var <- var / c → iteraciones log_c(initial) o log(initial/limit) (genérico)
                 if change_op in ("/", "//", "div") and op in (">", ">="):
                     try:
-                        is_zero = limit in ("0", "0.0") or (isinstance(limit, str) and limit.isdigit() and int(limit) == 0)
+                        is_zero = limit in ("0", "0.0") or (
+                            isinstance(limit, str)
+                            and limit.isdigit()
+                            and int(limit) == 0
+                        )
                     except (ValueError, TypeError):
                         is_zero = False
                     if is_zero:
@@ -372,16 +434,33 @@ def classify_while(
                         )
                     )
                 else:
-                    components.append(GuardInfo(kind="rel", atoms=[atom], vars_used=guard.vars_used))
+                    components.append(
+                        GuardInfo(kind="rel", atoms=[atom], vars_used=guard.vars_used)
+                    )
         if getattr(guard, "or_bool_vars", None):
-             for bvar in guard.or_bool_vars:
-                 components.append(GuardInfo(kind="bool_var", bool_var=bvar, desired=True, vars_used=guard.vars_used))
+            for bvar in guard.or_bool_vars:
+                components.append(
+                    GuardInfo(
+                        kind="bool_var",
+                        bool_var=bvar,
+                        desired=True,
+                        vars_used=guard.vars_used,
+                    )
+                )
 
         if not components:
             return ClassifyResult(status="unknown", reason_code="while_or_empty")
 
         for comp in components:
-            res = classify_while(comp, updates, mode, parent_context, while_line, compound=True, compound_op="or")
+            res = classify_while(
+                comp,
+                updates,
+                mode,
+                parent_context,
+                while_line,
+                compound=True,
+                compound_op="or",
+            )
             sub_results.append(res)
 
         if all(r.status == "bounded" for r in sub_results):
@@ -399,7 +478,9 @@ def classify_while(
 
         if any(r.status == "unbounded" for r in sub_results):
             unb = next(r for r in sub_results if r.status == "unbounded")
-            return ClassifyResult(status="unbounded", reason_code=unb.reason_code, evidence=unb.evidence)
+            return ClassifyResult(
+                status="unbounded", reason_code=unb.reason_code, evidence=unb.evidence
+            )
 
         return ClassifyResult(status="unknown", reason_code="while_or_unknown")
 
@@ -419,18 +500,40 @@ def classify_while(
                         )
                     )
                 else:
-                    components.append(GuardInfo(kind="rel", atoms=[atom], vars_used=guard.vars_used))
+                    components.append(
+                        GuardInfo(kind="rel", atoms=[atom], vars_used=guard.vars_used)
+                    )
 
         # En AND, recopilar variables booleanas también (si existen)
         if hasattr(guard, "and_bool_vars"):
             for bvar in guard.and_bool_vars:
-                components.append(GuardInfo(kind="bool_var", bool_var=bvar, desired=True, vars_used=guard.vars_used, atoms=[]))
+                components.append(
+                    GuardInfo(
+                        kind="bool_var",
+                        bool_var=bvar,
+                        desired=True,
+                        vars_used=guard.vars_used,
+                        atoms=[],
+                    )
+                )
 
         sub_results: List[ClassifyResult] = []
         for comp in components:
-            sub_results.append(classify_while(comp, updates, mode, parent_context, while_line, compound=True, compound_op="and"))
+            sub_results.append(
+                classify_while(
+                    comp,
+                    updates,
+                    mode,
+                    parent_context,
+                    while_line,
+                    compound=True,
+                    compound_op="and",
+                )
+            )
 
-        bounded = [r for r in sub_results if r.status == "bounded" and r.iterations_expr]
+        bounded = [
+            r for r in sub_results if r.status == "bounded" and r.iterations_expr
+        ]
         if not bounded:
             return ClassifyResult(status="unknown", reason_code="while_and_unknown")
 

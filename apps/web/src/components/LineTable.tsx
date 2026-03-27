@@ -21,10 +21,7 @@ function getDisplayCountLatex(
   hasUnboundedInData: boolean,
 ): string {
   const count = row.expectedRuns ?? row.count ?? "";
-  if (
-    hasUnboundedInData &&
-    hasUnboundedIterativeSymbol(count)
-  ) {
+  if (hasUnboundedInData && hasUnboundedIterativeSymbol(count)) {
     return "\\infty";
   }
   return count;
@@ -46,7 +43,13 @@ interface LineTableProps {
  * @returns Componente React del badge
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
-function Badge({ kind, t }: { readonly kind: LineCost["kind"]; readonly t: (k: string) => string }) {
+function Badge({
+  kind,
+  t,
+}: {
+  readonly kind: LineCost["kind"];
+  readonly t: (k: string) => string;
+}) {
   const badgeStyles = {
     assign: "bg-blue-500/20 text-blue-300 border-blue-500/30",
     if: "bg-purple-500/20 text-purple-300 border-purple-500/30",
@@ -108,11 +111,16 @@ export default function LineTable({
   const hasUnboundedInData = rows.some((row) => row.unbounded === true);
 
   return (
-    <div className="overflow-auto min-w-0" style={{ WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
+    <div
+      className="overflow-auto min-w-0"
+      style={{ WebkitOverflowScrolling: "touch" } as React.CSSProperties}
+    >
       <table className="w-full text-sm min-w-[320px]">
         <thead className="sticky top-0 bg-white/5 backdrop-blur-sm">
           <tr>
-            <th className="text-center p-2 font-semibold text-slate-300 w-10">#</th>
+            <th className="text-center p-2 font-semibold text-slate-300 w-10">
+              #
+            </th>
             <th className="text-center p-2 font-semibold text-slate-300 w-24">
               {t("type")}
             </th>
@@ -163,9 +171,7 @@ export default function LineTable({
               </td>
               <td className="p-2 text-center whitespace-nowrap text-slate-200">
                 <Formula
-                  latex={
-                    row.ops != null ? String(row.ops) : "\\text{—}"
-                  }
+                  latex={row.ops != null ? String(row.ops) : "\\text{—}"}
                 />
               </td>
               <td className="p-2 text-center whitespace-nowrap text-slate-200">

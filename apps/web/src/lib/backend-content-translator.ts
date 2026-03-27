@@ -49,7 +49,10 @@ const BACKEND_CONTENT_TRANSLATIONS: [string, string][] = [
   // ═══════════════════════════════════════════════════════════════════════════
   // EXTRACCIÓN Y PARÁMETROS
   // ═══════════════════════════════════════════════════════════════════════════
-  ["\\text{Iniciando extracción de recurrencia}", "\\text{Starting recurrence extraction}"],
+  [
+    "\\text{Iniciando extracción de recurrencia}",
+    "\\text{Starting recurrence extraction}",
+  ],
   ["\\text{Encontradas }", "\\text{Found }"],
   ["\\text{ llamadas recursivas}", "\\text{ recursive calls}"],
   ["\\text{Método detectado: }", "\\text{Method detected: }"],
@@ -77,17 +80,26 @@ const BACKEND_CONTENT_TRANSLATIONS: [string, string][] = [
     "\\text{Aplicando Método de Iteración (Unrolling)}",
     "\\text{Applying Iteration Method (Unrolling)}",
   ],
-  ["\\text{Paso 1: Recurrencia identificada }", "\\text{Step 1: Recurrence identified }"],
+  [
+    "\\text{Paso 1: Recurrencia identificada }",
+    "\\text{Step 1: Recurrence identified }",
+  ],
   ["\\text{Paso 2: Primera expansión }", "\\text{Step 2: First expansion }"],
   ["\\text{Segunda expansión }", "\\text{Second expansion }"],
   ["\\text{Paso 3: Forma general }", "\\text{Step 3: General form }"],
   ["\\text{Paso 4: Caso base }", "\\text{Step 4: Base case }"],
   ["\\text{Paso 5: Sustitución }", "\\text{Step 5: Substitution }"],
   ["\\text{Paso 6: Evaluación }", "\\text{Step 6: Evaluation }"],
-  ["\\text{Paso 6: Resultado aproximado}", "\\text{Step 6: Approximate result}"],
+  [
+    "\\text{Paso 6: Resultado aproximado}",
+    "\\text{Step 6: Approximate result}",
+  ],
   ["\\text{Paso 6: Resultado }", "\\text{Step 6: Result }"],
   ["\\text{Paso 7: Resultado final }", "\\text{Step 7: Final result }"],
-  ["\\text{Paso 7: Resultado aproximado }", "\\text{Step 7: Approximate result }"],
+  [
+    "\\text{Paso 7: Resultado aproximado }",
+    "\\text{Step 7: Approximate result }",
+  ],
   ["\\text{Paso 7: Resultado }", "\\text{Step 7: Result }"],
   ["\\text{Paso 2: Expansión}", "\\text{Step 2: Expansion}"],
   ["\\text{Paso 3: Forma general}", "\\text{Step 3: General form}"],
@@ -131,7 +143,10 @@ const BACKEND_CONTENT_TRANSLATIONS: [string, string][] = [
     "\\text{ (cada nivel reduce en 1 o 2)}",
     "\\text{ (each level reduces by 1 or 2)}",
   ],
-  ["\\text{Paso 5: Cálculo del costo total}", "\\text{Step 5: Total cost calculation}"],
+  [
+    "\\text{Paso 5: Cálculo del costo total}",
+    "\\text{Step 5: Total cost calculation}",
+  ],
   [
     "\\text{(cota superior. La complejidad exacta es }",
     "\\text{(upper bound. The exact complexity is }",
@@ -151,10 +166,7 @@ const BACKEND_CONTENT_TRANSLATIONS: [string, string][] = [
     "\\text{Applying Recursion Tree Method}",
   ],
   ["\\text{Nivel dominante: }", "\\text{Dominating level: }"],
-  [
-    "\\text{ (cada nodo tiene costo }",
-    "\\text{ (each node has cost }",
-  ],
+  ["\\text{ (cada nodo tiene costo }", "\\text{ (each node has cost }"],
   ["\\text{Último nivel tiene costo }", "\\text{Last level has cost }"],
   ["\\text{Trabajo en hojas (}", "\\text{Work at leaves (}"],
   ["\\text{Trabajo en hojas }", "\\text{Work at leaves }"],
@@ -171,10 +183,7 @@ const BACKEND_CONTENT_TRANSLATIONS: [string, string][] = [
   // TEXTO PLANO (summation.evaluated, mensajes de análisis)
   // ═══════════════════════════════════════════════════════════════════════════
   ["Análisis complejo requerido", "Complex analysis required"],
-  [
-    "Análisis complejo (término dominante ",
-    "Complex analysis (dominant term ",
-  ],
+  ["Análisis complejo (término dominante ", "Complex analysis (dominant term "],
 
   // ═══════════════════════════════════════════════════════════════════════════
   // DP VALIDATION REASONS

@@ -29,7 +29,6 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "tree.asymptotic_conclusion.partial": "La conclusión asintótica se reporta como parcial por limitaciones previas en el cierre simbólico.",
         "tree.asymptotic_conclusion.unsupported": "No hay conclusión cerrada del método con la cobertura actual para este caso.",
         "tree.step_blocked.unsupported": "Este paso queda bloqueado porque la recurrencia no cumple la aplicabilidad formal actual del método.",
-
         "concept.tree.recurrence_detected": "Primero fijamos la ecuación exacta que vamos a analizar. Esto evita mezclar fórmulas de otros métodos y deja claro qué estructura matemática se está resolviendo.",
         "concept.tree.recursion_tree_applicability_check": "El árbol de recursión simbólico se usa sobre todo en Divide y Vencerás con reducción uniforme. Para familias de Resta y Vencerás o Resta y Serás Vencido, esta versión del método no es la más representativa y se reporta explícitamente.",
         "concept.tree.tree_parameters_extracted": "Los parámetros $a$, $b$ y $f(n)$ determinan la geometría del árbol: cuántos nodos nacen por nivel, cómo cambia el tamaño del subproblema y qué costo local aporta cada nodo.",
@@ -42,7 +41,6 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "concept.tree.dominant_term_identified": "El término dominante se identifica comparando cómo crece el costo entre niveles (raíz, niveles intermedios u hojas). Ese paso conecta la suma con la cota asintótica.",
         "concept.tree.asymptotic_conclusion": "La conclusión asintótica resume el crecimiento de largo plazo de $T(n)$ y debe reflejar el estado real de soporte: completo, parcial o no soportado.",
         "concept.tree.blocked": "Cuando el método no aplica formalmente, los pasos siguientes se marcan como bloqueados para mantener transparencia matemática.",
-
         "warning.tree.unsupported_form": "Cobertura actual: este walkthrough del árbol se soporta para la familia Divide y Vencerás, $T(n)=aT(n/b)+f(n)$ con reducción uniforme.",
         "warning.tree.invalid_parameters": "Parámetros inválidos para el modelo del árbol: se requiere $a\\ge 1$ y $b>1$.",
         "warning.tree.sum_partial": "No fue posible cerrar completamente la sumatoria con las reglas simbólicas actuales.",
@@ -67,7 +65,6 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "tree.asymptotic_conclusion.partial": "Asymptotic conclusion is partial due to previous symbolic closure limitations.",
         "tree.asymptotic_conclusion.unsupported": "No closed method conclusion is available under current coverage.",
         "tree.step_blocked.unsupported": "This step is blocked because recurrence does not meet formal current method applicability.",
-
         "concept.tree.recurrence_detected": "We first pin down the exact recurrence under analysis. This prevents mixing formulas from other methods and keeps the mathematical target explicit.",
         "concept.tree.recursion_tree_applicability_check": "This symbolic recursion-tree walkthrough is mainly for Divide y Vencerás with uniform reduction. For Resta y Vencerás or Resta y Serás Vencido, this version is less representative and is explicitly marked out of scope.",
         "concept.tree.tree_parameters_extracted": "Parameters $a$, $b$, and $f(n)$ define tree geometry: branching per level, subproblem shrink rate, and local work per node.",
@@ -80,7 +77,6 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "concept.tree.dominant_term_identified": "Dominant term is identified by comparing level growth (root, internal levels, or leaves), linking sum structure to asymptotic behavior.",
         "concept.tree.asymptotic_conclusion": "Asymptotic conclusion summarizes long-run growth of $T(n)$ and must reflect real support status: complete, partial, or unsupported.",
         "concept.tree.blocked": "When method assumptions fail, downstream steps are marked blocked to preserve mathematical transparency.",
-
         "warning.tree.unsupported_form": "Current coverage: this walkthrough is supported for Divide y Vencerás recurrences of the form $T(n)=aT(n/b)+f(n)$ with uniform reduction.",
         "warning.tree.invalid_parameters": "Invalid tree-model parameters: required $a\\ge 1$ and $b>1$.",
         "warning.tree.sum_partial": "Could not fully close the summation with current symbolic rules.",
@@ -174,7 +170,9 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
                 index=2,
                 step_id="rt_s2",
                 kind="recursion_tree_applicability_check",
-                title=_title(ctx.locale, "Aplicabilidad del método", "Method applicability"),
+                title=_title(
+                    ctx.locale, "Aplicabilidad del método", "Method applicability"
+                ),
                 status="unsupported",
                 confidence="low",
                 summary_key="tree.applicability.unsupported",
@@ -187,15 +185,29 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
         )
 
         blocked_titles = {
-            "tree_parameters_extracted": _title(ctx.locale, "Parámetros del árbol", "Tree parameters"),
-            "level_model_built": _title(ctx.locale, "Modelo del nivel i", "Level-i model"),
+            "tree_parameters_extracted": _title(
+                ctx.locale, "Parámetros del árbol", "Tree parameters"
+            ),
+            "level_model_built": _title(
+                ctx.locale, "Modelo del nivel i", "Level-i model"
+            ),
             "level_cost_computed": _title(ctx.locale, "Costo por nivel", "Level cost"),
-            "tree_height_determined": _title(ctx.locale, "Altura del árbol", "Tree height"),
+            "tree_height_determined": _title(
+                ctx.locale, "Altura del árbol", "Tree height"
+            ),
             "leaf_cost_computed": _title(ctx.locale, "Costo de hojas", "Leaf cost"),
-            "total_tree_sum_built": _title(ctx.locale, "Suma total del árbol", "Total tree sum"),
-            "total_tree_sum_simplified": _title(ctx.locale, "Simplificación de suma", "Sum simplification"),
-            "dominant_term_identified": _title(ctx.locale, "Término dominante", "Dominant term"),
-            "asymptotic_conclusion": _title(ctx.locale, "Conclusión asintótica", "Asymptotic conclusion"),
+            "total_tree_sum_built": _title(
+                ctx.locale, "Suma total del árbol", "Total tree sum"
+            ),
+            "total_tree_sum_simplified": _title(
+                ctx.locale, "Simplificación de suma", "Sum simplification"
+            ),
+            "dominant_term_identified": _title(
+                ctx.locale, "Término dominante", "Dominant term"
+            ),
+            "asymptotic_conclusion": _title(
+                ctx.locale, "Conclusión asintótica", "Asymptotic conclusion"
+            ),
         }
 
         for index, step_def in enumerate(_STEP_DEFS[2:], start=3):
@@ -232,7 +244,9 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
             index=2,
             step_id="rt_s2",
             kind="recursion_tree_applicability_check",
-            title=_title(ctx.locale, "Aplicabilidad del método", "Method applicability"),
+            title=_title(
+                ctx.locale, "Aplicabilidad del método", "Method applicability"
+            ),
             status="complete",
             confidence="high",
             summary_key="tree.applicability.supported",
@@ -277,7 +291,9 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
             confidence="medium" if step4_status == "partial" else "high",
             summary_key="tree.level_model.built",
             concept_key="concept.tree.level_model_built",
-            warning_key="warning.tree.tree_inconsistent" if step4_status == "partial" else None,
+            warning_key=(
+                "warning.tree.tree_inconsistent" if step4_status == "partial" else None
+            ),
             primary_latex=ctx.level_model_latex,
             payload={"derivedExpression": ctx.level_model_latex},
             codes=["RT_TREE_INCONSISTENT"] if step4_status == "partial" else [],
@@ -331,13 +347,17 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
             summary_key="tree.leaf_cost.computed",
             concept_key="concept.tree.leaf_cost_computed",
             primary_latex=ctx.leaf_cost_latex,
-            items=[
-                {
-                    "id": "rt_s7_leaf_count",
-                    "kind": "result",
-                    "latex": ctx.leaf_count_latex,
-                }
-            ] if ctx.leaf_count_latex else [],
+            items=(
+                [
+                    {
+                        "id": "rt_s7_leaf_count",
+                        "kind": "result",
+                        "latex": ctx.leaf_count_latex,
+                    }
+                ]
+                if ctx.leaf_count_latex
+                else []
+            ),
             payload={
                 "leafCount": ctx.leaf_count_latex,
                 "leafCost": ctx.leaf_cost_latex,
@@ -374,10 +394,14 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
             status=step9_status,
             confidence="medium" if step9_status == "partial" else "high",
             summary_key=(
-                "tree.total_sum.simplified.partial" if step9_status == "partial" else "tree.total_sum.simplified.complete"
+                "tree.total_sum.simplified.partial"
+                if step9_status == "partial"
+                else "tree.total_sum.simplified.complete"
             ),
             concept_key="concept.tree.total_tree_sum_simplified",
-            warning_key="warning.tree.sum_partial" if step9_status == "partial" else None,
+            warning_key=(
+                "warning.tree.sum_partial" if step9_status == "partial" else None
+            ),
             primary_latex=ctx.simplified_expression_latex,
             payload={"simplifiedExpression": ctx.simplified_expression_latex},
             codes=["RT_SUMMATION_PARTIAL"] if step9_status == "partial" else [],
@@ -396,10 +420,14 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
             status=step10_status,
             confidence="medium" if step10_status == "partial" else "high",
             summary_key=(
-                "tree.dominant_term.identified.partial" if step10_status == "partial" else "tree.dominant_term.identified.complete"
+                "tree.dominant_term.identified.partial"
+                if step10_status == "partial"
+                else "tree.dominant_term.identified.complete"
             ),
             concept_key="concept.tree.dominant_term_identified",
-            warning_key="warning.tree.tree_inconsistent" if step10_status == "partial" else None,
+            warning_key=(
+                "warning.tree.tree_inconsistent" if step10_status == "partial" else None
+            ),
             primary_latex=ctx.dominant_reason_latex,
             payload={
                 "dominantLevel": ctx.dominant_level,
@@ -409,13 +437,15 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
         )
     )
 
-    step11_status: StepStatus = (
-        "partial" if ctx.asymptotic_partial else "complete"
-    )
+    step11_status: StepStatus = "partial" if ctx.asymptotic_partial else "complete"
     step11_summary = (
-        "tree.asymptotic_conclusion.partial" if step11_status == "partial" else "tree.asymptotic_conclusion.complete"
+        "tree.asymptotic_conclusion.partial"
+        if step11_status == "partial"
+        else "tree.asymptotic_conclusion.complete"
     )
-    step11_warning = "warning.tree.asymptotic_partial" if step11_status == "partial" else None
+    step11_warning = (
+        "warning.tree.asymptotic_partial" if step11_status == "partial" else None
+    )
 
     steps.append(
         make_recursive_step(

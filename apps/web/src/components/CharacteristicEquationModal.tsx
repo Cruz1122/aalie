@@ -7,7 +7,10 @@ import AAAnalysisStepsModal from "./AAAnalysisStepsModal";
 interface CharacteristicEquationModalProps {
   open: boolean;
   onClose: () => void;
-  characteristicEquation: AnalyzeOpenResponse["totals"]["characteristic_equation"] | null | undefined;
+  characteristicEquation:
+    | AnalyzeOpenResponse["totals"]["characteristic_equation"]
+    | null
+    | undefined;
   theta: string | null | undefined;
 }
 

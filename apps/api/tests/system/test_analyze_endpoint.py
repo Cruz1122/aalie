@@ -15,7 +15,7 @@ client = TestClient(app)
 
 class TestAnalyzeEndpoint:
     """Tests para el endpoint /analyze/open."""
-    
+
     def test_simple_for_loop(self):
         """Test: Bucle FOR simple"""
         source = """
@@ -25,25 +25,24 @@ test(n) BEGIN
     END
 END
 """
-        payload = {
-            "source": source,
-            "mode": "worst"
-        }
-        
+        payload = {"source": source, "mode": "worst"}
+
         response = client.post("/analyze/open", json=payload)
         assert response.status_code == 200
-        
+
         result = response.json()
         assert result.get("ok"), "Análisis debe ser exitoso"
         assert "byLine" in result, "Debe tener byLine"
         assert len(result.get("byLine", [])) > 0, "Debe tener filas"
-        
+
         # Verificar campos básicos
         for row in result.get("byLine", []):
             assert "count_raw" in row, "Debe tener count_raw"
             assert "count" in row, "Debe tener count"
-            assert "unknown" not in row.get("count", "").lower(), f"No debe tener 'unknown': {row.get('count')}"
-    
+            assert (
+                "unknown" not in row.get("count", "").lower()
+            ), f"No debe tener 'unknown': {row.get('count')}"
+
     def test_insertion_sort(self):
         """Test: Insertion Sort completo con WHILE anidado"""
         source = """
@@ -59,19 +58,16 @@ insertionSort(arr, n) BEGIN
     END
 END
 """
-        payload = {
-            "source": source,
-            "mode": "worst"
-        }
-        
+        payload = {"source": source, "mode": "worst"}
+
         response = client.post("/analyze/open", json=payload)
         assert response.status_code == 200
-        
+
         result = response.json()
         assert result.get("ok"), "Análisis debe ser exitoso"
         assert "byLine" in result, "Debe tener byLine"
         assert len(result.get("byLine", [])) > 0, "Debe tener filas"
-        
+
         # Verificar que tiene T_open
         assert "totals" in result, "Debe tener totals"
         assert "T_open" in result["totals"], "Debe tener T_open"
@@ -79,11 +75,13 @@ END
         assert isinstance(t_open, str), "T_open debe ser string"
         assert len(t_open) > 0, "T_open no debe estar vacío"
         # Verificar complejidad esperada Θ(n²)
-        notation = result["totals"].get("big_theta", "") or result["totals"].get("big_o", "")
-        assert notation_has_complexity(notation, "quadratic"), (
-            f"Insertion sort debe ser Θ(n²): {notation}"
+        notation = result["totals"].get("big_theta", "") or result["totals"].get(
+            "big_o", ""
         )
-    
+        assert notation_has_complexity(
+            notation, "quadratic"
+        ), f"Insertion sort debe ser Θ(n²): {notation}"
+
     def test_bubble_sort(self):
         """Test: Bubble Sort con bucles anidados"""
         source = """
@@ -99,27 +97,28 @@ burbuja(A[n], n) BEGIN
     END
 END
 """
-        payload = {
-            "source": source,
-            "mode": "worst"
-        }
-        
+        payload = {"source": source, "mode": "worst"}
+
         response = client.post("/analyze/open", json=payload)
         assert response.status_code == 200
-        
+
         result = response.json()
         assert result.get("ok"), "Análisis debe ser exitoso"
         assert "byLine" in result, "Debe tener byLine"
-        
+
         # Verificar T_open y complejidad Θ(n²)
         assert "totals" in result, "Debe tener totals"
         t_open = result["totals"].get("T_open", "")
-        assert isinstance(t_open, str) and len(t_open) > 0, "T_open debe ser string no vacío"
-        notation = result["totals"].get("big_theta", "") or result["totals"].get("big_o", "")
-        assert notation_has_complexity(notation, "quadratic"), (
-            f"Bubble sort debe ser Θ(n²): {notation}"
+        assert (
+            isinstance(t_open, str) and len(t_open) > 0
+        ), "T_open debe ser string no vacío"
+        notation = result["totals"].get("big_theta", "") or result["totals"].get(
+            "big_o", ""
         )
-    
+        assert notation_has_complexity(
+            notation, "quadratic"
+        ), f"Bubble sort debe ser Θ(n²): {notation}"
+
     def test_triangular_sum(self):
         """Test: Sumatoria triangular (FOR anidado)"""
         source = """
@@ -131,19 +130,16 @@ triangular(n) BEGIN
     END
 END
 """
-        payload = {
-            "source": source,
-            "mode": "worst"
-        }
-        
+        payload = {"source": source, "mode": "worst"}
+
         response = client.post("/analyze/open", json=payload)
         assert response.status_code == 200
-        
+
         result = response.json()
         assert result.get("ok"), "Análisis debe ser exitoso"
         assert "byLine" in result, "Debe tener byLine"
         assert len(result.get("byLine", [])) > 0, "Debe tener filas"
-        
+
         # Verificar que todas las filas tienen los campos necesarios
         for row in result.get("byLine", []):
             assert "line" in row, "Debe tener line"
@@ -153,11 +149,13 @@ END
             assert "count" in row, "Debe tener count"
         # Verificar complejidad Θ(n²) para sumatoria triangular
         if "totals" in result:
-            notation = result["totals"].get("big_theta", "") or result["totals"].get("big_o", "")
-            assert notation_has_complexity(notation, "quadratic"), (
-                f"Triangular debe ser Θ(n²): {notation}"
+            notation = result["totals"].get("big_theta", "") or result["totals"].get(
+                "big_o", ""
             )
-    
+            assert notation_has_complexity(
+                notation, "quadratic"
+            ), f"Triangular debe ser Θ(n²): {notation}"
+
     def test_nested_rectangular_loops(self):
         """Test: Bucles FOR anidados rectangulares"""
         source = """
@@ -169,18 +167,15 @@ rectangular(m, n) BEGIN
     END
 END
 """
-        payload = {
-            "source": source,
-            "mode": "worst"
-        }
-        
+        payload = {"source": source, "mode": "worst"}
+
         response = client.post("/analyze/open", json=payload)
         assert response.status_code == 200
-        
+
         result = response.json()
         assert result.get("ok"), "Análisis debe ser exitoso"
         assert "byLine" in result, "Debe tener byLine"
-    
+
     def test_selection_sort(self):
         """Test: Selection Sort"""
         source = """
@@ -200,18 +195,15 @@ selectionSort(A[n], n) BEGIN
     END
 END
 """
-        payload = {
-            "source": source,
-            "mode": "worst"
-        }
-        
+        payload = {"source": source, "mode": "worst"}
+
         response = client.post("/analyze/open", json=payload)
         assert response.status_code == 200
-        
+
         result = response.json()
         assert result.get("ok"), "Análisis debe ser exitoso"
         assert "byLine" in result, "Debe tener byLine"
-    
+
     def test_matrix_multiplication(self):
         """Test: Multiplicación de matrices con triple bucle anidado"""
         source = """
@@ -227,18 +219,15 @@ matrixMult(m, n, p) BEGIN
     END
 END
 """
-        payload = {
-            "source": source,
-            "mode": "worst"
-        }
-        
+        payload = {"source": source, "mode": "worst"}
+
         response = client.post("/analyze/open", json=payload)
         assert response.status_code == 200
-        
+
         result = response.json()
         assert result.get("ok"), "Análisis debe ser exitoso"
         assert "byLine" in result, "Debe tener byLine"
-    
+
     def test_while_loop(self):
         """Test: WHILE loop con multiplicación (complejidad logarítmica)"""
         source = """
@@ -250,24 +239,23 @@ whileLoop(n) BEGIN
     END
 END
 """
-        payload = {
-            "source": source,
-            "mode": "worst"
-        }
-        
+        payload = {"source": source, "mode": "worst"}
+
         response = client.post("/analyze/open", json=payload)
         assert response.status_code == 200
-        
+
         result = response.json()
         assert result.get("ok"), "Análisis debe ser exitoso"
         assert "byLine" in result, "Debe tener byLine"
         # Verificar complejidad Θ(log n) para WHILE i*2
         if "totals" in result:
-            notation = result["totals"].get("big_theta", "") or result["totals"].get("big_o", "")
-            assert notation_has_complexity(notation, "log"), (
-                f"WHILE i*2 debe ser Θ(log n): {notation}"
+            notation = result["totals"].get("big_theta", "") or result["totals"].get(
+                "big_o", ""
             )
-    
+            assert notation_has_complexity(
+                notation, "log"
+            ), f"WHILE i*2 debe ser Θ(log n): {notation}"
+
     def test_mixed_for_and_while(self):
         """Test: FOR con WHILE anidado"""
         source = """
@@ -281,33 +269,26 @@ mixedLoops(n) BEGIN
     END
 END
 """
-        payload = {
-            "source": source,
-            "mode": "worst"
-        }
-        
+        payload = {"source": source, "mode": "worst"}
+
         response = client.post("/analyze/open", json=payload)
         assert response.status_code == 200
-        
+
         result = response.json()
         assert result.get("ok"), "Análisis debe ser exitoso"
         assert "byLine" in result, "Debe tener byLine"
-    
+
     def test_invalid_source(self):
         """Test: Código fuente inválido debe retornar error"""
         source = "invalid code {"
-        payload = {
-            "source": source,
-            "mode": "worst"
-        }
-        
+        payload = {"source": source, "mode": "worst"}
+
         response = client.post("/analyze/open", json=payload)
         # Puede retornar 200 con ok=False o 422/400
         assert response.status_code in [200, 400, 422]
-        
+
         if response.status_code == 200:
             result = response.json()
             # Si el parsing falla, ok debería ser False
             # O puede que el endpoint intente analizar de todas formas
             assert "ok" in result or "errors" in result
-

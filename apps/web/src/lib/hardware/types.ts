@@ -15,18 +15,18 @@ export interface HardwareFeatures {
   hasRecursion: boolean;
   recursiveFanOut: number;
   hasDivideAndConquerShape: boolean;
-  hasEarlyReturn: boolean;           // Ejemplo: return en medio del cuerpo
-  hasBreakLikeExit: boolean;         // Break literal, assign de control flags obvios
-  branchDensityInsideLoops: number;  // (ifs en ciclos) / totalLoops
-  dataDependentConditions: number;   // While u conds que dependen de vars externas locales mutadas
-  scalarReductions: number;          // x = x + ...
-  mapLikeWrites: number;             // A[i] = ...
-  stencilLikeAccesses: number;       // A[i] = A[i-1] + A[i+1]
-  indirectIndexedAccesses: number;   // A[B[i]]
-  pointerOrObjectAccesses: number;   // p.next, tree.left
+  hasEarlyReturn: boolean; // Ejemplo: return en medio del cuerpo
+  hasBreakLikeExit: boolean; // Break literal, assign de control flags obvios
+  branchDensityInsideLoops: number; // (ifs en ciclos) / totalLoops
+  dataDependentConditions: number; // While u conds que dependen de vars externas locales mutadas
+  scalarReductions: number; // x = x + ...
+  mapLikeWrites: number; // A[i] = ...
+  stencilLikeAccesses: number; // A[i] = A[i-1] + A[i+1]
+  indirectIndexedAccesses: number; // A[B[i]]
+  pointerOrObjectAccesses: number; // p.next, tree.left
   graphLikeTraversalSignals: number; // BFS, DFS like queues/stacks
-  loopCarriedDependencies: number;   // x = f(x) inter iteraciones o A[i] = f(A[i-1])
-  sequentialStateUpdates: number;    // Acumuladores cruzados complejos
+  loopCarriedDependencies: number; // x = f(x) inter iteraciones o A[i] = f(A[i-1])
+  sequentialStateUpdates: number; // Acumuladores cruzados complejos
   estimatedParallelWorkUnits: "low" | "medium" | "high" | "unknown";
   memoryRegularity: "regular" | "mixed" | "irregular" | "unknown";
   controlRegularity: "regular" | "mixed" | "irregular" | "unknown";
@@ -44,7 +44,7 @@ export interface LoopDependencySummary {
   isMapLike: boolean;
   hasLoopCarriedDependency: boolean;
   hasDataDependentControl: boolean;
-  classification: 
+  classification:
     | "embarrassingly_parallel"
     | "parallel_with_reduction"
     | "weakly_parallel"
@@ -77,9 +77,9 @@ export interface PatternCandidate {
  * Capa 4: Resultado del scoring base
  */
 export interface HardwareScore {
-  gpu: number;     // 0-100 (referencial)
-  cpu: number;     // 0-100
-  hybrid: number;  // 0-100
+  gpu: number; // 0-100 (referencial)
+  cpu: number; // 0-100
+  hybrid: number; // 0-100
   confidence: number; // 0.0 - 1.0
 }
 

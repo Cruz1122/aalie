@@ -130,7 +130,7 @@ function renderIterativeCaseData(
 ) {
   // Resolver data: si es "same_as_worst", usar worstData
   const resolvedData = data === "same_as_worst" ? worstData : data;
-  
+
   if (!resolvedData) {
     return (
       <div className="text-center text-slate-400 py-4">
@@ -181,7 +181,9 @@ function renderIterativeCaseData(
       <div className="flex-1 flex flex-col space-y-2 min-h-0">
         {resolvedData.T_polynomial && (
           <div className="glass-card p-2 rounded-lg flex-shrink-0">
-            <div className="text-xs text-slate-400 mb-1">{t.view("tPolynomial")}</div>
+            <div className="text-xs text-slate-400 mb-1">
+              {t.view("tPolynomial")}
+            </div>
             <div className="text-white overflow-x-auto scrollbar-custom">
               <Formula latex={resolvedData.T_polynomial} display />
             </div>
@@ -200,7 +202,9 @@ function renderIterativeCaseData(
         <div className="grid grid-cols-3 gap-2 flex-shrink-0">
           {resolvedData.big_o && (
             <div className="glass-card p-2 rounded-lg text-center">
-              <div className="text-[10px] text-slate-400 mb-1">{t.view("bigO")}</div>
+              <div className="text-[10px] text-slate-400 mb-1">
+                {t.view("bigO")}
+              </div>
               <div className="text-white font-semibold text-xs overflow-x-auto scrollbar-custom">
                 <Formula latex={resolvedData.big_o} />
               </div>
@@ -208,7 +212,9 @@ function renderIterativeCaseData(
           )}
           {resolvedData.big_omega && (
             <div className="glass-card p-2 rounded-lg text-center">
-              <div className="text-[10px] text-slate-400 mb-1">{t.view("bigOmega")}</div>
+              <div className="text-[10px] text-slate-400 mb-1">
+                {t.view("bigOmega")}
+              </div>
               <div className="text-white font-semibold text-xs overflow-x-auto scrollbar-custom">
                 <Formula latex={resolvedData.big_omega} />
               </div>
@@ -216,7 +222,9 @@ function renderIterativeCaseData(
           )}
           {resolvedData.big_theta && (
             <div className="glass-card p-2 rounded-lg text-center">
-              <div className="text-[10px] text-slate-400 mb-1">{t.view("bigTheta")}</div>
+              <div className="text-[10px] text-slate-400 mb-1">
+                {t.view("bigTheta")}
+              </div>
               <div className="text-white font-semibold text-xs overflow-x-auto scrollbar-custom">
                 <Formula latex={resolvedData.big_theta} />
               </div>
@@ -340,7 +348,7 @@ function renderRecursiveData(
   // Resolver "same_as_worst" a worstData
   const resolvedBest = bestData === "same_as_worst" ? worstData : bestData;
   const resolvedAvg = avgData === "same_as_worst" ? worstData : avgData;
-  
+
   // Usar worst como fallback si no hay datos específicos
   const data = worstData || resolvedBest || resolvedAvg || null;
   const cardColor = isOwn
@@ -389,7 +397,9 @@ function renderRecursiveData(
       <div className="space-y-4 flex-1 flex flex-col">
         {data.recurrence && (
           <div className="glass-card p-3 rounded-lg flex-shrink-0">
-            <div className="text-sm text-slate-300 mb-1">{t.view("recurrenceLabel")}</div>
+            <div className="text-sm text-slate-300 mb-1">
+              {t.view("recurrenceLabel")}
+            </div>
             <div className="text-white overflow-x-auto scrollbar-custom">
               <Formula latex={data.recurrence.form} display />
             </div>
@@ -412,7 +422,9 @@ function renderRecursiveData(
 
         {data.method && (
           <div className="glass-card p-3 rounded-lg flex-shrink-0">
-            <div className="text-sm text-slate-300 mb-1">{t.view("methodUsed")}</div>
+            <div className="text-sm text-slate-300 mb-1">
+              {t.view("methodUsed")}
+            </div>
             <div className="text-white font-semibold capitalize">
               {data.method.replace("_", " ")}
             </div>
@@ -570,9 +582,11 @@ function renderRecursiveData(
               const worstTheta =
                 worstData?.characteristic_equation?.theta || worstData?.T_open;
               const bestTheta =
-                resolvedBest?.characteristic_equation?.theta || resolvedBest?.T_open;
+                resolvedBest?.characteristic_equation?.theta ||
+                resolvedBest?.T_open;
               const avgTheta =
-                resolvedAvg?.characteristic_equation?.theta || resolvedAvg?.T_open;
+                resolvedAvg?.characteristic_equation?.theta ||
+                resolvedAvg?.T_open;
 
               // Verificar si hay variabilidad (diferentes valores de theta)
               // También considerar cuando best case es O(1) y los otros son diferentes
@@ -637,7 +651,8 @@ function renderRecursiveData(
               } else if (data.characteristic_equation.theta) {
                 // Sin variabilidad completa, pero verificar si best case es diferente
                 const bestTheta =
-                  resolvedBest?.characteristic_equation?.theta || resolvedBest?.T_open;
+                  resolvedBest?.characteristic_equation?.theta ||
+                  resolvedBest?.T_open;
                 const worstTheta =
                   worstData?.characteristic_equation?.theta ||
                   worstData?.T_open;
@@ -782,46 +797,53 @@ function renderRecursiveData(
             )}
 
             {/* Comparación f(n) vs g(n) */}
-            {data.master.comparison && data.master.nlogba && data.recurrence && (
-              <div className="glass-card p-3 rounded-lg border border-blue-500/30 bg-blue-500/10 flex-shrink-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="material-symbols-outlined text-sm text-blue-400">
-                    compare_arrows
-                  </span>
-                  <div className="text-sm font-semibold text-blue-300">
-                    {t.view("comparison")}
+            {data.master.comparison &&
+              data.master.nlogba &&
+              data.recurrence && (
+                <div className="glass-card p-3 rounded-lg border border-blue-500/30 bg-blue-500/10 flex-shrink-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="material-symbols-outlined text-sm text-blue-400">
+                      compare_arrows
+                    </span>
+                    <div className="text-sm font-semibold text-blue-300">
+                      {t.view("comparison")}
+                    </div>
                   </div>
-                </div>
-                <div className="bg-slate-900/50 p-3 rounded border border-blue-500/20 overflow-x-auto scrollbar-custom">
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-center">
-                      <div className="text-xs text-slate-400 mb-1">f(n)</div>
-                      <div className="scale-90">
-                        <Formula latex={data.recurrence.f || ""} display />
+                  <div className="bg-slate-900/50 p-3 rounded border border-blue-500/20 overflow-x-auto scrollbar-custom">
+                    <div className="flex flex-col gap-2 items-center">
+                      <div className="text-center">
+                        <div className="text-xs text-slate-400 mb-1">f(n)</div>
+                        <div className="scale-90">
+                          <Formula latex={data.recurrence.f || ""} display />
+                        </div>
+                      </div>
+                      <div className="text-blue-400 text-lg font-bold">
+                        {data.master.comparison === "smaller" && " < "}
+                        {data.master.comparison === "equal" && " = "}
+                        {data.master.comparison === "larger" && " > "}
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-slate-400 mb-1">
+                          g(n) = n
+                          <sup>
+                            log<sub>b</sub> a
+                          </sup>
+                        </div>
+                        <div className="scale-90">
+                          <Formula latex={data.master.nlogba} display />
+                        </div>
                       </div>
                     </div>
-                    <div className="text-blue-400 text-lg font-bold">
-                      {data.master.comparison === "smaller" && " < "}
-                      {data.master.comparison === "equal" && " = "}
-                      {data.master.comparison === "larger" && " > "}
-                    </div>
-                    <div className="text-center">
-                      <div className="text-xs text-slate-400 mb-1">g(n) = n<sup>log<sub>b</sub> a</sup></div>
-                      <div className="scale-90">
-                        <Formula latex={data.master.nlogba} display />
-                      </div>
-                    </div>
                   </div>
+                  {data.master.case && (
+                    <div className="mt-2 text-xs text-blue-300 text-center">
+                      {data.master.case === 1 && t.view("case1Desc")}
+                      {data.master.case === 2 && t.view("case2Desc")}
+                      {data.master.case === 3 && t.view("case3Desc")}
+                    </div>
+                  )}
                 </div>
-                {data.master.case && (
-                  <div className="mt-2 text-xs text-blue-300 text-center">
-                    {data.master.case === 1 && t.view("case1Desc")}
-                    {data.master.case === 2 && t.view("case2Desc")}
-                    {data.master.case === 3 && t.view("case3Desc")}
-                  </div>
-                )}
-              </div>
-            )}
+              )}
 
             {/* Condición de regularidad (solo para Caso 3) */}
             {data.master.case === 3 && data.master.regularity && (
@@ -845,8 +867,8 @@ function renderRecursiveData(
                     </span>
                   )}
                   <div className="text-xs text-yellow-200 flex-1">
-                    {data.master.regularity.note || 
-                      (data.master.regularity.checked 
+                    {data.master.regularity.note ||
+                      (data.master.regularity.checked
                         ? t.view("regularityVerified")
                         : t.view("regularityAssumed"))}
                   </div>
@@ -857,8 +879,7 @@ function renderRecursiveData(
             {/* Theta Final - Mostrar los 3 casos si hay variabilidad */}
             {(() => {
               // Obtener theta de cada caso
-              const worstTheta =
-                worstData?.master?.theta || worstData?.T_open;
+              const worstTheta = worstData?.master?.theta || worstData?.T_open;
               const bestTheta =
                 resolvedBest?.master?.theta || resolvedBest?.T_open;
               const avgTheta =
@@ -1061,8 +1082,10 @@ function renderRecursiveData(
             {(() => {
               const worstTheta =
                 worstData?.iteration?.theta || worstData?.T_open;
-              const bestTheta = resolvedBest?.iteration?.theta || resolvedBest?.T_open;
-              const avgTheta = resolvedAvg?.iteration?.theta || resolvedAvg?.T_open;
+              const bestTheta =
+                resolvedBest?.iteration?.theta || resolvedBest?.T_open;
+              const avgTheta =
+                resolvedAvg?.iteration?.theta || resolvedAvg?.T_open;
 
               // Verificar si hay variabilidad (diferentes valores de theta)
               const hasVariability =
@@ -1221,7 +1244,10 @@ function renderRecursiveData(
                 </div>
                 <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
                   <div className="scale-90">
-                    <Formula latex={`h = ${data.recursion_tree.height}`} display />
+                    <Formula
+                      latex={`h = ${data.recursion_tree.height}`}
+                      display
+                    />
                   </div>
                 </div>
               </div>
@@ -1240,7 +1266,9 @@ function renderRecursiveData(
                 </div>
                 {data.recursion_tree.summation.expression && (
                   <div className="mb-2">
-                    <div className="text-xs text-slate-400 mb-1">{t.view("expression")}</div>
+                    <div className="text-xs text-slate-400 mb-1">
+                      {t.view("expression")}
+                    </div>
                     <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
                       <div className="scale-90">
                         <Formula
@@ -1256,7 +1284,9 @@ function renderRecursiveData(
                 )}
                 {data.recursion_tree.summation.evaluated && (
                   <div>
-                    <div className="text-xs text-slate-400 mb-1">{t.view("evaluated")}</div>
+                    <div className="text-xs text-slate-400 mb-1">
+                      {t.view("evaluated")}
+                    </div>
                     <div className="bg-slate-900/50 p-3 rounded border border-white/10 overflow-x-auto scrollbar-custom flex justify-center">
                       <div className="scale-90">
                         <Formula
@@ -1286,16 +1316,23 @@ function renderRecursiveData(
                 </div>
                 <div className="bg-slate-900/50 p-3 rounded border border-blue-500/20 overflow-x-auto scrollbar-custom">
                   <div className="text-xs text-blue-200">
-                    {data.recursion_tree.dominating_level.level === "leaves" && (
-                      <span className="font-semibold">{t.view("leavesLevel")}</span>
+                    {data.recursion_tree.dominating_level.level ===
+                      "leaves" && (
+                      <span className="font-semibold">
+                        {t.view("leavesLevel")}
+                      </span>
                     )}
                     {data.recursion_tree.dominating_level.level === "root" && (
-                      <span className="font-semibold">{t.view("rootLevel")}</span>
+                      <span className="font-semibold">
+                        {t.view("rootLevel")}
+                      </span>
                     )}
                     {data.recursion_tree.dominating_level.level !== "leaves" &&
                       data.recursion_tree.dominating_level.level !== "root" && (
                         <span className="font-semibold">
-                          {t.view("levelN", { level: data.recursion_tree.dominating_level.level })}
+                          {t.view("levelN", {
+                            level: data.recursion_tree.dominating_level.level,
+                          })}
                         </span>
                       )}
                   </div>
@@ -1465,71 +1502,71 @@ export default function ComparisonModal({
       showHeader={false}
       contentClassName="p-0"
     >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-            <span className="material-symbols-outlined text-purple-400 text-xl">
-              compare_arrows
-            </span>
-            {tView("comparisonWithLlm")}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
-            title={tCommon("close")}
-            aria-label={tCommon("close")}
-          >
-            ✕
-          </button>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+          <span className="material-symbols-outlined text-purple-400 text-xl">
+            compare_arrows
+          </span>
+          {tView("comparisonWithLlm")}
+        </h2>
+        <button
+          onClick={onClose}
+          className="text-slate-300 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
+          title={tCommon("close")}
+          aria-label={tCommon("close")}
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Contenido: dos columnas */}
+      <div className="flex-1 grid grid-cols-2 gap-6 overflow-y-auto pr-2 scrollbar-custom items-stretch pt-2">
+        {/* Columna izquierda: Análisis propio */}
+        <div className="flex flex-col">
+          {isRecursive
+            ? renderRecursiveData(
+                ownData.worst,
+                ownData.best,
+                ownData.avg,
+                tView("ownAnalysis"),
+                true,
+                t,
+                locale,
+              )
+            : renderIterativeData(ownData, llmData, true, t)}
         </div>
 
-        {/* Contenido: dos columnas */}
-        <div className="flex-1 grid grid-cols-2 gap-6 overflow-y-auto pr-2 scrollbar-custom items-stretch pt-2">
-          {/* Columna izquierda: Análisis propio */}
-          <div className="flex flex-col">
-            {isRecursive
-              ? renderRecursiveData(
-                  ownData.worst,
-                  ownData.best,
-                  ownData.avg,
-                  tView("ownAnalysis"),
-                  true,
-                  t,
-                  locale,
-                )
-              : renderIterativeData(ownData, llmData, true, t)}
-          </div>
-
-          {/* Columna derecha: Análisis LLM */}
-          <div className="flex flex-col">
-            {isRecursive
-              ? renderRecursiveData(
-                  llmData.worst,
-                  llmData.best,
-                  llmData.avg,
-                  tView("llmAnalysis"),
-                  false,
-                  t,
-                  locale,
-                )
-              : renderIterativeData(ownData, llmData, false, t)}
-          </div>
+        {/* Columna derecha: Análisis LLM */}
+        <div className="flex flex-col">
+          {isRecursive
+            ? renderRecursiveData(
+                llmData.worst,
+                llmData.best,
+                llmData.avg,
+                tView("llmAnalysis"),
+                false,
+                t,
+                locale,
+              )
+            : renderIterativeData(ownData, llmData, false, t)}
         </div>
+      </div>
 
-        {/* Nota del LLM */}
-        <div className={`mt-4 p-3 rounded-lg border ${bgColor} ${borderColor}`}>
-          <div className="flex items-center gap-2">
-            <span className={`material-symbols-outlined text-lg ${color}`}>
-              {icon}
-            </span>
-            <div className="flex-1">
-              <div className={`text-xs font-semibold mb-0.5 ${color}`}>
-                {tView("llmObservation")}
-              </div>
-              <div className={`text-xs ${color}`}>{text}</div>
+      {/* Nota del LLM */}
+      <div className={`mt-4 p-3 rounded-lg border ${bgColor} ${borderColor}`}>
+        <div className="flex items-center gap-2">
+          <span className={`material-symbols-outlined text-lg ${color}`}>
+            {icon}
+          </span>
+          <div className="flex-1">
+            <div className={`text-xs font-semibold mb-0.5 ${color}`}>
+              {tView("llmObservation")}
             </div>
+            <div className={`text-xs ${color}`}>{text}</div>
           </div>
         </div>
+      </div>
     </BaseModalContainer>
   );
 }

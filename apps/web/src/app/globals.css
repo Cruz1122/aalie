@@ -821,7 +821,9 @@ dialog::backdrop {
 }
 
 /* Aristas de retorno en verde - DEBE IR AL FINAL para mayor especificidad */
-.recursion-tree-container .react-flow__edge.return-edge path.react-flow__edge-path {
+.recursion-tree-container
+  .react-flow__edge.return-edge
+  path.react-flow__edge-path {
   stroke: #10b981 !important; /* verde para retornos */
   stroke-width: 2.5px !important;
 }

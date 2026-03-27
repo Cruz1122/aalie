@@ -6,6 +6,7 @@ las variables de control NO mutan. Bubble sort mejorado con ordenado debe ser bo
 
 Author: @Cruz1122
 """
+
 from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import (
     assert_all_cases_complexity,
@@ -114,9 +115,9 @@ class TestWhileLoopNotationBounded:
         while_rows = [r for r in by_line if r.get("kind") == "while"]
         assert len(while_rows) > 0
         for wr in while_rows:
-            assert not wr.get("unbounded", False), (
-                f"WHILE flag kill debe ser bounded: {wr}"
-            )
+            assert not wr.get(
+                "unbounded", False
+            ), f"WHILE flag kill debe ser bounded: {wr}"
 
     def test_while_ordenado_false_kill_bounded(self):
         """WHILE ordenado=false con ordenado <- true (must) → bounded."""
@@ -126,9 +127,9 @@ class TestWhileLoopNotationBounded:
         while_rows = [r for r in by_line if r.get("kind") == "while"]
         assert len(while_rows) > 0
         for wr in while_rows:
-            assert not wr.get("unbounded", False), (
-                f"WHILE ordenado=false con ordenado<-true debe ser bounded: {wr}"
-            )
+            assert not wr.get(
+                "unbounded", False
+            ), f"WHILE ordenado=false con ordenado<-true debe ser bounded: {wr}"
 
     def test_while_increment_must_bounded(self):
         """WHILE i<n con i <- i+1 (must) → bounded."""
@@ -138,9 +139,9 @@ class TestWhileLoopNotationBounded:
         while_rows = [r for r in by_line if r.get("kind") == "while"]
         assert len(while_rows) > 0
         for wr in while_rows:
-            assert not wr.get("unbounded", False), (
-                f"WHILE i<n con i<-i+1 debe ser bounded: {wr}"
-            )
+            assert not wr.get(
+                "unbounded", False
+            ), f"WHILE i<n con i<-i+1 debe ser bounded: {wr}"
 
 
 class TestWhileLoopNotationUnbounded:
@@ -154,9 +155,9 @@ class TestWhileLoopNotationUnbounded:
         while_rows = [r for r in by_line if r.get("kind") == "while"]
         assert len(while_rows) > 0
         for wr in while_rows:
-            assert wr.get("unbounded", False), (
-                f"WHILE flag=true sin kill debe ser unbounded: {wr}"
-            )
+            assert wr.get(
+                "unbounded", False
+            ), f"WHILE flag=true sin kill debe ser unbounded: {wr}"
 
     def test_while_no_progress_must_unbounded(self):
         """WHILE i<n con i<-i+1 solo en IF (may, no must) → unbounded."""
@@ -166,6 +167,6 @@ class TestWhileLoopNotationUnbounded:
         while_rows = [r for r in by_line if r.get("kind") == "while"]
         assert len(while_rows) > 0
         for wr in while_rows:
-            assert wr.get("unbounded", False), (
-                f"WHILE i<n con update solo en rama condicional debe ser unbounded: {wr}"
-            )
+            assert wr.get(
+                "unbounded", False
+            ), f"WHILE i<n con update solo en rama condicional debe ser unbounded: {wr}"

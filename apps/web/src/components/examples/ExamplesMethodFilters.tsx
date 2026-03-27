@@ -3,9 +3,7 @@
 import { useTranslations } from "next-intl";
 import React from "react";
 
-import type {
-  RecursiveMethodBadge,
-} from "@/lib/examples/catalog";
+import type { RecursiveMethodBadge } from "@/lib/examples/catalog";
 import { getMethodTranslationKey } from "@/lib/examples/catalog";
 
 const METHOD_META: Record<
@@ -45,7 +43,9 @@ export function ExamplesMethodFilters({
     <section className="glass-card rounded-xl border border-white/10 p-2">
       <div className="flex flex-wrap gap-2">
         {Object.entries(METHOD_META).map(([method, meta]) => {
-          const active = selectedMethods.includes(method as RecursiveMethodBadge);
+          const active = selectedMethods.includes(
+            method as RecursiveMethodBadge,
+          );
           return (
             <button
               key={method}

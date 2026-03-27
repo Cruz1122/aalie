@@ -6,6 +6,7 @@ Valida que cada builder produzca nodes y edges válidos.
 Author: AALIE - Plan Sistema Traza Estructural
 Version: 0.1.0
 """
+
 import pytest
 
 from app.modules.execution.derivations.structured_trace_builder import (
@@ -48,7 +49,12 @@ class TestStructuredTraceBuilders:
                 "calls": [
                     {"id": "c1", "children": ["c2"], "params": {"n": 3}},
                     {"id": "c2", "children": ["c3"], "params": {"n": 2}},
-                    {"id": "c3", "children": [], "params": {"n": 1}, "is_base_case": True},
+                    {
+                        "id": "c3",
+                        "children": [],
+                        "params": {"n": 1},
+                        "is_base_case": True,
+                    },
                 ],
                 "root_calls": ["c1"],
             },

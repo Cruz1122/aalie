@@ -15,7 +15,7 @@ export type { HardwareSuitabilityReport };
  */
 export function analyzeASTForGPUCPU(
   ast: Program,
-  locale: GpuCpuLocale = "en"
+  locale: GpuCpuLocale = "en",
 ): HardwareSuitabilityReport {
   return analyzeASTForHardware(ast, locale);
 }

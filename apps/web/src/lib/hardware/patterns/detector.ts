@@ -1,4 +1,8 @@
-import type { HardwareFeatures, DependencyProfile, PatternCandidate } from "../types";
+import type {
+  HardwareFeatures,
+  DependencyProfile,
+  PatternCandidate,
+} from "../types";
 
 export type PatternName =
   | "map element-wise"
@@ -20,7 +24,10 @@ export type PatternName =
 
 interface PatternRule {
   name: PatternName;
-  detect(f: HardwareFeatures, d: DependencyProfile): { match: boolean; evidence: string[] };
+  detect(
+    f: HardwareFeatures,
+    d: DependencyProfile,
+  ): { match: boolean; evidence: string[] };
 }
 
 const PATTERN_RULES: PatternRule[] = [
@@ -28,14 +35,22 @@ const PATTERN_RULES: PatternRule[] = [
     name: "map element-wise",
     detect(f, d) {
       const evidence: string[] = [];
-      const allMapLike = d.loops.length > 0 && d.loops.every((l) => l.isMapLike);
+      const allMapLike =
+        d.loops.length > 0 && d.loops.every((l) => l.isMapLike);
       const noLoopCarried = d.loops.every((l) => !l.hasLoopCarriedDependency);
       const noEarlyReturn = !f.hasEarlyReturn;
-      if (allMapLike) evidence.push("All loops write to array with independent index");
+      if (allMapLike)
+        evidence.push("All loops write to array with independent index");
       if (noLoopCarried) evidence.push("No loop-carried dependencies detected");
-      if (f.mapLikeWrites > 0) evidence.push(`${f.mapLikeWrites} map-like write(s) found`);
+      if (f.mapLikeWrites > 0)
+        evidence.push(`${f.mapLikeWrites} map-like write(s) found`);
       return {
-        match: allMapLike && noLoopCarried && noEarlyReturn && f.mapLikeWrites > 0 && !f.hasRecursion,
+        match:
+          allMapLike &&
+          noLoopCarried &&
+          noEarlyReturn &&
+          f.mapLikeWrites > 0 &&
+          !f.hasRecursion,
         evidence,
       };
     },
@@ -45,16 +60,23 @@ const PATTERN_RULES: PatternRule[] = [
     detect(f, d) {
       const evidence: string[] = [];
       const hasReductions = f.scalarReductions > 0;
-      const loopsHaveAccumulators = d.loops.some((l) => l.accumulators.length > 0);
-      const parallelReduceLoops = d.loops.some(
-        (l) => l.classification === "parallel_with_reduction"
+      const loopsHaveAccumulators = d.loops.some(
+        (l) => l.accumulators.length > 0,
       );
-      if (hasReductions) evidence.push(`${f.scalarReductions} scalar reduction(s) detected`);
-      if (loopsHaveAccumulators) evidence.push("Accumulator pattern in loop body");
-      if (parallelReduceLoops) evidence.push("Loop classified as parallel_with_reduction");
+      const parallelReduceLoops = d.loops.some(
+        (l) => l.classification === "parallel_with_reduction",
+      );
+      if (hasReductions)
+        evidence.push(`${f.scalarReductions} scalar reduction(s) detected`);
+      if (loopsHaveAccumulators)
+        evidence.push("Accumulator pattern in loop body");
+      if (parallelReduceLoops)
+        evidence.push("Loop classified as parallel_with_reduction");
       return {
         match:
-          hasReductions && (loopsHaveAccumulators || parallelReduceLoops) && !f.hasEarlyReturn,
+          hasReductions &&
+          (loopsHaveAccumulators || parallelReduceLoops) &&
+          !f.hasEarlyReturn,
         evidence,
       };
     },
@@ -64,8 +86,11 @@ const PATTERN_RULES: PatternRule[] = [
     detect(f, _d) {
       const evidence: string[] = [];
       if (f.stencilLikeAccesses > 0)
-        evidence.push(`${f.stencilLikeAccesses} stencil-like access(es) (A[i±k]) detected`);
-      const isStencil = f.stencilLikeAccesses > 0 && f.mapLikeWrites > 0 && !f.hasEarlyReturn;
+        evidence.push(
+          `${f.stencilLikeAccesses} stencil-like access(es) (A[i±k]) detected`,
+        );
+      const isStencil =
+        f.stencilLikeAccesses > 0 && f.mapLikeWrites > 0 && !f.hasEarlyReturn;
       return { match: isStencil, evidence };
     },
   },
@@ -73,10 +98,14 @@ const PATTERN_RULES: PatternRule[] = [
     name: "search with early exit",
     detect(f, _d) {
       const evidence: string[] = [];
-      if (f.hasEarlyReturn) evidence.push("Return statement found inside a loop");
+      if (f.hasEarlyReturn)
+        evidence.push("Return statement found inside a loop");
       if (f.hasEarlyReturn && f.loopCarriedDependencies === 0)
         evidence.push("No loop-carried dependency; search-like traversal");
-      return { match: f.hasEarlyReturn && f.loopCarriedDependencies === 0, evidence };
+      return {
+        match: f.hasEarlyReturn && f.loopCarriedDependencies === 0,
+        evidence,
+      };
     },
   },
   {
@@ -84,14 +113,21 @@ const PATTERN_RULES: PatternRule[] = [
     detect(f, d) {
       const evidence: string[] = [];
       const sequentialLoops = d.loops.filter(
-        (l) => l.classification === "sequential_by_dependency"
+        (l) => l.classification === "sequential_by_dependency",
       );
       if (f.loopCarriedDependencies > 0)
-        evidence.push(`${f.loopCarriedDependencies} loop-carried dependenc(ies) found`);
+        evidence.push(
+          `${f.loopCarriedDependencies} loop-carried dependenc(ies) found`,
+        );
       if (sequentialLoops.length > 0)
-        evidence.push(`${sequentialLoops.length} loop(s) classified as sequential_by_dependency`);
+        evidence.push(
+          `${sequentialLoops.length} loop(s) classified as sequential_by_dependency`,
+        );
       return {
-        match: sequentialLoops.length > 0 && f.loopCarriedDependencies > 0 && !f.hasRecursion,
+        match:
+          sequentialLoops.length > 0 &&
+          f.loopCarriedDependencies > 0 &&
+          !f.hasRecursion,
         evidence,
       };
     },
@@ -100,12 +136,21 @@ const PATTERN_RULES: PatternRule[] = [
     name: "nested rectangular loops",
     detect(f, d) {
       const evidence: string[] = [];
-      const allParallel = d.loops.length >= 2 && d.loops.every(
-        (l) => l.classification === "embarrassingly_parallel" || l.classification === "parallel_with_reduction"
-      );
-      if (f.nestedLoopDepth >= 2) evidence.push(`Nested loop depth: ${f.nestedLoopDepth}`);
-      if (allParallel) evidence.push("All nested loops appear to be data-parallel");
-      return { match: f.nestedLoopDepth >= 2 && allParallel && !f.hasWhile, evidence };
+      const allParallel =
+        d.loops.length >= 2 &&
+        d.loops.every(
+          (l) =>
+            l.classification === "embarrassingly_parallel" ||
+            l.classification === "parallel_with_reduction",
+        );
+      if (f.nestedLoopDepth >= 2)
+        evidence.push(`Nested loop depth: ${f.nestedLoopDepth}`);
+      if (allParallel)
+        evidence.push("All nested loops appear to be data-parallel");
+      return {
+        match: f.nestedLoopDepth >= 2 && allParallel && !f.hasWhile,
+        evidence,
+      };
     },
   },
   {
@@ -116,10 +161,18 @@ const PATTERN_RULES: PatternRule[] = [
         d.loops.length >= 1 &&
         f.mapLikeWrites > 0 &&
         f.branchDensityInsideLoops > 0.3;
-      if (hasCompareSwap) evidence.push("Compare-and-swap pattern (array writes + conditionals in loops)");
-      if (f.nestedLoopDepth >= 2) evidence.push("Nested loops found (characteristic of O(n²) sorts)");
+      if (hasCompareSwap)
+        evidence.push(
+          "Compare-and-swap pattern (array writes + conditionals in loops)",
+        );
+      if (f.nestedLoopDepth >= 2)
+        evidence.push("Nested loops found (characteristic of O(n²) sorts)");
       return {
-        match: hasCompareSwap && !f.hasRecursion && !f.hasEarlyReturn && f.nestedLoopDepth >= 2,
+        match:
+          hasCompareSwap &&
+          !f.hasRecursion &&
+          !f.hasEarlyReturn &&
+          f.nestedLoopDepth >= 2,
         evidence,
       };
     },
@@ -128,11 +181,17 @@ const PATTERN_RULES: PatternRule[] = [
     name: "divide and conquer balanced",
     detect(f, _d) {
       const evidence: string[] = [];
-      if (f.hasDivideAndConquerShape) evidence.push("Two or more recursive calls detected");
-      if (f.recursiveFanOut >= 2) evidence.push(`Recursive fan-out: ${f.recursiveFanOut}`);
-      if (f.loopCarriedDependencies === 0) evidence.push("No sequential cross-call dependencies");
+      if (f.hasDivideAndConquerShape)
+        evidence.push("Two or more recursive calls detected");
+      if (f.recursiveFanOut >= 2)
+        evidence.push(`Recursive fan-out: ${f.recursiveFanOut}`);
+      if (f.loopCarriedDependencies === 0)
+        evidence.push("No sequential cross-call dependencies");
       return {
-        match: f.hasDivideAndConquerShape && f.recursiveFanOut >= 2 && f.indirectIndexedAccesses === 0,
+        match:
+          f.hasDivideAndConquerShape &&
+          f.recursiveFanOut >= 2 &&
+          f.indirectIndexedAccesses === 0,
         evidence,
       };
     },
@@ -142,10 +201,14 @@ const PATTERN_RULES: PatternRule[] = [
     detect(f, _d) {
       const evidence: string[] = [];
       if (f.hasDivideAndConquerShape) evidence.push("Recursive divide pattern");
-      if (f.hasEarlyReturn) evidence.push("Early return (irregular base case / pruning)");
-      if (f.branchDensityInsideLoops > 0.5) evidence.push("High branch density indicates irregular partitioning");
+      if (f.hasEarlyReturn)
+        evidence.push("Early return (irregular base case / pruning)");
+      if (f.branchDensityInsideLoops > 0.5)
+        evidence.push("High branch density indicates irregular partitioning");
       return {
-        match: f.hasDivideAndConquerShape && (f.hasEarlyReturn || f.branchDensityInsideLoops > 0.5),
+        match:
+          f.hasDivideAndConquerShape &&
+          (f.hasEarlyReturn || f.branchDensityInsideLoops > 0.5),
         evidence,
       };
     },
@@ -155,11 +218,15 @@ const PATTERN_RULES: PatternRule[] = [
     detect(f, _d) {
       const evidence: string[] = [];
       if (f.graphLikeTraversalSignals > 0)
-        evidence.push(`${f.graphLikeTraversalSignals} graph-like call(s) (push/pop/enqueue/etc)`);
+        evidence.push(
+          `${f.graphLikeTraversalSignals} graph-like call(s) (push/pop/enqueue/etc)`,
+        );
       if (f.pointerOrObjectAccesses > 0)
         evidence.push(`${f.pointerOrObjectAccesses} pointer/field access(es)`);
       return {
-        match: f.graphLikeTraversalSignals > 0 || (f.pointerOrObjectAccesses > 0 && f.hasWhile),
+        match:
+          f.graphLikeTraversalSignals > 0 ||
+          (f.pointerOrObjectAccesses > 0 && f.hasWhile),
         evidence,
       };
     },
@@ -169,10 +236,16 @@ const PATTERN_RULES: PatternRule[] = [
     detect(f, _d) {
       const evidence: string[] = [];
       if (f.pointerOrObjectAccesses > 0)
-        evidence.push(`${f.pointerOrObjectAccesses} field/pointer access(es) detected`);
-      if (f.hasWhile) evidence.push("While loop with likely pointer-driven condition");
+        evidence.push(
+          `${f.pointerOrObjectAccesses} field/pointer access(es) detected`,
+        );
+      if (f.hasWhile)
+        evidence.push("While loop with likely pointer-driven condition");
       return {
-        match: f.pointerOrObjectAccesses > 0 && f.hasWhile && f.graphLikeTraversalSignals === 0,
+        match:
+          f.pointerOrObjectAccesses > 0 &&
+          f.hasWhile &&
+          f.graphLikeTraversalSignals === 0,
         evidence,
       };
     },
@@ -182,9 +255,14 @@ const PATTERN_RULES: PatternRule[] = [
     detect(f, _d) {
       const evidence: string[] = [];
       if (f.branchDensityInsideLoops > 0.5)
-        evidence.push(`Branch density: ${(f.branchDensityInsideLoops * 100).toFixed(0)}%`);
+        evidence.push(
+          `Branch density: ${(f.branchDensityInsideLoops * 100).toFixed(0)}%`,
+        );
       return {
-        match: f.branchDensityInsideLoops > 0.5 && !f.hasRecursion && f.loopCarriedDependencies === 0,
+        match:
+          f.branchDensityInsideLoops > 0.5 &&
+          !f.hasRecursion &&
+          f.loopCarriedDependencies === 0,
         evidence,
       };
     },
@@ -198,7 +276,8 @@ const PATTERN_RULES: PatternRule[] = [
       const highFanOut = f.recursiveFanOut >= 2 && d.globalRisk === "high";
       if (deepRecursionWithBranch)
         evidence.push("Early return in recursive context suggests pruning");
-      if (highFanOut) evidence.push("High-fan-out recursion with sequential dependency risk");
+      if (highFanOut)
+        evidence.push("High-fan-out recursion with sequential dependency risk");
       return { match: deepRecursionWithBranch || highFanOut, evidence };
     },
   },
@@ -207,7 +286,9 @@ const PATTERN_RULES: PatternRule[] = [
     detect(f, d) {
       const evidence: string[] = [];
       const hasMap = f.mapLikeWrites > 0;
-      const hasSeq = d.loops.some((l) => l.classification === "sequential_by_dependency");
+      const hasSeq = d.loops.some(
+        (l) => l.classification === "sequential_by_dependency",
+      );
       if (hasMap && hasSeq)
         evidence.push("Mix of map-like and sequential loops detected");
       return { match: hasMap && hasSeq, evidence };
@@ -217,7 +298,7 @@ const PATTERN_RULES: PatternRule[] = [
 
 export function detectPatterns(
   features: HardwareFeatures,
-  deps: DependencyProfile
+  deps: DependencyProfile,
 ): PatternCandidate[] {
   const results: PatternCandidate[] = [];
 
@@ -226,7 +307,11 @@ export function detectPatterns(
     if (match) {
       // Compute per-rule confidence based on evidence count and feature clarity
       const baseConf = 0.5 + Math.min(evidence.length * 0.1, 0.4);
-      results.push({ name: rule.name, confidence: Math.min(1.0, baseConf), evidence });
+      results.push({
+        name: rule.name,
+        confidence: Math.min(1.0, baseConf),
+        evidence,
+      });
     }
   }
 

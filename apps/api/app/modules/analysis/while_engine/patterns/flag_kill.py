@@ -4,6 +4,7 @@ Patrón: bandera booleana con kill real (flag, flag <- false).
 Author: @Cruz1122
 Version: 0.1.0
 """
+
 from typing import Any, Dict
 
 from .base import IterationBoundResult, TerminationResult, WhilePattern

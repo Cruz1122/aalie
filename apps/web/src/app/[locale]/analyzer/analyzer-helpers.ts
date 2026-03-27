@@ -6,7 +6,11 @@
 import type { AnalyzeOpenResponse, ParseResponse } from "@aa/types";
 import type React from "react";
 
-import type { MethodMetadataMap, MethodPrecision, MethodType } from "@/components/MethodSelector";
+import type {
+  MethodMetadataMap,
+  MethodPrecision,
+  MethodType,
+} from "@/components/MethodSelector";
 
 export interface AnalysisError {
   message: string;
@@ -90,7 +94,8 @@ const getPrecisionByMethod = (
     if (method === "iteration") return "medium";
     return "low";
   }
-  if (method === "master" || method === "characteristic_equation") return "medium";
+  if (method === "master" || method === "characteristic_equation")
+    return "medium";
   return "low";
 };
 
@@ -102,8 +107,15 @@ const getApplicableReason = (
 ): string => {
   const divideConquer = info?.type === "divide_conquer";
   const linearShift = info?.type === "linear_shift";
-  const isSingleBranchDivideConquer = divideConquer && Number(info?.a ?? 0) === 1;
-  const familyLabel = info?.strategy_family?.label || (divideConquer ? "Divide y Vencerás" : linearShift ? "Resta y Vencerás" : "");
+  const isSingleBranchDivideConquer =
+    divideConquer && Number(info?.a ?? 0) === 1;
+  const familyLabel =
+    info?.strategy_family?.label ||
+    (divideConquer
+      ? "Divide y Vencerás"
+      : linearShift
+        ? "Resta y Vencerás"
+        : "");
 
   if (recommended) {
     return locale === "es"
@@ -119,12 +131,12 @@ const getApplicableReason = (
 
   if (divideConquer && method === "iteration") {
     return isSingleBranchDivideConquer
-      ? (locale === "es"
+      ? locale === "es"
         ? "Aplica en la variante de rama única: se puede desplegar geométricamente y llegar a la cota, aunque suele requerir más manipulación algebraica que Master o árbol."
-        : "It applies for the single-branch variant: geometric unrolling can reach the bound, though it usually needs more algebraic manipulation than Master or tree.")
-      : (locale === "es"
+        : "It applies for the single-branch variant: geometric unrolling can reach the bound, though it usually needs more algebraic manipulation than Master or tree."
+      : locale === "es"
         ? "Es viable, pero en Divide y Vencerás con varias ramas suele ser más largo y menos transparente que resolver por casos de Master o por niveles del árbol."
-        : "It is viable, but for multi-branch Divide y Vencerás it is usually longer and less transparent than solving by Master cases or tree levels.");
+        : "It is viable, but for multi-branch Divide y Vencerás it is usually longer and less transparent than solving by Master cases or tree levels.";
   }
 
   if (linearShift && method === "iteration") {
@@ -222,24 +234,21 @@ const buildMethodMetadata = (
   recurrenceInfo: DetectionRecurrenceInfo | undefined,
   locale: SupportedLocale,
 ): MethodMetadataMap => {
-  return ALL_METHODS.reduce(
-    (acc, method) => {
-      const applicable = applicableMethods.includes(method);
-      const recommended = method === defaultMethod;
-      acc[method] = {
-        applicable,
-        recommended,
-        precision: applicable
-          ? getPrecisionByMethod(method, recurrenceInfo, recommended)
-          : "low",
-        reason: applicable
-          ? getApplicableReason(method, recurrenceInfo, recommended, locale)
-          : getNotApplicableReason(method, recurrenceInfo, locale),
-      };
-      return acc;
-    },
-    {} as MethodMetadataMap,
-  );
+  return ALL_METHODS.reduce((acc, method) => {
+    const applicable = applicableMethods.includes(method);
+    const recommended = method === defaultMethod;
+    acc[method] = {
+      applicable,
+      recommended,
+      precision: applicable
+        ? getPrecisionByMethod(method, recurrenceInfo, recommended)
+        : "low",
+      reason: applicable
+        ? getApplicableReason(method, recurrenceInfo, recommended, locale)
+        : getNotApplicableReason(method, recurrenceInfo, locale),
+    };
+    return acc;
+  }, {} as MethodMetadataMap);
 };
 
 /**
@@ -343,25 +352,25 @@ export async function detectAndSelectMethod(
 
         // Registrar la promesa ANTES de mostrar el selector para que cancelar
         // funcione de inmediato incluso si el usuario hace click muy rápido.
-        const selectionPromise = new Promise<MethodType>(
-          (resolve, reject) => {
-            methodSelectionPromiseRef.current = { resolve, reject };
-            setTimeout(() => {
-              if (methodSelectionPromiseRef.current) {
-                methodSelectionPromiseRef.current.resolve(defaultMethodValue);
-                methodSelectionPromiseRef.current = null;
-              }
-            }, 60000);
-          },
-        );
+        const selectionPromise = new Promise<MethodType>((resolve, reject) => {
+          methodSelectionPromiseRef.current = { resolve, reject };
+          setTimeout(() => {
+            if (methodSelectionPromiseRef.current) {
+              methodSelectionPromiseRef.current.resolve(defaultMethodValue);
+              methodSelectionPromiseRef.current = null;
+            }
+          }, 60000);
+        });
         setShowMethodSelector(true);
 
-        const selectedMethod = await selectionPromise.catch((reason: unknown) => {
-          if (reason === "METHOD_SELECTION_CANCELLED") {
-            return null;
-          }
-          return defaultMethodValue;
-        });
+        const selectedMethod = await selectionPromise.catch(
+          (reason: unknown) => {
+            if (reason === "METHOD_SELECTION_CANCELLED") {
+              return null;
+            }
+            return defaultMethodValue;
+          },
+        );
 
         setShowMethodSelector(false);
         methodSelectionPromiseRef.current = null;
@@ -394,9 +403,7 @@ export async function detectAndSelectMethod(
         return defaultMethodValue;
       }
     } else {
-      setMethodMetadata(
-        buildMethodMetadata([], "master", undefined, locale),
-      );
+      setMethodMetadata(buildMethodMetadata([], "master", undefined, locale));
       const analyzingMsg = getMessage
         ? getMessage("analyzingComplexity")
         : "Iniciando análisis de complejidad...";
@@ -411,9 +418,7 @@ export async function detectAndSelectMethod(
     }
   } catch (error) {
     console.warn("Error detectando métodos, usando método por defecto:", error);
-    setMethodMetadata(
-      buildMethodMetadata([], "master", undefined, locale),
-    );
+    setMethodMetadata(buildMethodMetadata([], "master", undefined, locale));
     const analyzingMsg = getMessage
       ? getMessage("analyzingComplexity")
       : "Iniciando análisis de complejidad...";
@@ -435,7 +440,11 @@ export async function detectAndSelectMethod(
 export function detectRecursiveMethod(
   worst: AnalyzeOpenResponse | null | undefined,
   best: AnalyzeOpenResponse | null | undefined,
-): "characteristicEquation" | "iterationMethod" | "recursionTree" | "masterTheorem" {
+):
+  | "characteristicEquation"
+  | "iterationMethod"
+  | "recursionTree"
+  | "masterTheorem" {
   const method =
     worst?.totals?.recurrence?.method || best?.totals?.recurrence?.method;
 
@@ -454,18 +463,31 @@ export function detectRecursiveMethod(
  * Actualiza el mensaje de análisis según el método detectado.
  */
 export function updateAnalysisMessageForMethod(
-  methodKey: "characteristicEquation" | "iterationMethod" | "recursionTree" | "masterTheorem",
+  methodKey:
+    | "characteristicEquation"
+    | "iterationMethod"
+    | "recursionTree"
+    | "masterTheorem",
   setAnalysisMessage: (value: string) => void,
   getMessage?: GetAnalysisMessage,
 ): void {
   const msg = (key: string, fallback: string) =>
     getMessage ? getMessage(key) : fallback;
   if (methodKey === "characteristicEquation") {
-    setAnalysisMessage(msg("applyingCharacteristic", "Aplicando Método de Ecuación Característica..."));
+    setAnalysisMessage(
+      msg(
+        "applyingCharacteristic",
+        "Aplicando Método de Ecuación Característica...",
+      ),
+    );
   } else if (methodKey === "iterationMethod") {
-    setAnalysisMessage(msg("applyingIteration", "Aplicando Método de Iteración..."));
+    setAnalysisMessage(
+      msg("applyingIteration", "Aplicando Método de Iteración..."),
+    );
   } else if (methodKey === "recursionTree") {
-    setAnalysisMessage(msg("applyingRecursionTree", "Aplicando Método de Árbol de Recursión..."));
+    setAnalysisMessage(
+      msg("applyingRecursionTree", "Aplicando Método de Árbol de Recursión..."),
+    );
   } else {
     setAnalysisMessage(msg("applyingMaster", "Aplicando Teorema Maestro..."));
   }

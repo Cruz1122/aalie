@@ -118,10 +118,26 @@ END`,
             {
               type: "list",
               items: [
-                { icon: "check", titleKey: "gramProcScalar", codeSnippet: "factorial(n)" },
-                { icon: "check", titleKey: "gramProcArrayDim", codeSnippet: "buscar(A[n], x)" },
-                { icon: "check", titleKey: "gramProcArrayRange", codeSnippet: "ordenar(A[1]..[n])" },
-                { icon: "check", titleKey: "gramProcTyped", codeSnippet: "procesar(Lista lista)" },
+                {
+                  icon: "check",
+                  titleKey: "gramProcScalar",
+                  codeSnippet: "factorial(n)",
+                },
+                {
+                  icon: "check",
+                  titleKey: "gramProcArrayDim",
+                  codeSnippet: "buscar(A[n], x)",
+                },
+                {
+                  icon: "check",
+                  titleKey: "gramProcArrayRange",
+                  codeSnippet: "ordenar(A[1]..[n])",
+                },
+                {
+                  icon: "check",
+                  titleKey: "gramProcTyped",
+                  codeSnippet: "procesar(Lista lista)",
+                },
               ],
             },
           ],
@@ -234,9 +250,21 @@ UNTIL (condicion);`,
               type: "table",
               headerKeys: ["gramOpType", "gramOpOps", "gramOpPrec"],
               rows: [
-                { typeKey: "gramOpArith", ops: "+ - * / DIV MOD", precKey: "gramOpPrecArith" },
-                { typeKey: "gramOpRel", ops: "= != < > <= >=", precKey: "gramOpPrecRel" },
-                { typeKey: "gramOpLog", ops: "AND OR NOT", precKey: "gramOpPrecLog" },
+                {
+                  typeKey: "gramOpArith",
+                  ops: "+ - * / DIV MOD",
+                  precKey: "gramOpPrecArith",
+                },
+                {
+                  typeKey: "gramOpRel",
+                  ops: "= != < > <= >=",
+                  precKey: "gramOpPrecRel",
+                },
+                {
+                  typeKey: "gramOpLog",
+                  ops: "AND OR NOT",
+                  precKey: "gramOpPrecLog",
+                },
               ],
             },
             {
@@ -295,10 +323,26 @@ print("Dijo \\"hola\\" y salió");`,
             {
               type: "list",
               items: [
-                { icon: "check", titleKey: "gramPrintLiteral", descKey: "gramPrintLiteralDesc" },
-                { icon: "check", titleKey: "gramPrintMulti", descKey: "gramPrintMultiDesc" },
-                { icon: "check", titleKey: "gramPrintExpr", descKey: "gramPrintExprDesc" },
-                { icon: "check", titleKey: "gramPrintEscape", descKey: "gramPrintEscapeDesc" },
+                {
+                  icon: "check",
+                  titleKey: "gramPrintLiteral",
+                  descKey: "gramPrintLiteralDesc",
+                },
+                {
+                  icon: "check",
+                  titleKey: "gramPrintMulti",
+                  descKey: "gramPrintMultiDesc",
+                },
+                {
+                  icon: "check",
+                  titleKey: "gramPrintExpr",
+                  descKey: "gramPrintExprDesc",
+                },
+                {
+                  icon: "check",
+                  titleKey: "gramPrintEscape",
+                  descKey: "gramPrintEscapeDesc",
+                },
               ],
             },
             {
@@ -375,9 +419,21 @@ print("Dijo \\"hola\\" y salió");`,
             {
               type: "list",
               items: [
-                { icon: "check", titleKey: "analisisResult1", descKey: "analisisResult1b" },
-                { icon: "check", titleKey: "analisisResult2", descKey: "analisisResult2b" },
-                { icon: "check", titleKey: "analisisResult3", descKey: "analisisResult3b" },
+                {
+                  icon: "check",
+                  titleKey: "analisisResult1",
+                  descKey: "analisisResult1b",
+                },
+                {
+                  icon: "check",
+                  titleKey: "analisisResult2",
+                  descKey: "analisisResult2b",
+                },
+                {
+                  icon: "check",
+                  titleKey: "analisisResult3",
+                  descKey: "analisisResult3b",
+                },
                 { icon: "check", textKey: "analisisResult4a" },
                 { icon: "check", textKey: "analisisResult4b" },
               ],
@@ -419,7 +475,11 @@ print("Dijo \\"hola\\" y salió");`,
                         { icon: "bullet", textKey: "worstCase3" },
                       ],
                     },
-                    { type: "paragraph", titleKey: "worstCaseEx", textKey: "worstCaseExDesc" },
+                    {
+                      type: "paragraph",
+                      titleKey: "worstCaseEx",
+                      textKey: "worstCaseExDesc",
+                    },
                   ],
                 },
                 {
@@ -438,7 +498,11 @@ print("Dijo \\"hola\\" y salió");`,
                         { icon: "bullet", textKey: "avgCase4" },
                       ],
                     },
-                    { type: "paragraph", titleKey: "avgCaseEx", textKey: "avgCaseExDesc" },
+                    {
+                      type: "paragraph",
+                      titleKey: "avgCaseEx",
+                      textKey: "avgCaseExDesc",
+                    },
                   ],
                 },
               ],
@@ -492,11 +556,31 @@ print("Dijo \\"hola\\" y salió");`,
                 {
                   type: "list",
                   items: [
-                    { icon: "bullet", titleKey: "analisisGpuRec", descKey: "analisisGpuRecDesc" },
-                    { icon: "bullet", titleKey: "analisisGpuBranch", descKey: "analisisGpuBranchDesc" },
-                    { icon: "bullet", titleKey: "analisisGpuLoops", descKey: "analisisGpuLoopsDesc" },
-                    { icon: "bullet", titleKey: "analisisGpuArrays", descKey: "analisisGpuArraysDesc" },
-                    { icon: "bullet", titleKey: "analisisGpuOps", descKey: "analisisGpuOpsDesc" },
+                    {
+                      icon: "bullet",
+                      titleKey: "analisisGpuRec",
+                      descKey: "analisisGpuRecDesc",
+                    },
+                    {
+                      icon: "bullet",
+                      titleKey: "analisisGpuBranch",
+                      descKey: "analisisGpuBranchDesc",
+                    },
+                    {
+                      icon: "bullet",
+                      titleKey: "analisisGpuLoops",
+                      descKey: "analisisGpuLoopsDesc",
+                    },
+                    {
+                      icon: "bullet",
+                      titleKey: "analisisGpuArrays",
+                      descKey: "analisisGpuArraysDesc",
+                    },
+                    {
+                      icon: "bullet",
+                      titleKey: "analisisGpuOps",
+                      descKey: "analisisGpuOpsDesc",
+                    },
                   ],
                 },
               ],
@@ -508,9 +592,21 @@ print("Dijo \\"hola\\" y salió");`,
                 {
                   type: "list",
                   items: [
-                    { icon: "bullet", titleKey: "analisisGpuGpu", descKey: "analisisGpuGpuDesc" },
-                    { icon: "bullet", titleKey: "analisisGpuCpuLabel", descKey: "analisisGpuCpuDesc" },
-                    { icon: "bullet", titleKey: "analisisGpuMix", descKey: "analisisGpuMixDesc" },
+                    {
+                      icon: "bullet",
+                      titleKey: "analisisGpuGpu",
+                      descKey: "analisisGpuGpuDesc",
+                    },
+                    {
+                      icon: "bullet",
+                      titleKey: "analisisGpuCpuLabel",
+                      descKey: "analisisGpuCpuDesc",
+                    },
+                    {
+                      icon: "bullet",
+                      titleKey: "analisisGpuMix",
+                      descKey: "analisisGpuMixDesc",
+                    },
                   ],
                 },
               ],
@@ -636,8 +732,14 @@ END`,
                 {
                   type: "list",
                   items: [
-                    { titleKey: "errorUnexpectedCause", descKey: "errorUnexpectedCauseDesc" },
-                    { titleKey: "errorUnexpectedSol", descKey: "errorUnexpectedSolDesc" },
+                    {
+                      titleKey: "errorUnexpectedCause",
+                      descKey: "errorUnexpectedCauseDesc",
+                    },
+                    {
+                      titleKey: "errorUnexpectedSol",
+                      descKey: "errorUnexpectedSolDesc",
+                    },
                   ],
                 },
               ],
@@ -650,8 +752,14 @@ END`,
                 {
                   type: "list",
                   items: [
-                    { titleKey: "errorUnexpectedCause", descKey: "errorMissingBeginCause" },
-                    { titleKey: "errorUnexpectedSol", descKey: "errorMissingBeginSol" },
+                    {
+                      titleKey: "errorUnexpectedCause",
+                      descKey: "errorMissingBeginCause",
+                    },
+                    {
+                      titleKey: "errorUnexpectedSol",
+                      descKey: "errorMissingBeginSol",
+                    },
                   ],
                 },
               ],
@@ -664,8 +772,14 @@ END`,
                 {
                   type: "list",
                   items: [
-                    { titleKey: "errorUnexpectedCause", descKey: "errorMissingSemicolonCause" },
-                    { titleKey: "errorUnexpectedSol", descKey: "errorMissingSemicolonSol" },
+                    {
+                      titleKey: "errorUnexpectedCause",
+                      descKey: "errorMissingSemicolonCause",
+                    },
+                    {
+                      titleKey: "errorUnexpectedSol",
+                      descKey: "errorMissingSemicolonSol",
+                    },
                   ],
                 },
               ],
@@ -678,7 +792,10 @@ END`,
                 {
                   type: "list",
                   items: [
-                    { titleKey: "errorUnexpectedCause", descKey: "errorApiCause" },
+                    {
+                      titleKey: "errorUnexpectedCause",
+                      descKey: "errorApiCause",
+                    },
                     { titleKey: "errorUnexpectedSol", descKey: "errorApiSol" },
                   ],
                 },

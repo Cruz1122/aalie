@@ -4,6 +4,7 @@ WHILE con IF(param=const) que contiene el update: best case asume param habilita
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
+
 import pytest
 
 from app.modules.analysis.service import analyze_algorithm
@@ -82,6 +83,7 @@ END
     ),
 ]
 
+
 # Parametrización restringida: solo algoritmos donde best/avg difieren de worst.
 def _flag_param_filtered():
     best_differs = []
@@ -96,7 +98,9 @@ def _flag_param_filtered():
     return best_differs, avg_differs
 
 
-FLAG_PARAM_ALGORITHMS_BEST_DIFFERS, FLAG_PARAM_ALGORITHMS_AVG_DIFFERS = _flag_param_filtered()
+FLAG_PARAM_ALGORITHMS_BEST_DIFFERS, FLAG_PARAM_ALGORITHMS_AVG_DIFFERS = (
+    _flag_param_filtered()
+)
 
 
 class TestFlagParamAlgorithms:
@@ -112,7 +116,9 @@ class TestFlagParamAlgorithms:
         result = analyze_algorithm(source, mode="all")
         assert result.get("ok", False), f"[{name}] Análisis falló"
         best = result.get("best")
-        assert best != "same_as_worst", f"[{name}] test solo para algoritmos con best != worst"
+        assert (
+            best != "same_as_worst"
+        ), f"[{name}] test solo para algoritmos con best != worst"
         assert isinstance(best, dict), f"[{name}] best debe ser dict"
         by_line = best.get("byLine", [])
         while_rows = [r for r in by_line if r.get("kind") == "while"]
@@ -124,11 +130,13 @@ class TestFlagParamAlgorithms:
             f"Obtenido: unbounded={wr.get('unbounded')}"
         )
         count = str(wr.get("count", ""))
-        assert "t_while" not in count or "unknown" not in count.lower(), (
-            f"[{name}] Best case count debe ser concreto: {count}"
-        )
+        assert (
+            "t_while" not in count or "unknown" not in count.lower()
+        ), f"[{name}] Best case count debe ser concreto: {count}"
 
-    @pytest.mark.parametrize("name,source", FLAG_PARAM_ALGORITHMS, ids=[a[0] for a in FLAG_PARAM_ALGORITHMS])
+    @pytest.mark.parametrize(
+        "name,source", FLAG_PARAM_ALGORITHMS, ids=[a[0] for a in FLAG_PARAM_ALGORITHMS]
+    )
     def test_worst_case_unbounded(self, name: str, source: str):
         """Worst case: param puede impedir progreso → unbounded."""
         result = analyze_algorithm(source, mode="all")
@@ -138,9 +146,9 @@ class TestFlagParamAlgorithms:
         while_rows = [r for r in by_line if r.get("kind") == "while"]
         assert len(while_rows) > 0
         wr = while_rows[0]
-        assert wr.get("unbounded", False), (
-            f"[{name}] Worst case debe ser unbounded (param puede impedir progreso)"
-        )
+        assert wr.get(
+            "unbounded", False
+        ), f"[{name}] Worst case debe ser unbounded (param puede impedir progreso)"
 
     @pytest.mark.parametrize(
         "name,source",
@@ -152,7 +160,9 @@ class TestFlagParamAlgorithms:
         result = analyze_algorithm(source, mode="all")
         assert result.get("ok", False), f"[{name}] Análisis falló"
         avg = result.get("avg")
-        assert avg != "same_as_worst", f"[{name}] test solo para algoritmos con avg != worst"
+        assert (
+            avg != "same_as_worst"
+        ), f"[{name}] test solo para algoritmos con avg != worst"
         if isinstance(avg, dict):
             by_line = avg.get("byLine", [])
             while_rows = [r for r in by_line if r.get("kind") == "while"]
@@ -161,9 +171,9 @@ class TestFlagParamAlgorithms:
                 note = wr.get("note", "")
                 # No debe decir "E[#iterations] = 1/p" para param-controlled
                 # (avg para param-controlled es unbounded, no geométrico)
-                assert "1/p" not in note or "geometric" not in note.lower(), (
-                    f"[{name}] Avg no debe usar modelo geométrico para param-controlled: {note}"
-                )
+                assert (
+                    "1/p" not in note or "geometric" not in note.lower()
+                ), f"[{name}] Avg no debe usar modelo geométrico para param-controlled: {note}"
 
     def test_user_example_best_bounded(self):
         """Caso específico del usuario: best case debe dar T_open con constantes (10, 9)."""
@@ -184,7 +194,9 @@ END
         assert isinstance(best, dict)
         totals = best["totals"]
         t_open = totals.get("T_open", "")
-        assert "10" in t_open or "9" in t_open, f"Best T_open debe tener constantes: {t_open}"
+        assert (
+            "10" in t_open or "9" in t_open
+        ), f"Best T_open debe tener constantes: {t_open}"
         assert "t_while" not in t_open, f"Best no debe tener t_while: {t_open}"
         # Best case acotado debe incluir notación asintótica O(1)/Ω(1) para la card
         assert totals.get("big_o"), "Best totals debe tener big_o (card)"
@@ -211,9 +223,9 @@ END
         assert len(while_rows) > 0
         wr = while_rows[0]
         # Avg para param-controlled: unbounded (no podemos promediar flag=0 ∞ con flag=1 10)
-        assert wr.get("unbounded", False) or "t_while" in str(wr.get("count", "")), (
-            "Avg debe ser unbounded o usar t_while (no E[iter]=2 o 3)"
-        )
+        assert wr.get("unbounded", False) or "t_while" in str(
+            wr.get("count", "")
+        ), "Avg debe ser unbounded o usar t_while (no E[iter]=2 o 3)"
 
     def test_no_o_flag_notation(self):
         """big_theta/big_o no debe ser O(flag) para algoritmos con param flag."""
@@ -232,7 +244,9 @@ END
         big_theta = worst.get("totals", {}).get("big_theta", "")
         big_o = worst.get("totals", {}).get("big_o", "")
         # No debe ser Θ(flag) u O(flag) - flag no es variable de tamaño
-        assert "flag" not in big_theta.lower(), f"big_theta no debe ser Θ(flag): {big_theta}"
+        assert (
+            "flag" not in big_theta.lower()
+        ), f"big_theta no debe ser Θ(flag): {big_theta}"
         assert "flag" not in big_o.lower(), f"big_o no debe ser O(flag): {big_o}"
 
 

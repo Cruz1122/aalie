@@ -7,6 +7,7 @@ y coherencia de steps con el pseudocódigo.
 Author: AALIE
 Version: 0.1.0
 """
+
 import pytest
 from fastapi.testclient import TestClient
 

@@ -16,7 +16,10 @@ interface StepInfoProps {
 }
 
 // Helper function to format microseconds with appropriate units
-const formatMicroseconds = (microseconds: number, t: (key: string) => string): string => {
+const formatMicroseconds = (
+  microseconds: number,
+  t: (key: string) => string,
+): string => {
   if (microseconds < 1) {
     return `${(microseconds * 1000).toFixed(2)} ${t("timeUnitNs")}`;
   } else if (microseconds < 1000) {
@@ -31,10 +34,10 @@ const formatMicroseconds = (microseconds: number, t: (key: string) => string): s
 // Helper function to format accumulated cost with abbreviation for long expressions
 const formatAccumulatedCost = (cost: string): string => {
   // Check if it's a sum expression (contains +)
-  if (!cost.includes('+')) return cost;
+  if (!cost.includes("+")) return cost;
 
   // Split by + and trim whitespace
-  const terms = cost.split('+').map(t => t.trim());
+  const terms = cost.split("+").map((t) => t.trim());
 
   // If 4 or more terms, abbreviate
   if (terms.length >= 4) {
@@ -59,14 +62,16 @@ const formatAccumulatedCost = (cost: string): string => {
   }
 
   // For less than 4 terms, format each term properly
-  return terms.map(term => {
-    const match = term.match(/[cC]_(\d+)/);
-    if (match) {
-      const num = match[1];
-      return num.length > 1 ? `c_{${num}}` : `c_${num}`;
-    }
-    return term;
-  }).join(' + ');
+  return terms
+    .map((term) => {
+      const match = term.match(/[cC]_(\d+)/);
+      if (match) {
+        const num = match[1];
+        return num.length > 1 ? `c_{${num}}` : `c_${num}`;
+      }
+      return term;
+    })
+    .join(" + ");
 };
 
 export default function StepInfo({
@@ -94,9 +99,7 @@ export default function StepInfo({
             <div className="w-12 h-12 bg-blue-500/20 rounded-full animate-ping" />
             <div className="absolute w-6 h-6 bg-blue-500 rounded-full" />
           </div>
-          <p className="text-xs text-slate-300">
-            {t("executingTrace")}
-          </p>
+          <p className="text-xs text-slate-300">{t("executingTrace")}</p>
         </div>
       ) : trace?.ok && stepData ? (
         <div
@@ -114,7 +117,9 @@ export default function StepInfo({
           {/* Grid for Line, Type, Cost, Microseconds, Tokens - max 3 cols para que no se aprieten */}
           <div className="grid gap-3 grid-cols-2 sm:grid-cols-3">
             <div className="glass-card p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 flex flex-col min-w-0 min-h-[72px]">
-              <div className="text-xs text-blue-300 mb-1.5 font-semibold text-center truncate">{t("line")}</div>
+              <div className="text-xs text-blue-300 mb-1.5 font-semibold text-center truncate">
+                {t("line")}
+              </div>
               <div className="flex-1 flex items-center justify-center min-h-[28px]">
                 <span className="text-white font-semibold text-base tabular-nums">
                   {stepData.line}
@@ -123,28 +128,39 @@ export default function StepInfo({
             </div>
 
             <div className="glass-card p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 flex flex-col min-w-0 min-h-[72px]">
-              <div className="text-xs text-purple-300 mb-1.5 font-semibold text-center truncate">{t("type")}</div>
+              <div className="text-xs text-purple-300 mb-1.5 font-semibold text-center truncate">
+                {t("type")}
+              </div>
               <div className="flex-1 flex items-center justify-center min-h-[28px]">
                 <span className="text-white font-semibold text-base">
                   {(() => {
                     const key = `eventKind_${stepData.kind}` as const;
                     const translated = t(key);
-                    return translated === key ? t("eventKind_other") : translated;
+                    return translated === key
+                      ? t("eventKind_other")
+                      : translated;
                   })()}
                 </span>
               </div>
             </div>
 
             {stepData.cost && (
-              <div className={`glass-card p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 flex flex-col min-w-0 ${stepData.accumulated_cost ? 'min-h-[88px]' : 'min-h-[72px]'}`}>
-                <div className="text-xs text-orange-300 mb-1.5 font-semibold text-center truncate">{t("cost")}</div>
+              <div
+                className={`glass-card p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 flex flex-col min-w-0 ${stepData.accumulated_cost ? "min-h-[88px]" : "min-h-[72px]"}`}
+              >
+                <div className="text-xs text-orange-300 mb-1.5 font-semibold text-center truncate">
+                  {t("cost")}
+                </div>
                 <div className="flex-1 flex flex-col items-center justify-center min-h-[28px] gap-0.5">
                   <div className="text-white text-sm text-center min-w-0">
                     <Formula latex={stepData.cost} />
                   </div>
                   {stepData.accumulated_cost && (
                     <div className="text-slate-400 text-xs text-center mt-0.5">
-                      {t("accumulated")} <Formula latex={formatAccumulatedCost(stepData.accumulated_cost)} />
+                      {t("accumulated")}{" "}
+                      <Formula
+                        latex={formatAccumulatedCost(stepData.accumulated_cost)}
+                      />
                     </div>
                   )}
                 </div>
@@ -153,7 +169,9 @@ export default function StepInfo({
 
             {/* Microsegundos - mostrar siempre, con loader si está cargando */}
             <div className="glass-card p-3 rounded-lg bg-green-500/10 border border-green-500/20 flex flex-col min-w-0 min-h-[72px]">
-              <div className="text-xs text-green-300 mb-1.5 font-semibold text-center truncate">{t("microseconds")}</div>
+              <div className="text-xs text-green-300 mb-1.5 font-semibold text-center truncate">
+                {t("microseconds")}
+              </div>
               <div className="flex-1 flex items-center justify-center min-h-[28px]">
                 {loadingDiagram && stepData?.microseconds === undefined ? (
                   <div className="w-5 h-5 border-2 border-green-300/50 border-t-green-300 rounded-full animate-spin" />
@@ -169,7 +187,9 @@ export default function StepInfo({
 
             {/* Tokens - mostrar siempre, con loader si está cargando */}
             <div className="glass-card p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex flex-col min-w-0 min-h-[72px]">
-              <div className="text-xs text-cyan-300 mb-1.5 font-semibold text-center truncate">{t("tokens")}</div>
+              <div className="text-xs text-cyan-300 mb-1.5 font-semibold text-center truncate">
+                {t("tokens")}
+              </div>
               <div className="flex-1 flex items-center justify-center min-h-[28px]">
                 {loadingDiagram && stepData?.tokens === undefined ? (
                   <div className="w-5 h-5 border-2 border-cyan-300/50 border-t-cyan-300 rounded-full animate-spin" />
@@ -214,7 +234,10 @@ export default function StepInfo({
                     <span className="material-symbols-outlined text-sm">
                       {expandedIteration ? "expand_less" : "expand_more"}
                     </span>
-                    {t("iteration")}{stepData.iteration.iteration ? ` #${stepData.iteration.iteration}` : ""}
+                    {t("iteration")}
+                    {stepData.iteration.iteration
+                      ? ` #${stepData.iteration.iteration}`
+                      : ""}
                   </button>
                 )}
               </div>
@@ -223,7 +246,9 @@ export default function StepInfo({
               {expandedDescription && stepData.description && (
                 <div className="glass-card p-3 rounded-lg animate-fade-in min-h-[80px]">
                   <div className="bg-slate-800/40 rounded px-3 py-2 border border-white/5">
-                    <div className="text-xs text-slate-400 mb-1">{t("stepDescription")}</div>
+                    <div className="text-xs text-slate-400 mb-1">
+                      {t("stepDescription")}
+                    </div>
                     <div className="text-white text-sm font-medium">
                       {stepData.description}
                     </div>
@@ -235,9 +260,13 @@ export default function StepInfo({
                 <div className="glass-card p-3 rounded-lg bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 animate-fade-in min-h-[80px]">
                   {stepData.iteration.loopVar && (
                     <div className="bg-slate-800/40 rounded px-3 py-2 border border-white/5">
-                      <div className="text-xs text-slate-400 mb-1">{t("iterationVariable")}</div>
+                      <div className="text-xs text-slate-400 mb-1">
+                        {t("iterationVariable")}
+                      </div>
                       <div className="text-white text-sm font-medium">
-                        <Formula latex={`${stepData.iteration.loopVar} = ${stepData.iteration.currentValue}${stepData.iteration.maxValue ? ` / ${stepData.iteration.maxValue}` : ""}`} />
+                        <Formula
+                          latex={`${stepData.iteration.loopVar} = ${stepData.iteration.currentValue}${stepData.iteration.maxValue ? ` / ${stepData.iteration.maxValue}` : ""}`}
+                        />
                       </div>
                     </div>
                   )}
@@ -257,8 +286,7 @@ export default function StepInfo({
                 </div>
                 {stepData.recursion.procedure && (
                   <div>
-                    {t("procedure")}{" "}
-                    {stepData.recursion.procedure}
+                    {t("procedure")} {stepData.recursion.procedure}
                   </div>
                 )}
               </div>
@@ -267,28 +295,34 @@ export default function StepInfo({
 
           {/* Variables with colorful styling and flex-wrap layout */}
           <div className="glass-card p-3 rounded-lg bg-gradient-to-br from-cyan-500/10 to-purple-500/10 border border-cyan-500/20">
-            <div className="text-xs text-cyan-300 mb-2 font-semibold">{t("variables")}:</div>
+            <div className="text-xs text-cyan-300 mb-2 font-semibold">
+              {t("variables")}:
+            </div>
             <div className="flex flex-wrap gap-2">
-              {Object.entries(stepData.variables).map(
-                ([key, value]) => {
-                  const strValue = String(value);
-                  const isLarge = strValue.length > 20 || strValue.includes('[');
+              {Object.entries(stepData.variables).map(([key, value]) => {
+                const strValue = String(value);
+                const isLarge = strValue.length > 20 || strValue.includes("[");
 
-                  return (
+                return (
+                  <div
+                    key={key}
+                    className={`bg-slate-800/40 rounded px-2 py-1.5 border border-white/5 flex items-center gap-2 ${
+                      isLarge ? "w-full" : "flex-shrink-0"
+                    }`}
+                  >
+                    <span className="text-cyan-200 text-sm font-medium flex-shrink-0">
+                      {key}:
+                    </span>
                     <div
-                      key={key}
-                      className={`bg-slate-800/40 rounded px-2 py-1.5 border border-white/5 flex items-center gap-2 ${isLarge ? "w-full" : "flex-shrink-0"
-                        }`}
+                      className={`text-white text-sm font-mono ${
+                        isLarge ? "flex-1 overflow-x-auto scrollbar-thin" : ""
+                      }`}
                     >
-                      <span className="text-cyan-200 text-sm font-medium flex-shrink-0">{key}:</span>
-                      <div className={`text-white text-sm font-mono ${isLarge ? "flex-1 overflow-x-auto scrollbar-thin" : ""
-                        }`}>
-                        <Formula latex={strValue} />
-                      </div>
+                      <Formula latex={strValue} />
                     </div>
-                  );
-                }
-              )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -309,4 +343,3 @@ export default function StepInfo({
     </div>
   );
 }
-

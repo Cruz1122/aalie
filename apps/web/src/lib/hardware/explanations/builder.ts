@@ -1,5 +1,11 @@
 import type { EngineOutput } from "../scoring/engine";
-import type { HardwareFeatures, DependencyProfile, PatternCandidate, HardwareSuitabilityReport, EvidenceItem } from "../types";
+import type {
+  HardwareFeatures,
+  DependencyProfile,
+  PatternCandidate,
+  HardwareSuitabilityReport,
+  EvidenceItem,
+} from "../types";
 
 type Locale = "en" | "es";
 
@@ -116,8 +122,11 @@ export function buildExplanations(
   deps: DependencyProfile,
   patterns: PatternCandidate[],
   engine: EngineOutput,
-  locale: Locale
-): Pick<HardwareSuitabilityReport, "summary" | "reasons" | "evidence" | "diagnostics"> {
+  locale: Locale,
+): Pick<
+  HardwareSuitabilityReport,
+  "summary" | "reasons" | "evidence" | "diagnostics"
+> {
   const positive: string[] = [];
   const negative: string[] = [];
   const blockers: string[] = [];
@@ -126,12 +135,24 @@ export function buildExplanations(
   // ── Blockers (from vetoes) ──
   for (const veto of engine.vetoes) {
     switch (veto.reason) {
-      case "Early return inside loop": blockers.push(t("earlyReturnBlocker", locale)); break;
-      case "While loop with data-dependent condition": blockers.push(t("whileDataDepBlocker", locale)); break;
-      case "Loop-carried dependency": blockers.push(t("loopCarriedBlocker", locale)); break;
-      case "Indirect indexed access dominates": blockers.push(t("indirectIndexBlocker", locale)); break;
-      case "Graph/pointer traversal": blockers.push(t("graphTraversalBlocker", locale)); break;
-      case "Unbalanced recursion with pruning": blockers.push(t("unbalancedRecBlocker", locale)); break;
+      case "Early return inside loop":
+        blockers.push(t("earlyReturnBlocker", locale));
+        break;
+      case "While loop with data-dependent condition":
+        blockers.push(t("whileDataDepBlocker", locale));
+        break;
+      case "Loop-carried dependency":
+        blockers.push(t("loopCarriedBlocker", locale));
+        break;
+      case "Indirect indexed access dominates":
+        blockers.push(t("indirectIndexBlocker", locale));
+        break;
+      case "Graph/pointer traversal":
+        blockers.push(t("graphTraversalBlocker", locale));
+        break;
+      case "Unbalanced recursion with pruning":
+        blockers.push(t("unbalancedRecBlocker", locale));
+        break;
     }
   }
 
@@ -139,37 +160,61 @@ export function buildExplanations(
   const topPattern = patterns[0]?.name ?? "";
   if (topPattern === "map element-wise") {
     positive.push(t("independentIterations", locale));
-    if (features.memoryRegularity === "regular") positive.push(t("regularContiguous", locale));
+    if (features.memoryRegularity === "regular")
+      positive.push(t("regularContiguous", locale));
     if (!features.hasRecursion) positive.push(t("noRecursion", locale));
   }
   if (topPattern === "stencil") positive.push(t("stencilRegular", locale));
-  if (topPattern === "nested rectangular loops") positive.push(t("deepNested", locale));
+  if (topPattern === "nested rectangular loops")
+    positive.push(t("deepNested", locale));
   if (topPattern === "reduction") positive.push(t("reductionDetected", locale));
-  if (topPattern === "divide and conquer balanced") positive.push(t("divideConquerBalanced", locale));
-  if (!features.hasRecursion && features.loopCarriedDependencies === 0 && engine.primaryRecommendation === "gpu") {
+  if (topPattern === "divide and conquer balanced")
+    positive.push(t("divideConquerBalanced", locale));
+  if (
+    !features.hasRecursion &&
+    features.loopCarriedDependencies === 0 &&
+    engine.primaryRecommendation === "gpu"
+  ) {
     positive.push(t("noRecursion", locale));
   }
 
   // ── Negative signals ──
-  if (features.loopCarriedDependencies > 0) negative.push(t("loopCarriedDep", locale));
-  if (features.branchDensityInsideLoops > 0.5) negative.push(t("highBranch", locale));
-  if (features.memoryRegularity === "irregular") negative.push(t("irregularMemory", locale));
-  if (features.hasRecursion && !features.hasDivideAndConquerShape) negative.push(t("recursionSerial", locale));
+  if (features.loopCarriedDependencies > 0)
+    negative.push(t("loopCarriedDep", locale));
+  if (features.branchDensityInsideLoops > 0.5)
+    negative.push(t("highBranch", locale));
+  if (features.memoryRegularity === "irregular")
+    negative.push(t("irregularMemory", locale));
+  if (features.hasRecursion && !features.hasDivideAndConquerShape)
+    negative.push(t("recursionSerial", locale));
 
   // ── Opportunities ──
-  if (topPattern === "reduction" || features.scalarReductions > 0) opportunities.push(t("parallelReductionOpp", locale));
-  if (features.hasDivideAndConquerShape && features.recursiveFanOut >= 2) opportunities.push(t("divideConquerTaskOpp", locale));
-  if (features.scalarReductions > 0 && features.mapLikeWrites === 0 && features.loopCarriedDependencies > 0) {
+  if (topPattern === "reduction" || features.scalarReductions > 0)
+    opportunities.push(t("parallelReductionOpp", locale));
+  if (features.hasDivideAndConquerShape && features.recursiveFanOut >= 2)
+    opportunities.push(t("divideConquerTaskOpp", locale));
+  if (
+    features.scalarReductions > 0 &&
+    features.mapLikeWrites === 0 &&
+    features.loopCarriedDependencies > 0
+  ) {
     opportunities.push(t("prefixScanOpp", locale));
   }
 
   // ── Summary ──
   let summary: string;
   switch (engine.internalVerdict) {
-    case "gpu": summary = t("summaryGpu", locale); break;
-    case "cpu": summary = t("summaryCpu", locale); break;
-    case "hybrid": summary = t("summaryHybrid", locale); break;
-    default: summary = t("summaryInconclusive", locale);
+    case "gpu":
+      summary = t("summaryGpu", locale);
+      break;
+    case "cpu":
+      summary = t("summaryCpu", locale);
+      break;
+    case "hybrid":
+      summary = t("summaryHybrid", locale);
+      break;
+    default:
+      summary = t("summaryInconclusive", locale);
   }
 
   // ── Pattern evidence items ──
@@ -192,10 +237,10 @@ export function buildExplanations(
         engine.primaryRecommendation === "gpu"
           ? "data"
           : engine.primaryRecommendation === "hybrid"
-          ? "mixed"
-          : features.hasDivideAndConquerShape
-          ? "task"
-          : "limited",
+            ? "mixed"
+            : features.hasDivideAndConquerShape
+              ? "task"
+              : "limited",
     },
   };
 }

@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
+import {
+  getMessages,
+  getTranslations,
+  setRequestLocale,
+} from "next-intl/server";
 
 import { GlobalLoaderOverlay } from "@/components/GlobalLoaderOverlay";
 import NavigationLoadingWrapper from "@/components/NavigationLoadingWrapper";
@@ -42,9 +46,7 @@ export default async function LocaleLayout({ children, params }: Props) {
       <GlobalLoaderProvider>
         <AnalysisProgressProvider>
           <NavigationProvider>
-            <NavigationLoadingWrapper>
-              {children}
-            </NavigationLoadingWrapper>
+            <NavigationLoadingWrapper>{children}</NavigationLoadingWrapper>
           </NavigationProvider>
           <GlobalLoaderOverlay />
         </AnalysisProgressProvider>

@@ -32,12 +32,12 @@ def test_classify_recursive():
     pass
 
 
-@when("envio POST a \"/classify\" con body source con FOR simple")
+@when('envio POST a "/classify" con body source con FOR simple')
 def post_classify_for(client, response_ctx):
     response_ctx["response"] = client.post("/classify", json={"source": FOR_SIMPLE})
 
 
-@when("envio POST a \"/classify\" con body source con factorial recursivo")
+@when('envio POST a "/classify" con body source con factorial recursivo')
 def post_classify_factorial(client, response_ctx):
     response_ctx["response"] = client.post("/classify", json={"source": FACTORIAL_REC})
 

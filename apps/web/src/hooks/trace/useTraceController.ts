@@ -2,7 +2,6 @@
 
 import { useCallback, useState, useRef, useMemo } from "react";
 
-
 import type {
   CaseType,
   TraceApiResponse,
@@ -31,7 +30,11 @@ export interface UseTraceControllerResult {
   /** true una vez que el primer fetch completó (con éxito o fallo). */
   fetchCompleted: boolean;
   /** Diagrama estructurado (única fuente). */
-  structuredDiagram: { graph: TraceGraph; patternKind: string; classification: { evidence: string[] } } | null;
+  structuredDiagram: {
+    graph: TraceGraph;
+    patternKind: string;
+    classification: { evidence: string[] };
+  } | null;
   algorithmKind: string | null;
   traceConfig: TraceConfig;
   loadTrace: (
@@ -105,7 +108,11 @@ export function useTraceController(
         const actualN = hasZeroCheck ? Math.max(1, n) : n;
         const arr = makeBaseArray(actualN);
         const midIndex = Math.floor(Math.max(1, actualN) / 2);
-        return { n: actualN, array: arr, x: arr[midIndex] ?? arr[arr.length - 1] };
+        return {
+          n: actualN,
+          array: arr,
+          x: arr[midIndex] ?? arr[arr.length - 1],
+        };
       },
       worst: (n: number): InternalInput => {
         if (hasZeroCheck) return { n: 0, array: [], x: undefined };
@@ -138,7 +145,9 @@ export function useTraceController(
 
       const scenario: CaseType = caseType;
       const overrideToUse =
-        effectiveOverride !== undefined ? effectiveOverride : initialVariablesOverride;
+        effectiveOverride !== undefined
+          ? effectiveOverride
+          : initialVariablesOverride;
 
       const nFromOverride =
         overrideToUse &&
@@ -197,9 +206,7 @@ export function useTraceController(
               throw new Error("Cache contains x, bypassing.");
             }
             setAlgorithmKind(
-              cachedData.algorithmKind ??
-                cachedData.trace?.kind ??
-                "unknown",
+              cachedData.algorithmKind ?? cachedData.trace?.kind ?? "unknown",
             );
             const st = cachedData.derived?.structuredTrace;
             if (st?.graph && (st.graph.nodes?.length ?? 0) > 0) {
@@ -239,9 +246,7 @@ export function useTraceController(
 
         const data: TraceApiResponse = await response.json();
 
-        setAlgorithmKind(
-          data.algorithmKind ?? data.trace?.kind ?? "unknown",
-        );
+        setAlgorithmKind(data.algorithmKind ?? data.trace?.kind ?? "unknown");
 
         const st = data.derived?.structuredTrace;
         if (st?.graph && (st.graph.nodes?.length ?? 0) > 0) {

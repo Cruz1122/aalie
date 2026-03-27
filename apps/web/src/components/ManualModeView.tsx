@@ -46,7 +46,6 @@ type TxtImportModalState = {
   showRepairAction?: boolean;
 };
 
-
 /**
  * Propiedades del componente ManualModeView.
  */
@@ -119,8 +118,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     const code = isControlled ? initialCode : internalCode;
     const setCode = useCallback(
       (value: string | ((prev: string) => string)) => {
-        const next =
-          typeof value === "function" ? value(code) : value;
+        const next = typeof value === "function" ? value(code) : value;
         if (!isControlled) setInternalCode(next);
         onCodeChange?.(next);
       },
@@ -146,9 +144,8 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     );
     const [isImportingTxt, setIsImportingTxt] = useState(false);
     const txtInputRef = useRef<HTMLInputElement | null>(null);
-    const [txtImportModal, setTxtImportModal] = useState<TxtImportModalState | null>(
-      null,
-    );
+    const [txtImportModal, setTxtImportModal] =
+      useState<TxtImportModalState | null>(null);
     const [showRepairModal, setShowRepairModal] = useState(false);
     const [pendingImportSourceForRepair, setPendingImportSourceForRepair] =
       useState<string | null>(null);
@@ -518,7 +515,9 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
                 canViewAst={localParseOk && ast != null}
                 hasCode={code.trim() !== ""}
                 verifyParseResult={verifyParseResult}
-                showAIHelpButton={showAIHelpButton && !!backendParseError && hasValidApiKey}
+                showAIHelpButton={
+                  showAIHelpButton && !!backendParseError && hasValidApiKey
+                }
                 onAIHelpClick={async () => {
                   const errorMessage = `Necesito ayuda con un error de sintaxis en mi código de pseudocódigo.
 
@@ -543,7 +542,8 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                   };
 
                   const codeHash = code.trim().slice(0, 100);
-                  const errorHash = backendParseError?.trim().slice(0, 50) || "";
+                  const errorHash =
+                    backendParseError?.trim().slice(0, 50) || "";
                   const messageExists = messages.some(
                     (msg) =>
                       msg.sender === "user" &&
@@ -570,7 +570,7 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                             timestamp: new Date(),
                           },
                           newMessage,
-                        ]
+                        ],
                   );
 
                   setTimeout(() => {
@@ -646,101 +646,101 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
             ReactDOM.createPortal(
               <div className="fixed inset-0 z-[9999] flex items-center justify-center glass-modal-overlay glass-modal-overlay-fixed modal-animate-in">
                 <div className="glass-modal-container rounded-xl shadow-2xl max-w-3xl w-full max-h-[80vh] flex flex-col m-4 modal-animate-in">
-                {/* Header compacto */}
-                <div className="glass-modal-header flex items-center justify-between px-5 py-3 rounded-t-xl border-b border-white/10">
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-yellow-400">
-                      account_tree
-                    </span>
-                    <h2 className="text-lg font-bold text-white">
-                      {tView("abstractSyntaxTree")}
-                    </h2>
-                  </div>
-                  <button
-                    onClick={() => setShowAstModal(false)}
-                    className="text-slate-400 hover:text-white text-2xl leading-none transition-all hover:rotate-90 transform duration-200"
-                  >
-                    ×
-                  </button>
-                </div>
-
-                {/* Tabs para cambiar vista */}
-                <div className="flex gap-2 px-5 py-3 border-b border-white/10">
-                  <button
-                    onClick={() => setViewMode("tree")}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                      viewMode === "tree"
-                        ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
-                        : "text-slate-400 hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-base">
+                  {/* Header compacto */}
+                  <div className="glass-modal-header flex items-center justify-between px-5 py-3 rounded-t-xl border-b border-white/10">
+                    <div className="flex items-center gap-3">
+                      <span className="material-symbols-outlined text-yellow-400">
                         account_tree
-                      </span>{" "}
-                      {tView("treeView")}
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => setViewMode("json")}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                      viewMode === "json"
-                        ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
-                        : "text-slate-400 hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-base">
-                        code
-                      </span>{" "}
-                      {tView("jsonView")}
-                    </span>
-                  </button>
-                </div>
-
-                {/* Content con altura fija */}
-                <div className="h-[300px] overflow-auto p-5 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
-                  {viewMode === "tree" ? (
-                    <ASTTreeView node={ast} />
-                  ) : (
-                    <pre className="text-xs text-slate-200 p-4 rounded-lg border border-white/10 overflow-x-auto font-mono h-full">
-                      {JSON.stringify(ast, null, 2)}
-                    </pre>
-                  )}
-                </div>
-
-                {/* Footer compacto */}
-                <div className="flex justify-between items-center gap-3 px-5 py-3 border-t border-white/10 rounded-b-xl">
-                  <div className="text-xs text-slate-400">
-                    {viewMode === "tree"
-                      ? tView("astTreeViewDesc")
-                      : tView("astJsonViewDesc")}
-                  </div>
-                  <div className="flex gap-2">
+                      </span>
+                      <h2 className="text-lg font-bold text-white">
+                        {tView("abstractSyntaxTree")}
+                      </h2>
+                    </div>
                     <button
-                      onClick={handleCopyJson}
-                      className={`glass-secondary px-4 py-2 text-xs font-semibold rounded-lg transition-all hover:scale-105 flex items-center gap-2 ${
-                        copied
-                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-                          : "text-slate-200"
+                      onClick={() => setShowAstModal(false)}
+                      className="text-slate-400 hover:text-white text-2xl leading-none transition-all hover:rotate-90 transform duration-200"
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  {/* Tabs para cambiar vista */}
+                  <div className="flex gap-2 px-5 py-3 border-b border-white/10">
+                    <button
+                      onClick={() => setViewMode("tree")}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                        viewMode === "tree"
+                          ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                          : "text-slate-400 hover:text-white hover:bg-white/5"
                       }`}
                     >
-                      <span className="material-symbols-outlined text-sm">
-                        {copied ? "check" : "content_copy"}
+                      <span className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-base">
+                          account_tree
+                        </span>{" "}
+                        {tView("treeView")}
                       </span>
-                      {copied ? tView("astModalCopied") : tView("copyJson")}
                     </button>
-                    <AAButton
-                      onClick={() => setShowAstModal(false)}
-                      variant="amber"
-                      size="sm"
+                    <button
+                      onClick={() => setViewMode("json")}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                        viewMode === "json"
+                          ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                          : "text-slate-400 hover:text-white hover:bg-white/5"
+                      }`}
                     >
-                      {tCommon("close")}
-                    </AAButton>
+                      <span className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-base">
+                          code
+                        </span>{" "}
+                        {tView("jsonView")}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Content con altura fija */}
+                  <div className="h-[300px] overflow-auto p-5 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
+                    {viewMode === "tree" ? (
+                      <ASTTreeView node={ast} />
+                    ) : (
+                      <pre className="text-xs text-slate-200 p-4 rounded-lg border border-white/10 overflow-x-auto font-mono h-full">
+                        {JSON.stringify(ast, null, 2)}
+                      </pre>
+                    )}
+                  </div>
+
+                  {/* Footer compacto */}
+                  <div className="flex justify-between items-center gap-3 px-5 py-3 border-t border-white/10 rounded-b-xl">
+                    <div className="text-xs text-slate-400">
+                      {viewMode === "tree"
+                        ? tView("astTreeViewDesc")
+                        : tView("astJsonViewDesc")}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleCopyJson}
+                        className={`glass-secondary px-4 py-2 text-xs font-semibold rounded-lg transition-all hover:scale-105 flex items-center gap-2 ${
+                          copied
+                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                            : "text-slate-200"
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-sm">
+                          {copied ? "check" : "content_copy"}
+                        </span>
+                        {copied ? tView("astModalCopied") : tView("copyJson")}
+                      </button>
+                      <AAButton
+                        onClick={() => setShowAstModal(false)}
+                        variant="amber"
+                        size="sm"
+                      >
+                        {tCommon("close")}
+                      </AAButton>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>,
+              </div>,
               document.body,
             )}
 

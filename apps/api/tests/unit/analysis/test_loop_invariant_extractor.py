@@ -37,13 +37,15 @@ def _if(line: int, test, consequent_body, alternate_body=None):
             "body": consequent_body,
             "pos": {"line": line + 1, "column": 2},
         },
-        "alternate": {
-            "type": "Block",
-            "body": alternate_body,
-            "pos": {"line": line + 2, "column": 2},
-        }
-        if alternate_body
-        else None,
+        "alternate": (
+            {
+                "type": "Block",
+                "body": alternate_body,
+                "pos": {"line": line + 2, "column": 2},
+            }
+            if alternate_body
+            else None
+        ),
         "pos": {"line": line, "column": 2},
     }
 
@@ -144,8 +146,20 @@ def test_extractor_detects_binary_search_interval_features():
             _if(
                 5,
                 _binary("<", _index("A", _identifier("mid")), _identifier("x")),
-                [_assign(6, _identifier("low"), _binary("+", _identifier("mid"), _literal(1)))],
-                [_assign(7, _identifier("high"), _binary("-", _identifier("mid"), _literal(1)))],
+                [
+                    _assign(
+                        6,
+                        _identifier("low"),
+                        _binary("+", _identifier("mid"), _literal(1)),
+                    )
+                ],
+                [
+                    _assign(
+                        7,
+                        _identifier("high"),
+                        _binary("-", _identifier("mid"), _literal(1)),
+                    )
+                ],
             ),
         ],
     )
@@ -167,8 +181,12 @@ def test_extractor_detects_filter_like_compaction():
                 4,
                 _binary(">", _index("A", _identifier("i")), _literal(0)),
                 [
-                    _assign(5, _index("B", _identifier("k")), _index("A", _identifier("i"))),
-                    _assign(6, _identifier("k"), _binary("+", _identifier("k"), _literal(1))),
+                    _assign(
+                        5, _index("B", _identifier("k")), _index("A", _identifier("i"))
+                    ),
+                    _assign(
+                        6, _identifier("k"), _binary("+", _identifier("k"), _literal(1))
+                    ),
                 ],
             )
         ],
@@ -187,7 +205,11 @@ def test_extractor_detects_order_check_without_swaps():
         [
             _if(
                 4,
-                _binary(">", _index("A", _identifier("i")), _index("A", _binary("+", _identifier("i"), _literal(1)))),
+                _binary(
+                    ">",
+                    _index("A", _identifier("i")),
+                    _index("A", _binary("+", _identifier("i"), _literal(1))),
+                ),
                 [_assign(5, _identifier("sorted"), _literal(False))],
             )
         ],
@@ -207,8 +229,14 @@ def test_extractor_detects_collection_equality_comparison():
         [
             _if(
                 4,
-                _binary("=", _index("A", _identifier("i")), _index("B", _identifier("j"))),
-                [_assign(5, _index("C", _identifier("k")), _index("A", _identifier("i")))],
+                _binary(
+                    "=", _index("A", _identifier("i")), _index("B", _identifier("j"))
+                ),
+                [
+                    _assign(
+                        5, _index("C", _identifier("k")), _index("A", _identifier("i"))
+                    )
+                ],
             )
         ],
     )
@@ -226,7 +254,9 @@ def test_extractor_detects_binary_exponentiation_state_anchors():
         [
             _if(
                 4,
-                _binary("==", _binary("mod", _identifier("e"), _literal(2)), _literal(1)),
+                _binary(
+                    "==", _binary("mod", _identifier("e"), _literal(2)), _literal(1)
+                ),
                 [
                     _assign(
                         5,
@@ -243,7 +273,11 @@ def test_extractor_detects_binary_exponentiation_state_anchors():
             _assign(
                 7,
                 _identifier("b"),
-                _binary("mod", _binary("*", _identifier("b"), _identifier("b")), _identifier("n")),
+                _binary(
+                    "mod",
+                    _binary("*", _identifier("b"), _identifier("b")),
+                    _identifier("n"),
+                ),
             ),
         ],
     )
@@ -265,8 +299,14 @@ def test_extractor_detects_structural_extrema_signal_with_unusual_names():
         [
             _if(
                 4,
-                _binary(">", _index("_rack_77", _identifier("ix_4")), _identifier("z_88")),
-                [_assign(5, _identifier("z_88"), _index("_rack_77", _identifier("ix_4")))],
+                _binary(
+                    ">", _index("_rack_77", _identifier("ix_4")), _identifier("z_88")
+                ),
+                [
+                    _assign(
+                        5, _identifier("z_88"), _index("_rack_77", _identifier("ix_4"))
+                    )
+                ],
             )
         ],
     )

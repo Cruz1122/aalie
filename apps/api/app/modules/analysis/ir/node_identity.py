@@ -7,6 +7,7 @@ nodos en diagnósticos y evidencias.
 Author: @Cruz1122
 Version: 0.1.0
 """
+
 from dataclasses import dataclass
 from typing import Any
 

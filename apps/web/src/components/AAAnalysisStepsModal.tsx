@@ -32,7 +32,11 @@ export default function AAAnalysisStepsModal({
   equationLabelKey = "recurrenceEquation",
 }: Readonly<AAAnalysisStepsModalProps>) {
   const t = useTranslations("analyzer.analysisSteps");
-  const thetaLatex = theta ? (theta.includes("T(n)") ? theta : `T(n) = ${theta}`) : null;
+  const thetaLatex = theta
+    ? theta.includes("T(n)")
+      ? theta
+      : `T(n) = ${theta}`
+    : null;
   const isIteration = bundle?.method === "iteration";
   const isMaster = bundle?.method === "master";
   const isRecursionTree = bundle?.method === "recursion_tree";
@@ -40,25 +44,27 @@ export default function AAAnalysisStepsModal({
     ? "text-violet-400"
     : isRecursionTree
       ? "text-cyan-400"
-    : isMaster
-      ? "text-orange-400"
-      : "text-blue-400";
+      : isMaster
+        ? "text-orange-400"
+        : "text-blue-400";
   const panelClassName = isIteration
     ? "rounded-xl bg-violet-950/55 ring-1 ring-violet-400/20"
     : isRecursionTree
       ? "rounded-xl bg-cyan-950/30 ring-1 ring-cyan-400/25"
-    : isMaster
-      ? "rounded-xl bg-orange-950/45 ring-1 ring-orange-400/25"
-      : "rounded-xl bg-slate-900 ring-1 ring-white/10";
-  const equationCardClassName = "rounded-lg border border-white/10 bg-slate-800/60 p-3";
-  const overallStatusCardClassName = "flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-slate-800/60 p-3";
+      : isMaster
+        ? "rounded-xl bg-orange-950/45 ring-1 ring-orange-400/25"
+        : "rounded-xl bg-slate-900 ring-1 ring-white/10";
+  const equationCardClassName =
+    "rounded-lg border border-white/10 bg-slate-800/60 p-3";
+  const overallStatusCardClassName =
+    "flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-slate-800/60 p-3";
   const accent: "blue" | "purple" | "orange" | "cyan" = isIteration
     ? "purple"
     : isRecursionTree
       ? "cyan"
-    : isMaster
-      ? "orange"
-      : "blue";
+      : isMaster
+        ? "orange"
+        : "blue";
 
   if (!open) return null;
 
@@ -86,7 +92,9 @@ export default function AAAnalysisStepsModal({
               <div className="text-sm font-semibold text-white">
                 {t("overallStatus")}
               </div>
-              <span className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${statusClassMap[bundle.overallStatus]}`}>
+              <span
+                className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${statusClassMap[bundle.overallStatus]}`}
+              >
                 {t(`status.${bundle.overallStatus}`)}
               </span>
             </div>
@@ -96,7 +104,9 @@ export default function AAAnalysisStepsModal({
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
               {equation && (
                 <div className={equationCardClassName}>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{t(equationLabelKey)}</p>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    {t(equationLabelKey)}
+                  </p>
                   <div className="overflow-x-auto">
                     <Formula latex={equation} display />
                   </div>
@@ -104,7 +114,9 @@ export default function AAAnalysisStepsModal({
               )}
               {thetaLatex && (
                 <div className={equationCardClassName}>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{t("finalTheta")}</p>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    {t("finalTheta")}
+                  </p>
                   <div className="overflow-x-auto">
                     <Formula latex={thetaLatex} display />
                   </div>

@@ -3,6 +3,7 @@ Tests unitarios para app.modules.analysis.visitors.if_visitor.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
+
 import pytest
 
 from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
@@ -20,13 +21,23 @@ class TestIfVisitor:
         node = {
             "type": "If",
             "pos": {"line": 2},
-            "test": {"type": "binary", "left": {"type": "identifier", "name": "x"}, "op": ">", "right": {"type": "number", "value": 0}},
+            "test": {
+                "type": "binary",
+                "left": {"type": "identifier", "name": "x"},
+                "op": ">",
+                "right": {"type": "number", "value": 0},
+            },
             "consequent": {
                 "type": "Block",
                 "body": [
-                    {"type": "Assign", "pos": {"line": 3}, "target": {"type": "identifier", "name": "y"}, "value": {"type": "number", "value": 1}}
-                ]
-            }
+                    {
+                        "type": "Assign",
+                        "pos": {"line": 3},
+                        "target": {"type": "identifier", "name": "y"},
+                        "value": {"type": "number", "value": 1},
+                    }
+                ],
+            },
         }
         self.analyzer.visitIf(node, mode="worst")
         assert len(self.analyzer.rows) > 0
@@ -36,19 +47,34 @@ class TestIfVisitor:
         node = {
             "type": "If",
             "pos": {"line": 2},
-            "test": {"type": "binary", "left": {"type": "identifier", "name": "x"}, "op": ">", "right": {"type": "number", "value": 0}},
+            "test": {
+                "type": "binary",
+                "left": {"type": "identifier", "name": "x"},
+                "op": ">",
+                "right": {"type": "number", "value": 0},
+            },
             "consequent": {
                 "type": "Block",
                 "body": [
-                    {"type": "Assign", "pos": {"line": 3}, "target": {"type": "identifier", "name": "y"}, "value": {"type": "number", "value": 1}}
-                ]
+                    {
+                        "type": "Assign",
+                        "pos": {"line": 3},
+                        "target": {"type": "identifier", "name": "y"},
+                        "value": {"type": "number", "value": 1},
+                    }
+                ],
             },
             "alternate": {
                 "type": "Block",
                 "body": [
-                    {"type": "Assign", "pos": {"line": 4}, "target": {"type": "identifier", "name": "y"}, "value": {"type": "number", "value": 0}}
-                ]
-            }
+                    {
+                        "type": "Assign",
+                        "pos": {"line": 4},
+                        "target": {"type": "identifier", "name": "y"},
+                        "value": {"type": "number", "value": 0},
+                    }
+                ],
+            },
         }
         self.analyzer.visitIf(node, mode="worst")
         assert len(self.analyzer.rows) > 0
@@ -71,7 +97,7 @@ class TestIfVisitor:
             "type": "binary",
             "left": {"type": "identifier", "name": "a"},
             "operator": "+",
-            "right": {"type": "number", "value": 1}
+            "right": {"type": "number", "value": 1},
         }
         result = self.analyzer._expr_to_str(expr)
         assert "a" in result
@@ -82,7 +108,7 @@ class TestIfVisitor:
         expr = {
             "type": "index",
             "target": {"type": "identifier", "name": "A"},
-            "index": {"type": "identifier", "name": "i"}
+            "index": {"type": "identifier", "name": "i"},
         }
         result = self.analyzer._expr_to_str(expr)
         assert "A" in result
@@ -107,14 +133,14 @@ class TestIfVisitor:
                 "type": "binary",
                 "operator": ">",
                 "left": {"type": "identifier", "name": "x"},
-                "right": {"type": "number", "value": 0}
+                "right": {"type": "number", "value": 0},
             },
             "right": {
                 "type": "binary",
                 "operator": "<",
                 "left": {"type": "identifier", "name": "y"},
-                "right": {"type": "number", "value": 10}
-            }
+                "right": {"type": "number", "value": 10},
+            },
         }
         result = self.analyzer._expr_to_str(expr)
         assert isinstance(result, str)
@@ -125,7 +151,7 @@ class TestIfVisitor:
         expr = {
             "type": "unary",
             "operator": "!",
-            "arg": {"type": "identifier", "name": "flag"}
+            "arg": {"type": "identifier", "name": "flag"},
         }
         result = self.analyzer._expr_to_str(expr)
         assert isinstance(result, str)
@@ -135,23 +161,38 @@ class TestIfVisitor:
         node = {
             "type": "If",
             "pos": {"line": 2},
-            "test": {"type": "binary", "left": {"type": "identifier", "name": "x"}, "op": ">", "right": {"type": "number", "value": 0}},
+            "test": {
+                "type": "binary",
+                "left": {"type": "identifier", "name": "x"},
+                "op": ">",
+                "right": {"type": "number", "value": 0},
+            },
             "consequent": {
                 "type": "Block",
                 "body": [
                     {
                         "type": "If",
                         "pos": {"line": 3},
-                        "test": {"type": "binary", "left": {"type": "identifier", "name": "y"}, "op": ">", "right": {"type": "number", "value": 0}},
+                        "test": {
+                            "type": "binary",
+                            "left": {"type": "identifier", "name": "y"},
+                            "op": ">",
+                            "right": {"type": "number", "value": 0},
+                        },
                         "consequent": {
                             "type": "Block",
                             "body": [
-                                {"type": "Assign", "pos": {"line": 4}, "target": {"type": "identifier", "name": "z"}, "value": {"type": "number", "value": 1}}
-                            ]
-                        }
+                                {
+                                    "type": "Assign",
+                                    "pos": {"line": 4},
+                                    "target": {"type": "identifier", "name": "z"},
+                                    "value": {"type": "number", "value": 1},
+                                }
+                            ],
+                        },
                     }
-                ]
-            }
+                ],
+            },
         }
         self.analyzer.visitIf(node, mode="worst")
         assert len(self.analyzer.rows) > 0
@@ -161,10 +202,20 @@ class TestIfVisitor:
         node = {
             "type": "If",
             "pos": {"line": 2},
-            "test": {"type": "binary", "left": {"type": "identifier", "name": "x"}, "op": ">", "right": {"type": "number", "value": 0}},
+            "test": {
+                "type": "binary",
+                "left": {"type": "identifier", "name": "x"},
+                "op": ">",
+                "right": {"type": "number", "value": 0},
+            },
             "consequent": [
-                {"type": "Assign", "pos": {"line": 3}, "target": {"type": "identifier", "name": "y"}, "value": {"type": "number", "value": 1}}
-            ]
+                {
+                    "type": "Assign",
+                    "pos": {"line": 3},
+                    "target": {"type": "identifier", "name": "y"},
+                    "value": {"type": "number", "value": 1},
+                }
+            ],
         }
         initial_rows = len(self.analyzer.rows)
         self.analyzer.visitIf(node, mode="worst")
@@ -175,16 +226,31 @@ class TestIfVisitor:
         node = {
             "type": "If",
             "pos": {"line": 2},
-            "test": {"type": "binary", "left": {"type": "identifier", "name": "x"}, "op": ">", "right": {"type": "number", "value": 0}},
+            "test": {
+                "type": "binary",
+                "left": {"type": "identifier", "name": "x"},
+                "op": ">",
+                "right": {"type": "number", "value": 0},
+            },
             "consequent": {
                 "type": "Block",
                 "body": [
-                    {"type": "Assign", "pos": {"line": 3}, "target": {"type": "identifier", "name": "y"}, "value": {"type": "number", "value": 1}}
-                ]
+                    {
+                        "type": "Assign",
+                        "pos": {"line": 3},
+                        "target": {"type": "identifier", "name": "y"},
+                        "value": {"type": "number", "value": 1},
+                    }
+                ],
             },
             "alternate": [
-                {"type": "Assign", "pos": {"line": 4}, "target": {"type": "identifier", "name": "y"}, "value": {"type": "number", "value": 0}}
-            ]
+                {
+                    "type": "Assign",
+                    "pos": {"line": 4},
+                    "target": {"type": "identifier", "name": "y"},
+                    "value": {"type": "number", "value": 0},
+                }
+            ],
         }
         initial_rows = len(self.analyzer.rows)
         self.analyzer.visitIf(node, mode="worst")
@@ -195,9 +261,13 @@ class TestIfVisitor:
         node = {
             "type": "If",
             "pos": {"line": 2},
-            "test": {"type": "binary", "left": {"type": "identifier", "name": "x"}, "op": ">", "right": {"type": "number", "value": 0}}
+            "test": {
+                "type": "binary",
+                "left": {"type": "identifier", "name": "x"},
+                "op": ">",
+                "right": {"type": "number", "value": 0},
+            },
         }
         len(self.analyzer.rows)
         self.analyzer.visitIf(node, mode="worst")
         # Debe manejar el caso sin causar error
-

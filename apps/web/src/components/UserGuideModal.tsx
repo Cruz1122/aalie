@@ -131,7 +131,9 @@ function BlockRenderer({
     case "code":
       return (
         <div className="bg-slate-800/70 border border-slate-600/40 rounded-lg p-4 font-mono text-sm overflow-x-auto">
-          <pre className="text-green-300 m-0 whitespace-pre-wrap">{block.code}</pre>
+          <pre className="text-green-300 m-0 whitespace-pre-wrap">
+            {block.code}
+          </pre>
         </div>
       );
     case "table":
@@ -150,7 +152,10 @@ function BlockRenderer({
 function ListRenderer({
   block,
   t,
-}: { block: ListBlock; t: (key: string) => string }) {
+}: {
+  block: ListBlock;
+  t: (key: string) => string;
+}) {
   return (
     <ul className="list-none space-y-2 ml-2">
       {block.items.map((item, i) => (
@@ -208,7 +213,10 @@ function ListItemRenderer({
           {index}
         </span>
       ) : iconConfig?.icon === "aalie" ? (
-        <AALIEIcon className={`${iconConfig.color} shrink-0 mt-0.5`} size={14} />
+        <AALIEIcon
+          className={`${iconConfig.color} shrink-0 mt-0.5`}
+          size={14}
+        />
       ) : iconConfig?.icon ? (
         <span
           className={`material-symbols-outlined text-sm mt-0.5 shrink-0 ${iconConfig.color}`}
@@ -226,7 +234,10 @@ function ListItemRenderer({
 function TableRenderer({
   block,
   t,
-}: { block: TableBlock; t: (key: string) => string }) {
+}: {
+  block: TableBlock;
+  t: (key: string) => string;
+}) {
   const is3Col = block.headerKeys.length === 3;
   const thirdHeader = is3Col ? block.headerKeys[2] : null;
 
@@ -256,7 +267,9 @@ function TableRenderer({
                     key={i}
                     className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors"
                   >
-                    <td className="py-3 px-4 font-semibold">{t(row.typeKey)}</td>
+                    <td className="py-3 px-4 font-semibold">
+                      {t(row.typeKey)}
+                    </td>
                     <td className="py-3 px-4 font-mono">
                       <code className="text-cyan-300">{row.ops}</code>
                     </td>
@@ -284,13 +297,14 @@ function TableRenderer({
 function NoteRenderer({
   block,
   t,
-}: { block: NoteBlock; t: (key: string) => string }) {
+}: {
+  block: NoteBlock;
+  t: (key: string) => string;
+}) {
   const style = NOTE_VARIANTS[block.variant];
 
   return (
-    <div
-      className={`${style.bg} border-l-4 ${style.border} rounded-r-lg p-4`}
-    >
+    <div className={`${style.bg} border-l-4 ${style.border} rounded-r-lg p-4`}>
       <div className="flex items-start gap-3">
         <span
           className={`material-symbols-outlined text-xl shrink-0 ${style.iconColor}`}
@@ -302,7 +316,9 @@ function NoteRenderer({
             {t(block.titleKey)}
           </p>
           {block.contentKey ? (
-            <p className={`${style.textColor} text-sm`}>{t(block.contentKey)}</p>
+            <p className={`${style.textColor} text-sm`}>
+              {t(block.contentKey)}
+            </p>
           ) : block.preKey && block.linkKey && block.postKey && block.href ? (
             <p className={`${style.textColor} text-sm`}>
               {t(block.preKey)}
@@ -345,7 +361,10 @@ const SUBSECTION_TITLE_COLORS = {
 function SubsectionRenderer({
   block,
   t,
-}: { block: SubsectionBlock; t: (key: string) => string }) {
+}: {
+  block: SubsectionBlock;
+  t: (key: string) => string;
+}) {
   const variant = block.variant ?? "default";
   const style = SUBSECTION_VARIANTS[variant];
   const iconColor = SUBSECTION_ICON_COLORS[variant];
@@ -375,7 +394,10 @@ function SubsectionRenderer({
 function LinkRenderer({
   block,
   t,
-}: { block: LinkBlock; t: (key: string) => string }) {
+}: {
+  block: LinkBlock;
+  t: (key: string) => string;
+}) {
   return (
     <div className="bg-blue-500/10 border-l-4 border-blue-500/50 rounded-r-lg p-4">
       <div className="flex items-start gap-3">

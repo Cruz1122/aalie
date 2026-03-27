@@ -5,7 +5,9 @@
 
 import type { SupportedLocale } from "./types";
 
-export function getResponseLanguageInstruction(locale: SupportedLocale): string {
+export function getResponseLanguageInstruction(
+  locale: SupportedLocale,
+): string {
   return locale === "en"
     ? `\n\nRESPONSE LANGUAGE (CRITICAL)
 - ALWAYS respond in English. Do not use Spanish or other languages.
@@ -15,13 +17,17 @@ export function getResponseLanguageInstruction(locale: SupportedLocale): string 
 - Todas las explicaciones, comentarios y salida en lenguaje natural deben estar en español.`;
 }
 
-export function getExplanationLanguageInstruction(locale: SupportedLocale): string {
+export function getExplanationLanguageInstruction(
+  locale: SupportedLocale,
+): string {
   return locale === "en"
     ? "The explanation MUST always be in ENGLISH. Do not use Spanish or other languages."
     : "La explicación DEBE estar SIEMPRE en ESPAÑOL. NO uses inglés ni otros idiomas.";
 }
 
-export function getExplanationFormatInstruction(locale: SupportedLocale): string {
+export function getExplanationFormatInstruction(
+  locale: SupportedLocale,
+): string {
   return locale === "en"
     ? '"explanation": "Explanation in ENGLISH and Markdown about the recursive process (max. 200 words)"'
     : '"explanation": "Explicación en ESPAÑOL y Markdown sobre el proceso recursivo (máx. 200 palabras)"';

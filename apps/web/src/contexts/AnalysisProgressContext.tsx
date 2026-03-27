@@ -72,8 +72,9 @@ const initialState: AnalysisProgressState = {
   methodMetadata: null,
 };
 
-const AnalysisProgressContext =
-  createContext<AnalysisProgressContextType | undefined>(undefined);
+const AnalysisProgressContext = createContext<
+  AnalysisProgressContextType | undefined
+>(undefined);
 
 interface AnalysisProgressProviderProps {
   children: ReactNode;
@@ -115,8 +116,7 @@ export const AnalysisProgressProvider: React.FC<
   const updateProgress = useCallback(
     (n: number | ((prev: number) => number)) => {
       setState((prev) => {
-        const next =
-          typeof n === "function" ? n(prev.progress) : n;
+        const next = typeof n === "function" ? n(prev.progress) : n;
         return {
           ...prev,
           progress: Math.min(100, Math.max(0, next)),
@@ -154,9 +154,12 @@ export const AnalysisProgressProvider: React.FC<
     setState((prev) => ({ ...prev, defaultMethod: method }));
   }, []);
 
-  const setMethodMetadata = useCallback((metadata: MethodMetadataMap | null) => {
-    setState((prev) => ({ ...prev, methodMetadata: metadata }));
-  }, []);
+  const setMethodMetadata = useCallback(
+    (metadata: MethodMetadataMap | null) => {
+      setState((prev) => ({ ...prev, methodMetadata: metadata }));
+    },
+    [],
+  );
 
   const handleClose = useCallback(() => {
     setState(initialState);

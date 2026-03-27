@@ -6,6 +6,7 @@ Delega a updates.summarize_updates.
 Author: @Cruz1122
 Version: 0.1.0
 """
+
 from typing import Any, Dict, Optional, Set
 
 from .updates import VarUpdateSummary, summarize_updates

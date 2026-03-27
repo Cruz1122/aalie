@@ -34,8 +34,10 @@ export const GEMINI_MODELS = {
   explain: getEnvOrDefault("LLM_MODEL_EXPLAIN", DEFAULT_GEMINI_MODELS.explain),
 };
 
-export const GEMINI_ENDPOINT_BASE =
-  getEnvOrDefault("GEMINI_ENDPOINT_BASE", DEFAULT_GEMINI_ENDPOINT_BASE);
+export const GEMINI_ENDPOINT_BASE = getEnvOrDefault(
+  "GEMINI_ENDPOINT_BASE",
+  DEFAULT_GEMINI_ENDPOINT_BASE,
+);
 
 // Parámetros por job (temperatura, tokens). Los prompts se obtienen de ./prompts según locale.
 export const JOB_CONFIG = {
@@ -107,7 +109,10 @@ export const JOB_CONFIG = {
             recurrence: {
               type: "object",
               properties: {
-                type: { type: "string", enum: ["divide_conquer", "linear_shift"] },
+                type: {
+                  type: "string",
+                  enum: ["divide_conquer", "linear_shift"],
+                },
                 form: { type: "string" },
                 a: { type: "number" },
                 b: { type: "number" },
@@ -149,7 +154,10 @@ export const JOB_CONFIG = {
               properties: {
                 case: { type: "number", enum: [1, 2, 3] },
                 nlogba: { type: "string" },
-                comparison: { type: "string", enum: ["smaller", "equal", "larger"] },
+                comparison: {
+                  type: "string",
+                  enum: ["smaller", "equal", "larger"],
+                },
                 theta: { type: "string" },
               },
             },

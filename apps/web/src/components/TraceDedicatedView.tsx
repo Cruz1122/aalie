@@ -9,7 +9,6 @@ import { useTraceController } from "@/hooks/trace/useTraceController";
 import { useTraceRefreshOnAnalysis } from "@/hooks/trace/useTraceRefreshOnAnalysis";
 import type { CaseType } from "@/types/trace";
 
-
 import ExecutionGraphView from "./ExecutionGraphView";
 import StructuredTraceContent from "./trace/StructuredTraceContent";
 import TraceChatPanel from "./trace/TraceChatPanel";
@@ -47,9 +46,8 @@ export default function TraceDedicatedView({
   const [isPlaying, setIsPlaying] = useState(false);
   const [playSpeed] = useState(1000);
   const [isDiagramExpanded, setIsDiagramExpanded] = useState(false);
-  const [initialVariablesOverride, setInitialVariablesOverride] = useState<
-    Record<string, unknown> | null
-  >(null);
+  const [initialVariablesOverride, setInitialVariablesOverride] =
+    useState<Record<string, unknown> | null>(null);
 
   const {
     trace,
@@ -64,7 +62,7 @@ export default function TraceDedicatedView({
     setAlgorithmKind,
     setExampleArray,
     exampleArray,
-  fetchCompleted,
+    fetchCompleted,
   } = useTraceController(
     {
       source,
@@ -137,8 +135,7 @@ export default function TraceDedicatedView({
   const isRecursiveOrHybrid =
     algorithmKind === "recursive" || algorithmKind === "hybrid";
 
-  const stepsToUse =
-    trace?.ok && trace?.trace?.steps ? trace.trace.steps : [];
+  const stepsToUse = trace?.ok && trace?.trace?.steps ? trace.trace.steps : [];
   const currentStepData =
     stepsToUse.length > 0 && currentStep < stepsToUse.length
       ? stepsToUse[currentStep]
@@ -150,22 +147,22 @@ export default function TraceDedicatedView({
     <div className="flex flex-col h-full min-h-0">
       {/* Content - misma estructura de grid y cards que la pantalla de análisis; sin loader al cambiar de vista */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Columna izquierda: pseudocódigo - misma estructura que análisis (glass-card) */}
-          <section className="lg:col-span-4 h-full">
-            <div className="glass-card !shadow-none p-4 rounded-lg h-full flex flex-col">
-              <TraceChatPanel
-                source={source}
-                currentLine={isRecursiveOrHybrid ? undefined : currentLine}
-                currentStep={currentStep}
-                totalSteps={isRecursiveOrHybrid ? 0 : totalSteps}
-                onBack={onBack}
-              />
-            </div>
-          </section>
+        {/* Columna izquierda: pseudocódigo - misma estructura que análisis (glass-card) */}
+        <section className="lg:col-span-4 h-full">
+          <div className="glass-card !shadow-none p-4 rounded-lg h-full flex flex-col">
+            <TraceChatPanel
+              source={source}
+              currentLine={isRecursiveOrHybrid ? undefined : currentLine}
+              currentStep={currentStep}
+              totalSteps={isRecursiveOrHybrid ? 0 : totalSteps}
+              onBack={onBack}
+            />
+          </div>
+        </section>
 
-          {/* Columna derecha: contenido principal - misma estructura que análisis */}
-          <section className="lg:col-span-8 h-full min-h-[420px]">
-            <div className="glass-card !shadow-none p-4 rounded-lg h-full flex flex-col min-h-0 overflow-hidden">
+        {/* Columna derecha: contenido principal - misma estructura que análisis */}
+        <section className="lg:col-span-8 h-full min-h-[420px]">
+          <div className="glass-card !shadow-none p-4 rounded-lg h-full flex flex-col min-h-0 overflow-hidden">
             <TraceStatusBanner
               loading={loading}
               error={error}
@@ -179,7 +176,9 @@ export default function TraceDedicatedView({
                   <div className="w-12 h-12 bg-purple-500/20 rounded-full animate-ping" />
                   <div className="absolute w-6 h-6 bg-purple-500 rounded-full" />
                 </div>
-                <p className="text-xs text-slate-400">{t("detectingAlgorithm")}</p>
+                <p className="text-xs text-slate-400">
+                  {t("detectingAlgorithm")}
+                </p>
               </div>
             ) : (
               <StructuredTraceContent
@@ -220,12 +219,12 @@ export default function TraceDedicatedView({
                 exampleArray={exampleArray}
                 setExampleArray={setExampleArray}
                 variant="dedicated"
-              fetchCompleted={fetchCompleted}
+                fetchCompleted={fetchCompleted}
               />
             )}
-            </div>
-          </section>
-        </div>
+          </div>
+        </section>
+      </div>
 
       {/* Expanded diagram modal - portal a body para overlay en toda la pantalla (evita cuadrado de blur por transform en ancestros) */}
       {isDiagramExpanded &&

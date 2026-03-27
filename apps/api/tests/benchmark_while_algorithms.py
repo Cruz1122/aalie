@@ -6,13 +6,16 @@ Ejecutar: cd apps/api && python -m pytest tests/benchmark_while_algorithms.py -v
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
+
 import pytest
 
 from app.modules.analysis.service import analyze_algorithm
 
 BENCHMARK_ALGORITHMS = [
     # 1. Euclides MCD - Θ(log min(a,b))
-    ("Euclides MCD", """mcd(a, b) BEGIN
+    (
+        "Euclides MCD",
+        """mcd(a, b) BEGIN
   WHILE (b != 0) DO BEGIN
     temp <- b;
     b <- a MOD b;
@@ -20,27 +23,39 @@ BENCHMARK_ALGORITHMS = [
   END
   RETURN a;
 END
-""", {"best": "log", "worst": "log", "avg": "log"}),
+""",
+        {"best": "log", "worst": "log", "avg": "log"},
+    ),
     # 2. WHILE incremento - Θ(n)
-    ("WHILE incremento", """linear(n) BEGIN
+    (
+        "WHILE incremento",
+        """linear(n) BEGIN
   i <- 0;
   WHILE (i < n) DO BEGIN
     x <- 1;
     i <- i + 1;
   END
 END
-""", {"best": "linear", "worst": "linear", "avg": "linear"}),
+""",
+        {"best": "linear", "worst": "linear", "avg": "linear"},
+    ),
     # 3. WHILE multiplicación - Θ(log n)
-    ("WHILE multiplicación", """logLoop(n) BEGIN
+    (
+        "WHILE multiplicación",
+        """logLoop(n) BEGIN
   i <- 1;
   WHILE (i <= n) DO BEGIN
     x <- 1;
     i <- i * 2;
   END
 END
-""", {"best": "log", "worst": "log", "avg": "log"}),
+""",
+        {"best": "log", "worst": "log", "avg": "log"},
+    ),
     # 4. Búsqueda binaria - Θ(1) best, Θ(log n) worst/avg
-    ("Búsqueda binaria", """binarySearch(A, n, x) BEGIN
+    (
+        "Búsqueda binaria",
+        """binarySearch(A, n, x) BEGIN
   low <- 1;
   high <- n;
   WHILE (low <= high) DO BEGIN
@@ -57,9 +72,13 @@ END
   END
   RETURN -1;
 END
-""", {"best": "constant", "worst": "log", "avg": "log"}),
+""",
+        {"best": "constant", "worst": "log", "avg": "log"},
+    ),
     # 5. Búsqueda lineal con flag (buscar) - Θ(1) best, Θ(n) worst/avg
-    ("Búsqueda lineal con flag", """buscar(A, n, x) BEGIN
+    (
+        "Búsqueda lineal con flag",
+        """buscar(A, n, x) BEGIN
     i <- 0;
     encontrado <- false;
     WHILE (i < n AND encontrado = false) DO BEGIN
@@ -71,9 +90,13 @@ END
     END;
     RETURN encontrado;
 END
-""", {"best": "constant", "worst": "linear", "avg": "linear"}),
+""",
+        {"best": "constant", "worst": "linear", "avg": "linear"},
+    ),
     # 6. Búsqueda lineal WHILE (sin flag) - Θ(1) best, Θ(n) worst/avg
-    ("Búsqueda lineal WHILE", """linearSearch(A, n, x) BEGIN
+    (
+        "Búsqueda lineal WHILE",
+        """linearSearch(A, n, x) BEGIN
   i <- 1;
   WHILE (i <= n AND A[i] != x) DO BEGIN
     i <- i + 1;
@@ -83,9 +106,13 @@ END
   END
   RETURN -1;
 END
-""", {"best": "constant", "worst": "linear", "avg": "linear"}),
+""",
+        {"best": "constant", "worst": "linear", "avg": "linear"},
+    ),
     # 7. Factorial WHILE - Θ(n)
-    ("Factorial WHILE", """factorial(n) BEGIN
+    (
+        "Factorial WHILE",
+        """factorial(n) BEGIN
   i <- 1;
   acc <- 1;
   WHILE (i <= n) DO BEGIN
@@ -94,9 +121,13 @@ END
   END
   RETURN acc;
 END
-""", {"best": "linear", "worst": "linear", "avg": "linear"}),
+""",
+        {"best": "linear", "worst": "linear", "avg": "linear"},
+    ),
     # 8. WHILE anidados - Θ(n²)
-    ("WHILE anidados", """nestedWhile(n) BEGIN
+    (
+        "WHILE anidados",
+        """nestedWhile(n) BEGIN
   i <- 0;
   WHILE (i < n) DO BEGIN
     j <- 0;
@@ -107,9 +138,13 @@ END
     i <- i + 1;
   END
 END
-""", {"best": "quadratic", "worst": "quadratic", "avg": "quadratic"}),
+""",
+        {"best": "quadratic", "worst": "quadratic", "avg": "quadratic"},
+    ),
     # 9. Insertion Sort - Θ(n) best, Θ(n²) worst/avg
-    ("Insertion Sort", """insertionSort(arr, n) BEGIN
+    (
+        "Insertion Sort",
+        """insertionSort(arr, n) BEGIN
   FOR i <- 2 TO n DO BEGIN
     key <- arr[i];
     j <- i - 1;
@@ -120,9 +155,13 @@ END
     arr[j + 1] <- key;
   END
 END
-""", {"best": "linear", "worst": "quadratic", "avg": "quadratic"}),
+""",
+        {"best": "linear", "worst": "quadratic", "avg": "quadratic"},
+    ),
     # 10. Bubble Sort Mejorado - Θ(n) best, Θ(n²) worst/avg
-    ("Bubble Sort Mejorado", """ordenamientoBurbujaMejorado(A, n) BEGIN
+    (
+        "Bubble Sort Mejorado",
+        """ordenamientoBurbujaMejorado(A, n) BEGIN
   i <- 1;
   intercambiado <- true;
   WHILE (i < n AND intercambiado = true) DO BEGIN
@@ -138,7 +177,9 @@ END
     i <- i + 1;
   END
 END
-""", {"best": "linear", "worst": "quadratic", "avg": "quadratic"}),
+""",
+        {"best": "linear", "worst": "quadratic", "avg": "quadratic"},
+    ),
 ]
 
 
@@ -175,10 +216,12 @@ def test_benchmark_while_algorithm(name: str, source: str, expected: dict) -> No
         theta = r.get("totals", {}).get("big_theta", "")
         results[mode] = theta
         exp = expected.get(mode, "")
-        assert _theta_matches(exp, theta), (
-            f"{name} {mode}: esperado {exp}, obtuvo {theta}"
-        )
-    print(f"  {name}: best={results['best']} worst={results['worst']} avg={results['avg']} OK")
+        assert _theta_matches(
+            exp, theta
+        ), f"{name} {mode}: esperado {exp}, obtuvo {theta}"
+    print(
+        f"  {name}: best={results['best']} worst={results['worst']} avg={results['avg']} OK"
+    )
 
 
 def test_benchmark_summary() -> None:
@@ -192,7 +235,9 @@ def test_benchmark_summary() -> None:
                 r = analyze_algorithm(source=source, mode=mode)
                 theta = r.get("totals", {}).get("big_theta", "")
                 if not _theta_matches(expected.get(mode, ""), theta):
-                    raise AssertionError(f"{mode}: esperado {expected.get(mode)}, obtuvo {theta}")
+                    raise AssertionError(
+                        f"{mode}: esperado {expected.get(mode)}, obtuvo {theta}"
+                    )
             passed += 1
             print(f"  [OK] {name}")
         except Exception as e:

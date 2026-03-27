@@ -14,37 +14,63 @@ interface GPUCPUModalProps {
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-function ConfidenceBadge({ confidence }: Readonly<{ confidence: HardwareSuitabilityReport["confidence"] }>) {
+function ConfidenceBadge({
+  confidence,
+}: Readonly<{ confidence: HardwareSuitabilityReport["confidence"] }>) {
   const colors: Record<string, string> = {
     high: "bg-green-500/20 border-green-500/40 text-green-300",
     medium: "bg-yellow-500/20 border-yellow-500/40 text-yellow-300",
     low: "bg-red-500/20 border-red-500/40 text-red-300",
   };
-  const labels: Record<string, string> = { high: "Alta", medium: "Media", low: "Baja" };
+  const labels: Record<string, string> = {
+    high: "Alta",
+    medium: "Media",
+    low: "Baja",
+  };
   return (
-    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${colors[confidence]}`}>
+    <span
+      className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${colors[confidence]}`}
+    >
       {labels[confidence] ?? confidence}
     </span>
   );
 }
 
-function RecommendationBadge({ rec }: Readonly<{ rec: HardwareSuitabilityReport["primaryRecommendation"] }>) {
+function RecommendationBadge({
+  rec,
+}: Readonly<{ rec: HardwareSuitabilityReport["primaryRecommendation"] }>) {
   const colors: Record<string, string> = {
     gpu: "bg-purple-500/20 border-purple-500/40 text-purple-200",
     cpu: "bg-blue-500/20 border-blue-500/40 text-blue-200",
     hybrid: "bg-cyan-500/20 border-cyan-500/40 text-cyan-200",
   };
-  const labels: Record<string, string> = { gpu: "GPU", cpu: "CPU", hybrid: "Híbrido" };
-  const icons: Record<string, string> = { gpu: "memory", cpu: "developer_board", hybrid: "merge" };
+  const labels: Record<string, string> = {
+    gpu: "GPU",
+    cpu: "CPU",
+    hybrid: "Híbrido",
+  };
+  const icons: Record<string, string> = {
+    gpu: "memory",
+    cpu: "developer_board",
+    hybrid: "merge",
+  };
   return (
-    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${colors[rec]}`}>
+    <div
+      className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${colors[rec]}`}
+    >
       <span className="material-symbols-outlined text-2xl">{icons[rec]}</span>
-      <span className="text-xl font-bold">{labels[rec] ?? rec.toUpperCase()}</span>
+      <span className="text-xl font-bold">
+        {labels[rec] ?? rec.toUpperCase()}
+      </span>
     </div>
   );
 }
 
-function ScoreBar({ label, value, color }: Readonly<{ label: string; value: number; color: string }>) {
+function ScoreBar({
+  label,
+  value,
+  color,
+}: Readonly<{ label: string; value: number; color: string }>) {
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-xs text-slate-400">
@@ -70,7 +96,9 @@ function ListSection({
   if (items.length === 0) return null;
   return (
     <div>
-      <div className={`flex items-center gap-2 mb-2 text-xs font-semibold ${color} uppercase tracking-wide`}>
+      <div
+        className={`flex items-center gap-2 mb-2 text-xs font-semibold ${color} uppercase tracking-wide`}
+      >
         <span className="material-symbols-outlined text-base">{icon}</span>
         {title}
       </div>
@@ -86,10 +114,15 @@ function ListSection({
   );
 }
 
-function PatternChip({ name, confidence }: Readonly<{ name: string; confidence: number }>) {
+function PatternChip({
+  name,
+  confidence,
+}: Readonly<{ name: string; confidence: number }>) {
   return (
     <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-slate-300">
-      <span className="material-symbols-outlined text-sm text-slate-400">pattern</span>
+      <span className="material-symbols-outlined text-sm text-slate-400">
+        pattern
+      </span>
       <span>{name}</span>
       <span className="text-slate-500">({(confidence * 100).toFixed(0)}%)</span>
     </div>
@@ -101,8 +134,19 @@ function PatternChip({ name, confidence }: Readonly<{ name: string; confidence: 
 function GPUCPUContent({
   analysis,
   t,
-}: Readonly<{ analysis: HardwareSuitabilityReport; t: (key: string) => string }>) {
-  const { scores, reasons, detectedPatterns, diagnostics, confidence, primaryRecommendation, summary } = analysis;
+}: Readonly<{
+  analysis: HardwareSuitabilityReport;
+  t: (key: string) => string;
+}>) {
+  const {
+    scores,
+    reasons,
+    detectedPatterns,
+    diagnostics,
+    confidence,
+    primaryRecommendation,
+    summary,
+  } = analysis;
 
   return (
     <div className="space-y-6">
@@ -111,7 +155,9 @@ function GPUCPUContent({
         <RecommendationBadge rec={primaryRecommendation} />
         <div className="flex-1 space-y-1 text-center sm:text-left">
           <div className="flex items-center justify-center sm:justify-start gap-2">
-            <span className="text-xs text-slate-400 uppercase tracking-wide">{t("confidence")}:</span>
+            <span className="text-xs text-slate-400 uppercase tracking-wide">
+              {t("confidence")}:
+            </span>
             <ConfidenceBadge confidence={confidence} />
           </div>
           <p className="text-sm text-slate-300 mt-1">{summary}</p>
@@ -120,10 +166,16 @@ function GPUCPUContent({
 
       {/* Score bars */}
       <div className="glass-card p-4 rounded-xl border border-white/10 space-y-3">
-        <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold mb-3">{t("scores")}</p>
+        <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold mb-3">
+          {t("scores")}
+        </p>
         <ScoreBar label="GPU" value={scores.gpu} color="bg-purple-500" />
         <ScoreBar label="CPU" value={scores.cpu} color="bg-blue-500" />
-        <ScoreBar label={t("hybrid")} value={scores.hybrid} color="bg-cyan-500" />
+        <ScoreBar
+          label={t("hybrid")}
+          value={scores.hybrid}
+          color="bg-cyan-500"
+        />
       </div>
 
       {/* Blockers — always visible if present */}
@@ -140,15 +192,32 @@ function GPUCPUContent({
 
       {/* Positive/Negative/Opportunities */}
       <div className="glass-card p-4 rounded-xl border border-white/10 space-y-4">
-        <ListSection title={t("positive")} items={reasons.positive} icon="check_circle" color="text-green-400" />
-        <ListSection title={t("negative")} items={reasons.negative} icon="warning" color="text-yellow-400" />
-        <ListSection title={t("opportunities")} items={reasons.opportunities} icon="lightbulb" color="text-purple-400" />
+        <ListSection
+          title={t("positive")}
+          items={reasons.positive}
+          icon="check_circle"
+          color="text-green-400"
+        />
+        <ListSection
+          title={t("negative")}
+          items={reasons.negative}
+          icon="warning"
+          color="text-yellow-400"
+        />
+        <ListSection
+          title={t("opportunities")}
+          items={reasons.opportunities}
+          icon="lightbulb"
+          color="text-purple-400"
+        />
       </div>
 
       {/* Detected Patterns */}
       {detectedPatterns.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold">{t("patterns")}</p>
+          <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold">
+            {t("patterns")}
+          </p>
           <div className="flex flex-wrap gap-2">
             {detectedPatterns.map((p, i) => (
               <PatternChip key={i} name={p.name} confidence={p.confidence} />
@@ -159,7 +228,9 @@ function GPUCPUContent({
 
       {/* Diagnostics */}
       <div className="glass-card p-4 rounded-xl border border-white/10">
-        <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold mb-3">{t("diagnostics")}</p>
+        <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold mb-3">
+          {t("diagnostics")}
+        </p>
         <div className="grid grid-cols-2 gap-2 text-xs">
           {(
             [
@@ -170,7 +241,9 @@ function GPUCPUContent({
             ] as const
           ).map(([k, v]) => (
             <div key={k} className="flex flex-col">
-              <span className="text-slate-500 capitalize">{k.replace(/([A-Z])/g, " $1")}</span>
+              <span className="text-slate-500 capitalize">
+                {k.replace(/([A-Z])/g, " $1")}
+              </span>
               <span className="text-slate-200 font-medium capitalize">{v}</span>
             </div>
           ))}
@@ -197,7 +270,11 @@ function GPUCPUContent({
 
 // ─── Modal ─────────────────────────────────────────────────────────────────
 
-export default function GPUCPUModal({ open, onClose, analysis }: Readonly<GPUCPUModalProps>) {
+export default function GPUCPUModal({
+  open,
+  onClose,
+  analysis,
+}: Readonly<GPUCPUModalProps>) {
   const t = useTranslations("analyzer.gpuCpuModal");
 
   if (!open || !analysis) return null;

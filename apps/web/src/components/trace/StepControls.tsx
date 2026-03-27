@@ -30,7 +30,9 @@ export default function StepControls({
     <div className="flex flex-row items-center gap-2 mb-3 flex-shrink-0 flex-wrap">
       {/* Step Counter */}
       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-700/50 border border-slate-600 flex-shrink-0">
-        <span className="material-symbols-outlined text-xs text-blue-400">info</span>
+        <span className="material-symbols-outlined text-xs text-blue-400">
+          info
+        </span>
         <span className="text-xs text-slate-300 font-semibold tabular-nums">
           {t("stepOf", { current: currentStep + 1, total: totalSteps })}
         </span>
@@ -100,6 +102,3 @@ export default function StepControls({
     </div>
   );
 }
-
-
-

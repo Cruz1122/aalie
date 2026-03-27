@@ -31,16 +31,13 @@ const ES_TO_EN: Record<string, string> = {
  * @param code - Código en español
  * @param locale - "en" para traducir, "es" para mantener
  */
-export function translatePseudocode(
-  code: string,
-  locale: "en" | "es"
-): string {
+export function translatePseudocode(code: string, locale: "en" | "es"): string {
   if (locale === "es" || !code) return code;
 
   let result = code;
   // Ordenar por longitud descendente para evitar reemplazos parciales
   const entries = Object.entries(ES_TO_EN).sort(
-    (a, b) => b[0].length - a[0].length
+    (a, b) => b[0].length - a[0].length,
   );
   for (const [es, en] of entries) {
     result = result.split(es).join(en);

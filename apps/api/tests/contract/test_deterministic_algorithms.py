@@ -5,6 +5,7 @@ Cobertura: WHILE/FOR con cotas constantes, sin IF con early return.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
+
 import pytest
 
 from app.modules.analysis.service import analyze_algorithm
@@ -180,23 +181,33 @@ END
 class TestDeterministicAlgorithms:
     """Tests para algoritmos determinísticos (worst == best)."""
 
-    @pytest.mark.parametrize("name,source", DETERMINISTIC_ALGORITHMS, ids=[a[0] for a in DETERMINISTIC_ALGORITHMS])
+    @pytest.mark.parametrize(
+        "name,source",
+        DETERMINISTIC_ALGORITHMS,
+        ids=[a[0] for a in DETERMINISTIC_ALGORITHMS],
+    )
     def test_deterministic_avg_is_same_as_worst(self, name: str, source: str):
         """Algoritmos determinísticos: avg debe ser same_as_worst (no modelo probabilístico)."""
         result = analyze_algorithm(source, mode="all")
-        assert result.get("ok", False), f"[{name}] Análisis falló: {result.get('errors', [])}"
-        assert result.get("has_case_variability") is False, (
-            f"[{name}] Debe ser has_case_variability=False (determinístico)"
-        )
+        assert result.get(
+            "ok", False
+        ), f"[{name}] Análisis falló: {result.get('errors', [])}"
+        assert (
+            result.get("has_case_variability") is False
+        ), f"[{name}] Debe ser has_case_variability=False (determinístico)"
         assert result.get("avg") == "same_as_worst", (
             f"[{name}] avg debe ser same_as_worst, no modelo probabilístico. "
             f"Obtenido: {result.get('avg')}"
         )
-        assert result.get("best") == "same_as_worst", (
-            f"[{name}] best debe ser same_as_worst"
-        )
+        assert (
+            result.get("best") == "same_as_worst"
+        ), f"[{name}] best debe ser same_as_worst"
 
-    @pytest.mark.parametrize("name,source", DETERMINISTIC_ALGORITHMS, ids=[a[0] for a in DETERMINISTIC_ALGORITHMS])
+    @pytest.mark.parametrize(
+        "name,source",
+        DETERMINISTIC_ALGORITHMS,
+        ids=[a[0] for a in DETERMINISTIC_ALGORITHMS],
+    )
     def test_deterministic_no_avg_model_applied(self, name: str, source: str):
         """Algoritmos determinísticos: no se ejecuta análisis avg con modelo probabilístico."""
         result = analyze_algorithm(source, mode="all")
@@ -204,11 +215,15 @@ class TestDeterministicAlgorithms:
         # avg es "same_as_worst" (string), no un objeto con avg_model_info
         avg = result.get("avg")
         assert avg == "same_as_worst", f"[{name}] avg debe ser string 'same_as_worst'"
-        assert not isinstance(avg, dict), (
-            f"[{name}] avg no debe ser dict (no se aplicó modelo probabilístico)"
-        )
+        assert not isinstance(
+            avg, dict
+        ), f"[{name}] avg no debe ser dict (no se aplicó modelo probabilístico)"
 
-    @pytest.mark.parametrize("name,source", DETERMINISTIC_ALGORITHMS, ids=[a[0] for a in DETERMINISTIC_ALGORITHMS])
+    @pytest.mark.parametrize(
+        "name,source",
+        DETERMINISTIC_ALGORITHMS,
+        ids=[a[0] for a in DETERMINISTIC_ALGORITHMS],
+    )
     def test_deterministic_worst_best_equal(self, name: str, source: str):
         """Algoritmos determinísticos: worst y best tienen T_open idéntica."""
         result = analyze_algorithm(source, mode="all")
@@ -222,7 +237,9 @@ class TestDeterministicAlgorithms:
         else:
             worst_t = worst.get("totals", {}).get("T_open", "")
             best_t = best.get("totals", {}).get("T_open", "")
-            assert worst_t == best_t, f"[{name}] T_open debe ser igual: worst={worst_t}, best={best_t}"
+            assert (
+                worst_t == best_t
+            ), f"[{name}] T_open debe ser igual: worst={worst_t}, best={best_t}"
 
     def test_whilen_constant_loop_example(self):
         """Caso específico: WHILE i<=10 con print (ejemplo del usuario)."""
@@ -247,24 +264,28 @@ END
 class TestVariableAlgorithms:
     """Tests para algoritmos con variabilidad (worst != best)."""
 
-    @pytest.mark.parametrize("name,source", VARIABLE_ALGORITHMS, ids=[a[0] for a in VARIABLE_ALGORITHMS])
+    @pytest.mark.parametrize(
+        "name,source", VARIABLE_ALGORITHMS, ids=[a[0] for a in VARIABLE_ALGORITHMS]
+    )
     def test_variable_has_variability(self, name: str, source: str):
         """Algoritmos con variabilidad: has_case_variability=True."""
         result = analyze_algorithm(source, mode="all")
         assert result.get("ok", False), f"[{name}] Análisis falló"
-        assert result.get("has_case_variability") is True, (
-            f"[{name}] Debe ser has_case_variability=True"
-        )
+        assert (
+            result.get("has_case_variability") is True
+        ), f"[{name}] Debe ser has_case_variability=True"
 
-    @pytest.mark.parametrize("name,source", VARIABLE_ALGORITHMS, ids=[a[0] for a in VARIABLE_ALGORITHMS])
+    @pytest.mark.parametrize(
+        "name,source", VARIABLE_ALGORITHMS, ids=[a[0] for a in VARIABLE_ALGORITHMS]
+    )
     def test_variable_avg_is_not_same_as_worst(self, name: str, source: str):
         """Algoritmos con variabilidad: avg es objeto con análisis (no same_as_worst)."""
         result = analyze_algorithm(source, mode="all")
         assert result.get("ok", False), f"[{name}] Análisis falló"
         avg = result.get("avg")
-        assert avg != "same_as_worst", (
-            f"[{name}] avg debe ser análisis completo, no same_as_worst"
-        )
+        assert (
+            avg != "same_as_worst"
+        ), f"[{name}] avg debe ser análisis completo, no same_as_worst"
         assert isinstance(avg, dict), f"[{name}] avg debe ser dict"
         assert "totals" in avg, f"[{name}] avg debe tener totals"
 
@@ -278,8 +299,12 @@ class TestDeterministicCoverage:
 
     def test_mix_deterministic_and_variable(self):
         """Verificar que determinísticos y variables se distinguen correctamente."""
-        det_results = [analyze_algorithm(s, mode="all") for _, s in DETERMINISTIC_ALGORITHMS[:3]]
-        var_results = [analyze_algorithm(s, mode="all") for _, s in VARIABLE_ALGORITHMS[:2]]
+        det_results = [
+            analyze_algorithm(s, mode="all") for _, s in DETERMINISTIC_ALGORITHMS[:3]
+        ]
+        var_results = [
+            analyze_algorithm(s, mode="all") for _, s in VARIABLE_ALGORITHMS[:2]
+        ]
         for r in det_results:
             assert r.get("has_case_variability") is False
         for r in var_results:

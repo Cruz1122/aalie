@@ -141,7 +141,7 @@ ${errorMessages}
 **SOLICITUD:**
 Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE el código corregido en un bloque \`\`\`pseudocode, sin explicaciones adicionales.`;
 
-  const strictGrammarRules = `
+      const strictGrammarRules = `
 
 **RESTRICCIONES DE GRAMÁTICA (OBLIGATORIAS):**
 1) NO uses prefijos como PROCEDURE, FUNCTION, FUNCION o PROCEDIMIENTO.
@@ -150,7 +150,7 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
 4) No agregues texto fuera del código.
 `;
 
-  const finalPrompt = `${prompt}${strictGrammarRules}`;
+      const finalPrompt = `${prompt}${strictGrammarRules}`;
 
       // Obtener API_KEY
       const { getApiKey } = await import("@/hooks/useApiKey");
@@ -180,7 +180,9 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
 
       if (!result.ok) {
         const rawErr = result?.error || t("unknownLlmError");
-        throw new Error(typeof rawErr === "string" ? rawErr : t("unknownLlmError"));
+        throw new Error(
+          typeof rawErr === "string" ? rawErr : t("unknownLlmError"),
+        );
       }
 
       // Extraer JSON de la respuesta
@@ -279,9 +281,7 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
       console.error("Error reparando código:", err);
       const rawMsg = err instanceof Error ? err.message : String(err);
       const key = translateLlmError(rawMsg);
-      setError(
-        key === "unknownLlmError" ? t("repairUnknownError") : t(key),
-      );
+      setError(key === "unknownLlmError" ? t("repairUnknownError") : t(key));
       setIsRepairing(false);
       clearRepairProgressAnimation();
       setRepairProgress(0);
@@ -412,7 +412,9 @@ Repara el código corrigiendo todos los errores de sintaxis. Retorna ÚNICAMENTE
       <div className="glass-modal-container rounded-2xl shadow-xl max-w-6xl w-[95vw] h-[85vh] flex flex-col m-4 modal-animate-in">
         {/* Header */}
         <div className="glass-modal-header flex items-center justify-between px-6 py-4 rounded-t-2xl border-b border-white/10">
-          <h2 className="text-2xl font-bold text-white">{tView("repairWithAI")}</h2>
+          <h2 className="text-2xl font-bold text-white">
+            {tView("repairWithAI")}
+          </h2>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-white text-3xl leading-none transition-colors hover:rotate-90 transform duration-200"

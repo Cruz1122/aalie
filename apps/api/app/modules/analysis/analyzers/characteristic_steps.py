@@ -37,7 +37,6 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "closed_form_simplified.partial": "La simplificación final fue parcial; se conserva la forma más simple disponible sin ocultar limitaciones.",
         "dominant_term_concluded.exponential": "Se identificó el término dominante y se concluyó el crecimiento de $T(n)$ a partir de la raíz de mayor magnitud.",
         "dominant_term_concluded.partial": "La conclusión asintótica se reporta con cobertura parcial por limitaciones acumuladas en pasos anteriores.",
-
         # Concept keys
         "concept.recurrence_detected": "Primero fijamos la forma exacta de la ecuación que vamos a resolver. El orden $k$ indica cuántos estados previos aparecen ($T(n-1),\\dots,T(n-k)$), y los desplazamientos muestran cómo se reduce el tamaño del subproblema. También se separa $g(n)$, que representa trabajo no recursivo, para no mezclarlo con la dinámica de las llamadas.",
         "concept.applicability_validated": "Este método está diseñado para Resta y Vencerás (desplazamientos constantes con estructura lineal). Si la recurrencia es de Divide y Vencerás (n/b) o de Resta y Serás Vencido con ramificación/costo excesivo, usar ecuación característica aquí sería forzar el modelo.",
@@ -51,7 +50,6 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "concept.base_conditions_applied": "Las constantes libres ($C_1, C_2, ...$) se determinan imponiendo condiciones iniciales como $T(0)$, $T(1)$, etc. Matemáticamente, esto convierte una familia de soluciones en una solución concreta. Si faltan condiciones, la estructura puede ser correcta, pero queda subdeterminada.",
         "concept.closed_form_simplified": "La simplificación no debe hacer la expresión más difícil de leer. Aquí se comparan formas equivalentes y se conserva la más simple de manera determinista para UI, tests y exportes. Si no es posible simplificar más, se mantiene explícitamente la mejor forma alcanzable.",
         "concept.dominant_term_concluded": "La cota asintótica se obtiene del término que domina cuando $n$ crece. En ecuación característica esto depende de la magnitud de la raíz dominante y, si hay multiplicidad, del factor polinómico asociado. El resultado resume el comportamiento de largo plazo de $T(n)$.",
-
         # Warning keys
         "warning.unsupported_non_linear_shift": "Cobertura actual: solo familia Resta y Vencerás lineal con desplazamientos constantes de la forma $T(n-k)$.",
         "warning.unsupported_gn_family": "Cobertura parcial: la solución particular solo está soportada para $g(n)=0$ o $g(n)=c$ constante.",
@@ -83,7 +81,6 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "closed_form_simplified.partial": "Final simplification is partial; the simplest available valid form is kept.",
         "dominant_term_concluded.exponential": "The dominant term was identified and $T(n)$ growth was concluded from the largest-magnitude root.",
         "dominant_term_concluded.partial": "Asymptotic conclusion is reported with partial coverage due to earlier limitations.",
-
         "concept.recurrence_detected": "We first pin down the exact equation we are solving. The order $k$ tells us how many previous states appear ($T(n-1),\\dots,T(n-k)$), and shifts tell us how problem size decreases. We also isolate $g(n)$ as non-recursive work so it is not confused with recurrence dynamics.",
         "concept.applicability_validated": "This method targets Resta y Vencerás patterns (linear, constant-shift recurrences). If the shape is Divide y Vencerás (n/b) or a Resta y Serás Vencido pattern with excessive branching/work, using characteristic equation here would be a model mismatch.",
         "concept.homogeneity_classified": "This classification decides the solution structure. If $g(n)=0$, we only need $T_h(n)$. If $g(n)\\neq 0$, we must add $T_p(n)$ to capture external forcing. Keeping these contributions separate avoids attributing $g(n)$ growth to the recursive part.",
@@ -96,7 +93,6 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "concept.base_conditions_applied": "Free constants ($C_1, C_2, ...$) are solved by enforcing base conditions such as $T(0)$ and $T(1)$. This turns a solution family into a concrete function. If base data is insufficient, the structure may be right but still underdetermined.",
         "concept.closed_form_simplified": "Simplification should never make the expression harder to read. We compare equivalent forms deterministically and keep the simplest one for UI, tests, and exports. If full simplification is not possible, we keep the best valid form explicitly.",
         "concept.dominant_term_concluded": "Asymptotic growth comes from the term that dominates as $n\\to\\infty$. In this method, that depends on dominant root magnitude and multiplicity-driven polynomial factors. The final bound summarizes long-run behavior of $T(n)$.",
-
         "warning.unsupported_non_linear_shift": "Current coverage: only Resta y Vencerás linear recurrences with constant shifts of the form $T(n-k)$.",
         "warning.unsupported_gn_family": "Partial coverage: particular solution is currently supported only for $g(n)=0$ or constant $g(n)=c$.",
         "warning.insufficient_base_conditions": "Not enough initial conditions were detected to solve all constants.",
@@ -104,6 +100,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "warning.simplification_partial": "Full symbolic simplification was not possible with current rules.",
     },
 }
+
 
 @dataclass
 class StepContext:
@@ -180,7 +177,11 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=1,
             step_id="ceq_s1",
             kind="recurrence_detected",
-            title="Recurrencia detectada" if locale_key(ctx.locale) == "es" else "Detected recurrence",
+            title=(
+                "Recurrencia detectada"
+                if locale_key(ctx.locale) == "es"
+                else "Detected recurrence"
+            ),
             status="complete",
             confidence="high",
             summary_key="recurrence_detected.linear_shift",
@@ -200,10 +201,18 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=2,
             step_id="ceq_s2",
             kind="applicability_validated",
-            title="Validación de aplicabilidad" if locale_key(ctx.locale) == "es" else "Applicability validation",
+            title=(
+                "Validación de aplicabilidad"
+                if locale_key(ctx.locale) == "es"
+                else "Applicability validation"
+            ),
             status=step2_status,
             confidence="high" if ctx.is_linear else "low",
-            summary_key="applicability_validated.supported" if ctx.is_linear else "applicability_validated.unsupported",
+            summary_key=(
+                "applicability_validated.supported"
+                if ctx.is_linear
+                else "applicability_validated.unsupported"
+            ),
             concept_key="concept.applicability_validated",
             warning_key=step2_warning,
             primary_latex=ctx.recurrence_form,
@@ -218,7 +227,11 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=3,
             step_id="ceq_s3",
             kind="homogeneity_classified",
-            title="Clasificación homogénea" if locale_key(ctx.locale) == "es" else "Homogeneity classification",
+            title=(
+                "Clasificación homogénea"
+                if locale_key(ctx.locale) == "es"
+                else "Homogeneity classification"
+            ),
             status="complete",
             confidence="high",
             summary_key=(
@@ -239,7 +252,11 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=4,
             step_id="ceq_s4",
             kind="homogeneous_part_extracted",
-            title="Extracción de parte homogénea" if locale_key(ctx.locale) == "es" else "Homogeneous part extraction",
+            title=(
+                "Extracción de parte homogénea"
+                if locale_key(ctx.locale) == "es"
+                else "Homogeneous part extraction"
+            ),
             status="complete",
             confidence="high",
             summary_key="homogeneous_part_extracted.standard",
@@ -255,7 +272,11 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=5,
             step_id="ceq_s5",
             kind="characteristic_polynomial_built",
-            title="Ecuación característica" if locale_key(ctx.locale) == "es" else "Characteristic equation",
+            title=(
+                "Ecuación característica"
+                if locale_key(ctx.locale) == "es"
+                else "Characteristic equation"
+            ),
             status="complete",
             confidence="high",
             summary_key="characteristic_polynomial_built.standard",
@@ -266,13 +287,17 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
     )
 
     roots_have_repetition = any(int(r.get("multiplicity", 1)) > 1 for r in ctx.roots)
-    step6_status: StepStatus = "partial" if ctx.has_complex_root_representation else "complete"
+    step6_status: StepStatus = (
+        "partial" if ctx.has_complex_root_representation else "complete"
+    )
     step6_key = (
         "roots_computed.partial"
         if step6_status == "partial"
-        else "roots_computed.repeated_root"
-        if roots_have_repetition
-        else "roots_computed.real_distinct"
+        else (
+            "roots_computed.repeated_root"
+            if roots_have_repetition
+            else "roots_computed.real_distinct"
+        )
     )
     steps.append(
         _make_step(
@@ -280,18 +305,34 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=6,
             step_id="ceq_s6",
             kind="roots_computed",
-            title="Raíces y multiplicidades" if locale_key(ctx.locale) == "es" else "Roots and multiplicities",
+            title=(
+                "Raíces y multiplicidades"
+                if locale_key(ctx.locale) == "es"
+                else "Roots and multiplicities"
+            ),
             status=step6_status,
             confidence="medium" if step6_status == "partial" else "high",
             summary_key=step6_key,
             concept_key="concept.roots_computed",
-            warning_key="warning.complex_root_form_partial" if step6_status == "partial" else None,
-            primary_latex=",\\;".join([
-                f"x_{{{idx + 1}}}={root_info.get('root')}\\;(m={root_info.get('multiplicity', 1)})"
-                for idx, root_info in enumerate(ctx.roots)
-            ]) if ctx.roots else None,
+            warning_key=(
+                "warning.complex_root_form_partial"
+                if step6_status == "partial"
+                else None
+            ),
+            primary_latex=(
+                ",\\;".join(
+                    [
+                        f"x_{{{idx + 1}}}={root_info.get('root')}\\;(m={root_info.get('multiplicity', 1)})"
+                        for idx, root_info in enumerate(ctx.roots)
+                    ]
+                )
+                if ctx.roots
+                else None
+            ),
             payload={"roots": ctx.roots},
-            codes=["CEQ_COMPLEX_ROOT_FORM_PARTIAL"] if step6_status == "partial" else [],
+            codes=(
+                ["CEQ_COMPLEX_ROOT_FORM_PARTIAL"] if step6_status == "partial" else []
+            ),
         )
     )
 
@@ -301,7 +342,11 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=7,
             step_id="ceq_s7",
             kind="homogeneous_solution_built",
-            title="Solución homogénea" if locale_key(ctx.locale) == "es" else "Homogeneous solution",
+            title=(
+                "Solución homogénea"
+                if locale_key(ctx.locale) == "es"
+                else "Homogeneous solution"
+            ),
             status="complete",
             confidence="high",
             summary_key="homogeneous_solution_built.standard",
@@ -333,21 +378,37 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=8,
             step_id="ceq_s8",
             kind="particular_solution_built",
-            title="Solución particular" if locale_key(ctx.locale) == "es" else "Particular solution",
+            title=(
+                "Solución particular"
+                if locale_key(ctx.locale) == "es"
+                else "Particular solution"
+            ),
             status=step8_status,
             confidence="high" if step8_status == "complete" else "low",
             summary_key=step8_key,
             concept_key="concept.particular_solution_built",
             warning_key=step8_warning,
-            primary_latex=ctx.particular_solution if ctx.particular_solution else r"T_p(n)\;\text{N/A}",
+            primary_latex=(
+                ctx.particular_solution
+                if ctx.particular_solution
+                else r"T_p(n)\;\text{N/A}"
+            ),
             payload={"g_n": ctx.g_n, "particular_solution": ctx.particular_solution},
             codes=step8_codes,
-            assumptions=["g(n) treated as constant family"] if (ctx.particular_supported and not ctx.is_homogeneous) else [],
+            assumptions=(
+                ["g(n) treated as constant family"]
+                if (ctx.particular_supported and not ctx.is_homogeneous)
+                else []
+            ),
         )
     )
 
     step9_status: StepStatus = "complete"
-    step9_key = "general_solution_built.homogeneous_only" if ctx.is_homogeneous else "general_solution_built.with_particular"
+    step9_key = (
+        "general_solution_built.homogeneous_only"
+        if ctx.is_homogeneous
+        else "general_solution_built.with_particular"
+    )
     step9_warning = None
     step9_codes: List[str] = []
     step9_blocked: List[str] = []
@@ -364,7 +425,11 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=9,
             step_id="ceq_s9",
             kind="general_solution_built",
-            title="Solución general" if locale_key(ctx.locale) == "es" else "General solution",
+            title=(
+                "Solución general"
+                if locale_key(ctx.locale) == "es"
+                else "General solution"
+            ),
             status=step9_status,
             confidence="medium" if step9_status == "partial" else "high",
             summary_key=step9_key,
@@ -380,11 +445,21 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
     has_base_cases = bool(ctx.base_cases)
     solved_constants = ctx.solved_constants or {}
     required_constants = max(int(ctx.required_constants), 0)
-    has_required_constants = (required_constants == 0) or (len(solved_constants) >= required_constants)
+    has_required_constants = (required_constants == 0) or (
+        len(solved_constants) >= required_constants
+    )
     step10_status: StepStatus = "complete" if has_required_constants else "partial"
-    step10_summary_key = "base_conditions_applied.solved" if has_required_constants else "base_conditions_applied.partial"
-    step10_warning = None if has_required_constants else "warning.insufficient_base_conditions"
-    step10_codes: List[str] = [] if has_required_constants else ["CEQ_INSUFFICIENT_BASE_CONDITIONS"]
+    step10_summary_key = (
+        "base_conditions_applied.solved"
+        if has_required_constants
+        else "base_conditions_applied.partial"
+    )
+    step10_warning = (
+        None if has_required_constants else "warning.insufficient_base_conditions"
+    )
+    step10_codes: List[str] = (
+        [] if has_required_constants else ["CEQ_INSUFFICIENT_BASE_CONDITIONS"]
+    )
     if has_required_constants and solved_constants:
         step10_primary = ",\\;".join([f"{k}={v}" for k, v in solved_constants.items()])
     elif has_base_cases:
@@ -398,7 +473,11 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=10,
             step_id="ceq_s10",
             kind="base_conditions_applied",
-            title="Aplicación de condiciones iniciales" if locale_key(ctx.locale) == "es" else "Initial conditions application",
+            title=(
+                "Aplicación de condiciones iniciales"
+                if locale_key(ctx.locale) == "es"
+                else "Initial conditions application"
+            ),
             status=step10_status,
             confidence="high" if step10_status == "complete" else "medium",
             summary_key=step10_summary_key,
@@ -421,19 +500,31 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=11,
             step_id="ceq_s11",
             kind="closed_form_simplified",
-            title="Simplificación final" if locale_key(ctx.locale) == "es" else "Final simplification",
+            title=(
+                "Simplificación final"
+                if locale_key(ctx.locale) == "es"
+                else "Final simplification"
+            ),
             status=step11_status,
             confidence="medium" if step11_status == "partial" else "high",
-            summary_key="closed_form_simplified.partial" if step11_status == "partial" else "closed_form_simplified.complete",
+            summary_key=(
+                "closed_form_simplified.partial"
+                if step11_status == "partial"
+                else "closed_form_simplified.complete"
+            ),
             concept_key="concept.closed_form_simplified",
-            warning_key="warning.simplification_partial" if step11_status == "partial" else None,
+            warning_key=(
+                "warning.simplification_partial" if step11_status == "partial" else None
+            ),
             primary_latex=ctx.closed_form,
             payload={"closed_form": ctx.closed_form},
             codes=["CEQ_SIMPLIFICATION_PARTIAL"] if step11_status == "partial" else [],
         )
     )
 
-    prior_partial = any(s.get("status") in ("partial", "unsupported", "error") for s in steps)
+    prior_partial = any(
+        s.get("status") in ("partial", "unsupported", "error") for s in steps
+    )
     step12_status: StepStatus = "partial" if prior_partial else "complete"
     steps.append(
         _make_step(
@@ -441,13 +532,24 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=12,
             step_id="ceq_s12",
             kind="dominant_term_concluded",
-            title="Conclusión asintótica" if locale_key(ctx.locale) == "es" else "Asymptotic conclusion",
+            title=(
+                "Conclusión asintótica"
+                if locale_key(ctx.locale) == "es"
+                else "Asymptotic conclusion"
+            ),
             status=step12_status,
             confidence="medium" if step12_status == "partial" else "high",
-            summary_key="dominant_term_concluded.partial" if step12_status == "partial" else "dominant_term_concluded.exponential",
+            summary_key=(
+                "dominant_term_concluded.partial"
+                if step12_status == "partial"
+                else "dominant_term_concluded.exponential"
+            ),
             concept_key="concept.dominant_term_concluded",
             primary_latex=f"T(n) = {ctx.theta}",
-            payload={"theta": ctx.theta, "dominant_root": ctx.roots[0].get("root") if ctx.roots else None},
+            payload={
+                "theta": ctx.theta,
+                "dominant_root": ctx.roots[0].get("root") if ctx.roots else None,
+            },
         )
     )
 

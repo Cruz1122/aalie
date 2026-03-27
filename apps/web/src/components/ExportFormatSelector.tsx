@@ -43,7 +43,9 @@ export default function ExportFormatSelector({
 }: ExportFormatSelectorProps) {
   const t = useTranslations("analyzer.exportSelector");
   const tCommon = useTranslations("common");
-  const [selectedFormats, setSelectedFormats] = useState<Set<ExportFormatType>>(new Set([]));
+  const [selectedFormats, setSelectedFormats] = useState<Set<ExportFormatType>>(
+    new Set([]),
+  );
 
   const toggleFormat = (formatId: ExportFormatType) => {
     setSelectedFormats((prev) => {
@@ -64,11 +66,15 @@ export default function ExportFormatSelector({
   const isSelectionValid = selectedFormats.size > 0;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center transition-opacity duration-300 opacity-100" style={{ pointerEvents: "auto" }}>
-      <div className="absolute inset-0 glass-modal-overlay" onClick={onCancel} />
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center transition-opacity duration-300 opacity-100"
+      style={{ pointerEvents: "auto" }}
+    >
       <div
-        className="relative z-10 glass-modal-container rounded-2xl p-8 w-[600px] h-[400px] mx-4 shadow-2xl flex flex-col"
-      >
+        className="absolute inset-0 glass-modal-overlay"
+        onClick={onCancel}
+      />
+      <div className="relative z-10 glass-modal-container rounded-2xl p-8 w-[600px] h-[400px] mx-4 shadow-2xl flex flex-col">
         <div className="flex-1 flex flex-col">
           <div className="mb-8 shrink-0">
             <h2 className="mt-1 text-xl font-semibold text-white text-center">
@@ -136,7 +142,9 @@ export default function ExportFormatSelector({
             disabled={!isSelectionValid}
             className="px-6 py-2 rounded-lg bg-slate-600/50 text-white border border-slate-500/50 hover:bg-slate-600/80 transition-colors text-sm font-semibold flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-slate-600/50"
           >
-            <span className="material-symbols-outlined text-base">download</span>
+            <span className="material-symbols-outlined text-base">
+              download
+            </span>
             {t("download")}
           </button>
         </div>

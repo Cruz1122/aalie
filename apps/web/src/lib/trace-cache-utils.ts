@@ -28,10 +28,7 @@ export interface TraceCacheKeyParams {
  */
 export function normalizeSource(source: string): string {
   if (!source || typeof source !== "string") return "";
-  let s = source
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n")
-    .trim();
+  let s = source.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
   // Remover comentarios de bloque /* ... */
   s = s.replace(/\/\*[\s\S]*?\*\//g, "");
   // Remover comentarios de línea // ...
@@ -54,7 +51,7 @@ export function normalizeSource(source: string): string {
 function djb2Hash(str: string): string {
   let h = 5381;
   for (let i = 0; i < str.length; i++) {
-    h = ((h << 5) + h) + str.charCodeAt(i);
+    h = (h << 5) + h + str.charCodeAt(i);
   }
   return (h >>> 0).toString(36);
 }

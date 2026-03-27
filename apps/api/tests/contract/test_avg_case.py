@@ -71,9 +71,9 @@ class TestAvgCase:
         assert "avg_model_info" in totals
         assert "A_of_n" in totals
         a_of_n = totals.get("A_of_n", "")
-        assert "n" in a_of_n.lower() or "frac" in a_of_n.lower(), (
-            f"A_of_n debe contener n o fracción: {a_of_n}"
-        )
+        assert (
+            "n" in a_of_n.lower() or "frac" in a_of_n.lower()
+        ), f"A_of_n debe contener n o fracción: {a_of_n}"
 
     def test_linear_search_avg_has_model_info(self):
         """Búsqueda lineal avg debe tener avg_model_info con mode y note."""
@@ -93,9 +93,9 @@ class TestAvgCase:
         if avg != "same_as_worst" and isinstance(avg, dict):
             totals = avg.get("totals", {})
             big_theta = totals.get("big_theta", "") or totals.get("big_o", "")
-            assert notation_has_complexity(big_theta, "quadratic"), (
-                f"Bubble sort avg debe ser Θ(n²): {big_theta}"
-            )
+            assert notation_has_complexity(
+                big_theta, "quadratic"
+            ), f"Bubble sort avg debe ser Θ(n²): {big_theta}"
 
     def test_bubble_sort_avg_has_expected_runs(self):
         """Bubble sort avg debe tener expectedRuns en cada fila."""
@@ -108,7 +108,9 @@ class TestAvgCase:
 
     def test_simple_for_avg_has_expected_runs(self):
         """FOR simple en avg debe tener expectedRuns."""
-        result = analyze_algorithm(SIMPLE_FOR, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
+        result = analyze_algorithm(
+            SIMPLE_FOR, mode="avg", avg_model={"mode": "uniform", "predicates": {}}
+        )
         assert result.get("ok", False)
         assert "byLine" in result
         for row in result["byLine"]:
@@ -116,7 +118,11 @@ class TestAvgCase:
 
     def test_if_with_probability_avg_case(self):
         """IF con ambas ramas en avg debe tener expectedRuns en guardia, then y else."""
-        result = analyze_algorithm(IF_BOTH_BRANCHES, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
+        result = analyze_algorithm(
+            IF_BOTH_BRANCHES,
+            mode="avg",
+            avg_model={"mode": "uniform", "predicates": {}},
+        )
         assert result.get("ok", False)
         rows = result.get("byLine", [])
         assert len(rows) >= 3
@@ -125,18 +131,24 @@ class TestAvgCase:
 
     def test_symbolic_model_avg_case(self):
         """Modelo simbólico debe tener avg_model_info con mode symbolic."""
-        result = analyze_algorithm(SIMPLE_ASSIGN, mode="avg", avg_model={"mode": "symbolic", "predicates": {}})
+        result = analyze_algorithm(
+            SIMPLE_ASSIGN, mode="avg", avg_model={"mode": "symbolic", "predicates": {}}
+        )
         assert result.get("ok", False)
         totals = result.get("totals", {})
         assert "avg_model_info" in totals
         model_info = totals["avg_model_info"]
         assert model_info["mode"] == "symbolic"
         note = model_info.get("note", "").lower()
-        assert "symbolic" in note or "simbólico" in note, f"note debe mencionar symbolic: {note}"
+        assert (
+            "symbolic" in note or "simbólico" in note
+        ), f"note debe mencionar symbolic: {note}"
 
     def test_avg_case_has_a_of_n(self):
         """Caso promedio con FOR debe tener A_of_n en totals."""
-        result = analyze_algorithm(SIMPLE_FOR, mode="avg", avg_model={"mode": "uniform", "predicates": {}})
+        result = analyze_algorithm(
+            SIMPLE_FOR, mode="avg", avg_model={"mode": "uniform", "predicates": {}}
+        )
         assert result.get("ok", False)
         totals = result.get("totals", {})
         assert "A_of_n" in totals
@@ -150,9 +162,9 @@ class TestAvgCase:
         assert avg != "same_as_worst" and isinstance(avg, dict)
         totals = avg.get("totals", {})
         assert "avg_foundation" in totals
-        assert totals["avg_foundation"] == "well_founded", (
-            f"Búsqueda lineal debe ser well_founded: {totals.get('avg_foundation')}"
-        )
+        assert (
+            totals["avg_foundation"] == "well_founded"
+        ), f"Búsqueda lineal debe ser well_founded: {totals.get('avg_foundation')}"
 
     def test_linear_search_avg_formula_contains_n_plus_1_over_2(self):
         """Búsqueda lineal A(n) debe contener (n+1)/2 o equivalente (E[iter] estándar)."""
@@ -165,13 +177,14 @@ class TestAvgCase:
         combined = (a_of_n + " " + t_poly).lower()
         # Debe contener n+1/2, (n+1)/2, frac con n, o similar
         has_expected = (
-            "n+1" in combined or "n + 1" in combined
+            "n+1" in combined
+            or "n + 1" in combined
             or "frac" in combined
             or "n/2" in combined
         )
-        assert has_expected, (
-            f"A(n) o T_polynomial debe reflejar E[iter]=(n+1)/2: A_of_n={a_of_n}, T_polynomial={t_poly}"
-        )
+        assert (
+            has_expected
+        ), f"A(n) o T_polynomial debe reflejar E[iter]=(n+1)/2: A_of_n={a_of_n}, T_polynomial={t_poly}"
 
     def test_avg_unbounded_has_approximate_foundation(self):
         """Algoritmo con WHILE unbounded en avg debe tener avg_foundation=approximate."""
@@ -190,6 +203,6 @@ END
         if avg != "same_as_worst" and isinstance(avg, dict):
             totals = avg.get("totals", {})
             if "avg_foundation" in totals:
-                assert totals["avg_foundation"] == "approximate", (
-                    f"WHILE unbounded en avg debe ser approximate: {totals.get('avg_foundation')}"
-                )
+                assert (
+                    totals["avg_foundation"] == "approximate"
+                ), f"WHILE unbounded en avg debe ser approximate: {totals.get('avg_foundation')}"

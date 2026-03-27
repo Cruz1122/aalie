@@ -14,7 +14,11 @@ import type {
   Identifier,
 } from "@aa/types";
 
-import type { DependencyProfile, LoopDependencySummary, RecursionDependencySummary } from "../types";
+import type {
+  DependencyProfile,
+  LoopDependencySummary,
+  RecursionDependencySummary,
+} from "../types";
 
 interface LoopScope {
   id: string;
@@ -59,7 +63,8 @@ function collectReads(node: AstNode, reads: Set<string>): void {
       break;
     }
     case "Call": {
-      for (const arg of (node as { args: AstNode[] }).args) collectReads(arg, reads);
+      for (const arg of (node as { args: AstNode[] }).args)
+        collectReads(arg, reads);
       break;
     }
     default:
@@ -70,18 +75,25 @@ function collectReads(node: AstNode, reads: Set<string>): void {
 function isLoopCarried(assign: Assign): boolean {
   const target = assign.target;
   if (target.type !== "Index") return false;
-  const tName = target.type === "Index" && "target" in target && (target as Index).target.type === "Identifier"
-    ? ((target as Index).target as Identifier).name
-    : null;
+  const tName =
+    target.type === "Index" &&
+    "target" in target &&
+    (target as Index).target.type === "Identifier"
+      ? ((target as Index).target as Identifier).name
+      : null;
   if (!tName) return false;
 
   function hasStencilRead(node: AstNode, name: string): boolean {
     if (node.type === "Index") {
       const n = node as Index;
-      if (n.target.type === "Identifier" && (n.target as Identifier).name === name) {
+      if (
+        n.target.type === "Identifier" &&
+        (n.target as Identifier).name === name
+      ) {
         if (n.index && n.index.type === "Binary") {
           const b = n.index as Binary;
-          if ((b.op === "+" || b.op === "-") && b.right.type === "Literal") return true;
+          if ((b.op === "+" || b.op === "-") && b.right.type === "Literal")
+            return true;
         }
       }
     }
@@ -103,7 +115,7 @@ function isScalarAccumulator(assign: Assign): boolean {
   const b = v as Binary;
   const lId = b.left.type === "Identifier" && (b.left as Identifier).name;
   const rId = b.right.type === "Identifier" && (b.right as Identifier).name;
-  return (lId === name || rId === name);
+  return lId === name || rId === name;
 }
 
 function analyzeLoopBody(body: Block, scope: LoopScope, fnName: string): void {
@@ -175,22 +187,39 @@ function analyzeStmt(node: AstNode, scope: LoopScope, fnName: string): void {
   }
 }
 
-function classifyLoop(scope: LoopScope): LoopDependencySummary["classification"] {
+function classifyLoop(
+  scope: LoopScope,
+): LoopDependencySummary["classification"] {
   if (scope.hasLoopCarried) return "sequential_by_dependency";
-  if (scope.hasEarlyReturn && scope.mapLikeTargets.size === 0) return "sequential_by_dependency";
-  if (scope.accumulators.size > 0 && !scope.hasLoopCarried) return "parallel_with_reduction";
-  if (scope.mapLikeTargets.size > 0 && scope.accumulators.size === 0 && !scope.hasLoopCarried) {
+  if (scope.hasEarlyReturn && scope.mapLikeTargets.size === 0)
+    return "sequential_by_dependency";
+  if (scope.accumulators.size > 0 && !scope.hasLoopCarried)
+    return "parallel_with_reduction";
+  if (
+    scope.mapLikeTargets.size > 0 &&
+    scope.accumulators.size === 0 &&
+    !scope.hasLoopCarried
+  ) {
     return "embarrassingly_parallel";
   }
-  if (scope.mapLikeTargets.size > 0 || scope.accumulators.size > 0) return "weakly_parallel";
+  if (scope.mapLikeTargets.size > 0 || scope.accumulators.size > 0)
+    return "weakly_parallel";
   return "unknown";
 }
 
 let _loopCounter = 0;
 
-function visitLoops(body: Block, loops: LoopDependencySummary[], fnName: string): void {
+function visitLoops(
+  body: Block,
+  loops: LoopDependencySummary[],
+  fnName: string,
+): void {
   for (const stmt of body.body) {
-    if (stmt.type === "For" || stmt.type === "While" || stmt.type === "Repeat") {
+    if (
+      stmt.type === "For" ||
+      stmt.type === "While" ||
+      stmt.type === "Repeat"
+    ) {
       const id = `loop_${++_loopCounter}`;
       const scope = mkLoopScope(id);
       const loopBody =
@@ -238,20 +267,37 @@ export function analyzeDependencies(ast: Program): DependencyProfile {
 
       function scanForRecursion(n: AstNode): void {
         if (!n) return;
-        if (n.type === "Call" && (n as { callee: string }).callee === proc.name) {
+        if (
+          n.type === "Call" &&
+          (n as { callee: string }).callee === proc.name
+        ) {
           recursiveCalls++;
         }
         if (n.type === "Return") hasReturnAfterCalls = recursiveCalls > 0;
-        if ("body" in n && n.body && typeof n.body === "object" && "body" in (n.body as object)) {
+        if (
+          "body" in n &&
+          n.body &&
+          typeof n.body === "object" &&
+          "body" in (n.body as object)
+        ) {
           for (const child of (n.body as Block).body) scanForRecursion(child);
         }
         if ("consequent" in n) {
-          for (const child of (n as If).consequent.body) scanForRecursion(child);
-          if ((n as If).alternate) for (const child of (n as If).alternate!.body) scanForRecursion(child);
+          for (const child of (n as If).consequent.body)
+            scanForRecursion(child);
+          if ((n as If).alternate)
+            for (const child of (n as If).alternate!.body)
+              scanForRecursion(child);
         }
-        if ("args" in n) for (const arg of (n as { args: AstNode[] }).args) scanForRecursion(arg);
-        if ("value" in n && (n as Return).value) scanForRecursion((n as Return).value);
-        if ("left" in n) { scanForRecursion((n as Binary).left); scanForRecursion((n as Binary).right); }
+        if ("args" in n)
+          for (const arg of (n as { args: AstNode[] }).args)
+            scanForRecursion(arg);
+        if ("value" in n && (n as Return).value)
+          scanForRecursion((n as Return).value);
+        if ("left" in n) {
+          scanForRecursion((n as Binary).left);
+          scanForRecursion((n as Binary).right);
+        }
       }
       for (const stmt of proc.body.body) scanForRecursion(stmt);
 
@@ -266,10 +312,17 @@ export function analyzeDependencies(ast: Program): DependencyProfile {
   }
 
   // Global risk
-  const hasSequential = loops.some((l) => l.classification === "sequential_by_dependency");
+  const hasSequential = loops.some(
+    (l) => l.classification === "sequential_by_dependency",
+  );
   const hasUnknown = loops.some((l) => l.classification === "unknown");
-  const globalRisk: DependencyProfile["globalRisk"] =
-    hasSequential ? "high" : hasUnknown ? "medium" : loops.length > 0 ? "low" : "unknown";
+  const globalRisk: DependencyProfile["globalRisk"] = hasSequential
+    ? "high"
+    : hasUnknown
+      ? "medium"
+      : loops.length > 0
+        ? "low"
+        : "unknown";
 
   return { loops, recursion, globalRisk };
 }

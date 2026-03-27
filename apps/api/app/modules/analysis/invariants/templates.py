@@ -44,6 +44,7 @@ def generate_behaviour(pattern: str, locale: str) -> str:
 
     return _BEHAVIOUR_EN.get(pattern, _BEHAVIOUR_DEFAULT_EN)
 
+
 def _first(values: List[str], default: str) -> str:
     return values[0] if values else default
 
@@ -63,27 +64,34 @@ def _features(facts: LoopFacts) -> Set[str]:
 
 def _feature_values(features: Set[str], prefix: str) -> List[str]:
     values = [
-        feature[len(prefix):].strip()
+        feature[len(prefix) :].strip()
         for feature in features
         if feature.startswith(prefix)
     ]
     return sorted({value for value in values if value})
 
 
-def _choose_interval_bounds(control_variables: List[str], fallback_left: str, fallback_right: str) -> tuple[str, str]:
+def _choose_interval_bounds(
+    control_variables: List[str], fallback_left: str, fallback_right: str
+) -> tuple[str, str]:
     if len(control_variables) < 2:
         return fallback_left, fallback_right
 
     names = list(control_variables)
     left = _first(
-        [name for name in names if _has_name_hint(name, ("low", "left", "izq", "inicio", "start", "l"))],
+        [
+            name
+            for name in names
+            if _has_name_hint(name, ("low", "left", "izq", "inicio", "start", "l"))
+        ],
         names[0],
     )
     right = _first(
         [
             name
             for name in names
-            if name != left and _has_name_hint(name, ("high", "right", "der", "fin", "end", "r"))
+            if name != left
+            and _has_name_hint(name, ("high", "right", "der", "fin", "end", "r"))
         ],
         _first([name for name in names if name != left], names[0]),
     )
@@ -102,9 +110,7 @@ def _choose_bound_variable(
         return default
 
     candidates = [
-        name
-        for name in bound_variables
-        if name not in {control, collection, target}
+        name for name in bound_variables if name not in {control, collection, target}
     ]
     if not candidates:
         candidates = list(bound_variables)
@@ -113,14 +119,18 @@ def _choose_bound_variable(
         [
             name
             for name in candidates
-            if _has_name_hint(name, ("n", "len", "size", "tam", "bound", "fin", "end", "m"))
+            if _has_name_hint(
+                name, ("n", "len", "size", "tam", "bound", "fin", "end", "m")
+            )
         ],
         candidates[0],
     )
     return preferred
 
 
-def _infer_copy_collections_from_updates(key_updates: List[str]) -> tuple[Optional[str], Optional[str]]:
+def _infer_copy_collections_from_updates(
+    key_updates: List[str],
+) -> tuple[Optional[str], Optional[str]]:
     for update in key_updates:
         text = update.strip()
         # Example: B[i] <- A[i]
@@ -173,13 +183,18 @@ def resolve_template_variant(pattern: PatternType, facts: LoopFacts) -> str:
 
     features = _features(facts)
     extrema_candidates = _feature_values(features, "extrema_candidate:")
-    accumulator = _first(extrema_candidates, _first(facts.accumulators, _first(facts.body_writes, "state")))
+    accumulator = _first(
+        extrema_candidates,
+        _first(facts.accumulators, _first(facts.body_writes, "state")),
+    )
     if pattern == "extrema":
         accumulator = _first(
             [
                 name
                 for name in facts.body_writes
-                if _has_name_hint(name, ("max", "min", "mayor", "menor", "small", "large"))
+                if _has_name_hint(
+                    name, ("max", "min", "mayor", "menor", "small", "large")
+                )
             ],
             accumulator,
         )
@@ -259,10 +274,7 @@ def resolve_template_variant(pattern: PatternType, facts: LoopFacts) -> str:
         has_collection = bool(facts.collection_variables)
         if len(facts.accumulators) > 1:
             return "multi_accumulator_ambiguous"
-        if (
-            "has_multidimensional_collection_access" in features
-            and has_collection
-        ):
+        if "has_multidimensional_collection_access" in features and has_collection:
             return "row_accumulation"
         if "has_multiplicative_accumulator" in features:
             if _has_name_hint(accumulator, ("fact", "factor")):
@@ -377,13 +389,18 @@ def build_invariant_text(
     )
     collection = _first(facts.collection_variables, "A")
     extrema_candidates = _feature_values(features, "extrema_candidate:")
-    accumulator = _first(extrema_candidates, _first(facts.accumulators, _first(facts.body_writes, "state")))
+    accumulator = _first(
+        extrema_candidates,
+        _first(facts.accumulators, _first(facts.body_writes, "state")),
+    )
     if pattern == "extrema":
         accumulator = _first(
             [
                 name
                 for name in facts.body_writes
-                if _has_name_hint(name, ("max", "min", "mayor", "menor", "small", "large"))
+                if _has_name_hint(
+                    name, ("max", "min", "mayor", "menor", "small", "large")
+                )
             ],
             accumulator,
         )
@@ -412,7 +429,9 @@ def build_invariant_text(
         _first(
             [
                 name
-                for name in (facts.body_writes + facts.body_reads + facts.target_variables)
+                for name in (
+                    facts.body_writes + facts.body_reads + facts.target_variables
+                )
                 if "." not in name
                 and name not in {control, second_control, collection, bound, target}
             ],
@@ -446,8 +465,10 @@ def build_invariant_text(
         "",
     )
 
-    state_vars = _join(facts.body_writes[:4]) if facts.body_writes else _join(
-        [name for name in [control, second_control, partner_var] if name]
+    state_vars = (
+        _join(facts.body_writes[:4])
+        if facts.body_writes
+        else _join([name for name in [control, second_control, partner_var] if name])
     )
     exp_var = facts.exponent_var or control
     base_var = facts.base_var or partner_var
@@ -458,22 +479,31 @@ def build_invariant_text(
         [
             name
             for name in facts.body_writes
-            if _has_name_hint(name, ("found", "exist", "flag", "encontr", "hall", "seen"))
+            if _has_name_hint(
+                name, ("found", "exist", "flag", "encontr", "hall", "seen")
+            )
         ],
         _first(
             [
                 name
                 for name in facts.body_writes
-                if "." not in name and name not in {control, second_control, collection, bound}
+                if "." not in name
+                and name not in {control, second_control, collection, bound}
             ],
             "found",
         ),
     )
 
-    source_hint, destination_hint = _infer_copy_collections_from_updates(facts.key_updates)
+    source_hint, destination_hint = _infer_copy_collections_from_updates(
+        facts.key_updates
+    )
     destination_collection = destination_hint or _first(
         [name for name in facts.body_writes if name in facts.collection_variables],
-        facts.collection_variables[1] if len(facts.collection_variables) > 1 else collection,
+        (
+            facts.collection_variables[1]
+            if len(facts.collection_variables) > 1
+            else collection
+        ),
     )
     source_collection = source_hint or _first(
         [name for name in facts.collection_variables if name != destination_collection],
@@ -571,10 +601,22 @@ def _build_spanish(
     prev_segment = f"{collection}[1..{control}-1]"
     current_cell = f"{collection}[{control}]"
     source_cell = f"{source_collection}[{control}]"
-    field_cell = f"{collection}[{control}].{collection_field}" if collection_field else current_cell
+    field_cell = (
+        f"{collection}[{control}].{collection_field}"
+        if collection_field
+        else current_cell
+    )
     full_segment = f"{collection}[1..{bound}]"
-    extrema_prev_segment = f"{collection}[1..{control}-1].{collection_field}" if collection_field else prev_segment
-    extrema_full_segment = f"{collection}[1..{bound}].{collection_field}" if collection_field else full_segment
+    extrema_prev_segment = (
+        f"{collection}[1..{control}-1].{collection_field}"
+        if collection_field
+        else prev_segment
+    )
+    extrema_full_segment = (
+        f"{collection}[1..{bound}].{collection_field}"
+        if collection_field
+        else full_segment
+    )
 
     if pattern == "binary_search_interval":
         if variant != "binary_search_interval":
@@ -1764,10 +1806,22 @@ def _build_english(
     prev_segment = f"{collection}[1..{control}-1]"
     current_cell = f"{collection}[{control}]"
     source_cell = f"{source_collection}[{control}]"
-    field_cell = f"{collection}[{control}].{collection_field}" if collection_field else current_cell
+    field_cell = (
+        f"{collection}[{control}].{collection_field}"
+        if collection_field
+        else current_cell
+    )
     full_segment = f"{collection}[1..{bound}]"
-    extrema_prev_segment = f"{collection}[1..{control}-1].{collection_field}" if collection_field else prev_segment
-    extrema_full_segment = f"{collection}[1..{bound}].{collection_field}" if collection_field else full_segment
+    extrema_prev_segment = (
+        f"{collection}[1..{control}-1].{collection_field}"
+        if collection_field
+        else prev_segment
+    )
+    extrema_full_segment = (
+        f"{collection}[1..{bound}].{collection_field}"
+        if collection_field
+        else full_segment
+    )
 
     if pattern == "binary_search_interval":
         if variant != "binary_search_interval":

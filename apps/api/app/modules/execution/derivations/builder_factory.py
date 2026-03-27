@@ -7,6 +7,7 @@ Aplica layout para convertir StructuredTraceView a TraceGraph.
 Author: Plan Sistema Traza Estructural
 Version: 0.1.0
 """
+
 from typing import Any, Callable, Dict, List, Optional
 
 from ..schemas import GraphNodeData, TraceGraphEdge, TraceGraphNode
@@ -21,7 +22,10 @@ from .builders import (
     build_single_branch_recursive_search,
     build_tail_recursive_linear,
 )
-from .structural_trace_classifier import StructuralPatternKind, StructuralTraceClassification
+from .structural_trace_classifier import (
+    StructuralPatternKind,
+    StructuralTraceClassification,
+)
 from .structured_trace_models import (
     StructuredTraceEdge,
     StructuredTraceNode,
@@ -47,7 +51,9 @@ BUILDER_REGISTRY: Dict[StructuralPatternKind, Callable[..., StructuredTraceView]
 }
 
 
-def get_builder(pattern_kind: StructuralPatternKind) -> Callable[..., StructuredTraceView]:
+def get_builder(
+    pattern_kind: StructuralPatternKind,
+) -> Callable[..., StructuredTraceView]:
     """Obtiene el builder para el patrón dado."""
     return BUILDER_REGISTRY.get(pattern_kind, build_generic_recursive)
 
@@ -188,7 +194,9 @@ def _apply_layout_tree(
             data=GraphNodeData(**data_dict),
         )
 
-    def layout_node(node_id: str, x: float, y: float, active_path: Optional[set[str]] = None) -> None:
+    def layout_node(
+        node_id: str, x: float, y: float, active_path: Optional[set[str]] = None
+    ) -> None:
         n = nodes_by_id.get(node_id)
         if not n or node_id in visited:
             return

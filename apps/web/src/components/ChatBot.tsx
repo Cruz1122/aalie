@@ -51,9 +51,7 @@ interface ChatBotProps {
  * Inferencia local de intención a partir del contenido del mensaje.
  * No usa ningún job LLM específico.
  */
-function inferIntentFromMessage(
-  message: string,
-): "parser_assist" | "general" {
+function inferIntentFromMessage(message: string): "parser_assist" | "general" {
   const text = message.toLowerCase();
 
   const codeKeywords = [
@@ -148,7 +146,8 @@ async function getLLMResponse(
 
     // Verificar si la respuesta indica un error
     if (!result.ok) {
-      const errorMessage = result?.error || (t ? t("unknownLlmError") : "Unknown LLM error");
+      const errorMessage =
+        result?.error || (t ? t("unknownLlmError") : "Unknown LLM error");
       // Todos los errores 500 son del LLM/Gemini, también errores que mencionen Gemini, API_KEY o LLM
       const isGeminiError =
         errorMessage.includes("Gemini") ||
@@ -485,9 +484,7 @@ export default function ChatBot({
 
   return (
     <div className="w-full max-w-2xl mx-auto px-2 sm:px-0 flex flex-col items-center justify-center flex-1 min-h-0">
-      <div
-        className="flex flex-col glass-modal-container rounded-2xl overflow-hidden min-h-[50vh] sm:min-h-[60vh] h-[50vh] sm:h-[70vh]"
-      >
+      <div className="flex flex-col glass-modal-container rounded-2xl overflow-hidden min-h-[50vh] sm:min-h-[60vh] h-[50vh] sm:h-[70vh]">
         {/* Header */}
         <div className="glass-modal-header p-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -588,186 +585,197 @@ export default function ChatBot({
             <div className="flex-1 overflow-y-auto p-2.5 space-y-2.5 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
               {/* Mostrar mensajes (el backend manejará la API_KEY automáticamente) */}
               {messages.map((message) => {
-            const isNewMessage = !animatedMessagesRef.current.has(message.id);
-            if (isNewMessage) {
-              animatedMessagesRef.current.add(message.id);
-            }
+                const isNewMessage = !animatedMessagesRef.current.has(
+                  message.id,
+                );
+                if (isNewMessage) {
+                  animatedMessagesRef.current.add(message.id);
+                }
 
-            return (
-              <div
-                key={message.id}
-                className={`flex items-start gap-2 ${
-                  message.sender === "user" ? "flex-row-reverse" : "flex-row"
-                } ${isNewMessage ? "chat-message-slide-in" : ""}`}
-              >
-                {/* Avatar */}
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    message.sender === "user"
-                      ? "bg-gradient-to-br from-blue-500/30 to-cyan-500/30"
-                      : "bg-gradient-to-br from-purple-500/30 to-blue-500/30"
-                  }`}
-                >
-                  {message.sender === "user" ? (
-                    <User size={14} className="text-blue-300" />
-                  ) : (
-                    <AALIEIcon className="text-purple-300" size={22} />
-                  )}
-                </div>
-
-                {/* Message Bubble */}
-                <div
-                  className={`flex flex-col min-w-0 overflow-hidden ${
-                    message.content.includes("**CÓDIGO ADJUNTO:**")
-                      ? "max-w-[min(85%,420px)]"
-                      : "max-w-[min(75%,420px)]"
-                  } ${message.sender === "user" ? "items-end" : "items-start"}`}
-                >
+                return (
                   <div
-                    className={`min-w-0 max-w-full overflow-hidden ${
-                      message.sender === "bot" ? "px-2 py-1.5" : "px-2.5 py-1.5"
-                    } rounded-xl ${
+                    key={message.id}
+                    className={`flex items-start gap-2 ${
                       message.sender === "user"
-                        ? "bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30"
-                        : message.isError
-                          ? "glass-card border-red-500/20"
-                          : "glass-card border-white/10"
-                    } ${message.sender === "user" ? "rounded-br-md" : "rounded-bl-md"}`}
+                        ? "flex-row-reverse"
+                        : "flex-row"
+                    } ${isNewMessage ? "chat-message-slide-in" : ""}`}
                   >
-                    {message.sender === "user" ? (
-                      // Detectar si es un mensaje de ayuda con IA (contiene **CÓDIGO ADJUNTO:**)
-                      (() => {
-                        const isAIHelpMessage = message.content.includes(
-                          "**CÓDIGO ADJUNTO:**",
-                        );
+                    {/* Avatar */}
+                    <div
+                      className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        message.sender === "user"
+                          ? "bg-gradient-to-br from-blue-500/30 to-cyan-500/30"
+                          : "bg-gradient-to-br from-purple-500/30 to-blue-500/30"
+                      }`}
+                    >
+                      {message.sender === "user" ? (
+                        <User size={14} className="text-blue-300" />
+                      ) : (
+                        <AALIEIcon className="text-purple-300" size={22} />
+                      )}
+                    </div>
 
-                        if (isAIHelpMessage) {
-                          const codeRegex = /```pseudocode\n([\s\S]*?)\n```/;
-                          const errorRegex = /```error\n([\s\S]*?)\n```/;
-                          const codeMatch = codeRegex.exec(message.content);
-                          const errorMatch = errorRegex.exec(message.content);
+                    {/* Message Bubble */}
+                    <div
+                      className={`flex flex-col min-w-0 overflow-hidden ${
+                        message.content.includes("**CÓDIGO ADJUNTO:**")
+                          ? "max-w-[min(85%,420px)]"
+                          : "max-w-[min(75%,420px)]"
+                      } ${message.sender === "user" ? "items-end" : "items-start"}`}
+                    >
+                      <div
+                        className={`min-w-0 max-w-full overflow-hidden ${
+                          message.sender === "bot"
+                            ? "px-2 py-1.5"
+                            : "px-2.5 py-1.5"
+                        } rounded-xl ${
+                          message.sender === "user"
+                            ? "bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30"
+                            : message.isError
+                              ? "glass-card border-red-500/20"
+                              : "glass-card border-white/10"
+                        } ${message.sender === "user" ? "rounded-br-md" : "rounded-bl-md"}`}
+                      >
+                        {message.sender === "user" ? (
+                          // Detectar si es un mensaje de ayuda con IA (contiene **CÓDIGO ADJUNTO:**)
+                          (() => {
+                            const isAIHelpMessage = message.content.includes(
+                              "**CÓDIGO ADJUNTO:**",
+                            );
 
-                          return (
-                            <div className="space-y-2.5 min-w-0 max-w-[min(100%,420px)]">
-                              {/* Código Adjunto */}
-                              <div className="space-y-1 min-w-0">
-                                <div className="bg-slate-800/70 border border-slate-600/40 rounded-md p-2.5 max-h-[200px] overflow-y-auto max-w-full min-w-0 overflow-hidden">
-                                  <pre className="text-slate-200 text-[10px] font-mono whitespace-pre-wrap break-words leading-relaxed">
-                                    {codeMatch?.[1] || ""}
-                                  </pre>
+                            if (isAIHelpMessage) {
+                              const codeRegex =
+                                /```pseudocode\n([\s\S]*?)\n```/;
+                              const errorRegex = /```error\n([\s\S]*?)\n```/;
+                              const codeMatch = codeRegex.exec(message.content);
+                              const errorMatch = errorRegex.exec(
+                                message.content,
+                              );
+
+                              return (
+                                <div className="space-y-2.5 min-w-0 max-w-[min(100%,420px)]">
+                                  {/* Código Adjunto */}
+                                  <div className="space-y-1 min-w-0">
+                                    <div className="bg-slate-800/70 border border-slate-600/40 rounded-md p-2.5 max-h-[200px] overflow-y-auto max-w-full min-w-0 overflow-hidden">
+                                      <pre className="text-slate-200 text-[10px] font-mono whitespace-pre-wrap break-words leading-relaxed">
+                                        {codeMatch?.[1] || ""}
+                                      </pre>
+                                    </div>
+                                  </div>
+
+                                  {/* Error Detectado */}
+                                  <div className="space-y-1">
+                                    <div className="bg-red-900/40 border border-red-500/40 rounded-md px-2.5 py-1.5">
+                                      <span className="text-red-200 text-[10px] font-medium">
+                                        Error: {errorMatch?.[1] || ""}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Solicitud */}
+                                  <div className="pt-1">
+                                    <p className="text-white text-[11px] font-medium">
+                                      {t("helpRequest")}
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
+                              );
+                            }
 
-                              {/* Error Detectado */}
-                              <div className="space-y-1">
-                                <div className="bg-red-900/40 border border-red-500/40 rounded-md px-2.5 py-1.5">
-                                  <span className="text-red-200 text-[10px] font-medium">
-                                    Error: {errorMatch?.[1] || ""}
+                            return (
+                              <p className="text-white text-[11px] leading-relaxed whitespace-pre-wrap break-words min-w-0 max-w-full">
+                                {message.content}
+                              </p>
+                            );
+                          })()
+                        ) : message.isError ? (
+                          // Mensaje de error minimalista con botón de reintentar
+                          <div className="space-y-1.5">
+                            <p className="text-red-300 text-[11px] leading-relaxed break-words min-w-0 max-w-full">
+                              {message.content}
+                            </p>
+                            {message.retryMessageId && (
+                              <div className="flex justify-center">
+                                <button
+                                  onClick={() => {
+                                    // Eliminar el mensaje de error antes de reintentar
+                                    setMessages((prev) =>
+                                      prev.filter((m) => m.id !== message.id),
+                                    );
+                                    // Reintentar
+                                    setTimeout(() => {
+                                      generateBotResponse(
+                                        message.retryMessageId,
+                                      );
+                                    }, 100);
+                                  }}
+                                  disabled={isTyping}
+                                  className="flex items-center gap-1 px-2 py-1 rounded-md bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300 text-[10px] font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  <span className="material-symbols-outlined text-xs">
+                                    refresh
                                   </span>
-                                </div>
+                                  {t("retry")}
+                                </button>
                               </div>
-
-                              {/* Solicitud */}
-                              <div className="pt-1">
-                                <p className="text-white text-[11px] font-medium">
-                                  {t("helpRequest")}
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        }
-
-                        return (
-                          <p className="text-white text-[11px] leading-relaxed whitespace-pre-wrap break-words min-w-0 max-w-full">
-                            {message.content}
-                          </p>
-                        );
-                      })()
-                    ) : message.isError ? (
-                      // Mensaje de error minimalista con botón de reintentar
-                      <div className="space-y-1.5">
-                        <p className="text-red-300 text-[11px] leading-relaxed break-words min-w-0 max-w-full">
-                          {message.content}
-                        </p>
-                        {message.retryMessageId && (
-                          <div className="flex justify-center">
-                            <button
-                              onClick={() => {
-                                // Eliminar el mensaje de error antes de reintentar
-                                setMessages((prev) =>
-                                  prev.filter((m) => m.id !== message.id),
-                                );
-                                // Reintentar
-                                setTimeout(() => {
-                                  generateBotResponse(message.retryMessageId);
-                                }, 100);
-                              }}
-                              disabled={isTyping}
-                              className="flex items-center gap-1 px-2 py-1 rounded-md bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300 text-[10px] font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <span className="material-symbols-outlined text-xs">
-                                refresh
-                              </span>
-                              {t("retry")}
-                            </button>
+                            )}
                           </div>
+                        ) : (
+                          <MarkdownRenderer
+                            content={message.content}
+                            onAnalyzeCode={onAnalyzeCode}
+                          />
                         )}
                       </div>
-                    ) : (
-                      <MarkdownRenderer
-                        content={message.content}
-                        onAnalyzeCode={onAnalyzeCode}
-                      />
-                    )}
+                      <span className="text-[10px] text-slate-500 mt-0.5 px-1">
+                        {formatTime(message.timestamp)}
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-[10px] text-slate-500 mt-0.5 px-1">
-                    {formatTime(message.timestamp)}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
 
-          {/* Typing Indicator - Estilo WhatsApp */}
-          {isTyping && (
-            <div className="flex items-start gap-2 chat-message-slide-in">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                <AALIEIcon className="text-purple-300" size={22} />
-              </div>
-              <div className="glass-card border-white/10 px-2.5 py-1.5 rounded-xl rounded-bl-md min-w-[45px]">
-                <div className="flex items-center justify-center space-x-1 h-3">
-                  <div className="w-1 h-1 bg-slate-300 rounded-full typing-dots"></div>
-                  <div className="w-1 h-1 bg-slate-300 rounded-full typing-dots"></div>
-                  <div className="w-1 h-1 bg-slate-300 rounded-full typing-dots"></div>
+              {/* Typing Indicator - Estilo WhatsApp */}
+              {isTyping && (
+                <div className="flex items-start gap-2 chat-message-slide-in">
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    <AALIEIcon className="text-purple-300" size={22} />
+                  </div>
+                  <div className="glass-card border-white/10 px-2.5 py-1.5 rounded-xl rounded-bl-md min-w-[45px]">
+                    <div className="flex items-center justify-center space-x-1 h-3">
+                      <div className="w-1 h-1 bg-slate-300 rounded-full typing-dots"></div>
+                      <div className="w-1 h-1 bg-slate-300 rounded-full typing-dots"></div>
+                      <div className="w-1 h-1 bg-slate-300 rounded-full typing-dots"></div>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              <div ref={messagesEndRef} />
             </div>
-          )}
-
-          <div ref={messagesEndRef} />
-        </div>
 
             {/* Input Container: flex para evitar solapamiento con el botón y centrado vertical */}
             <div className="glass-modal-header p-2.5 border-t border-white/10">
-          <div className="flex items-center gap-2 min-w-0 rounded-lg border border-slate-600/50 bg-white/5 focus-within:ring-2 focus-within:ring-purple-500/50 focus-within:border-transparent transition-all">
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={t("placeholder")}
-              disabled={isTyping}
-              className="flex-1 min-w-0 bg-transparent pl-2.5 pr-2 py-2 text-white placeholder-slate-400 text-xs focus:outline-none"
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isTyping}
-              className="flex-shrink-0 p-2 rounded-lg hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-slate-400 hover:text-white"
-            >
-              <Send size={18} className="shrink-0" />
-            </button>
-          </div>
+              <div className="flex items-center gap-2 min-w-0 rounded-lg border border-slate-600/50 bg-white/5 focus-within:ring-2 focus-within:ring-purple-500/50 focus-within:border-transparent transition-all">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={t("placeholder")}
+                  disabled={isTyping}
+                  className="flex-1 min-w-0 bg-transparent pl-2.5 pr-2 py-2 text-white placeholder-slate-400 text-xs focus:outline-none"
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!inputValue.trim() || isTyping}
+                  className="flex-shrink-0 p-2 rounded-lg hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-slate-400 hover:text-white"
+                >
+                  <Send size={18} className="shrink-0" />
+                </button>
+              </div>
             </div>
           </>
         )}

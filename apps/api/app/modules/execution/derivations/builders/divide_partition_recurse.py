@@ -6,6 +6,7 @@ Llamada → operación lateral → resultado → 2 subllamadas (quicksort).
 Author: Plan Sistema Traza Estructural
 Version: 0.1.0
 """
+
 from typing import Any, Dict, List
 
 from ...metrics_aggregator import aggregate_metrics
@@ -91,7 +92,11 @@ def build_divide_partition_recurse(
         if len(children) == 2 and config.showOperationNode:
             locale_key = str(config.locale).lower()[:2]
             op_title = "particionar" if locale_key == "es" else "partition"
-            op_line = "particionar(A, p, r) -> q" if locale_key == "es" else "partition(A, p, r) -> q"
+            op_line = (
+                "particionar(A, p, r) -> q"
+                if locale_key == "es"
+                else "partition(A, p, r) -> q"
+            )
             q_line = "q = indice pivote" if locale_key == "es" else "q = pivot index"
             op_id = f"op_{call_id}"
             nodes.append(
@@ -103,7 +108,9 @@ def build_divide_partition_recurse(
                 )
             )
             edges.append(
-                StructuredTraceEdge(id=f"e_{call_id}_op", source=node_id, target=op_id, label="")
+                StructuredTraceEdge(
+                    id=f"e_{call_id}_op", source=node_id, target=op_id, label=""
+                )
             )
             res_id = f"res_{call_id}"
             nodes.append(
@@ -115,7 +122,9 @@ def build_divide_partition_recurse(
                 )
             )
             edges.append(
-                StructuredTraceEdge(id=f"e_{op_id}_{res_id}", source=op_id, target=res_id, label="")
+                StructuredTraceEdge(
+                    id=f"e_{op_id}_{res_id}", source=op_id, target=res_id, label=""
+                )
             )
             for i, child_id in enumerate(children):
                 child_node_id = f"call_{child_id}"

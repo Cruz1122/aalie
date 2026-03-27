@@ -70,7 +70,11 @@ class TestAlgorithms:
         result = analyze_algorithm(INSERTION_SORT, mode="all")
         assert result.get("ok", False)
         assert_all_cases_complexity(
-            result, "quadratic", expected_best="linear", expected_avg="quadratic", name="Insertion Sort"
+            result,
+            "quadratic",
+            expected_best="linear",
+            expected_avg="quadratic",
+            name="Insertion Sort",
         )
 
     def test_insertion_sort_by_line_fields(self):
@@ -89,7 +93,9 @@ class TestAlgorithms:
             assert " + " not in ck, f"ck debe ser única por línea, no suma: {ck}"
             if row.get("ops", 1) > 1:
                 has_ops_gt_1 = True
-        assert has_ops_gt_1, "Al menos una fila debe tener ops > 1 (ej. asignación con array)"
+        assert (
+            has_ops_gt_1
+        ), "Al menos una fila debe tener ops > 1 (ej. asignación con array)"
 
     def test_bubble_sort_analyzes_successfully(self):
         """Bubble sort debe analizarse correctamente con pipeline completo."""
@@ -123,9 +129,9 @@ class TestAlgorithms:
             if row.get("unbounded"):
                 continue
             count = str(row.get("count", ""))
-            assert "unknown" not in count.lower(), (
-                f"Línea {row.get('line')} tiene count unknown: {count}"
-            )
+            assert (
+                "unknown" not in count.lower()
+            ), f"Línea {row.get('line')} tiene count unknown: {count}"
 
     def test_decreasing_limit_alias_quadratic(self):
         """FOR con límite decreciente por alias (k <- n; k <- k-1): debe ser Θ(n²)."""

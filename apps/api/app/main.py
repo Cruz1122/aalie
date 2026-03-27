@@ -6,6 +6,7 @@ y registra los routers de los módulos principales.
 
 Author: Juan Felipe Henao (@Pipe-1z)
 """
+
 import os
 
 from dotenv import load_dotenv
@@ -43,10 +44,10 @@ if get_cors_enabled():
 def health():
     """
     Endpoint de health check para verificar el estado del servidor.
-    
+
     Returns:
         JSONResponse con {"status": "ok"}
-        
+
     Author: Juan Felipe Henao (@Pipe-1z)
     """
     # Respeta tu forma actual (JSON con {"status":"ok"})

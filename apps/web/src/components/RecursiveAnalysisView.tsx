@@ -34,7 +34,9 @@ interface DPApplicabilityInfo {
 
 const THETA_ZERO_LATEX = String.raw`\theta(0)`;
 
-const isHomogeneousLinearShift = (recurrence: RecurrenceType): boolean | null => {
+const isHomogeneousLinearShift = (
+  recurrence: RecurrenceType,
+): boolean | null => {
   if (recurrence?.type !== "linear_shift") return null;
 
   const recurrenceGN = recurrence["g(n)"]?.trim().toLowerCase() ?? "";
@@ -149,7 +151,8 @@ function inferDPApplicability(
   }
 
   const recursive =
-    characteristicEquation.dp_version?.recursive_complexity?.toLowerCase() ?? "";
+    characteristicEquation.dp_version?.recursive_complexity?.toLowerCase() ??
+    "";
   const dpTime =
     characteristicEquation.dp_version?.time_complexity?.toLowerCase() ?? "";
   const hasImprovement =
@@ -318,7 +321,9 @@ const renderEfficiencyEquation = (
           <Formula latex={`T(n) = ${roundLatexNumbers(bestT)}`} display />
         </div>
         <div className="text-center">
-          <div className="text-xs text-yellow-300 mb-1">{tCases("average")}:</div>
+          <div className="text-xs text-yellow-300 mb-1">
+            {tCases("average")}:
+          </div>
           <Formula latex={`T(n) = ${roundLatexNumbers(avgT)}`} display />
         </div>
         <div className="text-center">
@@ -477,7 +482,10 @@ const renderCharacteristicBadges = (
 ): React.JSX.Element | null => {
   if (!characteristicEquation) return null;
 
-  const dpApplicability = inferDPApplicability(characteristicEquation, recurrence);
+  const dpApplicability = inferDPApplicability(
+    characteristicEquation,
+    recurrence,
+  );
   const homogeneousByGN = isHomogeneousLinearShift(recurrence);
   const isHomogeneous =
     homogeneousByGN ?? !characteristicEquation.particular_solution;
@@ -637,7 +645,9 @@ const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
   };
 
   return (
-    <div className={`mb-4 ${showGrid ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : ""}`}>
+    <div
+      className={`mb-4 ${showGrid ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : ""}`}
+    >
       <button
         onClick={handleDetailsClick}
         className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary transition-colors min-w-0 ${
@@ -650,10 +660,10 @@ const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
                 : "hover:bg-orange-500/20"
         } ${showGrid ? "" : "w-full"}`}
       >
-        <span className="material-symbols-outlined text-sm flex-shrink-0">info</span>
-        <span className="truncate">
-          {props.tView("viewStepByStep")}
+        <span className="material-symbols-outlined text-sm flex-shrink-0">
+          info
         </span>
+        <span className="truncate">{props.tView("viewStepByStep")}</span>
       </button>
       {props.isCharacteristicMethod &&
         props.dpApplicability.status !== "rejected" &&
@@ -662,7 +672,9 @@ const renderActionButtons = (props: ActionButtonsProps): React.JSX.Element => {
             onClick={() => props.setShowDPModal(true)}
             className="flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary hover:bg-green-500/20 transition-colors min-w-0"
           >
-            <span className="material-symbols-outlined text-sm flex-shrink-0">memory</span>
+            <span className="material-symbols-outlined text-sm flex-shrink-0">
+              memory
+            </span>
             <span className="truncate">{props.tView("viewDPVersion")}</span>
           </button>
         )}
@@ -804,11 +816,9 @@ const renderRecursionTreeCards = (
             <div className="text-center overflow-x-auto w-full max-w-full">
               <div className="text-xs scale-85">
                 <Formula
-                  latex={
-                    props.translateReason(
-                      props.recursionTree?.dominating_level?.reason || "",
-                    )
-                  }
+                  latex={props.translateReason(
+                    props.recursionTree?.dominating_level?.reason || "",
+                  )}
                   display
                 />
               </div>
@@ -831,7 +841,9 @@ const renderRecursionTreeCards = (
               {props.hasDifferentComplexities ? (
                 <div className="flex flex-row gap-4 items-center justify-center flex-wrap">
                   <div className="text-center">
-                    <div className="text-xs text-green-300 mb-1">{props.tCases("best")}:</div>
+                    <div className="text-xs text-green-300 mb-1">
+                      {props.tCases("best")}:
+                    </div>
                     <Formula latex={`T(n) = ${props.bestT}`} display />
                   </div>
                   <div className="text-center">
@@ -841,7 +853,9 @@ const renderRecursionTreeCards = (
                     <Formula latex={`T(n) = ${props.avgT}`} display />
                   </div>
                   <div className="text-center">
-                    <div className="text-xs text-red-300 mb-1">{props.tCases("worst")}:</div>
+                    <div className="text-xs text-red-300 mb-1">
+                      {props.tCases("worst")}:
+                    </div>
                     <Formula latex={`T(n) = ${props.worstT}`} display />
                   </div>
                 </div>
@@ -903,13 +917,19 @@ const renderEfficiencyCard = (
       : "border-blue-500/30";
 
   return (
-    <div className={`glass-card p-4 sm:p-7 rounded-lg border flex-shrink-0 min-w-0 ${efficiencyBorderClass}`}>
+    <div
+      className={`glass-card p-4 sm:p-7 rounded-lg border flex-shrink-0 min-w-0 ${efficiencyBorderClass}`}
+    >
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 min-w-0">
         <h3 className="text-white font-semibold text-sm flex items-center gap-2 flex-wrap min-w-0">
-          <span className={`material-symbols-outlined text-base flex-shrink-0 ${efficiencyIconClass}`}>
+          <span
+            className={`material-symbols-outlined text-base flex-shrink-0 ${efficiencyIconClass}`}
+          >
             functions
           </span>
-          <span className="truncate">{props.tRecursionTree("efficiencyEquation")}</span>
+          <span className="truncate">
+            {props.tRecursionTree("efficiencyEquation")}
+          </span>
           {props.isMasterMethod && props.hasDifferentComplexities && (
             <span
               className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border tracking-wide flex-shrink-0 ${getCaseBadgeStyle(props.selectedCase)}`}
@@ -944,7 +964,9 @@ const renderEfficiencyCard = (
       </div>
       <div
         className={`rounded-lg bg-slate-800/60 border flex justify-start sm:justify-center items-center overflow-x-auto overflow-y-auto max-h-[40vh] min-w-0 ${efficiencyInnerBorderClass} ${
-          props.isIterationMethod ? "p-4 sm:p-7 min-h-[100px] sm:min-h-[140px]" : "p-4 sm:p-6 min-h-[100px] sm:min-h-[120px]"
+          props.isIterationMethod
+            ? "p-4 sm:p-7 min-h-[100px] sm:min-h-[140px]"
+            : "p-4 sm:p-6 min-h-[100px] sm:min-h-[120px]"
         }`}
       >
         <div className="w-full min-w-0 overflow-auto [&_.katex]:!text-[0.8em] sm:[&_.katex]:!text-[0.95em] md:[&_.katex]:!text-[1em]">
@@ -1239,9 +1261,7 @@ export default function RecursiveAnalysisView({
                   )}
                 </span>
               </span>
-              <span
-                className="flex flex-col justify-center leading-tight"
-              >
+              <span className="flex flex-col justify-center leading-tight">
                 <span className="text-[11px] font-medium tracking-wide text-slate-400">
                   {tView("analysisMethod")}
                 </span>
@@ -1334,7 +1354,9 @@ export default function RecursiveAnalysisView({
                   <span className="material-symbols-outlined text-sm flex-shrink-0">
                     account_tree
                   </span>
-                  <span className="truncate">{tView("viewRecurrenceTree")}</span>
+                  <span className="truncate">
+                    {tView("viewRecurrenceTree")}
+                  </span>
                 </button>
               </div>
             );
@@ -1347,15 +1369,15 @@ export default function RecursiveAnalysisView({
                 <button
                   onClick={() => setShowProcedureModal(true)}
                   className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary transition-colors min-w-0 ${
-                    isIterationMethod ? "hover:bg-violet-500/20" : "hover:bg-orange-500/20"
+                    isIterationMethod
+                      ? "hover:bg-violet-500/20"
+                      : "hover:bg-orange-500/20"
                   }`}
                 >
                   <span className="material-symbols-outlined text-sm flex-shrink-0">
                     info
                   </span>
-                  <span className="truncate">
-                    {tView("viewStepByStep")}
-                  </span>
+                  <span className="truncate">{tView("viewStepByStep")}</span>
                 </button>
                 <button
                   onClick={() => setShowTreeModal(true)}
@@ -1364,7 +1386,9 @@ export default function RecursiveAnalysisView({
                   <span className="material-symbols-outlined text-sm flex-shrink-0">
                     account_tree
                   </span>
-                  <span className="truncate">{tView("viewRecurrenceTree")}</span>
+                  <span className="truncate">
+                    {tView("viewRecurrenceTree")}
+                  </span>
                 </button>
               </div>
             );
@@ -1389,13 +1413,17 @@ export default function RecursiveAnalysisView({
                   <button
                     onClick={() => setShowTreeModal(true)}
                     className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-md text-xs font-semibold text-white glass-secondary transition-colors min-w-0 ${
-                      isRecursionTreeMethod ? "hover:bg-cyan-500/20" : "hover:bg-purple-500/20"
+                      isRecursionTreeMethod
+                        ? "hover:bg-cyan-500/20"
+                        : "hover:bg-purple-500/20"
                     }`}
                   >
                     <span className="material-symbols-outlined text-sm flex-shrink-0">
                       account_tree
                     </span>
-                    <span className="truncate">{tView("viewRecurrenceTree")}</span>
+                    <span className="truncate">
+                      {tView("viewRecurrenceTree")}
+                    </span>
                   </button>
                 </div>
               )}
@@ -1460,12 +1488,12 @@ export default function RecursiveAnalysisView({
       {isCharacteristicMethod &&
         dpApplicability.status !== "rejected" &&
         characteristicEquation?.dp_version && (
-        <DPVersionModal
-          open={showDPModal}
-          onClose={() => setShowDPModal(false)}
-          characteristicEquation={characteristicEquation}
-        />
-      )}
+          <DPVersionModal
+            open={showDPModal}
+            onClose={() => setShowDPModal(false)}
+            characteristicEquation={characteristicEquation}
+          />
+        )}
 
       {/* Modal del árbol de recursión - para recursion_tree, characteristic_equation, master e iteration */}
       {((isRecursionTreeMethod && recurrence?.type === "divide_conquer") ||
@@ -1480,7 +1508,6 @@ export default function RecursiveAnalysisView({
           characteristicEquation={characteristicEquation}
         />
       )}
-
     </div>
   );
 }

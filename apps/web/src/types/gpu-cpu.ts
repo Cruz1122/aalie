@@ -19,4 +19,3 @@ export interface GPUCPUMetrics {
  * Resultado completo del análisis GPU vs CPU
  */
 export type GPUCPUAnalysisResult = HardwareSuitabilityReport;
-

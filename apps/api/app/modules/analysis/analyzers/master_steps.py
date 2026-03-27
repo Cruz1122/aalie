@@ -3,7 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from .recursive_steps_core import compute_overall_status, locale_key, make_recursive_step
+from .recursive_steps_core import (
+    compute_overall_status,
+    locale_key,
+    make_recursive_step,
+)
 
 _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
     "es": {
@@ -32,7 +36,6 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "master.asymptotic_conclusion.complete": "Se obtuvo la conclusión asintótica final de forma completa usando el caso validado.",
         "master.asymptotic_conclusion.partial": "La conclusión asintótica se reporta como parcial por limitaciones previas.",
         "master.asymptotic_conclusion.unsupported": "No hay conclusión asintótica cerrada con Teorema Maestro para este caso.",
-
         "concept.master.recurrence_detected": "Primero confirmamos la familia de recurrencia: aquí estamos en Divide y Vencerás. Este método solo aplica cuando el problema se reduce por escala $n/b$ y aparece un costo adicional $f(n)$.",
         "concept.master.master_form_validated": "Esta validación evita confundir familias: Teorema Maestro es para Divide y Vencerás, no para Resta y Vencerás ni para Resta y Serás Vencido. Si la forma no coincide, se detiene explícitamente.",
         "concept.master.master_parameters_extracted": "Los parámetros $a$, $b$ y $f(n)$ capturan la dinámica del árbol recursivo: cuántos subproblemas hay, cómo se reduce su tamaño y cuánto trabajo externo aporta cada nivel.",
@@ -43,7 +46,6 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "concept.master.regularity_checked": "En Caso 3 se exige que el trabajo externo siga dominando al bajar de escala: $a f(n/b) \\le c f(n)$ con $c<1$. Sin esa condición, la conclusión estándar no es válida.",
         "concept.master.master_applicability_decided": "Aquí se consolida si el método realmente aplica con soporte matemático suficiente. Cuando no aplica, el sistema lo declara en vez de forzar una respuesta.",
         "concept.master.asymptotic_conclusion": "La conclusión final resume el crecimiento asintótico de $T(n)$ usando solo pasos validados. Si hubo cobertura parcial, la salida conserva esa trazabilidad.",
-
         "warning.master.unsupported_form": "Cobertura actual: solo recurrencias estándar de la forma $T(n)=aT(n/b)+f(n)$.",
         "warning.master.invalid_parameters": "Parámetros inválidos para Teorema Maestro: se requiere $a\\ge 1$ y $b>1$.",
         "warning.master.intermediate_gap": "Se detectó forma intermedia (por ejemplo factores logarítmicos sobre $n^p$) fuera del Teorema Maestro clásico implementado.",
@@ -77,7 +79,6 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "master.asymptotic_conclusion.complete": "Final asymptotic conclusion was obtained completely using the validated case.",
         "master.asymptotic_conclusion.partial": "Asymptotic conclusion is reported as partial due to earlier limitations.",
         "master.asymptotic_conclusion.unsupported": "No closed asymptotic conclusion is available with Master Theorem for this case.",
-
         "concept.master.recurrence_detected": "We first confirm the recurrence family: this is Divide y Vencerás. The method applies when problem size shrinks by scale $n/b$ and additive work $f(n)$ is present.",
         "concept.master.master_form_validated": "This prevents family mismatch: Master Theorem is for Divide y Vencerás, not for Resta y Vencerás or Resta y Serás Vencido. If the shape does not match, we stop explicitly.",
         "concept.master.master_parameters_extracted": "Parameters $a$, $b$, and $f(n)$ capture recursive-tree dynamics: number of subproblems, shrink factor, and non-recursive work per level.",
@@ -88,7 +89,6 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "concept.master.regularity_checked": "In Case 3, external work must remain dominant under scaling: $a f(n/b) \\le c f(n)$ with $c<1$. Without this, standard conclusion is invalid.",
         "concept.master.master_applicability_decided": "This consolidates whether the method truly applies with enough mathematical support. If not, the system states it explicitly.",
         "concept.master.asymptotic_conclusion": "The final result summarizes asymptotic growth of $T(n)$ using only validated steps. Partial coverage remains visible in the final status.",
-
         "warning.master.unsupported_form": "Current coverage supports only standard recurrences of the form $T(n)=aT(n/b)+f(n)$.",
         "warning.master.invalid_parameters": "Invalid Master Theorem parameters: required $a\\ge 1$ and $b>1$.",
         "warning.master.intermediate_gap": "Intermediate form detected (for example logarithmic factors on top of $n^p$) outside current classic-theorem implementation.",
@@ -192,7 +192,9 @@ def build_master_step_bundle(ctx: MasterStepContext) -> Dict[str, Any]:
             index=2,
             step_id="master_s2",
             kind="master_form_validated",
-            title=_title(ctx.locale, "Validación de forma maestra", "Master-form validation"),
+            title=_title(
+                ctx.locale, "Validación de forma maestra", "Master-form validation"
+            ),
             status=step2_status,
             confidence="high" if is_form_supported else "low",
             summary_key=(
@@ -416,7 +418,9 @@ def build_master_step_bundle(ctx: MasterStepContext) -> Dict[str, Any]:
             confidence="high" if step7_status == "complete" else "medium",
             summary_key=step7_summary,
             concept_key="concept.master.master_case_evaluated",
-            primary_latex=(f"\\text{{Caso {ctx.case_candidate}}}" if ctx.case_candidate else None),
+            primary_latex=(
+                f"\\text{{Caso {ctx.case_candidate}}}" if ctx.case_candidate else None
+            ),
             payload={"caseCandidate": ctx.case_candidate},
             blocked_by=["master_s6"] if step7_status != "complete" else [],
         )
@@ -479,7 +483,9 @@ def build_master_step_bundle(ctx: MasterStepContext) -> Dict[str, Any]:
             index=9,
             step_id="master_s9",
             kind="master_applicability_decided",
-            title=_title(ctx.locale, "Decisión de aplicabilidad", "Applicability decision"),
+            title=_title(
+                ctx.locale, "Decisión de aplicabilidad", "Applicability decision"
+            ),
             status=step9_status,
             confidence="high" if step9_status == "complete" else "medium",
             summary_key=step9_summary,

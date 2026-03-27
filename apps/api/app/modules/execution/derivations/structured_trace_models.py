@@ -7,6 +7,7 @@ con layout para renderizado.
 Author: Plan Sistema Traza Estructural
 Version: 0.1.0
 """
+
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Literal, Optional
 

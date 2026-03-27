@@ -19,7 +19,8 @@ vi.mock("next-intl", () => ({
         "examples.families.secuencias": "Secuencias",
         "examples.families.estructuras": "Estructuras",
         "examples.families.clasicos": "Clásicos",
-        "examples.categories.resta-y-seras-vencido.label": "Resta y serás vencido",
+        "examples.categories.resta-y-seras-vencido.label":
+          "Resta y serás vencido",
         "analyzer.methods.masterTheorem": "Teorema Maestro",
         "analyzer.methods.iterationMethod": "Método de iteración",
         "analyzer.methods.recursionTree": "Árbol de Recursión",
@@ -62,7 +63,7 @@ describe("ExampleCatalogCard", () => {
         hideLabel="Ocultar algoritmo"
         analyzeLabel="Analizar"
         analyzingLabel="Analizando..."
-      />, 
+      />,
     );
 
     expect(screen.queryByText("Pseudocode")).not.toBeInTheDocument();

@@ -179,7 +179,11 @@ class TestComplexAlgorithms:
         result = analyze_algorithm(COMPLEX_WHILE, mode="all")
         assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
         assert_all_cases_complexity(
-            result, "linear", expected_best="constant", expected_avg="constant", name="Complex WHILE"
+            result,
+            "linear",
+            expected_best="constant",
+            expected_avg="constant",
+            name="Complex WHILE",
         )
 
     def test_complex_while_all_cases(self):
@@ -256,11 +260,13 @@ class TestComplexAlgorithms:
             for row in data.get("byLine", []):
                 count = str(row.get("count", ""))
                 # Regresión: count no debe ser "- n", "-n" ni expresiones negativas
-                assert count != "- n" and count != "-n", (
-                    f"Caso {case} línea {row.get('line')}: count negativo '{count}'"
-                )
+                assert (
+                    count != "- n" and count != "-n"
+                ), f"Caso {case} línea {row.get('line')}: count negativo '{count}'"
                 if count.startswith("-") and "n" in count:
-                    pytest.fail(f"Caso {case} línea {row.get('line')}: count negativo '{count}'")
+                    pytest.fail(
+                        f"Caso {case} línea {row.get('line')}: count negativo '{count}'"
+                    )
 
     def test_bubble_sort_longitud_correct_complexity(self):
         """Bubble sort con longitud decreciente: Θ(n²) worst/avg, Θ(n) best; sin símbolos de array."""

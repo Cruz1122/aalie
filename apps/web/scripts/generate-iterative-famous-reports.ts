@@ -95,10 +95,7 @@ const FAMOUS_ITERATIVE_ALGORITHMS: FamousIterativeAlgorithm[] = [
   },
 ];
 
-function saveArtifactFile(
-  outputDir: string,
-  artifact: ExportArtifact,
-): void {
+function saveArtifactFile(outputDir: string, artifact: ExportArtifact): void {
   const filename =
     artifact.format === "markdown"
       ? "report.md"
@@ -116,24 +113,38 @@ function saveArtifactFile(
   writeFileSync(targetPath, artifact.content);
 }
 
-function assertDeterministicLiveData(result: Awaited<ReturnType<typeof createReportFromSource>>): void {
-  if (!result.snapshot.meta.validity.parseOk || !result.snapshot.meta.validity.analysisOk) {
-    throw new Error("Missing live analysis data from backend (/grammar/parse or /analyze/open).");
+function assertDeterministicLiveData(
+  result: Awaited<ReturnType<typeof createReportFromSource>>,
+): void {
+  if (
+    !result.snapshot.meta.validity.parseOk ||
+    !result.snapshot.meta.validity.analysisOk
+  ) {
+    throw new Error(
+      "Missing live analysis data from backend (/grammar/parse or /analyze/open).",
+    );
   }
 
-  if (result.snapshot.algorithmType === "iterative" || result.snapshot.algorithmType === "hybrid") {
+  if (
+    result.snapshot.algorithmType === "iterative" ||
+    result.snapshot.algorithmType === "hybrid"
+  ) {
     if (result.snapshot.iterative.status !== "available") {
       throw new Error("Iterative section is not available in snapshot.");
     }
 
     const invariantSection = result.snapshot.iterative?.data?.loopInvariant;
     if (!invariantSection || invariantSection.status !== "available") {
-      throw new Error("Loop invariant is missing; expected deterministic /analyze/open loopInvariant.");
+      throw new Error(
+        "Loop invariant is missing; expected deterministic /analyze/open loopInvariant.",
+      );
     }
 
     const traceSection = result.snapshot.iterative?.data?.trace;
     if (!traceSection || traceSection.status !== "available") {
-      throw new Error("Trace section is missing; expected deterministic /analyze/trace data.");
+      throw new Error(
+        "Trace section is missing; expected deterministic /analyze/trace data.",
+      );
     }
 
     const missingCases = ["worst", "best", "avg"].filter((caseName) => {

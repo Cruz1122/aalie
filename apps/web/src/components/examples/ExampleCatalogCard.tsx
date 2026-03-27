@@ -117,7 +117,9 @@ export function ExampleCatalogCard({
   >;
   const copy = getLocalizedExampleContent(example, catalogItems, locale);
   const recursive = isRecursiveCategory(example.category);
-  const kindLabel = recursive ? t("examples.kind.recursive") : t("examples.kind.iterative");
+  const kindLabel = recursive
+    ? t("examples.kind.recursive")
+    : t("examples.kind.iterative");
   const familyLabel = t(FAMILY_LABEL_KEYS[example.family]);
   const behaviorIcon = EXAMPLE_FAMILY_ICONS[example.family];
 
@@ -137,7 +139,9 @@ export function ExampleCatalogCard({
             <div className="scrollbar-custom overscroll-contain flex-1 min-h-0 overflow-y-auto overflow-x-auto p-3">
               <code className="block min-w-min whitespace-pre font-mono text-[11px] leading-relaxed text-slate-100">
                 {example.sourceCode.split("\n").map((line, index) => (
-                  <div key={`${example.id}-line-${index}`}>{renderGrammarLine(line)}</div>
+                  <div key={`${example.id}-line-${index}`}>
+                    {renderGrammarLine(line)}
+                  </div>
                 ))}
               </code>
             </div>
@@ -200,7 +204,9 @@ export function ExampleCatalogCard({
           disabled={disableActions}
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-slate-200 transition-colors hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <span className={`material-symbols-outlined text-sm ${isAnalyzing ? "animate-spin" : ""}`}>
+          <span
+            className={`material-symbols-outlined text-sm ${isAnalyzing ? "animate-spin" : ""}`}
+          >
             {isAnalyzing ? "progress_activity" : "play_arrow"}
           </span>
           {isAnalyzing ? analyzingLabel : analyzeLabel}

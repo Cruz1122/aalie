@@ -1,6 +1,10 @@
 "use client";
 
-import type { RecursiveAnalysisStep, RecursiveStepConfidence, RecursiveStepStatus } from "@aa/types";
+import type {
+  RecursiveAnalysisStep,
+  RecursiveStepConfidence,
+  RecursiveStepStatus,
+} from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
@@ -60,7 +64,10 @@ function splitMixedLatexText(content: string): MixedSegment[] {
   return segments;
 }
 
-function MixedLatexText({ text, className }: Readonly<{ text: string; className?: string }>) {
+function MixedLatexText({
+  text,
+  className,
+}: Readonly<{ text: string; className?: string }>) {
   const segments = useMemo(() => splitMixedLatexText(text), [text]);
   return (
     <span className={className}>
@@ -73,7 +80,13 @@ function MixedLatexText({ text, className }: Readonly<{ text: string; className?
           );
         }
         if (segment.kind === "latex-inline") {
-          return <Formula key={`m-${index}`} latex={segment.value} className="mx-0.5 align-middle" />;
+          return (
+            <Formula
+              key={`m-${index}`}
+              latex={segment.value}
+              className="mx-0.5 align-middle"
+            />
+          );
         }
         return (
           <span key={`m-${index}`} className="whitespace-pre-wrap">
@@ -93,7 +106,9 @@ export default function AAAnalysisStepCard({
   const locale = asLocale(useLocale());
   const summary = translateBackendContent(step.summary, locale);
   const conceptNote = translateBackendContent(step.conceptNote, locale);
-  const warning = step.warning ? translateBackendContent(step.warning, locale) : null;
+  const warning = step.warning
+    ? translateBackendContent(step.warning, locale)
+    : null;
   const hasMath = Boolean(step.math.primaryLatex) || step.math.items.length > 0;
   const [isFlipped, setIsFlipped] = useState(false);
   const stepDotClassName =
@@ -101,60 +116,61 @@ export default function AAAnalysisStepCard({
       ? "absolute left-0 top-0 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-violet-400/50 bg-slate-900 text-sm font-semibold text-violet-300"
       : accent === "cyan"
         ? "absolute left-0 top-0 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-cyan-400/50 bg-slate-900 text-sm font-semibold text-cyan-300"
-      : accent === "orange"
-        ? "absolute left-0 top-0 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-orange-400/50 bg-slate-900 text-sm font-semibold text-orange-300"
-      : "absolute left-0 top-0 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-blue-400/50 bg-slate-900 text-sm font-semibold text-blue-300";
+        : accent === "orange"
+          ? "absolute left-0 top-0 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-orange-400/50 bg-slate-900 text-sm font-semibold text-orange-300"
+          : "absolute left-0 top-0 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-blue-400/50 bg-slate-900 text-sm font-semibold text-blue-300";
   const actionButtonClassName =
     accent === "purple"
       ? "rounded-md border border-violet-400/40 bg-violet-500/10 px-2 py-1 text-[10px] font-semibold text-violet-200 transition hover:bg-violet-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300"
       : accent === "cyan"
         ? "rounded-md border border-cyan-400/40 bg-cyan-500/10 px-2 py-1 text-[10px] font-semibold text-cyan-200 transition hover:bg-cyan-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
-      : accent === "orange"
-        ? "rounded-md border border-orange-400/40 bg-orange-500/10 px-2 py-1 text-[10px] font-semibold text-orange-200 transition hover:bg-orange-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
-      : "rounded-md border border-blue-400/40 bg-blue-500/10 px-2 py-1 text-[10px] font-semibold text-blue-200 transition hover:bg-blue-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300";
+        : accent === "orange"
+          ? "rounded-md border border-orange-400/40 bg-orange-500/10 px-2 py-1 text-[10px] font-semibold text-orange-200 transition hover:bg-orange-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
+          : "rounded-md border border-blue-400/40 bg-blue-500/10 px-2 py-1 text-[10px] font-semibold text-blue-200 transition hover:bg-blue-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300";
   const backCardClassName =
     accent === "purple"
       ? "col-start-1 row-start-1 min-w-0 max-w-full rounded-lg border border-violet-400/30 bg-slate-900/90 p-4 transition-opacity duration-220 ease-out motion-reduce:transition-none"
       : accent === "cyan"
         ? "col-start-1 row-start-1 min-w-0 max-w-full rounded-lg border border-cyan-400/30 bg-slate-900/90 p-4 transition-opacity duration-220 ease-out motion-reduce:transition-none"
-      : accent === "orange"
-        ? "col-start-1 row-start-1 min-w-0 max-w-full rounded-lg border border-orange-400/30 bg-slate-900/90 p-4 transition-opacity duration-220 ease-out motion-reduce:transition-none"
-      : "col-start-1 row-start-1 min-w-0 max-w-full rounded-lg border border-blue-400/30 bg-slate-900/90 p-4 transition-opacity duration-220 ease-out motion-reduce:transition-none";
+        : accent === "orange"
+          ? "col-start-1 row-start-1 min-w-0 max-w-full rounded-lg border border-orange-400/30 bg-slate-900/90 p-4 transition-opacity duration-220 ease-out motion-reduce:transition-none"
+          : "col-start-1 row-start-1 min-w-0 max-w-full rounded-lg border border-blue-400/30 bg-slate-900/90 p-4 transition-opacity duration-220 ease-out motion-reduce:transition-none";
   const backTitleClassName =
     accent === "purple"
       ? "text-sm font-semibold text-violet-200"
       : accent === "cyan"
         ? "text-sm font-semibold text-cyan-200"
-      : accent === "orange"
-        ? "text-sm font-semibold text-orange-200"
-        : "text-sm font-semibold text-blue-200";
+        : accent === "orange"
+          ? "text-sm font-semibold text-orange-200"
+          : "text-sm font-semibold text-blue-200";
 
   return (
     <div className="relative z-10 w-full max-w-full pl-10 sm:pl-12">
-      <div className={stepDotClassName}>
-        {step.index}
-      </div>
+      <div className={stepDotClassName}>{step.index}</div>
       <div className="relative max-w-full">
         <div className="grid">
           <div
             aria-hidden={isFlipped}
             className={`col-start-1 row-start-1 min-w-0 max-w-full rounded-lg border border-white/10 bg-slate-800/60 p-4 transition-opacity duration-220 ease-out motion-reduce:transition-none ${
-              isFlipped
-                ? "pointer-events-none opacity-0"
-                : "opacity-100"
+              isFlipped ? "pointer-events-none opacity-0" : "opacity-100"
             }`}
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <h4 className="text-sm font-semibold text-white">{step.title}</h4>
               <div className="flex flex-wrap items-center gap-2">
                 {step.status !== "complete" && (
-                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${statusClassMap[step.status]}`}>
+                  <span
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${statusClassMap[step.status]}`}
+                  >
                     {t(`status.${step.status}`)}
                   </span>
                 )}
                 {step.confidence !== "high" && (
-                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${confidenceClassMap[step.confidence]}`}>
-                    {t("confidence")}: {t(`confidenceLevels.${step.confidence}`)}
+                  <span
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${confidenceClassMap[step.confidence]}`}
+                  >
+                    {t("confidence")}:{" "}
+                    {t(`confidenceLevels.${step.confidence}`)}
                   </span>
                 )}
                 <button
@@ -182,7 +198,10 @@ export default function AAAnalysisStepCard({
                 {step.math.items.length > 0 && (
                   <div className="mt-2 space-y-2">
                     {step.math.items.map((item) => (
-                      <div key={item.id} className="overflow-x-auto rounded border border-white/10 bg-slate-950/60 p-2">
+                      <div
+                        key={item.id}
+                        className="overflow-x-auto rounded border border-white/10 bg-slate-950/60 p-2"
+                      >
                         <Formula latex={item.latex} display />
                       </div>
                     ))}
@@ -202,9 +221,7 @@ export default function AAAnalysisStepCard({
           <div
             aria-hidden={!isFlipped}
             className={`${backCardClassName} ${
-              isFlipped
-                ? "opacity-100"
-                : "pointer-events-none opacity-0"
+              isFlipped ? "opacity-100" : "pointer-events-none opacity-0"
             }`}
           >
             <div className="flex flex-wrap items-start justify-between gap-2">

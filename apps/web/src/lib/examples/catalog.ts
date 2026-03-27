@@ -51,7 +51,10 @@ export const EXAMPLE_CATEGORY_ORDER: ExampleCategory[] = [
   "resta-y-seras-vencido",
 ];
 
-export const EXAMPLE_CATEGORY_META: Record<ExampleCategory, ExampleCategoryMeta> = {
+export const EXAMPLE_CATEGORY_META: Record<
+  ExampleCategory,
+  ExampleCategoryMeta
+> = {
   iterativos: {
     slug: "iterativos",
     icon: "loop",
@@ -77,7 +80,10 @@ export const RECURSIVE_METHOD_BADGE_TO_METHOD = {
   EC: "characteristic_equation",
 } as const;
 
-export const EXAMPLE_METHOD_TRANSLATION_KEYS: Record<RecursiveMethodBadge, string> = {
+export const EXAMPLE_METHOD_TRANSLATION_KEYS: Record<
+  RecursiveMethodBadge,
+  string
+> = {
   TM: "analyzer.methods.masterTheorem",
   IT: "analyzer.methods.iterationMethod",
   AR: "analyzer.methods.recursionTree",
@@ -120,14 +126,16 @@ const buildCopy = (
   },
 });
 
-const createExample = (item: Omit<ExampleCatalogItem, "copy"> & {
-  titleEs: string;
-  titleEn: string;
-  summaryEs: string;
-  summaryEn: string;
-  tagsEs: string[];
-  tagsEn: string[];
-}): ExampleCatalogItem => ({
+const createExample = (
+  item: Omit<ExampleCatalogItem, "copy"> & {
+    titleEs: string;
+    titleEn: string;
+    summaryEs: string;
+    summaryEn: string;
+    tagsEs: string[];
+    tagsEn: string[];
+  },
+): ExampleCatalogItem => ({
   id: item.id,
   slug: item.slug,
   category: item.category,
@@ -158,8 +166,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Bogo Sort",
     titleEn: "Bogo Sort",
-    summaryEs: "Version didactica extrema para contrastar un ordenamiento ineficiente con el resto del catalogo iterativo.",
-    summaryEn: "An intentionally extreme teaching sample used to contrast an inefficient iterative sorter with the rest of the catalog.",
+    summaryEs:
+      "Version didactica extrema para contrastar un ordenamiento ineficiente con el resto del catalogo iterativo.",
+    summaryEn:
+      "An intentionally extreme teaching sample used to contrast an inefficient iterative sorter with the rest of the catalog.",
     tagsEs: ["ordenamiento", "azar", "toy"],
     tagsEn: ["sorting", "random", "toy"],
     sourceCode: code(
@@ -190,8 +200,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Ordenamiento burbuja",
     titleEn: "Bubble Sort",
-    summaryEs: "Ordena comparando elementos adyacentes y sirve como referencia estable para los casos cuadraticos.",
-    summaryEn: "Sorts by comparing adjacent elements and works as a stable reference for quadratic iterative cases.",
+    summaryEs:
+      "Ordena comparando elementos adyacentes y sirve como referencia estable para los casos cuadraticos.",
+    summaryEn:
+      "Sorts by comparing adjacent elements and works as a stable reference for quadratic iterative cases.",
     tagsEs: ["ordenamiento", "cuadratico", "intercambios"],
     tagsEn: ["sorting", "quadratic", "swaps"],
     sourceCode: code(
@@ -219,8 +231,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Bucket Sort",
     titleEn: "Bucket Sort",
-    summaryEs: "Esqueleto iterativo para distribucion en cubetas; queda oculto hasta validar una version completamente aterrizada a la gramatica.",
-    summaryEn: "Iterative bucket-distribution skeleton kept hidden until a grammar-friendly version is fully validated.",
+    summaryEs:
+      "Esqueleto iterativo para distribucion en cubetas; queda oculto hasta validar una version completamente aterrizada a la gramatica.",
+    summaryEn:
+      "Iterative bucket-distribution skeleton kept hidden until a grammar-friendly version is fully validated.",
     tagsEs: ["ordenamiento", "cubetas", "distribucion"],
     tagsEn: ["sorting", "buckets", "distribution"],
     sourceCode: code(
@@ -246,8 +260,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Ordenamiento por conteo",
     titleEn: "Counting Sort",
-    summaryEs: "Cuenta frecuencias y reconstruye el arreglo en varias pasadas lineales sobre indices y ocurrencias.",
-    summaryEn: "Counts frequencies and rebuilds the array in several linear passes over indices and occurrences.",
+    summaryEs:
+      "Cuenta frecuencias y reconstruye el arreglo en varias pasadas lineales sobre indices y ocurrencias.",
+    summaryEn:
+      "Counts frequencies and rebuilds the array in several linear passes over indices and occurrences.",
     tagsEs: ["ordenamiento", "frecuencias", "lineal"],
     tagsEn: ["sorting", "frequencies", "linear"],
     sourceCode: code(
@@ -280,8 +296,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Bandera nacional holandesa",
     titleEn: "Dutch National Flag",
-    summaryEs: "Mantiene tres regiones y es util para estudiar particiones lineales con varios punteros.",
-    summaryEn: "Maintains three regions and is useful to study linear partitions with multiple pointers.",
+    summaryEs:
+      "Mantiene tres regiones y es util para estudiar particiones lineales con varios punteros.",
+    summaryEn:
+      "Maintains three regions and is useful to study linear partitions with multiple pointers.",
     tagsEs: ["particion", "dos punteros", "lineal"],
     tagsEn: ["partition", "two pointers", "linear"],
     sourceCode: code(
@@ -323,8 +341,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Euclides iterativo (MCD)",
     titleEn: "Iterative Euclid (GCD)",
-    summaryEs: "Caso corto y confiable para estudiar un bucle con reduccion geometrica en el tamaño del estado.",
-    summaryEn: "A short and reliable sample to study a loop with geometric reduction on the state size.",
+    summaryEs:
+      "Caso corto y confiable para estudiar un bucle con reduccion geometrica en el tamaño del estado.",
+    summaryEn:
+      "A short and reliable sample to study a loop with geometric reduction on the state size.",
     tagsEs: ["mcd", "mod", "logaritmico"],
     tagsEn: ["gcd", "mod", "logarithmic"],
     sourceCode: code(
@@ -348,8 +368,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Factorial iterativo",
     titleEn: "Iterative factorial",
-    summaryEs: "Ejemplo lineal basico que recorre una variable de control simple y acumula un producto.",
-    summaryEn: "A basic linear sample that advances a simple control variable while accumulating a product.",
+    summaryEs:
+      "Ejemplo lineal basico que recorre una variable de control simple y acumula un producto.",
+    summaryEn:
+      "A basic linear sample that advances a simple control variable while accumulating a product.",
     tagsEs: ["factorial", "for", "lineal"],
     tagsEn: ["factorial", "for", "linear"],
     sourceCode: code(
@@ -372,8 +394,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Flood Fill iterativo",
     titleEn: "Iterative Flood Fill",
-    summaryEs: "Modelo con pila explicita para una malla; permanece oculto hasta validar una variante robusta para trazas grandes.",
-    summaryEn: "A grid sample with an explicit stack; kept hidden until a robust variant for large traces is validated.",
+    summaryEs:
+      "Modelo con pila explicita para una malla; permanece oculto hasta validar una variante robusta para trazas grandes.",
+    summaryEn:
+      "A grid sample with an explicit stack; kept hidden until a robust variant for large traces is validated.",
     tagsEs: ["matriz", "pila", "relleno"],
     tagsEn: ["matrix", "stack", "fill"],
     sourceCode: code(
@@ -401,8 +425,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Heapsort",
     titleEn: "Heapsort",
-    summaryEs: "Version compacta basada en heapify iterativo; queda deshabilitada mientras cerramos una validacion mas fina del soporte del heap.",
-    summaryEn: "Compact version built around iterative heapify; disabled until heap support is validated more thoroughly.",
+    summaryEs:
+      "Version compacta basada en heapify iterativo; queda deshabilitada mientras cerramos una validacion mas fina del soporte del heap.",
+    summaryEn:
+      "Compact version built around iterative heapify; disabled until heap support is validated more thoroughly.",
     tagsEs: ["heap", "ordenamiento", "arbol implicito"],
     tagsEn: ["heap", "sorting", "implicit tree"],
     sourceCode: code(
@@ -427,8 +453,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Ordenamiento por insercion",
     titleEn: "Insertion Sort",
-    summaryEs: "Construye el arreglo ordenado insertando cada clave en su posicion y muestra un while interno clasico.",
-    summaryEn: "Builds the sorted array by inserting each key into place and exposes a classic inner while loop.",
+    summaryEs:
+      "Construye el arreglo ordenado insertando cada clave en su posicion y muestra un while interno clasico.",
+    summaryEn:
+      "Builds the sorted array by inserting each key into place and exposes a classic inner while loop.",
     tagsEs: ["ordenamiento", "insercion", "while"],
     tagsEn: ["sorting", "insertion", "while"],
     sourceCode: code(
@@ -456,8 +484,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Busqueda por saltos",
     titleEn: "Jump Search",
-    summaryEs: "Alterna saltos de bloque con una fase lineal corta y resulta util para estudiar dos bucles consecutivos.",
-    summaryEn: "Alternates block jumps with a short linear scan and is useful to study two consecutive loops.",
+    summaryEs:
+      "Alterna saltos de bloque con una fase lineal corta y resulta util para estudiar dos bucles consecutivos.",
+    summaryEn:
+      "Alternates block jumps with a short linear scan and is useful to study two consecutive loops.",
     tagsEs: ["busqueda", "saltos", "bloques"],
     tagsEn: ["search", "jumps", "blocks"],
     sourceCode: code(
@@ -490,8 +520,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Kadane",
     titleEn: "Kadane",
-    summaryEs: "Mantiene un mejor prefijo local y uno global en una sola pasada lineal.",
-    summaryEn: "Tracks a best local prefix and a global optimum in a single linear pass.",
+    summaryEs:
+      "Mantiene un mejor prefijo local y uno global en una sola pasada lineal.",
+    summaryEn:
+      "Tracks a best local prefix and a global optimum in a single linear pass.",
     tagsEs: ["subarreglo", "dp", "lineal"],
     tagsEn: ["subarray", "dp", "linear"],
     sourceCode: code(
@@ -523,8 +555,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Busqueda lineal",
     titleEn: "Linear Search",
-    summaryEs: "Recorre secuencialmente el arreglo y sirve como referencia minima para busquedas iterativas.",
-    summaryEn: "Traverses the array sequentially and serves as a minimal reference for iterative searches.",
+    summaryEs:
+      "Recorre secuencialmente el arreglo y sirve como referencia minima para busquedas iterativas.",
+    summaryEn:
+      "Traverses the array sequentially and serves as a minimal reference for iterative searches.",
     tagsEs: ["busqueda", "lineal", "for"],
     tagsEn: ["search", "linear", "for"],
     sourceCode: code(
@@ -548,8 +582,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Maximum Subarray cuadratico",
     titleEn: "Quadratic Maximum Subarray",
-    summaryEs: "Recorre todos los inicios y expande sumas acumuladas para comparar con Kadane.",
-    summaryEn: "Iterates over all starting points and expands running sums to contrast with Kadane.",
+    summaryEs:
+      "Recorre todos los inicios y expande sumas acumuladas para comparar con Kadane.",
+    summaryEn:
+      "Iterates over all starting points and expands running sums to contrast with Kadane.",
     tagsEs: ["subarreglo", "cuadratico", "doble bucle"],
     tagsEn: ["subarray", "quadratic", "nested loops"],
     sourceCode: code(
@@ -578,8 +614,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Merge de dos arreglos ordenados",
     titleEn: "Merge two sorted arrays",
-    summaryEs: "Usa dos punteros y una salida temporal para estudiar una combinacion lineal clasica.",
-    summaryEn: "Uses two pointers and a temporary output to study a classic linear merge.",
+    summaryEs:
+      "Usa dos punteros y una salida temporal para estudiar una combinacion lineal clasica.",
+    summaryEn:
+      "Uses two pointers and a temporary output to study a classic linear merge.",
     tagsEs: ["merge", "dos punteros", "lineal"],
     tagsEn: ["merge", "two pointers", "linear"],
     sourceCode: code(
@@ -612,8 +650,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Newton-Raphson iterativo",
     titleEn: "Iterative Newton-Raphson",
-    summaryEs: "Ejemplo numerico con refinamientos sucesivos y corte por tolerancia.",
-    summaryEn: "Numerical sample with successive refinements and a tolerance-based stopping rule.",
+    summaryEs:
+      "Ejemplo numerico con refinamientos sucesivos y corte por tolerancia.",
+    summaryEn:
+      "Numerical sample with successive refinements and a tolerance-based stopping rule.",
     tagsEs: ["numerico", "aproximacion", "repeat"],
     tagsEn: ["numeric", "approximation", "repeat"],
     sourceCode: code(
@@ -636,8 +676,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Triangulo de Pascal bottom-up",
     titleEn: "Bottom-up Pascal Triangle",
-    summaryEs: "Construccion tabular de una matriz triangular; por ahora permanece en el catalogo maestro pero no en la UI publica.",
-    summaryEn: "Tabular construction of a triangular matrix; it stays in the master catalog for now but not in the public UI.",
+    summaryEs:
+      "Construccion tabular de una matriz triangular; por ahora permanece en el catalogo maestro pero no en la UI publica.",
+    summaryEn:
+      "Tabular construction of a triangular matrix; it stays in the master catalog for now but not in the public UI.",
     tagsEs: ["pascal", "tabla", "matriz"],
     tagsEn: ["pascal", "table", "matrix"],
     sourceCode: code(
@@ -663,8 +705,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Suma prefija",
     titleEn: "Prefix Sum",
-    summaryEs: "Construye una suma acumulada reutilizable y es ideal para estudiar dependencias lineales simples.",
-    summaryEn: "Builds a reusable cumulative sum and is ideal to study simple linear dependencies.",
+    summaryEs:
+      "Construye una suma acumulada reutilizable y es ideal para estudiar dependencias lineales simples.",
+    summaryEn:
+      "Builds a reusable cumulative sum and is ideal to study simple linear dependencies.",
     tagsEs: ["prefijos", "acumulado", "lineal"],
     tagsEn: ["prefix", "cumulative", "linear"],
     sourceCode: code(
@@ -687,8 +731,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Ordenamiento por seleccion",
     titleEn: "Selection Sort",
-    summaryEs: "Busca el minimo restante y lo coloca al frente en cada iteracion.",
-    summaryEn: "Finds the remaining minimum and places it at the front on each iteration.",
+    summaryEs:
+      "Busca el minimo restante y lo coloca al frente en cada iteracion.",
+    summaryEn:
+      "Finds the remaining minimum and places it at the front on each iteration.",
     tagsEs: ["ordenamiento", "seleccion", "cuadratico"],
     tagsEn: ["sorting", "selection", "quadratic"],
     sourceCode: code(
@@ -718,8 +764,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Ordenamiento Shell",
     titleEn: "Shell Sort",
-    summaryEs: "Refina el arreglo por saltos decrecientes y muestra varios niveles de anidacion iterativa.",
-    summaryEn: "Refines the array through decreasing gaps and shows multiple levels of iterative nesting.",
+    summaryEs:
+      "Refina el arreglo por saltos decrecientes y muestra varios niveles de anidacion iterativa.",
+    summaryEn:
+      "Refines the array through decreasing gaps and shows multiple levels of iterative nesting.",
     tagsEs: ["ordenamiento", "gaps", "incrementos"],
     tagsEn: ["sorting", "gaps", "increments"],
     sourceCode: code(
@@ -751,8 +799,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Criba de Eratostenes",
     titleEn: "Sieve of Eratosthenes",
-    summaryEs: "Marca multiplos en una tabla booleana y funciona bien para estudiar bucles anidados con saltos.",
-    summaryEn: "Marks multiples in a boolean table and works well to study nested loops with jumps.",
+    summaryEs:
+      "Marca multiplos en una tabla booleana y funciona bien para estudiar bucles anidados con saltos.",
+    summaryEn:
+      "Marks multiples in a boolean table and works well to study nested loops with jumps.",
     tagsEs: ["primos", "criba", "matriz logica"],
     tagsEn: ["primes", "sieve", "boolean table"],
     sourceCode: code(
@@ -783,8 +833,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Suma de arreglo",
     titleEn: "Array sum",
-    summaryEs: "Acumula todos los elementos del arreglo en un unico recorrido lineal.",
-    summaryEn: "Accumulates every element in the array in a single linear scan.",
+    summaryEs:
+      "Acumula todos los elementos del arreglo en un unico recorrido lineal.",
+    summaryEn:
+      "Accumulates every element in the array in a single linear scan.",
     tagsEs: ["suma", "lineal", "for"],
     tagsEn: ["sum", "linear", "for"],
     sourceCode: code(
@@ -807,8 +859,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Busqueda ternaria iterativa",
     titleEn: "Iterative Ternary Search",
-    summaryEs: "Divide el rango en tres secciones por iteracion sobre un arreglo ordenado.",
-    summaryEn: "Splits the range into three sections per iteration over a sorted array.",
+    summaryEs:
+      "Divide el rango en tres secciones por iteracion sobre un arreglo ordenado.",
+    summaryEn:
+      "Splits the range into three sections per iteration over a sorted array.",
     tagsEs: ["busqueda", "ternaria", "logaritmico"],
     tagsEn: ["search", "ternary", "logarithmic"],
     sourceCode: code(
@@ -852,8 +906,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Dos sumas con hash",
     titleEn: "Two Sum with hash",
-    summaryEs: "Queda en el catalogo maestro como recordatorio de futuros objetos auxiliares mas ricos.",
-    summaryEn: "Lives in the master catalog as a reminder for richer auxiliary-object support in the future.",
+    summaryEs:
+      "Queda en el catalogo maestro como recordatorio de futuros objetos auxiliares mas ricos.",
+    summaryEn:
+      "Lives in the master catalog as a reminder for richer auxiliary-object support in the future.",
     tagsEs: ["hash", "pares", "estructura auxiliar"],
     tagsEn: ["hash", "pairs", "auxiliary structure"],
     sourceCode: code(
@@ -879,8 +935,10 @@ const iterativeExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Warshall para cierre transitivo",
     titleEn: "Warshall Transitive Closure",
-    summaryEs: "Triple bucle sobre una matriz; se mantiene deshabilitado hasta validar mejor el soporte de matrices bidimensionales.",
-    summaryEn: "Triple loop over a matrix; remains disabled until two-dimensional matrix support is validated more carefully.",
+    summaryEs:
+      "Triple bucle sobre una matriz; se mantiene deshabilitado hasta validar mejor el soporte de matrices bidimensionales.",
+    summaryEn:
+      "Triple loop over a matrix; remains disabled until two-dimensional matrix support is validated more carefully.",
     tagsEs: ["matriz", "grafo", "transitividad"],
     tagsEn: ["matrix", "graph", "transitive closure"],
     sourceCode: code(
@@ -911,8 +969,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Par de puntos mas cercano",
     titleEn: "Closest Pair of Points",
-    summaryEs: "Esqueleto geometricamente fiel pero todavia no publicado mientras aterrizamos mejor la parte de franjas y puntos.",
-    summaryEn: "A geometrically faithful skeleton that stays hidden until the strip and point handling is modeled more tightly.",
+    summaryEs:
+      "Esqueleto geometricamente fiel pero todavia no publicado mientras aterrizamos mejor la parte de franjas y puntos.",
+    summaryEn:
+      "A geometrically faithful skeleton that stays hidden until the strip and point handling is modeled more tightly.",
     tagsEs: ["geometria", "puntos", "franja"],
     tagsEn: ["geometry", "points", "strip"],
     sourceCode: code(
@@ -941,8 +1001,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Envolvente convexa divide y vencerás",
     titleEn: "Divide-and-Conquer Convex Hull",
-    summaryEs: "Se conserva como boceto de referencia para una futura version validada del casco convexo.",
-    summaryEn: "Kept as a reference sketch for a future validated divide-and-conquer convex hull sample.",
+    summaryEs:
+      "Se conserva como boceto de referencia para una futura version validada del casco convexo.",
+    summaryEn:
+      "Kept as a reference sketch for a future validated divide-and-conquer convex hull sample.",
     tagsEs: ["geometria", "casco convexo", "merge"],
     tagsEn: ["geometry", "convex hull", "merge"],
     sourceCode: code(
@@ -967,8 +1029,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Cooley-Tukey FFT",
     titleEn: "Cooley-Tukey FFT",
-    summaryEs: "FFT recursiva con pares e impares; permanece deshabilitada hasta que fijemos una version mas sobria para el parser.",
-    summaryEn: "Recursive FFT over even and odd terms; stays disabled until a more parser-friendly version is fixed.",
+    summaryEs:
+      "FFT recursiva con pares e impares; permanece deshabilitada hasta que fijemos una version mas sobria para el parser.",
+    summaryEn:
+      "Recursive FFT over even and odd terms; stays disabled until a more parser-friendly version is fixed.",
     tagsEs: ["fft", "pares", "impares"],
     tagsEn: ["fft", "even", "odd"],
     sourceCode: code(
@@ -993,8 +1057,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Conteo de inversiones",
     titleEn: "Counting Inversions",
-    summaryEs: "Divide el arreglo, cuenta en cada mitad y acumula inversiones cruzadas al combinar.",
-    summaryEn: "Splits the array, counts on each half, and accumulates cross inversions while merging.",
+    summaryEs:
+      "Divide el arreglo, cuenta en cada mitad y acumula inversiones cruzadas al combinar.",
+    summaryEn:
+      "Splits the array, counts on each half, and accumulates cross inversions while merging.",
     tagsEs: ["merge", "inversiones", "divide y venceras"],
     tagsEn: ["merge", "inversions", "divide and conquer"],
     sourceCode: code(
@@ -1020,8 +1086,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Fast Multipole skeleton simplificado",
     titleEn: "Simplified Fast Multipole Skeleton",
-    summaryEs: "Queda como placeholder honesto de un patron jerarquico que aun no esta listo para exponerse al usuario final.",
-    summaryEn: "Kept as an honest placeholder for a hierarchical pattern that is not ready for end-user exposure yet.",
+    summaryEs:
+      "Queda como placeholder honesto de un patron jerarquico que aun no esta listo para exponerse al usuario final.",
+    summaryEn:
+      "Kept as an honest placeholder for a hierarchical pattern that is not ready for end-user exposure yet.",
     tagsEs: ["jerarquico", "geometria", "toy"],
     tagsEn: ["hierarchical", "geometry", "toy"],
     sourceCode: code(
@@ -1046,8 +1114,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Multiplicación de Karatsuba",
     titleEn: "Karatsuba Multiplication",
-    summaryEs: "Muestra una division ternaria del trabajo multiplicativo con combinacion algebraica al final.",
-    summaryEn: "Shows a ternary split of the multiplication work with an algebraic combine phase at the end.",
+    summaryEs:
+      "Muestra una division ternaria del trabajo multiplicativo con combinacion algebraica al final.",
+    summaryEn:
+      "Shows a ternary split of the multiplication work with an algebraic combine phase at the end.",
     tagsEs: ["karatsuba", "multiplicacion", "subproblemas"],
     tagsEn: ["karatsuba", "multiplication", "subproblems"],
     sourceCode: code(
@@ -1073,8 +1143,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "K-th Smallest por medianas de medianas",
     titleEn: "K-th Smallest by Median of Medians",
-    summaryEs: "Se mantiene como referencia avanzada hasta publicar una variante mas acotada del pivote determinista.",
-    summaryEn: "Kept as an advanced reference until a tighter deterministic-pivot variant is ready to publish.",
+    summaryEs:
+      "Se mantiene como referencia avanzada hasta publicar una variante mas acotada del pivote determinista.",
+    summaryEn:
+      "Kept as an advanced reference until a tighter deterministic-pivot variant is ready to publish.",
     tagsEs: ["seleccion", "medianas", "pivote"],
     tagsEn: ["selection", "medians", "pivot"],
     sourceCode: code(
@@ -1099,8 +1171,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Elemento mayoritario divide y vencerás",
     titleEn: "Divide-and-Conquer Majority Element",
-    summaryEs: "Obtiene candidatos por mitad y luego los valida en la fase de combinacion.",
-    summaryEn: "Obtains candidates per half and validates them in the combine phase.",
+    summaryEs:
+      "Obtiene candidatos por mitad y luego los valida en la fase de combinacion.",
+    summaryEn:
+      "Obtains candidates per half and validates them in the combine phase.",
     tagsEs: ["mayoria", "combinacion", "recursivo"],
     tagsEn: ["majority", "combine", "recursive"],
     sourceCode: code(
@@ -1128,8 +1202,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Parentización de cadena de matrices divide y vencerás ingenua",
     titleEn: "Naive Divide-and-Conquer Matrix Chain Parenthesization",
-    summaryEs: "Modelo recursivo ingenuo de particiones de matrices; queda fuera de la UI mientras validamos una forma mas estable.",
-    summaryEn: "Naive recursive matrix partition model kept out of the UI while we validate a more stable form.",
+    summaryEs:
+      "Modelo recursivo ingenuo de particiones de matrices; queda fuera de la UI mientras validamos una forma mas estable.",
+    summaryEn:
+      "Naive recursive matrix partition model kept out of the UI while we validate a more stable form.",
     tagsEs: ["matrices", "particiones", "naive"],
     tagsEn: ["matrices", "partitions", "naive"],
     sourceCode: code(
@@ -1154,8 +1230,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Max-Min Tournament",
     titleEn: "Max-Min Tournament",
-    summaryEs: "Parte el arreglo en dos mitades y combina maximo y minimo desde cada rama.",
-    summaryEn: "Splits the array into two halves and combines the maximum and minimum from each branch.",
+    summaryEs:
+      "Parte el arreglo en dos mitades y combina maximo y minimo desde cada rama.",
+    summaryEn:
+      "Splits the array into two halves and combines the maximum and minimum from each branch.",
     tagsEs: ["maximo", "minimo", "torneo"],
     tagsEn: ["maximum", "minimum", "tournament"],
     sourceCode: code(
@@ -1180,8 +1258,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Ordenamiento por mezcla",
     titleEn: "Merge Sort",
-    summaryEs: "Divide el arreglo en dos mitades, ordena cada una y las mezcla en tiempo lineal.",
-    summaryEn: "Splits the array in half, sorts each half, and merges them in linear time.",
+    summaryEs:
+      "Divide el arreglo en dos mitades, ordena cada una y las mezcla en tiempo lineal.",
+    summaryEn:
+      "Splits the array in half, sorts each half, and merges them in linear time.",
     tagsEs: ["ordenamiento", "merge", "divide y venceras"],
     tagsEn: ["sorting", "merge", "divide and conquer"],
     sourceCode: code(
@@ -1224,8 +1304,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Minimax de arbol binario",
     titleEn: "Binary Tree Minimax",
-    summaryEs: "Boceto recursivo de un arbol binario de juego; se mantiene fuera de la UI hasta fijar mejor los nodos auxiliares.",
-    summaryEn: "Recursive game-tree sketch kept out of the UI until auxiliary node handling is tightened.",
+    summaryEs:
+      "Boceto recursivo de un arbol binario de juego; se mantiene fuera de la UI hasta fijar mejor los nodos auxiliares.",
+    summaryEn:
+      "Recursive game-tree sketch kept out of the UI until auxiliary node handling is tightened.",
     tagsEs: ["minimax", "arbol", "juegos"],
     tagsEn: ["minimax", "tree", "games"],
     sourceCode: code(
@@ -1249,8 +1331,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Puntos más cercanos por variante de franja y mezcla",
     titleEn: "Nearest Points by Strip Merge Variant",
-    summaryEs: "Variante de cercania por franjas mantenida como borrador avanzado del catalogo maestro.",
-    summaryEn: "A strip-based nearest-points variant kept as an advanced draft in the master catalog.",
+    summaryEs:
+      "Variante de cercania por franjas mantenida como borrador avanzado del catalogo maestro.",
+    summaryEn:
+      "A strip-based nearest-points variant kept as an advanced draft in the master catalog.",
     tagsEs: ["geometria", "franja", "cercania"],
     tagsEn: ["geometry", "strip", "closeness"],
     sourceCode: code(
@@ -1275,8 +1359,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Multiplicación de polinomios divide y vencerás",
     titleEn: "Divide-and-Conquer Polynomial Multiplication",
-    summaryEs: "Separa los polinomios en mitades y combina productos parciales al final.",
-    summaryEn: "Splits the polynomials in halves and combines partial products at the end.",
+    summaryEs:
+      "Separa los polinomios en mitades y combina productos parciales al final.",
+    summaryEn:
+      "Splits the polynomials in halves and combines partial products at the end.",
     tagsEs: ["polinomios", "multiplicacion", "conquista"],
     tagsEn: ["polynomials", "multiplication", "conquer"],
     sourceCode: code(
@@ -1303,8 +1389,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Post Office recursive partition",
     titleEn: "Post Office Recursive Partition",
-    summaryEs: "Placeholder de particiones recursivas de intervalos; no se publica aun porque requiere una forma mas concreta.",
-    summaryEn: "Recursive interval-partition placeholder that is not public yet because it needs a more concrete form.",
+    summaryEs:
+      "Placeholder de particiones recursivas de intervalos; no se publica aun porque requiere una forma mas concreta.",
+    summaryEn:
+      "Recursive interval-partition placeholder that is not public yet because it needs a more concrete form.",
     tagsEs: ["intervalos", "particion", "clasico"],
     tagsEn: ["intervals", "partition", "classic"],
     sourceCode: code(
@@ -1329,8 +1417,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "QuadTree Construction",
     titleEn: "QuadTree Construction",
-    summaryEs: "Division en cuatro cuadrantes sobre una matriz; por ahora solo queda como referencia del catalogo maestro.",
-    summaryEn: "Four-way matrix partition kept for now as a master-catalog reference only.",
+    summaryEs:
+      "Division en cuatro cuadrantes sobre una matriz; por ahora solo queda como referencia del catalogo maestro.",
+    summaryEn:
+      "Four-way matrix partition kept for now as a master-catalog reference only.",
     tagsEs: ["quadtree", "matriz", "cuadrantes"],
     tagsEn: ["quadtree", "matrix", "quadrants"],
     sourceCode: code(
@@ -1358,8 +1448,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Ordenamiento rapido",
     titleEn: "Quick Sort",
-    summaryEs: "Particiona alrededor de un pivote y resuelve recursivamente las dos regiones restantes.",
-    summaryEn: "Partitions around a pivot and solves the two remaining regions recursively.",
+    summaryEs:
+      "Particiona alrededor de un pivote y resuelve recursivamente las dos regiones restantes.",
+    summaryEn:
+      "Partitions around a pivot and solves the two remaining regions recursively.",
     tagsEs: ["ordenamiento", "pivote", "particion"],
     tagsEn: ["sorting", "pivot", "partition"],
     sourceCode: code(
@@ -1396,8 +1488,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Consulta de suma por rango divide y vencerás",
     titleEn: "Divide-and-Conquer Range Sum Query",
-    summaryEs: "Muestra la particion del rango en dos mitades, pero se deja fuera de la UI hasta tener una version mas afinada.",
-    summaryEn: "Shows range partition into two halves, but stays out of the UI until a tighter version is ready.",
+    summaryEs:
+      "Muestra la particion del rango en dos mitades, pero se deja fuera de la UI hasta tener una version mas afinada.",
+    summaryEn:
+      "Shows range partition into two halves, but stays out of the UI until a tighter version is ready.",
     tagsEs: ["rangos", "sumas", "segmentos"],
     tagsEn: ["ranges", "sums", "segments"],
     sourceCode: code(
@@ -1422,8 +1516,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Construcción de árbol de segmentos",
     titleEn: "Segment Tree Construction",
-    summaryEs: "Construccion recursiva por intervalos que reservamos para una futura version mas completa.",
-    summaryEn: "Recursive interval construction reserved for a fuller future version.",
+    summaryEs:
+      "Construccion recursiva por intervalos que reservamos para una futura version mas completa.",
+    summaryEn:
+      "Recursive interval construction reserved for a fuller future version.",
     tagsEs: ["segment tree", "intervalos", "estructura"],
     tagsEn: ["segment tree", "intervals", "structure"],
     sourceCode: code(
@@ -1450,8 +1546,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Problema del skyline divide y vencerás",
     titleEn: "Divide-and-Conquer Skyline Problem",
-    summaryEs: "Problema clasico de line sweep y mezcla de perfiles que por ahora queda como registro avanzado.",
-    summaryEn: "Classic skyline merge problem that remains an advanced record for now.",
+    summaryEs:
+      "Problema clasico de line sweep y mezcla de perfiles que por ahora queda como registro avanzado.",
+    summaryEn:
+      "Classic skyline merge problem that remains an advanced record for now.",
     tagsEs: ["skyline", "perfil", "geometria"],
     tagsEn: ["skyline", "profile", "geometry"],
     sourceCode: code(
@@ -1476,8 +1574,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Multiplicacion de matrices de Strassen",
     titleEn: "Strassen Matrix Multiplication",
-    summaryEs: "Se incluye en el catalogo maestro, pero sigue deshabilitada hasta afinar la representacion matricial.",
-    summaryEn: "Included in the master catalog but still disabled until the matrix representation is refined.",
+    summaryEs:
+      "Se incluye en el catalogo maestro, pero sigue deshabilitada hasta afinar la representacion matricial.",
+    summaryEn:
+      "Included in the master catalog but still disabled until the matrix representation is refined.",
     tagsEs: ["strassen", "matrices", "7 productos"],
     tagsEn: ["strassen", "matrices", "7 products"],
     sourceCode: code(
@@ -1507,8 +1607,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Construcción de árbol de torneo",
     titleEn: "Tournament Tree Construction",
-    summaryEs: "Divide el arreglo en dos ramas y combina ganadores locales en la raiz.",
-    summaryEn: "Splits the array into two branches and combines local winners at the root.",
+    summaryEs:
+      "Divide el arreglo en dos ramas y combina ganadores locales en la raiz.",
+    summaryEn:
+      "Splits the array into two branches and combines local winners at the root.",
     tagsEs: ["torneo", "arbol", "estructura"],
     tagsEn: ["tournament", "tree", "structure"],
     sourceCode: code(
@@ -1536,8 +1638,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "VLSI Closest-Pair style partition",
     titleEn: "VLSI Closest-Pair Style Partition",
-    summaryEs: "Variante avanzada de particion geometrica que queda guardada solo en el catalogo maestro.",
-    summaryEn: "Advanced geometric partition variant stored only in the master catalog for now.",
+    summaryEs:
+      "Variante avanzada de particion geometrica que queda guardada solo en el catalogo maestro.",
+    summaryEn:
+      "Advanced geometric partition variant stored only in the master catalog for now.",
     tagsEs: ["vlsi", "geometria", "particion"],
     tagsEn: ["vlsi", "geometry", "partition"],
     sourceCode: code(
@@ -1562,8 +1666,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Mediana ponderada divide y vencerás",
     titleEn: "Divide-and-Conquer Weighted Median",
-    summaryEs: "Se mantiene como ejemplo avanzado de seleccion con pesos, aun fuera de la UI publica.",
-    summaryEn: "Kept as an advanced weighted selection sample, still out of the public UI.",
+    summaryEs:
+      "Se mantiene como ejemplo avanzado de seleccion con pesos, aun fuera de la UI publica.",
+    summaryEn:
+      "Kept as an advanced weighted selection sample, still out of the public UI.",
     tagsEs: ["mediana", "pesos", "seleccion"],
     tagsEn: ["median", "weights", "selection"],
     sourceCode: code(
@@ -1588,8 +1694,10 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Z-order recursive matrix traversal",
     titleEn: "Recursive Z-order Matrix Traversal",
-    summaryEs: "Recorre una matriz por cuadrantes y deja visible un patron claro de division en cuatro subproblemas.",
-    summaryEn: "Traverses a matrix by quadrants and makes a clear four-way divide-and-conquer pattern visible.",
+    summaryEs:
+      "Recorre una matriz por cuadrantes y deja visible un patron claro de division en cuatro subproblemas.",
+    summaryEn:
+      "Traverses a matrix by quadrants and makes a clear four-way divide-and-conquer pattern visible.",
     tagsEs: ["matriz", "z-order", "cuadrantes"],
     tagsEn: ["matrix", "z-order", "quadrants"],
     sourceCode: code(
@@ -1619,8 +1727,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Binary Search recursiva",
     titleEn: "Recursive Binary Search",
-    summaryEs: "Reduce el rango a una sola mitad y es uno de los casos mas confiables para el catalogo recursivo.",
-    summaryEn: "Reduces the range to a single half and is one of the most reliable cases in the recursive catalog.",
+    summaryEs:
+      "Reduce el rango a una sola mitad y es uno de los casos mas confiables para el catalogo recursivo.",
+    summaryEn:
+      "Reduces the range to a single half and is one of the most reliable cases in the recursive catalog.",
     tagsEs: ["busqueda", "mitad", "logaritmico"],
     tagsEn: ["search", "half", "logarithmic"],
     sourceCode: code(
@@ -1653,8 +1763,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Altura de arbol binario",
     titleEn: "Binary Tree Height",
-    summaryEs: "Se conserva en el catalogo maestro, pero su forma de dos ramas queda fuera de la publicacion inicial.",
-    summaryEn: "Kept in the master catalog, but its two-branch shape stays out of the initial release.",
+    summaryEs:
+      "Se conserva en el catalogo maestro, pero su forma de dos ramas queda fuera de la publicacion inicial.",
+    summaryEn:
+      "Kept in the master catalog, but its two-branch shape stays out of the initial release.",
     tagsEs: ["arbol", "altura", "dos ramas"],
     tagsEn: ["tree", "height", "two branches"],
     sourceCode: code(
@@ -1681,8 +1793,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Euclides recursivo",
     titleEn: "Recursive Euclid",
-    summaryEs: "Caso pequeno y estable para una reduccion por modulo hasta llegar al divisor final.",
-    summaryEn: "A short, stable case for reduction by modulo until the final divisor is reached.",
+    summaryEs:
+      "Caso pequeno y estable para una reduccion por modulo hasta llegar al divisor final.",
+    summaryEn:
+      "A short, stable case for reduction by modulo until the final divisor is reached.",
     tagsEs: ["mcd", "mod", "recursivo"],
     tagsEn: ["gcd", "mod", "recursive"],
     sourceCode: code(
@@ -1704,8 +1818,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Exponenciacion rapida",
     titleEn: "Fast Exponentiation",
-    summaryEs: "Reduce el exponente a la mitad en cada llamada y reutiliza el subresultado central.",
-    summaryEn: "Reduces the exponent by half on each call and reuses the central subresult.",
+    summaryEs:
+      "Reduce el exponente a la mitad en cada llamada y reutiliza el subresultado central.",
+    summaryEn:
+      "Reduces the exponent by half on each call and reuses the central subresult.",
     tagsEs: ["potencias", "halving", "logaritmico"],
     tagsEn: ["powers", "halving", "logarithmic"],
     sourceCode: code(
@@ -1732,8 +1848,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Fibonacci Search recursiva",
     titleEn: "Recursive Fibonacci Search",
-    summaryEs: "Caso avanzado de busqueda ordenada que permanece oculto hasta validar mejor sus offsets.",
-    summaryEn: "Advanced ordered-search case that stays hidden until its offsets are validated more carefully.",
+    summaryEs:
+      "Caso avanzado de busqueda ordenada que permanece oculto hasta validar mejor sus offsets.",
+    summaryEn:
+      "Advanced ordered-search case that stays hidden until its offsets are validated more carefully.",
     tagsEs: ["busqueda", "fibonacci", "offsets"],
     tagsEn: ["search", "fibonacci", "offsets"],
     sourceCode: code(
@@ -1762,8 +1880,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Find Maximum recursivo",
     titleEn: "Recursive Find Maximum",
-    summaryEs: "Procesa un elemento por llamada y compara contra el maximo del prefijo restante.",
-    summaryEn: "Processes one element per call and compares it against the maximum of the remaining prefix.",
+    summaryEs:
+      "Procesa un elemento por llamada y compara contra el maximo del prefijo restante.",
+    summaryEn:
+      "Processes one element per call and compares it against the maximum of the remaining prefix.",
     tagsEs: ["maximo", "decremento", "lineal"],
     tagsEn: ["maximum", "decrement", "linear"],
     sourceCode: code(
@@ -1789,8 +1909,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Heapify recursivo",
     titleEn: "Recursive Heapify",
-    summaryEs: "Modelo de heap implicito que queda en el catalogo maestro mientras afinamos su forma valida para UI publica.",
-    summaryEn: "Implicit-heap model kept in the master catalog while we refine its valid public-facing form.",
+    summaryEs:
+      "Modelo de heap implicito que queda en el catalogo maestro mientras afinamos su forma valida para UI publica.",
+    summaryEn:
+      "Implicit-heap model kept in the master catalog while we refine its valid public-facing form.",
     tagsEs: ["heap", "arbol implicito", "descenso"],
     tagsEn: ["heap", "implicit tree", "descent"],
     sourceCode: code(
@@ -1824,7 +1946,8 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Insertion Sort recursivo",
     titleEn: "Recursive Insertion Sort",
-    summaryEs: "Ordena el prefijo de longitud n-1 y luego inserta la ultima clave.",
+    summaryEs:
+      "Ordena el prefijo de longitud n-1 y luego inserta la ultima clave.",
     summaryEn: "Sorts the prefix of length n-1 and then inserts the last key.",
     tagsEs: ["ordenamiento", "insercion", "decremento"],
     tagsEn: ["sorting", "insertion", "decrement"],
@@ -1855,8 +1978,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Interpolation Search recursiva",
     titleEn: "Recursive Interpolation Search",
-    summaryEs: "Su posicion estimada hace mas delicado el soporte actual, por eso se mantiene oculta.",
-    summaryEn: "Its estimated position makes current support more delicate, so it remains hidden.",
+    summaryEs:
+      "Su posicion estimada hace mas delicado el soporte actual, por eso se mantiene oculta.",
+    summaryEn:
+      "Its estimated position makes current support more delicate, so it remains hidden.",
     tagsEs: ["busqueda", "interpolacion", "estimacion"],
     tagsEn: ["search", "interpolation", "estimation"],
     sourceCode: code(
@@ -1885,8 +2010,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Josephus recursivo",
     titleEn: "Recursive Josephus",
-    summaryEs: "Reduce el problema en una persona por llamada y luego recompone la posicion sobreviviente.",
-    summaryEn: "Reduces the problem by one person per call and then rebuilds the survivor position.",
+    summaryEs:
+      "Reduce el problema en una persona por llamada y luego recompone la posicion sobreviviente.",
+    summaryEn:
+      "Reduces the problem by one person per call and then rebuilds the survivor position.",
     tagsEs: ["josephus", "clasico", "decremento"],
     tagsEn: ["josephus", "classic", "decrement"],
     sourceCode: code(
@@ -1909,7 +2036,8 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     titleEs: "K-esimo simbolo en gramatica",
     titleEn: "K-th Symbol in Grammar",
     summaryEs: "Reduce la posicion y la fila hasta un caso base corto.",
-    summaryEn: "Reduces the position and row until a short base case is reached.",
+    summaryEn:
+      "Reduces the position and row until a short base case is reached.",
     tagsEs: ["gramatica", "simbolo", "halving"],
     tagsEn: ["grammar", "symbol", "halving"],
     sourceCode: code(
@@ -1938,8 +2066,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Linear Search recursiva",
     titleEn: "Recursive Linear Search",
-    summaryEs: "Procesa una posicion por llamada y termina cuando encuentra el elemento o consume el arreglo.",
-    summaryEn: "Processes one position per call and stops when it finds the element or exhausts the array.",
+    summaryEs:
+      "Procesa una posicion por llamada y termina cuando encuentra el elemento o consume el arreglo.",
+    summaryEn:
+      "Processes one position per call and stops when it finds the element or exhausts the array.",
     tagsEs: ["busqueda", "lineal", "recursivo"],
     tagsEn: ["search", "linear", "recursive"],
     sourceCode: code(
@@ -1964,8 +2094,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Longitud de lista enlazada",
     titleEn: "Linked List Length",
-    summaryEs: "Avanza un nodo por llamada hasta llegar al final de la lista enlazada.",
-    summaryEn: "Advances one node per call until the end of the linked list is reached.",
+    summaryEs:
+      "Avanza un nodo por llamada hasta llegar al final de la lista enlazada.",
+    summaryEn:
+      "Advances one node per call until the end of the linked list is reached.",
     tagsEs: ["lista", "longitud", "nodos"],
     tagsEn: ["list", "length", "nodes"],
     sourceCode: code(
@@ -1987,8 +2119,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Lista invertida recursiva",
     titleEn: "Recursive Reversed List",
-    summaryEs: "Procesa un nodo por llamada y reconstruye el orden al retornar.",
-    summaryEn: "Processes one node per call and rebuilds the order on the way back.",
+    summaryEs:
+      "Procesa un nodo por llamada y reconstruye el orden al retornar.",
+    summaryEn:
+      "Processes one node per call and rebuilds the order on the way back.",
     tagsEs: ["lista", "invertir", "nodos"],
     tagsEn: ["list", "reverse", "nodes"],
     sourceCode: code(
@@ -2010,8 +2144,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Max en arreglo divide-by-one",
     titleEn: "Array Max Divide-by-One",
-    summaryEs: "Reduce el problema en un elemento y compara contra el maximo del resto.",
-    summaryEn: "Reduces the problem by one element and compares against the maximum of the rest.",
+    summaryEs:
+      "Reduce el problema en un elemento y compara contra el maximo del resto.",
+    summaryEn:
+      "Reduces the problem by one element and compares against the maximum of the rest.",
     tagsEs: ["maximo", "decremento", "arreglo"],
     tagsEn: ["maximum", "decrement", "array"],
     sourceCode: code(
@@ -2037,8 +2173,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Numeros binarios por division entre 2",
     titleEn: "Binary Digits by Division by 2",
-    summaryEs: "Reduce el numero a la mitad y reconstruye sus digitos al volver.",
-    summaryEn: "Reduces the number by half and rebuilds its digits on the way back.",
+    summaryEs:
+      "Reduce el numero a la mitad y reconstruye sus digitos al volver.",
+    summaryEn:
+      "Reduces the number by half and rebuilds its digits on the way back.",
     tagsEs: ["binario", "division", "mitad"],
     tagsEn: ["binary", "division", "half"],
     sourceCode: code(
@@ -2061,7 +2199,8 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     titleEs: "Potencia modular rapida",
     titleEn: "Fast Modular Power",
     summaryEs: "Reduce el exponente y conserva el modulo en cada combinacion.",
-    summaryEn: "Reduces the exponent and preserves the modulus in each combine step.",
+    summaryEn:
+      "Reduces the exponent and preserves the modulus in each combine step.",
     tagsEs: ["modular", "potencia", "halving"],
     tagsEn: ["modular", "power", "halving"],
     sourceCode: code(
@@ -2088,8 +2227,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Ordenamiento por seleccion recursivo",
     titleEn: "Recursive Selection Sort",
-    summaryEs: "Fija la primera posicion, busca el minimo restante y continua sobre el sufijo.",
-    summaryEn: "Fixes the first position, finds the remaining minimum, and continues over the suffix.",
+    summaryEs:
+      "Fija la primera posicion, busca el minimo restante y continua sobre el sufijo.",
+    summaryEn:
+      "Fixes the first position, finds the remaining minimum, and continues over the suffix.",
     tagsEs: ["ordenamiento", "seleccion", "sufijo"],
     tagsEn: ["sorting", "selection", "suffix"],
     sourceCode: code(
@@ -2169,8 +2310,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Ternary Search recursiva",
     titleEn: "Recursive Ternary Search",
-    summaryEs: "Reduce el intervalo a uno de tres bloques posibles en cada llamada.",
-    summaryEn: "Reduces the interval to one of three possible blocks on each call.",
+    summaryEs:
+      "Reduce el intervalo a uno de tres bloques posibles en cada llamada.",
+    summaryEn:
+      "Reduces the interval to one of three possible blocks on each call.",
     tagsEs: ["busqueda", "ternaria", "bloques"],
     tagsEn: ["search", "ternary", "blocks"],
     sourceCode: code(
@@ -2207,7 +2350,8 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Tower of logarithmic halving toy example",
     titleEn: "Toy Example of Logarithmic Halving Tower",
-    summaryEs: "Ejemplo pedagogico artificial que dejamos fuera de la UI inicial.",
+    summaryEs:
+      "Ejemplo pedagogico artificial que dejamos fuera de la UI inicial.",
     summaryEn: "Artificial pedagogical example kept out of the initial UI.",
     tagsEs: ["toy", "halving", "pedagogico"],
     tagsEn: ["toy", "halving", "pedagogical"],
@@ -2230,8 +2374,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Recorrido inorder",
     titleEn: "Inorder Traversal",
-    summaryEs: "Permanece en el catalogo maestro, pero no en la UI inicial por su forma de dos ramas.",
-    summaryEn: "Stays in the master catalog, but not in the initial UI because of its two-branch shape.",
+    summaryEs:
+      "Permanece en el catalogo maestro, pero no en la UI inicial por su forma de dos ramas.",
+    summaryEn:
+      "Stays in the master catalog, but not in the initial UI because of its two-branch shape.",
     tagsEs: ["arbol", "inorder", "dos ramas"],
     tagsEn: ["tree", "inorder", "two branches"],
     sourceCode: code(
@@ -2255,8 +2401,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Recorrido postorder",
     titleEn: "Postorder Traversal",
-    summaryEs: "Se mantiene como referencia interna hasta fijar mejor la publicacion de recorridos binarios.",
-    summaryEn: "Kept as an internal reference until binary traversal publication is tightened.",
+    summaryEs:
+      "Se mantiene como referencia interna hasta fijar mejor la publicacion de recorridos binarios.",
+    summaryEn:
+      "Kept as an internal reference until binary traversal publication is tightened.",
     tagsEs: ["arbol", "postorder", "dos ramas"],
     tagsEn: ["tree", "postorder", "two branches"],
     sourceCode: code(
@@ -2280,8 +2428,10 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Recorrido preorder",
     titleEn: "Preorder Traversal",
-    summaryEs: "Se deja fuera de la UI inicial para mantener un lote conservador de arboles recursivos.",
-    summaryEn: "Left out of the initial UI to keep the recursive-tree batch conservative.",
+    summaryEs:
+      "Se deja fuera de la UI inicial para mantener un lote conservador de arboles recursivos.",
+    summaryEn:
+      "Left out of the initial UI to keep the recursive-tree batch conservative.",
     tagsEs: ["arbol", "preorder", "dos ramas"],
     tagsEn: ["tree", "preorder", "two branches"],
     sourceCode: code(
@@ -2308,8 +2458,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Ackermann truncado pedagogico",
     titleEn: "Pedagogical Truncated Ackermann",
-    summaryEs: "Se conserva solo como recordatorio de un patron fuera de la cobertura prudente de produccion.",
-    summaryEn: "Kept only as a reminder of a pattern outside the prudent production coverage.",
+    summaryEs:
+      "Se conserva solo como recordatorio de un patron fuera de la cobertura prudente de produccion.",
+    summaryEn:
+      "Kept only as a reminder of a pattern outside the prudent production coverage.",
     tagsEs: ["ackermann", "toy", "no estandar"],
     tagsEn: ["ackermann", "toy", "non standard"],
     sourceCode: code(
@@ -2334,8 +2486,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Catalan recursivo naive",
     titleEn: "Naive Recursive Catalan",
-    summaryEs: "Ejemplo famoso pero mas delicado para el motor actual; por eso se mantiene oculto.",
-    summaryEn: "A famous example, but more delicate for the current engine, so it stays hidden.",
+    summaryEs:
+      "Ejemplo famoso pero mas delicado para el motor actual; por eso se mantiene oculto.",
+    summaryEn:
+      "A famous example, but more delicate for the current engine, so it stays hidden.",
     tagsEs: ["catalan", "naive", "ramificado"],
     tagsEn: ["catalan", "naive", "branching"],
     sourceCode: code(
@@ -2361,8 +2515,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Escaleras recursivas",
     titleEn: "Climbing Stairs",
-    summaryEs: "Cuenta caminos con pasos de 1 y 2, generando una recurrencia lineal clasica.",
-    summaryEn: "Counts paths with steps of 1 and 2, yielding a classic linear recurrence.",
+    summaryEs:
+      "Cuenta caminos con pasos de 1 y 2, generando una recurrencia lineal clasica.",
+    summaryEn:
+      "Counts paths with steps of 1 and 2, yielding a classic linear recurrence.",
     tagsEs: ["escaleras", "fibonacci", "recurrencia"],
     tagsEn: ["stairs", "fibonacci", "recurrence"],
     sourceCode: code(
@@ -2384,8 +2540,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Coin Change recursivo naive",
     titleEn: "Naive Recursive Coin Change",
-    summaryEs: "Modelo recursivo muy ramificado que seguimos guardando como ejemplo maestro no publicado.",
-    summaryEn: "Highly branching recursive model still kept as an unpublished master example.",
+    summaryEs:
+      "Modelo recursivo muy ramificado que seguimos guardando como ejemplo maestro no publicado.",
+    summaryEn:
+      "Highly branching recursive model still kept as an unpublished master example.",
     tagsEs: ["monedas", "naive", "ramas"],
     tagsEn: ["coins", "naive", "branches"],
     sourceCode: code(
@@ -2413,8 +2571,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Contar cadenas binarias sin unos consecutivos",
     titleEn: "Count Binary Strings Without Consecutive Ones",
-    summaryEs: "Recurrencia lineal clasica que conecta facilmente con ecuacion caracteristica.",
-    summaryEn: "Classic linear recurrence that connects naturally with the characteristic equation.",
+    summaryEs:
+      "Recurrencia lineal clasica que conecta facilmente con ecuacion caracteristica.",
+    summaryEn:
+      "Classic linear recurrence that connects naturally with the characteristic equation.",
     tagsEs: ["cadenas", "binarias", "sin consecutivos"],
     tagsEn: ["strings", "binary", "no consecutive ones"],
     sourceCode: code(
@@ -2436,8 +2596,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Contar formas de llegar a N",
     titleEn: "Count Ways to Reach N",
-    summaryEs: "Otra recurrencia lineal corta para contar caminos con pequenos saltos.",
-    summaryEn: "Another short linear recurrence for counting paths with small jumps.",
+    summaryEs:
+      "Otra recurrencia lineal corta para contar caminos con pequenos saltos.",
+    summaryEn:
+      "Another short linear recurrence for counting paths with small jumps.",
     tagsEs: ["caminos", "pasos", "lineal"],
     tagsEn: ["paths", "steps", "linear"],
     sourceCode: code(
@@ -2459,8 +2621,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Derangements recursivo",
     titleEn: "Recursive Derangements",
-    summaryEs: "Secuencia lineal con coeficientes variables que nos sirve para expandir el lote de secuencias.",
-    summaryEn: "Linear sequence with variable coefficients that helps broaden the sequence batch.",
+    summaryEs:
+      "Secuencia lineal con coeficientes variables que nos sirve para expandir el lote de secuencias.",
+    summaryEn:
+      "Linear sequence with variable coefficients that helps broaden the sequence batch.",
     tagsEs: ["desarreglos", "secuencia", "lineal"],
     tagsEn: ["derangements", "sequence", "linear"],
     sourceCode: code(
@@ -2485,7 +2649,8 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Edit Distance recursivo naive",
     titleEn: "Naive Recursive Edit Distance",
-    summaryEs: "Ejemplo clasico multi-rama que guardamos fuera de la publicacion inicial.",
+    summaryEs:
+      "Ejemplo clasico multi-rama que guardamos fuera de la publicacion inicial.",
     summaryEn: "Classic multi-branch example kept out of the initial release.",
     tagsEs: ["distancia", "edicion", "naive"],
     tagsEn: ["distance", "edit", "naive"],
@@ -2511,8 +2676,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Factorial recursivo",
     titleEn: "Recursive factorial",
-    summaryEs: "Caso lineal sencillo que sigue siendo util para contrastar con su version iterativa.",
-    summaryEn: "Simple linear case that remains useful to contrast against its iterative counterpart.",
+    summaryEs:
+      "Caso lineal sencillo que sigue siendo util para contrastar con su version iterativa.",
+    summaryEn:
+      "Simple linear case that remains useful to contrast against its iterative counterpart.",
     tagsEs: ["factorial", "lineal", "decremento"],
     tagsEn: ["factorial", "linear", "decrement"],
     sourceCode: code(
@@ -2534,8 +2701,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Fibonacci recursivo",
     titleEn: "Recursive Fibonacci",
-    summaryEs: "Referencia central del catalogo para ecuacion caracteristica y crecimiento exponencial.",
-    summaryEn: "Core catalog reference for the characteristic equation and exponential growth.",
+    summaryEs:
+      "Referencia central del catalogo para ecuacion caracteristica y crecimiento exponencial.",
+    summaryEn:
+      "Core catalog reference for the characteristic equation and exponential growth.",
     tagsEs: ["fibonacci", "secuencia", "clasico"],
     tagsEn: ["fibonacci", "sequence", "classic"],
     sourceCode: code(
@@ -2557,8 +2726,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Emparejamiento de amigos recursivo",
     titleEn: "Recursive Friend Pairing",
-    summaryEs: "Secuencia combinatoria con una rama individual y otra emparejada.",
-    summaryEn: "Combinatorial sequence with one single branch and one paired branch.",
+    summaryEs:
+      "Secuencia combinatoria con una rama individual y otra emparejada.",
+    summaryEn:
+      "Combinatorial sequence with one single branch and one paired branch.",
     tagsEs: ["parejas", "combinatoria", "recurrencia"],
     tagsEn: ["pairing", "combinatorics", "recurrence"],
     sourceCode: code(
@@ -2580,7 +2751,8 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Torres de Hanoi",
     titleEn: "Tower of Hanoi",
-    summaryEs: "Problema clasico con dos llamadas sobre n-1 y un trabajo local constante.",
+    summaryEs:
+      "Problema clasico con dos llamadas sobre n-1 y un trabajo local constante.",
     summaryEn: "Classic problem with two calls on n-1 and constant local work.",
     tagsEs: ["hanoi", "clasico", "dos ramas"],
     tagsEn: ["hanoi", "classic", "two branches"],
@@ -2605,8 +2777,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "House Robber recursivo naive",
     titleEn: "Naive Recursive House Robber",
-    summaryEs: "Se mantiene como ejemplo avanzado no visible por la ramificacion y el maximo entre estados.",
-    summaryEn: "Kept as a non-visible advanced example because of branching and max-over-state behavior.",
+    summaryEs:
+      "Se mantiene como ejemplo avanzado no visible por la ramificacion y el maximo entre estados.",
+    summaryEn:
+      "Kept as a non-visible advanced example because of branching and max-over-state behavior.",
     tagsEs: ["house robber", "naive", "decision"],
     tagsEn: ["house robber", "naive", "decision"],
     sourceCode: code(
@@ -2636,8 +2810,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Integer Partition recursiva",
     titleEn: "Recursive Integer Partition",
-    summaryEs: "Permanece como muestra avanzada del catalogo maestro por su soporte aun parcial.",
-    summaryEn: "Remains an advanced master-catalog sample because support is still partial.",
+    summaryEs:
+      "Permanece como muestra avanzada del catalogo maestro por su soporte aun parcial.",
+    summaryEn:
+      "Remains an advanced master-catalog sample because support is still partial.",
     tagsEs: ["particiones", "enteros", "ramificado"],
     tagsEn: ["partitions", "integers", "branching"],
     sourceCode: code(
@@ -2662,8 +2838,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Escaleras de K pasos",
     titleEn: "K-step Stairs",
-    summaryEs: "Version pedagogica de escaleras con varias ramas controladas por una constante fija.",
-    summaryEn: "Pedagogical stairs variant with several branches controlled by a fixed constant.",
+    summaryEs:
+      "Version pedagogica de escaleras con varias ramas controladas por una constante fija.",
+    summaryEn:
+      "Pedagogical stairs variant with several branches controlled by a fixed constant.",
     tagsEs: ["escaleras", "k pasos", "recurrencia"],
     tagsEn: ["stairs", "k steps", "recurrence"],
     sourceCode: code(
@@ -2688,7 +2866,8 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Numeros de Lucas",
     titleEn: "Lucas Numbers",
-    summaryEs: "Secuencia hermana de Fibonacci con distintas condiciones iniciales.",
+    summaryEs:
+      "Secuencia hermana de Fibonacci con distintas condiciones iniciales.",
     summaryEn: "Fibonacci-like sequence with different initial conditions.",
     tagsEs: ["lucas", "secuencia", "lineal"],
     tagsEn: ["lucas", "sequence", "linear"],
@@ -2714,8 +2893,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Numeros de Pell",
     titleEn: "Pell Numbers",
-    summaryEs: "Recurrencia lineal de segundo orden que amplia el lote de ecuacion caracteristica.",
-    summaryEn: "Second-order linear recurrence that broadens the characteristic-equation batch.",
+    summaryEs:
+      "Recurrencia lineal de segundo orden que amplia el lote de ecuacion caracteristica.",
+    summaryEn:
+      "Second-order linear recurrence that broadens the characteristic-equation batch.",
     tagsEs: ["pell", "secuencia", "ecuacion caracteristica"],
     tagsEn: ["pell", "sequence", "characteristic equation"],
     sourceCode: code(
@@ -2737,8 +2918,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Secuencia de Perrin",
     titleEn: "Perrin Sequence",
-    summaryEs: "Secuencia lineal de orden tres util para ampliar el conjunto de ejemplos verificados.",
-    summaryEn: "Third-order linear sequence useful to expand the verified-example set.",
+    summaryEs:
+      "Secuencia lineal de orden tres util para ampliar el conjunto de ejemplos verificados.",
+    summaryEn:
+      "Third-order linear sequence useful to expand the verified-example set.",
     tagsEs: ["perrin", "orden 3", "secuencia"],
     tagsEn: ["perrin", "order 3", "sequence"],
     sourceCode: code(
@@ -2766,8 +2949,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Recaman truncado pedagogico",
     titleEn: "Pedagogical Truncated Recaman",
-    summaryEs: "Se mantiene como ejemplo no visible por requerir reglas mas finas de secuencias auto-referentes.",
-    summaryEn: "Kept as a non-visible example because self-referential sequences need finer rules.",
+    summaryEs:
+      "Se mantiene como ejemplo no visible por requerir reglas mas finas de secuencias auto-referentes.",
+    summaryEn:
+      "Kept as a non-visible example because self-referential sequences need finer rules.",
     tagsEs: ["recaman", "toy", "autoreferencia"],
     tagsEn: ["recaman", "toy", "self reference"],
     sourceCode: code(
@@ -2819,7 +3004,8 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: false,
     titleEs: "Subset Sum recursivo naive",
     titleEn: "Naive Recursive Subset Sum",
-    summaryEs: "Se deja fuera de la UI inicial para mantener las badges publicas conservadoras.",
+    summaryEs:
+      "Se deja fuera de la UI inicial para mantener las badges publicas conservadoras.",
     summaryEn: "Left out of the initial UI to keep public badges conservative.",
     tagsEs: ["subset sum", "naive", "decision"],
     tagsEn: ["subset sum", "naive", "decision"],
@@ -2868,8 +3054,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Suma de arreglo recursiva",
     titleEn: "Recursive Array Sum",
-    summaryEs: "Consume un elemento por llamada y delega el resto del trabajo al sufijo.",
-    summaryEn: "Consumes one element per call and delegates the rest of the work to the suffix.",
+    summaryEs:
+      "Consume un elemento por llamada y delega el resto del trabajo al sufijo.",
+    summaryEn:
+      "Consumes one element per call and delegates the rest of the work to the suffix.",
     tagsEs: ["arreglo", "suma", "lineal"],
     tagsEn: ["array", "sum", "linear"],
     sourceCode: code(
@@ -2891,8 +3079,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Tribonacci recursivo",
     titleEn: "Recursive Tribonacci",
-    summaryEs: "Amplia el patron de Fibonacci a tres ramas sobre desplazamientos constantes.",
-    summaryEn: "Extends the Fibonacci pattern to three branches over constant shifts.",
+    summaryEs:
+      "Amplia el patron de Fibonacci a tres ramas sobre desplazamientos constantes.",
+    summaryEn:
+      "Extends the Fibonacci pattern to three branches over constant shifts.",
     tagsEs: ["tribonacci", "orden 3", "secuencia"],
     tagsEn: ["tribonacci", "order 3", "sequence"],
     sourceCode: code(
@@ -2917,8 +3107,10 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     enabled: true,
     titleEs: "Formas de embaldosar 2xn",
     titleEn: "Ways to Tile 2xn",
-    summaryEs: "Cuenta mosaicos 2xn con una recurrencia lineal corta y muy didactica.",
-    summaryEn: "Counts 2xn tilings with a short and highly didactic linear recurrence.",
+    summaryEs:
+      "Cuenta mosaicos 2xn con una recurrencia lineal corta y muy didactica.",
+    summaryEn:
+      "Counts 2xn tilings with a short and highly didactic linear recurrence.",
     tagsEs: ["tiling", "domino", "secuencia"],
     tagsEn: ["tiling", "domino", "sequence"],
     sourceCode: code(
@@ -3008,16 +3200,21 @@ export const searchExamples = (
 
   return items.filter((item) => {
     const copy = item.copy[locale];
-    const haystack = [copy.title, copy.summary, ...copy.tags].map(normalize).join(" ");
+    const haystack = [copy.title, copy.summary, ...copy.tags]
+      .map(normalize)
+      .join(" ");
 
     return haystack.includes(normalizedQuery);
   });
 };
 
-export const getCategoryMeta = (category: ExampleCategory): ExampleCategoryMeta =>
-  EXAMPLE_CATEGORY_META[category];
+export const getCategoryMeta = (
+  category: ExampleCategory,
+): ExampleCategoryMeta => EXAMPLE_CATEGORY_META[category];
 
-export const getCategoryTotals = (category: ExampleCategory): {
+export const getCategoryTotals = (
+  category: ExampleCategory,
+): {
   total: number;
   enabled: number;
 } => ({
@@ -3027,7 +3224,9 @@ export const getCategoryTotals = (category: ExampleCategory): {
   ).length,
 });
 
-export const findExampleBySlug = (slug: string): ExampleCatalogItem | undefined =>
+export const findExampleBySlug = (
+  slug: string,
+): ExampleCatalogItem | undefined =>
   examplesCatalog.find((item) => item.slug === slug);
 
 export const getMethodTranslationKey = (method: RecursiveMethodBadge): string =>

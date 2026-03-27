@@ -19,7 +19,12 @@ interface UserGuideTableOfContentsProps {
 }
 
 const TOC_GROUPS: TocGroup[] = [
-  { id: "introduccion", titleKey: "introduccion", icon: "info", sectionIds: ["introduccion"] },
+  {
+    id: "introduccion",
+    titleKey: "introduccion",
+    icon: "info",
+    sectionIds: ["introduccion"],
+  },
   {
     id: "editor",
     titleKey: "editor",
@@ -52,8 +57,18 @@ const TOC_GROUPS: TocGroup[] = [
       "analisis-trace",
     ],
   },
-  { id: "ejemplos", titleKey: "ejemplos", icon: "lightbulb", sectionIds: ["ejemplos"] },
-  { id: "errores", titleKey: "errores", icon: "bug_report", sectionIds: ["errores"] },
+  {
+    id: "ejemplos",
+    titleKey: "ejemplos",
+    icon: "lightbulb",
+    sectionIds: ["ejemplos"],
+  },
+  {
+    id: "errores",
+    titleKey: "errores",
+    icon: "bug_report",
+    sectionIds: ["errores"],
+  },
 ];
 
 const SUB_ICONS: Record<string, string> = {
@@ -86,7 +101,9 @@ export function UserGuideTableOfContents({
 }: Readonly<UserGuideTableOfContentsProps>) {
   const t = useTranslations("userGuide");
   const sectionMap = new Map(sections.map((s) => [s.id, s]));
-  const [activeSection, setActiveSection] = useState<string>(sections[0]?.id ?? "");
+  const [activeSection, setActiveSection] = useState<string>(
+    sections[0]?.id ?? "",
+  );
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
@@ -98,7 +115,7 @@ export function UserGuideTableOfContents({
           }
         });
       },
-      { rootMargin: "-20% 0px -70% 0px", threshold: 0 }
+      { rootMargin: "-20% 0px -70% 0px", threshold: 0 },
     );
 
     sections.forEach((s) => {
@@ -151,7 +168,10 @@ export function UserGuideTableOfContents({
                   }}
                 >
                   {group.icon === "aalie" ? (
-                    <AALIEIcon className="text-primary flex-shrink-0" size={18} />
+                    <AALIEIcon
+                      className="text-primary flex-shrink-0"
+                      size={18}
+                    />
                   ) : (
                     <span className="material-symbols-outlined text-base flex-shrink-0">
                       {group.icon}
@@ -168,7 +188,9 @@ export function UserGuideTableOfContents({
                   <span className="material-symbols-outlined text-base flex-shrink-0 text-primary">
                     {group.icon}
                   </span>
-                  <span className="font-semibold text-white">{t(group.titleKey)}</span>
+                  <span className="font-semibold text-white">
+                    {t(group.titleKey)}
+                  </span>
                 </div>
                 <div className="ml-6 space-y-1 mt-1 border-l border-white/10 pl-3">
                   {group.sectionIds.map((sectionId) => {
@@ -191,7 +213,10 @@ export function UserGuideTableOfContents({
                         }}
                       >
                         {subIcon === "aalie" ? (
-                          <AALIEIcon className="text-primary flex-shrink-0" size={24} />
+                          <AALIEIcon
+                            className="text-primary flex-shrink-0"
+                            size={24}
+                          />
                         ) : (
                           <span className="material-symbols-outlined text-xs flex-shrink-0">
                             {subIcon ?? "arrow_right"}

@@ -7,6 +7,7 @@ y comparación estructural. Homogeneiza op/operator del parser.
 Author: @Cruz1122
 Version: 0.1.0
 """
+
 from typing import Any, Set
 
 
@@ -119,7 +120,9 @@ def is_numeric_expr(expr: Any) -> bool:
         t = expr_kind(expr)
         if t in ("number", "literal"):
             v = expr.get("value")
-            return isinstance(v, (int, float)) or (isinstance(v, str) and v.lstrip("-").replace(".", "").isdigit())
+            return isinstance(v, (int, float)) or (
+                isinstance(v, str) and v.lstrip("-").replace(".", "").isdigit()
+            )
         if t == "binary":
             op = _get_op(expr).lower()
             return op in ("+", "-", "*", "/", "//", "mod", "div")
@@ -139,7 +142,10 @@ def is_boolean_expr(expr: Any) -> bool:
         t = expr_kind(expr)
         if t == "literal":
             v = expr.get("value")
-            return isinstance(v, bool) or (isinstance(v, str) and v.lower() in ("true", "false", "verdadero", "falso"))
+            return isinstance(v, bool) or (
+                isinstance(v, str)
+                and v.lower() in ("true", "false", "verdadero", "falso")
+            )
         if t == "identifier":
             n = (expr.get("name") or "").lower()
             return n in ("true", "false", "verdadero", "falso", "v", "f")
@@ -167,7 +173,12 @@ def is_literal_true(expr: Any) -> bool:
             if isinstance(v, str):
                 return v.lower().strip() in ("true", "verdadero", "verdad", "v")
         if t == "identifier":
-            return (expr.get("name") or "").lower() in ("true", "verdadero", "verdad", "v")
+            return (expr.get("name") or "").lower() in (
+                "true",
+                "verdadero",
+                "verdad",
+                "v",
+            )
     return False
 
 
@@ -222,10 +233,9 @@ def expr_equals(a: Any, b: Any) -> bool:
                 and expr_equals(a.get("right"), b.get("right"))
             )
         if expr_kind(a) == "unary":
-            return (
-                (a.get("operator") or a.get("op")) == (b.get("operator") or b.get("op"))
-                and expr_equals(a.get("arg"), b.get("arg"))
-            )
+            return (a.get("operator") or a.get("op")) == (
+                b.get("operator") or b.get("op")
+            ) and expr_equals(a.get("arg"), b.get("arg"))
         if expr_kind(a) == "index":
             return expr_equals(a.get("target"), b.get("target")) and expr_equals(
                 a.get("index"), b.get("index")

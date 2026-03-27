@@ -8,6 +8,7 @@ Ninguna derivación ejecuta pseudocódigo.
 Author: Plan refactor subsistema trace
 Version: 0.1.0
 """
+
 from ..explanation_templates import explain_step, explain_steps
 from ..metrics_aggregator import aggregate_metrics
 from .structural_trace_classifier import (

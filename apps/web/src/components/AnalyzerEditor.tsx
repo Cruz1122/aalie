@@ -12,7 +12,6 @@ import {
   registerPseudocodeLanguage,
 } from "../lib/monaco-diagnostics";
 
-
 /**
  * Propiedades del componente AnalyzerEditor.
  */
@@ -214,7 +213,8 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
         didRemountAfterZeroHeightRef.current = true;
         setMonacoMountKey((k) => k + 1);
       }
-      if (rafLayoutRef.current != null) cancelAnimationFrame(rafLayoutRef.current);
+      if (rafLayoutRef.current != null)
+        cancelAnimationFrame(rafLayoutRef.current);
       rafLayoutRef.current = requestAnimationFrame(() => {
         editorRef.current?.layout();
       });
@@ -223,18 +223,18 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
     ro.observe(container);
     return () => {
       ro.disconnect();
-      if (rafLayoutRef.current != null) cancelAnimationFrame(rafLayoutRef.current);
+      if (rafLayoutRef.current != null)
+        cancelAnimationFrame(rafLayoutRef.current);
       rafLayoutRef.current = null;
     };
   }, [isEditorReady]);
 
   const shouldUseMeasuredHeight = height == null || height === "100%";
-  const monacoHeightProp =
-    shouldUseMeasuredHeight
-      ? measuredHeight == null
-        ? "100%"
-        : measuredHeight
-      : height ?? "300px";
+  const monacoHeightProp = shouldUseMeasuredHeight
+    ? measuredHeight == null
+      ? "100%"
+      : measuredHeight
+    : (height ?? "300px");
 
   /**
    * Maneja los cambios en el contenido del editor.
@@ -253,73 +253,73 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
       {/* Botones fuera del overflow-hidden para que los tooltips no se recorten */}
       {(onVerifyParse != null || onViewAst != null || showAIHelpButton) && (
         <div className="absolute top-2 right-5 flex gap-1 z-20">
-            {showAIHelpButton && onAIHelpClick != null && (
-              <button
-                type="button"
-                onClick={onAIHelpClick}
-                className="w-8 h-8 rounded-full bg-purple-500/12 border border-purple-500/20 text-purple-300/70 hover:bg-purple-500/25 hover:text-purple-300 transition-all duration-300 ease-out flex items-center justify-center animate-pulse-slow"
-                title={tManual("aiHelp")}
-              >
-                <AALIEIcon size={20} />
-              </button>
-            )}
-            {onVerifyParse != null && (
-              <button
-                type="button"
-                onClick={onVerifyParse}
-                disabled={isVerifyingParse || !hasCode}
-                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ease-out disabled:opacity-40 disabled:cursor-not-allowed ${
-                  verifyParseResult != null
-                    ? verifyParseResult.success
-                      ? "bg-emerald-500/12 border border-emerald-500/20 text-emerald-300/70 hover:bg-emerald-500/25 hover:text-emerald-300"
-                      : "bg-red-500/12 border border-red-500/20 text-red-300/70 hover:bg-red-500/25 hover:text-red-300"
-                    : "bg-blue-500/12 border border-blue-500/20 text-blue-300/70 hover:bg-blue-500/25 hover:text-blue-300"
-                }`}
-                title={verifyParseResult?.message ?? tManual("verifyParse")}
-              >
-                {isVerifyingParse ? (
-                  <span
-                    className="material-symbols-outlined animate-spin"
-                    style={{ fontSize: 16 }}
-                  >
-                    progress_activity
-                  </span>
-                ) : verifyParseResult != null ? (
-                  <span
-                    key={verifyParseResult.success ? "ok" : "err"}
-                    className="material-symbols-outlined animate-fade-in"
-                    style={{ fontSize: 16 }}
-                  >
-                    {verifyParseResult.success ? "check_circle" : "error"}
-                  </span>
-                ) : (
-                  <span
-                    className="material-symbols-outlined"
-                    style={{ fontSize: 16 }}
-                  >
-                    check_circle
-                  </span>
-                )}
-              </button>
-            )}
-            {onViewAst != null && (
-              <button
-                type="button"
-                onClick={onViewAst}
-                disabled={!canViewAst}
-                className="w-8 h-8 rounded-full bg-amber-500/12 border border-amber-500/20 text-amber-300/70 hover:bg-amber-500/25 hover:text-amber-300 transition-all duration-300 ease-out disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
-                title={tManual("viewAst")}
-              >
+          {showAIHelpButton && onAIHelpClick != null && (
+            <button
+              type="button"
+              onClick={onAIHelpClick}
+              className="w-8 h-8 rounded-full bg-purple-500/12 border border-purple-500/20 text-purple-300/70 hover:bg-purple-500/25 hover:text-purple-300 transition-all duration-300 ease-out flex items-center justify-center animate-pulse-slow"
+              title={tManual("aiHelp")}
+            >
+              <AALIEIcon size={20} />
+            </button>
+          )}
+          {onVerifyParse != null && (
+            <button
+              type="button"
+              onClick={onVerifyParse}
+              disabled={isVerifyingParse || !hasCode}
+              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ease-out disabled:opacity-40 disabled:cursor-not-allowed ${
+                verifyParseResult != null
+                  ? verifyParseResult.success
+                    ? "bg-emerald-500/12 border border-emerald-500/20 text-emerald-300/70 hover:bg-emerald-500/25 hover:text-emerald-300"
+                    : "bg-red-500/12 border border-red-500/20 text-red-300/70 hover:bg-red-500/25 hover:text-red-300"
+                  : "bg-blue-500/12 border border-blue-500/20 text-blue-300/70 hover:bg-blue-500/25 hover:text-blue-300"
+              }`}
+              title={verifyParseResult?.message ?? tManual("verifyParse")}
+            >
+              {isVerifyingParse ? (
+                <span
+                  className="material-symbols-outlined animate-spin"
+                  style={{ fontSize: 16 }}
+                >
+                  progress_activity
+                </span>
+              ) : verifyParseResult != null ? (
+                <span
+                  key={verifyParseResult.success ? "ok" : "err"}
+                  className="material-symbols-outlined animate-fade-in"
+                  style={{ fontSize: 16 }}
+                >
+                  {verifyParseResult.success ? "check_circle" : "error"}
+                </span>
+              ) : (
                 <span
                   className="material-symbols-outlined"
                   style={{ fontSize: 16 }}
                 >
-                  account_tree
+                  check_circle
                 </span>
-              </button>
-            )}
-          </div>
-        )}
+              )}
+            </button>
+          )}
+          {onViewAst != null && (
+            <button
+              type="button"
+              onClick={onViewAst}
+              disabled={!canViewAst}
+              className="w-8 h-8 rounded-full bg-amber-500/12 border border-amber-500/20 text-amber-300/70 hover:bg-amber-500/25 hover:text-amber-300 transition-all duration-300 ease-out disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
+              title={tManual("viewAst")}
+            >
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: 16 }}
+              >
+                account_tree
+              </span>
+            </button>
+          )}
+        </div>
+      )}
       {/* Editor: glass-card-editor sin hover difuminado */}
       <div
         ref={editorContainerRef}
@@ -348,8 +348,7 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
           options={{
             minimap: { enabled: false },
             fontSize: 14,
-            fontFamily:
-              "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
             fontLigatures: true,
             lineNumbers: "on",
             lineNumbersMinChars: 3,

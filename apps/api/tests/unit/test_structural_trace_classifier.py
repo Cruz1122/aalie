@@ -6,6 +6,7 @@ Valida clasificación por morfología: iterative, tail_recursive, binary_branch,
 Author: AALIE - Plan Sistema Traza Estructural
 Version: 0.1.0
 """
+
 import pytest
 
 from app.modules.execution.derivations.structural_trace_classifier import (
@@ -45,7 +46,12 @@ class TestStructuralTraceClassifier:
                 "calls": [
                     {"id": "c1", "children": ["c2"], "params": {"n": 4}},
                     {"id": "c2", "children": ["c3"], "params": {"n": 3}},
-                    {"id": "c3", "children": [], "params": {"n": 1}, "is_base_case": True},
+                    {
+                        "id": "c3",
+                        "children": [],
+                        "params": {"n": 1},
+                        "is_base_case": True,
+                    },
                 ],
                 "root_calls": ["c1"],
             },

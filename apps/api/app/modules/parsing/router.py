@@ -3,6 +3,7 @@ Router para el módulo de parsing.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
+
 from typing import Any, Dict
 
 from fastapi import APIRouter, Body
@@ -17,18 +18,18 @@ router = APIRouter(prefix="/grammar", tags=["grammar"])
 def parse(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Parsea pseudocódigo y devuelve AST o errores.
-    
+
     Body compat:
       { "input": string }  o  { "source": string }
     Respuesta compat con el frontend:
       { ok, available, runtime, error?, ast?, errors? }
-    
+
     Args:
         payload: Diccionario con "input" o "source" conteniendo el código a parsear
-        
+
     Returns:
         Diccionario con ok, available, runtime, error (opcional), ast (opcional) y errors (opcional)
-        
+
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     # Extraer source de input o source para compatibilidad
@@ -36,7 +37,7 @@ def parse(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
 
     # Usar la función parse_source
     result = parse_source(source)
-    
+
     # Agregar campos adicionales para compatibilidad con el frontend
     return {
         "ok": result["ok"],
@@ -46,4 +47,3 @@ def parse(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "ast": result["ast"],
         "errors": result["errors"],
     }
-

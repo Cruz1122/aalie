@@ -4,7 +4,13 @@
  * Version: 0.1.0
  */
 
-export type ListItemIcon = "check" | "error" | "warning" | "info" | "bullet" | "aalie";
+export type ListItemIcon =
+  | "check"
+  | "error"
+  | "warning"
+  | "info"
+  | "bullet"
+  | "aalie";
 
 export interface ParagraphBlock {
   type: "paragraph";

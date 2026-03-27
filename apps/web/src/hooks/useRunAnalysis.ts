@@ -60,7 +60,10 @@ export function useRunAnalysis(options?: {
   const getMessage: GetAnalysisMessage = useCallback(
     (key: string, params?: Record<string, string | number>) => {
       if (params) {
-        return tProgress(key as "algorithmIdentified", params as { type: string });
+        return tProgress(
+          key as "algorithmIdentified",
+          params as { type: string },
+        );
       }
       return tProgress(key as "init");
     },
@@ -121,18 +124,21 @@ export function useRunAnalysis(options?: {
           800,
           updateProgress,
           parsePromise,
-        )) as ParseResponse & { ok: boolean; ast?: Program; errors?: unknown[] };
+        )) as ParseResponse & {
+          ok: boolean;
+          ast?: Program;
+          errors?: unknown[];
+        };
 
         if (!parseRes.ok) {
           const msg =
             parseRes.errors
-              ?.map(
-                (e: { line?: number; column?: number; message?: string }) =>
-                  tMessages("lineErrorFormat", {
-                    line: e.line ?? 0,
-                    column: e.column ?? 0,
-                    message: e.message ?? "",
-                  }),
+              ?.map((e: { line?: number; column?: number; message?: string }) =>
+                tMessages("lineErrorFormat", {
+                  line: e.line ?? 0,
+                  column: e.column ?? 0,
+                  message: e.message ?? "",
+                }),
               )
               .join("\n") || tMessages("parseError");
           handleError(`${tMessages("syntaxErrors")}\n${msg}`);
@@ -285,10 +291,7 @@ export function useRunAnalysis(options?: {
         await animateProgress(80, 100, 200, updateProgress);
 
         if (typeof globalThis.window !== "undefined") {
-          globalThis.window.sessionStorage.setItem(
-            "analyzerCode",
-            sourceCode,
-          );
+          globalThis.window.sessionStorage.setItem("analyzerCode", sourceCode);
           globalThis.window.sessionStorage.setItem(
             "analyzerResults",
             JSON.stringify(analyzeRes),

@@ -8,6 +8,7 @@ Objetivo: diagnosticar dónde falla el motor de análisis.
 
 Author: @Cruz1122
 """
+
 import pytest
 
 from app.modules.analysis.service import analyze_algorithm
@@ -520,7 +521,11 @@ class TestIterativeBenchmark:
         result = analyze_algorithm(FIND_LAST_INDEX, mode="all")
         assert result.get("ok", False)
         assert_all_cases_complexity(
-            result, "linear", expected_best="constant", expected_avg="linear", name="Find last index"
+            result,
+            "linear",
+            expected_best="constant",
+            expected_avg="linear",
+            name="Find last index",
         )
 
     def test_10_sum_evens(self):
@@ -538,7 +543,11 @@ class TestIterativeBenchmark:
         result = analyze_algorithm(BUBBLE_SORT, mode="all")
         assert result.get("ok", False)
         assert_all_cases_complexity(
-            result, "quadratic", expected_best="quadratic", expected_avg="quadratic", name="Bubble sort"
+            result,
+            "quadratic",
+            expected_best="quadratic",
+            expected_avg="quadratic",
+            name="Bubble sort",
         )
 
     def test_12_selection_sort(self):
@@ -556,7 +565,11 @@ class TestIterativeBenchmark:
         result = analyze_algorithm(INSERTION_SORT, mode="all")
         assert result.get("ok", False)
         assert_all_cases_complexity(
-            result, "quadratic", expected_best="linear", expected_avg="quadratic", name="Insertion sort"
+            result,
+            "quadratic",
+            expected_best="linear",
+            expected_avg="quadratic",
+            name="Insertion sort",
         )
 
     def test_14_double_for_rectangular(self):
@@ -607,7 +620,11 @@ class TestIterativeBenchmark:
         result = analyze_algorithm(BINARY_SEARCH_ITER, mode="all")
         assert result.get("ok", False)
         assert_all_cases_complexity(
-            result, "log", expected_best="constant", expected_avg="log", name="Binary search iter"
+            result,
+            "log",
+            expected_best="constant",
+            expected_avg="log",
+            name="Binary search iter",
         )
 
     def test_19_while_log(self):
@@ -633,7 +650,9 @@ class TestIterativeBenchmark:
         )
 
 
-def _assert_recursive_result(result, expected_worst, expected_best=None, expected_avg=None, name=""):
+def _assert_recursive_result(
+    result, expected_worst, expected_best=None, expected_avg=None, name=""
+):
     """Helper para validar resultado recursivo con worst/best/avg."""
     assert result.get("ok", False), f"Análisis falló: {result.get('errors', [])}"
     assert_case_complexity(result, "worst", expected_worst, name)
@@ -653,9 +672,9 @@ def _assert_recurrence_method(result, expected_method, name=""):
     totals = worst.get("totals", {})
     recurrence = totals.get("recurrence", {})
     method = recurrence.get("method", "")
-    assert method == expected_method, (
-        f"[{name}] Esperado método {expected_method}, obtenido: {method}"
-    )
+    assert (
+        method == expected_method
+    ), f"[{name}] Esperado método {expected_method}, obtenido: {method}"
 
 
 class TestRecursiveMasterBenchmark:
@@ -669,11 +688,15 @@ class TestRecursiveMasterBenchmark:
         _assert_recursive_result(result, "nlogn", name="Merge sort")
 
     def test_02_binary_search_master(self):
-        result = analyze_algorithm(BINARY_SEARCH_REC, mode="all", preferred_method="master")
+        result = analyze_algorithm(
+            BINARY_SEARCH_REC, mode="all", preferred_method="master"
+        )
         if not result.get("ok"):
             pytest.fail(f"Binary search falló: {result.get('errors', [])}")
         _assert_recurrence_method(result, "master", "Binary search")
-        _assert_recursive_result(result, "log", expected_best="constant", name="Binary search")
+        _assert_recursive_result(
+            result, "log", expected_best="constant", name="Binary search"
+        )
 
     def test_03_merge_sort_master_ok(self):
         result = analyze_algorithm(MERGE_SORT, mode="all", preferred_method="master")
@@ -683,7 +706,9 @@ class TestRecursiveMasterBenchmark:
         assert totals["recurrence"].get("method") == "master"
 
     def test_04_binary_search_worst_log(self):
-        result = analyze_algorithm(BINARY_SEARCH_REC, mode="all", preferred_method="master")
+        result = analyze_algorithm(
+            BINARY_SEARCH_REC, mode="all", preferred_method="master"
+        )
         assert result.get("ok", False)
         assert_worst_complexity(result, "log", "Binary search rec")
 
@@ -702,7 +727,9 @@ class TestRecursiveIterationBenchmark:
     """5 tests recursivos con Método de Iteración."""
 
     def test_01_factorial_iteration(self):
-        result = analyze_algorithm(FACTORIAL_REC, mode="all", preferred_method="iteration")
+        result = analyze_algorithm(
+            FACTORIAL_REC, mode="all", preferred_method="iteration"
+        )
         if not result.get("ok"):
             pytest.fail(f"Factorial falló: {result.get('errors', [])}")
         _assert_recurrence_method(result, "iteration", "Factorial")
@@ -716,17 +743,23 @@ class TestRecursiveIterationBenchmark:
         _assert_recursive_result(result, "linear", name="Suma rec")
 
     def test_03_potencia_iteration(self):
-        result = analyze_algorithm(POTENCIA_LINEAL_REC, mode="all", preferred_method="iteration")
+        result = analyze_algorithm(
+            POTENCIA_LINEAL_REC, mode="all", preferred_method="iteration"
+        )
         if not result.get("ok"):
             pytest.fail(f"Potencia falló: {result.get('errors', [])}")
         _assert_recurrence_method(result, "iteration", "Potencia")
         _assert_recursive_result(result, "linear", name="Potencia")
 
     def test_04_binary_search_simple_iteration(self):
-        result = analyze_algorithm(BINARY_SEARCH_ONE_CALL, mode="all", preferred_method="iteration")
+        result = analyze_algorithm(
+            BINARY_SEARCH_ONE_CALL, mode="all", preferred_method="iteration"
+        )
         if not result.get("ok"):
             pytest.fail(f"Binary search simple falló: {result.get('errors', [])}")
-        _assert_recursive_result(result, "log", expected_best="constant", name="Binary search simple")
+        _assert_recursive_result(
+            result, "log", expected_best="constant", name="Binary search simple"
+        )
 
     def test_05_hanoi_iteration(self):
         result = analyze_algorithm(HANOI, mode="all", preferred_method="iteration")
@@ -739,7 +772,9 @@ class TestRecursiveCharacteristicEquationBenchmark:
     """5 tests recursivos con Ecuación Característica."""
 
     def test_01_fibonacci_characteristic(self):
-        result = analyze_algorithm(FIBONACCI_REC, mode="all", preferred_method="characteristic_equation")
+        result = analyze_algorithm(
+            FIBONACCI_REC, mode="all", preferred_method="characteristic_equation"
+        )
         if not result.get("ok"):
             pytest.fail(f"Fibonacci falló: {result.get('errors', [])}")
         _assert_recurrence_method(result, "characteristic_equation", "Fibonacci")
@@ -748,32 +783,42 @@ class TestRecursiveCharacteristicEquationBenchmark:
         char_eq = totals.get("characteristic_equation", {})
         if char_eq:
             theta = char_eq.get("solution", "") or char_eq.get("theta", "") or theta
-        assert notation_has_complexity(theta, "exponential") or notation_has_complexity(theta, "linear"), (
-            f"Fibonacci debe ser exponencial o linear: {theta}"
-        )
+        assert notation_has_complexity(theta, "exponential") or notation_has_complexity(
+            theta, "linear"
+        ), f"Fibonacci debe ser exponencial o linear: {theta}"
 
     def test_02_tribonacci_characteristic(self):
-        result = analyze_algorithm(TRIBONACCI, mode="all", preferred_method="characteristic_equation")
+        result = analyze_algorithm(
+            TRIBONACCI, mode="all", preferred_method="characteristic_equation"
+        )
         if not result.get("ok"):
             pytest.fail(f"Tribonacci falló: {result.get('errors', [])}")
         _assert_recursive_result(result, "exponential", name="Tribonacci")
 
     def test_03_fibonacci_cost_characteristic(self):
-        result = analyze_algorithm(FIBONACCI_COST, mode="all", preferred_method="characteristic_equation")
+        result = analyze_algorithm(
+            FIBONACCI_COST, mode="all", preferred_method="characteristic_equation"
+        )
         if not result.get("ok"):
             pytest.fail(f"Fibonacci cost falló: {result.get('errors', [])}")
         totals = get_totals(result, "worst")
         theta = get_notation_from_totals(totals)
-        assert "n" in theta.lower() or "exp" in theta.lower(), f"Fibonacci cost: {theta}"
+        assert (
+            "n" in theta.lower() or "exp" in theta.lower()
+        ), f"Fibonacci cost: {theta}"
 
     def test_04_double_fib_characteristic(self):
-        result = analyze_algorithm(DOUBLE_FIB, mode="all", preferred_method="characteristic_equation")
+        result = analyze_algorithm(
+            DOUBLE_FIB, mode="all", preferred_method="characteristic_equation"
+        )
         if not result.get("ok"):
             pytest.fail(f"Doble fib falló: {result.get('errors', [])}")
         _assert_recursive_result(result, "exponential", name="Doble fib")
 
     def test_05_fibonacci_ok(self):
-        result = analyze_algorithm(FIBONACCI_REC, mode="all", preferred_method="characteristic_equation")
+        result = analyze_algorithm(
+            FIBONACCI_REC, mode="all", preferred_method="characteristic_equation"
+        )
         assert result.get("ok", False)
         totals = get_totals(result, "worst")
         assert "recurrence" in totals
@@ -783,33 +828,45 @@ class TestRecursiveRecursionTreeBenchmark:
     """5 tests recursivos con Árbol de Recursión."""
 
     def test_01_merge_sort_tree(self):
-        result = analyze_algorithm(MERGE_SORT, mode="all", preferred_method="recursion_tree")
+        result = analyze_algorithm(
+            MERGE_SORT, mode="all", preferred_method="recursion_tree"
+        )
         if not result.get("ok"):
             pytest.fail(f"Merge sort tree falló: {result.get('errors', [])}")
         _assert_recurrence_method(result, "recursion_tree", "Merge sort tree")
         _assert_recursive_result(result, "nlogn", name="Merge sort tree")
 
     def test_02_binary_search_tree(self):
-        result = analyze_algorithm(BINARY_SEARCH_REC, mode="all", preferred_method="recursion_tree")
+        result = analyze_algorithm(
+            BINARY_SEARCH_REC, mode="all", preferred_method="recursion_tree"
+        )
         if not result.get("ok"):
             pytest.fail(f"Binary search tree falló: {result.get('errors', [])}")
         _assert_recurrence_method(result, "recursion_tree", "Binary search tree")
-        _assert_recursive_result(result, "log", expected_best="constant", name="Binary search tree")
+        _assert_recursive_result(
+            result, "log", expected_best="constant", name="Binary search tree"
+        )
 
     def test_03_quick_sort_worst_tree(self):
-        result = analyze_algorithm(QUICK_SORT_WORST, mode="all", preferred_method="recursion_tree")
+        result = analyze_algorithm(
+            QUICK_SORT_WORST, mode="all", preferred_method="recursion_tree"
+        )
         if not result.get("ok"):
             pytest.fail(f"Quick sort worst falló: {result.get('errors', [])}")
         _assert_recursive_result(result, "quadratic", name="Quick sort worst")
 
     def test_04_merge_4_ways_tree(self):
-        result = analyze_algorithm(MERGE_4_WAYS, mode="all", preferred_method="recursion_tree")
+        result = analyze_algorithm(
+            MERGE_4_WAYS, mode="all", preferred_method="recursion_tree"
+        )
         if not result.get("ok"):
             pytest.fail(f"Merge 4 ways falló: {result.get('errors', [])}")
         _assert_recursive_result(result, "linear", name="Merge 4 ways")
 
     def test_05_merge_sort_tree_has_levels(self):
-        result = analyze_algorithm(MERGE_SORT, mode="all", preferred_method="recursion_tree")
+        result = analyze_algorithm(
+            MERGE_SORT, mode="all", preferred_method="recursion_tree"
+        )
         assert result.get("ok", False)
         totals = get_totals(result, "worst")
         tree = totals.get("recursion_tree", {})

@@ -18,7 +18,9 @@ export default function PseudocodeViewer({
   const codeLines = source.split("\n");
 
   return (
-    <div className={`flex flex-col overflow-hidden ${!hideHeader ? "border-r border-slate-700 pr-4" : ""}`}>
+    <div
+      className={`flex flex-col overflow-hidden ${!hideHeader ? "border-r border-slate-700 pr-4" : ""}`}
+    >
       {!hideHeader && (
         <h3 className="text-sm font-semibold text-slate-300 mb-2 flex-shrink-0">
           {t("pseudocode")}
@@ -28,7 +30,8 @@ export default function PseudocodeViewer({
         <pre className="text-xs font-mono text-slate-300">
           {codeLines.map((line, idx) => {
             const lineNum = idx + 1;
-            const isCurrentLine = currentLine !== undefined && lineNum === currentLine;
+            const isCurrentLine =
+              currentLine !== undefined && lineNum === currentLine;
             return (
               <div
                 key={idx}
@@ -50,6 +53,3 @@ export default function PseudocodeViewer({
     </div>
   );
 }
-
-
-

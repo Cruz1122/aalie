@@ -8,12 +8,11 @@
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 import { CO, US } from "country-flag-icons/react/3x2";
-import { useLocale , useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRef, useEffect, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
-
 
 const locales = [
   { code: "es" as const, label: "ES", Flag: CO },
@@ -117,7 +116,9 @@ export default function LocaleSwitcher() {
                 : "text-slate-300 hover:bg-slate-800/60 hover:text-white"
             } ${isPending ? "opacity-50 cursor-not-allowed" : ""}`}
           >
-            <span className={`inline-block h-1.5 w-1.5 rounded-full ${locale === code ? "bg-slate-400" : "bg-slate-500"}`} />
+            <span
+              className={`inline-block h-1.5 w-1.5 rounded-full ${locale === code ? "bg-slate-400" : "bg-slate-500"}`}
+            />
             <Flag className="h-3 w-4 shrink-0 rounded-sm overflow-hidden" />
             {label}
           </button>
@@ -148,7 +149,9 @@ export default function LocaleSwitcher() {
         <span>{current.label}</span>
       </button>
 
-      {typeof document !== "undefined" && isOpen && createPortal(dropdownPanel, document.body)}
+      {typeof document !== "undefined" &&
+        isOpen &&
+        createPortal(dropdownPanel, document.body)}
     </div>
   );
 }

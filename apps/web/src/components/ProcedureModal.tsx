@@ -607,487 +607,486 @@ export default function ProcedureModal({
         },
       }}
     >
-          {isLineProcedure ? (
-            // Contenido específico para una línea
-            <div className="space-y-4">
-              {analysisData &&
-                (() => {
-                  const lineData = analysisData.byLine.find(
-                    (line) => line.line === selectedLine,
-                  );
-                  if (!lineData) {
-                    return (
-                      <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-                        <p className="text-red-300">
-                          {t("lineNotFound", { line: selectedLine })}
-                        </p>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div className="space-y-4">
-                      {/* Información de la línea */}
-                      <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10 space-y-4">
-                        <h4 className="font-semibold text-white text-base flex items-center gap-2">
-                          <span className="material-symbols-outlined text-amber-400 text-lg">insights</span>
-                          {t("lineAnalysis", { line: selectedLine })}
-                        </h4>
-
-                        {/* Tipo de operación */}
-                        <div>
-                          <span className="text-sm font-medium text-slate-400 block mb-2">
-                            {t("operationType")}
-                          </span>
-                          <div className="mt-1">
-                            {(() => {
-                              const kindConfig: Record<
-                                string,
-                                { labelKey: string; className: string }
-                              > = {
-                                assign: {
-                                  labelKey: "assign",
-                                  className:
-                                    "bg-blue-500/20 text-blue-300 border-blue-500/30",
-                                },
-                                if: {
-                                  labelKey: "if",
-                                  className:
-                                    "bg-purple-500/20 text-purple-300 border-purple-500/30",
-                                },
-                                for: {
-                                  labelKey: "for",
-                                  className:
-                                    "bg-green-500/20 text-green-300 border-green-500/30",
-                                },
-                                while: {
-                                  labelKey: "while",
-                                  className:
-                                    "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
-                                },
-                                repeat: {
-                                  labelKey: "repeat",
-                                  className:
-                                    "bg-orange-500/20 text-orange-300 border-orange-500/30",
-                                },
-                                call: {
-                                  labelKey: "call",
-                                  className:
-                                    "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
-                                },
-                                return: {
-                                  labelKey: "return",
-                                  className:
-                                    "bg-pink-500/20 text-pink-300 border-pink-500/30",
-                                },
-                                print: {
-                                  labelKey: "print",
-                                  className:
-                                    "bg-teal-500/20 text-teal-300 border-teal-500/30",
-                                },
-                                decl: {
-                                  labelKey: "decl",
-                                  className:
-                                    "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
-                                },
-                              };
-                              const config = kindConfig[lineData.kind] || {
-                                labelKey: "other",
-                                className:
-                                  "bg-gray-500/20 text-gray-300 border-gray-500/30",
-                              };
-                              return (
-                                <span
-                                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${config.className}`}
-                                >
-                                  {tLineTable(config.labelKey)}
-                                </span>
-                              );
-                            })()}
-                          </div>
-                        </div>
-
-                        {/* Costo elemental */}
-                        <div>
-                          <span className="text-sm font-medium text-slate-400 block mb-2">
-                            {t("elementalCost")}
-                          </span>
-                          <div className="p-3 rounded-lg bg-slate-900/50 border border-blue-500/20 overflow-x-auto scrollbar-custom">
-                            <Formula latex={lineData.ck} display />
-                          </div>
-                          <p className="text-slate-400 mt-1.5 text-xs">
-                            {t("elementalCostDesc")}
-                          </p>
-                        </div>
-
-                        {/* Operaciones elementales */}
-                        {lineData.ops != null && lineData.ops > 1 && (
-                          <div>
-                            <span className="text-sm font-medium text-slate-400 block mb-2">
-                              {tLineTable("elementaryOps")}
-                            </span>
-                            <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-600/30">
-                              <span className="text-slate-200">{lineData.ops}</span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Número de ejecuciones (o E[#] para promedio) */}
-                        <div>
-                          <span className="text-sm font-medium text-slate-400 block mb-2">
-                            {isAvgCase
-                              ? t("expectedExecutions")
-                              : t("numExecutions")}
-                          </span>
-                          <div className="p-3 rounded-lg bg-slate-900/50 border border-amber-500/20 overflow-x-auto scrollbar-custom">
-                            <Formula
-                              latex={lineData.expectedRuns || lineData.count}
-                              display
-                            />
-                          </div>
-                          <p className="text-slate-400 mt-1.5 text-xs">
-                            {isAvgCase
-                              ? t("expectedExecutionsDesc")
-                              : t("numExecutionsDesc")}
-                          </p>
-                        </div>
-
-                        {/* Notas adicionales */}
-                        {lineData.note && (
-                          <div>
-                            <span className="text-sm font-medium text-slate-400 block mb-2">
-                              {t("notes")}
-                            </span>
-                            <div className="mt-2 p-3 rounded bg-slate-900/50 border border-green-500/20">
-                              <p className="text-slate-300 text-sm">
-                                {lineData.note}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Fórmula de costo total */}
-                        <div>
-                          <span className="text-sm font-medium text-slate-400 block mb-2">
-                            {isAvgCase
-                              ? t("lineCostAvg")
-                              : t("lineCost")}
-                          </span>
-                          <div className="p-3 rounded-lg bg-slate-900/50 border border-purple-500/20 overflow-x-auto scrollbar-custom">
-                            <Formula
-                              latex={
-                                (lineData.ops ?? 1) > 1
-                                  ? `${lineData.ck} \\cdot ${lineData.ops} \\cdot (${lineData.expectedRuns || lineData.count})`
-                                  : `${lineData.ck} \\cdot (${lineData.expectedRuns || lineData.count})`
-                              }
-                              display
-                            />
-                          </div>
-                          <p className="text-slate-400 mt-1.5 text-xs">
-                            {isAvgCase
-                              ? t("lineCostAvgDesc")
-                              : t("lineCostDesc")}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Información adicional del análisis completo */}
-                      <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10 space-y-4">
-                        <h4 className="font-semibold text-white text-base flex items-center gap-2">
-                          <span className="material-symbols-outlined text-cyan-400 text-lg">science</span>
-                          {t("analysisContext")}
-                        </h4>
-
-                        {/* Ecuación principal */}
-                        <div>
-                          <span className="text-sm font-medium text-slate-400 block mb-2">
-                            {isAvgCase
-                              ? t("efficiencyEqAvg")
-                              : t("efficiencyEq")}
-                          </span>
-                          <div className="mt-2 p-3 rounded bg-slate-900/50 border border-white/10 overflow-x-auto scrollbar-custom">
-                            <Formula
-                              latex={
-                                analysisData.totals.A_of_n ||
-                                analysisData.totals.T_open
-                              }
-                              display
-                            />
-                          </div>
-                          {isAvgCase && analysisData.totals.avg_model_info && (
-                            <p className="text-slate-300 mt-1 text-xs">
-                              {t("modelLabel")} {analysisData.totals.avg_model_info.note}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Pasos del procedimiento específico de la línea */}
-                        {lineData.procedure &&
-                          lineData.procedure.length > 0 && (
-                            <div>
-                              <span className="text-sm font-medium text-slate-400 block mb-2">
-                                {t("simplificationProcedure")}
-                              </span>
-                              <div className="mt-2 space-y-2 max-h-48 overflow-y-auto scrollbar-custom">
-                                {lineData.procedure.map((step, index) => (
-                                  <div
-                                    key={index}
-                                    className="flex items-start gap-2 p-2 bg-slate-900/50 rounded border border-white/10"
-                                  >
-                                    <div className="flex-shrink-0 w-5 h-5 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs font-medium">
-                                      {index + 1}
-                                    </div>
-                                    <div className="flex-1 min-w-0 overflow-x-auto scrollbar-custom">
-                                      <Formula
-                                        latex={sanitizeProcedureStep(step)}
-                                        display
-                                      />
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                        {/* Símbolos */}
-                        {analysisData.totals.symbols &&
-                          Object.keys(analysisData.totals.symbols).length >
-                            0 && (
-                            <div>
-                              <span className="text-sm font-medium text-slate-400 block mb-2">
-                                {t("symbolsUsed")}
-                              </span>
-                              <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 max-h-32 overflow-y-auto scrollbar-custom">
-                                {Object.entries(
-                                  analysisData.totals.symbols,
-                                ).map(([symbol, description]) => (
-                                  <div
-                                    key={symbol}
-                                    className="flex items-center gap-2 p-2 bg-slate-900/50 rounded border border-white/10"
-                                  >
-                                    <div className="flex-shrink-0">
-                                      <Formula latex={symbol} />
-                                    </div>
-                                    <span className="text-slate-300 text-xs">
-                                      = {description}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                        {/* Notas generales */}
-                        {analysisData.totals.notes &&
-                          analysisData.totals.notes.length > 0 && (
-                            <div>
-                              <span className="text-sm font-medium text-slate-400 block mb-2">
-                                {t("generalNotes")}
-                              </span>
-                              <ul className="mt-2 space-y-1 max-h-24 overflow-y-auto scrollbar-custom">
-                                {analysisData.totals.notes.map(
-                                  (note, index) => (
-                                    <li
-                                      key={index}
-                                      className="flex items-start gap-2 text-sm text-slate-300"
-                                    >
-                                      <span className="text-amber-400 mt-1 flex-shrink-0">
-                                        •
-                                      </span>
-                                      <span>{note}</span>
-                                    </li>
-                                  ),
-                                )}
-                              </ul>
-                            </div>
-                          )}
-                      </div>
-                    </div>
-                  );
-                })()}
-            </div>
-          ) : (
-            // Contenido general (análisis completo)
-            <>
-              {analysisData && (
-                <div className="space-y-4">
-                  {/* Ecuación principal */}
-                  <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                    <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-cyan-400">functions</span>
-                      {isAvgCase
-                        ? t("efficiencyEquationAvg")
-                        : t("efficiencyEquation")}
-                    </h4>
-                    <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
-                      <Formula
-                        latex={
-                          analysisData.totals.A_of_n ||
-                          analysisData.totals.T_open
-                        }
-                        display
-                      />
-                    </div>
-                    {isAvgCase && analysisData.totals.avg_model_info && (
-                      <p className="text-slate-300 mt-2 text-sm">
-                        {t("modelLabel")} {analysisData.totals.avg_model_info.note}
-                      </p>
-                    )}
+      {isLineProcedure ? (
+        // Contenido específico para una línea
+        <div className="space-y-4">
+          {analysisData &&
+            (() => {
+              const lineData = analysisData.byLine.find(
+                (line) => line.line === selectedLine,
+              );
+              if (!lineData) {
+                return (
+                  <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                    <p className="text-red-300">
+                      {t("lineNotFound", { line: selectedLine })}
+                    </p>
                   </div>
+                );
+              }
 
-                  {/* Forma polinómica T(n) o A(n) si está disponible */}
-                  {analysisData.totals.T_polynomial && (
-                    <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                      <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-green-400">calculate</span>
+              return (
+                <div className="space-y-4">
+                  {/* Información de la línea */}
+                  <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10 space-y-4">
+                    <h4 className="font-semibold text-white text-base flex items-center gap-2">
+                      <span className="material-symbols-outlined text-amber-400 text-lg">
+                        insights
+                      </span>
+                      {t("lineAnalysis", { line: selectedLine })}
+                    </h4>
+
+                    {/* Tipo de operación */}
+                    <div>
+                      <span className="text-sm font-medium text-slate-400 block mb-2">
+                        {t("operationType")}
+                      </span>
+                      <div className="mt-1">
+                        {(() => {
+                          const kindConfig: Record<
+                            string,
+                            { labelKey: string; className: string }
+                          > = {
+                            assign: {
+                              labelKey: "assign",
+                              className:
+                                "bg-blue-500/20 text-blue-300 border-blue-500/30",
+                            },
+                            if: {
+                              labelKey: "if",
+                              className:
+                                "bg-purple-500/20 text-purple-300 border-purple-500/30",
+                            },
+                            for: {
+                              labelKey: "for",
+                              className:
+                                "bg-green-500/20 text-green-300 border-green-500/30",
+                            },
+                            while: {
+                              labelKey: "while",
+                              className:
+                                "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
+                            },
+                            repeat: {
+                              labelKey: "repeat",
+                              className:
+                                "bg-orange-500/20 text-orange-300 border-orange-500/30",
+                            },
+                            call: {
+                              labelKey: "call",
+                              className:
+                                "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
+                            },
+                            return: {
+                              labelKey: "return",
+                              className:
+                                "bg-pink-500/20 text-pink-300 border-pink-500/30",
+                            },
+                            print: {
+                              labelKey: "print",
+                              className:
+                                "bg-teal-500/20 text-teal-300 border-teal-500/30",
+                            },
+                            decl: {
+                              labelKey: "decl",
+                              className:
+                                "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
+                            },
+                          };
+                          const config = kindConfig[lineData.kind] || {
+                            labelKey: "other",
+                            className:
+                              "bg-gray-500/20 text-gray-300 border-gray-500/30",
+                          };
+                          return (
+                            <span
+                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${config.className}`}
+                            >
+                              {tLineTable(config.labelKey)}
+                            </span>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Costo elemental */}
+                    <div>
+                      <span className="text-sm font-medium text-slate-400 block mb-2">
+                        {t("elementalCost")}
+                      </span>
+                      <div className="p-3 rounded-lg bg-slate-900/50 border border-blue-500/20 overflow-x-auto scrollbar-custom">
+                        <Formula latex={lineData.ck} display />
+                      </div>
+                      <p className="text-slate-400 mt-1.5 text-xs">
+                        {t("elementalCostDesc")}
+                      </p>
+                    </div>
+
+                    {/* Operaciones elementales */}
+                    {lineData.ops != null && lineData.ops > 1 && (
+                      <div>
+                        <span className="text-sm font-medium text-slate-400 block mb-2">
+                          {tLineTable("elementaryOps")}
+                        </span>
+                        <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-600/30">
+                          <span className="text-slate-200">{lineData.ops}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Número de ejecuciones (o E[#] para promedio) */}
+                    <div>
+                      <span className="text-sm font-medium text-slate-400 block mb-2">
                         {isAvgCase
-                          ? t("polynomialFormAvg")
-                          : t("polynomialForm")}
-                      </h4>
-                      <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
+                          ? t("expectedExecutions")
+                          : t("numExecutions")}
+                      </span>
+                      <div className="p-3 rounded-lg bg-slate-900/50 border border-amber-500/20 overflow-x-auto scrollbar-custom">
+                        <Formula
+                          latex={lineData.expectedRuns || lineData.count}
+                          display
+                        />
+                      </div>
+                      <p className="text-slate-400 mt-1.5 text-xs">
+                        {isAvgCase
+                          ? t("expectedExecutionsDesc")
+                          : t("numExecutionsDesc")}
+                      </p>
+                    </div>
+
+                    {/* Notas adicionales */}
+                    {lineData.note && (
+                      <div>
+                        <span className="text-sm font-medium text-slate-400 block mb-2">
+                          {t("notes")}
+                        </span>
+                        <div className="mt-2 p-3 rounded bg-slate-900/50 border border-green-500/20">
+                          <p className="text-slate-300 text-sm">
+                            {lineData.note}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Fórmula de costo total */}
+                    <div>
+                      <span className="text-sm font-medium text-slate-400 block mb-2">
+                        {isAvgCase ? t("lineCostAvg") : t("lineCost")}
+                      </span>
+                      <div className="p-3 rounded-lg bg-slate-900/50 border border-purple-500/20 overflow-x-auto scrollbar-custom">
                         <Formula
                           latex={
-                            analysisData.totals
-                              .T_polynomial as unknown as string
+                            (lineData.ops ?? 1) > 1
+                              ? `${lineData.ck} \\cdot ${lineData.ops} \\cdot (${lineData.expectedRuns || lineData.count})`
+                              : `${lineData.ck} \\cdot (${lineData.expectedRuns || lineData.count})`
                           }
                           display
                         />
                       </div>
-                    </div>
-                  )}
-
-                  {/* Notación asintótica derivada de T(n) o de la forma detectada */}
-                  <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                    <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-amber-400">trending_up</span>
-                      {t("asymptoticNotation")}
-                    </h4>
-                    <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
-                      {(() => {
-                        const tPoly = analysisData.totals?.T_polynomial;
-                        const base =
-                          typeof tPoly === "string" && tPoly.trim().length > 0
-                            ? tPoly
-                            : derivationSteps[3]?.equation || "";
-                        const bigO = calculateBigOFromExpression(base);
-                        return <Formula latex={bigO} display />;
-                      })()}
+                      <p className="text-slate-400 mt-1.5 text-xs">
+                        {isAvgCase ? t("lineCostAvgDesc") : t("lineCostDesc")}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Pasos de derivación de la ecuación */}
-                  <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                    <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-purple-400">account_tree</span>
-                      {isAvgCase
-                        ? t("derivationA")
-                        : t("derivationT")}
+                  {/* Información adicional del análisis completo */}
+                  <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10 space-y-4">
+                    <h4 className="font-semibold text-white text-base flex items-center gap-2">
+                      <span className="material-symbols-outlined text-cyan-400 text-lg">
+                        science
+                      </span>
+                      {t("analysisContext")}
                     </h4>
-                    <div className="space-y-4">
-                      {derivationSteps.map((step, index) => {
-                        const colors = [
-                          {
-                            bg: "bg-blue-500/20",
-                            text: "text-blue-300",
-                            border: "border-blue-500/20",
-                          },
-                          {
-                            bg: "bg-green-500/20",
-                            text: "text-green-300",
-                            border: "border-green-500/20",
-                          },
-                          {
-                            bg: "bg-yellow-500/20",
-                            text: "text-yellow-300",
-                            border: "border-yellow-500/20",
-                          },
-                          {
-                            bg: "bg-purple-500/20",
-                            text: "text-purple-300",
-                            border: "border-purple-500/20",
-                          },
-                        ];
-                        const color = colors[index] || colors[0];
 
-                        return (
-                          <div key={index} className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className={`w-6 h-6 ${color.bg} ${color.text} rounded-full flex items-center justify-center text-xs font-medium`}
-                              >
+                    {/* Ecuación principal */}
+                    <div>
+                      <span className="text-sm font-medium text-slate-400 block mb-2">
+                        {isAvgCase ? t("efficiencyEqAvg") : t("efficiencyEq")}
+                      </span>
+                      <div className="mt-2 p-3 rounded bg-slate-900/50 border border-white/10 overflow-x-auto scrollbar-custom">
+                        <Formula
+                          latex={
+                            analysisData.totals.A_of_n ||
+                            analysisData.totals.T_open
+                          }
+                          display
+                        />
+                      </div>
+                      {isAvgCase && analysisData.totals.avg_model_info && (
+                        <p className="text-slate-300 mt-1 text-xs">
+                          {t("modelLabel")}{" "}
+                          {analysisData.totals.avg_model_info.note}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Pasos del procedimiento específico de la línea */}
+                    {lineData.procedure && lineData.procedure.length > 0 && (
+                      <div>
+                        <span className="text-sm font-medium text-slate-400 block mb-2">
+                          {t("simplificationProcedure")}
+                        </span>
+                        <div className="mt-2 space-y-2 max-h-48 overflow-y-auto scrollbar-custom">
+                          {lineData.procedure.map((step, index) => (
+                            <div
+                              key={index}
+                              className="flex items-start gap-2 p-2 bg-slate-900/50 rounded border border-white/10"
+                            >
+                              <div className="flex-shrink-0 w-5 h-5 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs font-medium">
                                 {index + 1}
                               </div>
-                              <h5 className="text-sm font-medium text-slate-300">
-                                {step.title}:
-                              </h5>
-                            </div>
-                            <div
-                              className={`ml-8 p-3 bg-slate-900/50 rounded-lg border ${color.border} overflow-x-auto scrollbar-custom`}
-                            >
-                              <Formula latex={step.equation} display />
-                            </div>
-                            <p className="text-xs text-slate-400 ml-8">
-                              {step.description}
-                            </p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Símbolos */}
-                  {Object.keys(symbols).length > 0 && (
-                    <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                      <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-blue-400">abc</span>
-                        {t("symbols")}
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto scrollbar-custom">
-                        {Object.entries(symbols).map(
-                          ([symbol, description]) => (
-                            <div
-                              key={symbol}
-                              className="flex items-center gap-2 p-2 bg-slate-900/50 rounded border border-white/10"
-                            >
-                              <div className="flex-shrink-0">
-                                <RenderVariable variable={symbol} />
+                              <div className="flex-1 min-w-0 overflow-x-auto scrollbar-custom">
+                                <Formula
+                                  latex={sanitizeProcedureStep(step)}
+                                  display
+                                />
                               </div>
-                              <span className="text-slate-300 text-xs">
-                                = {description}
-                              </span>
                             </div>
-                          ),
-                        )}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Notas */}
-                  {notes.length > 0 && (
-                    <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
-                      <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-amber-400">note</span>
-                        {t("generalNotes")}
-                      </h4>
-                      <ul className="space-y-2 max-h-32 overflow-y-auto scrollbar-custom">
-                        {notes.map((note, index) => (
-                          <li
-                            key={index}
-                            className="flex items-start gap-2 text-sm text-slate-300"
-                          >
-                            <span className="text-amber-400 mt-1 flex-shrink-0">
-                              •
-                            </span>
-                            <span>{note}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                    {/* Símbolos */}
+                    {analysisData.totals.symbols &&
+                      Object.keys(analysisData.totals.symbols).length > 0 && (
+                        <div>
+                          <span className="text-sm font-medium text-slate-400 block mb-2">
+                            {t("symbolsUsed")}
+                          </span>
+                          <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 max-h-32 overflow-y-auto scrollbar-custom">
+                            {Object.entries(analysisData.totals.symbols).map(
+                              ([symbol, description]) => (
+                                <div
+                                  key={symbol}
+                                  className="flex items-center gap-2 p-2 bg-slate-900/50 rounded border border-white/10"
+                                >
+                                  <div className="flex-shrink-0">
+                                    <Formula latex={symbol} />
+                                  </div>
+                                  <span className="text-slate-300 text-xs">
+                                    = {description}
+                                  </span>
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                    {/* Notas generales */}
+                    {analysisData.totals.notes &&
+                      analysisData.totals.notes.length > 0 && (
+                        <div>
+                          <span className="text-sm font-medium text-slate-400 block mb-2">
+                            {t("generalNotes")}
+                          </span>
+                          <ul className="mt-2 space-y-1 max-h-24 overflow-y-auto scrollbar-custom">
+                            {analysisData.totals.notes.map((note, index) => (
+                              <li
+                                key={index}
+                                className="flex items-start gap-2 text-sm text-slate-300"
+                              >
+                                <span className="text-amber-400 mt-1 flex-shrink-0">
+                                  •
+                                </span>
+                                <span>{note}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                  </div>
+                </div>
+              );
+            })()}
+        </div>
+      ) : (
+        // Contenido general (análisis completo)
+        <>
+          {analysisData && (
+            <div className="space-y-4">
+              {/* Ecuación principal */}
+              <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+                <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-cyan-400">
+                    functions
+                  </span>
+                  {isAvgCase
+                    ? t("efficiencyEquationAvg")
+                    : t("efficiencyEquation")}
+                </h4>
+                <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
+                  <Formula
+                    latex={
+                      analysisData.totals.A_of_n || analysisData.totals.T_open
+                    }
+                    display
+                  />
+                </div>
+                {isAvgCase && analysisData.totals.avg_model_info && (
+                  <p className="text-slate-300 mt-2 text-sm">
+                    {t("modelLabel")} {analysisData.totals.avg_model_info.note}
+                  </p>
+                )}
+              </div>
+
+              {/* Forma polinómica T(n) o A(n) si está disponible */}
+              {analysisData.totals.T_polynomial && (
+                <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+                  <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-green-400">
+                      calculate
+                    </span>
+                    {isAvgCase ? t("polynomialFormAvg") : t("polynomialForm")}
+                  </h4>
+                  <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
+                    <Formula
+                      latex={
+                        analysisData.totals.T_polynomial as unknown as string
+                      }
+                      display
+                    />
+                  </div>
                 </div>
               )}
-            </>
+
+              {/* Notación asintótica derivada de T(n) o de la forma detectada */}
+              <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+                <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-amber-400">
+                    trending_up
+                  </span>
+                  {t("asymptoticNotation")}
+                </h4>
+                <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 overflow-x-auto scrollbar-custom">
+                  {(() => {
+                    const tPoly = analysisData.totals?.T_polynomial;
+                    const base =
+                      typeof tPoly === "string" && tPoly.trim().length > 0
+                        ? tPoly
+                        : derivationSteps[3]?.equation || "";
+                    const bigO = calculateBigOFromExpression(base);
+                    return <Formula latex={bigO} display />;
+                  })()}
+                </div>
+              </div>
+
+              {/* Pasos de derivación de la ecuación */}
+              <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+                <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-purple-400">
+                    account_tree
+                  </span>
+                  {isAvgCase ? t("derivationA") : t("derivationT")}
+                </h4>
+                <div className="space-y-4">
+                  {derivationSteps.map((step, index) => {
+                    const colors = [
+                      {
+                        bg: "bg-blue-500/20",
+                        text: "text-blue-300",
+                        border: "border-blue-500/20",
+                      },
+                      {
+                        bg: "bg-green-500/20",
+                        text: "text-green-300",
+                        border: "border-green-500/20",
+                      },
+                      {
+                        bg: "bg-yellow-500/20",
+                        text: "text-yellow-300",
+                        border: "border-yellow-500/20",
+                      },
+                      {
+                        bg: "bg-purple-500/20",
+                        text: "text-purple-300",
+                        border: "border-purple-500/20",
+                      },
+                    ];
+                    const color = colors[index] || colors[0];
+
+                    return (
+                      <div key={index} className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-6 h-6 ${color.bg} ${color.text} rounded-full flex items-center justify-center text-xs font-medium`}
+                          >
+                            {index + 1}
+                          </div>
+                          <h5 className="text-sm font-medium text-slate-300">
+                            {step.title}:
+                          </h5>
+                        </div>
+                        <div
+                          className={`ml-8 p-3 bg-slate-900/50 rounded-lg border ${color.border} overflow-x-auto scrollbar-custom`}
+                        >
+                          <Formula latex={step.equation} display />
+                        </div>
+                        <p className="text-xs text-slate-400 ml-8">
+                          {step.description}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Símbolos */}
+              {Object.keys(symbols).length > 0 && (
+                <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+                  <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-blue-400">
+                      abc
+                    </span>
+                    {t("symbols")}
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto scrollbar-custom">
+                    {Object.entries(symbols).map(([symbol, description]) => (
+                      <div
+                        key={symbol}
+                        className="flex items-center gap-2 p-2 bg-slate-900/50 rounded border border-white/10"
+                      >
+                        <div className="flex-shrink-0">
+                          <RenderVariable variable={symbol} />
+                        </div>
+                        <span className="text-slate-300 text-xs">
+                          = {description}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Notas */}
+              {notes.length > 0 && (
+                <div className="p-4 rounded-lg bg-slate-800/50 border border-white/10">
+                  <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-amber-400">
+                      note
+                    </span>
+                    {t("generalNotes")}
+                  </h4>
+                  <ul className="space-y-2 max-h-32 overflow-y-auto scrollbar-custom">
+                    {notes.map((note, index) => (
+                      <li
+                        key={index}
+                        className="flex items-start gap-2 text-sm text-slate-300"
+                      >
+                        <span className="text-amber-400 mt-1 flex-shrink-0">
+                          •
+                        </span>
+                        <span>{note}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           )}
+        </>
+      )}
     </BaseModalContainer>
   );
 }

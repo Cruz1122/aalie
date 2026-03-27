@@ -3,12 +3,15 @@ Router para el módulo de analysis.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
+
 from typing import Any, Dict
 
 from fastapi import APIRouter, Body
 
 from ..classification.service import classify_algorithm as classify_algo
-from ..execution.derivations.structured_trace_builder import build_structured_trace_result
+from ..execution.derivations.structured_trace_builder import (
+    build_structured_trace_result,
+)
 from ..execution.derivations.structured_trace_models import StructuredTraceRenderConfig
 from ..execution.executor import CodeExecutor
 from ..parsing.service import parse_source
@@ -25,16 +28,16 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
     - byLine: tabla por línea
     - totals.T_open: ecuación de eficiencia abierta
     - totals.procedure: pasos para construir T_open
-    
+
     Si mode="all", devuelve todos los casos (worst, best y avg) en una sola respuesta.
     Si mode="avg", se requiere avgModel para el análisis de caso promedio.
-    
+
     Args:
         payload: Solicitud de análisis con código fuente, modo, y opciones
-        
+
     Returns:
         Resultado del análisis según el modo solicitado
-        
+
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     # Preparar avg_model
@@ -42,9 +45,9 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
     if payload.avgModel:
         avg_model = {
             "mode": payload.avgModel.mode,
-            "predicates": payload.avgModel.predicates or {}
+            "predicates": payload.avgModel.predicates or {},
         }
-    
+
     return analyze_algorithm(
         source=payload.source,
         mode=payload.mode,
@@ -52,7 +55,7 @@ def analyze_open(payload: AnalyzeRequest = Body(...)) -> Dict[str, Any]:
         avg_model=avg_model,
         algorithm_kind=payload.algorithm_kind,
         preferred_method=payload.preferred_method,
-        locale=payload.locale
+        locale=payload.locale,
     )
 
 
@@ -61,21 +64,18 @@ def detect_methods_endpoint(payload: AnalyzeRequest = Body(...)) -> Dict[str, An
     """
     Detecta qué métodos de análisis son aplicables para un algoritmo recursivo
     sin ejecutar el análisis completo.
-    
+
     Retorna una lista de métodos aplicables: ["characteristic_equation", "iteration", "recursion_tree", "master"]
-    
+
     Args:
         payload: Solicitud con código fuente y tipo de algoritmo (opcional)
-        
+
     Returns:
         Diccionario con métodos aplicables, método por defecto e información de recurrencia
-        
+
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
-    return detect_methods(
-        source=payload.source,
-        algorithm_kind=payload.algorithm_kind
-    )
+    return detect_methods(source=payload.source, algorithm_kind=payload.algorithm_kind)
 
 
 @router.post("/trace")
@@ -83,35 +83,38 @@ def analyze_trace(payload: TraceRequest = Body(...)) -> Dict[str, Any]:
     """
     Genera un rastro de ejecución paso a paso del pseudocódigo.
     Devuelve trace completo con pasos para iterativos, recursivos e híbridos.
-    
+
     Args:
         payload: Solicitud con código fuente, caso y tamaño de entrada
-        
+
     Returns:
         Rastro de ejecución con pasos detallados y metadatos de apoyo
-        
+
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     try:
         # 1) Parsear el código fuente
         parse_result = parse_source(payload.source)
         if not parse_result.get("ok", False):
-            return {
-                "ok": False,
-                "errors": parse_result.get("errors", [])
-            }
-        
+            return {"ok": False, "errors": parse_result.get("errors", [])}
+
         ast = parse_result.get("ast")
         if not ast:
             return {
                 "ok": False,
-                "errors": [{"message": "No se pudo obtener el AST del código", "line": None, "column": None}]
+                "errors": [
+                    {
+                        "message": "No se pudo obtener el AST del código",
+                        "line": None,
+                        "column": None,
+                    }
+                ],
             }
-        
+
         # 2) Clasificar el algoritmo
         classification_result = classify_algo(ast=ast)
         algorithm_kind = classification_result.get("kind", "unknown")
-        
+
         # 3) Ejecutar y generar rastro para cualquier tipo de algoritmo
         locale_val = (payload.locale or "en").lower()[:2]
         if locale_val not in ("en", "es"):
@@ -144,13 +147,16 @@ def analyze_trace(payload: TraceRequest = Body(...)) -> Dict[str, Any]:
             },
             "diagnostics": {
                 "truncated": trace.get("recursion_truncated", False),
-                "truncationReason": "max_depth" if trace.get("recursion_truncated") else None,
+                "truncationReason": (
+                    "max_depth" if trace.get("recursion_truncated") else None
+                ),
                 "warnings": [],
             },
         }
 
         # Artefactos derivados: structuredTrace (única fuente)
         import logging as _logging
+
         derived: Dict[str, Any] = {}
         try:
             st = build_structured_trace_result(
@@ -192,7 +198,7 @@ def analyze_trace(payload: TraceRequest = Body(...)) -> Dict[str, Any]:
         }
 
         return result
-        
+
     except Exception as e:
         return {
             "ok": False,
@@ -200,8 +206,7 @@ def analyze_trace(payload: TraceRequest = Body(...)) -> Dict[str, Any]:
                 {
                     "message": f"Error generando rastro: {str(e)}",
                     "line": None,
-                    "column": None
+                    "column": None,
                 }
-            ]
+            ],
         }
-

@@ -14,7 +14,8 @@ __all__ = []
 try:
     # Solo importar las funciones críticas que necesita la API
     from .api import parse_to_ast
-    __all__.append('parse_to_ast')
+
+    __all__.append("parse_to_ast")
 except ImportError as e:
     # Si falla, al menos el paquete será importable
     pass

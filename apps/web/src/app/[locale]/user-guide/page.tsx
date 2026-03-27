@@ -17,7 +17,8 @@ import { UserGuideSection } from "@/types/user-guide";
 export default function UserGuidePage() {
   const t = useTranslations("userGuide");
   const sections = useUserGuideSections();
-  const [selectedSection, setSelectedSection] = useState<UserGuideSection | null>(null);
+  const [selectedSection, setSelectedSection] =
+    useState<UserGuideSection | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { finishNavigation } = useNavigation();
 

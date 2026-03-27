@@ -36,12 +36,18 @@ def _run_export_worker(payload: Dict[str, Any]) -> Dict[str, Any]:
     # Node resuelve dependencias por `node_modules` en la carpeta actual y sus padres.
     # Como `apps/api` no es un paquete Node, le damos el `cwd` a `packages/report-export-orchestrator`
     # para que `tsx` (usado al ejecutar TS) sea encontrable.
-    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../"))
+    repo_root = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../../../../../")
+    )
     cwd = os.path.join(repo_root, "packages", "report-export-orchestrator")
     tsx_bin = os.path.join(cwd, "node_modules", ".bin", "tsx")
 
     # Ejecutamos el worker con el CLI de `tsx` para respetar ESM y la resolución de `exports`.
-    cmd = [tsx_bin, worker_path] if os.path.exists(tsx_bin) else ["node", "--import", "tsx", worker_path]
+    cmd = (
+        [tsx_bin, worker_path]
+        if os.path.exists(tsx_bin)
+        else ["node", "--import", "tsx", worker_path]
+    )
 
     proc = subprocess.run(
         cmd,
@@ -143,4 +149,3 @@ def export_report(request: Request, payload: Dict[str, Any] = Body(...)) -> Resp
         headers["X-Content-Hash"] = content_hash
 
     return Response(content=content_bytes, status_code=200, headers=headers)
-

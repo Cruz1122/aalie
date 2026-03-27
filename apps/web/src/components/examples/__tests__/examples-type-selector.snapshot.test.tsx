@@ -10,7 +10,8 @@ vi.mock("next-intl", () => ({
       "examples.categories.iterativos.label": "Iterativos",
       "examples.categories.divide-y-venceras.label": "Divide y vencerás",
       "examples.categories.resta-y-venceras.label": "Resta y vencerás",
-      "examples.categories.resta-y-seras-vencido.label": "Resta y serás vencido",
+      "examples.categories.resta-y-seras-vencido.label":
+        "Resta y serás vencido",
       "examples.categories.iterativos.offText":
         "Resuelven el problema con ciclos y actualizaciones paso a paso.",
       "examples.categories.divide-y-venceras.offText":
@@ -43,9 +44,7 @@ vi.mock("@/components/NavigationLink", () => ({
 describe("ExamplesTypeSelector snapshot", () => {
   it("renders base selector layout", () => {
     const { container } = render(
-      <ExamplesTypeSelector
-        ctaLabel="Ver familia"
-      />,
+      <ExamplesTypeSelector ctaLabel="Ver familia" />,
     );
 
     expect(container.firstChild).toMatchSnapshot();

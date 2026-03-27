@@ -2,6 +2,7 @@
 Contract tests: parametrizados por algoritmo + spec desde _support/algorithms y _support/expectations.
 Para nightly o ejecución completa; no obligatorio en daily gate.
 """
+
 import pytest
 
 from app.modules.analysis.service import analyze_algorithm
@@ -16,7 +17,9 @@ CONTRACT_ALGORITHMS = [
 
 
 @pytest.mark.contract
-@pytest.mark.parametrize("family,name", CONTRACT_ALGORITHMS, ids=[f"{f}/{n}" for f, n in CONTRACT_ALGORITHMS])
+@pytest.mark.parametrize(
+    "family,name", CONTRACT_ALGORITHMS, ids=[f"{f}/{n}" for f, n in CONTRACT_ALGORITHMS]
+)
 def test_contract_algorithm_analyzes_and_matches_spec(family, name):
     # Arrange
     source = load_algorithm(family, name)
@@ -25,7 +28,9 @@ def test_contract_algorithm_analyzes_and_matches_spec(family, name):
     result = analyze_algorithm(source, mode="all")
     # Assert: validar worst; best/avg solo cuando la spec los define (el analizador puede no distinguirlos)
     assert result.get("ok"), result.get("errors", [])
-    assert_complexity_class(result, "worst", spec.get("worst", "linear"), name=f"{family}/{name}")
+    assert_complexity_class(
+        result, "worst", spec.get("worst", "linear"), name=f"{family}/{name}"
+    )
     if "best" in spec:
         assert_case_complexity(result, "best", spec["best"], name=f"{family}/{name}")
     if "avg" in spec:

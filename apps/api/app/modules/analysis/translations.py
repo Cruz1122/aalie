@@ -2,6 +2,7 @@
 Traducciones para etiquetas del procedimiento de análisis.
 Permite mostrar los pasos en el idioma del usuario (en/es).
 """
+
 from typing import Dict
 
 PROCEDURE_LABELS: Dict[str, Dict[str, str]] = {

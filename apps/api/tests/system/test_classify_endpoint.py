@@ -3,6 +3,7 @@ Tests de sistema para el endpoint /classify.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
+
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -59,11 +60,9 @@ END
                 {
                     "type": "ProcDef",
                     "name": "test",
-                    "body": [
-                        {"type": "For", "variable": "i", "start": 1, "end": 10}
-                    ]
+                    "body": [{"type": "For", "variable": "i", "start": 1, "end": 10}],
                 }
-            ]
+            ],
         }
         response = client.post("/classify", json={"ast": ast})
         assert response.status_code == 200
@@ -95,4 +94,3 @@ END
         data = response.json()
         assert data.get("ok") is False
         assert "errors" in data
-

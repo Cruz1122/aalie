@@ -7,6 +7,7 @@ Entrada: ExecutionTrace. Salida: StructuralTraceClassification.
 Author: Plan Sistema Traza Estructural
 Version: 0.1.0
 """
+
 from dataclasses import dataclass
 from typing import Any, Dict, List, Literal, Optional
 
@@ -60,7 +61,9 @@ def _count_children_per_call(calls: List[Dict[str, Any]]) -> Dict[str, int]:
     return {c["id"]: len(c.get("children", [])) for c in calls}
 
 
-def _has_partition_like_pattern(steps: List[Dict[str, Any]], calls: List[Dict[str, Any]]) -> bool:
+def _has_partition_like_pattern(
+    steps: List[Dict[str, Any]], calls: List[Dict[str, Any]]
+) -> bool:
     """
     Detecta patrón tipo quicksort: asignación que produce índice + 2 subllamadas.
     Heurística: hay asignaciones a variable índice (q, pivot, mid) antes de las subllamadas.
@@ -84,7 +87,9 @@ def _has_partition_like_pattern(steps: List[Dict[str, Any]], calls: List[Dict[st
     return len(two_child_calls) >= 1 and len(assign_vars) >= 1
 
 
-def _has_merge_like_pattern(steps: List[Dict[str, Any]], calls: List[Dict[str, Any]]) -> bool:
+def _has_merge_like_pattern(
+    steps: List[Dict[str, Any]], calls: List[Dict[str, Any]]
+) -> bool:
     """
     Detecta patrón merge: subllamadas primero, luego operación de combinación.
     Heurística: call_enter/call_spawn_child seguidos de call_resume, luego assign/operation.
@@ -116,7 +121,9 @@ def _has_backtracking_pattern(steps: List[Dict[str, Any]]) -> bool:
     return has_condition and has_assign and has_recursive_call
 
 
-def _is_tail_recursive(calls: List[Dict[str, Any]], child_counts: Dict[str, int]) -> bool:
+def _is_tail_recursive(
+    calls: List[Dict[str, Any]], child_counts: Dict[str, int]
+) -> bool:
     """
     Tail recursive: cada nodo tiene 0 o 1 hijo; el hijo está "al final" (única rama).
     """
@@ -127,7 +134,9 @@ def _is_tail_recursive(calls: List[Dict[str, Any]], child_counts: Dict[str, int]
     return True
 
 
-def _is_single_branch_search(calls: List[Dict[str, Any]], child_counts: Dict[str, int]) -> bool:
+def _is_single_branch_search(
+    calls: List[Dict[str, Any]], child_counts: Dict[str, int]
+) -> bool:
     """
     Single branch: cada nodo tiene como máximo 1 hijo efectivo (la otra rama es base/return).
     """
@@ -142,7 +151,9 @@ def _has_auxiliary_operation_iterative(steps: List[Dict[str, Any]]) -> bool:
     """
     Iterativo con operación auxiliar: muchos assigns en contexto de loop, o swap/update.
     """
-    assign_count = sum(1 for s in steps if (s.get("kind") or s.get("eventKind")) == "assign")
+    assign_count = sum(
+        1 for s in steps if (s.get("kind") or s.get("eventKind")) == "assign"
+    )
     loop_count = sum(
         1
         for s in steps
@@ -237,7 +248,10 @@ def classify_structural_trace(trace: Dict[str, Any]) -> StructuralTraceClassific
             return StructuralTraceClassification(
                 patternKind="binary_branch_recursive",
                 confidence="high",
-                evidence=["exactly 2 child calls per node", "no partition/merge pattern"],
+                evidence=[
+                    "exactly 2 child calls per node",
+                    "no partition/merge pattern",
+                ],
             )
 
         # tail_recursive_linear o single_branch_recursive_search
@@ -246,7 +260,9 @@ def classify_structural_trace(trace: Dict[str, Any]) -> StructuralTraceClassific
             # tail: factorial acumulativo, etc. (una llamada al final)
             # Heurística: si hay muchas condition_eval -> single_branch_search
             condition_count = sum(
-                1 for s in steps if (s.get("kind") or s.get("eventKind")) == "condition_eval"
+                1
+                for s in steps
+                if (s.get("kind") or s.get("eventKind")) == "condition_eval"
             )
             if condition_count >= 2:
                 return StructuralTraceClassification(

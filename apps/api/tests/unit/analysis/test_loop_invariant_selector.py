@@ -96,7 +96,9 @@ def test_selector_tie_break_prefers_lower_depth(monkeypatch):
                             2,
                             "i",
                             [
-                                _for(4, "j", [_assign(5, _identifier("x"), _literal(1))]),
+                                _for(
+                                    4, "j", [_assign(5, _identifier("x"), _literal(1))]
+                                ),
                             ],
                         ),
                     ],

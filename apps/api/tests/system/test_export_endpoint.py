@@ -63,7 +63,10 @@ END
         "locale": "en",
         "includeTraceCases": ["worst"],
         "cachedParse": parse_res,
-        "cachedClassify": {"kind": classify_res["kind"], "method": classify_res.get("method")},
+        "cachedClassify": {
+            "kind": classify_res["kind"],
+            "method": classify_res.get("method"),
+        },
         "cachedAnalyze": analyze_res,
         "cachedTraceByCase": {"worst": trace_res},
     }
@@ -74,4 +77,3 @@ END
     assert resp.content and len(resp.content) > 1000
 
     assert "content-disposition" in resp.headers
-

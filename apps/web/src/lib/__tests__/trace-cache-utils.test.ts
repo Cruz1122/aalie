@@ -23,10 +23,7 @@ describe("trace-cache-utils", () => {
     });
 
     it("normaliza saltos de línea", () => {
-      assert.strictEqual(
-        normalizeSource("a\n\n\nb"),
-        "a b",
-      );
+      assert.strictEqual(normalizeSource("a\n\n\nb"), "a b");
     });
 
     it("remueve comentarios de línea", () => {
@@ -68,7 +65,10 @@ describe("trace-cache-utils", () => {
 
     it("source distinto produce clave distinta", () => {
       const k1 = buildTraceCacheKey(baseParams);
-      const k2 = buildTraceCacheKey({ ...baseParams, source: "fact(n) BEGIN RETURN 2; END" });
+      const k2 = buildTraceCacheKey({
+        ...baseParams,
+        source: "fact(n) BEGIN RETURN 2; END",
+      });
       assert.notStrictEqual(k1, k2);
     });
 

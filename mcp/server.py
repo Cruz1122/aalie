@@ -1,4 +1,5 @@
 """MCP AALIE Conventions - tools para convenciones, i18n, changelog y docs."""
+
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent

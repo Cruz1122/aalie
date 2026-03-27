@@ -93,4 +93,3 @@ export function getLayoutedGraph(
     edges: layoutedEdges,
   };
 }
-

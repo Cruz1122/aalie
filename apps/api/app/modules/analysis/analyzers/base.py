@@ -13,55 +13,61 @@ from ..utils.expr_converter import ExprConverter
 class BaseAnalyzer:
     """
     Clase base con utilidades para análisis de algoritmos.
-    
+
     Proporciona funcionalidades para:
     - Agregar filas de la tabla por línea
     - Aplicar multiplicadores de bucles (stack)
     - Construir la ecuación de eficiencia T_open = Σ C_{k}·count_{k}
     - Registrar el procedimiento (pasos) que llevaron a T_open
     - Memoización (Programación Dinámica) por nodo+contexto para optimización
-    
+
     **Memoización (PD):**
     La clase incluye un sistema de memoización que cachea resultados de análisis
     de nodos AST para evitar trabajo repetido. Esto es especialmente útil cuando:
     - El mismo bloque de código aparece múltiples veces
     - Hay bucles anidados que analizan estructuras similares
     - Se analizan múltiples casos (worst/best/avg) del mismo algoritmo
-    
+
     La memoización se activa automáticamente en nodos que se benefician de ella
     (Block, For, If, While, etc.) y usa una clave compuesta por:
     - Identificador estable del nodo (posición o hash)
     - Modo de análisis (worst/best/avg)
     - Contexto actual (hash del loop_stack)
-    
+
     El cache se limpia automáticamente cuando se llama a clear().
-    
+
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
-    
+
     def __init__(self, locale: str = "en"):
         """
         Inicializa una instancia de BaseAnalyzer.
-        
+
         Args:
             locale: Código de idioma para etiquetas del procedimiento ("en" | "es")
-        
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self.locale = locale if locale in ("en", "es") else "en"
         self._note_labels = get_note_labels(self.locale)
-        self.rows: List[LineCost] = []      # tabla por línea
-        self.loop_stack: List[Expr] = []    # multiplicadores activos (expresiones SymPy)
-        self.symbols: Dict[str, str] = {}   # ej: { "n": "length(A)" }
-        self.notes: List[str] = []          # reglas aplicadas / comentarios
-        self.memo: Dict[str, List[LineCost]] = {}  # PD: cache de filas por nodo+contexto
-        self.counter = 0                    # contador para generar constantes C_k
+        self.rows: List[LineCost] = []  # tabla por línea
+        self.loop_stack: List[Expr] = []  # multiplicadores activos (expresiones SymPy)
+        self.symbols: Dict[str, str] = {}  # ej: { "n": "length(A)" }
+        self.notes: List[str] = []  # reglas aplicadas / comentarios
+        self.memo: Dict[str, List[LineCost]] = (
+            {}
+        )  # PD: cache de filas por nodo+contexto
+        self.counter = 0  # contador para generar constantes C_k
         self.t_polynomial: Optional[str] = None  # forma polinómica T(n) = an² + bn + c
-        self.variable = "n"                  # variable principal del algoritmo
+        self.variable = "n"  # variable principal del algoritmo
         self.expr_converter = ExprConverter(self.variable)
-        self.mode: str = "worst"            # modo de análisis: "worst", "best", "avg"
-        self.avg_model: Optional[AvgModel] = None  # modelo probabilístico para caso promedio
-        self.procedure_steps: Optional[List[str]] = None  # pasos del procedimiento para caso promedio
+        self.mode: str = "worst"  # modo de análisis: "worst", "best", "avg"
+        self.avg_model: Optional[AvgModel] = (
+            None  # modelo probabilístico para caso promedio
+        )
+        self.procedure_steps: Optional[List[str]] = (
+            None  # pasos del procedimiento para caso promedio
+        )
 
     # --- util: detección de variables de tamaño ---
 
@@ -103,9 +109,16 @@ class BaseAnalyzer:
                     if p.get("type") == "ArrayParam":
                         for field in ("start", "end"):
                             val = p.get(field)
-                            if isinstance(val, dict) and val.get("type", "").lower() == "identifier":
+                            if (
+                                isinstance(val, dict)
+                                and val.get("type", "").lower() == "identifier"
+                            ):
                                 size_name = val.get("name")
-                                if isinstance(size_name, str) and size_name and size_name.lower() not in ARRAY_LIKE_NAMES:
+                                if (
+                                    isinstance(size_name, str)
+                                    and size_name
+                                    and size_name.lower() not in ARRAY_LIKE_NAMES
+                                ):
                                     scores[size_name] += 5
                         continue
                     if name.lower() in ARRAY_LIKE_NAMES:
@@ -149,7 +162,10 @@ class BaseAnalyzer:
             if node_type == "assign":
                 target = node.get("target")
                 value = node.get("value")
-                if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
+                if (
+                    isinstance(target, dict)
+                    and target.get("type", "").lower() == "identifier"
+                ):
                     name = target.get("name")
                     if isinstance(name, str) and name:
                         # Si el RHS contiene a la misma variable y estamos dentro de un bucle,
@@ -200,17 +216,39 @@ class BaseAnalyzer:
                             val = n.get("value")
                             if isinstance(val, bool):
                                 return True
-                            if isinstance(val, str) and val.lower().strip() in ("true", "false", "verdadero", "falso", "v", "f"):
+                            if isinstance(val, str) and val.lower().strip() in (
+                                "true",
+                                "false",
+                                "verdadero",
+                                "falso",
+                                "v",
+                                "f",
+                            ):
                                 return True
-                        if t == "identifier" and str(n.get("name", "")).lower() in ("true", "false", "verdadero", "falso", "v", "f"):
+                        if t == "identifier" and str(n.get("name", "")).lower() in (
+                            "true",
+                            "false",
+                            "verdadero",
+                            "falso",
+                            "v",
+                            "f",
+                        ):
                             return True
                         return False
 
-                    if _is_bool_literal(right) and isinstance(left, dict) and left.get("type", "").lower() == "identifier":
+                    if (
+                        _is_bool_literal(right)
+                        and isinstance(left, dict)
+                        and left.get("type", "").lower() == "identifier"
+                    ):
                         name = left.get("name")
                         if isinstance(name, str) and name:
                             bool_flags.add(name)
-                    elif _is_bool_literal(left) and isinstance(right, dict) and right.get("type", "").lower() == "identifier":
+                    elif (
+                        _is_bool_literal(left)
+                        and isinstance(right, dict)
+                        and right.get("type", "").lower() == "identifier"
+                    ):
                         name = right.get("name")
                         if isinstance(name, str) and name:
                             bool_flags.add(name)
@@ -258,7 +296,9 @@ class BaseAnalyzer:
 
         # Orden estable: mayor score primero, y en empate nombre ascendente.
         # Evita elegir variables no tamaño (p.ej. `x`) sobre `n` por orden lexicográfico inverso.
-        candidates.sort(key=lambda name: (-_tie_break_key(name)[0], _tie_break_key(name)[1]))
+        candidates.sort(
+            key=lambda name: (-_tie_break_key(name)[0], _tie_break_key(name)[1])
+        )
         return candidates
 
     # --- util 1: agregar fila ---
@@ -276,7 +316,7 @@ class BaseAnalyzer:
     ):
         """
         Inserta una fila aplicando el multiplicador del contexto de bucles.
-        
+
         Args:
             line: Número de línea
             kind: Tipo de instrucción (assign, for, while, if, etc.)
@@ -286,7 +326,7 @@ class BaseAnalyzer:
             unbounded: True si el bucle puede no terminar (evidencia de no terminación)
             unbounded_kind: "non_terminating" | "unknown" para clasificación
             ops: Operaciones elementales por ejecución (asignación, suma, acceso array, etc.)
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Convertir count a SymPy si es string
@@ -294,15 +334,15 @@ class BaseAnalyzer:
             count_expr = self._str_to_sympy(count)
         else:
             count_expr = count
-        
+
         # Aplicar multiplicadores del stack
         count_raw_expr = self._apply_loop_multipliers(count_expr)
-        
+
         # Normalizar strings si el método está disponible (solo formato básico)
-        if hasattr(self, '_normalize_string'):
+        if hasattr(self, "_normalize_string"):
             if note:
                 note = self._normalize_string(note)
-        
+
         # Convertir a LaTeX para almacenar (mantener compatibilidad con formato actual)
         try:
             count_raw_latex = latex(count_raw_expr)
@@ -317,14 +357,14 @@ class BaseAnalyzer:
                 count_raw_latex = str(count_raw_expr)
             else:
                 count_raw_latex = "1"
-        
+
         count_latex = count_raw_latex  # Inicialmente igual, se simplificará después
-        
+
         row = {
             "line": line,
             "kind": kind,
-            "ck": ck,              # Ej: "C_{3}" (una única constante por línea)
-            "count": count_latex,   # LaTeX para compatibilidad, se actualizará después
+            "ck": ck,  # Ej: "C_{3}" (una única constante por línea)
+            "count": count_latex,  # LaTeX para compatibilidad, se actualizará después
             "count_raw": count_raw_latex,  # LaTeX de la expresión con sumatorias
             "count_raw_expr": count_raw_expr,  # Expresión SymPy (nuevo campo interno)
             "note": note,
@@ -340,31 +380,31 @@ class BaseAnalyzer:
         # En modo promedio, agregar expectedRuns (alias de count para E[#])
         if self.mode == "avg":
             row["expectedRuns"] = count_latex
-        
+
         self.rows.append(row)
 
     def _apply_loop_multipliers(self, base_count: Expr) -> Expr:
         """
         Envuelve el conteo base con los multiplicadores activos del stack.
-        
+
         Args:
             base_count: Expresión SymPy base
-            
+
         Returns:
             Expresión SymPy con multiplicadores aplicados
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         from sympy import Symbol, preorder_traversal
-        
+
         expr = base_count if base_count is not None else Integer(1)
-        
+
         # Recolectar todas las variables ya usadas en la expresión
         used_vars = set()
         for subexpr in preorder_traversal(expr):
             if isinstance(subexpr, Symbol):
                 used_vars.add(subexpr.name)
-        
+
         # Aplicar multiplicadores del stack (de más externo a más interno)
         # NOTA: En SymPy, cuando construimos Sum(expr, (var, a, b)), el nuevo límite
         # se agrega al final, pero SymPy interpreta el PRIMER límite como el más EXTERNO.
@@ -376,23 +416,23 @@ class BaseAnalyzer:
                 var_sym = multiplier.args[1][0]  # Variable de la sumatoria
                 start_expr = multiplier.args[1][1]  # Límite inferior
                 end_expr = multiplier.args[1][2]  # Límite superior
-                
+
                 # NO renombrar la variable del multiplicador.
                 # Si la expresión base usa la misma variable (ej: 'i'), es correcto:
                 # significa que la expresión depende de la variable del bucle externo.
                 # Renombrar causaría que la sumatoria use una variable incorrecta.
-                # 
+                #
                 # Ejemplo: Si base_count = "n - i + 1" y el multiplicador es Sum(1, (i, 1, n-1)),
                 # el resultado debe ser Sum(n - i + 1, (i, 1, n-1)), NO Sum(n - i + 1, (j, 1, n-1)).
-                
+
                 var_name = var_sym.name if isinstance(var_sym, Symbol) else str(var_sym)
-                
+
                 # Agregar la variable a las usadas
                 used_vars.add(var_name)
-                
+
                 # Crear la sumatoria con la variable original del multiplicador
                 expr = Sum(expr, (var_sym, start_expr, end_expr))
-                
+
                 # Actualizar used_vars para incluir todas las variables en la nueva expresión
                 for subexpr in preorder_traversal(expr):
                     if isinstance(subexpr, Symbol):
@@ -403,20 +443,20 @@ class BaseAnalyzer:
                     expr = multiplier
                 else:
                     expr = expr * multiplier
-        
+
         return expr
-    
+
     def _str_to_sympy(self, expr_str: str) -> Expr:
         """
         Convierte un string a expresión SymPy.
         Soporta LaTeX: \\log_{k}(expr), \\frac{a}{b}, etc.
-        
+
         Args:
             expr_str: String representando una expresión
-            
+
         Returns:
             Expresión SymPy
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         import re
@@ -437,7 +477,7 @@ class BaseAnalyzer:
                 elif expr_str[i] == ")":
                     depth -= 1
                 i += 1
-            arg = expr_str[start:i-1]
+            arg = expr_str[start : i - 1]
             expr_str = (
                 expr_str[: log_match.start()]
                 + f"log({arg}, {log_match.group(1)})"
@@ -486,17 +526,17 @@ class BaseAnalyzer:
         except Exception:
             # Fallback: retornar 1
             return Integer(1)
-    
+
     def _expr_to_sympy(self, expr: Any) -> Expr:
         """
         Convierte una expresión del AST a SymPy usando ExprConverter.
-        
+
         Args:
             expr: Expresión del AST
-            
+
         Returns:
             Expresión SymPy
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         out = self.expr_converter.ast_to_sympy(expr)
@@ -549,16 +589,17 @@ class BaseAnalyzer:
     def push_multiplier(self, m: Union[str, Expr]):
         """
         Activa un multiplicador (p.ej., iteraciones de un for).
-        
+
         Args:
             m: Multiplicador (puede ser string LaTeX o Expr de SymPy)
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if isinstance(m, str):
             # Convertir string LaTeX a SymPy
             # Intentar parsear como sumatoria: \sum_{var=start}^{end} 1
             import re
+
             pattern = r"\\sum_\{([^=}]+)=([^}]*)\}\^\{([^}]*)\}\s*1"
             match = re.match(pattern, m.strip())
             if match:
@@ -570,13 +611,13 @@ class BaseAnalyzer:
             else:
                 # No es una sumatoria, convertir a expresión SymPy
                 m = self._str_to_sympy(m)
-        
+
         self.loop_stack.append(m)
 
     def pop_multiplier(self):
         """
         Desactiva el último multiplicador.
-        
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if self.loop_stack:
@@ -587,88 +628,91 @@ class BaseAnalyzer:
         """
         Construye la ecuación T_open = Σ C_{k}·count_{k} (o A(n) = Σ C_{k}·E[N_{k}] para promedio) en formato KaTeX.
         Usa simplificación inteligente: preserva constantes cuando hay pocas operaciones, simplifica cuando hay muchas.
-        
+
         Returns:
             String con la ecuación de eficiencia en formato KaTeX
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if not self.rows:
             return "0"
-        
+
         # Decidir si preservar constantes o simplificar
         if self._should_preserve_constants():
             return self._build_t_open_with_constants()
         else:
             return self._build_t_open_simplified()
-    
+
     def _build_t_open_simplified(self) -> str:
         """
         Construye T_open simplificado (versión original que suma directamente los count_expr).
-        
+
         Returns:
             String con la ecuación de eficiencia simplificada en formato KaTeX
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if not self.rows:
             return "0"
-        
+
         # Construir expresión SymPy
         from sympy import Add
-        
+
         terms = []
         for r in self.rows:
-            if r.get('ck') != "—" and r.get('count') != "—":
+            if r.get("ck") != "—" and r.get("count") != "—":
                 # Preferir usar count_expr (ya evaluado) si está disponible
-                count_expr = r.get('count_expr')
+                count_expr = r.get("count_expr")
                 if count_expr is None:
                     # Fallback: usar count_raw_expr
-                    count_expr = r.get('count_raw_expr')
+                    count_expr = r.get("count_raw_expr")
                 if count_expr is None:
                     # Fallback: convertir desde LaTeX
-                    count_expr = self._str_to_sympy(r.get('count_raw', '1'))
-                
+                    count_expr = self._str_to_sympy(r.get("count_raw", "1"))
+
                 # MEJORA: Si count es 0 (línea nunca ejecutada), saltar esta fila
                 # Esto evita términos que no contribuyen a la complejidad
                 if count_expr == Integer(0):
                     continue
-                
+
                 # Crear término: C_k * ops * count_expr (ops = operaciones elementales)
-                ops_val = r.get('ops', 1)
-                term_expr = Integer(ops_val) * count_expr if ops_val != 1 else count_expr
+                ops_val = r.get("ops", 1)
+                term_expr = (
+                    Integer(ops_val) * count_expr if ops_val != 1 else count_expr
+                )
                 terms.append(term_expr)
-        
+
         if not terms:
             return "0"
-        
+
         # Sumar todos los términos
         total_expr = Add(*terms) if len(terms) > 1 else terms[0]
-        
+
         # Simplificar completamente: evaluar todas las sumatorias
         from sympy import expand
         from sympy import simplify as sympy_simplify
 
         from ..utils.summation_closer import SummationCloser
-        
+
         # Usar SummationCloser para evaluar todas las sumatorias correctamente
         closer = SummationCloser(locale=self.locale)
         total_expr = closer._evaluate_all_sums_sympy(total_expr)
-        
+
         # Simplificar y expandir para obtener la forma más simple
         try:
             total_expr = expand(total_expr)
             total_expr = sympy_simplify(total_expr)
         except Exception:
             total_expr = sympy_simplify(total_expr)
-        
+
         # IMPORTANTE: Eliminar variables de iteración (índices reales de FOR) que no deberían estar en T_open
-        if hasattr(self, '_sanitize_expression'):
+        if hasattr(self, "_sanitize_expression"):
             total_expr = self._sanitize_expression(total_expr)
         else:
             # Fallback: limpieza básica de variables de iteración
             from sympy import Integer as SymInteger
             from sympy import Symbol
+
             iteration_vars = self._iteration_var_names()
             for var_name in iteration_vars:
                 var_symbol = Symbol(var_name, integer=True)
@@ -676,78 +720,80 @@ class BaseAnalyzer:
                     # Sustituir por 0 (no deberían estar presentes)
                     total_expr = total_expr.subs(var_symbol, SymInteger(0))
                     total_expr = sympy_simplify(total_expr)
-        
+
         # VALIDACIÓN: Verificar que T_open no contenga variables de iteración
         # Se permiten: variables de tamaño (self.variable y otras), C_k, símbolos t_*
         from sympy import Symbol
+
         free_symbols = total_expr.free_symbols
-        
+
         invalid_symbols = []
         iteration_vars = self._iteration_var_names()
         for sym in free_symbols:
             sym_name = str(sym)
             if sym_name in iteration_vars:
                 invalid_symbols.append(sym_name)
-        
+
         if invalid_symbols:
             # Log de advertencia: la expresión contiene variables de iteración que no deberían aparecer
             import logging
+
             logger = logging.getLogger(__name__)
             logger.warning(
                 f"T_open contiene variables de iteración no permitidas: {invalid_symbols}. "
                 f"Estas deberían haberse eliminado del resultado final. Expresión: {total_expr}"
             )
-        
+
         # Convertir a LaTeX
         return latex(total_expr)
-    
+
     def _build_t_open_with_constants(self) -> str:
         """
         Construye T_open preservando las constantes C_k en la expresión.
         Formato: "C_1 · count_1 + C_2 · count_2 + ..."
-        
+
         Returns:
             String con la ecuación de eficiencia preservando constantes en formato KaTeX
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if not self.rows:
             return "0"
-        
+
         import re
 
         from sympy import Integer, latex
-        
+
         terms_latex = []
-        
+
         for r in self.rows:
-            if r.get('ck') != "—" and r.get('count') != "—":
-                ck_str = r.get('ck', '')
-                
+            if r.get("ck") != "—" and r.get("count") != "—":
+                ck_str = r.get("ck", "")
+
                 # Parsear ck para obtener todas las constantes C_k
                 # ck puede ser "C_{1}", "C_{1} + C_{2}", etc.
                 # IMPORTANTE: Cada C_k debe tener su propio término separado
-                ck_pattern = r'C_\{(\d+)\}'
+                ck_pattern = r"C_\{(\d+)\}"
                 ck_matches = re.findall(ck_pattern, ck_str)
-                
+
                 # Si no se encontraron matches, intentar sin llaves (formato alternativo)
                 if not ck_matches:
-                    ck_pattern_alt = r'C_(\d+)'
+                    ck_pattern_alt = r"C_(\d+)"
                     ck_matches = re.findall(ck_pattern_alt, ck_str)
-                
+
                 # Obtener count_expr para simplificar sumatorias si es necesario
-                count_expr = r.get('count_expr')
+                count_expr = r.get("count_expr")
                 if count_expr is None:
-                    count_expr = r.get('count_raw_expr')
+                    count_expr = r.get("count_raw_expr")
                 if count_expr is None:
-                    count_expr = self._str_to_sympy(r.get('count_raw', '1'))
-                
+                    count_expr = self._str_to_sympy(r.get("count_raw", "1"))
+
                 # Simplificar count_expr (evaluar sumatorias) pero mantener como expresión
                 from sympy import expand
                 from sympy import simplify as sympy_simplify
 
                 from ..utils.summation_closer import SummationCloser
-                
+
                 closer = SummationCloser(locale=self.locale)
                 count_expr_simplified = closer._evaluate_all_sums_sympy(count_expr)
                 try:
@@ -755,20 +801,20 @@ class BaseAnalyzer:
                     count_expr_simplified = sympy_simplify(count_expr_simplified)
                 except Exception:
                     count_expr_simplified = sympy_simplify(count_expr_simplified)
-                
+
                 # MEJORA: Si count es 0 (línea nunca ejecutada), saltar esta fila
                 # Esto evita términos como "C_4 · 0" en T_open que no aportan información
                 if count_expr_simplified == Integer(0):
                     continue
-                
+
                 # Aplicar factor de operaciones elementales: C_k · ops · count
-                ops_val = r.get('ops', 1)
+                ops_val = r.get("ops", 1)
                 if ops_val != 1:
                     count_expr_simplified = Integer(ops_val) * count_expr_simplified
-                
+
                 # Convertir count a LaTeX
                 count_latex = latex(count_expr_simplified)
-                
+
                 # Si count es 1, no mostrar "· 1"
                 if count_expr_simplified == Integer(1):
                     count_latex = ""
@@ -778,6 +824,7 @@ class BaseAnalyzer:
                     # Agregar paréntesis si la expresión no es un simple símbolo o número
                     # Esto evita problemas como "C_3 \cdot n - 1" que debería ser "C_3 \cdot (n - 1)"
                     from sympy import Add, Mul, Pow, Symbol
+
                     # Verificar si necesita paréntesis
                     needs_parens = False
                     if isinstance(count_expr_simplified, Add):
@@ -790,10 +837,10 @@ class BaseAnalyzer:
                     elif not isinstance(count_expr_simplified, (Integer, Symbol, Pow)):
                         # Cualquier otra expresión compuesta
                         needs_parens = True
-                    
+
                     if needs_parens:
                         count_latex = f"({count_latex})"
-                
+
                 # Crear términos para cada C_k en esta fila
                 for ck_num in ck_matches:
                     ck_latex = f"C_{{{ck_num}}}"
@@ -802,30 +849,30 @@ class BaseAnalyzer:
                     else:
                         term = ck_latex
                     terms_latex.append(term)
-        
+
         if not terms_latex:
             return "0"
-        
+
         # Verificar si todos los count son constantes (1) y no hay variables
         # Si es así, simplificar a "C" en lugar de mostrar todas las constantes
         all_counts_are_constant = True
         has_variables = False
-        
+
         from sympy import Symbol, expand, preorder_traversal
         from sympy import simplify as sympy_simplify
 
         from ..utils.summation_closer import SummationCloser
-        
+
         closer = SummationCloser(locale=self.locale)
-        
+
         for r in self.rows:
-            if r.get('ck') != "—" and r.get('count') != "—":
-                count_expr = r.get('count_expr')
+            if r.get("ck") != "—" and r.get("count") != "—":
+                count_expr = r.get("count_expr")
                 if count_expr is None:
-                    count_expr = r.get('count_raw_expr')
+                    count_expr = r.get("count_raw_expr")
                 if count_expr is None:
-                    count_expr = self._str_to_sympy(r.get('count_raw', '1'))
-                
+                    count_expr = self._str_to_sympy(r.get("count_raw", "1"))
+
                 # Simplificar para verificar si es constante
                 count_expr_simplified = closer._evaluate_all_sums_sympy(count_expr)
                 try:
@@ -833,76 +880,81 @@ class BaseAnalyzer:
                     count_expr_simplified = sympy_simplify(count_expr_simplified)
                 except Exception:
                     count_expr_simplified = sympy_simplify(count_expr_simplified)
-                
+
                 # Verificar si es constante (Integer) y si tiene variables
                 if not isinstance(count_expr_simplified, Integer):
                     all_counts_are_constant = False
-                
+
                 # Verificar si hay variables (como n) en el count
                 for subexpr in preorder_traversal(count_expr):
-                    if isinstance(subexpr, Symbol) and subexpr.name not in ['i', 'j', 'k']:
+                    if isinstance(subexpr, Symbol) and subexpr.name not in [
+                        "i",
+                        "j",
+                        "k",
+                    ]:
                         # Si el símbolo es 'n' o similar, hay variables
                         has_variables = True
                         break
-                
+
                 if not all_counts_are_constant or has_variables:
                     break
-        
+
         # CAMBIO: Ya no simplificar a "C" incluso si todos son constantes
         # Siempre mostrar la expresión completa con las constantes individuales
         # Esto da más información al usuario sobre la estructura del algoritmo
         # Ejemplo: "2 \cdot C_1 + C_2 + C_3" en lugar de solo "C"
-        
+
         # Unir todos los términos con "+"
         return " + ".join(terms_latex)
-    
+
     def _should_preserve_constants(self) -> bool:
         """
         Decide si debería preservar las constantes C_k en T_open o simplificar.
-        
+
         Criterios:
         - Si hay ≤ 5 términos únicos de C_k → preservar
         - Si hay > 5 términos → simplificar
         - Si hay sumatorias anidadas complejas → simplificar
         - Si todos los count son constantes simples (1, 2, n, n-1) → preservar
-        
+
         Returns:
             True si debería preservar constantes, False si debería simplificar
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if not self.rows:
             return False
-        
+
         import re
 
         from sympy import preorder_traversal
-        
+
         # Contar términos únicos de C_k
         unique_ck_terms = set()
         total_ck_count = 0
         has_complex_summations = False
-        
+
         for r in self.rows:
-            if r.get('ck') != "—" and r.get('count') != "—":
-                ck_str = r.get('ck', '')
-                
+            if r.get("ck") != "—" and r.get("count") != "—":
+                ck_str = r.get("ck", "")
+
                 # Parsear todas las constantes C_k en esta fila
-                ck_pattern = r'C_\{(\d+)\}'
+                ck_pattern = r"C_\{(\d+)\}"
                 ck_matches = re.findall(ck_pattern, ck_str)
                 unique_ck_terms.update(ck_matches)
                 total_ck_count += len(ck_matches)
-                
+
                 # Verificar si hay sumatorias complejas en count_expr
-                count_expr = r.get('count_expr')
+                count_expr = r.get("count_expr")
                 if count_expr is None:
-                    count_expr = r.get('count_raw_expr')
+                    count_expr = r.get("count_raw_expr")
                 if count_expr is None:
-                    count_expr = self._str_to_sympy(r.get('count_raw', '1'))
-                
+                    count_expr = self._str_to_sympy(r.get("count_raw", "1"))
+
                 # Verificar complejidad: contar sumatorias anidadas
                 if count_expr is not None:
                     from sympy import Sum
+
                     summation_count = 0
                     for subexpr in preorder_traversal(count_expr):
                         if isinstance(subexpr, Sum):
@@ -911,94 +963,97 @@ class BaseAnalyzer:
                             if summation_count > 2:
                                 has_complex_summations = True
                                 break
-        
+
         # Criterio 1: Si hay más de 8 términos únicos de C_k, simplificar
         # Aumentado de 5 a 8 para acomodar algoritmos con asignaciones compuestas
         if len(unique_ck_terms) > 8:
             return False
-        
+
         # Criterio 2: Si hay más de 15 términos totales de C_k, simplificar
         # Aumentado de 10 a 15 para dar más flexibilidad
         if total_ck_count > 15:
             return False
-        
+
         # Criterio 3: Si hay sumatorias complejas, simplificar
         if has_complex_summations:
             return False
-        
+
         # Criterio 4: Si todos los count son constantes simples, preservar
         # (esto se verifica implícitamente si no hay sumatorias complejas y hay pocos términos)
-        
+
         # Si llegamos aquí, preservar constantes
         return True
-    
+
     def build_t_open_expr(self) -> Optional[Expr]:
         """
         Construye la expresión SymPy de T_open = Σ C_{k}·count_{k}.
-        
+
         Returns:
             Expresión SymPy simplificada o None si no hay términos
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if not self.rows:
             return None
-        
+
         # Construir expresión SymPy
         from sympy import Add
-        
+
         terms = []
         for r in self.rows:
-            if r.get('ck') != "—" and r.get('count') != "—":
+            if r.get("ck") != "—" and r.get("count") != "—":
                 # Preferir usar count_expr (expresión SymPy evaluada) si está disponible
-                count_expr = r.get('count_expr')
+                count_expr = r.get("count_expr")
                 if count_expr is None:
-                    count_expr = r.get('count_raw_expr')
+                    count_expr = r.get("count_raw_expr")
                 if count_expr is None:
                     # Fallback: parsear desde count (LaTeX evaluado)
-                    count_latex = r.get('count', '1')
+                    count_latex = r.get("count", "1")
                     count_expr = self._str_to_sympy(count_latex)
-                
+
                 # MEJORA: Si count es 0 (línea nunca ejecutada), saltar esta fila
                 # Esto evita términos que no contribuyen a la complejidad
                 if count_expr == Integer(0):
                     continue
-                
+
                 # Crear término: C_k * ops * count_expr (ops = operaciones elementales)
-                ops_val = r.get('ops', 1)
-                term_expr = Integer(ops_val) * count_expr if ops_val != 1 else count_expr
+                ops_val = r.get("ops", 1)
+                term_expr = (
+                    Integer(ops_val) * count_expr if ops_val != 1 else count_expr
+                )
                 terms.append(term_expr)
-        
+
         if not terms:
             return None
-        
+
         # Sumar todos los términos
         total_expr = Add(*terms) if len(terms) > 1 else terms[0]
-        
+
         # Simplificar completamente
         from sympy import expand
         from sympy import simplify as sympy_simplify
 
         from ..utils.summation_closer import SummationCloser
-        
+
         # Usar SummationCloser para evaluar todas las sumatorias correctamente
         closer = SummationCloser(locale=self.locale)
         total_expr = closer._evaluate_all_sums_sympy(total_expr)
-        
+
         # Simplificar y expandir para obtener la forma más simple
         try:
             total_expr = expand(total_expr)
             total_expr = sympy_simplify(total_expr)
         except Exception:
             total_expr = sympy_simplify(total_expr)
-        
+
         # IMPORTANTE: Eliminar variables de iteración (índices reales de FOR) que no deberían estar en T_open
-        if hasattr(self, '_sanitize_expression'):
+        if hasattr(self, "_sanitize_expression"):
             total_expr = self._sanitize_expression(total_expr)
         else:
             # Fallback: limpieza básica de variables de iteración
             from sympy import Integer as SymInteger
             from sympy import Symbol
+
             iteration_vars = self._iteration_var_names()
             for var_name in iteration_vars:
                 var_symbol = Symbol(var_name, integer=True)
@@ -1006,72 +1061,77 @@ class BaseAnalyzer:
                     # Sustituir por 0 (no deberían estar presentes)
                     total_expr = total_expr.subs(var_symbol, SymInteger(0))
                     total_expr = sympy_simplify(total_expr)
-        
+
         return total_expr
 
     # --- util 4: emitir respuesta estándar ---
     def result(self) -> AnalyzeOpenResponse:
         """
         Genera la respuesta estándar del análisis.
-        
+
         Returns:
             Diccionario que cumple el contrato AnalyzeOpenResponse
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Construir T_open (o A(n) para promedio)
         t_open_str = self.build_t_open()
-        
+
         totals = {
             "T_open": t_open_str,
             "symbols": self.symbols if self.symbols else None,
-            "notes": self.notes if self.notes else None
+            "notes": self.notes if self.notes else None,
         }
-        
+
         # Para caso promedio, agregar A_of_n y procedure
         if self.mode == "avg":
             totals["A_of_n"] = t_open_str
             # Agregar pasos del procedimiento a totals.procedure (no a notes)
-            if hasattr(self, 'procedure_steps') and self.procedure_steps:
+            if hasattr(self, "procedure_steps") and self.procedure_steps:
                 totals["procedure"] = self.procedure_steps
-        
+
         # Agregar T_polynomial si está disponible
         if self.t_polynomial:
             totals["T_polynomial"] = self.t_polynomial
-        
+
         # Agregar notaciones asintóticas si están disponibles (solo en IterativeAnalyzer)
-        if hasattr(self, 'big_o') and self.big_o:
+        if hasattr(self, "big_o") and self.big_o:
             totals["big_o"] = self.big_o
-        if hasattr(self, 'big_omega') and self.big_omega:
+        if hasattr(self, "big_omega") and self.big_omega:
             totals["big_omega"] = self.big_omega
-        if hasattr(self, 'big_theta') and self.big_theta:
+        if hasattr(self, "big_theta") and self.big_theta:
             totals["big_theta"] = self.big_theta
-        
+
         # Limpiar filas: eliminar objetos SymPy y asegurar que todo sea serializable
         clean_rows = []
         for row in self.rows:
             clean_row = {}
             for key, value in row.items():
                 # Saltar objetos SymPy no serializables
-                if key == 'count_raw_expr' or key == 'count_expr':
+                if key == "count_raw_expr" or key == "count_expr":
                     continue
                 # Convertir cualquier objeto SymPy restante a string
-                if hasattr(value, '__class__') and 'sympy' in str(type(value).__module__):
+                if hasattr(value, "__class__") and "sympy" in str(
+                    type(value).__module__
+                ):
                     try:
                         from sympy import latex
+
                         clean_row[key] = latex(value)
                     except Exception:
                         clean_row[key] = str(value)
                 # Asegurar que count, count_raw y expectedRuns sean strings
-                elif key in ['count', 'count_raw', 'expectedRuns'] and not isinstance(value, str):
+                elif key in ["count", "count_raw", "expectedRuns"] and not isinstance(
+                    value, str
+                ):
                     # Si el valor es 0, mantener "0", no convertir a "1"
-                    if value == 0 or (hasattr(value, '__eq__') and value == 0):
+                    if value == 0 or (hasattr(value, "__eq__") and value == 0):
                         clean_row[key] = "0"
                     else:
                         clean_row[key] = str(value) if value is not None else "1"
                 else:
                     clean_row[key] = value
-            
+
             # En modo promedio, asegurar que expectedRuns esté presente
             if self.mode == "avg" and "expectedRuns" not in clean_row:
                 # Si count es "0", mantener "0", no convertir a "1"
@@ -1080,9 +1140,9 @@ class BaseAnalyzer:
                     clean_row["expectedRuns"] = "0"
                 else:
                     clean_row["expectedRuns"] = count_val
-            
+
             clean_rows.append(clean_row)
-        
+
         # Agregar información del modelo promedio si está disponible
         if self.mode == "avg" and self.avg_model:
             # Detectar si estamos en Modelo A (éxito seguro con early return)
@@ -1091,15 +1151,24 @@ class BaseAnalyzer:
             for row in clean_rows:
                 if row.get("kind") == "return":
                     note = row.get("note", "")
-                    if note and ("éxito seguro" in note or "guaranteed success" in note or ("éxito" in note and "siempre ocurre" in note)):
+                    if note and (
+                        "éxito seguro" in note
+                        or "guaranteed success" in note
+                        or ("éxito" in note and "siempre ocurre" in note)
+                    ):
                         has_success_return = True
-                    if note and ("fracaso" in note or "failure" in note or "nunca ocurre" in note or "never occurs" in note):
+                    if note and (
+                        "fracaso" in note
+                        or "failure" in note
+                        or "nunca ocurre" in note
+                        or "never occurs" in note
+                    ):
                         has_failure_return = True
             # Si hay early return en bucle y éxito seguro, es Modelo A
             if has_success_return and has_failure_return:
                 model_info = {
                     "mode": self.avg_model.mode,
-                    "note": self._note("model_uniform_success")
+                    "note": self._note("model_uniform_success"),
                 }
             else:
                 model_info = self.avg_model.get_model_info(locale=self.locale)
@@ -1112,7 +1181,12 @@ class BaseAnalyzer:
             has_unbounded_symbols = False
             for r in clean_rows:
                 count_str = str(r.get("expectedRuns", "") or r.get("count", ""))
-                if "t_while" in count_str or "t_repeat" in count_str or "t_{while" in count_str or "t_{repeat" in count_str:
+                if (
+                    "t_while" in count_str
+                    or "t_repeat" in count_str
+                    or "t_{while" in count_str
+                    or "t_{repeat" in count_str
+                ):
                     has_unbounded_symbols = True
                     break
             if has_unbounded or has_unbounded_symbols:
@@ -1126,34 +1200,30 @@ class BaseAnalyzer:
                 if self.avg_model.mode == "symbolic":
                     hypotheses.append(self._note("hypotheses_symbolic"))
                 totals["hypotheses"] = hypotheses
-        
-        return {
-            "ok": True,
-            "byLine": clean_rows,
-            "totals": totals
-        }
+
+        return {"ok": True, "byLine": clean_rows, "totals": totals}
 
     # --- util 5: memoización (PD) ---
     def _get_node_id(self, node: Any) -> str:
         """
         Obtiene un identificador estable para un nodo del AST.
-        
+
         Prioridad:
         1. Posición (línea, columna) si está disponible
         2. Hash del contenido del nodo (tipo + estructura)
         3. ID del objeto como fallback
-        
+
         Args:
             node: Nodo del AST
-            
+
         Returns:
             String identificador estable del nodo
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if node is None:
             return "null"
-        
+
         # Intentar usar posición si está disponible
         if isinstance(node, dict):
             pos = node.get("pos", {})
@@ -1166,73 +1236,81 @@ class BaseAnalyzer:
                     if column is not None:
                         return f"{node_type}:{line}:{column}"
                     return f"{node_type}:{line}"
-            
+
             # Si no hay posición, usar hash del contenido
             try:
                 # Crear una representación estable del nodo (sin objetos no serializables)
                 node_repr = {
                     "type": node.get("type"),
                     "name": node.get("name"),
-                    "body": "..." if "body" in node else None,  # Solo indicar presencia, no contenido
+                    "body": (
+                        "..." if "body" in node else None
+                    ),  # Solo indicar presencia, no contenido
                 }
                 node_str = json.dumps(node_repr, sort_keys=True)
                 node_hash = hashlib.md5(node_str.encode()).hexdigest()[:8]
                 return f"{node.get('type', 'unknown')}:{node_hash}"
             except Exception:
                 pass
-        
+
         # Fallback: usar ID del objeto
         return str(id(node))
-    
+
     def _should_memoize(self, node: Any) -> bool:
         """
         Determina si un nodo debe ser cacheado usando memoización.
-        
+
         Estrategia:
         - Cachear nodos que pueden aparecer múltiples veces (Block, For, If, While, etc.)
         - No cachear nodos simples (Assign, Return, etc.) que son únicos por línea
         - No cachear si el nodo es None o no tiene estructura
-        
+
         Args:
             node: Nodo del AST a evaluar
-            
+
         Returns:
             True si el nodo debe ser cacheado, False en caso contrario
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if node is None:
             return False
-        
+
         if not isinstance(node, dict):
             return False
-        
+
         node_type = node.get("type", "").lower()
-        
+
         # Nodos que se benefician de memoización (estructuras que pueden repetirse)
         memoizable_types = {
-            "block", "for", "while", "repeat", "if", "procdef", "program"
+            "block",
+            "for",
+            "while",
+            "repeat",
+            "if",
+            "procdef",
+            "program",
         }
-        
+
         return node_type in memoizable_types
-    
+
     def memo_key(self, node: Any, mode: str, ctx_hash: str) -> str:
         """
         Genera clave estable para cachear filas de un subárbol bajo un contexto.
-        
+
         La clave combina:
         - Identificador estable del nodo (posición o hash)
         - Modo de análisis (worst/best/avg)
         - Hash del contexto actual (loop_stack)
-        
+
         Args:
             node: Nodo del AST
             mode: Modo de análisis ("worst", "best", "avg")
             ctx_hash: Hash del contexto actual (obtenido con get_context_hash())
-            
+
         Returns:
             Clave única para el cache en formato: "{node_id}|{mode}|{ctx_hash}"
-            
+
         Example:
             >>> analyzer = BaseAnalyzer()
             >>> node = {"type": "Block", "pos": {"line": 5, "column": 10}}
@@ -1242,7 +1320,7 @@ class BaseAnalyzer:
             >>> if cached is None:
             ...     # Analizar nodo...
             ...     analyzer.memo_set(key, rows)
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         nid = self._get_node_id(node)
@@ -1251,13 +1329,13 @@ class BaseAnalyzer:
     def memo_get(self, key: str) -> Optional[List[LineCost]]:
         """
         Obtiene filas del cache usando la clave proporcionada.
-        
+
         Args:
             key: Clave del cache (generada con memo_key())
-            
+
         Returns:
             Lista de filas cacheadas o None si no existe en el cache
-            
+
         Example:
             >>> analyzer = BaseAnalyzer()
             >>> key = analyzer.memo_key(node, "worst", analyzer.get_context_hash())
@@ -1265,7 +1343,7 @@ class BaseAnalyzer:
             >>> if cached_rows:
             ...     analyzer.rows.extend(cached_rows)
             ...     return  # Usar resultados cacheados
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         return self.memo.get(key)
@@ -1273,14 +1351,14 @@ class BaseAnalyzer:
     def memo_set(self, key: str, rows: List[LineCost]):
         """
         Guarda filas en el cache para reutilización posterior.
-        
+
         Crea una copia superficial de las filas para evitar aliasing accidental
         y asegurar que los cambios posteriores no afecten el cache.
-        
+
         Args:
             key: Clave del cache (generada con memo_key())
             rows: Lista de filas a cachear (LineCost)
-            
+
         Example:
             >>> analyzer = BaseAnalyzer()
             >>> rows_before = len(analyzer.rows)
@@ -1288,7 +1366,7 @@ class BaseAnalyzer:
             >>> rows_added = analyzer.rows[rows_before:]
             >>> key = analyzer.memo_key(node, "worst", analyzer.get_context_hash())
             >>> analyzer.memo_set(key, rows_added)
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Guardar una copia superficial para evitar aliasing accidental
@@ -1298,11 +1376,11 @@ class BaseAnalyzer:
     def add_symbol(self, symbol: str, description: str):
         """
         Agrega un símbolo con su descripción.
-        
+
         Args:
             symbol: Símbolo matemático (ej: "n", "m", "k")
             description: Descripción del símbolo (ej: "length(A)", "number of iterations")
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self.symbols[symbol] = description
@@ -1318,19 +1396,18 @@ class BaseAnalyzer:
     def add_note(self, note: str):
         """
         Agrega una nota al análisis.
-        
+
         Args:
             note: Nota descriptiva
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self.notes.append(note)
 
-
     def clear(self):
         """
         Limpia todos los datos del analizador.
-        
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self.rows.clear()
@@ -1344,10 +1421,10 @@ class BaseAnalyzer:
     def add_procedure_step(self, step: str) -> None:
         """
         Agrega un paso al procedimiento para caso promedio.
-        
+
         Args:
             step: String con el paso del procedimiento (puede contener LaTeX)
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if self.procedure_steps is None:
@@ -1357,10 +1434,10 @@ class BaseAnalyzer:
     def get_context_hash(self) -> str:
         """
         Genera un hash del contexto actual (loop_stack).
-        
+
         Returns:
             String hash del contexto
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Convertir expresiones SymPy a strings para el hash
@@ -1372,10 +1449,10 @@ class BaseAnalyzer:
     def C(self) -> str:
         """
         Genera la siguiente constante C_k.
-        
+
         Returns:
             String con la siguiente constante (ej: "C_{1}", "C_{2}", etc.)
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self.counter += 1

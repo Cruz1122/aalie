@@ -75,7 +75,11 @@ def _program(statements):
                 "type": "ProcDef",
                 "name": "main",
                 "params": [],
-                "body": {"type": "Block", "body": statements, "pos": {"line": 1, "column": 0}},
+                "body": {
+                    "type": "Block",
+                    "body": statements,
+                    "pos": {"line": 1, "column": 0},
+                },
                 "pos": {"line": 1, "column": 0},
             }
         ],
@@ -84,10 +88,12 @@ def _program(statements):
 
 
 def test_service_returns_fixed_shape_when_no_supported_loop():
-    ast = _program([
-        _assign(2, _identifier("x"), _literal(1)),
-        _assign(3, _identifier("y"), _literal(2)),
-    ])
+    ast = _program(
+        [
+            _assign(2, _identifier("x"), _literal(1)),
+            _assign(3, _identifier("y"), _literal(2)),
+        ]
+    )
 
     result = generate_loop_invariant(ast, locale="es")
 
@@ -119,29 +125,51 @@ def test_service_detects_repeat_loop_and_keeps_formal_sections():
         body=[
             _if(
                 4,
-                {"type": "Binary", "op": "==", "left": _index("A", _identifier("i")), "right": _identifier("x")},
-                consequent_body=[{"type": "Return", "value": _identifier("i"), "pos": {"line": 5, "column": 4}}],
+                {
+                    "type": "Binary",
+                    "op": "==",
+                    "left": _index("A", _identifier("i")),
+                    "right": _identifier("x"),
+                },
+                consequent_body=[
+                    {
+                        "type": "Return",
+                        "value": _identifier("i"),
+                        "pos": {"line": 5, "column": 4},
+                    }
+                ],
             ),
             _assign(
                 6,
                 _identifier("i"),
-                {"type": "Binary", "op": "+", "left": _identifier("i"), "right": _literal(1)},
+                {
+                    "type": "Binary",
+                    "op": "+",
+                    "left": _identifier("i"),
+                    "right": _literal(1),
+                },
             ),
         ],
-        test={"type": "Binary", "op": ">", "left": _identifier("i"), "right": _identifier("n")},
+        test={
+            "type": "Binary",
+            "op": ">",
+            "left": _identifier("i"),
+            "right": _identifier("n"),
+        },
     )
-    ast = _program([
-        _assign(2, _identifier("i"), _literal(1)),
-        repeat_loop,
-    ])
+    ast = _program(
+        [
+            _assign(2, _identifier("i"), _literal(1)),
+            repeat_loop,
+        ]
+    )
 
     result = generate_loop_invariant(ast, locale="en")
 
     assert result["selectedLoop"]["nodeType"] == "REPEAT"
-    assert (
-        result["invariant"]["propertyStatement"].startswith("At the start of each iteration")
-        or result["invariant"]["propertyStatement"].startswith("In REPEAT")
-    )
+    assert result["invariant"]["propertyStatement"].startswith(
+        "At the start of each iteration"
+    ) or result["invariant"]["propertyStatement"].startswith("In REPEAT")
     assert result["invariant"]["propertyStatement"]
     assert result["invariant"]["initialization"]
     assert result["invariant"]["maintenance"]
@@ -149,13 +177,20 @@ def test_service_detects_repeat_loop_and_keeps_formal_sections():
 
 
 def test_service_returns_low_confidence_when_evidence_is_insufficient():
-    ast = _program([
-        _while(
-            2,
-            {"type": "Binary", "op": ">", "left": _identifier("n"), "right": _literal(0)},
-            [_assign(3, _identifier("x"), _literal(1))],
-        )
-    ])
+    ast = _program(
+        [
+            _while(
+                2,
+                {
+                    "type": "Binary",
+                    "op": ">",
+                    "left": _identifier("n"),
+                    "right": _literal(0),
+                },
+                [_assign(3, _identifier("x"), _literal(1))],
+            )
+        ]
+    )
 
     result = generate_loop_invariant(ast, locale="es")
 
@@ -166,25 +201,27 @@ def test_service_returns_low_confidence_when_evidence_is_insufficient():
 
 
 def test_service_is_stable_for_same_input():
-    ast = _program([
-        _assign(2, _identifier("sum"), _literal(0)),
-        _for(
-            3,
-            "i",
-            [
-                _assign(
-                    4,
-                    _identifier("sum"),
-                    {
-                        "type": "Binary",
-                        "op": "+",
-                        "left": _identifier("sum"),
-                        "right": _index("A", _identifier("i")),
-                    },
-                )
-            ],
-        ),
-    ])
+    ast = _program(
+        [
+            _assign(2, _identifier("sum"), _literal(0)),
+            _for(
+                3,
+                "i",
+                [
+                    _assign(
+                        4,
+                        _identifier("sum"),
+                        {
+                            "type": "Binary",
+                            "op": "+",
+                            "left": _identifier("sum"),
+                            "right": _index("A", _identifier("i")),
+                        },
+                    )
+                ],
+            ),
+        ]
+    )
 
     first = generate_loop_invariant(ast, locale="en")
     second = generate_loop_invariant(ast, locale="en")
@@ -193,25 +230,27 @@ def test_service_is_stable_for_same_input():
 
 
 def test_service_includes_template_traceability_feature():
-    ast = _program([
-        _assign(2, _identifier("sum"), _literal(0)),
-        _for(
-            3,
-            "i",
-            [
-                _assign(
-                    4,
-                    _identifier("sum"),
-                    {
-                        "type": "Binary",
-                        "op": "+",
-                        "left": _identifier("sum"),
-                        "right": _index("A", _identifier("i")),
-                    },
-                )
-            ],
-        ),
-    ])
+    ast = _program(
+        [
+            _assign(2, _identifier("sum"), _literal(0)),
+            _for(
+                3,
+                "i",
+                [
+                    _assign(
+                        4,
+                        _identifier("sum"),
+                        {
+                            "type": "Binary",
+                            "op": "+",
+                            "left": _identifier("sum"),
+                            "right": _index("A", _identifier("i")),
+                        },
+                    )
+                ],
+            ),
+        ]
+    )
 
     result = generate_loop_invariant(ast, locale="es")
     features = result["evidence"]["detectedFeatures"]

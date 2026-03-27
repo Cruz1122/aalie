@@ -7,6 +7,7 @@ Punto de entrada único para el flujo: trace -> classification -> view -> graph.
 Author: Plan Sistema Traza Estructural
 Version: 0.1.0
 """
+
 from typing import Any, Dict, Optional
 
 from .builder_factory import build_structured_trace, structured_view_to_graph

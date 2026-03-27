@@ -35,7 +35,10 @@ export function ExamplesHomeView() {
   const locale = useLocale() as ExampleLocale;
   const t = useTranslations("examples");
   const tGlobal = useTranslations();
-  const catalogItems = t.raw("catalogItems") as Record<string, LocalizedExampleCatalogItem>;
+  const catalogItems = t.raw("catalogItems") as Record<
+    string,
+    LocalizedExampleCatalogItem
+  >;
   const router = useRouter();
   const { finishNavigation } = useNavigation();
   const [query, setQuery] = useState("");
@@ -59,11 +62,17 @@ export function ExamplesHomeView() {
         const normalizedTags = copy.tags.map((tag) => tag.toLowerCase());
         const bilingualTitleEs = item.copy.es.title.toLowerCase();
         const bilingualSummaryEs = item.copy.es.summary.toLowerCase();
-        const bilingualTagsEs = item.copy.es.tags.map((tag) => tag.toLowerCase());
+        const bilingualTagsEs = item.copy.es.tags.map((tag) =>
+          tag.toLowerCase(),
+        );
         const bilingualTitleEn = item.copy.en.title.toLowerCase();
         const bilingualSummaryEn = item.copy.en.summary.toLowerCase();
-        const bilingualTagsEn = item.copy.en.tags.map((tag) => tag.toLowerCase());
-        const normalizedCategory = tGlobal(CATEGORY_LABEL_KEYS[item.category]).toLowerCase();
+        const bilingualTagsEn = item.copy.en.tags.map((tag) =>
+          tag.toLowerCase(),
+        );
+        const normalizedCategory = tGlobal(
+          CATEGORY_LABEL_KEYS[item.category],
+        ).toLowerCase();
 
         if (
           !normalizedTitle.includes(normalizedQuery) &&
@@ -94,7 +103,9 @@ export function ExamplesHomeView() {
         if (normalizedCategory.includes(normalizedQuery)) score += 15;
         if (normalizedTags.some((tag) => tag.startsWith(normalizedQuery))) {
           score += 25;
-        } else if (normalizedTags.some((tag) => tag.includes(normalizedQuery))) {
+        } else if (
+          normalizedTags.some((tag) => tag.includes(normalizedQuery))
+        ) {
           score += 12;
         }
         if (
@@ -111,11 +122,22 @@ export function ExamplesHomeView() {
 
         return { item, score };
       })
-      .filter((entry): entry is { item: (typeof enabled)[number]; score: number } => entry !== null)
+      .filter(
+        (entry): entry is { item: (typeof enabled)[number]; score: number } =>
+          entry !== null,
+      )
       .sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
-        const aTitle = getLocalizedExampleContent(a.item, catalogItems, locale).title;
-        const bTitle = getLocalizedExampleContent(b.item, catalogItems, locale).title;
+        const aTitle = getLocalizedExampleContent(
+          a.item,
+          catalogItems,
+          locale,
+        ).title;
+        const bTitle = getLocalizedExampleContent(
+          b.item,
+          catalogItems,
+          locale,
+        ).title;
         return aTitle.localeCompare(bTitle, locale);
       })
       .slice(0, 3)
@@ -134,7 +156,9 @@ export function ExamplesHomeView() {
         <section className="space-y-4">
           <div className="relative">
             <label className="glass-card flex items-center gap-3 rounded-2xl border border-white/10 px-4 py-3">
-              <span className="material-symbols-outlined text-slate-400">search</span>
+              <span className="material-symbols-outlined text-slate-400">
+                search
+              </span>
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
@@ -154,7 +178,11 @@ export function ExamplesHomeView() {
                 {topMatches.length > 0 ? (
                   <ul className="divide-y divide-white/10">
                     {topMatches.map((item) => {
-                      const copy = getLocalizedExampleContent(item, catalogItems, locale);
+                      const copy = getLocalizedExampleContent(
+                        item,
+                        catalogItems,
+                        locale,
+                      );
                       const recursive = isRecursiveCategory(item.category);
                       const kindLabel = t("kind.recursive");
                       const iterativeLabel = t("kind.iterative");
@@ -162,10 +190,14 @@ export function ExamplesHomeView() {
                         <li key={item.id}>
                           <button
                             type="button"
-                            onClick={() => handleSelectMatch(item.slug, item.category)}
+                            onClick={() =>
+                              handleSelectMatch(item.slug, item.category)
+                            }
                             className="w-full px-4 py-3 text-left transition-colors hover:bg-white/5"
                           >
-                            <div className="text-sm font-semibold text-white">{copy.title}</div>
+                            <div className="text-sm font-semibold text-white">
+                              {copy.title}
+                            </div>
                             <div className="mt-1 text-xs text-neutral-300">
                               {tGlobal(CATEGORY_LABEL_KEYS[item.category])}
                             </div>
@@ -180,8 +212,12 @@ export function ExamplesHomeView() {
                                 item.verifiedMethods.map((method) => (
                                   <span
                                     key={method}
-                                    title={tGlobal(getMethodTranslationKey(method))}
-                                    aria-label={tGlobal(getMethodTranslationKey(method))}
+                                    title={tGlobal(
+                                      getMethodTranslationKey(method),
+                                    )}
+                                    aria-label={tGlobal(
+                                      getMethodTranslationKey(method),
+                                    )}
                                     className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${METHOD_BADGE_CLASSNAMES[method]}`}
                                   >
                                     {method}
@@ -194,7 +230,9 @@ export function ExamplesHomeView() {
                     })}
                   </ul>
                 ) : (
-                  <div className="px-4 py-3 text-sm text-neutral-300">{t("emptyTitle")}</div>
+                  <div className="px-4 py-3 text-sm text-neutral-300">
+                    {t("emptyTitle")}
+                  </div>
                 )}
               </div>
             )}
@@ -202,9 +240,7 @@ export function ExamplesHomeView() {
         </section>
 
         <section>
-          <ExamplesTypeSelector
-            ctaLabel={t("viewFamily")}
-          />
+          <ExamplesTypeSelector ctaLabel={t("viewFamily")} />
         </section>
       </main>
       <Footer />

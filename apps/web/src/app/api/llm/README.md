@@ -57,8 +57,7 @@
 ### Fallback por defecto
 
 ```ts
-export const DEFAULT_GEMINI_ENDPOINT_BASE =
-  "https://generativelanguage.googleapis.com/v1beta/models";
+export const DEFAULT_GEMINI_ENDPOINT_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
 export const DEFAULT_GEMINI_MODELS = {
   parser_assist: "gemini-2.5-flash",
@@ -72,6 +71,7 @@ export const DEFAULT_GEMINI_DIAGRAM_MODELS = {
   generate_diagram: "gemini-3-flash-preview",
 } as const;
 ```
+
 - El frontend puede mostrar siempre el modelo real activo por job leyendo sólo de aquí.
 
 ### ¿Cómo agregar o modificar un job/modelo?

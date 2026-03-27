@@ -41,7 +41,11 @@ function inferComplexityKind(complexity: string): ComplexityKind {
   if (/\^n\)?$/.test(normalized) || /\([0-9.]+\^n\)/.test(normalized)) {
     return "exponential";
   }
-  if (normalized.includes("nlogn") || normalized.includes("n*log") || normalized.includes("n\log")) {
+  if (
+    normalized.includes("nlogn") ||
+    normalized.includes("n*log") ||
+    normalized.includes("n\log")
+  ) {
     return "linearithmic";
   }
   if (normalized.includes("log(n)") || normalized.includes("logn")) {
@@ -85,7 +89,12 @@ function inferDPApplicabilityLevel(
 }
 
 function inferDPPatternKind(
-  backendPattern: "tabulation" | "memoization" | "rolling_window" | "none" | undefined,
+  backendPattern:
+    | "tabulation"
+    | "memoization"
+    | "rolling_window"
+    | "none"
+    | undefined,
   code: string,
   optimizedSpaceComplexity?: string,
 ): DPPatternKind {
@@ -122,8 +131,14 @@ interface DPVersionModalProps {
           status: "clear" | "doubtful" | "rejected";
           applicable: boolean;
           confidence: "high" | "medium" | "low";
-          primary_pattern: "tabulation" | "memoization" | "rolling_window" | "none";
-          supported_patterns: Array<"tabulation" | "memoization" | "rolling_window">;
+          primary_pattern:
+            | "tabulation"
+            | "memoization"
+            | "rolling_window"
+            | "none";
+          supported_patterns: Array<
+            "tabulation" | "memoization" | "rolling_window"
+          >;
           reasons: string[];
         };
         dp_version?: {
@@ -182,7 +197,10 @@ export default function DPVersionModal({
   );
   const alternativePatterns =
     characteristicEquation.dp_validation?.supported_patterns
-      ?.filter((pattern) => pattern !== characteristicEquation.dp_validation?.primary_pattern)
+      ?.filter(
+        (pattern) =>
+          pattern !== characteristicEquation.dp_validation?.primary_pattern,
+      )
       .map(mapBackendPatternToUI) ?? [];
 
   return (
@@ -194,185 +212,196 @@ export default function DPVersionModal({
       closeAriaLabel={t("closeModal")}
       sizeClassName={MODAL_SIZE}
     >
-          <div className="space-y-4">
-            <div
-              className={`p-4 rounded-xl border ${dpApplicability === "clear" ? "bg-green-500/10 border-green-500/30" : "bg-amber-500/10 border-amber-500/30"}`}
+      <div className="space-y-4">
+        <div
+          className={`p-4 rounded-xl border ${dpApplicability === "clear" ? "bg-green-500/10 border-green-500/30" : "bg-amber-500/10 border-amber-500/30"}`}
+        >
+          <h4 className="text-white font-semibold mb-2 text-sm flex items-center gap-2">
+            <span
+              className={`material-symbols-outlined text-lg ${dpApplicability === "clear" ? "text-green-400" : "text-amber-400"}`}
             >
-              <h4 className="text-white font-semibold mb-2 text-sm flex items-center gap-2">
-                <span
-                  className={`material-symbols-outlined text-lg ${dpApplicability === "clear" ? "text-green-400" : "text-amber-400"}`}
-                >
-                  {dpApplicability === "clear" ? "check_circle" : "help"}
-                </span>
-                {t("applicabilityTitle")}
-              </h4>
-              <p className="text-slate-200 text-xs">
-                {dpApplicability === "clear"
-                  ? t("applicability.clear")
-                  : t("applicability.doubtful")}
+              {dpApplicability === "clear" ? "check_circle" : "help"}
+            </span>
+            {t("applicabilityTitle")}
+          </h4>
+          <p className="text-slate-200 text-xs">
+            {dpApplicability === "clear"
+              ? t("applicability.clear")
+              : t("applicability.doubtful")}
+          </p>
+          <p className="text-slate-300 text-xs mt-2">
+            {t("patternUsed", { pattern: t(`patternType.${dpPattern}`) })}
+          </p>
+          <p className="text-slate-400 text-xs mt-1">
+            {t(`patternExplanation.${dpPattern}`)}
+          </p>
+          {alternativePatterns.length > 0 && (
+            <div className="mt-3">
+              <p className="text-slate-400 text-[11px] mb-1">
+                {t("supportedPatterns")}
               </p>
-              <p className="text-slate-300 text-xs mt-2">
-                {t("patternUsed", { pattern: t(`patternType.${dpPattern}`) })}
-              </p>
-              <p className="text-slate-400 text-xs mt-1">
-                {t(`patternExplanation.${dpPattern}`)}
-              </p>
-              {alternativePatterns.length > 0 && (
-                <div className="mt-3">
-                  <p className="text-slate-400 text-[11px] mb-1">{t("supportedPatterns")}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {alternativePatterns.map((pattern) => (
-                      <span
-                        key={pattern}
-                        className="inline-flex items-center rounded-full border border-slate-500/30 bg-slate-500/10 px-2 py-0.5 text-[11px] text-slate-200"
-                      >
-                        {t(`patternType.${pattern}`)}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {characteristicEquation.dp_validation?.reasons?.[0] && (
-                <p className="text-slate-300 text-xs mt-2">
-                  {translateBackendContent(
-                    characteristicEquation.dp_validation.reasons[0],
-                    locale as "en" | "es",
-                  )}
-                </p>
-              )}
-              {dpApplicability === "doubtful" && (
-                <p className="text-amber-200 text-xs mt-2">{t("doubtfulDisclaimer")}</p>
-              )}
-            </div>
-
-            {/* Comparación de Complejidades */}
-            <div className="p-4 rounded-xl glass-card border border-white/10">
-              <h4 className="text-white font-semibold mb-3 text-sm flex items-center gap-2">
-                <span className="material-symbols-outlined text-amber-400 text-lg">
-                  compare_arrows
-                </span>
-                {t("complexityComparison")}
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-                  <div className="text-red-300 font-semibold text-xs mb-2 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm">call_split</span>
-                    {t("recursiveVersion")}
-                  </div>
-                  <div className="text-red-200 mb-2 flex justify-center">
-                    <Formula latex={dpVersion.recursive_complexity} display />
-                  </div>
-                  <div className="text-slate-400 text-xs mt-1">
-                    {t("recursiveComplexityDetected", {
-                      type: t(`complexityType.${recursiveComplexityKind}`),
-                    })}
-                  </div>
-                </div>
-                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
-                  <div className="text-green-300 font-semibold text-xs mb-2 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm">memory</span>
-                    {t("dpVersion")}
-                  </div>
-                  <div className="text-green-200 mb-2 flex flex-col items-center gap-1">
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs text-slate-400">{t("time")}</span>
-                      <Formula latex={dpVersion.time_complexity} />
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs text-slate-400">{t("space")}</span>
-                      <Formula latex={dpVersion.space_complexity} />
-                    </div>
-                  </div>
-                </div>
+              <div className="flex flex-wrap gap-2">
+                {alternativePatterns.map((pattern) => (
+                  <span
+                    key={pattern}
+                    className="inline-flex items-center rounded-full border border-slate-500/30 bg-slate-500/10 px-2 py-0.5 text-[11px] text-slate-200"
+                  >
+                    {t(`patternType.${pattern}`)}
+                  </span>
+                ))}
               </div>
             </div>
+          )}
+          {characteristicEquation.dp_validation?.reasons?.[0] && (
+            <p className="text-slate-300 text-xs mt-2">
+              {translateBackendContent(
+                characteristicEquation.dp_validation.reasons[0],
+                locale as "en" | "es",
+              )}
+            </p>
+          )}
+          {dpApplicability === "doubtful" && (
+            <p className="text-amber-200 text-xs mt-2">
+              {t("doubtfulDisclaimer")}
+            </p>
+          )}
+        </div>
 
-            {/* Código Pseudocódigo */}
-            <div className="p-4 rounded-xl glass-card border border-white/10">
-              <h4 className="text-white font-semibold mb-3 text-sm flex items-center gap-2">
-                <span className="material-symbols-outlined text-cyan-400 text-lg">
-                  code
+        {/* Comparación de Complejidades */}
+        <div className="p-4 rounded-xl glass-card border border-white/10">
+          <h4 className="text-white font-semibold mb-3 text-sm flex items-center gap-2">
+            <span className="material-symbols-outlined text-amber-400 text-lg">
+              compare_arrows
+            </span>
+            {t("complexityComparison")}
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+              <div className="text-red-300 font-semibold text-xs mb-2 flex items-center gap-2">
+                <span className="material-symbols-outlined text-sm">
+                  call_split
                 </span>
-                {t("pseudocodeTitle")}
-              </h4>
-              <div className="bg-slate-900/80 p-3 rounded border border-white/10">
-                <pre className="text-slate-200 text-xs font-mono whitespace-pre-wrap overflow-x-auto">
-                  {translatedCode}
-                </pre>
+                {t("recursiveVersion")}
               </div>
-              <div className="mt-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                <p className="text-slate-300 text-xs leading-relaxed">
-                  <strong className="text-blue-300">{t("mainChanges")}</strong>{" "}
-                  {t("mainChangesText")}
-                </p>
+              <div className="text-red-200 mb-2 flex justify-center">
+                <Formula latex={dpVersion.recursive_complexity} display />
+              </div>
+              <div className="text-slate-400 text-xs mt-1">
+                {t("recursiveComplexityDetected", {
+                  type: t(`complexityType.${recursiveComplexityKind}`),
+                })}
               </div>
             </div>
-
-            {/* Explicación de Equivalencia */}
-            <div className="p-4 rounded-xl glass-card bg-blue-500/10 border border-blue-500/30">
-              <h4 className="text-blue-300 font-semibold mb-2 text-sm flex items-center gap-2">
-                <span className="material-symbols-outlined text-lg">functions</span>
-                {t("mathEquivalence")}
-              </h4>
-              <p className="text-slate-300 text-xs leading-relaxed">
-                {localeCode === "en" &&
-                characteristicEquation.dp_equivalence?.replace(/\s+/g, " ").trim() ===
-                  DP_EQUIVALENCE_ES
-                  ? t("dpEquivalenceDefault")
-                  : characteristicEquation.dp_equivalence}
-              </p>
-            </div>
-
-            {/* Ventajas de DP */}
-            <div className="p-4 rounded-xl glass-card bg-green-500/10 border border-green-500/30">
-              <h4 className="text-green-300 font-semibold mb-2 text-sm flex items-center gap-2">
-                <span className="material-symbols-outlined text-lg">check_circle</span>
-                {t("dpAdvantages")}
-              </h4>
-              <ul className="space-y-1.5 text-slate-300 text-xs">
-                <li className="flex items-start gap-2">
-                  <span className="material-symbols-outlined text-green-400 text-sm">
-                    check_circle
-                  </span>
-                  <span>
-                    {hasTimeImprovement
-                      ? t("improvedTime", {
-                          recursive: recursiveComplexity,
-                          dp: dpTimeComplexity,
-                        })
-                      : t("sameTime", {
-                          complexity: dpTimeComplexity,
-                        })}
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="material-symbols-outlined text-green-400 text-sm">
-                    check_circle
-                  </span>
-                  <span>{t("noRecalc")}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="material-symbols-outlined text-green-400 text-sm">
-                    check_circle
-                  </span>
-                  <span>{t("bottomUp")}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="material-symbols-outlined text-green-400 text-sm">
-                    check_circle
-                  </span>
-                  <span>
-                    {t("spaceOpt", {
-                      space:
-                        dpVersion.space_complexity === "O(n)"
-                          ? "O(1)"
-                          : dpVersion.space_complexity,
-                    })}
-                  </span>
-                </li>
-              </ul>
+            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+              <div className="text-green-300 font-semibold text-xs mb-2 flex items-center gap-2">
+                <span className="material-symbols-outlined text-sm">
+                  memory
+                </span>
+                {t("dpVersion")}
+              </div>
+              <div className="text-green-200 mb-2 flex flex-col items-center gap-1">
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-slate-400">{t("time")}</span>
+                  <Formula latex={dpVersion.time_complexity} />
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-slate-400">{t("space")}</span>
+                  <Formula latex={dpVersion.space_complexity} />
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* Código Pseudocódigo */}
+        <div className="p-4 rounded-xl glass-card border border-white/10">
+          <h4 className="text-white font-semibold mb-3 text-sm flex items-center gap-2">
+            <span className="material-symbols-outlined text-cyan-400 text-lg">
+              code
+            </span>
+            {t("pseudocodeTitle")}
+          </h4>
+          <div className="bg-slate-900/80 p-3 rounded border border-white/10">
+            <pre className="text-slate-200 text-xs font-mono whitespace-pre-wrap overflow-x-auto">
+              {translatedCode}
+            </pre>
+          </div>
+          <div className="mt-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+            <p className="text-slate-300 text-xs leading-relaxed">
+              <strong className="text-blue-300">{t("mainChanges")}</strong>{" "}
+              {t("mainChangesText")}
+            </p>
+          </div>
+        </div>
+
+        {/* Explicación de Equivalencia */}
+        <div className="p-4 rounded-xl glass-card bg-blue-500/10 border border-blue-500/30">
+          <h4 className="text-blue-300 font-semibold mb-2 text-sm flex items-center gap-2">
+            <span className="material-symbols-outlined text-lg">functions</span>
+            {t("mathEquivalence")}
+          </h4>
+          <p className="text-slate-300 text-xs leading-relaxed">
+            {localeCode === "en" &&
+            characteristicEquation.dp_equivalence
+              ?.replace(/\s+/g, " ")
+              .trim() === DP_EQUIVALENCE_ES
+              ? t("dpEquivalenceDefault")
+              : characteristicEquation.dp_equivalence}
+          </p>
+        </div>
+
+        {/* Ventajas de DP */}
+        <div className="p-4 rounded-xl glass-card bg-green-500/10 border border-green-500/30">
+          <h4 className="text-green-300 font-semibold mb-2 text-sm flex items-center gap-2">
+            <span className="material-symbols-outlined text-lg">
+              check_circle
+            </span>
+            {t("dpAdvantages")}
+          </h4>
+          <ul className="space-y-1.5 text-slate-300 text-xs">
+            <li className="flex items-start gap-2">
+              <span className="material-symbols-outlined text-green-400 text-sm">
+                check_circle
+              </span>
+              <span>
+                {hasTimeImprovement
+                  ? t("improvedTime", {
+                      recursive: recursiveComplexity,
+                      dp: dpTimeComplexity,
+                    })
+                  : t("sameTime", {
+                      complexity: dpTimeComplexity,
+                    })}
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="material-symbols-outlined text-green-400 text-sm">
+                check_circle
+              </span>
+              <span>{t("noRecalc")}</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="material-symbols-outlined text-green-400 text-sm">
+                check_circle
+              </span>
+              <span>{t("bottomUp")}</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="material-symbols-outlined text-green-400 text-sm">
+                check_circle
+              </span>
+              <span>
+                {t("spaceOpt", {
+                  space:
+                    dpVersion.space_complexity === "O(n)"
+                      ? "O(1)"
+                      : dpVersion.space_complexity,
+                })}
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
     </BaseModalContainer>
   );
 }

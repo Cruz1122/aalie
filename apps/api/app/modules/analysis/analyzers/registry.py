@@ -1,6 +1,7 @@
 """
 Registry de analizadores.
 """
+
 from .iterative import IterativeAnalyzer
 from .recursive import RecursiveAnalyzer
 
@@ -12,4 +13,3 @@ AnalyzerRegistry = {
 }
 
 __all__ = ["AnalyzerRegistry"]
-

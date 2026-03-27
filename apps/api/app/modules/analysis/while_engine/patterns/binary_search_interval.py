@@ -4,6 +4,7 @@ Patrón: binary search iterativo por reducción de intervalo.
 Author: @Cruz1122
 Version: 0.1.0
 """
+
 from typing import Any, Dict
 
 from .base import IterationBoundResult, TerminationResult, WhilePattern

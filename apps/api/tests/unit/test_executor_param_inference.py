@@ -1,6 +1,7 @@
 """
 Tests de inferencia de parámetros para ejecución recursiva.
 """
+
 import pytest
 
 from app.modules.execution.executor import CodeExecutor

@@ -4,6 +4,7 @@ Verifica que levels, height, theta y etiquetas sean correctos según el tipo de 
 
 Author: @Cruz1122
 """
+
 from app.modules.analysis.service import analyze_algorithm
 
 MERGE_SORT = """mergeSort(A, izq, der) BEGIN
@@ -68,7 +69,9 @@ class TestRecursionTreeStructure:
 
     def test_merge_sort_tree_levels_and_labels(self):
         """Merge sort (divide-and-conquer): levels con 2^i nodos, subproblem n/2^i, theta Θ(n log n)."""
-        result = analyze_algorithm(MERGE_SORT, mode="worst", preferred_method="recursion_tree")
+        result = analyze_algorithm(
+            MERGE_SORT, mode="worst", preferred_method="recursion_tree"
+        )
         assert result.get("ok"), f"Análisis falló: {result.get('errors', [])}"
         totals = result.get("totals", {})
         recursion_tree = totals.get("recursion_tree", {})
@@ -82,13 +85,17 @@ class TestRecursionTreeStructure:
         # Nivel 1: 2 nodos, tamaño n/2
         assert "2" in levels[1].get("num_nodes_latex", "")
         assert "n/2" in levels[1].get("subproblem_size_latex", "").replace(" ", "")
-        assert "log" in recursion_tree.get("height", "").lower() or "2" in recursion_tree.get("height", "")
+        assert "log" in recursion_tree.get(
+            "height", ""
+        ).lower() or "2" in recursion_tree.get("height", "")
         theta = recursion_tree.get("theta", "")
         assert "n" in theta and ("log" in theta.lower() or "\\log" in theta)
 
     def test_merge_sort_tree_has_required_fields(self):
         """Merge sort: verificar presencia de num_nodes_latex, subproblem_size_latex, cost_per_node_latex, total_cost_latex."""
-        result = analyze_algorithm(MERGE_SORT, mode="worst", preferred_method="recursion_tree")
+        result = analyze_algorithm(
+            MERGE_SORT, mode="worst", preferred_method="recursion_tree"
+        )
         assert result.get("ok")
         recursion_tree = result.get("totals", {}).get("recursion_tree", {})
         levels = recursion_tree.get("levels", [])
@@ -100,7 +107,9 @@ class TestRecursionTreeStructure:
 
     def test_binary_search_tree_structure(self):
         """Búsqueda binaria (divide-and-conquer a=1): 1 nodo por nivel, theta Θ(log n)."""
-        result = analyze_algorithm(BINARY_SEARCH_REC, mode="worst", preferred_method="recursion_tree")
+        result = analyze_algorithm(
+            BINARY_SEARCH_REC, mode="worst", preferred_method="recursion_tree"
+        )
         assert result.get("ok"), f"Análisis falló: {result.get('errors', [])}"
         totals = result.get("totals", {})
         totals.get("recurrence", {})
@@ -116,13 +125,15 @@ class TestRecursionTreeStructure:
         result = analyze_algorithm(FIBONACCI_REC, mode="worst")
         assert result.get("ok"), f"Análisis falló: {result.get('errors', [])}"
         recurrence = result.get("totals", {}).get("recurrence", {})
-        assert recurrence.get("type") == "linear_shift", (
-            f"Fibonacci debe ser linear_shift, obtuvo {recurrence.get('type')}"
-        )
+        assert (
+            recurrence.get("type") == "linear_shift"
+        ), f"Fibonacci debe ser linear_shift, obtuvo {recurrence.get('type')}"
 
     def test_fibonacci_recursion_tree_preferred_correct_structure(self):
         """Fibonacci con preferred_method=recursion_tree: no debe usar estructura divide-and-conquer incorrecta."""
-        result = analyze_algorithm(FIBONACCI_REC, mode="worst", preferred_method="recursion_tree")
+        result = analyze_algorithm(
+            FIBONACCI_REC, mode="worst", preferred_method="recursion_tree"
+        )
         assert result.get("ok"), f"Análisis falló: {result.get('errors', [])}"
         totals = result.get("totals", {})
         recursion_tree = totals.get("recursion_tree", {})
@@ -131,13 +142,15 @@ class TestRecursionTreeStructure:
         assert recursion_tree.get("recurrence_type") == "linear_shift"
         theta = recursion_tree.get("theta", "")
         # Fibonacci es Θ(φ^n), no Θ(n log n)
-        assert "n" not in theta or "log" not in theta.lower(), (
-            f"Fibonacci no debe dar Θ(n log n), obtuvo theta={theta}"
-        )
+        assert (
+            "n" not in theta or "log" not in theta.lower()
+        ), f"Fibonacci no debe dar Θ(n log n), obtuvo theta={theta}"
 
     def test_quicksort_worst_tree_structure(self):
         """Quicksort peor caso (linear_shift): 1 nodo por nivel, theta Θ(n²)."""
-        result = analyze_algorithm(QUICK_SORT_WORST, mode="worst", preferred_method="recursion_tree")
+        result = analyze_algorithm(
+            QUICK_SORT_WORST, mode="worst", preferred_method="recursion_tree"
+        )
         assert result.get("ok"), f"Análisis falló: {result.get('errors', [])}"
         totals = result.get("totals", {})
         recursion_tree = totals.get("recursion_tree", {})

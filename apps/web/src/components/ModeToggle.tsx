@@ -25,10 +25,12 @@ export default function ModeToggle({
           style={{
             left: 4,
             transform: mode === "manual" ? "translateX(100%)" : "translateX(0)",
-            backgroundColor: mode === "ai" ? "rgb(126 34 206 / 0.2)" : "rgb(59 130 246 / 0.2)",
+            backgroundColor:
+              mode === "ai" ? "rgb(126 34 206 / 0.2)" : "rgb(59 130 246 / 0.2)",
             borderWidth: 1,
             borderStyle: "solid",
-            borderColor: mode === "ai" ? "rgb(126 34 206 / 0.3)" : "rgb(59 130 246 / 0.3)",
+            borderColor:
+              mode === "ai" ? "rgb(126 34 206 / 0.3)" : "rgb(59 130 246 / 0.3)",
           }}
           aria-hidden
         />
@@ -40,7 +42,9 @@ export default function ModeToggle({
           disabled={isSwitching}
         >
           <AALIEIcon className="text-base flex-shrink-0" size={24} />
-          <span className={`truncate max-w-[70px] sm:max-w-none ${mode === "ai" ? "text-white" : "text-slate-400 hover:text-slate-200"}`}>
+          <span
+            className={`truncate max-w-[70px] sm:max-w-none ${mode === "ai" ? "text-white" : "text-slate-400 hover:text-slate-200"}`}
+          >
             {t("modeAI")}
           </span>
         </button>
@@ -51,8 +55,12 @@ export default function ModeToggle({
           style={{ color: mode === "manual" ? "white" : undefined }}
           disabled={isSwitching}
         >
-          <span className="material-symbols-outlined text-base flex-shrink-0">terminal</span>
-          <span className={`whitespace-nowrap ${mode === "manual" ? "text-white" : "text-slate-400 hover:text-slate-200"}`}>
+          <span className="material-symbols-outlined text-base flex-shrink-0">
+            terminal
+          </span>
+          <span
+            className={`whitespace-nowrap ${mode === "manual" ? "text-white" : "text-slate-400 hover:text-slate-200"}`}
+          >
             {t("modeManual")}
           </span>
         </button>

@@ -113,7 +113,12 @@ export interface RecursionCallTree {
 /** Diagnósticos de la traza (truncamiento, advertencias). */
 export interface TraceDiagnostics {
   truncated: boolean;
-  truncationReason?: "max_depth" | "max_steps" | "max_nodes" | "timeout" | "unsupported_pattern";
+  truncationReason?:
+    | "max_depth"
+    | "max_steps"
+    | "max_nodes"
+    | "timeout"
+    | "unsupported_pattern";
   warnings: string[];
 }
 
@@ -170,7 +175,10 @@ export interface StructuredTrace {
 /** Artefactos derivados de la traza. */
 export interface TraceDerived {
   structuredTrace?: StructuredTrace;
-  explanation?: { summary?: string; blocks?: Array<{ stepId?: string; text: string; kind?: string }> };
+  explanation?: {
+    summary?: string;
+    blocks?: Array<{ stepId?: string; text: string; kind?: string }>;
+  };
 }
 
 export interface TraceApiResponse {
@@ -211,4 +219,3 @@ export interface TraceGraph {
   nodes: GraphNode[];
   edges: GraphEdge[];
 }
-

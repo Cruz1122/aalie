@@ -7,6 +7,7 @@ para identificar variables de control, límites y demás roles sin heurísticas 
 Author: @Cruz1122
 Version: 0.1.0
 """
+
 from .scope_resolver import ScopeResolver, resolve_scope
 from .symbol_table import SymbolInfo, SymbolTable
 from .type_inference import infer_type

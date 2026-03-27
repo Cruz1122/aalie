@@ -450,7 +450,9 @@ END
         ),
     ],
 )
-def test_loop_invariant_representative_cases(name, source, expected_patterns, expected_node_type):
+def test_loop_invariant_representative_cases(
+    name, source, expected_patterns, expected_node_type
+):
     data = _analyze(source, mode="all", locale="en")
 
     assert data["ok"] is True, name

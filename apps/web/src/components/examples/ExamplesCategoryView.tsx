@@ -39,11 +39,16 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
   const locale = useLocale() as ExampleLocale;
   const t = useTranslations("examples");
   const tGlobal = useTranslations();
-  const catalogItems = t.raw("catalogItems") as Record<string, LocalizedExampleCatalogItem>;
+  const catalogItems = t.raw("catalogItems") as Record<
+    string,
+    LocalizedExampleCatalogItem
+  >;
   const searchParams = useSearchParams();
   const { finishNavigation } = useNavigation();
   const [query, setQuery] = useState("");
-  const [selectedMethods, setSelectedMethods] = useState<RecursiveMethodBadge[]>([]);
+  const [selectedMethods, setSelectedMethods] = useState<
+    RecursiveMethodBadge[]
+  >([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [analyzingExampleId, setAnalyzingExampleId] = useState<string | null>(
     null,
@@ -68,7 +73,11 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
     const searched = !normalized
       ? categoryItems
       : categoryItems.filter((item) => {
-          const localized = getLocalizedExampleContent(item, catalogItems, locale);
+          const localized = getLocalizedExampleContent(
+            item,
+            catalogItems,
+            locale,
+          );
           const haystack = [
             localized.title,
             localized.summary,
@@ -94,11 +103,20 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
     return recursiveCategory
       ? filterByMethods(sorted, selectedMethods)
       : sorted;
-  }, [catalogItems, category, locale, query, recursiveCategory, selectedMethods, tGlobal]);
+  }, [
+    catalogItems,
+    category,
+    locale,
+    query,
+    recursiveCategory,
+    selectedMethods,
+    tGlobal,
+  ]);
 
   const selectedExampleId =
     selectedSlug != null
-      ? visibleExamples.find((example) => example.slug === selectedSlug)?.id ?? null
+      ? (visibleExamples.find((example) => example.slug === selectedSlug)?.id ??
+        null)
       : null;
 
   useEffect(() => {
@@ -144,8 +162,14 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
               onChange={setQuery}
               placeholder={t("searchPlaceholder")}
               ariaLabel={t("searchAriaLabel")}
-              filtersButtonAriaLabel={recursiveCategory ? t("filtersTitle") : undefined}
-              onToggleFilters={recursiveCategory ? () => setFiltersOpen((prev) => !prev) : undefined}
+              filtersButtonAriaLabel={
+                recursiveCategory ? t("filtersTitle") : undefined
+              }
+              onToggleFilters={
+                recursiveCategory
+                  ? () => setFiltersOpen((prev) => !prev)
+                  : undefined
+              }
               filtersActive={recursiveCategory ? filtersOpen : false}
               filtersDropdown={
                 recursiveCategory ? (

@@ -6,6 +6,7 @@ Flujo lineal con nodos por paso/iteración.
 Author: Plan Sistema Traza Estructural
 Version: 0.1.0
 """
+
 from typing import Any, Dict, List, Optional
 
 from ..structural_trace_classifier import StructuralTraceClassification
@@ -43,13 +44,21 @@ def _step_to_label(step: Dict[str, Any]) -> str:
         return f"FOR {loop_var} = {val}"
     if kind == "loop_iter_enter":
         loop_var = it.get("loopVar", "iter")
-        val = it.get("currentValue") if it.get("currentValue") is not None else it.get("iteration", "?")
+        val = (
+            it.get("currentValue")
+            if it.get("currentValue") is not None
+            else it.get("iteration", "?")
+        )
         if step_kind == "for":
             return f"FOR {loop_var} = {val}"
         return f"{loop_var} = {val}"
     if kind == "loop_iter_exit":
         loop_var = it.get("loopVar", "iter")
-        val = it.get("currentValue") if it.get("currentValue") is not None else it.get("iteration", "?")
+        val = (
+            it.get("currentValue")
+            if it.get("currentValue") is not None
+            else it.get("iteration", "?")
+        )
         return f"Fin iter {loop_var}={val}"
     if kind == "loop_exit":
         exit_cond = it.get("exitCondition")
@@ -186,7 +195,9 @@ def build_generic_iterative(
         if event_kind == "loop_iter_enter":
             if loop_stack:
                 loop_stack[-1]["iter_index"] += 1
-            path = _iteration_path() or str(step.get("iteration", {}).get("iteration", "?"))
+            path = _iteration_path() or str(
+                step.get("iteration", {}).get("iteration", "?")
+            )
             iter_suffix = path.replace(".", "_")
             node_id = f"iter_{iter_suffix}_{step_num}"
             label = _step_to_label(step)
@@ -202,9 +213,17 @@ def build_generic_iterative(
                 "microseconds": 0,
                 "iterationPath": path,
                 "loopVar": it.get("loopVar", "iter"),
-                "loopValue": it.get("currentValue") if it.get("currentValue") is not None else it.get("iteration"),
+                "loopValue": (
+                    it.get("currentValue")
+                    if it.get("currentValue") is not None
+                    else it.get("iteration")
+                ),
                 "nodeType": "iteration",
-                "last_vars": step.get("variables") if isinstance(step.get("variables"), dict) else None,
+                "last_vars": (
+                    step.get("variables")
+                    if isinstance(step.get("variables"), dict)
+                    else None
+                ),
             }
             if active_iterations:
                 active_iterations[-1] = data
@@ -249,7 +268,9 @@ def build_generic_iterative(
         if event_kind == "loop_iter_exit":
             _add_costs(step)
             _update_vars(step)
-            path = _iteration_path() or str(step.get("iteration", {}).get("iteration", "?"))
+            path = _iteration_path() or str(
+                step.get("iteration", {}).get("iteration", "?")
+            )
             iter_suffix = path.replace(".", "_")
             node_id = f"iter_end_{iter_suffix}_{step_num}"
             label = _step_to_label(step)

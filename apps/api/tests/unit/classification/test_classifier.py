@@ -3,6 +3,7 @@ Tests unitarios para app.modules.classification.classifier.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
+
 from app.modules.classification.classifier import (
     _find_node_type,
     _find_procedure_definition,
@@ -24,11 +25,9 @@ class TestDetectAlgorithmKind:
                 {
                     "type": "ProcDef",
                     "name": "test",
-                    "body": [
-                        {"type": "For", "variable": "i", "start": 1, "end": 10}
-                    ]
+                    "body": [{"type": "For", "variable": "i", "start": 1, "end": 10}],
                 }
-            ]
+            ],
         }
         result = detect_algorithm_kind(ast)
         assert result == "iterative"
@@ -43,15 +42,10 @@ class TestDetectAlgorithmKind:
                     "name": "factorial",
                     "body": {
                         "type": "Block",
-                        "body": [
-                            {
-                                "type": "Call",
-                                "name": "factorial"
-                            }
-                        ]
-                    }
+                        "body": [{"type": "Call", "name": "factorial"}],
+                    },
                 }
-            ]
+            ],
         }
         result = detect_algorithm_kind(ast)
         assert result == "recursive"
@@ -68,14 +62,11 @@ class TestDetectAlgorithmKind:
                         "type": "Block",
                         "body": [
                             {"type": "For", "variable": "i"},
-                            {
-                                "type": "Call",
-                                "name": "hybrid"
-                            }
-                        ]
-                    }
+                            {"type": "Call", "name": "hybrid"},
+                        ],
+                    },
                 }
-            ]
+            ],
         }
         result = detect_algorithm_kind(ast)
         assert result == "hybrid"
@@ -88,21 +79,16 @@ class TestDetectAlgorithmKind:
                 {
                     "type": "ProcDef",
                     "name": "simple",
-                    "body": [
-                        {"type": "Assign", "variable": "x", "value": 1}
-                    ]
+                    "body": [{"type": "Assign", "variable": "x", "value": 1}],
                 }
-            ]
+            ],
         }
         result = detect_algorithm_kind(ast)
         assert result == "unknown"
 
     def test_no_procedure_definition(self):
         """Test: Maneja AST sin definición de procedimiento"""
-        ast = {
-            "type": "Program",
-            "body": []
-        }
+        ast = {"type": "Program", "body": []}
         result = detect_algorithm_kind(ast)
         assert result == "unknown"
 
@@ -142,15 +128,10 @@ class TestHasIterativeConstructs:
                 {
                     "type": "ProcDef",
                     "body": [
-                        {
-                            "type": "If",
-                            "then": [
-                                {"type": "For", "variable": "i"}
-                            ]
-                        }
-                    ]
+                        {"type": "If", "then": [{"type": "For", "variable": "i"}]}
+                    ],
                 }
-            ]
+            ],
         }
         result = _has_iterative_constructs(ast)
         assert result
@@ -169,22 +150,14 @@ class TestFindNodeType:
         """Test: Encuentra nodo en estructura anidada"""
         node = {
             "type": "Program",
-            "body": [
-                {"type": "ProcDef", "body": [{"type": "For"}]}
-            ]
+            "body": [{"type": "ProcDef", "body": [{"type": "For"}]}],
         }
         result = _find_node_type(node, ["For"])
         assert result
 
     def test_finds_node_in_list(self):
         """Test: Encuentra nodo en lista"""
-        node = {
-            "type": "Program",
-            "body": [
-                {"type": "While"},
-                {"type": "Assign"}
-            ]
-        }
+        node = {"type": "Program", "body": [{"type": "While"}, {"type": "Assign"}]}
         result = _find_node_type(node, ["While"])
         assert result
 
@@ -208,7 +181,7 @@ class TestFindNodeType:
         node = {
             "type": "Program",
             "pos": {"line": 1, "column": 1},
-            "body": [{"type": "For"}]
+            "body": [{"type": "For"}],
         }
         result = _find_node_type(node, ["For"])
         assert result
@@ -221,13 +194,7 @@ class TestFindProcedureDefinition:
         """Test: Encuentra definición de procedimiento"""
         ast = {
             "type": "Program",
-            "body": [
-                {
-                    "type": "ProcDef",
-                    "name": "test",
-                    "body": []
-                }
-            ]
+            "body": [{"type": "ProcDef", "name": "test", "body": []}],
         }
         result = _find_procedure_definition(ast)
         assert result is not None
@@ -236,30 +203,19 @@ class TestFindProcedureDefinition:
 
     def test_no_procedure_definition(self):
         """Test: No encuentra definición de procedimiento"""
-        ast = {
-            "type": "Program",
-            "body": [
-                {"type": "Assign", "variable": "x"}
-            ]
-        }
+        ast = {"type": "Program", "body": [{"type": "Assign", "variable": "x"}]}
         result = _find_procedure_definition(ast)
         assert result is None
 
     def test_empty_body(self):
         """Test: Maneja body vacío"""
-        ast = {
-            "type": "Program",
-            "body": []
-        }
+        ast = {"type": "Program", "body": []}
         result = _find_procedure_definition(ast)
         assert result is None
 
     def test_non_list_body(self):
         """Test: Maneja body que no es lista"""
-        ast = {
-            "type": "Program",
-            "body": "not a list"
-        }
+        ast = {"type": "Program", "body": "not a list"}
         result = _find_procedure_definition(ast)
         assert result is None
 
@@ -272,15 +228,7 @@ class TestHasRecursiveCalls:
         proc_def = {
             "type": "ProcDef",
             "name": "factorial",
-            "body": {
-                "type": "Block",
-                "body": [
-                    {
-                        "type": "Call",
-                        "name": "factorial"
-                    }
-                ]
-            }
+            "body": {"type": "Block", "body": [{"type": "Call", "name": "factorial"}]},
         }
         result = _has_recursive_calls(proc_def, "factorial")
         assert result
@@ -290,15 +238,7 @@ class TestHasRecursiveCalls:
         proc_def = {
             "type": "ProcDef",
             "name": "factorial",
-            "block": {
-                "type": "Block",
-                "body": [
-                    {
-                        "type": "Call",
-                        "name": "factorial"
-                    }
-                ]
-            }
+            "block": {"type": "Block", "body": [{"type": "Call", "name": "factorial"}]},
         }
         result = _has_recursive_calls(proc_def, "factorial")
         assert result
@@ -310,13 +250,8 @@ class TestHasRecursiveCalls:
             "name": "factorial",
             "statements": {
                 "type": "Block",
-                "body": [
-                    {
-                        "type": "Call",
-                        "name": "factorial"
-                    }
-                ]
-            }
+                "body": [{"type": "Call", "name": "factorial"}],
+            },
         }
         result = _has_recursive_calls(proc_def, "factorial")
         assert result
@@ -328,13 +263,8 @@ class TestHasRecursiveCalls:
             "name": "factorial",
             "body": {
                 "type": "Block",
-                "body": [
-                    {
-                        "type": "Call",
-                        "name": "other_function"
-                    }
-                ]
-            }
+                "body": [{"type": "Call", "name": "other_function"}],
+            },
         }
         result = _has_recursive_calls(proc_def, "factorial")
         assert not result
@@ -344,15 +274,7 @@ class TestHasRecursiveCalls:
         proc_def = {
             "type": "ProcDef",
             "name": "Factorial",
-            "body": {
-                "type": "Block",
-                "body": [
-                    {
-                        "type": "Call",
-                        "name": "factorial"
-                    }
-                ]
-            }
+            "body": {"type": "Block", "body": [{"type": "Call", "name": "factorial"}]},
         }
         result = _has_recursive_calls(proc_def, "Factorial")
         assert result
@@ -363,62 +285,37 @@ class TestSearchRecursiveCalls:
 
     def test_finds_call_by_name(self):
         """Test: Encuentra llamada por campo name"""
-        node = {
-            "type": "Call",
-            "name": "factorial"
-        }
+        node = {"type": "Call", "name": "factorial"}
         result = _search_recursive_calls(node, "factorial")
         assert result
 
     def test_finds_call_by_callee(self):
         """Test: Encuentra llamada por campo callee"""
-        node = {
-            "type": "Call",
-            "callee": "factorial"
-        }
+        node = {"type": "Call", "callee": "factorial"}
         result = _search_recursive_calls(node, "factorial")
         assert result
 
     def test_finds_call_by_function(self):
         """Test: Encuentra llamada por campo function"""
-        node = {
-            "type": "Call",
-            "function": "factorial"
-        }
+        node = {"type": "Call", "function": "factorial"}
         result = _search_recursive_calls(node, "factorial")
         assert result
 
     def test_finds_call_by_target_name(self):
         """Test: Encuentra llamada por target.name"""
-        node = {
-            "type": "Call",
-            "target": {
-                "name": "factorial"
-            }
-        }
+        node = {"type": "Call", "target": {"name": "factorial"}}
         result = _search_recursive_calls(node, "factorial")
         assert result
 
     def test_finds_nested_call(self):
         """Test: Encuentra llamada anidada"""
-        node = {
-            "type": "If",
-            "then": [
-                {
-                    "type": "Call",
-                    "name": "factorial"
-                }
-            ]
-        }
+        node = {"type": "If", "then": [{"type": "Call", "name": "factorial"}]}
         result = _search_recursive_calls(node, "factorial")
         assert result
 
     def test_does_not_find_call(self):
         """Test: No encuentra llamada"""
-        node = {
-            "type": "Call",
-            "name": "other_function"
-        }
+        node = {"type": "Call", "name": "other_function"}
         result = _search_recursive_calls(node, "factorial")
         assert not result
 
@@ -434,13 +331,7 @@ class TestSearchRecursiveCalls:
         node = {
             "type": "Program",
             "pos": {"line": 1},
-            "body": [
-                {
-                    "type": "Call",
-                    "name": "factorial"
-                }
-            ]
+            "body": [{"type": "Call", "name": "factorial"}],
         }
         result = _search_recursive_calls(node, "factorial")
         assert result
-

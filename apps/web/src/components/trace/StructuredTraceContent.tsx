@@ -109,9 +109,12 @@ export default function StructuredTraceContent({
     if (inputSizeDebounceRef.current) {
       clearTimeout(inputSizeDebounceRef.current);
     }
-    inputSizeDebounceRef.current = setTimeout(() => {
-      setDebouncedInputSize(inputSize);
-    }, isIterative ? 500 : 800);
+    inputSizeDebounceRef.current = setTimeout(
+      () => {
+        setDebouncedInputSize(inputSize);
+      },
+      isIterative ? 500 : 800,
+    );
     return () => {
       if (inputSizeDebounceRef.current) {
         clearTimeout(inputSizeDebounceRef.current);
@@ -138,11 +141,25 @@ export default function StructuredTraceContent({
   );
 
   const paramNames = useMemo(() => {
-    if (!ast) return { all: [] as string[], array: [] as string[], scalar: [] as string[], length: [] as string[], editableScalar: [] as string[] };
+    if (!ast)
+      return {
+        all: [] as string[],
+        array: [] as string[],
+        scalar: [] as string[],
+        length: [] as string[],
+        editableScalar: [] as string[],
+      };
     const proc = ast.body.find(
       (node): node is ProcDef => node.type === "ProcDef",
     );
-    if (!proc) return { all: [] as string[], array: [] as string[], scalar: [] as string[], length: [] as string[], editableScalar: [] as string[] };
+    if (!proc)
+      return {
+        all: [] as string[],
+        array: [] as string[],
+        scalar: [] as string[],
+        length: [] as string[],
+        editableScalar: [] as string[],
+      };
 
     const all: string[] = [];
     const array: string[] = [];
@@ -158,7 +175,12 @@ export default function StructuredTraceContent({
       }
     });
     // n (o length, size) como longitud del array: no editable, se fija a len(A)
-    const lengthNames = array.length > 0 ? scalar.filter((s) => ["n", "length", "size", "len"].includes(s.toLowerCase())) : [];
+    const lengthNames =
+      array.length > 0
+        ? scalar.filter((s) =>
+            ["n", "length", "size", "len"].includes(s.toLowerCase()),
+          )
+        : [];
     const editableScalar = scalar.filter((s) => !lengthNames.includes(s));
     return { all, array, scalar, length: lengthNames, editableScalar };
   }, [ast]);
@@ -179,7 +201,10 @@ export default function StructuredTraceContent({
       return Object.keys(filtered).length > 0 ? filtered : vars;
     };
 
-    if (initialVariablesOverride && Object.keys(initialVariablesOverride).length > 0) {
+    if (
+      initialVariablesOverride &&
+      Object.keys(initialVariablesOverride).length > 0
+    ) {
       return filterByParams(initialVariablesOverride);
     }
     const firstStepVars =
@@ -213,7 +238,10 @@ export default function StructuredTraceContent({
   }, [initialVariablesForNote]);
 
   const recursiveInitialVariables = useMemo(() => {
-    if (initialVariablesOverride && Object.keys(initialVariablesOverride).length > 0) {
+    if (
+      initialVariablesOverride &&
+      Object.keys(initialVariablesOverride).length > 0
+    ) {
       return initialVariablesOverride;
     }
     if (!trace?.ok || !trace.trace) return undefined;
@@ -229,11 +257,15 @@ export default function StructuredTraceContent({
       return rootFromSteps.recursion.params as Record<string, unknown>;
     }
     const rootCallId = trace.trace.callTreeSource?.root_calls?.[0];
-    const rootCall = trace.trace.callTreeSource?.calls?.find((c) => c.id === rootCallId);
+    const rootCall = trace.trace.callTreeSource?.calls?.find(
+      (c) => c.id === rootCallId,
+    );
     if (rootCall?.params && Object.keys(rootCall.params).length > 0) {
       return rootCall.params as Record<string, unknown>;
     }
-    return (steps[0]?.variables as Record<string, unknown> | undefined) ?? undefined;
+    return (
+      (steps[0]?.variables as Record<string, unknown> | undefined) ?? undefined
+    );
   }, [trace, initialVariablesOverride]);
 
   const recursiveFinalVariables = useMemo(() => {
@@ -250,7 +282,11 @@ export default function StructuredTraceContent({
         return step.recursion.params as Record<string, unknown>;
       }
     }
-    return (steps[steps.length - 1]?.variables as Record<string, unknown> | undefined) ?? undefined;
+    return (
+      (steps[steps.length - 1]?.variables as
+        | Record<string, unknown>
+        | undefined) ?? undefined
+    );
   }, [trace]);
 
   useEffect(() => {
@@ -375,7 +411,8 @@ export default function StructuredTraceContent({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const message = errorData?.error || `HTTP error! status: ${response.status}`;
+        const message =
+          errorData?.error || `HTTP error! status: ${response.status}`;
         throw new Error(message);
       }
 
@@ -384,7 +421,8 @@ export default function StructuredTraceContent({
         throw new Error(result?.error || tMessages("unknownLlmError"));
       }
 
-      const content = result?.data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+      const content =
+        result?.data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
       const normalizedContent = String(content).trim();
       if (!normalizedContent) {
         throw new Error(tMessages("emptyLlmResponse"));
@@ -412,8 +450,7 @@ export default function StructuredTraceContent({
 
       setAiExplanationMd(normalizedContent);
     } catch (error) {
-      const rawMessage =
-        error instanceof Error ? error.message : String(error);
+      const rawMessage = error instanceof Error ? error.message : String(error);
       const translatedKey = translateLlmError(rawMessage);
       setExplainError(
         translatedKey === "unknownLlmError"
@@ -549,7 +586,9 @@ export default function StructuredTraceContent({
               <section className="rounded-xl border border-amber-500/20 bg-slate-900/40 p-3 shadow-sm">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-base">timeline</span>
+                    <span className="material-symbols-outlined text-base">
+                      timeline
+                    </span>
                     {t("stepByStepTrace")}
                   </h3>
                   {traceConfig.controls?.scenario && (
@@ -569,7 +608,9 @@ export default function StructuredTraceContent({
                     <StepControls
                       currentStep={currentStep}
                       totalSteps={stepsToUse.length}
-                      onPrevious={() => setCurrentStep(Math.max(0, currentStep - 1))}
+                      onPrevious={() =>
+                        setCurrentStep(Math.max(0, currentStep - 1))
+                      }
                       onNext={() =>
                         setCurrentStep(
                           Math.min(stepsToUse.length - 1, currentStep + 1),
@@ -599,7 +640,9 @@ export default function StructuredTraceContent({
               <section className="rounded-xl border border-slate-700/60 bg-slate-900/40 p-4 shadow-sm space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-base">tune</span>
+                    <span className="material-symbols-outlined text-base">
+                      tune
+                    </span>
                     {t("controlsAndVariables")}
                   </h3>
                 </div>
@@ -631,7 +674,10 @@ export default function StructuredTraceContent({
                       initialVariables={
                         isIterative
                           ? trace?.ok && trace.trace?.steps?.[0]?.variables
-                            ? (trace.trace.steps[0].variables as Record<string, unknown>)
+                            ? (trace.trace.steps[0].variables as Record<
+                                string,
+                                unknown
+                              >)
                             : undefined
                           : recursiveInitialVariables
                       }
@@ -647,9 +693,7 @@ export default function StructuredTraceContent({
                       }
                     />
                   </div>
-                  <div className="min-w-0">
-                    {renderExplanationPanel()}
-                  </div>
+                  <div className="min-w-0">{renderExplanationPanel()}</div>
                 </div>
 
                 <div>
@@ -662,7 +706,7 @@ export default function StructuredTraceContent({
                     onRegenerate={handleRegenerate}
                     onExpand={() => setIsDiagramExpanded(true)}
                     traceConfig={traceConfig}
-                  fetchCompleted={fetchCompleted}
+                    fetchCompleted={fetchCompleted}
                     frameStyle="border"
                   />
                 </div>
@@ -710,12 +754,8 @@ export default function StructuredTraceContent({
                   arrayParamNames={paramNames.array}
                   scalarParamNames={paramNames.editableScalar}
                   lengthParamNames={paramNames.length}
-                  initialVariables={
-                    recursiveInitialVariables
-                  }
-                  finalVariables={
-                    recursiveFinalVariables
-                  }
+                  initialVariables={recursiveInitialVariables}
+                  finalVariables={recursiveFinalVariables}
                 />
 
                 {renderExplanationPanel()}
@@ -768,7 +808,10 @@ export default function StructuredTraceContent({
                     initialVariables={
                       isIterative
                         ? trace?.ok && trace.trace?.steps?.[0]?.variables
-                          ? (trace.trace.steps[0].variables as Record<string, unknown>)
+                          ? (trace.trace.steps[0].variables as Record<
+                              string,
+                              unknown
+                            >)
                           : undefined
                         : recursiveInitialVariables
                     }
@@ -789,7 +832,9 @@ export default function StructuredTraceContent({
                       <StepControls
                         currentStep={currentStep}
                         totalSteps={stepsToUse.length}
-                        onPrevious={() => setCurrentStep(Math.max(0, currentStep - 1))}
+                        onPrevious={() =>
+                          setCurrentStep(Math.max(0, currentStep - 1))
+                        }
                         onNext={() =>
                           setCurrentStep(
                             Math.min(stepsToUse.length - 1, currentStep + 1),

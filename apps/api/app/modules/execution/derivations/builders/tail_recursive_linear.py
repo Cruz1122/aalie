@@ -6,6 +6,7 @@ Cadena lineal (una llamada al final).
 Author: Plan Sistema Traza Estructural
 Version: 0.1.0
 """
+
 from typing import Any, Dict
 
 from ..structural_trace_classifier import StructuralTraceClassification

@@ -8,7 +8,10 @@ interface RecursionTreeProcedureModalProps {
   open: boolean;
   onClose: () => void;
   recurrence: AnalyzeOpenResponse["totals"]["recurrence"] | null | undefined;
-  recursionTree: AnalyzeOpenResponse["totals"]["recursion_tree"] | null | undefined;
+  recursionTree:
+    | AnalyzeOpenResponse["totals"]["recursion_tree"]
+    | null
+    | undefined;
   theta: string | null | undefined;
 }
 

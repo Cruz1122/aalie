@@ -7,6 +7,7 @@ un structuredTrace que cumpla patternKind, minNodes, nodeLabelsContain, etc.
 Author: AALIE - Auditoría diagramas
 Version: 0.1.0
 """
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -35,41 +36,41 @@ def _assert_trace_matches_expectation(st: dict, expected: dict, name: str) -> No
     actual_pattern = st.get("patternKind", "")
 
     if pattern is not None:
-        assert actual_pattern == pattern, (
-            f"[{name}] Esperado patternKind {pattern!r}, obtenido {actual_pattern!r}"
-        )
+        assert (
+            actual_pattern == pattern
+        ), f"[{name}] Esperado patternKind {pattern!r}, obtenido {actual_pattern!r}"
     elif alternatives:
-        assert actual_pattern in alternatives, (
-            f"[{name}] Esperado patternKind en {alternatives!r}, obtenido {actual_pattern!r}"
-        )
+        assert (
+            actual_pattern in alternatives
+        ), f"[{name}] Esperado patternKind en {alternatives!r}, obtenido {actual_pattern!r}"
     else:
-        assert pattern is not None or alternatives, (
-            f"[{name}] Expectativa debe definir patternKind o patternKindAlternatives"
-        )
+        assert (
+            pattern is not None or alternatives
+        ), f"[{name}] Expectativa debe definir patternKind o patternKindAlternatives"
 
     nodes = st.get("graph", {}).get("nodes", [])
     min_nodes = expected.get("minNodes", 1)
     max_nodes = expected.get("maxNodes")
-    assert len(nodes) >= min_nodes, (
-        f"[{name}] Esperado al menos {min_nodes} nodos, obtenido {len(nodes)}"
-    )
+    assert (
+        len(nodes) >= min_nodes
+    ), f"[{name}] Esperado al menos {min_nodes} nodos, obtenido {len(nodes)}"
     if max_nodes is not None:
-        assert len(nodes) <= max_nodes, (
-            f"[{name}] Esperado como máximo {max_nodes} nodos, obtenido {len(nodes)} (diagrama erróneo)"
-        )
+        assert (
+            len(nodes) <= max_nodes
+        ), f"[{name}] Esperado como máximo {max_nodes} nodos, obtenido {len(nodes)} (diagrama erróneo)"
 
     edges = st.get("graph", {}).get("edges", [])
     min_edges = expected.get("minEdges", 0)
-    assert len(edges) >= min_edges, (
-        f"[{name}] Esperado al menos {min_edges} edges, obtenido {len(edges)}"
-    )
+    assert (
+        len(edges) >= min_edges
+    ), f"[{name}] Esperado al menos {min_edges} edges, obtenido {len(edges)}"
 
     labels = [n.get("data", {}).get("label", "") for n in nodes]
     all_labels = " ".join(labels)
     for substr in expected.get("nodeLabelsContain", []):
-        assert substr in all_labels, (
-            f"[{name}] Faltan labels: substring {substr!r} no encontrado en labels"
-        )
+        assert (
+            substr in all_labels
+        ), f"[{name}] Faltan labels: substring {substr!r} no encontrado en labels"
 
 
 @pytest.mark.system
@@ -91,18 +92,18 @@ def test_trace_diagram_matches_expectation(family: str, name: str):
     }
 
     response = client.post("/analyze/trace", json=payload)
-    assert response.status_code == 200, f"[{family}/{name}] Trace falló: {response.text}"
+    assert (
+        response.status_code == 200
+    ), f"[{family}/{name}] Trace falló: {response.text}"
     data = response.json()
 
-    assert data.get("ok") is True, (
-        f"[{family}/{name}] Trace no ok: {data.get('errors', [])}"
-    )
+    assert (
+        data.get("ok") is True
+    ), f"[{family}/{name}] Trace no ok: {data.get('errors', [])}"
 
     derived = data.get("derived") or {}
     st = derived.get("structuredTrace")
-    assert st is not None, (
-        f"[{family}/{name}] derived.structuredTrace ausente"
-    )
+    assert st is not None, f"[{family}/{name}] derived.structuredTrace ausente"
 
     _assert_trace_matches_expectation(st, expected, f"{family}/{name}")
 

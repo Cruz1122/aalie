@@ -32,11 +32,13 @@ vi.mock("next-intl", () => ({
         "examples.categories.iterativos.label": "Iterativos",
         "examples.categories.divide-y-venceras.label": "Divide y vencerás",
         "examples.categories.resta-y-venceras.label": "Resta y vencerás",
-        "examples.categories.resta-y-seras-vencido.label": "Resta y serás vencido",
+        "examples.categories.resta-y-seras-vencido.label":
+          "Resta y serás vencido",
         "examples.categories.iterativos.offText": "Iterativos desc",
         "examples.categories.divide-y-venceras.offText": "Divide desc",
         "examples.categories.resta-y-venceras.offText": "Resta desc",
-        "examples.categories.resta-y-seras-vencido.offText": "Resta constante desc",
+        "examples.categories.resta-y-seras-vencido.offText":
+          "Resta constante desc",
         "examples.families.busqueda": "Búsqueda",
         "examples.families.ordenamiento": "Ordenamiento",
         "examples.families.matrices": "Matrices",
@@ -110,7 +112,15 @@ vi.mock("@/components/NavigationFooter", () => ({
 }));
 
 vi.mock("@/components/NavigationLink", () => ({
-  default: ({ href, children, className }: { href: string; children: ReactNode; className?: string }) => (
+  default: ({
+    href,
+    children,
+    className,
+  }: {
+    href: string;
+    children: ReactNode;
+    className?: string;
+  }) => (
     <a href={href} className={className}>
       {children}
     </a>
@@ -144,7 +154,9 @@ describe("Examples views", () => {
     const toggleFilters = screen.getByRole("button", { name: /Filtros/i });
     fireEvent.click(toggleFilters);
 
-    fireEvent.click(screen.getByRole("button", { name: /Árbol de Recursión/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Árbol de Recursión/i }),
+    );
 
     const analyzeButtons = screen.getAllByRole("button", { name: /Analizar/i });
     fireEvent.click(analyzeButtons[0]);

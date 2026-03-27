@@ -31,7 +31,6 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "iteration.asymptotic_concluded.complete": "Se concluyó la complejidad asintótica a partir de la forma final obtenida.",
         "iteration.asymptotic_concluded.partial": "La conclusión asintótica es parcial porque depende de una aproximación controlada.",
         "iteration.step_blocked.unsupported": "Este paso queda bloqueado porque la recurrencia no cumple la cobertura necesaria del método de iteración.",
-
         "concept.iteration.recurrence_detected": "Este método describe muy bien Resta y Vencerás: reducimos poco el tamaño (n, n-1, n-2, ...) y acumulamos trabajo externo $g(n)$ en cada paso. Por eso primero se separa claramente la dependencia recursiva de ese costo adicional.",
         "concept.iteration.applicability_validated": "Para evitar errores de método, aquí solo cubrimos la versión canónica de Resta y Vencerás con decremento unitario. Si la forma se comporta como Divide y Vencerás (n/b) o mezcla múltiples ramas costosas (Resta y Serás Vencido), se marca como fuera de dominio.",
         "concept.iteration.base_case_identified": "El despliegue iterativo necesita un punto de cierre. El caso base define dónde se detiene la expansión y desde qué valor conocido se reconstruye la solución completa.",
@@ -44,7 +43,6 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "concept.iteration.dominant_term_identified": "La dominancia se determina sobre la forma final: se compara qué término crece más rápido para $n$ grande y ese término gobierna la complejidad.",
         "concept.iteration.asymptotic_concluded": "La notación asintótica resume el crecimiento de largo plazo. Si hubo simplificación parcial, la conclusión se marca como parcial para preservar trazabilidad.",
         "concept.iteration.blocked": "Cuando el método no aplica en la cobertura actual, los pasos siguientes se dejan explícitamente bloqueados en vez de fingir continuidad.",
-
         "warning.iteration.unsupported_non_unit_shift": "Cobertura actual: solo se soporta recurrencia de decremento unitario $T(n)=T(n-1)+g(n)$.",
         "warning.iteration.unsupported_non_linear_form": "La forma detectada pertenece a otra familia (Divide y Vencerás o Resta y Serás Vencido) y no se resuelve aquí con este walkthrough de iteración.",
         "warning.iteration.missing_base_case": "No hay suficiente información de caso base para cerrar completamente la solución.",
@@ -71,7 +69,6 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "iteration.asymptotic_concluded.complete": "Asymptotic complexity was concluded from the final expression.",
         "iteration.asymptotic_concluded.partial": "Asymptotic conclusion is partial because it relies on a controlled approximation.",
         "iteration.step_blocked.unsupported": "This step is blocked because the recurrence does not meet current iteration-method coverage.",
-
         "concept.iteration.recurrence_detected": "This method is a natural fit for Resta y Vencerás: we reduce slowly (n, n-1, n-2, ...) and accumulate external work $g(n)$ at each step. We therefore separate recursive dependence from added work explicitly.",
         "concept.iteration.applicability_validated": "To avoid method mismatch, this walkthrough covers only canonical Resta y Vencerás with unit decrement. If the shape behaves like Divide y Vencerás (n/b) or costly multi-branch decrease (Resta y Serás Vencido), it is marked out of scope.",
         "concept.iteration.base_case_identified": "Iterative unfolding needs a closure point. The base case tells where expansion stops and from which known value reconstruction begins.",
@@ -84,7 +81,6 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "concept.iteration.dominant_term_identified": "Dominance is decided on the final form by comparing long-run growth rates of its terms.",
         "concept.iteration.asymptotic_concluded": "Asymptotic notation summarizes long-run growth. If prior steps were partial, this conclusion is explicitly marked partial as well.",
         "concept.iteration.blocked": "When method assumptions fail, following steps are explicitly blocked instead of pretending complete coverage.",
-
         "warning.iteration.unsupported_non_unit_shift": "Current coverage only supports unit-decrement recurrences $T(n)=T(n-1)+g(n)$.",
         "warning.iteration.unsupported_non_linear_form": "Detected shape belongs to another family (Divide y Vencerás or Resta y Serás Vencido), so this iteration walkthrough is out of scope.",
         "warning.iteration.missing_base_case": "Base-case data is insufficient for a fully closed solution.",
@@ -182,7 +178,11 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
                 index=2,
                 step_id="iter_s2",
                 kind="applicability_validated",
-                title=_title(ctx.locale, "Validación de aplicabilidad", "Applicability validation"),
+                title=_title(
+                    ctx.locale,
+                    "Validación de aplicabilidad",
+                    "Applicability validation",
+                ),
                 status="unsupported",
                 confidence="low",
                 summary_key="iteration.applicability_validated.unsupported",
@@ -195,15 +195,31 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
         )
 
         blocked_title_map = {
-            "base_case_identified": _title(ctx.locale, "Caso base y cierre", "Base case and closure"),
-            "initial_unrolling_built": _title(ctx.locale, "Primeras expansiones", "Initial unrolling"),
-            "k_pattern_generalized": _title(ctx.locale, "Patrón tras k expansiones", "Pattern after k expansions"),
+            "base_case_identified": _title(
+                ctx.locale, "Caso base y cierre", "Base case and closure"
+            ),
+            "initial_unrolling_built": _title(
+                ctx.locale, "Primeras expansiones", "Initial unrolling"
+            ),
+            "k_pattern_generalized": _title(
+                ctx.locale, "Patrón tras k expansiones", "Pattern after k expansions"
+            ),
             "k_value_solved": _title(ctx.locale, "Cálculo de k", "Solving k"),
-            "summation_built": _title(ctx.locale, "Construcción de sumatoria", "Summation construction"),
-            "summation_simplified": _title(ctx.locale, "Simplificación de sumatoria", "Summation simplification"),
-            "final_expression_built": _title(ctx.locale, "Forma final de T(n)", "Final T(n) expression"),
-            "dominant_term_identified": _title(ctx.locale, "Término dominante", "Dominant term"),
-            "asymptotic_concluded": _title(ctx.locale, "Conclusión asintótica", "Asymptotic conclusion"),
+            "summation_built": _title(
+                ctx.locale, "Construcción de sumatoria", "Summation construction"
+            ),
+            "summation_simplified": _title(
+                ctx.locale, "Simplificación de sumatoria", "Summation simplification"
+            ),
+            "final_expression_built": _title(
+                ctx.locale, "Forma final de T(n)", "Final T(n) expression"
+            ),
+            "dominant_term_identified": _title(
+                ctx.locale, "Término dominante", "Dominant term"
+            ),
+            "asymptotic_concluded": _title(
+                ctx.locale, "Conclusión asintótica", "Asymptotic conclusion"
+            ),
         }
 
         for index, step_def in enumerate(_ITERATION_STEP_DEFS[2:], start=3):
@@ -241,7 +257,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             index=2,
             step_id="iter_s2",
             kind="applicability_validated",
-            title=_title(ctx.locale, "Validación de aplicabilidad", "Applicability validation"),
+            title=_title(
+                ctx.locale, "Validación de aplicabilidad", "Applicability validation"
+            ),
             status="complete",
             confidence="high",
             summary_key="iteration.applicability_validated.supported",
@@ -274,7 +292,11 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             primary_latex=(
                 f"T({ctx.base_case_index})={ctx.base_case_value}"
                 if ctx.base_case_index is not None and ctx.base_case_value is not None
-                else f"T({ctx.base_case_index})" if ctx.base_case_index is not None else None
+                else (
+                    f"T({ctx.base_case_index})"
+                    if ctx.base_case_index is not None
+                    else None
+                )
             ),
             payload={
                 "baseCase": {
@@ -300,7 +322,11 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             concept_key="concept.iteration.initial_unrolling_built",
             primary_latex=ctx.expansions[0] if ctx.expansions else ctx.recurrence_form,
             items=[
-                {"id": f"iter_s4_e{idx+2}", "kind": "transformation", "latex": expansion}
+                {
+                    "id": f"iter_s4_e{idx+2}",
+                    "kind": "transformation",
+                    "latex": expansion,
+                }
                 for idx, expansion in enumerate(ctx.expansions[1:])
             ],
             payload={
@@ -309,7 +335,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             },
             derivation={
                 "sourceExpression": ctx.recurrence_form,
-                "derivedExpression": ctx.expansions[-1] if ctx.expansions else ctx.recurrence_form,
+                "derivedExpression": (
+                    ctx.expansions[-1] if ctx.expansions else ctx.recurrence_form
+                ),
             },
         )
     )
@@ -321,7 +349,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             index=5,
             step_id="iter_s5",
             kind="k_pattern_generalized",
-            title=_title(ctx.locale, "Patrón tras k expansiones", "Pattern after k expansions"),
+            title=_title(
+                ctx.locale, "Patrón tras k expansiones", "Pattern after k expansions"
+            ),
             status="complete",
             confidence="high",
             summary_key="iteration.k_pattern_generalized.standard",
@@ -369,7 +399,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             index=7,
             step_id="iter_s7",
             kind="summation_built",
-            title=_title(ctx.locale, "Construcción de sumatoria", "Summation construction"),
+            title=_title(
+                ctx.locale, "Construcción de sumatoria", "Summation construction"
+            ),
             status="complete",
             confidence="high",
             summary_key="iteration.summation_built.standard",
@@ -394,7 +426,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             index=8,
             step_id="iter_s8",
             kind="summation_simplified",
-            title=_title(ctx.locale, "Simplificación de sumatoria", "Summation simplification"),
+            title=_title(
+                ctx.locale, "Simplificación de sumatoria", "Summation simplification"
+            ),
             status=step8_status,
             confidence="medium" if step8_status == "partial" else "high",
             summary_key=(
@@ -412,7 +446,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             payload={
                 "symbolicResult": ctx.summation_evaluated,
                 "supportReason": (
-                    "ITER_SUMMATION_PARTIAL" if step8_status == "partial" else "complete"
+                    "ITER_SUMMATION_PARTIAL"
+                    if step8_status == "partial"
+                    else "complete"
                 ),
             },
             derivation={
@@ -476,7 +512,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
         )
     )
 
-    has_prior_partial = any(s.get("status") in {"partial", "unsupported", "error"} for s in steps)
+    has_prior_partial = any(
+        s.get("status") in {"partial", "unsupported", "error"} for s in steps
+    )
     step11_status: StepStatus = (
         "partial" if has_prior_partial or ctx.asymptotic_partial else "complete"
     )
@@ -507,7 +545,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             payload={
                 "asymptoticResult": ctx.theta,
                 "supportReason": (
-                    "ITER_ASYMPTOTIC_HEURISTIC" if ctx.asymptotic_partial else "complete"
+                    "ITER_ASYMPTOTIC_HEURISTIC"
+                    if ctx.asymptotic_partial
+                    else "complete"
                 ),
             },
             derivation={

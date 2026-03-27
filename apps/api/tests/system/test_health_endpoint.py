@@ -3,6 +3,7 @@ Tests de sistema para el endpoint /health.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
+
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -29,4 +30,3 @@ class TestHealthEndpoint:
         """Test: Endpoint /health no acepta método POST"""
         response = client.post("/health")
         assert response.status_code == 405  # Method Not Allowed
-

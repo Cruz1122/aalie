@@ -19,7 +19,9 @@ const statusClass: Record<LoopInvariant["status"], string> = {
   unavailable: "bg-red-500/20 text-red-100 border-red-400/40",
 };
 
-function fallbackInvariant(t: ReturnType<typeof useTranslations>): LoopInvariant {
+function fallbackInvariant(
+  t: ReturnType<typeof useTranslations>,
+): LoopInvariant {
   return {
     status: "unavailable",
     reason: "no_supported_loop",
@@ -60,7 +62,10 @@ function escapeRegExp(value: string): string {
   return value.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function collectArrayAccessTerms(text: string, collectionVariables: string[]): string[] {
+function collectArrayAccessTerms(
+  text: string,
+  collectionVariables: string[],
+): string[] {
   const found = new Set<string>();
 
   for (const variable of collectionVariables) {
@@ -92,7 +97,10 @@ function buildTermRegex(term: string): RegExp {
     // Identifier isolation without Unicode property escapes.
     // Avoids false matches like variable `n` inside "comparación".
     const boundaryClass = "A-Za-z0-9_À-ÖØ-öø-ÿ";
-    return new RegExp(`(^|[^${boundaryClass}])(${escaped})(?=[^${boundaryClass}]|$)`, "g");
+    return new RegExp(
+      `(^|[^${boundaryClass}])(${escaped})(?=[^${boundaryClass}]|$)`,
+      "g",
+    );
   }
   return new RegExp(escaped, "g");
 }
@@ -104,7 +112,9 @@ function highlightTerms(text: string, terms: string[]): string {
 
   const arrayTermsInText = collectArrayAccessTerms(text, []);
   const stableTerms = Array.from(
-    new Set([...arrayTermsInText, ...terms].filter((term) => term.trim().length > 0)),
+    new Set(
+      [...arrayTermsInText, ...terms].filter((term) => term.trim().length > 0),
+    ),
   ).sort((a, b) => {
     if (b.length !== a.length) {
       return b.length - a.length;
@@ -115,16 +125,19 @@ function highlightTerms(text: string, terms: string[]): string {
   for (const term of stableTerms) {
     const regex = buildTermRegex(term);
     const isIdentifier = /^[A-Za-z_][A-Za-z0-9_]*$/.test(term);
-    output = output.replace(regex, (match, prefix: string, isolatedValue: string) => {
-      const token = `@@LI_HL_${counter}@@`;
-      counter += 1;
-      if (isIdentifier) {
-        replacements.set(token, `\`${isolatedValue}\``);
-        return `${prefix}${token}`;
-      }
-      replacements.set(token, `\`${match}\``);
-      return token;
-    });
+    output = output.replace(
+      regex,
+      (match, prefix: string, isolatedValue: string) => {
+        const token = `@@LI_HL_${counter}@@`;
+        counter += 1;
+        if (isIdentifier) {
+          replacements.set(token, `\`${isolatedValue}\``);
+          return `${prefix}${token}`;
+        }
+        replacements.set(token, `\`${match}\``);
+        return token;
+      },
+    );
   }
 
   for (const [token, highlighted] of replacements.entries()) {
@@ -159,13 +172,28 @@ export default function LoopInvariantModal({
     ...selected.keyUpdates,
     ...selected.keyConditions,
   ].join("\n");
-  const arrayAccessTerms = collectArrayAccessTerms(evidenceCorpus, selected.collectionVariables);
+  const arrayAccessTerms = collectArrayAccessTerms(
+    evidenceCorpus,
+    selected.collectionVariables,
+  );
   const termsToHighlight = [...arrayAccessTerms, ...variableTerms];
 
-  const propertyStatement = highlightTerms(data.invariant.propertyStatement, termsToHighlight);
-  const initialization = highlightTerms(data.invariant.initialization, termsToHighlight);
-  const maintenance = highlightTerms(data.invariant.maintenance, termsToHighlight);
-  const finalization = highlightTerms(data.invariant.finalization, termsToHighlight);
+  const propertyStatement = highlightTerms(
+    data.invariant.propertyStatement,
+    termsToHighlight,
+  );
+  const initialization = highlightTerms(
+    data.invariant.initialization,
+    termsToHighlight,
+  );
+  const maintenance = highlightTerms(
+    data.invariant.maintenance,
+    termsToHighlight,
+  );
+  const finalization = highlightTerms(
+    data.invariant.finalization,
+    termsToHighlight,
+  );
   const loopDescription = (() => {
     if (!selected.nodeType) {
       return t("labels.noLoop");
@@ -213,14 +241,20 @@ export default function LoopInvariantModal({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 text-sm">
           <article className="bg-white/5 border border-white/10 rounded-md p-3">
             <h3 className="text-cyan-200 font-semibold text-sm mb-2 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px]">category</span>
+              <span className="material-symbols-outlined text-[16px]">
+                category
+              </span>
               {t("labels.pattern")}
             </h3>
-            <p className="text-white font-medium">{t(`patterns.${selected.patternType}`)}</p>
+            <p className="text-white font-medium">
+              {t(`patterns.${selected.patternType}`)}
+            </p>
           </article>
           <article className="bg-white/5 border border-white/10 rounded-md p-3">
             <h3 className="text-cyan-200 font-semibold text-sm mb-2 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px]">repeat</span>
+              <span className="material-symbols-outlined text-[16px]">
+                repeat
+              </span>
               {t("labels.selectedLoop")}
             </h3>
             <MarkdownRenderer
@@ -241,7 +275,9 @@ export default function LoopInvariantModal({
 
         <article className="bg-white/5 border border-white/10 rounded-md p-4">
           <h3 className="text-cyan-200 font-semibold text-sm mb-2 flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[16px]">verified</span>
+            <span className="material-symbols-outlined text-[16px]">
+              verified
+            </span>
             {t("sections.property")}
           </h3>
           <MarkdownRenderer
@@ -255,7 +291,9 @@ export default function LoopInvariantModal({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
           <article className="bg-white/5 border border-white/10 rounded-md p-4">
             <h3 className="text-cyan-200 font-semibold text-sm mb-2 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px]">play_arrow</span>
+              <span className="material-symbols-outlined text-[16px]">
+                play_arrow
+              </span>
               {t("sections.initialization")}
             </h3>
             <MarkdownRenderer
@@ -267,7 +305,9 @@ export default function LoopInvariantModal({
           </article>
           <article className="bg-white/5 border border-white/10 rounded-md p-4">
             <h3 className="text-cyan-200 font-semibold text-sm mb-2 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px]">autorenew</span>
+              <span className="material-symbols-outlined text-[16px]">
+                autorenew
+              </span>
               {t("sections.maintenance")}
             </h3>
             <MarkdownRenderer
@@ -279,7 +319,9 @@ export default function LoopInvariantModal({
           </article>
           <article className="bg-white/5 border border-white/10 rounded-md p-4">
             <h3 className="text-cyan-200 font-semibold text-sm mb-2 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[16px]">flag</span>
+              <span className="material-symbols-outlined text-[16px]">
+                flag
+              </span>
               {t("sections.finalization")}
             </h3>
             <MarkdownRenderer

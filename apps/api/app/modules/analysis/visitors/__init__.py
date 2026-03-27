@@ -5,9 +5,4 @@ from .if_visitor import IfVisitor
 from .simple_visitor import SimpleVisitor
 from .while_repeat_visitor import WhileRepeatVisitor
 
-__all__ = [
-    "ForVisitor",
-    "IfVisitor", 
-    "WhileRepeatVisitor",
-    "SimpleVisitor"
-]
+__all__ = ["ForVisitor", "IfVisitor", "WhileRepeatVisitor", "SimpleVisitor"]

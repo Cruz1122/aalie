@@ -6,6 +6,7 @@ Builder para patrón generic_recursive.
 Author: Plan Sistema Traza Estructural
 Version: 0.1.0
 """
+
 from typing import Any, Dict, List
 
 from ...metrics_aggregator import aggregate_metrics

@@ -84,7 +84,8 @@ describe("examples catalog integrity", () => {
     expect(filtered.length).toBeGreaterThan(0);
     for (const item of filtered) {
       expect(
-        item.verifiedMethods.includes("EC") || item.verifiedMethods.includes("TM"),
+        item.verifiedMethods.includes("EC") ||
+          item.verifiedMethods.includes("TM"),
       ).toBe(true);
     }
   });

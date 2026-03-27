@@ -3,7 +3,11 @@
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
 
-export type ProgressLoaderMode = "analysis" | "comparison" | "export" | "repair";
+export type ProgressLoaderMode =
+  | "analysis"
+  | "comparison"
+  | "export"
+  | "repair";
 export type AlgorithmType = "iterative" | "recursive" | "hybrid" | "unknown";
 export type BlurScope = "full" | "container";
 
@@ -115,7 +119,8 @@ export const AAProgressLoader: React.FC<AAProgressLoaderProps> = ({
 
   const tooltipText =
     !isComplete && !hasError
-      ? mode === "analysis" && (algorithmType === "recursive" || algorithmType === "hybrid")
+      ? mode === "analysis" &&
+        (algorithmType === "recursive" || algorithmType === "hybrid")
         ? tLoader("analyzingRecurrence")
         : mode === "analysis"
           ? tLoader("pleaseWait")
@@ -126,35 +131,42 @@ export const AAProgressLoader: React.FC<AAProgressLoaderProps> = ({
               : t("exportSelector.pleaseWait")
       : "";
 
-  const isExportGroup = mode === "export" && exportFormats && exportFormats.length > 1;
-  const isExportPdf = mode === "export" && exportFormats?.includes("pdf") && (!exportFormats || exportFormats.length === 1);
-  const isExportMarkdown = mode === "export" && exportFormats?.includes("markdown") && (!exportFormats || exportFormats.length === 1);
+  const isExportGroup =
+    mode === "export" && exportFormats && exportFormats.length > 1;
+  const isExportPdf =
+    mode === "export" &&
+    exportFormats?.includes("pdf") &&
+    (!exportFormats || exportFormats.length === 1);
+  const isExportMarkdown =
+    mode === "export" &&
+    exportFormats?.includes("markdown") &&
+    (!exportFormats || exportFormats.length === 1);
 
   const barGradient =
     mode === "comparison"
       ? "from-purple-500 to-purple-400"
       : mode === "repair"
         ? "from-purple-500 to-purple-400"
-      : isExportMarkdown
-        ? "from-blue-500 to-blue-400"
-      : isExportPdf
-        ? "from-red-500 to-red-400"
-      : isExportGroup
-        ? "from-slate-300 to-slate-100"
-        : "from-blue-500 to-blue-400";
+        : isExportMarkdown
+          ? "from-blue-500 to-blue-400"
+          : isExportPdf
+            ? "from-red-500 to-red-400"
+            : isExportGroup
+              ? "from-slate-300 to-slate-100"
+              : "from-blue-500 to-blue-400";
 
   const iconColor =
     mode === "comparison"
       ? "bg-purple-500/20 border-purple-500/30 text-purple-400"
       : mode === "repair"
         ? "bg-purple-500/20 border-purple-500/30 text-purple-400"
-      : isExportMarkdown
-        ? "bg-blue-500/20 border-blue-500/30 text-blue-400"
-      : isExportPdf
-        ? "bg-red-500/20 border-red-500/30 text-red-400"
-      : isExportGroup
-        ? "bg-slate-500/20 border-slate-500/30 text-slate-300"
-        : "bg-blue-500/20 border-blue-500/30 text-blue-400";
+        : isExportMarkdown
+          ? "bg-blue-500/20 border-blue-500/30 text-blue-400"
+          : isExportPdf
+            ? "bg-red-500/20 border-red-500/30 text-red-400"
+            : isExportGroup
+              ? "bg-slate-500/20 border-slate-500/30 text-slate-300"
+              : "bg-blue-500/20 border-blue-500/30 text-blue-400";
 
   // Timer post-completado: 1.5-2s mostrando mensaje final antes de cerrar
   useEffect(() => {
@@ -182,10 +194,9 @@ export const AAProgressLoader: React.FC<AAProgressLoaderProps> = ({
     }
   };
 
-  const overlayClass =
-    overlayContent
-      ? "absolute inset-0 glass-modal-overlay transition-opacity duration-300"
-      : blurScope === "container"
+  const overlayClass = overlayContent
+    ? "absolute inset-0 glass-modal-overlay transition-opacity duration-300"
+    : blurScope === "container"
       ? "absolute inset-0 glass-modal-overlay-container-only transition-opacity duration-300"
       : "absolute inset-0 glass-modal-overlay transition-opacity duration-300";
   const isOverlayMode = Boolean(overlayContent);
@@ -222,128 +233,130 @@ export const AAProgressLoader: React.FC<AAProgressLoaderProps> = ({
           )}
           {/* Contenido: icono, mensaje, badge */}
           <div className="flex flex-col items-center shrink-0 pt-8">
-          {/* Icono de estado */}
-          <div className="flex justify-center mb-6 shrink-0">
+            {/* Icono de estado */}
+            <div className="flex justify-center mb-6 shrink-0">
               {hasError ? (
-              <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center border-2 border-red-500/30">
-                <span className="material-symbols-outlined text-4xl text-red-400">
-                  error
-                </span>
-              </div>
-            ) : isComplete ? (
-              <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center border-2 border-green-500/30">
-                <span className="material-symbols-outlined text-4xl text-green-400">
-                  check_circle
-                </span>
-              </div>
-            ) : (
-              <div
-                className={`w-16 h-16 rounded-full flex items-center justify-center border-2 ${iconColor}`}
-              >
-                <span
-                  className={`material-symbols-outlined text-4xl animate-spin ${
-                    mode === "comparison"
-                      ? "text-purple-400"
-                      : mode === "repair"
-                        ? "text-purple-400"
-                        : isExportMarkdown
-                          ? "text-blue-400"
-                          : isExportPdf
-                            ? "text-red-400"
-                            : isExportGroup
-                              ? "text-slate-300"
-                              : "text-blue-400"
-                  }`}
+                <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center border-2 border-red-500/30">
+                  <span className="material-symbols-outlined text-4xl text-red-400">
+                    error
+                  </span>
+                </div>
+              ) : isComplete ? (
+                <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center border-2 border-green-500/30">
+                  <span className="material-symbols-outlined text-4xl text-green-400">
+                    check_circle
+                  </span>
+                </div>
+              ) : (
+                <div
+                  className={`w-16 h-16 rounded-full flex items-center justify-center border-2 ${iconColor}`}
                 >
-                  progress_activity
-                </span>
-              </div>
-            )}
-          </div>
+                  <span
+                    className={`material-symbols-outlined text-4xl animate-spin ${
+                      mode === "comparison"
+                        ? "text-purple-400"
+                        : mode === "repair"
+                          ? "text-purple-400"
+                          : isExportMarkdown
+                            ? "text-blue-400"
+                            : isExportPdf
+                              ? "text-red-400"
+                              : isExportGroup
+                                ? "text-slate-300"
+                                : "text-blue-400"
+                    }`}
+                  >
+                    progress_activity
+                  </span>
+                </div>
+              )}
+            </div>
 
-          {/* Mensaje principal */}
-          <div className="text-center mb-6">
-            <h3
+            {/* Mensaje principal */}
+            <div className="text-center mb-6">
+              <h3
                 className={`text-xl font-semibold mb-2 ${hasError ? "text-red-300" : "text-white"}`}
               >
-              {hasError ? errorTitle : message}
-            </h3>
+                {hasError ? errorTitle : message}
+              </h3>
 
-            {hasError && (
-              <>
-                <div className="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-                  <p className="text-sm text-red-300 whitespace-pre-wrap">{error}</p>
-                </div>
-                <div className="text-center mt-4">
-                  <button
-                    onClick={handleClose}
-                    className="px-4 py-2 rounded-lg bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition-colors text-sm font-semibold"
-                  >
-                    {closeLabel}
-                  </button>
-                </div>
-              </>
-            )}
+              {hasError && (
+                <>
+                  <div className="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+                    <p className="text-sm text-red-300 whitespace-pre-wrap">
+                      {error}
+                    </p>
+                  </div>
+                  <div className="text-center mt-4">
+                    <button
+                      onClick={handleClose}
+                      className="px-4 py-2 rounded-lg bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition-colors text-sm font-semibold"
+                    >
+                      {closeLabel}
+                    </button>
+                  </div>
+                </>
+              )}
 
-            {/* Badge: espacio reservado solo cuando no hay error para no empujar el botón abajo */}
-            {!hasError && (
-              <div className="min-h-[40px] flex items-center justify-center mt-6">
-                {mode === "analysis" && algorithmType && (
-                  <div
-                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium ${getAlgorithmTypeColor(algorithmType)} animate-[pop_0.5s_ease-out]`}
-                  >
-                    <span className="material-symbols-outlined text-base">
-                      category
-                    </span>
-                    <span>
-                      {tLoader("algorithmLabel")}:{" "}
-                      {getAlgorithmTypeLabel(algorithmType)}
-                    </span>
-                  </div>
-                )}
-                {mode === "repair" && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium bg-purple-500/20 text-purple-400 border-purple-500/30 animate-[pop_0.5s_ease-out]">
-                    <span className="material-symbols-outlined text-base">
-                      auto_awesome
-                    </span>
-                    <span>{tRepair("repairing")}</span>
-                  </div>
-                )}
-                {mode === "comparison" && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium bg-purple-500/20 text-purple-400 border-purple-500/30 animate-[pop_0.5s_ease-out]">
-                    <span className="material-symbols-outlined text-base">
-                      compare_arrows
-                    </span>
-                    <span>{tComparison("comparingWithLlm")}</span>
-                  </div>
-                )}
-                {isExportMarkdown && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium bg-blue-500/20 text-blue-400 border-blue-500/30 animate-[pop_0.5s_ease-out]">
-                    <span className="material-symbols-outlined text-base">
-                      markdown
-                    </span>
-                    <span>Markdown (MD)</span>
-                  </div>
-                )}
-                {isExportPdf && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium bg-red-500/20 text-red-400 border-red-500/30 animate-[pop_0.5s_ease-out]">
-                    <span className="material-symbols-outlined text-base">
-                      picture_as_pdf
-                    </span>
-                    <span>{t("exportSelector.formats.pdf")}</span>
-                  </div>
-                )}
-                {isExportGroup && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium bg-slate-500/20 text-slate-300 border-slate-500/30 animate-[pop_0.5s_ease-out]">
-                    <span className="material-symbols-outlined text-base">
-                      folder_zip
-                    </span>
-                    <span>Markdown & PDF (ZIP)</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+              {/* Badge: espacio reservado solo cuando no hay error para no empujar el botón abajo */}
+              {!hasError && (
+                <div className="min-h-[40px] flex items-center justify-center mt-6">
+                  {mode === "analysis" && algorithmType && (
+                    <div
+                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium ${getAlgorithmTypeColor(algorithmType)} animate-[pop_0.5s_ease-out]`}
+                    >
+                      <span className="material-symbols-outlined text-base">
+                        category
+                      </span>
+                      <span>
+                        {tLoader("algorithmLabel")}:{" "}
+                        {getAlgorithmTypeLabel(algorithmType)}
+                      </span>
+                    </div>
+                  )}
+                  {mode === "repair" && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium bg-purple-500/20 text-purple-400 border-purple-500/30 animate-[pop_0.5s_ease-out]">
+                      <span className="material-symbols-outlined text-base">
+                        auto_awesome
+                      </span>
+                      <span>{tRepair("repairing")}</span>
+                    </div>
+                  )}
+                  {mode === "comparison" && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium bg-purple-500/20 text-purple-400 border-purple-500/30 animate-[pop_0.5s_ease-out]">
+                      <span className="material-symbols-outlined text-base">
+                        compare_arrows
+                      </span>
+                      <span>{tComparison("comparingWithLlm")}</span>
+                    </div>
+                  )}
+                  {isExportMarkdown && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium bg-blue-500/20 text-blue-400 border-blue-500/30 animate-[pop_0.5s_ease-out]">
+                      <span className="material-symbols-outlined text-base">
+                        markdown
+                      </span>
+                      <span>Markdown (MD)</span>
+                    </div>
+                  )}
+                  {isExportPdf && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium bg-red-500/20 text-red-400 border-red-500/30 animate-[pop_0.5s_ease-out]">
+                      <span className="material-symbols-outlined text-base">
+                        picture_as_pdf
+                      </span>
+                      <span>{t("exportSelector.formats.pdf")}</span>
+                    </div>
+                  )}
+                  {isExportGroup && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium bg-slate-500/20 text-slate-300 border-slate-500/30 animate-[pop_0.5s_ease-out]">
+                      <span className="material-symbols-outlined text-base">
+                        folder_zip
+                      </span>
+                      <span>Markdown & PDF (ZIP)</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Barra de progreso: absoluta; más alta al inicio (!algorithmType), fixed abajo al clasificar */}

@@ -3,6 +3,7 @@ Constructor del rastro de ejecución.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
+
 import copy
 from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Optional, Tuple
@@ -55,25 +56,33 @@ def _serialize_value(value: Any) -> Any:
 @dataclass
 class ExecutionStep:
     """Un paso de ejecución individual."""
+
     id: str
     step_number: int
     line: Optional[int]
     kind: str  # eventKind: "assign" | "condition_eval" | "loop_enter" | ...
     variables: Dict[str, Any]  # variablesSnapshot
     variables_changed: Optional[Dict[str, Any]] = None  # Diff respecto al paso anterior
-    iteration: Optional[Dict[str, Any]] = None  # Para bucles: {loopVar, currentValue, maxValue}
-    recursion: Optional[Dict[str, Any]] = None  # Para recursión: {depth, callId, params, parentCallId}
+    iteration: Optional[Dict[str, Any]] = (
+        None  # Para bucles: {loopVar, currentValue, maxValue}
+    )
+    recursion: Optional[Dict[str, Any]] = (
+        None  # Para recursión: {depth, callId, params, parentCallId}
+    )
     cost: Optional[str] = None  # "C1", "C2", etc.
     accumulated_cost: Optional[str] = None  # Expresión acumulada
     description: Optional[str] = None  # Descripción del paso
     microseconds: Optional[float] = None  # Tiempo estimado en microsegundos
     tokens: Optional[int] = None  # Número de operaciones elementales (tokens)
-    decision: Optional[Dict[str, Any]] = None  # {conditionText, result} para condition_eval
+    decision: Optional[Dict[str, Any]] = (
+        None  # {conditionText, result} para condition_eval
+    )
 
 
 @dataclass
 class RecursionCall:
     """Una llamada recursiva en el árbol (árbol de llamadas recursivas)."""
+
     id: str
     depth: int
     params: Dict[str, Any]
@@ -83,25 +92,27 @@ class RecursionCall:
     function_name: Optional[str] = None
     entry_line: Optional[int] = None
     return_value: Optional[Any] = None
-    base_case: Optional[Dict[str, Any]] = None  # {detected: bool, conditionText?: str, matched?: bool}
+    base_case: Optional[Dict[str, Any]] = (
+        None  # {detected: bool, conditionText?: str, matched?: bool}
+    )
 
 
 class TraceBuilder:
     """
     Constructor del rastro de ejecución.
-    
+
     Acumula pasos de ejecución y construye el árbol de recursión si aplica.
-    
+
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
-    
+
     def __init__(self, build_detailed_trace: bool = True):
         """
         Inicializa el constructor de rastro.
-        
+
         Args:
             build_detailed_trace: Si False, no construye trace detallado (para recursivos/híbridos)
-        
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self.build_detailed_trace = build_detailed_trace
@@ -113,7 +124,7 @@ class TraceBuilder:
         self.cost_counter = 0
         self.accumulated_cost_parts: List[str] = []
         self._prev_variables: Optional[Dict[str, Any]] = None
-    
+
     def add_step(
         self,
         line: int,
@@ -129,7 +140,7 @@ class TraceBuilder:
     ) -> None:
         """
         Agrega un paso de ejecución.
-        
+
         Args:
             line: Número de línea ejecutada
             kind: Tipo de instrucción
@@ -138,20 +149,20 @@ class TraceBuilder:
             recursion: Información de recursión (si aplica)
             cost: Coste de este paso (ej: "C1")
             description: Descripción opcional del paso
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Si build_detailed_trace es False, no construir pasos detallados
         if not self.build_detailed_trace:
             return
-        
+
         self.step_counter += 1
-        
+
         # Generar coste si no se proporciona
         if cost is None:
             self.cost_counter += 1
             cost = f"C_{self.cost_counter}"
-        
+
         # Actualizar coste acumulado
         if cost:
             self.accumulated_cost_parts.append(cost)
@@ -167,7 +178,8 @@ class TraceBuilder:
         vchanged = variables_changed
         if vchanged is None and self._prev_variables is not None:
             vchanged = {
-                k: v for k, v in variables.items()
+                k: v
+                for k, v in variables.items()
                 if k not in self._prev_variables or self._prev_variables.get(k) != v
             }
             if not vchanged:
@@ -191,7 +203,7 @@ class TraceBuilder:
             microseconds=est_microseconds,
         )
         self.steps.append(step)
-    
+
     def enter_recursion(
         self,
         call_id: str,
@@ -206,7 +218,9 @@ class TraceBuilder:
 
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        parent_id = parent_call_id or (self.recursion_stack[-1] if self.recursion_stack else None)
+        parent_id = parent_call_id or (
+            self.recursion_stack[-1] if self.recursion_stack else None
+        )
 
         call = RecursionCall(
             id=call_id,
@@ -249,37 +263,38 @@ class TraceBuilder:
                 "conditionText": condition_text,
                 "matched": matched,
             }
-    
+
     def exit_recursion(self) -> None:
         """
         Registra el fin de una llamada recursiva.
-        
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         if self.recursion_stack:
             self.recursion_stack.pop()
-    
+
     def generate_call_id(self) -> str:
         """
         Genera un ID único para una llamada recursiva.
-        
+
         Returns:
             ID único de llamada
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self.call_id_counter += 1
         return f"call_{self.call_id_counter}"
-    
+
     def build(self) -> Dict[str, Any]:
         """
         Construye el rastro final en formato JSON.
-        
+
         Returns:
             Diccionario con el rastro completo
-            
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
+
         def _step_to_dict(s: ExecutionStep) -> Dict[str, Any]:
             d = asdict(s)
             if d.get("variables_changed") is None:
@@ -291,18 +306,17 @@ class TraceBuilder:
             d["eventKind"] = d.get("kind", "")
             return d
 
-        result: Dict[str, Any] = {
-            "steps": [_step_to_dict(step) for step in self.steps]
-        }
-        
+        result: Dict[str, Any] = {"steps": [_step_to_dict(step) for step in self.steps]}
+
         # Agregar árbol de recursión si hay llamadas recursivas
         if self.recursion_calls:
             # Encontrar la raíz (llamada sin padre)
             root_calls = [
-                call_id for call_id, call in self.recursion_calls.items()
+                call_id
+                for call_id, call in self.recursion_calls.items()
                 if call.depth == 0
             ]
-            
+
             calls_list = []
             for call_id in sorted(self.recursion_calls.keys()):
                 c = self.recursion_calls[call_id]
@@ -313,7 +327,8 @@ class TraceBuilder:
                 d["return_value"] = _serialize_value(d.get("return_value"))
                 if c.base_case is not None:
                     d["is_base_case"] = bool(
-                        c.base_case.get("detected", False) and c.base_case.get("matched", False)
+                        c.base_case.get("detected", False)
+                        and c.base_case.get("matched", False)
                     )
                 else:
                     d["is_base_case"] = False
@@ -323,13 +338,13 @@ class TraceBuilder:
                 "root_calls": root_calls,
             }
             result["recursionTree"] = recursion_tree
-        
+
         return result
-    
+
     def reset(self) -> None:
         """
         Reinicia el constructor (útil para múltiples ejecuciones).
-        
+
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self.steps.clear()

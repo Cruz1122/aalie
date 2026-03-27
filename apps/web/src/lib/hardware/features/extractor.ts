@@ -80,7 +80,8 @@ function mkCtx(functionName: string): ExtractionCtx {
 
 /** Returns the string name of the outermost indexed target, or null */
 function indexTargetName(node: Index): string | null {
-  if (node.target && "name" in node.target) return (node.target as Identifier).name;
+  if (node.target && "name" in node.target)
+    return (node.target as Identifier).name;
   return null;
 }
 
@@ -110,7 +111,10 @@ function detectScalarReduction(assign: Assign): boolean {
     bv.left.type === "Identifier" && (bv.left as Identifier).name === tName;
   const rightIsTarget =
     bv.right.type === "Identifier" && (bv.right as Identifier).name === tName;
-  return (leftIsTarget || rightIsTarget) && ["+", "-", "*", "max", "min"].includes(bv.op);
+  return (
+    (leftIsTarget || rightIsTarget) &&
+    ["+", "-", "*", "max", "min"].includes(bv.op)
+  );
 }
 
 /** Check if the assignment is loop-carried: A[i] = f(A[i-1]) — target has same base as a stencil-read */
@@ -268,8 +272,20 @@ function visitNode(node: AstNode, ctx: ExtractionCtx): void {
         ctx.recursiveCalls++;
       }
       // Detect graph-like: push/pop/enqueue/dequeue of queues/stacks
-      const graphKeywords = ["push", "pop", "enqueue", "dequeue", "append", "addEdge", "getNeighbors"];
-      if (graphKeywords.some(k => n.callee.toLowerCase().includes(k.toLowerCase()))) {
+      const graphKeywords = [
+        "push",
+        "pop",
+        "enqueue",
+        "dequeue",
+        "append",
+        "addEdge",
+        "getNeighbors",
+      ];
+      if (
+        graphKeywords.some((k) =>
+          n.callee.toLowerCase().includes(k.toLowerCase()),
+        )
+      ) {
         ctx.graphLikeSignals++;
       }
       for (const arg of n.args) visitNode(arg, ctx);
@@ -301,8 +317,14 @@ function detectDivideAndConquer(procDef: ProcDef, ctx: ExtractionCtx): boolean {
   return ctx.recursiveCalls >= 2;
 }
 
-function estimateWorkUnits(ctx: ExtractionCtx): "low" | "medium" | "high" | "unknown" {
-  const totalOps = ctx.mapLikeWrites + ctx.scalarReductions + ctx.stencilLike + ctx.loopCarried;
+function estimateWorkUnits(
+  ctx: ExtractionCtx,
+): "low" | "medium" | "high" | "unknown" {
+  const totalOps =
+    ctx.mapLikeWrites +
+    ctx.scalarReductions +
+    ctx.stencilLike +
+    ctx.loopCarried;
   const depth = ctx.nestedDepth;
   if (depth >= 2 || totalOps >= 10) return "high";
   if (totalOps >= 3 || depth >= 1) return "medium";
@@ -310,16 +332,25 @@ function estimateWorkUnits(ctx: ExtractionCtx): "low" | "medium" | "high" | "unk
   return "unknown";
 }
 
-function classifyControlRegularity(ctx: ExtractionCtx): "regular" | "mixed" | "irregular" | "unknown" {
+function classifyControlRegularity(
+  ctx: ExtractionCtx,
+): "regular" | "mixed" | "irregular" | "unknown" {
   if (ctx.loopCount === 0 && !ctx.hasWhile) return "unknown";
   const branchRatio = ctx.loopCount > 0 ? ctx.branchInLoop / ctx.loopCount : 0;
-  if (ctx.hasEarlyReturn || branchRatio > 0.6 || ctx.hasBreakLike) return "irregular";
+  if (ctx.hasEarlyReturn || branchRatio > 0.6 || ctx.hasBreakLike)
+    return "irregular";
   if (branchRatio > 0.3 || ctx.hasWhile) return "mixed";
   return "regular";
 }
 
-function classifyMemoryRegularity(ctx: ExtractionCtx): "regular" | "mixed" | "irregular" | "unknown" {
-  const total = ctx.mapLikeWrites + ctx.stencilLike + ctx.indirectIndexed + ctx.pointerAccesses;
+function classifyMemoryRegularity(
+  ctx: ExtractionCtx,
+): "regular" | "mixed" | "irregular" | "unknown" {
+  const total =
+    ctx.mapLikeWrites +
+    ctx.stencilLike +
+    ctx.indirectIndexed +
+    ctx.pointerAccesses;
   if (total === 0) return "unknown";
   const irregular = ctx.indirectIndexed + ctx.pointerAccesses;
   const regular = ctx.mapLikeWrites + ctx.stencilLike;
@@ -328,14 +359,16 @@ function classifyMemoryRegularity(ctx: ExtractionCtx): "regular" | "mixed" | "ir
   return "mixed";
 }
 
-function classifyDependencyStrength(ctx: ExtractionCtx): "none" | "weak" | "medium" | "strong" | "unknown" {
+function classifyDependencyStrength(
+  ctx: ExtractionCtx,
+): "none" | "weak" | "medium" | "strong" | "unknown" {
   if (ctx.loopCount === 0 && !ctx.hasRecursion) return "unknown";
-  if (ctx.loopCarried >= 2 || (ctx.loopCarried > 0 && ctx.hasWhile)) return "strong";
+  if (ctx.loopCarried >= 2 || (ctx.loopCarried > 0 && ctx.hasWhile))
+    return "strong";
   if (ctx.loopCarried === 1 || ctx.scalarReductions > 1) return "medium";
   if (ctx.scalarReductions === 1) return "weak";
   return "none";
 }
-
 
 export function extractFeatures(ast: Program): HardwareFeatures {
   // Determine algo kind
@@ -358,47 +391,44 @@ export function extractFeatures(ast: Program): HardwareFeatures {
       }
       // Count for loops at block root (top-level in procedures)
       topLevelLoops += procDef.body.body.filter(
-        (s) => s.type === "For" || s.type === "While" || s.type === "Repeat"
+        (s) => s.type === "For" || s.type === "While" || s.type === "Repeat",
       ).length;
       allCtxs.push(ctx);
     }
   }
 
   // Merge all contexts
-  const merged = allCtxs.reduce(
-    (acc, c) => {
-      acc.loopCount += c.loopCount;
-      acc.nestedDepth = Math.max(acc.nestedDepth, c.nestedDepth);
-      acc.hasWhile = acc.hasWhile || c.hasWhile;
-      acc.hasRepeat = acc.hasRepeat || c.hasRepeat;
-      acc.hasEarlyReturn = acc.hasEarlyReturn || c.hasEarlyReturn;
-      acc.hasBreakLike = acc.hasBreakLike || c.hasBreakLike;
-      acc.branchInLoop += c.branchInLoop;
-      acc.dataDependentConditions += c.dataDependentConditions;
-      acc.scalarReductions += c.scalarReductions;
-      acc.mapLikeWrites += c.mapLikeWrites;
-      acc.stencilLike += c.stencilLike;
-      acc.indirectIndexed += c.indirectIndexed;
-      acc.pointerAccesses += c.pointerAccesses;
-      acc.graphLikeSignals += c.graphLikeSignals;
-      acc.loopCarried += c.loopCarried;
-      acc.sequentialUpdates += c.sequentialUpdates;
-      acc.recursiveCalls += c.recursiveCalls;
-      acc.hasRecursion = acc.hasRecursion || c.hasRecursion;
-      return acc;
-    },
-    mkCtx("")
-  );
+  const merged = allCtxs.reduce((acc, c) => {
+    acc.loopCount += c.loopCount;
+    acc.nestedDepth = Math.max(acc.nestedDepth, c.nestedDepth);
+    acc.hasWhile = acc.hasWhile || c.hasWhile;
+    acc.hasRepeat = acc.hasRepeat || c.hasRepeat;
+    acc.hasEarlyReturn = acc.hasEarlyReturn || c.hasEarlyReturn;
+    acc.hasBreakLike = acc.hasBreakLike || c.hasBreakLike;
+    acc.branchInLoop += c.branchInLoop;
+    acc.dataDependentConditions += c.dataDependentConditions;
+    acc.scalarReductions += c.scalarReductions;
+    acc.mapLikeWrites += c.mapLikeWrites;
+    acc.stencilLike += c.stencilLike;
+    acc.indirectIndexed += c.indirectIndexed;
+    acc.pointerAccesses += c.pointerAccesses;
+    acc.graphLikeSignals += c.graphLikeSignals;
+    acc.loopCarried += c.loopCarried;
+    acc.sequentialUpdates += c.sequentialUpdates;
+    acc.recursiveCalls += c.recursiveCalls;
+    acc.hasRecursion = acc.hasRecursion || c.hasRecursion;
+    return acc;
+  }, mkCtx(""));
 
   merged.hasRecursion = hasRecursion;
   const algorithmKind: HardwareFeatures["algorithmKind"] =
     hasRecursion && merged.loopCount > 0
       ? "hybrid"
       : hasRecursion
-      ? "recursive"
-      : merged.loopCount > 0
-      ? "iterative"
-      : "unknown";
+        ? "recursive"
+        : merged.loopCount > 0
+          ? "iterative"
+          : "unknown";
 
   const branchDensity =
     merged.loopCount > 0 ? merged.branchInLoop / merged.loopCount : 0;
