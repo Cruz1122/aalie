@@ -22,7 +22,7 @@ interface NavigationFooterProps {
 }
 
 const linkBase =
-  "flex items-center gap-1.5 sm:gap-2 rounded-lg px-2 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white min-h-[44px] min-w-0 flex-1 basis-0 overflow-hidden";
+  "flex items-center gap-1.5 sm:gap-2 rounded-lg px-2 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium text-slate-300 transition-colors hover:bg-white/5 hover:text-white min-h-[44px] min-w-0 flex-1 basis-0 overflow-hidden";
 
 /**
  * Footer de navegación reutilizable para páginas de documentación y guías.
@@ -43,7 +43,7 @@ export function NavigationFooter({
 
   return (
     <nav
-      className={`glass-secondary rounded-xl border border-white/10 p-2 sm:p-4 mt-6 sm:mt-8 min-w-0 ${className}`}
+      className={`glass-card rounded-xl border border-white/10 p-2 sm:p-4 mt-6 sm:mt-8 min-w-0 ${className}`}
       aria-label="Navegación de página"
     >
       <div className="flex flex-row justify-between items-stretch gap-2 sm:gap-4 min-w-0">

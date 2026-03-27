@@ -468,6 +468,6 @@ Proyecto académico - Universidad de Caldas (2025-2)
 
 <div align="center">
 
-[Documentación](./docs/) • [Guía de Usuario](./apps/web/src/app/user-guide/) • [Ejemplos](./apps/web/src/app/examples/)
+[Documentación](./docs/) • [Guía de Usuario](./apps/web/src/app/[locale]/user-guide/) • [Ejemplos](./apps/web/src/app/[locale]/examples/)
 
 </div>

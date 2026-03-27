@@ -16,7 +16,9 @@ app/
 │   └── technical/
 │       └── page.tsx           # /documentation/technical
 ├── examples/
-│   └── page.tsx               # /examples
+│   ├── page.tsx               # /examples
+│   └── [category]/
+│       └── page.tsx           # /examples/iterativos | /examples/divide-y-venceras | ...
 ├── about-us/
 │   └── page.tsx               # /about-us
 └── privacy/
@@ -104,9 +106,21 @@ Ejemplos de algoritmos.
 **Componente:** `app/examples/page.tsx`
 
 **Características:**
-- Ejemplos por categoría
-- Copiar código
-- Analizar directamente
+- Home del catálogo centralizado de ejemplos
+- Buscador global sobre algoritmos habilitados
+- Selector de 4 familias de algoritmos
+
+### `/examples/[category]`
+
+Página de catálogo por familia.
+
+**Componente:** `app/examples/[category]/page.tsx`
+
+**Características:**
+- Rutas estáticas para `iterativos`, `divide-y-venceras`, `resta-y-venceras`, `resta-y-seras-vencido`
+- Buscador por categoría
+- Filtros de método (`TM`, `IT`, `AR`, `EC`) en categorías recursivas
+- Acción directa de análisis reutilizando el flujo actual (`useRunAnalysis`)
 
 ## Navegación
 
@@ -240,4 +254,3 @@ app/
 ├── not-found.tsx
 └── error.tsx
 ```
-
