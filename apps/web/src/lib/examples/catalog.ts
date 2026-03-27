@@ -42,9 +42,6 @@ export interface ExampleCatalogItem {
 export interface ExampleCategoryMeta {
   slug: ExampleCategory;
   icon: string;
-  label: Record<ExampleLocale, string>;
-  description: Record<ExampleLocale, string>;
-  offText: Record<ExampleLocale, string>;
 }
 
 export const EXAMPLE_CATEGORY_ORDER: ExampleCategory[] = [
@@ -58,66 +55,18 @@ export const EXAMPLE_CATEGORY_META: Record<ExampleCategory, ExampleCategoryMeta>
   iterativos: {
     slug: "iterativos",
     icon: "loop",
-    label: {
-      es: "Iterativos",
-      en: "Iterative",
-    },
-    description: {
-      es: "Algoritmos resueltos con ciclos y actualizaciones paso a paso. No muestran badges recursivas.",
-      en: "Algorithms solved with loops and step-by-step state updates. They do not display recursive badges.",
-    },
-    offText: {
-      es: "Resuelven el problema con ciclos y actualizaciones paso a paso.",
-      en: "They solve the problem with loops and step-by-step updates.",
-    },
   },
   "divide-y-venceras": {
     slug: "divide-y-venceras",
     icon: "sentiment_very_satisfied",
-    label: {
-      es: "Divide y vencerás",
-      en: "Divide and conquer",
-    },
-    description: {
-      es: "Varios subproblemas más pequeños que luego se combinan. Aquí mostramos solo badges respaldadas por el motor.",
-      en: "Several smaller subproblems that are later combined. Only engine-backed badges are shown here.",
-    },
-    offText: {
-      es: "Parten el problema en varias partes más pequeñas, las resuelven y luego combinan el resultado.",
-      en: "They split the problem into multiple smaller parts, solve them, and then combine the result.",
-    },
   },
   "resta-y-venceras": {
     slug: "resta-y-venceras",
     icon: "sentiment_satisfied",
-    label: {
-      es: "Resta y vencerás",
-      en: "Decrease and conquer",
-    },
-    description: {
-      es: "Reducen el problema a un solo subproblema más pequeño. Los filtros muestran los métodos realmente verificados.",
-      en: "They reduce the problem to a single smaller subproblem. Filters only expose truly verified methods.",
-    },
-    offText: {
-      es: "Reducen el problema a una versión más pequeña del mismo y repiten hasta llegar al caso base.",
-      en: "They reduce the problem to a smaller version of itself and repeat until reaching the base case.",
-    },
   },
   "resta-y-seras-vencido": {
     slug: "resta-y-seras-vencido",
     icon: "sentiment_dissatisfied",
-    label: {
-      es: "Resta y serás vencido",
-      en: "Decrease by constant step",
-    },
-    description: {
-      es: "Avanzan restando una parte pequeña en cada llamada y suelen producir recurrencias lineales o ramificadas.",
-      en: "They advance by removing a small portion on each call and often produce linear or branching recurrences.",
-    },
-    offText: {
-      es: "Avanzan restando una parte pequeña del problema en cada llamada, normalmente en recurrencias lineales.",
-      en: "They advance by removing a small part of the problem on each call, usually in linear recurrences.",
-    },
   },
 };
 
@@ -128,49 +77,11 @@ export const RECURSIVE_METHOD_BADGE_TO_METHOD = {
   EC: "characteristic_equation",
 } as const;
 
-export const RECURSIVE_METHOD_TOOLTIPS: Record<
-  RecursiveMethodBadge,
-  Record<ExampleLocale, string>
-> = {
-  TM: {
-    es: "Teorema Maestro",
-    en: "Master Theorem",
-  },
-  IT: {
-    es: "Método de iteración",
-    en: "Iteration Method",
-  },
-  AR: {
-    es: "Árbol de Recursión",
-    en: "Recursion Tree",
-  },
-  EC: {
-    es: "Ecuación Característica",
-    en: "Characteristic Equation",
-  },
-};
-
-export const EXAMPLE_FAMILY_LABELS: Record<
-  ExampleFamily,
-  Record<ExampleLocale, string>
-> = {
-  busqueda: { es: "Búsqueda", en: "Search" },
-  ordenamiento: { es: "Ordenamiento", en: "Sorting" },
-  matrices: { es: "Matrices", en: "Matrices" },
-  numerico: { es: "Numérico", en: "Numeric" },
-  geometria: { es: "Geometría", en: "Geometry" },
-  secuencias: { es: "Secuencias", en: "Sequences" },
-  estructuras: { es: "Estructuras", en: "Structures" },
-  clasicos: { es: "Clásicos", en: "Classics" },
-};
-
-export const EXAMPLE_DIFFICULTY_LABELS: Record<
-  ExampleDifficulty,
-  Record<ExampleLocale, string>
-> = {
-  basico: { es: "Básico", en: "Basic" },
-  intermedio: { es: "Intermedio", en: "Intermediate" },
-  avanzado: { es: "Avanzado", en: "Advanced" },
+export const EXAMPLE_METHOD_TRANSLATION_KEYS: Record<RecursiveMethodBadge, string> = {
+  TM: "analyzer.methods.masterTheorem",
+  IT: "analyzer.methods.iterationMethod",
+  AR: "analyzer.methods.recursionTree",
+  EC: "analyzer.methods.characteristicEquation",
 };
 
 export const EXAMPLE_FAMILY_ICONS: Record<ExampleFamily, string> = {
@@ -187,7 +98,7 @@ export const EXAMPLE_FAMILY_ICONS: Record<ExampleFamily, string> = {
 const code = (...lines: string[]): string => lines.join("\n");
 
 const buildCopy = (
-  category: ExampleCategory,
+  _category: ExampleCategory,
   titleEs: string,
   titleEn: string,
   summaryEs: string,
@@ -198,13 +109,13 @@ const buildCopy = (
   es: {
     title: titleEs,
     summary: summaryEs,
-    offText: EXAMPLE_CATEGORY_META[category].offText.es,
+    offText: "",
     tags: tagsEs,
   },
   en: {
     title: titleEn,
     summary: summaryEn,
-    offText: EXAMPLE_CATEGORY_META[category].offText.en,
+    offText: "",
     tags: tagsEn,
   },
 });
@@ -3097,14 +3008,7 @@ export const searchExamples = (
 
   return items.filter((item) => {
     const copy = item.copy[locale];
-    const haystack = [
-      copy.title,
-      copy.summary,
-      ...copy.tags,
-      EXAMPLE_CATEGORY_META[item.category].label[locale],
-    ]
-      .map(normalize)
-      .join(" ");
+    const haystack = [copy.title, copy.summary, ...copy.tags].map(normalize).join(" ");
 
     return haystack.includes(normalizedQuery);
   });
@@ -3126,17 +3030,5 @@ export const getCategoryTotals = (category: ExampleCategory): {
 export const findExampleBySlug = (slug: string): ExampleCatalogItem | undefined =>
   examplesCatalog.find((item) => item.slug === slug);
 
-export const getFamilyLabel = (
-  family: ExampleFamily,
-  locale: ExampleLocale,
-): string => EXAMPLE_FAMILY_LABELS[family][locale];
-
-export const getDifficultyLabel = (
-  difficulty: ExampleDifficulty,
-  locale: ExampleLocale,
-): string => EXAMPLE_DIFFICULTY_LABELS[difficulty][locale];
-
-export const getMethodTooltip = (
-  method: RecursiveMethodBadge,
-  locale: ExampleLocale,
-): string => RECURSIVE_METHOD_TOOLTIPS[method][locale];
+export const getMethodTranslationKey = (method: RecursiveMethodBadge): string =>
+  EXAMPLE_METHOD_TRANSLATION_KEYS[method];

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React from "react";
 
 import NavigationLink from "@/components/NavigationLink";
@@ -7,17 +8,15 @@ import {
   EXAMPLE_CATEGORY_ORDER,
   EXAMPLE_CATEGORY_META,
 } from "@/lib/examples/catalog";
-import type { ExampleLocale } from "@/lib/examples/catalog";
+import { CATEGORY_LABEL_KEYS, CATEGORY_OFFTEXT_KEYS } from "@/lib/examples/i18n";
 
 interface ExamplesTypeSelectorProps {
-  locale: ExampleLocale;
   ctaLabel: string;
 }
 
-export function ExamplesTypeSelector({
-  locale,
-  ctaLabel,
-}: ExamplesTypeSelectorProps) {
+export function ExamplesTypeSelector({ ctaLabel }: ExamplesTypeSelectorProps) {
+  const t = useTranslations();
+
   return (
     <section className="min-h-[68vh]">
       <div className="grid min-h-[68vh] grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
@@ -35,10 +34,10 @@ export function ExamplesTypeSelector({
                 {meta.icon}
               </span>
               <h3 className="line-clamp-2 text-xl font-bold text-white">
-                {meta.label[locale]}
+                {t(CATEGORY_LABEL_KEYS[category])}
               </h3>
               <p className="line-clamp-4 text-sm text-dark-text">
-                {meta.offText[locale]}
+                {t(CATEGORY_OFFTEXT_KEYS[category])}
               </p>
               <NavigationLink
                 href={`/examples/${category}`}

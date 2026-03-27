@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 
 import type {
@@ -8,12 +9,16 @@ import type {
   RecursiveMethodBadge,
 } from "@/lib/examples/catalog";
 import {
-  EXAMPLE_CATEGORY_META,
   EXAMPLE_FAMILY_ICONS,
-  getFamilyLabel,
-  getMethodTooltip,
+  getMethodTranslationKey,
   isRecursiveCategory,
 } from "@/lib/examples/catalog";
+import {
+  CATEGORY_LABEL_KEYS,
+  FAMILY_LABEL_KEYS,
+  getLocalizedExampleContent,
+  type LocalizedExampleCatalogItem,
+} from "@/lib/examples/i18n";
 
 const METHOD_CLASSNAMES: Record<RecursiveMethodBadge, string> = {
   TM: "border-orange-500/30 bg-orange-500/10 text-orange-200",
@@ -102,20 +107,18 @@ export function ExampleCatalogCard({
   analyzeLabel,
   analyzingLabel,
 }: ExampleCatalogCardProps) {
+  const t = useTranslations();
   const [expanded, setExpanded] = useState(false);
   const isAnalyzing = analyzingExampleId === example.id;
   const disableActions = analyzingExampleId !== null;
-  const copy = example.copy[locale];
-  const categoryMeta = EXAMPLE_CATEGORY_META[example.category];
+  const catalogItems = t.raw("examples.catalogItems") as Record<
+    string,
+    LocalizedExampleCatalogItem
+  >;
+  const copy = getLocalizedExampleContent(example, catalogItems, locale);
   const recursive = isRecursiveCategory(example.category);
-  const kindLabel = recursive
-    ? locale === "es"
-      ? "Recursivo"
-      : "Recursive"
-    : locale === "es"
-      ? "Iterativo"
-      : "Iterative";
-  const familyLabel = getFamilyLabel(example.family, locale);
+  const kindLabel = recursive ? t("examples.kind.recursive") : t("examples.kind.iterative");
+  const familyLabel = t(FAMILY_LABEL_KEYS[example.family]);
   const behaviorIcon = EXAMPLE_FAMILY_ICONS[example.family];
 
   return (
@@ -151,7 +154,7 @@ export function ExampleCatalogCard({
             </h3>
             {showCategory && (
               <span className="mx-auto rounded-full border border-white/10 bg-slate-950/60 px-2.5 py-1 text-[11px] font-medium text-slate-300">
-                {categoryMeta.label[locale]}
+                {t(CATEGORY_LABEL_KEYS[example.category])}
               </span>
             )}
             <p className="line-clamp-2 w-full text-xs leading-relaxed text-dark-text">
@@ -167,8 +170,8 @@ export function ExampleCatalogCard({
               {example.verifiedMethods.map((method) => (
                 <span
                   key={method}
-                  title={getMethodTooltip(method, locale)}
-                  aria-label={getMethodTooltip(method, locale)}
+                  title={t(getMethodTranslationKey(method))}
+                  aria-label={t(getMethodTranslationKey(method))}
                   className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${METHOD_CLASSNAMES[method]}`}
                 >
                   {method}

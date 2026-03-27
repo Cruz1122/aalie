@@ -1,12 +1,12 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React from "react";
 
 import type {
-  ExampleLocale,
   RecursiveMethodBadge,
 } from "@/lib/examples/catalog";
-import { getMethodTooltip } from "@/lib/examples/catalog";
+import { getMethodTranslationKey } from "@/lib/examples/catalog";
 
 const METHOD_META: Record<
   RecursiveMethodBadge,
@@ -31,16 +31,16 @@ const METHOD_META: Record<
 };
 
 interface ExamplesMethodFiltersProps {
-  locale: ExampleLocale;
   selectedMethods: RecursiveMethodBadge[];
   onToggle: (method: RecursiveMethodBadge) => void;
 }
 
 export function ExamplesMethodFilters({
-  locale,
   selectedMethods,
   onToggle,
 }: ExamplesMethodFiltersProps) {
+  const t = useTranslations();
+
   return (
     <section className="glass-card rounded-xl border border-white/10 p-2">
       <div className="flex flex-wrap gap-2">
@@ -57,7 +57,7 @@ export function ExamplesMethodFilters({
                   : "border-white/10 bg-slate-900/60 text-slate-300 hover:border-white/20 hover:text-white"
               }`}
             >
-              {getMethodTooltip(method as RecursiveMethodBadge, locale)}
+              {t(getMethodTranslationKey(method as RecursiveMethodBadge))}
             </button>
           );
         })}

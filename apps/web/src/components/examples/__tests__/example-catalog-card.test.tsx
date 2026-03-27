@@ -5,6 +5,46 @@ import { vi } from "vitest";
 import { ExampleCatalogCard } from "@/components/examples/ExampleCatalogCard";
 import { findExampleBySlug } from "@/lib/examples/catalog";
 
+vi.mock("next-intl", () => ({
+  useTranslations: () => {
+    const translator = (key: string) => {
+      const labels: Record<string, string> = {
+        "examples.kind.recursive": "Recursivo",
+        "examples.kind.iterative": "Iterativo",
+        "examples.families.busqueda": "Búsqueda",
+        "examples.families.ordenamiento": "Ordenamiento",
+        "examples.families.matrices": "Matrices",
+        "examples.families.numerico": "Numérico",
+        "examples.families.geometria": "Geometría",
+        "examples.families.secuencias": "Secuencias",
+        "examples.families.estructuras": "Estructuras",
+        "examples.families.clasicos": "Clásicos",
+        "examples.categories.resta-y-seras-vencido.label": "Resta y serás vencido",
+        "analyzer.methods.masterTheorem": "Teorema Maestro",
+        "analyzer.methods.iterationMethod": "Método de iteración",
+        "analyzer.methods.recursionTree": "Árbol de Recursión",
+        "analyzer.methods.characteristicEquation": "Ecuación Característica",
+      };
+      return labels[key] ?? key;
+    };
+
+    translator.raw = (key: string) => {
+      if (key === "examples.catalogItems") {
+        return {
+          "fibonacci-recursivo": {
+            title: "Fibonacci recursivo",
+            summary: "Resumen de fibonacci",
+            tags: ["fibonacci", "recursivo"],
+          },
+        };
+      }
+      return {};
+    };
+
+    return translator;
+  },
+}));
+
 const example = findExampleBySlug("fibonacci-recursivo");
 if (!example) {
   throw new Error("missing fixture example");

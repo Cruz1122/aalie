@@ -12,16 +12,12 @@ const pushMock = vi.fn();
 
 vi.mock("next-intl", () => ({
   useLocale: () => "es",
-  useTranslations: () =>
-    (key: string) => {
+  useTranslations: (namespace?: string) => {
+    const translator = (key: string) => {
       const labels: Record<string, string> = {
         title: "Catalogo",
         subtitle: "Subtitulo",
-        typeSelectorTitle: "Tipo",
-        typeSelectorSubtitle: "Tipo subtitulo",
         viewFamily: "Ver familia",
-        globalSearchTitle: "Busqueda global",
-        globalSearchSubtitle: "Busqueda subtitulo",
         searchPlaceholder: "buscar",
         searchAriaLabel: "buscar ejemplos",
         emptyTitle: "Sin resultados",
@@ -30,13 +26,53 @@ vi.mock("next-intl", () => ({
         hideAlgorithm: "Ocultar algoritmo",
         analyze: "Analizar",
         analyzing: "Analizando...",
-        categoryPanelTitle: "Panel",
         filtersTitle: "Filtros",
-        categorySummary: "Resumen categoria",
-        catalogSummary: "Resumen catalogo",
+        "examples.kind.recursive": "Recursivo",
+        "examples.kind.iterative": "Iterativo",
+        "examples.categories.iterativos.label": "Iterativos",
+        "examples.categories.divide-y-venceras.label": "Divide y vencerás",
+        "examples.categories.resta-y-venceras.label": "Resta y vencerás",
+        "examples.categories.resta-y-seras-vencido.label": "Resta y serás vencido",
+        "examples.categories.iterativos.offText": "Iterativos desc",
+        "examples.categories.divide-y-venceras.offText": "Divide desc",
+        "examples.categories.resta-y-venceras.offText": "Resta desc",
+        "examples.categories.resta-y-seras-vencido.offText": "Resta constante desc",
+        "examples.families.busqueda": "Búsqueda",
+        "examples.families.ordenamiento": "Ordenamiento",
+        "examples.families.matrices": "Matrices",
+        "examples.families.numerico": "Numérico",
+        "examples.families.geometria": "Geometría",
+        "examples.families.secuencias": "Secuencias",
+        "examples.families.estructuras": "Estructuras",
+        "examples.families.clasicos": "Clásicos",
+        "analyzer.methods.masterTheorem": "Teorema Maestro",
+        "analyzer.methods.iterationMethod": "Método de iteración",
+        "analyzer.methods.recursionTree": "Árbol de Recursión",
+        "analyzer.methods.characteristicEquation": "Ecuación Característica",
       };
       return labels[key] ?? key;
-    },
+    };
+
+    translator.raw = (key: string) => {
+      if (namespace === "examples" && key === "catalogItems") {
+        return {
+          "fibonacci-recursivo": {
+            title: "Fibonacci recursivo",
+            summary: "Resumen de fibonacci",
+            tags: ["fibonacci", "recursivo"],
+          },
+          "quick-sort": {
+            title: "Ordenamiento rápido",
+            summary: "Resumen quicksort",
+            tags: ["ordenamiento", "divide y vencerás"],
+          },
+        };
+      }
+      return {};
+    };
+
+    return translator;
+  },
 }));
 
 vi.mock("@/i18n/navigation", () => ({

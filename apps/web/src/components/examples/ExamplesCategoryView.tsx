@@ -15,12 +15,17 @@ import {
   getCategoryMeta,
   getExamplesByCategory,
   isRecursiveCategory,
-  searchExamples,
   type ExampleCatalogItem,
   type ExampleCategory,
   type ExampleLocale,
   type RecursiveMethodBadge,
 } from "@/lib/examples/catalog";
+import {
+  CATEGORY_LABEL_KEYS,
+  CATEGORY_OFFTEXT_KEYS,
+  getLocalizedExampleContent,
+  type LocalizedExampleCatalogItem,
+} from "@/lib/examples/i18n";
 
 import { ExamplesCatalogList } from "./ExamplesCatalogList";
 import { ExamplesMethodFilters } from "./ExamplesMethodFilters";
@@ -33,6 +38,8 @@ interface ExamplesCategoryViewProps {
 export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
   const locale = useLocale() as ExampleLocale;
   const t = useTranslations("examples");
+  const tGlobal = useTranslations();
+  const catalogItems = t.raw("catalogItems") as Record<string, LocalizedExampleCatalogItem>;
   const searchParams = useSearchParams();
   const { finishNavigation } = useNavigation();
   const [query, setQuery] = useState("");
@@ -56,13 +63,38 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
   const visibleExamples = useMemo(() => {
     const categoryItems = getExamplesByCategory(category, {
       enabledOnly: true,
-      locale,
     });
-    const searched = searchExamples(categoryItems, locale, query);
+    const normalized = query.trim().toLowerCase();
+    const searched = !normalized
+      ? categoryItems
+      : categoryItems.filter((item) => {
+          const localized = getLocalizedExampleContent(item, catalogItems, locale);
+          const haystack = [
+            localized.title,
+            localized.summary,
+            ...localized.tags,
+            item.copy.es.title,
+            item.copy.es.summary,
+            ...item.copy.es.tags,
+            item.copy.en.title,
+            item.copy.en.summary,
+            ...item.copy.en.tags,
+            tGlobal(CATEGORY_LABEL_KEYS[item.category]),
+          ]
+            .join(" ")
+            .toLowerCase();
+          return haystack.includes(normalized);
+        });
+    const sorted = [...searched].sort((a, b) =>
+      getLocalizedExampleContent(a, catalogItems, locale).title.localeCompare(
+        getLocalizedExampleContent(b, catalogItems, locale).title,
+        locale,
+      ),
+    );
     return recursiveCategory
-      ? filterByMethods(searched, selectedMethods)
-      : searched;
-  }, [category, locale, query, recursiveCategory, selectedMethods]);
+      ? filterByMethods(sorted, selectedMethods)
+      : sorted;
+  }, [catalogItems, category, locale, query, recursiveCategory, selectedMethods, tGlobal]);
 
   const selectedExampleId =
     selectedSlug != null
@@ -102,8 +134,8 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
         <div className="mx-auto max-w-7xl space-y-6">
           <PageHeader
             icon={meta.icon}
-            title={meta.label[locale]}
-            description={meta.offText[locale]}
+            title={tGlobal(CATEGORY_LABEL_KEYS[category])}
+            description={tGlobal(CATEGORY_OFFTEXT_KEYS[category])}
           />
 
           <div className="space-y-4">
@@ -118,7 +150,6 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
               filtersDropdown={
                 recursiveCategory ? (
                   <ExamplesMethodFilters
-                    locale={locale}
                     selectedMethods={selectedMethods}
                     onToggle={toggleMethod}
                   />

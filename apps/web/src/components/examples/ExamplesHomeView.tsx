@@ -8,15 +8,19 @@ import Header from "@/components/Header";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useRouter } from "@/i18n/navigation";
 import {
-  EXAMPLE_CATEGORY_META,
   getEnabledExamples,
-  getFamilyLabel,
-  getMethodTooltip,
+  getMethodTranslationKey,
   isRecursiveCategory,
   type ExampleLocale,
   type RecursiveMethodBadge,
   examplesCatalog,
 } from "@/lib/examples/catalog";
+import {
+  CATEGORY_LABEL_KEYS,
+  FAMILY_LABEL_KEYS,
+  getLocalizedExampleContent,
+  type LocalizedExampleCatalogItem,
+} from "@/lib/examples/i18n";
 
 import { ExamplesTypeSelector } from "./ExamplesTypeSelector";
 
@@ -30,6 +34,8 @@ const METHOD_BADGE_CLASSNAMES: Record<RecursiveMethodBadge, string> = {
 export function ExamplesHomeView() {
   const locale = useLocale() as ExampleLocale;
   const t = useTranslations("examples");
+  const tGlobal = useTranslations();
+  const catalogItems = t.raw("catalogItems") as Record<string, LocalizedExampleCatalogItem>;
   const router = useRouter();
   const { finishNavigation } = useNavigation();
   const [query, setQuery] = useState("");
@@ -47,18 +53,28 @@ export function ExamplesHomeView() {
     const enabled = getEnabledExamples(examplesCatalog);
     return enabled
       .map((item) => {
-        const copy = item.copy[locale];
+        const copy = getLocalizedExampleContent(item, catalogItems, locale);
         const normalizedTitle = copy.title.toLowerCase();
         const normalizedSummary = copy.summary.toLowerCase();
         const normalizedTags = copy.tags.map((tag) => tag.toLowerCase());
-        const normalizedCategory = EXAMPLE_CATEGORY_META[item.category].label[
-          locale
-        ].toLowerCase();
+        const bilingualTitleEs = item.copy.es.title.toLowerCase();
+        const bilingualSummaryEs = item.copy.es.summary.toLowerCase();
+        const bilingualTagsEs = item.copy.es.tags.map((tag) => tag.toLowerCase());
+        const bilingualTitleEn = item.copy.en.title.toLowerCase();
+        const bilingualSummaryEn = item.copy.en.summary.toLowerCase();
+        const bilingualTagsEn = item.copy.en.tags.map((tag) => tag.toLowerCase());
+        const normalizedCategory = tGlobal(CATEGORY_LABEL_KEYS[item.category]).toLowerCase();
 
         if (
           !normalizedTitle.includes(normalizedQuery) &&
           !normalizedSummary.includes(normalizedQuery) &&
           !normalizedTags.some((tag) => tag.includes(normalizedQuery)) &&
+          !bilingualTitleEs.includes(normalizedQuery) &&
+          !bilingualSummaryEs.includes(normalizedQuery) &&
+          !bilingualTagsEs.some((tag) => tag.includes(normalizedQuery)) &&
+          !bilingualTitleEn.includes(normalizedQuery) &&
+          !bilingualSummaryEn.includes(normalizedQuery) &&
+          !bilingualTagsEn.some((tag) => tag.includes(normalizedQuery)) &&
           !normalizedCategory.includes(normalizedQuery)
         ) {
           return null;
@@ -68,12 +84,29 @@ export function ExamplesHomeView() {
         if (normalizedTitle === normalizedQuery) score += 120;
         if (normalizedTitle.startsWith(normalizedQuery)) score += 80;
         if (normalizedTitle.includes(normalizedQuery)) score += 50;
+        if (bilingualTitleEs.startsWith(normalizedQuery)) score += 40;
+        if (bilingualTitleEn.startsWith(normalizedQuery)) score += 40;
+        if (bilingualTitleEs.includes(normalizedQuery)) score += 25;
+        if (bilingualTitleEn.includes(normalizedQuery)) score += 25;
         if (normalizedSummary.includes(normalizedQuery)) score += 20;
+        if (bilingualSummaryEs.includes(normalizedQuery)) score += 10;
+        if (bilingualSummaryEn.includes(normalizedQuery)) score += 10;
         if (normalizedCategory.includes(normalizedQuery)) score += 15;
         if (normalizedTags.some((tag) => tag.startsWith(normalizedQuery))) {
           score += 25;
         } else if (normalizedTags.some((tag) => tag.includes(normalizedQuery))) {
           score += 12;
+        }
+        if (
+          bilingualTagsEs.some((tag) => tag.startsWith(normalizedQuery)) ||
+          bilingualTagsEn.some((tag) => tag.startsWith(normalizedQuery))
+        ) {
+          score += 12;
+        } else if (
+          bilingualTagsEs.some((tag) => tag.includes(normalizedQuery)) ||
+          bilingualTagsEn.some((tag) => tag.includes(normalizedQuery))
+        ) {
+          score += 6;
         }
 
         return { item, score };
@@ -81,11 +114,13 @@ export function ExamplesHomeView() {
       .filter((entry): entry is { item: (typeof enabled)[number]; score: number } => entry !== null)
       .sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
-        return a.item.copy[locale].title.localeCompare(b.item.copy[locale].title, locale);
+        const aTitle = getLocalizedExampleContent(a.item, catalogItems, locale).title;
+        const bTitle = getLocalizedExampleContent(b.item, catalogItems, locale).title;
+        return aTitle.localeCompare(bTitle, locale);
       })
       .slice(0, 3)
       .map((entry) => entry.item);
-  }, [locale, query]);
+  }, [catalogItems, locale, query, tGlobal]);
 
   const handleSelectMatch = (slug: string, category: string) => {
     router.push(`/examples/${category}?example=${slug}`);
@@ -119,11 +154,10 @@ export function ExamplesHomeView() {
                 {topMatches.length > 0 ? (
                   <ul className="divide-y divide-white/10">
                     {topMatches.map((item) => {
-                      const copy = item.copy[locale];
-                      const category = EXAMPLE_CATEGORY_META[item.category];
+                      const copy = getLocalizedExampleContent(item, catalogItems, locale);
                       const recursive = isRecursiveCategory(item.category);
-                      const kindLabel = locale === "es" ? "Recursivo" : "Recursive";
-                      const iterativeLabel = locale === "es" ? "Iterativo" : "Iterative";
+                      const kindLabel = t("kind.recursive");
+                      const iterativeLabel = t("kind.iterative");
                       return (
                         <li key={item.id}>
                           <button
@@ -133,11 +167,11 @@ export function ExamplesHomeView() {
                           >
                             <div className="text-sm font-semibold text-white">{copy.title}</div>
                             <div className="mt-1 text-xs text-neutral-300">
-                              {category.label[locale]}
+                              {tGlobal(CATEGORY_LABEL_KEYS[item.category])}
                             </div>
                             <div className="mt-2 flex flex-wrap gap-1.5">
                               <span className="rounded-full border border-neutral-600 bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-200">
-                                {getFamilyLabel(item.family, locale)}
+                                {tGlobal(FAMILY_LABEL_KEYS[item.family])}
                               </span>
                               <span className="rounded-full border border-neutral-600 bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-200">
                                 {recursive ? kindLabel : iterativeLabel}
@@ -146,8 +180,8 @@ export function ExamplesHomeView() {
                                 item.verifiedMethods.map((method) => (
                                   <span
                                     key={method}
-                                    title={getMethodTooltip(method, locale)}
-                                    aria-label={getMethodTooltip(method, locale)}
+                                    title={tGlobal(getMethodTranslationKey(method))}
+                                    aria-label={tGlobal(getMethodTranslationKey(method))}
                                     className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${METHOD_BADGE_CLASSNAMES[method]}`}
                                   >
                                     {method}
@@ -169,7 +203,6 @@ export function ExamplesHomeView() {
 
         <section>
           <ExamplesTypeSelector
-            locale={locale}
             ctaLabel={t("viewFamily")}
           />
         </section>
