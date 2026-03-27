@@ -267,7 +267,7 @@ function getMethodPrecision(
   recommended: boolean,
 ): "high" | "medium" | "low" {
   if (recommended) return "high";
-  if (recurrenceType === "divide_conquer") {
+  if (recurrenceType === "divide_conquer" || recurrenceType === "divide_conquer_multi") {
     if (method === "master" || method === "recursion_tree") return "high";
     if (method === "iteration") return "low";
     return "low";
@@ -288,7 +288,7 @@ function getApplicableMethodReason(
   recurrenceA: number | undefined,
   i18n: ExportI18nBundle,
 ): string {
-  const divideConquer = recurrenceType === "divide_conquer";
+  const divideConquer = recurrenceType === "divide_conquer" || recurrenceType === "divide_conquer_multi";
   const linearShift = recurrenceType === "linear_shift";
   const isSingleBranchDivideConquer = divideConquer && recurrenceA === 1;
 
@@ -342,7 +342,7 @@ function getNotApplicableMethodReason(
   recurrenceType: string | undefined,
   i18n: ExportI18nBundle,
 ): string {
-  const divideConquer = recurrenceType === "divide_conquer";
+  const divideConquer = recurrenceType === "divide_conquer" || recurrenceType === "divide_conquer_multi";
   const linearShift = recurrenceType === "linear_shift";
 
   if (method === "master" && linearShift) {
@@ -405,9 +405,19 @@ function normalizeDidacticSummaryText(text: string): string {
 
 function normalizeDominantReasonText(value: string): string {
   return value
-    .replace(/\\text\{([^}]*)\}/g, "$1")
+    .replace(/\\text\{([^}]*)\}/g, " $1 ")
+    .replace(/\\cdot/g, " · ")
+    .replace(/\\times/g, " × ")
+    .replace(/\\log/g, "log")
+    .replace(/\\Theta/g, "Theta")
+    .replace(/\\Omega/g, "Omega")
+    .replace(/\\mathcal\{O\}/g, "O")
+    .replace(/\\left|\\right/g, " ")
+    .replace(/\\[A-Za-z]+/g, " ")
     .replace(/\\\\/g, ". ")
+    .replace(/\\+/g, " ")
     .replace(/\\[,;!]/g, " ")
+    .replace(/([a-záéíóúñ])([A-ZÁÉÍÓÚÑ])/g, "$1. $2")
     .replace(/[{}]/g, "")
     .replace(/([0-9])([A-Za-zÁÉÍÓÚáéíóú])/g, "$1. $2")
     .replace(/\s{2,}/g, " ")
@@ -419,10 +429,30 @@ function normalizeRecursiveFormula(formula: string | undefined): string | undefi
   const dominantWorkPattern =
     /\\text\{Trabajo en ra[ií]z ?\}\s*([^\\]+?)\s*\\\\\s*\\text\{Trabajo en hojas ?\(\}\s*([^\\]+?)\s*\\text\{\)\}/i;
   const match = dominantWorkPattern.exec(formula);
-  if (!match) return formula;
-  const rootWork = match[1]?.trim() || "N/A";
-  const leafWork = match[2]?.trim() || "N/A";
-  return `\\text{Trabajo en raíz: } ${rootWork} \\quad \\text{Trabajo en hojas: } ${leafWork}`;
+  if (match) {
+    const rootWork = match[1]?.trim() || "N/A";
+    const leafWork = match[2]?.trim() || "N/A";
+    return `\\text{Trabajo en raíz: } ${rootWork} \\quad \\text{Trabajo en hojas: } ${leafWork}`;
+  }
+
+  const dominantLevelCostPatternEs =
+    /\\text\{Cada nivel tiene costo ?\}\s*n\s*(?:\\\\\s*)?\\text\{Total ?\}\s*=\s*(.+)$/i;
+  const dominantLevelCostPatternEn =
+    /\\text\{Each level has cost ?\}\s*n\s*(?:\\\\\s*)?\\text\{Total ?\}\s*=\s*(.+)$/i;
+
+  const dominantLevelCostEs = dominantLevelCostPatternEs.exec(formula);
+  if (dominantLevelCostEs) {
+    const totalExpr = dominantLevelCostEs[1]?.trim() || "N/A";
+    return `\\text{Cada nivel tiene costo: } n \\quad \\text{Total: } ${totalExpr}`;
+  }
+
+  const dominantLevelCostEn = dominantLevelCostPatternEn.exec(formula);
+  if (dominantLevelCostEn) {
+    const totalExpr = dominantLevelCostEn[1]?.trim() || "N/A";
+    return `\\text{Each level has cost: } n \\quad \\text{Total: } ${totalExpr}`;
+  }
+
+  return formula;
 }
 
 function ensureSentence(text: string): string {
@@ -893,6 +923,88 @@ function buildGlobalResultSection(
   return {
     id: "global-result",
     title: i18n.globalResultTitle,
+    blocks,
+  };
+}
+
+function buildHybridProcessSection(
+  snapshot: AalieAnalysisSnapshotV1,
+  i18n: ExportI18nBundle,
+): DocumentSection {
+  const blocks: DocumentBlock[] = [];
+  const availableCases = CASE_ORDER.filter((caseName) => Boolean(snapshot.globalResult.cases[caseName]));
+
+  blocks.push({
+    kind: "paragraph",
+    text: localize(
+      i18n,
+      "El algoritmo híbrido combina una estructura de control iterativa con decisiones/llamadas recursivas. Para evitar duplicidad, este reporte prioriza el desarrollo recursivo completo y resume la interacción híbrida en una sola capa de proceso.",
+      "This hybrid algorithm combines iterative control flow with recursive calls/decisions. To avoid duplication, this report prioritizes the full recursive walkthrough and summarizes hybrid interaction in a single process layer.",
+    ),
+  });
+
+  blocks.push({
+    kind: "subsection",
+    title: localize(i18n, "Proceso de análisis híbrido", "Hybrid analysis process"),
+  });
+  blocks.push({
+    kind: "list",
+    items: [
+      localize(
+        i18n,
+        "Se identifica la parte iterativa como mecanismo de recorrido/control.",
+        "The iterative part is identified as the traversal/control mechanism.",
+      ),
+      localize(
+        i18n,
+        "Se identifica la parte recursiva como el núcleo de complejidad y derivación formal.",
+        "The recursive part is identified as the core of complexity and formal derivation.",
+      ),
+      localize(
+        i18n,
+        "Se valida el método recursivo seleccionado y su trazabilidad paso a paso.",
+        "The selected recursive method and its step-by-step traceability are validated.",
+      ),
+      localize(
+        i18n,
+        "Se reporta la complejidad final por caso y advertencias de cobertura.",
+        "Final complexity is reported by case along with coverage warnings.",
+      ),
+    ],
+  });
+
+  if (availableCases.length > 0) {
+    blocks.push({
+      kind: "subsection",
+      title: localize(i18n, "Complejidad por caso", "Case complexity"),
+    });
+    blocks.push({
+      kind: "table",
+      table: {
+        headers: [i18n.caseHeaderLabel, i18n.pedagogicalFinalComplexityLabel],
+        rows: availableCases.map((caseName) => [
+          caseLabel(caseName, i18n),
+          pickCaseComplexity(snapshot, caseName) || i18n.notAvailable,
+        ]),
+        align: ["left", "left"],
+      },
+    });
+  }
+
+  if (isSectionAvailable(snapshot.recursive) && isSectionAvailable(snapshot.recursive.data.selectedMethod)) {
+    blocks.push({
+      kind: "paragraph",
+      text: localize(
+        i18n,
+        `Método recursivo priorizado: ${methodLabel(snapshot.recursive.data.selectedMethod.data, i18n)}.`,
+        `Prioritized recursive method: ${methodLabel(snapshot.recursive.data.selectedMethod.data, i18n)}.`,
+      ),
+    });
+  }
+
+  return {
+    id: "hybrid-process",
+    title: localize(i18n, "Proceso Híbrido", "Hybrid Process"),
     blocks,
   };
 }
@@ -2726,6 +2838,78 @@ function buildRecursiveWarnings(snapshot: AalieAnalysisSnapshotV1): string[] {
   return Array.from(new Set(warnings));
 }
 
+function cleanSentence(value: string): string {
+  return String(value || "")
+    .trim()
+    .replace(/\s{2,}/g, " ")
+    .replace(/\.\.+/g, ".")
+    .replace(/\s+\./g, ".");
+}
+
+function confidenceDescriptor(
+  confidence: "high" | "medium" | "low",
+  i18n: ExportI18nBundle,
+): string {
+  if (confidence === "high") {
+    return localize(i18n, "señal fuerte", "strong signal");
+  }
+  if (confidence === "medium") {
+    return localize(i18n, "señal moderada", "moderate signal");
+  }
+  return localize(i18n, "señal inicial", "early signal");
+}
+
+function explainPatternName(
+  patternName: string,
+  confidence: number,
+  i18n: ExportI18nBundle,
+): string {
+  const pct = `${(confidence * 100).toFixed(0)}%`;
+  const key = String(patternName || "").toLowerCase();
+  if (key === "reduction") {
+    return localize(
+      i18n,
+      `Se detectó un patrón de reducción/acumulación (${pct}): parte del trabajo puede reagruparse para ejecutar combinaciones en paralelo por bloques.`,
+      `A reduction/accumulation pattern was detected (${pct}): part of the work can be regrouped to combine results in parallel blocks.`,
+    );
+  }
+  if (key === "divide_conquer") {
+    return localize(
+      i18n,
+      `Se detectó estructura divide y vencerás (${pct}): puede abrir oportunidades de paralelismo por subproblemas independientes.`,
+      `A divide-and-conquer structure was detected (${pct}): it can open parallelism opportunities across independent subproblems.`,
+    );
+  }
+  return localize(
+    i18n,
+    `Se detectó el patrón "${patternName}" (${pct}), útil como señal estructural para orientar la decisión hardware.`,
+    `Pattern "${patternName}" was detected (${pct}), providing structural evidence to guide hardware decisions.`,
+  );
+}
+
+function pedagogicalHardwareReason(raw: string, i18n: ExportI18nBundle): string {
+  const cleaned = cleanSentence(raw);
+  const lowered = cleaned.toLowerCase();
+
+  if (lowered.includes("loop-carried dependency")) {
+    return localize(
+      i18n,
+      "Cada iteración depende del resultado de la iteración anterior. Esa dependencia secuencial reduce el beneficio de paralelizar en GPU.",
+      "Each iteration depends on the previous iteration result. This sequential dependency reduces the benefit of GPU parallelization.",
+    );
+  }
+
+  if (lowered.includes("scalar reduction")) {
+    return localize(
+      i18n,
+      "Se detecta una acumulación/reducción escalar: puede optimizarse con una reducción paralela en árbol por bloques.",
+      "A scalar accumulation/reduction pattern is present: it can be optimized with a tree-style parallel reduction in blocks.",
+    );
+  }
+
+  return cleaned;
+}
+
 function buildGpuCpuBlocks(
   gpuCpu: SnapshotGpuCpuComparative,
   i18n: ExportI18nBundle,
@@ -2746,10 +2930,20 @@ function buildGpuCpuBlocks(
     gpuCpu.reasons.negative[0] ||
     null;
   const primaryPositive = gpuCpu.reasons.positive[0] || null;
+  const primaryOpportunity = gpuCpu.reasons.opportunities[0] || null;
+  const topPattern = gpuCpu.detectedPatterns[0] || null;
 
   const narrativeParts = [
-    ensureSentence(gpuCpu.summary),
-    primaryNegative ? ensureSentence(primaryNegative) : "",
+    ensureSentence(cleanSentence(gpuCpu.summary)),
+    primaryNegative
+      ? ensureSentence(
+          localize(
+            i18n,
+            `La principal limitación observada fue: ${pedagogicalHardwareReason(primaryNegative, i18n)}`,
+            `The main limitation observed was: ${pedagogicalHardwareReason(primaryNegative, i18n)}`,
+          ),
+        )
+      : "",
     localize(
       i18n,
       `Con este patrón de ejecución, se recomienda priorizar ${recommendationLabel} para este algoritmo.`,
@@ -2791,51 +2985,51 @@ function buildGpuCpuBlocks(
       text: narrativeParts,
     },
     {
-      kind: "keyValue",
-      entries: [
-        {
-          label: localize(i18n, "Scores", "Scores"),
-          value: `CPU ${gpuCpu.scores.cpu} | GPU ${gpuCpu.scores.gpu} | ${localize(i18n, "Híbrido", "Hybrid")} ${gpuCpu.scores.hybrid}`,
-        },
-      ],
+      kind: "subsection",
+      title: localize(i18n, "Lectura pedagógica", "Pedagogical interpretation"),
     },
   ];
 
+  const interpretationItems: string[] = [];
   if (primaryPositive) {
-    blocks.push({
-      kind: "paragraph",
-      text: localize(
+    interpretationItems.push(
+      localize(
         i18n,
-        `Señal favorable destacada: ${primaryPositive}.`,
-        `Highlighted favorable signal: ${primaryPositive}.`,
+        `Qué favorece esta recomendación: ${pedagogicalHardwareReason(primaryPositive, i18n)}`,
+        `What supports this recommendation: ${pedagogicalHardwareReason(primaryPositive, i18n)}`,
       ),
-    });
+    );
+  }
+  if (primaryNegative) {
+    interpretationItems.push(
+      localize(
+        i18n,
+        `Qué limita la alternativa opuesta: ${pedagogicalHardwareReason(primaryNegative, i18n)}`,
+        `What limits the opposite alternative: ${pedagogicalHardwareReason(primaryNegative, i18n)}`,
+      ),
+    );
+  }
+  if (primaryOpportunity) {
+    interpretationItems.push(
+      localize(
+        i18n,
+        `Cómo mejorar: ${pedagogicalHardwareReason(primaryOpportunity, i18n)}`,
+        `How to improve: ${pedagogicalHardwareReason(primaryOpportunity, i18n)}`,
+      ),
+    );
+  }
+  if (topPattern) {
+    interpretationItems.push(
+      localize(
+        i18n,
+        `${explainPatternName(topPattern.name, topPattern.confidence, i18n)} (${confidenceDescriptor(gpuCpu.confidence, i18n)}).`,
+        `${explainPatternName(topPattern.name, topPattern.confidence, i18n)} (${confidenceDescriptor(gpuCpu.confidence, i18n)}).`,
+      ),
+    );
   }
 
-  if (gpuCpu.reasons.opportunities.length > 0) {
-    blocks.push({
-      kind: "paragraph",
-      text: localize(
-        i18n,
-        `Oportunidad de mejora: ${gpuCpu.reasons.opportunities[0]}.`,
-        `Improvement opportunity: ${gpuCpu.reasons.opportunities[0]}.`,
-      ),
-    });
-  }
-
-  if (gpuCpu.detectedPatterns.length > 0) {
-    blocks.push({
-      kind: "paragraph",
-      text: localize(
-        i18n,
-        `Patrones detectados: ${gpuCpu.detectedPatterns
-          .map((p) => `${p.name} (${(p.confidence * 100).toFixed(0)}%)`)
-          .join(", ")}.`,
-        `Detected patterns: ${gpuCpu.detectedPatterns
-          .map((p) => `${p.name} (${(p.confidence * 100).toFixed(0)}%)`)
-          .join(", ")}.`,
-      ),
-    });
+  if (interpretationItems.length > 0) {
+    blocks.push({ kind: "list", items: interpretationItems });
   }
 
   return blocks;
@@ -2876,7 +3070,7 @@ function buildRecursiveSection(
     const recurrenceType = isSectionAvailable(data.recurrence)
       ? data.recurrence.data.type
       : undefined;
-    const strategyFamily = recurrenceType === "divide_conquer"
+    const strategyFamily = recurrenceType === "divide_conquer" || recurrenceType === "divide_conquer_multi"
       ? localize(i18n, "Divide y Vencerás", "Divide y Conquer")
       : recurrenceType === "linear_shift"
         ? localize(i18n, "Resta y Vencerás / Resta y Serás Vencido", "Decrease and Conquer / Decrease and Get Defeated")
@@ -3267,6 +3461,31 @@ function buildConclusionsSection(
     })
     .filter((item): item is string => Boolean(item));
 
+  if (snapshot.algorithmType === "hybrid") {
+    const selectedMethod =
+      isSectionAvailable(snapshot.recursive) && isSectionAvailable(snapshot.recursive.data.selectedMethod)
+        ? snapshot.recursive.data.selectedMethod.data
+        : null;
+
+    items.push(
+      localize(
+        i18n,
+        "El comportamiento híbrido se reporta sin duplicar narrativas: control iterativo + derivación recursiva formal.",
+        "Hybrid behavior is reported without duplicated narratives: iterative control + formal recursive derivation.",
+      ),
+    );
+
+    if (selectedMethod) {
+      items.push(
+        localize(
+          i18n,
+          `La conclusión principal se fundamenta en ${methodLabel(selectedMethod, i18n)} como método recursivo de referencia.`,
+          `The main conclusion is grounded on ${methodLabel(selectedMethod, i18n)} as the reference recursive method.`,
+        ),
+      );
+    }
+  }
+
   if (snapshot.meta.warnings.length > 0) {
     items.push(
       localize(
@@ -3307,15 +3526,32 @@ export function buildDocumentModel(snapshot: AalieAnalysisSnapshotV1): DocumentM
           buildComparativeSection(snapshot, i18n, { includeGpuCpu: true }),
           buildConclusionsSection(snapshot, i18n),
         ]
-      : [
-          buildExecutiveSummarySection(snapshot, i18n),
-          buildPseudocodeSection(snapshot, i18n),
-          buildGlobalResultSection(snapshot, i18n),
-          shouldIncludeIterative(snapshot) ? buildIterativeSection(snapshot, i18n) : null,
-          shouldIncludeRecursive(snapshot) ? buildRecursiveSection(snapshot, i18n) : null,
-          buildComparativeSection(snapshot, i18n, { includeGpuCpu: false }),
-          buildConclusionsSection(snapshot, i18n),
-        ];
+      : snapshot.algorithmType === "hybrid"
+        ? [
+            buildExecutiveSummarySection(snapshot, i18n),
+            buildPseudocodeSection(snapshot, i18n),
+            buildHybridProcessSection(snapshot, i18n),
+            isSectionAvailable(snapshot.iterative) &&
+            isSectionAvailable(snapshot.iterative.data.loopInvariant)
+              ? buildIterativeInvariantSection(snapshot, i18n)
+              : null,
+            shouldIncludeRecursive(snapshot)
+              ? buildRecursiveSection(snapshot, i18n)
+              : shouldIncludeIterative(snapshot)
+                ? buildIterativeSection(snapshot, i18n)
+                : null,
+            buildComparativeSection(snapshot, i18n, { includeGpuCpu: false }),
+            buildConclusionsSection(snapshot, i18n),
+          ]
+        : [
+            buildExecutiveSummarySection(snapshot, i18n),
+            buildPseudocodeSection(snapshot, i18n),
+            buildGlobalResultSection(snapshot, i18n),
+            shouldIncludeIterative(snapshot) ? buildIterativeSection(snapshot, i18n) : null,
+            shouldIncludeRecursive(snapshot) ? buildRecursiveSection(snapshot, i18n) : null,
+            buildComparativeSection(snapshot, i18n, { includeGpuCpu: false }),
+            buildConclusionsSection(snapshot, i18n),
+          ];
 
   return {
     title: snapshot.meta.algorithm.name || i18n.documentTitle,

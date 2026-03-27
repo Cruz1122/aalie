@@ -20,6 +20,7 @@ export async function buildTraceDiagramAssets(model: DocumentModel): Promise<Tra
       const svgRendered = renderTraceDiagramSvg({
         graph: block.diagram.graph,
         title: block.diagram.title,
+        locale: model.locale,
         caseName: model.locale === "es" ? "Peor caso" : "Worst case",
         summary: block.diagram.summary,
         diagnostics: block.diagram.diagnostics,

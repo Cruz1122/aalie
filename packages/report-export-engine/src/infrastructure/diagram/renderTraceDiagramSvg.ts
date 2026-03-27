@@ -6,6 +6,7 @@ export interface RenderTraceDiagramSvgInput {
   graph: TraceGraphCanonical;
   title: string;
   caseName: string;
+  locale?: "es" | "en";
   summary?: {
     totalCalls?: number;
     maxRecursionDepth?: number;
@@ -84,6 +85,25 @@ function wrapLine(line: string, maxChars: number): string[] {
   return lines;
 }
 
+function buildMultilineText(params: {
+  x: number;
+  y: number;
+  lines: string[];
+  lineHeight: number;
+  fontSize: number;
+  fill: string;
+  fontWeight?: string;
+}): string {
+  const { x, y, lines, lineHeight, fontSize, fill, fontWeight } = params;
+  if (lines.length === 0) return "";
+  const tspans = lines
+    .map((line, index) => `<tspan x="${x}" y="${y + index * lineHeight}">${escapeXml(line)}</tspan>`)
+    .join("");
+  return `<text x="${x}" y="${y}" font-size="${fontSize}" fill="${fill}"${
+    fontWeight ? ` font-weight="${fontWeight}"` : ""
+  }>${tspans}</text>`;
+}
+
 function buildNodeTextLines(label: string): string[] {
   const baseLines = String(label || "").split("\n").map((line) => line.trim()).filter(Boolean);
   const wrapped = baseLines.flatMap((line) => wrapLine(line, 30));
@@ -114,6 +134,7 @@ function extractStateSummary(graph: TraceGraphCanonical): { initial: string; fin
 function buildFooterPanel(input: {
   width: number;
   top: number;
+  locale: "es" | "en";
   caseName: string;
   totalCalls: number;
   maxDepth: number;
@@ -122,23 +143,67 @@ function buildFooterPanel(input: {
   finalState: string;
   note: string;
 }): string {
+  const t = input.locale === "es"
+    ? {
+        title: "Resumen de ejecución",
+        caseLabel: "Caso",
+        callsLabel: "Llamadas",
+        depthLabel: "Profundidad",
+        visibleNodesLabel: "Nodos visibles",
+        initialStateLabel: "Estado inicial",
+        finalStateLabel: "Estado final",
+      }
+    : {
+        title: "Execution summary",
+        caseLabel: "Case",
+        callsLabel: "Calls",
+        depthLabel: "Depth",
+        visibleNodesLabel: "Visible nodes",
+        initialStateLabel: "Initial state",
+        finalStateLabel: "Final state",
+      };
+
   const leftX = 24;
   const panelWidth = Math.max(520, input.width - 48);
-  const titleY = input.top + 24;
-  const bodyY = input.top + 50;
-  const rightColX = leftX + Math.floor(panelWidth * 0.54);
+  const titleY = input.top + 28;
+  const bodyY = input.top + 60;
+  const rightColX = leftX + Math.floor(panelWidth * 0.53);
+  const initialStateLines = wrapLine(input.initialState, 44);
+  const finalStateLines = wrapLine(input.finalState, 44);
+  const noteLines = input.note ? wrapLine(input.note, 92).slice(0, 2) : [];
 
   return [
-    `<rect x="${leftX}" y="${input.top}" width="${panelWidth}" height="124" rx="14" ry="14" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.2" />`,
-    `<text x="${leftX + 16}" y="${titleY}" font-size="15" font-weight="700" fill="#0f172a">Resumen de ejecución</text>`,
-    `<text x="${leftX + 16}" y="${bodyY}" font-size="13" fill="#1e293b">Caso: ${escapeXml(input.caseName)}</text>`,
-    `<text x="${leftX + 16}" y="${bodyY + 20}" font-size="13" fill="#1e293b">Llamadas: ${input.totalCalls} | Profundidad: ${input.maxDepth} | Nodos visibles: ${input.visibleNodes}</text>`,
-    `<text x="${leftX + 16}" y="${bodyY + 44}" font-size="13" fill="#0f172a" font-weight="600">Estado inicial</text>`,
-    `<text x="${leftX + 16}" y="${bodyY + 62}" font-size="12.5" fill="#334155">${escapeXml(input.initialState)}</text>`,
-    `<text x="${rightColX}" y="${bodyY + 44}" font-size="13" fill="#0f172a" font-weight="600">Estado final</text>`,
-    `<text x="${rightColX}" y="${bodyY + 62}" font-size="12.5" fill="#334155">${escapeXml(input.finalState)}</text>`,
+    `<rect x="${leftX}" y="${input.top}" width="${panelWidth}" height="168" rx="14" ry="14" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.2" />`,
+    `<text x="${leftX + 16}" y="${titleY}" font-size="18" font-weight="700" fill="#0f172a">${t.title}</text>`,
+    `<text x="${leftX + 16}" y="${bodyY}" font-size="15" fill="#1e293b">${t.caseLabel}: ${escapeXml(input.caseName)}</text>`,
+    `<text x="${leftX + 16}" y="${bodyY + 24}" font-size="15" fill="#1e293b">${t.callsLabel}: ${input.totalCalls} | ${t.depthLabel}: ${input.maxDepth} | ${t.visibleNodesLabel}: ${input.visibleNodes}</text>`,
+    `<text x="${leftX + 16}" y="${bodyY + 50}" font-size="14.5" fill="#0f172a" font-weight="600">${t.initialStateLabel}</text>`,
+    buildMultilineText({
+      x: leftX + 16,
+      y: bodyY + 72,
+      lines: initialStateLines.slice(0, 2),
+      lineHeight: 18,
+      fontSize: 14,
+      fill: "#334155",
+    }),
+    `<text x="${rightColX}" y="${bodyY + 50}" font-size="14.5" fill="#0f172a" font-weight="600">${t.finalStateLabel}</text>`,
+    buildMultilineText({
+      x: rightColX,
+      y: bodyY + 72,
+      lines: finalStateLines.slice(0, 2),
+      lineHeight: 18,
+      fontSize: 14,
+      fill: "#334155",
+    }),
     input.note
-      ? `<text x="${leftX + 16}" y="${bodyY + 90}" font-size="12.5" fill="#7c2d12">${escapeXml(input.note)}</text>`
+      ? buildMultilineText({
+          x: leftX + 16,
+          y: bodyY + 126,
+          lines: noteLines,
+          lineHeight: 16,
+          fontSize: 13.5,
+          fill: "#7c2d12",
+        })
       : "",
   ].join("\n");
 }
@@ -151,7 +216,7 @@ export function renderTraceDiagramSvg(input: RenderTraceDiagramSvgInput): Render
 
   const nodeWidth = 300;
   const nodeHeight = 108;
-  const footerHeight = 156;
+  const footerHeight = 198;
   const width = Math.max(680, layouted.width);
   const height = Math.max(260, layouted.height) + footerHeight;
 
@@ -211,12 +276,16 @@ export function renderTraceDiagramSvg(input: RenderTraceDiagramSvgInput): Render
     .join("\n");
 
   const stateSummary = extractStateSummary(layouted.graph);
+  const locale = input.locale === "es" ? "es" : "en";
   const footerNote = layouted.stats.truncated
-    ? "Advertencia: el trace original fue truncado."
+    ? (locale === "es"
+      ? "Advertencia: el trace original fue truncado."
+      : "Warning: the original trace was truncated.")
     : layouted.stats.reductionNote || "";
   const footer = buildFooterPanel({
     width,
     top: height - footerHeight + 16,
+    locale,
     caseName: input.caseName,
     totalCalls: layouted.stats.totalCalls,
     maxDepth: layouted.stats.maxDepth,

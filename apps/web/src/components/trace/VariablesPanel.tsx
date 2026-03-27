@@ -30,7 +30,6 @@ export default function VariablesPanel({
   mode,
   initialVariables,
   finalVariables,
-  recursionDiagram,
   editable = false,
   onVariablesChange,
   onResetToAuto,
