@@ -1857,11 +1857,22 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
     animateExport(0, 90, 2000);
 
     try {
+      const preferredMethod =
+        (data?.worst ? extractCoreData(data.worst)?.method : null) ||
+        (data?.best && data.best !== "same_as_worst"
+          ? extractCoreData(data.best)?.method
+          : null) ||
+        (data?.avg && data.avg !== "same_as_worst"
+          ? extractCoreData(data.avg)?.method
+          : null) ||
+        undefined;
+
       const reqBody = {
         source,
         formats,
         includeZipBundle: formats.length > 1,
         locale: locale === "es" ? "es" : "en",
+        preferredMethod,
         cachedParse: ast ? { ok: true, ast: ast, errors: parseErrors || undefined } : undefined,
         cachedClassify: algorithmType ? { 
           kind: algorithmType, 
