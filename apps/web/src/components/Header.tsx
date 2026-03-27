@@ -36,8 +36,8 @@ const navItems: NavItem[] = [
     color: "orange",
   },
   {
-    href: "/documentation",
-    labelKey: "documentation",
+    href: "/user-guide",
+    labelKey: "howToUse",
     icon: "menu_book",
     color: "blue",
   },

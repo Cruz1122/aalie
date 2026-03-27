@@ -13,10 +13,10 @@
   "nav": {
     "home": "Home",
     "analyzer": "Analyzer",
-    "documentation": "Docs",
     "examples": "Examples",
     "about": "About Us",
-    "openMenu": "Open menu"
+    "openMenu": "Open menu",
+    "howToUse": "How to use"
   },
   "footer": {
     "languageLabel": "Language",
@@ -850,77 +850,6 @@
       "finalTheta": "Asymptotic conclusion (Theta)"
     }
   },
-  "documentation": {
-    "index": {
-      "technicalTitle": "Technical Documentation",
-      "technicalDesc": "Detailed guides for developers, APIs, system architecture and code examples to integrate the analyzer into your projects.",
-      "technicalLink": "View Technical Documentation",
-      "userGuideTitle": "User Guide",
-      "userGuideDesc": "Step-by-step tutorials, common use cases and guides to get the most out of the complexity analyzer features.",
-      "userGuideLink": "View User Guide",
-      "examplesTitle": "Algorithm Examples",
-      "examplesDesc": "Collection of classic algorithms organized by analysis methods. Copy any example and analyze its complexity with the most appropriate method (iteration, master theorem, or recursion tree).",
-      "examplesLink": "View Examples"
-    },
-    "technical": {
-      "title": "Technical Documentation",
-      "subtitle": "Overview of the flow, monorepo architecture and initial API contracts. This document is an initial draft and will be updated as the project evolves.",
-      "toc": "Table of contents",
-      "fullTitle": "Complete Technical Documentation",
-      "fullDesc": "For detailed technical documentation, see the following resources in the repository:",
-      "apiTitle": "API Documentation",
-      "apiDesc": "Complete backend API documentation, including endpoints, data models, architecture and error handling.",
-      "appTitle": "App Documentation",
-      "appDesc": "Complete frontend documentation, including components, routing, state management, styling and API integration.",
-      "indexGeneral": "General index",
-      "endpoints": "REST endpoints",
-      "models": "Data models",
-      "architecture": "Architecture",
-      "errors": "Error handling",
-      "components": "Components",
-      "routing": "Routing system",
-      "state": "State",
-      "styling": "Styling",
-      "apiIntegration": "API integration",
-      "i18nLabels": "Internationalization, labels and prompts",
-      "note": "Note",
-      "noteText": "This documentation is available in the project repository in the folders",
-      "backToDocs": "Back to Documentation",
-      "nextToUserGuide": "View User Guide",
-      "updating": "This page is being constantly updated.",
-      "modalClose": "Close modal",
-      "viewDetails": "View Details",
-      "viewDiagram": "View Diagram",
-      "withDiagram": "With diagram",
-      "contentOnly": "Content only",
-      "sections": {
-        "arquitectura": "Architecture and request flow",
-        "flujoUi": "Analysis flow in the UI",
-        "visualizaciones": "Visualizations",
-        "errores": "Error handling",
-        "llm": "LLM integration",
-        "i18n": "Internationalization",
-        "monorepo": "Monorepo packages",
-        "herramientas": "Development tools",
-        "analisis": "Complexity analysis",
-        "grammar": "Grammar and parser",
-        "mcp": "MCP AALIE Conventions"
-      },
-      "descriptions": {
-        "arquitectura": "Monorepo, request flow, parse and analyze. REST and BFF for LLM.",
-        "flujoUi": "Monaco editor, live validation, cost table, LaTeX modals.",
-        "visualizaciones": "CFG, recurrence tree, React Flow. Dagre layout, execution diagrams.",
-        "errores": "API down, invalid grammar, unclosable summations. LLM suggestions.",
-        "llm": "Grammar correction, analysis from chat, simplification, procedures. Jobs and models.",
-        "i18n": "es/en support, backend labels, LLM prompts parametrized by locale.",
-        "monorepo": "@aa/grammar and @aa/types. Identical AST client-server.",
-        "herramientas": "ESLint, Prettier, Ruff, Black. Environment variables and trace metadata.",
-        "analisis": "3-column interface, iterative/recursive, Master Theorem, memoization, GPU/CPU, LaTeX.",
-        "grammar": "ANTLR4 grammar, TS/Py parsers. Procedures, control structures, operators.",
-        "mcp": "Tools: read_conventions, read_doc, list_components, changelog_template, i18n_reminder."
-      }
-    }
-  },
   "home": {
     "modeAI": "AALIE",
     "modeManual": "Manual",
@@ -1204,7 +1133,6 @@
     "errorApiUnavailable": "API unavailable",
     "errorApiCause": "The backend server is not responding.",
     "errorApiSol": "The editor will continue to work with local validation, but complexity analysis will not be available. Check your connection or try again later.",
-    "backToDoc": "Back to Documentation",
     "viewExamples": "View Examples",
     "examplesLink": "examples",
     "examplesPageLink": "examples page"

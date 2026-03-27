@@ -72,7 +72,6 @@ export default function UserGuidePage() {
 
           <NavigationFooter
             namespace="userGuide"
-            prev={{ href: "/documentation", labelKey: "backToDoc" }}
             next={{ href: "/examples", labelKey: "viewExamples" }}
           />
         </div>

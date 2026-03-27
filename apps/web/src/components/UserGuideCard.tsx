@@ -22,7 +22,6 @@ function truncate(text: string, max = 100) {
 
 /**
  * Card para secciones de la guía de usuario.
- * Misma estructura visual que DocumentationCard.
  * Author: @Cruz1122
  * Version: 0.1.0
  */
