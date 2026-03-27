@@ -65,6 +65,12 @@ export function toMarkdownInlineMath(value: string): string {
 export function toMarkdownTextWithInlineMath(text: string): string {
   const normalized = text.trim();
   if (!normalized) return text;
+  // If text already contains inline/block math delimiters, keep as-is to avoid
+  // wrapping full narrative paragraphs inside a single math expression.
+  if (normalized.includes("$")) return text;
+  // Preserve multi-line pedagogical text; wrapping the whole block as math
+  // causes malformed markdown in rendered reports.
+  if (normalized.includes("\n")) return text;
   if (normalized.includes(";")) return text;
 
   const separatorIndex = normalized.indexOf(":");

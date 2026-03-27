@@ -1,5 +1,7 @@
 from typing import Any
 from sympy import Symbol, Integer, sympify, Expr
+from sympy import Eq, Ne, Lt, Le, Gt, Ge
+from sympy.logic.boolalg import And, Or, Not
 
 
 class ExprConverter:
@@ -108,20 +110,37 @@ class ExprConverter:
                     return left ** right
                 elif op == "%":
                     return left % right
+                elif op in ("=", "=="):
+                    return Eq(left, right)
+                elif op in ("<>", "!="):
+                    return Ne(left, right)
+                elif op == "<":
+                    return Lt(left, right)
+                elif op == "<=" or op == "≤":
+                    return Le(left, right)
+                elif op == ">":
+                    return Gt(left, right)
+                elif op == ">=" or op == "≥":
+                    return Ge(left, right)
+                elif op in ("and", "&&"):
+                    return And(left, right)
+                elif op in ("or", "||"):
+                    return Or(left, right)
                 else:
                     # Fallback: tratar como resta (pero esto puede ser un error)
                     # Mejor retornar la expresión sin modificar o lanzar un error
-                    print(f"[ExprConverter] Warning: operador desconocido '{op}' en expresión binaria, usando resta como fallback")
                     return left - right
             
             elif expr_type == "unary":
                 arg = self.ast_to_sympy(expr.get("arg"))
-                op = expr.get("operator", "")
+                op = (expr.get("operator", "") or expr.get("op", "")).lower()
                 
                 if op == "-":
                     return -arg
                 elif op == "+":
                     return arg
+                elif op in ("not", "!"):
+                    return Not(arg)
                 else:
                     return arg
             
@@ -165,4 +184,3 @@ class ExprConverter:
         symbol = Symbol(name, real=True)
         self.symbols[name] = symbol
         return symbol
-

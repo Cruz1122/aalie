@@ -93,9 +93,19 @@ export default function TraceDedicatedView({
 
   const loadedParamsRef = useRef<string | null>(null);
   const previousSourceKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    // Evita arrastrar overrides de una ejecución/fuente anterior.
+    setInitialVariablesOverride(null);
+    loadedParamsRef.current = null;
+  }, [source]);
+
   useEffect(() => {
     if (!source) return;
-    const paramsKey = `${caseType}-${debouncedInputSize}-${source.substring(0, 100)}`;
+    const overrideKey = initialVariablesOverride
+      ? JSON.stringify(initialVariablesOverride)
+      : "auto";
+    const paramsKey = `${caseType}-${debouncedInputSize}-${source.substring(0, 100)}-${overrideKey}`;
     if (loadedParamsRef.current === paramsKey) return;
     loadedParamsRef.current = paramsKey;
     const sourceKey = source.substring(0, 100);
@@ -105,7 +115,7 @@ export default function TraceDedicatedView({
     }
     loadTraceWithReset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caseType, debouncedInputSize, source, locale]);
+  }, [caseType, debouncedInputSize, source, locale, initialVariablesOverride]);
   // Cuando hay error, resetear el guard para que el usuario pueda reintentar
   useEffect(() => {
     if (error) {

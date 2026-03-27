@@ -385,12 +385,62 @@ class RecursiveAnalyzer(BaseAnalyzer):
             else:
                 default_method = recurrence.get("method", "master")
             
+            def _is_constant_work(raw_term: Any) -> bool:
+                raw = str(raw_term or "").strip().lower().replace(" ", "")
+                if raw in {"", "0", "1", "theta(1)", "\\theta(1)", "o(1)", "\\mathcal{o}(1)"}:
+                    return True
+                try:
+                    _ = float(raw)
+                    return True
+                except Exception:
+                    return False
+
+            def _strategy_family(rec: Dict[str, Any]) -> Dict[str, Any]:
+                rec_type = str(rec.get("type", "") or "")
+                if rec_type == "divide_conquer":
+                    return {
+                        "key": "divide_y_venceras",
+                        "label": "Divide y Vencerás",
+                        "description": "El problema se parte en subproblemas de tamaño proporcional (n/b), se resuelven recursivamente y luego se combina su costo.",
+                    }
+
+                if rec_type == "linear_shift":
+                    coefficients = rec.get("coefficients", []) or []
+                    g_n = rec.get("g(n)")
+                    multi_branch = len(coefficients) > 1 or any((c or 0) > 1 for c in coefficients)
+                    if multi_branch:
+                        return {
+                            "key": "resta_y_seras_vencido",
+                            "label": "Resta y Serás Vencido",
+                            "description": "Se reduce poco el tamaño y además se duplican/ramifican llamadas, lo que suele disparar el costo (por ejemplo crecimiento exponencial).",
+                        }
+
+                    if not _is_constant_work(g_n):
+                        return {
+                            "key": "resta_y_seras_vencido",
+                            "label": "Resta y Serás Vencido",
+                            "description": "Se reduce de forma pequeña (n-1, n-k), pero el trabajo adicional por paso no es constante; eso puede degradar a costos cuadráticos o peores.",
+                        }
+
+                    return {
+                        "key": "resta_y_venceras",
+                        "label": "Resta y Vencerás",
+                        "description": "Se avanza restando una parte pequeña (n-1, n-k) y se extiende la solución del subproblema previo con trabajo adicional acotado.",
+                    }
+
+                return {
+                    "key": "desconocida",
+                    "label": "Familia no determinada",
+                    "description": "No se pudo ubicar la recurrencia en una familia canónica con la información disponible.",
+                }
+
             # Preparar información básica de la recurrencia
             recurrence_info = {
                 "type": recurrence.get("type"),
                 "form": recurrence.get("form"),
-                "applicable": recurrence.get("applicable")
+                "applicable": recurrence.get("applicable"),
             }
+            recurrence_info["strategy_family"] = _strategy_family(recurrence)
             
             if recurrence.get("type") == "divide_conquer":
                 recurrence_info.update({
@@ -399,7 +449,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "f": recurrence.get("f")
                 })
                 recurrence_info["dp_validation"] = self._build_non_dp_validation(
-                    "La recurrencia es divide-and-conquer; debe priorizarse Teorema Maestro, iteración o árbol de recursión antes que PD."
+                    "Esta recurrencia es de Divide y Vencerás (T(n)=aT(n/b)+f(n)); conviene resolverla con Teorema Maestro o árbol de recursión antes que con Programación Dinámica."
                 )
             elif recurrence.get("type") == "linear_shift":
                 recurrence_info.update({

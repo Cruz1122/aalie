@@ -164,17 +164,32 @@ export default function StructuredTraceContent({
   }, [ast]);
 
   const initialVariablesForNote = useMemo(() => {
+    const filterByParams = (vars: Record<string, unknown> | null) => {
+      if (!vars) return null;
+      if (traceConfig.kind !== "recursive" && traceConfig.kind !== "hybrid") {
+        return vars;
+      }
+      if (paramNames.all.length === 0) {
+        return vars;
+      }
+      const allowed = new Set(paramNames.all);
+      const filtered = Object.fromEntries(
+        Object.entries(vars).filter(([key]) => allowed.has(key)),
+      );
+      return Object.keys(filtered).length > 0 ? filtered : vars;
+    };
+
     if (initialVariablesOverride && Object.keys(initialVariablesOverride).length > 0) {
-      return initialVariablesOverride;
+      return filterByParams(initialVariablesOverride);
     }
     const firstStepVars =
       trace?.ok && trace.trace?.steps?.[0]?.variables
         ? (trace.trace.steps[0].variables as Record<string, unknown>)
         : null;
     return firstStepVars && Object.keys(firstStepVars).length > 0
-      ? firstStepVars
+      ? filterByParams(firstStepVars)
       : null;
-  }, [initialVariablesOverride, trace]);
+  }, [initialVariablesOverride, trace, traceConfig.kind, paramNames.all]);
 
   const variableSummary = useMemo(() => {
     if (!initialVariablesForNote) return null;
@@ -196,6 +211,47 @@ export default function StructuredTraceContent({
     if (!initialVariablesForNote) return false;
     return Object.prototype.hasOwnProperty.call(initialVariablesForNote, "n");
   }, [initialVariablesForNote]);
+
+  const recursiveInitialVariables = useMemo(() => {
+    if (initialVariablesOverride && Object.keys(initialVariablesOverride).length > 0) {
+      return initialVariablesOverride;
+    }
+    if (!trace?.ok || !trace.trace) return undefined;
+    const steps = trace.trace.steps ?? [];
+    const rootFromSteps = steps.find(
+      (step) =>
+        step.recursion &&
+        step.recursion.depth === 0 &&
+        step.recursion.params &&
+        Object.keys(step.recursion.params).length > 0,
+    );
+    if (rootFromSteps?.recursion?.params) {
+      return rootFromSteps.recursion.params as Record<string, unknown>;
+    }
+    const rootCallId = trace.trace.callTreeSource?.root_calls?.[0];
+    const rootCall = trace.trace.callTreeSource?.calls?.find((c) => c.id === rootCallId);
+    if (rootCall?.params && Object.keys(rootCall.params).length > 0) {
+      return rootCall.params as Record<string, unknown>;
+    }
+    return (steps[0]?.variables as Record<string, unknown> | undefined) ?? undefined;
+  }, [trace, initialVariablesOverride]);
+
+  const recursiveFinalVariables = useMemo(() => {
+    if (!trace?.ok || !trace.trace) return undefined;
+    const steps = trace.trace.steps ?? [];
+    for (let i = steps.length - 1; i >= 0; i -= 1) {
+      const step = steps[i];
+      if (
+        step.eventKind === "call_exit" &&
+        step.recursion &&
+        step.recursion.depth === 0 &&
+        step.recursion.params
+      ) {
+        return step.recursion.params as Record<string, unknown>;
+      }
+    }
+    return (steps[steps.length - 1]?.variables as Record<string, unknown> | undefined) ?? undefined;
+  }, [trace]);
 
   useEffect(() => {
     setAiExplanationMd("");
@@ -573,17 +629,21 @@ export default function StructuredTraceContent({
                       scalarParamNames={paramNames.editableScalar}
                       lengthParamNames={paramNames.length}
                       initialVariables={
-                        trace?.ok && trace.trace?.steps?.[0]?.variables
-                          ? (trace.trace.steps[0].variables as Record<string, unknown>)
-                          : undefined
+                        isIterative
+                          ? trace?.ok && trace.trace?.steps?.[0]?.variables
+                            ? (trace.trace.steps[0].variables as Record<string, unknown>)
+                            : undefined
+                          : recursiveInitialVariables
                       }
                       finalVariables={
-                        trace?.ok &&
-                        trace.trace?.steps &&
-                        trace.trace.steps.length > 0
-                          ? (trace.trace.steps[trace.trace.steps.length - 1]
-                              .variables as Record<string, unknown>)
-                          : undefined
+                        isIterative
+                          ? trace?.ok &&
+                            trace.trace?.steps &&
+                            trace.trace.steps.length > 0
+                            ? (trace.trace.steps[trace.trace.steps.length - 1]
+                                .variables as Record<string, unknown>)
+                            : undefined
+                          : recursiveFinalVariables
                       }
                     />
                   </div>
@@ -612,7 +672,7 @@ export default function StructuredTraceContent({
         ) : (
           <>
             {variant === "dedicated" && !isIterative ? (
-              <section className="rounded-xl border border-slate-700/60 bg-slate-900/40 p-4 shadow-sm space-y-4">
+              <section className="space-y-4">
                 <div>
                   <DiagramSection
                     structuredDiagram={structuredDiagram}
@@ -651,17 +711,10 @@ export default function StructuredTraceContent({
                   scalarParamNames={paramNames.editableScalar}
                   lengthParamNames={paramNames.length}
                   initialVariables={
-                    trace?.ok && trace.trace?.steps?.[0]?.variables
-                      ? (trace.trace.steps[0].variables as Record<string, unknown>)
-                      : undefined
+                    recursiveInitialVariables
                   }
                   finalVariables={
-                    trace?.ok &&
-                    trace.trace?.steps &&
-                    trace.trace.steps.length > 0
-                      ? (trace.trace.steps[trace.trace.steps.length - 1]
-                          .variables as Record<string, unknown>)
-                      : undefined
+                    recursiveFinalVariables
                   }
                 />
 
@@ -713,17 +766,21 @@ export default function StructuredTraceContent({
                     scalarParamNames={paramNames.editableScalar}
                     lengthParamNames={paramNames.length}
                     initialVariables={
-                      trace?.ok && trace.trace?.steps?.[0]?.variables
-                        ? (trace.trace.steps[0].variables as Record<string, unknown>)
-                        : undefined
+                      isIterative
+                        ? trace?.ok && trace.trace?.steps?.[0]?.variables
+                          ? (trace.trace.steps[0].variables as Record<string, unknown>)
+                          : undefined
+                        : recursiveInitialVariables
                     }
                     finalVariables={
-                      trace?.ok &&
-                      trace.trace?.steps &&
-                      trace.trace.steps.length > 0
-                        ? (trace.trace.steps[trace.trace.steps.length - 1]
-                            .variables as Record<string, unknown>)
-                        : undefined
+                      isIterative
+                        ? trace?.ok &&
+                          trace.trace?.steps &&
+                          trace.trace.steps.length > 0
+                          ? (trace.trace.steps[trace.trace.steps.length - 1]
+                              .variables as Record<string, unknown>)
+                          : undefined
+                        : recursiveFinalVariables
                     }
                   />
 

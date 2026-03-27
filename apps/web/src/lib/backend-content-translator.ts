@@ -184,6 +184,10 @@ const BACKEND_CONTENT_TRANSLATIONS: [string, string][] = [
     "The recurrence is divide-and-conquer; prioritize Master Theorem, iteration, or recursion tree over DP.",
   ],
   [
+    "Esta recurrencia es de Divide y Vencerás (T(n)=aT(n/b)+f(n)); conviene resolverla con Teorema Maestro o árbol de recursión antes que con Programación Dinámica.",
+    "This recurrence belongs to Divide y Vencerás (T(n)=aT(n/b)+f(n)); it is better solved with Master Theorem or recursion tree than with Dynamic Programming.",
+  ],
+  [
     "La recurrencia requiere conservar estados no contiguos o un historial más largo que una ventana pequeña.",
     "The recurrence requires preserving non-contiguous states or a history longer than a small window.",
   ],
@@ -234,4 +238,3 @@ export function translateBackendContent(
   }
   return result;
 }
-

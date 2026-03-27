@@ -78,6 +78,7 @@ class RecursionCall:
     depth: int
     params: Dict[str, Any]
     children: List[str]  # IDs de llamadas hijas
+    final_params: Optional[Dict[str, Any]] = None
     parent_id: Optional[str] = None
     function_name: Optional[str] = None
     entry_line: Optional[int] = None
@@ -171,7 +172,7 @@ class TraceBuilder:
             }
             if not vchanged:
                 vchanged = None
-        self._prev_variables = variables.copy()
+        self._prev_variables = copy.deepcopy(variables)
 
         # #region agent log
         try:
@@ -200,14 +201,14 @@ class TraceBuilder:
             step_number=self.step_counter,
             line=line if line else None,
             kind=effective_kind,
-            variables=variables.copy(),
-            variables_changed=vchanged,
-            iteration=iteration,
-            recursion=recursion,
+            variables=copy.deepcopy(variables),
+            variables_changed=copy.deepcopy(vchanged) if vchanged is not None else None,
+            iteration=copy.deepcopy(iteration) if iteration is not None else None,
+            recursion=copy.deepcopy(recursion) if recursion is not None else None,
             cost=cost,
             accumulated_cost=accumulated_cost,
             description=description,
-            decision=decision,
+            decision=copy.deepcopy(decision) if decision is not None else None,
             tokens=est_tokens,
             microseconds=est_microseconds,
         )
@@ -250,6 +251,11 @@ class TraceBuilder:
         """Registra el valor de retorno de una llamada recursiva."""
         if call_id in self.recursion_calls:
             self.recursion_calls[call_id].return_value = value
+
+    def record_final_params(self, call_id: str, params: Dict[str, Any]) -> None:
+        """Registra estado final de parámetros observables al salir de la llamada."""
+        if call_id in self.recursion_calls:
+            self.recursion_calls[call_id].final_params = copy.deepcopy(params)
 
     def record_base_case(
         self,
@@ -324,6 +330,8 @@ class TraceBuilder:
                 c = self.recursion_calls[call_id]
                 d = asdict(c)
                 d["params"] = _serialize_value(d.get("params", {}))
+                if d.get("final_params") is not None:
+                    d["final_params"] = _serialize_value(d.get("final_params", {}))
                 d["return_value"] = _serialize_value(d.get("return_value"))
                 if c.base_case is not None:
                     d["is_base_case"] = bool(
@@ -354,4 +362,3 @@ class TraceBuilder:
         self.cost_counter = 0
         self.accumulated_cost_parts.clear()
         self._prev_variables = None
-

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useRef , useMemo } from "react";
+import { useCallback, useState, useRef, useMemo } from "react";
 
 
 import type {
@@ -74,7 +74,7 @@ export function useTraceController(
     classification: { evidence: string[] };
   } | null>(null);
   const [algorithmKind, setAlgorithmKind] = useState<string | null>(null);
-  const [exampleArray, setExampleArray] = useState<number[]>([1, 2, 3, 4]);
+  const [exampleArray, setExampleArray] = useState<number[]>([]);
   // Permite cancelar requests anteriores cuando llega uno nuevo
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -150,9 +150,6 @@ export function useTraceController(
       const n = nFromOverride ?? nFromSelector;
 
       let variablesFromGenerator: Record<string, unknown> | null = null;
-      const nVal = n;
-      const makeBaseArray = (size: number) =>
-        Array.from({ length: Math.max(1, size) }, (_, idx) => idx + 1);
       if (traceConfig.kind === "iterative" && traceConfig.inputGenerator) {
         const generator =
           (scenario === "best"
@@ -175,22 +172,6 @@ export function useTraceController(
               ? (overrideToUse.A as number[])
               : arr;
           if (arrToUse.length > 0) setExampleArray(arrToUse);
-        }
-      }
-      if (
-        !variablesFromGenerator &&
-        (traceConfig.kind === "recursive" || traceConfig.kind === "hybrid")
-      ) {
-        const isSortingSource = /(merge|quick|heap|bubble|insertion|selection|sort|ordenar|mezclar|particionar)/i.test(
-          source,
-        );
-        const baseArr = makeBaseArray(nVal);
-        const arr = isSortingSource ? [...baseArr].reverse() : baseArr;
-        if (usesX) {
-          const x = arr[Math.floor(arr.length / 2)] ?? arr[arr.length - 1];
-          variablesFromGenerator = { A: arr, x };
-        } else {
-          variablesFromGenerator = { A: arr };
         }
       }
 
@@ -257,36 +238,6 @@ export function useTraceController(
         clearTimeout(timeoutId);
 
         const data: TraceApiResponse = await response.json();
-
-        // #region agent log
-        try {
-          fetch("http://127.0.0.1:7642/ingest/4e868e29-6cb7-4d4c-abab-40d6b95cd3c7", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Debug-Session-Id": "1b7cca",
-            },
-            body: JSON.stringify({
-              sessionId: "1b7cca",
-              runId: "initial",
-              hypothesisId: "H3",
-              location: "useTraceController.ts:after_fetch",
-              message: "trace_response_received",
-              data: {
-                ok: data?.ok ?? null,
-                algorithmKind: data?.algorithmKind ?? data?.trace?.kind ?? null,
-                stepsCount: data?.trace?.steps?.length ?? null,
-                hasStructuredTrace: Boolean(data?.derived?.structuredTrace),
-                graphNodes: data?.derived?.structuredTrace?.graph?.nodes?.length ?? null,
-                graphEdges: data?.derived?.structuredTrace?.graph?.edges?.length ?? null,
-              },
-              timestamp: Date.now(),
-            }),
-          }).catch(() => {});
-        } catch {
-          // Ignorar errores de logging de depuración
-        }
-        // #endregion agent log
 
         setAlgorithmKind(
           data.algorithmKind ?? data.trace?.kind ?? "unknown",

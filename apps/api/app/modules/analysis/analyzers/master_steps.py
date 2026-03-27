@@ -8,7 +8,7 @@ from .recursive_steps_core import compute_overall_status, locale_key, make_recur
 
 _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
     "es": {
-        "master.recurrence_detected.standard": "Se detectó una recurrencia de tipo Divide y Vencerás candidata al Teorema Maestro.",
+        "master.recurrence_detected.standard": "Se detectó una recurrencia de la familia Divide y Vencerás, candidata natural para Teorema Maestro.",
         "master.master_form_validated.supported": "La forma $T(n)=aT(n/b)+f(n)$ es válida con $a\\ge 1$ y $b>1$.",
         "master.master_form_validated.unsupported": "La recurrencia no cumple la forma estándar requerida por el Teorema Maestro en esta cobertura.",
         "master.master_parameters_extracted.standard": "Se extrajeron los parámetros estructurales $(a,b,f(n))$ para construir la comparación de crecimiento.",
@@ -34,8 +34,8 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "master.asymptotic_conclusion.partial": "La conclusión asintótica se reporta como parcial por limitaciones previas.",
         "master.asymptotic_conclusion.unsupported": "No hay conclusión asintótica cerrada con Teorema Maestro para este caso.",
 
-        "concept.master.recurrence_detected": "Primero confirmamos qué ecuación exacta se va a estudiar. Este método solo aplica a recurrencias de Divide y Vencerás con una subestructura de escala $n/b$ y un término adicional $f(n)$.",
-        "concept.master.master_form_validated": "La validación evita aplicar fórmulas fuera de dominio. Si la recurrencia no tiene la forma estándar, continuar produciría una clasificación engañosa, por eso se marca explícitamente.",
+        "concept.master.recurrence_detected": "Primero confirmamos la familia de recurrencia: aquí estamos en Divide y Vencerás. Este método solo aplica cuando el problema se reduce por escala $n/b$ y aparece un costo adicional $f(n)$.",
+        "concept.master.master_form_validated": "Esta validación evita confundir familias: Teorema Maestro es para Divide y Vencerás, no para Resta y Vencerás ni para Resta y Serás Vencido. Si la forma no coincide, se detiene explícitamente.",
         "concept.master.master_parameters_extracted": "Los parámetros $a$, $b$ y $f(n)$ capturan la dinámica del árbol recursivo: cuántos subproblemas hay, cómo se reduce su tamaño y cuánto trabajo externo aporta cada nivel.",
         "concept.master.critical_exponent_computed": "El exponente crítico $p=\\log_b(a)$ resume el costo acumulado de la parte recursiva pura. Es la referencia central para decidir cuál término domina.",
         "concept.master.reference_growth_built": "La función $n^p$ actúa como frontera: comparar $f(n)$ contra esa referencia determina si domina la parte recursiva, si están equilibradas o si domina el trabajo externo.",
@@ -53,7 +53,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "warning.master.comparison_partial": "La comparación de crecimiento no quedó completamente demostrada.",
     },
     "en": {
-        "master.recurrence_detected.standard": "A divide-and-conquer recurrence candidate for Master Theorem was detected.",
+        "master.recurrence_detected.standard": "A Divide y Vencerás recurrence was detected, which is the natural candidate for Master Theorem.",
         "master.master_form_validated.supported": "The form $T(n)=aT(n/b)+f(n)$ is valid with $a\\ge 1$ and $b>1$.",
         "master.master_form_validated.unsupported": "The recurrence does not match the standard form required by Master Theorem under current coverage.",
         "master.master_parameters_extracted.standard": "Structural parameters $(a,b,f(n))$ were extracted to build growth comparison.",
@@ -79,8 +79,8 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "master.asymptotic_conclusion.partial": "Asymptotic conclusion is reported as partial due to earlier limitations.",
         "master.asymptotic_conclusion.unsupported": "No closed asymptotic conclusion is available with Master Theorem for this case.",
 
-        "concept.master.recurrence_detected": "We first confirm the exact recurrence to analyze. This method applies only to divide-and-conquer recurrences with scale-reduction $n/b$ and additive work $f(n)$.",
-        "concept.master.master_form_validated": "Validation prevents applying formulas outside domain. If the recurrence is not in standard form, continuing would produce misleading classification, so it is flagged explicitly.",
+        "concept.master.recurrence_detected": "We first confirm the recurrence family: this is Divide y Vencerás. The method applies when problem size shrinks by scale $n/b$ and additive work $f(n)$ is present.",
+        "concept.master.master_form_validated": "This prevents family mismatch: Master Theorem is for Divide y Vencerás, not for Resta y Vencerás or Resta y Serás Vencido. If the shape does not match, we stop explicitly.",
         "concept.master.master_parameters_extracted": "Parameters $a$, $b$, and $f(n)$ capture recursive-tree dynamics: number of subproblems, shrink factor, and non-recursive work per level.",
         "concept.master.critical_exponent_computed": "The critical exponent $p=\\log_b(a)$ summarizes pure recursive accumulation. It is the key baseline for dominance decisions.",
         "concept.master.reference_growth_built": "Reference $n^p$ is the boundary function: comparing $f(n)$ to it tells whether recursion dominates, balances, or is dominated by external work.",

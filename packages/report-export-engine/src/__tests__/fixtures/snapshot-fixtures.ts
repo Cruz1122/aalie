@@ -388,6 +388,69 @@ function iterativeTraceFixture(): TraceResponseLike {
   };
 }
 
+function recursiveTraceFixture(): TraceResponseLike {
+  return {
+    ok: true,
+    algorithmKind: "recursive",
+    trace: {
+      kind: "recursive",
+      steps: [
+        {
+          id: "step_1",
+          step_number: 1,
+          line: 1,
+          kind: "call_enter",
+          eventKind: "call_enter",
+          variables: { n: 4 },
+          recursion: { depth: 0, callId: "call_1", params: { n: 4 }, procedure: "factorial" },
+        },
+      ],
+      summary: {
+        totalSteps: 7,
+        totalCalls: 4,
+        maxRecursionDepth: 3,
+        algorithmKind: "recursive",
+      },
+      diagnostics: {
+        truncated: false,
+        warnings: [],
+      },
+      callTreeSource: {
+        root_calls: ["call_1"],
+        calls: [
+          { id: "call_1", depth: 0, params: { n: 4 }, children: ["call_2"], return_value: 24 },
+          { id: "call_2", depth: 1, params: { n: 3 }, children: ["call_3"], return_value: 6 },
+          { id: "call_3", depth: 2, params: { n: 2 }, children: ["call_4"], return_value: 2 },
+          { id: "call_4", depth: 3, params: { n: 1 }, children: [], return_value: 1 },
+        ],
+      },
+    },
+    derived: {
+      structuredTrace: {
+        patternKind: "tail_recursive_linear",
+        graph: {
+          nodes: [
+            { id: "call_1", type: "default", position: { x: 0, y: 0 }, data: { label: "factorial(n=4)\n→ 24" } },
+            { id: "call_2", type: "default", position: { x: 0, y: 0 }, data: { label: "factorial(n=3)\n→ 6" } },
+            { id: "call_3", type: "default", position: { x: 0, y: 0 }, data: { label: "factorial(n=2)\n→ 2" } },
+            { id: "call_4", type: "default", position: { x: 0, y: 0 }, data: { label: "factorial(n=1)\n→ 1" } },
+          ],
+          edges: [
+            { id: "e1", source: "call_1", target: "call_2", label: "", type: "smoothstep" },
+            { id: "e2", source: "call_2", target: "call_3", label: "", type: "smoothstep" },
+            { id: "e3", source: "call_3", target: "call_4", label: "", type: "smoothstep" },
+          ],
+        },
+        classification: {
+          patternKind: "tail_recursive_linear",
+          confidence: "high",
+          evidence: ["fixture"],
+        },
+      },
+    },
+  };
+}
+
 function recursiveCase(
   method: SnapshotRecursiveMethod,
   recurrenceType: "divide_conquer" | "divide_conquer_multi" | "linear_shift",
@@ -859,7 +922,9 @@ export function createRecursiveSnapshot(method: SnapshotRecursiveMethod) {
       ],
       default_method: method,
     },
-    traceByCase: {},
+    traceByCase: {
+      worst: recursiveTraceFixture(),
+    },
   });
 }
 

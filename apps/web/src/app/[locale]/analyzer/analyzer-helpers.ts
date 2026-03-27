@@ -49,6 +49,11 @@ interface DetectionRecurrenceInfo {
   a?: number;
   b?: number;
   f?: string;
+  strategy_family?: {
+    key?: string;
+    label?: string;
+    description?: string;
+  };
 }
 
 const ALL_METHODS: MethodType[] = [
@@ -98,38 +103,39 @@ const getApplicableReason = (
   const divideConquer = info?.type === "divide_conquer";
   const linearShift = info?.type === "linear_shift";
   const isSingleBranchDivideConquer = divideConquer && Number(info?.a ?? 0) === 1;
+  const familyLabel = info?.strategy_family?.label || (divideConquer ? "Divide y Vencerás" : linearShift ? "Resta y Vencerás" : "");
 
   if (recommended) {
     return locale === "es"
-      ? "Este es el método recomendado para la recurrencia detectada."
-      : "This is the recommended method for the detected recurrence.";
+      ? `${familyLabel ? `La recurrencia cae en ${familyLabel}. ` : ""}Este método modela la estructura matemática de forma más directa y, por eso, normalmente produce una derivación más corta y estable.`
+      : `${familyLabel ? `The recurrence falls into ${familyLabel}. ` : ""}This method matches the mathematical structure most directly, so it usually yields a shorter and more stable derivation.`;
   }
 
   if (divideConquer && method === "recursion_tree") {
     return locale === "es"
-      ? "Método soportado y útil para visualización; normalmente se recomienda Teorema Maestro para una cota más estable."
-      : "Supported and useful for visualization; Master Theorem is usually preferred for a more stable bound.";
+      ? "Útil para Divide y Vencerás: permite ver costo por nivel (raíz, intermedios, hojas) y entender visualmente por qué aparece la cota final."
+      : "Useful for Divide y Vencerás: it exposes per-level cost (root, internal levels, leaves) and makes the final bound visually clear.";
   }
 
   if (divideConquer && method === "iteration") {
     return isSingleBranchDivideConquer
       ? (locale === "es"
-        ? "Método soportado por despliegue geométrico de rama única, pero suele ser menos robusto que Master/árbol."
-        : "Supported through single-branch geometric unrolling, but usually less robust than Master/tree.")
+        ? "Aplica en la variante de rama única: se puede desplegar geométricamente y llegar a la cota, aunque suele requerir más manipulación algebraica que Master o árbol."
+        : "It applies for the single-branch variant: geometric unrolling can reach the bound, though it usually needs more algebraic manipulation than Master or tree.")
       : (locale === "es"
-        ? "Método disponible con menor precisión para esta forma divide-and-conquer; úsalo solo si quieres comparar enfoques."
-        : "Available with lower precision for this divide-and-conquer shape; use it mainly for method comparison.");
+        ? "Es viable, pero en Divide y Vencerás con varias ramas suele ser más largo y menos transparente que resolver por casos de Master o por niveles del árbol."
+        : "It is viable, but for multi-branch Divide y Vencerás it is usually longer and less transparent than solving by Master cases or tree levels.");
   }
 
   if (linearShift && method === "iteration") {
     return locale === "es"
-      ? "Método soportado como alternativa, pero la ecuación característica suele converger más directo en esta recurrencia."
-      : "Supported as an alternative, but characteristic equation is usually more direct for this recurrence.";
+      ? "En Resta y Vencerás funciona bien para mostrar cómo se acumula el costo paso a paso; es una buena vía pedagógica aunque no siempre la más compacta."
+      : "In Resta y Vencerás it works well to show step-by-step cost accumulation; pedagogically strong, though not always the most compact path.";
   }
 
   return locale === "es"
-    ? "Este método es compatible con la forma de recurrencia detectada, aunque no es la opción recomendada."
-    : "This method is compatible with the detected recurrence shape, although it is not the recommended option.";
+    ? "Este método es compatible con la forma detectada y puede llegar a una cota válida, pero no ofrece la ruta más clara para este patrón."
+    : "This method is compatible with the detected shape and can reach a valid bound, but it is not the clearest path for this pattern.";
 };
 
 const getNotApplicableReason = (
@@ -144,14 +150,14 @@ const getNotApplicableReason = (
     return naturalJoin(
       [
         locale === "es"
-          ? "El Teorema Maestro se usa para dividir el problema en subproblemas de tamano proporcional"
-          : "Master Theorem is intended for recurrences that split the problem into proportional subproblems",
+          ? "Teorema Maestro es para Divide y Vencerás, donde el tamaño baja por razón (n/b)"
+          : "Master Theorem is for Divide y Vencerás, where size shrinks by ratio (n/b)",
         locale === "es"
-          ? "en este caso la recurrencia reduce por desplazamientos constantes como n-1 o n-k"
-          : "in this case the recurrence decreases through constant shifts such as n-1 or n-k",
+          ? "aquí estamos en una familia de Resta y Vencerás/Resta y Serás Vencido, con decrementos tipo n-1 o n-k"
+          : "here we are in a Resta y Vencerás/Resta y Serás Vencido family with decrements like n-1 or n-k",
         locale === "es"
-          ? "por eso no se cumplen las condiciones formales de T(n)=aT(n/b)+f(n)"
-          : "therefore the formal conditions of T(n)=aT(n/b)+f(n) are not satisfied",
+          ? "por eso no se cumplen sus hipótesis formales"
+          : "therefore its formal assumptions are not satisfied",
       ],
       locale,
     );
@@ -161,14 +167,14 @@ const getNotApplicableReason = (
     return naturalJoin(
       [
         locale === "es"
-          ? "La ecuacion caracteristica funciona mejor con recurrencias lineales de desplazamiento constante"
-          : "Characteristic equation works best for linear recurrences with constant shifts",
+          ? "Ecuación característica describe mejor recurrencias de Resta y Vencerás con desplazamientos constantes"
+          : "Characteristic equation best describes Resta y Vencerás recurrences with constant shifts",
         locale === "es"
-          ? "tu algoritmo tiene una forma divide-and-conquer con llamadas de tipo n/b"
-          : "your algorithm follows a divide-and-conquer shape with n/b style calls",
+          ? "tu recurrencia es de Divide y Vencerás con subproblemas del tipo n/b"
+          : "your recurrence is Divide y Vencerás with n/b-style subproblems",
         locale === "es"
-          ? "por eso este metodo no modela de forma directa la estructura detectada"
-          : "so this method does not model the detected structure directly",
+          ? "por eso este método no es la herramienta natural para este patrón"
+          : "so this method is not the natural tool for this pattern",
       ],
       locale,
     );
@@ -178,14 +184,14 @@ const getNotApplicableReason = (
     return naturalJoin(
       [
         locale === "es"
-          ? "El arbol de recursion es mas didactico cuando hay ramificacion en varios subproblemas"
-          : "Recursion tree is more informative when there is branching into multiple subproblems",
+          ? "El árbol de recursión brilla en Divide y Vencerás, cuando hay ramificación clara por niveles"
+          : "Recursion tree shines in Divide y Vencerás, where level-by-level branching is explicit",
         locale === "es"
-          ? "esta recurrencia avanza principalmente con un solo desplazamiento lineal"
-          : "this recurrence mainly advances with a single linear shift",
+          ? "aquí la recurrencia avanza casi linealmente (n, n-1, n-2)"
+          : "here the recurrence progresses almost linearly (n, n-1, n-2)",
         locale === "es"
-          ? "por eso su uso aqui no aporta una estimacion tan clara como otros metodos"
-          : "therefore its use here does not provide an estimate as clear as other methods",
+          ? "por eso suele aportar menos que ecuación característica o iteración"
+          : "so it usually adds less value than characteristic equation or iteration",
       ],
       locale,
     );
@@ -195,19 +201,19 @@ const getNotApplicableReason = (
     return naturalJoin(
       [
         locale === "es"
-          ? "Aunque iteracion puede desplegar la recurrencia, en este caso hay division en subproblemas paralelos"
-          : "Although iteration can unroll a recurrence, this case splits into parallel subproblems",
+          ? "En Divide y Vencerás con múltiples ramas, iterar término a término crece rápido en complejidad algebraica"
+          : "In multi-branch Divide y Vencerás, term-by-term unrolling grows algebraically fast",
         locale === "es"
-          ? "metodos como Teorema Maestro o arbol de recursion suelen ofrecer una cota mas estable"
-          : "methods such as Master Theorem or recursion tree usually provide a more stable bound",
+          ? "Master o árbol suelen dar una ruta más limpia para justificar la cota"
+          : "Master or recursion tree usually provide a cleaner route to justify the bound",
       ],
       locale,
     );
   }
 
   return locale === "es"
-    ? "Este metodo no cumple las condiciones detectadas para este patron de recurrencia."
-    : "This method does not meet the detected conditions for this recurrence pattern.";
+    ? "Este método no coincide con la familia recursiva detectada ni con sus supuestos matemáticos de base."
+    : "This method does not match the detected recurrence family nor its core mathematical assumptions.";
 };
 
 const buildMethodMetadata = (

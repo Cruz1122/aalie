@@ -16,12 +16,13 @@ from ..structured_trace_models import (
     StructuredTraceRenderConfig,
 )
 from ..structural_trace_classifier import StructuralTraceClassification
-from ._call_utils import call_to_label
+from ._call_utils import call_to_label, _format_param_value
 
 
 def _build_from_call_tree(
     trace: Dict[str, Any],
     pattern_kind: str,
+    config: StructuredTraceRenderConfig,
     max_nodes: int = 100,
 ) -> StructuredTraceView:
     """Construye vista desde recursionTree (árbol de llamadas)."""
@@ -51,7 +52,7 @@ def _build_from_call_tree(
             return
 
         node_id = f"call_{call_id}"
-        label = call_to_label(call)
+        label = call_to_label(call, config.locale)
         bc = call.get("base_case") or {}
         is_base = call.get("is_base_case", False) or (
             bc.get("detected", False) and bc.get("matched", False)
@@ -92,6 +93,33 @@ def _build_from_call_tree(
     for rid in root_ids:
         add_call(rid)
 
+    # Nodo final basado en retorno real de la llamada raíz.
+    if root_ids:
+        root_call = calls_by_id.get(root_ids[0]) or {}
+        ret = root_call.get("return_value")
+        if ret is not None:
+            result_id = f"result_{root_ids[0]}"
+            locale_key = str(config.locale).lower()[:2]
+            title = "Resultado" if locale_key == "es" else "Result"
+            result_label = f"{title}\n{_format_param_value(ret)}"
+            nodes.append(
+                StructuredTraceNode(
+                    id=result_id,
+                    role="result",
+                    title=title,
+                    lines=result_label.split("\n"),
+                    data={"nodeType": "output"},
+                )
+            )
+            edges.append(
+                StructuredTraceEdge(
+                    id=f"e_call_{root_ids[0]}_{result_id}",
+                    source=f"call_{root_ids[0]}",
+                    target=result_id,
+                    label="return",
+                )
+            )
+
     return StructuredTraceView(
         patternKind=pattern_kind,
         nodes=nodes,
@@ -102,7 +130,11 @@ def _build_from_call_tree(
 def build_generic_recursive(
     trace: Dict[str, Any],
     classification: StructuralTraceClassification,
-    _config: StructuredTraceRenderConfig,
+    config: StructuredTraceRenderConfig,
 ) -> StructuredTraceView:
     """Construye vista de árbol de llamadas genérico."""
-    return _build_from_call_tree(trace, classification.patternKind)
+    return _build_from_call_tree(
+        trace,
+        classification.patternKind,
+        config=config,
+    )

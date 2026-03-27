@@ -2,6 +2,8 @@
 import pytest
 from app.modules.analysis.utils.expr_converter import ExprConverter
 from sympy import Symbol, Integer, sympify
+from sympy import Eq, Le, Ne
+from sympy.logic.boolalg import And, Or, Not
 
 
 class TestExprConverter:
@@ -172,7 +174,7 @@ class TestExprConverter:
         expr = {
             "type": "unary",
             "arg": {"type": "number", "value": 5},
-            "operator": "!"
+            "operator": "??"
         }
         result = self.converter.ast_to_sympy(expr)
         # Debe retornar el argumento sin modificar
@@ -313,7 +315,85 @@ class TestExprConverter:
         # right será None, se convierte a Integer(0)
         assert result == Integer(5)
 
+    def test_binary_equals_operator(self):
+        """Test: Convertir comparación igualdad."""
+        expr = {
+            "type": "binary",
+            "left": {"type": "identifier", "name": "n"},
+            "right": {"type": "number", "value": 1},
+            "operator": "==",
+        }
+        result = self.converter.ast_to_sympy(expr)
+        assert str(result) == str(Eq(Symbol("n", integer=True, positive=True), Integer(1)))
+
+    def test_binary_lte_operator(self):
+        """Test: Convertir comparación <=."""
+        expr = {
+            "type": "binary",
+            "left": {"type": "identifier", "name": "i"},
+            "right": {"type": "identifier", "name": "j"},
+            "operator": "<=",
+        }
+        result = self.converter.ast_to_sympy(expr)
+        assert str(result) == str(Le(Symbol("i", integer=True), Symbol("j", integer=True)))
+
+    def test_binary_and_operator(self):
+        """Test: Convertir operador lógico AND."""
+        expr = {
+            "type": "binary",
+            "left": {
+                "type": "binary",
+                "left": {"type": "identifier", "name": "i"},
+                "right": {"type": "identifier", "name": "j"},
+                "operator": "<=",
+            },
+            "right": {
+                "type": "binary",
+                "left": {"type": "identifier", "name": "j"},
+                "right": {"type": "identifier", "name": "k"},
+                "operator": "<=",
+            },
+            "operator": "and",
+        }
+        result = self.converter.ast_to_sympy(expr)
+        assert isinstance(result, And)
+
+    def test_binary_or_operator(self):
+        """Test: Convertir operador lógico OR."""
+        expr = {
+            "type": "binary",
+            "left": {
+                "type": "binary",
+                "left": {"type": "identifier", "name": "u"},
+                "right": {"type": "number", "value": 0},
+                "operator": "==",
+            },
+            "right": {
+                "type": "binary",
+                "left": {"type": "identifier", "name": "u"},
+                "right": {"type": "number", "value": 1},
+                "operator": "==",
+            },
+            "operator": "or",
+        }
+        result = self.converter.ast_to_sympy(expr)
+        assert isinstance(result, Or)
+
+    def test_unary_not_operator(self):
+        """Test: Convertir operador unario NOT."""
+        expr = {
+            "type": "unary",
+            "arg": {
+                "type": "binary",
+                "left": {"type": "identifier", "name": "u"},
+                "right": {"type": "number", "value": 0},
+                "operator": "==",
+            },
+            "operator": "not",
+        }
+        result = self.converter.ast_to_sympy(expr)
+        assert result == Ne(Symbol("u", real=True), Integer(0))
+
 
 if __name__ == '__main__':
     unittest.main()
-

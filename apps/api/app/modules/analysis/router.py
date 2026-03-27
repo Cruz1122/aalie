@@ -11,6 +11,7 @@ from ..parsing.service import parse_source
 from ..classification.service import classify_algorithm as classify_algo
 from ..execution.executor import CodeExecutor
 from ..execution.derivations.structured_trace_builder import build_structured_trace_result
+from ..execution.derivations.structured_trace_models import StructuredTraceRenderConfig
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
@@ -150,7 +151,9 @@ def analyze_trace(payload: TraceRequest = Body(...)) -> Dict[str, Any]:
         import logging as _logging
         derived: Dict[str, Any] = {}
         try:
-            st = build_structured_trace_result(trace_enriched)
+            st = build_structured_trace_result(
+                trace_enriched, StructuredTraceRenderConfig(locale=locale_val)
+            )
             derived["structuredTrace"] = {
                 "patternKind": st["patternKind"],
                 "graph": st["graph"],
@@ -199,5 +202,4 @@ def analyze_trace(payload: TraceRequest = Body(...)) -> Dict[str, Any]:
                 }
             ]
         }
-
 

@@ -59,5 +59,8 @@ describe("markdown-renderer", () => {
     assert.match(markdown, /T\(n\)=2T\(n\/2\)\+n/);
     assert.match(markdown, /\*\*1\. Master Step 1\*\*/);
     assert.match(markdown, /\*Fixture summary for master step 1 Fixture concept for recurrence_detected\*/);
+    assert.match(markdown, /Seguimiento de ejecución recursiva|Recursive execution trace tracking/);
+    assert.match(markdown, /```mermaid/);
+    assert.match(markdown, /flowchart LR/);
   });
 });

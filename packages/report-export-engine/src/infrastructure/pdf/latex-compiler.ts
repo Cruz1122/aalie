@@ -25,6 +25,10 @@ export interface CompileLatexToPdfOptions {
   jobName?: string;
   cleanup?: boolean;
   assets?: LatexAssetRegistry;
+  extraFiles?: Array<{
+    relativePath: string;
+    content: string | Buffer;
+  }>;
 }
 
 export interface CompileLatexToPdfResult {
@@ -88,6 +92,14 @@ export function compileLatexToPdf(options: CompileLatexToPdfOptions): CompileLat
     copyFileSync(assets.styleFilePath, path.join(workDir, "aalie-report.sty"));
     copyFileSync(assets.ucaldasLogoPath, path.join(logosOutputDir, "ucaldas.pdf"));
     copyFileSync(assets.aalieLogoPath, path.join(logosOutputDir, "aalie.pdf"));
+
+    for (const file of options.extraFiles || []) {
+      const rel = String(file.relativePath || "").trim().replace(/^\/+/, "");
+      if (!rel) continue;
+      const dest = path.join(workDir, rel);
+      mkdirSync(path.dirname(dest), { recursive: true });
+      writeFileSync(dest, file.content);
+    }
 
     writeFileSync(texFilePath, options.texContent, "utf8");
 

@@ -153,6 +153,10 @@ class CodeExecutor:
         self.recursion_depth = 0
         self.recursion_truncated = False
         self.call_stack: List[Dict[str, Any]] = []  # Pila de frames de llamadas
+        # Captura de RETURN por llamada (incluye procedimientos no recursivos)
+        self.return_capture_stack: List[Any] = []
+        # Stack de procedimientos en ejecución (para asociar RETURN al frame correcto)
+        self.proc_exec_stack: List[str] = []
     
     def execute(self) -> Dict[str, Any]:
         """
@@ -218,6 +222,63 @@ class CodeExecutor:
             current["siguiente"] = node
             current = node
         return head
+
+    def _build_bst_from_sorted_array(self, arr: List[Any]) -> Optional[Dict[str, Any]]:
+        """Construye un BST balanceado (claves valor/izquierda/derecha) desde un array ordenado."""
+        if not arr:
+            return None
+
+        def build(lo: int, hi: int) -> Optional[Dict[str, Any]]:
+            if lo > hi:
+                return None
+            mid = (lo + hi) // 2
+            node: Dict[str, Any] = {
+                "valor": arr[mid],
+                "izquierda": build(lo, mid - 1),
+                "derecha": build(mid + 1, hi),
+            }
+            return node
+
+        return build(0, len(arr) - 1)
+
+    def _collect_field_names(self, node: Any, out: Optional[set] = None) -> set:
+        """Recolecta nombres de campos usados en accesos Field (ej. nodo.siguiente, raiz.izquierda)."""
+        if out is None:
+            out = set()
+        if isinstance(node, dict):
+            node_type = node.get("type", "")
+            if node_type == "Field":
+                name = node.get("name")
+                if isinstance(name, str) and name:
+                    out.add(name.lower())
+            for key, value in node.items():
+                if key == "type":
+                    continue
+                self._collect_field_names(value, out)
+        elif isinstance(node, list):
+            for item in node:
+                self._collect_field_names(item, out)
+        return out
+
+    def _build_default_array(self, fallback_size: int = 10) -> List[int]:
+        """Construye un arreglo base según el caso para inferencias estructurales."""
+        n = (
+            int(self.input_size)
+            if isinstance(self.input_size, int) and self.input_size > 0
+            else fallback_size
+        )
+        n = max(1, n)
+        ascending = list(range(1, n + 1))
+        if self.case == "worst":
+            return list(reversed(ascending))
+        if self.case == "avg":
+            # Permutación determinista (no ordenada) para visualizar trabajo real de ordenamiento.
+            mixed = ascending[:]
+            for idx in range(0, len(mixed) - 1, 2):
+                mixed[idx], mixed[idx + 1] = mixed[idx + 1], mixed[idx]
+            return mixed
+        # best (o fallback): ya ordenado
+        return ascending
 
     def _collect_identifiers(self, node: Any, out: Optional[set] = None) -> set:
         """Recolecta identificadores usados en un nodo del AST."""
@@ -332,87 +393,131 @@ class CodeExecutor:
         formal_params = proc_def.get("params", [])
         param_names: List[str] = []
         array_param_names: List[str] = []
+        body = proc_def.get("body") or proc_def
+        field_names = self._collect_field_names(body)
 
         for param in formal_params:
             param_name = None
-
-            # Extraer el nombre del parámetro según su tipo
             if isinstance(param, dict):
-                if param.get("type") == "Param":
-                    param_name = param.get("name")
-                elif param.get("type") == "ArrayParam":
+                if param.get("type") == "ArrayParam":
                     param_name = param.get("name")
                     if param_name:
                         array_param_names.append(param_name)
-                elif param.get("type") == "ObjectParam":
-                    param_name = param.get("name")
                 else:
                     param_name = param.get("name")
             elif isinstance(param, str):
                 param_name = param
 
-            if param_name:
-                param_names.append(param_name)
-                value = self.environment.get_variable(param_name)
-                if value is not None:
-                    params_map[param_name] = value
+            if not param_name:
+                continue
+            param_names.append(param_name)
+            value = self.environment.get_variable(param_name)
+            if value is not None:
+                params_map[param_name] = value
 
-        # Si no hay ArrayParam explícito, inferir array params por uso en índices
+        # Si no hay ArrayParam explícito, inferir array params por uso en índices.
         if not array_param_names:
-            body = proc_def.get("body") or proc_def
             array_targets = self._collect_array_targets(body)
             for param_name in param_names:
                 if param_name in array_targets:
                     array_param_names.append(param_name)
 
-        # Heurística: si hay params de array sin valor y existe un array en el environment
-        if array_param_names:
-            preferred = ["A", "arr", "array", "lista", "list"]
-            for array_name in array_param_names:
-                if array_name in params_map:
-                    continue
-                picked = self._pick_array_value(preferred)
-                if picked is not None:
-                    params_map[array_name] = picked
+        # Resolver array de trabajo base.
+        preferred_array_names = ["A", "arr", "array", "lista", "list"]
+        working_array = self._pick_array_value(preferred_array_names)
+        if working_array is None and array_param_names:
+            generated = self._build_default_array()
+            working_array = generated
+            self.environment.set_variable("A", generated)
 
-        # Inferir parametros de indices cuando se detecta un array param y uso de indices en el AST
-        if array_param_names:
-            body = proc_def.get("body") or proc_def
+        if array_param_names and working_array is not None:
+            for array_name in array_param_names:
+                if array_name not in params_map:
+                    params_map[array_name] = working_array
+
+        array_len = len(working_array) if isinstance(working_array, list) else None
+        if array_len is None:
+            for value in self.environment.variables.values():
+                if isinstance(value, list):
+                    array_len = len(value)
+                    break
+        if array_len is None and self.input_size is not None:
+            try:
+                array_len = int(self.input_size)
+            except Exception:
+                array_len = None
+
+        # Inferencias estructurales para recursión sobre objetos (listas/BST).
+        node_like_names = {"nodo", "node", "head", "list", "raiz", "root", "tree", "arbol"}
+        value_like_names = {"valor", "value", "key", "target", "x", "buscado", "needle"}
+        next_like_fields = {"siguiente", "next"}
+        left_right_fields = {"izquierda", "derecha", "left", "right"}
+
+        node_param = next(
+            (
+                p for p in param_names
+                if p.lower() in node_like_names
+            ),
+            None,
+        )
+        value_param = next(
+            (
+                p for p in param_names
+                if p.lower() in value_like_names
+            ),
+            None,
+        )
+        if value_param is None and len(param_names) >= 2:
+            second_name = param_names[1]
+            if second_name.lower() not in node_like_names:
+                value_param = second_name
+
+        if node_param and working_array is None:
+            generated = self._build_default_array()
+            working_array = generated
+            self.environment.set_variable("A", generated)
+
+        if node_param and isinstance(working_array, list) and working_array:
+            if node_param not in params_map:
+                if field_names & next_like_fields:
+                    linked = self._build_linked_list_from_array(working_array)
+                    if linked is not None:
+                        params_map[node_param] = linked
+                elif field_names & left_right_fields:
+                    sorted_values = sorted(working_array)
+                    bst = self._build_bst_from_sorted_array(sorted_values)
+                    if bst is not None:
+                        params_map[node_param] = bst
+
+            if value_param and value_param not in params_map:
+                params_map[value_param] = working_array[-1]
+
+        # Inferir parámetros índice cuando se detecta array param y uso de índices en el AST.
+        if array_param_names and array_len is not None:
             index_params = self._collect_array_index_identifiers(body, array_param_names)
             missing_index_params = [
                 p for p in param_names if p in index_params and p not in params_map
             ]
 
-            array_len: Optional[int] = None
-            for array_name in array_param_names:
-                value = params_map.get(array_name)
-                if isinstance(value, list):
-                    array_len = len(value)
-                    break
-            if array_len is None:
-                for value in self.environment.variables.values():
-                    if isinstance(value, list):
-                        array_len = len(value)
-                        break
-            if array_len is None and self.input_size is not None:
-                try:
-                    array_len = int(self.input_size)
-                except Exception:
-                    array_len = None
-
-            # Inferir inicio/fin usando patrones estructurales del AST (independiente del nombre)
             lower_bound_param: Optional[str] = None
             upper_bound_param: Optional[str] = None
-            if array_len is not None:
-                lower_bound_param, upper_bound_param = self._infer_bounds_from_ast(
-                    proc_def, param_names
-                )
-                if lower_bound_param and lower_bound_param in param_names and lower_bound_param not in params_map:
-                    params_map[lower_bound_param] = 1
-                if upper_bound_param and upper_bound_param in param_names and upper_bound_param not in params_map:
-                    params_map[upper_bound_param] = array_len
+            lower_bound_param, upper_bound_param = self._infer_bounds_from_ast(
+                proc_def, param_names
+            )
+            if (
+                lower_bound_param
+                and lower_bound_param in param_names
+                and lower_bound_param not in params_map
+            ):
+                params_map[lower_bound_param] = 1
+            if (
+                upper_bound_param
+                and upper_bound_param in param_names
+                and upper_bound_param not in params_map
+            ):
+                params_map[upper_bound_param] = array_len
 
-            if missing_index_params and array_len is not None:
+            if missing_index_params:
                 ordered_missing = [p for p in param_names if p in missing_index_params]
                 if len(ordered_missing) >= 2:
                     if ordered_missing[0] not in params_map:
@@ -424,46 +529,20 @@ class CodeExecutor:
                     end_like = {"fin", "end", "right", "high", "r", "last", "final", "der"}
                     params_map[ordered_missing[0]] = array_len if name in end_like else 1
 
-            # Inferir inicio/fin aunque no aparezcan como índice explícito
-            if array_len is not None:
-                start_like = {"inicio", "start", "left", "low", "l", "izq", "from", "begin"}
-                end_like = {"fin", "end", "right", "high", "r", "der", "to", "last", "final"}
-                for param_name in param_names:
-                    if param_name in params_map:
-                        continue
-                    lowered = param_name.lower()
-                    if lowered in start_like:
-                        params_map[param_name] = 1
-                    elif lowered in end_like:
-                        params_map[param_name] = array_len
+        # Inferir inicio/fin por nombre cuando hay longitud conocida.
+        if array_len is not None:
+            start_like = {"inicio", "start", "left", "low", "l", "izq", "from", "begin"}
+            end_like = {"fin", "end", "right", "high", "r", "der", "to", "last", "final"}
+            for param_name in param_names:
+                if param_name in params_map:
+                    continue
+                lowered = param_name.lower()
+                if lowered in start_like:
+                    params_map[param_name] = 1
+                elif lowered in end_like:
+                    params_map[param_name] = array_len
 
-        # Si aún no hay array_len (p. ej. no se detectó array param), inferir inicio/fin por nombre
-        if not array_param_names:
-            array_len: Optional[int] = None
-            for value in self.environment.variables.values():
-                if isinstance(value, list):
-                    array_len = len(value)
-                    break
-            if array_len is None and self.input_size is not None:
-                try:
-                    array_len = int(self.input_size)
-                except Exception:
-                    array_len = None
-            if array_len is not None:
-                start_like = {"inicio", "start", "left", "low", "l", "izq", "from", "begin"}
-                end_like = {"fin", "end", "right", "high", "r", "der", "to", "last", "final"}
-                for param_name in param_names:
-                    if param_name in params_map:
-                        continue
-                    lowered = param_name.lower()
-                    if lowered in start_like:
-                        params_map[param_name] = 1
-                    elif lowered in end_like:
-                        params_map[param_name] = array_len
-
-        # Fallback final para parámetros escalares sin valor:
-        # asignar valores concretos estables para evitar ejecución simbólica infinita
-        # en bucles dependientes de parámetros (ej. Euclides con b != 0).
+        # Fallback final para parámetros escalares sin valor.
         unresolved_params = [p for p in param_names if p not in params_map]
         if unresolved_params:
             base_size = (
@@ -482,21 +561,6 @@ class CodeExecutor:
                     params_map[param_name] = max(1, base_size // 2)
                 else:
                     params_map[param_name] = max(1, base_size - idx)
-
-        # Fallback: algoritmos de lista enlazada (buscarLista, etc.) con A y x
-        if len(params_map) < len(param_names) and len(param_names) >= 2:
-            arr = self.environment.get_variable("A")
-            x_val = self.environment.get_variable("x")
-            if isinstance(arr, list) and x_val is not None:
-                first = (param_names[0] or "").lower()
-                second = (param_names[1] or "").lower()
-                node_like = first in ("nodo", "node", "head", "list", "raiz", "root")
-                value_like = second in ("valor", "value", "key", "x", "target")
-                if node_like and value_like:
-                    linked = self._build_linked_list_from_array(arr)
-                    if linked is not None:
-                        params_map[param_names[0]] = linked
-                        params_map[param_names[1]] = x_val
 
         # #region agent log
         try:
@@ -629,6 +693,7 @@ class CodeExecutor:
         """
         proc_name = proc_def.get("name", "unknown")
         body = proc_def.get("body", {})
+        self.proc_exec_stack.append(proc_name)
         
         # Verificar si es recursivo (se llama a sí mismo)
         is_recursive = self._is_recursive_procedure(proc_def)
@@ -651,11 +716,12 @@ class CodeExecutor:
             self.recursion_depth += 1
             
             # Crear nuevo frame para la llamada
-            params_snapshot = copy.deepcopy(params)
+            frame_params_snapshot = copy.deepcopy(params)
+            recursion_params_snapshot = copy.deepcopy(params)
             frame = {
                 "call_id": call_id,
                 "proc_name": proc_name,
-                "params": params_snapshot,
+                "params": frame_params_snapshot,
                 "depth": depth,
                 "return_value": None
             }
@@ -664,7 +730,7 @@ class CodeExecutor:
             # Registrar entrada a recursión
             entry_line = proc_def.get("pos", {}).get("line", 0)
             self.trace_builder.enter_recursion(
-                call_id, depth, params_snapshot,
+                call_id, depth, recursion_params_snapshot,
                 function_name=proc_name,
                 entry_line=entry_line,
                 parent_call_id=parent_id,
@@ -680,7 +746,7 @@ class CodeExecutor:
                 recursion={
                     "depth": depth,
                     "callId": call_id,
-                    "params": params_snapshot,
+                    "params": recursion_params_snapshot,
                     "procedure": proc_name,
                 },
                 description=self._trace_labels["recursive_call"].format(
@@ -721,6 +787,9 @@ class CodeExecutor:
             call_id = current_frame.get("call_id")
             if call_id:
                 self.trace_builder.record_return_value(call_id, result)
+                self.trace_builder.record_final_params(
+                    call_id, current_frame.get("params", {})
+                )
 
             # Emitir call_exit antes de cerrar el frame
             line = proc_def.get("pos", {}).get("line", 0)
@@ -731,7 +800,7 @@ class CodeExecutor:
                 recursion={
                     "depth": self.recursion_depth - 1,
                     "callId": call_id,
-                    "params": current_frame.get("params", {}),
+                    "params": copy.deepcopy(current_frame.get("params", {})),
                     "procedure": proc_name,
                 },
                 description=f"Salida de {proc_name}",
@@ -751,6 +820,8 @@ class CodeExecutor:
         if created_scope:
             self.environment.pop_scope()
         
+        if self.proc_exec_stack and self.proc_exec_stack[-1] == proc_name:
+            self.proc_exec_stack.pop()
         return result
     
     def _execute_statement(self, stmt: Dict[str, Any]) -> None:
@@ -1411,8 +1482,14 @@ class CodeExecutor:
         value = self._evaluate_for_return(value_expr) if value_expr else None
         value_str = str(value) if value is not None else "None"
 
-        # Guardar valor de retorno en el frame actual si estamos en recursión
-        if self.call_stack:
+        # Capturar retorno para la llamada actual (recursiva o no).
+        if self.return_capture_stack:
+            self.return_capture_stack[-1] = value
+
+        # Guardar valor de retorno en el frame actual solo cuando corresponde
+        # al procedimiento recursivo que está ejecutándose.
+        current_proc = self.proc_exec_stack[-1] if self.proc_exec_stack else None
+        if self.call_stack and self.call_stack[-1].get("proc_name") == current_proc:
             self.call_stack[-1]["return_value"] = value
             call_id = self.call_stack[-1].get("call_id")
             if call_id:
@@ -1505,8 +1582,22 @@ class CodeExecutor:
             for param_name, param_value in params_map.items():
                 self.environment.set_variable(param_name, param_value)
             
-            # Ejecutar el procedimiento
-            return_value = self._execute_procedure(proc_def, params_map, pregenerated_call_id=pregenerated_call_id)
+            # Ejecutar el procedimiento y capturar RETURN explícito (incluye no recursivos)
+            capture_sentinel = object()
+            self.return_capture_stack.append(capture_sentinel)
+            return_value = None
+            try:
+                return_value = self._execute_procedure(
+                    proc_def, params_map, pregenerated_call_id=pregenerated_call_id
+                )
+            finally:
+                captured_return = (
+                    self.return_capture_stack.pop()
+                    if self.return_capture_stack
+                    else capture_sentinel
+                )
+            if captured_return is not capture_sentinel:
+                return_value = captured_return
 
             # Capturar posibles mutaciones de arrays/objetos para propagarlas al caller
             updated_params = {}
@@ -1535,7 +1626,7 @@ class CodeExecutor:
                     recursion={
                         "depth": self.recursion_depth - 1,
                         "callId": parent_call_id,
-                        "params": parent_frame.get("params", {}),
+                        "params": copy.deepcopy(parent_frame.get("params", {})),
                         "procedure": proc_def.get("name", "unknown"),
                     },
                     description=f"Reanudando tras retorno de {proc_name}",

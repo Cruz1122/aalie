@@ -67,3 +67,4 @@ class StructuredTraceRenderConfig:
     showConditionEvaluations: bool = True
     maxSnapshotsPerOperation: int = 4
     collapseRepeatedCalls: bool = False
+    locale: str = "en"

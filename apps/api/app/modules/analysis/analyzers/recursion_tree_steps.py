@@ -13,7 +13,7 @@ from .recursive_steps_core import (
 
 _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
     "es": {
-        "tree.recurrence_detected.standard": "Se detectó la recurrencia a analizar por árbol de recursión.",
+        "tree.recurrence_detected.standard": "Se detectó una recurrencia de familia Divide y Vencerás para analizar por árbol de recursión.",
         "tree.applicability.supported": "La recurrencia cumple la forma base del método: $T(n)=aT(n/b)+f(n)$ con parámetros válidos.",
         "tree.applicability.unsupported": "La recurrencia detectada queda fuera de la cobertura formal actual del árbol de recursión simbólico.",
         "tree.parameters.extracted": "Se extrajeron los parámetros estructurales del árbol: ramificación, reducción de tamaño y costo externo.",
@@ -32,7 +32,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "tree.step_blocked.unsupported": "Este paso queda bloqueado porque la recurrencia no cumple la aplicabilidad formal actual del método.",
 
         "concept.tree.recurrence_detected": "Primero fijamos la ecuación exacta que vamos a analizar. Esto evita mezclar fórmulas de otros métodos y deja claro qué estructura matemática se está resolviendo.",
-        "concept.tree.recursion_tree_applicability_check": "El árbol de recursión simbólico se aplica de forma canónica a recurrencias divide y vencerás con reducción uniforme. Si la forma no entra, se declara explícitamente en lugar de forzar una conclusión.",
+        "concept.tree.recursion_tree_applicability_check": "El árbol de recursión simbólico se usa sobre todo en Divide y Vencerás con reducción uniforme. Para familias de Resta y Vencerás o Resta y Serás Vencido, esta versión del método no es la más representativa y se reporta explícitamente.",
         "concept.tree.tree_parameters_extracted": "Los parámetros $a$, $b$ y $f(n)$ determinan la geometría del árbol: cuántos nodos nacen por nivel, cómo cambia el tamaño del subproblema y qué costo local aporta cada nodo.",
         "concept.tree.level_model_built": "Modelar el nivel $i$ permite separar estructura y costo: cuántos subproblemas hay, de qué tamaño son y qué cuesta resolver cada uno. Ese modelo es la base del análisis por niveles.",
         "concept.tree.level_cost_computed": "En árbol de recursión, el costo de un nivel no se adivina: se multiplica nodos por costo por nodo. Esa regla traduce la estructura del árbol en una expresión de costo acumulado.",
@@ -44,14 +44,14 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "concept.tree.asymptotic_conclusion": "La conclusión asintótica resume el crecimiento de largo plazo de $T(n)$ y debe reflejar el estado real de soporte: completo, parcial o no soportado.",
         "concept.tree.blocked": "Cuando el método no aplica formalmente, los pasos siguientes se marcan como bloqueados para mantener transparencia matemática.",
 
-        "warning.tree.unsupported_form": "Cobertura actual: el walkthrough formal del árbol se soporta para recurrencias tipo $T(n)=aT(n/b)+f(n)$ con reducción uniforme.",
+        "warning.tree.unsupported_form": "Cobertura actual: este walkthrough del árbol se soporta para la familia Divide y Vencerás, $T(n)=aT(n/b)+f(n)$ con reducción uniforme.",
         "warning.tree.invalid_parameters": "Parámetros inválidos para el modelo del árbol: se requiere $a\\ge 1$ y $b>1$.",
         "warning.tree.sum_partial": "No fue posible cerrar completamente la sumatoria con las reglas simbólicas actuales.",
         "warning.tree.tree_inconsistent": "Se detectó inconsistencia entre artefactos del árbol y el modelo simbólico esperado.",
         "warning.tree.asymptotic_partial": "La cota final se reporta como parcial porque depende de simplificación o heurística controlada.",
     },
     "en": {
-        "tree.recurrence_detected.standard": "The recurrence to analyze with recursion-tree method was detected.",
+        "tree.recurrence_detected.standard": "A Divide y Vencerás recurrence was detected for recursion-tree analysis.",
         "tree.applicability.supported": "The recurrence matches the base method form: $T(n)=aT(n/b)+f(n)$ with valid parameters.",
         "tree.applicability.unsupported": "Detected recurrence falls outside formal current coverage of symbolic recursion-tree walkthrough.",
         "tree.parameters.extracted": "Structural parameters were extracted: branching factor, size reduction, and external work.",
@@ -70,7 +70,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "tree.step_blocked.unsupported": "This step is blocked because recurrence does not meet formal current method applicability.",
 
         "concept.tree.recurrence_detected": "We first pin down the exact recurrence under analysis. This prevents mixing formulas from other methods and keeps the mathematical target explicit.",
-        "concept.tree.recursion_tree_applicability_check": "Symbolic recursion-tree walkthrough is canonically applied to divide-and-conquer recurrences with uniform reduction. If assumptions fail, we report it explicitly instead of forcing a result.",
+        "concept.tree.recursion_tree_applicability_check": "This symbolic recursion-tree walkthrough is mainly for Divide y Vencerás with uniform reduction. For Resta y Vencerás or Resta y Serás Vencido, this version is less representative and is explicitly marked out of scope.",
         "concept.tree.tree_parameters_extracted": "Parameters $a$, $b$, and $f(n)$ define tree geometry: branching per level, subproblem shrink rate, and local work per node.",
         "concept.tree.level_model_built": "Level-$i$ modeling separates structure from cost: how many subproblems exist, what size they have, and what each one costs.",
         "concept.tree.level_cost_computed": "In recursion-tree analysis, level cost is derived, not guessed: node count multiplied by per-node cost.",
@@ -82,7 +82,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "concept.tree.asymptotic_conclusion": "Asymptotic conclusion summarizes long-run growth of $T(n)$ and must reflect real support status: complete, partial, or unsupported.",
         "concept.tree.blocked": "When method assumptions fail, downstream steps are marked blocked to preserve mathematical transparency.",
 
-        "warning.tree.unsupported_form": "Current coverage: formal walkthrough is supported for recurrences of the form $T(n)=aT(n/b)+f(n)$ with uniform reduction.",
+        "warning.tree.unsupported_form": "Current coverage: this walkthrough is supported for Divide y Vencerás recurrences of the form $T(n)=aT(n/b)+f(n)$ with uniform reduction.",
         "warning.tree.invalid_parameters": "Invalid tree-model parameters: required $a\\ge 1$ and $b>1$.",
         "warning.tree.sum_partial": "Could not fully close the summation with current symbolic rules.",
         "warning.tree.tree_inconsistent": "An inconsistency was detected between produced tree artifacts and expected symbolic model.",

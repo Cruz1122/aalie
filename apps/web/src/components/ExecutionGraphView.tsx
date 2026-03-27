@@ -233,7 +233,7 @@ function mapNodes(nodes: GraphNode[]): Node[] {
   return nodes.map((n, idx) => {
     const rawLabel = n.data?.label ?? "";
     // Limpiar el "→ valor" del label: ese valor se mostrará en la arista de retorno
-    const label = rawLabel.replace(/\n?→\s*.+$/s, "").trim();
+    const label = rawLabel.replace(/\n→\s*.+$/s, "").trim();
     const isReturn = /return|retorna/i.test(label);
     // No ocultar los nodos de retorno, solo identificarlos para darles estilo especial
     const isReturnNode = /^(RETURN|Retorna)(\s|$)/i.test(label.trim());

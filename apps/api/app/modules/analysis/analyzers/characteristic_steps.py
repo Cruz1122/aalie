@@ -15,7 +15,7 @@ from .recursive_steps_core import (
 _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
     "es": {
         # Summary keys
-        "recurrence_detected.linear_shift": "Se identificó una recurrencia lineal por desplazamientos de orden {order}: eso significa que $T(n)$ depende de hasta $T(n-{order})$.",
+        "recurrence_detected.linear_shift": "Se identificó una recurrencia lineal de la familia Resta y Vencerás (orden {order}): $T(n)$ depende de hasta $T(n-{order})$.",
         "applicability_validated.supported": "La forma detectada sí entra en el dominio del método: lineal, con coeficientes constantes y desplazamientos constantes ($n-1$, $n-2$, ...).",
         "applicability_validated.unsupported": "La forma detectada queda fuera del dominio del método de ecuación característica con la cobertura actual.",
         "homogeneity_classification.homogeneous": "La recurrencia es homogénea porque $g(n)=0$; no hay término externo adicional.",
@@ -41,7 +41,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
 
         # Concept keys
         "concept.recurrence_detected": "Primero fijamos la forma exacta de la ecuación que vamos a resolver. El orden $k$ indica cuántos estados previos aparecen ($T(n-1),\\dots,T(n-k)$), y los desplazamientos muestran cómo se reduce el tamaño del subproblema. También se separa $g(n)$, que representa trabajo no recursivo, para no mezclarlo con la dinámica de las llamadas.",
-        "concept.applicability_validated": "Este método no sirve para cualquier recurrencia. Requiere linealidad, coeficientes constantes y desplazamientos constantes en $n$ (por ejemplo $n-1$, $n-2$). Si la forma no cumple esas condiciones, continuar como si aplicara produciría resultados matemáticamente inválidos, por eso se marca como no soportado.",
+        "concept.applicability_validated": "Este método está diseñado para Resta y Vencerás (desplazamientos constantes con estructura lineal). Si la recurrencia es de Divide y Vencerás (n/b) o de Resta y Serás Vencido con ramificación/costo excesivo, usar ecuación característica aquí sería forzar el modelo.",
         "concept.homogeneity_classified": "Clasificar en homogénea/no homogénea determina qué piezas de solución necesitamos. Si $g(n)=0$, basta con $T_h(n)$. Si $g(n)\\neq 0$, debemos construir además $T_p(n)$ para capturar el aporte externo. Esta separación evita atribuir al sistema recursivo un crecimiento que en realidad viene de $g(n)$.",
         "concept.homogeneous_part_extracted": "La ecuación característica se construye solo con la parte homogénea porque describe la dinámica interna de la recurrencia. En otras palabras, aquí modelamos cómo evoluciona $T(n)$ por dependencia entre estados, dejando $g(n)$ para un paso separado mediante solución particular.",
         "concept.characteristic_polynomial_built": "Partimos de la parte homogénea y probamos una forma $T(n)=x^n$. Al sustituirla, todos los términos quedan como combinaciones de potencias de $x$. Luego se pasa todo al lado izquierdo y se iguala a cero porque buscamos exactamente los valores de $x$ que hacen nulo ese operador lineal homogéneo. Esos valores son las raíces que estructuran la solución.",
@@ -54,14 +54,14 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "concept.dominant_term_concluded": "La cota asintótica se obtiene del término que domina cuando $n$ crece. En ecuación característica esto depende de la magnitud de la raíz dominante y, si hay multiplicidad, del factor polinómico asociado. El resultado resume el comportamiento de largo plazo de $T(n)$.",
 
         # Warning keys
-        "warning.unsupported_non_linear_shift": "Cobertura actual: solo recurrencias lineales con desplazamientos constantes de la forma $T(n-k)$.",
+        "warning.unsupported_non_linear_shift": "Cobertura actual: solo familia Resta y Vencerás lineal con desplazamientos constantes de la forma $T(n-k)$.",
         "warning.unsupported_gn_family": "Cobertura parcial: la solución particular solo está soportada para $g(n)=0$ o $g(n)=c$ constante.",
         "warning.insufficient_base_conditions": "No se detectaron suficientes condiciones iniciales para fijar todas las constantes.",
         "warning.complex_root_form_partial": "La forma exacta de algunas raíces no se representó completamente; se usó una forma parcial segura.",
         "warning.simplification_partial": "La simplificación simbólica completa no fue posible con las reglas actuales.",
     },
     "en": {
-        "recurrence_detected.linear_shift": "A linear shift-recurrence of order {order} was identified, meaning $T(n)$ depends on prior states up to $T(n-{order})$.",
+        "recurrence_detected.linear_shift": "A linear shift recurrence from the Resta y Vencerás family (order {order}) was identified, meaning $T(n)$ depends on prior states up to $T(n-{order})$.",
         "applicability_validated.supported": "The detected shape is within the method domain: linear, constant coefficients, and constant shifts ($n-1$, $n-2$, ...).",
         "applicability_validated.unsupported": "The detected shape falls outside the current characteristic-equation coverage.",
         "homogeneity_classification.homogeneous": "The recurrence is homogeneous because $g(n)=0$; there is no extra non-recursive forcing term.",
@@ -86,7 +86,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "dominant_term_concluded.partial": "Asymptotic conclusion is reported with partial coverage due to earlier limitations.",
 
         "concept.recurrence_detected": "We first pin down the exact equation we are solving. The order $k$ tells us how many previous states appear ($T(n-1),\\dots,T(n-k)$), and shifts tell us how problem size decreases. We also isolate $g(n)$ as non-recursive work so it is not confused with recurrence dynamics.",
-        "concept.applicability_validated": "The characteristic-equation method is not universal. It requires linearity, constant coefficients, and constant shifts in $n$. If those assumptions fail, continuing would be mathematically unsound, so the step is marked unsupported instead of hiding the limitation.",
+        "concept.applicability_validated": "This method targets Resta y Vencerás patterns (linear, constant-shift recurrences). If the shape is Divide y Vencerás (n/b) or a Resta y Serás Vencido pattern with excessive branching/work, using characteristic equation here would be a model mismatch.",
         "concept.homogeneity_classified": "This classification decides the solution structure. If $g(n)=0$, we only need $T_h(n)$. If $g(n)\\neq 0$, we must add $T_p(n)$ to capture external forcing. Keeping these contributions separate avoids attributing $g(n)$ growth to the recursive part.",
         "concept.homogeneous_part_extracted": "The characteristic equation is built from the homogeneous recurrence only, because it models internal state-to-state dynamics. The forcing term $g(n)$ is intentionally deferred and handled through the particular solution step.",
         "concept.characteristic_polynomial_built": "We start from the homogeneous recurrence and test a trial form $T(n)=x^n$. After substitution, all terms become powers of $x$. We then move everything to the left and set the expression to zero because we are solving for $x$ values that make the homogeneous linear operator vanish. Those roots define the structure of the solution.",
@@ -98,7 +98,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "concept.closed_form_simplified": "Simplification should never make the expression harder to read. We compare equivalent forms deterministically and keep the simplest one for UI, tests, and exports. If full simplification is not possible, we keep the best valid form explicitly.",
         "concept.dominant_term_concluded": "Asymptotic growth comes from the term that dominates as $n\\to\\infty$. In this method, that depends on dominant root magnitude and multiplicity-driven polynomial factors. The final bound summarizes long-run behavior of $T(n)$.",
 
-        "warning.unsupported_non_linear_shift": "Current coverage: only linear recurrences with constant shifts of the form $T(n-k)$.",
+        "warning.unsupported_non_linear_shift": "Current coverage: only Resta y Vencerás linear recurrences with constant shifts of the form $T(n-k)$.",
         "warning.unsupported_gn_family": "Partial coverage: particular solution is currently supported only for $g(n)=0$ or constant $g(n)=c$.",
         "warning.insufficient_base_conditions": "Not enough initial conditions were detected to solve all constants.",
         "warning.complex_root_form_partial": "Some roots could not be represented exactly; a safe partial form was used.",

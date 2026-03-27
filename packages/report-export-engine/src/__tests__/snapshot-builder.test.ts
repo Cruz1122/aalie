@@ -114,6 +114,8 @@ describe("snapshot-builder", () => {
     assert.strictEqual(recursionTree.recursive.data.stepByStep.status, "available");
     assert.strictEqual(recursionTree.recursive.data.stepByStep.data?.steps.length, 11);
     assert.ok(recursionTree.recursive.data.presentation);
+    assert.strictEqual(recursionTree.recursive.data.callTrace.status, "available");
+    assert.ok(recursionTree.recursive.data.callTrace.data?.worst?.reportTraceGraph?.graph?.nodes?.length);
   });
 
   it("mantiene pseudocodigo normalizado pendiente y conserva invariante cuando existe", () => {

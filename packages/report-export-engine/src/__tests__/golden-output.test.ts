@@ -5,6 +5,7 @@ import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
 import { compileLatexToPdf, isPdflatexAvailable } from "../infrastructure/pdf/latex-compiler";
+import { buildTraceDiagramAssets } from "../application/trace-diagram-assets";
 import { buildDocumentModel } from "../renderers/document-model-builder";
 import { renderLatexReport } from "../renderers/latex";
 import { renderMarkdownReport } from "../renderers/markdown";
@@ -34,7 +35,11 @@ function ensureGoldenFile(filePath: string, content: string): string {
   return readFileSync(filePath, "utf8");
 }
 
-function regenerateAndReadGoldenPdf(filePath: string, latex: string): Buffer | null {
+async function regenerateAndReadGoldenPdf(
+  filePath: string,
+  latex: string,
+  extraFiles: Array<{ relativePath: string; content: string | Buffer }> = [],
+): Promise<Buffer | null> {
   if (!isPdflatexAvailable()) {
     return null;
   }
@@ -47,6 +52,7 @@ function regenerateAndReadGoldenPdf(filePath: string, latex: string): Buffer | n
     texContent: latex,
     cleanup: true,
     jobName: "golden-report",
+    extraFiles,
   });
   writeFileSync(filePath, compiled.pdfBuffer);
   return readFileSync(filePath);
@@ -69,12 +75,13 @@ const goldenCases: GoldenCase[] = [
 
 describe("golden-output", () => {
   for (const testCase of goldenCases) {
-    it(`coincide con golden markdown/latex: ${testCase.name}`, () => {
+    it(`coincide con golden markdown/latex: ${testCase.name}`, async () => {
       const snapshot = testCase.snapshotFactory();
       const model = buildDocumentModel(snapshot);
 
       const markdown = renderMarkdownReport({ snapshot, documentModel: model });
       const latex = renderLatexReport({ snapshot, documentModel: model });
+      const diagramAssets = await buildTraceDiagramAssets(model);
 
       const mdPath = path.join(GOLDEN_DIR, `${testCase.name}.golden.md`);
       const texPath = path.join(GOLDEN_DIR, `${testCase.name}.golden.tex`);
@@ -82,7 +89,14 @@ describe("golden-output", () => {
 
       const expectedMd = ensureGoldenFile(mdPath, markdown);
       const expectedTex = ensureGoldenFile(texPath, latex);
-      const expectedPdf = regenerateAndReadGoldenPdf(pdfPath, latex);
+      const expectedPdf = await regenerateAndReadGoldenPdf(
+        pdfPath,
+        latex,
+        diagramAssets.map((asset) => ({
+          relativePath: asset.filename,
+          content: asset.content,
+        })),
+      );
 
       assert.strictEqual(markdown, expectedMd);
       assert.strictEqual(latex, expectedTex);

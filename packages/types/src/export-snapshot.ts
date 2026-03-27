@@ -3,6 +3,7 @@ import type {
   LoopInvariant,
   Program,
   RecursiveMethodStepBundle,
+  TraceGraphCanonical,
 } from "./index";
 
 export const SNAPSHOT_SCHEMA_VERSION = "1.0.0" as const;
@@ -140,6 +141,29 @@ export interface SnapshotTraceSummaryItem {
   warnings?: string[];
 }
 
+export interface SnapshotStructuralTraceClassification {
+  patternKind?: string;
+  confidence?: "high" | "medium" | "low";
+  evidence?: string[];
+}
+
+export interface SnapshotReportTraceGraph {
+  graph: TraceGraphCanonical;
+  patternKind?: string;
+  classification?: SnapshotStructuralTraceClassification;
+  summary?: {
+    totalSteps?: number;
+    totalCalls?: number;
+    maxRecursionDepth?: number;
+    algorithmKind?: string;
+  };
+  diagnostics?: {
+    truncated?: boolean;
+    truncationReason?: string;
+    warnings?: string[];
+  };
+}
+
 export interface SnapshotInput {
   originalPseudocode: string;
   normalizedPseudocode: SnapshotSection<string>;
@@ -216,6 +240,7 @@ export interface IterativeSnapshotSection {
         warnings?: string[];
       };
       callTreeSource?: unknown;
+      reportTraceGraph?: SnapshotReportTraceGraph;
     } | null>
   >;
   loopInvariant: SnapshotSection<LoopInvariant>;
@@ -265,6 +290,7 @@ export interface RecursiveSnapshotSection {
         truncationReason?: string;
         warnings?: string[];
       };
+      reportTraceGraph?: SnapshotReportTraceGraph;
     } | null>
   >;
 }

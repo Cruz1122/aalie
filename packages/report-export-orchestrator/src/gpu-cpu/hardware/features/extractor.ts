@@ -359,7 +359,12 @@ export function extractFeatures(ast: Program): HardwareFeatures {
       }
 
       // Count for loops at block root
-      topLevelLoops += procDef.body.body.filter((s) => s.type === "For" || s.type === "While" || s.type === "Repeat").length;
+      const rootStatements = Array.isArray(procDef.body?.body) ? procDef.body.body : [];
+      topLevelLoops += rootStatements.filter((s) => {
+        if (!s || typeof s !== "object") return false;
+        const nodeType = (s as { type?: unknown }).type;
+        return nodeType === "For" || nodeType === "While" || nodeType === "Repeat";
+      }).length;
       allCtxs.push(ctx);
     }
   }
@@ -429,4 +434,3 @@ export function extractFeatures(ast: Program): HardwareFeatures {
     dependencyStrength: classifyDependencyStrength(merged),
   };
 }
-

@@ -25,4 +25,5 @@ def build_tail_recursive_linear(
     return _build_from_call_tree(
         trace,
         classification.patternKind,
+        config=config,
     )

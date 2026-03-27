@@ -375,6 +375,37 @@ export function renderLatexBlock(block: DocumentBlock, i18n: ExportI18nBundle): 
     return lines.join("\n");
   }
 
+  if (block.kind === "executionTraceDiagram") {
+    const caption = i18n.locale === "es"
+      ? `Seguimiento de ejecución recursiva (${escapeLatexText(i18n.caseLabels[block.diagram.caseName])}).`
+      : `Recursive execution trace tracking (${escapeLatexText(i18n.caseLabels[block.diagram.caseName])}).`;
+
+    const summaryLine = i18n.locale === "es"
+      ? `Llamadas: ${block.diagram.stats.totalCalls}; profundidad máxima: ${block.diagram.stats.maxDepth}.`
+      : `Calls: ${block.diagram.stats.totalCalls}; max depth: ${block.diagram.stats.maxDepth}.`;
+
+    const lines = [
+      "\\FloatBarrier",
+      "\\begin{figure}[H]",
+      "\\centering",
+      `\\includegraphics[width=0.98\\linewidth,keepaspectratio]{${escapeLatexText(block.diagram.assetPdfPath)}}`,
+      `\\caption{${caption}}`,
+      "\\end{figure}",
+      "\\FloatBarrier",
+      `\\textbf{${escapeLatexText(summaryLine)}}`,
+    ];
+
+    if (block.diagram.diagnostics?.truncated) {
+      lines.push(
+        `${escapeLatexText(i18n.locale === "es"
+          ? "Advertencia: la traza fue truncada por límites de ejecución."
+          : "Warning: trace was truncated by execution limits.")}`,
+      );
+    }
+
+    return lines.join("\n");
+  }
+
   return renderLatexStatus(block.status, i18n);
 }
 

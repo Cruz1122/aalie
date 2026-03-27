@@ -5,6 +5,7 @@ import type {
   DocumentTable,
 } from "../../document-model-builder";
 import type { ExportI18nBundle } from "../../../infrastructure/i18n";
+import { renderTraceDiagramMermaid } from "../../shared/renderTraceDiagramMermaid";
 import { toMarkdownInlineMath, toMarkdownTextWithInlineMath } from "../../shared/math-format";
 
 function escapePipes(value: string): string {
@@ -13,6 +14,10 @@ function escapePipes(value: string): string {
 
 function renderMarkdownCell(value: string): string {
   return toMarkdownInlineMath(value);
+}
+
+function preserveMarkdownLineBreaks(value: string): string {
+  return value.replace(/\r?\n/g, "  \n");
 }
 
 function renderInstitutionalCodeBlock(
@@ -84,12 +89,12 @@ export function renderMarkdownBlock(
   }
 
   if (block.kind === "paragraph") {
-    return toMarkdownTextWithInlineMath(block.text);
+    return preserveMarkdownLineBreaks(toMarkdownTextWithInlineMath(block.text));
   }
 
   if (block.kind === "list") {
     return block.items
-      .map((item) => `- ${toMarkdownTextWithInlineMath(item)}`)
+      .map((item) => `- ${preserveMarkdownLineBreaks(toMarkdownTextWithInlineMath(item))}`)
       .join("\n");
   }
 
@@ -98,7 +103,7 @@ export function renderMarkdownBlock(
   }
 
   if (block.kind === "centeredParagraph") {
-    return `<p align="center">${toMarkdownTextWithInlineMath(block.text)}</p>`;
+    return `<p align="center">${preserveMarkdownLineBreaks(toMarkdownTextWithInlineMath(block.text))}</p>`;
   }
 
   if (block.kind === "code") {
@@ -122,12 +127,12 @@ export function renderMarkdownBlock(
     if (block.step.formula) {
       parts.push(`$$\n${block.step.formula}\n$$`);
     }
-    parts.push(`*${toMarkdownTextWithInlineMath(block.step.explanation)}*`);
+    parts.push(`*${preserveMarkdownLineBreaks(toMarkdownTextWithInlineMath(block.step.explanation))}*`);
     if (block.step.warning) {
-      parts.push(`*Warning: ${toMarkdownTextWithInlineMath(block.step.warning)}*`);
+      parts.push(`*Warning: ${preserveMarkdownLineBreaks(toMarkdownTextWithInlineMath(block.step.warning))}*`);
     }
     if (block.step.supportReason) {
-      parts.push(`*Support: ${toMarkdownTextWithInlineMath(block.step.supportReason)}*`);
+      parts.push(`*Support: ${preserveMarkdownLineBreaks(toMarkdownTextWithInlineMath(block.step.supportReason))}*`);
     }
     return parts.join("\n\n");
   }
@@ -138,8 +143,44 @@ export function renderMarkdownBlock(
 
   if (block.kind === "keyValue") {
     return block.entries
-      .map((entry) => `- **${entry.label}:** ${toMarkdownTextWithInlineMath(entry.value)}`)
+      .map((entry) => `- **${entry.label}:** ${preserveMarkdownLineBreaks(toMarkdownTextWithInlineMath(entry.value))}`)
       .join("\n");
+  }
+
+  if (block.kind === "executionTraceDiagram") {
+    const rendered = renderTraceDiagramMermaid({
+      graph: block.diagram.graph,
+      summary: block.diagram.summary,
+      diagnostics: block.diagram.diagnostics,
+    });
+
+    const lines = [
+      `**${block.diagram.title}**`,
+      rendered.mermaid,
+      `**${i18n.caseHeaderLabel}:** ${i18n.caseLabels[block.diagram.caseName]}`,
+      `**${i18n.pedagogicalTraceTitle}:** ${rendered.stats.totalCalls} ${i18n.locale === "es" ? "llamadas" : "calls"}, ${i18n.locale === "es" ? "profundidad máxima" : "max depth"} ${rendered.stats.maxDepth}`,
+    ];
+
+    if (rendered.stats.collapsedNodes > 0 || rendered.stats.reductionNote) {
+      lines.push(
+        `**${i18n.locale === "es" ? "Reducción visual" : "Visual reduction"}:** ${
+          rendered.stats.reductionNote ||
+          (i18n.locale === "es"
+            ? `${rendered.stats.collapsedNodes} nodos colapsados`
+            : `${rendered.stats.collapsedNodes} collapsed nodes`)
+        }`,
+      );
+    }
+
+    if (rendered.stats.truncated) {
+      lines.push(
+        `> ${i18n.locale === "es"
+          ? "Advertencia: la traza se truncó por límites de ejecución."
+          : "Warning: trace was truncated by execution limits."}`,
+      );
+    }
+
+    return lines.join("\n\n");
   }
 
   return renderMarkdownStatus(block.status, i18n);

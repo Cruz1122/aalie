@@ -195,11 +195,15 @@ let _loopCounter = 0;
 
 function visitLoops(body: Block, loops: LoopDependencySummary[], fnName: string): void {
   for (const stmt of body.body) {
-    if (stmt.type === "For" || stmt.type === "While" || stmt.type === "Repeat") {
+    if (!stmt || typeof stmt !== "object") {
+      continue;
+    }
+    const stmtType = (stmt as { type?: unknown }).type;
+    if (stmtType === "For" || stmtType === "While" || stmtType === "Repeat") {
       const id = `loop_${++_loopCounter}`;
       const scope = mkLoopScope(id);
       const loopBody =
-        stmt.type === "Repeat" ? (stmt as Repeat).body : (stmt as For | While).body;
+        stmtType === "Repeat" ? (stmt as Repeat).body : (stmt as For | While).body;
 
       analyzeLoopBody(loopBody, scope, fnName);
       const classification = classifyLoop(scope);
@@ -216,7 +220,7 @@ function visitLoops(body: Block, loops: LoopDependencySummary[], fnName: string)
 
       // recurse into nested loops
       visitLoops(loopBody, loops, fnName);
-    } else if (stmt.type === "If") {
+    } else if (stmtType === "If") {
       const n = stmt as If;
       visitLoops(n.consequent, loops, fnName);
       if (n.alternate) visitLoops(n.alternate, loops, fnName);
@@ -230,7 +234,10 @@ export function analyzeDependencies(ast: Program): DependencyProfile {
   const recursion: RecursionDependencySummary[] = [];
 
   for (const node of ast.body) {
-    if (node.type === "ProcDef") {
+    if (!node || typeof node !== "object") {
+      continue;
+    }
+    if ((node as { type?: unknown }).type === "ProcDef") {
       const proc = node as ProcDef;
       visitLoops(proc.body, loops, proc.name);
 
@@ -239,7 +246,7 @@ export function analyzeDependencies(ast: Program): DependencyProfile {
       let hasReturnAfterCalls = false;
 
       function scanForRecursion(n: any): void {
-        if (!n) return;
+        if (!n || typeof n !== "object") return;
         if (n.type === "Call" && (n as { callee: string }).callee === proc.name) {
           recursiveCalls++;
         }
@@ -247,11 +254,19 @@ export function analyzeDependencies(ast: Program): DependencyProfile {
         if ("body" in n && n.body && typeof n.body === "object" && "body" in (n.body as object)) {
           for (const child of (n.body as Block).body) scanForRecursion(child);
         }
-        if ("consequent" in n) {
-          for (const child of (n as If).consequent.body) scanForRecursion(child);
-          if ((n as If).alternate) for (const child of (n as If).alternate!.body) scanForRecursion(child);
+        if ("consequent" in n && (n as If).consequent && typeof (n as If).consequent === "object") {
+          const consequent = (n as If).consequent as Block;
+          if (Array.isArray(consequent.body)) {
+            for (const child of consequent.body) scanForRecursion(child);
+          }
+          const alternate = (n as If).alternate as Block | null | undefined;
+          if (alternate && typeof alternate === "object" && Array.isArray(alternate.body)) {
+            for (const child of alternate.body) scanForRecursion(child);
+          }
         }
-        if ("args" in n) for (const arg of (n as { args: AstNode[] }).args) scanForRecursion(arg);
+        if ("args" in n && Array.isArray((n as { args?: AstNode[] }).args)) {
+          for (const arg of (n as { args: AstNode[] }).args) scanForRecursion(arg);
+        }
         if ("value" in n && (n as Return).value) scanForRecursion((n as Return).value);
         if ("left" in n) {
           scanForRecursion((n as Binary).left);
@@ -279,4 +294,3 @@ export function analyzeDependencies(ast: Program): DependencyProfile {
 
   return { loops, recursion, globalRisk };
 }
-

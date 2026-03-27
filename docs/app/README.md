@@ -16,6 +16,8 @@ Esta carpeta contiene la documentación técnica completa del frontend del anali
 ### Documentación Técnica Detallada
 
 - [React Flow](./react-flow.md) - Visualización de diagramas interactivos con React Flow
+- [Sistema de Trazas Recursivas y React Flow](./recursive-trace-system.md) - Flujo end-to-end del trace recursivo, `structuredTrace` y renderizado
+- [Sistema de Reportes Recursivos](./recursive-report-generation-system.md) - Flujo end-to-end de exportación de reportes para algoritmos recursivos e híbridos
 - [GPU vs CPU Comparison](./gpu-cpu-comparison.md) - Sistema de análisis y scoring GPU/CPU
 - [LLM Comparison](./llm-comparison.md) - Comparación de análisis con LLM
 - [Pseudocode Tracking](./pseudocode-tracking.md) - Seguimiento de ejecución paso a paso
@@ -88,4 +90,3 @@ pnpm start
 ## Más Información
 
 Para detalles específicos, consulta los documentos individuales en esta carpeta.
-

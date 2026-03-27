@@ -15,11 +15,12 @@ import {
   type CompileLatexToPdfOptions,
 } from "../infrastructure/pdf/latex-compiler";
 import { createZipBundle } from "../infrastructure/bundle/zip-bundle";
+import { buildTraceDiagramAssets } from "./trace-diagram-assets";
 
 export type ExportFormat = "markdown" | "latex" | "pdf";
 
 export interface ExportArtifact {
-  format: ExportFormat | "snapshot";
+  format: ExportFormat | "snapshot" | "asset";
   filename: string;
   mimeType: string;
   content: string | Buffer;
@@ -63,6 +64,7 @@ export async function buildExportReport(
   const formats = normalizeFormats(options.formats);
   const model = options.documentModel || buildDocumentModel(options.snapshot);
   const artifacts: ExportArtifact[] = [];
+  const traceDiagramAssets = await buildTraceDiagramAssets(model);
 
   let latexContent: string | null = null;
 
@@ -104,6 +106,10 @@ export async function buildExportReport(
     try {
       const compiled = compileLatexToPdf({
         texContent: latexContent,
+        extraFiles: traceDiagramAssets.map((asset) => ({
+          relativePath: asset.filename,
+          content: asset.content,
+        })),
         ...options.pdf,
       });
 
@@ -130,6 +136,15 @@ export async function buildExportReport(
       filename: "snapshot.json",
       mimeType: artifactMimeType("snapshot"),
       content: JSON.stringify(options.snapshot, null, 2),
+    });
+  }
+
+  for (const asset of traceDiagramAssets) {
+    artifacts.push({
+      format: "asset",
+      filename: asset.filename,
+      mimeType: asset.mimeType,
+      content: asset.content,
     });
   }
 

@@ -240,11 +240,12 @@ class ExecutionEnvironment:
         # Resolver índices primero
         resolved_expr = self._resolve_indices(expr)
 
-        # Literal con valor no numérico: devolver directamente
-        # (soporta strings, bool, None, dict en PRINT/listas enlazadas)
+        # Literal con valor no numérico/simbólico: devolver directamente.
+        # Incluye listas para evitar convertir arrays a símbolos/string al pasar
+        # argumentos recursivos (ej. mergeSort(A, ...)).
         if isinstance(resolved_expr, dict) and resolved_expr.get("type") == "Literal":
             val = resolved_expr.get("value")
-            if val is None or isinstance(val, (dict, str, bool)):
+            if val is None or isinstance(val, (dict, list, str, bool)):
                 return val
 
         # Convertir a SymPy
@@ -365,4 +366,3 @@ class ExecutionEnvironment:
         )
         new_env.variables = self.variables.copy()
         return new_env
-

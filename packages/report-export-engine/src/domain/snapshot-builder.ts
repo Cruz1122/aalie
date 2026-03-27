@@ -6,6 +6,7 @@ import type {
   LoopInvariant,
   Program,
   RecursiveMethodStepBundle,
+  SnapshotReportTraceGraph,
   SnapshotCase,
   SnapshotGpuCpuComparative,
   SnapshotLlmComparative,
@@ -61,6 +62,37 @@ export interface DetectMethodsResponseLike {
 export interface TraceResponseLike {
   ok: boolean;
   algorithmKind?: string;
+  derived?: {
+    structuredTrace?: {
+      patternKind?: string;
+      graph?: {
+        nodes?: Array<{
+          id: string;
+          type: string;
+          position?: { x?: number; y?: number };
+          data?: {
+            label?: string;
+            microseconds?: number;
+            tokens?: number;
+            [key: string]: unknown;
+          };
+          parentId?: string;
+        }>;
+        edges?: Array<{
+          id: string;
+          source: string;
+          target: string;
+          label?: string;
+          type?: string;
+        }>;
+      };
+      classification?: {
+        patternKind?: string;
+        confidence?: "high" | "medium" | "low";
+        evidence?: string[];
+      };
+    };
+  };
   trace?: {
     kind?: "iterative" | "recursive" | "hybrid" | "unknown";
     steps?: unknown[];
@@ -95,6 +127,165 @@ export interface BuildSnapshotInput {
   traceByCase?: Partial<Record<SnapshotCase, TraceResponseLike | null>>;
   llm?: SnapshotLlmComparative | null;
   gpuCpu?: SnapshotGpuCpuComparative | null;
+}
+
+type CallTreeLike = {
+  calls?: unknown[];
+  root_calls?: unknown[];
+};
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+}
+
+function asNumber(value: unknown, fallback = 0): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+  return fallback;
+}
+
+function normalizeTraceGraphFromStructured(trace: TraceResponseLike): SnapshotReportTraceGraph | null {
+  const structured = trace.derived?.structuredTrace;
+  const graph = structured?.graph;
+  if (!graph || !Array.isArray(graph.nodes) || graph.nodes.length === 0) {
+    return null;
+  }
+
+  const nodes = graph.nodes
+    .map((node) => {
+      const id = String(node?.id || "").trim();
+      if (!id) return null;
+      return {
+        id,
+        type: String(node?.type || "default"),
+        position: {
+          x: asNumber(node?.position?.x, 0),
+          y: asNumber(node?.position?.y, 0),
+        },
+        data: {
+          label: String(node?.data?.label || id),
+          microseconds: typeof node?.data?.microseconds === "number" ? node.data.microseconds : undefined,
+          tokens: typeof node?.data?.tokens === "number" ? node.data.tokens : undefined,
+        },
+        parentId: typeof node?.parentId === "string" ? node.parentId : undefined,
+      };
+    })
+    .filter(Boolean) as SnapshotReportTraceGraph["graph"]["nodes"];
+
+  if (nodes.length === 0) {
+    return null;
+  }
+
+  const nodeIds = new Set(nodes.map((node) => node.id));
+  const edges = (Array.isArray(graph.edges) ? graph.edges : [])
+    .map((edge, index) => {
+      const source = String(edge?.source || "").trim();
+      const target = String(edge?.target || "").trim();
+      if (!source || !target || !nodeIds.has(source) || !nodeIds.has(target)) {
+        return null;
+      }
+      return {
+        id: String(edge?.id || `edge_${index}`),
+        source,
+        target,
+        label: String(edge?.label || ""),
+        type: String(edge?.type || "smoothstep"),
+      };
+    })
+    .filter(Boolean) as SnapshotReportTraceGraph["graph"]["edges"];
+
+  return {
+    graph: { nodes, edges },
+    patternKind: structured?.patternKind,
+    classification: structured?.classification
+      ? {
+          patternKind: structured.classification.patternKind,
+          confidence: structured.classification.confidence,
+          evidence: structured.classification.evidence || [],
+        }
+      : undefined,
+    summary: trace.trace?.summary,
+    diagnostics: trace.trace?.diagnostics,
+  };
+}
+
+function normalizeTraceGraphFromCallTree(trace: TraceResponseLike): SnapshotReportTraceGraph | null {
+  const callTreeRaw = (trace.trace?.callTreeSource || trace.trace?.recursionTree) as CallTreeLike | undefined;
+  if (!callTreeRaw || !Array.isArray(callTreeRaw.calls) || callTreeRaw.calls.length === 0) {
+    return null;
+  }
+
+  const calls = callTreeRaw.calls
+    .map((item) => asRecord(item))
+    .filter(Boolean) as Record<string, unknown>[];
+
+  if (calls.length === 0) return null;
+
+  const nodes = calls.map((call) => {
+    const id = String(call.id || "");
+    const fn = String(call.function_name || call.functionName || call.procedure || "call");
+    const depth = asNumber(call.depth, 0);
+    const params = asRecord(call.params) || {};
+    const ret = typeof call.return_value === "undefined" ? undefined : call.return_value;
+    const paramsStr = Object.keys(params).length > 0
+      ? Object.entries(params).map(([key, value]) => `${key}=${JSON.stringify(value)}`).join(", ")
+      : "";
+    const label = paramsStr ? `${fn}(${paramsStr})` : `${fn}(...)`;
+    const returnLine = typeof ret !== "undefined" ? `\n→ ${JSON.stringify(ret)}` : "";
+
+    return {
+      id,
+      type: "default",
+      position: { x: depth * 240, y: 0 },
+      data: {
+        label: `${label}${returnLine}`,
+      },
+      parentId: typeof call.parent_id === "string" ? call.parent_id : undefined,
+    };
+  });
+
+  const nodeIds = new Set(nodes.map((node) => node.id));
+  const edges: SnapshotReportTraceGraph["graph"]["edges"] = [];
+
+  for (const call of calls) {
+    const parent = String(call.id || "").trim();
+    if (!parent || !nodeIds.has(parent)) continue;
+    const children = Array.isArray(call.children) ? call.children : [];
+    for (const childId of children) {
+      const child = String(childId || "").trim();
+      if (!child || !nodeIds.has(child)) continue;
+      edges.push({
+        id: `edge_${parent}_${child}`,
+        source: parent,
+        target: child,
+        label: "",
+        type: "smoothstep",
+      });
+    }
+  }
+
+  return {
+    graph: { nodes, edges },
+    patternKind: "generic_recursive",
+    classification: {
+      patternKind: "generic_recursive",
+      confidence: "low",
+      evidence: ["fallback_from_call_tree_source"],
+    },
+    summary: trace.trace?.summary,
+    diagnostics: trace.trace?.diagnostics,
+  };
+}
+
+function resolveReportTraceGraph(trace: TraceResponseLike | null | undefined): SnapshotReportTraceGraph | undefined {
+  if (!trace || !trace.ok) return undefined;
+  return normalizeTraceGraphFromStructured(trace) || normalizeTraceGraphFromCallTree(trace) || undefined;
 }
 
 function stableStringify(value: unknown): string {
@@ -470,6 +661,7 @@ export function buildSnapshot(input: BuildSnapshotInput): AalieAnalysisSnapshotV
                     callTreeSource:
                       input.traceByCase.worst.trace.callTreeSource ||
                       input.traceByCase.worst.trace.recursionTree,
+                    reportTraceGraph: resolveReportTraceGraph(input.traceByCase.worst),
                   }
                 : null,
               best: input.traceByCase?.best?.trace
@@ -480,6 +672,7 @@ export function buildSnapshot(input: BuildSnapshotInput): AalieAnalysisSnapshotV
                     callTreeSource:
                       input.traceByCase.best.trace.callTreeSource ||
                       input.traceByCase.best.trace.recursionTree,
+                    reportTraceGraph: resolveReportTraceGraph(input.traceByCase.best),
                   }
                 : null,
               avg: input.traceByCase?.avg?.trace
@@ -490,6 +683,7 @@ export function buildSnapshot(input: BuildSnapshotInput): AalieAnalysisSnapshotV
                     callTreeSource:
                       input.traceByCase.avg.trace.callTreeSource ||
                       input.traceByCase.avg.trace.recursionTree,
+                    reportTraceGraph: resolveReportTraceGraph(input.traceByCase.avg),
                   }
                 : null,
             })
@@ -547,6 +741,7 @@ export function buildSnapshot(input: BuildSnapshotInput): AalieAnalysisSnapshotV
                           input.traceByCase.worst.trace.recursionTree,
                         summary: input.traceByCase.worst.trace.summary,
                         diagnostics: input.traceByCase.worst.trace.diagnostics,
+                        reportTraceGraph: resolveReportTraceGraph(input.traceByCase.worst),
                       }
                     : null,
                   best: input.traceByCase?.best?.trace
@@ -557,6 +752,7 @@ export function buildSnapshot(input: BuildSnapshotInput): AalieAnalysisSnapshotV
                           input.traceByCase.best.trace.recursionTree,
                         summary: input.traceByCase.best.trace.summary,
                         diagnostics: input.traceByCase.best.trace.diagnostics,
+                        reportTraceGraph: resolveReportTraceGraph(input.traceByCase.best),
                       }
                     : null,
                   avg: input.traceByCase?.avg?.trace
@@ -567,6 +763,7 @@ export function buildSnapshot(input: BuildSnapshotInput): AalieAnalysisSnapshotV
                           input.traceByCase.avg.trace.recursionTree,
                         summary: input.traceByCase.avg.trace.summary,
                         diagnostics: input.traceByCase.avg.trace.diagnostics,
+                        reportTraceGraph: resolveReportTraceGraph(input.traceByCase.avg),
                       }
                     : null,
                 })

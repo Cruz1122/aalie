@@ -19,7 +19,7 @@ from .generic_recursive import _build_from_call_tree
 def build_hybrid_recursive_iterative(
     trace: Dict[str, Any],
     classification: StructuralTraceClassification,
-    _config: StructuredTraceRenderConfig,
+    config: StructuredTraceRenderConfig,
 ) -> StructuredTraceView:
     """Construye vista para híbrido (recursión con bucles internos)."""
-    return _build_from_call_tree(trace, classification.patternKind)
+    return _build_from_call_tree(trace, classification.patternKind, config=config)

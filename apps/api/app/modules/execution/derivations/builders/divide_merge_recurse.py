@@ -16,7 +16,7 @@ from ..structured_trace_models import (
     StructuredTraceRenderConfig,
 )
 from ..structural_trace_classifier import StructuralTraceClassification
-from ._call_utils import call_to_label, _format_param_value
+from ._call_utils import call_to_label
 
 
 def build_divide_merge_recurse(
@@ -44,8 +44,7 @@ def build_divide_merge_recurse(
             edges=[],
         )
 
-    steps = trace.get("steps", [])
-    cost_by_call = aggregate_metrics(steps, calls)
+    cost_by_call = aggregate_metrics(trace.get("steps", []), calls)
     calls_by_id = {c["id"]: c for c in calls}
     if not root_ids:
         root_ids = [c["id"] for c in calls if c.get("depth", 0) == 0]
@@ -53,26 +52,6 @@ def build_divide_merge_recurse(
     nodes: List[StructuredTraceNode] = []
     edges: List[StructuredTraceEdge] = []
     max_nodes = 100
-
-    def build_exit_lines(snapshot: Dict[str, Any]) -> List[str]:
-        preferred_keys = ["A", "arr", "array", "lista", "list"]
-        lines: List[str] = []
-        for key in preferred_keys:
-            if key in snapshot:
-                lines.append(f"{key} = {_format_param_value(snapshot[key])}")
-        if not lines:
-            for key, value in snapshot.items():
-                lines.append(f"{key} = {_format_param_value(value)}")
-        return lines[:4]
-
-    def get_root_exit_snapshot(root_call_id: str) -> Dict[str, Any]:
-        for step in reversed(steps):
-            if step.get("kind") != "call_exit":
-                continue
-            recursion = step.get("recursion") or {}
-            if recursion.get("callId") == root_call_id or recursion.get("depth") == 0:
-                return step.get("variables") or {}
-        return {}
 
     def add_call(call_id: str) -> None:
         if len(nodes) >= max_nodes:
@@ -82,7 +61,7 @@ def build_divide_merge_recurse(
             return
 
         node_id = f"call_{call_id}"
-        label = call_to_label(call)
+        label = call_to_label(call, config.locale)
         bc = call.get("base_case") or {}
         is_base = call.get("is_base_case", False) or (
             bc.get("detected", False) and bc.get("matched", False)
@@ -108,13 +87,16 @@ def build_divide_merge_recurse(
 
         children = call.get("children", [])
         if len(children) >= 2 and config.showOperationNode:
+            locale_key = str(config.locale).lower()[:2]
+            merge_title = "mezcla" if locale_key == "es" else "merge"
+            merge_line = "mezclar(Izq, Der) -> A" if locale_key == "es" else "merge(L, R) -> A"
             merge_id = f"merge_{call_id}"
             nodes.append(
                 StructuredTraceNode(
                     id=merge_id,
                     role="merge",
-                    title="merge",
-                    lines=["merge(L, R) → A"],
+                    title=merge_title,
+                    lines=[merge_line],
                 )
             )
             for child_id in children:
@@ -153,35 +135,6 @@ def build_divide_merge_recurse(
 
     for rid in root_ids:
         add_call(rid)
-
-    # Agregar nodo de salida con ultimo snapshot de variables para la raiz
-    if root_ids:
-        root_id = root_ids[0]
-        exit_snapshot = get_root_exit_snapshot(root_id)
-        if exit_snapshot:
-            exit_lines = ["Salida", *build_exit_lines(exit_snapshot)]
-        else:
-            exit_lines = ["Salida"]
-        exit_node_id = f"exit_{root_id}"
-        nodes.append(
-            StructuredTraceNode(
-                id=exit_node_id,
-                role="result",
-                title="Salida",
-                lines=exit_lines,
-                data={"nodeType": "output"},
-            )
-        )
-        merge_node_id = f"merge_{root_id}"
-        source_node_id = merge_node_id if any(n.id == merge_node_id for n in nodes) else f"call_{root_id}"
-        edges.append(
-            StructuredTraceEdge(
-                id=f"e_{source_node_id}_{exit_node_id}",
-                source=source_node_id,
-                target=exit_node_id,
-                label="",
-            )
-        )
 
     return StructuredTraceView(
         patternKind=classification.patternKind,

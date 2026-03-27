@@ -47,7 +47,9 @@ export function getLayoutedGraph(
   const dagreGraph = createGraph(direction, nodesep, ranksep);
 
   // Registrar nodos en dagre
+  const nodeTypeById = new Map<string, string>();
   for (const node of graph.nodes) {
+    nodeTypeById.set(node.id, node.type || "default");
     dagreGraph.setNode(node.id, {
       width: w,
       height: h,
@@ -57,7 +59,13 @@ export function getLayoutedGraph(
   // Registrar edges en dagre (solo si tienen source/target válidos)
   for (const edge of graph.edges ?? []) {
     if (!edge.source || !edge.target) continue;
-    dagreGraph.setEdge(edge.source, edge.target);
+    // Forzar que nodos de salida queden visualmente a la izquierda en layout LR.
+    const targetType = nodeTypeById.get(edge.target);
+    if (direction === "LR" && targetType === "output") {
+      dagreGraph.setEdge(edge.target, edge.source);
+    } else {
+      dagreGraph.setEdge(edge.source, edge.target);
+    }
   }
 
   dagre.layout(dagreGraph);
@@ -85,5 +93,4 @@ export function getLayoutedGraph(
     edges: layoutedEdges,
   };
 }
-
 

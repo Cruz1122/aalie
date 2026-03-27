@@ -13,7 +13,7 @@ from .recursive_steps_core import (
 
 _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
     "es": {
-        "iteration.recurrence_detected.linear_shift": "Se detectó una recurrencia de decremento unitario: en cada paso, $T(n)$ depende de $T(n-1)$ y de un término adicional $g(n)$.",
+        "iteration.recurrence_detected.linear_shift": "Se detectó una recurrencia de la familia Resta y Vencerás: en cada paso, $T(n)$ depende de $T(n-1)$ y de un término adicional $g(n)$.",
         "iteration.recurrence_detected.generic": "Se detectó una recurrencia recursiva candidata para análisis por iteración.",
         "iteration.applicability_validated.supported": "La recurrencia sí entra en la cobertura actual del método: forma $T(n)=T(n-1)+g(n)$ con paso unitario.",
         "iteration.applicability_validated.unsupported": "La forma detectada queda fuera de la cobertura actual del método de iteración.",
@@ -33,8 +33,8 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "iteration.asymptotic_concluded.partial": "La conclusión asintótica es parcial porque depende de una aproximación controlada.",
         "iteration.step_blocked.unsupported": "Este paso queda bloqueado porque la recurrencia no cumple la cobertura necesaria del método de iteración.",
 
-        "concept.iteration.recurrence_detected": "El método de iteración trabaja desplegando recursivamente una forma concreta de recurrencia. Por eso primero se fija con precisión qué depende de $T(n-1)$ y qué parte corresponde al costo externo $g(n)$.",
-        "concept.iteration.applicability_validated": "Para evitar conclusiones inválidas, la cobertura actual se restringe a decremento unitario. Si la forma es de Divide y Vencerás o tiene desplazamientos no unitarios, este método no se aplica de forma canónica.",
+        "concept.iteration.recurrence_detected": "Este método describe muy bien Resta y Vencerás: reducimos poco el tamaño (n, n-1, n-2, ...) y acumulamos trabajo externo $g(n)$ en cada paso. Por eso primero se separa claramente la dependencia recursiva de ese costo adicional.",
+        "concept.iteration.applicability_validated": "Para evitar errores de método, aquí solo cubrimos la versión canónica de Resta y Vencerás con decremento unitario. Si la forma se comporta como Divide y Vencerás (n/b) o mezcla múltiples ramas costosas (Resta y Serás Vencido), se marca como fuera de dominio.",
         "concept.iteration.base_case_identified": "El despliegue iterativo necesita un punto de cierre. El caso base define dónde se detiene la expansión y desde qué valor conocido se reconstruye la solución completa.",
         "concept.iteration.initial_unrolling_built": "Desenrollar las primeras iteraciones permite observar la estructura acumulativa real y evita proponer un patrón general sin evidencia algebraica.",
         "concept.iteration.k_pattern_generalized": "Tras observar varias expansiones, se abstrae una forma con $k$ pasos: una parte recursiva residual y una suma de aportes de $g(\\cdot)$. Esta generalización es la base del cierre.",
@@ -47,13 +47,13 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "concept.iteration.blocked": "Cuando el método no aplica en la cobertura actual, los pasos siguientes se dejan explícitamente bloqueados en vez de fingir continuidad.",
 
         "warning.iteration.unsupported_non_unit_shift": "Cobertura actual: solo se soporta recurrencia de decremento unitario $T(n)=T(n-1)+g(n)$.",
-        "warning.iteration.unsupported_non_linear_form": "La forma detectada corresponde a otra familia de recurrencias (por ejemplo Divide y Vencerás) y no se resuelve aquí por iteración en esta cobertura.",
+        "warning.iteration.unsupported_non_linear_form": "La forma detectada pertenece a otra familia (Divide y Vencerás o Resta y Serás Vencido) y no se resuelve aquí con este walkthrough de iteración.",
         "warning.iteration.missing_base_case": "No hay suficiente información de caso base para cerrar completamente la solución.",
         "warning.iteration.summation_partial": "La sumatoria no se cerró de forma elemental con las reglas simbólicas actuales.",
         "warning.iteration.asymptotic_partial": "La cota asintótica proviene de una aproximación controlada y se reporta como parcial.",
     },
     "en": {
-        "iteration.recurrence_detected.linear_shift": "A unit-decrement recurrence was detected: at each step, $T(n)$ depends on $T(n-1)$ plus an additional term $g(n)$.",
+        "iteration.recurrence_detected.linear_shift": "A Resta y Vencerás recurrence was detected: at each step, $T(n)$ depends on $T(n-1)$ plus an additional term $g(n)$.",
         "iteration.recurrence_detected.generic": "A recursive recurrence candidate was detected for iteration-method analysis.",
         "iteration.applicability_validated.supported": "The recurrence is within current method coverage: shape $T(n)=T(n-1)+g(n)$ with unit decrement.",
         "iteration.applicability_validated.unsupported": "The detected shape is outside current coverage of the iteration method.",
@@ -73,8 +73,8 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "iteration.asymptotic_concluded.partial": "Asymptotic conclusion is partial because it relies on a controlled approximation.",
         "iteration.step_blocked.unsupported": "This step is blocked because the recurrence does not meet current iteration-method coverage.",
 
-        "concept.iteration.recurrence_detected": "The iteration method unfolds a specific recurrence shape. We first pin down what belongs to $T(n-1)$ dependence and what belongs to external work $g(n)$.",
-        "concept.iteration.applicability_validated": "To avoid invalid conclusions, current coverage is intentionally restricted to unit decrement recurrences. Divide-and-conquer or non-unit shifts are marked unsupported here.",
+        "concept.iteration.recurrence_detected": "This method is a natural fit for Resta y Vencerás: we reduce slowly (n, n-1, n-2, ...) and accumulate external work $g(n)$ at each step. We therefore separate recursive dependence from added work explicitly.",
+        "concept.iteration.applicability_validated": "To avoid method mismatch, this walkthrough covers only canonical Resta y Vencerás with unit decrement. If the shape behaves like Divide y Vencerás (n/b) or costly multi-branch decrease (Resta y Serás Vencido), it is marked out of scope.",
         "concept.iteration.base_case_identified": "Iterative unfolding needs a closure point. The base case tells where expansion stops and from which known value reconstruction begins.",
         "concept.iteration.initial_unrolling_built": "Unrolling the first iterations reveals the actual accumulation structure and prevents guessing a general pattern without algebraic evidence.",
         "concept.iteration.k_pattern_generalized": "After a few expansions, we generalize a $k$-step form: one residual recursive term and one accumulated summation term.",
@@ -87,7 +87,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "concept.iteration.blocked": "When method assumptions fail, following steps are explicitly blocked instead of pretending complete coverage.",
 
         "warning.iteration.unsupported_non_unit_shift": "Current coverage only supports unit-decrement recurrences $T(n)=T(n-1)+g(n)$.",
-        "warning.iteration.unsupported_non_linear_form": "Detected shape belongs to another recurrence family (for example divide-and-conquer), so iteration does not solve it under current coverage.",
+        "warning.iteration.unsupported_non_linear_form": "Detected shape belongs to another family (Divide y Vencerás or Resta y Serás Vencido), so this iteration walkthrough is out of scope.",
         "warning.iteration.missing_base_case": "Base-case data is insufficient for a fully closed solution.",
         "warning.iteration.summation_partial": "Summation could not be fully closed with current symbolic rules.",
         "warning.iteration.asymptotic_partial": "Asymptotic bound comes from a controlled approximation and is therefore partial.",

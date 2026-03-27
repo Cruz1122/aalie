@@ -1,12 +1,13 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
+import JSZip from "jszip";
 
 import { buildExportReport } from "../application/export-orchestrator";
 import {
   isPdflatexAvailable,
   LatexCompilationError,
 } from "../infrastructure/pdf/latex-compiler";
-import { createIterativeSnapshot } from "./fixtures/snapshot-fixtures";
+import { createIterativeSnapshot, createRecursiveSnapshot } from "./fixtures/snapshot-fixtures";
 
 describe("export-orchestrator", () => {
   it("genera markdown y latex desde el mismo snapshot", async () => {
@@ -74,5 +75,32 @@ describe("export-orchestrator", () => {
     }
     assert.ok(pdf.content.length > 1024, "PDF should not be empty");
     assert.strictEqual(pdf.content.subarray(0, 5).toString("utf8"), "%PDF-");
+  });
+
+  it("incluye assets de diagrama recursivo en el bundle ZIP", async () => {
+    const snapshot = createRecursiveSnapshot("master");
+    const result = await buildExportReport({
+      snapshot,
+      formats: ["markdown", "latex"],
+      includeSnapshotJson: false,
+      includeZipBundle: true,
+    });
+
+    assert.ok(result.bundle, "ZIP bundle should be present");
+    const zip = await JSZip.loadAsync(result.bundle?.content || Buffer.alloc(0));
+    const md = zip.file("report.md");
+    const tex = zip.file("report.tex");
+    const svg = zip.file("assets/trace-diagram-worst.svg");
+    const pdf = zip.file("assets/trace-diagram-worst.pdf");
+
+    assert.ok(md, "report.md should exist in bundle");
+    assert.ok(tex, "report.tex should exist in bundle");
+    assert.ok(svg, "trace diagram SVG should exist in bundle");
+    assert.ok(pdf, "trace diagram PDF should exist in bundle");
+
+    const markdownText = await md?.async("string");
+    const latexText = await tex?.async("string");
+    assert.match(markdownText || "", /```mermaid/);
+    assert.match(latexText || "", /assets\/trace-diagram-worst\.pdf/);
   });
 });
