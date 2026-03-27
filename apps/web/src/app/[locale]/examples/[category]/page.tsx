@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
 import { ExamplesCategoryView } from "@/components/examples/ExamplesCategoryView";
@@ -22,5 +23,9 @@ export default function ExampleCategoryPage({ params }: CategoryPageProps) {
     notFound();
   }
 
-  return <ExamplesCategoryView category={params.category as ExampleCategory} />;
+  return (
+    <Suspense fallback={null}>
+      <ExamplesCategoryView category={params.category as ExampleCategory} />
+    </Suspense>
+  );
 }

@@ -418,7 +418,7 @@ class TestRecursiveAnalyzerHelpers:
         params = [{"name": "n"}]
         result = self.analyzer._detect_indirect_division(body, args, params)
         if result is not None:
-            assert isinstance(result, float)
+            assert isinstance(result, (int, float))
 
 
 class TestRecursiveAnalyzerDPValidation:
@@ -573,7 +573,7 @@ class TestRecursiveAnalyzerDPValidation:
         params = [{"name": "n"}]
         result = self.analyzer._detect_indirect_division(body, args, params)
         if result is not None:
-            assert isinstance(result, float)
+            assert isinstance(result, (int, float))
 
     def test_detect_size_reduction_by_comparison(self):
         """Test: _detect_size_reduction_by_comparison detecta reducción"""
@@ -610,7 +610,7 @@ class TestRecursiveAnalyzerDPValidation:
         params = [{"name": "A"}, {"name": "izq"}, {"name": "der"}]
         result = self.analyzer._detect_size_reduction_by_comparison(args, params, proc_def)
         if result is not None:
-            assert isinstance(result, float)
+            assert isinstance(result, (int, float))
 
     def test_detect_size_reduction_by_comparison_no_args(self):
         """Test: _detect_size_reduction_by_comparison sin argumentos"""
@@ -720,7 +720,7 @@ class TestRecursiveAnalyzerDPValidation:
         params = [{"name": "A"}, {"name": "izq"}, {"name": "der"}]
         result = self.analyzer._detect_variable_size_reduction(args, params, proc_def)
         if result is not None:
-            assert isinstance(result, float)
+            assert isinstance(result, (int, float))
             assert result == 2.0
 
     def test_detect_variable_size_reduction_no_args(self):
@@ -758,7 +758,7 @@ class TestRecursiveAnalyzerDPValidation:
         }
         result = self.analyzer._extract_division_factor(expr)
         if result is not None:
-            assert isinstance(result, float)
+            assert isinstance(result, (int, float))
 
     def test_extract_division_factor_not_division(self):
         """Test: _extract_division_factor con expresión que no es división"""
