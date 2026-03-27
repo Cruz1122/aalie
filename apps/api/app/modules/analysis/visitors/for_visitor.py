@@ -1,7 +1,8 @@
 # apps/api/app/analysis/visitors/for_visitor.py
 
 from typing import Any, Dict
-from sympy import Symbol, Sum, Integer, Expr
+
+from sympy import Expr, Integer, Sum, Symbol
 
 
 class ForVisitor:
@@ -50,7 +51,7 @@ class ForVisitor:
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        from sympy import sympify, Symbol, Integer
+        from sympy import Integer, Symbol, sympify
         
         if not expr_str or expr_str.strip() == "":
             return Integer(1)

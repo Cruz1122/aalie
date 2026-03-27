@@ -1,6 +1,6 @@
 import pytest
-# tests/unit/test_complexity_classes.py
 
+# tests/unit/test_complexity_classes.py
 from app.modules.analysis.utils.complexity_classes import ComplexityClasses
 
 
@@ -323,8 +323,4 @@ class TestComplexityClasses:
         big_theta = self.complexity.calculate_big_theta(poly)
         assert big_theta is not None
         assert "\\Theta" in big_theta or "Theta" in big_theta
-
-
-if __name__ == '__main__':
-    unittest.main()
 

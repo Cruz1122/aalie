@@ -1,7 +1,6 @@
 # Fixtures compartidas a nivel tests/.
 # Author: AALIE reform
 # Version: 0.1.0
-import pytest
 
 
 def pytest_configure(config):

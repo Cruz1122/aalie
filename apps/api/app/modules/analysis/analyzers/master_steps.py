@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional
 
 from .recursive_steps_core import compute_overall_status, locale_key, make_recursive_step
 
-
 _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
     "es": {
         "master.recurrence_detected.standard": "Se detectó una recurrencia de la familia Divide y Vencerás, candidata natural para Teorema Maestro.",

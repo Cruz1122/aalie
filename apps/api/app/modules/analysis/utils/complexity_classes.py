@@ -1,7 +1,7 @@
-from sympy import Symbol, sympify, latex, oo, log, exp, Expr
-from sympy import Poly
-from sympy.polys.polytools import LC, LM
 import re
+
+from sympy import Expr, Poly, Symbol, exp, latex, log, oo, sympify
+from sympy.polys.polytools import LC, LM
 
 
 class ComplexityClasses:
@@ -47,7 +47,7 @@ class ComplexityClasses:
 
             # Expandir la expresión antes de extraer el término dominante.
             # NO usar simplify() aquí porque puede factorizar la expresión y mezclar grados.
-            from sympy import expand, Integer
+            from sympy import expand
 
             expr = expand(expr)
 
@@ -269,7 +269,6 @@ class ComplexityClasses:
         n = Symbol(variable, integer=True, positive=True)
         
         # Crear contexto con símbolos comunes + t_while_X, t_repeat_X
-        from sympy import log
         syms = {variable: n, 'log': log}
         for m in re.finditer(r't_(?:while|repeat)_\d+', expr_str):
             name = m.group(0)
@@ -277,7 +276,7 @@ class ComplexityClasses:
         
         try:
             return sympify(expr_str, locals=syms)
-        except Exception as e:
+        except Exception:
             # Fallback: intentar con parsing más simple
             try:
                 # Intentar sin algunos reemplazos complejos
@@ -423,7 +422,8 @@ class ComplexityClasses:
         # Este es el método principal para polinomios
         # Asegurar que la expresión esté expandida antes de crear el Poly
         # (puede estar factorizada como n*(n**2 + n + 1))
-        from sympy import expand as sympy_expand, Symbol, ZZ
+        from sympy import ZZ, Symbol
+        from sympy import expand as sympy_expand
         # Expandir la expresión para asegurar que esté en forma de suma
         expr_expanded = sympy_expand(expr)
         

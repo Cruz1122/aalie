@@ -3,8 +3,9 @@ Servicio de parsing.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
-from typing import Dict, Any
-from .adapter import parse_to_ast_adapter, is_grammar_available
+from typing import Any, Dict
+
+from .adapter import is_grammar_available, parse_to_ast_adapter
 
 
 def normalize_source_text(source: str) -> str:

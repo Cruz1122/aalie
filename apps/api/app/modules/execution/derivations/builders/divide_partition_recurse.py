@@ -6,16 +6,16 @@ Llamada → operación lateral → resultado → 2 subllamadas (quicksort).
 Author: Plan Sistema Traza Estructural
 Version: 0.1.0
 """
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from ...metrics_aggregator import aggregate_metrics
-from ..structured_trace_models import (
-    StructuredTraceView,
-    StructuredTraceNode,
-    StructuredTraceEdge,
-    StructuredTraceRenderConfig,
-)
 from ..structural_trace_classifier import StructuralTraceClassification
+from ..structured_trace_models import (
+    StructuredTraceEdge,
+    StructuredTraceNode,
+    StructuredTraceRenderConfig,
+    StructuredTraceView,
+)
 from ._call_utils import call_to_label
 
 

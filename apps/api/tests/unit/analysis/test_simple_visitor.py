@@ -4,6 +4,7 @@ Tests unitarios para app.modules.analysis.visitors.simple_visitor.
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 import pytest
+
 from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
 
 
@@ -66,7 +67,6 @@ class TestSimpleVisitor:
             "type": "Decl",
             "pos": {"line": 2},
             "variable": {"type": "identifier", "name": "x"},
-            "type": "int"
         }
         self.analyzer.visitDecl(node)
         assert len(self.analyzer.rows) > 0
@@ -716,7 +716,6 @@ class TestSimpleVisitor:
             "type": "Decl",
             "pos": {"line": 2},
             "variable": {"type": "identifier", "name": "arr"},
-            "type": "int[]",
             "size": {
                 "type": "binary",
                 "operator": "*",
@@ -791,5 +790,4 @@ class TestSimpleVisitor:
         result = self.analyzer._ops_of_expr(expr)
         # No debe agregar costo para literal
         assert result == 0
-
 

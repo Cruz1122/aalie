@@ -1,13 +1,13 @@
 # apps/api/app/analysis/visitors/while_repeat_visitor.py
 
+import re
 from typing import Any, Dict, List, Optional
 
-from sympy import Symbol, Integer, Expr, sympify, Sum, Rational
-import re
+from sympy import Expr, Integer, Rational, Sum, Symbol, sympify
 
 from ..ir.expr_utils import expr_to_str
-from ..while_engine import analyze_guard, summarize_updates, classify_while
-from ..while_engine.engine import WhileEngine, WhileAnalysisInput, WhileAnalysisResult
+from ..while_engine import analyze_guard, classify_while, summarize_updates
+from ..while_engine.engine import WhileAnalysisInput, WhileEngine
 
 
 class WhileRepeatVisitor:
@@ -83,7 +83,9 @@ class WhileRepeatVisitor:
         expr_str = expr_str.replace("\\cdot", "*")
 
         try:
-            from sympy import log as sympy_log, Min as sympy_Min, Max as sympy_Max
+            from sympy import Max as sympy_Max
+            from sympy import Min as sympy_Min
+            from sympy import log as sympy_log
 
             variable = getattr(self, "variable", "n")
             n = Symbol(variable, integer=True, positive=True)
@@ -498,7 +500,7 @@ class WhileRepeatVisitor:
             Diccionario con patrón detectado y complejidad, o None
         """
         test = node.get("test", {})
-        test_str = self._expr_to_str(test)
+        self._expr_to_str(test)
         
         # Patrón búsqueda binaria:
         # - Condición: izq <= der (o left <= right, low <= high, etc.)
@@ -642,10 +644,10 @@ class WhileRepeatVisitor:
             op2 = node.get("op", "") or node.get("operator", "")
             if op2 not in ("<", "<="):
                 return False
-            l = node.get("left", {})
-            if not (isinstance(l, dict) and l.get("type", "").lower() == "identifier"):
+            left_expr = node.get("left", {})
+            if not (isinstance(left_expr, dict) and left_expr.get("type", "").lower() == "identifier"):
                 return False
-            return l.get("name", "") == var_name
+            return left_expr.get("name", "") == var_name
         
         def is_array_gt_zero(node: Dict[str, Any]) -> bool:
             if not isinstance(node, dict):
@@ -656,23 +658,23 @@ class WhileRepeatVisitor:
             op3 = node.get("op", "") or node.get("operator", "")
             if op3 not in (">", ">="):
                 return False
-            l = node.get("left", {})
-            r = node.get("right", {})
+            left_expr = node.get("left", {})
+            right_expr = node.get("right", {})
             # Lado izquierdo: acceso a array A[i]
-            if not (isinstance(l, dict) and l.get("type", "").lower() == "index"):
+            if not (isinstance(left_expr, dict) and left_expr.get("type", "").lower() == "index"):
                 return False
-            index = l.get("index", {})
+            index = left_expr.get("index", {})
             if not (isinstance(index, dict) and index.get("type", "").lower() == "identifier"):
                 return False
             if index.get("name", "") != var_name:
                 return False
             # Lado derecho: constante 0
-            if not isinstance(r, dict):
+            if not isinstance(right_expr, dict):
                 return False
-            rt = r.get("type", "").lower()
+            rt = right_expr.get("type", "").lower()
             if rt not in ("number", "literal"):
                 return False
-            val = r.get("value", 0)
+            val = right_expr.get("value", 0)
             try:
                 return float(val) == 0.0
             except Exception:
@@ -708,8 +710,8 @@ class WhileRepeatVisitor:
             op2 = (expr.get("op") or expr.get("operator", "")).lower()
             if op2 not in ("=", "=="):
                 return False
-            l, r = expr.get("left", {}), expr.get("right", {})
-            for node in (l, r):
+            left_expr, right_expr = expr.get("left", {}), expr.get("right", {})
+            for node in (left_expr, right_expr):
                 if not isinstance(node, dict):
                     continue
                 nt = node.get("type", "").lower()
@@ -1762,7 +1764,9 @@ class WhileRepeatVisitor:
             # Para binary search: "1" en best case, "\\log_{2}(n)" en worst/avg
             if pattern == "binary_search":
                 # Para búsqueda binaria: ya viene el valor correcto en iterations
-                from sympy import log, sympify as sp_sympify, ceiling, Symbol as Sym
+                from sympy import Symbol as Sym
+                from sympy import ceiling, log
+                from sympy import sympify as sp_sympify
                 try:
                     # Si iterations es "1", usar directamente
                     if iterations == "1":
@@ -1891,7 +1895,7 @@ class WhileRepeatVisitor:
             change_op = change_rule.get("operator", "")
             change_const = change_rule.get("constant", "1")
             mode_info = closure_info.get("mode", mode)
-            pattern_note = closure_info.get("pattern_note", "")
+            closure_info.get("pattern_note", "")
             
             # Agregar información del modo si es best case y hay 0 iteraciones
             reason_code = closure_info.get("reason_code", "")

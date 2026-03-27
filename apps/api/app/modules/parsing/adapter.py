@@ -3,7 +3,7 @@ Adaptador para el parser de gramática.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
-from typing import Tuple, Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional, Tuple
 
 # Intentar usar el parser real si está instalado
 try:

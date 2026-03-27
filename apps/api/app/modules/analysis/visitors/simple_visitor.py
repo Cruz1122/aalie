@@ -1,6 +1,7 @@
 # apps/api/app/analysis/visitors/simple_visitor.py
 
 from typing import Any, Dict
+
 from sympy import Integer
 
 

@@ -8,13 +8,13 @@ Version: 0.1.0
 """
 from typing import Any, Dict, List, Optional
 
-from ..structured_trace_models import (
-    StructuredTraceView,
-    StructuredTraceNode,
-    StructuredTraceEdge,
-    StructuredTraceRenderConfig,
-)
 from ..structural_trace_classifier import StructuralTraceClassification
+from ..structured_trace_models import (
+    StructuredTraceEdge,
+    StructuredTraceNode,
+    StructuredTraceRenderConfig,
+    StructuredTraceView,
+)
 
 
 def _step_to_label(step: Dict[str, Any]) -> str:
@@ -146,7 +146,7 @@ def build_generic_iterative(
         if len(nodes) >= 80:
             break
         event_kind = step.get("eventKind") or step.get("kind", "")
-        step_kind = step.get("kind") or ""
+        step.get("kind") or ""
         step_num = step.get("step_number", idx + 1)
 
         if event_kind == "loop_enter":

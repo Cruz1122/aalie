@@ -3,8 +3,10 @@ Router para el módulo de classification.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
-from fastapi import APIRouter, Body
 from typing import Any, Dict
+
+from fastapi import APIRouter, Body
+
 from .service import classify_algorithm
 
 router = APIRouter(prefix="/classify", tags=["classify"])

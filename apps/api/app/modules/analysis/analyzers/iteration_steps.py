@@ -10,7 +10,6 @@ from .recursive_steps_core import (
     make_recursive_step,
 )
 
-
 _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
     "es": {
         "iteration.recurrence_detected.linear_shift": "Se detectó una recurrencia de la familia Resta y Vencerás: en cada paso, $T(n)$ depende de $T(n-1)$ y de un término adicional $g(n)$.",

@@ -1,15 +1,17 @@
-from typing import Any, Dict, List, Optional, Set
-from sympy import Expr, latex, Integer, Sum
+from typing import Any, Dict, Optional, Set
+
+from sympy import Expr, Integer, Sum, latex
+
 from ..ir.expr_utils import expr_to_str
-from .base import BaseAnalyzer
-from ..visitors.for_visitor import ForVisitor
-from ..visitors.if_visitor import IfVisitor
-from ..visitors.while_repeat_visitor import WhileRepeatVisitor
-from ..visitors.simple_visitor import SimpleVisitor
+from ..models.avg_model import AvgModel
+from ..utils.complexity_classes import ComplexityClasses
 from ..utils.expr_converter import ExprConverter
 from ..utils.summation_closer import SummationCloser
-from ..utils.complexity_classes import ComplexityClasses
-from ..models.avg_model import AvgModel
+from ..visitors.for_visitor import ForVisitor
+from ..visitors.if_visitor import IfVisitor
+from ..visitors.simple_visitor import SimpleVisitor
+from ..visitors.while_repeat_visitor import WhileRepeatVisitor
+from .base import BaseAnalyzer
 
 
 class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor, SimpleVisitor):
@@ -95,7 +97,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         Version: 0.1.0
         """
-        from sympy import preorder_traversal, Symbol
+        from sympy import preorder_traversal
 
         bound_vars: Set[str] = set()
         main_var = getattr(self, "variable", "n") or "n"
@@ -141,7 +143,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         Version: 0.1.0
         """
-        from sympy import Symbol, simplify, expand, preorder_traversal, Integer as SymInteger
+        from sympy import Integer as SymInteger
+        from sympy import Symbol, expand, simplify
 
         if expr is None:
             return expr
@@ -709,7 +712,6 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     size_aliases = getattr(self, "size_aliases", None) or {}
                     if size_aliases:
                         from sympy import Symbol as SymSymbol
-                        main_var_s = variable or "n"
                         for alias_name, main_name in size_aliases.items():
                             if alias_name and main_name and alias_name != main_name:
                                 alias_sym = SymSymbol(alias_name, integer=True)
@@ -721,8 +723,10 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     closed_count, steps = closer.close_summation(expr_for_close, variable or "n")
                     
                     # Guardar la expresión SymPy evaluada para usar en build_t_open_expr
-                    from sympy import simplify, latex as sympy_latex
                     import re
+
+                    from sympy import latex as sympy_latex
+                    from sympy import simplify
                     # Si contiene símbolos iterativos, no intentar evaluar sumatorias
                     # (ya se manejan en close_summation)
                     preserve = {"a", "b"} if row.get("euclid_pattern") else None
@@ -1101,9 +1105,11 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        from sympy import Symbol, Integer, latex, expand, simplify, Poly, powsimp, oo, zoo
-        from ..utils.summation_closer import SummationCloser
         import re
+
+        from sympy import Integer, Poly, Symbol, expand, latex, oo, powsimp, simplify, zoo
+
+        from ..utils.summation_closer import SummationCloser
         
         n_sym = Symbol(self.variable, integer=True, positive=True)
         
@@ -1167,13 +1173,13 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                             try:
                                 if coeff.is_zero if hasattr(coeff, 'is_zero') else (coeff == 0 or coeff == Integer(0)):
                                     continue
-                            except:
+                            except Exception:
                                 # Si hay error, intentar simplificar y verificar de nuevo
                                 try:
                                     coeff = simplify(expand(coeff))
                                     if coeff.is_zero if hasattr(coeff, 'is_zero') else (coeff == 0 or coeff == Integer(0)):
                                         continue
-                                except:
+                                except Exception:
                                     pass
                             
                             # Normalizar coeficiente para comparación determinista
@@ -1187,7 +1193,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                             try:
                                 if coeff_normalized.is_zero if hasattr(coeff_normalized, 'is_zero') else (coeff_normalized == 0 or coeff_normalized == Integer(0)):
                                     continue
-                            except:
+                            except Exception:
                                 pass
                             
                             # Crear tupla para comparación determinista
@@ -1268,14 +1274,14 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 try:
                     if coeff.is_zero if hasattr(coeff, 'is_zero') else (coeff == 0 or coeff == Integer(0)):
                         continue
-                except:
+                except Exception:
                     # Si hay error al verificar, intentar simplificar y verificar de nuevo
                     try:
                         coeff_simplified = simplify(coeff)
                         if coeff_simplified.is_zero if hasattr(coeff_simplified, 'is_zero') else (coeff_simplified == 0 or coeff_simplified == Integer(0)):
                             continue
                         coeff = coeff_simplified
-                    except:
+                    except Exception:
                         pass
                 
                 # Parsear y combinar todas las C_k
@@ -1398,8 +1404,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             Expresión SymPy o None si hay error
         """
         try:
-            from sympy import sympify, Symbol
             import re
+
+            from sympy import Symbol, sympify
             
             # Normalizar LaTeX a formato SymPy
             expr_str = latex_str

@@ -6,8 +6,8 @@ Cobertura: WHILE/FOR con cotas constantes, sin IF con early return.
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 import pytest
-from app.modules.analysis.service import analyze_algorithm
 
+from app.modules.analysis.service import analyze_algorithm
 
 # Algoritmos determinísticos: worst == best, avg debe ser same_as_worst
 DETERMINISTIC_ALGORITHMS = [

@@ -3,8 +3,10 @@ Gestión del environment de variables durante la ejecución.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
-from typing import Any, Dict, Optional, Union, List
-from sympy import Symbol, Integer, Expr, sympify
+from typing import Any, Dict, List, Optional, Union
+
+from sympy import Expr
+
 from ..analysis.utils.expr_converter import ExprConverter
 
 
@@ -213,7 +215,8 @@ class ExecutionEnvironment:
             # Recursión para otros tipos de nodos
             new_expr = expr.copy()
             for key, value in expr.items():
-                if key == "type": continue
+                if key == "type":
+                    continue
                 new_expr[key] = self._resolve_indices(value)
             return new_expr
             

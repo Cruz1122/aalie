@@ -3,7 +3,8 @@ Tests unitarios para app.modules.parsing.adapter.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+
 from app.modules.parsing import adapter
 
 

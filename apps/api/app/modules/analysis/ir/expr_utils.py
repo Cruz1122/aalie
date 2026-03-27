@@ -7,7 +7,7 @@ y comparación estructural. Homogeneiza op/operator del parser.
 Author: @Cruz1122
 Version: 0.1.0
 """
-from typing import Any, Set, Optional
+from typing import Any, Set
 
 
 def _get_op(expr: dict) -> str:
@@ -204,7 +204,7 @@ def expr_equals(a: Any, b: Any) -> bool:
         return True
     if a is None or b is None:
         return a is b
-    if type(a) != type(b):
+    if a.__class__ is not b.__class__:
         return False
     if isinstance(a, (str, int, float)):
         return a == b

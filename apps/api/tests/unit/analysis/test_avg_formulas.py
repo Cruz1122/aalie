@@ -10,8 +10,8 @@ Author: Plan Caso Promedio Pedagógico
 Version: 0.1.0
 """
 import pytest
-from app.modules.analysis.service import analyze_algorithm
 
+from app.modules.analysis.service import analyze_algorithm
 
 LINEAR_SEARCH = """linearSearch(A, n, x) BEGIN
   FOR i <- 1 TO n DO BEGIN
@@ -84,7 +84,7 @@ class TestAvgFormulas:
         assert result.get("ok", False)
         avg = result.get("avg")
         if avg != "same_as_worst" and isinstance(avg, dict):
-            if_rows = [r for r in avg.get("byLine", []) if r.get("kind") == "if"]
+            [r for r in avg.get("byLine", []) if r.get("kind") == "if"]
             # Debe haber filas IF con expectedRuns
             for row in avg.get("byLine", []):
                 if "expectedRuns" in row and row["expectedRuns"]:

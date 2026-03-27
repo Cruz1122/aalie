@@ -3,8 +3,9 @@ Ejecutor principal que recorre el AST y genera pasos de ejecución.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
-from typing import Any, Dict, List, Optional, Union, Tuple
 import copy
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 from ..analysis.translations import get_trace_step_labels
 from .environment import ExecutionEnvironment
 from .trace_builder import TraceBuilder
@@ -564,7 +565,8 @@ class CodeExecutor:
 
         # #region agent log
         try:
-            import json as _json, time as _time
+            import json as _json
+            import time as _time
             _log_payload = {
                 "sessionId": "1b7cca",
                 "runId": "initial",
@@ -599,7 +601,7 @@ class CodeExecutor:
         """
         try:
             body = proc_def.get("body", {})
-            proc_name = proc_def.get("name")
+            proc_def.get("name")
 
             base_if = self._find_base_condition_if(body)
             if not base_if:
@@ -881,7 +883,6 @@ class CodeExecutor:
         
         # Obtener nombre de variable y manejar asignación a array
         var_name = None
-        description_suffix = ""
         
         if isinstance(target, dict):
             if target.get("type") == "Identifier":
@@ -1093,7 +1094,7 @@ class CodeExecutor:
                 ) if isinstance(self._trace_labels.get("for_exit"), str) else f"Salida FOR {var_name}",
                 event_kind="loop_exit",
             )
-        except Exception as e:
+        except Exception:
             # Si falla, agregar paso simbólico
             self.trace_builder.add_step(
                 line=node.get("pos", {}).get("line", 0),
@@ -1414,26 +1415,26 @@ class CodeExecutor:
             left_val = self._evaluate_for_return(expr.get("left"))
             right_val = self._evaluate_for_return(expr.get("right"))
             op = expr.get("op", "")
-            l = self._to_numeric(left_val)
-            r = self._to_numeric(right_val)
+            left_num = self._to_numeric(left_val)
+            right_num = self._to_numeric(right_val)
             if op == "*":
-                return l * r
+                return left_num * right_num
             if op == "+":
-                return l + r
+                return left_num + right_num
             if op == "-":
-                return l - r
+                return left_num - right_num
             if op == "/":
-                return l / r if r != 0 else 0
+                return left_num / right_num if right_num != 0 else 0
             if op == "div":
-                return int(l // r) if r != 0 else 0
+                return int(left_num // right_num) if right_num != 0 else 0
             if op == "mod":
-                return int(l % r) if r != 0 else 0
+                return int(left_num % right_num) if right_num != 0 else 0
             if op == "and":
                 return 1 if (left_val and right_val) else 0
             if op == "or":
                 return 1 if (left_val or right_val) else 0
             if op in ("==", "!=", "<", "<=", ">", ">="):
-                cmp = (op == "==" and l == r) or (op == "!=" and l != r) or (op == "<" and l < r) or (op == "<=" and l <= r) or (op == ">" and l > r) or (op == ">=" and l >= r)
+                cmp = (op == "==" and left_num == right_num) or (op == "!=" and left_num != right_num) or (op == "<" and left_num < right_num) or (op == "<=" and left_num <= right_num) or (op == ">" and left_num > right_num) or (op == ">=" and left_num >= right_num)
                 return 1 if cmp else 0
         if node_type == "Unary":
             arg_val = self._evaluate_for_return(expr.get("arg"))

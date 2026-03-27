@@ -9,25 +9,24 @@ Version: 0.1.0
 """
 from typing import Any, Callable, Dict, List, Optional
 
-from ..schemas import TraceGraphCanonical, TraceGraphNode, TraceGraphEdge, GraphNodeData
-
-from .structural_trace_classifier import StructuralPatternKind, StructuralTraceClassification
-from .structured_trace_models import (
-    StructuredTraceView,
-    StructuredTraceNode,
-    StructuredTraceEdge,
-    StructuredTraceRenderConfig,
-)
+from ..schemas import GraphNodeData, TraceGraphEdge, TraceGraphNode
 from .builders import (
+    build_backtracking_stateful,
+    build_binary_branch_recursive,
+    build_divide_merge_recurse,
+    build_divide_partition_recurse,
     build_generic_iterative,
     build_generic_recursive,
-    build_tail_recursive_linear,
-    build_single_branch_recursive_search,
-    build_binary_branch_recursive,
-    build_divide_partition_recurse,
-    build_divide_merge_recurse,
-    build_backtracking_stateful,
     build_hybrid_recursive_iterative,
+    build_single_branch_recursive_search,
+    build_tail_recursive_linear,
+)
+from .structural_trace_classifier import StructuralPatternKind, StructuralTraceClassification
+from .structured_trace_models import (
+    StructuredTraceEdge,
+    StructuredTraceNode,
+    StructuredTraceRenderConfig,
+    StructuredTraceView,
 )
 
 BUILDER_REGISTRY: Dict[StructuralPatternKind, Callable[..., StructuredTraceView]] = {
@@ -80,7 +79,6 @@ def _apply_layout_linear(
     nodes: List[StructuredTraceNode], edges: List[StructuredTraceEdge]
 ) -> tuple:
     """Layout lineal vertical (iterativo, tail recursive)."""
-    x_spacing = 180
     y_spacing = 80
     x, y = 0.0, 0.0
 

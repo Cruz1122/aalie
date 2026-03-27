@@ -7,8 +7,9 @@ sin mirar nombres de variables.
 Author: @Cruz1122
 Version: 0.1.0
 """
-from typing import Any, Dict, Set, TYPE_CHECKING
-from ..ir.expr_utils import expr_vars, expr_kind, is_literal_true, is_literal_false
+from typing import TYPE_CHECKING, Any, Dict
+
+from ..ir.expr_utils import expr_kind, expr_vars, is_literal_false, is_literal_true
 
 if TYPE_CHECKING:
     from .symbol_table import SymbolTable

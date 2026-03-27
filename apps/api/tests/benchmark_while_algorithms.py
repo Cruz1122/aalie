@@ -7,8 +7,8 @@ Ejecutar: cd apps/api && python -m pytest tests/benchmark_while_algorithms.py -v
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 import pytest
-from app.modules.analysis.service import analyze_algorithm
 
+from app.modules.analysis.service import analyze_algorithm
 
 BENCHMARK_ALGORITHMS = [
     # 1. Euclides MCD - Θ(log min(a,b))

@@ -8,6 +8,7 @@ Author: @Cruz1122
 Version: 0.1.0
 """
 import pytest
+
 from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import get_totals
 

@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 DiagramKind = Literal["execution_diagram", "call_tree", "recurrence_tree"]
 
 ExecutionEventKind = Literal[

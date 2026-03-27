@@ -9,16 +9,17 @@ Version: 0.1.0
 """
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
+
 from .classifier import classify_while
-from .guard_analysis import analyze_guard_for_engine
-from .update_analysis import analyze_updates
 from .control_variables import detect_control_variables
-from .progress_proofs import prove_progress
-from .patterns.linear_counter import LinearCounterPattern
-from .patterns.flag_kill import FlagKillPattern
-from .patterns.euclid_mod import EuclidModPattern
+from .guard_analysis import analyze_guard_for_engine
 from .patterns.binary_search_interval import BinarySearchIntervalPattern
+from .patterns.euclid_mod import EuclidModPattern
+from .patterns.flag_kill import FlagKillPattern
 from .patterns.geometric_growth import GeometricGrowthPattern
+from .patterns.linear_counter import LinearCounterPattern
+from .progress_proofs import prove_progress
+from .update_analysis import analyze_updates
 
 
 @dataclass

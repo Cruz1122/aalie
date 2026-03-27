@@ -5,7 +5,6 @@ Verifica el flujo completo desde AST hasta resultado final para múltiples algor
 y casos (best/worst/average).
 """
 
-import pytest
 from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
 
 
@@ -301,7 +300,7 @@ class TestIterativeAnalyzer:
         """Test: analyze con avg_model configurado"""
         from app.modules.analysis.models.avg_model import AvgModel
         analyzer = IterativeAnalyzer()
-        avg_model = AvgModel(mode="uniform", predicates={})
+        AvgModel(mode="uniform", predicates={})
         ast = {
             "type": "Program",
             "body": [

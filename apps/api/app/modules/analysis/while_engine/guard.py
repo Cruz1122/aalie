@@ -10,6 +10,10 @@ Version: 0.1.0
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Literal, Optional, Set
 
+from ..ir.expr_utils import expr_to_str
+from ..ir.expr_utils import is_literal_false as _is_literal_false
+from ..ir.expr_utils import is_literal_true as _is_literal_true
+
 
 @dataclass
 class GuardInfo:
@@ -35,10 +39,6 @@ class GuardInfo:
     desired: Optional[bool] = None  # True = guard exige var==true para continuar
     or_bool_vars: Set[str] = field(default_factory=set)  # Vars que son bool en disyuntos de OR
     and_bool_vars: Set[str] = field(default_factory=set)  # Vars que son bool en disyuntos de AND
-
-
-from ..ir.expr_utils import expr_to_str, is_literal_true as _is_literal_true, is_literal_false as _is_literal_false
-
 
 def _collect_bool_vars(expr: Any) -> Set[str]:
     """Recolecta variables que actúan como bool (identifier o var==true/false).
@@ -169,8 +169,8 @@ def _analyze_guard_rec(test: Any, atoms: List[Dict], vars_used: Set[str], has_ar
         if op in ("and", "&&"):
             _collect_vars_and_array(left, vars_used, has_array)
             _collect_vars_and_array(right, vars_used, has_array)
-            k1 = _analyze_guard_rec(left, atoms, vars_used, has_array)
-            k2 = _analyze_guard_rec(right, atoms, vars_used, has_array)
+            _analyze_guard_rec(left, atoms, vars_used, has_array)
+            _analyze_guard_rec(right, atoms, vars_used, has_array)
             return "and"
 
         if op in ("or", "||"):
@@ -237,11 +237,14 @@ def analyze_guard(test: Any) -> GuardInfo:
         elif expr_type == "binary":
             op = (test.get("op") or test.get("operator") or "").lower()
             if op in ("=", "=="):
-                l = test.get("left", {})
-                r = test.get("right", {})
-                if isinstance(l, dict) and l.get("type", "").lower() == "identifier":
-                    if _is_literal_true(r): return GuardInfo(kind="bool_var", bool_var=l.get("name"), desired=True, vars_used={l.get("name")})
-                    if _is_literal_false(r): return GuardInfo(kind="bool_var", bool_var=l.get("name"), desired=False, vars_used={l.get("name")})
+                left_expr = test.get("left", {})
+                right_expr = test.get("right", {})
+                if isinstance(left_expr, dict) and left_expr.get("type", "").lower() == "identifier":
+                    var_name = left_expr.get("name")
+                    if _is_literal_true(right_expr):
+                        return GuardInfo(kind="bool_var", bool_var=var_name, desired=True, vars_used={var_name})
+                    if _is_literal_false(right_expr):
+                        return GuardInfo(kind="bool_var", bool_var=var_name, desired=False, vars_used={var_name})
 
     return GuardInfo(
         kind=kind if kind in ("and", "or", "not", "rel", "bool_var") else "unknown",

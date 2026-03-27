@@ -4,8 +4,7 @@ Tests unitarios para semantics.symbol_table y scope_resolver.
 Author: @Cruz1122
 Version: 0.1.0
 """
-import pytest
-from app.modules.analysis.semantics import SymbolTable, SymbolInfo, resolve_scope, infer_type
+from app.modules.analysis.semantics import SymbolInfo, SymbolTable, resolve_scope
 
 
 class TestSymbolInfo:

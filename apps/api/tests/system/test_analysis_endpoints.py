@@ -3,8 +3,8 @@ Tests de sistema para endpoints adicionales de análisis.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
-import pytest
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app)

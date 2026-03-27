@@ -4,9 +4,10 @@ Tests unitarios para app.modules.analysis.visitors.while_repeat_visitor.
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 import pytest
+from sympy import Integer, Symbol
+
 from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
 from app.modules.parsing.service import parse_source
-from sympy import Symbol, Integer
 
 
 class TestWhileRepeatVisitor:

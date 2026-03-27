@@ -6,13 +6,13 @@ Bloque iterativo local + subllamadas recursivas.
 Author: Plan Sistema Traza Estructural
 Version: 0.1.0
 """
-from typing import Dict, Any
+from typing import Any, Dict
 
-from ..structured_trace_models import (
-    StructuredTraceView,
-    StructuredTraceRenderConfig,
-)
 from ..structural_trace_classifier import StructuralTraceClassification
+from ..structured_trace_models import (
+    StructuredTraceRenderConfig,
+    StructuredTraceView,
+)
 from .generic_recursive import _build_from_call_tree
 
 

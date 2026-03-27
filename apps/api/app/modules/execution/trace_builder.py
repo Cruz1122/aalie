@@ -3,11 +3,11 @@ Constructor del rastro de ejecución.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
-from typing import Any, Dict, List, Optional, Tuple
-from dataclasses import dataclass, asdict
-import json
-from sympy import Expr
 import copy
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, List, Optional, Tuple
+
+from sympy import Expr
 
 # Estimación de coste por operación primitiva (μs). Heurística basada en operaciones típicas.
 MICROSECONDS_PER_TOKEN = 3.0
@@ -176,7 +176,8 @@ class TraceBuilder:
 
         # #region agent log
         try:
-            import json as _json, time as _time
+            import json as _json
+            import time as _time
             _log_payload = {
                 "sessionId": "1b7cca",
                 "runId": "initial",

@@ -1,5 +1,6 @@
 # tests/unit/test_summation_closer.py
 import pytest
+
 from app.modules.analysis.utils.summation_closer import SummationCloser
 
 
@@ -117,7 +118,7 @@ class TestSummationCloser:
 
     def test_has_iterative_symbols_with_sum(self):
         """Test: _has_iterative_symbols en expresión con sumatoria"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol('i', integer=True)
         n = Symbol('n', integer=True)
         expr = Sum(Integer(1), (i, Integer(1), n)) + Symbol('t_while_3')
@@ -126,7 +127,7 @@ class TestSummationCloser:
 
     def test_has_summations_true(self):
         """Test: _has_summations detecta sumatorias"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol('i', integer=True)
         n = Symbol('n', integer=True)
         expr = Sum(Integer(1), (i, Integer(1), n))
@@ -142,7 +143,7 @@ class TestSummationCloser:
 
     def test_close_summation_with_sympy_expr(self):
         """Test: close_summation acepta expresión SymPy"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol('i', integer=True)
         n = Symbol('n', integer=True, positive=True)
         expr = Sum(Integer(1), (i, Integer(1), n))
@@ -341,7 +342,7 @@ class TestSummationCloser:
 
     def test_evaluate_all_sums_sympy_simple(self):
         """Test: _evaluate_all_sums_sympy evalúa sumatorias en expresión SymPy"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         n = Symbol("n", integer=True, positive=True)
         expr = Sum(Integer(1), (i, Integer(1), n))
@@ -358,7 +359,7 @@ class TestSummationCloser:
 
     def test_generate_steps_from_sympy(self):
         """Test: _generate_steps_from_sympy genera pasos desde expresión SymPy"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         n = Symbol("n", integer=True, positive=True)
         expr = Sum(Integer(1), (i, Integer(1), n))
@@ -368,7 +369,7 @@ class TestSummationCloser:
 
     def test_generate_steps_from_sympy_structure(self):
         """Test: _generate_steps_from_sympy_structure genera pasos desde estructura SymPy"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         n = Symbol("n", integer=True, positive=True)
         expr = Sum(Integer(1), (i, Integer(1), n))
@@ -378,7 +379,7 @@ class TestSummationCloser:
 
     def test_analyze_single_sum(self):
         """Test: _analyze_single_sum analiza sumatoria simple"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         n = Symbol("n", integer=True, positive=True)
         sum_expr = Sum(Integer(1), (i, Integer(1), n))
@@ -398,7 +399,7 @@ class TestSummationCloser:
 
     def test_analyze_nested_sums(self):
         """Test: _analyze_nested_sums analiza sumatorias anidadas"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         j = Symbol("j", integer=True)
         n = Symbol("n", integer=True, positive=True)
@@ -412,7 +413,7 @@ class TestSummationCloser:
 
     def test_analyze_nested_sum_with_structure(self):
         """Test: _analyze_nested_sum_with_structure analiza sumatoria anidada con estructura"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         j = Symbol("j", integer=True)
         n = Symbol("n", integer=True, positive=True)
@@ -424,7 +425,7 @@ class TestSummationCloser:
 
     def test_analyze_multiple_limits_sum(self):
         """Test: _analyze_multiple_limits_sum analiza sumatoria con múltiples límites"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         n = Symbol("n", integer=True, positive=True)
         sum_expr = Sum(Integer(1), (i, Integer(1), n))
@@ -528,7 +529,7 @@ class TestSummationCloser:
     
     def test_evaluate_all_sums_sympy_nested(self):
         """Test: _evaluate_all_sums_sympy evalúa sumatorias anidadas"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         j = Symbol("j", integer=True)
         n = Symbol("n", integer=True, positive=True)
@@ -539,7 +540,7 @@ class TestSummationCloser:
     
     def test_evaluate_all_sums_sympy_multiple_limits(self):
         """Test: _evaluate_all_sums_sympy maneja múltiples límites"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         j = Symbol("j", integer=True)
         n = Symbol("n", integer=True, positive=True)
@@ -551,7 +552,7 @@ class TestSummationCloser:
     
     def test_generate_steps_from_sympy_structure_nested(self):
         """Test: _generate_steps_from_sympy_structure genera pasos para estructura anidada"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         j = Symbol("j", integer=True)
         n = Symbol("n", integer=True, positive=True)
@@ -563,7 +564,7 @@ class TestSummationCloser:
     
     def test_analyze_single_sum_constant(self):
         """Test: _analyze_single_sum analiza sumatoria constante"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         n = Symbol("n", integer=True, positive=True)
         sum_expr = Sum(Integer(1), (i, Integer(1), n))
@@ -574,7 +575,7 @@ class TestSummationCloser:
     
     def test_analyze_single_sum_arithmetic(self):
         """Test: _analyze_single_sum analiza sumatoria aritmética"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         n = Symbol("n", integer=True, positive=True)
         sum_expr = Sum(i, (i, Integer(1), n))
@@ -584,7 +585,7 @@ class TestSummationCloser:
     
     def test_analyze_single_sum_quadratic(self):
         """Test: _analyze_single_sum analiza sumatoria cuadrática"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         n = Symbol("n", integer=True, positive=True)
         sum_expr = Sum(i**2, (i, Integer(1), n))
@@ -594,7 +595,7 @@ class TestSummationCloser:
     
     def test_analyze_nested_sums_multiple(self):
         """Test: _analyze_nested_sums analiza múltiples sumatorias anidadas"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         j = Symbol("j", integer=True)
         k = Symbol("k", integer=True)
@@ -609,7 +610,7 @@ class TestSummationCloser:
     
     def test_analyze_nested_sum_with_structure_complex(self):
         """Test: _analyze_nested_sum_with_structure analiza estructura compleja"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         j = Symbol("j", integer=True)
         n = Symbol("n", integer=True, positive=True)
@@ -767,7 +768,7 @@ class TestSummationCloser:
     
     def test_sympy_to_latex_with_fraction(self):
         """Test: _sympy_to_latex convierte fracciones a LaTeX"""
-        from sympy import Symbol, Rational
+        from sympy import Symbol
         n_sym = Symbol("n", integer=True, positive=True)
         expr = n_sym / 2
         result = self.closer._sympy_to_latex(expr)
@@ -860,7 +861,7 @@ class TestSummationCloser:
     
     def test_analyze_single_sum_with_quadratic_body(self):
         """Test: _analyze_single_sum analiza sumatoria con cuerpo cuadrático"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         n = Symbol("n", integer=True, positive=True)
         sum_expr = Sum(i**2 + 2*i + 1, (i, Integer(1), n))
@@ -876,7 +877,7 @@ class TestSummationCloser:
     
     def test_analyze_single_sum_with_constant_factor(self):
         """Test: _analyze_single_sum analiza sumatoria con factor constante"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         n = Symbol("n", integer=True, positive=True)
         # Sumatoria con cuerpo constante (no depende de i)
@@ -893,7 +894,7 @@ class TestSummationCloser:
     
     def test_analyze_single_sum_with_linear_body(self):
         """Test: _analyze_single_sum analiza sumatoria con cuerpo lineal"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         n = Symbol("n", integer=True, positive=True)
         # Cuerpo lineal: -i + n + 1
@@ -910,7 +911,7 @@ class TestSummationCloser:
     
     def test_analyze_nested_sums_three_levels(self):
         """Test: _analyze_nested_sums analiza tres niveles de anidamiento"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         j = Symbol("j", integer=True)
         k = Symbol("k", integer=True)
@@ -925,7 +926,7 @@ class TestSummationCloser:
     
     def test_analyze_nested_sum_with_structure_triangular(self):
         """Test: _analyze_nested_sum_with_structure analiza estructura triangular"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         j = Symbol("j", integer=True)
         n = Symbol("n", integer=True, positive=True)
@@ -938,7 +939,7 @@ class TestSummationCloser:
     
     def test_analyze_nested_sum_with_structure_rectangular(self):
         """Test: _analyze_nested_sum_with_structure analiza estructura rectangular"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         j = Symbol("j", integer=True)
         n = Symbol("n", integer=True, positive=True)
@@ -952,7 +953,7 @@ class TestSummationCloser:
     
     def test_analyze_multiple_limits_sum_two_limits(self):
         """Test: _analyze_multiple_limits_sum analiza sumatoria con dos límites"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         j = Symbol("j", integer=True)
         n = Symbol("n", integer=True, positive=True)
@@ -965,7 +966,7 @@ class TestSummationCloser:
     
     def test_analyze_multiple_limits_sum_three_limits(self):
         """Test: _analyze_multiple_limits_sum analiza sumatoria con tres límites"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         j = Symbol("j", integer=True)
         k = Symbol("k", integer=True)
@@ -978,7 +979,7 @@ class TestSummationCloser:
     
     def test_analyze_multiple_limits_sum_invalid_limits(self):
         """Test: _analyze_multiple_limits_sum maneja límites inválidos"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum
         # Crear Sum con límites inválidos (solo 2 elementos en lugar de 3)
         try:
             sum_expr = Sum(Integer(1), (Integer(1), Integer(2)))  # Límite inválido
@@ -992,7 +993,7 @@ class TestSummationCloser:
     
     def test_generate_steps_from_sympy_structure_single_sum(self):
         """Test: _generate_steps_from_sympy_structure genera pasos para Sum simple"""
-        from sympy import Symbol, Sum, Integer
+        from sympy import Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         n = Symbol("n", integer=True, positive=True)
         sum_expr = Sum(Integer(1), (i, Integer(1), n))
@@ -1011,7 +1012,7 @@ class TestSummationCloser:
     
     def test_generate_steps_from_sympy_structure_multiple_sums(self):
         """Test: _generate_steps_from_sympy_structure genera pasos para múltiples sumatorias"""
-        from sympy import Symbol, Sum, Integer, Add
+        from sympy import Add, Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         j = Symbol("j", integer=True)
         n = Symbol("n", integer=True, positive=True)
@@ -1024,7 +1025,7 @@ class TestSummationCloser:
     
     def test_evaluate_all_sums_sympy_with_add(self):
         """Test: _evaluate_all_sums_sympy evalúa expresión con Add"""
-        from sympy import Symbol, Sum, Integer, Add
+        from sympy import Add, Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         j = Symbol("j", integer=True)
         n = Symbol("n", integer=True, positive=True)
@@ -1036,7 +1037,7 @@ class TestSummationCloser:
     
     def test_evaluate_all_sums_sympy_with_mul(self):
         """Test: _evaluate_all_sums_sympy evalúa expresión con Mul"""
-        from sympy import Symbol, Sum, Integer, Mul
+        from sympy import Integer, Mul, Sum, Symbol
         i = Symbol("i", integer=True)
         n = Symbol("n", integer=True, positive=True)
         sum_expr = Sum(Integer(1), (i, Integer(1), n))
@@ -1046,7 +1047,7 @@ class TestSummationCloser:
     
     def test_evaluate_all_sums_sympy_no_evaluation_possible(self):
         """Test: _evaluate_all_sums_sympy retorna expresión si no puede evaluar"""
-        from sympy import Symbol, Sum, Integer, Function
+        from sympy import Function, Integer, Sum, Symbol
         i = Symbol("i", integer=True)
         n = Symbol("n", integer=True, positive=True)
         # Crear función simbólica que no se puede evaluar
@@ -1091,8 +1092,4 @@ class TestSummationCloser:
         closed, steps = self.closer.close_summation(expr, variable="n")
         assert closed is not None
         assert steps is not None
-
-
-if __name__ == '__main__':
-    unittest.main()
 

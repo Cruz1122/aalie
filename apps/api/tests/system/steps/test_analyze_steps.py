@@ -1,5 +1,5 @@
 # Steps y escenarios BDD para analyze_open.feature
-from pytest_bdd import scenario, when, then
+from pytest_bdd import scenario, then, when
 
 FEATURE_DIR = "../features"
 FEATURE = "analyze_open.feature"

@@ -12,7 +12,6 @@ from typing import Any, Dict, List, Literal, Optional
 
 from .structural_trace_classifier import StructuralPatternKind
 
-
 StructuredNodeRole = Literal[
     "call",
     "operation",

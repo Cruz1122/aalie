@@ -1,7 +1,8 @@
-from typing import List, Tuple, Optional, Union
-from sympy import Symbol, summation, simplify, latex, sympify, Sum, expand, factor, Expr, Add, Mul
-from sympy.parsing.sympy_parser import parse_expr
 import re
+from typing import List, Optional, Tuple, Union
+
+from sympy import Add, Expr, Mul, Sum, Symbol, expand, factor, latex, simplify, summation, sympify
+from sympy.parsing.sympy_parser import parse_expr
 
 from ..translations import get_labels
 
@@ -94,7 +95,8 @@ class SummationCloser:
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         Version: 0.1.0
         """
-        from sympy import Integer as SymInteger, simplify
+        from sympy import Integer as SymInteger
+        from sympy import simplify
 
         main_sym = Symbol(variable, integer=True)
         candidate_zero = expr.subs(var_symbol, SymInteger(0))
@@ -437,8 +439,8 @@ class SummationCloser:
             
             # Simplificar límites si son numéricos
             try:
-                start_val = int(start) if start.strip().isdigit() else start
-                end_val = int(end) if end.strip().isdigit() else end
+                int(start) if start.strip().isdigit() else start
+                int(end) if end.strip().isdigit() else end
             except Exception:
                 # start_val y end_val no se usan después, pero se mantienen para compatibilidad
                 pass
@@ -802,7 +804,7 @@ class SummationCloser:
                         if not (evaluated_str.startswith('(') and evaluated_str.endswith(')')):
                             # El resultado no tiene paréntesis pero el cuerpo sí, hay un paréntesis extra
                             expr_after = expr_after[1:]
-                            print(f"[SummationCloser] Eliminando paréntesis extra en expr_after")
+                            print("[SummationCloser] Eliminando paréntesis extra en expr_after")
                 
                 expr = expr_before + evaluated_str + expr_after
                 
@@ -814,7 +816,7 @@ class SummationCloser:
                     while expr.endswith(')') and final_close > final_open:
                         expr = expr[:-1]
                         final_close -= 1
-                        print(f"[SummationCloser] Limpiando paréntesis extra al final")
+                        print("[SummationCloser] Limpiando paréntesis extra al final")
                 
                 # Debug: mostrar el reemplazo
                 replaced_part = expr[innermost_match.start():body_start + len(body_str)] if innermost_match.start() < len(expr) else ''
@@ -1185,7 +1187,7 @@ class SummationCloser:
         Returns:
             Expresión SymPy con todas las sumatorias evaluadas
         """
-        from sympy import simplify, expand, factor, summation
+        from sympy import expand, factor, simplify, summation
         
         def evaluate_all_sums(expr: Expr) -> Expr:
             """Evalúa recursivamente todas las sumatorias en la expresión."""
@@ -1230,7 +1232,6 @@ class SummationCloser:
                             end = limits[2]
                             try:
                                 # Usar summation() que maneja mejor las sumatorias simbólicas
-                                from sympy import summation
                                 evaluated = summation(body, (sum_var, start, end))
                                 evaluated = simplify(evaluated)
                                 # Verificar si el resultado todavía contiene Sum, seguir evaluando
@@ -1483,7 +1484,8 @@ class SummationCloser:
         """
         steps = []
         evaluated_result = None
-        from sympy import Integer, latex, Integer as Int, preorder_traversal
+        from sympy import Integer, preorder_traversal
+        from sympy import Integer as Int
         
         try:
             # PRIMERO: Verificar si hay múltiples límites (SymPy representa sumatorias anidadas así)
@@ -1741,7 +1743,9 @@ class SummationCloser:
                     # Si el cuerpo depende de la variable de forma lineal (como -i + n + 1)
                     else:
                         # Analizar si el cuerpo es una expresión lineal en la variable de suma
-                        from sympy import expand, Add as SymAdd, Mul as SymMul
+                        from sympy import Add as SymAdd
+                        from sympy import Mul as SymMul
+                        from sympy import expand
                         
                         # Expandir el cuerpo para ver sus términos
                         body_expanded = expand(body)
@@ -1987,7 +1991,7 @@ class SummationCloser:
             Lista de pasos en formato LaTeX
         """
         steps = []
-        from sympy import latex, Integer as Int
+        from sympy import Integer as Int
         
         if len(sums) >= 2:
             # Dos o más sumatorias: son anidadas
@@ -2141,7 +2145,7 @@ class SummationCloser:
             Lista de pasos en formato LaTeX
         """
         steps = []
-        from sympy import latex, Integer as Int
+        from sympy import Integer as Int
         
         # Sum(body, (var1, start1, end1), (var2, start2, end2), ...)
         body = sum_expr.args[0]
@@ -2216,7 +2220,7 @@ class SummationCloser:
                 outer_end_latex = limits_info[0]['end_latex']
                 
                 # Importar funciones necesarias
-                from sympy import simplify, expand
+                from sympy import expand, simplify
                 
                 # Si el cuerpo es 1, es una sumatoria constante anidada
                 if body == Int(1) or body == 1:
@@ -2281,7 +2285,7 @@ class SummationCloser:
                                     evaluated_simplified = simplify(evaluated_simplified)
                                     if evaluated_simplified.has(var_symbol):
                                         # Si todavía tiene la variable, intentar usar summation() de SymPy
-                                        from sympy import summation, Sum as SymSum
+                                        from sympy import Sum as SymSum
                                         # Intentar re-evaluar si es posible
                                         if isinstance(evaluated_simplified, SymSum):
                                             evaluated_simplified = evaluated_simplified.doit()
@@ -2321,4 +2325,3 @@ class SummationCloser:
                 return steps
         
         return steps
-

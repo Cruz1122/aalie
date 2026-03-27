@@ -3,8 +3,9 @@ Contract tests: parametrizados por algoritmo + spec desde _support/algorithms y 
 Para nightly o ejecución completa; no obligatorio en daily gate.
 """
 import pytest
+
 from app.modules.analysis.service import analyze_algorithm
-from tests._support.assertions import assert_complexity_class, assert_case_complexity
+from tests._support.assertions import assert_case_complexity, assert_complexity_class
 from tests._support.loaders import load_algorithm, load_spec
 
 # Lista (familia, nombre) de algoritmos con spec en expectations/

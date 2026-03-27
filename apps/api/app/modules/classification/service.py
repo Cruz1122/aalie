@@ -3,9 +3,10 @@ Servicio de clasificación de algoritmos.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
-from typing import Dict, Any
-from .classifier import detect_algorithm_kind
+from typing import Any, Dict
+
 from ..parsing.service import parse_source
+from .classifier import detect_algorithm_kind
 
 
 def classify_algorithm(source: str = None, ast: Dict[str, Any] = None) -> Dict[str, Any]:

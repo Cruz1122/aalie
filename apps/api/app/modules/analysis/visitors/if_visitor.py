@@ -1,6 +1,7 @@
 # apps/api/app/analysis/visitors/if_visitor.py
 
 from typing import Any, Dict
+
 from sympy import Integer, Mul, Rational
 
 
@@ -171,7 +172,7 @@ class IfVisitor:
             # Un early return es un return o break que está dentro de un bucle
             def has_early_return(rows):
                 # Verificar si hay bucles activos (multiplicadores en el stack)
-                has_active_loops = hasattr(self, 'loop_stack') and len(self.loop_stack) > 0
+                hasattr(self, 'loop_stack') and len(self.loop_stack) > 0
                 
                 for row in rows:
                     # Si es un return o break, y hay bucles activos, es un early return

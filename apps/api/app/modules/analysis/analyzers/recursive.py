@@ -1,35 +1,41 @@
-from typing import Any, Dict, List, Optional, Tuple
 import math
 import re
+from collections import Counter
+from typing import Any, Dict, List, Optional, Tuple
+
 from sympy import (
     Abs,
     Eq,
     Expr,
     Function,
+    I,
     Integer,
-    Pow,
     Poly,
+    Pow,
     Rational,
     Symbol,
-    Sum as SymSum,
     expand,
     factor,
     latex,
-    roots as sympy_roots,
+    limit,
+    oo,
     rsolve,
     simplify,
     solve,
     sqrt,
     summation,
-    symbols,
     sympify,
-    I,
-    im,
-    limit,
-    log as sympy_log,
-    oo,
 )
-from collections import Counter
+from sympy import (
+    Sum as SymSum,
+)
+from sympy import (
+    log as sympy_log,
+)
+from sympy import (
+    roots as sympy_roots,
+)
+
 from .base import BaseAnalyzer
 from .characteristic_steps import StepContext, build_characteristic_step_bundle
 from .iteration_steps import IterationStepContext, build_iteration_step_bundle
@@ -2220,7 +2226,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Detectar operaciones binarias simples (sin bucles) - O(1)
         # PERO: Si contiene llamadas recursivas, no cuenta como trabajo
         if node_type == "Binary":
-            op = node.get("op", "")
+            node.get("op", "")
             left = node.get("left", {})
             right = node.get("right", {})
             
@@ -2974,7 +2980,6 @@ class RecursiveAnalyzer(BaseAnalyzer):
         p_latex = "0"
         reference_growth = "1"
         relation_type = "undetermined"
-        comparison_code: Optional[str] = None
         case_candidate: Optional[int] = None
         comparison_partial = False
         regularity_holds: Optional[bool] = None
@@ -2995,13 +3000,12 @@ class RecursiveAnalyzer(BaseAnalyzer):
             if f_expr is None:
                 relation_type = "undetermined"
                 comparison_partial = True
-                comparison_code = "MASTER_COMPARISON_PARTIAL"
             else:
                 comparison_data = self._compare_master_growth_structured(f_expr, p_expr, n_sym)
                 relation_type = comparison_data["relation_type"]
                 case_candidate = comparison_data["case_candidate"]
                 comparison_partial = comparison_data["status"] == "partial"
-                comparison_code = comparison_data.get("code")
+                comparison_data.get("code")
                 comparison_legacy = comparison_data.get("comparison")
 
         # Regularidad solo para caso 3
@@ -3225,11 +3229,10 @@ class RecursiveAnalyzer(BaseAnalyzer):
             return False
         
         # Si body es un Block, obtener su lista de statements
-        statements_list = None
         if isinstance(body, dict) and body.get("type") == "Block":
-            statements_list = body.get("body", []) or body.get("statements", [])
+            body.get("body", []) or body.get("statements", [])
         elif isinstance(body, list):
-            statements_list = body
+            pass
         
         # Buscar returns que estén antes de cualquier llamada recursiva en el flujo de control
         # Esto buscará en todo el body, incluyendo estructuras anidadas como IFs
@@ -3554,7 +3557,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         
         # Intentar parsear directamente con SymPy
         try:
-            from sympy import sympify, log
+            from sympy import log, sympify
             # Reemplazar n con el símbolo
             expr_str_clean = expr_str.replace("n", str(n_sym))
             return sympify(expr_str_clean, locals={"log": log})
@@ -3576,7 +3579,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             {"case": int, "comparison": str}
         """
         try:
-            from sympy import limit, oo, simplify, Integer
+            from sympy import Integer, limit, oo, simplify
             
             # Caso especial: si g(n) = 1 (log_b_a = 0) y f(n) = n, es Caso 3
             if abs(log_b_a) < 1e-10:
@@ -3677,7 +3680,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         Returns:
             {"case": int, "comparison": str}
         """
-        from sympy import Symbol, Integer
+        from sympy import Integer, Symbol
         
         n_sym = Symbol("n", integer=True, positive=True)
         
@@ -4018,7 +4021,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         Returns:
             String LaTeX simplificado
         """
-        from sympy import simplify, powsimp
+        from sympy import powsimp, simplify
         
         # Simplificar la expresión usando SymPy
         try:
@@ -5259,7 +5262,7 @@ FIN FUNCIÓN"""
             
             # Construir término g(n) solo si no es homogénea
             g_term = "" if is_homogeneous else " + g(i)"
-            g_comment = "" if is_homogeneous else f" + g(i)"
+            g_comment = "" if is_homogeneous else " + g(i)"
             
             code = f"""FUNCIÓN dp_solve_optimized(n):
     SI n <= 0 ENTONCES
@@ -6636,11 +6639,11 @@ FIN FUNCIÓN"""
             Lista de strings LaTeX con las expansiones simplificadas
         """
         g_type = g_n_info["type"]
-        g_pattern = g_n_info["pattern"]
+        g_n_info["pattern"]
         factor = g_n_info["factor"]
         
         expansions = []
-        n_sym = Symbol('n')
+        Symbol('n')
         
         # Simplificar f(n) usando sympy si es posible
         try:
@@ -6652,7 +6655,7 @@ FIN FUNCIÓN"""
             else:
                 # Intentar parsear como expresión
                 f_n_expr = sympify(f_n.replace("\\", "").replace("theta", "").replace("Theta", "").replace("(", "").replace(")", "").strip(), evaluate=False)
-        except:
+        except Exception:
             # Si falla, usar como string
             f_n_expr = None
         
@@ -6737,7 +6740,7 @@ FIN FUNCIÓN"""
         elif g_type == "division":
             return f"T(n) = T(n/{factor}^k) + \\sum_{{i=0}}^{{k-1}} ({f_n})|_{{n/{factor}^i}}"
         else:
-            return f"T(n) = T(g^k(n)) + \\sum_{{i=0}}^{{k-1}} f(g^i(n))"
+            return "T(n) = T(g^k(n)) + \\sum_{i=0}^{k-1} f(g^i(n))"
     
     def _determine_k_from_base_case(self, g_n_info: Dict[str, Any], n0: int) -> str:
         """
@@ -6817,7 +6820,7 @@ FIN FUNCIÓN"""
                 f_n_expr = Integer(int(f_simplified))
             else:
                 f_n_expr = None
-        except:
+        except Exception:
             f_n_expr = None
         
         # Detectar el tipo de sumatoria
@@ -6835,14 +6838,14 @@ FIN FUNCIÓN"""
                 evaluated = f"\\sum_{{i=0}}^{{n-1}} 1 = {sum_latex} = \\Theta(n)"
                 theta = "n"
             else:  # division
-                evaluated = f"\\Theta(\\log n)"
+                evaluated = "\\Theta(\\log n)"
                 theta = "\\log n"
         
         elif f_simplified == "n" or "n" in f_simplified:
             # Sumatoria aritmética o geométrica
             if g_type == "subtraction":
                 # Σ (n-i) para i=0..n-1 = n + (n-1) + ... + 1 = n(n+1)/2
-                evaluated = f"\\sum_{{i=0}}^{{n-1}} (n-i) = \\frac{{n(n+1)}}{{2}}"
+                evaluated = "\\sum_{i=0}^{n-1} (n-i) = \\frac{n(n+1)}{2}"
                 theta = "n^2"
             else:  # division
                 # Σ n/2^i para i=0..log(n) ≈ 2n (serie geométrica)
@@ -6852,19 +6855,19 @@ FIN FUNCIÓN"""
         elif "^" in f_simplified or "2" in f_simplified:
             # Polinomio de grado superior
             if g_type == "subtraction":
-                evaluated = f"\\Theta(n^3)"
+                evaluated = "\\Theta(n^3)"
                 theta = "n^3"
             else:
-                evaluated = f"\\Theta(n^2)"
+                evaluated = "\\Theta(n^2)"
                 theta = "n^2"
         
         else:
             # Por defecto
             if g_type == "subtraction":
-                evaluated = f"\\Theta(n)"
+                evaluated = "\\Theta(n)"
                 theta = "n"
             else:
-                evaluated = f"\\Theta(n)"
+                evaluated = "\\Theta(n)"
                 theta = "n"
         
         return {
@@ -7150,7 +7153,7 @@ FIN FUNCIÓN"""
             # Fibonacci-type: T(n) = c1*T(n-k1) + c2*T(n-k2) + ... (múltiples términos)
             # Árbol con subproblemas superpuestos; no usar estructura divide-and-conquer
             shifts = self.recurrence.get("shifts", [])
-            coefficients = self.recurrence.get("coefficients", [])
+            self.recurrence.get("coefficients", [])
             if len(shifts) >= 2:
                 recurrence_form = self.recurrence.get("form", "T(n) = T(n-1) + T(n-2) + 1")
                 self.proof_steps.append({"id": "tree_extract", "text": f"\\text{{Recurrencia }} {recurrence_form}"})
@@ -7446,7 +7449,7 @@ FIN FUNCIÓN"""
             if a == int(b):
                 # Suma geométrica: Σ b^i desde i=0 hasta log_b(n) = (b^(log_b(n)+1) - 1)/(b - 1) = (b·n - 1)/(b - 1) = Θ(n)
                 evaluated = f"{f_n} \\cdot \\sum_{{i=0}}^{{{height_expr}}} {a}^i = {f_n} \\cdot \\frac{{{a}^{{\\log_{{{b_str}}}(n)+1}} - 1}}{{{a} - 1}} = {f_n} \\cdot \\frac{{{a} \\cdot n - 1}}{{{a} - 1}}"
-                theta = f"\\Theta(n)"
+                theta = "\\Theta(n)"
             else:
                 # Si a ≠ b, el término dominante es a^log_b(n) = n^log_b(a)
                 evaluated = f"{f_n} \\cdot \\sum_{{i=0}}^{{{height_expr}}} {a}^i = {f_n} \\cdot \\frac{{{a}^{{\\log_{{{b_str}}}(n)+1}} - 1}}{{{a} - 1}} \\approx {f_n} \\cdot n^{{\\log_{{{b_str}}} {a}}}"
@@ -7458,11 +7461,11 @@ FIN FUNCIÓN"""
             # Si a = b, entonces Σ 1^i = log_b(n), entonces T(n) = n·log_b(n)
             if a == int(b):
                 evaluated = f"n \\cdot \\sum_{{i=0}}^{{{height_expr}}} 1 = n \\cdot {height_expr}"
-                theta = f"\\Theta(n \\log n)"
+                theta = "\\Theta(n \\log n)"
             # Si a < b, la suma converge: n · (1 - (a/b)^(log_b(n)+1))/(1 - a/b) ≈ n
             elif a < b:
                 evaluated = f"n \\cdot \\sum_{{i=0}}^{{{height_expr}}} ({a}/{b_str})^i \\approx n"
-                theta = f"\\Theta(n)"
+                theta = "\\Theta(n)"
             # Si a > b, domina el último nivel: n · (a/b)^(log_b(n)) ≈ n · a^log_b(n) / b^log_b(n) = n^log_b(a)
             else:
                 evaluated = f"n \\cdot \\sum_{{i=0}}^{{{height_expr}}} ({a}/{b_str})^i \\approx n^{{\\log_{{{b_str}}} {a}}}"
@@ -7473,10 +7476,10 @@ FIN FUNCIÓN"""
             # Similar al caso anterior pero con n^2
             if a == int(b):
                 evaluated = f"n^2 \\cdot \\sum_{{i=0}}^{{{height_expr}}} ({a}/{b_str}^2)^i \\approx n^2"
-                theta = f"\\Theta(n^2)"
+                theta = "\\Theta(n^2)"
             else:
                 evaluated = f"n^2 \\cdot \\sum_{{i=0}}^{{{height_expr}}} ({a}/{b_str}^2)^i"
-                theta = f"\\Theta(n^2)"
+                theta = "\\Theta(n^2)"
         
         # Caso por defecto: usar expresión general
         else:
@@ -7511,7 +7514,6 @@ FIN FUNCIÓN"""
         
         b_str = self._simplify_number_latex(b)
         nlogba = f"n^{{\\log_{{{b_str}}} {a}}}"
-        height_expr = f"\\log_{{{b_str}}}(n)"
         
         # Caso: f(n) = constante
         if f_simplified == "1" or f_simplified == "c" or f_simplified.replace(" ", "") == "c_1":
@@ -7529,7 +7531,7 @@ FIN FUNCIÓN"""
         # Caso: f(n) = n
         elif f_simplified == "n":
             if a == int(b):
-                return {"level": "all", "reason": f"\\text{{Cada nivel tiene costo }} n \\\\ \\text{{Total }} = n \\cdot \\log n"}
+                return {"level": "all", "reason": "\\text{Cada nivel tiene costo } n \\\\ \\text{Total } = n \\cdot \\log n"}
             elif a < b:
                 return {"level": "root", "reason": f"\\text{{Trabajo en raíz }} {f_n} \\\\ \\text{{Trabajo en hojas}}"}
             else:

@@ -4,8 +4,8 @@ Tests de sistema para el endpoint /grammar/parse.
 Verifica que el parsing de pseudocódigo funcione correctamente a través del endpoint HTTP.
 """
 
-import pytest
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 client = TestClient(app)

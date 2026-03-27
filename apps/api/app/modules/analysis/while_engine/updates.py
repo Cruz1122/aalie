@@ -10,7 +10,7 @@ Version: 0.1.0
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set
 
-from ..ir.expr_utils import expr_to_str, is_literal_true, is_literal_false, is_simple_constant
+from ..ir.expr_utils import expr_to_str, is_literal_false, is_literal_true, is_simple_constant
 
 
 @dataclass

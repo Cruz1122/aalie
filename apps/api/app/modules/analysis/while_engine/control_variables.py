@@ -9,8 +9,8 @@ Version: 0.1.0
 """
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Set
-from ..ir.expr_utils import expr_vars
-from ..semantics import SymbolTable, SymbolInfo
+
+from ..semantics import SymbolTable
 
 
 @dataclass

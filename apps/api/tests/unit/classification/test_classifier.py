@@ -4,12 +4,12 @@ Tests unitarios para app.modules.classification.classifier.
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 from app.modules.classification.classifier import (
-    detect_algorithm_kind,
-    _has_iterative_constructs,
     _find_node_type,
     _find_procedure_definition,
+    _has_iterative_constructs,
     _has_recursive_calls,
-    _search_recursive_calls
+    _search_recursive_calls,
+    detect_algorithm_kind,
 )
 
 

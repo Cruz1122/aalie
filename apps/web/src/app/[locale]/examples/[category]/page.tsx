@@ -1,5 +1,5 @@
-import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { ExamplesCategoryView } from "@/components/examples/ExamplesCategoryView";
 import {

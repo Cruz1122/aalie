@@ -7,13 +7,13 @@ Usa pseudocode como input y expectativas explícitas (auténticos).
 Author: @Cruz1122
 """
 import pytest
+
 from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import (
     assert_all_cases_complexity,
     assert_notation_no_array_symbols,
     get_totals,
 )
-
 
 # Bucles anidados con límites variables: FOR i=1 TO n, FOR j=i TO n → Θ(n²)
 NESTED_LOOPS_VARIABLE_LIMITS = """triangular(n) BEGIN

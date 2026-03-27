@@ -3,11 +3,11 @@ Tests de component: hasta 15 algoritmos canónicos para el daily gate.
 Carga pseudocódigo desde _support/algorithms/ y valida con _support.assertions.
 """
 import pytest
+
 from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import (
     assert_all_cases_complexity,
     assert_has_asymptotic_notation,
-    assert_no_unknown_counts,
     get_totals,
 )
 from tests._support.loaders import load_algorithm

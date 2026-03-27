@@ -9,6 +9,7 @@ Objetivo: diagnosticar dónde falla el motor de análisis.
 Author: @Cruz1122
 """
 import pytest
+
 from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import (
     assert_all_cases_complexity,
@@ -18,7 +19,6 @@ from tests._support.assertions import (
     get_totals,
     notation_has_complexity,
 )
-
 
 # --- Algoritmos iterativos ---
 

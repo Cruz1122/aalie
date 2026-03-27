@@ -9,8 +9,8 @@ Version: 0.1.0
 """
 from typing import Any, Dict, Optional
 
-from .structural_trace_classifier import classify_structural_trace
 from .builder_factory import build_structured_trace, structured_view_to_graph
+from .structural_trace_classifier import classify_structural_trace
 from .structured_trace_models import StructuredTraceRenderConfig
 
 

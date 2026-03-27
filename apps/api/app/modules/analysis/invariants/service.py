@@ -8,8 +8,7 @@ from typing import Any, Dict, Optional
 from .classifier import classify_loop_pattern
 from .schemas import SUPPORTED_PATTERNS, empty_loop_invariant, normalize_locale
 from .selector import select_significant_loop
-from .templates import build_invariant_text, resolve_template_variant, generate_behaviour
-
+from .templates import build_invariant_text, generate_behaviour, resolve_template_variant
 
 _SPANISH_ACCENT_REPLACEMENTS: tuple[tuple[str, str], ...] = (
     ("iteracion", "iteración"),

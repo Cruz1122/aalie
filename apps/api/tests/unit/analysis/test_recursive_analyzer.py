@@ -3,8 +3,10 @@ Tests unitarios para métodos helper de RecursiveAnalyzer.
 
 Author: Tests generados para aumentar cobertura de código
 """
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import MagicMock, patch
+
 from app.modules.analysis.analyzers.recursive import RecursiveAnalyzer
 
 
@@ -78,10 +80,6 @@ class TestRecursiveAnalyzerHelpers:
 
     def test_find_procedure_by_name_not_found(self):
         """Test: _find_procedure_by_name no encuentra procedimiento"""
-        ast = {
-            "type": "Program",
-            "body": []
-        }
         with patch.object(self.analyzer, '_find_main_procedure', return_value=None):
             result = self.analyzer._find_procedure_by_name("nonexistent")
             assert result is None
@@ -945,7 +943,7 @@ class TestRecursiveAnalyzerDPValidation:
 
     def test_parse_complexity_expression_constant(self):
         """Test: _parse_complexity_expression parsea constante"""
-        from sympy import Symbol, Integer
+        from sympy import Integer, Symbol
         n_sym = Symbol("n", integer=True, positive=True)
         result = self.analyzer._parse_complexity_expression("1", n_sym)
         assert result is not None
@@ -977,7 +975,7 @@ class TestRecursiveAnalyzerDPValidation:
 
     def test_compare_with_limits_case_1(self):
         """Test: _compare_with_limits detecta Caso 1"""
-        from sympy import Symbol, Integer
+        from sympy import Integer, Symbol
         n_sym = Symbol("n", integer=True, positive=True)
         f_n = Integer(1)  # f(n) = 1
         g_n = n_sym  # g(n) = n
@@ -1101,7 +1099,7 @@ class TestRecursiveAnalyzerDPValidation:
 
     def test_simplify_expr_latex(self):
         """Test: _simplify_expr_latex simplifica expresión SymPy a LaTeX"""
-        from sympy import Symbol, Integer
+        from sympy import Integer, Symbol
         n_sym = Symbol("n", integer=True, positive=True)
         expr = n_sym ** 2 + Integer(1)
         result = self.analyzer._simplify_expr_latex(expr)
@@ -1362,7 +1360,7 @@ class TestRecursiveAnalyzerDPValidation:
         
         # Configurar recurrencia
         recursive_calls = self.analyzer._find_recursive_calls(proc_def)
-        linear_info = self.analyzer._detect_linear_recurrence(proc_def, recursive_calls)
+        self.analyzer._detect_linear_recurrence(proc_def, recursive_calls)
         
         # Simular extracción de recurrencia
         self.analyzer.recurrence = {
@@ -3410,12 +3408,6 @@ class TestRecursiveAnalyzerDPValidation:
         assert steps[1]["status"] == "unsupported"
         assert "ITER_UNSUPPORTED_NON_LINEAR_FORM" in steps[1]["audit"]["codes"]
     
-    def test_apply_recursion_tree_method_no_recurrence(self):
-        """Test: _apply_recursion_tree_method falla si no hay recurrencia"""
-        self.analyzer.recurrence = None
-        result = self.analyzer._apply_recursion_tree_method()
-        assert not result.get("success")
-    
     def test_generate_dp_code(self):
         """Test: _generate_dp_code genera código DP"""
         coefficients = {1: 1, 2: 1}
@@ -3655,7 +3647,3 @@ class TestRecursiveAnalyzerDPValidation:
         result = self.analyzer._identify_dominating_level(levels, a, b, f_n)
         assert isinstance(result, dict)
         assert "level" in result
-
-
-if __name__ == '__main__':
-    unittest.main()

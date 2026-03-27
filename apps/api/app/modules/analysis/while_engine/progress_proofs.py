@@ -8,6 +8,7 @@ Version: 0.1.0
 """
 from dataclasses import dataclass
 from typing import Any, List, Optional
+
 from sympy import Expr
 
 

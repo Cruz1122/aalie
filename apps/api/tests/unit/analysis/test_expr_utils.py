@@ -4,16 +4,12 @@ Tests unitarios para ir.expr_utils.
 Author: @Cruz1122
 Version: 0.1.0
 """
-import pytest
 from app.modules.analysis.ir.expr_utils import (
+    expr_equals,
     expr_to_str,
     expr_vars,
-    expr_kind,
-    is_numeric_expr,
-    is_boolean_expr,
-    is_literal_true,
     is_literal_false,
-    expr_equals,
+    is_literal_true,
     is_simple_constant,
 )
 

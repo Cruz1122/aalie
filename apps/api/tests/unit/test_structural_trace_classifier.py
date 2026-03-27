@@ -9,8 +9,8 @@ Version: 0.1.0
 import pytest
 
 from app.modules.execution.derivations.structural_trace_classifier import (
-    classify_structural_trace,
     StructuralTraceClassification,
+    classify_structural_trace,
 )
 
 

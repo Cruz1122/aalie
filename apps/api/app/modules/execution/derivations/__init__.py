@@ -11,9 +11,9 @@ Version: 0.1.0
 from ..explanation_templates import explain_step, explain_steps
 from ..metrics_aggregator import aggregate_metrics
 from .structural_trace_classifier import (
-    classify_structural_trace,
-    StructuralTraceClassification,
     StructuralPatternKind,
+    StructuralTraceClassification,
+    classify_structural_trace,
 )
 from .structured_trace_builder import build_structured_trace_result
 

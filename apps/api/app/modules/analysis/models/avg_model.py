@@ -1,5 +1,6 @@
-from typing import Dict, Optional, Any
-from sympy import Symbol, Integer, Rational
+from typing import Any, Dict, Optional
+
+from sympy import Integer, Rational, Symbol
 
 
 class AvgModel:

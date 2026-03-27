@@ -6,14 +6,11 @@ Usa pseudocode como input y expectativas explícitas de complejidad (auténticos
 
 Author: @Cruz1122
 """
-import pytest
 from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import (
     assert_all_cases_complexity,
-    get_totals,
     get_by_line,
 )
-
 
 INSERTION_SORT = """insertionSort(arr, n) BEGIN
   FOR i <- 2 TO n DO BEGIN

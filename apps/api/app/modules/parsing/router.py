@@ -3,10 +3,12 @@ Router para el módulo de parsing.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
-from fastapi import APIRouter, Body
 from typing import Any, Dict
-from .service import parse_source
+
+from fastapi import APIRouter, Body
+
 from .adapter import is_grammar_available
+from .service import parse_source
 
 router = APIRouter(prefix="/grammar", tags=["grammar"])
 

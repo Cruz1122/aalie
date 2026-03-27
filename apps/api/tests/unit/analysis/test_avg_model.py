@@ -3,8 +3,9 @@ Tests unitarios para app.modules.analysis.models.avg_model.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
-from sympy import Rational, Symbol
 import pytest
+from sympy import Rational, Symbol
+
 from app.modules.analysis.models.avg_model import AvgModel
 
 

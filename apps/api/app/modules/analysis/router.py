@@ -3,15 +3,17 @@ Router para el módulo de analysis.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
-from fastapi import APIRouter, Body
 from typing import Any, Dict
-from .service import analyze_algorithm, detect_methods
-from .schemas import AnalyzeRequest, TraceRequest
-from ..parsing.service import parse_source
+
+from fastapi import APIRouter, Body
+
 from ..classification.service import classify_algorithm as classify_algo
-from ..execution.executor import CodeExecutor
 from ..execution.derivations.structured_trace_builder import build_structured_trace_result
 from ..execution.derivations.structured_trace_models import StructuredTraceRenderConfig
+from ..execution.executor import CodeExecutor
+from ..parsing.service import parse_source
+from .schemas import AnalyzeRequest, TraceRequest
+from .service import analyze_algorithm, detect_methods
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 

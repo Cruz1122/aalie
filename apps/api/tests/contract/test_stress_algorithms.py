@@ -6,6 +6,7 @@ Objetivo: que el analizador no falle y, cuando exista spec, validar todos los ca
 from pathlib import Path
 
 import pytest
+
 from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import assert_all_cases_complexity
 from tests._support.loaders import load_algorithm, load_spec

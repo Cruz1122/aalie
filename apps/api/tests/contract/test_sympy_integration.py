@@ -4,7 +4,6 @@ Tests de integración básica con SymPy.
 Verifica que los componentes trabajan juntos correctamente.
 """
 
-import pytest
 from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
 
 

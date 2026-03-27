@@ -1,7 +1,7 @@
 from typing import Any
-from sympy import Symbol, Integer, sympify, Expr
-from sympy import Eq, Ne, Lt, Le, Gt, Ge
-from sympy.logic.boolalg import And, Or, Not
+
+from sympy import Eq, Expr, Ge, Gt, Integer, Le, Lt, Ne, Symbol, sympify
+from sympy.logic.boolalg import And, Not, Or
 
 
 class ExprConverter:

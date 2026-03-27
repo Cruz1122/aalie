@@ -4,6 +4,7 @@ Tests unitarios para app.modules.analysis.visitors.if_visitor.
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 import pytest
+
 from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
 
 
@@ -196,7 +197,7 @@ class TestIfVisitor:
             "pos": {"line": 2},
             "test": {"type": "binary", "left": {"type": "identifier", "name": "x"}, "op": ">", "right": {"type": "number", "value": 0}}
         }
-        initial_rows = len(self.analyzer.rows)
+        len(self.analyzer.rows)
         self.analyzer.visitIf(node, mode="worst")
         # Debe manejar el caso sin causar error
 

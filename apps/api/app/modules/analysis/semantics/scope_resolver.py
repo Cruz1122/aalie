@@ -7,8 +7,9 @@ Recorre el AST del procedimiento para extraer la estructura de scope.
 Author: @Cruz1122
 Version: 0.1.0
 """
-from typing import Any, Dict, List, Optional, Set
-from .symbol_table import SymbolTable, SymbolInfo
+from typing import Any, Dict, Set
+
+from .symbol_table import SymbolTable
 
 
 def _collect_params(proc_def: Dict[str, Any]) -> Set[str]:

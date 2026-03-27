@@ -10,7 +10,6 @@ from .recursive_steps_core import (
     make_recursive_step,
 )
 
-
 _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
     "es": {
         "tree.recurrence_detected.standard": "Se detectó una recurrencia de familia Divide y Vencerás para analizar por árbol de recursión.",

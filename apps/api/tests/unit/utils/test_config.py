@@ -5,7 +5,8 @@ Author: Juan Felipe Henao (@Pipe-1z)
 """
 import os
 from unittest.mock import patch
-from app.core.config import _as_bool, get_dev_cors_enabled, get_dev_allowed_origins
+
+from app.core.config import _as_bool, get_dev_allowed_origins, get_dev_cors_enabled
 
 
 class TestAsBool:

@@ -5,8 +5,8 @@ WHILE con IF(param=const) que contiene el update: best case asume param habilita
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 import pytest
-from app.modules.analysis.service import analyze_algorithm
 
+from app.modules.analysis.service import analyze_algorithm
 
 # Algoritmos con param-controlled progress: IF(flag=1) THEN i<-i+1
 FLAG_PARAM_ALGORITHMS: list[tuple[str, str]] = [

@@ -1,7 +1,8 @@
 # tests/unit/test_base_analyzer.py
 import pytest
+from sympy import Integer, Sum, Symbol
+
 from app.modules.analysis.analyzers.base import BaseAnalyzer
-from sympy import Symbol, Sum, Integer, latex
 
 
 class TestBaseAnalyzer:

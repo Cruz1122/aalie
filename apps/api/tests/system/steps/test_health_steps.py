@@ -1,6 +1,5 @@
 # Steps y escenarios BDD para health.feature
-import pytest
-from pytest_bdd import scenario, when, then
+from pytest_bdd import scenario, then, when
 
 FEATURE_DIR = "../features"
 

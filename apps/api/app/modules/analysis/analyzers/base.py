@@ -2,7 +2,7 @@ import hashlib
 import json
 from typing import Any, Dict, List, Optional, Union
 
-from sympy import Expr, Integer, Symbol, Sum, latex, sympify
+from sympy import Expr, Integer, Sum, Symbol, latex, sympify
 
 from ...shared.types import AnalyzeOpenResponse, LineCost
 from ..models.avg_model import AvgModel
@@ -454,7 +454,9 @@ class BaseAnalyzer:
 
         # Intentar parsear directamente
         try:
-            from sympy import log as sympy_log, Min as sympy_Min, Max as sympy_Max
+            from sympy import Max as sympy_Max
+            from sympy import Min as sympy_Min
+            from sympy import log as sympy_log
 
             n = Symbol(self.variable, integer=True, positive=True)
             i = Symbol("i", integer=True)
@@ -644,7 +646,8 @@ class BaseAnalyzer:
         total_expr = Add(*terms) if len(terms) > 1 else terms[0]
         
         # Simplificar completamente: evaluar todas las sumatorias
-        from sympy import expand, simplify as sympy_simplify
+        from sympy import expand
+        from sympy import simplify as sympy_simplify
 
         from ..utils.summation_closer import SummationCloser
         
@@ -664,7 +667,8 @@ class BaseAnalyzer:
             total_expr = self._sanitize_expression(total_expr)
         else:
             # Fallback: limpieza básica de variables de iteración
-            from sympy import Symbol, Integer as SymInteger
+            from sympy import Integer as SymInteger
+            from sympy import Symbol
             iteration_vars = self._iteration_var_names()
             for var_name in iteration_vars:
                 var_symbol = Symbol(var_name, integer=True)
@@ -711,14 +715,14 @@ class BaseAnalyzer:
             return "0"
         
         import re
-        from sympy import latex, Integer
+
+        from sympy import Integer, latex
         
         terms_latex = []
         
         for r in self.rows:
             if r.get('ck') != "—" and r.get('count') != "—":
                 ck_str = r.get('ck', '')
-                count_str = r.get('count', '1')
                 
                 # Parsear ck para obtener todas las constantes C_k
                 # ck puede ser "C_{1}", "C_{1} + C_{2}", etc.
@@ -739,7 +743,9 @@ class BaseAnalyzer:
                     count_expr = self._str_to_sympy(r.get('count_raw', '1'))
                 
                 # Simplificar count_expr (evaluar sumatorias) pero mantener como expresión
-                from sympy import simplify as sympy_simplify, expand
+                from sympy import expand
+                from sympy import simplify as sympy_simplify
+
                 from ..utils.summation_closer import SummationCloser
                 
                 closer = SummationCloser(locale=self.locale)
@@ -771,7 +777,7 @@ class BaseAnalyzer:
                     separator = " \\cdot "
                     # Agregar paréntesis si la expresión no es un simple símbolo o número
                     # Esto evita problemas como "C_3 \cdot n - 1" que debería ser "C_3 \cdot (n - 1)"
-                    from sympy import Symbol, Add, Mul, Pow
+                    from sympy import Add, Mul, Pow, Symbol
                     # Verificar si necesita paréntesis
                     needs_parens = False
                     if isinstance(count_expr_simplified, Add):
@@ -805,7 +811,9 @@ class BaseAnalyzer:
         all_counts_are_constant = True
         has_variables = False
         
-        from sympy import Symbol, preorder_traversal, simplify as sympy_simplify, expand
+        from sympy import Symbol, expand, preorder_traversal
+        from sympy import simplify as sympy_simplify
+
         from ..utils.summation_closer import SummationCloser
         
         closer = SummationCloser(locale=self.locale)
@@ -867,7 +875,8 @@ class BaseAnalyzer:
             return False
         
         import re
-        from sympy import Symbol, Integer, preorder_traversal
+
+        from sympy import preorder_traversal
         
         # Contar términos únicos de C_k
         unique_ck_terms = set()
@@ -967,7 +976,9 @@ class BaseAnalyzer:
         total_expr = Add(*terms) if len(terms) > 1 else terms[0]
         
         # Simplificar completamente
-        from sympy import simplify as sympy_simplify, expand
+        from sympy import expand
+        from sympy import simplify as sympy_simplify
+
         from ..utils.summation_closer import SummationCloser
         
         # Usar SummationCloser para evaluar todas las sumatorias correctamente
@@ -986,7 +997,8 @@ class BaseAnalyzer:
             total_expr = self._sanitize_expression(total_expr)
         else:
             # Fallback: limpieza básica de variables de iteración
-            from sympy import Symbol, Integer as SymInteger
+            from sympy import Integer as SymInteger
+            from sympy import Symbol
             iteration_vars = self._iteration_var_names()
             for var_name in iteration_vars:
                 var_symbol = Symbol(var_name, integer=True)

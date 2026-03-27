@@ -5,7 +5,6 @@ Verifica que el sistema detecte correctamente cuándo usar el Método de Iteraci
 en lugar del Teorema Maestro, y que los resultados sean correctos.
 """
 
-import pytest
 from app.modules.analysis.analyzers.recursive import RecursiveAnalyzer
 
 

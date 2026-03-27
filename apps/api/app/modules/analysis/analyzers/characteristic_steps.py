@@ -11,7 +11,6 @@ from .recursive_steps_core import (
     make_recursive_step,
 )
 
-
 _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
     "es": {
         # Summary keys

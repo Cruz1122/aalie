@@ -3,7 +3,8 @@ Tests unitarios para app.modules.analysis.service.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from app.modules.analysis.service import analyze_algorithm, detect_methods
 
 
@@ -81,7 +82,7 @@ class TestAnalyzeAlgorithm:
         mock_registry.get.return_value = IterativeAnalyzer
         
         with patch.object(IterativeAnalyzer, '__new__', return_value=mock_analyzer):
-            result = analyze_algorithm("code", mode="worst", algorithm_kind="iterative")
+            analyze_algorithm("code", mode="worst", algorithm_kind="iterative")
             # No debe llamar a detect_algorithm_kind si se proporciona algorithm_kind
             mock_detect.assert_not_called()
     

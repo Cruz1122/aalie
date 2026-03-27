@@ -5,8 +5,8 @@ Verifica que el análisis de complejidad funcione correctamente a través del en
 Incluye verificaciones de complejidad esperada (big_theta/big_o) para tests auténticos.
 """
 
-import pytest
 from fastapi.testclient import TestClient
+
 from app.main import app
 from tests._support.assertions import notation_has_complexity
 

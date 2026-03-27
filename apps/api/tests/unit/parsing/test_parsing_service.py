@@ -4,7 +4,8 @@ Tests unitarios para app.modules.parsing.service.
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 from unittest.mock import patch
-from app.modules.parsing.service import parse_source, normalize_source_text
+
+from app.modules.parsing.service import normalize_source_text, parse_source
 
 
 class TestParseSource:

@@ -8,8 +8,8 @@ Author: Juan Camilo Cruz Parra (@Cruz1122)
 import re
 
 import pytest
-from app.modules.analysis.service import analyze_algorithm
 
+from app.modules.analysis.service import analyze_algorithm
 
 # --- Algoritmos con WHILE (20+) ---
 

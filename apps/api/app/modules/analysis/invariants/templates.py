@@ -6,34 +6,43 @@ from typing import List, Optional, Set
 
 from .schemas import InvariantText, LoopFacts, PatternType, normalize_locale
 
+_BEHAVIOUR_ES = {
+    "binary_search_interval": "El algoritmo {} busca un elemento en un arreglo de forma eficiente dividiendo el rango de búsqueda a la mitad en cada paso.",
+    "euclidean_gcd": "El algoritmo {} calcula el máximo común divisor de dos números reemplazando iterativamente el mayor por el residuo de la división.",
+    "partition_by_pivot": "El algoritmo {} reorganiza un arreglo alrededor de un pivote, agrupando los elementos menores a un lado y los mayores al otro.",
+    "merge_progress": "El algoritmo {} combina o compara elementos de múltiples arreglos avanzando de manera coordinada a través de ellos.",
+    "insertion_prefix_sorted": "El algoritmo {} ordena un arreglo insertando gradualmente cada elemento en su posición correcta respecto a los anteriores.",
+    "selection_prefix_sorted": "El algoritmo {} ordena un arreglo buscando repetidamente el elemento extremo en la parte no ordenada y colocándolo en su lugar.",
+    "search": "El algoritmo {} recorre un conjunto de datos linealmente hasta encontrar un elemento o condición particular.",
+    "accumulation": "El algoritmo {} procesa elementos secuencialmente para calcular un valor acumulado agregado (como una suma o producto total).",
+    "extrema": "El algoritmo {} inspecciona un conjunto de valores para identificar el elemento más grande o más pequeño.",
+    "two_pointer_like": "El algoritmo {} utiliza dos posiciones de referencia simultáneas que se acercan o avanzan juntas para procesar elementos extremos o relacionados de la colección.",
+    "sorting_pass": "El algoritmo {} realiza un pase sobre el arreglo, intercambiando o reposicionando elementos para ordenarlo progresivamente.",
+}
+
+_BEHAVIOUR_EN = {
+    "binary_search_interval": "The algorithm {} efficiently searches for an element in an array by repeatedly halving the search range.",
+    "euclidean_gcd": "The algorithm {} computes the greatest common divisor of two numbers by iteratively replacing the larger with the division remainder.",
+    "partition_by_pivot": "The algorithm {} reorganizes an array around a pivot, gathering smaller elements on one side and larger ones on the other.",
+    "merge_progress": "The algorithm {} combines or compares elements from multiple arrays by progressing coordinately across them.",
+    "insertion_prefix_sorted": "The algorithm {} sorts an array by gradually inserting each element into its correct position relative to the preceding ones.",
+    "selection_prefix_sorted": "The algorithm {} sorts an array by repeatedly finding the extreme element in the unsorted portion and placing it in place.",
+    "search": "The algorithm {} traverses a dataset linearly until finding a particular element or condition.",
+    "accumulation": "The algorithm {} sequentially processes elements to compute an aggregate accumulated value (like a total sum).",
+    "extrema": "The algorithm {} inspects a set of values to identify the largest or smallest element.",
+    "two_pointer_like": "The algorithm {} uses two simultaneous reference positions that approach each other or advance together to process elements.",
+    "sorting_pass": "The algorithm {} makes a pass over the array, swapping or repositioning elements to progressively sort it.",
+}
+
+_BEHAVIOUR_DEFAULT_ES = "El algoritmo {} repite un procedimiento iterativo para procesar la entrada de forma progresiva."
+_BEHAVIOUR_DEFAULT_EN = "The algorithm {} repeats an iterative procedure to progressively process the input."
+
 
 def generate_behaviour(pattern: str, locale: str) -> str:
     if locale == "es":
-        if pattern == "binary_search_interval": return "El algoritmo {} busca un elemento en un arreglo de forma eficiente dividiendo el rango de búsqueda a la mitad en cada paso."
-        if pattern == "euclidean_gcd": return "El algoritmo {} calcula el máximo común divisor de dos números reemplazando iterativamente el mayor por el residuo de la división."
-        if pattern == "partition_by_pivot": return "El algoritmo {} reorganiza un arreglo alrededor de un pivote, agrupando los elementos menores a un lado y los mayores al otro."
-        if pattern == "merge_progress": return "El algoritmo {} combina o compara elementos de múltiples arreglos avanzando de manera coordinada a través de ellos."
-        if pattern == "insertion_prefix_sorted": return "El algoritmo {} ordena un arreglo insertando gradualmente cada elemento en su posición correcta respecto a los anteriores."
-        if pattern == "selection_prefix_sorted": return "El algoritmo {} ordena un arreglo buscando repetidamente el elemento extremo en la parte no ordenada y colocándolo en su lugar."
-        if pattern == "search": return "El algoritmo {} recorre un conjunto de datos linealmente hasta encontrar un elemento o condición particular."
-        if pattern == "accumulation": return "El algoritmo {} procesa elementos secuencialmente para calcular un valor acumulado agregado (como una suma o producto total)."
-        if pattern == "extrema": return "El algoritmo {} inspecciona un conjunto de valores para identificar el elemento más grande o más pequeño."
-        if pattern == "two_pointer_like": return "El algoritmo {} utiliza dos posiciones de referencia simultáneas que se acercan o avanzan juntas para procesar elementos extremos o relacionados de la colección."
-        if pattern == "sorting_pass": return "El algoritmo {} realiza un pase sobre el arreglo, intercambiando o reposicionando elementos para ordenarlo progresivamente."
-        return "El algoritmo {} repite un procedimiento iterativo para procesar la entrada de forma progresiva."
-    
-    if pattern == "binary_search_interval": return "The algorithm {} efficiently searches for an element in an array by repeatedly halving the search range."
-    if pattern == "euclidean_gcd": return "The algorithm {} computes the greatest common divisor of two numbers by iteratively replacing the larger with the division remainder."
-    if pattern == "partition_by_pivot": return "The algorithm {} reorganizes an array around a pivot, gathering smaller elements on one side and larger ones on the other."
-    if pattern == "merge_progress": return "The algorithm {} combines or compares elements from multiple arrays by progressing coordinately across them."
-    if pattern == "insertion_prefix_sorted": return "The algorithm {} sorts an array by gradually inserting each element into its correct position relative to the preceding ones."
-    if pattern == "selection_prefix_sorted": return "The algorithm {} sorts an array by repeatedly finding the extreme element in the unsorted portion and placing it in place."
-    if pattern == "search": return "The algorithm {} traverses a dataset linearly until finding a particular element or condition."
-    if pattern == "accumulation": return "The algorithm {} sequentially processes elements to compute an aggregate accumulated value (like a total sum)."
-    if pattern == "extrema": return "The algorithm {} inspects a set of values to identify the largest or smallest element."
-    if pattern == "two_pointer_like": return "The algorithm {} uses two simultaneous reference positions that approach each other or advance together to process elements."
-    if pattern == "sorting_pass": return "The algorithm {} makes a pass over the array, swapping or repositioning elements to progressively sort it."
-    return "The algorithm {} repeats an iterative procedure to progressively process the input."
+        return _BEHAVIOUR_ES.get(pattern, _BEHAVIOUR_DEFAULT_ES)
+
+    return _BEHAVIOUR_EN.get(pattern, _BEHAVIOUR_DEFAULT_EN)
 
 def _first(values: List[str], default: str) -> str:
     return values[0] if values else default
@@ -786,7 +795,7 @@ def _build_spanish(
                 f"Finalización: cuando uno de los subarreglos se agota, el subarreglo construido en {destination_collection} es la fusión ordenada correcta de lo ya consumido."
             ),
             didactic_summary=(
-                f"El merge avanza dos fronteras ordenadas y construye un subarreglo de salida también ordenada."
+                "El merge avanza dos fronteras ordenadas y construye un subarreglo de salida también ordenada."
             ),
         )
 
@@ -857,7 +866,7 @@ def _build_spanish(
                 f"Al inicio de cada iteración externa, el subarreglo inicial {collection}[1..{control}-1] ya está ordenado y contiene los menores elementos globales."
             ),
             initialization=(
-                f"Inicialización: con subarreglo inicial vacío antes de la primera iteración, la propiedad es verdadera."
+                "Inicialización: con subarreglo inicial vacío antes de la primera iteración, la propiedad es verdadera."
             ),
             maintenance=(
                 f"Mantenimiento: se busca el mínimo del subarreglo restante aún no ordenado y se intercambia con la posición {control}; eso extiende el subarreglo inicial ordenado en una posición."
@@ -974,7 +983,7 @@ def _build_spanish(
                     f"Al inicio de cada iteración externa, todas las celdas de {collection} en filas anteriores a {control} ya fueron revisadas, y cualquier búsqueda en la fila actual se hace columna por columna sin saltos."
                 ),
                 initialization=(
-                    f"Inicialización: antes de iniciar en la primera fila, no hay filas previas revisadas y la propiedad es verdadera."
+                    "Inicialización: antes de iniciar en la primera fila, no hay filas previas revisadas y la propiedad es verdadera."
                 ),
                 maintenance=(
                     f"Mantenimiento: se completa el barrido de la fila {control} por columnas; al pasar a la siguiente fila, queda garantizado que todas las filas previas fueron revisadas correctamente."
@@ -983,7 +992,7 @@ def _build_spanish(
                     f"Finalización: al terminar el barrido de filas, se decide correctamente si {target} aparece en la matriz {collection}."
                 ),
                 didactic_summary=(
-                    f"La búsqueda matricial progresa por filas completas y conserva qué región ya fue inspeccionada."
+                    "La búsqueda matricial progresa por filas completas y conserva qué región ya fue inspeccionada."
                 ),
             )
 
@@ -1397,7 +1406,7 @@ def _build_spanish(
                 f"Mantenimiento: en cada paso se evalúa el predicado y se asigna el campo correspondiente del elemento actual ({field_cell}), preservando uniformidad sobre lo ya procesado."
             ),
             finalization=(
-                f"Finalización: al cerrar el recorrido, todos los elementos del subarreglo relevante cumplen la política de asignación de campo definida por el predicado."
+                "Finalización: al cerrar el recorrido, todos los elementos del subarreglo relevante cumplen la política de asignación de campo definida por el predicado."
             ),
             didactic_summary=(
                 "Esta familia captura escrituras uniformes de campos de objeto controladas por condición booleana, sin forzar una lectura de extremos o conteo."
@@ -1498,7 +1507,7 @@ def _build_spanish(
                     f"Finalización: al terminar, todos los subarreglos iniciales en {destination_collection}[1..{bound}] están correctamente construidos."
                 ),
                 didactic_summary=(
-                    f"El ciclo aplica una recurrencia de subarreglos iniciales donde cada posición depende de la anterior ya válidada."
+                    "El ciclo aplica una recurrencia de subarreglos iniciales donde cada posición depende de la anterior ya válidada."
                 ),
             )
 
@@ -1551,7 +1560,7 @@ def _build_spanish(
                 f"Mantenimiento: cada iteración actualiza {control} y/o {second_control} de forma monotónica, reduciendo la región pendiente sin inválidar lo ya resuelto."
             ),
             finalization=(
-                f"Finalización: cuando las fronteras se cruzan, no queda región pendiente y la condición global queda satisfecha."
+                "Finalización: cuando las fronteras se cruzan, no queda región pendiente y la condición global queda satisfecha."
             ),
             didactic_summary=(
                 "El método de dos punteros conserva una frontera de trabajo explícita y decreciente."
@@ -1565,10 +1574,10 @@ def _build_spanish(
                     f"Al inicio de cada iteración externa, los últimos {control}-1 elementos de {collection} ya están en su posición final y forman un subarreglo final ya ordenado."
                 ),
                 initialization=(
-                    f"Inicialización: antes de la primera iteración externa, no hay elementos fijados al final, por lo que el subarreglo final ya ordenado es vacío."
+                    "Inicialización: antes de la primera iteración externa, no hay elementos fijados al final, por lo que el subarreglo final ya ordenado es vacío."
                 ),
                 maintenance=(
-                    f"Mantenimiento: la pasada interna compara adyacentes y empuja el mayor del subarreglo aún no ordenado hasta su posición final al final de la zona pendiente."
+                    "Mantenimiento: la pasada interna compara adyacentes y empuja el mayor del subarreglo aún no ordenado hasta su posición final al final de la zona pendiente."
                 ),
                 finalization=(
                     f"Finalización: al completar las iteraciones externas, todo {collection}[1..{bound}] queda ordenado."
@@ -1583,13 +1592,13 @@ def _build_spanish(
                 f"Al inicio de cada iteración interna, en el subarreglo {collection}[1..{control}], el mayor de los elementos ya comparados quedó ubicado al final de ese subarreglo."
             ),
             initialization=(
-                f"Inicialización: antes de la primera comparación, el subarreglo visitado es mínimo y la propiedad se cumple de forma directa."
+                "Inicialización: antes de la primera comparación, el subarreglo visitado es mínimo y la propiedad se cumple de forma directa."
             ),
             maintenance=(
                 f"Mantenimiento: en cada paso se comparan {collection}[{control}] y {collection}[{control} + 1]; si están en orden incorrecto, se intercambian, y así el mayor avanza una posición hacia la derecha."
             ),
             finalization=(
-                f"Finalización: al terminar la iteración interna de ordenamiento, el mayor del subarreglo no ordenado queda en su posición final."
+                "Finalización: al terminar la iteración interna de ordenamiento, el mayor del subarreglo no ordenado queda en su posición final."
             ),
             didactic_summary=(
                 "La invariante interna de burbuja garantiza que el máximo del subarreglo inicial recorrido migra al extremo derecho de la pasada."
@@ -1622,7 +1631,7 @@ def _build_spanish(
                     f"Al inicio de cada iteración, el estado de frontera [{control}, {second_control}] delimita un intervalo válido de trabajo."
                 ),
                 initialization=(
-                    f"Inicialización: las fronteras se inician sobre el intervalo completo del problema."
+                    "Inicialización: las fronteras se inician sobre el intervalo completo del problema."
                 ),
                 maintenance=(
                     f"Mantenimiento: cada actualización de {control} o {second_control} reduce el intervalo descartando solo regiones inválidas."
@@ -1681,7 +1690,7 @@ def _build_spanish(
                 "Inicialización: antes del primer paso, no hay elementos actualizados en el subarreglo inicial y la formulación uniforme es válida."
             ),
             maintenance=(
-                f"Mantenimiento: cada iteración actualiza el campo del elemento indexado por el control, conservando consistencia local del subarreglo procesado."
+                "Mantenimiento: cada iteración actualiza el campo del elemento indexado por el control, conservando consistencia local del subarreglo procesado."
             ),
             finalization=(
                 "Finalización: al terminar, la escritura uniforme de campos queda garantizada sobre todo el subarreglo recorrido, aunque el objetivo global siga siendo ambiguo."
@@ -2670,7 +2679,7 @@ def _build_english(
                     f"Finalization: when the loop ends, every prefix in {destination_collection}[1..{bound}] is correct."
                 ),
                 didactic_summary=(
-                    f"Each prefix value depends on the previous one, so correctness propagates index by index."
+                    "Each prefix value depends on the previous one, so correctness propagates index by index."
                 ),
             )
 

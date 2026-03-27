@@ -1,9 +1,9 @@
 # tests/unit/test_expr_converter.py
 import pytest
+from sympy import Eq, Integer, Le, Ne, Symbol
+from sympy.logic.boolalg import And, Or
+
 from app.modules.analysis.utils.expr_converter import ExprConverter
-from sympy import Symbol, Integer, sympify
-from sympy import Eq, Le, Ne
-from sympy.logic.boolalg import And, Or, Not
 
 
 class TestExprConverter:
@@ -393,7 +393,3 @@ class TestExprConverter:
         }
         result = self.converter.ast_to_sympy(expr)
         assert result == Ne(Symbol("u", real=True), Integer(0))
-
-
-if __name__ == '__main__':
-    unittest.main()

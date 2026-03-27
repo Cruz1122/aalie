@@ -4,9 +4,7 @@ Verifica que levels, height, theta y etiquetas sean correctos según el tipo de 
 
 Author: @Cruz1122
 """
-import pytest
 from app.modules.analysis.service import analyze_algorithm
-
 
 MERGE_SORT = """mergeSort(A, izq, der) BEGIN
   IF (izq < der) THEN BEGIN
@@ -105,7 +103,7 @@ class TestRecursionTreeStructure:
         result = analyze_algorithm(BINARY_SEARCH_REC, mode="worst", preferred_method="recursion_tree")
         assert result.get("ok"), f"Análisis falló: {result.get('errors', [])}"
         totals = result.get("totals", {})
-        recurrence = totals.get("recurrence", {})
+        totals.get("recurrence", {})
         # Puede usar recursion_tree o master según detección
         if "recursion_tree" in totals:
             recursion_tree = totals["recursion_tree"]

@@ -4,8 +4,9 @@ Tests unitarios para app.modules.analysis.visitors.for_visitor.
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 import pytest
+from sympy import Integer, Symbol
+
 from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
-from sympy import Symbol, Integer
 
 
 class TestForVisitor:

@@ -6,17 +6,17 @@ Builder para patrón generic_recursive.
 Author: Plan Sistema Traza Estructural
 Version: 0.1.0
 """
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from ...metrics_aggregator import aggregate_metrics
-from ..structured_trace_models import (
-    StructuredTraceView,
-    StructuredTraceNode,
-    StructuredTraceEdge,
-    StructuredTraceRenderConfig,
-)
 from ..structural_trace_classifier import StructuralTraceClassification
-from ._call_utils import call_to_label, _format_param_value
+from ..structured_trace_models import (
+    StructuredTraceEdge,
+    StructuredTraceNode,
+    StructuredTraceRenderConfig,
+    StructuredTraceView,
+)
+from ._call_utils import _format_param_value, call_to_label
 
 
 def _build_from_call_tree(

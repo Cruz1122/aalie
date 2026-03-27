@@ -16,8 +16,8 @@ from fastapi.responses import JSONResponse
 from .core.config import get_cors_allowed_origins, get_cors_enabled
 from .modules.analysis.router import router as analyze_router
 from .modules.classification.router import router as classify_router
-from .modules.parsing.router import router as parse_router
 from .modules.export.router import router as export_router
+from .modules.parsing.router import router as parse_router
 
 # Cargar variables de entorno desde .env
 env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
