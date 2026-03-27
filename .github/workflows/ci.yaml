@@ -211,8 +211,7 @@ jobs:
         run: python -m ruff check apps/api --output-format=github
 
       - name: Black formatting (api)
-        working-directory: apps/api
-        run: python -m black --check --diff .
+        run: python -m black --check --diff apps/api mcp packages/grammar/py
 
   # Job de Docker: Verifica que las imágenes construyen
   docker-integration:
