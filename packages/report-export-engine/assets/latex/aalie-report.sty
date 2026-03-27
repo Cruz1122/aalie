@@ -59,6 +59,25 @@
 \renewcommand{\arraystretch}{1.15}
 
 % ------------------------------------------------------
+% Control de ecuaciones largas
+% ------------------------------------------------------
+\newsavebox{\aalie@mathbox}
+\newcommand{\AALIEDisplayMath}[1]{%
+  \begingroup
+  \setbox\aalie@mathbox=\hbox{$\displaystyle #1$}%
+  \ifdim\wd\aalie@mathbox>\linewidth
+    \[
+      \resizebox{\linewidth}{!}{$\displaystyle #1$}%
+    \]
+  \else
+    \[
+      #1
+    \]
+  \fi
+  \endgroup
+}
+
+% ------------------------------------------------------
 % Colores
 % ------------------------------------------------------
 \definecolor{ingColor}{HTML}{D27B48}

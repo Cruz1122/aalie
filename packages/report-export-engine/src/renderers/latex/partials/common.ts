@@ -329,9 +329,7 @@ export function renderLatexBlock(block: DocumentBlock, i18n: ExportI18nBundle): 
     if (block.label) {
       pieces.push(`\\paragraph{${escapeLatexText(block.label)}}`);
     }
-    pieces.push("\\[");
-    pieces.push(block.formula);
-    pieces.push("\\]");
+    pieces.push(`\\AALIEDisplayMath{${block.formula}}`);
     return pieces.join("\n");
   }
 
@@ -342,9 +340,7 @@ export function renderLatexBlock(block: DocumentBlock, i18n: ExportI18nBundle): 
       `\\paragraph{${escapeLatexText(`${block.step.index}. ${block.step.title}`)}}`,
     ];
     if (block.step.formula) {
-      lines.push("\\[");
-      lines.push(block.step.formula);
-      lines.push("\\]");
+      lines.push(`\\AALIEDisplayMath{${block.step.formula}}`);
     }
     lines.push(`{\\footnotesize\\textit{${renderLatexTextWithEmbeddedMath(block.step.explanation)}}}`);
     if (block.step.warning) {
