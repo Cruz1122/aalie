@@ -1281,10 +1281,10 @@ class IterativeAnalyzer(
         Genera un procedimiento general de 4 pasos para iterativos (worst/best).
 
         Estructura:
-        1) Determinar líneas contables (según caso)
-        2) Determinar ejecuciones por línea y resolver sumatorias
-        3) Sumar costos para obtener T(n) completa
-        4) Simplificar y concluir notación asintótica
+        1) Determinar líneas contables (según caso) [DETAILS IN PER-LINE MODAL]
+        2) Determinar ejecuciones por línea y resolver sumatorias [DETAILS IN PER-LINE MODAL]
+        3) Sumar costos para obtener T(n) completa [SHOWN IN GENERAL MODAL]
+        4) Simplificar y concluir notación asintótica [SHOWN IN GENERAL MODAL]
         """
         if mode == "avg":
             return
@@ -1299,35 +1299,30 @@ class IterativeAnalyzer(
 
         procedure_steps: list[str] = []
 
-        # Paso 1: líneas contables
-        # Evitar que KaTeX compacte "peor caso" como símbolos multiplicados.
-        procedure_steps.append(
-            f"\\text{{Paso 1: Determinar líneas contables ({case_label})}}"
-            if self.locale == "es"
-            else f"\\text{{Step 1: Determine countable lines ({case_label})}}"
-        )
-        if counted_rows:
-            for row in counted_rows:
-                line_no = row.get("line", "?")
-                ck = row.get("ck", "C")
-                procedure_steps.append(
-                    self._note(
-                        "proc_iter_countable_line",
-                        line=line_no,
-                        ck=ck,
-                    )
-                )
-        else:
-            procedure_steps.append(self._note("proc_iter_no_countable_lines"))
-
-        # Paso 2: ejecuciones por línea y sumatorias
-        procedure_steps.append(self._note("proc_iter_step2"))
+        # PASOS 1 Y 2: Distribuir detalles a cada línea (per-line procedure modal)
+        # Estos pasos ahora van en row["procedure"] en lugar de en el procedimiento general
         for row in counted_rows:
             line_no = row.get("line", "?")
+            ck = row.get("ck", "C")
             count_raw = str(row.get("count_raw", row.get("count", "1")))
             count_closed = str(row.get("count", count_raw))
+
+            # Inicializar line_procedure si no existe
+            if "line_procedure" not in row:
+                row["line_procedure"] = []
+
+            # Paso 1: Línea contable
+            row["line_procedure"].append(
+                self._note(
+                    "proc_iter_countable_line",
+                    line=line_no,
+                    ck=ck,
+                )
+            )
+
+            # Paso 2: Ejecuciones por línea
             if count_raw.replace(" ", "") == count_closed.replace(" ", ""):
-                procedure_steps.append(
+                row["line_procedure"].append(
                     self._note(
                         "proc_iter_line_exec_same",
                         line=line_no,
@@ -1335,7 +1330,7 @@ class IterativeAnalyzer(
                     )
                 )
             else:
-                procedure_steps.append(
+                row["line_procedure"].append(
                     self._note(
                         "proc_iter_line_exec",
                         line=line_no,
@@ -1343,17 +1338,19 @@ class IterativeAnalyzer(
                         count_closed=count_closed,
                     )
                 )
+
+            # Subpaso: Resolución de sumatorias (si aplica)
             row_steps = row.get("procedure") or []
             has_sum_steps = isinstance(row_steps, list) and any(
                 isinstance(s, str) and "\\sum" in s for s in row_steps
             )
             if has_sum_steps and len(row_steps) > 1:
-                procedure_steps.append(
+                row["line_procedure"].append(
                     self._note("proc_iter_summation_resolution", line=line_no)
                 )
                 for step in row_steps:
                     if isinstance(step, str) and step.strip() and step.strip() != "0":
-                        procedure_steps.append(step)
+                        row["line_procedure"].append(step)
 
         # Construir versión explícita con conteos crudos para mostrar sumatoria inicial
         raw_terms = []

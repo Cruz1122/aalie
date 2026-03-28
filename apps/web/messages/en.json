@@ -533,6 +533,7 @@
       "numExecutions": "Number of executions:",
       "expectedExecutionsDesc": "Expected number of times this line executes (E[N_ℓ])",
       "numExecutionsDesc": "How many times this line executes",
+      "lineCostDerivation": "Step by step of how this cost was derived:",
       "notes": "Notes:",
       "lineCost": "Line cost:",
       "lineCostAvg": "Expected line cost:",

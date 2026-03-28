@@ -534,6 +534,7 @@
       "numExecutions": "Número de ejecuciones:",
       "expectedExecutionsDesc": "Esperanza del número de veces que se ejecuta esta línea (E[N_ℓ])",
       "numExecutionsDesc": "Cuántas veces se ejecuta esta línea",
+      "lineCostDerivation": "Paso a paso de cómo se llegó a este costo:",
       "notes": "Notas:",
       "lineCost": "Costo total de la línea:",
       "lineCostAvg": "Costo esperado de la línea:",
