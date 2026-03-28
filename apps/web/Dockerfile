@@ -22,8 +22,14 @@ COPY pnpm-lock.yaml ./
 # Manifest del paquete web
 COPY apps/web/package.json apps/web/
 
-# Instalar dependencias de workspaces (aunque hoy solo exista "web")
-RUN pnpm install --frozen-lockfile
+# Manifests de paquetes workspace usados por web
+COPY packages/grammar/package.json packages/grammar/
+COPY packages/types/package.json packages/types/
+
+# Instalar dependencias de workspaces para entorno dev en contenedor.
+# Se usa --no-frozen-lockfile para evitar bloqueo si package.json cambió y
+# el lockfile local aún no pudo regenerarse en el host.
+RUN pnpm install --no-frozen-lockfile
 
 # Copiar el código fuente del paquete web
 COPY apps/web/ apps/web/

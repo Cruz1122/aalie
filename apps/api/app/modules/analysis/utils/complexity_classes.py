@@ -25,6 +25,55 @@ class ComplexityClasses:
         """
         pass
 
+    def _replace_balanced_fracs(self, expr_str: str) -> str:
+        """
+        Reemplaza fracciones LaTeX con llaves balanceadas:
+          \frac{A}{B} -> ((A)/(B))
+
+        Soporta numerador/denominador con llaves anidadas, donde un regex
+        simple de tipo [^{}]+ suele fallar.
+        """
+
+        def _read_braced(text: str, open_idx: int):
+            if open_idx >= len(text) or text[open_idx] != "{":
+                return None, open_idx
+            depth = 0
+            start = open_idx + 1
+            i = open_idx
+            while i < len(text):
+                ch = text[i]
+                if ch == "{":
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+                    if depth == 0:
+                        return text[start:i], i
+                i += 1
+            return None, open_idx
+
+        out = expr_str
+        guard = 0
+        while "\\frac" in out and guard < 64:
+            guard += 1
+            frac_idx = out.find("\\frac")
+            if frac_idx < 0:
+                break
+
+            num_open = frac_idx + len("\\frac")
+            num, num_close = _read_braced(out, num_open)
+            if num is None:
+                break
+
+            den_open = num_close + 1
+            den, den_close = _read_braced(out, den_open)
+            if den is None:
+                break
+
+            repl = f"(({num})/({den}))"
+            out = out[:frac_idx] + repl + out[den_close + 1 :]
+
+        return out
+
     def extract_dominant_term(self, polynomial: str, variable: str = "n") -> str:
         """
         Extrae el término dominante de un polinomio.
@@ -110,10 +159,7 @@ class ComplexityClasses:
             # Eliminar factor numérico (p.ej., 15 n^2 → n^2, 7/2 n^2 → n^2)
             best_term = self._strip_numeric_coefficient(best_term)
             return self._sympy_to_latex(best_term)
-        except Exception as e:
-            print(
-                f"[ComplexityClasses] Error extrayendo término dominante de {polynomial}: {e}"
-            )
+        except Exception:
             # Fallback: aproximar el monomio dominante directamente desde el string
             return self._fallback_dominant_from_string(polynomial, variable)
 
@@ -249,6 +295,18 @@ class ComplexityClasses:
         expr_str = re.sub(r"(\w+)\^(\d+)", r"\1**\2", expr_str)
         expr_str = re.sub(r"(\w+)\^\{(\d+)\}", r"\1**\2", expr_str)
 
+        # Reintentar reemplazo de fracciones después de normalizar potencias.
+        # Esto permite convertir casos como \frac{5n^{2}}{2} (anidación en ^{2})
+        # que no matchean en el primer pass por tener llaves internas.
+        for _ in range(4):
+            updated = re.sub(r"\\frac\{([^{}]+)\}\{([^{}]+)\}", replace_frac, expr_str)
+            if updated == expr_str:
+                break
+            expr_str = updated
+
+        # Conversión robusta final para cualquier \frac restante con llaves anidadas.
+        expr_str = self._replace_balanced_fracs(expr_str)
+
         # Reemplazar logaritmos: \log(n) -> log(n), \log{\left(n\right)} -> log(n)
         # Primero remover \left y \right dentro de logaritmos
         expr_str = re.sub(r"\\log\{\\left\(([^)]+)\\right\)\}", r"log(\1)", expr_str)
@@ -292,7 +350,20 @@ class ComplexityClasses:
                 expr_str_simple = expr_str
                 return sympify(expr_str_simple, locals=syms)
             except Exception as e2:
-                raise e2
+                # Último fallback: parser LaTeX de SymPy para expresiones que
+                # aún conservan notación TeX (p.ej. \frac no convertido).
+                try:
+                    from sympy.parsing.latex import parse_latex
+
+                    latex_input = polynomial
+                    latex_input = re.sub(r"\\left", "", latex_input)
+                    latex_input = re.sub(r"\\right", "", latex_input)
+                    parsed = parse_latex(latex_input)
+                    if variable == "n":
+                        parsed = parsed.subs(Symbol("N"), n)
+                    return parsed
+                except Exception:
+                    raise e2
 
     def _strip_numeric_coefficient(self, expr: "Expr") -> "Expr":
         """

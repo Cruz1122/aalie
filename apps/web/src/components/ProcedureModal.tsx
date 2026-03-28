@@ -754,6 +754,40 @@ export default function ProcedureModal({
                       </p>
                     </div>
 
+                    {/* Paso a paso de cómo se llegó a este costo */}
+                    {((lineData.line_procedure &&
+                      lineData.line_procedure.length > 0 &&
+                      lineData.line_procedure) ||
+                      (lineData.procedure && lineData.procedure.length > 0
+                        ? lineData.procedure
+                        : null)) && (
+                        <div>
+                          <span className="text-sm font-medium text-slate-400 block mb-2">
+                            {t("lineCostDerivation")}
+                          </span>
+                          <div className="mt-2 space-y-2 max-h-64 overflow-y-auto scrollbar-custom">
+                            {(
+                              lineData.line_procedure &&
+                              lineData.line_procedure.length > 0
+                                ? lineData.line_procedure
+                                : lineData.procedure || []
+                            ).map((step, index) => (
+                              <div
+                                key={index}
+                                className="flex items-start gap-2 p-2 bg-slate-900/50 rounded border border-amber-500/20"
+                              >
+                                <div className="flex-shrink-0 w-5 h-5 bg-amber-500/20 text-amber-300 rounded-full flex items-center justify-center text-xs font-medium">
+                                  {index + 1}
+                                </div>
+                                <div className="flex-1 min-w-0 overflow-x-auto scrollbar-custom">
+                                  <Formula latex={sanitizeProcedureStep(step)} display />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                     {/* Notas adicionales */}
                     {lineData.note && (
                       <div>
@@ -787,6 +821,7 @@ export default function ProcedureModal({
                         {isAvgCase ? t("lineCostAvgDesc") : t("lineCostDesc")}
                       </p>
                     </div>
+
                   </div>
 
                   {/* Información adicional del análisis completo */}
@@ -819,33 +854,6 @@ export default function ProcedureModal({
                         </p>
                       )}
                     </div>
-
-                    {/* Pasos del procedimiento específico de la línea */}
-                    {lineData.procedure && lineData.procedure.length > 0 && (
-                      <div>
-                        <span className="text-sm font-medium text-slate-400 block mb-2">
-                          {t("simplificationProcedure")}
-                        </span>
-                        <div className="mt-2 space-y-2 max-h-48 overflow-y-auto scrollbar-custom">
-                          {lineData.procedure.map((step, index) => (
-                            <div
-                              key={index}
-                              className="flex items-start gap-2 p-2 bg-slate-900/50 rounded border border-white/10"
-                            >
-                              <div className="flex-shrink-0 w-5 h-5 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs font-medium">
-                                {index + 1}
-                              </div>
-                              <div className="flex-1 min-w-0 overflow-x-auto scrollbar-custom">
-                                <Formula
-                                  latex={sanitizeProcedureStep(step)}
-                                  display
-                                />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
 
                     {/* Símbolos */}
                     {analysisData.totals.symbols &&

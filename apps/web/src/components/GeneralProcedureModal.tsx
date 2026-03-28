@@ -8,7 +8,7 @@
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
 import type { AnalyzeOpenResponse } from "@aa/types";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useMemo } from "react";
 
 import Formula from "./Formula";
@@ -24,6 +24,8 @@ interface GeneralProcedureModalProps {
   onClose: () => void;
   /** Datos del análisis a mostrar */
   data: AnalyzeOpenResponse | undefined;
+  /** Caso seleccionado para el procedimiento general */
+  caseType?: "worst" | "best" | "average";
 }
 
 /**
@@ -83,11 +85,14 @@ export default function GeneralProcedureModal({
   open,
   onClose,
   data,
+  caseType = "worst",
 }: Readonly<GeneralProcedureModalProps>) {
   const t = useTranslations("analyzer.generalProcedureModal");
+  const locale = useLocale();
 
   // Detectar si es caso promedio
   const isAvgCase = data?.totals?.avg_model_info !== undefined;
+  const isAverageSelected = caseType === "average";
 
   const tOpen = data?.totals?.A_of_n || data?.totals?.T_open || "";
   const rawPoly = (data?.totals as { T_polynomial?: string })?.T_polynomial;
@@ -104,7 +109,7 @@ export default function GeneralProcedureModal({
         avg_foundation?: "well_founded" | "approximate";
         hypotheses?: string[];
         notes?: string[];
-        procedure?: string[]; // Pasos del procedimiento (para caso promedio)
+        procedure?: string[]; // Pasos del procedimiento general
       }
     | undefined;
 
@@ -130,12 +135,35 @@ export default function GeneralProcedureModal({
       .join(" + ");
   }, [data?.byLine]);
 
-  // Obtener pasos del procedimiento para caso promedio desde procedure
-  const avgProcedureSteps = useMemo(() => {
-    if (!isAvgCase || !totals?.procedure) return [];
-    // Los pasos del procedimiento para promedio están en totals.procedure
+  // Obtener pasos del procedimiento general desde totals.procedure
+  const procedureSteps = useMemo(() => {
+    if (!totals?.procedure) return [];
     return totals.procedure;
-  }, [isAvgCase, totals?.procedure]);
+  }, [totals?.procedure]);
+
+  // Ajustar etiqueta del caso mostrado cuando backend devuelve same_as_worst
+  const caseAwareProcedureSteps = useMemo(() => {
+    if (procedureSteps.length === 0) return procedureSteps;
+
+    const isSpanish = locale?.toLowerCase().startsWith("es");
+    const caseLabel = isSpanish
+      ? caseType === "best"
+        ? "mejor caso"
+        : caseType === "average"
+          ? "caso promedio"
+          : "peor caso"
+      : caseType === "best"
+        ? "best case"
+        : caseType === "average"
+          ? "average case"
+          : "worst case";
+
+    const casePattern = /(peor caso|mejor caso|caso promedio|worst case|best case|average case)/gi;
+    return procedureSteps.map((step) => {
+      if (typeof step !== "string") return step;
+      return step.replace(casePattern, caseLabel);
+    });
+  }, [procedureSteps, caseType, locale]);
 
   if (!open) return null;
 
@@ -219,17 +247,19 @@ export default function GeneralProcedureModal({
         </div>
       </div>
 
-      {/* Pasos del procedimiento para caso promedio */}
-      {isAvgCase && avgProcedureSteps.length > 0 && (
+      {/* Pasos del procedimiento general */}
+      {procedureSteps.length > 0 && (
         <div className="p-4 rounded-xl glass-card border border-white/10 space-y-4">
           <h4 className="text-white font-semibold flex items-center gap-2">
             <span className="material-symbols-outlined text-purple-400 text-lg">
               list_alt
             </span>
-            {t("avgProcedure")}
+            {isAvgCase || isAverageSelected
+              ? t("avgProcedure")
+              : t("iterativeProcedure")}
           </h4>
           <div className="space-y-3">
-            {avgProcedureSteps.map((step, index) => (
+            {caseAwareProcedureSteps.map((step, index) => (
               <div
                 key={index}
                 className="flex items-start gap-3 p-3 bg-slate-900/50 rounded-lg border border-white/10"

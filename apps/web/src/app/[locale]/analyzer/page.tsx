@@ -2871,6 +2871,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
       <GeneralProcedureModal
         open={openGeneral}
         onClose={() => setOpenGeneral(false)}
+        caseType={generalProcedureCase}
         data={
           generalProcedureCase === "worst"
             ? data?.worst || undefined

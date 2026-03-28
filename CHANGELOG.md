@@ -5,6 +5,31 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [Unreleased] - 2026-03-28
+
+### Added
+- Procedimiento general didáctico de 4 pasos para análisis iterativo en mejor y peor caso: identificación de líneas contables, cálculo de ejecuciones por línea, construcción de la ecuación completa y cierre asintótico.
+- Procedimiento didáctico de 4 pasos para caso promedio en flujo independiente, manteniendo la semántica de esperanza $E[N_{\ell}]$ por línea.
+- Subpaso explícito en el paso de construcción de ecuación para reemplazar sumatorias por sus formas cerradas cuando el costo crudo contiene términos con $\sum$.
+- Subpaso explícito para sustitución de constantes $C_k \to 1$ en el caso promedio cuando existen constantes simbólicas en la ecuación cerrada.
+- Campo `line_procedure` en cada fila: procedimiento detallado específico de cómo se llegó al costo de esa línea (contabilidad + resolución de sumatorias).
+
+### Changed
+- Reordenamiento del procedimiento de mejor/peor caso para que el paso a paso quede estable y consistente en 4 pasos, con narrativa pedagógica y ecuaciones intermedias.
+- Reordenamiento del procedimiento de promedio para seguir el mismo esquema de 4 pasos, respetando su modelo probabilístico y su cálculo por esperanza.
+- En mejor/peor/promedio, las resoluciones de sumatoria por línea ahora se muestran condicionadas a evidencia real de sumatorias en el procedimiento de la fila (no solo por plantilla), incluyendo pasos intermedios de linealidad, evaluación parcial y combinación.
+- La ecuación simplificada final se conserva para el paso de cierre asintótico, evitando duplicaciones innecesarias entre pasos consecutivos.
+- **Separación de responsabilidades en modales para iterativos (worst/best case)**:
+  - Pasos 1-2 (Determinar líneas contables + Resolver sumatorias por línea): ahora se distribuyen a cada `row["line_procedure"]` y se muestran en `ProcedureModal` bajo "How this cost was derived".
+  - Pasos 3-4 (Sumar costos totales + Simplificar): se conservan en `procedure_steps` general y se muestran en `GeneralProcedureModal`.
+- Frontend `ProcedureModal.tsx` ahora renderiza `line_procedure` en una sección con borde ámbar bajo "Number of executions", mostrando el paso a paso completo de cómo se llegó al costo de esa línea específica.
+- En `ProcedureModal.tsx`, la sección bajo "Número de ejecuciones" ahora usa `line_procedure` como fuente principal y `procedure` como fallback, evitando que el paso a paso desaparezca en casos sin `line_procedure`.
+
+### Fixed
+- Corrección de inconsistencia pedagógica donde el caso promedio no reflejaba la misma estructura de 4 pasos que mejor/peor caso.
+- Corrección de omisiones en subpasos de sumatorias para que se muestren únicamente cuando aplican y con trazabilidad completa de transformación algebraica.
+- Refactorización de `_generate_iterative_four_step_procedure`: ahora separa los pasos por línea (line_procedure) de los pasos generales, evitando duplicación y mejorando claridad pedagógica en interfaces.
+
 ## [Unreleased] - 2026-03-18
 
 ### Added

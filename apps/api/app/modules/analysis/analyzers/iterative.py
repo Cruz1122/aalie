@@ -1013,7 +1013,10 @@ class IterativeAnalyzer(
 
         # Generar procedimiento general para caso promedio
         if mode == "avg":
-            self._generate_avg_procedure()
+            self._generate_avg_procedure(
+                t_open_expr=t_open_expr,
+                has_unbounded=has_unbounded,
+            )
 
         # Calcular notaciones asintóticas usando la expresión SymPy directamente
         # Caso especial: algoritmo de Euclides (mcd) → O(log(min(a,b)))
@@ -1068,6 +1071,13 @@ class IterativeAnalyzer(
             self.big_omega = "\\Omega(1)"
             self.big_theta = "\\Theta(1)"
 
+        # Procedimiento general de iterativos para worst/best con 4 pasos didácticos.
+        self._generate_iterative_four_step_procedure(
+            mode=mode,
+            t_open_expr=t_open_expr,
+            has_unbounded=has_unbounded,
+        )
+
         # Retornar resultado, usando la expresión SymPy de T_open para formatear mejor el string.
         out = self.result()
         if isinstance(out, dict) and t_open_expr is not None:
@@ -1114,7 +1124,11 @@ class IterativeAnalyzer(
 
         return out
 
-    def _generate_avg_procedure(self):
+    def _generate_avg_procedure(
+        self,
+        t_open_expr: Optional[Expr],
+        has_unbounded: bool,
+    ):
         """
         Genera los pasos del procedimiento para caso promedio.
         Almacena los pasos en self.procedure_steps para incluirlos en totals.procedure.
@@ -1123,108 +1137,298 @@ class IterativeAnalyzer(
             return
 
         procedure_steps = []
+        counted_rows = [
+            r for r in self.rows if r.get("ck") != "—" and r.get("count") != "—"
+        ]
 
-        # Paso 1: Definición de caso promedio
-        procedure_steps.append(self._note("proc_step1_def"))
+        # Paso 1: Definir el caso promedio y el modelo probabilístico.
+        procedure_steps.append(
+            "\\text{Paso 1: Definir caso promedio y modelo probabilístico}"
+            if self.locale == "es"
+            else "\\text{Step 1: Define average case and probabilistic model}"
+        )
         procedure_steps.append("A(n) = \\sum_{I \\in I_n} T(I) \\cdot p(I)")
 
-        # Paso 2: Si es uniforme, mostrar fórmula uniforme
         if self.avg_model.mode == "uniform":
-            procedure_steps.append(self._note("proc_step2_model"))
             procedure_steps.append("A(n) = \\frac{1}{|I_n|} \\sum_{I \\in I_n} T(I)")
-
-        # Paso 3: Linealidad de la esperanza
-        procedure_steps.append(self._note("proc_step3_linearity"))
-        procedure_steps.append("A(n) = \\sum_{\\ell} C_{\\ell} \\cdot E[N_{\\ell}]")
-
-        # Paso 4: Cálculo de E[N_ℓ] por constructo
-        procedure_steps.append(self._note("proc_step4_construct"))
-
-        # Agregar explicaciones por tipo de constructo encontrado
-        constructos_encontrados = set()
-        for row in self.rows:
-            kind = row.get("kind", "")
-            if kind in ["for", "if", "while", "repeat"]:
-                constructos_encontrados.add(kind)
-
-        if "for" in constructos_encontrados:
-            # Verificar si hay early return para mostrar regla correcta
-            has_early_return_avg = False
-            for row in self.rows:
-                if row.get("kind") == "for" and "E[iter]" in str(row.get("note", "")):
-                    has_early_return_avg = True
-                    break
-            if has_early_return_avg:
-                procedure_steps.append(self._note("proc_for_early"))
-            else:
-                procedure_steps.append(self._note("proc_for_deterministic"))
-        if "if" in constructos_encontrados:
-            # Verificar si hay early return para mostrar regla correcta
-            has_early_return_avg = False
-            has_success_return = False
-            for row in self.rows:
-                if (
-                    row.get("kind") == "return"
-                    and row.get("note")
-                    and (
-                        "éxito seguro" in row.get("note", "")
-                        or "guaranteed success" in row.get("note", "")
-                    )
-                ):
-                    has_early_return_avg = True
-                    has_success_return = True
-                    break
-            if has_early_return_avg and has_success_return:
-                procedure_steps.append(self._note("proc_if_early"))
-            else:
-                p_str = self.avg_model.get_default_probability()
-                procedure_steps.append(self._note("proc_if_formula", p_str=p_str))
-        if "while" in constructos_encontrados:
-            procedure_steps.append(self._note("proc_while_formula"))
-
-        # Paso 5: Cierre de sumatorias
-        procedure_steps.append(self._note("proc_step5_summation"))
-        has_unbounded = any(r.get("unbounded") for r in self.rows)
-        if has_unbounded:
-            procedure_steps.append(self._note("proc_a_of_n_tends_infinity"))
-        else:
-            t_open = self.build_t_open()
-            procedure_steps.append(f"A(n) = {t_open}")
-
-        # Paso 6: Resultado y modelo
-        procedure_steps.append(self._note("proc_step6_result"))
-        # Detectar si estamos en Modelo A (éxito seguro con early return)
-        has_success_return = False
-        has_failure_return = False
-        for row in self.rows:
-            if row.get("kind") == "return":
-                note = row.get("note", "")
-                if note and (
-                    "éxito seguro" in note
-                    or "guaranteed success" in note
-                    or ("éxito" in note and "siempre ocurre" in note)
-                ):
-                    has_success_return = True
-                if note and (
-                    "fracaso" in note
-                    or "nunca ocurre" in note
-                    or "failure" in note
-                    or "never occurs" in note
-                ):
-                    has_failure_return = True
-        # Si hay early return en bucle y éxito seguro, es Modelo A
-        if has_success_return and has_failure_return:
-            model_note = self._note("model_uniform_success")
-        else:
-            model_info = self.avg_model.get_model_info(locale=self.locale)
-            model_note = model_info["note"]
-        procedure_steps.append(self._note("proc_model_label", model_note=model_note))
-
-        # Agregar hipótesis si hay símbolos
+        model_info = self.avg_model.get_model_info(locale=self.locale)
+        procedure_steps.append(
+            self._note("proc_model_label", model_note=model_info["note"])
+        )
         if self.avg_model.has_symbols():
             procedure_steps.append(self._note("hypotheses_symbolic"))
 
+        # Paso 2: Determinar E[N_l] por línea y resolver sumatorias por línea.
+        procedure_steps.append(
+            "\\text{Paso 2: Determinar } E[N_{\\ell}] \\text{ por línea}"
+            if self.locale == "es"
+            else "\\text{Step 2: Determine } E[N_{\\ell}] \\text{ per line}"
+        )
+        procedure_steps.append("A(n) = \\sum_{\\ell} C_{\\ell} \\cdot E[N_{\\ell}]")
+        for row in counted_rows:
+            line_no = row.get("line", "?")
+            count_raw = str(row.get("count_raw", row.get("count", "1")))
+            count_closed = str(row.get("count", count_raw))
+            if count_raw.replace(" ", "") == count_closed.replace(" ", ""):
+                procedure_steps.append(
+                    f"E[N_{{{line_no}}}] = {count_closed}"
+                )
+            else:
+                procedure_steps.append(
+                    f"E[N_{{{line_no}}}] = {count_raw} = {count_closed}"
+                )
+
+            row_steps = row.get("procedure") or []
+            has_sum_steps = isinstance(row_steps, list) and any(
+                isinstance(s, str) and "\\sum" in s for s in row_steps
+            )
+            if has_sum_steps and len(row_steps) > 1:
+                procedure_steps.append(
+                    self._note("proc_iter_summation_resolution", line=line_no)
+                )
+                for step in row_steps:
+                    if isinstance(step, str) and step.strip() and step.strip() != "0":
+                        procedure_steps.append(step)
+
+        # Paso 3: Construir A(n) completa y reemplazar sumatorias cerradas cuando aplique.
+        procedure_steps.append(
+            "\\text{Paso 3: Construir } A(n) \\text{ completa}"
+            if self.locale == "es"
+            else "\\text{Step 3: Build full } A(n)"
+        )
+
+        raw_terms = []
+        closed_terms = []
+        has_raw_summations = False
+        for row in counted_rows:
+            ck = str(row.get("ck", ""))
+            if not ck:
+                continue
+            count_raw = str(row.get("count_raw", row.get("count", "1")))
+            count_closed = str(row.get("count", count_raw))
+            ops_val = row.get("ops", 1)
+            if "\\sum" in count_raw:
+                has_raw_summations = True
+            if ops_val and ops_val != 1:
+                raw_terms.append(f"{ck} \\cdot {ops_val} \\cdot ({count_raw})")
+                closed_terms.append(
+                    f"{ck} \\cdot {ops_val} \\cdot ({count_closed})"
+                )
+            else:
+                raw_terms.append(f"{ck} \\cdot ({count_raw})")
+                closed_terms.append(f"{ck} \\cdot ({count_closed})")
+
+        raw_sum_expr = " + ".join(raw_terms) if raw_terms else "0"
+        closed_sum_expr = " + ".join(closed_terms) if closed_terms else raw_sum_expr
+
+        if has_unbounded:
+            procedure_steps.append(self._note("proc_a_of_n_tends_infinity"))
+        else:
+            procedure_steps.append(f"A(n) = {raw_sum_expr}")
+
+            if has_raw_summations and closed_sum_expr != raw_sum_expr:
+                procedure_steps.append(
+                    "\\text{Reemplazamos sumatorias por sus formas cerradas:}"
+                    if self.locale == "es"
+                    else "\\text{We replace summations with their closed forms:}"
+                )
+                procedure_steps.append(f"A(n) = {closed_sum_expr}")
+
+            # Subpaso opcional: sustituir constantes C_k por 1 cuando aparezcan.
+            has_symbolic_constants = "C_" in closed_sum_expr
+            if has_symbolic_constants and t_open_expr is not None:
+                import re
+
+                procedure_steps.append(
+                    "\\text{Sustituimos constantes } C_k \\text{ por } 1:"
+                    if self.locale == "es"
+                    else "\\text{We substitute constants } C_k \\text{ by } 1:"
+                )
+                substituted_expr = re.sub(r"C_\{\d+\}", "1", closed_sum_expr)
+                substituted_expr = re.sub(r"C_k", "1", substituted_expr)
+                procedure_steps.append(f"A(n) = {substituted_expr}")
+
+        # Paso 4: Simplificar y concluir notación asintótica.
+        procedure_steps.append(
+            "\\text{Paso 4: Simplificar y concluir notación asintótica}"
+            if self.locale == "es"
+            else "\\text{Step 4: Simplify and conclude asymptotic notation}"
+        )
+        if has_unbounded:
+            procedure_steps.append("A(n) = \\infty")
+        elif t_open_expr is not None:
+            procedure_steps.append(f"A(n) = {latex(t_open_expr)}")
+        else:
+            procedure_steps.append(f"A(n) = {self.build_t_open()}")
+
+        if self.big_o:
+            procedure_steps.append(f"A(n) = {self.big_o}")
+        if self.big_omega:
+            procedure_steps.append(f"A(n) = {self.big_omega}")
+        if self.big_theta:
+            procedure_steps.append(f"A(n) = {self.big_theta}")
+
         # Almacenar en un campo separado para totals.procedure (no en notes)
+        self.procedure_steps = procedure_steps
+
+    def _generate_iterative_four_step_procedure(
+        self,
+        mode: str,
+        t_open_expr: Optional[Expr],
+        has_unbounded: bool,
+    ) -> None:
+        """
+        Genera un procedimiento general de 4 pasos para iterativos (worst/best).
+
+        Estructura:
+        1) Determinar líneas contables (según caso) [DETAILS IN PER-LINE MODAL]
+        2) Determinar ejecuciones por línea y resolver sumatorias [DETAILS IN PER-LINE MODAL]
+        3) Sumar costos para obtener T(n) completa [SHOWN IN GENERAL MODAL]
+        4) Simplificar y concluir notación asintótica [SHOWN IN GENERAL MODAL]
+        """
+        if mode == "avg":
+            return
+
+        counted_rows = [
+            r for r in self.rows if r.get("ck") != "—" and r.get("count") != "—"
+        ]
+
+        case_key = "proc_iter_case_worst" if mode == "worst" else "proc_iter_case_best"
+        case_label = self._note(case_key)
+        symbol_name = "T(n)"
+
+        procedure_steps: list[str] = []
+
+        # PASOS 1 Y 2: Distribuir detalles a cada línea (per-line procedure modal)
+        # Estos pasos ahora van en row["procedure"] en lugar de en el procedimiento general
+        for row in counted_rows:
+            line_no = row.get("line", "?")
+            ck = row.get("ck", "C")
+            count_raw = str(row.get("count_raw", row.get("count", "1")))
+            count_closed = str(row.get("count", count_raw))
+
+            # Inicializar line_procedure si no existe
+            if "line_procedure" not in row:
+                row["line_procedure"] = []
+
+            # Paso 1: Línea contable
+            row["line_procedure"].append(
+                self._note(
+                    "proc_iter_countable_line",
+                    line=line_no,
+                    ck=ck,
+                )
+            )
+
+            # Paso 2: Ejecuciones por línea
+            if count_raw.replace(" ", "") == count_closed.replace(" ", ""):
+                row["line_procedure"].append(
+                    self._note(
+                        "proc_iter_line_exec_same",
+                        line=line_no,
+                        count=count_closed,
+                    )
+                )
+            else:
+                row["line_procedure"].append(
+                    self._note(
+                        "proc_iter_line_exec",
+                        line=line_no,
+                        count_raw=count_raw,
+                        count_closed=count_closed,
+                    )
+                )
+
+            # Subpaso: Resolución de sumatorias (si aplica)
+            row_steps = row.get("procedure") or []
+            has_sum_steps = isinstance(row_steps, list) and any(
+                isinstance(s, str) and "\\sum" in s for s in row_steps
+            )
+            if has_sum_steps and len(row_steps) > 1:
+                row["line_procedure"].append(
+                    self._note("proc_iter_summation_resolution", line=line_no)
+                )
+                for step in row_steps:
+                    if isinstance(step, str) and step.strip() and step.strip() != "0":
+                        row["line_procedure"].append(step)
+
+        # Construir versión explícita con conteos crudos para mostrar sumatoria inicial
+        raw_terms = []
+        for row in counted_rows:
+            ck = str(row.get("ck", ""))
+            if not ck:
+                continue
+            count_raw = str(row.get("count_raw", row.get("count", "1")))
+            ops_val = row.get("ops", 1)
+            if ops_val and ops_val != 1:
+                raw_terms.append(f"{ck} \\cdot {ops_val} \\cdot ({count_raw})")
+            else:
+                raw_terms.append(f"{ck} \\cdot ({count_raw})")
+        raw_sum_expr = " + ".join(raw_terms) if raw_terms else "0"
+
+        # Construir versión con sumatorias ya cerradas (si aplica)
+        closed_terms = []
+        has_raw_summations = False
+        for row in counted_rows:
+            ck = str(row.get("ck", ""))
+            if not ck:
+                continue
+            count_raw = str(row.get("count_raw", row.get("count", "1")))
+            if "\\sum" in count_raw:
+                has_raw_summations = True
+            count_closed = str(row.get("count", count_raw))
+            ops_val = row.get("ops", 1)
+            if ops_val and ops_val != 1:
+                closed_terms.append(
+                    f"{ck} \\cdot {ops_val} \\cdot ({count_closed})"
+                )
+            else:
+                closed_terms.append(f"{ck} \\cdot ({count_closed})")
+        closed_sum_expr = " + ".join(closed_terms) if closed_terms else raw_sum_expr
+
+        # Paso 3: T(n) completa
+        procedure_steps.append(self._note("proc_iter_step3", symbol_name=symbol_name))
+        procedure_steps.append(f"{symbol_name} = {raw_sum_expr}")
+
+        # Subpaso: reemplazar sumatorias por formas cerradas (solo cuando aplica)
+        if has_raw_summations and closed_sum_expr != raw_sum_expr:
+            procedure_steps.append(
+                "\\text{Reemplazamos sumatorias por sus formas cerradas:}"
+                if self.locale == "es"
+                else "\\text{We replace summations with their closed forms:}"
+            )
+            procedure_steps.append(f"{symbol_name} = {closed_sum_expr}")
+
+        # Subpaso: sustituir constantes C_k por 1 (solo cuando aplica)
+        has_symbolic_constants = "C_" in closed_sum_expr
+        if has_symbolic_constants and not has_unbounded and t_open_expr is not None:
+            import re
+
+            procedure_steps.append(
+                "\\text{Sustituimos constantes } C_k \\text{ por } 1:"
+                if self.locale == "es"
+                else "\\text{We substitute constants } C_k \\text{ by } 1:"
+            )
+            substituted_expr = re.sub(r"C_\{\d+\}", "1", closed_sum_expr)
+            substituted_expr = re.sub(r"C_k", "1", substituted_expr)
+            procedure_steps.append(f"{symbol_name} = {substituted_expr}")
+
+        if has_unbounded:
+            procedure_steps.append(f"{symbol_name} = \\infty")
+        elif t_open_expr is None:
+            procedure_steps.append(f"{symbol_name} = {self.build_t_open()}")
+
+        # Paso 4: simplificación y notación asintótica
+        procedure_steps.append(self._note("proc_iter_step4"))
+        if t_open_expr is not None and not has_unbounded:
+            procedure_steps.append(f"{symbol_name} = {latex(t_open_expr)}")
+        if self.big_o:
+            procedure_steps.append(f"{symbol_name} = {self.big_o}")
+        if self.big_omega:
+            procedure_steps.append(f"{symbol_name} = {self.big_omega}")
+        if self.big_theta:
+            procedure_steps.append(f"{symbol_name} = {self.big_theta}")
+
         self.procedure_steps = procedure_steps
 
     def _calculate_t_polynomial_fallback(self):
