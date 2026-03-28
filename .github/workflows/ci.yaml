@@ -5,8 +5,10 @@ on:
     branches: [main, develop, ci-test]
     paths:
       - "apps/**"
+      - "docs/**"
       - "packages/**"
       - "infra/**"
+      - "scripts/**"
       - "pnpm-*.yaml"
       - "package.json"
       - "pnpm-workspace.yaml"
@@ -15,8 +17,10 @@ on:
     branches: [main, develop]
     paths:
       - "apps/**"
+      - "docs/**"
       - "packages/**"
       - "infra/**"
+      - "scripts/**"
       - "pnpm-*.yaml"
       - "package.json"
       - "pnpm-workspace.yaml"
@@ -213,11 +217,27 @@ jobs:
       - name: Black formatting (api)
         run: python -m black --check --diff apps/api mcp packages/grammar/py
 
+  docs-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate docs contracts
+        run: python3 scripts/check_docs_contracts.py
+
   # Job de Docker: Verifica que las imágenes construyen
   docker-integration:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [build, test, lint-web, lint-api]  # Solo corre si build, tests y lint pasan
+    needs: [build, test, lint-web, lint-api, docs-contracts]  # Solo corre si build, tests, lint y docs pasan
 
     steps:
       - name: Checkout
