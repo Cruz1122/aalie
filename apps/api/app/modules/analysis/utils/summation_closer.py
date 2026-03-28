@@ -1684,12 +1684,11 @@ class SummationCloser:
                     # Analizar el cuerpo
                     # Verificar si el cuerpo es constante respecto a la variable de suma
                     from sympy import Symbol as SymSymbol
-                    from sympy import simplify as sympy_simplify
 
                     # PRIMERO: Verificar si el cuerpo es exactamente la variable de la sumatoria
                     # Usar comparación más robusta: simplificar ambos y comparar
-                    body_simplified = sympy_simplify(body)
-                    sum_var_simplified = sympy_simplify(sum_var)
+                    body_simplified = simplify(body)
+                    sum_var_simplified = simplify(sum_var)
                     is_arithmetic_sum = (body_simplified == sum_var_simplified) or (
                         body == sum_var
                     )
@@ -1709,8 +1708,6 @@ class SummationCloser:
                     # Si el cuerpo es 1, es una sumatoria constante
                     if body == Int(1) or body == 1:
                         # Calcular y simplificar el resultado usando SymPy
-                        from sympy import simplify
-
                         result_expr = end - start + Int(1)
                         result_simplified = simplify(result_expr)
                         result_latex = self._sympy_to_latex(result_simplified)
@@ -1736,8 +1733,6 @@ class SummationCloser:
                     # DEBE ir ANTES del caso de factor constante
                     elif is_arithmetic_sum:
                         # Calcular la suma aritmética correctamente
-                        from sympy import simplify, summation
-
                         # Fórmula: Σ_{i=a}^{b} i = (b(b+1))/2 - ((a-1)a)/2
                         # Usar summation() que es más robusto para sumatorias simbólicas
                         try:
@@ -1907,8 +1902,6 @@ class SummationCloser:
                     # Si el cuerpo NO depende de la variable de suma, es constante (factor constante)
                     elif not body_depends_on_var:
                         # Aplicar regla de factor constante: Σ_{i=a}^{b} c = c · (b - a + 1)
-                        from sympy import simplify
-
                         result_expr = body * (end - start + Int(1))
                         result_simplified = simplify(result_expr)
                         result_latex = self._sympy_to_latex(result_simplified)
@@ -1976,201 +1969,85 @@ class SummationCloser:
                                 # Evaluar cada parte y combinar resultados
                                 const_result_latex = None
                                 var_result_latex = None
+                                const_result_expr = None
+                                var_result_expr = None
 
-                                # Parte constante
+                                # Agregar encabezado "Evaluando cada sumatoria"
+                                steps.append(
+                                    f"\\text{{{self._labels['evaluating_summation']} }}"
+                                )
+
+                                # Parte constante - SIEMPRE mostrar el paso
                                 if constant_terms:
                                     const_sum = Sum(
                                         SymAdd(*constant_terms), (sum_var, start, end)
                                     )
+                                    const_result_latex = None
+                                    const_result_expr = None
                                     try:
                                         const_result = const_sum.doit()
                                         const_result_simplified = simplify(const_result)
+                                        const_result_expr = const_result_simplified
                                         const_result_latex = self._sympy_to_latex(
                                             const_result_simplified
                                         )
+                                    except Exception:
+                                        try:
+                                            # Intentar sin simplify
+                                            const_result = const_sum.doit()
+                                            const_result_expr = const_result
+                                            const_result_latex = self._sympy_to_latex(const_result)
+                                        except Exception:
+                                            pass
+                                    
+                                    # Generar paso de evaluación constante (con o sin simplificación)
+                                    if const_result_latex:
+                                        const_step = f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {const_terms_latex} = {const_result_latex}"
+                                        steps.append(const_step)
+
+                                # Parte con variable - SIEMPRE mostrar el paso
+                                if terms_with_var:
+                                    var_sum_expr = SymAdd(*terms_with_var)
+                                    var_sum = Sum(var_sum_expr, (sum_var, start, end))
+                                    var_result_latex = None
+                                    var_result_expr = None
+                                    
+                                    try:
+                                        var_sum_result = var_sum.doit()
+                                        var_sum_simplified = simplify(var_sum_result)
+                                        var_result_expr = var_sum_simplified
+                                        var_result_latex = self._sympy_to_latex(var_sum_simplified)
+                                    except Exception:
+                                        try:
+                                            # Intentar sin simplify
+                                            var_sum_result = var_sum.doit()
+                                            var_result_expr = var_sum_result
+                                            var_result_latex = self._sympy_to_latex(var_sum_result)
+                                        except Exception:
+                                            pass
+                                    
+                                    # Generar paso de evaluación variable (con o sin simplificación)
+                                    if var_result_latex:
+                                        var_step = f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = {var_result_latex}"
+                                        steps.append(var_step)
+
+                                # Combinar resultados si se evaluaron ambas partes exitosamente
+                                if (
+                                    const_result_latex
+                                    and var_result_latex
+                                    and const_result_expr is not None
+                                    and var_result_expr is not None
+                                ):
+                                    try:
+                                        total_expr = var_result_expr + const_result_expr
+                                        total_simplified = simplify(total_expr)
+                                        total_latex = self._sympy_to_latex(total_simplified)
+                                        
                                         steps.append(
-                                            f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {const_terms_latex} = {const_result_latex}"
+                                            f"\\text{{{self._labels['combining_results']} }} {var_result_latex} + {const_result_latex} = {total_latex}"
                                         )
                                     except Exception:
                                         pass
-
-                                # Parte con variable
-                                if terms_with_var:
-                                    # Construir expresión con términos de variable
-                                    var_sum_expr = SymAdd(*terms_with_var)
-
-                                    # Verificar si es de la forma k*sum_var (suma aritmética)
-                                    if len(terms_with_var) == 1:
-                                        term = terms_with_var[0]
-                                        # Verificar si el término es proporcional a sum_var
-                                        # Intentar factorizar sum_var
-                                        from sympy import factor
-
-                                        term_factored = factor(term)
-
-                                        if isinstance(term_factored, SymMul):
-                                            # Buscar si sum_var está en los factores
-                                            has_var = False
-                                            coeff = 1
-                                            for factor_elem in term_factored.args:
-                                                if factor_elem == sum_var:
-                                                    has_var = True
-                                                elif not factor_elem.has(sum_var):
-                                                    coeff = (
-                                                        coeff * factor_elem
-                                                        if coeff != 1
-                                                        else factor_elem
-                                                    )
-
-                                            if has_var:
-                                                # Es de la forma k*sum_var
-                                                var_sum = Sum(
-                                                    sum_var, (sum_var, start, end)
-                                                )
-                                                try:
-                                                    var_sum_result = var_sum.doit()
-                                                    var_sum_simplified = simplify(
-                                                        var_sum_result
-                                                    )
-                                                    var_sum_latex = (
-                                                        self._sympy_to_latex(
-                                                            var_sum_simplified
-                                                        )
-                                                    )
-
-                                                    if coeff != 1:
-                                                        coeff_latex = (
-                                                            self._sympy_to_latex(coeff)
-                                                        )
-                                                        total_result = (
-                                                            coeff * var_sum_result
-                                                        )
-                                                        total_simplified = simplify(
-                                                            total_result
-                                                        )
-                                                        total_latex = (
-                                                            self._sympy_to_latex(
-                                                                total_simplified
-                                                            )
-                                                        )
-
-                                                        steps.append(
-                                                            f"\\text{{{self._labels['applying_arithmetic_formula']} }} "
-                                                            f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = "
-                                                            f"{coeff_latex} \\cdot \\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = "
-                                                            f"{coeff_latex} \\cdot {var_sum_latex} = {total_latex}"
-                                                        )
-                                                        var_result_latex = total_latex
-                                                    else:
-                                                        steps.append(
-                                                            f"\\text{{{self._labels['applying_arithmetic_formula']} }} "
-                                                            f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = {var_sum_latex}"
-                                                        )
-                                                        var_result_latex = var_sum_latex
-                                                except Exception:
-                                                    steps.append(
-                                                        f"\\text{{{self._labels['evaluating_summation']} }} "
-                                                        f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
-                                                    )
-                                            else:
-                                                # No es proporcional a sum_var, evaluar directamente
-                                                var_sum = Sum(
-                                                    var_sum_expr, (sum_var, start, end)
-                                                )
-                                                try:
-                                                    var_sum_result = var_sum.doit()
-                                                    var_sum_simplified = simplify(
-                                                        var_sum_result
-                                                    )
-                                                    var_sum_latex = (
-                                                        self._sympy_to_latex(
-                                                            var_sum_simplified
-                                                        )
-                                                    )
-                                                    steps.append(
-                                                        f"\\text{{{self._labels['evaluating_summation']} }} "
-                                                        f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = {var_sum_latex}"
-                                                    )
-                                                    var_result_latex = var_sum_latex
-                                                except Exception:
-                                                    steps.append(
-                                                        f"\\text{{{self._labels['evaluating_summation']} }} "
-                                                        f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
-                                                    )
-                                        else:
-                                            # No es un Mul, verificar si es directamente sum_var
-                                            if term == sum_var:
-                                                var_sum = Sum(
-                                                    sum_var, (sum_var, start, end)
-                                                )
-                                                try:
-                                                    var_sum_result = var_sum.doit()
-                                                    var_sum_simplified = simplify(
-                                                        var_sum_result
-                                                    )
-                                                    var_sum_latex = (
-                                                        self._sympy_to_latex(
-                                                            var_sum_simplified
-                                                        )
-                                                    )
-                                                    steps.append(
-                                                        f"\\text{{{self._labels['applying_arithmetic_formula']} }} "
-                                                        f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {var_latex} = {var_sum_latex}"
-                                                    )
-                                                    var_result_latex = var_sum_latex
-                                                except Exception:
-                                                    steps.append(
-                                                        f"\\text{{{self._labels['evaluating_summation']} }} "
-                                                        f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
-                                                    )
-                                            else:
-                                                # Evaluar directamente
-                                                var_sum = Sum(
-                                                    var_sum_expr, (sum_var, start, end)
-                                                )
-                                                try:
-                                                    var_sum_result = var_sum.doit()
-                                                    var_sum_simplified = simplify(
-                                                        var_sum_result
-                                                    )
-                                                    var_sum_latex = (
-                                                        self._sympy_to_latex(
-                                                            var_sum_simplified
-                                                        )
-                                                    )
-                                                    steps.append(
-                                                        f"\\text{{{self._labels['evaluating_summation']} }} "
-                                                        f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = {var_sum_latex}"
-                                                    )
-                                                    var_result_latex = var_sum_latex
-                                                except Exception:
-                                                    steps.append(
-                                                        f"\\text{{{self._labels['evaluating_summation']} }} "
-                                                        f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
-                                                    )
-                                    else:
-                                        # Múltiples términos con variable, evaluar directamente
-                                        var_sum = Sum(
-                                            var_sum_expr, (sum_var, start, end)
-                                        )
-                                        try:
-                                            var_sum_result = var_sum.doit()
-                                            var_sum_simplified = simplify(
-                                                var_sum_result
-                                            )
-                                            var_sum_latex = self._sympy_to_latex(
-                                                var_sum_simplified
-                                            )
-                                            steps.append(
-                                                f"\\text{{{self._labels['evaluating_summation']} }} "
-                                                f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = {var_sum_latex}"
-                                            )
-                                            var_result_latex = var_sum_latex
-                                        except Exception:
-                                            steps.append(
-                                                f"\\text{{{self._labels['evaluating_summation']} }} "
-                                                f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex}"
-                                            )
 
                             elif terms_with_var:
                                 # Solo términos que dependen de la variable
@@ -2187,33 +2064,6 @@ class SummationCloser:
                             steps.append(
                                 f"\\text{{{self._labels['evaluating_summation']} }} {sum_latex}"
                             )
-
-                        # Agregar resultado final combinado si hay partes separadas (solo dentro del bloque Add)
-                        if (
-                            isinstance(body_expanded, SymAdd)
-                            and terms_with_var
-                            and constant_terms
-                        ):
-                            if (
-                                "const_result_latex" in locals()
-                                and "var_result_latex" in locals()
-                                and const_result_latex
-                                and var_result_latex
-                            ):
-                                # Combinar resultados
-                                try:
-                                    from sympy import sympify
-
-                                    total_expr = sympify(
-                                        var_result_latex.replace("\\", "")
-                                    ) + sympify(const_result_latex.replace("\\", ""))
-                                    total_simplified = simplify(total_expr)
-                                    total_latex = self._sympy_to_latex(total_simplified)
-                                    steps.append(
-                                        f"\\text{{{self._labels['combining_results']} }} {var_result_latex} + {const_result_latex} = {total_latex}"
-                                    )
-                                except Exception:
-                                    pass
 
                         # Agregar resultado final (para todos los casos)
                         try:
@@ -2305,8 +2155,6 @@ class SummationCloser:
 
                         # Simplificar si es posible
                         try:
-                            from sympy import simplify
-
                             inner_result_expr = inner_end - inner_start + Int(1)
                             inner_result_simplified = simplify(inner_result_expr)
                             inner_result_latex = self._sympy_to_latex(
@@ -2609,9 +2457,6 @@ class SummationCloser:
                                             )
                                         # Si todavía queda, sustituir (evitar resultado negativo)
                                         if evaluated_simplified.has(var_symbol):
-                                            print(
-                                                f"[SummationCloser] Advertencia: Variable de iteración {var_name} todavía presente después de evaluar sumatoria con doit()"
-                                            )
                                             evaluated_simplified = (
                                                 self._safe_substitute_iteration_var(
                                                     evaluated_simplified,

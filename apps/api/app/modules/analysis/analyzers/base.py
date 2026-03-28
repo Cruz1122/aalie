@@ -1086,9 +1086,11 @@ class BaseAnalyzer:
         # Para caso promedio, agregar A_of_n y procedure
         if self.mode == "avg":
             totals["A_of_n"] = t_open_str
-            # Agregar pasos del procedimiento a totals.procedure (no a notes)
-            if hasattr(self, "procedure_steps") and self.procedure_steps:
-                totals["procedure"] = self.procedure_steps
+
+        # Agregar pasos del procedimiento cuando estén disponibles
+        # (avg y también walkthroughs generales para worst/best en iterativos)
+        if hasattr(self, "procedure_steps") and self.procedure_steps:
+            totals["procedure"] = self.procedure_steps
 
         # Agregar T_polynomial si está disponible
         if self.t_polynomial:

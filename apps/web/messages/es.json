@@ -581,6 +581,7 @@
       "polynomialFormT": "Forma polinómica T(n)",
       "polynomialFormA": "Forma polinómica A(n)",
       "avgProcedure": "Procedimiento de Caso Promedio",
+      "iterativeProcedure": "Procedimiento Iterativo",
       "asymptoticNotation": "Notación asintótica",
       "bigOUpper": "Big-O (cota superior):",
       "bigOmegaLower": "Big-Omega (cota inferior):",
