@@ -256,11 +256,11 @@ def strip_outer_math_delimiters(value: str) -> str:
 
 
 def normalize_latex_math_expression(value: str) -> str:
-    return re.sub(
-        r"([A-Za-z])_([0-9]+)\b",
-        r"\1_{\2}",
-        strip_outer_math_delimiters(value),
-    )
+    normalized = strip_outer_math_delimiters(value)
+    # Some analyzer outputs arrive JSON-escaped twice (for example `\\Theta(\\\\log...)`).
+    # Collapse duplicated command backslashes before rendering inline/cell math.
+    normalized = re.sub(r"\\\\([A-Za-z]+)", r"\\\1", normalized)
+    return re.sub(r"([A-Za-z])_([0-9]+)\b", r"\1_{\2}", normalized)
 
 
 def render_latex_text_with_inline_math(value: str) -> str:

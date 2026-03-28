@@ -227,7 +227,7 @@ def _render_block(block: Dict[str, object], i18n: Dict[str, object]) -> str:
             r"\FloatBarrier",
             r"\begin{figure}[H]",
             r"\centering",
-            rf"\includegraphics[width=0.98\linewidth,keepaspectratio]{{{escape_latex_text(str(diagram.get('assetPdfPath') or ''))}}}",
+            rf"\includegraphics[width=0.98\linewidth,height=0.72\textheight,keepaspectratio]{{{escape_latex_text(str(diagram.get('assetPdfPath') or ''))}}}",
             rf"\caption{{{caption}}}",
             r"\end{figure}",
             r"\FloatBarrier",
@@ -280,4 +280,3 @@ def render_latex_report(snapshot: Dict[str, object], model: DocumentModel, templ
         ]
     )
     return meta_comment + "\n" + source_template
-

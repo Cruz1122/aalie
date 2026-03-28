@@ -123,6 +123,90 @@ def _normalize_dominant_reason_text(value: str) -> str:
     )
 
 
+_MASTER_TITLE_TRANSLATIONS_ES = {
+    "Detected recurrence": "Recurrencia detectada",
+    "Master-form validation": "Validación de forma maestra",
+    "Extracted parameters": "Parámetros extraídos",
+    "Critical exponent": "Exponente crítico",
+    "Reference growth": "Crecimiento de referencia",
+    "Growth comparison": "Comparación de crecimiento",
+    "Case evaluation": "Evaluación de caso",
+    "Regularity check": "Chequeo de regularidad",
+    "Applicability decision": "Decisión de aplicabilidad",
+    "Asymptotic conclusion": "Conclusión asintótica",
+}
+
+_MASTER_TITLE_TRANSLATIONS_EN = {
+    value: key for key, value in _MASTER_TITLE_TRANSLATIONS_ES.items()
+}
+
+_MASTER_TEXT_TRANSLATIONS_ES = {
+    "The recurrence is classified as Case 1.": "La recurrencia se clasifica como Caso 1.",
+    "The recurrence is classified as Case 2.": "La recurrencia se clasifica como Caso 2.",
+    "The recurrence is classified as Case 3 (subject to regularity).": "La recurrencia se clasifica como Caso 3 (sujeto a regularidad).",
+    "No valid Master Theorem case could be assigned with current evidence.": "No se pudo asignar un caso válido del Teorema Maestro con la evidencia disponible.",
+    "Case-3 regularity condition was verified and allows the case conclusion.": "La condición de regularidad del Caso 3 se verificó y permite concluir el caso.",
+    "Case-3 regularity condition fails; theorem cannot be applied at this point.": "La condición de regularidad del Caso 3 no se cumple; no se puede aplicar el teorema en este punto.",
+    "Regularity is not required because the candidate is not Case 3.": "La regularidad no aplica porque el caso candidato no es el Caso 3.",
+    "Master Theorem applicability is confirmed for this recurrence.": "Se confirma aplicabilidad del Teorema Maestro para esta recurrencia.",
+    "Master Theorem is not applicable for this recurrence under current coverage.": "Se concluye que el Teorema Maestro no aplica en esta recurrencia bajo cobertura actual.",
+}
+
+_MASTER_TEXT_TRANSLATIONS_EN = {
+    value: key for key, value in _MASTER_TEXT_TRANSLATIONS_ES.items()
+}
+
+
+def _localize_analysis_text(value: Any, i18n: Dict[str, Any]) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return text
+    if i18n["locale"] == "es":
+        for source, target in _MASTER_TEXT_TRANSLATIONS_ES.items():
+            text = text.replace(source, target)
+        for source, target in _MASTER_TITLE_TRANSLATIONS_ES.items():
+            text = text.replace(source, target)
+        text = re.sub(r"\bMaster Theorem\b", "Teorema Maestro", text)
+        text = re.sub(r"\bCase\s*-\s*([123])\b", r"Caso \1", text)
+        text = re.sub(r"\bCase\s+([123])\b", r"Caso \1", text)
+        text = re.sub(
+            r"\bsubject to regularity\b",
+            "sujeto a regularidad",
+            text,
+            flags=re.I,
+        )
+        text = re.sub(
+            r"\bcase conclusion\b",
+            "conclusión del caso",
+            text,
+            flags=re.I,
+        )
+        text = re.sub(r"\bRegularity\b", "Regularidad", text)
+        text = re.sub(r"\bregularity\b", "regularidad", text)
+        return text
+    for source, target in _MASTER_TEXT_TRANSLATIONS_EN.items():
+        text = text.replace(source, target)
+    for source, target in _MASTER_TITLE_TRANSLATIONS_EN.items():
+        text = text.replace(source, target)
+    text = re.sub(r"\bTeorema Maestro\b", "Master Theorem", text)
+    text = re.sub(r"\bCaso\s*([123])\b", r"Case \1", text)
+    text = re.sub(
+        r"\bsujeto a regularidad\b",
+        "subject to regularity",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(
+        r"\bconclusión del caso\b",
+        "case conclusion",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(r"\bRegularidad\b", "Regularity", text)
+    text = re.sub(r"\bregularidad\b", "regularity", text)
+    return text
+
+
 def _build_line_cost_table(line_costs: List[Dict[str, Any]], i18n: Dict[str, Any]) -> DocumentTable:
     headers = (
         ["Línea", "Tipo", "Costo base", "Conteo (sumatoria)", "Conteo simplificado"]
@@ -396,7 +480,14 @@ def _build_global_result_section(snapshot: Dict[str, Any], i18n: Dict[str, Any])
             steps = maybe_list(result.get("explanationSteps") or [])
             if steps:
                 blocks.append({"kind": "paragraph", "text": localize(i18n, "Desarrollo paso a paso:", "Step-by-step development:")})
-                blocks.append({"kind": "list", "items": steps})
+                blocks.append(
+                    {
+                        "kind": "list",
+                        "items": [
+                            _localize_analysis_text(item, i18n) for item in steps
+                        ],
+                    }
+                )
     if not blocks:
         blocks.append({"kind": "paragraph", "text": i18n["pedagogicalNoData"]})
     return DocumentSection(id="global-result", title=i18n["globalResultTitle"], blocks=blocks)
@@ -1074,8 +1165,8 @@ def _build_recursive_step_explanation(summary: Optional[str], concept_note: Opti
             return inner if re.search(r"[A-Za-zÀ-ÿ]", inner) and " " in inner else trimmed
         return trimmed
 
-    summary_text = unwrap(str(summary or ""))
-    concept_text = unwrap(str(concept_note or ""))
+    summary_text = _localize_analysis_text(unwrap(str(summary or "")), i18n)
+    concept_text = _localize_analysis_text(unwrap(str(concept_note or "")), i18n)
     if summary_text and concept_text:
         return f"{summary_text} {concept_text}"
     if summary_text:
@@ -1306,12 +1397,18 @@ def _build_recursive_section(snapshot: Dict[str, Any], i18n: Dict[str, Any]) -> 
                         "kind": "pedagogicalStep",
                         "step": {
                             "index": step.get("index"),
-                            "title": step.get("title"),
+                            "title": _localize_analysis_text(step.get("title"), i18n),
                             "status": step.get("status"),
                             "formula": normalize_recursive_formula(((step.get("math") or {}).get("primaryLatex"))),
                             "explanation": _build_recursive_step_explanation(step.get("summary"), step.get("conceptNote"), i18n),
-                            "warning": step.get("warning") or None,
-                            "supportReason": (((step.get("derivation") or {}).get("supportReason"))) if isinstance(step.get("derivation"), dict) else None,
+                            "warning": _localize_analysis_text(step.get("warning"), i18n) or None,
+                            "supportReason": _localize_analysis_text(
+                                ((step.get("derivation") or {}).get("supportReason"))
+                                if isinstance(step.get("derivation"), dict)
+                                else None,
+                                i18n,
+                            )
+                            or None,
                         },
                     }
                 )
