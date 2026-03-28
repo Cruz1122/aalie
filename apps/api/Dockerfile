@@ -19,6 +19,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     texlive-latex-recommended \
     texlive-pictures \
     texlive-fonts-recommended \
+    texlive-lang-english \
+    texlive-lang-spanish \
   && rm -rf /var/lib/apt/lists/*
 
 # Node.js (needed by the export worker) — install Node 22 (pnpm/tsx compatible)

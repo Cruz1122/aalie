@@ -1,11 +1,14 @@
 import os
 import shutil
+import zipfile
+from io import BytesIO
 from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import create_app
+from app.modules.analysis.trace_service import build_default_trace_inputs
 
 
 def _has_pdflatex() -> bool:
@@ -25,10 +28,7 @@ def _create_client(extra_env: dict[str, str] | None = None) -> TestClient:
         return TestClient(create_app())
 
 
-def _build_export_payload(client: TestClient) -> dict:
-    if not _has_pdflatex():
-        pytest.skip("pdflatex no está disponible en el entorno de tests")
-
+def _build_export_payload(client: TestClient, formats: list[str] | None = None) -> dict:
     source = """triangular(n) BEGIN
   FOR i <- 1 TO n DO BEGIN
     FOR j <- i TO n DO BEGIN
@@ -57,13 +57,15 @@ END
     ).json()
     assert analyze_res["ok"] is True
 
+    trace_input = build_default_trace_inputs(source, "worst")
+
     trace_res = client.post(
         "/analyze/trace",
         json={
             "source": source,
             "case": "worst",
-            "input_size": 5,
-            "initial_variables": None,
+            "input_size": trace_input["input_size"],
+            "initial_variables": trace_input["initial_variables"],
             "locale": "en",
         },
     ).json()
@@ -71,8 +73,8 @@ END
 
     return {
         "source": source,
-        "formats": ["pdf"],
-        "includeZipBundle": False,
+        "formats": formats or ["pdf"],
+        "includeZipBundle": bool(formats and len(formats) > 1),
         "locale": "en",
         "includeTraceCases": ["worst"],
         "cachedParse": parse_res,
@@ -86,6 +88,9 @@ END
 
 
 def test_export_report_returns_pdf_when_pdflatex_is_available():
+    if not _has_pdflatex():
+        pytest.skip("pdflatex no está disponible en el entorno de tests")
+
     client = _create_client()
     export_payload = _build_export_payload(client)
 
@@ -95,6 +100,68 @@ def test_export_report_returns_pdf_when_pdflatex_is_available():
     assert resp.content and len(resp.content) > 1000
 
     assert "content-disposition" in resp.headers
+
+
+def test_export_report_returns_markdown_and_is_deterministic():
+    client = _create_client()
+    export_payload = _build_export_payload(client, formats=["markdown"])
+
+    resp_a = client.post("/export/report", json=export_payload)
+    resp_b = client.post("/export/report", json=export_payload)
+
+    assert resp_a.status_code == 200
+    assert resp_b.status_code == 200
+    assert resp_a.headers["content-type"].startswith("text/markdown")
+    assert resp_a.content == resp_b.content
+    assert resp_a.headers["x-snapshot-id"] == resp_b.headers["x-snapshot-id"]
+    assert resp_a.headers["x-content-hash"] == resp_b.headers["x-content-hash"]
+
+
+def test_export_report_markdown_is_stable_with_or_without_caches():
+    client = _create_client()
+    cached_payload = _build_export_payload(client, formats=["markdown"])
+    raw_payload = {
+        "source": cached_payload["source"],
+        "formats": ["markdown"],
+        "includeZipBundle": False,
+        "locale": "en",
+        "includeTraceCases": ["worst"],
+    }
+
+    cached_resp = client.post("/export/report", json=cached_payload)
+    raw_resp = client.post("/export/report", json=raw_payload)
+
+    assert cached_resp.status_code == 200
+    assert raw_resp.status_code == 200
+    assert cached_resp.content == raw_resp.content
+    assert cached_resp.headers["x-snapshot-id"] == raw_resp.headers["x-snapshot-id"]
+    assert cached_resp.headers["x-content-hash"] == raw_resp.headers["x-content-hash"]
+
+
+def test_export_report_returns_zip_bundle_contract():
+    if not _has_pdflatex():
+        pytest.skip("pdflatex no está disponible en el entorno de tests")
+
+    client = _create_client()
+    export_payload = _build_export_payload(client, formats=["markdown", "pdf"])
+
+    resp = client.post("/export/report", json=export_payload)
+
+    assert resp.status_code == 200
+    assert resp.headers["content-type"].startswith("application/zip")
+
+    with zipfile.ZipFile(BytesIO(resp.content)) as bundle:
+        names = bundle.namelist()
+        assert names[0] == "report.md"
+        assert names[1] == "report.pdf"
+        assert "snapshot.json" in names
+        assert names[-1] == "manifest.json"
+
+        manifest = bundle.read("manifest.json").decode("utf-8")
+        snapshot = bundle.read("snapshot.json").decode("utf-8")
+        assert '"formats": [' in manifest
+        assert '"snapshotId"' in manifest
+        assert '"schemaVersion": "1.0.0"' in snapshot
 
 
 def test_export_report_preflight_allows_configured_origin():

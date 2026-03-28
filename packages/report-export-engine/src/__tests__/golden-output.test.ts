@@ -1,9 +1,11 @@
 import assert from "node:assert";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
+import JSZip from "jszip";
 
+import { buildExportReport } from "../application/export-orchestrator";
 import { compileLatexToPdf, isPdflatexAvailable } from "../infrastructure/pdf/latex-compiler";
 import { buildTraceDiagramAssets } from "../application/trace-diagram-assets";
 import { buildDocumentModel } from "../renderers/document-model-builder";
@@ -26,12 +28,7 @@ const GOLDEN_DIR = path.resolve(
 );
 
 function ensureGoldenFile(filePath: string, content: string): string {
-  if (!existsSync(GOLDEN_DIR)) {
-    mkdirSync(GOLDEN_DIR, { recursive: true });
-  }
-  if (!existsSync(filePath)) {
-    writeFileSync(filePath, content, "utf8");
-  }
+  assert.ok(existsSync(filePath), `Missing golden file: ${filePath}`);
   return readFileSync(filePath, "utf8");
 }
 
@@ -43,10 +40,7 @@ async function regenerateAndReadGoldenPdf(
   if (!isPdflatexAvailable()) {
     return null;
   }
-
-  if (!existsSync(GOLDEN_DIR)) {
-    mkdirSync(GOLDEN_DIR, { recursive: true });
-  }
+  assert.ok(existsSync(filePath), `Missing golden PDF: ${filePath}`);
 
   const compiled = compileLatexToPdf({
     texContent: latex,
@@ -54,7 +48,7 @@ async function regenerateAndReadGoldenPdf(
     jobName: "golden-report",
     extraFiles,
   });
-  writeFileSync(filePath, compiled.pdfBuffer);
+  assert.ok(compiled.pdfBuffer.length > 1024, "compiled PDF should have meaningful size");
   return readFileSync(filePath);
 }
 
@@ -86,9 +80,33 @@ describe("golden-output", () => {
       const mdPath = path.join(GOLDEN_DIR, `${testCase.name}.golden.md`);
       const texPath = path.join(GOLDEN_DIR, `${testCase.name}.golden.tex`);
       const pdfPath = path.join(GOLDEN_DIR, `${testCase.name}.golden.pdf`);
+      const snapshotPath = path.join(GOLDEN_DIR, `${testCase.name}.snapshot.json`);
+      const manifestPath = path.join(GOLDEN_DIR, `${testCase.name}.manifest.json`);
 
       const expectedMd = ensureGoldenFile(mdPath, markdown);
       const expectedTex = ensureGoldenFile(texPath, latex);
+      const expectedSnapshot = ensureGoldenFile(
+        snapshotPath,
+        JSON.stringify(snapshot, null, 2),
+      );
+      const zipReport = await buildExportReport({
+        snapshot,
+        formats: ["markdown", "latex"],
+        includeSnapshotJson: true,
+        includeZipBundle: true,
+      });
+      const zip = await JSZip.loadAsync(zipReport.bundle?.content || Buffer.alloc(0));
+      const expectedManifest = ensureGoldenFile(
+        manifestPath,
+        JSON.stringify(
+          {
+            entries: Object.keys(zip.files),
+            manifest: JSON.parse((await zip.file("manifest.json")?.async("string")) || "{}"),
+          },
+          null,
+          2,
+        ),
+      );
       const expectedPdf = await regenerateAndReadGoldenPdf(
         pdfPath,
         latex,
@@ -100,6 +118,18 @@ describe("golden-output", () => {
 
       assert.strictEqual(markdown, expectedMd);
       assert.strictEqual(latex, expectedTex);
+      assert.strictEqual(JSON.stringify(snapshot, null, 2), expectedSnapshot);
+      assert.strictEqual(
+        JSON.stringify(
+          {
+            entries: Object.keys(zip.files),
+            manifest: JSON.parse((await zip.file("manifest.json")?.async("string")) || "{}"),
+          },
+          null,
+          2,
+        ),
+        expectedManifest,
+      );
       if (expectedPdf) {
         assert.ok(expectedPdf.length > 1024, "golden PDF should have meaningful size");
         assert.strictEqual(expectedPdf.subarray(0, 5).toString("utf8"), "%PDF-");

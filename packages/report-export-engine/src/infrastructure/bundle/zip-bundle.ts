@@ -22,8 +22,23 @@ export async function createZipBundle(
   metadata: ExportBundleMetadata,
 ): Promise<ExportZipBundleResult> {
   const zip = new JSZip();
+  const order = new Map([
+    ["report.md", 0],
+    ["report.tex", 1],
+    ["report.pdf", 2],
+    ["snapshot.json", 3],
+  ]);
 
-  for (const file of files) {
+  const sortedFiles = [...files].sort((a, b) => {
+    const aPriority = order.get(a.filename) ?? 4;
+    const bPriority = order.get(b.filename) ?? 4;
+    if (aPriority !== bPriority) {
+      return aPriority - bPriority;
+    }
+    return a.filename.localeCompare(b.filename);
+  });
+
+  for (const file of sortedFiles) {
     zip.file(file.filename, file.content);
   }
 

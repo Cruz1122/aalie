@@ -8,80 +8,15 @@ from __future__ import annotations
 
 import base64
 import json
-import os
-import subprocess
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Body, Request
 from fastapi.responses import Response
 
+from .service import ExportService
+
 router = APIRouter(prefix="/export", tags=["export"])
-
-
-def _node_worker_path() -> str:
-    """
-    Returns the path to the Node worker script.
-
-    Note: the worker is implemented in a later plan step.
-    """
-
-    # apps/api/app/modules/export/router.py -> packages/report-export-orchestrator/src/report-worker.ts
-    return os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            "../../../../../packages/report-export-orchestrator/src/report-worker.ts",
-        )
-    )
-
-
-def _run_export_worker(payload: Dict[str, Any]) -> Dict[str, Any]:
-    worker_path = _node_worker_path()
-    # Ejecutamos el worker desde el paquete del orquestador para que el archivo y sus
-    # dependencias de workspace (`@aa/*`) se resuelvan desde el mismo árbol de Node.
-    repo_root = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "../../../../../")
-    )
-    cwd = os.path.join(repo_root, "packages", "report-export-orchestrator")
-    tsx_bin = os.path.join(cwd, "node_modules", ".bin", "tsx")
-
-    # Ejecutamos el worker con el CLI de `tsx` para respetar ESM y la resolución de `exports`.
-    cmd = (
-        [tsx_bin, worker_path]
-        if os.path.exists(tsx_bin)
-        else ["node", "--import", "tsx", worker_path]
-    )
-
-    proc = subprocess.run(
-        cmd,
-        input=json.dumps(payload),
-        capture_output=True,
-        check=False,
-        text=True,
-        cwd=cwd,
-    )
-
-    if proc.returncode != 0:
-        return {
-            "ok": False,
-            "error": "Export worker failed",
-            "kind": "worker_failed",
-            "logs": (proc.stderr or "").splitlines(),
-            "status": 500,
-        }
-
-    try:
-        parsed = json.loads(proc.stdout)
-        if not parsed or not isinstance(parsed, dict):
-            raise ValueError("Empty worker response")
-        return parsed
-    except Exception:
-        return {
-            "ok": False,
-            "error": "Export worker returned invalid JSON",
-            "kind": "worker_invalid_response",
-            "logs": [(proc.stdout or "")[-4000:], (proc.stderr or "")[-4000:]],
-            "status": 500,
-        }
+export_service = ExportService()
 
 
 @router.post("/report")
@@ -100,7 +35,7 @@ def export_report(request: Request, payload: Dict[str, Any] = Body(...)) -> Resp
         if origin and not payload.get("requestOrigin"):
             payload["requestOrigin"] = origin
 
-        result = _run_export_worker(payload)
+        result = export_service.render_report(payload)
     except Exception as e:
         return Response(
             content=json.dumps(
@@ -119,6 +54,9 @@ def export_report(request: Request, payload: Dict[str, Any] = Body(...)) -> Resp
         error_message = str(result.get("error") or "Export failed")
         kind = result.get("kind")
         logs = result.get("logs")
+        compiler_logs = result.get("compilerLogs")
+        asset_manifest = result.get("assetManifest")
+        workdir = result.get("workDir")
         body: Dict[str, Any] = {"ok": False, "error": error_message}
         if kind:
             body["kind"] = kind
@@ -126,9 +64,15 @@ def export_report(request: Request, payload: Dict[str, Any] = Body(...)) -> Resp
             body["logs"] = logs[-4000:]
         elif isinstance(logs, list):
             body["logs"] = logs[-4000:]
+        if isinstance(compiler_logs, str) and compiler_logs:
+            body["compilerLogs"] = compiler_logs[-4000:]
+        if isinstance(asset_manifest, list):
+            body["assetManifest"] = asset_manifest
+        if isinstance(workdir, str) and workdir:
+            body["workDir"] = workdir
         return Response(
             content=json.dumps(body),
-            status_code=500,
+            status_code=int(result.get("status") or 500),
             media_type="application/json",
         )
 

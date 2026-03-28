@@ -10,12 +10,19 @@ export type LatexCompilationErrorKind = "compiler_missing" | "compilation_failed
 export class LatexCompilationError extends Error {
   kind: LatexCompilationErrorKind;
   logs: string;
+  workDir?: string;
 
-  constructor(kind: LatexCompilationErrorKind, message: string, logs = "") {
+  constructor(
+    kind: LatexCompilationErrorKind,
+    message: string,
+    logs = "",
+    workDir?: string,
+  ) {
     super(message);
     this.name = "LatexCompilationError";
     this.kind = kind;
     this.logs = logs;
+    this.workDir = workDir;
   }
 }
 
@@ -24,6 +31,7 @@ export interface CompileLatexToPdfOptions {
   timeoutMs?: number;
   jobName?: string;
   cleanup?: boolean;
+  preserveWorkDirOnError?: boolean;
   assets?: LatexAssetRegistry;
   extraFiles?: Array<{
     relativePath: string;
@@ -85,6 +93,7 @@ export function compileLatexToPdf(options: CompileLatexToPdfOptions): CompileLat
   const logosOutputDir = path.join(workDir, "logos");
 
   const logs: string[] = [];
+  let shouldCleanup = cleanup;
 
   try {
     mkdirSync(logosOutputDir, { recursive: true });
@@ -130,8 +139,17 @@ export function compileLatexToPdf(options: CompileLatexToPdfOptions): CompileLat
       pdfBuffer,
       logs: logs.join("\n"),
     };
+  } catch (error) {
+    if (error instanceof LatexCompilationError) {
+      if (options.preserveWorkDirOnError) {
+        error.workDir = workDir;
+        shouldCleanup = false;
+      }
+      throw error;
+    }
+    throw error;
   } finally {
-    if (cleanup) {
+    if (shouldCleanup) {
       rmSync(workDir, { recursive: true, force: true });
     }
   }

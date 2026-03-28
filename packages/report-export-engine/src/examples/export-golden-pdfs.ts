@@ -13,8 +13,12 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import type { AalieAnalysisSnapshotV1 } from "@aa/types";
+
+import { buildTraceDiagramAssets } from "../application/trace-diagram-assets";
 import { compileLatexToPdf, isPdflatexAvailable } from "../infrastructure/pdf/latex-compiler";
 import { resolveLatexAssetRegistry } from "../infrastructure/assets/asset-registry";
+import { buildDocumentModel } from "../renderers/document-model-builder";
 
 const CURRENT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const GOLDEN_DIR = path.resolve(CURRENT_DIR, "../__tests__/fixtures/golden");
@@ -40,7 +44,33 @@ function isTectonicAvailable(tectonicPath: string | null): tectonicPath is strin
   return result.status === 0;
 }
 
-function compileWithTectonic(texContent: string, tectonicPath: string): Buffer {
+function companionSnapshotPath(texFile: string): string {
+  return path.join(GOLDEN_DIR, texFile.replace(/\.golden\.tex$/, ".snapshot.json"));
+}
+
+async function resolveExtraFiles(texFile: string): Promise<Array<{ relativePath: string; content: string | Buffer }>> {
+  const snapshotPath = companionSnapshotPath(texFile);
+  if (!existsSync(snapshotPath)) {
+    return [];
+  }
+
+  const snapshot = JSON.parse(
+    readFileSync(snapshotPath, "utf8"),
+  ) as AalieAnalysisSnapshotV1;
+  const model = buildDocumentModel(snapshot);
+  const assets = await buildTraceDiagramAssets(model);
+
+  return assets.map((asset) => ({
+    relativePath: asset.filename,
+    content: asset.content,
+  }));
+}
+
+function compileWithTectonic(
+  texContent: string,
+  tectonicPath: string,
+  extraFiles: Array<{ relativePath: string; content: string | Buffer }>,
+): Buffer {
   const assets = resolveLatexAssetRegistry();
   const workDir = mkdtempSync(path.join(tmpdir(), "aalie-golden-pdf-"));
   const texPath = path.join(workDir, "report.tex");
@@ -51,6 +81,13 @@ function compileWithTectonic(texContent: string, tectonicPath: string): Buffer {
     copyFileSync(assets.styleFilePath, path.join(workDir, "aalie-report.sty"));
     copyFileSync(assets.ucaldasLogoPath, path.join(logosOutputDir, "ucaldas.pdf"));
     copyFileSync(assets.aalieLogoPath, path.join(logosOutputDir, "aalie.pdf"));
+    for (const file of extraFiles) {
+      const rel = String(file.relativePath || "").trim().replace(/^\/+/, "");
+      if (!rel) continue;
+      const dest = path.join(workDir, rel);
+      mkdirSync(path.dirname(dest), { recursive: true });
+      writeFileSync(dest, file.content);
+    }
     writeFileSync(texPath, texContent, "utf8");
 
     const run = spawnSync(
@@ -77,7 +114,7 @@ function compileWithTectonic(texContent: string, tectonicPath: string): Buffer {
   }
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const pdflatexAvailable = isPdflatexAvailable();
   const tectonicPath = resolveTectonicPath();
   const canUseTectonic = isTectonicAvailable(tectonicPath);
@@ -103,16 +140,18 @@ function main(): void {
     const texPath = path.join(GOLDEN_DIR, texFile);
     const pdfPath = path.join(GOLDEN_DIR, texFile.replace(/\.golden\.tex$/, ".golden.pdf"));
     const texContent = readFileSync(texPath, "utf8");
+    const extraFiles = await resolveExtraFiles(texFile);
 
     if (pdflatexAvailable) {
       const result = compileLatexToPdf({
         texContent,
         jobName: "golden-report",
         cleanup: true,
+        extraFiles,
       });
       writeFileSync(pdfPath, result.pdfBuffer);
     } else if (canUseTectonic && tectonicPath) {
-      const buffer = compileWithTectonic(texContent, tectonicPath);
+      const buffer = compileWithTectonic(texContent, tectonicPath, extraFiles);
       writeFileSync(pdfPath, buffer);
     }
 
@@ -122,4 +161,7 @@ function main(): void {
   console.log(`Exported ${files.length} golden PDF files in ${GOLDEN_DIR}`);
 }
 
-main();
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
