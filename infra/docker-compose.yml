@@ -14,7 +14,6 @@ services:
     environment:
       DEV_CORS_ENABLED: "1"
       DEV_ALLOWED_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000"
-      API_INTERNAL_BASE_URL: "http://127.0.0.1:8000"
       PYTHONDONTWRITEBYTECODE: "1"
       PYTHONUNBUFFERED: "1"
     volumes:
@@ -22,9 +21,6 @@ services:
       - ../apps/api:/usr/src/app/apps/api
       # Monta packages para acceso a parsers grammar
       - ../packages:/usr/src/app/packages
-      # Conserva los node_modules de los paquetes del exportador dentro del contenedor
-      - api_export_engine_node_modules:/usr/src/app/packages/report-export-engine/node_modules
-      - api_export_orchestrator_node_modules:/usr/src/app/packages/report-export-orchestrator/node_modules
 
   web:
     build:
@@ -57,7 +53,5 @@ services:
       - web_pkg_node_modules:/usr/src/app/apps/web/node_modules
 
 volumes:
-  api_export_engine_node_modules:
-  api_export_orchestrator_node_modules:
   web_root_node_modules:
   web_pkg_node_modules:

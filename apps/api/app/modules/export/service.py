@@ -7,32 +7,32 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from .asset_builder import build_asset_manifest
-from .render_service import build_snapshot_with_renderer, render_report_with_renderer
+from .document_model import build_document_model
+from .engine import build_snapshot_result, render_report_result
 from .snapshot_builder import build_export_state
+from .trace_diagram_assets import build_trace_diagram_assets
 
 
 class ExportService:
     def build_snapshot(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         export_state = build_export_state(payload)
-        return build_snapshot_with_renderer(export_state)
+        return build_snapshot_result(export_state)
 
     def build_assets(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         snapshot_result = self.build_snapshot(payload)
         snapshot = snapshot_result.get("snapshot") or {}
-        comparative = (snapshot.get("comparative") or {}) if isinstance(snapshot, dict) else {}
-        gpu_cpu = (comparative.get("gpuCpu") or {}) if isinstance(comparative, dict) else {}
-        data = gpu_cpu.get("data") if isinstance(gpu_cpu, dict) else None
-        entries = []
-        if data:
-            entries.append(
-                {
-                    "filename": "comparative/gpu-cpu.json",
-                    "mimeType": "application/json; charset=utf-8",
-                    "size": len(str(data)),
-                }
-            )
+        document_model = build_document_model(snapshot)
+        assets = build_trace_diagram_assets(document_model)
+        entries = [
+            {
+                "filename": asset.filename,
+                "mimeType": asset.mimeType,
+                "size": len(asset.content if isinstance(asset.content, bytes) else asset.content.encode("utf-8")),
+            }
+            for asset in assets
+        ]
         return {"assetManifest": build_asset_manifest(entries)}
 
     def render_report(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         export_state = build_export_state(payload)
-        return render_report_with_renderer(export_state)
+        return render_report_result(export_state)

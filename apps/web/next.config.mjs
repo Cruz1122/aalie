@@ -8,7 +8,7 @@ const nextConfig = {
   experimental: {
     typedRoutes: true,
   },
-  transpilePackages: ["@aa/grammar", "@aa/types", "@aa/report-export-engine"],
+  transpilePackages: ["@aa/grammar", "@aa/types"],
 
   // Configuración para Web Workers
   webpack: (config, { isServer }) => {

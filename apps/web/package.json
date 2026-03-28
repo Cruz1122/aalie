@@ -13,8 +13,6 @@
     "test": "vitest run",
     "test:trace-cache": "node --import tsx --test --test-reporter=spec src/lib/__tests__/trace-cache-utils.test.ts",
     "test:trace-cache:tap": "node --import tsx --test src/lib/__tests__/trace-cache-utils.test.ts",
-    "test:export": "node --import tsx --test src/server/export/__tests__/*.test.ts",
-    "generate:iterative-famous": "node --import tsx scripts/generate-iterative-famous-reports.ts",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
     "format": "prettier --check .",
@@ -24,8 +22,6 @@
     "validate:examples-catalog": "node --import tsx scripts/validate-examples-catalog.ts"
   },
   "dependencies": {
-    "@aa/report-export-engine": "workspace:^",
-    "@aa/report-export-orchestrator": "workspace:^",
     "@aa/grammar": "workspace:^",
     "@aa/types": "workspace:^",
     "@monaco-editor/react": "^4.7.0",

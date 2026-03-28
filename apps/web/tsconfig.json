@@ -16,8 +16,7 @@
     "paths": {
       "@/*": ["./src/*"],
       "@aa/types": ["../../packages/types/src"],
-      "@aa/grammar": ["../../packages/grammar/ts/src"],
-      "@aa/report-export-engine": ["../../packages/report-export-engine/src"]
+      "@aa/grammar": ["../../packages/grammar/ts/src"]
     },
     "skipLibCheck": true,
     "esModuleInterop": true,
