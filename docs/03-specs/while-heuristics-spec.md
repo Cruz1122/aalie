@@ -31,6 +31,22 @@ Aplica al `while_engine`, a la clasificación de patrones y al payload usado por
 - si no hay prueba fuerte, el engine retorna `bounded`, `unbounded`, `unknown` o `not_proven` según evidencia disponible;
 - nunca se adivina una cota para cerrar un hueco.
 
+### Ranking de evidencia
+
+- `strong`: guard interpretable, variable de control identificada, regla de actualización monotónica, dirección compatible con el guard y límite inferible. Autoriza clase asintótica y `iterations_expr`.
+- `medium`: patrón reconocible con alguna ambigüedad local pero sin contradicción estructural. Autoriza salida parcial o `bounded` con advertencia, no una conclusión fuerte completa.
+- `weak`: hay señales de progreso pero no prueba suficiente de controlador dominante o de terminación. Autoriza `unknown` o `not_proven`.
+- `contradictory`: guard, actualización y progreso chocan entre sí. Autoriza rechazo del patrón o `unbounded/not_proven`, nunca cierre optimista.
+
+Evidencia suficiente, a efectos contractuales, significa al menos nivel `strong`.
+
+### Desempate entre patrones fuertes
+
+- si dos patrones alcanzan `strong`, no gana “el primero” por orden incidental de implementación.
+- el desempate debe seguir esta prioridad contractual: patrón más específico del dominio > patrón con menos supuestos implícitos > patrón con evidencia sobre una variable de control dominante única.
+- si dos patrones fuertes siguen empatados después de esa prioridad, el engine debe degradar a salida parcial o registrar ambigüedad explícita en `diagnostics`; no puede elegir arbitrariamente.
+- `binary_search_interval` prevalece sobre `geometric_growth` cuando ambos describen el mismo loop pero el guard y las actualizaciones evidencian reducción de intervalo de búsqueda.
+
 ### Casos por modo
 
 - `best`: puede aceptar `flag_kill` con una sola iteración cuando la bandera se mata en el camino correspondiente;
@@ -55,13 +71,13 @@ Aplica al `while_engine`, a la clasificación de patrones y al payload usado por
 - `pattern_used`
 - `reason_code`
 - `diagnostics`
-- payload compatible con visitor: `variable`, `limit`, `change_rule`, `operator`, `evidence`
+- payload compatible con visitor: `variable`, `limit`, `change_rule`, `operator`, `evidence`, `evidence_level`
 
 ## Invariantes
 
 - el guard se analiza antes que las actualizaciones;
 - las variables asignadas en el cuerpo se usan para reforzar evidencia de control;
-- los patrones se intentan en orden fijo y el primero que aplica gana;
+- el orden interno de evaluación no define por sí solo el patrón ganador;
 - una coincidencia de patrón no autoriza extrapolar a casos no demostrados.
 
 ## Errores esperables

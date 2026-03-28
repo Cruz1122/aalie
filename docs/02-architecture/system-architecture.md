@@ -44,6 +44,21 @@ AALIE es un monorepo con:
 - Backend: contratos deterministas del motor, trace, snapshot y render institucional.
 - Paquetes compartidos: gramática, AST y tipos estables.
 
+### Dependencias contractuales entre capas
+
+- `packages/grammar` posee la gramática efectiva y el shape base que habilita parse/AST.
+- `packages/types` posee los tipos compartidos exportables y el shape público del snapshot.
+- `apps/api` posee el comportamiento contractual del motor, trace, snapshot builder y export.
+- `apps/web` consume contratos; no redefine parse, análisis, snapshot ni trace.
+
+### Propiedad y compatibilidad del snapshot
+
+- el snapshot es propiedad contractual de `apps/api` y `packages/types`;
+- `apps/web`, renderers de export y tests lo consumen como contrato estable;
+- un cambio backward compatible puede agregar campos opcionales o nuevas subsecciones con `status`;
+- un cambio incompatible incluye renombrar/remover campos públicos, alterar precedencias o cambiar semántica observable; eso exige nueva versión de schema, docs y checks;
+- `internal` puede crecer solo si no rompe consumidores declarados ni se vuelve prerequisito de UI/export.
+
 ### Dependencias externas criticas
 
 - ANTLR para parseo;

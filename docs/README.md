@@ -25,6 +25,12 @@ No es un repositorio de informes académicos ni de historiales de sprint.
 
 ## Estructura
 
+### Jerarquía documental obligatoria
+
+- `CORE CONTRACTS`: `03-specs/` y ADRs que fijan reglas del motor. Nadie debería tocar parser, análisis, WHILE, recurrencias, trace, snapshot o export sin pasar primero por aquí.
+- `SECONDARY CONTRACTS`: `04-api/`, `05-quality/` y `06-operations/`. Traducen el núcleo a interfaces externas, validación y operación reproducible.
+- `TERTIARY GUIDES`: `01-product/`, `02-architecture/`, `07-user/` y `08-content/`. Aportan contexto, uso y authoring, pero no reemplazan contratos normativos.
+
 - `01-product/`: vision compartida, glosario, limitaciones y mapa actual de capacidades.
 - `02-architecture/`: como esta organizado el sistema real hoy.
 - `03-specs/`: contratos normativos del motor, snapshot, export y catálogos.
@@ -43,6 +49,21 @@ Entradas recomendadas por perfil:
 - Operación: `06-operations/local-development.md` -> `06-operations/troubleshooting.md`.
 - Usuario/docente: `07-user/user-guide.md`.
 - Autor de contenido: `08-content/authoring-guide.md`.
+
+### Ruta crítica obligatoria
+
+Si vas a tocar el sistema base, estos documentos son lectura obligatoria antes de cambiar código:
+
+1. `03-specs/pseudocode-grammar-spec.md`
+2. `03-specs/ast-schema.md`
+3. `03-specs/analysis-engine-spec.md`
+4. `03-specs/while-heuristics-spec.md`
+5. `03-specs/recurrence-methods-spec.md`
+6. `03-specs/execution-trace-spec.md`
+7. `03-specs/report-snapshot-spec.md`
+8. `03-specs/export-engine-spec.md`
+
+Si el cambio afecta interfaces externas, sumar además `04-api/` y `05-quality/testing-strategy.md`.
 
 ## Ejemplos
 

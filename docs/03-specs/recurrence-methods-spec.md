@@ -31,6 +31,13 @@ Aplica a `detect_methods`, `RecursiveAnalyzer` y bundles paso a paso.
 - `divide_conquer`: `master` > `recursion_tree` > `iteration`
 - la lista de `applicable_methods` no implica que todos sean igual de recomendables; `default_method` fija la prioridad contractual.
 
+### Detección contractual de familias
+
+- `linear_shift`: una sola rama recursiva dominante con desplazamiento del argumento por constante o transformación lineal equivalente defendible, más combinación algebraica local compatible.
+- `divide_conquer`: varias subllamadas recursivas homogéneas sobre subproblemas de tamaño fraccional o reducible multiplicativamente, con término no recursivo separable.
+- si la forma detectada no satisface ninguna familia con evidencia suficiente, el sistema no debe promover método principal concluyente.
+- la detección de familia precede a la selección de método; primero se clasifica la forma de recurrencia y después se aplica la prioridad.
+
 ### Salida mínima por método
 
 - `recurrence`
@@ -58,6 +65,8 @@ Aplica a `detect_methods`, `RecursiveAnalyzer` y bundles paso a paso.
 - `master` se reserva para divide-and-conquer de forma canónica;
 - `recursion_tree` y `iteration` pueden coexistir con el método por defecto;
 - si el método no aplica, el motor debe fallar de forma explícita o degradar a parcial, nunca fingir aplicabilidad.
+- `default_method` debe ser coherente con la familia detectada;
+- un método aplicable no puede publicarse si contradice la familia de recurrencia inferida.
 
 ## Errores esperables
 

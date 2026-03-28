@@ -17,7 +17,15 @@ Este archivo organiza la lectura por objetivo práctico, no por historia del pro
 
 ## Estructura
 
+### Cómo leer este índice
+
+- `Lectura conceptual`: ayuda a ubicar el sistema y entender responsabilidades.
+- `Contrato obligatorio`: fuente de verdad que debe cambiar si cambia el comportamiento contractual.
+- si ambos aparecen juntos, el contrato obligatorio prevalece.
+
 ### Entender el sistema
+
+Lectura conceptual:
 
 1. `01-product/vision.md`
 2. `02-architecture/system-architecture.md`
@@ -26,20 +34,34 @@ Este archivo organiza la lectura por objetivo práctico, no por historia del pro
 
 ### Cambiar parser, AST o análisis
 
+Contrato obligatorio:
+
 1. `03-specs/pseudocode-grammar-spec.md`
 2. `03-specs/ast-schema.md`
 3. `03-specs/analysis-engine-spec.md`
 4. `03-specs/while-heuristics-spec.md`
 5. `03-specs/recurrence-methods-spec.md`
 
+Contrato secundario:
+
+6. `04-api/parse-api.md`
+7. `04-api/analysis-api.md`
+
 ### Trazas, snapshot y export
 
+Lectura conceptual:
+
 1. `02-architecture/execution-trace-architecture.md`
+
+Contrato obligatorio:
+
 2. `03-specs/execution-trace-spec.md`
 3. `03-specs/report-snapshot-spec.md`
 4. `03-specs/export-engine-spec.md`
 
 ### Integración FE/BE
+
+Contrato obligatorio:
 
 1. `04-api/endpoints-overview.md`
 2. `04-api/analysis-api.md`
@@ -47,6 +69,8 @@ Este archivo organiza la lectura por objetivo práctico, no por historia del pro
 4. `04-api/llm-api.md`
 
 ### Validar comportamiento
+
+Contrato obligatorio:
 
 1. `05-quality/testing-strategy.md`
 2. `05-quality/algorithm-oracles.md`

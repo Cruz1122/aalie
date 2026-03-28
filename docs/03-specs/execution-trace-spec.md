@@ -60,6 +60,7 @@ Aplica a `/analyze/trace`, `trace_service`, `execution/schemas` y consumidores f
 - `derived.structuredTrace.patternKind`
 - `derived.structuredTrace.graph`
 - `derived.structuredTrace.classification`
+- `derived.structuredTrace` es contractual para consumidores de diagramas; no es un adorno opcional del payload.
 
 ## Inputs
 
@@ -75,12 +76,20 @@ Aplica a `/analyze/trace`, `trace_service`, `execution/schemas` y consumidores f
 - call tree si aplica;
 - summary, diagnostics y structuredTrace.
 
+## Contrato de `derived.structuredTrace`
+
+- `patternKind` clasifica la forma estructural reconocida para la visualización; si no hay clasificación defendible, debe ser `unknown`.
+- `graph` es la representación serializable consumida por diagramas; debe poder estar vacío sin invalidar el trace base.
+- `classification` resume la lectura estructural derivada y debe ser coherente con `patternKind`.
+- si `structuredTrace` no puede derivarse, el trace base sigue siendo válido; los consumidores deben degradar visualmente sin reinterpretar `steps`.
+
 ## Invariantes
 
 - los pasos se entregan en orden de ejecución;
 - `summary.totalSteps` refleja longitud real de `steps`;
 - `callTreeSource` y `structuredTrace` son consumidores auxiliares del mismo trace base;
 - UI, export y tests consumen esta estructura sin reinterpretación ad hoc.
+- `structuredTrace` nunca puede contradecir el `trace` base; si hay duda, degrada a `unknown`.
 
 ## Errores esperables
 

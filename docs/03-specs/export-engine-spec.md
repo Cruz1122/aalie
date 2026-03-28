@@ -36,6 +36,14 @@ Aplica a `/export/report`, render Markdown, LaTeX/PDF, ZIP y manifiesto.
 - preservar `snapshotId` y `contentHash`;
 - reportar advertencias y estados faltantes en vez de recalcular o esconderlos.
 
+### Contrato mínimo de plantillas
+
+- toda plantilla debe renderizar: metadatos básicos, pseudocódigo fuente, tipo de algoritmo, resultado principal, advertencias y `snapshotId`.
+- si el algoritmo es iterativo, la plantilla debe incluir al menos costos por línea o resumen equivalente, `T_open`/forma principal disponible y notaciones.
+- si el algoritmo es recursivo, la plantilla debe incluir recurrencia, método seleccionado o estado inconcluso explícito, y detalle paso a paso cuando exista.
+- si hay trace disponible, la plantilla puede resumirlo o adjuntarlo, pero nunca inventarlo si falta.
+- si falta una subsección, la plantilla debe mostrar estado `not_available`, `not_supported`, `missing_data` o equivalente textual; no puede omitir silenciosamente un bloque contractual esperado.
+
 ## Inputs
 
 - payload de export con `source`, `formats`, locale y caches opcionales;
@@ -53,6 +61,7 @@ Aplica a `/export/report`, render Markdown, LaTeX/PDF, ZIP y manifiesto.
 - el export no recalcula análisis por fuera del snapshot resultante;
 - el mismo snapshot produce la misma base de contenido en UI, MD y PDF;
 - el ZIP conserva orden estable de artefactos.
+- dos plantillas distintas pueden variar en presentación, pero no en el conjunto base de afirmaciones contractuales derivadas del snapshot.
 
 ## Errores esperables
 
