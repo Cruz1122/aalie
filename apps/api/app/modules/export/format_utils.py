@@ -89,11 +89,17 @@ def normalize_recursive_formula(formula: Optional[str]) -> Optional[str]:
 
     for pattern, replacement in (
         (
-            re.compile(r"\\text\{Cada nivel tiene costo ?\}\s*n\s*(?:\\\\\s*)?\\text\{Total ?\}\s*=\s*(.+)$", re.I),
+            re.compile(
+                r"\\text\{Cada nivel tiene costo ?\}\s*n\s*(?:\\\\\s*)?\\text\{Total ?\}\s*=\s*(.+)$",
+                re.I,
+            ),
             r"\text{Cada nivel tiene costo: } n \quad \text{Total: } \1",
         ),
         (
-            re.compile(r"\\text\{Each level has cost ?\}\s*n\s*(?:\\\\\s*)?\\text\{Total ?\}\s*=\s*(.+)$", re.I),
+            re.compile(
+                r"\\text\{Each level has cost ?\}\s*n\s*(?:\\\\\s*)?\\text\{Total ?\}\s*=\s*(.+)$",
+                re.I,
+            ),
             r"\text{Each level has cost: } n \quad \text{Total: } \1",
         ),
     ):
@@ -111,7 +117,9 @@ def ensure_sentence(text: str) -> str:
 
 
 def pick_case_complexity(snapshot: Dict[str, Any], case_name: str) -> str:
-    result = (((snapshot.get("globalResult") or {}).get("cases") or {}).get(case_name)) or {}
+    result = (
+        ((snapshot.get("globalResult") or {}).get("cases") or {}).get(case_name)
+    ) or {}
     return (
         result.get("big_theta")
         or result.get("big_o")
@@ -144,7 +152,9 @@ def localize_todos(todos: Optional[List[str]], i18n: Dict[str, Any]) -> List[str
     return localized
 
 
-def build_status_block(label: str, section: Dict[str, Any], i18n: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def build_status_block(
+    label: str, section: Dict[str, Any], i18n: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
     status = (section or {}).get("status")
     if status in {"not_requested", "available"}:
         return None
@@ -161,7 +171,12 @@ def build_status_block(label: str, section: Dict[str, Any], i18n: Dict[str, Any]
 
 def is_narrative_sentence(value: str) -> bool:
     normalized = value.strip()
-    if not normalized or " " not in normalized or "\\" in normalized or "=" in normalized:
+    if (
+        not normalized
+        or " " not in normalized
+        or "\\" in normalized
+        or "=" in normalized
+    ):
         return False
     if re.match(r"^(O|Omega|Theta)\s*\(", normalized):
         return False
@@ -276,7 +291,9 @@ def render_latex_text_with_inline_math(value: str) -> str:
         left = normalized[: separator_index + 1]
         right = normalized[separator_index + 1 :].strip()
         if not re.search(r"[;,]", right) and is_likely_math_expression(right):
-            return f"{escape_latex_text(left)} ${normalize_latex_math_expression(right)}$"
+            return (
+                f"{escape_latex_text(left)} ${normalize_latex_math_expression(right)}$"
+            )
     if is_likely_math_expression(normalized):
         return f"${normalize_latex_math_expression(normalized)}$"
     return escape_latex_text(normalized)

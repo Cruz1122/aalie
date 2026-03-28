@@ -42,4 +42,3 @@ SNAPSHOT_NOT_IMPLEMENTED_TODOS = {
     "loopInvariant": "Loop invariant extraction is not implemented.",
     "symbolicRecurrenceTree": "Full symbolic recurrence tree reconstruction is not implemented.",
 }
-

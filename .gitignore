@@ -61,5 +61,6 @@ apps/api/.mypy_cache/
 # Test result files
 test_result.json
 
-# Bloquear lockfiles ajenos\ n**/package-lock.json
+# Bloquear lockfiles ajenos
+**/package-lock.json
 **/yarn.lock

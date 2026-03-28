@@ -5,7 +5,7 @@ import React, { useState } from "react";
 
 export type ExportFormatType = "markdown" | "pdf";
 
-export const EXPORT_FORMATS: ExportFormatType[] = ["markdown", "pdf"];
+const EXPORT_FORMATS: ExportFormatType[] = ["markdown", "pdf"];
 
 interface FormatInfo {
   id: ExportFormatType;

@@ -112,7 +112,7 @@ export function removeApiKey(): void {
  * @returns true si hay una API_KEY válida disponible
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
-export function hasValidApiKey(): boolean {
+function hasValidApiKey(): boolean {
   // En el cliente, verificar localStorage
   if (typeof window !== "undefined") {
     const stored = getApiKey();
@@ -130,7 +130,7 @@ export function hasValidApiKey(): boolean {
  * @returns La API_KEY si está disponible, null en caso contrario
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
-export function getApiKeyWithFallback(): string | null {
+function getApiKeyWithFallback(): string | null {
   // Prioridad 1: localStorage (solo en cliente)
   if (typeof window !== "undefined") {
     const stored = getApiKey();
@@ -155,7 +155,7 @@ export function getApiKeyWithFallback(): string | null {
  * @returns true si el servidor tiene API_KEY disponible, false en caso contrario
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
-export async function checkServerApiKey(): Promise<boolean> {
+async function checkServerApiKey(): Promise<boolean> {
   if (typeof window === "undefined") {
     return false;
   }
@@ -209,7 +209,7 @@ export async function getApiKeyStatus(): Promise<{
  * const { apiKey, isValid, updateApiKey, clearApiKey } = useApiKey();
  * ```
  */
-export function useApiKey() {
+function useApiKey() {
   const [apiKey, setApiKeyState] = React.useState<string | null>(null);
   const [isValid, setIsValid] = React.useState<boolean>(false);
   const [hasServerApiKey, setHasServerApiKey] = React.useState<boolean>(false);

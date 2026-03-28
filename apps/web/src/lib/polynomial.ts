@@ -15,7 +15,7 @@
  * calculateBigO("n log(n)"); // "O(\\log n)"
  * ```
  */
-export function calculateBigO(polynomial: string): string {
+function calculateBigO(polynomial: string): string {
   if (!polynomial) return "O(1)";
 
   const normalized = polynomial.trim();
@@ -46,7 +46,7 @@ export function calculateBigO(polynomial: string): string {
  * normalizePolynomial("0 \\cdot n + 0"); // "0"
  * ```
  */
-export function normalizePolynomial(poly?: string): string {
+function normalizePolynomial(poly?: string): string {
   if (!poly) return "";
 
   // Reemplazar \cdot por espacio y limpiar espacios

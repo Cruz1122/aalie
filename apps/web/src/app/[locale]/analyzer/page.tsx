@@ -422,9 +422,6 @@ export default function AnalyzerPage() {
     }
   }, [showAstModal]);
 
-  // Estado para indicar que se debe ejecutar análisis automático (ya no se usa, se eliminó)
-  // Los datos ahora vienen directamente desde sessionStorage cuando están guardados
-
   // Función para copiar JSON
   const handleCopyJson = async () => {
     if (!ast) return;

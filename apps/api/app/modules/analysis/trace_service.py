@@ -43,8 +43,10 @@ def build_default_trace_inputs(
     safe_n = max(1, n)
     asc_array = [index + 1 for index in range(safe_n)]
     desc_array = list(reversed(asc_array))
-    selected_array = asc_array if case == "best" and is_sorting_like else (
-        desc_array if is_sorting_like else asc_array
+    selected_array = (
+        asc_array
+        if case == "best" and is_sorting_like
+        else (desc_array if is_sorting_like else asc_array)
     )
 
     variables: Dict[str, Any] = {}

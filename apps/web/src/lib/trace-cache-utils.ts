@@ -9,7 +9,7 @@
 /** Versión del contrato de trace. Incrementar cuando cambie el formato del response. */
 export const TRACE_CONTRACT_VERSION = "2.2";
 
-export const TRACE_CACHE_KEY_PREFIX = "analyzerTraceCache";
+const TRACE_CACHE_KEY_PREFIX = "analyzerTraceCache";
 export const TRACE_CACHE_TTL_MS = 5 * 60 * 1000; // 5 min
 
 export interface TraceCacheKeyParams {

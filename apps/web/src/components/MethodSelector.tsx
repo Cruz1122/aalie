@@ -29,7 +29,7 @@ export interface MethodMetadata {
 
 export type MethodMetadataMap = Record<MethodType, MethodMetadata>;
 
-export const ALL_METHODS: MethodType[] = [
+const ALL_METHODS: MethodType[] = [
   "characteristic_equation",
   "iteration",
   "recursion_tree",

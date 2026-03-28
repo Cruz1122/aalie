@@ -21,7 +21,7 @@ import katex from "katex";
  * Convierte el contenido dentro de O(...) a LaTeX para KaTeX.
  * Ej: "n²" -> "n^2", "log n" -> "\\log n", "2ⁿ" -> "2^n"
  */
-export function complexityToLatex(content: string): string {
+function complexityToLatex(content: string): string {
   return content
     .replace(/²/g, "^2")
     .replace(/ⁿ/g, "^n")
@@ -40,7 +40,7 @@ export function complexityToLatex(content: string): string {
  * @returns Contenido interno listo para KaTeX
  * @author Plan corrección bugs trace
  */
-export function extractLatexFromDelimiters(latex: string): string {
+function extractLatexFromDelimiters(latex: string): string {
   if (!latex || typeof latex !== "string") return latex;
   const s = latex.trim();
   if (s.startsWith("$$") && s.endsWith("$$") && s.length > 4) {

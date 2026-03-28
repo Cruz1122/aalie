@@ -23,7 +23,7 @@ function getEnvOrDefault(name: string, fallback: string): string {
   return trimmed.length > 0 ? trimmed : fallback;
 }
 
-export const GEMINI_MODELS = {
+const GEMINI_MODELS = {
   parser_assist: getEnvOrDefault(
     "LLM_MODEL_PARSER_ASSIST",
     DEFAULT_GEMINI_MODELS.parser_assist,
@@ -40,7 +40,7 @@ export const GEMINI_ENDPOINT_BASE = getEnvOrDefault(
 );
 
 // Parámetros por job (temperatura, tokens). Los prompts se obtienen de ./prompts según locale.
-export const JOB_CONFIG = {
+const JOB_CONFIG = {
   parser_assist: {
     temperature: 0.7,
     maxTokens: 16000,
@@ -234,13 +234,8 @@ export const JOB_CONFIG = {
 };
 
 // Helper para obtener modelo por job
-export function getModel(job: LLMJob): string {
+function getModel(job: LLMJob): string {
   return GEMINI_MODELS[job];
-}
-
-/** @deprecated Use getPromptByLocale from ./prompts. Mantenido por compatibilidad. */
-export function getPrompt(job: LLMJob, locale?: string) {
-  return getPromptByLocale(job, locale);
 }
 
 export interface JSONSchemaProperty {

@@ -4,7 +4,6 @@ PDF compilation via pdflatex with rich diagnostics.
 
 from __future__ import annotations
 
-import os
 import shutil
 import subprocess
 import tempfile
@@ -52,7 +51,9 @@ def compile_latex_to_pdf(
         asset_entries.append(
             {
                 "filename": str(dest.relative_to(work_dir)),
-                "mimeType": "application/pdf" if dest.suffix.lower() == ".pdf" else "text/plain",
+                "mimeType": (
+                    "application/pdf" if dest.suffix.lower() == ".pdf" else "text/plain"
+                ),
                 "size": dest.stat().st_size,
             }
         )
@@ -77,7 +78,11 @@ def compile_latex_to_pdf(
             asset_entries.append(
                 {
                     "filename": rel,
-                    "mimeType": "application/pdf" if dest.suffix.lower() == ".pdf" else "application/octet-stream",
+                    "mimeType": (
+                        "application/pdf"
+                        if dest.suffix.lower() == ".pdf"
+                        else "application/octet-stream"
+                    ),
                     "size": dest.stat().st_size,
                 }
             )

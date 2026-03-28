@@ -7,7 +7,7 @@
  * Compara dos notaciones Big O y retorna la más pequeña (más informativa).
  * O(n) < O(n log n) < O(n²) < O(2^n)
  */
-export function compareBigO(notation1: string, notation2: string): number {
+function compareBigO(notation1: string, notation2: string): number {
   const order1 = getAsymptoticOrder(notation1);
   const order2 = getAsymptoticOrder(notation2);
   return order1 - order2; // Menor orden = más pequeña = mejor
@@ -17,7 +17,7 @@ export function compareBigO(notation1: string, notation2: string): number {
  * Compara dos notaciones Big Omega y retorna la más grande (más informativa).
  * Ω(n log n) > Ω(n) > Ω(log n)
  */
-export function compareBigOmega(notation1: string, notation2: string): number {
+function compareBigOmega(notation1: string, notation2: string): number {
   const order1 = getAsymptoticOrder(notation1);
   const order2 = getAsymptoticOrder(notation2);
   return order2 - order1; // Mayor orden = más grande = mejor
@@ -93,7 +93,7 @@ function getAsymptoticOrder(notation: string): number {
  * Extrae el contenido interno de una notación asintótica.
  * Ej: "O(n log n)" -> "n log n"
  */
-export function extractNotationContent(notation: string): string {
+function extractNotationContent(notation: string): string {
   // Remover prefijos O(, Θ(, Ω( y paréntesis finales
   return notation
     .replace(/^[OΘΩ]\s*\(/i, "")
@@ -105,7 +105,7 @@ export function extractNotationContent(notation: string): string {
 /**
  * Determina si una notación contiene hipótesis o condiciones.
  */
-export function hasHypothesis(notation: string): boolean {
+function hasHypothesis(notation: string): boolean {
   const lower = notation.toLowerCase();
   return (
     lower.includes("para") ||
@@ -119,7 +119,7 @@ export function hasHypothesis(notation: string): boolean {
 /**
  * Determina si una notación es condicional (depende de parámetros).
  */
-export function isConditional(notation: string): boolean {
+function isConditional(notation: string): boolean {
   const lower = notation.toLowerCase();
   return (
     (lower.includes("p") || lower.includes("q")) &&
@@ -130,7 +130,7 @@ export function isConditional(notation: string): boolean {
 /**
  * Selecciona la mejor notación Big O de una lista.
  */
-export function selectBestBigO(notations: string[]): string | null {
+function selectBestBigO(notations: string[]): string | null {
   if (notations.length === 0) return null;
   if (notations.length === 1) return notations[0];
 
@@ -142,7 +142,7 @@ export function selectBestBigO(notations: string[]): string | null {
 /**
  * Selecciona la mejor notación Big Omega de una lista.
  */
-export function selectBestBigOmega(notations: string[]): string | null {
+function selectBestBigOmega(notations: string[]): string | null {
   if (notations.length === 0) return null;
   if (notations.length === 1) return notations[0];
 

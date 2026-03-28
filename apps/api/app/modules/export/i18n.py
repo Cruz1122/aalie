@@ -107,7 +107,14 @@ ES_EXPORT_I18N: Dict[str, Any] = {
     "headers": {
         "caseResults": ["Caso", "Costo", "Forma simplificada", "O", "Ω", "Θ"],
         "lineCosts": ["Línea", "Tipo", "Costo base", "Conteo bruto", "Conteo", "Nota"],
-        "traceSummary": ["Caso", "Tipo", "Pasos", "Llamadas", "Profundidad máxima", "Truncado"],
+        "traceSummary": [
+            "Caso",
+            "Tipo",
+            "Pasos",
+            "Llamadas",
+            "Profundidad máxima",
+            "Truncado",
+        ],
         "recurrenceTreeLevels": [
             "Nivel",
             "Nodos",
@@ -240,4 +247,3 @@ EN_EXPORT_I18N: Dict[str, Any] = {
 
 def get_export_i18n(locale: str) -> Dict[str, Any]:
     return ES_EXPORT_I18N if str(locale).lower().startswith("es") else EN_EXPORT_I18N
-

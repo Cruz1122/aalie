@@ -42,11 +42,19 @@ def test_build_export_state_generates_deterministic_metadata():
     payload = _base_payload()
 
     state_a = build_export_state(payload)
-    state_b = build_export_state({**payload, "requestOrigin": "https://frontend.example"})
+    state_b = build_export_state(
+        {**payload, "requestOrigin": "https://frontend.example"}
+    )
 
-    assert state_a["snapshotInput"]["analysisId"] == state_b["snapshotInput"]["analysisId"]
-    assert state_a["snapshotInput"]["snapshotId"] == state_b["snapshotInput"]["snapshotId"]
-    assert state_a["snapshotInput"]["createdAt"] == state_b["snapshotInput"]["createdAt"]
+    assert (
+        state_a["snapshotInput"]["analysisId"] == state_b["snapshotInput"]["analysisId"]
+    )
+    assert (
+        state_a["snapshotInput"]["snapshotId"] == state_b["snapshotInput"]["snapshotId"]
+    )
+    assert (
+        state_a["snapshotInput"]["createdAt"] == state_b["snapshotInput"]["createdAt"]
+    )
 
 
 def test_build_export_state_normalizes_formats_and_defaults():

@@ -138,4 +138,3 @@ class LatexCompilationError(Exception):
         self.logs = logs
         self.asset_manifest = asset_manifest or []
         self.work_dir = work_dir
-

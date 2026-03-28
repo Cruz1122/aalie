@@ -1,6 +1,9 @@
 from pathlib import Path
 
-from app.modules.export.asset_registry import read_latex_template, resolve_latex_asset_registry
+from app.modules.export.asset_registry import (
+    read_latex_template,
+    resolve_latex_asset_registry,
+)
 
 
 def test_asset_registry_resolves_backend_owned_export_assets():
@@ -15,9 +18,7 @@ def test_asset_registry_resolves_backend_owned_export_assets():
         / "assets"
         / "latex"
     )
-    assert asset_root.samefile(
-        expected_root
-    )
+    assert asset_root.samefile(expected_root)
     assert "packages/report-export-engine" not in registry.asset_root
     assert asset_root.joinpath("aalie-report.sty").exists()
     assert asset_root.joinpath("logos", "aalie.pdf").exists()

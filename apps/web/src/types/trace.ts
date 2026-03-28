@@ -101,9 +101,6 @@ export interface RecursionCallNode {
   return_value?: unknown;
 }
 
-/** @deprecated Use RecursionCallNode. Alias para compatibilidad. */
-export type RecursionTreeCall = RecursionCallNode;
-
 /** Fuente del árbol de llamadas recursivas. Backend envía como recursionTree. */
 export interface RecursionCallTree {
   calls: RecursionCallNode[];

@@ -28,7 +28,7 @@ export function errorsToMarkers(
  * @returns Proveedor de hover de Monaco
  * @author Juan Camilo Cruz Parra (@Cruz1122)
  */
-export function createHoverProvider(
+function createHoverProvider(
   errors: ParseError[],
 ): Monaco.languages.HoverProvider {
   return {

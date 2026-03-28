@@ -33,4 +33,3 @@ def mark_missing_data(warning: Dict[str, Any]) -> Dict[str, Any]:
 
 def is_section_available(section: Optional[Dict[str, Any]]) -> bool:
     return bool(section) and section.get("status") == "available" and "data" in section
-

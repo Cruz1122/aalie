@@ -80,7 +80,7 @@ export const RECURSIVE_METHOD_BADGE_TO_METHOD = {
   EC: "characteristic_equation",
 } as const;
 
-export const EXAMPLE_METHOD_TRANSLATION_KEYS: Record<
+const EXAMPLE_METHOD_TRANSLATION_KEYS: Record<
   RecursiveMethodBadge,
   string
 > = {
@@ -3131,7 +3131,7 @@ export const examplesCatalog: ExampleCatalogItem[] = [
   ...decreaseByOneExamples,
 ];
 
-export const EXAMPLE_CATEGORY_COUNTS: Record<ExampleCategory, number> = {
+const EXAMPLE_CATEGORY_COUNTS: Record<ExampleCategory, number> = {
   iterativos: iterativeExamples.length,
   "divide-y-venceras": divideAndConquerExamples.length,
   "resta-y-venceras": decreaseAndConquerExamples.length,
@@ -3212,7 +3212,7 @@ export const getCategoryMeta = (
   category: ExampleCategory,
 ): ExampleCategoryMeta => EXAMPLE_CATEGORY_META[category];
 
-export const getCategoryTotals = (
+const getCategoryTotals = (
   category: ExampleCategory,
 ): {
   total: number;

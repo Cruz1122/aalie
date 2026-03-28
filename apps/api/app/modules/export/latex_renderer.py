@@ -9,7 +9,6 @@ from typing import Dict, List
 from .asset_registry import read_latex_template
 from .format_utils import (
     escape_latex_text,
-    is_likely_math_expression,
     render_latex_cell_value,
     render_latex_text_with_embedded_math,
     render_latex_text_with_inline_math,
@@ -30,11 +29,19 @@ def _render_institutional_code(block: Dict[str, object]) -> str:
     rendered_lines = []
     for index, line in enumerate(block.get("lines") or []):
         tone = "ucaldasBlue" if index % 2 == 0 else "ingColor"
-        prefix = f"{line.get('lineNumber')}: " if isinstance(line, dict) and line.get("lineNumber") is not None else ""
-        rendered_lines.append(rf"\textcolor{{{tone}}}{{{escape_latex_text(prefix + str(line.get('text') or ''))}}}\\")
+        prefix = (
+            f"{line.get('lineNumber')}: "
+            if isinstance(line, dict) and line.get("lineNumber") is not None
+            else ""
+        )
+        rendered_lines.append(
+            rf"\textcolor{{{tone}}}{{{escape_latex_text(prefix + str(line.get('text') or ''))}}}\\"
+        )
     output = []
     if block.get("title"):
-        output.append(rf"\GraySubsection{{{escape_latex_text(str(block.get('title')))}}}")
+        output.append(
+            rf"\GraySubsection{{{escape_latex_text(str(block.get('title')))}}}"
+        )
     output.extend(
         [
             r"\begin{center}",
@@ -57,7 +64,12 @@ def _render_institutional_code(block: Dict[str, object]) -> str:
 
 def _is_trace_table(headers: List[str]) -> bool:
     normalized = [header.lower() for header in headers]
-    return len(headers) == 7 and any("paso" in item or "step" in item for item in normalized) and any("contexto" in item or "context" in item for item in normalized) and any("costo" in item or "cost" in item for item in normalized)
+    return (
+        len(headers) == 7
+        and any("paso" in item or "step" in item for item in normalized)
+        and any("contexto" in item or "context" in item for item in normalized)
+        and any("costo" in item or "cost" in item for item in normalized)
+    )
 
 
 def _build_column_spec(headers: List[str], align: List[str] | None) -> str:
@@ -79,9 +91,11 @@ def _build_column_spec(headers: List[str], align: List[str] | None) -> str:
         columns.append(
             r">{\centering\arraybackslash}X"
             if target == "center"
-            else r">{\raggedleft\arraybackslash}X"
-            if target == "right"
-            else r">{\raggedright\arraybackslash}X"
+            else (
+                r">{\raggedleft\arraybackslash}X"
+                if target == "right"
+                else r">{\raggedright\arraybackslash}X"
+            )
         )
     return "".join(columns)
 
@@ -94,7 +108,11 @@ def _render_table(table: DocumentTable, i18n: Dict[str, object]) -> str:
     spec = _build_column_spec(table.headers, table.align)
     column_count = max(1, len(table.headers))
     if _is_trace_table(table.headers):
-        continued_label = "Continúa en la siguiente página" if i18n["locale"] == "es" else "Continued on next page"
+        continued_label = (
+            "Continúa en la siguiente página"
+            if i18n["locale"] == "es"
+            else "Continued on next page"
+        )
         lines.extend(
             [
                 r"\begingroup",
@@ -118,10 +136,15 @@ def _render_table(table: DocumentTable, i18n: Dict[str, object]) -> str:
             ]
         )
         if not table.rows:
-            lines.append(rf"\multicolumn{{{column_count}}}{{>{{\raggedright\arraybackslash}}p{{0.95\linewidth}}}}{{{escape_latex_text(str(i18n['notAvailable']))}}} \\")
+            lines.append(
+                rf"\multicolumn{{{column_count}}}{{>{{\raggedright\arraybackslash}}p{{0.95\linewidth}}}}{{{escape_latex_text(str(i18n['notAvailable']))}}} \\"
+            )
         else:
             for row in table.rows:
-                lines.append(" & ".join(render_latex_cell_value(str(cell)) for cell in row) + r" \\")
+                lines.append(
+                    " & ".join(render_latex_cell_value(str(cell)) for cell in row)
+                    + r" \\"
+                )
         lines.extend([r"\end{longtable}", r"\endgroup"])
         return "\n".join(lines)
     lines.extend(
@@ -138,10 +161,14 @@ def _render_table(table: DocumentTable, i18n: Dict[str, object]) -> str:
         ]
     )
     if not table.rows:
-        lines.append(rf"\multicolumn{{{column_count}}}{{>{{\raggedright\arraybackslash}}p{{0.95\linewidth}}}}{{{escape_latex_text(str(i18n['notAvailable']))}}} \\")
+        lines.append(
+            rf"\multicolumn{{{column_count}}}{{>{{\raggedright\arraybackslash}}p{{0.95\linewidth}}}}{{{escape_latex_text(str(i18n['notAvailable']))}}} \\"
+        )
     else:
         for row in table.rows:
-            lines.append(" & ".join(render_latex_cell_value(str(cell)) for cell in row) + r" \\")
+            lines.append(
+                " & ".join(render_latex_cell_value(str(cell)) for cell in row) + r" \\"
+            )
     lines.extend([r"\bottomrule", r"\end{tabularx}", r"\endgroup", r"\end{center}"])
     return "\n".join(lines)
 
@@ -165,11 +192,22 @@ def _render_block(block: Dict[str, object], i18n: Dict[str, object]) -> str:
     if kind == "heading":
         return rf"\paragraph{{{escape_latex_text(str(block.get('text') or ''))}}}"
     if kind == "emphasis":
-        return rf"\textbf{{\textit{{{escape_latex_text(str(block.get('text') or ''))}}}}}"
+        return (
+            rf"\textbf{{\textit{{{escape_latex_text(str(block.get('text') or ''))}}}}}"
+        )
     if kind == "paragraph":
         return render_latex_text_with_inline_math(str(block.get("text") or ""))
     if kind == "list":
-        return "\n".join([r"\begin{itemize}", *[rf"\item {render_latex_text_with_inline_math(str(item))}" for item in (block.get("items") or [])], r"\end{itemize}"])
+        return "\n".join(
+            [
+                r"\begin{itemize}",
+                *[
+                    rf"\item {render_latex_text_with_inline_math(str(item))}"
+                    for item in (block.get("items") or [])
+                ],
+                r"\end{itemize}",
+            ]
+        )
     if kind == "code":
         return "\n".join(
             [
@@ -185,7 +223,13 @@ def _render_block(block: Dict[str, object], i18n: Dict[str, object]) -> str:
     if kind == "subsection":
         return rf"\GraySubsection{{{escape_latex_text(str(block.get('title') or ''))}}}"
     if kind == "centeredParagraph":
-        return "\n".join([r"\begin{center}", render_latex_text_with_embedded_math(str(block.get("text") or "")), r"\end{center}"])
+        return "\n".join(
+            [
+                r"\begin{center}",
+                render_latex_text_with_embedded_math(str(block.get("text") or "")),
+                r"\end{center}",
+            ]
+        )
     if kind == "institutionalCode":
         return _render_institutional_code(block)
     if kind == "formula":
@@ -196,20 +240,50 @@ def _render_block(block: Dict[str, object], i18n: Dict[str, object]) -> str:
         return "\n".join(lines)
     if kind == "pedagogicalStep":
         step = block.get("step") or {}
-        lines = [rf"\paragraph{{{escape_latex_text(str(step.get('index')) + '. ' + str(step.get('title') or ''))}}}"]
+        lines = [
+            rf"\paragraph{{{escape_latex_text(str(step.get('index')) + '. ' + str(step.get('title') or ''))}}}"
+        ]
         if step.get("formula"):
             lines.append(rf"\AALIEDisplayMath{{{step.get('formula')}}}")
-        lines.append(r"{\footnotesize\textit{" + render_latex_text_with_embedded_math(str(step.get("explanation") or "")) + "}}")
+        lines.append(
+            r"{\footnotesize\textit{"
+            + render_latex_text_with_embedded_math(str(step.get("explanation") or ""))
+            + "}}"
+        )
         if step.get("warning"):
-            lines.append(r"{\footnotesize\textit{" + escape_latex_text("Advertencia" if i18n["locale"] == "es" else "Warning") + ": " + render_latex_text_with_embedded_math(str(step.get("warning") or "")) + "}}")
+            lines.append(
+                r"{\footnotesize\textit{"
+                + escape_latex_text(
+                    "Advertencia" if i18n["locale"] == "es" else "Warning"
+                )
+                + ": "
+                + render_latex_text_with_embedded_math(str(step.get("warning") or ""))
+                + "}}"
+            )
         if step.get("supportReason"):
-            lines.append(r"{\footnotesize\textit{" + escape_latex_text("Soporte" if i18n["locale"] == "es" else "Support") + ": " + render_latex_text_with_embedded_math(str(step.get("supportReason") or "")) + "}}")
+            lines.append(
+                r"{\footnotesize\textit{"
+                + escape_latex_text("Soporte" if i18n["locale"] == "es" else "Support")
+                + ": "
+                + render_latex_text_with_embedded_math(
+                    str(step.get("supportReason") or "")
+                )
+                + "}}"
+            )
         return "\n".join(lines)
     if kind == "table":
         return _render_table(block.get("table"), i18n)
     if kind == "keyValue":
         return "\n".join(
-            [r"\begin{itemize}", *[rf"\item \textbf{{{escape_latex_text(str(entry.get('label') or ''))}}}: {render_latex_text_with_inline_math(str(entry.get('value') or ''))}" for entry in (block.get("entries") or []) if isinstance(entry, dict)], r"\end{itemize}"]
+            [
+                r"\begin{itemize}",
+                *[
+                    rf"\item \textbf{{{escape_latex_text(str(entry.get('label') or ''))}}}: {render_latex_text_with_inline_math(str(entry.get('value') or ''))}"
+                    for entry in (block.get("entries") or [])
+                    if isinstance(entry, dict)
+                ],
+                r"\end{itemize}",
+            ]
         )
     if kind == "executionTraceDiagram":
         diagram = block.get("diagram") or {}
@@ -234,16 +308,30 @@ def _render_block(block: Dict[str, object], i18n: Dict[str, object]) -> str:
             rf"\textbf{{{escape_latex_text(summary_line)}}}",
         ]
         if (diagram.get("diagnostics") or {}).get("truncated"):
-            lines.append(escape_latex_text("Advertencia: la traza fue truncada por límites de ejecución." if i18n["locale"] == "es" else "Warning: trace was truncated by execution limits."))
+            lines.append(
+                escape_latex_text(
+                    "Advertencia: la traza fue truncada por límites de ejecución."
+                    if i18n["locale"] == "es"
+                    else "Warning: trace was truncated by execution limits."
+                )
+            )
         return "\n".join(lines)
     return _render_status(block.get("status") or {}, i18n)
 
 
-def render_latex_report(snapshot: Dict[str, object], model: DocumentModel, template: str | None = None) -> str:
+def render_latex_report(
+    snapshot: Dict[str, object], model: DocumentModel, template: str | None = None
+) -> str:
     i18n = get_export_i18n(model.locale)
     source_template = template or read_latex_template()
-    executive_section = next((section for section in model.sections if section.id == "executive-summary"), None)
-    executive_body = "\n\n".join(_render_block(block, i18n) for block in (executive_section.blocks if executive_section else []))
+    executive_section = next(
+        (section for section in model.sections if section.id == "executive-summary"),
+        None,
+    )
+    executive_body = "\n\n".join(
+        _render_block(block, i18n)
+        for block in (executive_section.blocks if executive_section else [])
+    )
     content_sections = []
     for section in model.sections:
         if section.id == "executive-summary":
@@ -265,7 +353,9 @@ def render_latex_report(snapshot: Dict[str, object], model: DocumentModel, templ
         "%%__VERSION_LABEL__%%": escape_latex_text(str(i18n["versionLabel"])),
         "%%__DATE_LABEL__%%": escape_latex_text(str(i18n["dateLabel"])),
         "%%__DISCLAIMER__%%": escape_latex_text(model.disclaimer),
-        "%%__EXECUTIVE_SUMMARY_TITLE__%%": escape_latex_text(str(i18n["executiveSummaryTitle"])),
+        "%%__EXECUTIVE_SUMMARY_TITLE__%%": escape_latex_text(
+            str(i18n["executiveSummaryTitle"])
+        ),
         "%%__EXECUTIVE_SUMMARY_BODY__%%": executive_body,
         "%%__CONTENT_SECTIONS__%%": "\n\n".join(content_sections),
     }

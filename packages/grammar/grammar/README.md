@@ -820,7 +820,7 @@ pnpm --filter @aa/grammar build
 ```
 
 **¿Qué hace esto?**
-- Ejecuta `scripts/gen-ts.mjs`
+- Ejecuta `scripts/gen-ts.js`
 - Usa `antlr4ts` para generar el parser TypeScript
 - Genera archivos en `packages/grammar/src/ts/`:
   - `LanguageLexer.ts`
@@ -1320,4 +1320,3 @@ Esto ejecuta `tsc` y genera `dist/index.d.ts` y `dist/index.js`.
 ---
 
 **Última actualización:** Octubre 2025
-

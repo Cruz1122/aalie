@@ -27,7 +27,11 @@ class ExportService:
             {
                 "filename": asset.filename,
                 "mimeType": asset.mimeType,
-                "size": len(asset.content if isinstance(asset.content, bytes) else asset.content.encode("utf-8")),
+                "size": len(
+                    asset.content
+                    if isinstance(asset.content, bytes)
+                    else asset.content.encode("utf-8")
+                ),
             }
             for asset in assets
         ]

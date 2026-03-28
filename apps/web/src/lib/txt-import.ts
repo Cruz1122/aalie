@@ -15,7 +15,7 @@ export type TxtImportValidationResult =
         | "readError";
     };
 
-export function normalizeImportedAlgorithmSource(source: string): string {
+function normalizeImportedAlgorithmSource(source: string): string {
   return source.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
 }
 
@@ -101,7 +101,7 @@ function hasProcedureLikeNode(value: unknown): boolean {
   return Object.values(node).some((child) => hasProcedureLikeNode(child));
 }
 
-export function looksLikeAlgorithmAst(ast: unknown): boolean {
+function looksLikeAlgorithmAst(ast: unknown): boolean {
   return hasProcedureLikeNode(ast);
 }
 

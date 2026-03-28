@@ -28,8 +28,14 @@ def _render_table(table: DocumentTable) -> str:
     lines.append(f"| {' | '.join(headers)} |")
     align_markers = []
     for index, _header in enumerate(headers):
-        align = (table.align or [])[index] if table.align and index < len(table.align) else "left"
-        align_markers.append(":---:" if align == "center" else "---:" if align == "right" else "---")
+        align = (
+            (table.align or [])[index]
+            if table.align and index < len(table.align)
+            else "left"
+        )
+        align_markers.append(
+            ":---:" if align == "center" else "---:" if align == "right" else "---"
+        )
     lines.append(f"| {' | '.join(align_markers)} |")
     for row in table.rows:
         safe_row = [_escape_pipes(to_markdown_inline_math(str(cell))) for cell in row]
@@ -40,7 +46,11 @@ def _render_table(table: DocumentTable) -> str:
 def _render_institutional_code(block: Dict[str, object]) -> str:
     lines = []
     for line in block.get("lines") or []:
-        prefix = f"{line['lineNumber']}: " if isinstance(line, dict) and line.get("lineNumber") is not None else ""
+        prefix = (
+            f"{line['lineNumber']}: "
+            if isinstance(line, dict) and line.get("lineNumber") is not None
+            else ""
+        )
         lines.append(prefix + str((line or {}).get("text") or ""))
     code_block = "```text\n" + "\n".join(lines) + "\n```"
     title = block.get("title")
@@ -48,10 +58,15 @@ def _render_institutional_code(block: Dict[str, object]) -> str:
 
 
 def _render_status(status: Dict[str, object], i18n: Dict[str, object]) -> str:
-    lines = [f"> {status.get('label')}", f"> {status.get('message') or status.get('status')}"]
+    lines = [
+        f"> {status.get('label')}",
+        f"> {status.get('message') or status.get('status')}",
+    ]
     todos = status.get("todos") or []
     if todos:
-        lines.append(f"> {i18n['todoPrefix']}: {'; '.join(str(todo) for todo in todos)}")
+        lines.append(
+            f"> {i18n['todoPrefix']}: {'; '.join(str(todo) for todo in todos)}"
+        )
     return "\n".join(lines)
 
 
@@ -62,7 +77,9 @@ def _render_block(block: Dict[str, object], i18n: Dict[str, object]) -> str:
     if kind == "emphasis":
         return f"***{block.get('text')}***"
     if kind == "paragraph":
-        return _preserve_line_breaks(to_markdown_text_with_inline_math(str(block.get("text") or "")))
+        return _preserve_line_breaks(
+            to_markdown_text_with_inline_math(str(block.get("text") or ""))
+        )
     if kind == "list":
         return "\n".join(
             f"- {_preserve_line_breaks(to_markdown_text_with_inline_math(str(item)))}"
@@ -86,11 +103,17 @@ def _render_block(block: Dict[str, object], i18n: Dict[str, object]) -> str:
         parts = [f"**{step.get('index')}. {step.get('title')}**"]
         if step.get("formula"):
             parts.append(f"$$\n{step.get('formula')}\n$$")
-        parts.append(f"*{_preserve_line_breaks(to_markdown_text_with_inline_math(str(step.get('explanation') or '')))}*")
+        parts.append(
+            f"*{_preserve_line_breaks(to_markdown_text_with_inline_math(str(step.get('explanation') or '')))}*"
+        )
         if step.get("warning"):
-            parts.append(f"*Warning: {_preserve_line_breaks(to_markdown_text_with_inline_math(str(step.get('warning') or '')))}*")
+            parts.append(
+                f"*Warning: {_preserve_line_breaks(to_markdown_text_with_inline_math(str(step.get('warning') or '')))}*"
+            )
         if step.get("supportReason"):
-            parts.append(f"*Support: {_preserve_line_breaks(to_markdown_text_with_inline_math(str(step.get('supportReason') or '')))}*")
+            parts.append(
+                f"*Support: {_preserve_line_breaks(to_markdown_text_with_inline_math(str(step.get('supportReason') or '')))}*"
+            )
         return "\n\n".join(parts)
     if kind == "table":
         return _render_table(block.get("table"))
@@ -113,12 +136,18 @@ def _render_block(block: Dict[str, object], i18n: Dict[str, object]) -> str:
             f"**{i18n['caseHeaderLabel']}:** {i18n['caseLabels'][diagram.get('caseName')]}",
             f"**{i18n['pedagogicalTraceTitle']}:** {rendered['stats']['totalCalls']} {'llamadas' if i18n['locale'] == 'es' else 'calls'}, {'profundidad máxima' if i18n['locale'] == 'es' else 'max depth'} {rendered['stats']['maxDepth']}",
         ]
-        if rendered["stats"].get("collapsedNodes") or rendered["stats"].get("reductionNote"):
+        if rendered["stats"].get("collapsedNodes") or rendered["stats"].get(
+            "reductionNote"
+        ):
             lines.append(
                 f"**{'Reducción visual' if i18n['locale'] == 'es' else 'Visual reduction'}:** "
                 + (
                     rendered["stats"].get("reductionNote")
-                    or (f"{rendered['stats']['collapsedNodes']} nodos colapsados" if i18n["locale"] == "es" else f"{rendered['stats']['collapsedNodes']} collapsed nodes")
+                    or (
+                        f"{rendered['stats']['collapsedNodes']} nodos colapsados"
+                        if i18n["locale"] == "es"
+                        else f"{rendered['stats']['collapsedNodes']} collapsed nodes"
+                    )
                 )
             )
         if rendered["stats"].get("truncated"):
@@ -146,4 +175,3 @@ def render_markdown_report(snapshot: Dict[str, object], model: DocumentModel) ->
         blocks = "\n\n".join(_render_block(block, i18n) for block in section.blocks)
         rendered_sections.append(f"## {section.title}\n\n{blocks}")
     return "\n\n".join(front + rendered_sections) + "\n"
-

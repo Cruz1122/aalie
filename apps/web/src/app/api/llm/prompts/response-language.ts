@@ -17,7 +17,7 @@ export function getResponseLanguageInstruction(
 - Todas las explicaciones, comentarios y salida en lenguaje natural deben estar en español.`;
 }
 
-export function getExplanationLanguageInstruction(
+function getExplanationLanguageInstruction(
   locale: SupportedLocale,
 ): string {
   return locale === "en"
@@ -25,7 +25,7 @@ export function getExplanationLanguageInstruction(
     : "La explicación DEBE estar SIEMPRE en ESPAÑOL. NO uses inglés ni otros idiomas.";
 }
 
-export function getExplanationFormatInstruction(
+function getExplanationFormatInstruction(
   locale: SupportedLocale,
 ): string {
   return locale === "en"

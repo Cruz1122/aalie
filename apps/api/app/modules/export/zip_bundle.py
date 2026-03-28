@@ -63,4 +63,3 @@ def create_zip_bundle(
         filename=f"aalie-export-{metadata['snapshotId']}.zip",
         content=buffer.getvalue(),
     )
-

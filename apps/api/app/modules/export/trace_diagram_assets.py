@@ -46,4 +46,3 @@ def build_trace_diagram_assets(model: DocumentModel) -> List[ExportArtifact]:
                 content=pdf_buffer,
             )
     return [assets_by_filename[name] for name in sorted(assets_by_filename)]
-
