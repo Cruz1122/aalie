@@ -1,8 +1,7 @@
-import { ExportArtifact, LatexCompilationError } from "@aa/report-export-engine";
-import {
-  createReportFromSource,
-  type ExportReportRequest,
-} from "@aa/report-export-orchestrator";
+import { LatexCompilationError } from "@aa/report-export-engine";
+import type { ExportArtifact } from "@aa/report-export-engine";
+
+import { createReportFromSource, type ExportReportRequest } from "./export-service";
 
 function readStdinJson(): Promise<unknown> {
   return new Promise((resolve, reject) => {
@@ -50,7 +49,9 @@ async function main() {
       throw new Error("No artifacts were generated.");
     }
 
-    const mimeType = isBundle ? "application/zip" : (outputMatch as ExportArtifact).mimeType;
+    const mimeType = isBundle
+      ? "application/zip"
+      : (outputMatch as ExportArtifact).mimeType;
     const filename = outputMatch.filename;
     const content = toContentBytes(outputMatch.content);
 
@@ -88,7 +89,8 @@ async function main() {
 }
 
 main().catch((e) => {
-  process.stdout.write(JSON.stringify({ ok: false, error: e instanceof Error ? e.message : String(e) }));
+  process.stdout.write(
+    JSON.stringify({ ok: false, error: e instanceof Error ? e.message : String(e) }),
+  );
   process.exit(0);
 });
-

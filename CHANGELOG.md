@@ -8,6 +8,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ## [Unreleased] - 2026-03-18
 
 ### Added
+- Documentación de infraestructura de export de reportes: `docs/reports-export-infrastructure.md` (flujo, código completo de router, worker, orquestador, motor, LaTeX, Docker/Compose, `package.json` y fragmento del front).
 - Importación de algoritmos desde archivo `.txt` en modo manual (`/es`) y en la vista del analizador (`/es/analyzer`).
 - Modal dedicado para validación de importación TXT con mensajes por tipo de error (archivo inválido, no algoritmo, gramática inválida).
 - Flujo de reparación con IA tras importación fallida por gramática, manteniendo edición final en Monaco antes de analizar.

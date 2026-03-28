@@ -6,6 +6,8 @@ Author: Juan Felipe Henao (@Pipe-1z)
 
 import os
 
+DEFAULT_ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
+
 
 def _as_bool(value: str) -> bool:
     """
@@ -71,9 +73,8 @@ def get_dev_allowed_origins() -> list[str]:
     Author: Juan Felipe Henao (@Pipe-1z)
     """
     raw = os.getenv("DEV_ALLOWED_ORIGINS", "")
-    defaults = ["http://localhost:3000", "http://127.0.0.1:3000"]
     items = _parse_allowed_origins(raw)
-    return items if items else defaults
+    return items if items else DEFAULT_ALLOWED_ORIGINS
 
 
 def get_cors_allowed_origins() -> list[str]:
@@ -82,9 +83,14 @@ def get_cors_allowed_origins() -> list[str]:
 
     - Primero intenta `CORS_ALLOWED_ORIGINS`.
     - Si no está, intenta `DEV_ALLOWED_ORIGINS`.
-    - Si no hay ninguno definido, habilita acceso desde cualquier origen (`*`).
+    - Si no hay ninguno definido, usa los orígenes de desarrollo por defecto.
+    - El wildcard (`*`) solo se habilita si se configura explícitamente.
     """
 
-    raw = os.getenv("CORS_ALLOWED_ORIGINS") or os.getenv("DEV_ALLOWED_ORIGINS") or ""
+    raw = (
+        os.getenv("CORS_ALLOWED_ORIGINS")
+        or os.getenv("DEV_ALLOWED_ORIGINS")
+        or ",".join(DEFAULT_ALLOWED_ORIGINS)
+    )
     items = _parse_allowed_origins(raw)
-    return items if items else ["*"]
+    return items if items else DEFAULT_ALLOWED_ORIGINS

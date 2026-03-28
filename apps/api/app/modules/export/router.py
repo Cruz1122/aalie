@@ -25,17 +25,19 @@ def _node_worker_path() -> str:
     Note: the worker is implemented in a later plan step.
     """
 
-    # apps/api/app/modules/export/router.py -> apps/api/app/exporter/worker.ts
+    # apps/api/app/modules/export/router.py -> packages/report-export-orchestrator/src/report-worker.ts
     return os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "..", "exporter", "worker.ts")
+        os.path.join(
+            os.path.dirname(__file__),
+            "../../../../../packages/report-export-orchestrator/src/report-worker.ts",
+        )
     )
 
 
 def _run_export_worker(payload: Dict[str, Any]) -> Dict[str, Any]:
     worker_path = _node_worker_path()
-    # Node resuelve dependencias por `node_modules` en la carpeta actual y sus padres.
-    # Como `apps/api` no es un paquete Node, le damos el `cwd` a `packages/report-export-orchestrator`
-    # para que `tsx` (usado al ejecutar TS) sea encontrable.
+    # Ejecutamos el worker desde el paquete del orquestador para que el archivo y sus
+    # dependencias de workspace (`@aa/*`) se resuelvan desde el mismo árbol de Node.
     repo_root = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "../../../../../")
     )
