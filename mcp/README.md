@@ -1,44 +1,39 @@
-# MCP AALIE Conventions
+# AALIE Repo-Local MCP
 
-Servidor MCP que expone herramientas para seguir convenciones del proyecto.
+Servidor MCP local del repositorio para encapsular reglas contractuales de AALIE.
+
+## Qué expone
+
+- `get_change_context`
+- `check_contract_impact`
+- `validate_snapshot_contract`
+- `evaluate_while_case`
+- `detect_recursive_family`
+- `generate_test_oracle_stub`
+
+No expone wrappers genéricos de shell o lectura de archivos.
 
 ## Instalación
 
 ```bash
-pip install -r mcp/requirements.txt
+python3 -m pip install -r mcp/requirements.txt
 ```
 
-## Configuración
-
-La configuración está en `.cursor/mcp.json`. Cursor la carga automáticamente al abrir el proyecto.
-
-## Herramientas
-
-| Tool | Descripción |
-|------|-------------|
-| `read_conventions` | Lee docs/development/conventions.md |
-| `read_doc` | Lee documentación por ruta (ej: app/i18n-labels-prompts.md) |
-| `list_components` | Lista componentes en apps/web/src/components |
-| `changelog_template` | Formato para CHANGELOG.md |
-| `i18n_reminder` | Recordatorio de uso de i18n |
-| `test_suite_commands` | Comandos de la suite de tests (pnpm test:api, test:api:gate, etc.) |
-
-## Ejecutar tests (Backend)
-
-Desde la raíz del repo: `pnpm test:api`, `pnpm test:api:gate`, `pnpm test:api:contract`, `pnpm test:api:cov`, `pnpm test:api:unit`, `pnpm test:api:stress`.  
-O desde `apps/api` con `python -m pytest` (no `pytest` directo):
+## Ejecutar
 
 ```bash
-cd apps/api && python -m pytest tests/ -v
-python -m pytest tests/unit/ -v
-python -m pytest tests/contract/test_stress_algorithms.py -v
+python3 mcp/server.py
 ```
 
-## Verificar MCP
+El servidor usa `stdio`.
 
-```bash
-cd c:/dev/algorithmic-analysis
-python mcp/server.py
-```
+## Integración de editor
 
-El servidor usa stdio; Cursor lo invoca automáticamente.
+- Cursor usa `.cursor/mcp.json`
+- VS Code usa `.vscode/mcp.json` y `.vscode/tasks.json`
+
+## Notas de runtime
+
+- Los archivos committeados usan `python3` porque ese binario sí existe en este entorno.
+- Si trabajas con venv local, reemplaza el comando por `.venv/bin/python3`.
+- En Windows, apunta al ejecutable del entorno virtual correspondiente.

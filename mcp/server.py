@@ -1,79 +1,135 @@
-"""MCP AALIE Conventions - tools para convenciones, i18n, changelog y docs."""
+"""Repo-local MCP server for AALIE."""
 
+from __future__ import annotations
+
+import sys
 from pathlib import Path
+from typing import Any, Callable, Dict
 
 ROOT = Path(__file__).resolve().parent.parent
+MCP_DIR = ROOT / "mcp"
+APPS_API_DIR = ROOT / "apps" / "api"
+
+for path in (MCP_DIR, APPS_API_DIR):
+    path_str = str(path)
+    if path_str not in sys.path:
+        sys.path.insert(0, path_str)
 
 try:
-    from mcp.server.fastmcp import FastMCP
+    from mcp.server.fastmcp import FastMCP as _FastMCP
+
+    MCP_RUNTIME_AVAILABLE = True
 except ImportError:
-    raise SystemExit("pip install mcp")
+    MCP_RUNTIME_AVAILABLE = False
 
-mcp = FastMCP("AALIE Conventions", json_response=True)
+    class _FastMCP:  # pragma: no cover - exercised indirectly in smoke tests
+        """Minimal fallback so the module can still be imported in dev/test."""
 
+        def __init__(self, name: str, json_response: bool = False) -> None:
+            self.name = name
+            self.json_response = json_response
+            self._decorated: Dict[str, Callable[..., Any]] = {}
 
-@mcp.tool()
-def read_conventions() -> str:
-    """OBLIGATORIO antes de crear/modificar código. Devuelve convenciones AALIE."""
-    p = ROOT / "docs" / "development" / "conventions.md"
-    return p.read_text(encoding="utf-8") if p.exists() else "No encontrado."
+        def tool(self) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+            def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+                self._decorated[func.__name__] = func
+                return func
 
+            return decorator
 
-@mcp.tool()
-def read_doc(path: str) -> str:
-    """Lee docs. Ej: app/i18n-labels-prompts.md, api/endpoints.md."""
-    p = ROOT / "docs" / path
-    if not str(p.resolve()).startswith(str(ROOT)):
-        return "Ruta no permitida."
-    return p.read_text(encoding="utf-8") if p.exists() else "No encontrado."
-
-
-@mcp.tool()
-def list_components(folder: str = "") -> str:
-    """Lista componentes en apps/web/src/components. Revisar antes de crear uno nuevo."""
-    base = ROOT / "apps" / "web" / "src" / "components"
-    d = base / folder if folder else base
-    if not d.exists():
-        return "No encontrado."
-    files = list(d.glob("*.tsx")) + list(d.glob("*.ts"))
-    return "\n".join(f.name for f in sorted(files, key=lambda x: x.name))
+        def run(self, transport: str = "stdio") -> None:
+            raise SystemExit(
+                "The 'mcp' package is required to run the AALIE MCP server. "
+                "Install it with: python3 -m pip install -r mcp/requirements.txt"
+            )
 
 
-@mcp.tool()
-def changelog_template() -> str:
-    """Formato para CHANGELOG.md. Añadir entrada en [Unreleased] antes de commit."""
-    return """## [Unreleased]
-### Added
-### Changed
-### Fixed
-### Removed"""
+from tools.check_contract_impact import check_contract_impact as check_contract_impact_tool
+from tools.detect_recursive_family import (
+    detect_recursive_family as detect_recursive_family_tool,
+)
+from tools.evaluate_while_case import evaluate_while_case as evaluate_while_case_tool
+from tools.generate_test_oracle_stub import (
+    generate_test_oracle_stub as generate_test_oracle_stub_tool,
+)
+from tools.get_change_context import get_change_context as get_change_context_tool
+from tools.validate_snapshot_contract import (
+    validate_snapshot_contract as validate_snapshot_contract_tool,
+)
+
+FastMCP = _FastMCP
+mcp = FastMCP("AALIE Agentic", json_response=True)
+REGISTERED_TOOLS: Dict[str, Callable[..., Any]] = {}
 
 
-@mcp.tool()
-def i18n_reminder() -> str:
-    """Recordatorio i18n: no literales en UI. Usar useTranslations + messages/."""
-    return (
-        "Frontend: useTranslations('ns') -> t('key'). "
-        "Archivos: messages/es.json, en.json. "
-        "Backend: translations.py"
+def _register_tool(
+    func: Callable[..., Any],
+) -> Callable[..., Any]:
+    REGISTERED_TOOLS[func.__name__] = func
+    return mcp.tool()(func)
+
+
+@_register_tool
+def get_change_context(path: str | None = None, feature: str | None = None) -> Dict[str, Any]:
+    """Return required docs/tests/skill before touching a repo area."""
+
+    return get_change_context_tool(path=path, feature=feature)
+
+
+@_register_tool
+def check_contract_impact(changed_paths: list[str]) -> Dict[str, Any]:
+    """Return impacted contracts, review checklist and tests for changed files."""
+
+    return check_contract_impact_tool(changed_paths=changed_paths)
+
+
+@_register_tool
+def validate_snapshot_contract(
+    snapshot: Dict[str, Any] | None = None,
+    snapshot_path: str | None = None,
+) -> Dict[str, Any]:
+    """Validate a snapshot against AALIE snapshot contract invariants."""
+
+    return validate_snapshot_contract_tool(snapshot=snapshot, snapshot_path=snapshot_path)
+
+
+@_register_tool
+def evaluate_while_case(source: str, mode: str = "worst") -> Dict[str, Any]:
+    """Diagnose WHILE coverage/evidence without inventing conclusions."""
+
+    return evaluate_while_case_tool(source=source, mode=mode)
+
+
+@_register_tool
+def detect_recursive_family(
+    source: str,
+    algorithm_kind: str | None = None,
+) -> Dict[str, Any]:
+    """Detect recurrence family and applicable recursive methods."""
+
+    return detect_recursive_family_tool(source=source, algorithm_kind=algorithm_kind)
+
+
+@_register_tool
+def generate_test_oracle_stub(
+    source: str = "",
+    focus: str | None = None,
+    changed_paths: list[str] | None = None,
+) -> Dict[str, Any]:
+    """Return the minimum expected-test structure for a source/change."""
+
+    return generate_test_oracle_stub_tool(
+        source=source,
+        focus=focus,
+        changed_paths=changed_paths,
     )
 
 
-@mcp.tool()
-def test_suite_commands() -> str:
-    """Comandos de la suite de tests backend (apps/api). Usar desde raíz del repo."""
-    return """Suite de tests API (ejecutar desde raíz: pnpm <script> o cd apps/api && python -m pytest ...):
+def main() -> None:
+    """Run the MCP server over stdio."""
 
-- pnpm test:api          → Todos los tests (tests/ -v)
-- pnpm test:api:gate     → Daily gate (unit or component or system, -q)
-- pnpm test:api:contract → Solo contract (nightly)
-- pnpm test:api:cov      → Con cobertura (--cov=app --cov-report=term)
-- pnpm test:api:unit     → Solo tests/unit/ -v
-- pnpm test:api:stress   → Solo test_stress_algorithms.py (Prueba1–Prueba7)
-
-Desde apps/api: python -m pytest tests/ -v (siempre python -m pytest, no pytest directo).
-Markers: unit, component, contract, system, slow, while, recursive, dp."""
+    mcp.run(transport="stdio")
 
 
 if __name__ == "__main__":
-    mcp.run(transport="stdio")
+    main()

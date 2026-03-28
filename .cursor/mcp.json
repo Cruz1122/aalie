@@ -1,9 +1,9 @@
 {
   "mcpServers": {
-    "aalie-conventions": {
-      "command": "python",
+    "aalie": {
+      "command": "python3",
       "args": ["mcp/server.py"],
-  "cwd": "."
+      "cwd": "."
     }
   }
 }

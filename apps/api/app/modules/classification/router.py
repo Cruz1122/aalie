@@ -1,5 +1,5 @@
 """
-Router para el módulo de classification.
+Enrutador del módulo de clasificación.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
@@ -16,17 +16,19 @@ router = APIRouter(prefix="/classify", tags=["classify"])
 @router.post("")
 def classify(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
-    Clasifica un algoritmo como iterative, recursive, hybrid o unknown.
+    Clasifica un algoritmo a partir del contenido recibido en el cuerpo.
 
-    Acepta dos formatos de entrada:
-    - {"source": str}: Código fuente a parsear y clasificar
-    - {"ast": Dict[str, Any]}: AST ya parseado a clasificar
+    Acepta dos formatos de entrada en el payload:
+    {"source": str} para parsear y clasificar código fuente, o
+    {"ast": Dict[str, Any]} para clasificar un AST ya construido.
 
     Args:
-        payload: Diccionario con "source" o "ast" a clasificar
+        payload: Diccionario con la clave "source" o "ast" que
+            contiene la información a clasificar.
 
     Returns:
-        Diccionario con ok, kind ("iterative"|"recursive"|"hybrid"|"unknown"), method y errors (opcional)
+        Diccionario con el resultado de la clasificación. Incluye ok,
+        kind, method y, cuando aplica, la lista errors.
 
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """

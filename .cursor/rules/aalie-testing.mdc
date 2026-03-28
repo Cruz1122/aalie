@@ -1,0 +1,11 @@
+---
+description: Guardas persistentes para tests auténticos y oráculos
+alwaysApply: true
+---
+
+# AALIE Testing
+
+- Los tests críticos usan expected estructurado, no solo “no falla”.
+- Declarar explícitamente si la comparación es exacta, simbólica o contractual.
+- `partial` y `unsupported` son salidas válidas cuando el contrato así lo diga.
+- Priorizar oráculos auténticos sobre asserts débiles de transporte.

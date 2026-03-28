@@ -2,7 +2,7 @@
 Módulo para clasificación de algoritmos basado en AST.
 
 Este módulo es la fuente única de verdad para detectar si un algoritmo
-es iterative, recursive, hybrid o unknown.
+es iterativo, recursivo, híbrido o desconocido.
 
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
@@ -12,15 +12,18 @@ from typing import Any, Dict, List, Optional
 
 def detect_algorithm_kind(ast: Dict[str, Any]) -> str:
     """
-    Detecta el tipo de algoritmo desde el AST.
+    Detecta la clase de un algoritmo a partir de su AST.
 
-    Fuente única de verdad para clasificación de algoritmos.
+    Esta función centraliza la lógica de clasificación y determina si el
+    algoritmo analizado utiliza estructuras iterativas, llamadas recursivas,
+    una combinación de ambas o si no se puede establecer una categoría.
 
     Args:
-        ast: AST del programa parseado
+        ast: Árbol de sintaxis abstracta del programa ya parseado.
 
     Returns:
-        "iterative", "recursive", "hybrid", o "unknown"
+        Cadena con la clase detectada del algoritmo: "iterative",
+        "recursive", "hybrid" o "unknown".
 
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
@@ -49,13 +52,16 @@ def detect_algorithm_kind(ast: Dict[str, Any]) -> str:
 
 def _has_iterative_constructs(ast: Dict[str, Any]) -> bool:
     """
-    Verifica si el AST contiene construcciones iterativas (For, While, Repeat).
+    Verifica si el AST contiene construcciones iterativas.
+
+    Se consideran iterativas las estructuras For, While y Repeat.
 
     Args:
-        ast: AST del programa
+        ast: Árbol de sintaxis abstracta del programa.
 
     Returns:
-        True si encuentra construcciones iterativas
+        True si encuentra al menos una construcción iterativa;
+        en caso contrario, False.
 
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
@@ -64,14 +70,17 @@ def _has_iterative_constructs(ast: Dict[str, Any]) -> bool:
 
 def _find_node_type(node: Any, target_types: List[str]) -> bool:
     """
-    Busca recursivamente un tipo de nodo en el AST.
+    Busca de forma recursiva tipos de nodo específicos dentro del AST.
 
     Args:
-        node: Nodo del AST (puede ser dict, list, o valor primitivo)
-        target_types: Lista de tipos de nodo a buscar (ej: ["For", "While"])
+        node: Nodo actual del AST. Puede ser un diccionario, una lista o un
+            valor primitivo.
+        target_types: Lista de tipos de nodo que se desean localizar, por
+            ejemplo ["For", "While"].
 
     Returns:
-        True si encuentra al menos uno de los tipos buscados
+        True si encuentra al menos uno de los tipos indicados;
+        en caso contrario, False.
 
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
@@ -101,13 +110,14 @@ def _find_node_type(node: Any, target_types: List[str]) -> bool:
 
 def _find_procedure_definition(ast: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """
-    Encuentra la definición del procedimiento principal en el AST.
+    Encuentra la primera definición de procedimiento en el AST.
 
     Args:
-        ast: AST del programa
+        ast: Árbol de sintaxis abstracta del programa.
 
     Returns:
-        Nodo ProcDef del procedimiento principal o None si no se encuentra
+        Nodo ProcDef correspondiente al procedimiento encontrado o None
+        si el árbol no contiene una definición de procedimiento.
 
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
@@ -124,14 +134,15 @@ def _find_procedure_definition(ast: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
 def _has_recursive_calls(proc_def: Dict[str, Any], proc_name: str) -> bool:
     """
-    Verifica si un procedimiento tiene llamadas recursivas a sí mismo.
+    Verifica si un procedimiento contiene llamadas recursivas a sí mismo.
 
     Args:
-        proc_def: Nodo ProcDef del procedimiento
-        proc_name: Nombre del procedimiento
+        proc_def: Nodo ProcDef del procedimiento a inspeccionar.
+        proc_name: Nombre del procedimiento que se usará como referencia.
 
     Returns:
-        True si encuentra al menos una llamada recursiva
+        True si encuentra al menos una llamada recursiva al mismo
+        procedimiento; en caso contrario, False.
 
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
@@ -148,14 +159,17 @@ def _has_recursive_calls(proc_def: Dict[str, Any], proc_name: str) -> bool:
 
 def _search_recursive_calls(node: Any, proc_name: str) -> bool:
     """
-    Busca recursivamente llamadas a proc_name en el árbol de nodos.
+    Busca de forma recursiva llamadas a un procedimiento dentro del árbol.
 
     Args:
-        node: Nodo del AST donde buscar
-        proc_name: Nombre del procedimiento a buscar
+        node: Nodo del AST desde el que inicia la búsqueda.
+        proc_name: Nombre del procedimiento que debe coincidir con la llamada.
 
     Returns:
-        True si encuentra una llamada recursiva
+        True si encuentra una llamada recursiva al procedimiento indicado;
+        en caso contrario, False.
+
+    Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
     if not isinstance(node, dict):
         return False

@@ -14,15 +14,22 @@ def classify_algorithm(
     source: str = None, ast: Dict[str, Any] = None
 ) -> Dict[str, Any]:
     """
-    Clasifica un algoritmo como iterative, recursive, hybrid o unknown.
+    Clasifica un algoritmo a partir de código fuente o de un AST.
+
+    Si se recibe un AST, la clasificación se realiza directamente. Si se
+    recibe código fuente, primero se parsea y luego se determina la clase
+    del algoritmo.
 
     Args:
-        source: Código fuente a parsear y clasificar (opcional)
-        ast: AST ya parseado a clasificar (opcional)
+        source: Código fuente que debe parsearse y clasificarse. Es opcional
+            cuando ya se proporciona ast.
+        ast: Árbol de sintaxis abstracta ya parseado. Es opcional cuando se
+            proporciona source.
 
     Returns:
-        Diccionario con ok (bool), kind ("iterative"|"recursive"|"hybrid"|"unknown"),
-        method ("ast") y errors (lista opcional)
+        Diccionario con el estado de la operación. Cuando la clasificación es
+        exitosa incluye ok, kind y method; si ocurre un error, incluye la
+        lista errors con el detalle correspondiente.
 
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """

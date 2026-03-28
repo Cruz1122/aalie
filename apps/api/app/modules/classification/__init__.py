@@ -1,4 +1,4 @@
-# Módulo de classification
+# Módulo de clasificación
 from .classifier import detect_algorithm_kind
 from .router import router
 from .service import classify_algorithm

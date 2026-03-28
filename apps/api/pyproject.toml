@@ -9,6 +9,7 @@ dependencies = [
     "antlr4-python3-runtime==4.13.2",
     "python-dotenv>=1.0.0",
     "sympy>=1.12,<2.0",
+    "reportlab>=4.2,<5.0",
 ]
 
 [tool.ruff]
