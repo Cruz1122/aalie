@@ -244,14 +244,31 @@ def escape_latex_text(text: str) -> str:
     return "".join(LATEX_TEXT_ESCAPE_MAP.get(char, char) for char in text)
 
 
+def strip_outer_math_delimiters(value: str) -> str:
+    normalized = str(value).strip()
+    if normalized.startswith("$") and normalized.endswith("$") and len(normalized) >= 2:
+        return normalized[1:-1].strip()
+    if normalized.startswith(r"\(") and normalized.endswith(r"\)"):
+        return normalized[2:-2].strip()
+    if normalized.startswith(r"\[") and normalized.endswith(r"\]"):
+        return normalized[2:-2].strip()
+    return normalized
+
+
 def normalize_latex_math_expression(value: str) -> str:
-    return re.sub(r"([A-Za-z])_([0-9]+)\b", r"\1_{\2}", value)
+    return re.sub(
+        r"([A-Za-z])_([0-9]+)\b",
+        r"\1_{\2}",
+        strip_outer_math_delimiters(value),
+    )
 
 
 def render_latex_text_with_inline_math(value: str) -> str:
     normalized = value.strip()
     if not normalized:
         return ""
+    if "$" in normalized:
+        return render_latex_text_with_embedded_math(normalized)
     if is_narrative_equation(normalized) or ";" in normalized:
         return escape_latex_text(normalized)
     separator_index = normalized.find(":")
@@ -285,6 +302,8 @@ def render_latex_cell_value(value: str) -> str:
     normalized = value.strip()
     if not normalized:
         return ""
+    if "$" in normalized:
+        return render_latex_text_with_embedded_math(normalized)
     if is_narrative_equation(normalized):
         return escape_latex_text(normalized)
     if is_likely_math_expression(normalized):
@@ -292,4 +311,3 @@ def render_latex_cell_value(value: str) -> str:
     if is_technical_token(normalized):
         return rf"\texttt{{\detokenize{{{normalized}}}}}"
     return escape_latex_text(normalized)
-
