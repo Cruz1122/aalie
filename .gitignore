@@ -36,6 +36,7 @@ __pycache__/
 *.pyo
 *.pyd
 .venv/
+.venv311/
 .env
 .env.*
 !.env.example

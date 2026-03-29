@@ -115,7 +115,9 @@ def analyze_algorithm(
                 result_worst = analyzer_worst.analyze(
                     ast, "worst", preferred_method=preferred_method
                 )
-                result_best = analyzer_best.analyze(ast, "best", preferred_method=preferred_method)
+                result_best = analyzer_best.analyze(
+                    ast, "best", preferred_method=preferred_method
+                )
             else:
                 result_worst = analyzer_worst.analyze(ast, "worst")
                 result_best = analyzer_best.analyze(ast, "best")
@@ -161,13 +163,17 @@ def analyze_algorithm(
 
                 def _subtree_has_type(node: Any, type_name: str) -> bool:
                     if isinstance(node, list):
-                        return any(_subtree_has_type(child, type_name) for child in node)
+                        return any(
+                            _subtree_has_type(child, type_name) for child in node
+                        )
                     if not isinstance(node, dict):
                         return False
                     if node.get("type", "").lower() == type_name:
                         return True
                     for value in node.values():
-                        if isinstance(value, (dict, list)) and _subtree_has_type(value, type_name):
+                        if isinstance(value, (dict, list)) and _subtree_has_type(
+                            value, type_name
+                        ):
                             return True
                     return False
 
@@ -189,12 +195,15 @@ def analyze_algorithm(
                             if not isinstance(nodes, list):
                                 nodes = [nodes] if isinstance(nodes, dict) else []
                             for stmt in nodes:
-                                if isinstance(stmt, dict) and stmt.get("type", "").lower() == "for":
+                                if (
+                                    isinstance(stmt, dict)
+                                    and stmt.get("type", "").lower() == "for"
+                                ):
                                     inner = stmt.get("body") or stmt.get("block") or {}
                                     # En el cuerpo del FOR debe haber un WHILE que contenga un FOR
-                                    return _subtree_has_type(inner, "while") and _subtree_has_type(
-                                        inner, "for"
-                                    )
+                                    return _subtree_has_type(
+                                        inner, "while"
+                                    ) and _subtree_has_type(inner, "for")
                     return False
 
                 if isinstance(ast, dict) and _has_for_while_for_pattern(ast):
@@ -214,7 +223,9 @@ def analyze_algorithm(
             best_t_open = result_best.get("totals", {}).get("T_open", "")
             worst_recurrence = result_worst.get("totals", {}).get("recurrence")
             best_recurrence = result_best.get("totals", {}).get("recurrence")
-            is_deterministic = worst_t_open == best_t_open and worst_recurrence == best_recurrence
+            is_deterministic = (
+                worst_t_open == best_t_open and worst_recurrence == best_recurrence
+            )
 
             result_avg = None
             if not is_deterministic:
@@ -246,7 +257,9 @@ def analyze_algorithm(
 
             # Verificar variabilidad
             # Comparar directamente worst, best y avg - si todos tienen la misma T_open y recurrence, no hay variabilidad
-            has_variability = False  # Inicializar como False, solo True si hay diferencias
+            has_variability = (
+                False  # Inicializar como False, solo True si hay diferencias
+            )
             if result_worst.get("ok") and result_best.get("ok"):
                 worst_t_open = result_worst.get("totals", {}).get("T_open", "")
                 best_t_open = result_best.get("totals", {}).get("T_open", "")
@@ -262,7 +275,10 @@ def analyze_algorithm(
                         avg_t_open = result_avg.get("totals", {}).get("T_open", "")
                         avg_recurrence = result_avg.get("totals", {}).get("recurrence")
                         # Si avg es diferente de worst/best, hay variabilidad
-                        if avg_t_open != worst_t_open or avg_recurrence != worst_recurrence:
+                        if (
+                            avg_t_open != worst_t_open
+                            or avg_recurrence != worst_recurrence
+                        ):
                             has_variability = True
                         # Si avg también es igual, NO hay variabilidad (todos los casos son iguales)
                         else:
@@ -315,7 +331,9 @@ def analyze_algorithm(
                     preferred_method=preferred_method,
                 )
             else:
-                result = analyzer.analyze(ast, mode, api_key=api_key, avg_model=avg_model_dict)
+                result = analyzer.analyze(
+                    ast, mode, api_key=api_key, avg_model=avg_model_dict
+                )
 
             if isinstance(result, dict):
                 result["loopInvariant"] = loop_invariant
