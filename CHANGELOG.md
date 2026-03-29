@@ -28,6 +28,8 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - En `ProcedureModal.tsx`, la sección bajo "Número de ejecuciones" ahora usa `line_procedure` como fuente principal y `procedure` como fallback, evitando que el paso a paso desaparezca en casos sin `line_procedure`.
 
 ### Fixed
+- El servicio de análisis ya no falla completo si la generación de invariante de ciclo lanza excepción: ahora degrada `loopInvariant` a estado `unavailable` y continúa el análisis principal.
+- En `BaseAnalyzer.add_row`, expresiones no-SymPy en `count_raw_expr` usan fallback de texto plano, corrigiendo regresión de formato en pruebas de manejo de errores LaTeX.
 - Corrección de inconsistencia pedagógica donde el caso promedio no reflejaba la misma estructura de 4 pasos que mejor/peor caso.
 - Corrección de omisiones en subpasos de sumatorias para que se muestren únicamente cuando aplican y con trazabilidad completa de transformación algebraica.
 - Refactorización de `_generate_iterative_four_step_procedure`: ahora separa los pasos por línea (line_procedure) de los pasos generales, evitando duplicación y mejorando claridad pedagógica en interfaces.
