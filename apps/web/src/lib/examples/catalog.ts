@@ -80,10 +80,7 @@ export const RECURSIVE_METHOD_BADGE_TO_METHOD = {
   EC: "characteristic_equation",
 } as const;
 
-const EXAMPLE_METHOD_TRANSLATION_KEYS: Record<
-  RecursiveMethodBadge,
-  string
-> = {
+const EXAMPLE_METHOD_TRANSLATION_KEYS: Record<RecursiveMethodBadge, string> = {
   TM: "analyzer.methods.masterTheorem",
   IT: "analyzer.methods.iterationMethod",
   AR: "analyzer.methods.recursionTree",
@@ -3193,8 +3190,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     titleEn: "Frog jump 1, 2, 3",
     summaryEs:
       "Tres transiciones por posicion; misma forma que Tribonacci en el conteo.",
-    summaryEn:
-      "Three transitions per position; Tribonacci-shaped counting.",
+    summaryEn: "Three transitions per position; Tribonacci-shaped counting.",
     tagsEs: ["rana", "tribonacci", "saltos"],
     tagsEn: ["frog", "tribonacci", "jumps"],
     sourceCode: code(
@@ -3221,8 +3217,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     titleEn: "Count paths with jumps of 1 and 2",
     summaryEs:
       "Cuenta caminos en linea de longitud n con pasos unitarios o dobles.",
-    summaryEn:
-      "Counts length-n paths along a line using steps of 1 or 2.",
+    summaryEn: "Counts length-n paths along a line using steps of 1 or 2.",
     tagsEs: ["caminos", "saltos", "fibonacci"],
     tagsEn: ["paths", "jumps", "fibonacci"],
     sourceCode: code(
