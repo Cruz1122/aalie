@@ -3,7 +3,7 @@
 import re
 from typing import Any, Dict, List, Optional
 
-from sympy import Expr, Integer, Rational, Sum, Symbol, sympify
+from sympy import Add, Expr, Integer, Rational, Sum, Symbol, latex, simplify, sympify
 
 from ..ir.expr_utils import expr_to_str
 from ..while_engine import analyze_guard, classify_while, summarize_updates
@@ -36,6 +36,133 @@ class WhileRepeatVisitor:
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         return rf"t_{{{kind}_{line}}}"
+
+    def loop_iterations_symbol_name(self, kind: str, line: int) -> str:
+        """Nombre interno del controlador estructural de iteraciones."""
+        return f"I_{kind}_{line}"
+
+    def loop_iterations_symbol(self, kind: str, line: int) -> Symbol:
+        """Símbolo estructural para un bloque de loop no cerrado exactamente."""
+        return Symbol(self.loop_iterations_symbol_name(kind, line), real=True, positive=True)
+
+    def _block_to_dict(self, block: Any) -> Dict[str, Any]:
+        if isinstance(block, dict):
+            return dict(block)
+        if hasattr(block, "__dict__"):
+            return dict(block.__dict__)
+        return {}
+
+    def _normalize_while_block(self, line: int, closure_info: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        closure_info = closure_info or {}
+        existing = self._block_to_dict(closure_info.get("cost_block"))
+        status = str(existing.get("status") or "").strip()
+        if not status:
+            if closure_info.get("status") == "unbounded":
+                status = "unbounded"
+            elif closure_info.get("success") and closure_info.get("iterations"):
+                status = "available"
+            elif closure_info.get("success"):
+                status = "partial"
+            else:
+                status = "unknown"
+        iterations_expr = existing.get("iterations_expr")
+        if not iterations_expr and status == "available":
+            iterations_expr = closure_info.get("iterations")
+        iterations_class = existing.get("iterations_class")
+        if not iterations_class:
+            raw = f"{iterations_expr or ''} {closure_info.get('pattern', '')}".lower()
+            if "log" in raw:
+                iterations_class = "logarithmic"
+            elif "1" == str(iterations_expr or "").strip():
+                iterations_class = "constant"
+        block_id = str(existing.get("id") or f"while_L{line}")
+        rendered_iterations = iterations_expr or self.loop_iterations_symbol_name("while", line)
+        per_iteration_cost_expr = existing.get("per_iteration_cost_expr") or f"C_{{guard,{line}}} + C_{{body,{line}}}"
+        exit_check_cost_expr = existing.get("exit_check_cost_expr") or f"C_{{guard_exit,{line}}}"
+        expanded_cost_expr = existing.get("expanded_cost_expr")
+        if not expanded_cost_expr:
+            if status == "unbounded":
+                expanded_cost_expr = "\\infty"
+            else:
+                expanded_cost_expr = (
+                    f"({rendered_iterations}) \\cdot ({per_iteration_cost_expr}) + {exit_check_cost_expr}"
+                )
+        return {
+            "id": block_id,
+            "line": line,
+            "status": status,
+            "pattern_used": existing.get("pattern_used") or closure_info.get("pattern"),
+            "evidence_level": existing.get("evidence_level") or ("strong" if status in {"available", "unbounded"} else "weak"),
+            "reason_code": existing.get("reason_code") or closure_info.get("reason_code"),
+            "dominant_controller": existing.get("dominant_controller") or closure_info.get("variable"),
+            "iterations_expr": iterations_expr,
+            "iterations_class": iterations_class,
+            "per_iteration_cost_expr": per_iteration_cost_expr,
+            "exit_check_cost_expr": exit_check_cost_expr,
+            "expanded_cost_expr": expanded_cost_expr,
+            "diagnostics": list(existing.get("diagnostics") or []),
+        }
+
+    def _format_block_expr(self, expr: Any) -> str:
+        if expr is None:
+            return "0"
+        try:
+            if hasattr(self, "_format_canonical_expr"):
+                return self._format_canonical_expr(expr)
+            return latex(expr)
+        except Exception:
+            return str(expr)
+
+    def _finalize_loop_block_cost(
+        self,
+        block_id: str,
+        *,
+        body_row_start: int,
+        multiplier_expr: Optional[Expr],
+        guard_ops: int,
+        fallback_line: int,
+    ) -> None:
+        if not block_id:
+            return
+        if multiplier_expr is None:
+            return
+        try:
+            if multiplier_expr == Integer(0):
+                return
+        except Exception:
+            pass
+
+        body_rows = self.rows[body_row_start:]
+        base_terms = [Integer(max(1, guard_ops))]
+        for row in body_rows:
+            if row.get("ck") == "—":
+                continue
+            count_expr = row.get("count_raw_expr")
+            if count_expr is None:
+                continue
+            try:
+                base_count = simplify(count_expr / multiplier_expr)
+            except Exception:
+                continue
+            ops_val = row.get("ops", 1)
+            base_terms.append(Integer(ops_val) * base_count if ops_val not in (None, 1) else base_count)
+
+        try:
+            per_iteration_expr = simplify(Add(*base_terms))
+        except Exception:
+            per_iteration_expr = Add(*base_terms)
+        exit_expr = Integer(max(1, guard_ops))
+        try:
+            expanded_expr = simplify(multiplier_expr * per_iteration_expr + exit_expr)
+        except Exception:
+            expanded_expr = multiplier_expr * per_iteration_expr + exit_expr
+
+        self.update_while_block(
+            block_id,
+            per_iteration_cost_expr=self._format_block_expr(per_iteration_expr),
+            exit_check_cost_expr=self._format_block_expr(exit_expr),
+            expanded_cost_expr=self._format_block_expr(expanded_expr),
+        )
 
     def _expr_to_str(self, expr: Any) -> str:
         """Delega a expr_to_str del módulo ir.expr_utils."""
@@ -1510,6 +1637,25 @@ class WhileRepeatVisitor:
                         "mode": mode,
                         "reason_code": engine_result.reason_code,
                         "pattern": engine_result.pattern_used,
+                        "cost_block": engine_result.cost_block,
+                    }
+                if engine_result.cost_block and getattr(engine_result.cost_block, "status", None) in (
+                    "partial",
+                    "unknown",
+                ):
+                    return {
+                        "variable": engine_result.variable or "",
+                        "initial_value": None,
+                        "change_rule": engine_result.change_rule
+                        or {"operator": "+", "constant": "1"},
+                        "limit": engine_result.limit or "n",
+                        "operator": engine_result.operator or "<",
+                        "iterations": None,
+                        "success": True,
+                        "mode": mode,
+                        "reason_code": engine_result.reason_code,
+                        "pattern": engine_result.pattern_used,
+                        "cost_block": engine_result.cost_block,
                     }
                 if engine_result.status == "unbounded":
                     if (
@@ -1532,6 +1678,7 @@ class WhileRepeatVisitor:
                         "reason_code": engine_result.reason_code
                         or "while_unbounded_unknown",
                         "evidence": engine_result.evidence or {},
+                        "cost_block": engine_result.cost_block,
                     }
             except Exception:
                 # Si el engine falla, usar el clasificador para no perder bounded/unbounded
@@ -1929,6 +2076,16 @@ class WhileRepeatVisitor:
 
                         # Multiplicador para el cuerpo
                         mult_expr = iterations_expr
+                        block = self._normalize_while_block(
+                            L,
+                            {
+                                "success": True,
+                                "iterations": self._format_block_expr(iterations_expr),
+                                "reason_code": "while_avg_probability",
+                                "pattern": "probabilistic_exit",
+                            },
+                        )
+                        self.register_while_block(block)
 
                         # Condición: se evalúa (iterations + 1) veces
                         ck_cond = self.C()
@@ -1946,9 +2103,12 @@ class WhileRepeatVisitor:
                             count=cond_count,
                             note=self._note("while_avg_iter", L=L, p_str=p_str),
                             ops=ops,
+                            loop_block_ref=block["id"],
                         )
 
                         # Cuerpo: se ejecuta E[#iteraciones] veces
+                        body_row_start = len(self.rows)
+                        self.push_loop_block_ref(block["id"])
                         self.push_multiplier(mult_expr)
 
                         body = node.get("body")
@@ -1975,6 +2135,14 @@ class WhileRepeatVisitor:
                                 self.visit(body, mode)
 
                         self.pop_multiplier()
+                        self.pop_loop_block_ref()
+                        self._finalize_loop_block_cost(
+                            block["id"],
+                            body_row_start=body_row_start,
+                            multiplier_expr=mult_expr,
+                            guard_ops=ops,
+                            fallback_line=L,
+                        )
                         return
                     except Exception as e:
                         print(
@@ -1993,7 +2161,9 @@ class WhileRepeatVisitor:
             # Caso UNBOUNDED: evidencia de no terminación
             reason_code = closure_info.get("reason_code", "while_unbounded_unknown")
             note_text = self._note(reason_code)
-            t_sym = Symbol(t, real=True)
+            block = self._normalize_while_block(L, closure_info)
+            self.register_while_block(block)
+            t_sym = self.loop_iterations_symbol("while", L)
             ck_cond = self.C()
             cond_count = t_sym + Integer(1)
             ops = (
@@ -2011,7 +2181,10 @@ class WhileRepeatVisitor:
                 unbounded=True,
                 unbounded_kind="non_terminating",
                 ops=ops,
+                loop_block_ref=block["id"],
             )
+            body_row_start = len(self.rows)
+            self.push_loop_block_ref(block["id"])
             self.push_multiplier(t_sym)
             body = node.get("body")
             if body:
@@ -2030,6 +2203,8 @@ class WhileRepeatVisitor:
                 else:
                     self.visit(body, mode)
             self.pop_multiplier()
+            self.pop_loop_block_ref()
+            self.update_while_block(block["id"], expanded_cost_expr="\\infty")
             return
 
         if closure_info and closure_info.get("success"):
@@ -2041,11 +2216,15 @@ class WhileRepeatVisitor:
             operator = closure_info["operator"]
             initial_value = closure_info.get("initial_value")
             pattern = closure_info.get("pattern")
+            block = self._normalize_while_block(L, closure_info)
+            self.register_while_block(block)
 
             # Convertir iteraciones (string) a SymPy
             # La variable iterations ya viene diferenciada por modo desde _analyze_while_closure
             # Para binary search: "1" en best case, "\\log_{2}(n)" en worst/avg
-            if pattern == "binary_search":
+            if block["status"] != "available":
+                iterations_expr = self.loop_iterations_symbol("while", L)
+            elif pattern == "binary_search":
                 # Para búsqueda binaria: ya viene el valor correcto en iterations
                 from sympy import Symbol as Sym
                 from sympy import ceiling, log
@@ -2076,7 +2255,7 @@ class WhileRepeatVisitor:
                     iterations_expr = self._str_to_sympy(str(iterations))
 
             # APLICAR SUBSTITUCIÓN DEL LÍMITE:
-            if isinstance(limit, str) and limit and not limit.isdigit():
+            if block["status"] == "available" and isinstance(limit, str) and limit and not limit.isdigit():
                 import re
 
                 if re.match(r"^[a-zA-Z_]\w*$", limit):
@@ -2142,6 +2321,8 @@ class WhileRepeatVisitor:
                     not isinstance(limit, str) or limit.strip()
                 )
                 if (
+                    block["status"] == "available"
+                    and
                     not iterations_is_one
                     and pattern_local not in ("binary_search",)
                     and reason_code_local != "while_euclid_mod"
@@ -2295,10 +2476,13 @@ class WhileRepeatVisitor:
                 note=note_text,
                 euclid_pattern=(reason_code == "while_euclid_mod"),
                 ops=ops,
+                loop_block_ref=block["id"],
             )
 
             # 2) Cuerpo: se ejecuta iterations veces
             # En best case con 0 iteraciones, el multiplicador debe ser 0
+            body_row_start = len(self.rows)
+            self.push_loop_block_ref(block["id"])
             if mode == "best" and iterations == "0":
                 # El cuerpo no se ejecuta, usar multiplicador 0
                 self.push_multiplier(Integer(0))
@@ -2340,19 +2524,26 @@ class WhileRepeatVisitor:
             if param_controlled:
                 setattr(self, "_param_controlled_if_take_then", False)
             self.pop_multiplier()
+            self.pop_loop_block_ref()
+            self._finalize_loop_block_cost(
+                block["id"],
+                body_row_start=body_row_start,
+                multiplier_expr=mult_expr if not (mode == "best" and iterations == "0") else Integer(0),
+                guard_ops=ops,
+                fallback_line=L,
+            )
         else:
             # Paso 3: Fallback - usar símbolo iterativo con nota mejorada
-            if mode == "avg":
-                # En promedio, usar símbolo t̄_while_L (esperanza)
-                t_bar = f"\\bar{{t}}_{{while_{L}}}"
-                t_sym = Symbol(f"t_bar_while_{L}", real=True, positive=True)
-                note_text = self._note("while_avg_unbounded", L=L, t_bar=t_bar)
-            else:
-                # En worst/best, usar símbolo t_while_L
-                t_sym = Symbol(t, real=True)
-                # Importante: “desconocido” no implica no-terminación.
-                # No marcar como unbounded a menos que el clasificador tenga evidencia.
-                note_text = self._note("while_unbounded_unknown")
+            block = self._normalize_while_block(
+                L,
+                {
+                    "success": False,
+                    "reason_code": "while_unbounded_unknown",
+                },
+            )
+            self.register_while_block(block)
+            t_sym = self.loop_iterations_symbol("while", L)
+            note_text = self._note("while_unbounded_unknown")
 
             # 1) Condición: se evalúa (t + 1) veces
             ck_cond = self.C()
@@ -2370,9 +2561,12 @@ class WhileRepeatVisitor:
                 count=cond_count,
                 note=note_text,
                 ops=ops,
+                loop_block_ref=block["id"],
             )
 
             # 2) Cuerpo: se ejecuta t veces
+            body_row_start = len(self.rows)
+            self.push_loop_block_ref(block["id"])
             self.push_multiplier(t_sym)
 
             # Visitar el cuerpo del bucle (con memoización si es un bloque)
@@ -2400,6 +2594,14 @@ class WhileRepeatVisitor:
                     self.visit(body, mode)
 
             self.pop_multiplier()
+            self.pop_loop_block_ref()
+            self._finalize_loop_block_cost(
+                block["id"],
+                body_row_start=body_row_start,
+                multiplier_expr=t_sym,
+                guard_ops=ops,
+                fallback_line=L,
+            )
 
     def visitRepeat(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """

@@ -79,6 +79,19 @@ def _base_payload() -> dict:
                     "big_o": "O(1)",
                     "big_omega": "\\Omega(1)",
                     "big_theta": "\\Theta(1)",
+                    "whileBlocks": [
+                        {
+                            "id": "while_L4",
+                            "line": 4,
+                            "status": "available",
+                            "patternUsed": "binary_search_interval",
+                            "evidenceLevel": "strong",
+                            "iterationsExpr": "\\log_{2}(n)",
+                            "iterationsClass": "logarithmic",
+                            "expandedCostExpr": "\\log_{2}(n) \\cdot C_{iter}",
+                            "diagnostics": ["Binary search"],
+                        }
+                    ],
                     "procedure": [],
                     "step_by_step": _iterative_case_bundle(),
                     "notes": [],
@@ -129,3 +142,17 @@ def test_build_snapshot_includes_iterative_case_step_by_step():
     bundle = (iterative_data.get("caseStepByStep") or {}).get("worst") or {}
     assert bundle.get("method") == "iterative_case"
     assert bundle.get("version") == "iter_case_steps_v1"
+
+
+def test_build_snapshot_copies_while_blocks_into_iterative_and_global_case():
+    state = build_export_state(_base_payload())
+
+    snapshot = build_snapshot(state["snapshotInput"], state["options"])
+
+    iterative_data = (snapshot.get("iterative") or {}).get("data") or {}
+    while_blocks = (iterative_data.get("whileBlocks") or {}).get("worst") or []
+    global_case = ((snapshot.get("globalResult") or {}).get("cases") or {}).get("worst") or {}
+
+    assert while_blocks
+    assert while_blocks[0].get("patternUsed") == "binary_search_interval"
+    assert (global_case.get("whileBlocks") or [])[0].get("id") == "while_L4"

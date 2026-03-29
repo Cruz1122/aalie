@@ -51,6 +51,46 @@ class IterativeAnalyzer(
     def _counted_rows(self) -> List[Dict[str, Any]]:
         return [r for r in self.rows if r.get("ck") != "—" and r.get("count") != "—"]
 
+    def _while_blocks(self) -> List[Dict[str, Any]]:
+        return [dict(block) for block in (getattr(self, "while_blocks", None) or [])]
+
+    def _has_non_exact_loop_blocks(self) -> bool:
+        return any(
+            str(block.get("status") or "").strip() in {"partial", "unknown"}
+            for block in self._while_blocks()
+        )
+
+    def _can_publish_exact_polynomial(self) -> bool:
+        return not self._has_non_exact_loop_blocks()
+
+    def _derive_partial_loop_notations(
+        self, t_open_expr: Optional[Expr]
+    ) -> tuple[Optional[str], Optional[str], Optional[str]]:
+        if t_open_expr is None:
+            return (None, None, None)
+
+        partial_blocks = [
+            block
+            for block in self._while_blocks()
+            if str(block.get("status") or "").strip() == "partial"
+            and block.get("iterations_class")
+        ]
+        if len(partial_blocks) != 1:
+            return (None, None, None)
+
+        block = partial_blocks[0]
+        symbol_name = f"I_while_{block.get('line')}"
+        free_symbols = {getattr(sym, "name", "") for sym in getattr(t_open_expr, "free_symbols", set())}
+        if not free_symbols or free_symbols != {symbol_name}:
+            return (None, None, None)
+
+        iterations_class = str(block.get("iterations_class") or "")
+        if iterations_class == "logarithmic":
+            return ("O(\\log(n))", "\\Omega(1)", "\\Theta(\\log(n))")
+        if iterations_class == "constant":
+            return ("O(1)", "\\Omega(1)", "\\Theta(1)")
+        return (None, None, None)
+
     def _normalize_final_expr(
         self,
         expr: Optional[Expr],
@@ -452,19 +492,6 @@ class IterativeAnalyzer(
             except Exception:
                 # No dejar que un fallo de sustitución rompa el análisis.
                 pass
-
-        # Sustituir símbolos iterativos no resueltos (t_while_X, t_repeat_X) por variable principal
-        import re as _re
-
-        for sym in list(expr.free_symbols):
-            sname = getattr(sym, "name", "")
-            if sname and (
-                _re.match(r"t_(?:while|repeat)_\d+", sname)
-                or _re.match(r"t_\{while_\d+\}", sname)
-                or _re.match(r"t_\{repeat_\d+\}", sname)
-            ):
-                expr = expr.subs(sym, main_sym)
-        expr = simplify(expr)
 
         # Verificar si quedan variables de iteración
         free_vars = expr.free_symbols
@@ -1288,8 +1315,11 @@ class IterativeAnalyzer(
             except Exception:
                 pass
 
-        # Calcular T_polynomial: agrupar términos con C_k (para mostrar estructura)
-        self._calculate_t_polynomial_fallback()
+        # Calcular T_polynomial solo cuando todos los bloques de loop tienen cierre exacto
+        if self._can_publish_exact_polynomial():
+            self._calculate_t_polynomial_fallback()
+        else:
+            self.t_polynomial = None
         # Si hay bucles unbounded, T_polynomial tiende a infinito
         has_unbounded = any(r.get("unbounded") for r in self.rows)
         if has_unbounded:
@@ -1305,6 +1335,7 @@ class IterativeAnalyzer(
         # Calcular notaciones asintóticas usando la expresión SymPy directamente
         # Caso especial: algoritmo de Euclides (mcd) → O(log(min(a,b)))
         has_euclid = any(r.get("euclid_pattern") for r in self.rows)
+        has_non_exact_loop_blocks = self._has_non_exact_loop_blocks()
         if has_euclid:
             self.big_o = "O(\\log(\\min(a,b)))"
             self.big_omega = "\\Omega(1)"
@@ -1321,6 +1352,12 @@ class IterativeAnalyzer(
                     self.big_o = "\\infty"
                     self.big_omega = "\\Omega(1)"
                     self.big_theta = "\\infty"
+                elif has_non_exact_loop_blocks:
+                    (
+                        self.big_o,
+                        self.big_omega,
+                        self.big_theta,
+                    ) = self._derive_partial_loop_notations(t_open_expr)
                 elif not has_size_variable and not expr_has_size and not has_unbounded:
                     # Caso sin variable de tamaño y bucle acotado (ej. best case param-controlled)
                     self.big_o = "O(1)"
@@ -1343,15 +1380,13 @@ class IterativeAnalyzer(
                 import traceback
 
                 traceback.print_exc()
-                # Valores por defecto
-                self.big_o = "O(1)"
-                self.big_omega = "\\Omega(1)"
-                self.big_theta = "\\Theta(1)"
+                self.big_o = None
+                self.big_omega = None
+                self.big_theta = None
         else:
-            # Si no hay expresión, usar valores por defecto
-            self.big_o = "O(1)"
-            self.big_omega = "\\Omega(1)"
-            self.big_theta = "\\Theta(1)"
+            self.big_o = None
+            self.big_omega = None
+            self.big_theta = None
 
         # Procedimiento general de iterativos para worst/best con 4 pasos didácticos.
         self._generate_iterative_four_step_procedure(
@@ -1725,6 +1760,7 @@ class IterativeAnalyzer(
             elif not (
                 clean_sym.startswith("C_")
                 or clean_sym.startswith("t_")
+                or clean_sym.startswith("I_")
                 or clean_sym in allowed
             ):
                 pass

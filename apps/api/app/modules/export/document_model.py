@@ -1347,6 +1347,7 @@ def _build_iterative_case_analysis_section(
     global_cases = (snapshot.get("globalResult") or {}).get("cases") or {}
     for case_name in CASE_ORDER:
         line_costs = list((data.get("lineCostTable") or {}).get(case_name) or [])
+        while_blocks = list((data.get("whileBlocks") or {}).get(case_name) or [])
         case_step_bundle = (data.get("caseStepByStep") or {}).get(case_name) or {}
         case_walkthrough = [
             step
@@ -1386,6 +1387,56 @@ def _build_iterative_case_analysis_section(
                 ),
             ]
         )
+        if while_blocks:
+            blocks.append(
+                {
+                    "kind": "heading",
+                    "text": localize(
+                        i18n,
+                        "Bloques WHILE detectados",
+                        "Detected WHILE blocks",
+                    ),
+                }
+            )
+            for block in while_blocks:
+                pattern_text = safe(
+                    block.get("patternUsed"),
+                    localize(i18n, "no determinado", "undetermined"),
+                )
+                status_text = safe(
+                    block.get("status"),
+                    localize(i18n, "desconocido", "unknown"),
+                )
+                blocks.extend(
+                    [
+                        {
+                            "kind": "paragraph",
+                            "text": localize(
+                                i18n,
+                                f"Patrón: {pattern_text}. Estado: {status_text}.",
+                                f"Pattern: {pattern_text}. Status: {status_text}.",
+                            ),
+                        },
+                        {
+                            "kind": "formula",
+                            "formula": (
+                                "\\text{Iteraciones del bloque} = "
+                                + str(
+                                    block.get("iterationsExpr")
+                                    or block.get("iterationsClass")
+                                    or i18n["notAvailable"]
+                                )
+                            ),
+                        },
+                        {
+                            "kind": "formula",
+                            "formula": (
+                                "\\text{Costo expandido del bloque} = "
+                                + str(block.get("expandedCostExpr") or i18n["notAvailable"])
+                            ),
+                        },
+                    ]
+                )
         if case_walkthrough:
             blocks.append(
                 {

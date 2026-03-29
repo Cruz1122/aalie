@@ -40,6 +40,7 @@ class LineCost(BaseModel):
     note: Optional[str] = None
     unbounded: Optional[bool] = None  # True si el bucle puede no terminar
     unbounded_kind: Optional[str] = None  # "non_terminating" | "unknown"
+    loopBlockRef: Optional[str] = None
 
 
 class LoopInvariantSelectedLoop(BaseModel):

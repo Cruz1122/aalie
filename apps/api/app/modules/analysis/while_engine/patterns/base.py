@@ -26,6 +26,8 @@ class IterationBoundResult:
     exact_symbolic_bound: Optional[str]
     asymptotic_bound: Optional[str]
     not_proven: bool
+    iterations_class: Optional[str] = None
+    evidence_level: Optional[str] = None
 
 
 @dataclass

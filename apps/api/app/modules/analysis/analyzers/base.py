@@ -72,6 +72,8 @@ class BaseAnalyzer:
         self.step_by_step: Optional[Dict[str, Any]] = (
             None  # walkthrough tipado compartido para el caso completo
         )
+        self.while_blocks: List[Dict[str, Any]] = []
+        self.loop_block_ref_stack: List[str] = []
 
     # --- util: detección de variables de tamaño ---
 
@@ -317,6 +319,7 @@ class BaseAnalyzer:
         unbounded_kind: Optional[str] = None,
         euclid_pattern: bool = False,
         ops: int = 1,
+        loop_block_ref: Optional[str] = None,
     ):
         """
         Inserta una fila aplicando el multiplicador del contexto de bucles.
@@ -374,6 +377,10 @@ class BaseAnalyzer:
             "note": note,
             "ops": ops,
         }
+
+        active_loop_block = loop_block_ref or self.current_loop_block_ref()
+        if active_loop_block:
+            row["loopBlockRef"] = active_loop_block
 
         if unbounded:
             row["unbounded"] = True
@@ -1097,6 +1104,23 @@ class BaseAnalyzer:
             totals["procedure"] = self.procedure_steps
         if hasattr(self, "step_by_step") and self.step_by_step:
             totals["step_by_step"] = self.step_by_step
+        if self.while_blocks:
+            totals["whileBlocks"] = [
+                {
+                    "id": block.get("id"),
+                    "line": block.get("line"),
+                    "status": block.get("status"),
+                    "patternUsed": block.get("pattern_used"),
+                    "evidenceLevel": block.get("evidence_level"),
+                    "reasonCode": block.get("reason_code"),
+                    "dominantController": block.get("dominant_controller"),
+                    "iterationsExpr": block.get("iterations_expr"),
+                    "iterationsClass": block.get("iterations_class"),
+                    "expandedCostExpr": block.get("expanded_cost_expr"),
+                    "diagnostics": block.get("diagnostics") or [],
+                }
+                for block in self.while_blocks
+            ]
 
         # Agregar T_polynomial si está disponible
         if self.t_polynomial:
@@ -1194,6 +1218,8 @@ class BaseAnalyzer:
                     or "t_repeat" in count_str
                     or "t_{while" in count_str
                     or "t_{repeat" in count_str
+                    or "I_while" in count_str
+                    or "I_repeat" in count_str
                 ):
                     has_unbounded_symbols = True
                     break
@@ -1426,6 +1452,8 @@ class BaseAnalyzer:
         self.t_polynomial = None
         self.procedure_steps = None
         self.step_by_step = None
+        self.while_blocks.clear()
+        self.loop_block_ref_stack.clear()
 
     def add_procedure_step(self, step: str) -> None:
         """
@@ -1450,10 +1478,12 @@ class BaseAnalyzer:
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         # Convertir expresiones SymPy a strings para el hash
-        if not self.loop_stack:
+        if not self.loop_stack and not self.loop_block_ref_stack:
             return "root"
         # Usar representación LaTeX de las expresiones
-        return "|".join([latex(expr) for expr in self.loop_stack])
+        expr_part = "|".join([latex(expr) for expr in self.loop_stack])
+        ref_part = "|".join(self.loop_block_ref_stack)
+        return f"{expr_part}::{ref_part}".strip(":")
 
     def C(self) -> str:
         """
@@ -1466,3 +1496,48 @@ class BaseAnalyzer:
         """
         self.counter += 1
         return f"C_{{{self.counter}}}"
+
+    def register_while_block(self, block: Dict[str, Any]) -> Dict[str, Any]:
+        """Registra o reemplaza un bloque semántico de WHILE."""
+        block_id = str(block.get("id") or "").strip()
+        if not block_id:
+            raise ValueError("while block requires stable id")
+        for idx, existing in enumerate(self.while_blocks):
+            if str(existing.get("id") or "").strip() == block_id:
+                merged = dict(existing)
+                merged.update(block)
+                self.while_blocks[idx] = merged
+                return merged
+        self.while_blocks.append(dict(block))
+        return block
+
+    def update_while_block(self, block_id: str, **changes: Any) -> Optional[Dict[str, Any]]:
+        """Actualiza un bloque WHILE previamente registrado."""
+        normalized_id = str(block_id or "").strip()
+        if not normalized_id:
+            return None
+        for idx, existing in enumerate(self.while_blocks):
+            if str(existing.get("id") or "").strip() != normalized_id:
+                continue
+            updated = dict(existing)
+            updated.update(changes)
+            self.while_blocks[idx] = updated
+            return updated
+        return None
+
+    def push_loop_block_ref(self, block_id: str) -> None:
+        """Activa un bloque de loop para filas hijas."""
+        normalized_id = str(block_id or "").strip()
+        if normalized_id:
+            self.loop_block_ref_stack.append(normalized_id)
+
+    def pop_loop_block_ref(self) -> None:
+        """Desactiva el último bloque de loop activo."""
+        if self.loop_block_ref_stack:
+            self.loop_block_ref_stack.pop()
+
+    def current_loop_block_ref(self) -> Optional[str]:
+        """Bloque WHILE/REPEAT actualmente activo para filas hijas."""
+        if not self.loop_block_ref_stack:
+            return None
+        return self.loop_block_ref_stack[-1]

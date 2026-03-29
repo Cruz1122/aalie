@@ -231,6 +231,21 @@ export interface LineCost {
   expectedRuns?: string; // E[# ejecuciones] para caso promedio (KaTeX)
   unbounded?: boolean;  // true si el bucle puede no terminar (evidencia de no terminación)
   unbounded_kind?: "non_terminating" | "unknown";  // clasificación del unbounded
+  loopBlockRef?: string; // referencia opcional al bloque semántico de loop que gobierna la línea
+}
+
+export interface WhileBlockView {
+  id: string;
+  line: number;
+  status: "available" | "partial" | "unknown" | "unbounded";
+  patternUsed?: string;
+  evidenceLevel: "strong" | "medium" | "weak";
+  reasonCode?: string;
+  dominantController?: string;
+  iterationsExpr?: string;
+  iterationsClass?: string;
+  expandedCostExpr?: string;
+  diagnostics?: string[];
 }
 
 export type LoopInvariantStatus = "ok" | "unavailable" | "low_confidence";
@@ -475,6 +490,7 @@ export interface AnalyzeOpenResponse {
     T_open: string;                 // Σ C_k · count_k (KaTeX) - simplificado con SymPy (o A(n) para promedio)
     procedure?: string[];            // pasos (KaTeX) para construir T_open (legacy, puede estar vacío)
     step_by_step?: AnalysisStepBundle; // walkthrough tipado compartido para el caso iterativo
+    whileBlocks?: WhileBlockView[];  // bloques semánticos de WHILE preservados hasta snapshot/export
     symbols?: Record<string,string>;// p.ej.: { n: "length(A)" }
     notes?: string[];               // reglas usadas (for, while, if) o pasos de procedimiento para promedio
     dp_validation_events?: Array<{

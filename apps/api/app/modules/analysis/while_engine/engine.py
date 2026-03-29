@@ -18,6 +18,7 @@ from .patterns.binary_search_interval import BinarySearchIntervalPattern
 from .patterns.euclid_mod import EuclidModPattern
 from .patterns.flag_kill import FlagKillPattern
 from .patterns.geometric_growth import GeometricGrowthPattern
+from .patterns.interval_shrink import IntervalShrinkPattern
 from .patterns.linear_counter import LinearCounterPattern
 from .progress_proofs import prove_progress
 from .update_analysis import analyze_updates
@@ -33,6 +34,25 @@ class WhileAnalysisInput:
     mode: str = "worst"
     symbol_table: Optional[Any] = None
     global_analysis_ctx: Optional[Dict] = None
+
+
+@dataclass
+class WhileCostBlock:
+    """Bloque semántico expandible para WHILE."""
+
+    id: str
+    line: int
+    status: str  # available | partial | unknown | unbounded
+    pattern_used: Optional[str] = None
+    evidence_level: str = "weak"  # strong | medium | weak
+    reason_code: Optional[str] = None
+    dominant_controller: Optional[str] = None
+    iterations_expr: Optional[str] = None
+    iterations_class: Optional[str] = None
+    per_iteration_cost_expr: Optional[str] = None
+    exit_check_cost_expr: Optional[str] = None
+    expanded_cost_expr: Optional[str] = None
+    diagnostics: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -56,6 +76,7 @@ class WhileAnalysisResult:
     change_rule: Optional[Dict] = None
     operator: Optional[str] = None
     evidence: Optional[Dict] = None
+    cost_block: Optional[WhileCostBlock] = None
 
 
 # Patrones en orden de prioridad
@@ -65,11 +86,71 @@ _PATTERNS = [
     ("flag_kill", FlagKillPattern()),
     ("euclid_mod", EuclidModPattern()),
     ("binary_search_interval", BinarySearchIntervalPattern()),
+    ("interval_shrink", IntervalShrinkPattern()),
 ]
 
 
 class WhileEngine:
     """Motor de análisis WHILE."""
+
+    @staticmethod
+    def _block_id(line: int) -> str:
+        return f"while_L{line}"
+
+    @staticmethod
+    def _unknown_iterations_symbol(line: int) -> str:
+        return f"I_while_{line}"
+
+    @staticmethod
+    def _infer_iterations_class(iterations_expr: Optional[str], asymptotic_class: Optional[str]) -> Optional[str]:
+        source = f"{iterations_expr or ''} {asymptotic_class or ''}".lower()
+        if "log" in source:
+            return "logarithmic"
+        if any(token in source for token in ("n^2", "n^{2}", "quadratic")):
+            return "quadratic"
+        if "n" in source:
+            return "linear"
+        if "1" in source or "constant" in source:
+            return "constant"
+        return None
+
+    def _build_cost_block(
+        self,
+        *,
+        line: int,
+        status: str,
+        pattern_used: Optional[str],
+        evidence_level: Optional[str],
+        reason_code: Optional[str],
+        dominant_controller: Optional[str],
+        iterations_expr: Optional[str],
+        iterations_class: Optional[str],
+        diagnostics: List[str],
+    ) -> WhileCostBlock:
+        per_iteration_cost_expr = f"C_{{guard,{line}}} + C_{{body,{line}}}"
+        exit_check_cost_expr = f"C_{{guard_exit,{line}}}"
+        rendered_iterations = iterations_expr or self._unknown_iterations_symbol(line)
+        if status == "unbounded":
+            expanded_cost_expr = "\\infty"
+        else:
+            expanded_cost_expr = (
+                f"({rendered_iterations}) \\cdot ({per_iteration_cost_expr}) + {exit_check_cost_expr}"
+            )
+        return WhileCostBlock(
+            id=self._block_id(line),
+            line=line,
+            status=status,
+            pattern_used=pattern_used,
+            evidence_level=evidence_level or "weak",
+            reason_code=reason_code,
+            dominant_controller=dominant_controller,
+            iterations_expr=iterations_expr,
+            iterations_class=iterations_class,
+            per_iteration_cost_expr=per_iteration_cost_expr,
+            exit_check_cost_expr=exit_check_cost_expr,
+            expanded_cost_expr=expanded_cost_expr,
+            diagnostics=list(diagnostics or []),
+        )
 
     def analyze(self, input_data: WhileAnalysisInput) -> WhileAnalysisResult:
         """
@@ -164,6 +245,9 @@ class WhileEngine:
             "control_variables": control,
             "progress_proof": progress,
             "mode": mode,
+            "while_node": node,
+            "parent_context": parent,
+            "procedure_context": input_data.procedure_context,
         }
         for pattern_name, pattern in _PATTERNS:
             if pattern.matches(while_ctx):
@@ -177,9 +261,31 @@ class WhileEngine:
                     asymptotic_class = "O(1)"
                 else:
                     asymptotic_class = iter_result.asymptotic_bound
-                # Patrón acotado: marcar status como bounded para que el visitor use el resultado
-                effective_status = (
-                    "bounded" if iter_result.exact_symbolic_bound else status
+                iterations_class = (
+                    getattr(iter_result, "iterations_class", None)
+                    or self._infer_iterations_class(iterations_expr, asymptotic_class)
+                )
+                effective_status = "bounded" if iter_result.exact_symbolic_bound else "unknown"
+                block_status = "available" if iter_result.exact_symbolic_bound else "partial"
+                dominant_controller = (
+                    control.primary_numeric_controller
+                    or control.primary_boolean_controller
+                    or (
+                        "..".join(getattr(control, "coupled_controllers", [])[:2])
+                        if getattr(control, "coupled_controllers", None)
+                        else None
+                    )
+                )
+                cost_block = self._build_cost_block(
+                    line=L,
+                    status=block_status,
+                    pattern_used=pattern_name,
+                    evidence_level=getattr(iter_result, "evidence_level", None),
+                    reason_code=reason_code,
+                    dominant_controller=dominant_controller,
+                    iterations_expr=iterations_expr if iter_result.exact_symbolic_bound else None,
+                    iterations_class=iterations_class,
+                    diagnostics=pattern.explain(while_ctx),
                 )
                 return WhileAnalysisResult(
                     status=effective_status,
@@ -188,8 +294,7 @@ class WhileEngine:
                     ),
                     iterations_expr=iterations_expr,
                     asymptotic_class=asymptotic_class,
-                    dominant_controller=control.primary_numeric_controller
-                    or control.primary_boolean_controller,
+                    dominant_controller=dominant_controller,
                     pattern_used=pattern_name,
                     reason_code=reason_code,
                     diagnostics=pattern.explain(while_ctx),
@@ -198,7 +303,49 @@ class WhileEngine:
                     change_rule=change_rule or {"operator": "+", "constant": "1"},
                     operator=op_rel,
                     evidence=evidence,
+                    cost_block=cost_block,
                 )
+
+        fallback_iterations_class = self._infer_iterations_class(iterations_expr, None)
+        if status == "bounded" and iterations_expr:
+            cost_block = self._build_cost_block(
+                line=L,
+                status="available",
+                pattern_used=None,
+                evidence_level="medium",
+                reason_code=reason_code,
+                dominant_controller=control.primary_numeric_controller
+                or control.primary_boolean_controller,
+                iterations_expr=iterations_expr,
+                iterations_class=fallback_iterations_class,
+                diagnostics=[],
+            )
+        elif status == "unbounded":
+            cost_block = self._build_cost_block(
+                line=L,
+                status="unbounded",
+                pattern_used=None,
+                evidence_level="strong" if progress.proven else "medium",
+                reason_code=reason_code,
+                dominant_controller=control.primary_numeric_controller
+                or control.primary_boolean_controller,
+                iterations_expr=None,
+                iterations_class=None,
+                diagnostics=[],
+            )
+        else:
+            cost_block = self._build_cost_block(
+                line=L,
+                status="unknown",
+                pattern_used=None,
+                evidence_level="weak",
+                reason_code=reason_code,
+                dominant_controller=control.primary_numeric_controller
+                or control.primary_boolean_controller,
+                iterations_expr=None,
+                iterations_class=fallback_iterations_class,
+                diagnostics=[],
+            )
 
         return WhileAnalysisResult(
             status=status,
@@ -214,4 +361,5 @@ class WhileEngine:
             change_rule=change_rule or {"operator": "+", "constant": "1"},
             operator=op_rel,
             evidence=evidence,
+            cost_block=cost_block,
         )

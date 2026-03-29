@@ -245,9 +245,11 @@ class ComplexityClasses:
         # Eliminar espacios
         expr_str = re.sub(r"\s+", "", expr_str)
 
-        # Normalizar t_{while_X} y t_{repeat_X} a t_while_X (SymPy no parsea llaves)
+        # Normalizar símbolos de loop con llaves para detectar si quedan sin resolver.
         expr_str = re.sub(r"t_\{while_(\d+)\}", r"t_while_\1", expr_str)
         expr_str = re.sub(r"t_\{repeat_(\d+)\}", r"t_repeat_\1", expr_str)
+        expr_str = re.sub(r"I_\{while_(\d+)\}", r"I_while_\1", expr_str)
+        expr_str = re.sub(r"I_\{repeat_(\d+)\}", r"I_repeat_\1", expr_str)
 
         # Reemplazar operadores LaTeX
         expr_str = expr_str.replace("\\cdot", "*")
@@ -333,13 +335,17 @@ class ComplexityClasses:
         # Crear símbolo para la variable
         n = Symbol(variable, integer=True, positive=True)
 
-        # Crear contexto con símbolos comunes + t_while_X, t_repeat_X
-        syms = {variable: n, "log": log}
-        for m in re.finditer(r"t_(?:while|repeat)_\d+", expr_str):
-            name = m.group(0)
-            syms[name] = (
-                n  # Sustituir por n como cota conservadora cuando no hay bound explícito
+        unresolved_loop_symbols = re.findall(
+            r"\b(?:t_(?:while|repeat)_\d+|I_(?:while|repeat)_\d+)\b", expr_str
+        )
+        if unresolved_loop_symbols:
+            raise ValueError(
+                "Expresión contiene símbolos de loop no resueltos: "
+                + ", ".join(sorted(set(unresolved_loop_symbols)))
             )
+
+        # Crear contexto con símbolos comunes
+        syms = {variable: n, "log": log}
 
         try:
             return sympify(expr_str, locals=syms)

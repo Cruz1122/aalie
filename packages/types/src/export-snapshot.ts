@@ -4,6 +4,7 @@ import type {
   LoopInvariant,
   Program,
   TraceGraphCanonical,
+  WhileBlockView,
 } from "./index";
 
 export const SNAPSHOT_SCHEMA_VERSION = "1.0.0" as const;
@@ -212,6 +213,7 @@ export interface SnapshotCaseResult {
   big_o?: string;
   big_omega?: string;
   big_theta?: string;
+  whileBlocks?: WhileBlockView[];
   explanationSteps?: string[];
   raw?: AnalyzeOpenResponse;
 }
@@ -222,6 +224,7 @@ export interface SnapshotGlobalResult {
 
 export interface IterativeSnapshotSection {
   lineCostTable: Record<SnapshotCase, AnalyzeOpenResponse["byLine"] | null>;
+  whileBlocks: Record<SnapshotCase, WhileBlockView[] | null>;
   summations: Record<SnapshotCase, string | null>;
   simplificationSteps: Record<SnapshotCase, string[] | null>;
   asymptoticProcedure: Record<SnapshotCase, string[] | null>;

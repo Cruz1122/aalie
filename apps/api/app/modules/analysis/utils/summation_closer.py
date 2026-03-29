@@ -34,6 +34,13 @@ class _ReadableLatexPrinter(LatexPrinter):
         return separator.join(self._render_mul_factor(arg) for arg in args)
 
     def _print_Mul(self, expr):
+        if any(
+            getattr(arg, "is_Pow", False)
+            and getattr(getattr(arg, "exp", None), "is_negative", False)
+            for arg in expr.args
+        ):
+            return super()._print_Mul(expr)
+
         coeff, tail = expr.as_coeff_Mul(rational=True)
         if getattr(coeff, "is_Rational", False) and getattr(coeff, "q", 1) != 1 and tail != 1:
             numerator_factors = []

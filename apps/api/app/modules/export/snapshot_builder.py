@@ -473,6 +473,7 @@ def _build_case_result(case_name: str, data: Any) -> Optional[Dict[str, Any]]:
         "big_o": totals.get("big_o"),
         "big_omega": totals.get("big_omega"),
         "big_theta": totals.get("big_theta"),
+        "whileBlocks": totals.get("whileBlocks") or [],
         "explanationSteps": totals.get("procedure") or [],
         "raw": data,
     }
@@ -880,6 +881,35 @@ def build_snapshot(
                     ),
                     "avg": (
                         ((normalized_cases["avg"] or {}).get("byLine"))
+                        if isinstance(normalized_cases["avg"], dict)
+                        else None
+                    ),
+                },
+                "whileBlocks": {
+                    "worst": (
+                        (
+                            ((normalized_cases["worst"] or {}).get("totals") or {}).get(
+                                "whileBlocks"
+                            )
+                        )
+                        if isinstance(normalized_cases["worst"], dict)
+                        else None
+                    ),
+                    "best": (
+                        (
+                            ((normalized_cases["best"] or {}).get("totals") or {}).get(
+                                "whileBlocks"
+                            )
+                        )
+                        if isinstance(normalized_cases["best"], dict)
+                        else None
+                    ),
+                    "avg": (
+                        (
+                            ((normalized_cases["avg"] or {}).get("totals") or {}).get(
+                                "whileBlocks"
+                            )
+                        )
                         if isinstance(normalized_cases["avg"], dict)
                         else None
                     ),
