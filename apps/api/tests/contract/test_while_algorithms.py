@@ -612,6 +612,7 @@ def _get_by_line(result, case: str):
     return (data or {}).get("byLine", [])
 
 
+@pytest.mark.slow
 class TestWhileAlgorithms:
     """Tests para 20+ algoritmos con WHILE."""
 
