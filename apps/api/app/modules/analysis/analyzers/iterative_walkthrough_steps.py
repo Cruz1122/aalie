@@ -328,6 +328,7 @@ def _asymptotic_membership_items(
 
 
 def _asymptotic_primary_result(
+    locale: str,
     symbol_name: str,
     *,
     big_o: Optional[str],
@@ -337,7 +338,11 @@ def _asymptotic_primary_result(
 ) -> str:
     if has_unbounded:
         return f"{symbol_name} = \\infty"
-    final_class = big_theta or big_o or big_omega or "\\Theta(1)"
+    final_class = big_theta or big_o or big_omega
+    if not final_class:
+        if locale_key(locale) == "es":
+            return f"{symbol_name} = \\text{{cota no concluyente}}"
+        return f"{symbol_name} = \\text{{inconclusive bound}}"
     return f"{symbol_name} = {final_class}"
 
 
@@ -357,6 +362,11 @@ def _asymptotic_explanations(
             return (
                 f"El proceso no queda acotado y por eso se reporta \\({symbol_name} = \\infty\\).",
                 f"La ejecución puede prolongarse sin límite, así que no hay una cota asintótica finita que cierre el análisis; por eso la conclusión se reporta como \\({symbol_name} = \\infty\\).",
+            )
+        if not (big_o or big_omega or big_theta):
+            return (
+                f"A partir de \\({symbol_name} = {simplified_formula}\\), se conserva la forma estructural porque no hay evidencia suficiente para cerrar una cota asintótica fuerte.",
+                f"La expresión \\({symbol_name} = {simplified_formula}\\) todavía depende de controladores estructurales no resueltos; por eso el análisis se publica como parcial y no se inventa una notación \\(O\\), \\(\\Omega\\) o \\(\\Theta\\).",
             )
         summary = (
             f"A partir de \\({symbol_name} = {simplified_formula}\\), el crecimiento queda gobernado por "
@@ -386,6 +396,11 @@ def _asymptotic_explanations(
         return (
             f"The process is unbounded, so the conclusion is reported as \\({symbol_name} = \\infty\\).",
             f"Execution can continue without a finite bound, so there is no finite asymptotic class to close the analysis; the conclusion is therefore reported as \\({symbol_name} = \\infty\\).",
+        )
+    if not (big_o or big_omega or big_theta):
+        return (
+            f"Starting from \\({symbol_name} = {simplified_formula}\\), the structural form is preserved because there is not enough evidence to close a strong asymptotic bound.",
+            f"The expression \\({symbol_name} = {simplified_formula}\\) still depends on unresolved structural controllers, so the analysis remains partial and no \\(O\\), \\(\\Omega\\), or \\(\\Theta\\) class is invented.",
         )
     summary = (
         f"Starting from \\({symbol_name} = {simplified_formula}\\), growth is governed by "
@@ -735,6 +750,7 @@ def build_iterative_case_step_bundle(
     )
 
     asymptotic_formula = _asymptotic_primary_result(
+        locale,
         symbol_name,
         big_o=big_o,
         big_omega=big_omega,
@@ -762,7 +778,11 @@ def build_iterative_case_step_bundle(
             "Conclusión asintótica",
             "Asymptotic conclusion",
         ),
-        status="complete",
+        status=(
+            "complete"
+            if has_unbounded or big_o or big_omega or big_theta
+            else "partial"
+        ),
         confidence="high",
         summary_key="iter_case.asymptotic",
         concept_key="concept.iter_case.asymptotic",

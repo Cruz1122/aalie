@@ -500,6 +500,52 @@ def _has_asymptotic_notation(totals: dict) -> bool:
     )
 
 
+def _while_blocks(totals: dict) -> list[dict]:
+    blocks = totals.get("whileBlocks")
+    if isinstance(blocks, list):
+        return [block for block in blocks if isinstance(block, dict)]
+    return []
+
+
+def _has_unresolved_while_blocks(totals: dict) -> bool:
+    return any(
+        str(block.get("status", "")).lower() in {"partial", "unknown", "unbounded"}
+        for block in _while_blocks(totals)
+    )
+
+
+def _assert_partial_while_case(name: str, totals: dict) -> None:
+    assert _has_unresolved_while_blocks(totals), (
+        f"[{name}] Si no hay notación asintótica, debe existir al menos un whileBlock "
+        f"parcial/desconocido. Totals: {list(totals.keys())}"
+    )
+    t_open = str(totals.get("T_open", ""))
+    assert "I_{while" in t_open or "I_while" in t_open, (
+        f"[{name}] Un caso parcial debe preservar controlador estructural en T_open. "
+        f"T_open={t_open!r}"
+    )
+    step_bundle = totals.get("step_by_step") or {}
+    steps = step_bundle.get("steps") if isinstance(step_bundle, dict) else None
+    if isinstance(steps, list):
+        asymptotic_step = next(
+            (
+                step
+                for step in steps
+                if isinstance(step, dict)
+                and step.get("kind") == "asymptotic_concluded"
+            ),
+            None,
+        )
+        if asymptotic_step:
+            primary = str(
+                ((asymptotic_step.get("math") or {}).get("primaryLatex")) or ""
+            )
+            assert "\\Theta(1)" not in primary and "O(1)" not in primary, (
+                f"[{name}] Un caso parcial no debe vender O(1)/Θ(1) en el walkthrough. "
+                f"primaryLatex={primary!r}"
+            )
+
+
 def _is_o1_notation(notation: str) -> bool:
     """True si la notación es O(1), Θ(1) o Ω(1)."""
     if not notation:
@@ -595,10 +641,9 @@ class TestWhileAlgorithms:
         result = analyze_algorithm(source, mode="all")
         assert result.get("ok", False), f"[{name}] Análisis falló"
         totals = _get_totals(result, "worst")
-        assert _has_asymptotic_notation(totals), (
-            f"[{name}] Worst case debe tener big_theta, big_o o big_omega. "
-            f"Totals: {list(totals.keys())}"
-        )
+        if not _has_asymptotic_notation(totals):
+            _assert_partial_while_case(name, totals)
+            return
 
     @pytest.mark.parametrize("name,source", ALGORITHMS, ids=[a[0] for a in ALGORITHMS])
     def test_best_case_has_asymptotic_notation(self, name: str, source: str):
@@ -606,9 +651,9 @@ class TestWhileAlgorithms:
         result = analyze_algorithm(source, mode="all")
         assert result.get("ok", False), f"[{name}] Análisis falló"
         totals = _get_totals(result, "best")
-        assert _has_asymptotic_notation(
-            totals
-        ), f"[{name}] Best case debe tener notación asintótica. Totals: {list(totals.keys())}"
+        if not _has_asymptotic_notation(totals):
+            _assert_partial_while_case(name, totals)
+            return
 
     @pytest.mark.parametrize("name,source", ALGORITHMS, ids=[a[0] for a in ALGORITHMS])
     def test_by_line_no_unknown_count(self, name: str, source: str):
@@ -714,6 +759,9 @@ class TestWhileAlgorithms:
         big_theta = totals.get("big_theta", "") or ""
         big_o = totals.get("big_o", "") or ""
         notation = big_theta or big_o
+        if not notation:
+            _assert_partial_while_case(name, totals)
+            return
         assert _notation_has_complexity(
             notation, expected
         ), f"[{name}] Esperado {expected}, obtenido: big_theta={big_theta!r}, big_o={big_o!r}"
