@@ -7,7 +7,12 @@ from app.modules.export.asset_registry import (
     resolve_latex_asset_registry,
 )
 from app.modules.export.i18n import get_export_i18n
-from app.modules.export.models import DocumentInstitutionInfo, DocumentModel, DocumentSection, ExportArtifact
+from app.modules.export.models import (
+    DocumentInstitutionInfo,
+    DocumentModel,
+    DocumentSection,
+    ExportArtifact,
+)
 from app.modules.export.section_status import (
     create_section,
     is_section_available,
