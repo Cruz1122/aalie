@@ -67,13 +67,7 @@ def test_safe_json_parse_and_normalize_llm_payload():
     parsed = _safe_json_parse(wrapped)
     assert parsed["verdict"] == "ok"
 
-    payload = {
-        "data": {
-            "candidates": [
-                {"content": {"parts": [{"text": wrapped}]}}
-            ]
-        }
-    }
+    payload = {"data": {"candidates": [{"content": {"parts": [{"text": wrapped}]}}]}}
     normalized = normalize_llm_comparative_payload(payload)
     assert normalized["normalized"]["verdict"] == "ok"
     assert normalized["normalized"]["confidence"] == 0.9
@@ -89,7 +83,12 @@ def test_render_markdown_report_covers_block_kinds(monkeypatch):
         "render_trace_diagram_mermaid",
         lambda *args, **kwargs: {
             "mermaid": "```mermaid\\ngraph TD; A-->B;\\n```",
-            "stats": {"totalCalls": 3, "maxDepth": 2, "collapsedNodes": 1, "truncated": True},
+            "stats": {
+                "totalCalls": 3,
+                "maxDepth": 2,
+                "collapsedNodes": 1,
+                "truncated": True,
+            },
         },
     )
 
@@ -101,10 +100,29 @@ def test_render_markdown_report_covers_block_kinds(monkeypatch):
         {"kind": "subsection", "title": "Sub"},
         {"kind": "centeredParagraph", "text": "center"},
         {"kind": "code", "language": "text", "code": "print('ok')"},
-        {"kind": "institutionalCode", "title": "Pseudo", "lines": [{"lineNumber": 1, "text": "a <- 1"}]},
+        {
+            "kind": "institutionalCode",
+            "title": "Pseudo",
+            "lines": [{"lineNumber": 1, "text": "a <- 1"}],
+        },
         {"kind": "formula", "label": "F", "formula": "T(n)=n"},
-        {"kind": "pedagogicalStep", "step": {"index": 1, "title": "S", "formula": "n", "explanation": "exp", "warning": "warn", "supportReason": "because"}},
-        {"kind": "table", "table": DocumentTable(headers=["A|B"], rows=[["x|y"]], title="Tab", align=["center"])},
+        {
+            "kind": "pedagogicalStep",
+            "step": {
+                "index": 1,
+                "title": "S",
+                "formula": "n",
+                "explanation": "exp",
+                "warning": "warn",
+                "supportReason": "because",
+            },
+        },
+        {
+            "kind": "table",
+            "table": DocumentTable(
+                headers=["A|B"], rows=[["x|y"]], title="Tab", align=["center"]
+            ),
+        },
         {"kind": "keyValue", "entries": [{"label": "L", "value": "V"}]},
         {
             "kind": "executionTraceDiagram",
@@ -116,7 +134,15 @@ def test_render_markdown_report_covers_block_kinds(monkeypatch):
                 "diagnostics": {},
             },
         },
-        {"kind": "unknown", "status": {"label": "L", "status": "missing_data", "message": "M", "todos": ["t"]}},
+        {
+            "kind": "unknown",
+            "status": {
+                "label": "L",
+                "status": "missing_data",
+                "message": "M",
+                "todos": ["t"],
+            },
+        },
     ]
 
     md_text = render_markdown_report({"snapshotId": "snap-1"}, _build_model(blocks))
@@ -136,12 +162,21 @@ def test_render_report_result_success_and_pdf_error(monkeypatch):
         "createdAt": "2026-03-29T00:00:00Z",
     }
 
-    monkeypatch.setattr(eng, "build_snapshot_result", lambda state: {"ok": True, "snapshot": snapshot})
+    monkeypatch.setattr(
+        eng, "build_snapshot_result", lambda state: {"ok": True, "snapshot": snapshot}
+    )
     monkeypatch.setattr(eng, "build_document_model", lambda s: _build_model([]))
     monkeypatch.setattr(
         eng,
         "build_trace_diagram_assets",
-        lambda model: [ExportArtifact(format="asset", filename="trace/a.svg", mimeType="image/svg+xml", content="<svg/>")],
+        lambda model: [
+            ExportArtifact(
+                format="asset",
+                filename="trace/a.svg",
+                mimeType="image/svg+xml",
+                content="<svg/>",
+            )
+        ],
     )
     monkeypatch.setattr(eng, "render_markdown_report", lambda snapshot, model: "# md")
     monkeypatch.setattr(eng, "render_latex_report", lambda snapshot, model: "latex")
@@ -153,12 +188,18 @@ def test_render_report_result_success_and_pdf_error(monkeypatch):
     monkeypatch.setattr(
         eng,
         "create_zip_bundle",
-        lambda artifacts, metadata: type("B", (), {"filename": "bundle.zip", "content": b"ZIP"})(),
+        lambda artifacts, metadata: type(
+            "B", (), {"filename": "bundle.zip", "content": b"ZIP"}
+        )(),
     )
 
     export_state = {
         "snapshotInput": {"analysis": {}},
-        "render": {"formats": ["markdown", "latex", "pdf"], "includeSnapshotJson": True, "includeZipBundle": True},
+        "render": {
+            "formats": ["markdown", "latex", "pdf"],
+            "includeSnapshotJson": True,
+            "includeZipBundle": True,
+        },
     }
     ok = render_report_result(export_state)
 
@@ -170,7 +211,9 @@ def test_render_report_result_success_and_pdf_error(monkeypatch):
     monkeypatch.setattr(
         eng,
         "compile_latex_to_pdf",
-        lambda *args, **kwargs: (_ for _ in ()).throw(LatexCompilationError("compilation_failed", "boom", logs="x")),
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            LatexCompilationError("compilation_failed", "boom", logs="x")
+        ),
     )
     err = render_report_result(export_state)
     assert err["ok"] is False

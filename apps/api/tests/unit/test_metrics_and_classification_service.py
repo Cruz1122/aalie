@@ -24,12 +24,18 @@ def test_aggregate_metrics_handles_cycles_and_missing_data():
 
 
 def test_classify_algorithm_ast_source_errors_and_exception(monkeypatch):
-    monkeypatch.setattr(classification_service, "detect_algorithm_kind", lambda ast: "iterative")
+    monkeypatch.setattr(
+        classification_service, "detect_algorithm_kind", lambda ast: "iterative"
+    )
 
     by_ast = classification_service.classify_algorithm(ast={"type": "Program"})
     assert by_ast == {"ok": True, "kind": "iterative", "method": "ast"}
 
-    monkeypatch.setattr(classification_service, "parse_source", lambda source: {"ok": True, "ast": {"type": "Program"}})
+    monkeypatch.setattr(
+        classification_service,
+        "parse_source",
+        lambda source: {"ok": True, "ast": {"type": "Program"}},
+    )
     by_source = classification_service.classify_algorithm(source="algo")
     assert by_source["ok"] is True
     assert by_source["kind"] == "iterative"
@@ -40,16 +46,26 @@ def test_classify_algorithm_ast_source_errors_and_exception(monkeypatch):
     parse_error = classification_service.classify_algorithm(source="bad")
     assert parse_error["ok"] is True
 
-    monkeypatch.setattr(classification_service, "parse_source", lambda source: {"ok": False, "errors": [{"message": "parse"}]})
+    monkeypatch.setattr(
+        classification_service,
+        "parse_source",
+        lambda source: {"ok": False, "errors": [{"message": "parse"}]},
+    )
     parse_fail = classification_service.classify_algorithm(source="bad")
     assert parse_fail["ok"] is False
     assert parse_fail["errors"][0]["message"] == "parse"
 
-    monkeypatch.setattr(classification_service, "parse_source", lambda source: {"ok": True, "ast": None})
+    monkeypatch.setattr(
+        classification_service, "parse_source", lambda source: {"ok": True, "ast": None}
+    )
     no_ast = classification_service.classify_algorithm(source="bad")
     assert no_ast["ok"] is False
 
-    monkeypatch.setattr(classification_service, "detect_algorithm_kind", lambda ast: (_ for _ in ()).throw(RuntimeError("boom")))
+    monkeypatch.setattr(
+        classification_service,
+        "detect_algorithm_kind",
+        lambda ast: (_ for _ in ()).throw(RuntimeError("boom")),
+    )
     crash = classification_service.classify_algorithm(ast={"type": "Program"})
     assert crash["ok"] is False
     assert "Error en clasificación" in crash["errors"][0]["message"]

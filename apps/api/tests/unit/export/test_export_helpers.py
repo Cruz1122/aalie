@@ -92,9 +92,21 @@ def test_resolve_latex_registry_raises_when_missing(monkeypatch):
 
 def test_create_zip_bundle_is_deterministic_order():
     artifacts = [
-        ExportArtifact(format="asset", filename="z.txt", mimeType="text/plain", content="z"),
-        ExportArtifact(format="markdown", filename="report.md", mimeType="text/markdown", content="# report"),
-        ExportArtifact(format="snapshot", filename="snapshot.json", mimeType="application/json", content="{}"),
+        ExportArtifact(
+            format="asset", filename="z.txt", mimeType="text/plain", content="z"
+        ),
+        ExportArtifact(
+            format="markdown",
+            filename="report.md",
+            mimeType="text/markdown",
+            content="# report",
+        ),
+        ExportArtifact(
+            format="snapshot",
+            filename="snapshot.json",
+            mimeType="application/json",
+            content="{}",
+        ),
     ]
 
     bundle = create_zip_bundle(
@@ -154,7 +166,9 @@ def test_build_trace_diagram_assets_uses_renderer(monkeypatch):
 
     import app.modules.export.trace_diagram_assets as mod
 
-    monkeypatch.setattr(mod, "render_trace_diagram_svg", lambda *args, **kwargs: {"svg": "<svg/>"})
+    monkeypatch.setattr(
+        mod, "render_trace_diagram_svg", lambda *args, **kwargs: {"svg": "<svg/>"}
+    )
     monkeypatch.setattr(mod, "render_trace_diagram_pdf", lambda *args, **kwargs: b"pdf")
 
     assets = build_trace_diagram_assets(model)

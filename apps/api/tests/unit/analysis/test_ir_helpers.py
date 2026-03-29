@@ -71,7 +71,12 @@ def test_normalize_node_covers_structures():
             },
             {
                 "type": "Repeat",
-                "test": {"type": "binary", "left": {"type": "number", "value": 1}, "op": "<", "right": {"type": "number", "value": 2}},
+                "test": {
+                    "type": "binary",
+                    "left": {"type": "number", "value": 1},
+                    "op": "<",
+                    "right": {"type": "number", "value": 2},
+                },
                 "body": {"type": "Block", "body": []},
             },
         ],
