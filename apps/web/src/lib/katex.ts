@@ -2,37 +2,6 @@
 import katex from "katex";
 
 /**
- * Renderiza LaTeX a HTML (SSR/CSR seguro).
- * - throwOnError: false → nunca rompe la UI si hay un error de sintaxis.
- * - trust: false → no ejecuta nada "activo" embebido.
- * - strict: "ignore" → ignora warnings de LaTeX no estándar.
- *
- * @param latex - Expresión LaTeX a renderizar
- * @param opts - Opciones opcionales de KaTeX (displayMode, etc.)
- * @returns String HTML con la expresión renderizada
- * @author Juan Camilo Cruz Parra (@Cruz1122)
- *
- * @example
- * ```ts
- * const html = renderLatexToHtml("T(n) = O(n^2)", { displayMode: true });
- * ```
- */
-/**
- * Convierte el contenido dentro de O(...) a LaTeX para KaTeX.
- * Ej: "n²" -> "n^2", "log n" -> "\\log n", "2ⁿ" -> "2^n"
- */
-function complexityToLatex(content: string): string {
-  return content
-    .replace(/²/g, "^2")
-    .replace(/ⁿ/g, "^n")
-    .replace(/φ/g, "\\phi")
-    .replace(/√(\d+)/g, "\\sqrt{$1}")
-    .replace(/√(\w+)/g, "\\sqrt{$1}")
-    .replace(/\blog\s+/g, "\\log ")
-    .replace(/\bmin\s*\(/g, "\\min(");
-}
-
-/**
  * Extrae el contenido LaTeX de delimitadores $...$ o $$...$$.
  * El LLM y otros orígenes pueden devolver "$\Theta(n)$" en lugar de "\Theta(n)".
  *
@@ -52,6 +21,22 @@ function extractLatexFromDelimiters(latex: string): string {
   return s;
 }
 
+/**
+ * Renderiza LaTeX a HTML (SSR/CSR seguro).
+ * - throwOnError: false → nunca rompe la UI si hay un error de sintaxis.
+ * - trust: false → no ejecuta nada "activo" embebido.
+ * - strict: "ignore" → ignora warnings de LaTeX no estándar.
+ *
+ * @param latex - Expresión LaTeX a renderizar
+ * @param opts - Opciones opcionales de KaTeX (displayMode, etc.)
+ * @returns String HTML con la expresión renderizada
+ * @author Juan Camilo Cruz Parra (@Cruz1122)
+ *
+ * @example
+ * ```ts
+ * const html = renderLatexToHtml("T(n) = O(n^2)", { displayMode: true });
+ * ```
+ */
 export function renderLatexToHtml(
   latex: string,
   opts?: Partial<katex.KatexOptions>,

@@ -16,19 +16,3 @@ export function getResponseLanguageInstruction(
 - Responde SIEMPRE en español. No uses inglés ni otros idiomas.
 - Todas las explicaciones, comentarios y salida en lenguaje natural deben estar en español.`;
 }
-
-function getExplanationLanguageInstruction(
-  locale: SupportedLocale,
-): string {
-  return locale === "en"
-    ? "The explanation MUST always be in ENGLISH. Do not use Spanish or other languages."
-    : "La explicación DEBE estar SIEMPRE en ESPAÑOL. NO uses inglés ni otros idiomas.";
-}
-
-function getExplanationFormatInstruction(
-  locale: SupportedLocale,
-): string {
-  return locale === "en"
-    ? '"explanation": "Explanation in ENGLISH and Markdown about the recursive process (max. 200 words)"'
-    : '"explanation": "Explicación en ESPAÑOL y Markdown sobre el proceso recursivo (máx. 200 palabras)"';
-}

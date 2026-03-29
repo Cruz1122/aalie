@@ -3243,13 +3243,6 @@ export const examplesCatalog: ExampleCatalogItem[] = [
   ...decreaseByOneExamples,
 ];
 
-const EXAMPLE_CATEGORY_COUNTS: Record<ExampleCategory, number> = {
-  iterativos: iterativeExamples.length,
-  "divide-y-venceras": divideAndConquerExamples.length,
-  "resta-y-venceras": decreaseAndConquerExamples.length,
-  "resta-y-seras-vencido": decreaseByOneExamples.length,
-};
-
 export const isRecursiveCategory = (category: ExampleCategory): boolean =>
   category !== "iterativos";
 
@@ -3323,18 +3316,6 @@ export const searchExamples = (
 export const getCategoryMeta = (
   category: ExampleCategory,
 ): ExampleCategoryMeta => EXAMPLE_CATEGORY_META[category];
-
-const getCategoryTotals = (
-  category: ExampleCategory,
-): {
-  total: number;
-  enabled: number;
-} => ({
-  total: examplesCatalog.filter((item) => item.category === category).length,
-  enabled: examplesCatalog.filter(
-    (item) => item.category === category && item.enabled,
-  ).length,
-});
 
 export const findExampleBySlug = (
   slug: string,

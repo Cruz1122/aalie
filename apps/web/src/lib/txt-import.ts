@@ -74,37 +74,6 @@ export async function readAndValidateTxtFile(
   };
 }
 
-function hasProcedureLikeNode(value: unknown): boolean {
-  if (!value) {
-    return false;
-  }
-
-  if (Array.isArray(value)) {
-    return value.some((item) => hasProcedureLikeNode(item));
-  }
-
-  if (typeof value !== "object") {
-    return false;
-  }
-
-  const node = value as Record<string, unknown>;
-  const nodeType = typeof node.type === "string" ? node.type.toLowerCase() : "";
-  if (
-    nodeType === "procdef" ||
-    nodeType === "procedure" ||
-    nodeType === "function" ||
-    nodeType === "functiondef"
-  ) {
-    return true;
-  }
-
-  return Object.values(node).some((child) => hasProcedureLikeNode(child));
-}
-
-function looksLikeAlgorithmAst(ast: unknown): boolean {
-  return hasProcedureLikeNode(ast);
-}
-
 export function looksLikeAlgorithmSourceText(source: string): boolean {
   const normalized = normalizeImportedAlgorithmSource(source).trim();
   if (!normalized) {
