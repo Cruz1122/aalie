@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from sympy import Add, Expr, Integer, Rational, Sum, Symbol, latex, simplify, sympify
 
 from ..ir.expr_utils import expr_to_str
+from ..utils.summation_closer import format_sympy_expr_latex
 from ..while_engine import analyze_guard, classify_while, summarize_updates
 from ..while_engine.engine import WhileAnalysisInput, WhileEngine
 
@@ -2024,6 +2025,13 @@ class WhileRepeatVisitor:
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         L = node.get("pos", {}).get("line", 0)
+        body_node = node.get("body")
+        has_body_early_return = (
+            mode == "best"
+            and body_node is not None
+            and hasattr(self, "_has_return_in_body")
+            and self._has_return_in_body(body_node)
+        )
 
         # Estrategia unificada:
         # 1. En modo promedio, intentar probabilidad primero (si está disponible)
@@ -2173,6 +2181,19 @@ class WhileRepeatVisitor:
 
         # Paso 2: Intentar análisis de cierre (para todos los modos, incluyendo avg como fallback)
         closure_info = self._analyze_while_closure(node, parent_context, mode)
+        best_body_return_single_pass = False
+        if (
+            mode == "best"
+            and has_body_early_return
+            and closure_info
+            and closure_info.get("success")
+            and closure_info.get("status") != "unbounded"
+            and str(closure_info.get("iterations")) != "0"
+        ):
+            closure_info = dict(closure_info)
+            closure_info["iterations"] = "1"
+            closure_info["reason_code"] = "while_best_early_return"
+            best_body_return_single_pass = True
 
         if (
             closure_info
@@ -2236,6 +2257,12 @@ class WhileRepeatVisitor:
             limit = closure_info["limit"]
             operator = closure_info["operator"]
             initial_value = closure_info.get("initial_value")
+            if best_body_return_single_pass and not initial_value and var_name:
+                initial_value = self._find_initial_value_of_var(
+                    var_name, L, parent_context
+                )
+                if not initial_value and var_name in ("i", "j", "k"):
+                    initial_value = "1"
             pattern = closure_info.get("pattern")
             block = self._normalize_while_block(L, closure_info)
             self.register_while_block(block)
@@ -2393,6 +2420,10 @@ class WhileRepeatVisitor:
             ck_cond = self.C()
             if mode == "best" and iterations == "0":
                 cond_count = Integer(1)
+            elif best_body_return_single_pass:
+                # El return termina el flujo dentro de la primera iteración, así que
+                # no hay una reevaluación final de la condición del while.
+                cond_count = Integer(1)
             else:
                 cond_count = iterations_expr + Integer(1)
 
@@ -2406,6 +2437,8 @@ class WhileRepeatVisitor:
             reason_code = closure_info.get("reason_code", "")
             if reason_code == "while_euclid_mod":
                 note_text = self._note("while_euclid_mod", L=L, var_name=var_name)
+            elif best_body_return_single_pass:
+                note_text = self._note("while_best_early_return", L=L)
             elif pattern == "binary_search":
                 note_text = self._note("while_binary_search", L=L, mode_info=mode_info)
             elif mode_info == "best" and iterations == "0":
@@ -2511,6 +2544,8 @@ class WhileRepeatVisitor:
             if mode == "best" and iterations == "0":
                 # El cuerpo no se ejecuta, usar multiplicador 0
                 self.push_multiplier(Integer(0))
+            elif best_body_return_single_pass:
+                self.push_multiplier(Integer(1))
             else:
                 self.push_multiplier(mult_expr)
 
@@ -2545,6 +2580,24 @@ class WhileRepeatVisitor:
                 else:
                     # No es cacheable, visitar normalmente
                     self.visit(body, mode)
+
+            if best_body_return_single_pass and initial_value and var_name:
+                try:
+                    control_sym = Symbol(var_name, integer=True)
+                    initial_expr = self._str_to_sympy(str(initial_value))
+                    for row in self.rows[body_row_start:]:
+                        count_expr = row.get("count_raw_expr")
+                        if count_expr is None or not hasattr(count_expr, "subs"):
+                            continue
+                        specialized = count_expr.subs(control_sym, initial_expr)
+                        row["count_raw_expr"] = specialized
+                        rendered = format_sympy_expr_latex(specialized)
+                        row["count_raw"] = rendered
+                        row["count"] = rendered
+                        if self.mode == "avg":
+                            row["expectedRuns"] = rendered
+                except Exception:
+                    pass
 
             if param_controlled:
                 setattr(self, "_param_controlled_if_take_then", False)

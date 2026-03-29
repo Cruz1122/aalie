@@ -1924,43 +1924,15 @@ class IterativeAnalyzer(
             else:
                 self.visit(stmt, mode)
 
-            # En modo "best", verificar si se ejecutó un return que termina la función
+            # En modo "best", cualquier return ya elegido para el camino favorable
+            # termina la función y hace inalcanzables las sentencias siguientes
+            # del bloque actual, aunque el return haya venido desde un IF/WHILE anidado.
             if mode == "best":
-                should_stop = False
-
-                # Verificar si el statement que acabamos de visitar es un return
-                # y si no hay bucles activos (lo que significa que termina la función)
-                if (
-                    isinstance(stmt, dict)
-                    and stmt.get("type") == "Return"
-                    and len(self.loop_stack) == 0
-                ):
-                    # Un return fuera de bucles termina la función
-                    should_stop = True
-
-                # Verificar si acabamos de visitar un for que ejecutó un return
-                # Cuando un for tiene un return en su cuerpo y se ejecuta en best case,
-                # el return termina la función después de que el for termina
-                elif (
-                    isinstance(stmt, dict)
-                    and stmt.get("type") == "For"
-                    and len(self.loop_stack) == 0
-                ):
-                    # El for terminó (loop_stack está vacío ahora)
-                    # Buscar si hay un return reciente con nota "early-exit"
-                    # que se agregó durante la visita del for
-                    for row in self.rows[stmt_rows_before:]:
-                        if (
-                            row.get("kind") == "return"
-                            and row.get("note")
-                            and "early-exit" in row.get("note", "").lower()
-                        ):
-                            # Se ejecutó un return dentro del for que termina la función
-                            should_stop = True
-                            break
-
-                # Si debemos detener, salir del bucle
-                if should_stop:
+                emitted_returns = any(
+                    row.get("kind") == "return"
+                    for row in self.rows[stmt_rows_before:]
+                )
+                if emitted_returns:
                     break
 
         # Guardar resultados en cache si corresponde
