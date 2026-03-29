@@ -62,7 +62,9 @@ class TestAnalyzeAlgorithm:
     @patch("app.modules.analysis.service.parse_source")
     @patch("app.modules.analysis.service.detect_algorithm_kind")
     @patch("app.modules.analysis.service.AnalyzerRegistry")
-    def test_analyzes_with_algorithm_kind_provided(self, mock_registry, mock_detect, mock_parse):
+    def test_analyzes_with_algorithm_kind_provided(
+        self, mock_registry, mock_detect, mock_parse
+    ):
         """Test: Analiza con tipo de algoritmo proporcionado"""
         mock_parse.return_value = {"ok": True, "ast": {"type": "Program", "body": []}}
 
@@ -180,7 +182,9 @@ class TestAnalyzeAlgorithm:
     @patch("app.modules.analysis.service.parse_source")
     @patch("app.modules.analysis.service.detect_algorithm_kind")
     @patch("app.modules.analysis.service.AnalyzerRegistry")
-    def test_mode_all_recursive_with_preferred_method(self, mock_registry, mock_detect, mock_parse):
+    def test_mode_all_recursive_with_preferred_method(
+        self, mock_registry, mock_detect, mock_parse
+    ):
         """Test: Modo 'all' con RecursiveAnalyzer y preferred_method"""
         mock_parse.return_value = {"ok": True, "ast": {"type": "Program", "body": []}}
         mock_detect.return_value = "recursive"
@@ -434,5 +438,11 @@ class TestDetectMethods:
         result = detect_methods("code")
 
         assert result["ok"]
-        assert result["recurrence_info"]["dp_validation"]["primary_pattern"] == "tabulation"
-        assert "memoization" in result["recurrence_info"]["dp_validation"]["supported_patterns"]
+        assert (
+            result["recurrence_info"]["dp_validation"]["primary_pattern"]
+            == "tabulation"
+        )
+        assert (
+            "memoization"
+            in result["recurrence_info"]["dp_validation"]["supported_patterns"]
+        )
