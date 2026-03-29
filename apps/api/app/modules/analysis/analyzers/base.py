@@ -74,6 +74,8 @@ class BaseAnalyzer:
         )
         self.while_blocks: List[Dict[str, Any]] = []
         self.loop_block_ref_stack: List[str] = []
+        # Cooperative multiple inheritance: pass to next class in MRO  
+        super().__init__()
 
     # --- util: detección de variables de tamaño ---
 
