@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, Set
 
-from sympy import Expr, Integer, Mul, Sum, factor_terms, latex, simplify, together
+from sympy import Expr, Integer, Mul, Sum, factor_terms, simplify, together
 
 from ..ir.expr_utils import expr_to_str
 from ..models.avg_model import AvgModel
@@ -80,7 +80,10 @@ class IterativeAnalyzer(
 
         block = partial_blocks[0]
         symbol_name = f"I_while_{block.get('line')}"
-        free_symbols = {getattr(sym, "name", "") for sym in getattr(t_open_expr, "free_symbols", set())}
+        free_symbols = {
+            getattr(sym, "name", "")
+            for sym in getattr(t_open_expr, "free_symbols", set())
+        }
         if not free_symbols or free_symbols != {symbol_name}:
             return (None, None, None)
 
@@ -115,7 +118,9 @@ class IterativeAnalyzer(
         try:
             numer, denom = normalized.as_numer_denom()
             free_symbols = tuple(sorted(normalized.free_symbols, key=lambda s: s.name))
-            if numer.is_polynomial(*free_symbols) and denom.is_polynomial(*free_symbols):
+            if numer.is_polynomial(*free_symbols) and denom.is_polynomial(
+                *free_symbols
+            ):
                 normalized = factor_terms(normalized)
         except Exception:
             pass
@@ -124,18 +129,18 @@ class IterativeAnalyzer(
             normalized = normalized.replace(
                 lambda candidate: getattr(candidate, "is_Mul", False)
                 and any(getattr(arg, "is_One", False) for arg in candidate.args),
-                lambda candidate: Mul(
-                    *[
-                        arg
-                        for arg in candidate.args
-                        if not getattr(arg, "is_One", False)
-                    ],
-                    evaluate=True,
-                )
-                if any(
-                    not getattr(arg, "is_One", False) for arg in candidate.args
-                )
-                else Integer(1),
+                lambda candidate: (
+                    Mul(
+                        *[
+                            arg
+                            for arg in candidate.args
+                            if not getattr(arg, "is_One", False)
+                        ],
+                        evaluate=True,
+                    )
+                    if any(not getattr(arg, "is_One", False) for arg in candidate.args)
+                    else Integer(1)
+                ),
             )
         except Exception:
             pass
@@ -237,8 +242,10 @@ class IterativeAnalyzer(
             fallback=str(row.get("count") or "0"),
         )
         if (
-            " + " in contribution_latex or " - " in contribution_latex
-        ) and "\\cdot" not in contribution_latex and "\\frac" not in contribution_latex:
+            (" + " in contribution_latex or " - " in contribution_latex)
+            and "\\cdot" not in contribution_latex
+            and "\\frac" not in contribution_latex
+        ):
             contribution_latex = f"\\left({contribution_latex}\\right)"
 
         ck = self._ck_latex(row.get("ck"))
@@ -1490,9 +1497,7 @@ class IterativeAnalyzer(
             count_raw = str(row.get("count_raw", row.get("count", "1")))
             count_closed = str(row.get("count_closed") or row.get("count", count_raw))
             if count_raw.replace(" ", "") == count_closed.replace(" ", ""):
-                procedure_steps.append(
-                    f"E[N_{{{line_no}}}] = {count_closed}"
-                )
+                procedure_steps.append(f"E[N_{{{line_no}}}] = {count_closed}")
             else:
                 procedure_steps.append(
                     f"E[N_{{{line_no}}}] = {count_raw} = {count_closed}"
@@ -1597,8 +1602,6 @@ class IterativeAnalyzer(
             r for r in self.rows if r.get("ck") != "—" and r.get("count") != "—"
         ]
 
-        case_key = "proc_iter_case_worst" if mode == "worst" else "proc_iter_case_best"
-        case_label = self._note(case_key)
         symbol_name = "T(n)"
 
         procedure_steps: list[str] = []
@@ -1700,7 +1703,9 @@ class IterativeAnalyzer(
         # Paso 4: simplificación y notación asintótica
         procedure_steps.append(self._note("proc_iter_step4"))
         if t_open_expr is not None and not has_unbounded:
-            procedure_steps.append(f"{symbol_name} = {self._format_canonical_expr(t_open_expr)}")
+            procedure_steps.append(
+                f"{symbol_name} = {self._format_canonical_expr(t_open_expr)}"
+            )
         if self.big_o:
             procedure_steps.append(f"{symbol_name} = {self.big_o}")
         if self.big_omega:

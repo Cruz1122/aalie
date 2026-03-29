@@ -151,7 +151,9 @@ def test_build_snapshot_copies_while_blocks_into_iterative_and_global_case():
 
     iterative_data = (snapshot.get("iterative") or {}).get("data") or {}
     while_blocks = (iterative_data.get("whileBlocks") or {}).get("worst") or []
-    global_case = ((snapshot.get("globalResult") or {}).get("cases") or {}).get("worst") or {}
+    global_case = ((snapshot.get("globalResult") or {}).get("cases") or {}).get(
+        "worst"
+    ) or {}
 
     assert while_blocks
     assert while_blocks[0].get("patternUsed") == "binary_search_interval"

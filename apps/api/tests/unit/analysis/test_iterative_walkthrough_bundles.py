@@ -58,7 +58,9 @@ def test_iterative_worst_case_emits_typed_line_and_case_walkthroughs():
     assert "subíndice" in str(steps[1].get("conceptNote") or "")
 
     line_bundles = [
-        row.get("step_by_step") for row in result.get("byLine", []) if row.get("step_by_step")
+        row.get("step_by_step")
+        for row in result.get("byLine", [])
+        if row.get("step_by_step")
     ]
     assert line_bundles, "Las filas contables deben incluir walkthrough tipado"
     assert all(bundle.get("method") == "iterative_line" for bundle in line_bundles)
@@ -111,12 +113,18 @@ def test_iterative_nested_counts_render_nested_sigmas_instead_of_substack():
     assert "\\sum_{i=1}^{n}" in str(inner_row.get("count_raw") or "")
     assert "\\sum_{j=i}^{n}" in str(inner_row.get("count_raw") or "")
     assert "\\left(n + 1\\right)" in str(
-        ((((inner_row.get("step_by_step") or {}).get("steps") or [{}, {}, {}])[2].get("math") or {}).get("items") or [{}])[0].get("latex")
+        (
+            (
+                ((inner_row.get("step_by_step") or {}).get("steps") or [{}, {}, {}])[
+                    2
+                ].get("math")
+                or {}
+            ).get("items")
+            or [{}]
+        )[0].get("latex")
         or ""
     )
-    assert "\\frac{n \\left(n + 1\\right)}{2}" in str(
-        inner_row.get("count") or ""
-    )
+    assert "\\frac{n \\left(n + 1\\right)}{2}" in str(inner_row.get("count") or "")
 
 
 def test_iterative_final_line_cost_uses_canonical_factored_form():
@@ -135,11 +143,15 @@ def test_iterative_final_line_cost_uses_canonical_factored_form():
 
     inner_row = next(row for row in accountable_rows if row.get("line") == 4)
     inner_final_step = ((inner_row.get("step_by_step") or {}).get("steps") or [])[-1]
-    inner_final_latex = str((inner_final_step.get("math") or {}).get("primaryLatex") or "")
+    inner_final_latex = str(
+        (inner_final_step.get("math") or {}).get("primaryLatex") or ""
+    )
     assert "n \\cdot \\left(n + 1\\right)" in inner_final_latex
     bundle = (result.get("totals") or {}).get("step_by_step") or {}
     steps = bundle.get("steps") or []
-    closed_step = next(step for step in steps if step.get("kind") == "line_cost_sum_closed")
+    closed_step = next(
+        step for step in steps if step.get("kind") == "line_cost_sum_closed"
+    )
     assert "\\frac{3 n \\left(n + 3\\right)}{2}" in str(
         (closed_step.get("math") or {}).get("primaryLatex") or ""
     )

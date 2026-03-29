@@ -102,7 +102,9 @@ class WhileEngine:
         return f"I_while_{line}"
 
     @staticmethod
-    def _infer_iterations_class(iterations_expr: Optional[str], asymptotic_class: Optional[str]) -> Optional[str]:
+    def _infer_iterations_class(
+        iterations_expr: Optional[str], asymptotic_class: Optional[str]
+    ) -> Optional[str]:
         source = f"{iterations_expr or ''} {asymptotic_class or ''}".lower()
         if "log" in source:
             return "logarithmic"
@@ -133,9 +135,7 @@ class WhileEngine:
         if status == "unbounded":
             expanded_cost_expr = "\\infty"
         else:
-            expanded_cost_expr = (
-                f"({rendered_iterations}) \\cdot ({per_iteration_cost_expr}) + {exit_check_cost_expr}"
-            )
+            expanded_cost_expr = f"({rendered_iterations}) \\cdot ({per_iteration_cost_expr}) + {exit_check_cost_expr}"
         return WhileCostBlock(
             id=self._block_id(line),
             line=line,
@@ -261,12 +261,15 @@ class WhileEngine:
                     asymptotic_class = "O(1)"
                 else:
                     asymptotic_class = iter_result.asymptotic_bound
-                iterations_class = (
-                    getattr(iter_result, "iterations_class", None)
-                    or self._infer_iterations_class(iterations_expr, asymptotic_class)
+                iterations_class = getattr(
+                    iter_result, "iterations_class", None
+                ) or self._infer_iterations_class(iterations_expr, asymptotic_class)
+                effective_status = (
+                    "bounded" if iter_result.exact_symbolic_bound else "unknown"
                 )
-                effective_status = "bounded" if iter_result.exact_symbolic_bound else "unknown"
-                block_status = "available" if iter_result.exact_symbolic_bound else "partial"
+                block_status = (
+                    "available" if iter_result.exact_symbolic_bound else "partial"
+                )
                 dominant_controller = (
                     control.primary_numeric_controller
                     or control.primary_boolean_controller
@@ -283,7 +286,9 @@ class WhileEngine:
                     evidence_level=getattr(iter_result, "evidence_level", None),
                     reason_code=reason_code,
                     dominant_controller=dominant_controller,
-                    iterations_expr=iterations_expr if iter_result.exact_symbolic_bound else None,
+                    iterations_expr=(
+                        iterations_expr if iter_result.exact_symbolic_bound else None
+                    ),
                     iterations_class=iterations_class,
                     diagnostics=pattern.explain(while_ctx),
                 )

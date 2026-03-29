@@ -286,7 +286,13 @@ def _render_markdown_text_with_embedded_math(value: str) -> str:
     if not normalized:
         return value
     parts = [part for part in re.split(EMBEDDED_MATH_PATTERN, value) if part]
-    if len(parts) == 1 and parts[0] == value and "$" not in value and r"\(" not in value and r"\[" not in value:
+    if (
+        len(parts) == 1
+        and parts[0] == value
+        and "$" not in value
+        and r"\(" not in value
+        and r"\[" not in value
+    ):
         return value
 
     rendered: List[str] = []

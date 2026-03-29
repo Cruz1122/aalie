@@ -49,7 +49,11 @@ def _frontmatter_data(path: Path) -> dict:
                     result[key] = []
                     current_key = key
                     current_list = result[key]
-            elif line.startswith("  - ") and current_key and isinstance(current_list, list):
+            elif (
+                line.startswith("  - ")
+                and current_key
+                and isinstance(current_list, list)
+            ):
                 current_list.append(line[4:].strip())
         return result
 
@@ -68,9 +72,13 @@ def test_server_registers_exactly_the_six_repo_local_tools():
 
 
 def test_cursor_and_vscode_configs_are_valid_json():
-    cursor_config = json.loads((ROOT / ".cursor" / "mcp.json").read_text(encoding="utf-8"))
+    cursor_config = json.loads(
+        (ROOT / ".cursor" / "mcp.json").read_text(encoding="utf-8")
+    )
     vscode_mcp = json.loads((ROOT / ".vscode" / "mcp.json").read_text(encoding="utf-8"))
-    vscode_tasks = json.loads((ROOT / ".vscode" / "tasks.json").read_text(encoding="utf-8"))
+    vscode_tasks = json.loads(
+        (ROOT / ".vscode" / "tasks.json").read_text(encoding="utf-8")
+    )
 
     assert cursor_config["mcpServers"]["aalie"]["command"] == "python3"
     assert vscode_mcp["servers"]["aalie"]["command"] == "python3"

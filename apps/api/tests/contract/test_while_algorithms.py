@@ -531,8 +531,7 @@ def _assert_partial_while_case(name: str, totals: dict) -> None:
             (
                 step
                 for step in steps
-                if isinstance(step, dict)
-                and step.get("kind") == "asymptotic_concluded"
+                if isinstance(step, dict) and step.get("kind") == "asymptotic_concluded"
             ),
             None,
         )

@@ -174,7 +174,11 @@ def _detect_contradictions(
                 contradictions.append(
                     f"controller '{dominant_controller}' is reset inside the loop"
                 )
-    if getattr(guard, "kind", None) == "rel" and not dominant_controller and getattr(engine_result, "status", None) == "bounded":
+    if (
+        getattr(guard, "kind", None) == "rel"
+        and not dominant_controller
+        and getattr(engine_result, "status", None) == "bounded"
+    ):
         contradictions.append(
             "bounded result lacks a defensible dominant controller in the current evidence"
         )
@@ -190,7 +194,9 @@ def _detect_ambiguity(
     reasons: list[str] = []
     reason_code = getattr(engine_result, "reason_code", None)
     if while_count > 1:
-        reasons.append("source contains multiple WHILE loops; only the first one was diagnosed")
+        reasons.append(
+            "source contains multiple WHILE loops; only the first one was diagnosed"
+        )
     if reason_code in AMBIGUOUS_REASON_CODES:
         reasons.append(f"reason_code={reason_code} is explicitly non-conclusive")
     if getattr(guard, "kind", None) in {"and", "or"} and not getattr(
@@ -213,9 +219,12 @@ def _resolve_evidence_level(
     if contradictions:
         return "contradictory"
 
-    controller_summary = updates.get(dominant_controller) if dominant_controller else None
+    controller_summary = (
+        updates.get(dominant_controller) if dominant_controller else None
+    )
     has_monotone_progress = bool(
-        controller_summary and getattr(controller_summary, "monotone_progress_must", False)
+        controller_summary
+        and getattr(controller_summary, "monotone_progress_must", False)
     )
     has_bounded_flag_kill = bool(
         controller_summary and getattr(controller_summary, "kills_guard_must", False)
@@ -225,7 +234,9 @@ def _resolve_evidence_level(
             getattr(engine_result, "pattern_used", None) in SUPPORTED_PATTERNS,
             bool(getattr(engine_result, "iterations_expr", None)),
             bool(dominant_controller),
-            has_monotone_progress or has_bounded_flag_kill or getattr(engine_result, "pattern_used", None) == "euclid_mod",
+            has_monotone_progress
+            or has_bounded_flag_kill
+            or getattr(engine_result, "pattern_used", None) == "euclid_mod",
             not ambiguity,
         ]
     )
@@ -269,7 +280,10 @@ def _build_explanation(
         explanation.append(
             "coupled_controllers=" + ", ".join(getattr(control, "coupled_controllers"))
         )
-    if any(getattr(summary, "monotone_progress_must", False) for summary in updates.values()):
+    if any(
+        getattr(summary, "monotone_progress_must", False)
+        for summary in updates.values()
+    ):
         explanation.append("at least one guard variable has must monotone progress")
     explanation.extend(f"ambiguity:{item}" for item in ambiguity_reasons)
     explanation.extend(f"contradiction:{item}" for item in contradictions)
@@ -285,7 +299,9 @@ def evaluate_while_case(source: str, mode: str = "worst") -> dict[str, Any]:
     if mode not in {"worst", "best", "avg"}:
         return {
             "ok": False,
-            "errors": [{"code": "invalid_mode", "message": "mode must be worst, best or avg."}],
+            "errors": [
+                {"code": "invalid_mode", "message": "mode must be worst, best or avg."}
+            ],
         }
     if not isinstance(source, str) or not source.strip():
         return {
@@ -294,9 +310,13 @@ def evaluate_while_case(source: str, mode: str = "worst") -> dict[str, Any]:
         }
 
     from app.modules.parsing.service import parse_source
-    from app.modules.analysis.while_engine.control_variables import detect_control_variables
+    from app.modules.analysis.while_engine.control_variables import (
+        detect_control_variables,
+    )
     from app.modules.analysis.while_engine.engine import WhileAnalysisInput, WhileEngine
-    from app.modules.analysis.while_engine.guard_analysis import analyze_guard_for_engine
+    from app.modules.analysis.while_engine.guard_analysis import (
+        analyze_guard_for_engine,
+    )
     from app.modules.analysis.while_engine.progress_proofs import prove_progress
     from app.modules.analysis.while_engine.update_analysis import analyze_updates
 
@@ -312,7 +332,9 @@ def evaluate_while_case(source: str, mode: str = "worst") -> dict[str, Any]:
     if not while_contexts:
         return {
             "ok": False,
-            "errors": [{"code": "no_while_found", "message": "No WHILE loop found in source."}],
+            "errors": [
+                {"code": "no_while_found", "message": "No WHILE loop found in source."}
+            ],
         }
 
     selected = while_contexts[0]

@@ -225,8 +225,7 @@ class TestIterativeAnalyzer:
         expr = Rational(1, 2) * n**2 + Rational(3, 2) * n
 
         assert (
-            analyzer._format_canonical_expr(expr)
-            == "\\frac{n \\left(n + 3\\right)}{2}"
+            analyzer._format_canonical_expr(expr) == "\\frac{n \\left(n + 3\\right)}{2}"
         )
 
     def test_format_canonical_expr_preserves_clean_factor_with_multiplier(self):
@@ -255,8 +254,7 @@ class TestIterativeAnalyzer:
         expr = Rational(1, 2) * (n + 1)
 
         assert (
-            analyzer._format_canonical_expr(expr)
-            == "\\frac{\\left(n + 1\\right)}{2}"
+            analyzer._format_canonical_expr(expr) == "\\frac{\\left(n + 1\\right)}{2}"
         )
 
     def test_format_final_line_contribution_wraps_combined_ck(self):
@@ -333,7 +331,9 @@ END
             == "C_{1} \\cdot 3 \\cdot \\left(n + 1\\right) + C_{2} \\cdot \\frac{3 n \\left(n + 3\\right)}{2} + C_{3} \\cdot n \\cdot \\left(n + 1\\right)"
         )
 
-        accountable_rows = [row for row in result.get("byLine", []) if row.get("ck") != "—"]
+        accountable_rows = [
+            row for row in result.get("byLine", []) if row.get("ck") != "—"
+        ]
         triangular_row = next(row for row in accountable_rows if row.get("line") == 3)
         assert (
             triangular_row.get("line_cost_final")
@@ -358,7 +358,9 @@ END
         result = analyze_algorithm(source, mode="worst", locale="es")
 
         assert result.get("ok", False)
-        accountable_rows = [row for row in result.get("byLine", []) if row.get("ck") != "—"]
+        accountable_rows = [
+            row for row in result.get("byLine", []) if row.get("ck") != "—"
+        ]
         inner_for_row = next(row for row in accountable_rows if row.get("line") == 5)
         assert inner_for_row.get("count") == "\\frac{n \\left(n + 3\\right)}{2}"
         assert (

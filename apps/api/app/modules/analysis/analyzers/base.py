@@ -1511,7 +1511,9 @@ class BaseAnalyzer:
         self.while_blocks.append(dict(block))
         return block
 
-    def update_while_block(self, block_id: str, **changes: Any) -> Optional[Dict[str, Any]]:
+    def update_while_block(
+        self, block_id: str, **changes: Any
+    ) -> Optional[Dict[str, Any]]:
         """Actualiza un bloque WHILE previamente registrado."""
         normalized_id = str(block_id or "").strip()
         if not normalized_id:

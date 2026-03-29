@@ -1432,7 +1432,10 @@ def _build_iterative_case_analysis_section(
                             "kind": "formula",
                             "formula": (
                                 "\\text{Costo expandido del bloque} = "
-                                + str(block.get("expandedCostExpr") or i18n["notAvailable"])
+                                + str(
+                                    block.get("expandedCostExpr")
+                                    or i18n["notAvailable"]
+                                )
                             ),
                         },
                     ]
@@ -1466,7 +1469,11 @@ def _build_iterative_case_analysis_section(
                             or None,
                             "supportReason": _localize_analysis_text(
                                 (
-                                    ((step.get("derivation") or {}).get("supportReason"))
+                                    (
+                                        (step.get("derivation") or {}).get(
+                                            "supportReason"
+                                        )
+                                    )
                                     if isinstance(step.get("derivation"), dict)
                                     else None
                                 ),

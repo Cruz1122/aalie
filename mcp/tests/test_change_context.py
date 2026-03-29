@@ -34,10 +34,11 @@ def test_check_contract_impact_merges_export_contracts_without_duplicates():
     assert result["ok"] is True
     assert result["areas"] == ["export_snapshot"]
     assert result["risk"] == "high"
-    assert "docs/09-decisions/adr-002-single-snapshot-for-exports.md" in result[
-        "contracts_impacted"
-    ]
+    assert (
+        "docs/09-decisions/adr-002-single-snapshot-for-exports.md"
+        in result["contracts_impacted"]
+    )
     assert "single-snapshot source of truth" in result["must_review"]
-    assert "apps/api/tests/unit/export/test_snapshot_builder.py" in result[
-        "tests_to_run"
-    ]
+    assert (
+        "apps/api/tests/unit/export/test_snapshot_builder.py" in result["tests_to_run"]
+    )

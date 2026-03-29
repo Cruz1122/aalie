@@ -32,7 +32,10 @@ END"""
     assert result["focus"] == "recursive"
     assert result["comparison_mode"] == "symbolic"
     assert "family" in result["required_fields"]
-    assert result["suggested_contract_values"]["default_method"] == "characteristic_equation"
+    assert (
+        result["suggested_contract_values"]["default_method"]
+        == "characteristic_equation"
+    )
 
 
 def test_generate_test_oracle_stub_for_export_focus_is_contractual():

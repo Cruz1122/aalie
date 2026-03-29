@@ -77,8 +77,14 @@ def _export_stub(source: str, changed_paths: list[str] | None) -> dict[str, Any]
     ensure_apps_api_on_path()
     from app.modules.classification.service import classify_algorithm
 
-    classification = classify_algorithm(source=source) if source.strip() else {"ok": False}
-    detected_kind = classification.get("kind") if classification.get("ok") else "<iterative|recursive|hybrid|unknown>"
+    classification = (
+        classify_algorithm(source=source) if source.strip() else {"ok": False}
+    )
+    detected_kind = (
+        classification.get("kind")
+        if classification.get("ok")
+        else "<iterative|recursive|hybrid|unknown>"
+    )
     schema_version = extract_types_snapshot_schema_version() or "1.0.0"
     impact = build_contract_impact(changed_paths or [])
     return {
@@ -102,8 +108,12 @@ def _export_stub(source: str, changed_paths: list[str] | None) -> dict[str, Any]
                     "avg": "<present or null>",
                 }
             },
-            "iterative": {"status": "<available|not_supported|not_requested|missing_data>"},
-            "recursive": {"status": "<available|not_supported|not_requested|missing_data>"},
+            "iterative": {
+                "status": "<available|not_supported|not_requested|missing_data>"
+            },
+            "recursive": {
+                "status": "<available|not_supported|not_requested|missing_data>"
+            },
         },
         "suggested_assertions": [
             "Assert schemaVersion matches the shared snapshot contract.",
@@ -122,9 +132,11 @@ def _export_stub(source: str, changed_paths: list[str] | None) -> dict[str, Any]
 def _while_stub(source: str, changed_paths: list[str] | None) -> dict[str, Any]:
     diagnosis = evaluate_while_case(source=source, mode="worst")
     impact = build_contract_impact(changed_paths or [])
-    strong_symbolic = diagnosis.get("ok") and diagnosis.get("status") == "bounded" and diagnosis.get(
-        "evidence_level"
-    ) == "strong"
+    strong_symbolic = (
+        diagnosis.get("ok")
+        and diagnosis.get("status") == "bounded"
+        and diagnosis.get("evidence_level") == "strong"
+    )
     return {
         "comparison_mode": "symbolic" if strong_symbolic else "contractual",
         "required_fields": [
@@ -207,8 +219,14 @@ def _core_analysis_stub(source: str, changed_paths: list[str] | None) -> dict[st
     ensure_apps_api_on_path()
     from app.modules.classification.service import classify_algorithm
 
-    classification = classify_algorithm(source=source) if source.strip() else {"ok": False}
-    detected_kind = classification.get("kind") if classification.get("ok") else "<iterative|recursive|hybrid|unknown>"
+    classification = (
+        classify_algorithm(source=source) if source.strip() else {"ok": False}
+    )
+    detected_kind = (
+        classification.get("kind")
+        if classification.get("ok")
+        else "<iterative|recursive|hybrid|unknown>"
+    )
     impact = build_contract_impact(changed_paths or [])
     return {
         "comparison_mode": "symbolic",
@@ -257,7 +275,9 @@ def generate_test_oracle_stub(
             ],
         }
 
-    resolved_focus = _resolve_focus(source=source, focus=focus, changed_paths=changed_paths)
+    resolved_focus = _resolve_focus(
+        source=source, focus=focus, changed_paths=changed_paths
+    )
     if resolved_focus == "export_snapshot":
         payload = _export_stub(source=source, changed_paths=changed_paths)
     elif resolved_focus == "while":

@@ -44,7 +44,9 @@ except ImportError:
             )
 
 
-from tools.check_contract_impact import check_contract_impact as check_contract_impact_tool
+from tools.check_contract_impact import (
+    check_contract_impact as check_contract_impact_tool,
+)
 from tools.detect_recursive_family import (
     detect_recursive_family as detect_recursive_family_tool,
 )
@@ -70,7 +72,9 @@ def _register_tool(
 
 
 @_register_tool
-def get_change_context(path: str | None = None, feature: str | None = None) -> Dict[str, Any]:
+def get_change_context(
+    path: str | None = None, feature: str | None = None
+) -> Dict[str, Any]:
     """Return required docs/tests/skill before touching a repo area."""
 
     return get_change_context_tool(path=path, feature=feature)
@@ -90,7 +94,9 @@ def validate_snapshot_contract(
 ) -> Dict[str, Any]:
     """Validate a snapshot against AALIE snapshot contract invariants."""
 
-    return validate_snapshot_contract_tool(snapshot=snapshot, snapshot_path=snapshot_path)
+    return validate_snapshot_contract_tool(
+        snapshot=snapshot, snapshot_path=snapshot_path
+    )
 
 
 @_register_tool

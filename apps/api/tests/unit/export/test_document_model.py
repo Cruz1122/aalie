@@ -150,7 +150,9 @@ def test_build_document_model_prefers_iterative_case_bundle_from_reportable_step
     snapshot = _snapshot_with_iterative_case_bundle()
 
     model = build_document_model(snapshot)
-    section = next(section for section in model.sections if section.id == "iterative-cases")
+    section = next(
+        section for section in model.sections if section.id == "iterative-cases"
+    )
     pedagogical_titles = [
         block["step"]["title"]
         for block in section.blocks
@@ -165,7 +167,9 @@ def test_build_document_model_renders_while_block_layers_from_snapshot():
     snapshot = _snapshot_with_iterative_case_bundle()
 
     model = build_document_model(snapshot)
-    section = next(section for section in model.sections if section.id == "iterative-cases")
+    section = next(
+        section for section in model.sections if section.id == "iterative-cases"
+    )
     formulas = [
         block.get("formula")
         for block in section.blocks

@@ -3,7 +3,11 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, Optional
 
-from .recursive_steps_core import compute_overall_status, locale_key, make_recursive_step
+from .recursive_steps_core import (
+    compute_overall_status,
+    locale_key,
+    make_recursive_step,
+)
 
 _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
     "es": {
@@ -126,11 +130,7 @@ def _symbol_name(mode: str) -> str:
 
 def _line_refs(rows: List[Dict[str, Any]], locale: str) -> str:
     numbers = sorted(
-        {
-            int(row.get("line"))
-            for row in rows
-            if isinstance(row.get("line"), int)
-        }
+        {int(row.get("line")) for row in rows if isinstance(row.get("line"), int)}
     )
     if not numbers:
         return _title(locale, "sin líneas numeradas", "no numbered lines")
@@ -181,10 +181,7 @@ def _line_closed_count_value(row: Dict[str, Any], mode: str) -> str:
 def _line_raw_count_value(row: Dict[str, Any], mode: str) -> str:
     if mode == "avg":
         return str(
-            row.get("count_raw")
-            or row.get("expectedRuns")
-            or row.get("count")
-            or "0"
+            row.get("count_raw") or row.get("expectedRuns") or row.get("count") or "0"
         )
     return str(row.get("count_raw") or row.get("count") or "0")
 
@@ -216,7 +213,9 @@ def _substitute_symbolic_constants(expression: Optional[str]) -> Optional[str]:
     return substituted
 
 
-def _dominant_term(big_theta: Optional[str], simplified_expression: Optional[str]) -> str:
+def _dominant_term(
+    big_theta: Optional[str], simplified_expression: Optional[str]
+) -> str:
     theta = str(big_theta or "").strip()
     if theta:
         normalized = theta.replace("\\Theta", "").strip()
@@ -478,7 +477,11 @@ def build_iterative_line_step_bundle(
             kind="line_execution_count_resolved",
             title=_title(
                 locale,
-                "Conteo de ejecuciones" if mode != "avg" else "Esperanza de ejecuciones",
+                (
+                    "Conteo de ejecuciones"
+                    if mode != "avg"
+                    else "Esperanza de ejecuciones"
+                ),
                 "Execution count" if mode != "avg" else "Expected executions",
             ),
             status="complete",
@@ -574,15 +577,28 @@ def build_iterative_case_step_bundle(
     case_label = _case_label(mode, locale)
     symbol_name = _symbol_name(mode)
     line_refs = _line_refs(rows, locale)
-    model_note = avg_model_note or _title(locale, "modelo disponible", "available model")
+    model_note = avg_model_note or _title(
+        locale, "modelo disponible", "available model"
+    )
     hypotheses = [str(item).strip() for item in (hypotheses or []) if str(item).strip()]
     hypotheses_suffix = (
-        (" " + _title(locale, f"Supuestos: {'; '.join(hypotheses)}.", f"Assumptions: {'; '.join(hypotheses)}."))
+        (
+            " "
+            + _title(
+                locale,
+                f"Supuestos: {'; '.join(hypotheses)}.",
+                f"Assumptions: {'; '.join(hypotheses)}.",
+            )
+        )
         if hypotheses
         else ""
     )
-    summary_key_prefix = "iter_case.lines.average" if mode == "avg" else "iter_case.lines.standard"
-    counts_key = "iter_case.counts.average" if mode == "avg" else "iter_case.counts.standard"
+    summary_key_prefix = (
+        "iter_case.lines.average" if mode == "avg" else "iter_case.lines.standard"
+    )
+    counts_key = (
+        "iter_case.counts.average" if mode == "avg" else "iter_case.counts.standard"
+    )
     counts_concept_key = (
         "concept.iter_case.counts.average"
         if mode == "avg"
@@ -706,7 +722,9 @@ def build_iterative_case_step_bundle(
             )
         )
 
-    simplified_formula = simplified_expression or closed_sum_expression or raw_sum_expression
+    simplified_formula = (
+        simplified_expression or closed_sum_expression or raw_sum_expression
+    )
     steps.append(
         make_recursive_step(
             template_strings=_TEMPLATE_STRINGS,
@@ -725,7 +743,9 @@ def build_iterative_case_step_bundle(
         )
     )
 
-    dominant = "\\infty" if has_unbounded else _dominant_term(big_theta, simplified_formula)
+    dominant = (
+        "\\infty" if has_unbounded else _dominant_term(big_theta, simplified_formula)
+    )
     steps.append(
         make_recursive_step(
             template_strings=_TEMPLATE_STRINGS,

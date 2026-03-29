@@ -93,7 +93,9 @@ def detect_recursive_family(
     if default_method:
         justification.append(f"Default method under current contract: {default_method}")
     if not justification:
-        justification.append("No recurrence family could be defended from current evidence.")
+        justification.append(
+            "No recurrence family could be defended from current evidence."
+        )
 
     status = "available" if family else "inconclusive"
     return {

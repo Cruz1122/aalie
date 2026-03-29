@@ -42,7 +42,11 @@ class _ReadableLatexPrinter(LatexPrinter):
             return super()._print_Mul(expr)
 
         coeff, tail = expr.as_coeff_Mul(rational=True)
-        if getattr(coeff, "is_Rational", False) and getattr(coeff, "q", 1) != 1 and tail != 1:
+        if (
+            getattr(coeff, "is_Rational", False)
+            and getattr(coeff, "q", 1) != 1
+            and tail != 1
+        ):
             numerator_factors = []
             numerator_value = abs(getattr(coeff, "p", 1))
             if numerator_value != 1:
@@ -1676,7 +1680,6 @@ class SummationCloser:
             Tupla (lista de pasos en formato LaTeX, expresión evaluada o None)
         """
         steps = []
-        evaluated_result = None
         from sympy import Integer, preorder_traversal
         from sympy import Integer as Int
 
@@ -1981,7 +1984,6 @@ class SummationCloser:
                     else:
                         # Analizar si el cuerpo es una expresión lineal en la variable de suma
                         from sympy import Add as SymAdd
-                        from sympy import Mul as SymMul
                         from sympy import expand
 
                         # Expandir el cuerpo para ver sus términos
@@ -2048,10 +2050,12 @@ class SummationCloser:
                                             # Intentar sin simplify
                                             const_result = const_sum.doit()
                                             const_result_expr = const_result
-                                            const_result_latex = self._sympy_to_latex(const_result)
+                                            const_result_latex = self._sympy_to_latex(
+                                                const_result
+                                            )
                                         except Exception:
                                             pass
-                                    
+
                                     # Generar paso de evaluación constante (con o sin simplificación)
                                     if const_result_latex:
                                         const_step = f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {const_terms_latex} = {const_result_latex}"
@@ -2063,21 +2067,25 @@ class SummationCloser:
                                     var_sum = Sum(var_sum_expr, (sum_var, start, end))
                                     var_result_latex = None
                                     var_result_expr = None
-                                    
+
                                     try:
                                         var_sum_result = var_sum.doit()
                                         var_sum_simplified = simplify(var_sum_result)
                                         var_result_expr = var_sum_simplified
-                                        var_result_latex = self._sympy_to_latex(var_sum_simplified)
+                                        var_result_latex = self._sympy_to_latex(
+                                            var_sum_simplified
+                                        )
                                     except Exception:
                                         try:
                                             # Intentar sin simplify
                                             var_sum_result = var_sum.doit()
                                             var_result_expr = var_sum_result
-                                            var_result_latex = self._sympy_to_latex(var_sum_result)
+                                            var_result_latex = self._sympy_to_latex(
+                                                var_sum_result
+                                            )
                                         except Exception:
                                             pass
-                                    
+
                                     # Generar paso de evaluación variable (con o sin simplificación)
                                     if var_result_latex:
                                         var_step = f"\\sum_{{{var_latex}={start_latex}}}^{{{end_latex}}} {terms_var_latex} = {var_result_latex}"
@@ -2093,8 +2101,10 @@ class SummationCloser:
                                     try:
                                         total_expr = var_result_expr + const_result_expr
                                         total_simplified = simplify(total_expr)
-                                        total_latex = self._sympy_to_latex(total_simplified)
-                                        
+                                        total_latex = self._sympy_to_latex(
+                                            total_simplified
+                                        )
+
                                         steps.append(
                                             f"\\text{{{self._labels['combining_results']} }} {var_result_latex} + {const_result_latex} = {total_latex}"
                                         )

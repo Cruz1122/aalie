@@ -43,7 +43,9 @@ class WhileRepeatVisitor:
 
     def loop_iterations_symbol(self, kind: str, line: int) -> Symbol:
         """Símbolo estructural para un bloque de loop no cerrado exactamente."""
-        return Symbol(self.loop_iterations_symbol_name(kind, line), real=True, positive=True)
+        return Symbol(
+            self.loop_iterations_symbol_name(kind, line), real=True, positive=True
+        )
 
     def _block_to_dict(self, block: Any) -> Dict[str, Any]:
         if isinstance(block, dict):
@@ -52,7 +54,9 @@ class WhileRepeatVisitor:
             return dict(block.__dict__)
         return {}
 
-    def _normalize_while_block(self, line: int, closure_info: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def _normalize_while_block(
+        self, line: int, closure_info: Optional[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         closure_info = closure_info or {}
         existing = self._block_to_dict(closure_info.get("cost_block"))
         status = str(existing.get("status") or "").strip()
@@ -76,25 +80,33 @@ class WhileRepeatVisitor:
             elif "1" == str(iterations_expr or "").strip():
                 iterations_class = "constant"
         block_id = str(existing.get("id") or f"while_L{line}")
-        rendered_iterations = iterations_expr or self.loop_iterations_symbol_name("while", line)
-        per_iteration_cost_expr = existing.get("per_iteration_cost_expr") or f"C_{{guard,{line}}} + C_{{body,{line}}}"
-        exit_check_cost_expr = existing.get("exit_check_cost_expr") or f"C_{{guard_exit,{line}}}"
+        rendered_iterations = iterations_expr or self.loop_iterations_symbol_name(
+            "while", line
+        )
+        per_iteration_cost_expr = (
+            existing.get("per_iteration_cost_expr")
+            or f"C_{{guard,{line}}} + C_{{body,{line}}}"
+        )
+        exit_check_cost_expr = (
+            existing.get("exit_check_cost_expr") or f"C_{{guard_exit,{line}}}"
+        )
         expanded_cost_expr = existing.get("expanded_cost_expr")
         if not expanded_cost_expr:
             if status == "unbounded":
                 expanded_cost_expr = "\\infty"
             else:
-                expanded_cost_expr = (
-                    f"({rendered_iterations}) \\cdot ({per_iteration_cost_expr}) + {exit_check_cost_expr}"
-                )
+                expanded_cost_expr = f"({rendered_iterations}) \\cdot ({per_iteration_cost_expr}) + {exit_check_cost_expr}"
         return {
             "id": block_id,
             "line": line,
             "status": status,
             "pattern_used": existing.get("pattern_used") or closure_info.get("pattern"),
-            "evidence_level": existing.get("evidence_level") or ("strong" if status in {"available", "unbounded"} else "weak"),
-            "reason_code": existing.get("reason_code") or closure_info.get("reason_code"),
-            "dominant_controller": existing.get("dominant_controller") or closure_info.get("variable"),
+            "evidence_level": existing.get("evidence_level")
+            or ("strong" if status in {"available", "unbounded"} else "weak"),
+            "reason_code": existing.get("reason_code")
+            or closure_info.get("reason_code"),
+            "dominant_controller": existing.get("dominant_controller")
+            or closure_info.get("variable"),
             "iterations_expr": iterations_expr,
             "iterations_class": iterations_class,
             "per_iteration_cost_expr": per_iteration_cost_expr,
@@ -145,7 +157,11 @@ class WhileRepeatVisitor:
             except Exception:
                 continue
             ops_val = row.get("ops", 1)
-            base_terms.append(Integer(ops_val) * base_count if ops_val not in (None, 1) else base_count)
+            base_terms.append(
+                Integer(ops_val) * base_count
+                if ops_val not in (None, 1)
+                else base_count
+            )
 
         try:
             per_iteration_expr = simplify(Add(*base_terms))
@@ -1639,7 +1655,9 @@ class WhileRepeatVisitor:
                         "pattern": engine_result.pattern_used,
                         "cost_block": engine_result.cost_block,
                     }
-                if engine_result.cost_block and getattr(engine_result.cost_block, "status", None) in (
+                if engine_result.cost_block and getattr(
+                    engine_result.cost_block, "status", None
+                ) in (
                     "partial",
                     "unknown",
                 ):
@@ -2002,7 +2020,6 @@ class WhileRepeatVisitor:
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         L = node.get("pos", {}).get("line", 0)
-        t = self.iter_sym("while", L)
 
         # Estrategia unificada:
         # 1. En modo promedio, intentar probabilidad primero (si está disponible)
@@ -2255,7 +2272,12 @@ class WhileRepeatVisitor:
                     iterations_expr = self._str_to_sympy(str(iterations))
 
             # APLICAR SUBSTITUCIÓN DEL LÍMITE:
-            if block["status"] == "available" and isinstance(limit, str) and limit and not limit.isdigit():
+            if (
+                block["status"] == "available"
+                and isinstance(limit, str)
+                and limit
+                and not limit.isdigit()
+            ):
                 import re
 
                 if re.match(r"^[a-zA-Z_]\w*$", limit):
@@ -2322,8 +2344,7 @@ class WhileRepeatVisitor:
                 )
                 if (
                     block["status"] == "available"
-                    and
-                    not iterations_is_one
+                    and not iterations_is_one
                     and pattern_local not in ("binary_search",)
                     and reason_code_local != "while_euclid_mod"
                     and has_explicit_limit
@@ -2528,7 +2549,11 @@ class WhileRepeatVisitor:
             self._finalize_loop_block_cost(
                 block["id"],
                 body_row_start=body_row_start,
-                multiplier_expr=mult_expr if not (mode == "best" and iterations == "0") else Integer(0),
+                multiplier_expr=(
+                    mult_expr
+                    if not (mode == "best" and iterations == "0")
+                    else Integer(0)
+                ),
                 guard_ops=ops,
                 fallback_line=L,
             )

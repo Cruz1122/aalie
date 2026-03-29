@@ -362,7 +362,9 @@ def build_change_context(path: str | None = None, feature: str | None = None) ->
     else:
         return {
             "ok": False,
-            "errors": [{"code": "missing_input", "message": "Provide path or feature."}],
+            "errors": [
+                {"code": "missing_input", "message": "Provide path or feature."}
+            ],
         }
 
     if not matches:
@@ -390,9 +392,7 @@ def build_change_context(path: str | None = None, feature: str | None = None) ->
         "related_tests": dedupe(
             test for entry in matches for test in entry.related_tests
         ),
-        "must_review": dedupe(
-            item for entry in matches for item in entry.must_review
-        ),
+        "must_review": dedupe(item for entry in matches for item in entry.must_review),
         "recommended_skill": primary.recommended_skill,
         "related_areas": [entry.area for entry in matches[1:]],
     }
