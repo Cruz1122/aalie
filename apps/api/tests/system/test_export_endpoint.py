@@ -198,6 +198,9 @@ def test_export_report_preflight_rejects_disallowed_origin():
 
 
 def test_export_report_returns_cors_headers_for_allowed_origin():
+    if not _has_pdflatex():
+        pytest.skip("pdflatex no está disponible en el entorno de tests")
+
     allowed_origin = "https://frontend.example"
     client = _create_client({"CORS_ALLOWED_ORIGINS": allowed_origin})
     export_payload = _build_export_payload(client)
