@@ -5,7 +5,10 @@ Verifica el flujo completo desde AST hasta resultado final para múltiples algor
 y casos (best/worst/average).
 """
 
+from sympy import Rational, Symbol
+
 from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
+from app.modules.analysis.service import analyze_algorithm
 
 
 class TestIterativeAnalyzer:
@@ -216,6 +219,62 @@ class TestIterativeAnalyzer:
         result = analyzer._latex_to_sympy_expr("invalid!!!")
         assert result is None
 
+    def test_format_canonical_expr_factors_common_term(self):
+        analyzer = IterativeAnalyzer()
+        n = Symbol("n", integer=True, positive=True)
+        expr = Rational(1, 2) * n**2 + Rational(3, 2) * n
+
+        assert (
+            analyzer._format_canonical_expr(expr)
+            == "\\frac{n \\left(n + 3\\right)}{2}"
+        )
+
+    def test_format_canonical_expr_preserves_clean_factor_with_multiplier(self):
+        analyzer = IterativeAnalyzer()
+        n = Symbol("n", integer=True, positive=True)
+        expr = Rational(3, 2) * n**2 + Rational(9, 2) * n
+
+        assert (
+            analyzer._format_canonical_expr(expr)
+            == "\\frac{3 n \\left(n + 3\\right)}{2}"
+        )
+
+    def test_format_canonical_expr_does_not_fully_factor_constant_term_polynomial(self):
+        analyzer = IterativeAnalyzer()
+        n = Symbol("n", integer=True, positive=True)
+        expr = Rational(5, 2) * n**2 + Rational(17, 2) * n + 3
+
+        assert (
+            analyzer._format_canonical_expr(expr)
+            == "\\frac{5 n^{2}}{2} + \\frac{17 n}{2} + 3"
+        )
+
+    def test_format_canonical_expr_preserves_average_case_half_sum(self):
+        analyzer = IterativeAnalyzer()
+        n = Symbol("n", integer=True, positive=True)
+        expr = Rational(1, 2) * (n + 1)
+
+        assert (
+            analyzer._format_canonical_expr(expr)
+            == "\\frac{\\left(n + 1\\right)}{2}"
+        )
+
+    def test_format_final_line_contribution_wraps_combined_ck(self):
+        analyzer = IterativeAnalyzer()
+        n = Symbol("n", integer=True, positive=True)
+        row = {
+            "ck": "C_{1} + C_{2}",
+            "count_expr": n + 1,
+            "count_raw_expr": n + 1,
+            "count": "n + 1",
+            "ops": 1,
+        }
+
+        assert (
+            analyzer._format_final_line_contribution(row)
+            == "(C_{1} + C_{2}) \\cdot \\left(n + 1\\right)"
+        )
+
     def test_calculate_t_polynomial_fallback(self):
         """Test: _calculate_t_polynomial_fallback calcula T_polynomial"""
         analyzer = IterativeAnalyzer()
@@ -254,6 +313,58 @@ class TestIterativeAnalyzer:
         # Nota: El método puede retornar "0" si hay problemas con el procesamiento,
         # pero el test principal (test_calculate_t_polynomial_fallback) ya verifica
         # que el método funciona correctamente con casos más complejos
+
+    def test_nested_triangular_outputs_are_canonicalized(self):
+        source = """nested(n) BEGIN
+  FOR i <- 1 TO n DO BEGIN
+    FOR j <- i TO n DO BEGIN
+      x <- x + 1;
+    END
+  END
+END
+"""
+        result = analyze_algorithm(source, mode="worst", locale="es")
+
+        assert result.get("ok", False)
+        totals = result.get("totals", {})
+        assert totals.get("T_open") == "\\frac{5 n^{2}}{2} + \\frac{17 n}{2} + 3"
+        assert (
+            totals.get("T_polynomial")
+            == "C_{1} \\cdot 3 \\cdot \\left(n + 1\\right) + C_{2} \\cdot \\frac{3 n \\left(n + 3\\right)}{2} + C_{3} \\cdot n \\cdot \\left(n + 1\\right)"
+        )
+
+        accountable_rows = [row for row in result.get("byLine", []) if row.get("ck") != "—"]
+        triangular_row = next(row for row in accountable_rows if row.get("line") == 3)
+        assert (
+            triangular_row.get("line_cost_final")
+            == "C_{2} \\cdot \\frac{3 n \\left(n + 3\\right)}{2}"
+        )
+
+    def test_maximum_subarray_quadratic_counts_use_compact_fraction_form(self):
+        source = """maximumSubarrayCuadratico(A[n], n) BEGIN
+    mejor <- A[1];
+    FOR i <- 1 TO n DO BEGIN
+        suma <- 0;
+        FOR j <- i TO n DO BEGIN
+            suma <- suma + A[j];
+            IF (suma > mejor) THEN BEGIN
+                mejor <- suma;
+            END
+        END
+    END
+    RETURN mejor;
+END
+"""
+        result = analyze_algorithm(source, mode="worst", locale="es")
+
+        assert result.get("ok", False)
+        accountable_rows = [row for row in result.get("byLine", []) if row.get("ck") != "—"]
+        inner_for_row = next(row for row in accountable_rows if row.get("line") == 5)
+        assert inner_for_row.get("count") == "\\frac{n \\left(n + 3\\right)}{2}"
+        assert (
+            inner_for_row.get("line_cost_final")
+            == "C_{4} \\cdot \\frac{3 n \\left(n + 3\\right)}{2}"
+        )
 
     def test_generate_avg_procedure_uniform(self):
         """Test: _generate_avg_procedure genera procedimiento para modelo uniforme"""

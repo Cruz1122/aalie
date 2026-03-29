@@ -1,5 +1,101 @@
-from app.modules.export.document_model import _localize_analysis_text
+from app.modules.export.document_model import (
+    _localize_analysis_text,
+    build_document_model,
+)
 from app.modules.export.i18n import get_export_i18n
+from app.modules.export.snapshot_builder import build_export_state, build_snapshot
+
+
+def _iterative_case_bundle() -> dict:
+    return {
+        "method": "iterative_case",
+        "version": "iter_case_steps_v1",
+        "overallStatus": "complete",
+        "steps": [
+            {
+                "id": "iter_case_s1",
+                "index": 1,
+                "kind": "line_groups_identified",
+                "title": "Líneas consideradas",
+                "status": "complete",
+                "math": {"primaryLatex": None, "items": []},
+                "summary": "Resumen previo por líneas.",
+                "conceptNote": "Explicación previa por líneas.",
+                "teachingNote": "Explicación previa por líneas.",
+                "warning": None,
+                "confidence": "high",
+                "payload": {"reportable": False},
+                "template": {
+                    "summaryKey": "iter_case.lines.standard",
+                    "conceptKey": "concept.iter_case.lines",
+                    "warningKey": None,
+                    "params": {},
+                },
+                "audit": {"codes": [], "assumptions": [], "blockedBy": []},
+            },
+            {
+                "id": "iter_case_s2",
+                "index": 2,
+                "kind": "line_cost_sum_built",
+                "title": "Suma global",
+                "status": "complete",
+                "math": {"primaryLatex": "T(n) = 1 + n", "items": []},
+                "summary": "Se construye la suma global.",
+                "conceptNote": "Explicación de la suma global.",
+                "teachingNote": "Explicación de la suma global.",
+                "warning": None,
+                "confidence": "high",
+                "payload": {"reportable": True},
+                "template": {
+                    "summaryKey": "iter_case.sum.standard",
+                    "conceptKey": "concept.iter_case.sum",
+                    "warningKey": None,
+                    "params": {},
+                },
+                "audit": {"codes": [], "assumptions": [], "blockedBy": []},
+            },
+        ],
+    }
+
+
+def _snapshot_with_iterative_case_bundle() -> dict:
+    payload = {
+        "source": "sumatoria(n) BEGIN RETURN n; END",
+        "formats": ["markdown"],
+        "locale": "es",
+        "cachedParse": {
+            "ok": True,
+            "available": True,
+            "runtime": "python",
+            "error": None,
+            "ast": {"type": "Program", "body": []},
+            "errors": [],
+        },
+        "cachedClassify": {"ok": True, "kind": "iterative", "method": "ast"},
+        "cachedAnalyze": {
+            "ok": True,
+            "has_case_variability": False,
+            "worst": {
+                "ok": True,
+                "byLine": [],
+                "totals": {
+                    "T_open": "1",
+                    "T_polynomial": "1",
+                    "big_o": "O(1)",
+                    "big_omega": "\\Omega(1)",
+                    "big_theta": "\\Theta(1)",
+                    "procedure": [],
+                    "step_by_step": _iterative_case_bundle(),
+                    "notes": [],
+                },
+            },
+            "best": "same_as_worst",
+            "avg": "same_as_worst",
+        },
+        "cachedTraceByCase": {"worst": {"ok": True, "trace": {"steps": []}}},
+    }
+    state = build_export_state(payload)
+    return build_snapshot(state["snapshotInput"], state["options"])
 
 
 def test_localize_analysis_text_translates_master_case_references_to_spanish():
@@ -35,3 +131,18 @@ def test_localize_analysis_text_translates_master_step_titles():
         _localize_analysis_text("Evaluación de caso", get_export_i18n("en"))
         == "Case evaluation"
     )
+
+
+def test_build_document_model_prefers_iterative_case_bundle_from_reportable_step():
+    snapshot = _snapshot_with_iterative_case_bundle()
+
+    model = build_document_model(snapshot)
+    section = next(section for section in model.sections if section.id == "iterative-cases")
+    pedagogical_titles = [
+        block["step"]["title"]
+        for block in section.blocks
+        if block.get("kind") == "pedagogicalStep"
+    ]
+
+    assert "Suma global" in pedagogical_titles
+    assert "Líneas consideradas" not in pedagogical_titles

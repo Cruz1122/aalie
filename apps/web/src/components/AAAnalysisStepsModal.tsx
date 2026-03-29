@@ -13,6 +13,9 @@ interface AAAnalysisStepsModalProps {
   bundle: RecursiveMethodStepBundle | null | undefined;
   equation?: string | null;
   theta?: string | null;
+  title?: string;
+  showOverview?: boolean;
+  accentOverride?: "blue" | "purple" | "orange" | "cyan";
   equationLabelKey?: "characteristicEquation" | "recurrenceEquation";
 }
 
@@ -29,6 +32,9 @@ export default function AAAnalysisStepsModal({
   bundle,
   equation,
   theta,
+  title,
+  showOverview = true,
+  accentOverride,
   equationLabelKey = "recurrenceEquation",
 }: Readonly<AAAnalysisStepsModalProps>) {
   const t = useTranslations("analyzer.analysisSteps");
@@ -37,7 +43,10 @@ export default function AAAnalysisStepsModal({
       ? theta
       : `T(n) = ${theta}`
     : null;
-  const isIteration = bundle?.method === "iteration";
+  const isIteration =
+    bundle?.method === "iteration" ||
+    bundle?.method === "iterative_line" ||
+    bundle?.method === "iterative_case";
   const isMaster = bundle?.method === "master";
   const isRecursionTree = bundle?.method === "recursion_tree";
   const titleIconClassName = isIteration
@@ -58,13 +67,15 @@ export default function AAAnalysisStepsModal({
     "rounded-lg border border-white/10 bg-slate-800/60 p-3";
   const overallStatusCardClassName =
     "flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-slate-800/60 p-3";
-  const accent: "blue" | "purple" | "orange" | "cyan" = isIteration
-    ? "purple"
-    : isRecursionTree
-      ? "cyan"
-      : isMaster
-        ? "orange"
-        : "blue";
+  const accent: "blue" | "purple" | "orange" | "cyan" =
+    accentOverride ||
+    (isIteration
+      ? "purple"
+      : isRecursionTree
+        ? "cyan"
+        : isMaster
+          ? "orange"
+          : "blue");
 
   if (!open) return null;
 
@@ -72,7 +83,7 @@ export default function AAAnalysisStepsModal({
     <BaseModalContainer
       open={open}
       onClose={onClose}
-      title={t("title")}
+      title={title || t("title")}
       titleIcon="list"
       titleIconClassName={titleIconClassName}
       closeAriaLabel={t("closeModal")}
@@ -87,7 +98,7 @@ export default function AAAnalysisStepsModal({
         </div>
       ) : (
         <div className="space-y-4">
-          {bundle.overallStatus !== "complete" && (
+          {showOverview && bundle.overallStatus !== "complete" && (
             <div className={overallStatusCardClassName}>
               <div className="text-sm font-semibold text-white">
                 {t("overallStatus")}
@@ -100,7 +111,7 @@ export default function AAAnalysisStepsModal({
             </div>
           )}
 
-          {(equation || thetaLatex) && (
+          {showOverview && (equation || thetaLatex) && (
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
               {equation && (
                 <div className={equationCardClassName}>

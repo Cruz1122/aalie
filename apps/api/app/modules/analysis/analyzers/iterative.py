@@ -1,17 +1,21 @@
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
-from sympy import Expr, Integer, Sum, latex
+from sympy import Expr, Integer, Mul, Sum, factor_terms, latex, simplify, together
 
 from ..ir.expr_utils import expr_to_str
 from ..models.avg_model import AvgModel
 from ..utils.complexity_classes import ComplexityClasses
 from ..utils.expr_converter import ExprConverter
-from ..utils.summation_closer import SummationCloser
+from ..utils.summation_closer import SummationCloser, format_sympy_expr_latex
 from ..visitors.for_visitor import ForVisitor
 from ..visitors.if_visitor import IfVisitor
 from ..visitors.simple_visitor import SimpleVisitor
 from ..visitors.while_repeat_visitor import WhileRepeatVisitor
 from .base import BaseAnalyzer
+from .iterative_walkthrough_steps import (
+    build_iterative_case_step_bundle,
+    build_iterative_line_step_bundle,
+)
 
 
 class IterativeAnalyzer(
@@ -43,6 +47,256 @@ class IterativeAnalyzer(
         self.big_o: Optional[str] = None
         self.big_omega: Optional[str] = None
         self.big_theta: Optional[str] = None
+
+    def _counted_rows(self) -> List[Dict[str, Any]]:
+        return [r for r in self.rows if r.get("ck") != "—" and r.get("count") != "—"]
+
+    def _normalize_final_expr(
+        self,
+        expr: Optional[Expr],
+        *,
+        orig_expr: Optional[Expr] = None,
+        preserve_symbols: Optional[Set[str]] = None,
+    ) -> Optional[Expr]:
+        if expr is None:
+            return None
+
+        normalized = expr
+        if hasattr(self, "_sanitize_expression"):
+            normalized = self._sanitize_expression(
+                normalized,
+                orig_expr=orig_expr,
+                preserve_symbols=preserve_symbols,
+            )
+
+        normalized = simplify(normalized)
+        normalized = together(normalized)
+
+        try:
+            numer, denom = normalized.as_numer_denom()
+            free_symbols = tuple(sorted(normalized.free_symbols, key=lambda s: s.name))
+            if numer.is_polynomial(*free_symbols) and denom.is_polynomial(*free_symbols):
+                normalized = factor_terms(normalized)
+        except Exception:
+            pass
+
+        try:
+            normalized = normalized.replace(
+                lambda candidate: getattr(candidate, "is_Mul", False)
+                and any(getattr(arg, "is_One", False) for arg in candidate.args),
+                lambda candidate: Mul(
+                    *[
+                        arg
+                        for arg in candidate.args
+                        if not getattr(arg, "is_One", False)
+                    ],
+                    evaluate=True,
+                )
+                if any(
+                    not getattr(arg, "is_One", False) for arg in candidate.args
+                )
+                else Integer(1),
+            )
+        except Exception:
+            pass
+
+        return normalized
+
+    def _format_canonical_expr(
+        self,
+        expr: Optional[Expr],
+        *,
+        orig_expr: Optional[Expr] = None,
+        preserve_symbols: Optional[Set[str]] = None,
+        fallback: Optional[str] = None,
+    ) -> str:
+        if expr is None:
+            return fallback or "0"
+
+        try:
+            normalized = self._normalize_final_expr(
+                expr,
+                orig_expr=orig_expr,
+                preserve_symbols=preserve_symbols,
+            )
+            if normalized is None:
+                return fallback or "0"
+            rendered = format_sympy_expr_latex(normalized)
+            return self._strip_neutral_factors(rendered)
+        except Exception:
+            pass
+
+        try:
+            return self._strip_neutral_factors(format_sympy_expr_latex(expr))
+        except Exception:
+            return fallback or str(expr)
+
+    def _row_preserve_symbols(self, row: Dict[str, Any]) -> Optional[Set[str]]:
+        if row.get("euclid_pattern"):
+            return {"a", "b"}
+        return None
+
+    def _ck_latex(self, ck_value: Any) -> str:
+        ck = str(ck_value or "").strip()
+        if not ck:
+            return ""
+        if ("+" in ck or "-" in ck) and not (ck.startswith("(") and ck.endswith(")")):
+            return f"({ck})"
+        return ck
+
+    def _strip_neutral_factors(self, latex_str: str) -> str:
+        import re
+
+        cleaned = str(latex_str or "")
+        cleaned = re.sub(r"\b1 \\cdot ", "", cleaned)
+        cleaned = re.sub(r" \\cdot 1\b", "", cleaned)
+        return cleaned
+
+    def _final_line_count_expr(self, row: Dict[str, Any]) -> Optional[Expr]:
+        count_expr = row.get("count_expr")
+        if count_expr is None:
+            count_expr = row.get("count_raw_expr")
+        if count_expr is None:
+            count_expr = self._str_to_sympy(row.get("count_raw", "1"))
+        return self._normalize_final_expr(
+            count_expr,
+            orig_expr=row.get("count_raw_expr"),
+            preserve_symbols=self._row_preserve_symbols(row),
+        )
+
+    def _format_final_line_contribution(self, row: Dict[str, Any]) -> Optional[str]:
+        count_expr = self._final_line_count_expr(row)
+        if count_expr is None:
+            count_value = str(row.get("count") or "").strip()
+            if not count_value or count_value == "—":
+                return None
+            ck = self._ck_latex(row.get("ck"))
+            ops_val = row.get("ops", 1)
+            if ops_val not in (None, 1):
+                if ck:
+                    return f"{ck} \\cdot {ops_val} \\cdot ({count_value})"
+                return f"{ops_val} \\cdot ({count_value})"
+            if ck:
+                return f"{ck} \\cdot ({count_value})"
+            return count_value
+
+        try:
+            if count_expr == Integer(0):
+                return "0"
+        except Exception:
+            pass
+
+        ops_val = row.get("ops", 1)
+        contribution_expr = (
+            Integer(ops_val) * count_expr if ops_val not in (None, 1) else count_expr
+        )
+        contribution_latex = self._format_canonical_expr(
+            contribution_expr,
+            orig_expr=row.get("count_raw_expr"),
+            preserve_symbols=self._row_preserve_symbols(row),
+            fallback=str(row.get("count") or "0"),
+        )
+        if (
+            " + " in contribution_latex or " - " in contribution_latex
+        ) and "\\cdot" not in contribution_latex and "\\frac" not in contribution_latex:
+            contribution_latex = f"\\left({contribution_latex}\\right)"
+
+        ck = self._ck_latex(row.get("ck"))
+        if not ck:
+            return contribution_latex
+        if contribution_latex in {"1", "1.0"}:
+            return ck
+        return f"{ck} \\cdot {contribution_latex}"
+
+    def _build_case_sum_expressions(self) -> Dict[str, str]:
+        counted_rows = self._counted_rows()
+        raw_terms: List[str] = []
+        closed_terms: List[str] = []
+        for row in counted_rows:
+            ck = self._ck_latex(row.get("ck"))
+            if not ck:
+                continue
+            count_raw = str(row.get("count_raw", row.get("count", "1")))
+            count_closed = str(
+                row.get("expectedRuns")
+                if self.mode == "avg" and row.get("expectedRuns")
+                else row.get("count", count_raw)
+            )
+            ops_val = row.get("ops", 1)
+            if ops_val and ops_val != 1:
+                raw_terms.append(f"{ck} \\cdot {ops_val} \\cdot ({count_raw})")
+                closed_terms.append(
+                    self._format_final_line_contribution(row)
+                    or f"{ck} \\cdot {ops_val} \\cdot ({count_closed})"
+                )
+            else:
+                raw_terms.append(f"{ck} \\cdot ({count_raw})")
+                closed_terms.append(
+                    self._format_final_line_contribution(row)
+                    or f"{ck} \\cdot ({count_closed})"
+                )
+        raw_sum_expr = " + ".join(raw_terms) if raw_terms else "0"
+        closed_sum_expr = " + ".join(closed_terms) if closed_terms else raw_sum_expr
+        return {
+            "raw": raw_sum_expr,
+            "closed": closed_sum_expr,
+        }
+
+    def _format_simplified_case_expression(
+        self,
+        *,
+        t_open_expr: Optional[Expr],
+        has_unbounded: bool,
+    ) -> str:
+        if has_unbounded:
+            return "\\infty"
+        if t_open_expr is not None:
+            return self._format_canonical_expr(t_open_expr)
+        return self.build_t_open()
+
+    def _attach_iterative_step_bundles(
+        self,
+        *,
+        mode: str,
+        t_open_expr: Optional[Expr],
+        has_unbounded: bool,
+    ) -> None:
+        counted_rows = self._counted_rows()
+        for row in counted_rows:
+            row["line_cost_final"] = self._format_final_line_contribution(row)
+            row["step_by_step"] = build_iterative_line_step_bundle(
+                row=row,
+                locale=self.locale,
+                mode=mode,
+            )
+
+        sum_expressions = self._build_case_sum_expressions()
+        avg_model_note = None
+        if mode == "avg" and self.avg_model:
+            avg_model_note = self.avg_model.get_model_info(locale=self.locale).get(
+                "note"
+            )
+        hypotheses = []
+        if mode == "avg" and self.avg_model and self.avg_model.has_symbols():
+            hypotheses.append(self._note("hypotheses_symbolic"))
+
+        self.step_by_step = build_iterative_case_step_bundle(
+            rows=counted_rows,
+            locale=self.locale,
+            mode=mode,
+            raw_sum_expression=sum_expressions["raw"],
+            closed_sum_expression=sum_expressions["closed"],
+            simplified_expression=self._format_simplified_case_expression(
+                t_open_expr=t_open_expr,
+                has_unbounded=has_unbounded,
+            ),
+            big_o=self.big_o,
+            big_omega=self.big_omega,
+            big_theta=self.big_theta,
+            avg_model_note=avg_model_note,
+            hypotheses=hypotheses,
+            has_unbounded=has_unbounded,
+        )
 
     def build_t_open(self) -> str:
         """
@@ -780,7 +1034,9 @@ class IterativeAnalyzer(
                     # Actualizar count_raw para reflejar count_raw_expr (puede incluir probabilidades)
                     # Esto asegura que count_raw muestre la expresión con probabilidad antes del cierre
                     try:
-                        count_raw_latex_from_expr = latex(count_raw_expr)
+                        count_raw_latex_from_expr = format_sympy_expr_latex(
+                            count_raw_expr
+                        )
                         if isinstance(count_raw_latex_from_expr, str):
                             row["count_raw"] = count_raw_latex_from_expr
                             # También actualizar expectedRuns en modo promedio para que refleje la probabilidad
@@ -812,7 +1068,6 @@ class IterativeAnalyzer(
                     # Guardar la expresión SymPy evaluada para usar en build_t_open_expr
                     import re
 
-                    from sympy import latex as sympy_latex
                     from sympy import simplify
 
                     # Si contiene símbolos iterativos, no intentar evaluar sumatorias
@@ -841,11 +1096,26 @@ class IterativeAnalyzer(
                             orig_expr=expr_for_close,
                             preserve_symbols=preserve,
                         )
-                    row["count_expr"] = count_evaluated  # Expresión SymPy evaluada
+                    normalized_count_expr = self._normalize_final_expr(
+                        count_evaluated,
+                        orig_expr=expr_for_close,
+                        preserve_symbols=preserve,
+                    )
+                    row["count_expr"] = (
+                        normalized_count_expr
+                        if normalized_count_expr is not None
+                        else count_evaluated
+                    )
+                    row["count_closed"] = closed_count
+                    if mode == "avg":
+                        row["expectedRuns_closed"] = closed_count
 
-                    # Para el costo de línea mostrado, usar SIEMPRE la versión simplificada
-                    # de SymPy (count_expr), que normaliza productos (n*n → n^{2}, etc.).
-                    count_latex = sympy_latex(count_evaluated)
+                    count_latex = self._format_canonical_expr(
+                        row["count_expr"],
+                        orig_expr=expr_for_close,
+                        preserve_symbols=preserve,
+                        fallback=closed_count,
+                    )
 
                     # En algunos entornos, SymPy puede imprimir productos como "n n" en lugar de "n^{2}".
                     # Comprimir repeticiones consecutivas del mismo símbolo: n n -> n^{2}, n n n -> n^{3}, etc.
@@ -870,7 +1140,7 @@ class IterativeAnalyzer(
                     count_raw_latex_str = row.get(
                         "count_raw",
                         (
-                            latex(count_raw_expr)
+                            format_sympy_expr_latex(count_raw_expr)
                             if hasattr(count_raw_expr, "__str__")
                             else str(count_raw_expr)
                         ),
@@ -911,7 +1181,7 @@ class IterativeAnalyzer(
             if count_raw_expr is not None:
                 try:
                     # Convertir expresión SymPy a LaTeX para procesamiento
-                    count_raw_latex = latex(count_raw_expr)
+                    count_raw_latex = format_sympy_expr_latex(count_raw_expr)
                     # Verificar que el resultado sea un string
                     if not isinstance(count_raw_latex, str):
                         count_raw_latex = str(count_raw_latex)
@@ -954,11 +1224,25 @@ class IterativeAnalyzer(
                 closed_count, steps = closer.close_summation(
                     latex_for_close, variable or "n"
                 )
-                row["count"] = closed_count
+                row["count_closed"] = closed_count
+                try:
+                    parsed_closed = self._str_to_sympy(closed_count)
+                    row["count_expr"] = self._normalize_final_expr(
+                        parsed_closed,
+                        preserve_symbols=self._row_preserve_symbols(row),
+                    )
+                    row["count"] = self._format_canonical_expr(
+                        row["count_expr"],
+                        preserve_symbols=self._row_preserve_symbols(row),
+                        fallback=closed_count,
+                    )
+                except Exception:
+                    row["count"] = closed_count
 
                 # En modo promedio, actualizar expectedRuns con la expresión cerrada
                 if mode == "avg":
-                    row["expectedRuns"] = closed_count
+                    row["expectedRuns_closed"] = closed_count
+                    row["expectedRuns"] = row["count"]
 
                 # Generar procedimiento paso a paso
                 if mode == "avg":
@@ -1027,8 +1311,6 @@ class IterativeAnalyzer(
             self.big_theta = "\\Theta(\\log(\\min(a,b)))"
         elif t_open_expr is not None:
             try:
-                from sympy import latex as sympy_latex
-
                 # Bucles unbounded: complejidad tiende a infinito
                 has_unbounded = any(r.get("unbounded") for r in self.rows)
                 main_var = getattr(self, "variable", "n") or "n"
@@ -1046,7 +1328,7 @@ class IterativeAnalyzer(
                     self.big_theta = "\\Theta(1)"
                 else:
                     # Delegar el cálculo de la notación asintótica a ComplexityClasses.
-                    t_open_latex = sympy_latex(t_open_expr)
+                    t_open_latex = self._format_canonical_expr(t_open_expr)
                     self.big_o = complexity.calculate_big_o(t_open_latex, main_var)
                     self.big_omega = complexity.calculate_big_omega(
                         t_open_latex, main_var
@@ -1077,17 +1359,20 @@ class IterativeAnalyzer(
             t_open_expr=t_open_expr,
             has_unbounded=has_unbounded,
         )
+        self._attach_iterative_step_bundles(
+            mode=mode,
+            t_open_expr=t_open_expr,
+            has_unbounded=has_unbounded,
+        )
 
         # Retornar resultado, usando la expresión SymPy de T_open para formatear mejor el string.
         out = self.result()
         if isinstance(out, dict) and t_open_expr is not None:
             try:
-                from sympy import latex as sympy_latex
-
                 totals = out.get("totals") or {}
                 # Usar siempre la versión simplificada de SymPy para T_open (sin C_k),
                 # lo que evita artefactos como `n n` y normaliza a potencias `n^{2}`, `n^{3}`, etc.
-                totals["T_open"] = sympy_latex(t_open_expr)
+                totals["T_open"] = self._format_canonical_expr(t_open_expr)
                 out["totals"] = totals
             except Exception:
                 # Si algo falla al formatear, conservar el T_open original construido en BaseAnalyzer.
@@ -1126,8 +1411,8 @@ class IterativeAnalyzer(
 
     def _generate_avg_procedure(
         self,
-        t_open_expr: Optional[Expr],
-        has_unbounded: bool,
+        t_open_expr: Optional[Expr] = None,
+        has_unbounded: bool = False,
     ):
         """
         Genera los pasos del procedimiento para caso promedio.
@@ -1168,7 +1453,7 @@ class IterativeAnalyzer(
         for row in counted_rows:
             line_no = row.get("line", "?")
             count_raw = str(row.get("count_raw", row.get("count", "1")))
-            count_closed = str(row.get("count", count_raw))
+            count_closed = str(row.get("count_closed") or row.get("count", count_raw))
             if count_raw.replace(" ", "") == count_closed.replace(" ", ""):
                 procedure_steps.append(
                     f"E[N_{{{line_no}}}] = {count_closed}"
@@ -1197,29 +1482,13 @@ class IterativeAnalyzer(
             else "\\text{Step 3: Build full } A(n)"
         )
 
-        raw_terms = []
-        closed_terms = []
-        has_raw_summations = False
-        for row in counted_rows:
-            ck = str(row.get("ck", ""))
-            if not ck:
-                continue
-            count_raw = str(row.get("count_raw", row.get("count", "1")))
-            count_closed = str(row.get("count", count_raw))
-            ops_val = row.get("ops", 1)
-            if "\\sum" in count_raw:
-                has_raw_summations = True
-            if ops_val and ops_val != 1:
-                raw_terms.append(f"{ck} \\cdot {ops_val} \\cdot ({count_raw})")
-                closed_terms.append(
-                    f"{ck} \\cdot {ops_val} \\cdot ({count_closed})"
-                )
-            else:
-                raw_terms.append(f"{ck} \\cdot ({count_raw})")
-                closed_terms.append(f"{ck} \\cdot ({count_closed})")
-
-        raw_sum_expr = " + ".join(raw_terms) if raw_terms else "0"
-        closed_sum_expr = " + ".join(closed_terms) if closed_terms else raw_sum_expr
+        sum_expressions = self._build_case_sum_expressions()
+        raw_sum_expr = sum_expressions["raw"]
+        closed_sum_expr = sum_expressions["closed"]
+        has_raw_summations = any(
+            "\\sum" in str(row.get("count_raw", row.get("count", "1")))
+            for row in counted_rows
+        )
 
         if has_unbounded:
             procedure_steps.append(self._note("proc_a_of_n_tends_infinity"))
@@ -1257,7 +1526,7 @@ class IterativeAnalyzer(
         if has_unbounded:
             procedure_steps.append("A(n) = \\infty")
         elif t_open_expr is not None:
-            procedure_steps.append(f"A(n) = {latex(t_open_expr)}")
+            procedure_steps.append(f"A(n) = {self._format_canonical_expr(t_open_expr)}")
         else:
             procedure_steps.append(f"A(n) = {self.build_t_open()}")
 
@@ -1305,7 +1574,7 @@ class IterativeAnalyzer(
             line_no = row.get("line", "?")
             ck = row.get("ck", "C")
             count_raw = str(row.get("count_raw", row.get("count", "1")))
-            count_closed = str(row.get("count", count_raw))
+            count_closed = str(row.get("count_closed") or row.get("count", count_raw))
 
             # Inicializar line_procedure si no existe
             if "line_procedure" not in row:
@@ -1353,38 +1622,13 @@ class IterativeAnalyzer(
                         row["line_procedure"].append(step)
 
         # Construir versión explícita con conteos crudos para mostrar sumatoria inicial
-        raw_terms = []
-        for row in counted_rows:
-            ck = str(row.get("ck", ""))
-            if not ck:
-                continue
-            count_raw = str(row.get("count_raw", row.get("count", "1")))
-            ops_val = row.get("ops", 1)
-            if ops_val and ops_val != 1:
-                raw_terms.append(f"{ck} \\cdot {ops_val} \\cdot ({count_raw})")
-            else:
-                raw_terms.append(f"{ck} \\cdot ({count_raw})")
-        raw_sum_expr = " + ".join(raw_terms) if raw_terms else "0"
-
-        # Construir versión con sumatorias ya cerradas (si aplica)
-        closed_terms = []
-        has_raw_summations = False
-        for row in counted_rows:
-            ck = str(row.get("ck", ""))
-            if not ck:
-                continue
-            count_raw = str(row.get("count_raw", row.get("count", "1")))
-            if "\\sum" in count_raw:
-                has_raw_summations = True
-            count_closed = str(row.get("count", count_raw))
-            ops_val = row.get("ops", 1)
-            if ops_val and ops_val != 1:
-                closed_terms.append(
-                    f"{ck} \\cdot {ops_val} \\cdot ({count_closed})"
-                )
-            else:
-                closed_terms.append(f"{ck} \\cdot ({count_closed})")
-        closed_sum_expr = " + ".join(closed_terms) if closed_terms else raw_sum_expr
+        sum_expressions = self._build_case_sum_expressions()
+        raw_sum_expr = sum_expressions["raw"]
+        closed_sum_expr = sum_expressions["closed"]
+        has_raw_summations = any(
+            "\\sum" in str(row.get("count_raw", row.get("count", "1")))
+            for row in counted_rows
+        )
 
         # Paso 3: T(n) completa
         procedure_steps.append(self._note("proc_iter_step3", symbol_name=symbol_name))
@@ -1421,7 +1665,7 @@ class IterativeAnalyzer(
         # Paso 4: simplificación y notación asintótica
         procedure_steps.append(self._note("proc_iter_step4"))
         if t_open_expr is not None and not has_unbounded:
-            procedure_steps.append(f"{symbol_name} = {latex(t_open_expr)}")
+            procedure_steps.append(f"{symbol_name} = {self._format_canonical_expr(t_open_expr)}")
         if self.big_o:
             procedure_steps.append(f"{symbol_name} = {self.big_o}")
         if self.big_omega:
@@ -1433,366 +1677,70 @@ class IterativeAnalyzer(
 
     def _calculate_t_polynomial_fallback(self):
         """
-        Calcula T_polynomial de forma determinista usando SymPy Poly.
+        Calcula T_polynomial como suma determinista de contribuciones finales por línea.
 
-        Agrupa términos por potencias de n (n², n¹, n⁰) preservando las constantes C_k.
-        Usa Poly para extraer coeficientes de todas las potencias de n de forma determinista.
+        Preserva las constantes C_k y usa las expresiones canónicas ya cerradas por línea
+        para mantener coherencia con el walkthrough y con los costos finales mostrados.
 
         Returns:
             None (establece self.t_polynomial)
 
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        import re
+        polynomial_terms: list[str] = []
 
-        from sympy import (
-            Integer,
-            Poly,
-            Symbol,
-            expand,
-            latex,
-            oo,
-            powsimp,
-            simplify,
-            zoo,
-        )
-
-        from ..utils.summation_closer import SummationCloser
-
-        n_sym = Symbol(self.variable, integer=True, positive=True)
-
-        # Función auxiliar para parsear ck_str que puede contener múltiples C_k
-        def parse_ck_string(ck_str):
-            """Parsea un string como 'C_3 + C_4' en una lista de C_k individuales."""
-            ck_pattern = r"C_\{(\d+)\}"
-            ck_matches = re.findall(ck_pattern, ck_str)
-            return [f"C_{{{num}}}" for num in ck_matches]
-
-        # Estructura para agrupar C_k por grado del polinomio
-        # {degree: {coeff_tuple: [lista de C_k strings]}}
-        # coeff_tuple es una tupla normalizada para comparación determinista
-        degree_to_coeffs = {}  # {degree: {coeff_tuple: [C_k strings]}}
-        # Términos no polinomiales (log(n), etc.) para no usar subs(n,0) que da zoo
-        non_poly_terms = []  # [(ck_str, count_expr), ...]
-
-        closer = SummationCloser(locale=self.locale)
-
-        # Procesar cada fila y extraer coeficientes polinomiales
         for row in self.rows:
-            if row.get("ck") != "—" and row.get("count") != "—":
-                ck_str = row.get("ck", "")
-                count_expr = row.get("count_expr")
-                if count_expr is None:
-                    count_expr = row.get("count_raw_expr")
-                if count_expr is None:
-                    count_expr = self._str_to_sympy(row.get("count_raw", "1"))
+            if row.get("ck") == "—" or row.get("count") == "—":
+                continue
+            try:
+                contribution = self._format_final_line_contribution(row)
+            except Exception:
+                contribution = None
+            if not contribution or contribution == "0":
+                continue
+            polynomial_terms.append(contribution)
 
-                # Evaluar sumatorias y simplificar
-                count_expr = closer._evaluate_all_sums_sympy(count_expr)
-                count_expr = expand(count_expr)
-                count_expr = simplify(count_expr)
-
-                # Aplicar factor de operaciones elementales: C_k · ops · count
-                ops_val = row.get("ops", 1)
-                if ops_val != 1:
-                    count_expr = Integer(ops_val) * count_expr
-
-                # IMPORTANTE: Eliminar variables de iteración (i, j, k) que no deberían estar en el resultado final
-                count_expr = self._sanitize_expression(count_expr)
-
-                # Convertir a Poly para extraer coeficientes de todas las potencias
-                try:
-                    # Intentar crear Poly (puede fallar si hay símbolos no numéricos)
-                    poly = Poly(count_expr, n_sym)
-                    all_coeffs = (
-                        poly.all_coeffs()
-                    )  # Lista de coeficientes [coeff_n^max, ..., coeff_n^1, coeff_n^0]
-                    max_degree = poly.degree()
-
-                    # Procesar cada coeficiente (de mayor a menor grado)
-                    for degree in range(max_degree, -1, -1):
-                        coeff_idx = max_degree - degree
-                        if coeff_idx < len(all_coeffs):
-                            coeff = all_coeffs[coeff_idx]
-                            coeff = simplify(powsimp(coeff))
-
-                            # IMPORTANTE: Eliminar variables de iteración del coeficiente
-                            coeff = self._sanitize_expression(coeff)
-
-                            # Verificar si el coeficiente es cero (saltar términos nulos)
-                            try:
-                                if (
-                                    coeff.is_zero
-                                    if hasattr(coeff, "is_zero")
-                                    else (coeff == 0 or coeff == Integer(0))
-                                ):
-                                    continue
-                            except Exception:
-                                # Si hay error, intentar simplificar y verificar de nuevo
-                                try:
-                                    coeff = simplify(expand(coeff))
-                                    if (
-                                        coeff.is_zero
-                                        if hasattr(coeff, "is_zero")
-                                        else (coeff == 0 or coeff == Integer(0))
-                                    ):
-                                        continue
-                                except Exception:
-                                    pass
-
-                            # Normalizar coeficiente para comparación determinista
-                            # Usar una representación canónica (expandida y simplificada)
-                            coeff_normalized = expand(coeff)
-                            coeff_normalized = simplify(powsimp(coeff_normalized))
-                            # Asegurar que no queden variables de iteración
-                            coeff_normalized = self._sanitize_expression(
-                                coeff_normalized
-                            )
-
-                            # Verificar nuevamente después de normalizar (por si se simplificó a 0)
-                            try:
-                                if (
-                                    coeff_normalized.is_zero
-                                    if hasattr(coeff_normalized, "is_zero")
-                                    else (
-                                        coeff_normalized == 0
-                                        or coeff_normalized == Integer(0)
-                                    )
-                                ):
-                                    continue
-                            except Exception:
-                                pass
-
-                            # Crear tupla para comparación determinista
-                            # Convertir a string canónico para evitar problemas de comparación
-                            coeff_key = str(coeff_normalized)
-
-                            # Inicializar estructura si es necesario
-                            if degree not in degree_to_coeffs:
-                                degree_to_coeffs[degree] = {}
-
-                            if coeff_key not in degree_to_coeffs[degree]:
-                                degree_to_coeffs[degree][coeff_key] = {
-                                    "coeff": coeff_normalized,
-                                    "cks": [],
-                                }
-
-                            # Agregar C_k a este coeficiente
-                            degree_to_coeffs[degree][coeff_key]["cks"].append(ck_str)
-
-                except Exception:
-                    # Si Poly falla (p.ej., expresión con log(n) no es polinómica)
-                    try:
-                        # subs(n,0) en log(n)+1 da zoo → latex(zoo) = \tilde{\infty}. Evitar eso.
-                        const_value = simplify(count_expr.subs(n_sym, 0))
-                        is_infinite = (
-                            const_value in (oo, -oo, zoo)
-                            or (
-                                getattr(const_value, "is_infinite", None)
-                                and const_value.is_infinite
-                            )
-                            or (
-                                getattr(const_value, "is_zero", None)
-                                and str(const_value) == "zoo"
-                            )
-                        )
-                        if is_infinite:
-                            # No usar constante infinita; añadir como término no polinómico (C_k) * expr
-                            non_poly_terms.append((ck_str, count_expr))
-                            continue
-                        # Verificar si la constante es cero
-                        try:
-                            if (
-                                const_value.is_zero
-                                if hasattr(const_value, "is_zero")
-                                else (const_value == 0 or const_value == Integer(0))
-                            ):
-                                continue
-                        except Exception:
-                            pass
-                        const_key = str(const_value)
-                        if 0 not in degree_to_coeffs:
-                            degree_to_coeffs[0] = {}
-                        if const_key not in degree_to_coeffs[0]:
-                            degree_to_coeffs[0][const_key] = {
-                                "coeff": const_value,
-                                "cks": [],
-                            }
-                        degree_to_coeffs[0][const_key]["cks"].append(ck_str)
-                    except Exception:
-                        # Si todo falla, intentar añadir como término no polinómico para no perder la fila
-                        try:
-                            non_poly_terms.append((ck_str, count_expr))
-                        except Exception:
-                            continue
-
-        if not degree_to_coeffs:
+        if not polynomial_terms:
             self.t_polynomial = "0"
             return
 
-        # Construir T_polynomial en orden descendente de grado (n², n¹, n⁰)
-        polynomial_terms = []
+        result = " + ".join(polynomial_terms).replace("+ -", "- ")
+        self.t_polynomial = result
 
-        # Ordenar grados de mayor a menor
-        sorted_degrees = sorted(degree_to_coeffs.keys(), reverse=True)
+        import logging
+        import re
 
-        for degree in sorted_degrees:
-            coeff_dict = degree_to_coeffs[degree]
+        logger = logging.getLogger(__name__)
+        symbol_pattern = r"\b([a-zA-Z_]\w*(?:_\{[^}]+\})?)\b"
+        found_symbols = re.findall(symbol_pattern, result)
 
-            # Para cada coeficiente único en este grado, crear un término
-            # Ordenar coeficientes de forma determinista (por representación string)
-            sorted_coeffs = sorted(coeff_dict.items(), key=lambda x: str(x[0]))
+        invalid_symbols = []
+        iteration_vars_found = []
+        allowed = {"cdot", "text", "times", "left", "right", "frac"}
+        for sym in found_symbols:
+            clean_sym = sym.replace("_{", "").replace("}", "")
+            if clean_sym in ["i", "j", "k"]:
+                iteration_vars_found.append(sym)
+                invalid_symbols.append(sym)
+            elif not (
+                clean_sym.startswith("C_")
+                or clean_sym.startswith("t_")
+                or clean_sym in allowed
+            ):
+                pass
 
-            for coeff_key, data in sorted_coeffs:
-                coeff = data["coeff"]
-                cks_list = data["cks"]
-
-                # Verificar si el coeficiente es cero (eliminar términos nulos)
-                try:
-                    if (
-                        coeff.is_zero
-                        if hasattr(coeff, "is_zero")
-                        else (coeff == 0 or coeff == Integer(0))
-                    ):
-                        continue
-                except Exception:
-                    # Si hay error al verificar, intentar simplificar y verificar de nuevo
-                    try:
-                        coeff_simplified = simplify(coeff)
-                        if (
-                            coeff_simplified.is_zero
-                            if hasattr(coeff_simplified, "is_zero")
-                            else (
-                                coeff_simplified == 0 or coeff_simplified == Integer(0)
-                            )
-                        ):
-                            continue
-                        coeff = coeff_simplified
-                    except Exception:
-                        pass
-
-                # Parsear y combinar todas las C_k
-                all_cks = []
-                for ck in cks_list:
-                    parsed = parse_ck_string(ck)
-                    all_cks.extend(parsed)
-
-                # Ordenar C_k numéricamente para determinismo
-                def get_ck_number(ck_str):
-                    match = re.search(r"C_\{(\d+)\}", ck_str)
-                    return int(match.group(1)) if match else 0
-
-                all_cks.sort(key=get_ck_number)
-                ck_combined = (
-                    " + ".join(all_cks)
-                    if len(all_cks) > 1
-                    else all_cks[0] if all_cks else ""
+        if invalid_symbols:
+            if iteration_vars_found:
+                logger.error(
+                    f"ERROR CRÍTICO: T_polynomial contiene variables de iteración {iteration_vars_found} "
+                    f"que NO deberían estar presentes. Otros símbolos inválidos: {[s for s in invalid_symbols if s not in iteration_vars_found]}. "
+                    f"Expresión: {result}"
                 )
-
-                if not ck_combined:
-                    continue
-
-                # Formatear término según el grado y coeficiente
-                # Aplicar powsimp al término completo para "-4 n·n" → "-4 n²"
-                term_expr = coeff * (n_sym**degree)
-                term_expr = powsimp(term_expr)
-                if degree == 0:
-                    # Término constante
-                    if coeff == Integer(1):
-                        polynomial_terms.append(f"({ck_combined})")
-                    elif coeff == Integer(-1):
-                        polynomial_terms.append(f"-({ck_combined})")
-                    else:
-                        coeff_latex = latex(term_expr)
-                        polynomial_terms.append(f"({ck_combined}) \\cdot {coeff_latex}")
-                elif degree == 1:
-                    # Término lineal
-                    if coeff == Integer(1):
-                        polynomial_terms.append(f"({ck_combined}) \\cdot n")
-                    elif coeff == Integer(-1):
-                        polynomial_terms.append(f"-({ck_combined}) \\cdot n")
-                    else:
-                        term_latex = latex(term_expr)
-                        polynomial_terms.append(f"({ck_combined}) \\cdot {term_latex}")
-                else:
-                    # Términos de grado superior (n², n³, etc.)
-                    if coeff == Integer(1):
-                        polynomial_terms.append(
-                            f"({ck_combined}) \\cdot n^{{{degree}}}"
-                        )
-                    elif coeff == Integer(-1):
-                        polynomial_terms.append(
-                            f"-({ck_combined}) \\cdot n^{{{degree}}}"
-                        )
-                    else:
-                        term_latex = latex(term_expr)
-                        polynomial_terms.append(f"({ck_combined}) \\cdot {term_latex}")
-
-        # Añadir términos no polinomiales (log(n), etc.) sin usar subs(n,0) que daría zoo
-        def get_ck_number(ck_s):
-            m = re.search(r"C_\{(\d+)\}", ck_s)
-            return int(m.group(1)) if m else 0
-
-        for ck_str, expr in non_poly_terms:
-            parsed = parse_ck_string(ck_str)
-            all_cks = sorted(parsed, key=get_ck_number)
-            ck_combined = (
-                " + ".join(all_cks)
-                if len(all_cks) > 1
-                else (all_cks[0] if all_cks else "")
-            )
-            if ck_combined:
-                try:
-                    expr_latex = latex(expr)
-                    polynomial_terms.append(f"({ck_combined}) \\cdot {expr_latex}")
-                except Exception:
-                    pass
-
-        if polynomial_terms:
-            result = " + ".join(polynomial_terms)
-            result = result.replace("+ -", "- ")
-            self.t_polynomial = result
-
-            # VALIDACIÓN: Verificar que t_polynomial solo contenga variable de tamaño y C_k
-            # Genérico: aceptar cualquier variable de tamaño (n, N, m, etc.), no solo n
-            import re
-
-            symbol_pattern = r"\b([a-zA-Z_]\w*(?:_\{[^}]+\})?)\b"
-            found_symbols = re.findall(symbol_pattern, result)
-
-            invalid_symbols = []
-            iteration_vars_found = []
-            ALLOWED = {"cdot", "text", "times", "left", "right", "frac"}
-            for sym in found_symbols:
-                clean_sym = sym.replace("_{", "").replace("}", "")
-                if clean_sym in ["i", "j", "k"]:
-                    iteration_vars_found.append(sym)
-                    invalid_symbols.append(sym)
-                elif not (
-                    clean_sym.startswith("C_")
-                    or clean_sym.startswith("t_")
-                    or clean_sym in ALLOWED
-                ):
-                    # Variable de tamaño (n, N, m, etc.): permitir genéricamente
-                    pass
-
-            if invalid_symbols:
-                import logging
-
-                logger = logging.getLogger(__name__)
-                if iteration_vars_found:
-                    logger.error(
-                        f"ERROR CRÍTICO: T_polynomial contiene variables de iteración {iteration_vars_found} "
-                        f"que NO deberían estar presentes. Otros símbolos inválidos: {[s for s in invalid_symbols if s not in iteration_vars_found]}. "
-                        f"Expresión: {result}"
-                    )
-                else:
-                    logger.warning(
-                        f"T_polynomial contiene símbolos no permitidos: {invalid_symbols}. "
-                        f"Solo se permiten variables de tamaño (n, m, etc.), símbolos C_k y t_*. Expresión: {result}"
-                    )
-        else:
-            self.t_polynomial = "0"
+            else:
+                logger.warning(
+                    f"T_polynomial contiene símbolos no permitidos: {invalid_symbols}. "
+                    f"Solo se permiten variables de tamaño (n, m, etc.), símbolos C_k y t_*. Expresión: {result}"
+                )
 
     def _latex_to_sympy_expr(
         self, latex_str: str, variable: str = "n"

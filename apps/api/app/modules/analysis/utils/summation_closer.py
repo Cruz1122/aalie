@@ -15,8 +15,70 @@ from sympy import (
     sympify,
 )
 from sympy.parsing.sympy_parser import parse_expr
+from sympy.printing.latex import LatexPrinter
 
 from ..translations import get_labels
+
+
+class _ReadableLatexPrinter(LatexPrinter):
+    """Latex printer that keeps multiplicative parentheses and expands multi-limit sums."""
+
+    def _render_mul_factor(self, arg):
+        rendered = self._print(arg)
+        if isinstance(arg, Add):
+            rendered = f"\\left({rendered}\\right)"
+        return rendered
+
+    def _render_mul_factors(self, args, *, compact: bool) -> str:
+        separator = " " if compact else " \\cdot "
+        return separator.join(self._render_mul_factor(arg) for arg in args)
+
+    def _print_Mul(self, expr):
+        coeff, tail = expr.as_coeff_Mul(rational=True)
+        if getattr(coeff, "is_Rational", False) and getattr(coeff, "q", 1) != 1 and tail != 1:
+            numerator_factors = []
+            numerator_value = abs(getattr(coeff, "p", 1))
+            if numerator_value != 1:
+                numerator_factors.append(numerator_value)
+
+            if isinstance(tail, Mul):
+                numerator_factors.extend(tail.args)
+            else:
+                numerator_factors.append(tail)
+
+            numerator = self._render_mul_factors(numerator_factors, compact=True)
+            denominator = self._print(coeff.q)
+            prefix = "- " if coeff < 0 else ""
+            return f"{prefix}\\frac{{{numerator}}}{{{denominator}}}"
+
+        return self._render_mul_factors(expr.args, compact=False)
+
+    def _print_Sum(self, expr):
+        limits = list(getattr(expr, "limits", ()) or expr.args[1:])
+        if not limits:
+            return super()._print_Sum(expr)
+
+        rendered = self._print(getattr(expr, "function", expr.args[0]))
+        for limit in reversed(limits):
+            if len(limit) >= 3:
+                var, start, end = limit[:3]
+                rendered = (
+                    f"\\sum_{{{self._print(var)}={self._print(start)}}}"
+                    f"^{{{self._print(end)}}} {rendered}"
+                )
+            elif len(limit) == 1:
+                rendered = f"\\sum_{{{self._print(limit[0])}}} {rendered}"
+            else:
+                return super()._print_Sum(expr)
+        return rendered
+
+
+def format_sympy_expr_latex(expr: Expr) -> str:
+    """Render SymPy expressions with readable nested sums for UI/export output."""
+    try:
+        return _ReadableLatexPrinter().doprint(expr).replace("*", " \\cdot ")
+    except Exception:
+        return latex(expr)
 
 
 class SummationCloser:
@@ -1282,24 +1344,7 @@ class SummationCloser:
         Genérico: funciona para n·(k-1), m·(i+1), c·(a+b), etc.
         """
         try:
-            from sympy import Add as SymAdd
-            from sympy.printing.latex import LatexPrinter
-
-            class ParensLatexPrinter(LatexPrinter):
-                def _print_Mul(self, expr):
-                    parts = []
-                    for arg in expr.args:
-                        s = self._print(arg)
-                        if isinstance(arg, SymAdd):
-                            s = f"\\left({s}\\right)"
-                        parts.append(s)
-                    return " \\cdot ".join(parts)
-
-                # Heredar resto del comportamiento por defecto
-                def _print_Add(self, expr):
-                    return super()._print_Add(expr)
-
-            return ParensLatexPrinter().doprint(expr)
+            return format_sympy_expr_latex(expr)
         except Exception:
             return latex(expr)
 

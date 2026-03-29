@@ -8,6 +8,7 @@ from ...shared.types import AnalyzeOpenResponse, LineCost
 from ..models.avg_model import AvgModel
 from ..translations import get_note_labels
 from ..utils.expr_converter import ExprConverter
+from ..utils.summation_closer import format_sympy_expr_latex
 
 
 class BaseAnalyzer:
@@ -67,6 +68,9 @@ class BaseAnalyzer:
         )
         self.procedure_steps: Optional[List[str]] = (
             None  # pasos del procedimiento para caso promedio
+        )
+        self.step_by_step: Optional[Dict[str, Any]] = (
+            None  # walkthrough tipado compartido para el caso completo
         )
 
     # --- util: detección de variables de tamaño ---
@@ -345,7 +349,7 @@ class BaseAnalyzer:
 
         # Convertir a LaTeX para almacenar (mantener compatibilidad con formato actual)
         try:
-            count_raw_latex = latex(count_raw_expr)
+            count_raw_latex = format_sympy_expr_latex(count_raw_expr)
             # Asegurar que sea un string
             if not isinstance(count_raw_latex, str):
                 count_raw_latex = str(count_raw_latex)
@@ -1091,6 +1095,8 @@ class BaseAnalyzer:
         # (avg y también walkthroughs generales para worst/best en iterativos)
         if hasattr(self, "procedure_steps") and self.procedure_steps:
             totals["procedure"] = self.procedure_steps
+        if hasattr(self, "step_by_step") and self.step_by_step:
+            totals["step_by_step"] = self.step_by_step
 
         # Agregar T_polynomial si está disponible
         if self.t_polynomial:
@@ -1419,6 +1425,7 @@ class BaseAnalyzer:
         self.memo.clear()
         self.t_polynomial = None
         self.procedure_steps = None
+        self.step_by_step = None
 
     def add_procedure_step(self, step: str) -> None:
         """

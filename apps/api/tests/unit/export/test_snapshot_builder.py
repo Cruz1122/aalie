@@ -1,4 +1,56 @@
-from app.modules.export.snapshot_builder import build_export_state
+from app.modules.export.snapshot_builder import build_export_state, build_snapshot
+
+
+def _iterative_case_bundle() -> dict:
+    return {
+        "method": "iterative_case",
+        "version": "iter_case_steps_v1",
+        "overallStatus": "complete",
+        "steps": [
+            {
+                "id": "iter_case_s1",
+                "index": 1,
+                "kind": "line_groups_identified",
+                "title": "Líneas consideradas",
+                "status": "complete",
+                "math": {"primaryLatex": None, "items": []},
+                "summary": "Resumen previo por líneas.",
+                "conceptNote": "Explicación previa por líneas.",
+                "teachingNote": "Explicación previa por líneas.",
+                "warning": None,
+                "confidence": "high",
+                "payload": {"reportable": False},
+                "template": {
+                    "summaryKey": "iter_case.lines.standard",
+                    "conceptKey": "concept.iter_case.lines",
+                    "warningKey": None,
+                    "params": {},
+                },
+                "audit": {"codes": [], "assumptions": [], "blockedBy": []},
+            },
+            {
+                "id": "iter_case_s2",
+                "index": 2,
+                "kind": "line_cost_sum_built",
+                "title": "Suma global",
+                "status": "complete",
+                "math": {"primaryLatex": "T(n) = 1 + n", "items": []},
+                "summary": "Se construye la suma global.",
+                "conceptNote": "Explicación de la suma global.",
+                "teachingNote": "Explicación de la suma global.",
+                "warning": None,
+                "confidence": "high",
+                "payload": {"reportable": True},
+                "template": {
+                    "summaryKey": "iter_case.sum.standard",
+                    "conceptKey": "concept.iter_case.sum",
+                    "warningKey": None,
+                    "params": {},
+                },
+                "audit": {"codes": [], "assumptions": [], "blockedBy": []},
+            },
+        ],
+    }
 
 
 def _base_payload() -> dict:
@@ -28,6 +80,7 @@ def _base_payload() -> dict:
                     "big_omega": "\\Omega(1)",
                     "big_theta": "\\Theta(1)",
                     "procedure": [],
+                    "step_by_step": _iterative_case_bundle(),
                     "notes": [],
                 },
             },
@@ -65,3 +118,14 @@ def test_build_export_state_normalizes_formats_and_defaults():
 
     assert state["render"]["formats"] == ["markdown", "pdf"]
     assert state["options"]["includeGpuCpu"] is True
+
+
+def test_build_snapshot_includes_iterative_case_step_by_step():
+    state = build_export_state(_base_payload())
+
+    snapshot = build_snapshot(state["snapshotInput"], state["options"])
+
+    iterative_data = (snapshot.get("iterative") or {}).get("data") or {}
+    bundle = (iterative_data.get("caseStepByStep") or {}).get("worst") or {}
+    assert bundle.get("method") == "iterative_case"
+    assert bundle.get("version") == "iter_case_steps_v1"

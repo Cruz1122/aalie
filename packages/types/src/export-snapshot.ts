@@ -1,8 +1,8 @@
 import type {
+  AnalysisStepBundle,
   AnalyzeOpenResponse,
   LoopInvariant,
   Program,
-  RecursiveMethodStepBundle,
   TraceGraphCanonical,
 } from "./index";
 
@@ -225,6 +225,7 @@ export interface IterativeSnapshotSection {
   summations: Record<SnapshotCase, string | null>;
   simplificationSteps: Record<SnapshotCase, string[] | null>;
   asymptoticProcedure: Record<SnapshotCase, string[] | null>;
+  caseStepByStep: Record<SnapshotCase, AnalysisStepBundle | null>;
   trace: SnapshotSection<
     Record<SnapshotCase, {
       steps: unknown[];
@@ -265,7 +266,7 @@ export interface RecursiveSnapshotSection {
   rootsAndMultiplicities: SnapshotSection<
     Array<{ root: string; multiplicity: number }>
   >;
-  stepByStep: SnapshotSection<RecursiveMethodStepBundle>;
+  stepByStep: SnapshotSection<AnalysisStepBundle>;
   closedForm: SnapshotSection<{
     homogeneousSolution?: string;
     particularSolution?: string;

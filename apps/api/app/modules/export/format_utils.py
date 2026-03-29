@@ -14,6 +14,7 @@ BASIC_MATH_OPERATOR_PATTERN = re.compile(r"[=+*^]")
 FRACTION_PATTERN = re.compile(r"\b[A-Za-z]\b\s*/\s*\d")
 SUBTRACTION_PATTERN = re.compile(r"\b[A-Za-z]\b\s*-\s*\d")
 SPECIAL_TEXT_PATTERN = re.compile(r"[&%$#{}~]")
+EMBEDDED_MATH_PATTERN = re.compile(r"(\$[^$]+\$|\\\(.+?\\\)|\\\[.+?\\\])", re.S)
 
 LATEX_TEXT_ESCAPE_MAP = {
     "\\": r"\textbackslash{}",
@@ -243,7 +244,9 @@ def to_markdown_inline_math(value: str) -> str:
 def to_markdown_text_with_inline_math(text: str) -> str:
     normalized = text.strip()
     if not normalized or "$" in normalized or "\n" in normalized or ";" in normalized:
-        return text
+        return _render_markdown_text_with_embedded_math(text)
+    if r"\(" in normalized or r"\[" in normalized:
+        return _render_markdown_text_with_embedded_math(text)
     separator_index = normalized.find(":")
     if separator_index > -1:
         left = normalized[: separator_index + 1]
@@ -278,11 +281,32 @@ def normalize_latex_math_expression(value: str) -> str:
     return re.sub(r"([A-Za-z])_([0-9]+)\b", r"\1_{\2}", normalized)
 
 
+def _render_markdown_text_with_embedded_math(value: str) -> str:
+    normalized = value.strip()
+    if not normalized:
+        return value
+    parts = [part for part in re.split(EMBEDDED_MATH_PATTERN, value) if part]
+    if len(parts) == 1 and parts[0] == value and "$" not in value and r"\(" not in value and r"\[" not in value:
+        return value
+
+    rendered: List[str] = []
+    for part in parts:
+        if part.startswith("$") and part.endswith("$"):
+            rendered.append(f"${normalize_latex_math_expression(part)}$")
+        elif part.startswith(r"\(") and part.endswith(r"\)"):
+            rendered.append(f"${normalize_latex_math_expression(part)}$")
+        elif part.startswith(r"\[") and part.endswith(r"\]"):
+            rendered.append(f"${normalize_latex_math_expression(part)}$")
+        else:
+            rendered.append(part)
+    return "".join(rendered)
+
+
 def render_latex_text_with_inline_math(value: str) -> str:
     normalized = value.strip()
     if not normalized:
         return ""
-    if "$" in normalized:
+    if "$" in normalized or r"\(" in normalized or r"\[" in normalized:
         return render_latex_text_with_embedded_math(normalized)
     if is_narrative_equation(normalized) or ";" in normalized:
         return escape_latex_text(normalized)
@@ -303,13 +327,17 @@ def render_latex_text_with_embedded_math(value: str) -> str:
     normalized = value.strip()
     if not normalized:
         return ""
-    if "$" not in normalized:
+    if "$" not in normalized and r"\(" not in normalized and r"\[" not in normalized:
         return escape_latex_text(normalized)
-    parts = [part for part in re.split(r"(\$[^$]+\$)", normalized) if part]
+    parts = [part for part in re.split(EMBEDDED_MATH_PATTERN, normalized) if part]
     rendered: List[str] = []
     for part in parts:
         if part.startswith("$") and part.endswith("$"):
-            rendered.append(part)
+            rendered.append(f"${normalize_latex_math_expression(part)}$")
+        elif part.startswith(r"\(") and part.endswith(r"\)"):
+            rendered.append(f"${normalize_latex_math_expression(part)}$")
+        elif part.startswith(r"\[") and part.endswith(r"\]"):
+            rendered.append(r"\[" + normalize_latex_math_expression(part) + r"\]")
         else:
             rendered.append(escape_latex_text(part))
     return "".join(rendered)

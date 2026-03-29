@@ -808,6 +808,16 @@ class TestSummationCloser:
         assert isinstance(result, str)
         assert len(result) > 0
 
+    def test_sympy_to_latex_compacts_factored_rational_products(self):
+        """Test: _sympy_to_latex prefiere n(n+3)/2 frente a 1/2·n·(n+3)."""
+        from sympy import Rational, Symbol
+
+        n_sym = Symbol("n", integer=True, positive=True)
+        expr = Rational(1, 2) * n_sym * (n_sym + 3)
+        result = self.closer._sympy_to_latex(expr)
+
+        assert result == "\\frac{n \\left(n + 3\\right)}{2}"
+
     def test_sympy_to_latex_with_log(self):
         """Test: _sympy_to_latex convierte logaritmos a LaTeX"""
         from sympy import Symbol, log

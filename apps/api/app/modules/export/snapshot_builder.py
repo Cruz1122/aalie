@@ -971,6 +971,35 @@ def build_snapshot(
                         else None
                     ),
                 },
+                "caseStepByStep": {
+                    "worst": (
+                        (
+                            ((normalized_cases["worst"] or {}).get("totals") or {}).get(
+                                "step_by_step"
+                            )
+                        )
+                        if isinstance(normalized_cases["worst"], dict)
+                        else None
+                    ),
+                    "best": (
+                        (
+                            ((normalized_cases["best"] or {}).get("totals") or {}).get(
+                                "step_by_step"
+                            )
+                        )
+                        if isinstance(normalized_cases["best"], dict)
+                        else None
+                    ),
+                    "avg": (
+                        (
+                            ((normalized_cases["avg"] or {}).get("totals") or {}).get(
+                                "step_by_step"
+                            )
+                        )
+                        if isinstance(normalized_cases["avg"], dict)
+                        else None
+                    ),
+                },
                 "trace": (
                     create_section(
                         "available",

@@ -227,6 +227,7 @@ export interface LineCost {
   note?: string;        // aclaraciones (p. ej., "worst: max(then, else)")
   procedure?: string[]; // procedimiento completo por línea (desde count_raw hasta forma polinómica)
   line_procedure?: string[]; // pasos específicos de la línea (contabilidad + cierre de sumatorias)
+  step_by_step?: AnalysisStepBundle; // walkthrough tipado compartido para el modal de línea
   expectedRuns?: string; // E[# ejecuciones] para caso promedio (KaTeX)
   unbounded?: boolean;  // true si el bucle puede no terminar (evidencia de no terminación)
   unbounded_kind?: "non_terminating" | "unknown";  // clasificación del unbounded
@@ -346,6 +347,20 @@ export type IterationStepKind =
   | "dominant_term_identified"
   | "asymptotic_concluded";
 
+export type IterativeWalkthroughStepKind =
+  | "line_scope_identified"
+  | "line_execution_count_resolved"
+  | "line_count_summation_closed"
+  | "line_cost_built"
+  | "line_groups_identified"
+  | "line_counts_summarized"
+  | "line_cost_sum_built"
+  | "line_cost_sum_closed"
+  | "constant_substitution_applied"
+  | "cost_expression_simplified"
+  | "dominant_term_identified"
+  | "asymptotic_concluded";
+
 export type MasterStepKind =
   | "recurrence_detected"
   | "master_form_validated"
@@ -374,16 +389,21 @@ export type RecursionTreeStepKind =
 export type RecursiveStepKind =
   | CharacteristicStepKind
   | IterationStepKind
+  | IterativeWalkthroughStepKind
   | MasterStepKind
   | RecursionTreeStepKind;
 export type RecursiveMethodId =
   | "characteristic_equation"
   | "iteration"
+  | "iterative_line"
+  | "iterative_case"
   | "master"
   | "recursion_tree";
 export type RecursiveStepBundleVersion =
   | "ceq_steps_v1"
   | "iter_steps_v1"
+  | "iter_line_steps_v1"
+  | "iter_case_steps_v1"
   | "master_steps_v1"
   | "rt_steps_v1";
 
@@ -437,6 +457,15 @@ export interface RecursiveMethodStepBundle {
   steps: RecursiveAnalysisStep[];
 }
 
+export type AnalysisStepStatus = RecursiveStepStatus;
+export type AnalysisStepConfidence = RecursiveStepConfidence;
+export type AnalysisStepKind = RecursiveStepKind;
+export type AnalysisMethodId = RecursiveMethodId;
+export type AnalysisStepBundleVersion = RecursiveStepBundleVersion;
+export type AnalysisStepMathItem = RecursiveStepMathItem;
+export type AnalysisStep = RecursiveAnalysisStep;
+export type AnalysisStepBundle = RecursiveMethodStepBundle;
+
 /** Response exitoso con análisis abierto */
 export interface AnalyzeOpenResponse {
   ok: true;
@@ -445,6 +474,7 @@ export interface AnalyzeOpenResponse {
   totals: {
     T_open: string;                 // Σ C_k · count_k (KaTeX) - simplificado con SymPy (o A(n) para promedio)
     procedure?: string[];            // pasos (KaTeX) para construir T_open (legacy, puede estar vacío)
+    step_by_step?: AnalysisStepBundle; // walkthrough tipado compartido para el caso iterativo
     symbols?: Record<string,string>;// p.ej.: { n: "length(A)" }
     notes?: string[];               // reglas usadas (for, while, if) o pasos de procedimiento para promedio
     dp_validation_events?: Array<{

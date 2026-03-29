@@ -1347,24 +1347,27 @@ def _build_iterative_case_analysis_section(
     global_cases = (snapshot.get("globalResult") or {}).get("cases") or {}
     for case_name in CASE_ORDER:
         line_costs = list((data.get("lineCostTable") or {}).get(case_name) or [])
+        case_step_bundle = (data.get("caseStepByStep") or {}).get(case_name) or {}
+        case_walkthrough = [
+            step
+            for step in ((case_step_bundle or {}).get("steps") or [])
+            if isinstance(step, dict)
+            and (
+                not isinstance(step.get("payload"), dict)
+                or (step.get("payload") or {}).get("reportable") is not False
+            )
+        ]
         asymptotic_procedure = maybe_list(
             (data.get("asymptoticProcedure") or {}).get(case_name) or []
         )
         global_case = global_cases.get(case_name) or {}
-        if not global_case and not line_costs and not asymptotic_procedure:
+        if (
+            not global_case
+            and not line_costs
+            and not asymptotic_procedure
+            and not case_walkthrough
+        ):
             continue
-        count_sum = _build_count_summation_expression(line_costs)
-        count_formula = (
-            f"{count_sum['structural']} = {count_sum['simplified']}"
-            if count_sum["simplified"]
-            else count_sum["structural"]
-        )
-        final_complexity = (
-            global_case.get("big_theta")
-            or global_case.get("big_o")
-            or global_case.get("big_omega")
-        )
-        simplified_cost = global_case.get("T_polynomial") or global_case.get("T_open")
         blocks.extend(
             [
                 {"kind": "subsection", "title": _case_label(case_name, i18n)},
@@ -1381,6 +1384,63 @@ def _build_iterative_case_analysis_section(
                     if line_costs
                     else {"kind": "paragraph", "text": i18n["pedagogicalNoData"]}
                 ),
+            ]
+        )
+        if case_walkthrough:
+            blocks.append(
+                {
+                    "kind": "subsection",
+                    "title": localize(
+                        i18n, "Desarrollo paso a paso", "Step-by-step walkthrough"
+                    ),
+                }
+            )
+            for step in case_walkthrough:
+                blocks.append(
+                    {
+                        "kind": "pedagogicalStep",
+                        "step": {
+                            "index": step.get("index"),
+                            "title": _localize_analysis_text(step.get("title"), i18n),
+                            "status": step.get("status"),
+                            "formula": normalize_recursive_formula(
+                                ((step.get("math") or {}).get("primaryLatex"))
+                            ),
+                            "explanation": _build_recursive_step_explanation(
+                                step.get("summary"), step.get("conceptNote"), i18n
+                            ),
+                            "warning": _localize_analysis_text(
+                                step.get("warning"), i18n
+                            )
+                            or None,
+                            "supportReason": _localize_analysis_text(
+                                (
+                                    ((step.get("derivation") or {}).get("supportReason"))
+                                    if isinstance(step.get("derivation"), dict)
+                                    else None
+                                ),
+                                i18n,
+                            )
+                            or None,
+                        },
+                    }
+                )
+            continue
+
+        count_sum = _build_count_summation_expression(line_costs)
+        count_formula = (
+            f"{count_sum['structural']} = {count_sum['simplified']}"
+            if count_sum["simplified"]
+            else count_sum["structural"]
+        )
+        final_complexity = (
+            global_case.get("big_theta")
+            or global_case.get("big_o")
+            or global_case.get("big_omega")
+        )
+        simplified_cost = global_case.get("T_polynomial") or global_case.get("T_open")
+        blocks.extend(
+            [
                 {
                     "kind": "heading",
                     "text": localize(
