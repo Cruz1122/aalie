@@ -22,6 +22,10 @@ class WhileRepeatVisitor:
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
 
+    def __init__(self, **kwargs):
+        """Cooperative multiple inheritance: pass kwargs to next class in MRO."""
+        super().__init__(**kwargs)
+
     def iter_sym(self, kind: str, line: int) -> str:
         """
         Genera símbolos de iteración deterministas.

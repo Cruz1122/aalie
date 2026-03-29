@@ -18,6 +18,10 @@ class ForVisitor:
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
 
+    def __init__(self, **kwargs):
+        """Cooperative multiple inheritance: pass kwargs to next class in MRO."""
+        super().__init__(**kwargs)
+
     def _expr_to_sympy(self, expr: Any) -> Expr:
         """
         Convierte una expresión del AST a SymPy.

@@ -22,6 +22,10 @@ class IfVisitor:
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
 
+    def __init__(self, **kwargs):
+        """Cooperative multiple inheritance: pass kwargs to next class in MRO."""
+        super().__init__(**kwargs)
+
     def _expr_to_str(self, expr: Any) -> str:
         """Delega a expr_to_str del módulo ir.expr_utils."""
         from ..ir.expr_utils import expr_to_str
