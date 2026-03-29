@@ -19,6 +19,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Reordenamiento del procedimiento de promedio para seguir el mismo esquema de 4 pasos, respetando su modelo probabilístico y su cálculo por esperanza.
 - En mejor/peor/promedio, las resoluciones de sumatoria por línea ahora se muestran condicionadas a evidencia real de sumatorias en el procedimiento de la fila (no solo por plantilla), incluyendo pasos intermedios de linealidad, evaluación parcial y combinación.
 - La ecuación simplificada final se conserva para el paso de cierre asintótico, evitando duplicaciones innecesarias entre pasos consecutivos.
+- CI de tests del API optimizado: ejecución paralela (`pytest -n auto`) y exclusión de suite lenta en el gate principal (`-m "not slow"`), dejando benchmarks/estrés para ejecución separada.
 - **Separación de responsabilidades en modales para iterativos (worst/best case)**:
   - Pasos 1-2 (Determinar líneas contables + Resolver sumatorias por línea): ahora se distribuyen a cada `row["line_procedure"]` y se muestran en `ProcedureModal` bajo "How this cost was derived".
   - Pasos 3-4 (Sumar costos totales + Simplificar): se conservan en `procedure_steps` general y se muestran en `GeneralProcedureModal`.

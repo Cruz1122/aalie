@@ -11,6 +11,8 @@ import pytest
 
 from app.modules.analysis.service import analyze_algorithm
 
+pytestmark = [pytest.mark.slow]
+
 BENCHMARK_ALGORITHMS = [
     # 1. Euclides MCD - Θ(log min(a,b))
     (

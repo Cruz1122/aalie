@@ -1,5 +1,8 @@
 name: CI
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 on:
   push:
     branches: [main, develop, ci-test]
@@ -129,8 +132,8 @@ jobs:
       - name: Run tests with coverage
         working-directory: apps/api
         run: |
-          echo "🧪 Running tests with coverage..."
-          pytest tests/ -v --tb=short --cov=app --cov-report=xml --cov-report=term --cov-report=html --cov-fail-under=70
+          echo "🧪 Running fast tests with coverage (excluding slow suite)..."
+          pytest tests/ -v --tb=short -n auto --dist=worksteal -m "not slow" --cov=app --cov-report=xml --cov-report=term --cov-report=html --cov-fail-under=70
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
@@ -138,6 +141,7 @@ jobs:
         with:
           name: coverage-report
           path: apps/api/htmlcov/
+          if-no-files-found: ignore
           retention-days: 30
 
       - name: Test summary

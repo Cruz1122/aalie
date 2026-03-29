@@ -21,6 +21,8 @@ from tests._support.assertions import (
     notation_has_complexity,
 )
 
+pytestmark = [pytest.mark.contract, pytest.mark.slow]
+
 # --- Algoritmos iterativos ---
 
 FIBONACCI_ITERATIVE = """fibIter(n) BEGIN
