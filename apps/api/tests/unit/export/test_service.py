@@ -7,11 +7,16 @@ def test_export_service_build_snapshot(monkeypatch):
 
     import app.modules.export.service as service_mod
 
-    monkeypatch.setattr(service_mod, "build_export_state", lambda payload: {"state": payload})
+    monkeypatch.setattr(
+        service_mod, "build_export_state", lambda payload: {"state": payload}
+    )
     monkeypatch.setattr(
         service_mod,
         "build_snapshot_result",
-        lambda export_state: {"ok": True, "snapshot": {"id": export_state["state"]["id"]}},
+        lambda export_state: {
+            "ok": True,
+            "snapshot": {"id": export_state["state"]["id"]},
+        },
     )
 
     result = service.build_snapshot({"id": "abc"})
@@ -29,7 +34,9 @@ def test_export_service_build_assets_handles_bytes_and_text(monkeypatch):
         "build_snapshot",
         lambda payload: {"snapshot": {"snapshotId": "s1", "contentHash": "h1"}},
     )
-    monkeypatch.setattr(service_mod, "build_document_model", lambda snapshot: {"dummy": True})
+    monkeypatch.setattr(
+        service_mod, "build_document_model", lambda snapshot: {"dummy": True}
+    )
     monkeypatch.setattr(
         service_mod,
         "build_trace_diagram_assets",
@@ -64,7 +71,9 @@ def test_export_service_render_report(monkeypatch):
 
     import app.modules.export.service as service_mod
 
-    monkeypatch.setattr(service_mod, "build_export_state", lambda payload: {"state": payload})
+    monkeypatch.setattr(
+        service_mod, "build_export_state", lambda payload: {"state": payload}
+    )
     monkeypatch.setattr(
         service_mod,
         "render_report_result",

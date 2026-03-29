@@ -86,9 +86,7 @@ def normalize_recursive_formula(formula: Optional[str]) -> Optional[str]:
     if match:
         root_work = (match.group(1) or "").strip() or "N/A"
         leaf_work = (match.group(2) or "").strip() or "N/A"
-        return (
-            rf"\text{{Trabajo en raíz: }} {root_work} \quad \text{{Trabajo en hojas: }} {leaf_work}"
-        )
+        return rf"\text{{Trabajo en raíz: }} {root_work} \quad \text{{Trabajo en hojas: }} {leaf_work}"
 
     for pattern, replacement in (
         (
@@ -121,7 +119,9 @@ def ensure_sentence(text: str) -> str:
 
 
 def pick_case_complexity(snapshot: Dict[str, Any], case_name: str) -> str:
-    result = (((snapshot.get("globalResult") or {}).get("cases") or {}).get(case_name)) or {}
+    result = (
+        ((snapshot.get("globalResult") or {}).get("cases") or {}).get(case_name)
+    ) or {}
     return (
         result.get("big_theta")
         or result.get("big_o")
@@ -173,7 +173,12 @@ def build_status_block(
 
 def is_narrative_sentence(value: str) -> bool:
     normalized = value.strip()
-    if not normalized or " " not in normalized or "\\" in normalized or "=" in normalized:
+    if (
+        not normalized
+        or " " not in normalized
+        or "\\" in normalized
+        or "=" in normalized
+    ):
         return False
     if re.match(r"^(O|Omega|Theta)\s*\(", normalized):
         return False
@@ -317,7 +322,9 @@ def render_latex_text_with_inline_math(value: str) -> str:
         left = normalized[: separator_index + 1]
         right = normalized[separator_index + 1 :].strip()
         if not re.search(r"[;,]", right) and is_likely_math_expression(right):
-            return f"{escape_latex_text(left)} ${normalize_latex_math_expression(right)}$"
+            return (
+                f"{escape_latex_text(left)} ${normalize_latex_math_expression(right)}$"
+            )
     if is_likely_math_expression(normalized):
         return f"${normalize_latex_math_expression(normalized)}$"
     return escape_latex_text(normalized)

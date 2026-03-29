@@ -47,7 +47,9 @@ def test_general_helpers_cover_branches():
 def test_recursive_formula_normalization_and_sentence_helpers():
     assert normalize_recursive_formula(None) is None
 
-    dominant = r"\text{Trabajo en raíz } n " r"\\ " r"\text{Trabajo en hojas (} n^2 \text{)}"
+    dominant = (
+        r"\text{Trabajo en raíz } n " r"\\ " r"\text{Trabajo en hojas (} n^2 \text{)}"
+    )
     normalized_dominant = normalize_recursive_formula(dominant)
     assert "Trabajo en raíz:" in normalized_dominant
     assert "Trabajo en hojas:" in normalized_dominant
@@ -93,10 +95,15 @@ def test_status_and_case_helpers():
     )
     assert todos[0] == "Normalized pseudocode serialization is not implemented."
     assert todos[1] == "Loop invariant extraction is not implemented."
-    assert todos[2] == "Full symbolic recurrence tree reconstruction is not implemented."
+    assert (
+        todos[2] == "Full symbolic recurrence tree reconstruction is not implemented."
+    )
     assert todos[3] == "custom"
 
-    assert build_status_block("recursive.recurrence", {"status": "available"}, i18n) is None
+    assert (
+        build_status_block("recursive.recurrence", {"status": "available"}, i18n)
+        is None
+    )
     status_block = build_status_block(
         "recursive.recurrence",
         {"status": "missing_data", "todos": ["custom"]},
@@ -139,7 +146,10 @@ def test_markdown_and_latex_text_helpers_more_paths():
     assert to_markdown_text_with_inline_math("x + y") == "$x + y$"
     assert to_markdown_text_with_inline_math("texto normal") == "texto normal"
     assert to_markdown_text_with_inline_math("") == ""
-    assert to_markdown_text_with_inline_math("texto; con punto y coma") == "texto; con punto y coma"
+    assert (
+        to_markdown_text_with_inline_math("texto; con punto y coma")
+        == "texto; con punto y coma"
+    )
 
     escaped = escape_latex_text(r"a_b & c%")
     assert r"\_" in escaped and r"\&" in escaped and r"\%" in escaped
@@ -188,7 +198,8 @@ def test_render_latex_text_with_inline_math_preserves_embedded_math():
 
 def test_render_latex_text_with_embedded_math_converts_parenthesized_latex():
     text = (
-        r"A partir de \(T(n) = 4 \cdot n^{2} + 11 \cdot n + 6\), " r"queda gobernada por \(n^{2}\)."
+        r"A partir de \(T(n) = 4 \cdot n^{2} + 11 \cdot n + 6\), "
+        r"queda gobernada por \(n^{2}\)."
     )
     assert (
         render_latex_text_with_embedded_math(text)
@@ -198,7 +209,8 @@ def test_render_latex_text_with_embedded_math_converts_parenthesized_latex():
 
 def test_to_markdown_text_with_inline_math_converts_parenthesized_latex():
     text = (
-        r"A partir de \(T(n) = 4 \cdot n^{2} + 11 \cdot n + 6\), " r"queda gobernada por \(n^{2}\)."
+        r"A partir de \(T(n) = 4 \cdot n^{2} + 11 \cdot n + 6\), "
+        r"queda gobernada por \(n^{2}\)."
     )
     assert (
         to_markdown_text_with_inline_math(text)
