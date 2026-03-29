@@ -8,6 +8,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ## [Unreleased] - 2026-03-28
 
 ### Added
+- Cobertura agresiva de módulo `export` con 26 nuevos tests unitarios: `test_router.py` (4 tests), `test_latex_compiler.py` (4 tests), `test_trace_diagram.py` (6 tests), `test_document_model_helpers.py` (4 tests), `test_latex_renderer_expanded.py` (7 tests). Logró aumentar cobertura global de 70.08% a 75.51% (+1,022 líneas cubiertas).
 - Procedimiento general didáctico de 4 pasos para análisis iterativo en mejor y peor caso: identificación de líneas contables, cálculo de ejecuciones por línea, construcción de la ecuación completa y cierre asintótico.
 - Procedimiento didáctico de 4 pasos para caso promedio en flujo independiente, manteniendo la semántica de esperanza $E[N_{\ell}]$ por línea.
 - Subpaso explícito en el paso de construcción de ecuación para reemplazar sumatorias por sus formas cerradas cuando el costo crudo contiene términos con $\sum$.
