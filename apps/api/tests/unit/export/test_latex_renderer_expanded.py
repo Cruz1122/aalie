@@ -111,7 +111,12 @@ def test_render_institutional_code_and_status():
     assert "2: return x" in rendered_code
 
     status_rendered = _render_status(
-        {"label": "Warnings", "status": "partial", "message": "Need review", "todos": ["todo-1"]},
+        {
+            "label": "Warnings",
+            "status": "partial",
+            "message": "Need review",
+            "todos": ["todo-1"],
+        },
         {"statusPrefix": "Estado"},
     )
     assert "Need review" in status_rendered

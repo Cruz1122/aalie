@@ -20,7 +20,9 @@ class _FakeService:
 
 
 def _request_with_headers(headers):
-    raw_headers = [(key.encode("utf-8"), value.encode("utf-8")) for key, value in headers.items()]
+    raw_headers = [
+        (key.encode("utf-8"), value.encode("utf-8")) for key, value in headers.items()
+    ]
     scope = {
         "type": "http",
         "method": "POST",
@@ -31,12 +33,17 @@ def _request_with_headers(headers):
 
 
 def test_export_report_rejects_empty_source(monkeypatch):
-    monkeypatch.setattr(export_router, "export_service", _FakeService(response={"ok": True}))
+    monkeypatch.setattr(
+        export_router, "export_service", _FakeService(response={"ok": True})
+    )
 
     response = export_router.export_report(_request_with_headers({}), {"source": "   "})
 
     assert response.status_code == 400
-    assert json.loads(response.body.decode("utf-8"))["error"] == "Field 'source' is required."
+    assert (
+        json.loads(response.body.decode("utf-8"))["error"]
+        == "Field 'source' is required."
+    )
 
 
 def test_export_report_success_propagates_origin_and_attachment_headers(monkeypatch):
@@ -59,7 +66,9 @@ def test_export_report_success_propagates_origin_and_attachment_headers(monkeypa
     assert response.status_code == 200
     assert response.body == b"PDF-BYTES"
     assert response.headers["content-type"] == "application/pdf"
-    assert response.headers["content-disposition"] == 'attachment; filename="report.pdf"'
+    assert (
+        response.headers["content-disposition"] == 'attachment; filename="report.pdf"'
+    )
     assert response.headers["x-snapshot-id"] == "snap-123"
     assert response.headers["x-content-hash"] == "hash-xyz"
     assert service.last_payload["requestOrigin"] == "http://localhost:3000"

@@ -93,10 +93,14 @@ def test_loop_line_extraction_and_label_stripping():
         {"lineNumber": 2, "text": "b <- 2"},
         {"lineNumber": 3, "text": "WHILE x"},
     ]
-    assert _extract_selected_loop_lines(pseudocode, {"lineStart": 4, "lineEnd": 2}) == []
+    assert (
+        _extract_selected_loop_lines(pseudocode, {"lineStart": 4, "lineEnd": 2}) == []
+    )
     assert _extract_selected_loop_lines(pseudocode, None) == []
 
-    stripped = _strip_leading_label("Resumen:  Dominante: O(n)", ["Resumen", "Dominante"])
+    stripped = _strip_leading_label(
+        "Resumen:  Dominante: O(n)", ["Resumen", "Dominante"]
+    )
     assert stripped == "O(n)"
 
 
@@ -107,7 +111,12 @@ def test_state_and_trace_helpers_cover_change_and_stability_logic():
             "eventKind": "loop_enter",
             "variables": {"i": 0, "n": 10, "const": 42},
             "variablesChanged": {},
-            "iteration": {"loopVar": "i", "currentValue": 0, "maxValue": 10, "iteration": 1},
+            "iteration": {
+                "loopVar": "i",
+                "currentValue": 0,
+                "maxValue": 10,
+                "iteration": 1,
+            },
             "description": "entry",
         },
         {
@@ -115,7 +124,12 @@ def test_state_and_trace_helpers_cover_change_and_stability_logic():
             "eventKind": "loop_iter_enter",
             "variables": {"i": 1, "n": 10, "const": 42},
             "variablesChanged": {"i": 1},
-            "iteration": {"loopVar": "i", "currentValue": 1, "maxValue": 10, "iteration": 2},
+            "iteration": {
+                "loopVar": "i",
+                "currentValue": 1,
+                "maxValue": 10,
+                "iteration": 2,
+            },
             "description": "iter",
         },
         {
@@ -173,7 +187,9 @@ def test_state_and_trace_helpers_cover_change_and_stability_logic():
     assert context_fallback == "assignment"
 
     assert _build_state_change_text(current, previous) == "i: 0 -> 1"
-    assert _build_state_change_text({**current, "variablesChanged": {}}, previous) == "-"
+    assert (
+        _build_state_change_text({**current, "variablesChanged": {}}, previous) == "-"
+    )
 
 
 def test_hardware_pedagogical_helpers_cover_narratives_and_patterns():
@@ -194,7 +210,9 @@ def test_hardware_pedagogical_helpers_cover_narratives_and_patterns():
     assert "dependencia secuencial" in _pedagogical_hardware_reason(
         "Loop-carried dependency detected.", i18n_es
     )
-    assert "parallel reduction" in _pedagogical_hardware_reason("Scalar reduction in loop", i18n_en)
+    assert "parallel reduction" in _pedagogical_hardware_reason(
+        "Scalar reduction in loop", i18n_en
+    )
 
     blocks = _build_gpu_cpu_blocks(
         {

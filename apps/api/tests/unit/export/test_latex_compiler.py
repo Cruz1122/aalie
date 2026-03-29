@@ -29,10 +29,14 @@ def _make_assets(tmp_path: Path) -> LatexAssetRegistry:
 
 
 def test_compile_latex_raises_when_compiler_missing(monkeypatch):
-    monkeypatch.setattr("app.modules.export.latex_compiler.is_pdflatex_available", lambda: False)
+    monkeypatch.setattr(
+        "app.modules.export.latex_compiler.is_pdflatex_available", lambda: False
+    )
 
     with pytest.raises(LatexCompilationError) as exc_info:
-        compile_latex_to_pdf("\\documentclass{article}\\begin{document}x\\end{document}")
+        compile_latex_to_pdf(
+            "\\documentclass{article}\\begin{document}x\\end{document}"
+        )
 
     assert exc_info.value.kind == "compiler_missing"
 
@@ -41,13 +45,16 @@ def test_compile_latex_success_with_extra_files(monkeypatch, tmp_path):
     workdir = tmp_path / "work"
     workdir.mkdir(parents=True, exist_ok=True)
 
-    monkeypatch.setattr("app.modules.export.latex_compiler.is_pdflatex_available", lambda: True)
+    monkeypatch.setattr(
+        "app.modules.export.latex_compiler.is_pdflatex_available", lambda: True
+    )
     monkeypatch.setattr(
         "app.modules.export.latex_compiler.resolve_latex_asset_registry",
         lambda: _make_assets(tmp_path / "assets"),
     )
     monkeypatch.setattr(
-        "app.modules.export.latex_compiler.tempfile.mkdtemp", lambda prefix: str(workdir)
+        "app.modules.export.latex_compiler.tempfile.mkdtemp",
+        lambda prefix: str(workdir),
     )
 
     calls = {"count": 0}
@@ -82,13 +89,16 @@ def test_compile_latex_returns_compilation_failed_with_logs(monkeypatch, tmp_pat
     workdir = tmp_path / "work-fail"
     workdir.mkdir(parents=True, exist_ok=True)
 
-    monkeypatch.setattr("app.modules.export.latex_compiler.is_pdflatex_available", lambda: True)
+    monkeypatch.setattr(
+        "app.modules.export.latex_compiler.is_pdflatex_available", lambda: True
+    )
     monkeypatch.setattr(
         "app.modules.export.latex_compiler.resolve_latex_asset_registry",
         lambda: _make_assets(tmp_path / "assets-fail"),
     )
     monkeypatch.setattr(
-        "app.modules.export.latex_compiler.tempfile.mkdtemp", lambda prefix: str(workdir)
+        "app.modules.export.latex_compiler.tempfile.mkdtemp",
+        lambda prefix: str(workdir),
     )
     monkeypatch.setattr(
         "app.modules.export.latex_compiler.subprocess.run",
@@ -109,17 +119,22 @@ def test_compile_latex_returns_compilation_failed_with_logs(monkeypatch, tmp_pat
     assert any(item["filename"] == "report.tex" for item in error.asset_manifest)
 
 
-def test_compile_latex_raises_output_missing_when_pdf_not_generated(monkeypatch, tmp_path):
+def test_compile_latex_raises_output_missing_when_pdf_not_generated(
+    monkeypatch, tmp_path
+):
     workdir = tmp_path / "work-missing"
     workdir.mkdir(parents=True, exist_ok=True)
 
-    monkeypatch.setattr("app.modules.export.latex_compiler.is_pdflatex_available", lambda: True)
+    monkeypatch.setattr(
+        "app.modules.export.latex_compiler.is_pdflatex_available", lambda: True
+    )
     monkeypatch.setattr(
         "app.modules.export.latex_compiler.resolve_latex_asset_registry",
         lambda: _make_assets(tmp_path / "assets-missing"),
     )
     monkeypatch.setattr(
-        "app.modules.export.latex_compiler.tempfile.mkdtemp", lambda prefix: str(workdir)
+        "app.modules.export.latex_compiler.tempfile.mkdtemp",
+        lambda prefix: str(workdir),
     )
     monkeypatch.setattr(
         "app.modules.export.latex_compiler.subprocess.run",

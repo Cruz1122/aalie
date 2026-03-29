@@ -68,7 +68,10 @@ def test_layout_and_mermaid_include_synthetic_return_edges_and_stats():
 
     layout = build_trace_diagram_layout(
         graph,
-        {"summary": {"totalCalls": 10, "maxRecursionDepth": 5}, "diagnostics": {"truncated": True}},
+        {
+            "summary": {"totalCalls": 10, "maxRecursionDepth": 5},
+            "diagnostics": {"truncated": True},
+        },
     )
     mermaid = render_trace_diagram_mermaid(
         graph, summary={"totalCalls": 10}, diagnostics={"truncated": True}
@@ -83,21 +86,38 @@ def test_layout_and_mermaid_include_synthetic_return_edges_and_stats():
 
 def test_reduction_modes_cover_full_compact_and_collapsed_paths():
     nodes_small = [
-        {"id": f"n{i}", "data": {"label": "x"}, "position": {"x": 0, "y": 0}} for i in range(10)
+        {"id": f"n{i}", "data": {"label": "x"}, "position": {"x": 0, "y": 0}}
+        for i in range(10)
     ]
     edges_small = [
-        {"id": f"e{i}", "source": f"n{i}", "target": f"n{i+1}", "type": "smoothstep", "label": ""}
+        {
+            "id": f"e{i}",
+            "source": f"n{i}",
+            "target": f"n{i+1}",
+            "type": "smoothstep",
+            "label": "",
+        }
         for i in range(9)
     ]
     reduced_small = build_reduction(nodes_small, edges_small)
     assert reduced_small["labelMode"] == "full"
 
     nodes_mid = [
-        {"id": f"m{i}", "data": {"label": "long label" * 20}, "position": {"x": 0, "y": 0}}
+        {
+            "id": f"m{i}",
+            "data": {"label": "long label" * 20},
+            "position": {"x": 0, "y": 0},
+        }
         for i in range(30)
     ]
     edges_mid = [
-        {"id": f"em{i}", "source": f"m{i}", "target": f"m{i+1}", "type": "smoothstep", "label": ""}
+        {
+            "id": f"em{i}",
+            "source": f"m{i}",
+            "target": f"m{i+1}",
+            "type": "smoothstep",
+            "label": "",
+        }
         for i in range(29)
     ]
     reduced_mid = build_reduction(nodes_mid, edges_mid)
@@ -105,11 +125,21 @@ def test_reduction_modes_cover_full_compact_and_collapsed_paths():
     assert reduced_mid["collapsedNodes"] == 0
 
     nodes_large = [
-        {"id": f"l{i}", "data": {"label": "line one\nline two"}, "position": {"x": 0, "y": 0}}
+        {
+            "id": f"l{i}",
+            "data": {"label": "line one\nline two"},
+            "position": {"x": 0, "y": 0},
+        }
         for i in range(70)
     ]
     edges_large = [
-        {"id": f"el{i}", "source": f"l{i}", "target": f"l{i+1}", "type": "smoothstep", "label": ""}
+        {
+            "id": f"el{i}",
+            "source": f"l{i}",
+            "target": f"l{i+1}",
+            "type": "smoothstep",
+            "label": "",
+        }
         for i in range(69)
     ]
     reduced_large = build_reduction(nodes_large, edges_large)
@@ -145,14 +175,18 @@ def test_svg_and_pdf_renderers_return_expected_outputs():
 
 
 def test_label_compaction_and_return_edge_synthesis_helpers():
-    label = compact_label("line-1\nline-2\nline-3\nline-4", max_chars_per_line=6, max_lines=2)
+    label = compact_label(
+        "line-1\nline-2\nline-3\nline-4", max_chars_per_line=6, max_lines=2
+    )
     assert "…" in label
 
     nodes = [
         {"id": "a", "data": {"label": "f"}},
         {"id": "b", "data": {"label": "g\n→ n-1"}},
     ]
-    edges = [{"id": "ab", "source": "a", "target": "b", "label": "", "type": "smoothstep"}]
+    edges = [
+        {"id": "ab", "source": "a", "target": "b", "label": "", "type": "smoothstep"}
+    ]
     synthetic = synthesize_return_edges(nodes, edges)
     assert synthetic[0]["source"] == "b"
     assert synthetic[0]["target"] == "a"
