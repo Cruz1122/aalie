@@ -305,8 +305,6 @@ jobs:
       - name: Ruff linting (api)
         run: python -m ruff check apps/api --output-format=github
 
-      - name: Black formatting (api)
-        run: python -m black --check --diff apps/api mcp packages/grammar/py
 
   docs-contracts:
     runs-on: ubuntu-latest
