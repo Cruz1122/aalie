@@ -2,6 +2,7 @@ import pytest
 
 # tests/unit/test_complexity_classes.py
 from app.modules.analysis.utils.complexity_classes import ComplexityClasses
+
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 

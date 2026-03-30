@@ -1,6 +1,7 @@
 import pytest
 
 from app.modules.export.snapshot_builder import build_export_state, build_snapshot
+
 pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
 
 

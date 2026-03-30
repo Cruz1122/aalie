@@ -4,8 +4,9 @@ Tests unitarios para app.modules.parsing.service.
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from app.modules.parsing.service import normalize_source_text, parse_source
 

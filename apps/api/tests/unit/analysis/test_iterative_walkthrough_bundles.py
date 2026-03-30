@@ -1,6 +1,7 @@
 import pytest
 
 from app.modules.analysis.service import analyze_algorithm
+
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 SIMPLE_FOR = """simpleFor(n) BEGIN

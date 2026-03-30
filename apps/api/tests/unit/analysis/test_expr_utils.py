@@ -16,7 +16,6 @@ from app.modules.analysis.ir.expr_utils import (
     is_simple_constant,
 )
 
-
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 

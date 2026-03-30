@@ -8,6 +8,7 @@ import pytest
 from sympy import Integer, Symbol
 
 from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
+
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 

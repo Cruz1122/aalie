@@ -2,6 +2,7 @@
 import pytest
 
 from app.modules.analysis.utils.summation_closer import SummationCloser
+
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 

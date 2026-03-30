@@ -1,12 +1,11 @@
-import pytest
-
 from pathlib import Path
+
+import pytest
 
 from app.modules.export.asset_registry import (
     read_latex_template,
     resolve_latex_asset_registry,
 )
-
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
 

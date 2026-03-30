@@ -1,17 +1,13 @@
-import pytest
-
 import json
 from zipfile import ZipFile
+
+import pytest
 
 from app.modules.export.asset_builder import build_asset_manifest
 from app.modules.export.asset_registry import (
     read_latex_template,
     resolve_latex_asset_registry,
 )
-
-
-pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
-
 from app.modules.export.i18n import get_export_i18n
 from app.modules.export.models import (
     DocumentInstitutionInfo,
@@ -27,6 +23,8 @@ from app.modules.export.section_status import (
 )
 from app.modules.export.trace_diagram_assets import build_trace_diagram_assets
 from app.modules.export.zip_bundle import create_zip_bundle
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
 
 
 def test_build_asset_manifest_filters_and_sorts():

@@ -4,8 +4,9 @@ Tests unitarios para app.modules.classification.service.
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from app.modules.classification.service import classify_algorithm
 

@@ -16,7 +16,6 @@ from app.modules.export.trace_diagram import (
     synthesize_return_edges,
 )
 
-
 pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
 
 

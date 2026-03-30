@@ -4,10 +4,10 @@ Tests unitarios para app.core.config.
 Author: Juan Felipe Henao (@Pipe-1z)
 """
 
-import pytest
-
 import os
 from unittest.mock import patch
+
+import pytest
 
 from app.core.config import (
     _as_bool,
@@ -16,7 +16,6 @@ from app.core.config import (
     get_dev_allowed_origins,
     get_dev_cors_enabled,
 )
-
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 

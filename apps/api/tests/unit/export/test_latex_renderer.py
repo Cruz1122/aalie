@@ -2,6 +2,7 @@ import pytest
 
 from app.modules.export.i18n import get_export_i18n
 from app.modules.export.latex_renderer import _render_block
+
 pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
 
 

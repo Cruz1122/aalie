@@ -2,6 +2,7 @@ import pytest
 
 from app.modules.export.models import ExportArtifact
 from app.modules.export.service import ExportService
+
 pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
 
 

@@ -15,7 +15,6 @@ from app.modules.classification.classifier import (
     detect_algorithm_kind,
 )
 
-
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 

@@ -25,11 +25,9 @@ from app.modules.export.document_model import (
     _strip_leading_label,
     _wrap_summation_term,
 )
-
+from app.modules.export.i18n import get_export_i18n
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
-
-from app.modules.export.i18n import get_export_i18n
 
 
 def test_line_cost_table_and_expression_helpers_cover_linear_paths():

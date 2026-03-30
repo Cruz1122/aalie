@@ -4,11 +4,12 @@ Tests unitarios para app.modules.parsing.adapter.
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 
-import pytest
-
 from unittest.mock import patch
 
+import pytest
+
 from app.modules.parsing import adapter
+
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 

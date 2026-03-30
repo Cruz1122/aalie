@@ -703,4 +703,3 @@ def test_field_assignment_progress_template_mentions_predicate_controlled_write(
     assert variant == "object_field_predicate_assignment"
     assert "asignación por predicado" in text.property_statement.lower()
     assert "A[i].aprobado" in text.property_statement
-import pytest

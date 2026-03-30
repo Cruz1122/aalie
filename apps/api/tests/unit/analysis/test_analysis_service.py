@@ -4,11 +4,12 @@ Tests unitarios para app.modules.analysis.service.
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 
-import pytest
-
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from app.modules.analysis.service import analyze_algorithm, detect_methods
+
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 

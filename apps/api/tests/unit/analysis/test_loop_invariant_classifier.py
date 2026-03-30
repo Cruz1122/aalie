@@ -486,4 +486,3 @@ def test_classifier_returns_unknown_when_evidence_is_insufficient():
 
     assert result.pattern == "unknown"
     assert result.confidence < 0.5
-import pytest

@@ -262,4 +262,3 @@ def test_service_includes_template_traceability_feature():
     assert any(feature.startswith("template:") for feature in features)
     assert "classificationConfidence" in result["evidence"]
     assert "templateVariant" in result["evidence"]
-import pytest

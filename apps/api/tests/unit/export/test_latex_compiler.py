@@ -4,6 +4,7 @@ import pytest
 
 from app.modules.export.latex_compiler import compile_latex_to_pdf
 from app.modules.export.models import LatexAssetRegistry, LatexCompilationError
+
 pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
 
 

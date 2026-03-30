@@ -23,11 +23,9 @@ from app.modules.export.format_utils import (
     to_markdown_inline_math,
     to_markdown_text_with_inline_math,
 )
-
+from app.modules.export.i18n import get_export_i18n
 
 pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
-
-from app.modules.export.i18n import get_export_i18n
 
 
 def test_general_helpers_cover_branches():
