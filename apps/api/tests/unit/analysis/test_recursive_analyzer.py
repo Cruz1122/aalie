@@ -3428,6 +3428,186 @@ class TestRecursiveAnalyzerDPValidation:
         result = self.analyzer._detect_early_return()
         assert not result
 
+    def test_expansion_profile_interval_base_case_is_structural(self):
+        """Test: perfil detecta caso base estructural tipo inicio==fin (intervalo)."""
+        proc_def = {
+            "type": "ProcDef",
+            "name": "maxPorMitades",
+            "params": [{"name": "A"}, {"name": "inicio"}, {"name": "fin"}],
+            "body": {
+                "type": "Block",
+                "body": [
+                    # medio <- (inicio + fin) DIV 2
+                    {
+                        "type": "Assign",
+                        "left": {"type": "Identifier", "name": "medio"},
+                        "right": {
+                            "type": "Binary",
+                            "op": "DIV",
+                            "left": {
+                                "type": "Binary",
+                                "op": "+",
+                                "left": {"type": "Identifier", "name": "inicio"},
+                                "right": {"type": "Identifier", "name": "fin"},
+                            },
+                            "right": {"type": "Literal", "value": 2},
+                        },
+                    },
+                    # IF (inicio == fin) RETURN ...
+                    {
+                        "type": "If",
+                        "test": {
+                            "type": "Binary",
+                            "op": "==",
+                            "left": {"type": "Identifier", "name": "inicio"},
+                            "right": {"type": "Identifier", "name": "fin"},
+                        },
+                        "consequent": {
+                            "type": "Block",
+                            "body": [{"type": "Return", "value": {"type": "Literal", "value": 0}}],
+                        },
+                        "alternate": {
+                            "type": "Block",
+                            "body": [
+                                {
+                                    "type": "Call",
+                                    "name": "maxPorMitades",
+                                    "args": [
+                                        {"type": "Identifier", "name": "A"},
+                                        {"type": "Identifier", "name": "inicio"},
+                                        {"type": "Identifier", "name": "medio"},
+                                    ],
+                                },
+                                {
+                                    "type": "Call",
+                                    "name": "maxPorMitades",
+                                    "args": [
+                                        {"type": "Identifier", "name": "A"},
+                                        {
+                                            "type": "Binary",
+                                            "op": "+",
+                                            "left": {"type": "Identifier", "name": "medio"},
+                                            "right": {"type": "Literal", "value": 1},
+                                        },
+                                        {"type": "Identifier", "name": "fin"},
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                ],
+            },
+        }
+        self.analyzer.proc_def = proc_def
+        self.analyzer.procedure_name = "maxPorMitades"
+        profile = self.analyzer._build_recursive_expansion_profile(proc_def)
+        decision = self.analyzer._classify_case_variability(profile)
+        assert decision.kind == "deterministic_structural_recursion"
+        assert decision.has_case_variability is False
+        assert profile.has_pruning is False
+        assert profile.base_case_guards, "Debe detectar guarda estructural de caso base"
+
+    def test_expansion_profile_span_zero_is_structural(self):
+        """Test: perfil detecta caso base estructural tipo (fin-inicio)==0."""
+        proc_def = {
+            "type": "ProcDef",
+            "name": "spanBase",
+            "params": [{"name": "inicio"}, {"name": "fin"}],
+            "body": {
+                "type": "Block",
+                "body": [
+                    {
+                        "type": "Assign",
+                        "left": {"type": "Identifier", "name": "medio"},
+                        "right": {
+                            "type": "Binary",
+                            "op": "DIV",
+                            "left": {
+                                "type": "Binary",
+                                "op": "+",
+                                "left": {"type": "Identifier", "name": "inicio"},
+                                "right": {"type": "Identifier", "name": "fin"},
+                            },
+                            "right": {"type": "Literal", "value": 2},
+                        },
+                    },
+                    {
+                        "type": "If",
+                        "test": {
+                            "type": "Binary",
+                            "op": "==",
+                            "left": {
+                                "type": "Binary",
+                                "op": "-",
+                                "left": {"type": "Identifier", "name": "fin"},
+                                "right": {"type": "Identifier", "name": "inicio"},
+                            },
+                            "right": {"type": "Literal", "value": 0},
+                        },
+                        "consequent": {
+                            "type": "Block",
+                            "body": [{"type": "Return", "value": {"type": "Literal", "value": 1}}],
+                        },
+                        "alternate": {
+                            "type": "Block",
+                            "body": [
+                                {
+                                    "type": "Call",
+                                    "name": "spanBase",
+                                    "args": [
+                                        {"type": "Identifier", "name": "inicio"},
+                                        {"type": "Identifier", "name": "medio"},
+                                    ],
+                                }
+                            ],
+                        },
+                    },
+                ],
+            },
+        }
+        self.analyzer.proc_def = proc_def
+        self.analyzer.procedure_name = "spanBase"
+        profile = self.analyzer._build_recursive_expansion_profile(proc_def)
+        assert profile.base_case_guards, "Debe detectar alguna guarda estructural de caso base"
+
+    def test_guard_x_eq_target_is_not_structural_base_case(self):
+        """Test: x==target no se clasifica como guarda estructural de tamaño."""
+        proc_def = {
+            "type": "ProcDef",
+            "name": "binarySearch",
+            "params": [{"name": "x"}, {"name": "target"}],
+            "body": {
+                "type": "Block",
+                "body": [
+                    {
+                        "type": "If",
+                        "test": {
+                            "type": "Binary",
+                            "op": "==",
+                            "left": {"type": "Identifier", "name": "x"},
+                            "right": {"type": "Identifier", "name": "target"},
+                        },
+                        "consequent": {
+                            "type": "Block",
+                            "body": [{"type": "Return", "value": {"type": "Literal", "value": 0}}],
+                        },
+                        "alternate": {
+                            "type": "Block",
+                            "body": [{"type": "Call", "name": "binarySearch", "args": []}],
+                        },
+                    }
+                ],
+            },
+        }
+        self.analyzer.proc_def = proc_def
+        self.analyzer.procedure_name = "binarySearch"
+        profile = self.analyzer._build_recursive_expansion_profile(proc_def)
+        # Si hay guarda, debe estar clasificada como dependiente de datos o unknown, no base structural.
+        assert not any(g.kind == "structural_base_case" for g in profile.data_dependent_guards)
+        assert any(
+            g.kind in {"data_dependent", "unknown"} for g in profile.data_dependent_guards
+        ) or profile.has_pruning is True
+
     def test_has_return_before_recursive_calls_if_then_else(self):
         """Test: _has_return_before_recursive_calls detecta patrón IF-THEN-ELSE con return en THEN"""
         self.analyzer.procedure_name = "binarySearch"

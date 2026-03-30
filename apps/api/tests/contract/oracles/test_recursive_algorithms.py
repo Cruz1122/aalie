@@ -105,6 +105,20 @@ FAST_POWER_RECURSIVE_PSEUDOCODE = """exponenciacionRapida(x, n) BEGIN
 END
 """
 
+MAX_POR_MITADES_PSEUDOCODE = """maxPorMitades(A, inicio, fin) BEGIN
+  IF (inicio = fin) THEN BEGIN
+    RETURN A[inicio];
+  END
+  medio <- (inicio + fin) DIV 2;
+  izq <- maxPorMitades(A, inicio, medio);
+  der <- maxPorMitades(A, medio + 1, fin);
+  IF (izq > der) THEN BEGIN
+    RETURN izq;
+  END
+  RETURN der;
+END
+"""
+
 TRIBONACCI_RECURSIVE_PSEUDOCODE = """tribonacci(n) BEGIN
   IF (n <= 2) THEN BEGIN
     RETURN n;
@@ -151,6 +165,21 @@ class TestRecursiveAlgorithmsPseudocode:
         ), f"Binary search recursivo debe ser Θ(log n): {theta}"
         assert_all_cases_complexity(
             result, "log", expected_best="constant", name="Binary search rec"
+        )
+
+    def test_max_por_mitades_is_deterministic_theta_n(self):
+        """maxPorMitades no tiene poda: best/avg = same_as_worst y Θ(n)."""
+        result = analyze_algorithm(MAX_POR_MITADES_PSEUDOCODE, mode="all", preferred_method="master")
+        assert result.get("ok"), result.get("errors", [])
+        assert result.get("has_case_variability") is False
+        assert result.get("best") == "same_as_worst"
+        assert result.get("avg") == "same_as_worst"
+        assert_all_cases_complexity(
+            result,
+            "linear",
+            expected_best="linear",
+            expected_avg="linear",
+            name="maxPorMitades",
         )
 
 

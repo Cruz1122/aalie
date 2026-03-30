@@ -1,7 +1,8 @@
 import math
 import re
 from collections import Counter
-from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from sympy import (
     Abs,
@@ -44,6 +45,51 @@ from .recursion_tree_steps import (
     RecursionTreeStepContext,
     build_recursion_tree_step_bundle,
 )
+
+
+@dataclass(frozen=True)
+class RecursiveCallSite:
+    node: Dict[str, Any]
+    call_name: str
+    args: List[Dict[str, Any]] = field(default_factory=list)
+    line: Optional[int] = None
+
+
+@dataclass(frozen=True)
+class GuardEvidence:
+    node: Dict[str, Any]
+    kind: str  # "structural_base_case" | "data_dependent" | "unknown"
+    pattern: str  # stable pattern key, not free-form prose
+    line: Optional[int] = None
+    related_size_symbols: Set[str] = field(default_factory=set)
+
+
+@dataclass(frozen=True)
+class RecursiveExpansionDeterminism:
+    level: str  # "strong" | "medium" | "weak"
+    details: List[str] = field(default_factory=list)  # reason codes
+
+
+@dataclass(frozen=True)
+class RecursiveExpansionProfile:
+    recursive_call_sites: List[RecursiveCallSite] = field(default_factory=list)
+    calls_before_any_non_base_return: bool = False
+    base_case_guards: List[GuardEvidence] = field(default_factory=list)
+    size_signals: Dict[str, Any] = field(default_factory=dict)
+    data_dependent_guards: List[GuardEvidence] = field(default_factory=list)
+    expansion_determinism: RecursiveExpansionDeterminism = field(
+        default_factory=lambda: RecursiveExpansionDeterminism(level="weak", details=[])
+    )
+    has_pruning: bool = False
+    has_case_variability: Optional[bool] = None
+    reason_codes: List[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class CaseVariabilityDecision:
+    kind: str  # "deterministic_structural_recursion" | "data_dependent_pruning" | "unknown_variability"
+    has_case_variability: Optional[bool]
+    reason_codes: List[str] = field(default_factory=list)
 
 
 class RecursiveAnalyzer(BaseAnalyzer):
@@ -156,22 +202,24 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 ],
             }
 
-        # 2.5. Si estamos en modo "best" y hay early return no recursivo y *existe*
-        # una entrada de tamaño n que lo active, el mejor caso es Θ(1). Sin embargo,
-        # el caso base n = 1 no debe considerarse "mejor caso O(1)" para n grande,
-        # por lo que sólo aplicamos esta optimización cuando el early return está
-        # estrictamente separado de la condición de caso base recursivo.
-        if mode == "best":
-            has_early_return = self._detect_early_return()
-            if has_early_return:
-                # En este punto asumimos que el early return corresponde a un camino
-                # alternativo para entradas de tamaño n (no sólo para n = 1).
+        # 2.5. Perfil de expansión recursiva y decisión de variabilidad (contractual).
+        # Esta fase separa:
+        # - caso base estructural (no autoriza best asintótico distinto)
+        # - poda dependiente de datos (sí puede justificar best diferente)
+        profile = self._build_recursive_expansion_profile(proc_def)
+        decision = self._classify_case_variability(profile)
+        self.expansion_profile = profile  # debug/inspección (no contractual por sí mismo)
+        self.case_variability_decision = decision
+
+        # Shortcut Θ(1) solo si hay evidencia de poda dependiente de datos.
+        if mode == "best" and decision.kind == "data_dependent_pruning":
+            if profile.calls_before_any_non_base_return:
                 self.proof_steps.append(
                     {
-                        "id": "best_case_early_return",
+                        "id": "best_case_data_pruning",
                         "text": (
-                            "\\text{Mejor caso: } \\Theta(1) \\text{ (existe una entrada de tamaño } n "
-                            "\\text{ que activa un return temprano sin recursión)}"
+                            "\\text{Mejor caso: } \\Theta(1) "
+                            "\\text{ (poda dependiente de datos evita la recursión)}"
                         ),
                     }
                 )
@@ -182,7 +230,13 @@ class RecursiveAnalyzer(BaseAnalyzer):
                         "T_open": "\\Theta(1)",
                         "big_theta": "\\Theta(1)",
                         "symbols": None,
-                        "notes": None,
+                        "notes": {
+                            "case_variability_decision": {
+                                "kind": decision.kind,
+                                "has_case_variability": decision.has_case_variability,
+                                "reason_codes": decision.reason_codes,
+                            }
+                        },
                         "proof": self.proof_steps.copy(),
                     },
                 }
@@ -3327,7 +3381,15 @@ class RecursiveAnalyzer(BaseAnalyzer):
             elif case_candidate == 3 and regularity_holds is True:
                 theta_worst_avg = f"\\Theta({self._simplify_latex_expr(f_n_str)})"
 
-        has_early_return = self._detect_early_return()
+        # Best-case distinto solo si hay evidencia de poda dependiente de datos
+        profile = getattr(self, "expansion_profile", None)
+        decision = getattr(self, "case_variability_decision", None)
+        has_early_return = bool(
+            decision
+            and getattr(decision, "kind", None) == "data_dependent_pruning"
+            and profile
+            and getattr(profile, "calls_before_any_non_base_return", False)
+        )
         theta_best: Optional[str]
         if has_early_return:
             theta_best = "\\Theta(1)"
@@ -3584,6 +3646,465 @@ class RecursiveAnalyzer(BaseAnalyzer):
         if p_simplified == 1:
             return "n"
         return f"n^{{{self._simplify_latex_expr(latex(p_simplified))}}}"
+
+    def _build_recursive_expansion_profile(
+        self, proc_def: Dict[str, Any]
+    ) -> RecursiveExpansionProfile:
+        """
+        Construye un perfil estructural de expansión recursiva.
+
+        Este perfil separa:
+        - guardas estructurales de caso base (tamaño/subproblema)
+        - guardas de poda dependientes de datos (evitan llamadas recursivas)
+        y provee evidencia para decidir variabilidad de casos.
+        """
+        profile = RecursiveExpansionProfile()
+
+        recursive_calls = self._find_recursive_calls(proc_def)
+        proc_name = proc_def.get("name", "") or (self.procedure_name or "")
+
+        call_sites: List[RecursiveCallSite] = []
+        for call in recursive_calls:
+            line = call.get("pos", {}).get("line") if isinstance(call, dict) else None
+            args = call.get("args", []) if isinstance(call, dict) else []
+            call_sites.append(
+                RecursiveCallSite(
+                    node=call,
+                    call_name=str(call.get("name") or call.get("callee") or proc_name),
+                    args=list(args) if isinstance(args, list) else [],
+                    line=line if isinstance(line, int) else None,
+                )
+            )
+
+        size_signals = self._extract_size_signals(proc_def, recursive_calls)
+        size_symbols: Set[str] = set(size_signals.get("size_symbols") or set())
+        size_graph = size_signals.get("size_graph") or {}
+
+        base_case_guards: List[GuardEvidence] = []
+        data_dependent_guards: List[GuardEvidence] = []
+        reason_codes: List[str] = []
+
+        if_nodes: List[Dict[str, Any]] = []
+        self._collect_if_nodes(proc_def.get("body", {}), if_nodes)
+
+        has_pruning = False
+        for if_node in if_nodes:
+            test = if_node.get("test") or if_node.get("condition")
+            consequent = if_node.get("consequent") or if_node.get("then") or if_node.get("thenBody")
+            alternate = if_node.get("alternate") or if_node.get("else") or if_node.get("elseBody")
+
+            then_returns = self._find_return_statements(consequent) if consequent else []
+            else_returns = self._find_return_statements(alternate) if alternate else []
+
+            then_has_rec = self._has_recursive_calls_in_node(consequent) if consequent else False
+            else_has_rec = self._has_recursive_calls_in_node(alternate) if alternate else False
+
+            guard = self._classify_guard(test, size_symbols=size_symbols, size_graph=size_graph)
+
+            # Caso base estructural típico: hay return en una rama y recursión en la otra,
+            # y la guarda es de tamaño/subproblema.
+            if (then_returns or else_returns) and (then_has_rec or else_has_rec):
+                if guard and guard.kind == "structural_base_case":
+                    base_case_guards.append(guard)
+                    reason_codes.append(guard.pattern)
+                    continue
+
+                # Poda dependiente de datos: return en una rama evita llamadas recursivas
+                # que ocurren en otra rama y la guarda NO es base-case estructural.
+                if guard and guard.kind == "data_dependent":
+                    data_dependent_guards.append(guard)
+                    reason_codes.append(guard.pattern)
+                    has_pruning = True
+                    continue
+
+                if guard and guard.kind == "unknown":
+                    data_dependent_guards.append(guard)
+                    reason_codes.append(guard.pattern)
+                    # unknown no autoriza pruning fuerte, pero sí indica posible variabilidad
+
+        # Determinismo de expansión (heurística fuerte)
+        determinism = self._assess_same_expansion_above_base(
+            proc_def,
+            recursive_calls=recursive_calls,
+            base_case_guards=base_case_guards,
+            size_symbols=size_symbols,
+        )
+
+        calls_before_non_base_return = self._calls_before_any_non_base_return(
+            proc_def,
+            recursive_calls=recursive_calls,
+            base_case_guards=base_case_guards,
+        )
+
+        return RecursiveExpansionProfile(
+            recursive_call_sites=call_sites,
+            calls_before_any_non_base_return=calls_before_non_base_return,
+            base_case_guards=base_case_guards,
+            size_signals=size_signals,
+            data_dependent_guards=data_dependent_guards,
+            expansion_determinism=determinism,
+            has_pruning=has_pruning,
+            has_case_variability=None,
+            reason_codes=reason_codes,
+        )
+
+    def _collect_if_nodes(self, node: Any, out: List[Dict[str, Any]]) -> None:
+        if not isinstance(node, dict):
+            return
+        node_type = node.get("type", "")
+        if node_type == "If" or node_type == "Conditional":
+            out.append(node)
+        for key, value in node.items():
+            if key in ["type", "pos", "name", "callee"]:
+                continue
+            if isinstance(value, list):
+                for item in value:
+                    self._collect_if_nodes(item, out)
+            elif isinstance(value, dict):
+                self._collect_if_nodes(value, out)
+
+    def _extract_size_signals(
+        self, proc_def: Dict[str, Any], recursive_calls: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """
+        Extrae señales de tamaño desde argumentos de llamadas recursivas y relaciones
+        simples desde asignaciones (grafo pequeño).
+        """
+        arg_symbols: Set[str] = set()
+        transformed_symbols: Set[str] = set()
+        edges: Dict[str, Set[str]] = {}
+
+        def add_edge(dst: str, src: str) -> None:
+            if not dst or not src:
+                return
+            if dst not in edges:
+                edges[dst] = set()
+            edges[dst].add(src)
+
+        # 1) Señales desde argumentos de llamadas recursivas
+        for call in recursive_calls:
+            args = call.get("args", []) if isinstance(call, dict) else []
+            if not isinstance(args, list):
+                continue
+            for arg in args:
+                ids = self._collect_identifiers(arg)
+                arg_symbols.update(ids)
+                # marcar transformaciones típicas
+                if isinstance(arg, dict) and (arg.get("type", "") or "").lower() == "binary":
+                    op = arg.get("op", "") or arg.get("operator", "")
+                    if op in {"+", "-", "*", "DIV", "/"}:
+                        transformed_symbols.update(ids)
+
+        # 2) Relaciones desde asignaciones tipo x <- expr
+        body = proc_def.get("body", {}) or proc_def.get("block", {})
+        assigns: List[Dict[str, Any]] = []
+        self._collect_assign_nodes(body, assigns)
+        for a in assigns:
+            lhs = a.get("left") or a.get("target") or a.get("var")
+            rhs = a.get("right") or a.get("value")
+            lhs_names = self._collect_identifiers(lhs)
+            rhs_names = self._collect_identifiers(rhs)
+            for dst in lhs_names:
+                for src in rhs_names:
+                    add_edge(dst, src)
+            # Si RHS es una transformación típica (p.ej. (inicio+fin) DIV 2),
+            # marcar LHS y sus fuentes como size-related candidatos.
+            if isinstance(rhs, dict) and (rhs.get("type", "") or "").lower() == "binary":
+                op = rhs.get("op", "") or rhs.get("operator", "")
+                if op in {"+", "-", "*", "DIV", "/"}:
+                    transformed_symbols.update(lhs_names)
+                    transformed_symbols.update(rhs_names)
+
+        # Propagación simple: si dst depende de size_symbol, dst también es size-related
+        changed = True
+        # Semilla de símbolos size-related: solo los que aparecen en transformaciones de tamaño,
+        # no cualquier parámetro/identificador pasado en llamadas recursivas.
+        size_related: Set[str] = set(transformed_symbols)
+        while changed:
+            changed = False
+            for dst, srcs in edges.items():
+                # Propagación hacia adelante: si dst depende de size-related, dst es size-related.
+                if dst not in size_related and any(s in size_related for s in srcs):
+                    size_related.add(dst)
+                    changed = True
+                # Propagación hacia atrás: si dst es size-related, sus fuentes también lo son.
+                if dst in size_related:
+                    for s in srcs:
+                        if s not in size_related:
+                            size_related.add(s)
+                            changed = True
+
+        return {
+            "size_symbols": size_related,
+            "direct_size_symbols": arg_symbols,
+            "transformed_symbols": transformed_symbols,
+            "size_graph": {k: sorted(v) for k, v in edges.items()},
+        }
+
+    def _collect_assign_nodes(self, node: Any, out: List[Dict[str, Any]]) -> None:
+        if not isinstance(node, dict):
+            return
+        node_type = node.get("type", "")
+        if node_type in {"Assign", "Assignment"}:
+            out.append(node)
+        for key, value in node.items():
+            if key in ["type", "pos", "name", "callee"]:
+                continue
+            if isinstance(value, list):
+                for item in value:
+                    self._collect_assign_nodes(item, out)
+            elif isinstance(value, dict):
+                self._collect_assign_nodes(value, out)
+
+    def _collect_identifiers(self, node: Any) -> Set[str]:
+        names: Set[str] = set()
+        if not isinstance(node, dict):
+            return names
+        node_type = (node.get("type", "") or "").lower()
+        if node_type == "identifier":
+            name = node.get("name")
+            if isinstance(name, str) and name:
+                names.add(name)
+        for key, value in node.items():
+            if key in ["type", "pos"]:
+                continue
+            if isinstance(value, list):
+                for item in value:
+                    names.update(self._collect_identifiers(item))
+            elif isinstance(value, dict):
+                names.update(self._collect_identifiers(value))
+        return names
+
+    def _classify_guard(
+        self,
+        condition: Any,
+        *,
+        size_symbols: Set[str],
+        size_graph: Dict[str, Any],
+    ) -> Optional[GuardEvidence]:
+        if not isinstance(condition, dict):
+            return None
+        node_type = (condition.get("type", "") or "").lower()
+        if node_type != "binary":
+            return GuardEvidence(
+                node=condition,
+                kind="unknown",
+                pattern="guard_non_binary",
+                line=condition.get("pos", {}).get("line")
+                if isinstance(condition.get("pos"), dict)
+                else None,
+                related_size_symbols=set(),
+            )
+        op = condition.get("op", "") or condition.get("operator", "")
+        left = condition.get("left", {})
+        right = condition.get("right", {})
+        left_ids = self._collect_identifiers(left)
+        right_ids = self._collect_identifiers(right)
+        related = set([n for n in left_ids.union(right_ids) if n in size_symbols])
+
+        line = condition.get("pos", {}).get("line") if isinstance(condition.get("pos"), dict) else None
+
+        # Nivel 1: comparación con constante sobre size-related
+        if op in {"<=", "<", "==", "==="} and related:
+            right_type = (right.get("type", "") or "").lower() if isinstance(right, dict) else ""
+            if right_type in {"number", "literal"} and (right.get("value") is not None or right.get("val") is not None):
+                return GuardEvidence(
+                    node=condition,
+                    kind="structural_base_case",
+                    pattern="structural_base_case_constant",
+                    line=line if isinstance(line, int) else None,
+                    related_size_symbols=related,
+                )
+
+        # Nivel 2: igualdad/orden entre size-like vars (a == b, a >= b)
+        if op in {"==", "===", ">=", ">", "<=", "<"}:
+            if left_ids and right_ids and left_ids.issubset(size_symbols) and right_ids.issubset(size_symbols):
+                return GuardEvidence(
+                    node=condition,
+                    kind="structural_base_case",
+                    pattern="structural_base_case_interval_relation",
+                    line=line if isinstance(line, int) else None,
+                    related_size_symbols=related or left_ids.union(right_ids),
+                )
+
+        # Nivel 3: span algebraico (b - a) == 0 / <= 0
+        if op in {"==", "===", "<=", "<"} and isinstance(left, dict):
+            left_type = (left.get("type", "") or "").lower()
+            if left_type == "binary":
+                left_op = left.get("op", "") or left.get("operator", "")
+                if left_op == "-":
+                    span_ids = self._collect_identifiers(left)
+                    if span_ids and span_ids.issubset(size_symbols):
+                        right_type = (right.get("type", "") or "").lower() if isinstance(right, dict) else ""
+                        if right_type in {"number", "literal"}:
+                            val = right.get("value") if "value" in right else right.get("val")
+                            try:
+                                v_int = int(float(val))
+                            except Exception:
+                                v_int = None
+                            if v_int == 0:
+                                return GuardEvidence(
+                                    node=condition,
+                                    kind="structural_base_case",
+                                    pattern="structural_base_case_span_zero",
+                                    line=line if isinstance(line, int) else None,
+                                    related_size_symbols=span_ids,
+                                )
+                            if v_int is not None and v_int <= 0:
+                                return GuardEvidence(
+                                    node=condition,
+                                    kind="structural_base_case",
+                                    pattern="structural_base_case_span_nonpositive",
+                                    line=line if isinstance(line, int) else None,
+                                    related_size_symbols=span_ids,
+                                )
+
+        # Data-dependent por descarte: binaria pero no conectada a size graph
+        if left_ids or right_ids:
+            if not related:
+                return GuardEvidence(
+                    node=condition,
+                    kind="data_dependent",
+                    pattern="conditional_pruning_on_data",
+                    line=line if isinstance(line, int) else None,
+                    related_size_symbols=set(),
+                )
+
+        return GuardEvidence(
+            node=condition,
+            kind="unknown",
+            pattern="guard_unknown",
+            line=line if isinstance(line, int) else None,
+            related_size_symbols=related,
+        )
+
+    def _assess_same_expansion_above_base(
+        self,
+        proc_def: Dict[str, Any],
+        *,
+        recursive_calls: List[Dict[str, Any]],
+        base_case_guards: List[GuardEvidence],
+        size_symbols: Set[str],
+    ) -> RecursiveExpansionDeterminism:
+        """
+        Heurística fuerte: si fuera del caso base la expansión siempre ejecuta el mismo
+        patrón de llamadas recursivas (misma aridad y sin guardas data-dependent que
+        omitan subllamadas), tratamos la expansión como estructuralmente determinista.
+        """
+        # Si no hay llamadas recursivas, no aplica.
+        if not recursive_calls:
+            return RecursiveExpansionDeterminism(level="weak", details=["no_recursive_calls"])
+
+        # Si hay condicionales que cambien el número/presencia de subllamadas fuera
+        # de los casos base estructurales, no podemos afirmar determinismo fuerte.
+        if_nodes: List[Dict[str, Any]] = []
+        self._collect_if_nodes(proc_def.get("body", {}), if_nodes)
+        for if_node in if_nodes:
+            test = if_node.get("test") or if_node.get("condition")
+            consequent = if_node.get("consequent") or if_node.get("then") or if_node.get("thenBody")
+            alternate = if_node.get("alternate") or if_node.get("else") or if_node.get("elseBody")
+
+            then_has_rec = self._has_recursive_calls_in_node(consequent) if consequent else False
+            else_has_rec = self._has_recursive_calls_in_node(alternate) if alternate else False
+
+            # Si recursión está solo en una rama, es potencial pruning/variabilidad.
+            if then_has_rec != else_has_rec:
+                guard = self._classify_guard(
+                    test,
+                    size_symbols=size_symbols,
+                    size_graph={},
+                )
+                if guard and guard.kind != "structural_base_case":
+                    return RecursiveExpansionDeterminism(
+                        level="medium",
+                        details=["conditional_recursion_or_pruning", guard.pattern],
+                    )
+
+        call_count_effective = self._calculate_recursive_calls_count(proc_def, recursive_calls)
+        if call_count_effective <= 0:
+            return RecursiveExpansionDeterminism(level="weak", details=["no_effective_calls"])
+
+        # Si a (effective) es estable y no hay condicionales que cambien presencia de recursión,
+        # tratamos como determinista fuerte.
+        if call_count_effective == len(recursive_calls) or call_count_effective in {1, 2}:
+            return RecursiveExpansionDeterminism(
+                level="strong",
+                details=[
+                    "same_expansion_above_base",
+                    f"deterministic_call_arity_{call_count_effective}",
+                ],
+            )
+
+        return RecursiveExpansionDeterminism(level="medium", details=["expansion_uncertain"])
+
+    def _calls_before_any_non_base_return(
+        self,
+        proc_def: Dict[str, Any],
+        *,
+        recursive_calls: List[Dict[str, Any]],
+        base_case_guards: List[GuardEvidence],
+    ) -> bool:
+        """
+        Señal conservadora: ¿aparecen returns no-base antes de cualquier llamada recursiva?
+        Si ocurre, sugiere poda/atajo que puede afectar best-case.
+        """
+        if not recursive_calls:
+            return False
+        body = proc_def.get("body", {}) or proc_def.get("block", {})
+        # Reusar el detector existente, pero bloqueando explícitamente guardas de caso base.
+        # Si el detector encuentra return temprano y NO hay evidencia de caso base, marcamos True.
+        if self._has_return_before_recursive_calls(body, recursive_calls):
+            if base_case_guards:
+                return False
+            return True
+        return False
+
+    def _classify_case_variability(
+        self, profile: RecursiveExpansionProfile
+    ) -> CaseVariabilityDecision:
+        """
+        Decide variabilidad de casos usando el perfil de expansión.
+
+        - deterministic_structural_recursion: expansión determinista, sin poda real.
+        - data_dependent_pruning: evidencia de guardas por datos que omiten subllamadas.
+        - unknown_variability: evidencia insuficiente (conservador; no shortcuts optimistas).
+        """
+        reasons = list(profile.reason_codes or [])
+        reasons.extend(list(profile.expansion_determinism.details or []))
+
+        if profile.has_pruning and profile.data_dependent_guards:
+            return CaseVariabilityDecision(
+                kind="data_dependent_pruning",
+                has_case_variability=True,
+                reason_codes=reasons
+                + ["has_pruning_true", "data_dependent_guards_present"],
+            )
+
+        if (
+            profile.expansion_determinism.level == "strong"
+            and not profile.has_pruning
+            and not profile.data_dependent_guards
+        ):
+            return CaseVariabilityDecision(
+                kind="deterministic_structural_recursion",
+                has_case_variability=False,
+                reason_codes=reasons + ["deterministic_structural_recursion"],
+            )
+
+        # Si tenemos base cases estructurales pero no evidencia fuerte de poda,
+        # por contrato preferimos no inventar variabilidad.
+        if profile.base_case_guards and not profile.has_pruning:
+            return CaseVariabilityDecision(
+                kind="unknown_variability",
+                has_case_variability=None,
+                reason_codes=reasons + ["variability_unknown_insufficient_evidence"],
+            )
+
+        return CaseVariabilityDecision(
+            kind="unknown_variability",
+            has_case_variability=None,
+            reason_codes=reasons + ["variability_unknown_insufficient_evidence"],
+        )
 
     def _detect_early_return(self) -> bool:
         """

@@ -140,13 +140,23 @@ def _update_summary(updates: dict[str, Any]) -> dict[str, Any]:
 
 
 def _resolve_dominant_controller(engine_result: Any, control: Any) -> str | None:
-    return (
+    raw = (
         getattr(engine_result, "dominant_controller", None)
         or getattr(engine_result, "variable", None)
         or ((getattr(engine_result, "evidence", None) or {}).get("var"))
         or getattr(control, "primary_numeric_controller", None)
         or getattr(control, "primary_boolean_controller", None)
     )
+    if not raw:
+        return None
+    controller = str(raw).strip()
+    # Normalizar representaciones del engine como "i..n" para empatar con
+    # las keys de update_analysis/control_variables ("i", "j", etc.).
+    if ".." in controller:
+        left = controller.split("..", 1)[0].strip()
+        if left:
+            controller = left
+    return controller or None
 
 
 def _detect_contradictions(
