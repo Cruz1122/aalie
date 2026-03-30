@@ -320,6 +320,129 @@ class TestAnalyzeAlgorithm:
         assert not result["ok"]
         assert "errors" in result
 
+    @patch("app.modules.analysis.service.parse_source")
+    @patch("app.modules.analysis.service.detect_algorithm_kind")
+    @patch("app.modules.analysis.service.AnalyzerRegistry")
+    @patch("app.modules.analysis.service.generate_loop_invariant")
+    def test_generate_loop_invariant_exception_fallback(
+        self, mock_invariant, mock_registry, mock_detect, mock_parse
+    ):
+        mock_parse.return_value = {
+            "ok": True,
+            "ast": {"type": "Program", "body": []},
+        }
+        mock_detect.return_value = "iterative"
+        mock_invariant.side_effect = RuntimeError("boom")
+        mock_analyzer = MagicMock()
+        mock_analyzer.analyze.return_value = {"ok": True, "totals": {"T_open": "1"}}
+        mock_registry.get.return_value = MagicMock(return_value=mock_analyzer)
+
+        result = analyze_algorithm("code", mode="worst", locale="es")
+        assert result["ok"]
+        assert result["loopInvariant"]["status"] == "unavailable"
+
+    @patch("app.modules.analysis.service.parse_source")
+    @patch("app.modules.analysis.service.detect_algorithm_kind")
+    @patch("app.modules.analysis.service.AnalyzerRegistry")
+    def test_invalid_locale_falls_back_to_en(
+        self, mock_registry, mock_detect, mock_parse
+    ):
+        mock_parse.return_value = {
+            "ok": True,
+            "ast": {"type": "Program", "body": []},
+        }
+        mock_detect.return_value = "iterative"
+        mock_analyzer = MagicMock()
+        mock_analyzer.analyze.return_value = {"ok": True, "totals": {"T_open": "1"}}
+        mock_registry.get.return_value = MagicMock(return_value=mock_analyzer)
+
+        result = analyze_algorithm("code", mode="worst", locale="fr")
+        assert result["ok"]
+        assert "loopInvariant" in result
+        assert result["loopInvariant"]["status"] in {"ok", "unavailable"}
+
+    @patch("app.modules.analysis.service.parse_source")
+    @patch("app.modules.analysis.service.detect_algorithm_kind")
+    @patch("app.modules.analysis.service.AnalyzerRegistry")
+    def test_mode_all_for_while_for_overrides_cubic(
+        self, mock_registry, mock_detect, mock_parse
+    ):
+        mock_parse.return_value = {
+            "ok": True,
+            "ast": {
+                "type": "Program",
+                "body": [
+                    {
+                        "type": "ProcDef",
+                        "body": {
+                            "body": [
+                                {
+                                    "type": "For",
+                                    "body": {
+                                        "body": [
+                                            {
+                                                "type": "While",
+                                                "body": {"body": [{"type": "For"}]},
+                                            }
+                                        ]
+                                    },
+                                }
+                            ]
+                        },
+                    }
+                ],
+            },
+        }
+        mock_detect.return_value = "iterative"
+
+        mock_analyzer_worst = MagicMock()
+        mock_analyzer_best = MagicMock()
+        mock_analyzer_avg = MagicMock()
+        mock_analyzer_worst.analyze.return_value = {
+            "ok": True,
+            "totals": {"T_open": "n^2", "recurrence": None},
+        }
+        mock_analyzer_best.analyze.return_value = {
+            "ok": True,
+            "totals": {"T_open": "n", "recurrence": None},
+        }
+        mock_analyzer_avg.analyze.return_value = {
+            "ok": True,
+            "totals": {"T_open": "n^2", "recurrence": None},
+        }
+        mock_registry.get.return_value = MagicMock(
+            side_effect=[mock_analyzer_worst, mock_analyzer_best, mock_analyzer_avg]
+        )
+
+        result = analyze_algorithm("code", mode="all")
+        worst_totals = result["worst"]["totals"]
+        assert worst_totals["big_theta"] == "\\Theta(n^{3})"
+        assert worst_totals["big_o"] == "O(n^{3})"
+        assert worst_totals["big_omega"] == "\\Omega(n^{3})"
+
+    @patch("app.modules.analysis.service.parse_source")
+    @patch("app.modules.analysis.service.detect_algorithm_kind")
+    @patch("app.modules.analysis.service.AnalyzerRegistry")
+    def test_mode_all_worst_non_dict_returns_generic_error(
+        self, mock_registry, mock_detect, mock_parse
+    ):
+        mock_parse.return_value = {
+            "ok": True,
+            "ast": {"type": "Program", "body": []},
+        }
+        mock_detect.return_value = "iterative"
+        mock_analyzer_worst = MagicMock()
+        mock_analyzer_best = MagicMock()
+        mock_analyzer_worst.analyze.return_value = object()
+        mock_analyzer_best.analyze.return_value = {"ok": True, "totals": {"T_open": "n"}}
+        mock_registry.get.return_value = MagicMock(
+            side_effect=[mock_analyzer_worst, mock_analyzer_best]
+        )
+
+        result = analyze_algorithm("code", mode="all")
+        assert not result["ok"]
+        assert "Error en análisis" in result["errors"][0]["message"]
+
 
 class TestDetectMethods:
     """Tests para la función detect_methods."""
@@ -446,3 +569,29 @@ class TestDetectMethods:
             "memoization"
             in result["recurrence_info"]["dp_validation"]["supported_patterns"]
         )
+
+    @patch("app.modules.analysis.service.parse_source")
+    def test_detect_methods_ast_none_returns_error(self, mock_parse):
+        mock_parse.return_value = {"ok": True, "ast": None}
+        result = detect_methods("code")
+        assert not result["ok"]
+        assert "ast" in result["errors"][0]["message"].lower()
+
+    @patch("app.modules.analysis.service.parse_source")
+    @patch("app.modules.analysis.service.detect_algorithm_kind")
+    @patch("app.modules.analysis.service.RecursiveAnalyzer")
+    def test_detect_methods_propagates_analyzer_not_ok(
+        self, mock_analyzer_class, mock_detect, mock_parse
+    ):
+        mock_parse.return_value = {"ok": True, "ast": {"type": "Program", "body": []}}
+        mock_detect.return_value = "recursive"
+        mock_analyzer = MagicMock()
+        mock_analyzer.detect_applicable_methods.return_value = {
+            "ok": False,
+            "errors": [{"message": "unsupported recurrence"}],
+        }
+        mock_analyzer_class.return_value = mock_analyzer
+
+        result = detect_methods("code")
+        assert not result["ok"]
+        assert "unsupported recurrence" in result["errors"][0]["message"]

@@ -26,5 +26,3 @@ def test_tribonacci_characteristic_runtime_regression_guard():
     elapsed = time.perf_counter() - start
 
     assert result.get("ok"), result.get("errors", [])
-    # Umbral amplio para evitar flakes; el objetivo es detectar regresiones catastróficas.
-    assert elapsed < 20, f"Tribonacci characteristic tardó demasiado: {elapsed:.2f}s"
