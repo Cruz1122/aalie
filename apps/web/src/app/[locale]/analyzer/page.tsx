@@ -45,6 +45,7 @@ import {
   type CoreAnalysisData,
 } from "@/lib/extract-core-data";
 import { analyzeASTForGPUCPU } from "@/lib/gpu-cpu-analyzer";
+import { buildLlmComparisonPayload } from "@/lib/llm-compare-payload";
 import { translateLlmError } from "@/lib/llm-error-translator";
 import { getSavedCase, saveCase } from "@/lib/polynomial";
 import {
@@ -840,13 +841,13 @@ export default function AnalyzerPage() {
       }
 
       // Preparar todos los datos del análisis para enviar al LLM
-      const fullAnalysisData = {
+      const fullAnalysisData = buildLlmComparisonPayload({
+        data,
+        isRecursive,
         worst: ownCoreDataWorst,
         best: ownCoreDataBest,
         avg: ownCoreDataAvg,
-        isRecursive,
-        has_case_variability: data.has_case_variability || false,
-      };
+      }) ?? {};
 
       // Detectar el método usado en el análisis propio (si es recursivo)
       let ownMethod: string | undefined = undefined;
@@ -891,7 +892,7 @@ ${source}
 **ANÁLISIS PROPIO COMPLETO (para que puedas dar una observación real):**
 ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         // Detectar si hay variabilidad de casos en el análisis propio
-        const hasVariability = fullAnalysisData.has_case_variability === true;
+        const hasVariability = data.has_case_variability === true;
         const hasBestCase = data.best !== null && data.best !== undefined;
         const hasAvgCase = data.avg !== null && data.avg !== undefined;
 
@@ -921,8 +922,12 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
 2. Determina si es iterativo o recursivo
 3. Calcula la complejidad temporal y espacial
 4. ${ownMethod && isRecursive ? `**USA EL MISMO MÉTODO QUE EL ANÁLISIS PROPIO** (${ownMethod})` : "Aplica los métodos apropiados (Teorema Maestro, Iteración, Árbol de Recursión, Ecuación Característica, etc.)"}
-5. Proporciona todos los datos core del análisis en formato JSON
-6. **IMPORTANTE**: Compara tu análisis con el análisis propio proporcionado y da una observación REAL y específica (máx. 150 caracteres) sobre:
+5. **Haz que tu salida coincida con el sistema paso a paso de AALIE**:
+   - Si reportas un caso iterativo, incluye \`step_by_step\` con el walkthrough del caso (\`method: "iterative_case"\`)
+   - Si reportas un método recursivo (\`characteristic_equation\`, \`iteration\`, \`master\`, \`recursion_tree\`), ese objeto DEBE incluir su \`step_by_step\`
+   - Respeta la estructura de \`steps\`, \`overallStatus\`, \`summary\`, \`conceptNote\`, \`math.primaryLatex\` y \`math.items\`
+6. Proporciona todos los datos core del análisis en formato JSON
+7. **IMPORTANTE**: Compara tu análisis con el análisis propio proporcionado y da una observación REAL y específica (máx. 150 caracteres) sobre:
    - La precisión del análisis propio
    - Si hay diferencias o coincidencias
    - Si hay aspectos que podrían mejorarse

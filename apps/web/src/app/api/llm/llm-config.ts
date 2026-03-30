@@ -39,6 +39,59 @@ export const GEMINI_ENDPOINT_BASE = getEnvOrDefault(
   DEFAULT_GEMINI_ENDPOINT_BASE,
 );
 
+const STEP_MATH_ITEM_SCHEMA = {
+  type: "object",
+  properties: {
+    id: { type: "string" },
+    kind: { type: "string" },
+    latex: { type: "string" },
+  },
+};
+
+const STEP_SCHEMA = {
+  type: "object",
+  properties: {
+    id: { type: "string" },
+    index: { type: "number" },
+    kind: { type: "string" },
+    title: { type: "string" },
+    status: { type: "string" },
+    summary: { type: "string" },
+    conceptNote: { type: "string" },
+    warning: { type: "string" },
+    confidence: { type: "string" },
+    math: {
+      type: "object",
+      properties: {
+        primaryLatex: { type: "string" },
+        items: { type: "array", items: STEP_MATH_ITEM_SCHEMA },
+      },
+    },
+  },
+};
+
+const STEP_BUNDLE_SCHEMA = {
+  type: "object",
+  properties: {
+    method: { type: "string" },
+    version: { type: "string" },
+    overallStatus: { type: "string" },
+    steps: { type: "array", items: STEP_SCHEMA },
+  },
+};
+
+const ITERATIVE_CASE_SCHEMA = {
+  type: "object",
+  properties: {
+    T_open: { type: "string" },
+    T_polynomial: { type: "string" },
+    big_o: { type: "string" },
+    big_omega: { type: "string" },
+    big_theta: { type: "string" },
+    step_by_step: STEP_BUNDLE_SCHEMA,
+  },
+};
+
 // Parámetros por job (temperatura, tokens). Los prompts se obtienen de ./prompts según locale.
 const JOB_CONFIG = {
   parser_assist: {
@@ -71,41 +124,15 @@ const JOB_CONFIG = {
         analysis: {
           type: "object",
           properties: {
-            worst: {
-              type: "object",
-              properties: {
-                T_open: { type: "string" },
-                T_polynomial: { type: "string" },
-                big_o: { type: "string" },
-                big_omega: { type: "string" },
-                big_theta: { type: "string" },
-              },
-            },
-            best: {
-              type: "object",
-              properties: {
-                T_open: { type: "string" },
-                T_polynomial: { type: "string" },
-                big_o: { type: "string" },
-                big_omega: { type: "string" },
-                big_theta: { type: "string" },
-              },
-            },
-            avg: {
-              type: "object",
-              properties: {
-                T_open: { type: "string" },
-                T_polynomial: { type: "string" },
-                big_o: { type: "string" },
-                big_omega: { type: "string" },
-                big_theta: { type: "string" },
-              },
-            },
+            worst: ITERATIVE_CASE_SCHEMA,
+            best: ITERATIVE_CASE_SCHEMA,
+            avg: ITERATIVE_CASE_SCHEMA,
             T_open: { type: "string" },
             T_polynomial: { type: "string" },
             big_o: { type: "string" },
             big_omega: { type: "string" },
             big_theta: { type: "string" },
+            step_by_step: STEP_BUNDLE_SCHEMA,
             recurrence: {
               type: "object",
               properties: {
@@ -147,6 +174,7 @@ const JOB_CONFIG = {
                 general_solution: { type: "string" },
                 closed_form: { type: "string" },
                 theta: { type: "string" },
+                step_by_step: STEP_BUNDLE_SCHEMA,
               },
             },
             master: {
@@ -159,6 +187,7 @@ const JOB_CONFIG = {
                   enum: ["smaller", "equal", "larger"],
                 },
                 theta: { type: "string" },
+                step_by_step: STEP_BUNDLE_SCHEMA,
               },
             },
             iteration: {
@@ -182,6 +211,7 @@ const JOB_CONFIG = {
                   },
                 },
                 theta: { type: "string" },
+                step_by_step: STEP_BUNDLE_SCHEMA,
               },
             },
             recursion_tree: {
@@ -218,6 +248,7 @@ const JOB_CONFIG = {
                   },
                 },
                 theta: { type: "string" },
+                step_by_step: STEP_BUNDLE_SCHEMA,
               },
             },
           },
