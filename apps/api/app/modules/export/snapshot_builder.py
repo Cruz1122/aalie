@@ -7,7 +7,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from ..analysis.service import analyze_algorithm, detect_methods
@@ -1077,12 +1077,15 @@ def _derive_metadata(snapshot_input: Dict[str, Any], include_gpu_cpu: bool) -> D
         "includeGpuCpu": include_gpu_cpu,
     }
     seed_hash = hashlib.sha256(_stable_json(seed_payload).encode("utf-8")).hexdigest()
-    created_at_base = datetime(2000, 1, 1, tzinfo=timezone.utc)
-    created_at = created_at_base + timedelta(days=int(seed_hash[:8], 16) % 36525)
+    provided_created_at = snapshot_input.get("createdAt")
+    if isinstance(provided_created_at, str) and provided_created_at.strip():
+        created_at_iso = provided_created_at.strip()
+    else:
+        created_at_iso = _iso_utc(datetime.now(timezone.utc))
     return {
         "analysisId": str(uuid.uuid5(ANALYSIS_NAMESPACE, seed_hash)),
         "snapshotId": str(uuid.uuid5(SNAPSHOT_NAMESPACE, seed_hash)),
-        "createdAt": _iso_utc(created_at),
+        "createdAt": created_at_iso,
     }
 
 

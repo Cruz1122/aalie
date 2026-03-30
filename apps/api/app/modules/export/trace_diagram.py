@@ -11,7 +11,6 @@ from io import BytesIO
 from typing import Any, Dict, List, Optional
 
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import portrait
 from reportlab.pdfgen import canvas
 
 
@@ -560,7 +559,9 @@ def render_trace_diagram_pdf(
     width = max(680, int(layouted["width"]))
     height = max(260, int(layouted["height"])) + footer_height
     buffer = BytesIO()
-    pdf = canvas.Canvas(buffer, pagesize=portrait((width, height)))
+    # Preserve the real canvas size for wide recursion traces. Using portrait()
+    # swaps width/height when width > height and clips horizontal content.
+    pdf = canvas.Canvas(buffer, pagesize=(width, height))
     pdf.setTitle("AALIE Recursive Trace Diagram")
     pdf.setCreator("AALIE Export Backend")
     pdf.setLineJoin(1)

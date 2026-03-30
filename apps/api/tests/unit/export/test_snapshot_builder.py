@@ -108,8 +108,9 @@ def _base_payload() -> dict:
     }
 
 
-def test_build_export_state_generates_deterministic_metadata():
+def test_build_export_state_generates_stable_ids_and_respects_created_at():
     payload = _base_payload()
+    payload["createdAt"] = "2026-03-30T12:00:00Z"
 
     state_a = build_export_state(payload)
     state_b = build_export_state(
@@ -122,9 +123,8 @@ def test_build_export_state_generates_deterministic_metadata():
     assert (
         state_a["snapshotInput"]["snapshotId"] == state_b["snapshotInput"]["snapshotId"]
     )
-    assert (
-        state_a["snapshotInput"]["createdAt"] == state_b["snapshotInput"]["createdAt"]
-    )
+    assert state_a["snapshotInput"]["createdAt"] == "2026-03-30T12:00:00Z"
+    assert state_b["snapshotInput"]["createdAt"] == "2026-03-30T12:00:00Z"
 
 
 def test_build_export_state_normalizes_formats_and_defaults():

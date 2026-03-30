@@ -179,6 +179,40 @@ def test_svg_and_pdf_renderers_return_expected_outputs():
     assert pdf_bytes.startswith(b"%PDF")
 
 
+def test_pdf_renderer_preserves_wide_canvas_media_box():
+    graph = {
+        "nodes": [
+            {
+                "id": f"n{i}",
+                "data": {"label": f"call_{i}"},
+                "position": {"x": 0, "y": 0},
+            }
+            for i in range(6)
+        ],
+        "edges": [
+            {
+                "id": f"e{i}",
+                "source": f"n{i}",
+                "target": f"n{i+1}",
+                "label": "",
+                "type": "smoothstep",
+            }
+            for i in range(5)
+        ],
+    }
+
+    pdf_bytes = render_trace_diagram_pdf(
+        graph,
+        title="Wide Recursive Trace",
+        case_name="worst",
+        locale="en",
+        summary={"totalCalls": 6},
+        diagnostics={"truncated": False},
+    )
+
+    assert b"/MediaBox [ 0 0 2720 458 ]" in pdf_bytes
+
+
 def test_label_compaction_and_return_edge_synthesis_helpers():
     label = compact_label(
         "line-1\nline-2\nline-3\nline-4", max_chars_per_line=6, max_lines=2
