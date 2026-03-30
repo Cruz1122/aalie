@@ -143,8 +143,7 @@ def is_boolean_expr(expr: Any) -> bool:
         if t == "literal":
             v = expr.get("value")
             return isinstance(v, bool) or (
-                isinstance(v, str)
-                and v.lower() in ("true", "false", "verdadero", "falso")
+                isinstance(v, str) and v.lower() in ("true", "false", "verdadero", "falso")
             )
         if t == "identifier":
             n = (expr.get("name") or "").lower()

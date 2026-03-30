@@ -90,9 +90,7 @@ def build_divide_merge_recurse(
         if len(children) >= 2 and config.showOperationNode:
             locale_key = str(config.locale).lower()[:2]
             merge_title = "mezcla" if locale_key == "es" else "merge"
-            merge_line = (
-                "mezclar(Izq, Der) -> A" if locale_key == "es" else "merge(L, R) -> A"
-            )
+            merge_line = "mezclar(Izq, Der) -> A" if locale_key == "es" else "merge(L, R) -> A"
             merge_id = f"merge_{call_id}"
             nodes.append(
                 StructuredTraceNode(

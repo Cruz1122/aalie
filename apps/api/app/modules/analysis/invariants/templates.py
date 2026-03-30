@@ -35,7 +35,9 @@ _BEHAVIOUR_EN = {
 }
 
 _BEHAVIOUR_DEFAULT_ES = "El algoritmo {} repite un procedimiento iterativo para procesar la entrada de forma progresiva."
-_BEHAVIOUR_DEFAULT_EN = "The algorithm {} repeats an iterative procedure to progressively process the input."
+_BEHAVIOUR_DEFAULT_EN = (
+    "The algorithm {} repeats an iterative procedure to progressively process the input."
+)
 
 
 def generate_behaviour(pattern: str, locale: str) -> str:
@@ -63,11 +65,7 @@ def _features(facts: LoopFacts) -> Set[str]:
 
 
 def _feature_values(features: Set[str], prefix: str) -> List[str]:
-    values = [
-        feature[len(prefix) :].strip()
-        for feature in features
-        if feature.startswith(prefix)
-    ]
+    values = [feature[len(prefix) :].strip() for feature in features if feature.startswith(prefix)]
     return sorted({value for value in values if value})
 
 
@@ -90,8 +88,7 @@ def _choose_interval_bounds(
         [
             name
             for name in names
-            if name != left
-            and _has_name_hint(name, ("high", "right", "der", "fin", "end", "r"))
+            if name != left and _has_name_hint(name, ("high", "right", "der", "fin", "end", "r"))
         ],
         _first([name for name in names if name != left], names[0]),
     )
@@ -109,9 +106,7 @@ def _choose_bound_variable(
     if not bound_variables:
         return default
 
-    candidates = [
-        name for name in bound_variables if name not in {control, collection, target}
-    ]
+    candidates = [name for name in bound_variables if name not in {control, collection, target}]
     if not candidates:
         candidates = list(bound_variables)
 
@@ -119,9 +114,7 @@ def _choose_bound_variable(
         [
             name
             for name in candidates
-            if _has_name_hint(
-                name, ("n", "len", "size", "tam", "bound", "fin", "end", "m")
-            )
+            if _has_name_hint(name, ("n", "len", "size", "tam", "bound", "fin", "end", "m"))
         ],
         candidates[0],
     )
@@ -192,9 +185,7 @@ def resolve_template_variant(pattern: PatternType, facts: LoopFacts) -> str:
             [
                 name
                 for name in facts.body_writes
-                if _has_name_hint(
-                    name, ("max", "min", "mayor", "menor", "small", "large")
-                )
+                if _has_name_hint(name, ("max", "min", "mayor", "menor", "small", "large"))
             ],
             accumulator,
         )
@@ -398,9 +389,7 @@ def build_invariant_text(
             [
                 name
                 for name in facts.body_writes
-                if _has_name_hint(
-                    name, ("max", "min", "mayor", "menor", "small", "large")
-                )
+                if _has_name_hint(name, ("max", "min", "mayor", "menor", "small", "large"))
             ],
             accumulator,
         )
@@ -429,9 +418,7 @@ def build_invariant_text(
         _first(
             [
                 name
-                for name in (
-                    facts.body_writes + facts.body_reads + facts.target_variables
-                )
+                for name in (facts.body_writes + facts.body_reads + facts.target_variables)
                 if "." not in name
                 and name not in {control, second_control, collection, bound, target}
             ],
@@ -458,9 +445,7 @@ def build_invariant_text(
         [
             name.split(".", 1)[1]
             for name in (facts.body_writes + facts.body_reads + facts.condition_reads)
-            if isinstance(name, str)
-            and name.startswith(f"{collection}.")
-            and "." in name
+            if isinstance(name, str) and name.startswith(f"{collection}.") and "." in name
         ],
         "",
     )
@@ -479,31 +464,22 @@ def build_invariant_text(
         [
             name
             for name in facts.body_writes
-            if _has_name_hint(
-                name, ("found", "exist", "flag", "encontr", "hall", "seen")
-            )
+            if _has_name_hint(name, ("found", "exist", "flag", "encontr", "hall", "seen"))
         ],
         _first(
             [
                 name
                 for name in facts.body_writes
-                if "." not in name
-                and name not in {control, second_control, collection, bound}
+                if "." not in name and name not in {control, second_control, collection, bound}
             ],
             "found",
         ),
     )
 
-    source_hint, destination_hint = _infer_copy_collections_from_updates(
-        facts.key_updates
-    )
+    source_hint, destination_hint = _infer_copy_collections_from_updates(facts.key_updates)
     destination_collection = destination_hint or _first(
         [name for name in facts.body_writes if name in facts.collection_variables],
-        (
-            facts.collection_variables[1]
-            if len(facts.collection_variables) > 1
-            else collection
-        ),
+        (facts.collection_variables[1] if len(facts.collection_variables) > 1 else collection),
     )
     source_collection = source_hint or _first(
         [name for name in facts.collection_variables if name != destination_collection],
@@ -601,21 +577,13 @@ def _build_spanish(
     prev_segment = f"{collection}[1..{control}-1]"
     current_cell = f"{collection}[{control}]"
     source_cell = f"{source_collection}[{control}]"
-    field_cell = (
-        f"{collection}[{control}].{collection_field}"
-        if collection_field
-        else current_cell
-    )
+    field_cell = f"{collection}[{control}].{collection_field}" if collection_field else current_cell
     full_segment = f"{collection}[1..{bound}]"
     extrema_prev_segment = (
-        f"{collection}[1..{control}-1].{collection_field}"
-        if collection_field
-        else prev_segment
+        f"{collection}[1..{control}-1].{collection_field}" if collection_field else prev_segment
     )
     extrema_full_segment = (
-        f"{collection}[1..{bound}].{collection_field}"
-        if collection_field
-        else full_segment
+        f"{collection}[1..{bound}].{collection_field}" if collection_field else full_segment
     )
 
     if pattern == "binary_search_interval":
@@ -1273,9 +1241,7 @@ def _build_spanish(
                 property_statement=(
                     f"Al inicio de cada iteración, {accumulator} representa la potencia acumulada de la base tras las multiplicaciones ya ejecutadas."
                 ),
-                initialization=(
-                    f"Inicialización: {accumulator} = 1, equivalente a exponente 0."
-                ),
+                initialization=(f"Inicialización: {accumulator} = 1, equivalente a exponente 0."),
                 maintenance=(
                     f"Mantenimiento: cada iteración multiplica {accumulator} por la base, por lo que el exponente acumulado aumenta en uno."
                 ),
@@ -1806,21 +1772,13 @@ def _build_english(
     prev_segment = f"{collection}[1..{control}-1]"
     current_cell = f"{collection}[{control}]"
     source_cell = f"{source_collection}[{control}]"
-    field_cell = (
-        f"{collection}[{control}].{collection_field}"
-        if collection_field
-        else current_cell
-    )
+    field_cell = f"{collection}[{control}].{collection_field}" if collection_field else current_cell
     full_segment = f"{collection}[1..{bound}]"
     extrema_prev_segment = (
-        f"{collection}[1..{control}-1].{collection_field}"
-        if collection_field
-        else prev_segment
+        f"{collection}[1..{control}-1].{collection_field}" if collection_field else prev_segment
     )
     extrema_full_segment = (
-        f"{collection}[1..{bound}].{collection_field}"
-        if collection_field
-        else full_segment
+        f"{collection}[1..{bound}].{collection_field}" if collection_field else full_segment
     )
 
     if pattern == "binary_search_interval":
@@ -2457,9 +2415,7 @@ def _build_english(
                 property_statement=(
                     f"At the start of each iteration, {accumulator} represents the accumulated power after the multiplications already performed."
                 ),
-                initialization=(
-                    f"Initialization: {accumulator} = 1, corresponding to exponent 0."
-                ),
+                initialization=(f"Initialization: {accumulator} = 1, corresponding to exponent 0."),
                 maintenance=(
                     f"Maintenance: each step multiplies {accumulator} by the base, so the represented exponent increases by one."
                 ),
@@ -2788,9 +2744,7 @@ def _build_english(
             finalization=(
                 "Finalization: when boundaries cross, no pending region remains and the global condition is satisfied."
             ),
-            didactic_summary=(
-                "The two-pointer method keeps an explicit, shrinking work interval."
-            ),
+            didactic_summary=("The two-pointer method keeps an explicit, shrinking work interval."),
         )
 
     if pattern == "sorting_pass":
@@ -2856,9 +2810,7 @@ def _build_english(
                 property_statement=(
                     f"At the start of each iteration, boundary state [{control}, {second_control}] defines a valid working interval."
                 ),
-                initialization=(
-                    "Initialization: boundaries start on the full problem interval."
-                ),
+                initialization=("Initialization: boundaries start on the full problem interval."),
                 maintenance=(
                     f"Maintenance: each update of {control} or {second_control} removes only invalid regions, preserving interval validity."
                 ),

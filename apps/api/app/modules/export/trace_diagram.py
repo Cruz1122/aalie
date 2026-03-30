@@ -44,14 +44,10 @@ def _sanitize_node(node: Dict[str, Any]) -> Dict[str, Any]:
                 else None
             ),
             "tokens": (
-                data.get("tokens")
-                if isinstance(data.get("tokens"), (int, float))
-                else None
+                data.get("tokens") if isinstance(data.get("tokens"), (int, float)) else None
             ),
         },
-        "parentId": (
-            node.get("parentId") if isinstance(node.get("parentId"), str) else None
-        ),
+        "parentId": (node.get("parentId") if isinstance(node.get("parentId"), str) else None),
     }
 
 
@@ -65,9 +61,7 @@ def _sanitize_edge(edge: Dict[str, Any], index: int) -> Dict[str, Any]:
     }
 
 
-def _detect_roots(
-    nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]
-) -> List[str]:
+def _detect_roots(nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> List[str]:
     incoming = {node["id"]: 0 for node in nodes}
     for edge in edges:
         incoming[edge["target"]] = incoming.get(edge["target"], 0) + 1
@@ -75,9 +69,7 @@ def _detect_roots(
     return roots or sorted(node["id"] for node in nodes)[:1]
 
 
-def build_depth_index(
-    nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]
-) -> Dict[str, int]:
+def build_depth_index(nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> Dict[str, int]:
     by_source: Dict[str, List[str]] = {}
     for edge in edges:
         by_source.setdefault(edge["source"], []).append(edge["target"])
@@ -140,9 +132,7 @@ def synthesize_return_edges(
     return synthetic
 
 
-def build_reduction(
-    nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]
-) -> Dict[str, Any]:
+def build_reduction(nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> Dict[str, Any]:
     count = len(nodes)
     if count <= 25:
         return {
@@ -170,9 +160,7 @@ def build_reduction(
         }
     depth_index = build_depth_index(nodes, edges)
     max_visible_depth = 4
-    visible_ids = {
-        node_id for node_id, depth in depth_index.items() if depth <= max_visible_depth
-    }
+    visible_ids = {node_id for node_id, depth in depth_index.items() if depth <= max_visible_depth}
     reduced_nodes = [
         {
             **node,
@@ -185,9 +173,7 @@ def build_reduction(
         if node["id"] in visible_ids
     ]
     reduced_edges = [
-        edge
-        for edge in edges
-        if edge["source"] in visible_ids and edge["target"] in visible_ids
+        edge for edge in edges if edge["source"] in visible_ids and edge["target"] in visible_ids
     ]
     collapsed_nodes = max(0, len(nodes) - len(reduced_nodes))
     reduction_note = (
@@ -204,9 +190,7 @@ def build_reduction(
     }
 
 
-def _tree_layout(
-    nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]
-) -> Dict[str, Any]:
+def _tree_layout(nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]]) -> Dict[str, Any]:
     depth_index = build_depth_index(nodes, edges)
     by_source: Dict[str, List[str]] = {}
     for edge in edges:
@@ -298,9 +282,7 @@ def build_trace_diagram_layout(
         "width": layouted["width"],
         "height": layouted["height"],
         "stats": {
-            "totalCalls": int(
-                _as_number(summary.get("totalCalls"), len(layouted["nodes"]))
-            ),
+            "totalCalls": int(_as_number(summary.get("totalCalls"), len(layouted["nodes"]))),
             "maxDepth": max_depth,
             "totalEdges": len(with_return_edges),
             "truncated": bool(diagnostics.get("truncated")),
@@ -424,9 +406,7 @@ def _parse_label_parts(label: str) -> Dict[str, str]:
     return_line = next((line for line in lines if line.startswith("→")), "")
     return {
         "signature": signature,
-        "finalState": re.sub(
-            r"^(estado final|final)\s*:\s*", "", final_line, flags=re.I
-        ).strip(),
+        "finalState": re.sub(r"^(estado final|final)\s*:\s*", "", final_line, flags=re.I).strip(),
         "returnValue": re.sub(r"^→\s*", "", return_line).strip(),
     }
 
@@ -441,9 +421,7 @@ def _extract_state_summary(graph: Dict[str, Any]) -> Dict[str, str]:
     ordered = sorted((roots or nodes), key=lambda node: node["id"])
     if not ordered:
         return {"initial": "N/A", "final": "N/A"}
-    parts = _parse_label_parts(
-        (((ordered[0] or {}).get("data") or {}).get("label")) or ""
-    )
+    parts = _parse_label_parts((((ordered[0] or {}).get("data") or {}).get("label")) or "")
     return {
         "initial": parts["signature"] or "N/A",
         "final": parts["finalState"] or parts["returnValue"] or "N/A",
@@ -478,11 +456,7 @@ def render_trace_diagram_svg(
         is_return = edge["type"] == "return"
         x1 = source["position"]["x"] + (node_width / 2 if is_return else node_width)
         y1 = source["position"]["y"] + (10 if is_return else node_height / 2)
-        x2 = (
-            target["position"]["x"] + node_width / 2
-            if is_return
-            else target["position"]["x"]
-        )
+        x2 = target["position"]["x"] + node_width / 2 if is_return else target["position"]["x"]
         y2 = target["position"]["y"] + (10 if is_return else node_height / 2)
         mx = (x1 + x2) / 2
         arch_lift = max(56, abs(x2 - x1) * 0.12) if is_return else 0
@@ -491,9 +465,7 @@ def render_trace_diagram_svg(
         path = f"M {x1} {y1} C {mx} {c1y}, {mx} {c2y}, {x2} {y2}"
         label = str(edge.get("label") or "").strip()
         if not label and is_return:
-            label = _parse_label_parts((source["data"] or {}).get("label") or "")[
-                "returnValue"
-            ]
+            label = _parse_label_parts((source["data"] or {}).get("label") or "")["returnValue"]
         label_y = max(32, min(c1y, c2y) - 8 if is_return else (y1 + y2) / 2 - 8)
         label_svg = (
             f'<text x="{mx}" y="{label_y}" text-anchor="middle" font-size="14" font-weight="600" fill="#0f172a">{_escape_xml(label)}</text>'
@@ -608,17 +580,9 @@ def render_trace_diagram_pdf(
             continue
         is_return = edge["type"] == "return"
         x1 = source["position"]["x"] + (node_width / 2 if is_return else node_width)
-        y1 = (
-            height
-            - 16
-            - (source["position"]["y"] + (10 if is_return else node_height / 2))
-        )
+        y1 = height - 16 - (source["position"]["y"] + (10 if is_return else node_height / 2))
         x2 = target["position"]["x"] + (node_width / 2 if is_return else 0)
-        y2 = (
-            height
-            - 16
-            - (target["position"]["y"] + (10 if is_return else node_height / 2))
-        )
+        y2 = height - 16 - (target["position"]["y"] + (10 if is_return else node_height / 2))
         mx = (x1 + x2) / 2
         arch_lift = max(56, abs(x2 - x1) * 0.12) if is_return else 0
         c1y = y1 + arch_lift if is_return else y1
@@ -636,9 +600,7 @@ def render_trace_diagram_pdf(
         pdf.drawPath(path, stroke=1, fill=0)
         label = str(edge.get("label") or "").strip()
         if not label and is_return:
-            label = _parse_label_parts((source["data"] or {}).get("label") or "")[
-                "returnValue"
-            ]
+            label = _parse_label_parts((source["data"] or {}).get("label") or "")["returnValue"]
         if label:
             pdf.setDash()
             pdf.setFillColor(colors.HexColor("#0f172a"))
@@ -660,9 +622,7 @@ def render_trace_diagram_pdf(
         for index, line in enumerate(
             _build_node_text_lines((node["data"] or {}).get("label") or node["id"])
         ):
-            pdf.drawCentredString(
-                x + node_width / 2, y + node_height - 32 - index * 18, line
-            )
+            pdf.drawCentredString(x + node_width / 2, y + node_height - 32 - index * 18, line)
     panel_width = max(520, width - 48)
     panel_y = 16
     pdf.setFillColor(colors.HexColor("#f8fafc"))
@@ -687,9 +647,7 @@ def render_trace_diagram_pdf(
     )
     pdf.setFont("Helvetica", 15)
     pdf.setFillColor(colors.HexColor("#1e293b"))
-    pdf.drawString(
-        40, panel_y + 108, f"{'Caso' if locale == 'es' else 'Case'}: {case_name}"
-    )
+    pdf.drawString(40, panel_y + 108, f"{'Caso' if locale == 'es' else 'Case'}: {case_name}")
     pdf.drawString(
         40,
         panel_y + 84,
@@ -699,9 +657,7 @@ def render_trace_diagram_pdf(
     )
     pdf.setFillColor(colors.HexColor("#0f172a"))
     pdf.setFont("Helvetica-Bold", 14)
-    pdf.drawString(
-        40, panel_y + 58, "Estado inicial" if locale == "es" else "Initial state"
-    )
+    pdf.drawString(40, panel_y + 58, "Estado inicial" if locale == "es" else "Initial state")
     pdf.drawString(
         24 + panel_width * 0.53,
         panel_y + 58,

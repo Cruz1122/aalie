@@ -41,9 +41,7 @@ def _normalize_formats(formats: Any) -> List[str]:
     if not isinstance(formats, list) or len(formats) == 0:
         return DEFAULT_FORMATS.copy()
     normalized = [
-        str(item)
-        for item in formats
-        if isinstance(item, str) and item in SUPPORTED_FORMATS
+        str(item) for item in formats if isinstance(item, str) and item in SUPPORTED_FORMATS
     ]
     return list(dict.fromkeys(normalized)) or DEFAULT_FORMATS.copy()
 
@@ -52,9 +50,7 @@ def _normalize_trace_cases(cases: Any) -> Optional[List[str]]:
     if not isinstance(cases, list) or len(cases) == 0:
         return None
     normalized = [
-        str(item)
-        for item in cases
-        if isinstance(item, str) and item in SUPPORTED_TRACE_CASES
+        str(item) for item in cases if isinstance(item, str) and item in SUPPORTED_TRACE_CASES
     ]
     unique = list(dict.fromkeys(normalized))
     return unique or None
@@ -105,11 +101,7 @@ def _stable_stringify(value: Any) -> str:
 def _canonicalize_trace_step(step: Any) -> Any:
     if not isinstance(step, dict):
         return step
-    return {
-        key: value
-        for key, value in step.items()
-        if key not in {"microseconds", "tokens"}
-    }
+    return {key: value for key, value in step.items() if key not in {"microseconds", "tokens"}}
 
 
 def _canonicalize_trace_response(trace: Any) -> Any:
@@ -155,14 +147,10 @@ def _canonicalize_trace_response(trace: Any) -> Any:
         "algorithmKind": trace.get("algorithmKind"),
         "trace": {
             "kind": trace_body.get("kind"),
-            "steps": [
-                _canonicalize_trace_step(step)
-                for step in (trace_body.get("steps") or [])
-            ],
+            "steps": [_canonicalize_trace_step(step) for step in (trace_body.get("steps") or [])],
             "summary": trace_body.get("summary"),
             "diagnostics": trace_body.get("diagnostics"),
-            "callTreeSource": trace_body.get("callTreeSource")
-            or trace_body.get("recursionTree"),
+            "callTreeSource": trace_body.get("callTreeSource") or trace_body.get("recursionTree"),
         },
         "derived": {
             "structuredTrace": {
@@ -178,11 +166,7 @@ def _canonicalize_trace_response(trace: Any) -> Any:
 
 
 def _iso_utc(dt: datetime) -> str:
-    return (
-        dt.astimezone(timezone.utc)
-        .isoformat(timespec="milliseconds")
-        .replace("+00:00", "Z")
-    )
+    return dt.astimezone(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
 def _strip_undefined_deep(value: Any) -> Any:
@@ -219,11 +203,7 @@ def _extract_algorithm_from_ast(ast: Any) -> Dict[str, Any]:
     if not isinstance(body, list):
         return {"name": "UnknownProcedure", "parameters": []}
     procedure = next(
-        (
-            node
-            for node in body
-            if isinstance(node, dict) and node.get("type") == "ProcDef"
-        ),
+        (node for node in body if isinstance(node, dict) and node.get("type") == "ProcDef"),
         None,
     )
     name = str((procedure or {}).get("name") or "UnknownProcedure")
@@ -304,9 +284,7 @@ def _normalize_recurrence(value: Any) -> Optional[Dict[str, Any]]:
     }
 
 
-def _normalize_trace_graph_from_structured(
-    trace: Dict[str, Any]
-) -> Optional[Dict[str, Any]]:
+def _normalize_trace_graph_from_structured(trace: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     structured = (trace.get("derived") or {}).get("structuredTrace") or {}
     graph = structured.get("graph") or {}
     nodes = []
@@ -333,15 +311,11 @@ def _normalize_trace_graph_from_structured(
                         else None
                     ),
                     "tokens": (
-                        data.get("tokens")
-                        if isinstance(data.get("tokens"), (int, float))
-                        else None
+                        data.get("tokens") if isinstance(data.get("tokens"), (int, float)) else None
                     ),
                 },
                 "parentId": (
-                    node.get("parentId")
-                    if isinstance(node.get("parentId"), str)
-                    else None
+                    node.get("parentId") if isinstance(node.get("parentId"), str) else None
                 ),
             }
         )
@@ -374,13 +348,9 @@ def _normalize_trace_graph_from_structured(
     }
 
 
-def _normalize_trace_graph_from_call_tree(
-    trace: Dict[str, Any]
-) -> Optional[Dict[str, Any]]:
+def _normalize_trace_graph_from_call_tree(trace: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     trace_payload = trace.get("trace") if isinstance(trace.get("trace"), dict) else {}
-    call_tree = trace_payload.get("callTreeSource") or trace_payload.get(
-        "recursionTree"
-    )
+    call_tree = trace_payload.get("callTreeSource") or trace_payload.get("recursionTree")
     if not isinstance(call_tree, dict):
         return None
     calls = [item for item in (call_tree.get("calls") or []) if isinstance(item, dict)]
@@ -392,21 +362,15 @@ def _normalize_trace_graph_from_call_tree(
         if not node_id:
             continue
         fn = str(
-            call.get("function_name")
-            or call.get("functionName")
-            or call.get("procedure")
-            or "call"
+            call.get("function_name") or call.get("functionName") or call.get("procedure") or "call"
         )
         params = call.get("params") if isinstance(call.get("params"), dict) else {}
         params_str = ", ".join(
-            f"{key}={json.dumps(value, ensure_ascii=False)}"
-            for key, value in params.items()
+            f"{key}={json.dumps(value, ensure_ascii=False)}" for key, value in params.items()
         )
         label = f"{fn}({params_str})" if params_str else f"{fn}(...)"
         if "return_value" in call:
-            label = (
-                f"{label}\n→ {json.dumps(call.get('return_value'), ensure_ascii=False)}"
-            )
+            label = f"{label}\n→ {json.dumps(call.get('return_value'), ensure_ascii=False)}"
         nodes.append(
             {
                 "id": node_id,
@@ -414,9 +378,7 @@ def _normalize_trace_graph_from_call_tree(
                 "position": {"x": int(call.get("depth") or 0) * 240, "y": 0},
                 "data": {"label": label},
                 "parentId": (
-                    call.get("parent_id")
-                    if isinstance(call.get("parent_id"), str)
-                    else None
+                    call.get("parent_id") if isinstance(call.get("parent_id"), str) else None
                 ),
             }
         )
@@ -452,14 +414,12 @@ def _normalize_trace_graph_from_call_tree(
     }
 
 
-def _resolve_report_trace_graph(
-    trace: Optional[Dict[str, Any]]
-) -> Optional[Dict[str, Any]]:
+def _resolve_report_trace_graph(trace: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     if not trace or not trace.get("ok"):
         return None
-    return _normalize_trace_graph_from_structured(
+    return _normalize_trace_graph_from_structured(trace) or _normalize_trace_graph_from_call_tree(
         trace
-    ) or _normalize_trace_graph_from_call_tree(trace)
+    )
 
 
 def _build_case_result(case_name: str, data: Any) -> Optional[Dict[str, Any]]:
@@ -547,9 +507,7 @@ def _infer_algorithm_type(snapshot_input: Dict[str, Any]) -> str:
 
 
 def _build_recursive_presentation(step_by_step: Any) -> Optional[Dict[str, Any]]:
-    steps = (
-        (step_by_step or {}).get("steps") if isinstance(step_by_step, dict) else None
-    )
+    steps = (step_by_step or {}).get("steps") if isinstance(step_by_step, dict) else None
     if not isinstance(steps, list) or not steps:
         return None
     first = steps[0] if isinstance(steps[0], dict) else {}
@@ -592,21 +550,13 @@ def build_snapshot(
     snapshot_id = str(snapshot_input.get("snapshotId") or "")
     created_at = str(snapshot_input.get("createdAt") or "")
     parse_payload = (
-        snapshot_input.get("parse")
-        if isinstance(snapshot_input.get("parse"), dict)
-        else None
+        snapshot_input.get("parse") if isinstance(snapshot_input.get("parse"), dict) else None
     )
     analyze_payload = (
-        snapshot_input.get("analyze")
-        if isinstance(snapshot_input.get("analyze"), dict)
-        else None
+        snapshot_input.get("analyze") if isinstance(snapshot_input.get("analyze"), dict) else None
     )
-    parse_ast = (
-        parse_payload.get("ast") if parse_payload and parse_payload.get("ok") else None
-    )
-    algorithm_info = _extract_algorithm_from_ast(
-        parse_ast if isinstance(parse_ast, dict) else {}
-    )
+    parse_ast = parse_payload.get("ast") if parse_payload and parse_payload.get("ok") else None
+    algorithm_info = _extract_algorithm_from_ast(parse_ast if isinstance(parse_ast, dict) else {})
 
     normalized_cases = _resolve_same_as_worst(
         (analyze_payload or {}).get("worst"),
@@ -614,23 +564,14 @@ def build_snapshot(
         (analyze_payload or {}).get("avg"),
     )
     selected_case = (
-        normalized_cases["worst"]
-        or normalized_cases["best"]
-        or normalized_cases["avg"]
-        or None
+        normalized_cases["worst"] or normalized_cases["best"] or normalized_cases["avg"] or None
     )
     loop_invariant = (
         (analyze_payload or {}).get("loopInvariant")
-        or (
-            (selected_case or {}).get("loopInvariant")
-            if isinstance(selected_case, dict)
-            else None
-        )
+        or ((selected_case or {}).get("loopInvariant") if isinstance(selected_case, dict) else None)
         or None
     )
-    totals = (
-        (selected_case or {}).get("totals") if isinstance(selected_case, dict) else {}
-    )
+    totals = (selected_case or {}).get("totals") if isinstance(selected_case, dict) else {}
     normalized_recurrence = _normalize_recurrence((totals or {}).get("recurrence"))
     method_details = [
         (
@@ -660,20 +601,14 @@ def build_snapshot(
     method_details = [detail for detail in method_details if detail]
 
     if normalized_recurrence and normalized_recurrence.get("method") == "iteration":
-        selected_step_by_step = (
-            (totals.get("iteration") or {}).get("step_by_step")
-        ) or ((totals.get("characteristic_equation") or {}).get("step_by_step"))
-    elif (
-        normalized_recurrence
-        and normalized_recurrence.get("method") == "characteristic_equation"
-    ):
+        selected_step_by_step = ((totals.get("iteration") or {}).get("step_by_step")) or (
+            (totals.get("characteristic_equation") or {}).get("step_by_step")
+        )
+    elif normalized_recurrence and normalized_recurrence.get("method") == "characteristic_equation":
         selected_step_by_step = (
             (totals.get("characteristic_equation") or {}).get("step_by_step")
         ) or ((totals.get("iteration") or {}).get("step_by_step"))
-    elif (
-        normalized_recurrence
-        and normalized_recurrence.get("method") == "recursion_tree"
-    ):
+    elif normalized_recurrence and normalized_recurrence.get("method") == "recursion_tree":
         selected_step_by_step = (
             ((totals.get("recursion_tree") or {}).get("step_by_step"))
             or ((totals.get("master") or {}).get("step_by_step"))
@@ -707,9 +642,7 @@ def build_snapshot(
         else None
     )
     if detect_methods_payload and detect_methods_payload.get("ok"):
-        methods_available = (
-            detect_methods_payload.get("applicable_methods") or methods_applied
-        )
+        methods_available = detect_methods_payload.get("applicable_methods") or methods_applied
     else:
         methods_available = methods_applied
 
@@ -724,15 +657,9 @@ def build_snapshot(
         if not isinstance(trace, dict):
             continue
         trace_data = trace.get("trace") if isinstance(trace.get("trace"), dict) else {}
-        summary = (
-            trace_data.get("summary")
-            if isinstance(trace_data.get("summary"), dict)
-            else {}
-        )
+        summary = trace_data.get("summary") if isinstance(trace_data.get("summary"), dict) else {}
         diagnostics = (
-            trace_data.get("diagnostics")
-            if isinstance(trace_data.get("diagnostics"), dict)
-            else {}
+            trace_data.get("diagnostics") if isinstance(trace_data.get("diagnostics"), dict) else {}
         )
         trace_summary_data.append(
             {
@@ -763,9 +690,7 @@ def build_snapshot(
             "algorithmTypeDetected": algorithm_type,
             "methodsApplied": methods_applied,
             "methodsAvailable": methods_available,
-            "hasCaseVariability": bool(
-                (analyze_payload or {}).get("has_case_variability")
-            ),
+            "hasCaseVariability": bool((analyze_payload or {}).get("has_case_variability")),
             "validity": {
                 "parseOk": bool((parse_payload or {}).get("ok")),
                 "analysisOk": bool((analyze_payload or {}).get("ok")),
@@ -792,9 +717,7 @@ def build_snapshot(
                 "errors": (parse_payload or {}).get("errors"),
             },
             "analysisSummary": {
-                "hasCaseVariability": bool(
-                    (analyze_payload or {}).get("has_case_variability")
-                ),
+                "hasCaseVariability": bool((analyze_payload or {}).get("has_case_variability")),
                 "availableCases": [
                     case_name for case_name, value in normalized_cases.items() if value
                 ],
@@ -816,9 +739,7 @@ def build_snapshot(
                     "available",
                     {
                         "kind": _infer_algorithm_type(snapshot_input),
-                        "method": (
-                            (snapshot_input.get("classify") or {}).get("method")
-                        ),
+                        "method": ((snapshot_input.get("classify") or {}).get("method")),
                     },
                 )
                 if ((snapshot_input.get("classify") or {}).get("kind"))
@@ -834,24 +755,22 @@ def build_snapshot(
                     "available",
                     {
                         "proof": (totals or {}).get("proof"),
-                        "characteristicEquation": (totals or {}).get(
-                            "characteristic_equation"
-                        ),
+                        "characteristicEquation": (totals or {}).get("characteristic_equation"),
                         "characteristicEquationStepByStep": (
                             (totals or {}).get("characteristic_equation") or {}
                         ).get("step_by_step"),
                         "iteration": (totals or {}).get("iteration"),
-                        "iterationStepByStep": (
-                            (totals or {}).get("iteration") or {}
-                        ).get("step_by_step"),
+                        "iterationStepByStep": ((totals or {}).get("iteration") or {}).get(
+                            "step_by_step"
+                        ),
                         "master": (totals or {}).get("master"),
                         "masterStepByStep": ((totals or {}).get("master") or {}).get(
                             "step_by_step"
                         ),
                         "recursionTree": (totals or {}).get("recursion_tree"),
-                        "recursionTreeStepByStep": (
-                            (totals or {}).get("recursion_tree") or {}
-                        ).get("step_by_step"),
+                        "recursionTreeStepByStep": ((totals or {}).get("recursion_tree") or {}).get(
+                            "step_by_step"
+                        ),
                     },
                 )
                 if selected_case
@@ -887,116 +806,68 @@ def build_snapshot(
                 },
                 "whileBlocks": {
                     "worst": (
-                        (
-                            ((normalized_cases["worst"] or {}).get("totals") or {}).get(
-                                "whileBlocks"
-                            )
-                        )
+                        (((normalized_cases["worst"] or {}).get("totals") or {}).get("whileBlocks"))
                         if isinstance(normalized_cases["worst"], dict)
                         else None
                     ),
                     "best": (
-                        (
-                            ((normalized_cases["best"] or {}).get("totals") or {}).get(
-                                "whileBlocks"
-                            )
-                        )
+                        (((normalized_cases["best"] or {}).get("totals") or {}).get("whileBlocks"))
                         if isinstance(normalized_cases["best"], dict)
                         else None
                     ),
                     "avg": (
-                        (
-                            ((normalized_cases["avg"] or {}).get("totals") or {}).get(
-                                "whileBlocks"
-                            )
-                        )
+                        (((normalized_cases["avg"] or {}).get("totals") or {}).get("whileBlocks"))
                         if isinstance(normalized_cases["avg"], dict)
                         else None
                     ),
                 },
                 "summations": {
                     "worst": (
-                        (
-                            ((normalized_cases["worst"] or {}).get("totals") or {}).get(
-                                "T_open"
-                            )
-                        )
+                        (((normalized_cases["worst"] or {}).get("totals") or {}).get("T_open"))
                         if isinstance(normalized_cases["worst"], dict)
                         else None
                     ),
                     "best": (
-                        (
-                            ((normalized_cases["best"] or {}).get("totals") or {}).get(
-                                "T_open"
-                            )
-                        )
+                        (((normalized_cases["best"] or {}).get("totals") or {}).get("T_open"))
                         if isinstance(normalized_cases["best"], dict)
                         else None
                     ),
                     "avg": (
-                        (
-                            ((normalized_cases["avg"] or {}).get("totals") or {}).get(
-                                "T_open"
-                            )
-                        )
+                        (((normalized_cases["avg"] or {}).get("totals") or {}).get("T_open"))
                         if isinstance(normalized_cases["avg"], dict)
                         else None
                     ),
                 },
                 "simplificationSteps": {
                     "worst": (
-                        (
-                            ((normalized_cases["worst"] or {}).get("totals") or {}).get(
-                                "procedure"
-                            )
-                        )
+                        (((normalized_cases["worst"] or {}).get("totals") or {}).get("procedure"))
                         if isinstance(normalized_cases["worst"], dict)
                         else None
                     ),
                     "best": (
-                        (
-                            ((normalized_cases["best"] or {}).get("totals") or {}).get(
-                                "procedure"
-                            )
-                        )
+                        (((normalized_cases["best"] or {}).get("totals") or {}).get("procedure"))
                         if isinstance(normalized_cases["best"], dict)
                         else None
                     ),
                     "avg": (
-                        (
-                            ((normalized_cases["avg"] or {}).get("totals") or {}).get(
-                                "procedure"
-                            )
-                        )
+                        (((normalized_cases["avg"] or {}).get("totals") or {}).get("procedure"))
                         if isinstance(normalized_cases["avg"], dict)
                         else None
                     ),
                 },
                 "asymptoticProcedure": {
                     "worst": (
-                        (
-                            ((normalized_cases["worst"] or {}).get("totals") or {}).get(
-                                "notes"
-                            )
-                        )
+                        (((normalized_cases["worst"] or {}).get("totals") or {}).get("notes"))
                         if isinstance(normalized_cases["worst"], dict)
                         else None
                     ),
                     "best": (
-                        (
-                            ((normalized_cases["best"] or {}).get("totals") or {}).get(
-                                "notes"
-                            )
-                        )
+                        (((normalized_cases["best"] or {}).get("totals") or {}).get("notes"))
                         if isinstance(normalized_cases["best"], dict)
                         else None
                     ),
                     "avg": (
-                        (
-                            ((normalized_cases["avg"] or {}).get("totals") or {}).get(
-                                "notes"
-                            )
-                        )
+                        (((normalized_cases["avg"] or {}).get("totals") or {}).get("notes"))
                         if isinstance(normalized_cases["avg"], dict)
                         else None
                     ),
@@ -1012,20 +883,12 @@ def build_snapshot(
                         else None
                     ),
                     "best": (
-                        (
-                            ((normalized_cases["best"] or {}).get("totals") or {}).get(
-                                "step_by_step"
-                            )
-                        )
+                        (((normalized_cases["best"] or {}).get("totals") or {}).get("step_by_step"))
                         if isinstance(normalized_cases["best"], dict)
                         else None
                     ),
                     "avg": (
-                        (
-                            ((normalized_cases["avg"] or {}).get("totals") or {}).get(
-                                "step_by_step"
-                            )
-                        )
+                        (((normalized_cases["avg"] or {}).get("totals") or {}).get("step_by_step"))
                         if isinstance(normalized_cases["avg"], dict)
                         else None
                     ),
@@ -1036,26 +899,16 @@ def build_snapshot(
                         {
                             case_name: (
                                 {
-                                    "steps": ((trace.get("trace") or {}).get("steps"))
-                                    or [],
-                                    "summary": (
-                                        (trace.get("trace") or {}).get("summary")
-                                    ),
-                                    "diagnostics": (
-                                        (trace.get("trace") or {}).get("diagnostics")
-                                    ),
+                                    "steps": ((trace.get("trace") or {}).get("steps")) or [],
+                                    "summary": ((trace.get("trace") or {}).get("summary")),
+                                    "diagnostics": ((trace.get("trace") or {}).get("diagnostics")),
                                     "callTreeSource": (
                                         (trace.get("trace") or {}).get("callTreeSource")
                                     )
-                                    or (
-                                        (trace.get("trace") or {}).get("recursionTree")
-                                    ),
-                                    "reportTraceGraph": _resolve_report_trace_graph(
-                                        trace
-                                    ),
+                                    or ((trace.get("trace") or {}).get("recursionTree")),
+                                    "reportTraceGraph": _resolve_report_trace_graph(trace),
                                 }
-                                if isinstance(trace, dict)
-                                and isinstance(trace.get("trace"), dict)
+                                if isinstance(trace, dict) and isinstance(trace.get("trace"), dict)
                                 else None
                             )
                             for case_name, trace in trace_by_case.items()
@@ -1067,9 +920,7 @@ def build_snapshot(
                 "loopInvariant": (
                     create_section("available", loop_invariant)
                     if loop_invariant
-                    else mark_not_implemented(
-                        SNAPSHOT_NOT_IMPLEMENTED_TODOS["loopInvariant"]
-                    )
+                    else mark_not_implemented(SNAPSHOT_NOT_IMPLEMENTED_TODOS["loopInvariant"])
                 ),
             },
         ),
@@ -1097,11 +948,7 @@ def build_snapshot(
                     "rootsAndMultiplicities": (
                         create_section(
                             "available",
-                            (
-                                (totals.get("characteristic_equation") or {}).get(
-                                    "roots"
-                                )
-                            ),
+                            ((totals.get("characteristic_equation") or {}).get("roots")),
                         )
                         if isinstance(totals, dict)
                         and isinstance(totals.get("characteristic_equation"), dict)
@@ -1133,24 +980,17 @@ def build_snapshot(
                                     )
                                 ),
                                 "closedForm": (
-                                    (totals.get("characteristic_equation") or {}).get(
-                                        "closed_form"
-                                    )
+                                    (totals.get("characteristic_equation") or {}).get("closed_form")
                                 ),
                                 "theta": (
-                                    (totals.get("characteristic_equation") or {}).get(
-                                        "theta"
-                                    )
+                                    (totals.get("characteristic_equation") or {}).get("theta")
                                 ),
                                 "baseCases": (
-                                    (totals.get("characteristic_equation") or {}).get(
-                                        "base_cases"
-                                    )
+                                    (totals.get("characteristic_equation") or {}).get("base_cases")
                                 ),
                             },
                         )
-                        if isinstance(totals, dict)
-                        and totals.get("characteristic_equation")
+                        if isinstance(totals, dict) and totals.get("characteristic_equation")
                         else create_section("not_supported")
                     ),
                     "recursionTreeSerializable": (
@@ -1158,9 +998,7 @@ def build_snapshot(
                         if isinstance(totals, dict) and totals.get("recursion_tree")
                         else create_section(
                             "not_implemented",
-                            todos=[
-                                SNAPSHOT_NOT_IMPLEMENTED_TODOS["symbolicRecurrenceTree"]
-                            ],
+                            todos=[SNAPSHOT_NOT_IMPLEMENTED_TODOS["symbolicRecurrenceTree"]],
                         )
                     ),
                     "callTrace": (
@@ -1169,31 +1007,16 @@ def build_snapshot(
                             {
                                 case_name: (
                                     {
-                                        "steps": (
-                                            (trace.get("trace") or {}).get("steps")
-                                        )
-                                        or [],
+                                        "steps": ((trace.get("trace") or {}).get("steps")) or [],
                                         "callTreeSource": (
-                                            (trace.get("trace") or {}).get(
-                                                "callTreeSource"
-                                            )
+                                            (trace.get("trace") or {}).get("callTreeSource")
                                         )
-                                        or (
-                                            (trace.get("trace") or {}).get(
-                                                "recursionTree"
-                                            )
-                                        ),
-                                        "summary": (
-                                            (trace.get("trace") or {}).get("summary")
-                                        ),
+                                        or ((trace.get("trace") or {}).get("recursionTree")),
+                                        "summary": ((trace.get("trace") or {}).get("summary")),
                                         "diagnostics": (
-                                            (trace.get("trace") or {}).get(
-                                                "diagnostics"
-                                            )
+                                            (trace.get("trace") or {}).get("diagnostics")
                                         ),
-                                        "reportTraceGraph": _resolve_report_trace_graph(
-                                            trace
-                                        ),
+                                        "reportTraceGraph": _resolve_report_trace_graph(trace),
                                     }
                                     if isinstance(trace, dict)
                                     and isinstance(trace.get("trace"), dict)
@@ -1226,25 +1049,19 @@ def build_snapshot(
             "disclaimer": INSTITUTIONAL_DISCLAIMER_TEXT[locale],
             "caseLimitations": [warning["message"] for warning in warnings],
             "generalLimitations": (
-                DEFAULT_GENERAL_LIMITATIONS_ES
-                if locale == "es"
-                else DEFAULT_GENERAL_LIMITATIONS_EN
+                DEFAULT_GENERAL_LIMITATIONS_ES if locale == "es" else DEFAULT_GENERAL_LIMITATIONS_EN
             ),
         },
     }
 
     normalized = _strip_undefined_deep(snapshot_without_hash)
-    content_hash = hashlib.sha256(
-        _stable_stringify(normalized).encode("utf-8")
-    ).hexdigest()
+    content_hash = hashlib.sha256(_stable_stringify(normalized).encode("utf-8")).hexdigest()
     snapshot = _deep_copy(snapshot_without_hash)
     snapshot["contentHash"] = content_hash
     return snapshot
 
 
-def _derive_metadata(
-    snapshot_input: Dict[str, Any], include_gpu_cpu: bool
-) -> Dict[str, str]:
+def _derive_metadata(snapshot_input: Dict[str, Any], include_gpu_cpu: bool) -> Dict[str, str]:
     seed_payload = {
         "source": snapshot_input.get("source"),
         "locale": snapshot_input.get("locale"),
@@ -1279,17 +1096,13 @@ def build_export_state(payload: Dict[str, Any]) -> Dict[str, Any]:
     classify_raw = payload.get("cachedClassify") or classify_algorithm(source=source)
     classify_result = {
         "kind": classify_raw.get("kind") if isinstance(classify_raw, dict) else None,
-        "method": (
-            classify_raw.get("method") if isinstance(classify_raw, dict) else None
-        ),
+        "method": (classify_raw.get("method") if isinstance(classify_raw, dict) else None),
     }
     algorithm_kind = _normalize_algorithm_kind(
         payload.get("algorithmKind") or classify_result.get("kind")
     )
     trace_cases = _normalize_trace_cases(payload.get("includeTraceCases")) or (
-        ["worst", "best", "avg"]
-        if algorithm_kind in {"iterative", "hybrid"}
-        else ["worst"]
+        ["worst", "best", "avg"] if algorithm_kind in {"iterative", "hybrid"} else ["worst"]
     )
 
     analyze_result = payload.get("cachedAnalyze") or analyze_algorithm(
@@ -1322,8 +1135,7 @@ def build_export_state(payload: Dict[str, Any]) -> Dict[str, Any]:
             locale=locale,
         )
     trace_by_case = {
-        case_name: _canonicalize_trace_response(trace)
-        for case_name, trace in trace_by_case.items()
+        case_name: _canonicalize_trace_response(trace) for case_name, trace in trace_by_case.items()
     }
 
     snapshot_input: Dict[str, Any] = {
@@ -1341,12 +1153,8 @@ def build_export_state(payload: Dict[str, Any]) -> Dict[str, Any]:
         snapshot_input,
         include_gpu_cpu=payload.get("includeGpuCpu", True) is not False,
     )
-    snapshot_input["analysisId"] = str(
-        payload.get("analysisId") or metadata["analysisId"]
-    )
-    snapshot_input["snapshotId"] = str(
-        payload.get("snapshotId") or metadata["snapshotId"]
-    )
+    snapshot_input["analysisId"] = str(payload.get("analysisId") or metadata["analysisId"])
+    snapshot_input["snapshotId"] = str(payload.get("snapshotId") or metadata["snapshotId"])
     snapshot_input["createdAt"] = str(payload.get("createdAt") or metadata["createdAt"])
 
     return {

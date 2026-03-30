@@ -170,9 +170,7 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
                 index=2,
                 step_id="rt_s2",
                 kind="recursion_tree_applicability_check",
-                title=_title(
-                    ctx.locale, "Aplicabilidad del método", "Method applicability"
-                ),
+                title=_title(ctx.locale, "Aplicabilidad del método", "Method applicability"),
                 status="unsupported",
                 confidence="low",
                 summary_key="tree.applicability.unsupported",
@@ -188,23 +186,15 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
             "tree_parameters_extracted": _title(
                 ctx.locale, "Parámetros del árbol", "Tree parameters"
             ),
-            "level_model_built": _title(
-                ctx.locale, "Modelo del nivel i", "Level-i model"
-            ),
+            "level_model_built": _title(ctx.locale, "Modelo del nivel i", "Level-i model"),
             "level_cost_computed": _title(ctx.locale, "Costo por nivel", "Level cost"),
-            "tree_height_determined": _title(
-                ctx.locale, "Altura del árbol", "Tree height"
-            ),
+            "tree_height_determined": _title(ctx.locale, "Altura del árbol", "Tree height"),
             "leaf_cost_computed": _title(ctx.locale, "Costo de hojas", "Leaf cost"),
-            "total_tree_sum_built": _title(
-                ctx.locale, "Suma total del árbol", "Total tree sum"
-            ),
+            "total_tree_sum_built": _title(ctx.locale, "Suma total del árbol", "Total tree sum"),
             "total_tree_sum_simplified": _title(
                 ctx.locale, "Simplificación de suma", "Sum simplification"
             ),
-            "dominant_term_identified": _title(
-                ctx.locale, "Término dominante", "Dominant term"
-            ),
+            "dominant_term_identified": _title(ctx.locale, "Término dominante", "Dominant term"),
             "asymptotic_conclusion": _title(
                 ctx.locale, "Conclusión asintótica", "Asymptotic conclusion"
             ),
@@ -244,9 +234,7 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
             index=2,
             step_id="rt_s2",
             kind="recursion_tree_applicability_check",
-            title=_title(
-                ctx.locale, "Aplicabilidad del método", "Method applicability"
-            ),
+            title=_title(ctx.locale, "Aplicabilidad del método", "Method applicability"),
             status="complete",
             confidence="high",
             summary_key="tree.applicability.supported",
@@ -291,9 +279,7 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
             confidence="medium" if step4_status == "partial" else "high",
             summary_key="tree.level_model.built",
             concept_key="concept.tree.level_model_built",
-            warning_key=(
-                "warning.tree.tree_inconsistent" if step4_status == "partial" else None
-            ),
+            warning_key=("warning.tree.tree_inconsistent" if step4_status == "partial" else None),
             primary_latex=ctx.level_model_latex,
             payload={"derivedExpression": ctx.level_model_latex},
             codes=["RT_TREE_INCONSISTENT"] if step4_status == "partial" else [],
@@ -399,9 +385,7 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
                 else "tree.total_sum.simplified.complete"
             ),
             concept_key="concept.tree.total_tree_sum_simplified",
-            warning_key=(
-                "warning.tree.sum_partial" if step9_status == "partial" else None
-            ),
+            warning_key=("warning.tree.sum_partial" if step9_status == "partial" else None),
             primary_latex=ctx.simplified_expression_latex,
             payload={"simplifiedExpression": ctx.simplified_expression_latex},
             codes=["RT_SUMMATION_PARTIAL"] if step9_status == "partial" else [],
@@ -425,9 +409,7 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
                 else "tree.dominant_term.identified.complete"
             ),
             concept_key="concept.tree.dominant_term_identified",
-            warning_key=(
-                "warning.tree.tree_inconsistent" if step10_status == "partial" else None
-            ),
+            warning_key=("warning.tree.tree_inconsistent" if step10_status == "partial" else None),
             primary_latex=ctx.dominant_reason_latex,
             payload={
                 "dominantLevel": ctx.dominant_level,
@@ -443,9 +425,7 @@ def build_recursion_tree_step_bundle(ctx: RecursionTreeStepContext) -> Dict[str,
         if step11_status == "partial"
         else "tree.asymptotic_conclusion.complete"
     )
-    step11_warning = (
-        "warning.tree.asymptotic_partial" if step11_status == "partial" else None
-    )
+    step11_warning = "warning.tree.asymptotic_partial" if step11_status == "partial" else None
 
     steps.append(
         make_recursive_step(

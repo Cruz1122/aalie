@@ -90,9 +90,7 @@ def call_to_label(call: Dict[str, Any], locale: str = "en") -> str:
     if isinstance(final_params, dict) and final_params:
         changed = {k: v for k, v in final_params.items() if params.get(k) != v}
         if changed:
-            final_str = ", ".join(
-                f"{k}={_format_param_value(v)}" for k, v in changed.items()
-            )
+            final_str = ", ".join(f"{k}={_format_param_value(v)}" for k, v in changed.items())
             label_parts.append(f"{_t(locale, 'final', 'estado final')}: {final_str}")
     if base:
         label_parts.append(_t(locale, "(base)", "(caso base)"))

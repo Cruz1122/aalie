@@ -163,11 +163,7 @@ class WhileEngine:
         body = node.get("body")
         mode = input_data.mode
         parent = input_data.parent_context
-        L = (
-            node.get("pos", {}).get("line", 0)
-            if isinstance(node.get("pos"), dict)
-            else 0
-        )
+        L = node.get("pos", {}).get("line", 0) if isinstance(node.get("pos"), dict) else 0
 
         # 1) Guard
         guard = analyze_guard_for_engine(test)
@@ -222,9 +218,7 @@ class WhileEngine:
         control = detect_control_variables(guard, updates, input_data.symbol_table)
 
         # Extraer variable, limit, change_rule para visitor
-        var_name = evidence.get("var") or (
-            control.primary_numeric_controller if control else None
-        )
+        var_name = evidence.get("var") or (control.primary_numeric_controller if control else None)
         limit = evidence.get("limit", "n")
         op_rel = evidence.get("op", "<")
         change_rule = {}
@@ -264,12 +258,8 @@ class WhileEngine:
                 iterations_class = getattr(
                     iter_result, "iterations_class", None
                 ) or self._infer_iterations_class(iterations_expr, asymptotic_class)
-                effective_status = (
-                    "bounded" if iter_result.exact_symbolic_bound else "unknown"
-                )
-                block_status = (
-                    "available" if iter_result.exact_symbolic_bound else "partial"
-                )
+                effective_status = "bounded" if iter_result.exact_symbolic_bound else "unknown"
+                block_status = "available" if iter_result.exact_symbolic_bound else "partial"
                 dominant_controller = (
                     control.primary_numeric_controller
                     or control.primary_boolean_controller
@@ -286,17 +276,13 @@ class WhileEngine:
                     evidence_level=getattr(iter_result, "evidence_level", None),
                     reason_code=reason_code,
                     dominant_controller=dominant_controller,
-                    iterations_expr=(
-                        iterations_expr if iter_result.exact_symbolic_bound else None
-                    ),
+                    iterations_expr=(iterations_expr if iter_result.exact_symbolic_bound else None),
                     iterations_class=iterations_class,
                     diagnostics=pattern.explain(while_ctx),
                 )
                 return WhileAnalysisResult(
                     status=effective_status,
-                    termination=(
-                        "proven_terminating" if progress.proven else "not_proven"
-                    ),
+                    termination=("proven_terminating" if progress.proven else "not_proven"),
                     iterations_expr=iterations_expr,
                     asymptotic_class=asymptotic_class,
                     dominant_controller=dominant_controller,

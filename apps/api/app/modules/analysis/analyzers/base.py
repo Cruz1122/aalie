@@ -55,17 +55,13 @@ class BaseAnalyzer:
         self.loop_stack: List[Expr] = []  # multiplicadores activos (expresiones SymPy)
         self.symbols: Dict[str, str] = {}  # ej: { "n": "length(A)" }
         self.notes: List[str] = []  # reglas aplicadas / comentarios
-        self.memo: Dict[str, List[LineCost]] = (
-            {}
-        )  # PD: cache de filas por nodo+contexto
+        self.memo: Dict[str, List[LineCost]] = {}  # PD: cache de filas por nodo+contexto
         self.counter = 0  # contador para generar constantes C_k
         self.t_polynomial: Optional[str] = None  # forma polinómica T(n) = an² + bn + c
         self.variable = "n"  # variable principal del algoritmo
         self.expr_converter = ExprConverter(self.variable)
         self.mode: str = "worst"  # modo de análisis: "worst", "best", "avg"
-        self.avg_model: Optional[AvgModel] = (
-            None  # modelo probabilístico para caso promedio
-        )
+        self.avg_model: Optional[AvgModel] = None  # modelo probabilístico para caso promedio
         self.procedure_steps: Optional[List[str]] = (
             None  # pasos del procedimiento para caso promedio
         )
@@ -170,10 +166,7 @@ class BaseAnalyzer:
             if node_type == "assign":
                 target = node.get("target")
                 value = node.get("value")
-                if (
-                    isinstance(target, dict)
-                    and target.get("type", "").lower() == "identifier"
-                ):
+                if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
                     name = target.get("name")
                     if isinstance(name, str) and name:
                         # Si el RHS contiene a la misma variable y estamos dentro de un bucle,
@@ -304,9 +297,7 @@ class BaseAnalyzer:
 
         # Orden estable: mayor score primero, y en empate nombre ascendente.
         # Evita elegir variables no tamaño (p.ej. `x`) sobre `n` por orden lexicográfico inverso.
-        candidates.sort(
-            key=lambda name: (-_tie_break_key(name)[0], _tie_break_key(name)[1])
-        )
+        candidates.sort(key=lambda name: (-_tie_break_key(name)[0], _tie_break_key(name)[1]))
         return candidates
 
     # --- util 1: agregar fila ---
@@ -495,9 +486,7 @@ class BaseAnalyzer:
                 i += 1
             arg = expr_str[start : i - 1]
             expr_str = (
-                expr_str[: log_match.start()]
-                + f"log({arg}, {log_match.group(1)})"
-                + expr_str[i:]
+                expr_str[: log_match.start()] + f"log({arg}, {log_match.group(1)})" + expr_str[i:]
             )
         # \\log(arg) -> log(arg)
         expr_str = re.sub(r"\\log\s*\(([^)]+)\)", r"log(\1)", expr_str)
@@ -693,9 +682,7 @@ class BaseAnalyzer:
 
                 # Crear término: C_k * ops * count_expr (ops = operaciones elementales)
                 ops_val = r.get("ops", 1)
-                term_expr = (
-                    Integer(ops_val) * count_expr if ops_val != 1 else count_expr
-                )
+                term_expr = Integer(ops_val) * count_expr if ops_val != 1 else count_expr
                 terms.append(term_expr)
 
         if not terms:
@@ -1034,9 +1021,7 @@ class BaseAnalyzer:
 
                 # Crear término: C_k * ops * count_expr (ops = operaciones elementales)
                 ops_val = r.get("ops", 1)
-                term_expr = (
-                    Integer(ops_val) * count_expr if ops_val != 1 else count_expr
-                )
+                term_expr = Integer(ops_val) * count_expr if ops_val != 1 else count_expr
                 terms.append(term_expr)
 
         if not terms:
@@ -1148,9 +1133,7 @@ class BaseAnalyzer:
                 if key == "count_raw_expr" or key == "count_expr":
                     continue
                 # Convertir cualquier objeto SymPy restante a string
-                if hasattr(value, "__class__") and "sympy" in str(
-                    type(value).__module__
-                ):
+                if hasattr(value, "__class__") and "sympy" in str(type(value).__module__):
                     try:
                         from sympy import latex
 
@@ -1158,9 +1141,7 @@ class BaseAnalyzer:
                     except Exception:
                         clean_row[key] = str(value)
                 # Asegurar que count, count_raw y expectedRuns sean strings
-                elif key in ["count", "count_raw", "expectedRuns"] and not isinstance(
-                    value, str
-                ):
+                elif key in ["count", "count_raw", "expectedRuns"] and not isinstance(value, str):
                     # Si el valor es 0, mantener "0", no convertir a "1"
                     if value == 0 or (hasattr(value, "__eq__") and value == 0):
                         clean_row[key] = "0"
@@ -1516,9 +1497,7 @@ class BaseAnalyzer:
         self.while_blocks.append(dict(block))
         return block
 
-    def update_while_block(
-        self, block_id: str, **changes: Any
-    ) -> Optional[Dict[str, Any]]:
+    def update_while_block(self, block_id: str, **changes: Any) -> Optional[Dict[str, Any]]:
         """Actualiza un bloque WHILE previamente registrado."""
         normalized_id = str(block_id or "").strip()
         if not normalized_id:

@@ -51,9 +51,7 @@ def compile_latex_to_pdf(
         asset_entries.append(
             {
                 "filename": str(dest.relative_to(work_dir)),
-                "mimeType": (
-                    "application/pdf" if dest.suffix.lower() == ".pdf" else "text/plain"
-                ),
+                "mimeType": ("application/pdf" if dest.suffix.lower() == ".pdf" else "text/plain"),
                 "size": dest.stat().st_size,
             }
         )

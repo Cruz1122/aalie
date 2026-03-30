@@ -168,9 +168,7 @@ def _updates_match(a: Dict, b: Dict) -> bool:
     if a.get("type") != b.get("type"):
         return False
     if a.get("type") == "num":
-        return a.get("operator") == b.get("operator") and a.get("constant") == b.get(
-            "constant"
-        )
+        return a.get("operator") == b.get("operator") and a.get("constant") == b.get("constant")
     if a.get("type") == "bool_assign":
         return a.get("value") == b.get("value")
     if a.get("type") == "mod_decrease":
@@ -259,12 +257,8 @@ def _compute_summary_for_var(
             if u.get("value") is False and guard_desired is True:
                 kills_guard_must = True  # var=true → var<-false mata
             elif u.get("value") is True and guard_desired is False:
-                kills_guard_must = (
-                    True  # var=false → var<-true mata (bubble sort mejorado)
-                )
-        if (u.get("type") == "num" or u.get("type") == "mod_decrease") and u.get(
-            "monotone"
-        ):
+                kills_guard_must = True  # var=false → var<-true mata (bubble sort mejorado)
+        if (u.get("type") == "num" or u.get("type") == "mod_decrease") and u.get("monotone"):
             monotone_progress_must = True
 
     for u in may:
@@ -323,10 +317,7 @@ def summarize_updates(
                 for atom in atoms:
                     if not isinstance(atom, dict):
                         continue
-                    if (
-                        atom.get("var") == var_name
-                        and atom.get("bool_desired") is not None
-                    ):
+                    if atom.get("var") == var_name and atom.get("bool_desired") is not None:
                         desired = bool(atom.get("bool_desired"))
                         break
 

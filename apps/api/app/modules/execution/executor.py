@@ -72,9 +72,7 @@ def _detect_zero_based_indexing(ast: Dict[str, Any]) -> bool:
                             for j in range(i + 1, len(body)):
                                 s = body[j]
                                 if isinstance(s, dict) and s.get("type") == "While":
-                                    if _expr_uses_identifier(
-                                        s.get("test", {}), target_name
-                                    ):
+                                    if _expr_uses_identifier(s.get("test", {}), target_name):
                                         return True
                                     break
                                 if isinstance(s, dict) and s.get("type") in (
@@ -380,9 +378,7 @@ class CodeExecutor:
             return any(self._contains_call(item) for item in node)
         return False
 
-    def _pick_array_value(
-        self, preferred_names: Optional[List[str]] = None
-    ) -> Optional[List[Any]]:
+    def _pick_array_value(self, preferred_names: Optional[List[str]] = None) -> Optional[List[Any]]:
         """Obtiene un array del environment priorizando nombres comunes."""
         if preferred_names:
             for name in preferred_names:
@@ -517,9 +513,7 @@ class CodeExecutor:
 
         # Inferir parámetros índice cuando se detecta array param y uso de índices en el AST.
         if array_param_names and array_len is not None:
-            index_params = self._collect_array_index_identifiers(
-                body, array_param_names
-            )
+            index_params = self._collect_array_index_identifiers(body, array_param_names)
             missing_index_params = [
                 p for p in param_names if p in index_params and p not in params_map
             ]
@@ -561,9 +555,7 @@ class CodeExecutor:
                         "final",
                         "der",
                     }
-                    params_map[ordered_missing[0]] = (
-                        array_len if name in end_like else 1
-                    )
+                    params_map[ordered_missing[0]] = array_len if name in end_like else 1
 
         # Inferir inicio/fin por nombre cuando hay longitud conocida.
         if array_len is not None:
@@ -670,10 +662,7 @@ class CodeExecutor:
                 def _is_same_or_offset(node: Any, base_name: str) -> bool:
                     """Devuelve True si node es el identificador base_name o base_name +/- c."""
                     if isinstance(node, dict):
-                        if (
-                            node.get("type") == "Identifier"
-                            and node.get("name") == base_name
-                        ):
+                        if node.get("type") == "Identifier" and node.get("name") == base_name:
                             return True
                         if node.get("type") == "Binary" and node.get("op") in (
                             "+",
@@ -681,10 +670,7 @@ class CodeExecutor:
                         ):
                             left_node = node.get("left")
                             right_node = node.get("right")
-                            if (
-                                isinstance(right_node, dict)
-                                and right_node.get("type") == "Literal"
-                            ):
+                            if isinstance(right_node, dict) and right_node.get("type") == "Literal":
                                 return _is_same_or_offset(left_node, base_name)
                     return False
 
@@ -694,9 +680,7 @@ class CodeExecutor:
                     continue
 
                 # Aceptamos si al menos una llamada respeta el patrón "igual o +/- c"
-                if _is_same_or_offset(lower_arg, lower) and _is_same_or_offset(
-                    upper_arg, upper
-                ):
+                if _is_same_or_offset(lower_arg, lower) and _is_same_or_offset(upper_arg, upper):
                     return (lower, upper)
 
             # Si no se pudo validar con llamadas, devolver la inferencia de la condición base
@@ -824,9 +808,7 @@ class CodeExecutor:
             call_id = current_frame.get("call_id")
             if call_id:
                 self.trace_builder.record_return_value(call_id, result)
-                self.trace_builder.record_final_params(
-                    call_id, current_frame.get("params", {})
-                )
+                self.trace_builder.record_final_params(call_id, current_frame.get("params", {}))
 
             # Emitir call_exit antes de cerrar el frame
             line = proc_def.get("pos", {}).get("line", 0)
@@ -937,11 +919,7 @@ class CodeExecutor:
                     current_array = self.environment.get_variable(array_name)
 
                     # Si no existe, intentar crear uno nuevo si el índice es pequeño
-                    if (
-                        current_array is None
-                        and isinstance(index_val, int)
-                        and 0 <= index_val < 20
-                    ):
+                    if current_array is None and isinstance(index_val, int) and 0 <= index_val < 20:
                         current_array = [0] * (index_val + 1)
 
                     if isinstance(current_array, list) and isinstance(index_val, int):
@@ -961,7 +939,9 @@ class CodeExecutor:
                         var_name = f"{array_name}[{index_val}]"
                     else:
                         # Fallback simbólico
-                        var_name = f"{array_name}[{self.environment.evaluate_to_string(index_node)}]"
+                        var_name = (
+                            f"{array_name}[{self.environment.evaluate_to_string(index_node)}]"
+                        )
 
                 # Soporte para matrices A[i][j] = val
                 elif array_node.get("type") == "Index":
@@ -987,12 +967,7 @@ class CodeExecutor:
                             # Asegurar filas
                             if row_idx >= len(current_matrix):
                                 current_matrix.extend(
-                                    [
-                                        []
-                                        for _ in range(
-                                            row_idx - len(current_matrix) + 1
-                                        )
-                                    ]
+                                    [[] for _ in range(row_idx - len(current_matrix) + 1)]
                                 )
 
                             row_list = current_matrix[row_idx]
@@ -1156,9 +1131,7 @@ class CodeExecutor:
                     "maxValue": end_int,
                 },
                 description=(
-                    self._trace_labels.get("for_exit", "Salida de FOR").format(
-                        var_name=var_name
-                    )
+                    self._trace_labels.get("for_exit", "Salida de FOR").format(var_name=var_name)
                     if isinstance(self._trace_labels.get("for_exit"), str)
                     else f"Salida FOR {var_name}"
                 ),
@@ -1170,9 +1143,7 @@ class CodeExecutor:
                 line=node.get("pos", {}).get("line", 0),
                 kind="for",
                 variables=self.environment.get_variables_snapshot(),
-                description=self._trace_labels["for_symbolic"].format(
-                    var_name=var_name
-                ),
+                description=self._trace_labels["for_symbolic"].format(var_name=var_name),
             )
 
     def _execute_while(self, node: Dict[str, Any]) -> None:
@@ -1267,9 +1238,7 @@ class CodeExecutor:
             )
 
         # loop_exit: salida del bucle WHILE (incluir condición si salió por comparación)
-        exit_desc = self._trace_labels.get("for_exit", "Salida de FOR").format(
-            var_name="iter"
-        )
+        exit_desc = self._trace_labels.get("for_exit", "Salida de FOR").format(var_name="iter")
         if exit_condition_text:
             exit_desc = self._trace_labels.get(
                 "loop_exit_condition", "Exit: {condition} = false"
@@ -1375,9 +1344,7 @@ class CodeExecutor:
 
         # Si se alcanzó el límite de seguridad, añadir paso de advertencia
         if iteration_count >= max_iterations:
-            desc = self._trace_labels.get(
-                "loop_truncated", "Loop reached safety limit."
-            )
+            desc = self._trace_labels.get("loop_truncated", "Loop reached safety limit.")
             self.trace_builder.add_step(
                 line=node.get("pos", {}).get("line", 0),
                 kind="repeat",
@@ -1387,9 +1354,7 @@ class CodeExecutor:
             )
 
         # loop_exit: salida del bucle REPEAT (incluir condición si salió por comparación)
-        exit_desc = self._trace_labels.get("for_exit", "Salida de FOR").format(
-            var_name="iter"
-        )
+        exit_desc = self._trace_labels.get("for_exit", "Salida de FOR").format(var_name="iter")
         if exit_condition_text:
             exit_desc = self._trace_labels.get(
                 "loop_exit_condition_repeat", "Exit: {condition} = true"
@@ -1476,9 +1441,7 @@ class CodeExecutor:
             line=node.get("pos", {}).get("line", 0),
             kind="if",
             variables=self.environment.get_variables_snapshot(),
-            description=self._trace_labels["if_condition"].format(
-                condition_val=condition_val
-            ),
+            description=self._trace_labels["if_condition"].format(condition_val=condition_val),
             event_kind="condition_eval",
             decision={"conditionText": condition_text, "result": execute_then},
         )
@@ -1571,9 +1534,7 @@ class CodeExecutor:
 
             if isinstance(v, Expr):
                 if getattr(v, "is_number", False):
-                    return (
-                        float(v) if getattr(v, "is_Float", lambda: False)() else int(v)
-                    )
+                    return float(v) if getattr(v, "is_Float", lambda: False)() else int(v)
                 # SymPy Boolean o Relational: convertir a bool Python
                 return 1 if bool(v) else 0
         except Exception:
@@ -1637,9 +1598,7 @@ class CodeExecutor:
         if self.ast.get("type") == "Program":
             body = self.ast.get("body", [])
             proc_defs = [
-                item
-                for item in body
-                if isinstance(item, dict) and item.get("type") == "ProcDef"
+                item for item in body if isinstance(item, dict) and item.get("type") == "ProcDef"
             ]
             for p in proc_defs:
                 if p.get("name") == proc_name:
@@ -1679,9 +1638,9 @@ class CodeExecutor:
                         "procedure": proc_name,
                     },
                     description=(
-                        self._trace_labels.get(
-                            "recursive_call", "Llamada recursiva"
-                        ).format(proc_name=proc_name, depth=self.recursion_depth)
+                        self._trace_labels.get("recursive_call", "Llamada recursiva").format(
+                            proc_name=proc_name, depth=self.recursion_depth
+                        )
                         if isinstance(self._trace_labels.get("recursive_call"), str)
                         else f"Invocando {proc_name}"
                     ),
@@ -1774,9 +1733,7 @@ class CodeExecutor:
             line=node.get("pos", {}).get("line", 0),
             kind="print",
             variables=self.environment.get_variables_snapshot(),
-            description=self._trace_labels["print_args"].format(
-                args=", ".join(arg_strs)
-            ),
+            description=self._trace_labels["print_args"].format(args=", ".join(arg_strs)),
             event_kind="print",
         )
 
@@ -1838,13 +1795,13 @@ class CodeExecutor:
 
             # Operadores lógicos (evaluar subcondiciones)
             if op in ("and", "&&"):
-                return self._evaluate_condition(
-                    condition.get("left")
-                ) and self._evaluate_condition(condition.get("right"))
+                return self._evaluate_condition(condition.get("left")) and self._evaluate_condition(
+                    condition.get("right")
+                )
             if op in ("or", "||"):
-                return self._evaluate_condition(
-                    condition.get("left")
-                ) or self._evaluate_condition(condition.get("right"))
+                return self._evaluate_condition(condition.get("left")) or self._evaluate_condition(
+                    condition.get("right")
+                )
 
             # Comparaciones con None (ej. nodo == null en listas enlazadas)
             if left is None or right is None:
