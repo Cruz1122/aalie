@@ -18,6 +18,7 @@ from .patterns.binary_search_interval import BinarySearchIntervalPattern
 from .patterns.euclid_mod import EuclidModPattern
 from .patterns.flag_kill import FlagKillPattern
 from .patterns.geometric_growth import GeometricGrowthPattern
+from .patterns.gnome_sort_cursor import GnomeSortCursorPattern
 from .patterns.interval_shrink import IntervalShrinkPattern
 from .patterns.linear_counter import LinearCounterPattern
 from .progress_proofs import prove_progress
@@ -81,6 +82,7 @@ class WhileAnalysisResult:
 
 # Patrones en orden de prioridad
 _PATTERNS = [
+    ("gnome_sort_cursor", GnomeSortCursorPattern()),
     ("linear_counter", LinearCounterPattern()),
     ("geometric_growth", GeometricGrowthPattern()),
     ("flag_kill", FlagKillPattern()),
@@ -246,6 +248,7 @@ class WhileEngine:
         for pattern_name, pattern in _PATTERNS:
             if pattern.matches(while_ctx):
                 iter_result = pattern.derive_iterations(while_ctx)
+                pattern_reason_code = getattr(iter_result, "reason_code", None) or reason_code
                 # El patrón es autoritativo: usar su cota cuando coincida
                 if iter_result.exact_symbolic_bound:
                     iterations_expr = iter_result.exact_symbolic_bound
@@ -274,7 +277,7 @@ class WhileEngine:
                     status=block_status,
                     pattern_used=pattern_name,
                     evidence_level=getattr(iter_result, "evidence_level", None),
-                    reason_code=reason_code,
+                    reason_code=pattern_reason_code,
                     dominant_controller=dominant_controller,
                     iterations_expr=(iterations_expr if iter_result.exact_symbolic_bound else None),
                     iterations_class=iterations_class,
@@ -287,7 +290,7 @@ class WhileEngine:
                     asymptotic_class=asymptotic_class,
                     dominant_controller=dominant_controller,
                     pattern_used=pattern_name,
-                    reason_code=reason_code,
+                    reason_code=pattern_reason_code,
                     diagnostics=pattern.explain(while_ctx),
                     variable=var_name,
                     limit=limit,

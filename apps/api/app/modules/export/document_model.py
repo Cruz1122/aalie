@@ -353,6 +353,23 @@ def _strip_leading_label(value: str, labels: List[str]) -> str:
     return normalized.strip()
 
 
+def _build_step_formula(step: Dict[str, Any]) -> Optional[str]:
+    math = step.get("math") or {}
+    primary = normalize_recursive_formula(math.get("primaryLatex"))
+    items = math.get("items") or []
+    normalized_items = [
+        normalize_recursive_formula(item.get("latex"))
+        for item in items
+        if isinstance(item, dict) and str(item.get("latex") or "").strip()
+    ]
+    formulas = [formula for formula in [primary, *normalized_items] if formula]
+    if not formulas:
+        return None
+    if len(formulas) == 1:
+        return formulas[0]
+    return r"\begin{aligned}" + " \\\\ ".join(formulas) + r"\end{aligned}"
+
+
 def _build_executive_summary_section(
     snapshot: Dict[str, Any], i18n: Dict[str, Any]
 ) -> DocumentSection:
@@ -1207,20 +1224,6 @@ def _build_iterative_invariant_section(
                     safe(payload.get("didacticSummary"), i18n["notAvailable"])
                 ),
             },
-            {
-                "kind": "subsection",
-                "title": localize(i18n, "Resumen técnico", "Technical summary"),
-            },
-            {
-                "kind": "list",
-                "items": [
-                    f"{localize(i18n, 'Patrón detectado', 'Detected pattern')}: {safe((selected_loop or {}).get('patternType'), i18n['notAvailable'])}",
-                    f"{localize(i18n, 'Tipo de ciclo', 'Loop type')}: {safe((selected_loop or {}).get('nodeType'), i18n['notAvailable'])}",
-                    f"{localize(i18n, 'Líneas seleccionadas', 'Selected lines')}: {safe((selected_loop or {}).get('lineStart'), '?')} - {safe((selected_loop or {}).get('lineEnd'), '?')}",
-                    f"{localize(i18n, 'Variante', 'Variant')}: {safe(((payload.get('evidence') or {}).get('templateVariant')), i18n['notAvailable'])}",
-                    f"{localize(i18n, 'Confianza', 'Confidence')}: {safe(((payload.get('evidence') or {}).get('classificationConfidence')), i18n['notAvailable'])}",
-                ],
-            },
         ]
     )
     return DocumentSection(
@@ -1248,16 +1251,11 @@ def _build_iterative_case_analysis_section(
     global_cases = (snapshot.get("globalResult") or {}).get("cases") or {}
     for case_name in CASE_ORDER:
         line_costs = list((data.get("lineCostTable") or {}).get(case_name) or [])
-        while_blocks = list((data.get("whileBlocks") or {}).get(case_name) or [])
         case_step_bundle = (data.get("caseStepByStep") or {}).get(case_name) or {}
         case_walkthrough = [
             step
             for step in ((case_step_bundle or {}).get("steps") or [])
             if isinstance(step, dict)
-            and (
-                not isinstance(step.get("payload"), dict)
-                or (step.get("payload") or {}).get("reportable") is not False
-            )
         ]
         asymptotic_procedure = maybe_list(
             (data.get("asymptoticProcedure") or {}).get(case_name) or []
@@ -1283,56 +1281,6 @@ def _build_iterative_case_analysis_section(
                 ),
             ]
         )
-        if while_blocks:
-            blocks.append(
-                {
-                    "kind": "heading",
-                    "text": localize(
-                        i18n,
-                        "Bloques WHILE detectados",
-                        "Detected WHILE blocks",
-                    ),
-                }
-            )
-            for block in while_blocks:
-                pattern_text = safe(
-                    block.get("patternUsed"),
-                    localize(i18n, "no determinado", "undetermined"),
-                )
-                status_text = safe(
-                    block.get("status"),
-                    localize(i18n, "desconocido", "unknown"),
-                )
-                blocks.extend(
-                    [
-                        {
-                            "kind": "paragraph",
-                            "text": localize(
-                                i18n,
-                                f"Patrón: {pattern_text}. Estado: {status_text}.",
-                                f"Pattern: {pattern_text}. Status: {status_text}.",
-                            ),
-                        },
-                        {
-                            "kind": "formula",
-                            "formula": (
-                                "\\text{Iteraciones del bloque} = "
-                                + str(
-                                    block.get("iterationsExpr")
-                                    or block.get("iterationsClass")
-                                    or i18n["notAvailable"]
-                                )
-                            ),
-                        },
-                        {
-                            "kind": "formula",
-                            "formula": (
-                                "\\text{Costo expandido del bloque} = "
-                                + str(block.get("expandedCostExpr") or i18n["notAvailable"])
-                            ),
-                        },
-                    ]
-                )
         if case_walkthrough:
             blocks.append(
                 {
@@ -1348,9 +1296,7 @@ def _build_iterative_case_analysis_section(
                             "index": step.get("index"),
                             "title": _localize_analysis_text(step.get("title"), i18n),
                             "status": step.get("status"),
-                            "formula": normalize_recursive_formula(
-                                ((step.get("math") or {}).get("primaryLatex"))
-                            ),
+                            "formula": _build_step_formula(step),
                             "explanation": _build_recursive_step_explanation(
                                 step.get("summary"), step.get("conceptNote"), i18n
                             ),
@@ -2121,9 +2067,7 @@ def _build_recursive_section(
                             "index": step.get("index"),
                             "title": _localize_analysis_text(step.get("title"), i18n),
                             "status": step.get("status"),
-                            "formula": normalize_recursive_formula(
-                                ((step.get("math") or {}).get("primaryLatex"))
-                            ),
+                            "formula": _build_step_formula(step),
                             "explanation": _build_recursive_step_explanation(
                                 step.get("summary"), step.get("conceptNote"), i18n
                             ),

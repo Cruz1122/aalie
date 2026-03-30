@@ -159,7 +159,7 @@ def render_markdown_report(snapshot: Dict[str, object], model: DocumentModel) ->
     i18n = get_export_i18n(model.locale)
     hidden_meta = (
         f"<!-- snapshotId: {model.snapshotId}; contentHash: {model.contentHash}; "
-        f"analysisId: {model.analysisId}; createdAt: {model.createdAt} -->"
+        f"analysisId: {model.analysisId} -->"
     )
     front = [f"# {model.title}", "", f"> {model.disclaimer}", "", hidden_meta]
     rendered_sections = []

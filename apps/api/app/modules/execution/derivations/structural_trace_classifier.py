@@ -88,20 +88,46 @@ def _has_partition_like_pattern(steps: List[Dict[str, Any]], calls: List[Dict[st
 def _has_merge_like_pattern(steps: List[Dict[str, Any]], calls: List[Dict[str, Any]]) -> bool:
     """
     Detecta patrón merge: subllamadas primero, luego operación de combinación.
-    Heurística: call_enter/call_spawn_child seguidos de call_resume, luego assign/operation.
+    Heurística: tras volver de subllamadas debe aparecer evidencia real de combinación
+    (llamada helper merge/combine o escritura sobre una colección/arreglo).
     """
     if len(calls) < 2:
         return False
-    kinds = [(s.get("kind") or s.get("eventKind")) for s in steps]
-    # Patrón aproximado: después de call_resume (vuelta de hijos) hay assigns
     in_resume = False
-    assigns_after_resume = 0
-    for k in kinds:
-        if k == "call_resume":
+    collection_writes_after_resume = 0
+    merge_keywords_after_resume = 0
+
+    for step in steps:
+        kind = step.get("kind") or step.get("eventKind")
+        description = str(step.get("description") or "").lower()
+
+        if kind == "call_resume":
             in_resume = True
-        elif in_resume and k == "assign":
-            assigns_after_resume += 1
-    return assigns_after_resume >= 2
+            continue
+
+        if not in_resume:
+            continue
+
+        if kind in {"call_spawn_child", "call_enter"}:
+            proc = str(((step.get("recursion") or {}).get("procedure")) or "").lower()
+            if proc and any(token in proc for token in ("merge", "mezclar", "combine", "combinar")):
+                merge_keywords_after_resume += 1
+            continue
+
+        if kind == "assign":
+            if "[" in description or any(
+                token in description for token in ("merge", "mezclar", "combine", "combinar")
+            ):
+                collection_writes_after_resume += 1
+            continue
+
+        if kind in {"return_emit", "call_exit"}:
+            continue
+
+        if any(token in description for token in ("merge", "mezclar", "combine", "combinar")):
+            merge_keywords_after_resume += 1
+
+    return merge_keywords_after_resume >= 1 or collection_writes_after_resume >= 2
 
 
 def _has_backtracking_pattern(steps: List[Dict[str, Any]]) -> bool:

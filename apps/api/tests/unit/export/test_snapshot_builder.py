@@ -127,6 +127,18 @@ def test_build_export_state_generates_stable_ids_and_respects_created_at():
     assert state_b["snapshotInput"]["createdAt"] == "2026-03-30T12:00:00Z"
 
 
+def test_build_snapshot_content_hash_is_stable_when_created_at_changes():
+    payload = _base_payload()
+
+    state_a = build_export_state({**payload, "createdAt": "2026-03-30T12:00:00Z"})
+    state_b = build_export_state({**payload, "createdAt": "2026-03-30T12:05:00Z"})
+
+    snapshot_a = build_snapshot(state_a["snapshotInput"], state_a["options"])
+    snapshot_b = build_snapshot(state_b["snapshotInput"], state_b["options"])
+
+    assert snapshot_a["contentHash"] == snapshot_b["contentHash"]
+
+
 def test_build_export_state_normalizes_formats_and_defaults():
     payload = _base_payload()
     payload["formats"] = ["markdown", "pdf", "markdown", "other"]

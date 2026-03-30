@@ -28,6 +28,7 @@ class IterationBoundResult:
     not_proven: bool
     iterations_class: Optional[str] = None
     evidence_level: Optional[str] = None
+    reason_code: Optional[str] = None
 
 
 @dataclass

@@ -164,3 +164,63 @@ END
     steps = trace.get("steps", [])
     assert steps
     assert steps[-1].get("variables", {}).get("A") == "[1, 2, 3, 4]"
+
+
+@pytest.mark.unit
+def test_bitonic_sort_infers_ascending_flag_and_sorts() -> None:
+    source = """
+bitonicSort(A[n], inicio, fin, ascendente) BEGIN
+    IF (fin - inicio <= 0) THEN BEGIN
+        RETURN 0;
+    END
+    medio <- (inicio + fin) DIV 2;
+    CALL bitonicSort(A, inicio, medio, true);
+    CALL bitonicSort(A, medio + 1, fin, false);
+    CALL bitonicMerge(A, inicio, fin, ascendente);
+    RETURN 0;
+END
+
+bitonicMerge(A[n], inicio, fin, ascendente) BEGIN
+    IF (fin - inicio <= 0) THEN BEGIN
+        RETURN 0;
+    END
+    medio <- (inicio + fin) DIV 2;
+    i <- inicio;
+    WHILE (i <= medio) DO BEGIN
+        CALL compareAndSwap(A, i, i + (medio - inicio + 1), ascendente);
+        i <- i + 1;
+    END
+    CALL bitonicMerge(A, inicio, medio, ascendente);
+    CALL bitonicMerge(A, medio + 1, fin, ascendente);
+    RETURN 0;
+END
+
+compareAndSwap(A[n], i, j, ascendente) BEGIN
+    temp <- 0;
+    IF (ascendente = true) THEN BEGIN
+        IF (A[i] > A[j]) THEN BEGIN
+            temp <- A[i];
+            A[i] <- A[j];
+            A[j] <- temp;
+        END
+    END
+    ELSE BEGIN
+        IF (A[i] < A[j]) THEN BEGIN
+            temp <- A[i];
+            A[i] <- A[j];
+            A[j] <- temp;
+        END
+    END
+    RETURN 0;
+END
+"""
+    parsed = parse_source(source)
+    assert parsed.get("ok") is True
+    ast = parsed.get("ast")
+    assert isinstance(ast, dict)
+    executor = CodeExecutor(ast, input_size=4, case="worst", initial_variables={"A": [4, 3, 2, 1]})
+
+    trace = executor.execute()
+    steps = trace.get("steps", [])
+    assert steps
+    assert steps[-1].get("variables", {}).get("A") == "[1, 2, 3, 4]"

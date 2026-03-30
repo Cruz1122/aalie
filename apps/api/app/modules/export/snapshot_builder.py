@@ -1055,7 +1055,10 @@ def build_snapshot(
     }
 
     normalized = _strip_undefined_deep(snapshot_without_hash)
-    content_hash = hashlib.sha256(_stable_stringify(normalized).encode("utf-8")).hexdigest()
+    hash_source = _deep_copy(normalized)
+    if isinstance(hash_source, dict):
+        hash_source.pop("createdAt", None)
+    content_hash = hashlib.sha256(_stable_stringify(hash_source).encode("utf-8")).hexdigest()
     snapshot = _deep_copy(snapshot_without_hash)
     snapshot["contentHash"] = content_hash
     return snapshot

@@ -82,6 +82,51 @@ class TestStructuralTraceClassifier:
         assert isinstance(result, StructuralTraceClassification)
         assert result.patternKind in ("binary_branch_recursive", "generic_recursive")
 
+    def test_scalar_combine_after_resume_is_not_classified_as_merge(self):
+        """Dos subllamadas y luego solo combine escalar no deben inventar nodo merge."""
+        trace = {
+            "kind": "recursive",
+            "steps": [
+                {"kind": "call_resume", "description": "Reanudando tras retorno"},
+                {"kind": "assign", "description": "Asignación: izq = 4"},
+                {"kind": "call_resume", "description": "Reanudando tras retorno"},
+                {"kind": "assign", "description": "Asignación: der = 2"},
+                {"kind": "condition_eval", "description": "IF: condición = False"},
+                {"kind": "return_emit", "description": "RETURN 2"},
+            ],
+            "recursionTree": {
+                "calls": [
+                    {"id": "c1", "children": ["c2", "c3"], "params": {"n": 4}},
+                    {"id": "c2", "children": [], "params": {"n": 2}},
+                    {"id": "c3", "children": [], "params": {"n": 2}},
+                ],
+                "root_calls": ["c1"],
+            },
+        }
+        result = classify_structural_trace(trace)
+        assert result.patternKind != "divide_merge_recurse"
+
+    def test_array_writes_after_resume_can_still_be_classified_as_merge(self):
+        """Escrituras al arreglo tras reanudar sí cuentan como combinación tipo merge."""
+        trace = {
+            "kind": "recursive",
+            "steps": [
+                {"kind": "call_resume", "description": "Reanudando tras retorno"},
+                {"kind": "assign", "description": "Asignación: A[k] = izq[i]"},
+                {"kind": "assign", "description": "Asignación: A[k + 1] = der[j]"},
+            ],
+            "recursionTree": {
+                "calls": [
+                    {"id": "c1", "children": ["c2", "c3"], "params": {"n": 4}},
+                    {"id": "c2", "children": [], "params": {"n": 2}},
+                    {"id": "c3", "children": [], "params": {"n": 2}},
+                ],
+                "root_calls": ["c1"],
+            },
+        }
+        result = classify_structural_trace(trace)
+        assert result.patternKind == "divide_merge_recurse"
+
     def test_empty_trace_returns_unknown(self):
         """Traza vacía o sin información -> unknown o generic_iterative."""
         trace = {"kind": "unknown", "steps": [], "recursionTree": None}

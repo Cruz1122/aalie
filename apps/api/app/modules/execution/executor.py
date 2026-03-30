@@ -590,6 +590,12 @@ class CodeExecutor:
             )
             for idx, param_name in enumerate(unresolved_params):
                 lowered = param_name.lower()
+                if lowered in {"ascendente", "ascending", "enabled", "enable"}:
+                    params_map[param_name] = True
+                    continue
+                if lowered in {"descendente", "descending", "disabled", "disable"}:
+                    params_map[param_name] = False
+                    continue
                 if lowered in {"n", "size", "len", "length", "tam", "tamano"}:
                     params_map[param_name] = base_size
                     continue

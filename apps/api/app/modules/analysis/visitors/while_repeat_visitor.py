@@ -2320,6 +2320,8 @@ class WhileRepeatVisitor:
             reason_code = closure_info.get("reason_code", "")
             if reason_code == "while_euclid_mod":
                 note_text = self._note("while_euclid_mod", L=L, var_name=var_name)
+            elif pattern == "gnome_sort_cursor":
+                note_text = self._note("while_gnome_sort_cursor", L=L)
             elif best_body_return_single_pass:
                 note_text = self._note("while_best_early_return", L=L)
             elif pattern == "binary_search":
