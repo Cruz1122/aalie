@@ -1,3 +1,5 @@
+import pytest
+
 from app.modules.export.format_utils import (
     build_status_block,
     ensure_sentence,
@@ -21,6 +23,10 @@ from app.modules.export.format_utils import (
     to_markdown_inline_math,
     to_markdown_text_with_inline_math,
 )
+
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
+
 from app.modules.export.i18n import get_export_i18n
 
 

@@ -1,6 +1,10 @@
 """Unit tests for deterministic loop evidence extractor."""
 
+import pytest
+
 from app.modules.analysis.invariants.extractor import extract_loop_facts
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 def _identifier(name: str):
@@ -316,3 +320,4 @@ def test_extractor_detects_structural_extrema_signal_with_unusual_names():
     assert facts is not None
     assert "has_extrema_max_signal" in facts.detected_features
     assert "extrema_candidate:z_88" in facts.detected_features
+import pytest

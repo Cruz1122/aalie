@@ -5,10 +5,13 @@ Verifica el flujo completo desde AST hasta resultado final para múltiples algor
 y casos (best/worst/average).
 """
 
+import pytest
 from sympy import Rational, Symbol
 
 from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
 from app.modules.analysis.service import analyze_algorithm
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.iterative]
 
 
 class TestIterativeAnalyzer:

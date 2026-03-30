@@ -5,6 +5,8 @@ Author: @Cruz1122
 Version: 0.1.0
 """
 
+import pytest
+
 from app.modules.analysis.ir.expr_utils import (
     expr_equals,
     expr_to_str,
@@ -13,6 +15,10 @@ from app.modules.analysis.ir.expr_utils import (
     is_literal_true,
     is_simple_constant,
 )
+
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
+
 
 
 class TestExprToStr:

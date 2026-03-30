@@ -13,9 +13,9 @@ import pytest
 from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import get_totals
 
+pytestmark = [pytest.mark.contract, pytest.mark.oracle, pytest.mark.while_loop]
 
-@pytest.mark.contract
-@pytest.mark.while_domain
+
 class TestWhileMetamorphic:
     """Pruebas metamórficas: renombrar variables no cambia clasificación."""
 

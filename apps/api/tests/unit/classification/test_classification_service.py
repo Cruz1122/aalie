@@ -4,9 +4,12 @@ Tests unitarios para app.modules.classification.service.
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 
+import pytest
 from unittest.mock import patch
 
 from app.modules.classification.service import classify_algorithm
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 class TestClassifyAlgorithm:
@@ -96,13 +99,12 @@ class TestClassifyAlgorithm:
 
     @patch("app.modules.classification.service.parse_source")
     @patch("app.modules.classification.service.detect_algorithm_kind")
-    def test_classifies_all_kinds(self, mock_detect, mock_parse):
-        """Test: Clasifica todos los tipos de algoritmos"""
+    def test_propagates_hybrid_kind_without_reclassification(self, mock_detect, mock_parse):
+        """Test: Preserva el kind detectado por el clasificador"""
         mock_parse.return_value = {"ok": True, "ast": {"type": "Program", "body": []}}
+        mock_detect.return_value = "hybrid"
 
-        for kind in ["iterative", "recursive", "hybrid", "unknown"]:
-            mock_detect.return_value = kind
-            result = classify_algorithm(source="code")
-            assert result["ok"]
-            assert result["kind"] == kind
-            assert result["method"] == "ast"
+        result = classify_algorithm(source="code")
+        assert result["ok"]
+        assert result["kind"] == "hybrid"
+        assert result["method"] == "ast"

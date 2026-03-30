@@ -1,6 +1,10 @@
 """Unit tests for deterministic loop invariant orchestration."""
 
+import pytest
+
 from app.modules.analysis.invariants.service import generate_loop_invariant
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 def _identifier(name: str):
@@ -258,3 +262,4 @@ def test_service_includes_template_traceability_feature():
     assert any(feature.startswith("template:") for feature in features)
     assert "classificationConfidence" in result["evidence"]
     assert "templateVariant" in result["evidence"]
+import pytest

@@ -6,11 +6,15 @@ Usa pseudocode como input y expectativas explícitas (auténticos).
 
 Author: @Cruz1122
 """
+import pytest
+
 from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import (
     assert_all_cases_complexity,
     get_totals,
 )
+
+pytestmark = [pytest.mark.contract, pytest.mark.oracle, pytest.mark.iterative]
 
 SELECTION_SORT = """selectionSort(A, n) BEGIN
   FOR i <- 1 TO n - 1 DO BEGIN

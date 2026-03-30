@@ -1,5 +1,8 @@
+import pytest
+
 from app.modules.analysis.while_engine.engine import WhileAnalysisInput, WhileEngine
 from app.modules.parsing.service import parse_source
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 def _while_from_source(source: str):

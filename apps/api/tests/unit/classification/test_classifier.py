@@ -4,6 +4,8 @@ Tests unitarios para app.modules.classification.classifier.
 Author: Juan Camilo Cruz Parra (@Cruz1122)
 """
 
+import pytest
+
 from app.modules.classification.classifier import (
     _find_node_type,
     _find_procedure_definition,
@@ -12,6 +14,10 @@ from app.modules.classification.classifier import (
     _search_recursive_calls,
     detect_algorithm_kind,
 )
+
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
+
 
 
 class TestDetectAlgorithmKind:

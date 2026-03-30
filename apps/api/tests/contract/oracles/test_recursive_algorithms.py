@@ -5,6 +5,8 @@ Verifica el análisis de algoritmos recursivos divide-and-conquer.
 Incluye tests auténticos con pseudocode y expectativas de complejidad.
 """
 
+import pytest
+
 from app.modules.analysis.analyzers.recursive import RecursiveAnalyzer
 from app.modules.analysis.service import analyze_algorithm, detect_methods
 from tests._support.assertions import (
@@ -12,6 +14,8 @@ from tests._support.assertions import (
     get_notation_from_totals,
     notation_has_complexity,
 )
+
+pytestmark = [pytest.mark.contract, pytest.mark.oracle, pytest.mark.recursive]
 
 MERGE_SORT_PSEUDOCODE = """mergeSort(A, izq, der) BEGIN
   IF (izq < der) THEN BEGIN

@@ -1,3 +1,5 @@
+import pytest
+
 from app.modules.export.trace_diagram import (
     _as_number,
     _build_node_text_lines,
@@ -13,6 +15,10 @@ from app.modules.export.trace_diagram import (
     render_trace_diagram_svg,
     synthesize_return_edges,
 )
+
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
+
 
 
 def _small_graph():

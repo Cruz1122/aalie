@@ -1,5 +1,8 @@
+import pytest
+
 from app.modules.classification import service as classification_service
 from app.modules.execution.metrics_aggregator import aggregate_metrics
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 def test_aggregate_metrics_handles_cycles_and_missing_data():

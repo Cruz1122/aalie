@@ -1,7 +1,11 @@
 """Unit tests for deterministic loop pattern classifier."""
 
+import pytest
+
 from app.modules.analysis.invariants.classifier import classify_loop_pattern
 from app.modules.analysis.invariants.schemas import LoopFacts
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 def make_facts(**overrides) -> LoopFacts:
@@ -482,3 +486,4 @@ def test_classifier_returns_unknown_when_evidence_is_insufficient():
 
     assert result.pattern == "unknown"
     assert result.confidence < 0.5
+import pytest

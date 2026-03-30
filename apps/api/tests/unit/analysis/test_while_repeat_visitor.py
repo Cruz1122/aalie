@@ -9,6 +9,7 @@ from sympy import Integer, Symbol
 
 from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
 from app.modules.parsing.service import parse_source
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 class TestWhileRepeatVisitor:

@@ -9,6 +9,7 @@ from unittest.mock import patch
 import pytest
 
 from app.modules.analysis.analyzers.recursive import RecursiveAnalyzer
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 class TestRecursiveAnalyzerHelpers:

@@ -1,7 +1,13 @@
+import pytest
+
 from app.modules.export.document_model import (
     _localize_analysis_text,
     build_document_model,
 )
+
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
+
 from app.modules.export.i18n import get_export_i18n
 from app.modules.export.snapshot_builder import build_export_state, build_snapshot
 

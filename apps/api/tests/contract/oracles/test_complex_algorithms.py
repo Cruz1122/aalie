@@ -15,6 +15,8 @@ from tests._support.assertions import (
     get_totals,
 )
 
+pytestmark = [pytest.mark.contract, pytest.mark.oracle, pytest.mark.iterative]
+
 # Bucles anidados con límites variables: FOR i=1 TO n, FOR j=i TO n → Θ(n²)
 NESTED_LOOPS_VARIABLE_LIMITS = """triangular(n) BEGIN
   FOR i <- 1 TO n DO BEGIN

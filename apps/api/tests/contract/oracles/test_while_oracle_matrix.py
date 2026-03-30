@@ -66,38 +66,78 @@ END
 
 
 @pytest.mark.parametrize(
-    "name,source,expected_family",
+    "name,source,expected_theta,expected_pattern,expected_block_status,expected_iteration_class,expected_invariant_pattern",
     [
-        ("flag_kill", FLAG_KILL, {"1"}),
-        ("binary_interval", BINARY_INTERVAL, {"log", "nlogn", "n"}),
-        ("guard_compound", GUARD_COMPOUND, {"n"}),
-        ("interval_shrink", INTERVAL_SHRINK, {"log", "n"}),
-        ("ambiguous_updates", AMBIGUOUS_UPDATES, {"infty", "log", "n"}),
+        (
+            "flag_kill",
+            FLAG_KILL,
+            "\\Theta(1)",
+            "flag_kill",
+            "available",
+            "constant",
+            "loop_progress_only",
+        ),
+        (
+            "binary_interval",
+            BINARY_INTERVAL,
+            "\\Theta(\\log(x))",
+            "binary_search_interval",
+            "available",
+            "logarithmic",
+            "binary_search_interval",
+        ),
+        (
+            "guard_compound",
+            GUARD_COMPOUND,
+            "\\Theta(n)",
+            "linear_counter",
+            "available",
+            "linear",
+            "loop_progress_only",
+        ),
+        (
+            "interval_shrink",
+            INTERVAL_SHRINK,
+            "\\Theta(\\frac{\\\\log{\\left(n \\right)}}{\\\\log{\\left(2 \\right)}})",
+            "binary_search_interval",
+            "available",
+            "logarithmic",
+            "loop_progress_only",
+        ),
+        (
+            "ambiguous_updates",
+            AMBIGUOUS_UPDATES,
+            "\\infty",
+            None,
+            "unbounded",
+            None,
+            "loop_progress_only",
+        ),
     ],
 )
-def test_while_oracle_matrix_contract_and_class(name, source, expected_family):
+def test_while_oracle_matrix_contract_and_class(
+    name,
+    source,
+    expected_theta,
+    expected_pattern,
+    expected_block_status,
+    expected_iteration_class,
+    expected_invariant_pattern,
+):
     result = analyze_algorithm(source, mode="worst")
     assert result.get("ok"), f"{name}: {result.get('errors', [])}"
     totals = result.get("totals", {})
     loop_invariant = result.get("loopInvariant", {})
-    text = " ".join(
-        str(totals.get(k, "")).lower() for k in ("big_theta", "big_o", "T_open")
-    )
-    normalized = (
-        text.replace("\\", "")
-        .replace("{", "")
-        .replace("}", "")
-        .replace(" ", "")
-        .replace("theta", "")
-        .replace("omega", "")
-    )
-    assert loop_invariant.get("status") in {
-        "ok",
-        "available",
-        "partial",
-        "unsupported",
-        "unavailable",
-    }
-    assert any(token in normalized for token in expected_family), (
-        f"{name}: notación inesperada: {text}"
+    while_blocks = totals.get("whileBlocks") or []
+    assert while_blocks, f"{name}: whileBlocks ausente"
+    primary_block = while_blocks[0]
+
+    assert totals.get("big_theta") == expected_theta
+    assert primary_block.get("patternUsed") == expected_pattern
+    assert primary_block.get("status") == expected_block_status
+    assert primary_block.get("iterationsClass") == expected_iteration_class
+    assert loop_invariant.get("status") == "ok"
+    assert (
+        loop_invariant.get("selectedLoop", {}).get("patternType")
+        == expected_invariant_pattern
     )

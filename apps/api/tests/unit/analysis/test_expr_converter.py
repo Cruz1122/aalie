@@ -4,6 +4,7 @@ from sympy import Eq, Integer, Le, Ne, Symbol
 from sympy.logic.boolalg import And, Or
 
 from app.modules.analysis.utils.expr_converter import ExprConverter
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 class TestExprConverter:

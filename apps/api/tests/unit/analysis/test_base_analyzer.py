@@ -3,6 +3,7 @@ import pytest
 from sympy import Integer, Sum, Symbol
 
 from app.modules.analysis.analyzers.base import BaseAnalyzer
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 class TestBaseAnalyzer:

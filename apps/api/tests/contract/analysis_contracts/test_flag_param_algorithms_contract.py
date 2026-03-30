@@ -9,6 +9,8 @@ import pytest
 
 from app.modules.analysis.service import analyze_algorithm
 
+pytestmark = [pytest.mark.contract]
+
 # Algoritmos con param-controlled progress: IF(flag=1) THEN i<-i+1
 FLAG_PARAM_ALGORITHMS: list[tuple[str, str]] = [
     # 1. Ejemplo del usuario: WHILE i<=10, IF flag=1 THEN i<-i+1

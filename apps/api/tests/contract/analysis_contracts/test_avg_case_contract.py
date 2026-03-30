@@ -5,8 +5,12 @@ Usa pseudocode como input y verifica expectedRuns, A_of_n, avg_model_info.
 
 Author: @Cruz1122
 """
+import pytest
+
 from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import notation_has_complexity
+
+pytestmark = [pytest.mark.contract]
 
 LINEAR_SEARCH = """linearSearch(A, n, x) BEGIN
   FOR i <- 1 TO n DO BEGIN

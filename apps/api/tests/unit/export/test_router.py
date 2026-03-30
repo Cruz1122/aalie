@@ -1,9 +1,12 @@
+import pytest
+
 import base64
 import json
 
 from starlette.requests import Request
 
 from app.modules.export import router as export_router
+pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
 
 
 class _FakeService:

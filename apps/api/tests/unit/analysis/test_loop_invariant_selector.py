@@ -1,6 +1,10 @@
 """Unit tests for deterministic loop selector."""
 
+import pytest
+
 from app.modules.analysis.invariants.selector import select_significant_loop
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 def _identifier(name: str):
@@ -149,3 +153,4 @@ def test_selector_tie_break_prefers_earlier_appearance(monkeypatch):
     assert selection.selected.depth == 0
     assert selection.selected.line_start == 2
     assert selection.selected.order == 1
+import pytest

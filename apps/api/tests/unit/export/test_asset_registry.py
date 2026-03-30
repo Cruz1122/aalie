@@ -1,9 +1,15 @@
+import pytest
+
 from pathlib import Path
 
 from app.modules.export.asset_registry import (
     read_latex_template,
     resolve_latex_asset_registry,
 )
+
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
+
 
 
 def test_asset_registry_resolves_backend_owned_export_assets():

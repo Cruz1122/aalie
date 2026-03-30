@@ -1,3 +1,5 @@
+import pytest
+
 import json
 from zipfile import ZipFile
 
@@ -6,6 +8,10 @@ from app.modules.export.asset_registry import (
     read_latex_template,
     resolve_latex_asset_registry,
 )
+
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
+
 from app.modules.export.i18n import get_export_i18n
 from app.modules.export.models import (
     DocumentInstitutionInfo,

@@ -7,11 +7,15 @@ las variables de control NO mutan. Bubble sort mejorado con ordenado debe ser bo
 Author: @Cruz1122
 """
 
+import pytest
+
 from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import (
     assert_all_cases_complexity,
     get_by_line,
 )
+
+pytestmark = [pytest.mark.contract, pytest.mark.oracle, pytest.mark.while_loop]
 
 # --- Casos BOUNDED (variable de control muta) ---
 

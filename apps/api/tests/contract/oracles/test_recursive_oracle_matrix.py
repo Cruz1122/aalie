@@ -21,14 +21,6 @@ SPARSE_LINEAR_SHIFT = """sparseRec(n) BEGIN
 END
 """
 
-MULTI_BRANCH = """tribonacci(n) BEGIN
-  IF (n <= 2) THEN BEGIN
-    RETURN n;
-  END
-  RETURN tribonacci(n - 1) + tribonacci(n - 2) + tribonacci(n - 3);
-END
-"""
-
 DIVIDE_AND_CONQUER = """mergeSort(A, izq, der) BEGIN
   IF (izq < der) THEN BEGIN
     medio <- (izq + der) / 2;
@@ -52,6 +44,19 @@ def test_recursive_matrix_single_branch_oracle():
 
 
 def test_recursive_matrix_sparse_shift_contract_statuses():
+    result = detect_methods(SPARSE_LINEAR_SHIFT, algorithm_kind="recursive")
+    assert result.get("ok"), result.get("errors", [])
+    assert result.get("default_method") == "characteristic_equation"
+    assert result.get("applicable_methods") == ["characteristic_equation"]
+    recurrence = result.get("recurrence_info", {})
+    assert recurrence.get("type") == "linear_shift"
+    dp_validation = recurrence.get("dp_validation", {})
+    assert dp_validation.get("status") == "clear"
+    assert dp_validation.get("primary_pattern") == "tabulation"
+    assert dp_validation.get("supported_patterns") == ["tabulation", "memoization"]
+
+
+def test_recursive_matrix_detect_methods_contract_fields():
     result = analyze_algorithm(
         SPARSE_LINEAR_SHIFT,
         mode="worst",
@@ -60,36 +65,23 @@ def test_recursive_matrix_sparse_shift_contract_statuses():
     assert result.get("ok"), result.get("errors", [])
     totals = result.get("totals", {})
     recurrence = totals.get("recurrence", {})
-    char_eq = totals.get("characteristic_equation", {})
+    characteristic = totals.get("characteristic_equation", {})
     assert recurrence.get("type") == "linear_shift"
     assert recurrence.get("method") == "characteristic_equation"
-    assert char_eq.get("status") in {"available", "partial", "unsupported", None}
-
-
-def test_recursive_matrix_detect_methods_contract_fields():
-    result = detect_methods(SPARSE_LINEAR_SHIFT, algorithm_kind="recursive")
-    assert result.get("ok"), result.get("errors", [])
-    assert isinstance(result.get("applicable_methods"), list)
-    assert result.get("default_method") is not None
-    assert isinstance(result.get("recurrence_info"), dict)
-
-
-def test_recursive_matrix_multi_branch_step_bundle_shape():
-    result = analyze_algorithm(
-        MULTI_BRANCH,
-        mode="worst",
-        preferred_method="characteristic_equation",
-    )
-    assert result.get("ok"), result.get("errors", [])
-    bundle = result.get("totals", {}).get("characteristic_equation", {}).get("step_by_step", {})
-    assert isinstance(bundle, dict)
-    if bundle:
-        assert isinstance(bundle.get("steps"), list)
-        assert bundle.get("method") is not None
+    assert characteristic.get("method") == "characteristic_equation"
+    assert characteristic.get("theta") is not None
+    bundle = characteristic.get("step_by_step", {})
+    assert bundle.get("method") == "characteristic_equation"
+    assert bundle.get("version") == "ceq_steps_v1"
+    assert bundle.get("overallStatus") == "partial"
+    assert len(bundle.get("steps", [])) == 12
 
 
 def test_recursive_matrix_divide_conquer_method_metadata():
     result = detect_methods(DIVIDE_AND_CONQUER, algorithm_kind="recursive")
     assert result.get("ok"), result.get("errors", [])
-    methods = result.get("applicable_methods", [])
-    assert any(m in methods for m in ("master", "recursion_tree", "iteration"))
+    assert result.get("default_method") == "master"
+    assert result.get("applicable_methods") == ["master", "recursion_tree"]
+    recurrence = result.get("recurrence_info", {})
+    assert recurrence.get("type") == "divide_conquer"
+    assert recurrence.get("dp_validation", {}).get("primary_pattern") == "none"

@@ -5,7 +5,10 @@ Author: @Cruz1122
 Version: 0.1.0
 """
 
+import pytest
+
 from app.modules.analysis.semantics import SymbolInfo, SymbolTable, resolve_scope
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 class TestSymbolInfo:

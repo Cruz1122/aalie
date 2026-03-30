@@ -1,3 +1,5 @@
+import pytest
+
 from app.modules.export.latex_renderer import (
     _build_column_spec,
     _is_trace_table,
@@ -9,6 +11,10 @@ from app.modules.export.latex_renderer import (
     _replace_token,
     render_latex_report,
 )
+
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
+
 from app.modules.export.models import (
     DocumentInstitutionInfo,
     DocumentModel,

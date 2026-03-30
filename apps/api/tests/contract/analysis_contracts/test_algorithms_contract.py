@@ -9,14 +9,14 @@ from app.modules.analysis.service import analyze_algorithm
 from tests._support.assertions import assert_case_complexity, assert_complexity_class
 from tests._support.loaders import load_algorithm, load_spec
 
+pytestmark = [pytest.mark.contract]
+
 # Lista (familia, nombre) de algoritmos con spec en expectations/
 CONTRACT_ALGORITHMS = [
     ("math", "fast_exponentiation"),
     # Añadir aquí los 21 algoritmos según se creen .txt y .json
 ]
 
-
-@pytest.mark.contract
 @pytest.mark.parametrize(
     "family,name", CONTRACT_ALGORITHMS, ids=[f"{f}/{n}" for f, n in CONTRACT_ALGORITHMS]
 )

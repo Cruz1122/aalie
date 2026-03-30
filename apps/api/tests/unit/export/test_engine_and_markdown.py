@@ -1,3 +1,5 @@
+import pytest
+
 import base64
 
 from app.modules.export.engine import (
@@ -10,6 +12,10 @@ from app.modules.export.engine import (
     normalize_llm_comparative_payload,
     render_report_result,
 )
+
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
+
 from app.modules.export.latex_compiler import LatexCompilationError
 from app.modules.export.markdown_renderer import render_markdown_report
 from app.modules.export.models import (

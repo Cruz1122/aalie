@@ -8,6 +8,7 @@ import pytest
 from sympy import Rational, Symbol
 
 from app.modules.analysis.models.avg_model import AvgModel
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 class TestAvgModel:

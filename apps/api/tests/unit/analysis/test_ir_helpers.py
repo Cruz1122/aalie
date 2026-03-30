@@ -1,5 +1,8 @@
+import pytest
+
 from app.modules.analysis.ir.ast_normalizer import normalize_expr, normalize_node
 from app.modules.analysis.ir.node_identity import NodeIdentity, node_id
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
 def test_normalize_expr_binary_unary_and_index():

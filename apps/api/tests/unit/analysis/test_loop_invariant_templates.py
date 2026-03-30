@@ -1,10 +1,15 @@
 """Unit tests for deterministic loop invariant templates."""
 
+import pytest
+
 from app.modules.analysis.invariants.schemas import LoopFacts
 from app.modules.analysis.invariants.templates import (
     build_invariant_text,
     resolve_template_variant,
 )
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast]
+
 
 
 def make_facts(**overrides) -> LoopFacts:
@@ -698,3 +703,4 @@ def test_field_assignment_progress_template_mentions_predicate_controlled_write(
     assert variant == "object_field_predicate_assignment"
     assert "asignación por predicado" in text.property_statement.lower()
     assert "A[i].aprobado" in text.property_statement
+import pytest

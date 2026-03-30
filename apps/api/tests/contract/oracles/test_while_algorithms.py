@@ -12,6 +12,8 @@ import pytest
 
 from app.modules.analysis.service import analyze_algorithm
 
+pytestmark = [pytest.mark.contract, pytest.mark.oracle, pytest.mark.while_loop]
+
 # --- Algoritmos con WHILE (20+) ---
 
 ALGORITHMS = [

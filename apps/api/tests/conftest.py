@@ -31,44 +31,6 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "dp: tests involving DP algorithms")
     config.addinivalue_line("markers", "benchmark: performance/regression benchmark tests")
 
-
-def pytest_collection_modifyitems(items):
-    """
-    Lane mapping with immediate cut-over:
-    - fast: unit/component/system except explicit slow/benchmark.
-    - oracle: component + selected contract oracle modules.
-    """
-    oracle_contract_files = {
-        "test_algorithms_contract.py",
-        "test_recursive_algorithms.py",
-        "test_while_algorithms.py",
-    }
-
-    for item in items:
-        marker_names = {m.name for m in item.iter_markers()}
-
-        if "while" in marker_names:
-            item.add_marker("while_loop")
-        if "trace" in str(item.fspath):
-            item.add_marker("trace")
-        if "export" in str(item.fspath):
-            item.add_marker("export")
-
-        if (
-            {"unit", "component", "system"} & marker_names
-            and "slow" not in marker_names
-            and "benchmark" not in marker_names
-        ):
-            item.add_marker("fast")
-
-        if "component" in marker_names:
-            item.add_marker("oracle")
-            item.add_marker("iterative")
-
-        if item.fspath.basename in oracle_contract_files and "slow" not in marker_names:
-            item.add_marker("oracle")
-
-
 def pytest_ignore_collect(collection_path: Path, config) -> bool:  # type: ignore[override]
     """
     Permite correr lanes no-export en entornos sin reportlab.

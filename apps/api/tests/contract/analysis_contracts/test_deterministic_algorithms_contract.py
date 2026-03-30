@@ -10,6 +10,8 @@ import pytest
 
 from app.modules.analysis.service import analyze_algorithm
 
+pytestmark = [pytest.mark.contract]
+
 # Algoritmos determinísticos: worst == best, avg debe ser same_as_worst
 DETERMINISTIC_ALGORITHMS = [
     # 1. WHILE con cota constante (ejemplo del usuario)

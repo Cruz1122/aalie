@@ -1,5 +1,8 @@
+import pytest
+
 from app.modules.export.i18n import get_export_i18n
 from app.modules.export.latex_renderer import _render_block
+pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
 
 
 def test_execution_trace_diagram_is_constrained_by_page_height_in_latex():

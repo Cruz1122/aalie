@@ -1,3 +1,5 @@
+import pytest
+
 from app.modules.export.document_model import (
     _build_changes,
     _build_count_summation_expression,
@@ -23,6 +25,10 @@ from app.modules.export.document_model import (
     _strip_leading_label,
     _wrap_summation_term,
 )
+
+
+pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
+
 from app.modules.export.i18n import get_export_i18n
 
 
