@@ -2453,7 +2453,12 @@ class RecursiveAnalyzer(BaseAnalyzer):
 
         return False
 
-    def _analyze_work_complexity(self, node: Any, recursive_calls: List[Dict[str, Any]]) -> str:
+    def _analyze_work_complexity(
+        self,
+        node: Any,
+        recursive_calls: List[Dict[str, Any]],
+        visited_aux_procs: Optional[Set[str]] = None,
+    ) -> str:
         """
         Analiza la complejidad del trabajo no recursivo.
 
@@ -2469,6 +2474,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
 
         node_type = node.get("type", "")
 
+        if visited_aux_procs is None:
+            visited_aux_procs = set()
+
         # Manejar llamadas a funciones
         if node_type == "Call":
             call_name = node.get("name") or node.get("callee", "")
@@ -2478,13 +2486,25 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     return "0"  # No cuenta trabajo recursivo
                 # Si es una función auxiliar, buscar su definición y analizar su complejidad
                 else:
+                    call_key = call_name.strip().lower()
+                    if call_key in visited_aux_procs:
+                        # Evitar ciclos/auto-recursión en funciones auxiliares (p.ej. bitonicMerge).
+                        # Para extracción de recurrencia, degradamos de forma conservadora a O(1)
+                        # en vez de reventar con RecursionError.
+                        return "1"
                     aux_proc = self._find_procedure_by_name(call_name)
                     if aux_proc:
                         # Analizar la complejidad de la función auxiliar
-                        aux_complexity = self._analyze_work_complexity(
-                            aux_proc.get("body", {}), recursive_calls
-                        )
-                        return aux_complexity
+                        visited_aux_procs.add(call_key)
+                        try:
+                            aux_complexity = self._analyze_work_complexity(
+                                aux_proc.get("body", {}),
+                                recursive_calls,
+                                visited_aux_procs,
+                            )
+                            return aux_complexity
+                        finally:
+                            visited_aux_procs.discard(call_key)
                     # Si no se encuentra la definición, asumir O(1) por defecto
                     return "1"
 
@@ -2520,24 +2540,32 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     # Analizar el lado no recursivo para determinar su complejidad
                     if left_is_recursive and not right_is_recursive:
                         # El lado derecho tiene trabajo no recursivo
-                        right_complexity = self._analyze_work_complexity(right, recursive_calls)
+                        right_complexity = self._analyze_work_complexity(
+                            right, recursive_calls, visited_aux_procs
+                        )
                         # Si el análisis devuelve "0", significa que no detectó trabajo, pero sabemos que hay trabajo
                         # (porque no es recursivo), así que devolvemos "1" como mínimo
                         return right_complexity if right_complexity != "0" else "1"
                     elif right_is_recursive and not left_is_recursive:
                         # El lado izquierdo tiene trabajo no recursivo
-                        left_complexity = self._analyze_work_complexity(left, recursive_calls)
+                        left_complexity = self._analyze_work_complexity(
+                            left, recursive_calls, visited_aux_procs
+                        )
                         # Si el análisis devuelve "0", significa que no detectó trabajo, pero sabemos que hay trabajo
                         # (porque no es recursivo), así que devolvemos "1" como mínimo
                         return left_complexity if left_complexity != "0" else "1"
                     # Si ninguno es recursivo, ambos tienen trabajo
                     elif not left_is_recursive and not right_is_recursive:
-                        left_complexity = self._analyze_work_complexity(left, recursive_calls)
-                        right_complexity = self._analyze_work_complexity(right, recursive_calls)
+                        left_complexity = self._analyze_work_complexity(
+                            left, recursive_calls, visited_aux_procs
+                        )
+                        right_complexity = self._analyze_work_complexity(
+                            right, recursive_calls, visited_aux_procs
+                        )
                         return self._max_complexity(left_complexity, right_complexity)
                 # Si no es Binary, analizar recursivamente el valor
                 else:
-                    return self._analyze_work_complexity(value, recursive_calls)
+                    return self._analyze_work_complexity(value, recursive_calls, visited_aux_procs)
 
         max_complexity = "1"  # Por defecto, constante
 
@@ -2581,16 +2609,24 @@ class RecursiveAnalyzer(BaseAnalyzer):
             # para determinar la complejidad del trabajo no recursivo
             if left_is_recursive and not right_is_recursive:
                 # El lado derecho tiene trabajo no recursivo
-                right_complexity = self._analyze_work_complexity(right, recursive_calls)
+                right_complexity = self._analyze_work_complexity(
+                    right, recursive_calls, visited_aux_procs
+                )
                 return right_complexity if right_complexity != "0" else "1"
             elif right_is_recursive and not left_is_recursive:
                 # El lado izquierdo tiene trabajo no recursivo
-                left_complexity = self._analyze_work_complexity(left, recursive_calls)
+                left_complexity = self._analyze_work_complexity(
+                    left, recursive_calls, visited_aux_procs
+                )
                 return left_complexity if left_complexity != "0" else "1"
             elif not left_is_recursive and not right_is_recursive:
                 # Ambos lados tienen trabajo no recursivo
-                left_complexity = self._analyze_work_complexity(left, recursive_calls)
-                right_complexity = self._analyze_work_complexity(right, recursive_calls)
+                left_complexity = self._analyze_work_complexity(
+                    left, recursive_calls, visited_aux_procs
+                )
+                right_complexity = self._analyze_work_complexity(
+                    right, recursive_calls, visited_aux_procs
+                )
                 return self._max_complexity(left_complexity, right_complexity)
 
             # Si no se puede determinar, asumir O(1) para operaciones básicas
@@ -2606,10 +2642,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
             alternate_complexity = "0"
 
             if isinstance(consequent, dict):
-                consequent_complexity = self._analyze_work_complexity(consequent, recursive_calls)
+                consequent_complexity = self._analyze_work_complexity(
+                    consequent, recursive_calls, visited_aux_procs
+                )
 
             if isinstance(alternate, dict):
-                alternate_complexity = self._analyze_work_complexity(alternate, recursive_calls)
+                alternate_complexity = self._analyze_work_complexity(
+                    alternate, recursive_calls, visited_aux_procs
+                )
 
             # El trabajo no recursivo es el máximo entre ambas ramas
             return self._max_complexity(consequent_complexity, alternate_complexity)
@@ -2650,10 +2690,14 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 continue
             if isinstance(value, list):
                 for item in value:
-                    child_complexity = self._analyze_work_complexity(item, recursive_calls)
+                    child_complexity = self._analyze_work_complexity(
+                        item, recursive_calls, visited_aux_procs
+                    )
                     max_complexity = self._max_complexity(max_complexity, child_complexity)
             elif isinstance(value, dict):
-                child_complexity = self._analyze_work_complexity(value, recursive_calls)
+                child_complexity = self._analyze_work_complexity(
+                    value, recursive_calls, visited_aux_procs
+                )
                 max_complexity = self._max_complexity(max_complexity, child_complexity)
 
         return max_complexity
@@ -6448,6 +6492,15 @@ FIN FUNCIÓN"""
         if range_reduction:
             return range_reduction
 
+        # Estrategia 0.1: Detectar reducción índice-límite (sufijo/prefijo) cuando solo
+        # un índice se mueve (i <- i + 1) y el límite permanece constante (n).
+        # Ejemplos:
+        # - linearSearchRec(A, x, i, n) -> linearSearchRec(A, x, i+1, n) con base IF (i > n)
+        # - selectionSortRec(A, inicio, n) -> selectionSortRec(A, inicio+1, n) con base IF (inicio >= n)
+        index_bound_reduction = self._detect_index_bound_reduction(args, params, proc_def)
+        if index_bound_reduction:
+            return index_bound_reduction
+
         # Estrategia 0.5: Detectar búsqueda binaria (izq, medio-1) o (medio+1, der) con medio=(izq+der)/2
         binary_search_reduction = self._detect_binary_search_range_reduction(args, params, proc_def)
         if binary_search_reduction:
@@ -6932,6 +6985,111 @@ FIN FUNCIÓN"""
         reduction = 2 * k_value
 
         return {"type": "subtraction", "pattern": f"n-{reduction}", "factor": reduction}
+
+    def _detect_index_bound_reduction(
+        self, args: List[Any], params: List[Any], proc_def: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Detecta una reducción de tamaño de la forma (bound - idx) cuando:
+        - existe un parámetro 'idx' cuyo argumento recursivo es idx + k (k literal > 0),
+        - existe un parámetro 'bound' cuyo argumento recursivo es el mismo bound (constante),
+        - y hay evidencia estructural de caso base comparando idx vs bound (idx >= bound o idx > bound).
+
+        Esto permite modelar recurrencias como:
+        T(n) = T(n-1) + g(n) cuando el 'n' conceptual es (bound - idx + 1).
+        """
+        if not isinstance(proc_def, dict):
+            return None
+        if not isinstance(args, list) or not isinstance(params, list):
+            return None
+        if len(args) != len(params) or len(args) < 2:
+            return None
+
+        # Extraer nombres de parámetros (en minúsculas) y mapear índice -> nombre.
+        param_names: List[str] = []
+        for p in params:
+            if isinstance(p, dict):
+                param_names.append(str(p.get("name", "") or "").strip().lower())
+            else:
+                param_names.append(str(p).strip().lower())
+
+        def _is_identifier(node: Any, name_lower: str) -> bool:
+            return (
+                isinstance(node, dict)
+                and node.get("type", "").lower() == "identifier"
+                and (node.get("name") or node.get("id") or "").strip().lower() == name_lower
+            )
+
+        def _is_plus_literal(node: Any, name_lower: str) -> Optional[int]:
+            if not isinstance(node, dict) or node.get("type", "").lower() != "binary":
+                return None
+            if str(node.get("op", "")).strip() != "+":
+                return None
+            left = node.get("left", {})
+            right = node.get("right", {})
+            if not _is_identifier(left, name_lower):
+                return None
+            if not isinstance(right, dict) or right.get("type", "").lower() != "literal":
+                return None
+            try:
+                k = int(right.get("value"))
+            except Exception:
+                return None
+            return k if k > 0 else None
+
+        # Buscar pares (idx, bound) candidatos.
+        candidates: List[Tuple[str, str, int]] = []
+        for i, (pname, arg) in enumerate(zip(param_names, args)):
+            if not pname:
+                continue
+            k = _is_plus_literal(arg, pname)
+            if k is None:
+                continue
+            # Encontrar algún bound que permanezca constante.
+            for j, (bname, barg) in enumerate(zip(param_names, args)):
+                if i == j or not bname:
+                    continue
+                if _is_identifier(barg, bname):
+                    candidates.append((pname, bname, k))
+
+        if not candidates:
+            return None
+
+        # Evidencia mínima: un IF con comparación idx vs bound (>, >=).
+        def _has_guard(node: Any, idx_name: str, bound_name: str) -> bool:
+            if isinstance(node, dict):
+                if node.get("type", "") == "If":
+                    test = node.get("test") or node.get("condition") or {}
+                    if (
+                        isinstance(test, dict)
+                        and test.get("type", "").lower() == "binary"
+                        and str(test.get("op", "")).strip() in {">", ">="}
+                    ):
+                        left = test.get("left", {})
+                        right = test.get("right", {})
+                        if _is_identifier(left, idx_name) and _is_identifier(right, bound_name):
+                            return True
+                    # seguir buscando en ramas
+                    if _has_guard(node.get("consequent", {}), idx_name, bound_name):
+                        return True
+                    if _has_guard(node.get("alternate", {}), idx_name, bound_name):
+                        return True
+                for v in node.values():
+                    if _has_guard(v, idx_name, bound_name):
+                        return True
+            elif isinstance(node, list):
+                for it in node:
+                    if _has_guard(it, idx_name, bound_name):
+                        return True
+            return False
+
+        body = proc_def.get("body") or {}
+        for idx_name, bound_name, k in candidates:
+            if _has_guard(body, idx_name, bound_name):
+                # Tamaño conceptual: (bound - idx + 1). Si idx aumenta k, el tamaño baja k.
+                return {"type": "subtraction", "pattern": f"n-{k}", "factor": k}
+
+        return None
 
     def _combines_multiple_results(
         self, proc_def: Dict[str, Any], recursive_calls: List[Dict[str, Any]]

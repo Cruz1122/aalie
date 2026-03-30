@@ -9,6 +9,7 @@ from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
 from sympy import Expr
+from sympy.core.basic import Basic
 
 # Estimación de coste por operación primitiva (μs). Heurística basada en operaciones típicas.
 MICROSECONDS_PER_TOKEN = 3.0
@@ -46,6 +47,12 @@ def _serialize_value(value: Any) -> Any:
     """Convierte valores no serializables (ej. SymPy) a formas seguras."""
     if isinstance(value, Expr):
         return str(value)
+    if isinstance(value, Basic):
+        # SymPy BooleanTrue/BooleanFalse/Relational, etc.
+        try:
+            return bool(value)
+        except Exception:
+            return str(value)
     if isinstance(value, dict):
         return {k: _serialize_value(v) for k, v in value.items()}
     if isinstance(value, list):
