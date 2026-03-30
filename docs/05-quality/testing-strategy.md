@@ -16,19 +16,34 @@ Aplica a backend, contratos, sistema, examples catalog y checks documentales.
 - `.github/workflows/ci.yaml`
 - `apps/web/package.json`
 
-## Estructura
+## Estructura por carriles
 
-### Capas
+### Lanes backend (`apps/api/tests`)
 
-- `unit`: componentes aislados del motor
-- `component`: algoritmos canónicos
-- `contract`: regresión parametrizada y stress
-- `system`: endpoints HTTP y BDD
-- `web`: tests de componentes/utilidades frontend
+- `fast`: feedback rápido para PR y desarrollo.
+- `oracle`: capacidad real del motor con expected semántico.
+- `contract`: invariantes del contrato público (shape/estados/coherencia).
+- `system`: validación HTTP/end-to-end.
+- `slow`: integraciones legítimamente costosas.
+- `stress`: estrés representativo, fuera del gate rápido.
+- `export`: pruebas de export (incluye PDF real).
+- `benchmark`: medición de rendimiento (no correctness profunda).
+- `web`: tests de componentes/utilidades frontend.
+
+### Markers de dominio
+
+- `iterative`, `recursive`, `while_loop`, `trace`, `dp`, `export`.
 
 ### Regla central
 
 Las pruebas críticas deben ser auténticas: `input -> expected output real`, no solo “no explota”.
+
+## Patrón estándar obligatorio
+
+- cada test valida una hipótesis principal;
+- cada test usa la ruta mínima necesaria para esa hipótesis;
+- cada test declara si valida: oráculo funcional, contrato estructural, artefacto auxiliar, integración completa o benchmark;
+- queda prohibido mezclar en un solo test corrección matemática + shape contractual + rendimiento + export + metadatos auxiliares.
 
 ### Regla de oráculos
 
@@ -48,10 +63,10 @@ Las pruebas críticas deben ser auténticas: `input -> expected output real`, no
 
 ### Distribución por responsabilidad
 
-- parser/AST: unit + system parse
-- clasificación y análisis: unit + contract + system
-- WHILE y recurrencias: contract obligatoria
-- trace y export: unit + system
+- parser/AST: `fast` + `contract` + `system` (parse).
+- clasificación y análisis: `oracle` + `contract` + `system`.
+- WHILE y recurrencias: `oracle` + `contract` obligatoria.
+- trace y export: `contract` + `system`; PDF real en `slow + export`.
 - ejemplos: validación dedicada del catálogo
 
 ### Formato mínimo de expected
@@ -71,6 +86,23 @@ Las pruebas críticas deben ser auténticas: `input -> expected output real`, no
 ## Limites conocidos
 
 - algunos resultados correctos son `partial` o `unsupported`; la prueba debe reflejar eso, no forzar certeza inexistente.
+
+## Ejecución y paralelismo
+
+### Regla operativa
+
+`pytest-xdist` es obligatorio en CI y recomendado localmente.  
+Todos los lanes deben correr en paralelo con `-n auto --dist=worksteal`.
+
+### Comandos oficiales (backend)
+
+Desde `apps/api`:
+
+- PR gate (bloqueante): `python -m pytest tests/ -n auto --dist=worksteal -m "fast or oracle" --cov=app --cov-report=term`
+- validación ampliada (no bloqueante): `python -m pytest tests/ -n auto --dist=worksteal -m "fast or oracle or contract or system" -q`
+- nightly/release: `python -m pytest tests/ -n auto --dist=worksteal -m "slow or stress or export or benchmark" -q`
+
+Si el entorno no tiene `xdist`, instalar: `pip install pytest-xdist`.
 
 ## Archivos relacionados
 

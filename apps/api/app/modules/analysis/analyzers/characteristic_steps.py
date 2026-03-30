@@ -33,6 +33,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "general_solution_built.partial": "La solución general quedó parcial porque la parte particular no se pudo construir con la cobertura actual.",
         "base_conditions_applied.solved": "Se aplicaron condiciones iniciales para fijar las constantes libres y obtener una forma cerrada concreta.",
         "base_conditions_applied.partial": "Las condiciones iniciales detectadas no alcanzan para fijar todas las constantes de la solución general.",
+        "base_conditions_applied.partial_symbolic": "Se detectaron condiciones iniciales, pero se omitió la resolución exacta de constantes para evitar bloqueo simbólico en este caso.",
         "closed_form_simplified.complete": "Se eligió la forma cerrada algebraicamente más simple entre expresiones equivalentes.",
         "closed_form_simplified.partial": "La simplificación final fue parcial; se conserva la forma más simple disponible sin ocultar limitaciones.",
         "dominant_term_concluded.exponential": "Se identificó el término dominante y se concluyó el crecimiento de $T(n)$ a partir de la raíz de mayor magnitud.",
@@ -54,6 +55,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "warning.unsupported_non_linear_shift": "Cobertura actual: solo familia Resta y Vencerás lineal con desplazamientos constantes de la forma $T(n-k)$.",
         "warning.unsupported_gn_family": "Cobertura parcial: la solución particular solo está soportada para $g(n)=0$ o $g(n)=c$ constante.",
         "warning.insufficient_base_conditions": "No se detectaron suficientes condiciones iniciales para fijar todas las constantes.",
+        "warning.symbolic_constant_solver_skipped": "Se omitió la resolución exacta de constantes por complejidad simbólica del sistema (guard de rendimiento).",
         "warning.complex_root_form_partial": "La forma exacta de algunas raíces no se representó completamente; se usó una forma parcial segura.",
         "warning.simplification_partial": "La simplificación simbólica completa no fue posible con las reglas actuales.",
     },
@@ -77,6 +79,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "general_solution_built.partial": "The full solution is partial because the particular component is unsupported with current coverage.",
         "base_conditions_applied.solved": "Initial conditions were applied to solve free constants and obtain a concrete closed form.",
         "base_conditions_applied.partial": "Detected initial conditions are insufficient to solve all free constants.",
+        "base_conditions_applied.partial_symbolic": "Initial conditions were detected, but exact constant solving was skipped to avoid symbolic solver stalls for this case.",
         "closed_form_simplified.complete": "The algebraically simplest equivalent closed form was selected.",
         "closed_form_simplified.partial": "Final simplification is partial; the simplest available valid form is kept.",
         "dominant_term_concluded.exponential": "The dominant term was identified and $T(n)$ growth was concluded from the largest-magnitude root.",
@@ -96,6 +99,7 @@ _TEMPLATE_STRINGS: Dict[str, Dict[str, str]] = {
         "warning.unsupported_non_linear_shift": "Current coverage: only Resta y Vencerás linear recurrences with constant shifts of the form $T(n-k)$.",
         "warning.unsupported_gn_family": "Partial coverage: particular solution is currently supported only for $g(n)=0$ or constant $g(n)=c$.",
         "warning.insufficient_base_conditions": "Not enough initial conditions were detected to solve all constants.",
+        "warning.symbolic_constant_solver_skipped": "Exact constant solving was skipped due to symbolic-system complexity (performance guard).",
         "warning.complex_root_form_partial": "Some roots could not be represented exactly; a safe partial form was used.",
         "warning.simplification_partial": "Full symbolic simplification was not possible with current rules.",
     },
@@ -124,6 +128,7 @@ class StepContext:
     simplification_partial: bool = False
     solved_constants: Dict[str, Any] | None = None
     required_constants: int = 0
+    constant_resolution_skipped: bool = False
 
 
 def _make_step(
@@ -178,9 +183,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             step_id="ceq_s1",
             kind="recurrence_detected",
             title=(
-                "Recurrencia detectada"
-                if locale_key(ctx.locale) == "es"
-                else "Detected recurrence"
+                "Recurrencia detectada" if locale_key(ctx.locale) == "es" else "Detected recurrence"
             ),
             status="complete",
             confidence="high",
@@ -287,9 +290,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
     )
 
     roots_have_repetition = any(int(r.get("multiplicity", 1)) > 1 for r in ctx.roots)
-    step6_status: StepStatus = (
-        "partial" if ctx.has_complex_root_representation else "complete"
-    )
+    step6_status: StepStatus = "partial" if ctx.has_complex_root_representation else "complete"
     step6_key = (
         "roots_computed.partial"
         if step6_status == "partial"
@@ -315,9 +316,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             summary_key=step6_key,
             concept_key="concept.roots_computed",
             warning_key=(
-                "warning.complex_root_form_partial"
-                if step6_status == "partial"
-                else None
+                "warning.complex_root_form_partial" if step6_status == "partial" else None
             ),
             primary_latex=(
                 ",\\;".join(
@@ -330,9 +329,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
                 else None
             ),
             payload={"roots": ctx.roots},
-            codes=(
-                ["CEQ_COMPLEX_ROOT_FORM_PARTIAL"] if step6_status == "partial" else []
-            ),
+            codes=(["CEQ_COMPLEX_ROOT_FORM_PARTIAL"] if step6_status == "partial" else []),
         )
     )
 
@@ -343,9 +340,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             step_id="ceq_s7",
             kind="homogeneous_solution_built",
             title=(
-                "Solución homogénea"
-                if locale_key(ctx.locale) == "es"
-                else "Homogeneous solution"
+                "Solución homogénea" if locale_key(ctx.locale) == "es" else "Homogeneous solution"
             ),
             status="complete",
             confidence="high",
@@ -379,9 +374,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             step_id="ceq_s8",
             kind="particular_solution_built",
             title=(
-                "Solución particular"
-                if locale_key(ctx.locale) == "es"
-                else "Particular solution"
+                "Solución particular" if locale_key(ctx.locale) == "es" else "Particular solution"
             ),
             status=step8_status,
             confidence="high" if step8_status == "complete" else "low",
@@ -389,9 +382,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             concept_key="concept.particular_solution_built",
             warning_key=step8_warning,
             primary_latex=(
-                ctx.particular_solution
-                if ctx.particular_solution
-                else r"T_p(n)\;\text{N/A}"
+                ctx.particular_solution if ctx.particular_solution else r"T_p(n)\;\text{N/A}"
             ),
             payload={"g_n": ctx.g_n, "particular_solution": ctx.particular_solution},
             codes=step8_codes,
@@ -425,11 +416,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             index=9,
             step_id="ceq_s9",
             kind="general_solution_built",
-            title=(
-                "Solución general"
-                if locale_key(ctx.locale) == "es"
-                else "General solution"
-            ),
+            title=("Solución general" if locale_key(ctx.locale) == "es" else "General solution"),
             status=step9_status,
             confidence="medium" if step9_status == "partial" else "high",
             summary_key=step9_key,
@@ -449,17 +436,18 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
         len(solved_constants) >= required_constants
     )
     step10_status: StepStatus = "complete" if has_required_constants else "partial"
-    step10_summary_key = (
-        "base_conditions_applied.solved"
-        if has_required_constants
-        else "base_conditions_applied.partial"
-    )
-    step10_warning = (
-        None if has_required_constants else "warning.insufficient_base_conditions"
-    )
-    step10_codes: List[str] = (
-        [] if has_required_constants else ["CEQ_INSUFFICIENT_BASE_CONDITIONS"]
-    )
+    if has_required_constants:
+        step10_summary_key = "base_conditions_applied.solved"
+        step10_warning = None
+        step10_codes = []
+    elif ctx.constant_resolution_skipped:
+        step10_summary_key = "base_conditions_applied.partial_symbolic"
+        step10_warning = "warning.symbolic_constant_solver_skipped"
+        step10_codes = ["CEQ_SYMBOLIC_CONSTANT_SOLVER_SKIPPED"]
+    else:
+        step10_summary_key = "base_conditions_applied.partial"
+        step10_warning = "warning.insufficient_base_conditions"
+        step10_codes = ["CEQ_INSUFFICIENT_BASE_CONDITIONS"]
     if has_required_constants and solved_constants:
         step10_primary = ",\\;".join([f"{k}={v}" for k, v in solved_constants.items()])
     elif has_base_cases:
@@ -488,6 +476,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
                 "base_cases": ctx.base_cases,
                 "solved_constants": solved_constants,
                 "required_constants": required_constants,
+                "constant_resolution_skipped": ctx.constant_resolution_skipped,
             },
             codes=step10_codes,
         )
@@ -501,9 +490,7 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
             step_id="ceq_s11",
             kind="closed_form_simplified",
             title=(
-                "Simplificación final"
-                if locale_key(ctx.locale) == "es"
-                else "Final simplification"
+                "Simplificación final" if locale_key(ctx.locale) == "es" else "Final simplification"
             ),
             status=step11_status,
             confidence="medium" if step11_status == "partial" else "high",
@@ -513,18 +500,14 @@ def build_characteristic_step_bundle(ctx: StepContext) -> Dict[str, Any]:
                 else "closed_form_simplified.complete"
             ),
             concept_key="concept.closed_form_simplified",
-            warning_key=(
-                "warning.simplification_partial" if step11_status == "partial" else None
-            ),
+            warning_key=("warning.simplification_partial" if step11_status == "partial" else None),
             primary_latex=ctx.closed_form,
             payload={"closed_form": ctx.closed_form},
             codes=["CEQ_SIMPLIFICATION_PARTIAL"] if step11_status == "partial" else [],
         )
     )
 
-    prior_partial = any(
-        s.get("status") in ("partial", "unsupported", "error") for s in steps
-    )
+    prior_partial = any(s.get("status") in ("partial", "unsupported", "error") for s in steps)
     step12_status: StepStatus = "partial" if prior_partial else "complete"
     steps.append(
         _make_step(

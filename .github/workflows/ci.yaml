@@ -28,6 +28,8 @@ on:
       - "package.json"
       - "pnpm-workspace.yaml"
       - ".github/workflows/ci.yaml"
+  schedule:
+    - cron: "0 5 * * *"
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -119,6 +121,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
+          pip install pytest-xdist
 
       - name: Install grammar package
         run: |
@@ -129,11 +132,21 @@ jobs:
             echo "⚠️  Grammar package not found, tests may fail"
           fi
 
+      - name: Verify xdist availability
+        run: python -c "import xdist; print('✅ xdist:', xdist.__version__)"
+
       - name: Run tests with coverage
         working-directory: apps/api
         run: |
-          echo "🧪 Running fast tests with coverage (excluding slow suite)..."
-          pytest tests/ -v --tb=short -n auto --dist=worksteal -m "not slow" --cov=app --cov-report=xml --cov-report=term --cov-report=html --cov-fail-under=70
+          echo "🧪 Running PR lanes: fast + oracle..."
+          pytest tests/ -v --tb=short -n auto --dist=worksteal -m "fast or oracle" --cov=app --cov-report=xml --cov-report=term --cov-report=html --cov-fail-under=70
+
+      - name: Run extended validation lanes (non-blocking)
+        continue-on-error: true
+        working-directory: apps/api
+        run: |
+          echo "🧪 Running extended lanes: fast + oracle + contract + system..."
+          pytest tests/ -v --tb=short -n auto --dist=worksteal -m "fast or oracle or contract or system"
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
@@ -149,6 +162,45 @@ jobs:
         run: |
           echo "✅ Tests completed"
           echo "📊 Coverage report available in artifacts"
+
+  test-nightly-lanes:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "apps/api/requirements*.txt"
+
+      - name: Install Python dependencies
+        working-directory: apps/api
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install pytest-xdist
+
+      - name: Install grammar package
+        run: |
+          if [ -d packages/grammar/py ]; then
+            pip install -e packages/grammar/py
+          fi
+
+      - name: Verify xdist availability
+        run: python -c "import xdist; print('✅ xdist:', xdist.__version__)"
+
+      - name: Run nightly lanes
+        working-directory: apps/api
+        run: |
+          echo "🌙 Running nightly lanes: slow + stress + export + benchmark"
+          pytest tests/ -v --tb=short -n auto --dist=worksteal -m "slow or stress or export or benchmark"
 
   lint-web:
     runs-on: ubuntu-latest

@@ -61,13 +61,21 @@ addopts = [
     "--tb=short"
 ]
 markers = [
+    "fast: fast lane tests for PR feedback",
+    "oracle: semantic oracle tests (real expected output)",
     "unit: unit tests (fast, isolated)",
     "component: component/integration tests (few canonical algorithms)",
     "contract: contract/regression tests (many parametrized cases)",
     "system: system/HTTP endpoint tests",
     "slow: slow tests (e.g. heavy SymPy)",
+    "stress: stress/integration heavy tests",
+    "export: export contract/integration tests",
+    "trace: trace/structured-trace tests",
+    "iterative: tests involving iterative analysis",
+    "while_loop: tests involving while-loop analysis",
     "while: tests involving WHILE loops",
     "while_domain: tests del dominio WHILE (engine, patrones, metamórficos)",
     "recursive: tests involving recursive analysis",
     "dp: tests involving DP algorithms",
+    "benchmark: performance/regression benchmark tests",
 ]

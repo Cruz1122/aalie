@@ -10,6 +10,8 @@ from fastapi.testclient import TestClient
 from app.main import create_app
 from app.modules.analysis.trace_service import build_default_trace_inputs
 
+pytestmark = [pytest.mark.system]
+
 
 def _has_pdflatex() -> bool:
     return shutil.which("pdflatex") is not None
@@ -87,6 +89,8 @@ END
     }
 
 
+@pytest.mark.slow
+@pytest.mark.export
 def test_export_report_returns_pdf_when_pdflatex_is_available():
     if not _has_pdflatex():
         pytest.skip("pdflatex no está disponible en el entorno de tests")
@@ -138,6 +142,8 @@ def test_export_report_markdown_is_stable_with_or_without_caches():
     assert cached_resp.headers["x-content-hash"] == raw_resp.headers["x-content-hash"]
 
 
+@pytest.mark.slow
+@pytest.mark.export
 def test_export_report_returns_zip_bundle_contract():
     if not _has_pdflatex():
         pytest.skip("pdflatex no está disponible en el entorno de tests")
@@ -197,6 +203,8 @@ def test_export_report_preflight_rejects_disallowed_origin():
     assert "access-control-allow-origin" not in resp.headers
 
 
+@pytest.mark.slow
+@pytest.mark.export
 def test_export_report_returns_cors_headers_for_allowed_origin():
     if not _has_pdflatex():
         pytest.skip("pdflatex no está disponible en el entorno de tests")

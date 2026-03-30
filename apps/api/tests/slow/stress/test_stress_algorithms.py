@@ -27,6 +27,7 @@ _SUPPORT = Path(__file__).resolve().parent.parent / "_support"
 
 @pytest.mark.contract
 @pytest.mark.slow
+@pytest.mark.stress
 @pytest.mark.parametrize(
     "family,name", STRESS_ALGORITHMS, ids=[f"{f}/{n}" for f, n in STRESS_ALGORITHMS]
 )

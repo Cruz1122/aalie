@@ -188,9 +188,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 }
 
         # 3. Extraer recurrencia (puede usar preferred_method si se proporciona)
-        extraction_result = self._extract_recurrence(
-            proc_def, preferred_method=preferred_method
-        )
+        extraction_result = self._extract_recurrence(proc_def, preferred_method=preferred_method)
         if not extraction_result["success"]:
             return {
                 "ok": False,
@@ -370,9 +368,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 }
 
             # 3. Extraer recurrencia sin método preferido (para detectar todos los métodos)
-            extraction_result = self._extract_recurrence(
-                proc_def, preferred_method=None
-            )
+            extraction_result = self._extract_recurrence(proc_def, preferred_method=None)
             if not extraction_result["success"]:
                 return {
                     "ok": False,
@@ -446,10 +442,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     proc_def, recursive_calls, a, b
                 )
                 # Iteración geométrica para rama única: T(n)=T(n/b)+Theta(1).
-                use_iteration = (
-                    self._is_single_branch_geometric_divide_conquer_recurrence(
-                        recurrence
-                    )
+                use_iteration = self._is_single_branch_geometric_divide_conquer_recurrence(
+                    recurrence
                 )
             else:
                 # Fallback conservador para tipos no estandarizados.
@@ -534,9 +528,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 if rec_type == "linear_shift":
                     coefficients = rec.get("coefficients", []) or []
                     g_n = rec.get("g(n)")
-                    multi_branch = len(coefficients) > 1 or any(
-                        (c or 0) > 1 for c in coefficients
-                    )
+                    multi_branch = len(coefficients) > 1 or any((c or 0) > 1 for c in coefficients)
                     if multi_branch:
                         return {
                             "key": "resta_y_seras_vencido",
@@ -720,9 +712,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 if node.get("type") == "For":
                     for_body = node.get("body")
                     if isinstance(for_body, dict):
-                        for_body = (
-                            for_body.get("body", for_body.get("statements", [])) or []
-                        )
+                        for_body = for_body.get("body", for_body.get("statements", [])) or []
                     if self._node_contains_call_ids(for_body, call_ids):
                         return True
                 for _k, v in node.items():
@@ -1045,8 +1035,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             # Si la llamada recursiva está dentro de un FOR (generación de subconjuntos), forzar modelo 2^n
             if self._recursive_call_inside_for(proc_def, recursive_calls):
                 has_heuristic = any(
-                    s.get("heuristic") == "recursive_call_inside_for"
-                    for s in subproblem_sizes
+                    s.get("heuristic") == "recursive_call_inside_for" for s in subproblem_sizes
                 )
                 if not has_heuristic:
                     # Override: pudo haberse clasificado como divide_conquer; forzar subtraction + heuristic
@@ -1077,25 +1066,19 @@ class RecursiveAnalyzer(BaseAnalyzer):
         if has_subtraction:
             # Para decrease-and-conquer, verificar patrones
             patterns = [
-                s.get("pattern")
-                for s in subproblem_sizes
-                if s.get("type") == "subtraction"
+                s.get("pattern") for s in subproblem_sizes if s.get("type") == "subtraction"
             ]
 
             # Permitir múltiples llamadas recursivas con substracciones (ej: Fibonacci T(n) = T(n-1) + T(n-2))
             # Solo rechazar si hay mezcla de tipos (substracción y división)
-            has_mixed_types = any(
-                s.get("type") != "subtraction" for s in subproblem_sizes
-            )
+            has_mixed_types = any(s.get("type") != "subtraction" for s in subproblem_sizes)
 
             if has_mixed_types:
                 return {
                     "success": False,
                     "recurrence": {
                         "applicable": False,
-                        "notes": [
-                            "Mezcla de tipos de subproblemas (substracción y división)"
-                        ],
+                        "notes": ["Mezcla de tipos de subproblemas (substracción y división)"],
                     },
                     "reason": "Subproblemas de tipos distintos",
                 }
@@ -1107,9 +1090,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "success": False,
                     "recurrence": {
                         "applicable": False,
-                        "notes": [
-                            "No se pudieron identificar patrones de subproblemas"
-                        ],
+                        "notes": ["No se pudieron identificar patrones de subproblemas"],
                     },
                     "reason": "Patrones de subproblemas no identificados",
                 }
@@ -1129,9 +1110,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                         "success": False,
                         "recurrence": {
                             "applicable": False,
-                            "notes": [
-                                "No se pudieron determinar factores de división (b)"
-                            ],
+                            "notes": ["No se pudieron determinar factores de división (b)"],
                         },
                         "reason": "Tamaños de subproblemas no determinados",
                     }
@@ -1251,10 +1230,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
                 if len(term_counts_linear) > 1:
                     terms_latex = " + ".join(
-                        [
-                            f"T({t})"
-                            for t in sorted(term_counts_linear.keys(), reverse=True)
-                        ]
+                        [f"T({t})" for t in sorted(term_counts_linear.keys(), reverse=True)]
                     )
                     recurrence_form_linear = f"T(n) = {terms_latex} + {f_n_display}"
                 else:
@@ -1282,10 +1258,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                         term_counts[pattern] += 1
                 if len(term_counts) > 1:
                     terms_latex = " + ".join(
-                        [
-                            f"T({term})"
-                            for term in sorted(term_counts.keys(), reverse=True)
-                        ]
+                        [f"T({term})" for term in sorted(term_counts.keys(), reverse=True)]
                     )
                     f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
                     recurrence_form = f"T(n) = {terms_latex} + {f_n_display}"
@@ -1293,15 +1266,11 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     pattern, count = list(term_counts.items())[0]
                     f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
                     if count > 1:
-                        recurrence_form = (
-                            f"T(n) = {count} \\cdot T({pattern}) + {f_n_display}"
-                        )
+                        recurrence_form = f"T(n) = {count} \\cdot T({pattern}) + {f_n_display}"
                     else:
                         recurrence_form = f"T(n) = T({pattern}) + {f_n_display}"
                 else:
-                    subproblem_info = self._analyze_subproblem_type(
-                        recursive_calls[0], proc_def
-                    )
+                    subproblem_info = self._analyze_subproblem_type(recursive_calls[0], proc_def)
                     f_n_display = f_n if f_n and f_n != "0" else "\\Theta(1)"
                     if subproblem_info:
                         pattern = subproblem_info.get("pattern", "n-1")
@@ -1379,9 +1348,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 if is_homogeneous:
                     recurrence_form_corrected = f"T(n) = {' + '.join(terms_latex)}"
                 else:
-                    recurrence_form_corrected = (
-                        f"T(n) = {' + '.join(terms_latex)} + g(n)"
-                    )
+                    recurrence_form_corrected = f"T(n) = {' + '.join(terms_latex)} + g(n)"
 
                 recurrence = {
                     "type": "linear_shift",
@@ -1412,9 +1379,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             # Para método de iteración, verificar si es linear_shift o divide_conquer
             # Si la recurrencia tiene forma T(n) = T(n-k) + f(n) (desplazamiento lineal), es linear_shift
             # Si tiene forma T(n) = a·T(n/b) + f(n) con b > 1, es divide_conquer
-            has_subtraction = any(
-                s.get("type") == "subtraction" for s in subproblem_sizes
-            )
+            has_subtraction = any(s.get("type") == "subtraction" for s in subproblem_sizes)
 
             if has_subtraction:
                 # Es una recurrencia lineal (linear_shift)
@@ -1439,10 +1404,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                         g_n_clean == "0"
                         or g_n_clean == "\\theta(0)"
                         or g_n_clean == "theta(0)"
-                        or (
-                            g_n_clean == ""
-                            and (not g_n_str or len(g_n_str.strip()) == 0)
-                        )
+                        or (g_n_clean == "" and (not g_n_str or len(g_n_str.strip()) == 0))
                     )
 
                     if is_homogeneous:
@@ -1450,9 +1412,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     else:
                         # Reemplazar g(n) con el valor real si está disponible
                         g_n_display = g_n_str if g_n_str and g_n_str != "0" else "g(n)"
-                        recurrence_form_linear = (
-                            f"T(n) = {' + '.join(terms_latex)} + {g_n_display}"
-                        )
+                        recurrence_form_linear = f"T(n) = {' + '.join(terms_latex)} + {g_n_display}"
 
                     recurrence = {
                         "type": "linear_shift",
@@ -1462,9 +1422,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                         "coefficients": [
                             coefficients[shift] for shift in sorted(coefficients.keys())
                         ],
-                        "g(n)": (
-                            "0" if is_homogeneous else (g_n_str if g_n_str else None)
-                        ),
+                        "g(n)": ("0" if is_homogeneous else (g_n_str if g_n_str else None)),
                         "n0": n0,
                         "applicable": True,
                         "notes": [],
@@ -1515,9 +1473,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     "g(n)": "n",
                     "n0": n0,
                     "applicable": True,
-                    "notes": [
-                        "QuickSort con pivot fijo en izq: worst case T(n)=T(n-1)+n"
-                    ],
+                    "notes": ["QuickSort con pivot fijo en izq: worst case T(n)=T(n-1)+n"],
                     "method": method,
                 }
             elif method == "recursion_tree" and has_recursive_call_inside_for:
@@ -1666,9 +1622,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         self._collect_recursive_calls(body, proc_name, calls)
         return calls
 
-    def _collect_recursive_calls(
-        self, node: Any, proc_name: str, calls: List[Dict[str, Any]]
-    ):
+    def _collect_recursive_calls(self, node: Any, proc_name: str, calls: List[Dict[str, Any]]):
         """
         Recolecta recursivamente todas las llamadas a proc_name.
 
@@ -2027,9 +1981,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
 
             counter = Counter(division_factors)
             most_common = counter.most_common(1)[0]
-            if (
-                most_common[1] >= len(division_factors) * 0.5
-            ):  # Al menos 50% de las divisiones
+            if most_common[1] >= len(division_factors) * 0.5:  # Al menos 50% de las divisiones
                 return most_common[0]
 
         # Estrategia 2: Analizar los argumentos de las llamadas recursivas
@@ -2247,9 +2199,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             ]:
                 return True
             # También podría ser izq + der que representa el rango
-            return (
-                True  # Por ahora, asumir que cualquier identificador puede ser tamaño
-            )
+            return True  # Por ahora, asumir que cualquier identificador puede ser tamaño
 
         # Suma/resta que podría representar un rango (der - izq + 1, etc.)
         if expr_type == "binary":
@@ -2258,12 +2208,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 left = expr.get("left", {})
                 right = expr.get("right", {})
                 # Si es una suma/resta de parámetros, probablemente representa tamaño
-                if (
-                    isinstance(left, dict)
-                    and left.get("type", "").lower() == "identifier"
-                ) or (
-                    isinstance(right, dict)
-                    and right.get("type", "").lower() == "identifier"
+                if (isinstance(left, dict) and left.get("type", "").lower() == "identifier") or (
+                    isinstance(right, dict) and right.get("type", "").lower() == "identifier"
                 ):
                     return True
 
@@ -2281,10 +2227,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             if node.get("type", "").lower() == "assign":
                 target = node.get("target", {})
                 value = node.get("value", {})
-                if (
-                    isinstance(target, dict)
-                    and target.get("type", "").lower() == "identifier"
-                ):
+                if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
                     tname = (target.get("name") or "").lower()
                     if tname in ["pivot", "pivote", "pi"]:
                         if (
@@ -2456,9 +2399,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
 
         return False
 
-    def _analyze_work_complexity(
-        self, node: Any, recursive_calls: List[Dict[str, Any]]
-    ) -> str:
+    def _analyze_work_complexity(self, node: Any, recursive_calls: List[Dict[str, Any]]) -> str:
         """
         Analiza la complejidad del trabajo no recursivo.
 
@@ -2525,28 +2466,20 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     # Analizar el lado no recursivo para determinar su complejidad
                     if left_is_recursive and not right_is_recursive:
                         # El lado derecho tiene trabajo no recursivo
-                        right_complexity = self._analyze_work_complexity(
-                            right, recursive_calls
-                        )
+                        right_complexity = self._analyze_work_complexity(right, recursive_calls)
                         # Si el análisis devuelve "0", significa que no detectó trabajo, pero sabemos que hay trabajo
                         # (porque no es recursivo), así que devolvemos "1" como mínimo
                         return right_complexity if right_complexity != "0" else "1"
                     elif right_is_recursive and not left_is_recursive:
                         # El lado izquierdo tiene trabajo no recursivo
-                        left_complexity = self._analyze_work_complexity(
-                            left, recursive_calls
-                        )
+                        left_complexity = self._analyze_work_complexity(left, recursive_calls)
                         # Si el análisis devuelve "0", significa que no detectó trabajo, pero sabemos que hay trabajo
                         # (porque no es recursivo), así que devolvemos "1" como mínimo
                         return left_complexity if left_complexity != "0" else "1"
                     # Si ninguno es recursivo, ambos tienen trabajo
                     elif not left_is_recursive and not right_is_recursive:
-                        left_complexity = self._analyze_work_complexity(
-                            left, recursive_calls
-                        )
-                        right_complexity = self._analyze_work_complexity(
-                            right, recursive_calls
-                        )
+                        left_complexity = self._analyze_work_complexity(left, recursive_calls)
+                        right_complexity = self._analyze_work_complexity(right, recursive_calls)
                         return self._max_complexity(left_complexity, right_complexity)
                 # Si no es Binary, analizar recursivamente el valor
                 else:
@@ -2556,11 +2489,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
 
         # Detectar acceso a arrays (Index) - tiene trabajo constante O(1)
         # IMPORTANTE: Verificar esto ANTES de procesar otros tipos de nodos
-        if (
-            node_type == "Index"
-            or node_type.lower() == "index"
-            or node_type == "ArrayAccess"
-        ):
+        if node_type == "Index" or node_type.lower() == "index" or node_type == "ArrayAccess":
             # Acceso a array es O(1)
             return "1"
 
@@ -2623,14 +2552,10 @@ class RecursiveAnalyzer(BaseAnalyzer):
             alternate_complexity = "0"
 
             if isinstance(consequent, dict):
-                consequent_complexity = self._analyze_work_complexity(
-                    consequent, recursive_calls
-                )
+                consequent_complexity = self._analyze_work_complexity(consequent, recursive_calls)
 
             if isinstance(alternate, dict):
-                alternate_complexity = self._analyze_work_complexity(
-                    alternate, recursive_calls
-                )
+                alternate_complexity = self._analyze_work_complexity(alternate, recursive_calls)
 
             # El trabajo no recursivo es el máximo entre ambas ramas
             return self._max_complexity(consequent_complexity, alternate_complexity)
@@ -2671,12 +2596,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 continue
             if isinstance(value, list):
                 for item in value:
-                    child_complexity = self._analyze_work_complexity(
-                        item, recursive_calls
-                    )
-                    max_complexity = self._max_complexity(
-                        max_complexity, child_complexity
-                    )
+                    child_complexity = self._analyze_work_complexity(item, recursive_calls)
+                    max_complexity = self._max_complexity(max_complexity, child_complexity)
             elif isinstance(value, dict):
                 child_complexity = self._analyze_work_complexity(value, recursive_calls)
                 max_complexity = self._max_complexity(max_complexity, child_complexity)
@@ -2767,15 +2688,11 @@ class RecursiveAnalyzer(BaseAnalyzer):
         if node_type in ["logical", "logicalop"]:
             left = test.get("left", {})
             right = test.get("right", {})
-            return self._while_depends_on_size(left) or self._while_depends_on_size(
-                right
-            )
+            return self._while_depends_on_size(left) or self._while_depends_on_size(right)
 
         return False
 
-    def _check_nested_loops(
-        self, node: Any, recursive_calls: List[Dict[str, Any]]
-    ) -> str:
+    def _check_nested_loops(self, node: Any, recursive_calls: List[Dict[str, Any]]) -> str:
         """
         Verifica si hay bucles anidados en el nodo.
 
@@ -2819,9 +2736,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
 
         return "n" if has_loop else "1"
 
-    def _has_loop_inside(
-        self, node: Any, recursive_calls: List[Dict[str, Any]]
-    ) -> bool:
+    def _has_loop_inside(self, node: Any, recursive_calls: List[Dict[str, Any]]) -> bool:
         """
         Verifica si hay un bucle dentro del nodo.
 
@@ -2993,10 +2908,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                             if return_expr_type.lower() == "identifier":
                                 return_id_name = return_expr.get("name", "")
                                 # Si el return es el parámetro mismo (ej: RETURN n)
-                                if (
-                                    param_name
-                                    and return_id_name.lower() == param_name.lower()
-                                ):
+                                if param_name and return_id_name.lower() == param_name.lower():
                                     # RETURN n significa T(n) = n cuando n <= n_value
                                     # Para Fibonacci con n <= 1: T(0) = 0, T(1) = 1
                                     for i in range(n_value + 1):
@@ -3035,9 +2947,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     statements = body.get("body", [])
                     for stmt in statements:
                         if isinstance(stmt, dict) and stmt.get("type") == "If":
-                            condition = stmt.get("test", {}) or stmt.get(
-                                "condition", {}
-                            )
+                            condition = stmt.get("test", {}) or stmt.get("condition", {})
                             consequent = stmt.get("consequent", {})
                             n_value = self._extract_base_case_from_condition(condition)
                             if n_value is not None:
@@ -3051,8 +2961,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                                         return_id_name = return_expr.get("name", "")
                                         if (
                                             param_name
-                                            and return_id_name.lower()
-                                            == param_name.lower()
+                                            and return_id_name.lower() == param_name.lower()
                                         ):
                                             # RETURN n significa T(n) = n cuando n <= n_value
                                             # Para Fibonacci con n <= 1: T(0) = 0, T(1) = 1
@@ -3070,10 +2979,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                             param_name = self._get_procedure_param_name()
                             if return_expr and return_expr.get("type") == "Identifier":
                                 return_id_name = return_expr.get("name", "")
-                                if (
-                                    param_name
-                                    and return_id_name.lower() == param_name.lower()
-                                ):
+                                if param_name and return_id_name.lower() == param_name.lower():
                                     for i in range(n_value + 1):
                                         base_cases[f"T({i})"] = i
 
@@ -3295,11 +3201,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                         try:
                             # Intentar obtener el valor, puede estar en "value" o "val"
                             # Usar get con default None y verificar explícitamente para manejar 0
-                            n0_value = (
-                                right.get("value")
-                                if "value" in right
-                                else right.get("val")
-                            )
+                            n0_value = right.get("value") if "value" in right else right.get("val")
                             if n0_value is not None:
                                 n0 = int(float(n0_value))
                                 # Verificar que left sea una expresión relacionada con el tamaño del problema
@@ -3314,24 +3216,18 @@ class RecursiveAnalyzer(BaseAnalyzer):
                                     # Si left es una expresión binaria, verificar si es una resta/suma
                                     # que representa el tamaño del problema (fin - inicio, n - 1, etc.)
                                     if left_type == "binary":
-                                        left_op = left.get("op", "") or left.get(
-                                            "operator", ""
-                                        )
+                                        left_op = left.get("op", "") or left.get("operator", "")
                                         # Resta o suma que representa el tamaño del problema
                                         if left_op in ["-", "+"]:
                                             # Verificar que ambos lados sean identificadores o números
                                             # (representa tamaño: fin - inicio, n - 1, etc.)
                                             left_left = left.get("left", {})
                                             left_right = left.get("right", {})
-                                            if isinstance(
-                                                left_left, dict
-                                            ) and isinstance(left_right, dict):
-                                                left_left_type = left_left.get(
-                                                    "type", ""
-                                                ).lower()
-                                                left_right_type = left_right.get(
-                                                    "type", ""
-                                                ).lower()
+                                            if isinstance(left_left, dict) and isinstance(
+                                                left_right, dict
+                                            ):
+                                                left_left_type = left_left.get("type", "").lower()
+                                                left_right_type = left_right.get("type", "").lower()
                                                 # Al menos uno debe ser un identificador (variable)
                                                 if (
                                                     left_left_type == "identifier"
@@ -3391,9 +3287,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         if support_code is None:
             try:
                 p_expr = simplify(
-                    sympy_log(
-                        Integer(a), Integer(int(b) if float(b).is_integer() else b)
-                    )
+                    sympy_log(Integer(a), Integer(int(b) if float(b).is_integer() else b))
                 )
                 p_latex = self._simplify_latex_expr(latex(p_expr))
                 reference_growth = self._format_master_n_power(p_expr)
@@ -3406,9 +3300,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 relation_type = "undetermined"
                 comparison_partial = True
             else:
-                comparison_data = self._compare_master_growth_structured(
-                    f_expr, p_expr, n_sym
-                )
+                comparison_data = self._compare_master_growth_structured(f_expr, p_expr, n_sym)
                 relation_type = comparison_data["relation_type"]
                 case_candidate = comparison_data["case_candidate"]
                 comparison_partial = comparison_data["status"] == "partial"
@@ -3487,11 +3379,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             )
 
         master = {
-            "case": (
-                case_candidate
-                if step_bundle.get("overallStatus") != "unsupported"
-                else None
-            ),
+            "case": (case_candidate if step_bundle.get("overallStatus") != "unsupported" else None),
             "nlogba": reference_growth,
             "comparison": comparison_legacy,
             "regularity": regularity,
@@ -3568,9 +3456,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         c_wild = Wild("c", exclude=[n_sym])
         alpha_wild = Wild("alpha")
         beta_wild = Wild("beta")
-        match = expr.match(
-            c_wild * (n_sym**alpha_wild) * (sympy_log(n_sym) ** beta_wild)
-        )
+        match = expr.match(c_wild * (n_sym**alpha_wild) * (sympy_log(n_sym) ** beta_wild))
         if not match:
             return {
                 "status": "partial",
@@ -3648,9 +3534,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
     ) -> Dict[str, Any]:
         try:
             b_term = Integer(int(b)) if float(b).is_integer() else b
-            ratio_expr = simplify(
-                (Integer(a) * f_expr.subs(n_sym, n_sym / b_term)) / f_expr
-            )
+            ratio_expr = simplify((Integer(a) * f_expr.subs(n_sym, n_sym / b_term)) / f_expr)
         except Exception:
             return {
                 "holds": None,
@@ -3759,12 +3643,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Si es un If, verificar patrón común: return en THEN, recursivas en ELSE
         if node_type == "If" or node_type == "Conditional":
             condition = node.get("test") or node.get("condition")
-            then_body = (
-                node.get("then") or node.get("thenBody") or node.get("consequent")
-            )
-            else_body = (
-                node.get("else") or node.get("elseBody") or node.get("alternate")
-            )
+            then_body = node.get("then") or node.get("thenBody") or node.get("consequent")
+            else_body = node.get("else") or node.get("elseBody") or node.get("alternate")
 
             # Patrón: IF cond THEN RETURN (sin recursivas); sin ELSE o con ELSE con recursivas
             # Ej: IF (A[mitad]=x) THEN RETURN mitad; ... (early return en búsqueda binaria)
@@ -3801,14 +3681,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     # Si es un caso base por tamaño, no cuenta como early return
                     # para bajar mejor caso a O(1): solo fija T(1).
                     is_base_case = False
-                    if (
-                        condition
-                        and isinstance(condition, dict)
-                        and condition.get("type")
-                    ):
-                        base_case_value = self._extract_base_case_from_condition(
-                            condition
-                        )
+                    if condition and isinstance(condition, dict) and condition.get("type"):
+                        base_case_value = self._extract_base_case_from_condition(condition)
                         is_base_case = base_case_value is not None
 
                     if is_base_case:
@@ -3838,14 +3712,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
                         condition = stmt.get("test") or stmt.get("condition")
                         is_base_case = False
                         # Verificar que condition no sea None ni un diccionario vacío
-                        if (
-                            condition
-                            and isinstance(condition, dict)
-                            and condition.get("type")
-                        ):
-                            base_case_value = self._extract_base_case_from_condition(
-                                condition
-                            )
+                        if condition and isinstance(condition, dict) and condition.get("type"):
+                            base_case_value = self._extract_base_case_from_condition(condition)
                             is_base_case = base_case_value is not None
 
                         # Si es caso base por tamaño, no cuenta como early return
@@ -3854,9 +3722,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                             continue
 
                         # Si NO es caso base, buscar recursivamente en este IF
-                        if self._has_return_before_recursive_calls(
-                            stmt, recursive_calls
-                        ):
+                        if self._has_return_before_recursive_calls(stmt, recursive_calls):
                             return True
 
                     # Si encontramos recursivas después de un return temprano, es válido
@@ -3969,9 +3835,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
 
         return False
 
-    def _contains_recursive_call(
-        self, node: Any, recursive_calls: List[Dict[str, Any]]
-    ) -> bool:
+    def _contains_recursive_call(self, node: Any, recursive_calls: List[Dict[str, Any]]) -> bool:
         """
         Verifica si un nodo contiene alguna llamada recursiva.
 
@@ -4027,9 +3891,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             g_n_expr = n_sym**log_b_a
 
             # Comparar usando límites
-            comparison_result = self._compare_with_limits(
-                f_n_expr, g_n_expr, n_sym, log_b_a
-            )
+            comparison_result = self._compare_with_limits(f_n_expr, g_n_expr, n_sym, log_b_a)
 
             return comparison_result
 
@@ -4070,10 +3932,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
 
         # Manejar n log n
         if "log" in expr_str and "n" in expr_str:
-            if (
-                expr_str.replace(" ", "") == "nlog(n)"
-                or expr_str.replace(" ", "") == "n*log(n)"
-            ):
+            if expr_str.replace(" ", "") == "nlog(n)" or expr_str.replace(" ", "") == "n*log(n)":
                 from sympy import log
 
                 return n_sym * log(n_sym)
@@ -4122,9 +3981,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     if lim == oo or (hasattr(lim, "is_infinite") and lim.is_infinite):
                         return {"case": 3, "comparison": "larger"}
                     # Si f(n) = 1, entonces f(n) = g(n) → Caso 2
-                    if f_exponent == 0 or (
-                        isinstance(f_n_expr, Integer) and f_n_expr == 1
-                    ):
+                    if f_exponent == 0 or (isinstance(f_n_expr, Integer) and f_n_expr == 1):
                         return {"case": 2, "comparison": "equal"}
 
             # Caso especial: si g(n) = n (log_b_a = 1) y f(n) = n, es Caso 2
@@ -4173,9 +4030,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         # Fallback: comparación heurística
         return self._compare_heuristic(f_n_expr, g_n_expr, log_b_a)
 
-    def _compare_heuristic(
-        self, f_n_expr: Expr, g_n_expr: Expr, log_b_a: float
-    ) -> Dict[str, Any]:
+    def _compare_heuristic(self, f_n_expr: Expr, g_n_expr: Expr, log_b_a: float) -> Dict[str, Any]:
         """
         Comparación heurística cuando los límites fallan.
 
@@ -4430,9 +4285,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             latex_str = re.sub(r"\^\{(\d+)\.0+\}", r"^{\1}", latex_str)
 
             # Simplificar fracciones con denominador 1: \frac{k}{1} → k
-            latex_str = re.sub(
-                re.escape(r"\frac") + r"\{(\d+(?:\.\d+)?)\}\{1\}", r"\1", latex_str
-            )
+            latex_str = re.sub(re.escape(r"\frac") + r"\{(\d+(?:\.\d+)?)\}\{1\}", r"\1", latex_str)
 
             # Simplificar multiplicación por 1: 1 \cdot x → x, x \cdot 1 → x
             # Usar re.escape para escapar \cdot correctamente
@@ -4452,17 +4305,13 @@ class RecursiveAnalyzer(BaseAnalyzer):
             latex_str = re.sub(r"1\s+" + log_pattern + r"\s+n", r"\\log n", latex_str)
             latex_str = re.sub(r"1\s*" + log_pattern + r"\s+n", r"\\log n", latex_str)
             # Manejar formato SymPy: 1 \log{\left(n \right)} → \log n
-            left_right_pattern = (
-                re.escape(r"\left(") + r"\s*n\s*" + re.escape(r"\right)")
-            )
+            left_right_pattern = re.escape(r"\left(") + r"\s*n\s*" + re.escape(r"\right)")
             latex_str = re.sub(
                 r"1\s*" + log_pattern + r"\s*\{\s*" + left_right_pattern + r"\s*\}",
                 r"\\log n",
                 latex_str,
             )
-            latex_str = re.sub(
-                r"1\s+" + log_pattern + r"\s*\(\s*n\s*\)", r"\\log n", latex_str
-            )
+            latex_str = re.sub(r"1\s+" + log_pattern + r"\s*\(\s*n\s*\)", r"\\log n", latex_str)
             # Manejar log sin backslash (con y sin espacios) - solo cuando hay espacios antes del 1
             # Para evitar reemplazar números como "21 log n", solo reemplazar si hay espacio, inicio, o paréntesis antes
             # Usar alternativas simples para evitar problemas con lookbehinds de ancho variable
@@ -4503,12 +4352,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
             # Simplificar expresiones generales: 1 * cualquier_expresión → cualquier_expresión
             # (solo si está precedido por espacios, inicio, o paréntesis)
             # Separar las alternativas para evitar problemas con lookbehinds
-            latex_str = re.sub(
-                r"(?<=\s)1\s*\*\s*", "", latex_str
-            )  # 1 * expr después de espacio
-            latex_str = re.sub(
-                r"(?<=\()1\s*\*\s*", "", latex_str
-            )  # 1 * expr después de (
+            latex_str = re.sub(r"(?<=\s)1\s*\*\s*", "", latex_str)  # 1 * expr después de espacio
+            latex_str = re.sub(r"(?<=\()1\s*\*\s*", "", latex_str)  # 1 * expr después de (
             latex_str = re.sub(r"^1\s*\*\s*", "", latex_str)  # 1 * expr al inicio
             latex_str = re.sub(r"\*\s*1(?=\s|$|\)|}|,)", "", latex_str)  # expr * 1
 
@@ -4623,9 +4468,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             return str(int(round(rounded)))
         return str(rounded)
 
-    def _calculate_theta(
-        self, case: int, g_n_expr: Expr, f_n_str: str, log_b_a: float
-    ) -> str:
+    def _calculate_theta(self, case: int, g_n_expr: Expr, f_n_str: str, log_b_a: float) -> str:
         """
         Calcula Θ(...) según el caso del Teorema Maestro.
 
@@ -4675,9 +4518,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         if self.characteristic_equation:
             # Para characteristic_equation, si hay early return y estamos en modo best, usar Θ(1)
             # El theta ya debería estar ajustado en _apply_characteristic_equation_method, pero verificamos por seguridad
-            if self.mode == "best" and self.characteristic_equation.get(
-                "has_early_return", False
-            ):
+            if self.mode == "best" and self.characteristic_equation.get("has_early_return", False):
                 t_open = "\\Theta(1)"
             else:
                 t_open = self.characteristic_equation.get("theta", "N/A")
@@ -4865,9 +4706,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         if not param_names:
             return None
 
-        size_candidates = [
-            name.lower() for name in self.detect_size_variables_from_proc(proc_def)
-        ]
+        size_candidates = [name.lower() for name in self.detect_size_variables_from_proc(proc_def)]
         for param_name in param_names:
             if param_name.lower() in size_candidates:
                 return param_name
@@ -4912,9 +4751,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 args = call.get("args", []) or []
                 if index >= len(args):
                     continue
-                if not self._argument_preserves_parameter_identity(
-                    args[index], param_name
-                ):
+                if not self._argument_preserves_parameter_identity(args[index], param_name):
                     changed.append(param_name)
                     break
 
@@ -5055,10 +4892,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
 
         # Para algoritmos con ecuación característica (lineales con desplazamientos constantes),
         # típicamente NO hay variabilidad porque la estructura es determinística
-        if (
-            self.recurrence
-            and self.recurrence.get("method") == "characteristic_equation"
-        ):
+        if self.recurrence and self.recurrence.get("method") == "characteristic_equation":
             # Verificar si hay ramas condicionales que afecten recursión
             body = self.proc_def.get("body", {}) or self.proc_def.get("block", {})
 
@@ -5070,9 +4904,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             # Verificar si las llamadas recursivas están en diferentes ramas condicionales
             # Si todas las llamadas recursivas están en la misma rama (o fuera de IF),
             # entonces no hay variabilidad
-            has_conditional_recursion = self._has_conditional_recursive_calls(
-                body, recursive_calls
-            )
+            has_conditional_recursion = self._has_conditional_recursive_calls(body, recursive_calls)
 
             # SIEMPRE verificar early returns que afectan el flujo recursivo
             # Un early return que evita la recursión (ej: IF condición THEN RETURN; ELSE recursivas)
@@ -5119,9 +4951,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             alternate = node.get("alternate", {})
 
             # Verificar si hay llamadas recursivas en cada rama
-            has_in_consequent = self._contains_recursive_call(
-                consequent, recursive_calls
-            )
+            has_in_consequent = self._contains_recursive_call(consequent, recursive_calls)
             has_in_alternate = self._contains_recursive_call(alternate, recursive_calls)
 
             # Si hay en ambas ramas, hay variabilidad
@@ -5142,9 +4972,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
 
         return False
 
-    def _contains_recursive_call(
-        self, node: Any, recursive_calls: List[Dict[str, Any]]
-    ) -> bool:
+    def _contains_recursive_call(self, node: Any, recursive_calls: List[Dict[str, Any]]) -> bool:
         """
         Verifica si un nodo contiene una llamada recursiva.
 
@@ -5301,11 +5129,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 seen.add(key)
                 unique_candidates.append(candidate)
 
-            return (
-                min(unique_candidates, key=_expression_score)
-                if unique_candidates
-                else expr
-            )
+            return min(unique_candidates, key=_expression_score) if unique_candidates else expr
 
         def _try_closed_form_with_rsolve(
             *,
@@ -5319,10 +5143,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 return None
 
             t_fn = Function("T")
-            rhs = (
-                sum(coeff * t_fn(n - offset) for offset, coeff in coeffs.items())
-                + g_constant
-            )
+            rhs = sum(coeff * t_fn(n - offset) for offset, coeff in coeffs.items()) + g_constant
             recurrence_eq = Eq(t_fn(n), rhs)
 
             initial_conditions: Dict[Expr, Expr] = {}
@@ -5346,12 +5167,42 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 return None
 
             # Debe devolver forma cerrada sin constantes libres C_i.
-            unresolved = [
-                sym for sym in solved.free_symbols if str(sym).startswith("C")
-            ]
+            unresolved = [sym for sym in solved.free_symbols if str(sym).startswith("C")]
             if unresolved:
                 return None
             return solved
+
+        def _root_is_symbolically_simple(root_expr: Expr) -> bool:
+            """
+            Heurística de seguridad: evita solve exacto de constantes cuando las raíces
+            tienen forma algebraica pesada (ej. radicales cúbicos), que puede bloquear SymPy.
+            """
+            try:
+                simplified_root = simplify(root_expr)
+            except Exception:
+                simplified_root = root_expr
+
+            if bool(simplified_root.has(I)):
+                return False
+
+            if bool(
+                simplified_root.is_Integer
+                or simplified_root.is_Rational
+                or simplified_root.is_Float
+            ):
+                return True
+
+            try:
+                for power_expr in simplified_root.atoms(Pow):
+                    exponent = getattr(power_expr, "exp", None)
+                    if isinstance(exponent, Rational) and int(exponent.q) > 2:
+                        return False
+            except Exception:
+                return False
+
+            root_latex = latex(simplified_root)
+            blocked_tokens = ("sqrt[3]", "sqrt[4]", "RootOf", "\\zeta")
+            return not any(token in root_latex for token in blocked_tokens)
 
         linear_info = self._detect_linear_recurrence(
             self.proc_def, self._find_recursive_calls(self.proc_def)
@@ -5422,9 +5273,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 }
             for root_value in roots_from_solve:
                 root_simplified = simplify(root_value)
-                root_mult_map[root_simplified] = (
-                    int(root_mult_map.get(root_simplified, 0)) + 1
-                )
+                root_mult_map[root_simplified] = int(root_mult_map.get(root_simplified, 0)) + 1
 
         if not root_mult_map:
             return {
@@ -5511,11 +5360,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                         equations = [Eq(expanded_balance, 0)]
 
                 try:
-                    solved_k = (
-                        solve(equations, [K], dict=True)
-                        if equations
-                        else [{K: Integer(0)}]
-                    )
+                    solved_k = solve(equations, [K], dict=True) if equations else [{K: Integer(0)}]
                 except Exception:
                     solved_k = []
 
@@ -5534,6 +5379,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
         resolved_general_expr = general_expr
         constants_resolved = False
         insufficient_base_conditions = False
+        constant_resolution_skipped = False
 
         if constant_symbols:
             usable_base_cases: List[Tuple[int, Expr]] = []
@@ -5548,33 +5394,37 @@ class RecursiveAnalyzer(BaseAnalyzer):
 
             usable_base_cases.sort(key=lambda item: item[0])
             if len(usable_base_cases) >= len(constant_symbols):
-                equations = [
-                    Eq(simplify(general_expr.subs(n, base_index)), base_value)
-                    for base_index, base_value in usable_base_cases[
-                        : len(constant_symbols)
+                can_attempt_exact_solving = len(constant_symbols) <= 2 or all(
+                    _root_is_symbolically_simple(entry["root_expr"]) for entry in root_entries
+                )
+                if can_attempt_exact_solving:
+                    equations = [
+                        Eq(simplify(general_expr.subs(n, base_index)), base_value)
+                        for base_index, base_value in usable_base_cases[: len(constant_symbols)]
                     ]
-                ]
-                try:
-                    solved_constants_raw = solve(equations, constant_symbols, dict=True)
-                except Exception:
-                    solved_constants_raw = []
+                    try:
+                        solved_constants_raw = solve(equations, constant_symbols, dict=True)
+                    except Exception:
+                        solved_constants_raw = []
 
-                if solved_constants_raw:
-                    solved_map = solved_constants_raw[0]
-                    resolved_general_expr = simplify(general_expr.subs(solved_map))
-                    constants_resolved = True
-                    solved_constants = {
-                        latex(symbol): latex(simplify(value))
-                        for symbol, value in solved_map.items()
-                    }
-                elif usable_base_cases:
+                    if solved_constants_raw:
+                        solved_map = solved_constants_raw[0]
+                        resolved_general_expr = simplify(general_expr.subs(solved_map))
+                        constants_resolved = True
+                        solved_constants = {
+                            latex(symbol): latex(simplify(value))
+                            for symbol, value in solved_map.items()
+                        }
+                    elif usable_base_cases:
+                        insufficient_base_conditions = True
+                else:
+                    # Guard de rendimiento para sistemas simbólicos pesados (p.ej. Tribonacci con raíces cúbicas).
+                    constant_resolution_skipped = True
                     insufficient_base_conditions = True
             elif usable_base_cases:
                 insufficient_base_conditions = True
 
-        closed_form_base_expr = (
-            resolved_general_expr if constants_resolved else general_expr
-        )
+        closed_form_base_expr = resolved_general_expr if constants_resolved else general_expr
         rsolve_candidate_expr: Optional[Expr] = None
         if constants_resolved:
             rsolve_candidate_expr = _try_closed_form_with_rsolve(
@@ -5618,9 +5468,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
             particular_degree = 0
             if particular_expr is not None and particular_expr.has(n):
                 try:
-                    particular_degree = max(
-                        int(Poly(expand(particular_expr), n).degree()), 0
-                    )
+                    particular_degree = max(int(Poly(expand(particular_expr), n).degree()), 0)
                 except Exception:
                     particular_degree = 1
 
@@ -5628,7 +5476,9 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 dominant_abs_latex = latex(simplify(Abs(root_entries[0]["root_expr"])))
                 exponential_term = _pow_n(dominant_abs_latex)
                 if dominant_multiplicity > 1:
-                    theta_result = f"\\Theta(n^{dominant_multiplicity - 1} \\cdot {exponential_term})"
+                    theta_result = (
+                        f"\\Theta(n^{dominant_multiplicity - 1} \\cdot {exponential_term})"
+                    )
                 else:
                     theta_result = f"\\Theta({exponential_term})"
             else:
@@ -5652,12 +5502,8 @@ class RecursiveAnalyzer(BaseAnalyzer):
         dp_equivalence = ""
         if is_dp_linear:
             dp_code = self._generate_dp_code(coefficients, max_offset)
-            dp_code_optimized = self._generate_optimized_dp_code(
-                coefficients, max_offset, g_n_str
-            )
-            recursive_complexity = self._calculate_recursive_complexity(
-                coefficients, max_offset
-            )
+            dp_code_optimized = self._generate_optimized_dp_code(coefficients, max_offset, g_n_str)
+            recursive_complexity = self._calculate_recursive_complexity(coefficients, max_offset)
             dp_space_optimized = "O(1)" if max_offset <= 3 else f"O({max_offset})"
 
             dp_version = {
@@ -5715,6 +5561,7 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 simplification_partial=simplification_partial,
                 solved_constants=solved_constants,
                 required_constants=len(constant_symbols),
+                constant_resolution_skipped=constant_resolution_skipped,
             )
         )
 
@@ -5738,6 +5585,22 @@ class RecursiveAnalyzer(BaseAnalyzer):
             "theta": theta_result,
             "has_early_return": has_early_return,
             "step_by_step": step_bundle,
+            "constant_resolution": {
+                "status": (
+                    "solved"
+                    if constants_resolved
+                    else ("partial" if constant_resolution_skipped else "unresolved")
+                ),
+                "reason": (
+                    "symbolic_solver_guard"
+                    if constant_resolution_skipped
+                    else (
+                        "insufficient_base_conditions"
+                        if insufficient_base_conditions and not constants_resolved
+                        else None
+                    )
+                ),
+            },
         }
 
         self.proof_steps.append(
@@ -5759,6 +5622,13 @@ class RecursiveAnalyzer(BaseAnalyzer):
                 {
                     "id": "dp_rejected",
                     "text": "\\text{La validación previa descarta presentar esta recurrencia como Programación Dinámica}",
+                }
+            )
+        if constant_resolution_skipped:
+            self.proof_steps.append(
+                {
+                    "id": "base_conditions_partial_symbolic_guard",
+                    "text": "\\text{Condiciones base detectadas, pero se omite solve exacto de constantes por guard de rendimiento simbólico.}",
                 }
             )
 
@@ -5949,9 +5819,7 @@ FIN FUNCIÓN"""
 
         return code
 
-    def _calculate_recursive_complexity(
-        self, coefficients: Dict[int, int], max_offset: int
-    ) -> str:
+    def _calculate_recursive_complexity(self, coefficients: Dict[int, int], max_offset: int) -> str:
         """
         Calcula la complejidad de la versión recursiva.
 
@@ -6060,9 +5928,7 @@ FIN FUNCIÓN"""
             return range_reduction
 
         # Estrategia 0.5: Detectar búsqueda binaria (izq, medio-1) o (medio+1, der) con medio=(izq+der)/2
-        binary_search_reduction = self._detect_binary_search_range_reduction(
-            args, params, proc_def
-        )
+        binary_search_reduction = self._detect_binary_search_range_reduction(args, params, proc_def)
         if binary_search_reduction:
             return binary_search_reduction
 
@@ -6080,16 +5946,8 @@ FIN FUNCIÓN"""
                         left = arg.get("left", {})
                         right = arg.get("right", {})
                         if isinstance(left, dict) and isinstance(right, dict):
-                            ln = (
-                                (left.get("name") or left.get("id") or "")
-                                .strip()
-                                .lower()
-                            )
-                            rn = (
-                                (right.get("name") or right.get("id") or "")
-                                .strip()
-                                .lower()
-                            )
+                            ln = (left.get("name") or left.get("id") or "").strip().lower()
+                            rn = (right.get("name") or right.get("id") or "").strip().lower()
                             if ln in param_names and rn in param_names:
                                 return {"type": "mod", "pattern": "mod", "factor": 1}
 
@@ -6099,8 +5957,7 @@ FIN FUNCIÓN"""
             first_param_name = first_param.get("name", "")
             # Verificar si el primer parámetro es un array (tiene corchetes en el nombre o es arrayParam)
             first_param_is_array = (
-                "[" in first_param_name
-                or first_param.get("type", "").lower() == "arrayparam"
+                "[" in first_param_name or first_param.get("type", "").lower() == "arrayparam"
             )
         else:
             first_param_name = str(first_param)
@@ -6163,16 +6020,13 @@ FIN FUNCIÓN"""
                 "type", ""
             ).lower() in ["binary", "unary"]
             first_arg_simple = (
-                isinstance(first_arg, dict)
-                and first_arg.get("type", "").lower() == "identifier"
+                isinstance(first_arg, dict) and first_arg.get("type", "").lower() == "identifier"
             )
 
             if second_arg_modified and first_arg_simple:
                 # El segundo parámetro es probablemente el tamaño
                 size_param_name = (
-                    params[1].get("name", "")
-                    if isinstance(params[1], dict)
-                    else str(params[1])
+                    params[1].get("name", "") if isinstance(params[1], dict) else str(params[1])
                 )
                 size_arg_index = 1
                 size_arg = second_arg
@@ -6188,9 +6042,7 @@ FIN FUNCIÓN"""
                     target_name = target.get("name", "") or target.get("id", "")
                     # Si el target es el primer parámetro (el objeto/nodo), es probablemente una lista enlazada
                     if target_name == first_param_name:
-                        field_name = size_arg.get("name", "") or size_arg.get(
-                            "field", ""
-                        )
+                        field_name = size_arg.get("name", "") or size_arg.get("field", "")
                         field_name_lower = str(field_name).lower()
                         # Campos comunes de listas enlazadas (siguiente, next, etc.) → n-1
                         if field_name_lower in ["siguiente", "next", "proximo", "prox"]:
@@ -6276,9 +6128,7 @@ FIN FUNCIÓN"""
                     right = size_arg.get("right", {})
                     if isinstance(left, dict) and isinstance(right, dict):
                         left_name = (left.get("name") or left.get("id") or "").strip()
-                        right_name = (
-                            right.get("name") or right.get("id") or ""
-                        ).strip()
+                        right_name = (right.get("name") or right.get("id") or "").strip()
                         param_names = set()
                         for p in params:
                             if isinstance(p, dict):
@@ -6351,9 +6201,7 @@ FIN FUNCIÓN"""
 
         return None
 
-    def _is_range_halving_pattern(
-        self, expr: Dict[str, Any], params: List[Any]
-    ) -> bool:
+    def _is_range_halving_pattern(self, expr: Dict[str, Any], params: List[Any]) -> bool:
         """
         Detecta si una expresión es del tipo (inicio + fin) / 2.
 
@@ -6399,23 +6247,14 @@ FIN FUNCIÓN"""
         inicio_keywords = ["inicio", "izq", "left", "start", "begin", "low"]
         fin_keywords = ["fin", "der", "right", "end", "high"]
         inicio_idx = next(
-            (
-                i
-                for i, n in enumerate(param_names)
-                if any(k in n for k in inicio_keywords)
-            ),
+            (i for i, n in enumerate(param_names) if any(k in n for k in inicio_keywords)),
             None,
         )
         fin_idx = next(
             (i for i, n in enumerate(param_names) if any(k in n for k in fin_keywords)),
             None,
         )
-        if (
-            inicio_idx is None
-            or fin_idx is None
-            or inicio_idx >= len(args)
-            or fin_idx >= len(args)
-        ):
+        if inicio_idx is None or fin_idx is None or inicio_idx >= len(args) or fin_idx >= len(args):
             return None
         inicio_arg = args[inicio_idx]
         fin_arg = args[fin_idx]
@@ -6427,16 +6266,10 @@ FIN FUNCIÓN"""
                 continue
             target = stmt.get("target", {})
             value = stmt.get("value", {})
-            if (
-                isinstance(target, dict)
-                and target.get("type", "").lower() == "identifier"
-            ):
+            if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
                 tname = (target.get("name") or "").lower()
                 if tname in ["medio", "mid", "middle", "mitad"]:
-                    if (
-                        isinstance(value, dict)
-                        and value.get("type", "").lower() == "binary"
-                    ):
+                    if isinstance(value, dict) and value.get("type", "").lower() == "binary":
                         if value.get("op", "") == "/":
                             left = value.get("left", {})
                             right = value.get("right", {})
@@ -6445,10 +6278,7 @@ FIN FUNCIÓN"""
                                 and right.get("type", "").lower() == "literal"
                             ):
                                 if right.get("value") == 2:
-                                    if (
-                                        isinstance(left, dict)
-                                        and left.get("op", "") == "+"
-                                    ):
+                                    if isinstance(left, dict) and left.get("op", "") == "+":
                                         medio_var = target.get("name", "")
                                         break
         if not medio_var:
@@ -6457,28 +6287,16 @@ FIN FUNCIÓN"""
         if isinstance(fin_arg, dict) and fin_arg.get("type", "").lower() == "binary":
             if fin_arg.get("op", "") == "-":
                 left = fin_arg.get("left", {})
-                if (
-                    isinstance(left, dict)
-                    and left.get("type", "").lower() == "identifier"
-                ):
+                if isinstance(left, dict) and left.get("type", "").lower() == "identifier":
                     if (left.get("name") or "").lower() == medio_var.lower():
                         is_division = True
-        if (
-            isinstance(inicio_arg, dict)
-            and inicio_arg.get("type", "").lower() == "binary"
-        ):
+        if isinstance(inicio_arg, dict) and inicio_arg.get("type", "").lower() == "binary":
             if inicio_arg.get("op", "") == "+":
                 right = inicio_arg.get("right", {})
-                if (
-                    isinstance(right, dict)
-                    and right.get("type", "").lower() == "literal"
-                ):
+                if isinstance(right, dict) and right.get("type", "").lower() == "literal":
                     if right.get("value") == 1:
                         left = inicio_arg.get("left", {})
-                        if (
-                            isinstance(left, dict)
-                            and left.get("type", "").lower() == "identifier"
-                        ):
+                        if isinstance(left, dict) and left.get("type", "").lower() == "identifier":
                             if (left.get("name") or "").lower() == medio_var.lower():
                                 is_division = True
         if is_division:
@@ -6506,16 +6324,12 @@ FIN FUNCIÓN"""
 
         # Buscar parámetros que parezcan inicio/fin (ignorar el primero que suele ser el array)
         param_info = []
-        for i, param in enumerate(
-            params[1:], start=1
-        ):  # Saltar el primer parámetro (array)
+        for i, param in enumerate(params[1:], start=1):  # Saltar el primer parámetro (array)
             if isinstance(param, dict):
                 param_name = param.get("name", "")
             else:
                 param_name = str(param)
-            param_info.append(
-                {"index": i, "name": param_name, "name_lower": param_name.lower()}
-            )
+            param_info.append({"index": i, "name": param_name, "name_lower": param_name.lower()})
 
         # Nombres comunes para inicio/fin
         inicio_keywords = ["inicio", "izq", "left", "start", "begin", "low"]
@@ -6546,10 +6360,7 @@ FIN FUNCIÓN"""
         fin_arg = args[fin_idx]
 
         # Verificar que inicio_arg es una suma (inicio + k)
-        if (
-            not isinstance(inicio_arg, dict)
-            or inicio_arg.get("type", "").lower() != "binary"
-        ):
+        if not isinstance(inicio_arg, dict) or inicio_arg.get("type", "").lower() != "binary":
             return None
 
         inicio_op = inicio_arg.get("op", "")
@@ -6561,17 +6372,12 @@ FIN FUNCIÓN"""
 
         # Verificar que left es el parámetro inicio
         if isinstance(inicio_left, dict):
-            inicio_left_name = (
-                inicio_left.get("name") or inicio_left.get("id", "")
-            ).lower()
+            inicio_left_name = (inicio_left.get("name") or inicio_left.get("id", "")).lower()
             if inicio_left_name != inicio_param["name_lower"]:
                 return None
 
         # Extraer el valor de k de inicio + k
-        if (
-            isinstance(inicio_right, dict)
-            and inicio_right.get("type", "").lower() == "literal"
-        ):
+        if isinstance(inicio_right, dict) and inicio_right.get("type", "").lower() == "literal":
             k_value = inicio_right.get("value", 0)
         else:
             return None
@@ -6594,10 +6400,7 @@ FIN FUNCIÓN"""
                 return None
 
         # Verificar que right es el mismo k
-        if (
-            isinstance(fin_right, dict)
-            and fin_right.get("type", "").lower() == "literal"
-        ):
+        if isinstance(fin_right, dict) and fin_right.get("type", "").lower() == "literal":
             fin_k_value = fin_right.get("value", 0)
             if fin_k_value != k_value:
                 return None
@@ -6844,18 +6647,14 @@ FIN FUNCIÓN"""
             return {"success": True, "iteration": iteration}
 
         if recurrence_type == "divide_conquer":
-            if not self._is_single_branch_geometric_divide_conquer_recurrence(
-                self.recurrence
-            ):
+            if not self._is_single_branch_geometric_divide_conquer_recurrence(self.recurrence):
                 return _build_unsupported_result(
                     support_code="ITER_UNSUPPORTED_NON_LINEAR_FORM",
                     g_n_value=str(self.recurrence.get("f", "1")),
                 )
 
             base_idx, base_val, missing_base = _base_case_info()
-            base_for_formula = (
-                base_idx if isinstance(base_idx, int) and base_idx > 0 else 1
-            )
+            base_for_formula = base_idx if isinstance(base_idx, int) and base_idx > 0 else 1
 
             try:
                 b_value = float(self.recurrence.get("b", 2))
@@ -6875,13 +6674,13 @@ FIN FUNCIÓN"""
                 if base_for_formula == 1:
                     k_value = f"\\log_{{{b_display}}} n"
                 else:
-                    k_value = f"\\log_{{{b_display}}}\\left(\\frac{{n}}{{{base_for_formula}}}\\right)"
+                    k_value = (
+                        f"\\log_{{{b_display}}}\\left(\\frac{{n}}{{{base_for_formula}}}\\right)"
+                    )
                 summation_evaluated = (
                     f"\\sum_{{j=0}}^{{k-1}} {g_n_value}={g_n_value}\\cdot {k_value}"
                 )
-                final_expression = (
-                    f"T(n)=T({base_for_formula})+{g_n_value}\\cdot {k_value}"
-                )
+                final_expression = f"T(n)=T({base_for_formula})+{g_n_value}\\cdot {k_value}"
 
             k_condition = f"\\frac{{n}}{{{b_display}^k}}={base_for_formula}"
             if base_for_formula == 1:
@@ -6894,12 +6693,8 @@ FIN FUNCIÓN"""
                 f"T(n)=T\\left(\\frac{{n}}{{{b_display}^2}}\\right)+2\\cdot {g_n_value}",
                 f"T(n)=T\\left(\\frac{{n}}{{{b_display}^3}}\\right)+3\\cdot {g_n_value}",
             ]
-            general_form = (
-                f"T(n)=T\\left(\\frac{{n}}{{{b_display}^k}}\\right)+k\\cdot {g_n_value}"
-            )
-            summation_expression = (
-                f"T(n)=T({base_for_formula})+\\sum_{{j=0}}^{{k-1}} {g_n_value}"
-            )
+            general_form = f"T(n)=T\\left(\\frac{{n}}{{{b_display}^k}}\\right)+k\\cdot {g_n_value}"
+            summation_expression = f"T(n)=T({base_for_formula})+\\sum_{{j=0}}^{{k-1}} {g_n_value}"
 
             context = IterationStepContext(
                 locale=self.locale,
@@ -7040,18 +6835,14 @@ FIN FUNCIÓN"""
                 f"T(n)={c_latex}^2T(n-2)+{c_latex}\\cdot {g_n_minus_1_latex}+{g_n_latex}",
                 f"T(n)={c_latex}^3T(n-3)+{c_latex}^2\\cdot {g_n_minus_2_latex}+{c_latex}\\cdot {g_n_minus_1_latex}+{g_n_latex}",
             ]
-            general_form = (
-                rf"T(n)={c_latex}^kT(n-k)+\sum_{{j=0}}^{{k-1}} {c_latex}^j g(n-j)"
-            )
+            general_form = rf"T(n)={c_latex}^kT(n-k)+\sum_{{j=0}}^{{k-1}} {c_latex}^j g(n-j)"
             k_condition = f"n-k={base_idx}"
             k_value = "n" if base_idx == 0 else f"n-{base_idx}"
 
             lower_limit = base_idx + 1
             summation_expression = rf"T(n)={c_latex}^{{{k_value}}}T({base_idx})+\sum_{{i={lower_limit}}}^{{n}} {c_latex}^{{n-i}}\,g(i)"
 
-            summation_evaluated = (
-                rf"\sum_{{i={lower_limit}}}^{{n}} {c_latex}^{{n-i}}\,g(i)"
-            )
+            summation_evaluated = rf"\sum_{{i={lower_limit}}}^{{n}} {c_latex}^{{n-i}}\,g(i)"
             sum_partial = True
             asymptotic_partial = True
             if g_expr_n is not None and g_expr_n.is_number:
@@ -7141,9 +6932,7 @@ FIN FUNCIÓN"""
         lower_limit = base_idx + 1
         k_condition = f"n-k={base_idx}"
         k_value = "n" if base_idx == 0 else f"n-{base_idx}"
-        summation_expression = (
-            f"T(n)=T({base_idx})+\\sum_{{i={lower_limit}}}^{{n}} {g_i_latex}"
-        )
+        summation_expression = f"T(n)=T({base_idx})+\\sum_{{i={lower_limit}}}^{{n}} {g_i_latex}"
 
         summation_evaluated = f"\\sum_{{i={lower_limit}}}^{{n}} {g_i_latex}"
         sum_partial = True
@@ -7165,15 +6954,11 @@ FIN FUNCIÓN"""
                 final_expr_obj = simplify(Integer(base_val) + sum_expr)
                 final_expression = f"T(n)={latex(final_expr_obj)}"
             except Exception:
-                final_expression = (
-                    f"T(n)={base_val}+{summation_evaluated.split('=')[-1]}"
-                )
+                final_expression = f"T(n)={base_val}+{summation_evaluated.split('=')[-1]}"
         elif base_val is not None:
             final_expression = f"T(n)={base_val}+{summation_evaluated.split('=')[-1]}"
         else:
-            final_expression = (
-                f"T(n)=T({base_idx})+{summation_evaluated.split('=')[-1]}"
-            )
+            final_expression = f"T(n)=T({base_idx})+{summation_evaluated.split('=')[-1]}"
 
         theta_core: Optional[str] = None
         dominant_term = "\\text{N/A}"
@@ -7207,9 +6992,7 @@ FIN FUNCIÓN"""
                     dominant_term = theta_core
                     asymptotic_partial = True
                 elif (
-                    isinstance(g_expr_n, Pow)
-                    and g_expr_n.base == n_sym
-                    and g_expr_n.exp.is_number
+                    isinstance(g_expr_n, Pow) and g_expr_n.base == n_sym and g_expr_n.exp.is_number
                 ):
                     next_exp = simplify(g_expr_n.exp + 1)
                     theta_core = _format_n_power(next_exp)
@@ -7424,9 +7207,7 @@ FIN FUNCIÓN"""
                     # Si hay múltiples términos iguales, intentar agrupar
                     if len(f_terms) > 1 and all(term == f_terms[0] for term in f_terms):
                         # Todos los términos son iguales
-                        expansion = (
-                            f"T(n) = T(n-{i}) + {len(f_terms)} \\cdot {f_terms[0]}"
-                        )
+                        expansion = f"T(n) = T(n-{i}) + {len(f_terms)} \\cdot {f_terms[0]}"
                     else:
                         expansion = f"T(n) = T(n-{i}) + {' + '.join(f_terms)}"
                 expansions.append(expansion)
@@ -7527,15 +7308,11 @@ FIN FUNCIÓN"""
         if g_type == "subtraction":
             return f"T(n) = T({n0}) + \\sum_{{i=0}}^{{{k_expr}}} ({f_n})|_{{n-i}}"
         elif g_type == "division":
-            return (
-                f"T(n) = T({n0}) + \\sum_{{i=0}}^{{{k_expr}}} ({f_n})|_{{n/{factor}^i}}"
-            )
+            return f"T(n) = T({n0}) + \\sum_{{i=0}}^{{{k_expr}}} ({f_n})|_{{n/{factor}^i}}"
         else:
             return f"T(n) = T({n0}) + \\sum f(\\cdot)"
 
-    def _solve_summation(
-        self, g_n_info: Dict[str, Any], f_n: str, k_expr: str
-    ) -> Dict[str, str]:
+    def _solve_summation(self, g_n_info: Dict[str, Any], f_n: str, k_expr: str) -> Dict[str, str]:
         """
         Evalúa la sumatoria y simplifica a notación asintótica.
 
@@ -7568,9 +7345,7 @@ FIN FUNCIÓN"""
         if (
             f_simplified == "1"
             or f_simplified == "c"
-            or (
-                f_n_expr is not None and isinstance(f_n_expr, Integer) and f_n_expr == 1
-            )
+            or (f_n_expr is not None and isinstance(f_n_expr, Integer) and f_n_expr == 1)
         ):
             # Sumatoria constante: Σ c = c * k
             if g_type == "subtraction":
@@ -7670,8 +7445,7 @@ FIN FUNCIÓN"""
         # Si hay subtracción (n-1, n-k), no es divide-and-conquer
         has_subtraction = any(
             self._analyze_subproblem_type(call, proc_def)
-            and self._analyze_subproblem_type(call, proc_def).get("type")
-            == "subtraction"
+            and self._analyze_subproblem_type(call, proc_def).get("type") == "subtraction"
             for call in recursive_calls
         )
         if has_subtraction:
@@ -7719,10 +7493,7 @@ FIN FUNCIÓN"""
             raw_a = self.recurrence.get("a")
             raw_b = self.recurrence.get("b")
             raw_n0 = self.recurrence.get("n0", 1)
-            f_n = (
-                str(self.recurrence.get("f", self.recurrence.get("g(n)", "0"))).strip()
-                or "0"
-            )
+            f_n = str(self.recurrence.get("f", self.recurrence.get("g(n)", "0"))).strip() or "0"
 
             a_value: Optional[int]
             b_value: Optional[float]
@@ -7764,18 +7535,14 @@ FIN FUNCIÓN"""
             theta_raw = recursion_tree_payload.get("theta")
             theta_latex = None
             if isinstance(theta_raw, str) and theta_raw.strip():
-                theta_latex = (
-                    theta_raw if "T(n)" in theta_raw else f"T(n) = {theta_raw}"
-                )
+                theta_latex = theta_raw if "T(n)" in theta_raw else f"T(n) = {theta_raw}"
 
             if isinstance(dominant_level, str) and dominant_level.lower() == "unknown":
                 tree_inconsistent = True
                 asymptotic_partial = True
 
             level_model = f"N_i={a_display}^i,\\;n_i=\\frac{{n}}{{{b_display}^i}},\\;c_i=f\\left(\\frac{{n}}{{{b_display}^i}}\\right)"
-            level_cost = (
-                f"C_i={a_display}^i\\cdot f\\left(\\frac{{n}}{{{b_display}^i}}\\right)"
-            )
+            level_cost = f"C_i={a_display}^i\\cdot f\\left(\\frac{{n}}{{{b_display}^i}}\\right)"
             height_latex = (
                 recursion_tree_payload.get("height")
                 or f"\\frac{{n}}{{{b_display}^h}}={n0_display}\\Rightarrow h=\\log_{{{b_display}}}\\left(\\frac{{n}}{{{n0_display}}}\\right)"
@@ -7799,21 +7566,15 @@ FIN FUNCIÓN"""
                 leaf_count_latex=leaf_count if is_supported else None,
                 leaf_cost_latex=leaf_cost if is_supported else None,
                 total_expression_latex=total_expression if is_supported else None,
-                simplified_expression_latex=(
-                    simplified_expression if is_supported else None
-                ),
-                dominant_level=(
-                    str(dominant_level) if dominant_level is not None else None
-                ),
+                simplified_expression_latex=(simplified_expression if is_supported else None),
+                dominant_level=(str(dominant_level) if dominant_level is not None else None),
                 dominant_reason_latex=dominant_reason if is_supported else None,
                 theta_latex=theta_latex if is_supported else None,
                 summation_partial=summation_partial,
                 tree_inconsistent=tree_inconsistent,
                 asymptotic_partial=asymptotic_partial,
             )
-            recursion_tree_payload["step_by_step"] = build_recursion_tree_step_bundle(
-                step_ctx
-            )
+            recursion_tree_payload["step_by_step"] = build_recursion_tree_step_bundle(step_ctx)
             return recursion_tree_payload
 
         self.proof_steps.append(
@@ -7830,9 +7591,7 @@ FIN FUNCIÓN"""
             n0 = self.recurrence.get("n0", 1)
             # Prioridad: branching subset (generación de subconjuntos) → 2^n antes que QuickSort → n²
             if self.recurrence.get("branching_subset"):
-                recurrence_form = self.recurrence.get(
-                    "form", "T(n) = T(n-1) + \\Theta(1)"
-                )
+                recurrence_form = self.recurrence.get("form", "T(n) = T(n-1) + \\Theta(1)")
                 self.proof_steps.append(
                     {
                         "id": "tree_extract",
@@ -7900,9 +7659,7 @@ FIN FUNCIÓN"""
                     "table_by_levels": [],
                     "theta": f"\\Theta({theta})",
                 }
-                self.proof_steps.append(
-                    {"id": "tree_result", "text": f"T(n) = \\Theta({theta})"}
-                )
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
                 recursion_tree = _with_tree_steps(
                     recursion_tree,
                     support_code="RT_UNSUPPORTED_FORM",
@@ -7948,9 +7705,7 @@ FIN FUNCIÓN"""
                     "table_by_levels": [],
                     "theta": f"\\Theta({theta})",
                 }
-                self.proof_steps.append(
-                    {"id": "tree_result", "text": f"T(n) = \\Theta({theta})"}
-                )
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
                 recursion_tree = _with_tree_steps(
                     recursion_tree,
                     support_code="RT_UNSUPPORTED_FORM",
@@ -7963,9 +7718,7 @@ FIN FUNCIÓN"""
             shifts = self.recurrence.get("shifts", [])
             self.recurrence.get("coefficients", [])
             if len(shifts) >= 2:
-                recurrence_form = self.recurrence.get(
-                    "form", "T(n) = T(n-1) + T(n-2) + 1"
-                )
+                recurrence_form = self.recurrence.get("form", "T(n) = T(n-1) + T(n-2) + 1")
                 self.proof_steps.append(
                     {
                         "id": "tree_extract",
@@ -8016,9 +7769,7 @@ FIN FUNCIÓN"""
                     "table_by_levels": [],
                     "theta": f"\\Theta({theta})",
                 }
-                self.proof_steps.append(
-                    {"id": "tree_result", "text": f"T(n) = \\Theta({theta})"}
-                )
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
                 recursion_tree = _with_tree_steps(
                     recursion_tree,
                     support_code="RT_UNSUPPORTED_FORM",
@@ -8028,9 +7779,7 @@ FIN FUNCIÓN"""
 
             # Recursión dentro de FOR (generación de subconjuntos): ramificación → Θ(2^n)
             if self.recurrence.get("branching_subset"):
-                recurrence_form = self.recurrence.get(
-                    "form", "T(n) = T(n-1) + \\Theta(1)"
-                )
+                recurrence_form = self.recurrence.get("form", "T(n) = T(n-1) + \\Theta(1)")
                 self.proof_steps.append(
                     {
                         "id": "tree_extract",
@@ -8098,9 +7847,7 @@ FIN FUNCIÓN"""
                     "table_by_levels": [],
                     "theta": f"\\Theta({theta})",
                 }
-                self.proof_steps.append(
-                    {"id": "tree_result", "text": f"T(n) = \\Theta({theta})"}
-                )
+                self.proof_steps.append({"id": "tree_result", "text": f"T(n) = \\Theta({theta})"})
                 recursion_tree = _with_tree_steps(
                     recursion_tree,
                     support_code="RT_UNSUPPORTED_FORM",
@@ -8129,7 +7876,9 @@ FIN FUNCIÓN"""
         if n0 == 1:
             height_latex = f"h = {height_expr}"
         else:
-            height_latex = f"h = {height_expr} \\approx \\log_{{{self._simplify_number_latex(b)}}}(n)"
+            height_latex = (
+                f"h = {height_expr} \\approx \\log_{{{self._simplify_number_latex(b)}}}(n)"
+            )
 
         self.proof_steps.append({"id": "tree_height", "text": height_latex})
 
@@ -8219,9 +7968,7 @@ FIN FUNCIÓN"""
 
         return {"success": True, "recursion_tree": recursion_tree}
 
-    def _build_tree_levels(
-        self, a: int, b: float, f_n: str, n0: int
-    ) -> List[Dict[str, Any]]:
+    def _build_tree_levels(self, a: int, b: float, f_n: str, n0: int) -> List[Dict[str, Any]]:
         """
         Construye la información de cada nivel del árbol de recursión.
 
@@ -8243,9 +7990,7 @@ FIN FUNCIÓN"""
         # Detectar tipo de f(n) para simplificar notación
         f_simplified = f_n.strip().lower()
         is_constant = (
-            f_simplified == "1"
-            or f_simplified == "c"
-            or f_simplified.replace(" ", "") == "c_1"
+            f_simplified == "1" or f_simplified == "c" or f_simplified.replace(" ", "") == "c_1"
         )
 
         for i in range(max_levels + 1):
@@ -8327,11 +8072,7 @@ FIN FUNCIÓN"""
         f_simplified = f_n.strip().lower()
 
         # Construir expresión de la sumatoria (simplificar si f(n) es constante)
-        if (
-            f_simplified == "1"
-            or f_simplified == "c"
-            or f_simplified.replace(" ", "") == "c_1"
-        ):
+        if f_simplified == "1" or f_simplified == "c" or f_simplified.replace(" ", "") == "c_1":
             # Si f(n) es constante, no usar notación de evaluación
             expression = f"\\sum_{{i=0}}^{{{height_expr}}} {a}^i \\cdot {f_n}"
         else:
@@ -8339,11 +8080,7 @@ FIN FUNCIÓN"""
             expression = f"\\sum_{{i=0}}^{{{height_expr}}} {a}^i \\cdot f(n/{b_str}^i)"
 
         # Caso 1: f(n) = constante (1, c)
-        if (
-            f_simplified == "1"
-            or f_simplified == "c"
-            or f_simplified.replace(" ", "") == "c_1"
-        ):
+        if f_simplified == "1" or f_simplified == "c" or f_simplified.replace(" ", "") == "c_1":
             # Σ a^i · c = c · Σ a^i = c · (a^(log_b(n)+1) - 1)/(a - 1)
             # Si a = b, entonces: Σ a^i = Σ 1^i = log_b(n) + 1 ≈ log_b(n)
             # Pero el costo real es: Σ a^i = (a^(log_b(n)+1) - 1)/(a - 1)
@@ -8377,12 +8114,12 @@ FIN FUNCIÓN"""
         elif "^2" in f_simplified or "n^2" in f_simplified:
             # Similar al caso anterior pero con n^2
             if a == int(b):
-                evaluated = f"n^2 \\cdot \\sum_{{i=0}}^{{{height_expr}}} ({a}/{b_str}^2)^i \\approx n^2"
+                evaluated = (
+                    f"n^2 \\cdot \\sum_{{i=0}}^{{{height_expr}}} ({a}/{b_str}^2)^i \\approx n^2"
+                )
                 theta = "\\Theta(n^2)"
             else:
-                evaluated = (
-                    f"n^2 \\cdot \\sum_{{i=0}}^{{{height_expr}}} ({a}/{b_str}^2)^i"
-                )
+                evaluated = f"n^2 \\cdot \\sum_{{i=0}}^{{{height_expr}}} ({a}/{b_str}^2)^i"
                 theta = "\\Theta(n^2)"
 
         # Caso por defecto: usar expresión general
@@ -8418,11 +8155,7 @@ FIN FUNCIÓN"""
         nlogba = f"n^{{\\log_{{{b_str}}} {a}}}"
 
         # Caso: f(n) = constante
-        if (
-            f_simplified == "1"
-            or f_simplified == "c"
-            or f_simplified.replace(" ", "") == "c_1"
-        ):
+        if f_simplified == "1" or f_simplified == "c" or f_simplified.replace(" ", "") == "c_1":
             if a == int(b):
                 # Cuando a=b y f(n)=constante, cada nivel tiene costo a^i·c
                 # El nivel i tiene costo 3^i·c, así que los niveles más profundos tienen mayor costo
