@@ -1,4 +1,3 @@
-import time
 
 import pytest
 
@@ -17,12 +16,10 @@ pytestmark = [pytest.mark.slow, pytest.mark.benchmark, pytest.mark.recursive]
 
 def test_tribonacci_characteristic_runtime_regression_guard():
     """Guard no bloqueante de rendimiento para evitar regresión extrema en Tribonacci."""
-    start = time.perf_counter()
     result = analyze_algorithm(
         TRIBONACCI_RECURSIVE_PSEUDOCODE,
         mode="worst",
         preferred_method="characteristic_equation",
     )
-    elapsed = time.perf_counter() - start
 
     assert result.get("ok"), result.get("errors", [])

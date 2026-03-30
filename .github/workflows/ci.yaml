@@ -100,7 +100,7 @@ jobs:
       - name: FastAPI smoke test
         run: python -c "import fastapi; print('✅ FastAPI:', fastapi.__version__)"
 
-  test:
+  test-pr-gate:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -135,18 +135,11 @@ jobs:
       - name: Verify xdist availability
         run: python -c "import xdist; print('✅ xdist:', xdist.__version__)"
 
-      - name: Run tests with coverage
+      - name: Run PR gate lanes with coverage
         working-directory: apps/api
         run: |
           echo "🧪 Running PR lanes: fast + oracle..."
           pytest tests/ -v --tb=short -n auto --dist=worksteal -m "fast or oracle" --cov=app --cov-report=xml --cov-report=term --cov-report=html --cov-fail-under=70
-
-      - name: Run extended validation lanes (non-blocking)
-        continue-on-error: true
-        working-directory: apps/api
-        run: |
-          echo "🧪 Running extended lanes: fast + oracle + contract + system..."
-          pytest tests/ -v --tb=short -n auto --dist=worksteal -m "fast or oracle or contract or system"
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
@@ -160,8 +153,50 @@ jobs:
       - name: Test summary
         if: always()
         run: |
-          echo "✅ Tests completed"
+          echo "✅ PR gate tests completed"
           echo "📊 Coverage report available in artifacts"
+
+  test-extended-lanes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "apps/api/requirements*.txt"
+
+      - name: Install Python dependencies
+        working-directory: apps/api
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install pytest-xdist
+
+      - name: Install grammar package
+        run: |
+          if [ -d packages/grammar/py ]; then
+            echo "📦 Installing grammar package..."
+            pip install -e packages/grammar/py
+          else
+            echo "⚠️  Grammar package not found, tests may fail"
+          fi
+
+      - name: Verify xdist availability
+        run: python -c "import xdist; print('✅ xdist:', xdist.__version__)"
+
+      - name: Run extended validation lanes (non-blocking)
+        working-directory: apps/api
+        run: |
+          echo "🧪 Running extended lanes: fast + oracle + contract + system..."
+          pytest tests/ -v --tb=short -n auto --dist=worksteal -m "fast or oracle or contract or system"
 
   test-nightly-lanes:
     if: github.event_name == 'schedule'
@@ -293,7 +328,7 @@ jobs:
   docker-integration:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [build, test, lint-web, lint-api, docs-contracts]  # Solo corre si build, tests, lint y docs pasan
+    needs: [build, test-pr-gate, lint-web, lint-api, docs-contracts]  # Solo corre si build, PR gate, lint y docs pasan
 
     steps:
       - name: Checkout
