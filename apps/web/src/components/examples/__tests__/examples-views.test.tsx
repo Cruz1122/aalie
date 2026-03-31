@@ -141,7 +141,7 @@ describe("Examples views", () => {
       target: { value: "fibonacci" },
     });
 
-    const firstResult = screen.getByRole("button", { name: /fibonacci/i });
+    const firstResult = screen.getAllByRole("button", { name: /fibonacci/i })[0];
     fireEvent.click(firstResult);
     expect(pushMock).toHaveBeenCalledTimes(1);
     expect(pushMock.mock.calls[0][0]).toMatch(/^\/examples\/.+\?example=.+/);

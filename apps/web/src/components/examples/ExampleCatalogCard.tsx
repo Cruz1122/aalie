@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 
 import type {
+  CatalogTier,
   ExampleCatalogItem,
   ExampleLocale,
   RecursiveMethodBadge,
@@ -117,6 +118,9 @@ export function ExampleCatalogCard({
   >;
   const copy = getLocalizedExampleContent(example, catalogItems, locale);
   const recursive = isRecursiveCategory(example.category);
+  const tier: CatalogTier = example.catalogTier;
+  const tierLabel =
+    tier === "blocked" ? "Bloqueado" : tier === "experimental" ? "Experimental" : null;
   const kindLabel = recursive
     ? t("examples.kind.recursive")
     : t("examples.kind.iterative");
@@ -171,6 +175,11 @@ export function ExampleCatalogCard({
               <span className="rounded-full border border-white/10 bg-slate-950/60 px-2 py-0.5 text-[10px] font-medium text-slate-300">
                 {kindLabel}
               </span>
+              {tierLabel && (
+                <span className="rounded-full border border-white/10 bg-slate-950/60 px-2 py-0.5 text-[10px] font-medium text-slate-300">
+                  {tierLabel}
+                </span>
+              )}
               {example.verifiedMethods.map((method) => (
                 <span
                   key={method}
@@ -201,7 +210,7 @@ export function ExampleCatalogCard({
         <button
           type="button"
           onClick={() => onAnalyze(example)}
-          disabled={disableActions}
+          disabled={disableActions || tier === "blocked"}
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-slate-200 transition-colors hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <span

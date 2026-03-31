@@ -93,4 +93,38 @@ describe("ExampleCatalogCard", () => {
     expect(onAnalyze).toHaveBeenCalledTimes(1);
     expect(onAnalyze.mock.calls[0][0].id).toBe(example.id);
   });
+
+  it("shows a tier chip when catalogTier is not contractual", () => {
+    render(
+      <ExampleCatalogCard
+        example={{ ...example, catalogTier: "experimental" }}
+        locale="es"
+        analyzingExampleId={null}
+        onAnalyze={vi.fn()}
+        viewLabel="Ver algoritmo"
+        hideLabel="Ocultar algoritmo"
+        analyzeLabel="Analizar"
+        analyzingLabel="Analizando..."
+      />,
+    );
+
+    expect(screen.getByText(/Experimental/i)).toBeInTheDocument();
+  });
+
+  it("disables analyze button when catalogTier is blocked", () => {
+    render(
+      <ExampleCatalogCard
+        example={{ ...example, catalogTier: "blocked" }}
+        locale="es"
+        analyzingExampleId={null}
+        onAnalyze={vi.fn()}
+        viewLabel="Ver algoritmo"
+        hideLabel="Ocultar algoritmo"
+        analyzeLabel="Analizar"
+        analyzingLabel="Analizando..."
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: /Analizar/i })).toBeDisabled();
+  });
 });

@@ -10,6 +10,8 @@ export type RecursiveMethodBadge = "TM" | "IT" | "AR" | "EC";
 
 export type ExampleDifficulty = "basico" | "intermedio" | "avanzado";
 
+export type CatalogTier = "contractual" | "experimental" | "blocked";
+
 export type ExampleFamily =
   | "busqueda"
   | "ordenamiento"
@@ -33,6 +35,7 @@ export interface ExampleCatalogItem {
   category: ExampleCategory;
   family: ExampleFamily;
   difficulty: ExampleDifficulty;
+  catalogTier: CatalogTier;
   sourceCode: string;
   verifiedMethods: RecursiveMethodBadge[];
   enabled: boolean;
@@ -124,13 +127,14 @@ const buildCopy = (
 });
 
 const createExample = (
-  item: Omit<ExampleCatalogItem, "copy"> & {
+  item: Omit<ExampleCatalogItem, "copy" | "catalogTier"> & {
     titleEs: string;
     titleEn: string;
     summaryEs: string;
     summaryEn: string;
     tagsEs: string[];
     tagsEn: string[];
+    catalogTier?: CatalogTier;
   },
 ): ExampleCatalogItem => ({
   id: item.id,
@@ -138,6 +142,7 @@ const createExample = (
   category: item.category,
   family: item.family,
   difficulty: item.difficulty,
+  catalogTier: item.catalogTier ?? "contractual",
   sourceCode: item.sourceCode,
   verifiedMethods: item.verifiedMethods,
   enabled: item.enabled,

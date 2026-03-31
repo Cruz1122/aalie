@@ -124,19 +124,14 @@ class ComplexityClasses:
             else:
                 terms = [expr]
 
-            best_term = None
-            best_deg = -1.0
-
-            for term in terms:
+            def _total_degree_in_size_syms(term) -> float:
                 try:
                     powers = term.as_powers_dict()
                 except Exception:
-                    continue
-
+                    return -1.0
                 total_deg = 0.0
                 for sym, exp in powers.items():
                     if sym in size_syms:
-                        # exp puede no ser puramente numérico (casos raros), intentar evaluarlo
                         if getattr(exp, "is_number", False):
                             try:
                                 total_deg += float(exp)
@@ -147,18 +142,32 @@ class ComplexityClasses:
                                 total_deg += float(exp.evalf())
                             except Exception:
                                 pass
+                return total_deg
 
-                if total_deg > best_deg:
-                    best_deg = total_deg
-                    best_term = term
+            best_deg = -1.0
+            for term in terms:
+                d = _total_degree_in_size_syms(term)
+                if d > best_deg:
+                    best_deg = d
 
-            if best_term is None or best_deg <= 0:
-                # No se encontró monomio con grado positivo → tratar como constante
+            if best_deg <= 0:
                 return "1"
 
-            # Eliminar factor numérico (p.ej., 15 n^2 → n^2, 7/2 n^2 → n^2)
-            best_term = self._strip_numeric_coefficient(best_term)
-            return self._sympy_to_latex(best_term)
+            # Todos los términos con el mismo grado total máximo (p. ej. 12*n y 12*m → Θ(n+m))
+            max_terms = [t for t in terms if abs(_total_degree_in_size_syms(t) - best_deg) < 1e-9]
+
+            if not max_terms:
+                return "1"
+
+            if len(max_terms) == 1:
+                best_term = self._strip_numeric_coefficient(max_terms[0])
+                return self._sympy_to_latex(best_term)
+
+            from sympy import Add as SymAdd
+
+            stripped = [self._strip_numeric_coefficient(t) for t in max_terms]
+            combined = SymAdd(*stripped)
+            return self._sympy_to_latex(combined)
         except Exception:
             # Fallback: aproximar el monomio dominante directamente desde el string
             return self._fallback_dominant_from_string(polynomial, variable)
@@ -447,17 +456,14 @@ class ComplexityClasses:
         import re as _re2
 
         token_vars = _re2.findall(r"[a-zA-Z]+", s)
-        # Filtrar tokens obvios que no representan tamaño (log, C, t, etc.)
-        # y nombres típicos de arrays (A, B, arr, etc.) que no deben aparecer en complejidad
-        ARRAY_LIKE_NAMES = {"a", "b", "c", "arr", "array", "lista", "list"}
+        # Filtrar tokens de ruido LaTeX; no usar heurística por letra suelta (p. ej. a,b en \\min(a,b)).
+        LATEX_NOISE = {"log", "cdot", "frac", "text", "arr", "array", "lista", "list", "sum", "lim"}
         filtered = []
         for tok in token_vars:
             low = tok.lower()
-            if low in ("log", "cdot", "frac", "text"):
+            if low in LATEX_NOISE:
                 continue
             if low.startswith("c_") or low.startswith("t_"):
-                continue
-            if low in ARRAY_LIKE_NAMES:
                 continue
             filtered.append(tok)
         # Evitar recursión infinita: solo reintentar si encontramos algo distinto

@@ -1,5 +1,5 @@
 import re
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Set, Tuple, Union
 
 from sympy import (
     Add,
@@ -101,16 +101,26 @@ class SummationCloser:
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
 
-    def __init__(self, locale: str = "en"):
+    def __init__(
+        self,
+        locale: str = "en",
+        exclude_from_iteration_substitution: Optional[Set[str]] = None,
+    ):
         """
         Inicializa una instancia de SummationCloser.
 
         Args:
             locale: Código de idioma para las etiquetas ("en" | "es")
+            exclude_from_iteration_substitution: Nombres que no deben tratarse como i/j/k
+                ficticios (p. ej. parámetro escalar ``k`` en counting-sort).
 
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         self._labels = get_labels(locale)
+        self._exclude_from_iteration_substitution = set(exclude_from_iteration_substitution or set())
+
+    def _builtin_iteration_names(self) -> List[str]:
+        return [x for x in ("i", "j", "k") if x not in self._exclude_from_iteration_substitution]
 
     def _has_iterative_symbols(self, expr: Expr) -> bool:
         """
@@ -300,7 +310,7 @@ class SummationCloser:
                 # Verificar y eliminar variables de iteración que no deberían estar en el resultado final
                 # Las variables i, j, k son variables de iteración que deben ser eliminadas
                 # IMPORTANTE: No sustituir por 0 si el resultado sería negativo (ej. n*(j-1) con j=0 → -n)
-                iteration_vars = ["i", "j", "k"]
+                iteration_vars = self._builtin_iteration_names()
                 main_sym = next(
                     (s for s in result_expr.free_symbols if getattr(s, "name", None) == variable),
                     None,
@@ -381,21 +391,16 @@ class SummationCloser:
                 # Convertir a LaTeX
                 closed_latex = self._sympy_to_latex(result_expr)
 
-                # Validación final: verificar que no haya variables de iteración en el LaTeX
-                if any(
-                    var in closed_latex
-                    for var in [
-                        "\\left(i",
-                        "(i",
-                        "i)",
-                        "\\left(j",
-                        "(j",
-                        "j)",
-                        "\\left(k",
-                        "(k",
-                        "k)",
-                    ]
-                ):
+                # Validación final: i/j/k como iteración; no confundir con parámetros excluidos (p. ej. k en counting-sort).
+                excl = self._exclude_from_iteration_substitution
+                iter_latex_markers = []
+                if "i" not in excl:
+                    iter_latex_markers.extend(["\\left(i", "(i", "i)"])
+                if "j" not in excl:
+                    iter_latex_markers.extend(["\\left(j", "(j", "j)"])
+                if "k" not in excl:
+                    iter_latex_markers.extend(["\\left(k", "(k", "k)"])
+                if iter_latex_markers and any(m in closed_latex for m in iter_latex_markers):
                     print(
                         f"[SummationCloser] ERROR: Resultado LaTeX todavía contiene variables de iteración: {closed_latex}"
                     )
@@ -1279,7 +1284,7 @@ class SummationCloser:
         """
         try:
             # Verificar y eliminar variables de iteración que no deberían estar en el resultado final
-            iteration_vars = ["i", "j", "k"]
+            iteration_vars = self._builtin_iteration_names()
             cleaned_expr = expr
             for var_name in iteration_vars:
                 var_symbol = Symbol(var_name, integer=True)
@@ -1458,7 +1463,7 @@ class SummationCloser:
         result = evaluate_all_sums(expr)
 
         # Verificar y eliminar variables de iteración que no deberían estar en el resultado final
-        iteration_vars = ["i", "j", "k"]
+        iteration_vars = self._builtin_iteration_names()
         for var_name in iteration_vars:
             var_symbol = Symbol(var_name, integer=True)
             if result.has(var_symbol):
@@ -2165,7 +2170,7 @@ class SummationCloser:
                                     outer_result = simplify(outer_result)
 
                                     # Verificar y eliminar variables de iteración más agresivamente
-                                    iteration_vars = ["i", "j", "k"]
+                                    iteration_vars = self._builtin_iteration_names()
                                     for var_name in iteration_vars:
                                         var_symbol = Symbol(var_name, integer=True)
                                         if outer_result.has(var_symbol):
@@ -2387,7 +2392,7 @@ class SummationCloser:
                     evaluated_simplified = simplify(evaluated)
 
                     # Verificar y eliminar variables de iteración que no deberían estar en el resultado final
-                    iteration_vars = ["i", "j", "k"]
+                    iteration_vars = self._builtin_iteration_names()
                     for var_name in iteration_vars:
                         var_symbol = Symbol(var_name, integer=True)
                         if evaluated_simplified.has(var_symbol):

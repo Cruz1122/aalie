@@ -23,6 +23,7 @@ from .patterns.geometric_growth import GeometricGrowthPattern
 from .patterns.phase_loop_composition import PhaseLoopCompositionPattern
 from .patterns.gnome_sort_cursor import GnomeSortCursorPattern
 from .patterns.interval_shrink import IntervalShrinkPattern
+from .patterns.merge_two_pointers import MergeTwoPointersPattern
 from .patterns.linear_counter import LinearCounterPattern
 from .patterns.shrinking_window_bidirectional import (
     ShrinkingWindowBidirectionalPattern,
@@ -93,6 +94,7 @@ _PATTERNS = [
     ("sentinel_scan", SentinelScanPattern()),
     ("gap_shrink_then_scan", GapShrinkThenScanPattern()),
     ("phase_loop_composition", PhaseLoopCompositionPattern()),
+    ("merge_two_pointers", MergeTwoPointersPattern()),
     ("linear_counter", LinearCounterPattern()),
     ("geometric_growth", GeometricGrowthPattern()),
     ("flag_kill", FlagKillPattern()),

@@ -1,6 +1,6 @@
 import hashlib
 import json
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Union
 
 from sympy import Expr, Integer, Sum, Symbol, latex, sympify
 
@@ -70,10 +70,30 @@ class BaseAnalyzer:
         )
         self.while_blocks: List[Dict[str, Any]] = []
         self.loop_block_ref_stack: List[str] = []
+        # Bases de arreglo declaradas como ArrayParam en el ProcDef (AST); no usar heurística por nombre.
+        self._array_param_names: Set[str] = set()
         # Cooperative multiple inheritance: pass to next class in MRO
         super().__init__()
 
     # --- util: detección de variables de tamaño ---
+
+    @staticmethod
+    def array_param_base_names(proc_def: Optional[Dict[str, Any]]) -> Set[str]:
+        """
+        Nombres de parámetros de tipo arreglo según el AST (nodos ArrayParam).
+
+        Solo estos identificadores deben tratarse como “base de arreglo” al limpiar
+        expresiones de complejidad o al penalizar candidatos a variable de tamaño.
+        """
+        out: Set[str] = set()
+        if not isinstance(proc_def, dict) or proc_def.get("type") != "ProcDef":
+            return out
+        for p in proc_def.get("params") or []:
+            if isinstance(p, dict) and p.get("type") == "ArrayParam":
+                name = p.get("name")
+                if isinstance(name, str) and name:
+                    out.add(name)
+        return out
 
     def detect_size_variables_from_proc(
         self,
@@ -102,10 +122,9 @@ class BaseAnalyzer:
         index_uses: Dict[str, int] = defaultdict(int)
         bool_flags: set[str] = set()
 
-        # 1) Parámetros del procedimiento
-        # Excluir ArrayParam y nombres típicos de arrays (A, B, arr, etc.)
-        ARRAY_LIKE_NAMES = {"a", "b", "c", "arr", "array", "lista", "list"}
+        # 1) Parámetros del procedimiento (ArrayParam vs Param según AST)
         params = proc_def.get("params", []) or []
+        array_param_bases = self.array_param_base_names(proc_def)
         for p in params:
             if isinstance(p, dict):
                 name = p.get("name")
@@ -118,14 +137,8 @@ class BaseAnalyzer:
                                 and val.get("type", "").lower() == "identifier"
                             ):
                                 size_name = val.get("name")
-                                if (
-                                    isinstance(size_name, str)
-                                    and size_name
-                                    and size_name.lower() not in ARRAY_LIKE_NAMES
-                                ):
+                                if isinstance(size_name, str) and size_name:
                                     scores[size_name] += 5
-                        continue
-                    if name.lower() in ARRAY_LIKE_NAMES:
                         continue
                     scores[name] += 5
 
@@ -277,8 +290,8 @@ class BaseAnalyzer:
                 scores[name] -= 5
             if name in forbidden:
                 scores[name] -= 10
-            # Excluir nombres de arrays (A, B, arr, etc.) que pueden venir del cuerpo (ej. A[j])
-            if name.lower() in ARRAY_LIKE_NAMES:
+            # Penalizar identificadores que son bases de arreglo declaradas en el ProcDef
+            if name in array_param_bases:
                 scores[name] -= 10
 
         # Filtro: solo candidatos con score positivo
@@ -1037,7 +1050,10 @@ class BaseAnalyzer:
         from ..utils.summation_closer import SummationCloser
 
         # Usar SummationCloser para evaluar todas las sumatorias correctamente
-        closer = SummationCloser(locale=self.locale)
+        closer = SummationCloser(
+            locale=self.locale,
+            exclude_from_iteration_substitution=getattr(self, "_scalar_param_names", None) or set(),
+        )
         total_expr = closer._evaluate_all_sums_sympy(total_expr)
 
         # Simplificar y expandir para obtener la forma más simple
@@ -1440,6 +1456,7 @@ class BaseAnalyzer:
         self.step_by_step = None
         self.while_blocks.clear()
         self.loop_block_ref_stack.clear()
+        self._array_param_names.clear()
 
     def add_procedure_step(self, step: str) -> None:
         """

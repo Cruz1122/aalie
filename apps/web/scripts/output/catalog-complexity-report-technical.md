@@ -1,18 +1,22 @@
 # Informe: catálogo vs motor de análisis
 
-- Generado: 2026-03-31T00:09:51.248Z
+- Generado: 2026-03-31T01:37:21.415Z
 - API: `http://localhost:8000`
 - Comparaciones por caso: **300** evaluaciones en total (3 casos × 100 algoritmos).
 - Errores de API / detect-methods: 0.
 
 ## Resumen por clase de discrepancia
 - exact_match: 0
-- symbolic_equivalent: 211
-- notation_mismatch_only: 48
-- expected_dataset_issue: 35
-- engine_bug_likely: 6
+- symbolic_equivalent: 217
+- notation_mismatch_only: 27
+- expected_dataset_issue: 22
+- engine_bug_likely: 0
 - unsupported_or_inconclusive_expected: 0
 - parameterization_mismatch: 0
+- policy_best_mismatch: 21
+- size_parameter_mismatch: 0
+- model_dependent_expected: 7
+- engine_approximation_gap: 6
 
 ## Política de comparación
 
@@ -39,19 +43,19 @@
 | Comb Sort | best | O(n \log n) | \Theta(\log(n)) | notation_mismatch_only | no | no |
 | Comb Sort | avg | O(n^2) | \Theta(n) | notation_mismatch_only | no | no |
 | Comb Sort | worst | O(n^2) | \Theta(n) | notation_mismatch_only | no | no |
-| Ordenamiento por conteo | best | O(n + k) | 8 \cdot k \cdot I_{while 10} + 8 \cdot I_{while 10} + 9 \cdot k + 8 \cdot n + 20 | engine_bug_likely | no | no |
-| Ordenamiento por conteo | avg | O(n + k) | 8 \cdot k \cdot I_{while 10} + 8 \cdot I_{while 10} + 9 \cdot k + 8 \cdot n + 20 | engine_bug_likely | no | no |
-| Ordenamiento por conteo | worst | O(n + k) | 8 \cdot k \cdot I_{while 10} + 8 \cdot I_{while 10} + 9 \cdot k + 8 \cdot n + 20 | engine_bug_likely | no | no |
+| Ordenamiento por conteo | best | O(n + k) | \Theta(k + n) | symbolic_equivalent | sí | no |
+| Ordenamiento por conteo | avg | O(n + k) | \Theta(k + n) | symbolic_equivalent | sí | no |
+| Ordenamiento por conteo | worst | O(n + k) | \Theta(k + n) | symbolic_equivalent | sí | no |
 | Bandera nacional holandesa | best | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Bandera nacional holandesa | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Bandera nacional holandesa | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
-| Euclides iterativo (MCD) | best | O(1) | \Theta(\log(\min(a,b))) | notation_mismatch_only | no | no |
+| Euclides iterativo (MCD) | best | O(1) | \Theta(\log(\min(a,b))) | policy_best_mismatch | no | no |
 | Euclides iterativo (MCD) | avg | O(\log n) | \Theta(\log(\min(a,b))) | notation_mismatch_only | no | no |
 | Euclides iterativo (MCD) | worst | O(\log n) | \Theta(\log(\min(a,b))) | notation_mismatch_only | no | no |
 | Exchange Sort | best | O(n^2) | \Theta(n^{2}) | symbolic_equivalent | sí | no |
 | Exchange Sort | avg | O(n^2) | \Theta(n^{2}) | symbolic_equivalent | sí | no |
 | Exchange Sort | worst | O(n^2) | \Theta(n^{2}) | symbolic_equivalent | sí | no |
-| Factorial iterativo | best | O(1) | \Theta(n) | notation_mismatch_only | no | no |
+| Factorial iterativo | best | O(1) | \Theta(n) | policy_best_mismatch | no | no |
 | Factorial iterativo | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Factorial iterativo | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Gnome Sort | best | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
@@ -62,7 +66,7 @@
 | Ordenamiento por insercion | worst | O(n^2) | \Theta(n^{2}) | symbolic_equivalent | sí | no |
 | Busqueda por saltos | best | O(1) | \Theta(1) | symbolic_equivalent | sí | no |
 | Busqueda por saltos | avg | O(\sqrt{n}) | \Theta(n) | notation_mismatch_only | no | no |
-| Busqueda por saltos | worst | O(\sqrt{n}) | \Theta(fin) | notation_mismatch_only | no | no |
+| Busqueda por saltos | worst | O(\sqrt{n}) | \Theta(fin + inicio) | notation_mismatch_only | no | no |
 | Kadane | best | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Kadane | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Kadane | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
@@ -72,12 +76,12 @@
 | Maximum Subarray cuadratico | best | O(n^2) | \Theta(n^{2}) | symbolic_equivalent | sí | no |
 | Maximum Subarray cuadratico | avg | O(n^2) | \Theta(n^{2}) | symbolic_equivalent | sí | no |
 | Maximum Subarray cuadratico | worst | O(n^2) | \Theta(n^{2}) | symbolic_equivalent | sí | no |
-| Merge de dos arreglos ordenados | best | O(n + m) | \Theta(1) | engine_bug_likely | no | no |
-| Merge de dos arreglos ordenados | avg | O(n + m) | \Theta(1) | engine_bug_likely | no | no |
-| Merge de dos arreglos ordenados | worst | O(n + m) | 4 \cdot \left(3 \cdot I_{while 5} + 2\right) | engine_bug_likely | no | no |
+| Merge de dos arreglos ordenados | best | O(1) | \Theta(1) | symbolic_equivalent | sí | no |
+| Merge de dos arreglos ordenados | avg | O(n + m) | \Theta(m + n) | symbolic_equivalent | sí | no |
+| Merge de dos arreglos ordenados | worst | O(n + m) | \Theta(m + n) | symbolic_equivalent | sí | no |
 | Newton-Raphson iterativo | best | O(1) | \Theta(iteraciones) | expected_dataset_issue | no | no |
-| Newton-Raphson iterativo | avg | O(t) | \Theta(iteraciones) | expected_dataset_issue | no | no |
-| Newton-Raphson iterativo | worst | O(t) | \Theta(iteraciones) | expected_dataset_issue | no | no |
+| Newton-Raphson iterativo | avg | O(t) | \Theta(iteraciones) | model_dependent_expected | no | no |
+| Newton-Raphson iterativo | worst | O(t) | \Theta(iteraciones) | model_dependent_expected | no | no |
 | Suma prefija | best | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Suma prefija | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Suma prefija | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
@@ -87,9 +91,9 @@
 | Sentinel Linear Search | best | O(1) | \Theta(1) | symbolic_equivalent | sí | no |
 | Sentinel Linear Search | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Sentinel Linear Search | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
-| Ordenamiento Shell | best | O(n \log n) | \Theta(\log(n)) | expected_dataset_issue | no | no |
-| Ordenamiento Shell | avg | O(n^{1.5}) | \Theta(\frac{gap^{2} \\log{\left(n \right)}}{\\log{\left(2 \right)}}) | expected_dataset_issue | no | no |
-| Ordenamiento Shell | worst | O(n^2) | \Theta(\frac{gap^{2} \\log{\left(n \right)}}{\\log{\left(2 \right)}}) | expected_dataset_issue | no | no |
+| Ordenamiento Shell | best | O(n \log n) | \Theta(\log(n)) | model_dependent_expected | no | no |
+| Ordenamiento Shell | avg | O(n^{1.5}) | \Theta(\frac{gap^{2} \\log{\left(n \right)}}{\\log{\left(2 \right)}} + \frac{n^{2} \\log{\left(n \right)}}{\\log{\left(2 \right)}}) | model_dependent_expected | no | no |
+| Ordenamiento Shell | worst | O(n^2) | \Theta(\frac{gap^{2} \\log{\left(n \right)}}{\\log{\left(2 \right)}} + \frac{n^{2} \\log{\left(n \right)}}{\\log{\left(2 \right)}}) | model_dependent_expected | no | no |
 | Criba de Eratostenes | best | O(n \log\log n) | \Theta(n) | notation_mismatch_only | no | no |
 | Criba de Eratostenes | avg | O(n \log\log n) | \Theta(n^{2}) | notation_mismatch_only | no | no |
 | Criba de Eratostenes | worst | O(n \log\log n) | \Theta(n^{2}) | notation_mismatch_only | no | no |
@@ -184,28 +188,28 @@
 
 | Algoritmo (catálogo) | Caso | Esperado | Obtenido (big_Θ / big_O / …) | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| Binary Search recursiva | best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| Binary Search recursiva | best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | Binary Search recursiva | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | Binary Search recursiva | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
-| Binary Search primera ocurrencia | best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| Binary Search primera ocurrencia | best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | Binary Search primera ocurrencia | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | Binary Search primera ocurrencia | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
-| Binary Search ultima ocurrencia | best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| Binary Search ultima ocurrencia | best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | Binary Search ultima ocurrencia | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | Binary Search ultima ocurrencia | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
-| Conteo recursivo regresivo | best | O(1) | \Theta(n) | notation_mismatch_only | no | no |
+| Conteo recursivo regresivo | best | O(1) | \Theta(n) | policy_best_mismatch | no | no |
 | Conteo recursivo regresivo | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Conteo recursivo regresivo | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
-| Conteo recursivo de digitos | best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| Conteo recursivo de digitos | best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | Conteo recursivo de digitos | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | Conteo recursivo de digitos | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
-| Euclides recursivo | best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| Euclides recursivo | best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | Euclides recursivo | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | Euclides recursivo | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
-| Exponenciacion rapida | best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| Exponenciacion rapida | best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | Exponenciacion rapida | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | Exponenciacion rapida | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
-| Factorial recursivo | best | O(1) | \Theta(n) | notation_mismatch_only | no | no |
+| Factorial recursivo | best | O(1) | \Theta(n) | policy_best_mismatch | no | no |
 | Factorial recursivo | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Factorial recursivo | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Find Maximum recursivo | best | O(1) | \Theta(1) | symbolic_equivalent | sí | no |
@@ -217,7 +221,7 @@
 | Insertion Sort recursivo | best | O(n) | \Theta(n^{2}) | notation_mismatch_only | no | no |
 | Insertion Sort recursivo | avg | O(n^2) | \Theta(n^{2}) | symbolic_equivalent | sí | no |
 | Insertion Sort recursivo | worst | O(n^2) | \Theta(n^{2}) | symbolic_equivalent | sí | no |
-| Josephus recursivo | best | O(1) | \Theta(n) | notation_mismatch_only | no | no |
+| Josephus recursivo | best | O(1) | \Theta(n) | policy_best_mismatch | no | no |
 | Josephus recursivo | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Josephus recursivo | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | K-esimo simbolo en gramatica | best | O(1) | \Theta(1) | symbolic_equivalent | sí | no |
@@ -229,34 +233,34 @@
 | Max en arreglo divide-by-one | best | O(1) | \Theta(1) | symbolic_equivalent | sí | no |
 | Max en arreglo divide-by-one | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Max en arreglo divide-by-one | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
-| Numeros binarios por division entre 2 | best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| Numeros binarios por division entre 2 | best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | Numeros binarios por division entre 2 | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | Numeros binarios por division entre 2 | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | Palindrome Check recursivo | best | O(1) | \Theta(1) | symbolic_equivalent | sí | no |
 | Palindrome Check recursivo | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Palindrome Check recursivo | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
-| Potencia modular rapida | best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| Potencia modular rapida | best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | Potencia modular rapida | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | Potencia modular rapida | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
-| Potencia recursiva naive | best | O(1) | \Theta(n) | notation_mismatch_only | no | no |
+| Potencia recursiva naive | best | O(1) | \Theta(n) | policy_best_mismatch | no | no |
 | Potencia recursiva naive | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Potencia recursiva naive | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Ordenamiento por seleccion recursivo | best | O(n^2) | \Theta(n^{2}) | symbolic_equivalent | sí | no |
 | Ordenamiento por seleccion recursivo | avg | O(n^2) | \Theta(n^{2}) | symbolic_equivalent | sí | no |
 | Ordenamiento por seleccion recursivo | worst | O(n^2) | \Theta(n^{2}) | symbolic_equivalent | sí | no |
-| Suma recursiva de digitos | best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| Suma recursiva de digitos | best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | Suma recursiva de digitos | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | Suma recursiva de digitos | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | Inversion recursiva de cadena | best | O(1) | \Theta(1) | symbolic_equivalent | sí | no |
 | Inversion recursiva de cadena | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Inversion recursiva de cadena | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
-| Suma de 1..n recursiva | best | O(1) | \Theta(n) | notation_mismatch_only | no | no |
+| Suma de 1..n recursiva | best | O(1) | \Theta(n) | policy_best_mismatch | no | no |
 | Suma de 1..n recursiva | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Suma de 1..n recursiva | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
-| Suma de arreglo recursiva | best | O(1) | \Theta(n) | notation_mismatch_only | no | no |
+| Suma de arreglo recursiva | best | O(1) | \Theta(n) | policy_best_mismatch | no | no |
 | Suma de arreglo recursiva | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | Suma de arreglo recursiva | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
-| Ternary Search recursiva | best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| Ternary Search recursiva | best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | Ternary Search recursiva | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | Ternary Search recursiva | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 
@@ -285,7 +289,7 @@
 | Colocacion de casas en fila (1D) | best | O(1) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | expected_dataset_issue | no | no |
 | Colocacion de casas en fila (1D) | avg | O(\varphi^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | symbolic_equivalent | sí | no |
 | Colocacion de casas en fila (1D) | worst | O(\varphi^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | symbolic_equivalent | sí | no |
-| Sucesion de Jacobsthal | best | O(1) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | notation_mismatch_only | no | no |
+| Sucesion de Jacobsthal | best | O(1) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | policy_best_mismatch | no | no |
 | Sucesion de Jacobsthal | avg | O(2^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | notation_mismatch_only | no | no |
 | Sucesion de Jacobsthal | worst | O(2^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | notation_mismatch_only | no | no |
 | Escaleras de K pasos | best | O(1) | \Theta(\left(\frac{1}{3} + \frac{4}{3 \sqrt[3]{3 \sqrt{33} + 19}} + \frac{\sqrt[3]{3 \sqrt{33} + 19}}{3}\right)^n) | expected_dataset_issue | no | no |
@@ -295,17 +299,17 @@
 | Numeros de Lucas | avg | O(\varphi^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | symbolic_equivalent | sí | no |
 | Numeros de Lucas | worst | O(\varphi^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | symbolic_equivalent | sí | no |
 | Vacas de Narayana | best | O(1) | \Theta(\left(\frac{\sqrt[3]{2}}{3 \sqrt[3]{3 \sqrt{93} + 29}} + \frac{1}{3} + \frac{2^{\frac{2}{3}} \sqrt[3]{3 \sqrt{93} + 29}}{6}\right)^n) | expected_dataset_issue | no | no |
-| Vacas de Narayana | avg | O(1.4656^n) | \Theta(\left(\frac{\sqrt[3]{2}}{3 \sqrt[3]{3 \sqrt{93} + 29}} + \frac{1}{3} + \frac{2^{\frac{2}{3}} \sqrt[3]{3 \sqrt{93} + 29}}{6}\right)^n) | expected_dataset_issue | no | no |
-| Vacas de Narayana | worst | O(1.4656^n) | \Theta(\left(\frac{\sqrt[3]{2}}{3 \sqrt[3]{3 \sqrt{93} + 29}} + \frac{1}{3} + \frac{2^{\frac{2}{3}} \sqrt[3]{3 \sqrt{93} + 29}}{6}\right)^n) | expected_dataset_issue | no | no |
+| Vacas de Narayana | avg | O(1.4656^n) | \Theta(\left(\frac{\sqrt[3]{2}}{3 \sqrt[3]{3 \sqrt{93} + 29}} + \frac{1}{3} + \frac{2^{\frac{2}{3}} \sqrt[3]{3 \sqrt{93} + 29}}{6}\right)^n) | engine_approximation_gap | no | no |
+| Vacas de Narayana | worst | O(1.4656^n) | \Theta(\left(\frac{\sqrt[3]{2}}{3 \sqrt[3]{3 \sqrt{93} + 29}} + \frac{1}{3} + \frac{2^{\frac{2}{3}} \sqrt[3]{3 \sqrt{93} + 29}}{6}\right)^n) | engine_approximation_gap | no | no |
 | Sucesion de Padovan | best | O(1) | \Theta(1) | symbolic_equivalent | sí | no |
-| Sucesion de Padovan | avg | O(1.3247^n) | \Theta(\left(\frac{2 \sqrt[3]{18} + \sqrt[3]{12} \left(\sqrt{69} + 9\right)^{\frac{2}{3}}}{6 \sqrt[3]{\sqrt{69} + 9}}\right)^n) | expected_dataset_issue | no | no |
-| Sucesion de Padovan | worst | O(1.3247^n) | \Theta(\left(\frac{2 \sqrt[3]{18} + \sqrt[3]{12} \left(\sqrt{69} + 9\right)^{\frac{2}{3}}}{6 \sqrt[3]{\sqrt{69} + 9}}\right)^n) | expected_dataset_issue | no | no |
-| Numeros de Pell | best | O(1) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | notation_mismatch_only | no | no |
+| Sucesion de Padovan | avg | O(1.3247^n) | \Theta(\left(\frac{2 \sqrt[3]{18} + \sqrt[3]{12} \left(\sqrt{69} + 9\right)^{\frac{2}{3}}}{6 \sqrt[3]{\sqrt{69} + 9}}\right)^n) | engine_approximation_gap | no | no |
+| Sucesion de Padovan | worst | O(1.3247^n) | \Theta(\left(\frac{2 \sqrt[3]{18} + \sqrt[3]{12} \left(\sqrt{69} + 9\right)^{\frac{2}{3}}}{6 \sqrt[3]{\sqrt{69} + 9}}\right)^n) | engine_approximation_gap | no | no |
+| Numeros de Pell | best | O(1) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | policy_best_mismatch | no | no |
 | Numeros de Pell | avg | O((1+\sqrt{2})^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | notation_mismatch_only | no | no |
 | Numeros de Pell | worst | O((1+\sqrt{2})^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | notation_mismatch_only | no | no |
 | Secuencia de Perrin | best | O(1) | \Theta(\left(\frac{2 \sqrt[3]{18} + \sqrt[3]{12} \left(\sqrt{69} + 9\right)^{\frac{2}{3}}}{6 \sqrt[3]{\sqrt{69} + 9}}\right)^n) | expected_dataset_issue | no | no |
-| Secuencia de Perrin | avg | O(1.3247^n) | \Theta(\left(\frac{2 \sqrt[3]{18} + \sqrt[3]{12} \left(\sqrt{69} + 9\right)^{\frac{2}{3}}}{6 \sqrt[3]{\sqrt{69} + 9}}\right)^n) | expected_dataset_issue | no | no |
-| Secuencia de Perrin | worst | O(1.3247^n) | \Theta(\left(\frac{2 \sqrt[3]{18} + \sqrt[3]{12} \left(\sqrt{69} + 9\right)^{\frac{2}{3}}}{6 \sqrt[3]{\sqrt{69} + 9}}\right)^n) | expected_dataset_issue | no | no |
+| Secuencia de Perrin | avg | O(1.3247^n) | \Theta(\left(\frac{2 \sqrt[3]{18} + \sqrt[3]{12} \left(\sqrt{69} + 9\right)^{\frac{2}{3}}}{6 \sqrt[3]{\sqrt{69} + 9}}\right)^n) | engine_approximation_gap | no | no |
+| Secuencia de Perrin | worst | O(1.3247^n) | \Theta(\left(\frac{2 \sqrt[3]{18} + \sqrt[3]{12} \left(\sqrt{69} + 9\right)^{\frac{2}{3}}}{6 \sqrt[3]{\sqrt{69} + 9}}\right)^n) | engine_approximation_gap | no | no |
 | Poblacion de conejos (Fibonacci) | best | O(1) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | expected_dataset_issue | no | no |
 | Poblacion de conejos (Fibonacci) | avg | O(\varphi^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | symbolic_equivalent | sí | no |
 | Poblacion de conejos (Fibonacci) | worst | O(\varphi^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | symbolic_equivalent | sí | no |
@@ -315,7 +319,7 @@
 | Tetranacci | best | O(1) | \Theta(\left(\frac{1}{4} + \frac{\sqrt{- \frac{7}{9 \sqrt[3]{- \frac{65}{432} + \frac{\sqrt{1689}}{144}}} + \frac{11}{12} + 2 \sqrt[3]{- \frac{65}{432} + \frac{\sqrt{1689}}{144}}}}{2} + \frac{\sqrt{- 2 \sqrt[3]{- \frac{65}{432} + \frac{\sqrt{1689}}{144}} + \frac{7}{9 \sqrt[3]{- \frac{65}{432} + \frac{\sqrt{1689}}{144}}} + \frac{11}{6} + \frac{13}{4 \sqrt{- \frac{7}{9 \sqrt[3]{- \frac{65}{432} + \frac{\sqrt{1689}}{144}}} + \frac{11}{12} + 2 \sqrt[3]{- \frac{65}{432} + \frac{\sqrt{1689}}{144}}}}}}{2}\right)^n) | expected_dataset_issue | no | no |
 | Tetranacci | avg | O(1.9276^n) | \Theta(\left(\frac{1}{4} + \frac{\sqrt{- \frac{7}{9 \sqrt[3]{- \frac{65}{432} + \frac{\sqrt{1689}}{144}}} + \frac{11}{12} + 2 \sqrt[3]{- \frac{65}{432} + \frac{\sqrt{1689}}{144}}}}{2} + \frac{\sqrt{- 2 \sqrt[3]{- \frac{65}{432} + \frac{\sqrt{1689}}{144}} + \frac{7}{9 \sqrt[3]{- \frac{65}{432} + \frac{\sqrt{1689}}{144}}} + \frac{11}{6} + \frac{13}{4 \sqrt{- \frac{7}{9 \sqrt[3]{- \frac{65}{432} + \frac{\sqrt{1689}}{144}}} + \frac{11}{12} + 2 \sqrt[3]{- \frac{65}{432} + \frac{\sqrt{1689}}{144}}}}}}{2}\right)^n) | symbolic_equivalent | sí | no |
 | Tetranacci | worst | O(1.9276^n) | \Theta(\left(\frac{1}{4} + \frac{\sqrt{- \frac{7}{9 \sqrt[3]{- \frac{65}{432} + \frac{\sqrt{1689}}{144}}} + \frac{11}{12} + 2 \sqrt[3]{- \frac{65}{432} + \frac{\sqrt{1689}}{144}}}}{2} + \frac{\sqrt{- 2 \sqrt[3]{- \frac{65}{432} + \frac{\sqrt{1689}}{144}} + \frac{7}{9 \sqrt[3]{- \frac{65}{432} + \frac{\sqrt{1689}}{144}}} + \frac{11}{6} + \frac{13}{4 \sqrt{- \frac{7}{9 \sqrt[3]{- \frac{65}{432} + \frac{\sqrt{1689}}{144}}} + \frac{11}{12} + 2 \sqrt[3]{- \frac{65}{432} + \frac{\sqrt{1689}}{144}}}}}}{2}\right)^n) | symbolic_equivalent | sí | no |
-| Torres de Hanoi | best | O(1) | \Theta(2^n) | notation_mismatch_only | no | no |
+| Torres de Hanoi | best | O(1) | \Theta(2^n) | policy_best_mismatch | no | no |
 | Torres de Hanoi | avg | O(2^n) | \Theta(2^n) | symbolic_equivalent | sí | no |
 | Torres de Hanoi | worst | O(2^n) | \Theta(2^n) | symbolic_equivalent | sí | no |
 | Tribonacci recursivo | best | O(1) | \Theta(\left(\frac{1}{3} + \frac{4}{3 \sqrt[3]{3 \sqrt{33} + 19}} + \frac{\sqrt[3]{3 \sqrt{33} + 19}}{3}\right)^n) | expected_dataset_issue | no | no |
@@ -325,8 +329,8 @@
 | Formas de embaldosar 2xn | avg | O(\varphi^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | symbolic_equivalent | sí | no |
 | Formas de embaldosar 2xn | worst | O(\varphi^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | symbolic_equivalent | sí | no |
 | Formas de escribir n con sumandos 1, 3 y 4 | best | O(1) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | expected_dataset_issue | no | no |
-| Formas de escribir n con sumandos 1, 3 y 4 | avg | O(c^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | expected_dataset_issue | no | no |
-| Formas de escribir n con sumandos 1, 3 y 4 | worst | O(c^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | expected_dataset_issue | no | no |
+| Formas de escribir n con sumandos 1, 3 y 4 | avg | O(c^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | model_dependent_expected | no | no |
+| Formas de escribir n con sumandos 1, 3 y 4 | worst | O(c^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | model_dependent_expected | no | no |
 | Domino 1xn con fichas 1 y 2 | best | O(1) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | expected_dataset_issue | no | no |
 | Domino 1xn con fichas 1 y 2 | avg | O(\varphi^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | symbolic_equivalent | sí | no |
 | Domino 1xn con fichas 1 y 2 | worst | O(\varphi^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | symbolic_equivalent | sí | no |
@@ -2582,9 +2586,9 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(n + k) | 8 \cdot k \cdot I_{while 10} + 8 \cdot I_{while 10} + 9 \cdot k + 8 \cdot n + 20 | engine_bug_likely | no | no |
-| avg | O(n + k) | 8 \cdot k \cdot I_{while 10} + 8 \cdot I_{while 10} + 9 \cdot k + 8 \cdot n + 20 | engine_bug_likely | no | no |
-| worst | O(n + k) | 8 \cdot k \cdot I_{while 10} + 8 \cdot I_{while 10} + 9 \cdot k + 8 \cdot n + 20 | engine_bug_likely | no | no |
+| best | O(n + k) | \Theta(k + n) | symbolic_equivalent | sí | no |
+| avg | O(n + k) | \Theta(k + n) | symbolic_equivalent | sí | no |
+| worst | O(n + k) | \Theta(k + n) | symbolic_equivalent | sí | no |
 
 #### Pseudocódigo analizado
 
@@ -2622,13 +2626,13 @@ _truncado a 400 líneas; ver snapshot JSON completo._
     "count_raw": "k + 2",
     "note": "Cabecera de for i=0..k",
     "ops": 3,
-    "count_closed": "2",
+    "count_closed": "k + 2",
     "procedure": [
       "k + 2"
     ],
     "line_procedure": [
       "\\text{Línea contable } 2 \\text{: costo } C_{1}",
-      "N_{2} = k + 2 \\Rightarrow N_{2} = 2"
+      "N_{2} = k + 2"
     ],
     "line_cost_final": "C_{1} \\cdot 3 \\cdot \\left(k + 2\\right)",
     "step_by_step": {
@@ -2753,14 +2757,14 @@ _truncado a 400 líneas; ver snapshot JSON completo._
     "count_raw": "\\sum_{i=0}^{k} 1",
     "note": null,
     "ops": 1,
-    "count_closed": "1",
+    "count_closed": "k + 1",
     "procedure": [
       "\\sum_{i=0}^{k} 1",
       "\\text{Aplicando fórmula de sumatoria constante: } \\sum_{i=0}^{k} 1 = k + 1"
     ],
     "line_procedure": [
       "\\text{Línea contable } 3 \\text{: costo } C_{2}",
-      "N_{3} = \\sum_{i=0}^{k} 1 \\Rightarrow N_{3} = 1",
+      "N_{3} = \\sum_{i=0}^{k} 1 \\Rightarrow N_{3} = k + 1",
       "\\text{Resolución de sumatoria para la línea } 3 \\text{:}",
       "\\sum_{i=0}^{k} 1",
       "\\text{Aplicando fórmula de sumatoria constante: } \\sum_{i=0}^{k} 1 = k + 1"
@@ -2854,7 +2858,7 @@ _truncado a 400 líneas; ver snapshot JSON completo._
               {
                 "id": "iter_line_3_closed",
                 "kind": "equation",
-                "latex": "N_{3} = 1"
+                "latex": "N_{3} = k + 1"
               }
             ]
           },
@@ -3481,7 +3485,7 @@ _Parametrización de tamaño (nota)_: Se acepta log(min(a,b)) como log n (n ~ mi
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(\log(\min(a,b))) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(\log(\min(a,b))) | policy_best_mismatch | no | no |
 | avg | O(\log n) | \Theta(\log(\min(a,b))) | notation_mismatch_only | no | no |
 | worst | O(\log n) | \Theta(\log(\min(a,b))) | notation_mismatch_only | no | no |
 
@@ -3641,7 +3645,7 @@ _truncado a 400 líneas; ver snapshot JSON completo._
     "line": 3,
     "kind": "assign",
     "ck": "C_{2}",
-    "count": "n",
+    "count": "\\min\\left(a, b\\right)",
     "count_raw": "\\min\\left(a, b\\right)",
     "note": null,
     "ops": 1,
@@ -3654,7 +3658,7 @@ _truncado a 400 líneas; ver snapshot JSON completo._
       "\\text{Línea contable } 3 \\text{: costo } C_{2}",
       "N_{3} = \\min\\left(a, b\\right)"
     ],
-    "line_cost_final": "C_{2} \\cdot n",
+    "line_cost_final": "C_{2} \\cdot \\min\\left(a, b\\right)",
     "step_by_step": {
       "method": "iterative_line",
       "version": "iter_line_steps_v1",
@@ -3738,7 +3742,7 @@ _truncado a 400 líneas; ver snapshot JSON completo._
           "title": "Costo final de la línea",
           "status": "complete",
           "math": {
-            "primaryLatex": "C_{2} \\cdot n",
+            "primaryLatex": "C_{2} \\cdot \\min\\left(a, b\\right)",
             "items": []
           },
           "summary": "Con el costo elemental y el conteo cerrado se obtiene el aporte total de la línea 3.",
@@ -3749,7 +3753,7 @@ _truncado a 400 líneas; ver snapshot JSON completo._
           "payload": {
             "line": 3,
             "mode": "worst",
-            "costFormula": "C_{2} \\cdot n",
+            "costFormula": "C_{2} \\cdot \\min\\left(a, b\\right)",
             "ck": "C_{2}"
           },
           "template": {
@@ -3773,7 +3777,7 @@ _truncado a 400 líneas; ver snapshot JSON completo._
     "line": 4,
     "kind": "assign",
     "ck": "C_{3}",
-    "count": "n",
+    "count": "\\min\\left(a, b\\right)",
     "count_raw": "\\min\\left(a, b\\right)",
     "note": null,
     "ops": 2,
@@ -3786,7 +3790,7 @@ _truncado a 400 líneas; ver snapshot JSON completo._
       "\\text{Línea contable } 4 \\text{: costo } C_{3}",
       "N_{4} = \\min\\left(a, b\\right)"
     ],
-    "line_cost_final": "C_{3} \\cdot 2 \\cdot n",
+    "line_cost_final": "C_{3} \\cdot 2 \\cdot \\min\\left(a, b\\right)",
     "step_by_step": {
       "method": "iterative_line",
       "version": "iter_line_steps_v1",
@@ -3870,7 +3874,7 @@ _truncado a 400 líneas; ver snapshot JSON completo._
           "title": "Costo final de la línea",
           "status": "complete",
           "math": {
-            "primaryLatex": "C_{3} \\cdot 2 \\cdot n",
+            "primaryLatex": "C_{3} \\cdot 2 \\cdot \\min\\left(a, b\\right)",
             "items": []
           },
           "summary": "Con el costo elemental y el conteo cerrado se obtiene el aporte total de la línea 4.",
@@ -3881,7 +3885,7 @@ _truncado a 400 líneas; ver snapshot JSON completo._
           "payload": {
             "line": 4,
             "mode": "worst",
-            "costFormula": "C_{3} \\cdot 2 \\cdot n",
+            "costFormula": "C_{3} \\cdot 2 \\cdot \\min\\left(a, b\\right)",
             "ck": "C_{3}"
           },
           "template": {
@@ -4355,7 +4359,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(n) | policy_best_mismatch | no | no |
 | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 
@@ -5677,7 +5681,7 @@ _Confianza expected_: hard_oracle
 | --- | --- | --- | --- | --- | --- | --- |
 | best | O(1) | \Theta(1) | symbolic_equivalent | sí | no |
 | avg | O(\sqrt{n}) | \Theta(n) | notation_mismatch_only | no | no |
-| worst | O(\sqrt{n}) | \Theta(fin) | notation_mismatch_only | no | no |
+| worst | O(\sqrt{n}) | \Theta(fin + inicio) | notation_mismatch_only | no | no |
 
 #### Pseudocódigo analizado
 
@@ -7439,9 +7443,9 @@ _Parametrización de tamaño (nota)_: El motor tiende a reportar n o n+m según 
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(n + m) | \Theta(1) | engine_bug_likely | no | no |
-| avg | O(n + m) | \Theta(1) | engine_bug_likely | no | no |
-| worst | O(n + m) | 4 \cdot \left(3 \cdot I_{while 5} + 2\right) | engine_bug_likely | no | no |
+| best | O(1) | \Theta(1) | symbolic_equivalent | sí | no |
+| avg | O(n + m) | \Theta(m + n) | symbolic_equivalent | sí | no |
+| worst | O(n + m) | \Theta(m + n) | symbolic_equivalent | sí | no |
 
 #### Pseudocódigo analizado
 
@@ -7868,8 +7872,8 @@ _truncado a 400 líneas; ver snapshot JSON completo._
     "line": 5,
     "kind": "while",
     "ck": "C_{4}",
-    "count": "I_{while 5} + 1",
-    "count_raw": "I_{while 5} + 1",
+    "count": "m + n + 1",
+    "count_raw": "m + n + 1",
 …
 ```
 
@@ -7886,8 +7890,8 @@ _Parametrización de tamaño (nota)_: Pedagógico: el coste depende de iteracion
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
 | best | O(1) | \Theta(iteraciones) | expected_dataset_issue | no | no |
-| avg | O(t) | \Theta(iteraciones) | expected_dataset_issue | no | no |
-| worst | O(t) | \Theta(iteraciones) | expected_dataset_issue | no | no |
+| avg | O(t) | \Theta(iteraciones) | model_dependent_expected | no | no |
+| worst | O(t) | \Theta(iteraciones) | model_dependent_expected | no | no |
 
 #### Pseudocódigo analizado
 
@@ -9634,9 +9638,9 @@ _Confianza expected_: depends_on_model
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(n \log n) | \Theta(\log(n)) | expected_dataset_issue | no | no |
-| avg | O(n^{1.5}) | \Theta(\frac{gap^{2} \\log{\left(n \right)}}{\\log{\left(2 \right)}}) | expected_dataset_issue | no | no |
-| worst | O(n^2) | \Theta(\frac{gap^{2} \\log{\left(n \right)}}{\\log{\left(2 \right)}}) | expected_dataset_issue | no | no |
+| best | O(n \log n) | \Theta(\log(n)) | model_dependent_expected | no | no |
+| avg | O(n^{1.5}) | \Theta(\frac{gap^{2} \\log{\left(n \right)}}{\\log{\left(2 \right)}} + \frac{n^{2} \\log{\left(n \right)}}{\\log{\left(2 \right)}}) | model_dependent_expected | no | no |
+| worst | O(n^2) | \Theta(\frac{gap^{2} \\log{\left(n \right)}}{\\log{\left(2 \right)}} + \frac{n^{2} \\log{\left(n \right)}}{\\log{\left(2 \right)}}) | model_dependent_expected | no | no |
 
 #### Pseudocódigo analizado
 
@@ -12333,7 +12337,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 
@@ -12371,7 +12375,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 
@@ -12409,7 +12413,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 
@@ -12447,7 +12451,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(n) | policy_best_mismatch | no | no |
 | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 
@@ -12474,7 +12478,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 
@@ -12503,7 +12507,7 @@ _Parametrización de tamaño (nota)_: Se acepta log(min(a,b)) como log n (n ~ mi
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 
@@ -12530,7 +12534,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 
@@ -12562,7 +12566,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(n) | policy_best_mismatch | no | no |
 | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 
@@ -12686,7 +12690,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(n) | policy_best_mismatch | no | no |
 | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 
@@ -12808,7 +12812,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 
@@ -12865,7 +12869,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 
@@ -12897,7 +12901,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(n) | policy_best_mismatch | no | no |
 | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 
@@ -12960,7 +12964,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 
@@ -13017,7 +13021,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(n) | policy_best_mismatch | no | no |
 | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 
@@ -13044,7 +13048,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(n) | policy_best_mismatch | no | no |
 | avg | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 | worst | O(n) | \Theta(n) | symbolic_equivalent | sí | no |
 
@@ -13071,7 +13075,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(\log n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(\log n) | policy_best_mismatch | no | no |
 | avg | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 | worst | O(\log n) | \Theta(\log n) | symbolic_equivalent | sí | no |
 
@@ -13308,7 +13312,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | policy_best_mismatch | no | no |
 | avg | O(2^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | notation_mismatch_only | no | no |
 | worst | O(2^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | notation_mismatch_only | no | no |
 
@@ -13399,8 +13403,8 @@ _Confianza expected_: approx_symbolic
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
 | best | O(1) | \Theta(\left(\frac{\sqrt[3]{2}}{3 \sqrt[3]{3 \sqrt{93} + 29}} + \frac{1}{3} + \frac{2^{\frac{2}{3}} \sqrt[3]{3 \sqrt{93} + 29}}{6}\right)^n) | expected_dataset_issue | no | no |
-| avg | O(1.4656^n) | \Theta(\left(\frac{\sqrt[3]{2}}{3 \sqrt[3]{3 \sqrt{93} + 29}} + \frac{1}{3} + \frac{2^{\frac{2}{3}} \sqrt[3]{3 \sqrt{93} + 29}}{6}\right)^n) | expected_dataset_issue | no | no |
-| worst | O(1.4656^n) | \Theta(\left(\frac{\sqrt[3]{2}}{3 \sqrt[3]{3 \sqrt{93} + 29}} + \frac{1}{3} + \frac{2^{\frac{2}{3}} \sqrt[3]{3 \sqrt{93} + 29}}{6}\right)^n) | expected_dataset_issue | no | no |
+| avg | O(1.4656^n) | \Theta(\left(\frac{\sqrt[3]{2}}{3 \sqrt[3]{3 \sqrt{93} + 29}} + \frac{1}{3} + \frac{2^{\frac{2}{3}} \sqrt[3]{3 \sqrt{93} + 29}}{6}\right)^n) | engine_approximation_gap | no | no |
+| worst | O(1.4656^n) | \Theta(\left(\frac{\sqrt[3]{2}}{3 \sqrt[3]{3 \sqrt{93} + 29}} + \frac{1}{3} + \frac{2^{\frac{2}{3}} \sqrt[3]{3 \sqrt{93} + 29}}{6}\right)^n) | engine_approximation_gap | no | no |
 
 _preferred_method_: `characteristic_equation`
 
@@ -13426,8 +13430,8 @@ _Confianza expected_: approx_symbolic
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
 | best | O(1) | \Theta(1) | symbolic_equivalent | sí | no |
-| avg | O(1.3247^n) | \Theta(\left(\frac{2 \sqrt[3]{18} + \sqrt[3]{12} \left(\sqrt{69} + 9\right)^{\frac{2}{3}}}{6 \sqrt[3]{\sqrt{69} + 9}}\right)^n) | expected_dataset_issue | no | no |
-| worst | O(1.3247^n) | \Theta(\left(\frac{2 \sqrt[3]{18} + \sqrt[3]{12} \left(\sqrt{69} + 9\right)^{\frac{2}{3}}}{6 \sqrt[3]{\sqrt{69} + 9}}\right)^n) | expected_dataset_issue | no | no |
+| avg | O(1.3247^n) | \Theta(\left(\frac{2 \sqrt[3]{18} + \sqrt[3]{12} \left(\sqrt{69} + 9\right)^{\frac{2}{3}}}{6 \sqrt[3]{\sqrt{69} + 9}}\right)^n) | engine_approximation_gap | no | no |
+| worst | O(1.3247^n) | \Theta(\left(\frac{2 \sqrt[3]{18} + \sqrt[3]{12} \left(\sqrt{69} + 9\right)^{\frac{2}{3}}}{6 \sqrt[3]{\sqrt{69} + 9}}\right)^n) | engine_approximation_gap | no | no |
 
 _preferred_method_: `characteristic_equation`
 
@@ -13455,7 +13459,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | policy_best_mismatch | no | no |
 | avg | O((1+\sqrt{2})^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | notation_mismatch_only | no | no |
 | worst | O((1+\sqrt{2})^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | notation_mismatch_only | no | no |
 
@@ -13483,8 +13487,8 @@ _Confianza expected_: approx_symbolic
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
 | best | O(1) | \Theta(\left(\frac{2 \sqrt[3]{18} + \sqrt[3]{12} \left(\sqrt{69} + 9\right)^{\frac{2}{3}}}{6 \sqrt[3]{\sqrt{69} + 9}}\right)^n) | expected_dataset_issue | no | no |
-| avg | O(1.3247^n) | \Theta(\left(\frac{2 \sqrt[3]{18} + \sqrt[3]{12} \left(\sqrt{69} + 9\right)^{\frac{2}{3}}}{6 \sqrt[3]{\sqrt{69} + 9}}\right)^n) | expected_dataset_issue | no | no |
-| worst | O(1.3247^n) | \Theta(\left(\frac{2 \sqrt[3]{18} + \sqrt[3]{12} \left(\sqrt{69} + 9\right)^{\frac{2}{3}}}{6 \sqrt[3]{\sqrt{69} + 9}}\right)^n) | expected_dataset_issue | no | no |
+| avg | O(1.3247^n) | \Theta(\left(\frac{2 \sqrt[3]{18} + \sqrt[3]{12} \left(\sqrt{69} + 9\right)^{\frac{2}{3}}}{6 \sqrt[3]{\sqrt{69} + 9}}\right)^n) | engine_approximation_gap | no | no |
+| worst | O(1.3247^n) | \Theta(\left(\frac{2 \sqrt[3]{18} + \sqrt[3]{12} \left(\sqrt{69} + 9\right)^{\frac{2}{3}}}{6 \sqrt[3]{\sqrt{69} + 9}}\right)^n) | engine_approximation_gap | no | no |
 
 _preferred_method_: `characteristic_equation`
 
@@ -13602,7 +13606,7 @@ _Confianza expected_: hard_oracle
 
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
-| best | O(1) | \Theta(2^n) | notation_mismatch_only | no | no |
+| best | O(1) | \Theta(2^n) | policy_best_mismatch | no | no |
 | avg | O(2^n) | \Theta(2^n) | symbolic_equivalent | sí | no |
 | worst | O(2^n) | \Theta(2^n) | symbolic_equivalent | sí | no |
 
@@ -13689,8 +13693,8 @@ _Confianza expected_: depends_on_model
 | Caso | Esperado | Obtenido | Clase | Contenido | Literal |
 | --- | --- | --- | --- | --- | --- | --- |
 | best | O(1) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | expected_dataset_issue | no | no |
-| avg | O(c^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | expected_dataset_issue | no | no |
-| worst | O(c^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | expected_dataset_issue | no | no |
+| avg | O(c^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | model_dependent_expected | no | no |
+| worst | O(c^n) | \Theta(\left(\frac{1}{2} + \frac{\sqrt{5}}{2}\right)^n) | model_dependent_expected | no | no |
 
 _preferred_method_: `characteristic_equation`
 

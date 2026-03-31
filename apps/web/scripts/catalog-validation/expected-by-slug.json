@@ -132,7 +132,7 @@
     },
     "merge-dos-arreglos-ordenados": {
       "catalogTitleEs": "Merge de dos arreglos ordenados",
-      "best": "O(n + m)",
+      "best": "O(1)",
       "avg": "O(n + m)",
       "worst": "O(n + m)",
       "note": "m segundo arreglo",

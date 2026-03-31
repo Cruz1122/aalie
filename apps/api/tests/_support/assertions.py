@@ -268,26 +268,25 @@ def assert_expected_symbols(
         ), f"Caso {case}: se esperaba símbolo {sym!r} en totals, obtenido: {t_open!r}"
 
 
-# Símbolos típicos de arrays que no deben aparecer en la notación de complejidad
-_ARRAY_LIKE_SYMBOLS = {"a", "b", "c", "arr", "array", "lista", "list"}
+# Palabras reservadas de ruido; no usar letras sueltas (chocan con \\min(a,b), etc.)
+_NOTATION_NOISE_TOKENS = {"arr", "array", "lista", "list"}
 
 
 def assert_notation_no_array_symbols(
     result: Dict[str, Any], case: str = "worst"
 ) -> None:
     """
-    Verifica que la notación asintótica no contenga símbolos de arrays (A, B, arr, etc.).
-    La complejidad debe expresarse solo en términos de tamaño (n, m, etc.).
+    Verifica que la notación no contenga tokens de ruido tipo nombre de arreglo genérico.
+    La complejidad debe expresarse en términos de tamaño (n, m, k, etc.), no identificadores heurísticos.
     """
     totals = get_totals(result, case)
     notation = get_notation_from_totals(totals)
     if not notation:
         return
-    # Buscar símbolos de array como palabras/tokens (evitar falsos positivos en "log", "frac")
     tokens = set(re.findall(r"[a-zA-Z]+", notation.lower()))
-    for bad in _ARRAY_LIKE_SYMBOLS:
+    for bad in _NOTATION_NOISE_TOKENS:
         assert bad not in tokens, (
-            f"Caso {case}: la notación no debe contener símbolos de array como {bad!r}, "
+            f"Caso {case}: la notación no debe contener token {bad!r}, "
             f"obtenido: {notation!r}"
         )
 

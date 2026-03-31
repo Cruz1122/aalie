@@ -350,7 +350,11 @@ type DiscrepancyClass =
   | "expected_dataset_issue"
   | "engine_bug_likely"
   | "unsupported_or_inconclusive_expected"
-  | "parameterization_mismatch";
+  | "parameterization_mismatch"
+  | "policy_best_mismatch"
+  | "size_parameter_mismatch"
+  | "model_dependent_expected"
+  | "engine_approximation_gap";
 
 type RowResult = {
   case: CaseKey;
@@ -421,6 +425,7 @@ function isKaratsubaLogSpecialEq(expected: string, obtained: string): boolean {
 }
 
 function classifyDiscrepancy(args: {
+  caseKey: CaseKey;
   exp: ExpectedRow;
   expected: string;
   obtained: string;
@@ -428,7 +433,8 @@ function classifyDiscrepancy(args: {
   literalMatch: boolean;
   sizeMeta?: SizeMetaRow;
 }): DiscrepancyClass {
-  const { exp, expected, obtained, contentMatch, literalMatch, sizeMeta } = args;
+  const { exp, expected, obtained, contentMatch, literalMatch, sizeMeta, caseKey } =
+    args;
 
   if (looksUnsupported(obtained)) {
     return "unsupported_or_inconclusive_expected";
@@ -449,7 +455,7 @@ function classifyDiscrepancy(args: {
   const expKnown = expVar && expVar !== "min(a,b)";
   const gotKnown = gotVar && gotVar !== "min(a,b)";
   if (expVar && gotVar && expKnown && gotKnown && expVar !== gotVar) {
-    return "parameterization_mismatch";
+    return "size_parameter_mismatch";
   }
 
   // Errores “visibles” de engine: infty o símbolos iterativos sin cierre.
@@ -482,10 +488,23 @@ function classifyDiscrepancy(args: {
     return "expected_dataset_issue";
   }
 
+  // Política: best-case esperado constante (O(1)) pero el motor devuelve crecimiento no-constante.
+  if (caseKey === "best" && expIsConst && !gotIsConst) {
+    const conf = exp.expectedConfidence || "hard_oracle";
+    if (conf === "hard_oracle") {
+      return "policy_best_mismatch";
+    }
+    return "expected_dataset_issue";
+  }
+
   // Si el expected no es hard oracle, el mismatch puede ser del oráculo o de forma.
   const conf = exp.expectedConfidence || "hard_oracle";
+  if (conf === "approx_symbolic") {
+    // expected define un rango “aproximado”; si el match relaxado ya falló, asumimos gap del motor.
+    return "engine_approximation_gap";
+  }
   if (conf !== "hard_oracle") {
-    return "expected_dataset_issue";
+    return "model_dependent_expected";
   }
 
   // Por defecto: mismatch de notación o engine (sin evidencia extra).
@@ -526,6 +545,7 @@ function compareCases(
       contentMatch: relaxedMatch(exp[k], obtNorm),
       literalMatch: strictMatch(exp[k], obtained[k]),
       discrepancyClass: classifyDiscrepancy({
+        caseKey: k,
         exp,
         expected: exp[k],
         obtained: obtNorm,
@@ -725,6 +745,10 @@ async function main(): Promise<void> {
     "engine_bug_likely",
     "unsupported_or_inconclusive_expected",
     "parameterization_mismatch",
+    "policy_best_mismatch",
+    "size_parameter_mismatch",
+    "model_dependent_expected",
+    "engine_approximation_gap",
   ];
   const classCounts: Record<DiscrepancyClass, number> = {
     exact_match: 0,
@@ -734,6 +758,10 @@ async function main(): Promise<void> {
     engine_bug_likely: 0,
     unsupported_or_inconclusive_expected: 0,
     parameterization_mismatch: 0,
+    policy_best_mismatch: 0,
+    size_parameter_mismatch: 0,
+    model_dependent_expected: 0,
+    engine_approximation_gap: 0,
   };
 
   for (const r of reportRows) {
@@ -897,11 +925,15 @@ async function main(): Promise<void> {
     md.push("");
   }
 
-  // Vista ejecutiva: top 10 bugs probables vs top 10 mismatch de oráculo.
+  // Vista ejecutiva: top 10 bugs probables (engine_bug_likely + policy_best_mismatch)
+  // vs top 10 mismatch de oráculo.
   const perExample = reportRows.map((r) => {
     const bugCases = r.analyzeOk
-      ? r.rowResults.filter((c) => c.discrepancyClass === "engine_bug_likely")
-          .length
+      ? r.rowResults.filter(
+          (c) =>
+            c.discrepancyClass === "engine_bug_likely" ||
+            c.discrepancyClass === "policy_best_mismatch",
+        ).length
       : 3;
     const oracleMismatchCases = r.analyzeOk
       ? r.rowResults.filter(
@@ -944,9 +976,11 @@ async function main(): Promise<void> {
   }
   mdExecutive.push("");
 
-  mdExecutive.push("## Top 10 bugs reales (engine_bug_likely)");
+  mdExecutive.push("## Top 10 bugs reales (engine_bug_likely + policy_best_mismatch)");
   mdExecutive.push("");
-  mdExecutive.push("| Algoritmo | Categoria | Casos engine_bug_likely |");
+  mdExecutive.push(
+    "| Algoritmo | Categoria | Casos engine_bug_likely+policy_best_mismatch |",
+  );
   mdExecutive.push("| --- | --- | --- |");
   for (const row of topEngineBugs) {
     mdExecutive.push(

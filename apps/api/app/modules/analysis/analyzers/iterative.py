@@ -458,14 +458,13 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         if orig_expr is not None:
             bound_vars = self._collect_vars_in_sum_bounds(orig_expr)
 
-        # Sustituir símbolos de arrays (A, B, arr, etc.) por variable principal.
-        # Nunca deben aparecer en la complejidad; provienen de accesos A[j] en el cuerpo.
-        # No sustituir símbolos en preserve_symbols (ej. a, b en mcd(a,b) para Euclides).
+        # Sustituir por tamaño principal solo las bases de arreglo declaradas como ArrayParam en el AST.
+        # Los accesos A[i] introducen el símbolo de la base en la expresión SymPy; no usar listas de nombres.
         preserve = preserve_symbols or set()
-        ARRAY_LIKE_NAMES = {"a", "b", "c", "arr", "array", "lista", "list"}
+        array_bases = getattr(self, "_array_param_names", None) or set()
         for sym in list(expr.free_symbols):
-            name = getattr(sym, "name", "").lower()
-            if name in ARRAY_LIKE_NAMES and name not in preserve:
+            name = getattr(sym, "name", "")
+            if name and name in array_bases and name not in preserve:
                 expr = expr.subs(sym, main_sym)
 
         # Sustituir alias de tamaño (ej. indiceLimite <- n en burbuja) para que
@@ -514,7 +513,10 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Intentar simplificar más agresivamente
         from ..utils.summation_closer import SummationCloser
 
-        closer = SummationCloser(locale=self.locale)
+        closer = SummationCloser(
+            locale=self.locale,
+            exclude_from_iteration_substitution=getattr(self, "_scalar_param_names", set()) or set(),
+        )
 
         # Evaluar todas las sumatorias
         expr = closer._evaluate_all_sums_sympy(expr)
@@ -908,6 +910,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             variable = None
             has_size_variable = False
 
+        self._array_param_names = self.array_param_base_names(main_proc) if main_proc else set()
+
         # Actualizar variable principal del analizador y ExprConverter
         # Usar siempre algún símbolo estable (por defecto 'n') aunque no se detecte tamaño
         self.variable = variable or "n"
@@ -929,12 +933,20 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         )
         # Nunca sanitizar la variable principal de tamaño (n)
         self.loop_index_vars = {v for v in self.loop_index_vars if v != main_var}
+        # Parámetros escalares (Param) no son índices de bucle: p. ej. k = rango en counting-sort.
+        scalar_params: Set[str] = set()
+        if main_proc:
+            for p in main_proc.get("params") or []:
+                if isinstance(p, dict) and p.get("type") == "Param":
+                    nm = p.get("name")
+                    if isinstance(nm, str) and nm:
+                        scalar_params.add(nm)
+        self.loop_index_vars = {v for v in self.loop_index_vars if v not in scalar_params}
         if not self.loop_index_vars:
-            self.loop_index_vars = {
-                "i",
-                "j",
-                "k",
-            }  # fallback legacy (excl. n implícito)
+            self.loop_index_vars = {"i", "j", "k"} - scalar_params
+            if not self.loop_index_vars:
+                self.loop_index_vars = {"i", "j"}
+        self._scalar_param_names = scalar_params
 
         # Detectar alias de tamaño (k <- n) en el prefijo del procedimiento principal.
         try:
@@ -966,7 +978,10 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         self.visit(ast, mode)
 
         # Usar SymPy para cerrar sumatorias y generar procedimientos
-        closer = SummationCloser(locale=self.locale)
+        closer = SummationCloser(
+            locale=self.locale,
+            exclude_from_iteration_substitution=self._scalar_param_names,
+        )
         complexity = ComplexityClasses()
 
         # Cerrar sumatorias y generar procedimientos para cada fila
@@ -1684,9 +1699,10 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         invalid_symbols = []
         iteration_vars_found = []
         allowed = {"cdot", "text", "times", "left", "right", "frac"}
+        scalar_excl = getattr(self, "_scalar_param_names", set()) or set()
         for sym in found_symbols:
             clean_sym = sym.replace("_{", "").replace("}", "")
-            if clean_sym in ["i", "j", "k"]:
+            if clean_sym in ["i", "j", "k"] and clean_sym not in scalar_excl:
                 iteration_vars_found.append(sym)
                 invalid_symbols.append(sym)
             elif not (

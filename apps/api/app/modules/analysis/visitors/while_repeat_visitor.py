@@ -1293,6 +1293,100 @@ class WhileRepeatVisitor:
 
         return None
 
+    def _body_decrements_indexed_by_one(
+        self, body_node: Dict[str, Any], array_name: str, index_var: str
+    ) -> bool:
+        """True si el cuerpo contiene una asignación arr[idx] <- arr[idx] - 1."""
+        found = False
+
+        def walk(n: Any) -> None:
+            nonlocal found
+            if found:
+                return
+            if isinstance(n, dict):
+                if n.get("type", "").lower() == "assign":
+                    val = n.get("value", {})
+                    if isinstance(val, dict) and val.get("type", "").lower() == "binary":
+                        vop = (val.get("op") or val.get("operator", "")).lower()
+                        if vop == "-" and isinstance(val.get("left"), dict) and isinstance(
+                            val.get("right"), dict
+                        ):
+                            lft, rgt = val["left"], val["right"]
+                            if (
+                                lft.get("type", "").lower() == "index"
+                                and lft.get("target", {}).get("name") == array_name
+                                and lft.get("index", {}).get("name") == index_var
+                            ):
+                                rv = rgt.get("value", rgt.get("name"))
+                                if rgt.get("type", "").lower() in ("number", "literal") and str(
+                                    rv
+                                ) in ("1", "1.0"):
+                                    found = True
+                for v in n.values():
+                    walk(v)
+            elif isinstance(n, list):
+                for it in n:
+                    walk(it)
+
+        walk(body_node)
+        return found
+
+    def _match_frequency_drain_while(self, node: Dict[str, Any]) -> Optional[Dict[str, str]]:
+        """
+        WHILE (C[idx] > 0) con decremento unitario en la misma celda (counting sort).
+        """
+        test = node.get("test", {})
+        body = node.get("body", {})
+        if isinstance(body, list):
+            body = {"type": "Block", "body": body}
+        if not isinstance(test, dict):
+            return None
+        op = (test.get("op") or test.get("operator", "")).lower()
+        if str(test.get("type", "")).lower() != "binary" or op not in (">", ">=", "<", "<="):
+            return None
+        left, right = test.get("left", {}), test.get("right", {})
+        if op in ("<", "<="):
+            left, right = right, left
+        if left.get("type", "").lower() != "index":
+            return None
+        tgt = left.get("target", {})
+        idx = left.get("index", {})
+        if tgt.get("type", "").lower() != "identifier" or idx.get("type", "").lower() != "identifier":
+            return None
+        arr_name = str(tgt.get("name", "") or "")
+        idx_var = str(idx.get("name", "") or "")
+        if not arr_name or not idx_var:
+            return None
+        rt = str(right.get("type", "")).lower()
+        if rt not in ("number", "literal"):
+            return None
+        rv = right.get("value", right.get("name"))
+        try:
+            if int(str(rv)) != 0:
+                return None
+        except (ValueError, TypeError):
+            return None
+        if not self._body_decrements_indexed_by_one(body, arr_name, idx_var):
+            return None
+        return {"array_name": arr_name, "index_var": idx_var}
+
+    def _sum_span_expr_for_loop_var(self, mult_expr: Any, var_name: str) -> Optional[Expr]:
+        """Si mult_expr es Sum(1, (var, a, b)), devuelve (b - a + 1) si var coincide."""
+        if not isinstance(mult_expr, Sum):
+            return None
+        if mult_expr.args[0] != Integer(1):
+            return None
+        lim = mult_expr.args[1]
+        if not hasattr(lim, "__len__") or len(lim) < 3:
+            return None
+        sym, a, b = lim[0], lim[1], lim[2]
+        if getattr(sym, "name", "") != var_name:
+            return None
+        try:
+            return b - a + Integer(1)
+        except Exception:
+            return None
+
     def _analyze_while_closure(
         self,
         node: Dict[str, Any],
@@ -1323,6 +1417,23 @@ class WhileRepeatVisitor:
             body = {"type": "Block", "body": body}
         L = node.get("pos", {}).get("line", 0)
         condition_info_pre = self._extract_condition_info(test)
+
+        fd = getattr(self, "_frequency_drain", None)
+        if fd:
+            main = getattr(self, "variable", "n") or "n"
+            return {
+                "variable": fd["index_var"],
+                "initial_value": None,
+                "change_rule": {"operator": "-", "constant": "1"},
+                "limit": "0",
+                "operator": ">",
+                "iterations": main,
+                "success": True,
+                "mode": mode,
+                "reason_code": "while_frequency_drain_for",
+                "pattern": "counting_sort_drain",
+                "frequency_drain_cond_extra": fd["outer_span"],
+            }
 
         # 1) VERIFICAR BEST CASE PRIMERO: Si es best case y hay condición AND con array/variable diferente
         # Para insertion sort: WHILE (j > 0 AND A[j] > key)
@@ -2081,7 +2192,23 @@ class WhileRepeatVisitor:
                         # Continuar con análisis de cierre como fallback
 
         # Paso 2: Intentar análisis de cierre (para todos los modos, incluyendo avg como fallback)
-        closure_info = self._analyze_while_closure(node, parent_context, mode)
+        popped_freq_mult: Optional[Expr] = None
+        self._frequency_drain = None
+        drain = self._match_frequency_drain_while(node)
+        if drain and getattr(self, "loop_stack", None):
+            span_expr = self._sum_span_expr_for_loop_var(self.loop_stack[-1], drain["index_var"])
+            if span_expr is not None:
+                popped_freq_mult = self.loop_stack.pop()
+                self._frequency_drain = {**drain, "outer_span": span_expr}
+        try:
+            closure_info = self._analyze_while_closure(node, parent_context, mode)
+        finally:
+            self._frequency_drain = None
+
+        def _restore_popped_for_multiplier() -> None:
+            if popped_freq_mult is not None:
+                self.loop_stack.append(popped_freq_mult)
+
         best_body_return_single_pass = False
         if (
             mode == "best"
@@ -2144,6 +2271,7 @@ class WhileRepeatVisitor:
             self.pop_multiplier()
             self.pop_loop_block_ref()
             self.update_while_block(block["id"], expanded_cost_expr="\\infty")
+            _restore_popped_for_multiplier()
             return
 
         if closure_info and closure_info.get("success"):
@@ -2259,8 +2387,9 @@ class WhileRepeatVisitor:
                 if (
                     block["status"] == "available"
                     and not iterations_is_one
-                    and pattern_local not in ("binary_search",)
+                    and pattern_local not in ("binary_search", "counting_sort_drain")
                     and reason_code_local != "while_euclid_mod"
+                    and reason_code_local != "while_frequency_drain_for"
                     and has_explicit_limit
                 ):
                     var_sym = Symbol(var_name, integer=True)
@@ -2307,6 +2436,12 @@ class WhileRepeatVisitor:
                 # El return termina el flujo dentro de la primera iteración, así que
                 # no hay una reevaluación final de la condición del while.
                 cond_count = Integer(1)
+            elif closure_info.get("reason_code") == "while_frequency_drain_for":
+                extra = closure_info.get("frequency_drain_cond_extra")
+                if extra is not None:
+                    cond_count = iterations_expr + extra
+                else:
+                    cond_count = iterations_expr + Integer(1)
             else:
                 cond_count = iterations_expr + Integer(1)
 
@@ -2322,6 +2457,8 @@ class WhileRepeatVisitor:
                 note_text = self._note("while_euclid_mod", L=L, var_name=var_name)
             elif pattern == "gnome_sort_cursor":
                 note_text = self._note("while_gnome_sort_cursor", L=L)
+            elif pattern == "counting_sort_drain":
+                note_text = self._note("while_frequency_drain_for", L=L)
             elif best_body_return_single_pass:
                 note_text = self._note("while_best_early_return", L=L)
             elif pattern == "binary_search":
@@ -2556,6 +2693,8 @@ class WhileRepeatVisitor:
                 guard_ops=ops,
                 fallback_line=L,
             )
+
+        _restore_popped_for_multiplier()
 
     def visitRepeat(self, node: Dict[str, Any], mode: str = "worst") -> None:
         """
