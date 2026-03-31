@@ -12,6 +12,9 @@ packages/report-export-engine/build/
 # Reports
 reports/
 
+# Catálogo: snapshot JSON grande (regenerable con pnpm validate:catalog-complexity en apps/web)
+apps/web/scripts/output/catalog-complexity-snapshot.json
+
 # Builds
 dist/
 .next/

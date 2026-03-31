@@ -6,7 +6,7 @@ y casos (best/worst/average).
 """
 
 import pytest
-from sympy import Rational, Symbol
+from sympy import Rational, Symbol, Sum
 
 from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
 from app.modules.analysis.service import analyze_algorithm
@@ -275,6 +275,28 @@ class TestIterativeAnalyzer:
             analyzer._format_final_line_contribution(row)
             == "(C_{1} + C_{2}) \\cdot \\left(n + 1\\right)"
         )
+
+    def test_sanitize_expression_reuses_main_symbol_for_bound_var_substitution(self):
+        """
+        Regresión: evitar que exista más de un "n" de SymPy con asunciones distintas.
+        Caso problemático previo: sustitución inicio->n y cancelación fallida produciendo n·(-n+n).
+        """
+        analyzer = IterativeAnalyzer()
+        analyzer.variable = "n"
+        # Fuerzamos que la variable de cota "inicio" sea tratada como variable de iteración
+        # (esto reproduce el bug observado donde inicio se terminó sustituyendo a n).
+        analyzer.loop_index_vars = {"inicio"}
+
+        n_pos = Symbol("n", integer=True, positive=True)  # como usa ExprConverter para la variable principal
+        inicio = Symbol("inicio", real=True)
+        i = Symbol("i", integer=True)
+
+        expr = n_pos * (-inicio + n_pos)
+        # orig_expr con Sum en el que los límites dependen de `inicio` para que bound_vars contenga "inicio".
+        orig_expr = Sum(n_pos, (i, inicio, n_pos - 1))
+
+        out = analyzer._sanitize_expression(expr, orig_expr=orig_expr)
+        assert out == 0
 
     def test_calculate_t_polynomial_fallback(self):
         """Test: _calculate_t_polynomial_fallback calcula T_polynomial"""

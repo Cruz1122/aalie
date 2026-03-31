@@ -15,12 +15,18 @@ from .classifier import classify_while
 from .control_variables import detect_control_variables
 from .guard_analysis import analyze_guard_for_engine
 from .patterns.binary_search_interval import BinarySearchIntervalPattern
+from .patterns.gap_shrink_then_scan import GapShrinkThenScanPattern
 from .patterns.euclid_mod import EuclidModPattern
+from .patterns.sentinel_scan import SentinelScanPattern
 from .patterns.flag_kill import FlagKillPattern
 from .patterns.geometric_growth import GeometricGrowthPattern
+from .patterns.phase_loop_composition import PhaseLoopCompositionPattern
 from .patterns.gnome_sort_cursor import GnomeSortCursorPattern
 from .patterns.interval_shrink import IntervalShrinkPattern
 from .patterns.linear_counter import LinearCounterPattern
+from .patterns.shrinking_window_bidirectional import (
+    ShrinkingWindowBidirectionalPattern,
+)
 from .progress_proofs import prove_progress
 from .update_analysis import analyze_updates
 
@@ -83,6 +89,10 @@ class WhileAnalysisResult:
 # Patrones en orden de prioridad
 _PATTERNS = [
     ("gnome_sort_cursor", GnomeSortCursorPattern()),
+    ("shrinking_window_bidirectional", ShrinkingWindowBidirectionalPattern()),
+    ("sentinel_scan", SentinelScanPattern()),
+    ("gap_shrink_then_scan", GapShrinkThenScanPattern()),
+    ("phase_loop_composition", PhaseLoopCompositionPattern()),
     ("linear_counter", LinearCounterPattern()),
     ("geometric_growth", GeometricGrowthPattern()),
     ("flag_kill", FlagKillPattern()),

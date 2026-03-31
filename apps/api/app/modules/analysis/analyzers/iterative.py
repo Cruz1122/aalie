@@ -443,19 +443,20 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Incluir t_while_X, t_repeat_X (símbolos iterativos no resueltos) → sustituir por main_var
         iteration_vars = list(getattr(self, "loop_index_vars", None) or ["i", "j", "k"])
         main_var = getattr(self, "variable", "n") or "n"
-        main_sym = Symbol(main_var, integer=True)
+        # IMPORTANT: reutilizar el símbolo de "n" que ya exista en la expresión.
+        # Si creamos un nuevo Symbol("n", integer=True) pero la expresión usa
+        # Symbol("n", integer=True, positive=True), SymPy no cancela (-n + n).
+        main_sym = next(
+            (s for s in expr.free_symbols if getattr(s, "name", None) == main_var),
+            None,
+        )
+        if main_sym is None:
+            main_sym = Symbol(main_var, integer=True)
 
         # Recolectar variables en límites de Sum desde orig_expr (tiene Sum antes de evaluar)
         bound_vars: Set[str] = set()
         if orig_expr is not None:
             bound_vars = self._collect_vars_in_sum_bounds(orig_expr)
-
-        # Expandir y simplificar primero
-        try:
-            expr = expand(expr)
-            expr = simplify(expr)
-        except Exception:
-            pass
 
         # Sustituir símbolos de arrays (A, B, arr, etc.) por variable principal.
         # Nunca deben aparecer en la complejidad; provienen de accesos A[j] en el cuerpo.
@@ -466,7 +467,6 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             name = getattr(sym, "name", "").lower()
             if name in ARRAY_LIKE_NAMES and name not in preserve:
                 expr = expr.subs(sym, main_sym)
-        expr = simplify(expr)
 
         # Sustituir alias de tamaño (ej. indiceLimite <- n en burbuja) para que
         # T_open y T_polynomial queden en función de variables de tamaño reales.
@@ -480,9 +480,18 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     # Buscar símbolos libres cuyo nombre coincida con el alias
                     for sym in free_syms:
                         if getattr(sym, "name", "") == alias_name:
-                            main_sym_alias = Symbol(main_name, integer=True)
+                            # Reutilizar el símbolo de tamaño si ya existe.
+                            main_sym_alias = next(
+                                (
+                                    s
+                                    for s in expr.free_symbols
+                                    if getattr(s, "name", None) == main_name
+                                ),
+                                None,
+                            )
+                            if main_sym_alias is None:
+                                main_sym_alias = Symbol(main_name, integer=True)
                             expr = expr.subs(sym, main_sym_alias)
-                expr = simplify(expr)
             except Exception:
                 # No dejar que un fallo de sustitución rompa el análisis.
                 pass
@@ -509,8 +518,6 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
 
         # Evaluar todas las sumatorias
         expr = closer._evaluate_all_sums_sympy(expr)
-        expr = expand(expr)
-        expr = simplify(expr)
 
         # Verificar de nuevo
         free_vars = expr.free_symbols
@@ -526,8 +533,6 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
 
         if has_iteration_vars:
             try:
-                expr = expand(expr)
-                expr = simplify(expr)
                 free_vars_after = expr.free_symbols
                 replaced = []
                 for sym in list(free_vars_after):
@@ -558,6 +563,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     else:
                         expr = expr.subs(sym, SymInteger(0))
                     replaced.append(sym_name)
+                # Simplificar solo una vez al final del pipeline de sanitizado.
                 expr = simplify(expr)
                 if replaced:
                     print(

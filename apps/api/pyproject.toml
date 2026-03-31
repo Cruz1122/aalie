@@ -78,4 +78,5 @@ markers = [
     "recursive: tests involving recursive analysis",
     "dp: tests involving DP algorithms",
     "benchmark: performance/regression benchmark tests",
+    "regression: síntomas explícitos de informes / catálogo (no duplicar oráculos)",
 ]

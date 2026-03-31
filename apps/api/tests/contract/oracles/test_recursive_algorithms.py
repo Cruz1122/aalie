@@ -5,6 +5,8 @@ Verifica el análisis de algoritmos recursivos divide-and-conquer.
 Incluye tests auténticos con pseudocode y expectativas de complejidad.
 """
 
+import time
+
 import pytest
 
 from app.modules.analysis.analyzers.recursive import RecursiveAnalyzer
@@ -52,6 +54,17 @@ FIBONACCI_RECURSIVE_PSEUDOCODE = """fibonacci(n) BEGIN
 END
 """
 
+TETRANACCI_RECURSIVE_PSEUDOCODE = """tetranacci(n) BEGIN
+    IF (n <= 2) THEN BEGIN
+        RETURN 0;
+    END
+    IF (n = 3) THEN BEGIN
+        RETURN 1;
+    END
+    RETURN tetranacci(n - 1) + tetranacci(n - 2) + tetranacci(n - 3) + tetranacci(n - 4);
+END
+"""
+
 HANOI_RECURSIVE_PSEUDOCODE = """hanoi(n, origen, destino, aux) BEGIN
     IF (n = 1) THEN BEGIN
         RETURN 1;
@@ -92,6 +105,39 @@ LINEAR_SUM_RECURSIVE_PSEUDOCODE = """sumaRec(n) BEGIN
 END
 """
 
+INSERTION_SORT_RECURSIVE_PSEUDOCODE = """insertionSortRec(A[n], n) BEGIN
+    IF (n <= 1) THEN BEGIN
+        RETURN 0;
+    END
+    CALL insertionSortRec(A, n - 1);
+    clave <- A[n];
+    j <- n - 1;
+    WHILE (j > 0 AND A[j] > clave) DO BEGIN
+        A[j + 1] <- A[j];
+        j <- j - 1;
+    END
+    A[j + 1] <- clave;
+    RETURN 0;
+END
+"""
+
+RECURSIVE_SELECTION_SORT_PSEUDOCODE = """selectionSortRec(A[n], inicio, n) BEGIN
+    IF (inicio >= n) THEN BEGIN
+        RETURN 0;
+    END
+    minIndice <- inicio;
+    FOR j <- inicio + 1 TO n DO BEGIN
+        IF (A[j] < A[minIndice]) THEN BEGIN
+            minIndice <- j;
+        END
+    END
+    temp <- A[inicio];
+    A[inicio] <- A[minIndice];
+    A[minIndice] <- temp;
+    RETURN selectionSortRec(A, inicio + 1, n);
+END
+"""
+
 FAST_POWER_RECURSIVE_PSEUDOCODE = """exponenciacionRapida(x, n) BEGIN
     IF (n = 0) THEN BEGIN
         RETURN 1;
@@ -102,6 +148,56 @@ FAST_POWER_RECURSIVE_PSEUDOCODE = """exponenciacionRapida(x, n) BEGIN
         resultado <- resultado * x;
     END
     RETURN resultado;
+END
+"""
+
+QUICK_SORT_PSEUDOCODE = """quickSort(A[n], izq, der) BEGIN
+    IF (izq < der) THEN BEGIN
+        pivote <- A[der];
+        i <- izq - 1;
+        FOR j <- izq TO der - 1 DO BEGIN
+            IF (A[j] <= pivote) THEN BEGIN
+                i <- i + 1;
+                temp <- A[i];
+                A[i] <- A[j];
+                A[j] <- temp;
+            END
+        END
+        temp <- A[i + 1];
+        A[i + 1] <- A[der];
+        A[der] <- temp;
+        pi <- i + 1;
+        CALL quickSort(A, izq, pi - 1);
+        CALL quickSort(A, pi + 1, der);
+    END
+    RETURN 0;
+END
+"""
+
+RANDOMIZED_QUICK_SORT_PSEUDOCODE = """quickSortRand(A[n], izq, der) BEGIN
+    IF (izq < der) THEN BEGIN
+        r <- randomInt(izq, der);
+        temp <- A[r];
+        A[r] <- A[der];
+        A[der] <- temp;
+        pivote <- A[der];
+        i <- izq - 1;
+        FOR j <- izq TO der - 1 DO BEGIN
+            IF (A[j] <= pivote) THEN BEGIN
+                i <- i + 1;
+                temp <- A[i];
+                A[i] <- A[j];
+                A[j] <- temp;
+            END
+        END
+        temp <- A[i + 1];
+        A[i + 1] <- A[der];
+        A[der] <- temp;
+        pi <- i + 1;
+        CALL quickSortRand(A, izq, pi - 1);
+        CALL quickSortRand(A, pi + 1, der);
+    END
+    RETURN 0;
 END
 """
 
@@ -181,6 +277,89 @@ class TestRecursiveAlgorithmsPseudocode:
             expected_avg="linear",
             name="maxPorMitades",
         )
+
+    def test_insertion_sort_recursive_worst_is_quadratic(self):
+        """Recursive insertion sort: T(n)=T(n-1)+Θ(n) => Θ(n^2) en worst."""
+        result = analyze_algorithm(INSERTION_SORT_RECURSIVE_PSEUDOCODE, mode="worst")
+        assert result.get("ok"), result.get("errors", [])
+        totals = result.get("totals", {}) or {}
+        theta = get_notation_from_totals(totals)
+        assert notation_has_complexity(
+            theta, "quadratic"
+        ), f"Insertion sort recursivo worst debe ser cuadrático: {theta}"
+
+    def test_recursive_selection_sort_worst_is_quadratic(self):
+        """Recursive selection sort: T(n)=T(n-1)+Θ(n) => Θ(n^2) en worst."""
+        result = analyze_algorithm(RECURSIVE_SELECTION_SORT_PSEUDOCODE, mode="worst")
+        assert result.get("ok"), result.get("errors", [])
+        totals = result.get("totals", {}) or {}
+        theta = get_notation_from_totals(totals)
+        assert notation_has_complexity(
+            theta, "quadratic"
+        ), f"Selection sort recursivo worst debe ser cuadrático: {theta}"
+
+    def test_quick_sort_worst_is_quadratic(self):
+        """QuickSort: worst case debe permitir degeneración cuadrática."""
+        result = analyze_algorithm(QUICK_SORT_PSEUDOCODE, mode="worst")
+        assert result.get("ok"), result.get("errors", [])
+        totals = result.get("totals", {}) or {}
+        theta = get_notation_from_totals(totals)
+        assert notation_has_complexity(
+            theta, "quadratic"
+        ), f"QuickSort worst debe ser cuadrático: {theta}"
+
+    def test_randomized_quick_sort_worst_is_quadratic(self):
+        """Randomized QuickSort: worst case sigue siendo cuadrático (aunque avg sea esperado)."""
+        result = analyze_algorithm(RANDOMIZED_QUICK_SORT_PSEUDOCODE, mode="worst")
+        assert result.get("ok"), result.get("errors", [])
+        totals = result.get("totals", {}) or {}
+        theta = get_notation_from_totals(totals)
+        assert notation_has_complexity(
+            theta, "quadratic"
+        ), f"Randomized QuickSort worst debe ser cuadrático: {theta}"
+
+
+class TestTetranacciCharacteristicEquation:
+    """
+    Regresión: recurrencia lineal orden 4 (catálogo `tetranacci-sequence`).
+    Las heurísticas SymPy sobre la solución homogénea no deben bloquear el análisis;
+    el resultado debe seguir siendo exponencial con raíz dominante coherente (~1.93).
+    """
+
+    def test_tetranacci_exponential_theta_and_dominant_growth_contract(self):
+        """Contractual: Θ exponencial; growth_rate acotado; bundle CEQ presente; termina a tiempo."""
+        t0 = time.perf_counter()
+        result = analyze_algorithm(
+            TETRANACCI_RECURSIVE_PSEUDOCODE,
+            mode="worst",
+            preferred_method="characteristic_equation",
+            algorithm_kind="recursive",
+        )
+        elapsed = time.perf_counter() - t0
+        assert result.get("ok"), result.get("errors", [])
+        assert elapsed < 45.0, f"análisis Tetranacci excede tope razonable: {elapsed:.1f}s"
+
+        char_eq = result.get("totals", {}).get("characteristic_equation", {})
+        theta = char_eq.get("theta") or ""
+        assert notation_has_complexity(
+            theta, "exponential"
+        ), f"theta debe clasificarse como exponencial (orden 4, raíz dominante > 1): {theta}"
+
+        gr = char_eq.get("growth_rate")
+        assert gr is not None, "debe exponer growth_rate numérico de la raíz dominante"
+        assert 1.85 < float(gr) < 2.0, (
+            "raíz dominante de Tetranacci ≈1.927562; fuera de rango indica regresión"
+            f": {gr}"
+        )
+
+        eq = char_eq.get("equation", "")
+        assert "0" in eq.replace(" ", "") and (
+            "=" in eq
+        ), f"ecuación característica legible esperada, obtuvo: {eq!r}"
+
+        bundle = char_eq.get("step_by_step", {})
+        assert bundle.get("method") == "characteristic_equation"
+        assert isinstance(bundle.get("steps"), list) and len(bundle.get("steps", [])) > 0
 
 
 class TestDynamicProgrammingValidation:

@@ -19,7 +19,8 @@
     "format:write": "prettier --write .",
     "test:watch": "vitest",
     "test:examples": "vitest run src/lib/examples/__tests__ src/components/examples/__tests__",
-    "validate:examples-catalog": "node --import tsx scripts/validate-examples-catalog.ts"
+    "validate:examples-catalog": "node --import tsx scripts/validate-examples-catalog.ts",
+    "validate:catalog-complexity": "node --import tsx scripts/validate-catalog-complexity.ts"
   },
   "dependencies": {
     "@aa/grammar": "workspace:^",

@@ -19,11 +19,21 @@ Aplica al `while_engine`, a la clasificación de patrones y al payload usado por
 
 ### Patrones soportados hoy
 
+Orden de evaluación en `WhileEngine` (primera coincidencia con evidencia suficiente gana; ver desempate contractual abajo):
+
+- `gnome_sort_cursor`
+- `shrinking_window_bidirectional` (p. ej. Dutch National Flag: ventana `mid`/`high`)
+- `sentinel_scan` (búsqueda con centinela)
+- `gap_shrink_then_scan` (p. ej. Comb Sort / Shell Sort externo por `gap`)
+- `phase_loop_composition` (p. ej. Jump Search: fase salto + fase barrido)
 - `linear_counter`
 - `geometric_growth`
 - `flag_kill`
 - `euclid_mod`
 - `binary_search_interval`
+- `interval_shrink`
+
+Los patrones anteriores amplían el núcleo documentado históricamente (`linear_counter` … `binary_search_interval`) sin relajar la política conservadora: solo cotas con evidencia suficiente.
 
 ### Política de decisión
 

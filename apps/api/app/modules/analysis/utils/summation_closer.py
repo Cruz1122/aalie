@@ -179,7 +179,15 @@ class SummationCloser:
         from sympy import Integer as SymInteger
         from sympy import simplify
 
-        main_sym = Symbol(variable, integer=True)
+        # IMPORTANT: reutilizar el símbolo de "n" que ya exista en la expresión.
+        # Esto evita crear un Symbol("n", integer=True) diferente de
+        # Symbol("n", integer=True, positive=True), que rompe cancelaciones.
+        main_sym = next(
+            (s for s in getattr(expr, "free_symbols", set()) if getattr(s, "name", None) == variable),
+            None,
+        )
+        if main_sym is None:
+            main_sym = Symbol(variable, integer=True)
         candidate_zero = expr.subs(var_symbol, SymInteger(0))
         use_main_instead = False
         try:
@@ -293,9 +301,19 @@ class SummationCloser:
                 # Las variables i, j, k son variables de iteración que deben ser eliminadas
                 # IMPORTANTE: No sustituir por 0 si el resultado sería negativo (ej. n*(j-1) con j=0 → -n)
                 iteration_vars = ["i", "j", "k"]
-                main_sym = Symbol(variable, integer=True)
+                main_sym = next(
+                    (s for s in result_expr.free_symbols if getattr(s, "name", None) == variable),
+                    None,
+                )
+                if main_sym is None:
+                    main_sym = Symbol(variable, integer=True)
                 for var_name in iteration_vars:
-                    var_symbol = Symbol(var_name, integer=True)
+                    var_symbol = next(
+                        (s for s in result_expr.free_symbols if getattr(s, "name", None) == var_name),
+                        None,
+                    )
+                    if var_symbol is None:
+                        var_symbol = Symbol(var_name, integer=True)
                     if result_expr.has(var_symbol):
                         # La expresión todavía contiene una variable de iteración
                         # Esto significa que alguna sumatoria no se evaluó completamente
