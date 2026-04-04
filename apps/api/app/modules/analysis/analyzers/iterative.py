@@ -18,7 +18,9 @@ from .iterative_walkthrough_steps import (
 )
 
 
-class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor, SimpleVisitor):
+class IterativeAnalyzer(
+    BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor, SimpleVisitor
+):
     """
     Analizador iterativo unificado que combina todos los visitors.
 
@@ -70,7 +72,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         partial_blocks = [
             block
             for block in self._while_blocks()
-            if str(block.get("status") or "").strip() == "partial" and block.get("iterations_class")
+            if str(block.get("status") or "").strip() == "partial"
+            and block.get("iterations_class")
         ]
         if len(partial_blocks) != 1:
             return (None, None, None)
@@ -78,7 +81,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         block = partial_blocks[0]
         symbol_name = f"I_while_{block.get('line')}"
         free_symbols = {
-            getattr(sym, "name", "") for sym in getattr(t_open_expr, "free_symbols", set())
+            getattr(sym, "name", "")
+            for sym in getattr(t_open_expr, "free_symbols", set())
         }
         if not free_symbols or free_symbols != {symbol_name}:
             return (None, None, None)
@@ -114,7 +118,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         try:
             numer, denom = normalized.as_numer_denom()
             free_symbols = tuple(sorted(normalized.free_symbols, key=lambda s: s.name))
-            if numer.is_polynomial(*free_symbols) and denom.is_polynomial(*free_symbols):
+            if numer.is_polynomial(*free_symbols) and denom.is_polynomial(
+                *free_symbols
+            ):
                 normalized = factor_terms(normalized)
         except Exception:
             pass
@@ -125,7 +131,11 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 and any(getattr(arg, "is_One", False) for arg in candidate.args),
                 lambda candidate: (
                     Mul(
-                        *[arg for arg in candidate.args if not getattr(arg, "is_One", False)],
+                        *[
+                            arg
+                            for arg in candidate.args
+                            if not getattr(arg, "is_One", False)
+                        ],
                         evaluate=True,
                     )
                     if any(not getattr(arg, "is_One", False) for arg in candidate.args)
@@ -269,7 +279,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             else:
                 raw_terms.append(f"{ck} \\cdot ({count_raw})")
                 closed_terms.append(
-                    self._format_final_line_contribution(row) or f"{ck} \\cdot ({count_closed})"
+                    self._format_final_line_contribution(row)
+                    or f"{ck} \\cdot ({count_closed})"
                 )
         raw_sum_expr = " + ".join(raw_terms) if raw_terms else "0"
         closed_sum_expr = " + ".join(closed_terms) if closed_terms else raw_sum_expr
@@ -309,7 +320,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         sum_expressions = self._build_case_sum_expressions()
         avg_model_note = None
         if mode == "avg" and self.avg_model:
-            avg_model_note = self.avg_model.get_model_info(locale=self.locale).get("note")
+            avg_model_note = self.avg_model.get_model_info(locale=self.locale).get(
+                "note"
+            )
         hypotheses = []
         if mode == "avg" and self.avg_model and self.avg_model.has_symbols():
             hypotheses.append(self._note("hypotheses_symbolic"))
@@ -434,7 +447,7 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         Version: 0.1.0
         """
         from sympy import Integer as SymInteger
-        from sympy import Symbol, expand, simplify
+        from sympy import Symbol, simplify
 
         if expr is None:
             return expr
@@ -515,7 +528,10 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
 
         closer = SummationCloser(
             locale=self.locale,
-            exclude_from_iteration_substitution=getattr(self, "_scalar_param_names", set()) or set(),
+            exclude_from_iteration_substitution=getattr(
+                self, "_scalar_param_names", set()
+            )
+            or set(),
         )
 
         # Evaluar todas las sumatorias
@@ -572,7 +588,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                         f"[IterativeAnalyzer] Advertencia: Variables de iteración {replaced} eliminadas de expresión final"
                     )
             except Exception as e:
-                print(f"[IterativeAnalyzer] Error al limpiar variables de iteración: {e}")
+                print(
+                    f"[IterativeAnalyzer] Error al limpiar variables de iteración: {e}"
+                )
                 for sym in list(expr.free_symbols):
                     if getattr(sym, "name", "") in iteration_vars:
                         expr = expr.subs(sym, main_sym)
@@ -603,7 +621,10 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 var = n.get("var", "")
                 if isinstance(var, str) and var:
                     out.add(var)
-                elif isinstance(var, dict) and str(var.get("type", "")).lower() == "identifier":
+                elif (
+                    isinstance(var, dict)
+                    and str(var.get("type", "")).lower() == "identifier"
+                ):
                     name = var.get("name", "")
                     if isinstance(name, str) and name:
                         out.add(name)
@@ -643,11 +664,17 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             Si stmt es de la forma id <- id ± const (con const numérica),
             devuelve el nombre de id (candidato a variable de control).
             """
-            if not isinstance(stmt, dict) or str(stmt.get("type", "")).lower() != "assign":
+            if (
+                not isinstance(stmt, dict)
+                or str(stmt.get("type", "")).lower() != "assign"
+            ):
                 return None
             target = stmt.get("target", {})
             value = stmt.get("value", {})
-            if not isinstance(target, dict) or str(target.get("type", "")).lower() != "identifier":
+            if (
+                not isinstance(target, dict)
+                or str(target.get("type", "")).lower() != "identifier"
+            ):
                 return None
             var = (target.get("name") or "").strip()
             # Nunca tratar la variable principal de tamaño como índice de control.
@@ -689,7 +716,10 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     if name:
                         out.add(name)
                 return
-            if isinstance(body_node, dict) and str(body_node.get("type", "")).lower() == "block":
+            if (
+                isinstance(body_node, dict)
+                and str(body_node.get("type", "")).lower() == "block"
+            ):
                 _collect_from_body(body_node.get("body") or [])
                 return
             if isinstance(body_node, dict):
@@ -718,7 +748,11 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                         # - o bien tiene un update aritmético detectado en el cuerpo, o
                         # - es un índice clásico (i/j/k) usado en la condición.
                         for cand in (v, v2):
-                            if not isinstance(cand, str) or not cand or cand == main_var:
+                            if (
+                                not isinstance(cand, str)
+                                or not cand
+                                or cand == main_var
+                            ):
                                 continue
                             if cand in out or cand in iter_legacy:
                                 out.add(cand)
@@ -819,7 +853,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             if not isinstance(node, dict) or node.get("type") != "ProcDef":
                 continue
             params = node.get("params", [])
-            param_names = {p.get("name", "") if isinstance(p, dict) else str(p) for p in params}
+            param_names = {
+                p.get("name", "") if isinstance(p, dict) else str(p) for p in params
+            }
             param_names.discard("")
             proc_body = node.get("body") or node.get("block", {})
             self._collect_control_params_from_node(proc_body, param_names, control)
@@ -837,7 +873,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             if info and info.get("variable"):
                 if_info = self._find_var_guarded_if(body, info["variable"])
                 if if_info:
-                    id_name = self._extract_id_from_var_eq_const(if_info.get("test", {}))
+                    id_name = self._extract_id_from_var_eq_const(
+                        if_info.get("test", {})
+                    )
                     if id_name and id_name in param_names:
                         control.add(id_name)
         if nt == "block":
@@ -910,7 +948,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             variable = None
             has_size_variable = False
 
-        self._array_param_names = self.array_param_base_names(main_proc) if main_proc else set()
+        self._array_param_names = (
+            self.array_param_base_names(main_proc) if main_proc else set()
+        )
 
         # Actualizar variable principal del analizador y ExprConverter
         # Usar siempre algún símbolo estable (por defecto 'n') aunque no se detecte tamaño
@@ -924,7 +964,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         except Exception:
             self.for_index_vars = set()
         try:
-            self.while_repeat_control_vars = self._collect_while_repeat_control_vars(ast)
+            self.while_repeat_control_vars = self._collect_while_repeat_control_vars(
+                ast
+            )
         except Exception:
             self.while_repeat_control_vars = set()
         main_var = self.variable or "n"
@@ -941,7 +983,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     nm = p.get("name")
                     if isinstance(nm, str) and nm:
                         scalar_params.add(nm)
-        self.loop_index_vars = {v for v in self.loop_index_vars if v not in scalar_params}
+        self.loop_index_vars = {
+            v for v in self.loop_index_vars if v not in scalar_params
+        }
         if not self.loop_index_vars:
             self.loop_index_vars = {"i", "j", "k"} - scalar_params
             if not self.loop_index_vars:
@@ -958,7 +1002,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Ejemplo: longitud <- n en bubble sort mejorado.
         if isinstance(self.size_aliases, dict) and self.size_aliases:
             self.loop_index_vars = {
-                v for v in self.loop_index_vars if v not in set(self.size_aliases.keys())
+                v
+                for v in self.loop_index_vars
+                if v not in set(self.size_aliases.keys())
             }
 
         # Crear instancia de AvgModel si mode == "avg"
@@ -1021,7 +1067,11 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 elif note and (
                     "éxito seguro" in note
                     or "guaranteed success" in note
-                    or ("éxito" in note and "siempre ocurre" in note and "fracaso" not in note)
+                    or (
+                        "éxito" in note
+                        and "siempre ocurre" in note
+                        and "fracaso" not in note
+                    )
                 ):
                     # return i: siempre ocurre 1 vez, no multiplicado por E[iter]
                     row["count_raw_expr"] = Integer(1)
@@ -1046,7 +1096,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     # Actualizar count_raw para reflejar count_raw_expr (puede incluir probabilidades)
                     # Esto asegura que count_raw muestre la expresión con probabilidad antes del cierre
                     try:
-                        count_raw_latex_from_expr = format_sympy_expr_latex(count_raw_expr)
+                        count_raw_latex_from_expr = format_sympy_expr_latex(
+                            count_raw_expr
+                        )
                         if isinstance(count_raw_latex_from_expr, str):
                             row["count_raw"] = count_raw_latex_from_expr
                             # También actualizar expectedRuns en modo promedio para que refleje la probabilidad
@@ -1066,10 +1118,14 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                                 alias_sym = SymSymbol(alias_name, integer=True)
                                 main_sym = SymSymbol(main_name, integer=True)
                                 if expr_for_close.has(alias_sym):
-                                    expr_for_close = expr_for_close.subs(alias_sym, main_sym)
+                                    expr_for_close = expr_for_close.subs(
+                                        alias_sym, main_sym
+                                    )
 
                     # Pasar el objeto SymPy directamente a close_summation
-                    closed_count, steps = closer.close_summation(expr_for_close, variable or "n")
+                    closed_count, steps = closer.close_summation(
+                        expr_for_close, variable or "n"
+                    )
 
                     # Guardar la expresión SymPy evaluada para usar en build_t_open_expr
                     import re
@@ -1079,9 +1135,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     # Si contiene símbolos iterativos, no intentar evaluar sumatorias
                     # (ya se manejan en close_summation)
                     preserve = {"a", "b"} if row.get("euclid_pattern") else None
-                    if closer._has_iterative_symbols(expr_for_close) and not closer._has_summations(
+                    if closer._has_iterative_symbols(
                         expr_for_close
-                    ):
+                    ) and not closer._has_summations(expr_for_close):
                         # Es un símbolo iterativo puro, simplificar y limpiar variables de iteración
                         count_evaluated = simplify(expr_for_close)
                         # IMPORTANTE: Eliminar variables de iteración que no deberían estar
@@ -1092,7 +1148,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                         )
                     else:
                         # Evaluar sumatorias si las hay (usar expr_for_close con alias ya sustituidos)
-                        count_evaluated = closer._evaluate_all_sums_sympy(expr_for_close)
+                        count_evaluated = closer._evaluate_all_sums_sympy(
+                            expr_for_close
+                        )
                         count_evaluated = simplify(count_evaluated)
                         # IMPORTANTE: Eliminar variables de iteración que no deberían estar (orig_expr tiene Sum para bound_vars)
                         count_evaluated = self._sanitize_expression(
@@ -1190,7 +1248,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     if not isinstance(count_raw_latex, str):
                         count_raw_latex = str(count_raw_latex)
                 except Exception as e:
-                    print(f"[IterativeAnalyzer] Error convirtiendo count_raw_expr a LaTeX: {e}")
+                    print(
+                        f"[IterativeAnalyzer] Error convirtiendo count_raw_expr a LaTeX: {e}"
+                    )
                     # Fallback: usar count_raw si está disponible
                     if not isinstance(count_raw_latex, str):
                         # Si count_raw_expr es 0, mantener "0"
@@ -1209,7 +1269,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 ):
                     count_raw_latex = "0"
                 else:
-                    count_raw_latex = str(count_raw_latex) if count_raw_latex is not None else "1"
+                    count_raw_latex = (
+                        str(count_raw_latex) if count_raw_latex is not None else "1"
+                    )
 
             # Sustituir alias en LaTeX cuando no hay expr SymPy (para cierre por string)
             latex_for_close = count_raw_latex
@@ -1221,7 +1283,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
 
             # Cerrar sumatoria (trabaja con LaTeX por ahora, pero recibe SymPy internamente)
             try:
-                closed_count, steps = closer.close_summation(latex_for_close, variable or "n")
+                closed_count, steps = closer.close_summation(
+                    latex_for_close, variable or "n"
+                )
                 row["count_closed"] = closed_count
                 try:
                     parsed_closed = self._str_to_sympy(closed_count)
@@ -1251,7 +1315,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     if steps:
                         procedure_steps.extend(steps)
                     else:
-                        procedure_steps.append(f"E[N_{{{row.get('line', '?')}}}] = {closed_count}")
+                        procedure_steps.append(
+                            f"E[N_{{{row.get('line', '?')}}}] = {closed_count}"
+                        )
                     row["procedure"] = procedure_steps
                 else:
                     # Para worst/best, procedimiento normal
@@ -1260,7 +1326,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     else:
                         row["procedure"] = [count_raw_latex, closed_count]
             except Exception as e:
-                print(f"[IterativeAnalyzer] Error cerrando sumatoria para {count_raw_latex}: {e}")
+                print(
+                    f"[IterativeAnalyzer] Error cerrando sumatoria para {count_raw_latex}: {e}"
+                )
                 import traceback
 
                 traceback.print_exc()
@@ -1334,8 +1402,12 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     # Delegar el cálculo de la notación asintótica a ComplexityClasses.
                     t_open_latex = self._format_canonical_expr(t_open_expr)
                     self.big_o = complexity.calculate_big_o(t_open_latex, main_var)
-                    self.big_omega = complexity.calculate_big_omega(t_open_latex, main_var)
-                    self.big_theta = complexity.calculate_big_theta(t_open_latex, main_var)
+                    self.big_omega = complexity.calculate_big_omega(
+                        t_open_latex, main_var
+                    )
+                    self.big_theta = complexity.calculate_big_theta(
+                        t_open_latex, main_var
+                    )
             except Exception as e:
                 print(
                     f"[IterativeAnalyzer] Error calculando notaciones asintóticas desde expresión SymPy: {e}"
@@ -1420,7 +1492,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             return
 
         procedure_steps = []
-        counted_rows = [r for r in self.rows if r.get("ck") != "—" and r.get("count") != "—"]
+        counted_rows = [
+            r for r in self.rows if r.get("ck") != "—" and r.get("count") != "—"
+        ]
 
         # Paso 1: Definir el caso promedio y el modelo probabilístico.
         procedure_steps.append(
@@ -1433,7 +1507,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         if self.avg_model.mode == "uniform":
             procedure_steps.append("A(n) = \\frac{1}{|I_n|} \\sum_{I \\in I_n} T(I)")
         model_info = self.avg_model.get_model_info(locale=self.locale)
-        procedure_steps.append(self._note("proc_model_label", model_note=model_info["note"]))
+        procedure_steps.append(
+            self._note("proc_model_label", model_note=model_info["note"])
+        )
         if self.avg_model.has_symbols():
             procedure_steps.append(self._note("hypotheses_symbolic"))
 
@@ -1451,14 +1527,18 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
             if count_raw.replace(" ", "") == count_closed.replace(" ", ""):
                 procedure_steps.append(f"E[N_{{{line_no}}}] = {count_closed}")
             else:
-                procedure_steps.append(f"E[N_{{{line_no}}}] = {count_raw} = {count_closed}")
+                procedure_steps.append(
+                    f"E[N_{{{line_no}}}] = {count_raw} = {count_closed}"
+                )
 
             row_steps = row.get("procedure") or []
             has_sum_steps = isinstance(row_steps, list) and any(
                 isinstance(s, str) and "\\sum" in s for s in row_steps
             )
             if has_sum_steps and len(row_steps) > 1:
-                procedure_steps.append(self._note("proc_iter_summation_resolution", line=line_no))
+                procedure_steps.append(
+                    self._note("proc_iter_summation_resolution", line=line_no)
+                )
                 for step in row_steps:
                     if isinstance(step, str) and step.strip() and step.strip() != "0":
                         procedure_steps.append(step)
@@ -1474,7 +1554,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         raw_sum_expr = sum_expressions["raw"]
         closed_sum_expr = sum_expressions["closed"]
         has_raw_summations = any(
-            "\\sum" in str(row.get("count_raw", row.get("count", "1"))) for row in counted_rows
+            "\\sum" in str(row.get("count_raw", row.get("count", "1")))
+            for row in counted_rows
         )
 
         if has_unbounded:
@@ -1545,7 +1626,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         if mode == "avg":
             return
 
-        counted_rows = [r for r in self.rows if r.get("ck") != "—" and r.get("count") != "—"]
+        counted_rows = [
+            r for r in self.rows if r.get("ck") != "—" and r.get("count") != "—"
+        ]
 
         symbol_name = "T(n)"
 
@@ -1609,7 +1692,8 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         raw_sum_expr = sum_expressions["raw"]
         closed_sum_expr = sum_expressions["closed"]
         has_raw_summations = any(
-            "\\sum" in str(row.get("count_raw", row.get("count", "1"))) for row in counted_rows
+            "\\sum" in str(row.get("count_raw", row.get("count", "1")))
+            for row in counted_rows
         )
 
         # Paso 3: T(n) completa
@@ -1647,7 +1731,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
         # Paso 4: simplificación y notación asintótica
         procedure_steps.append(self._note("proc_iter_step4"))
         if t_open_expr is not None and not has_unbounded:
-            procedure_steps.append(f"{symbol_name} = {self._format_canonical_expr(t_open_expr)}")
+            procedure_steps.append(
+                f"{symbol_name} = {self._format_canonical_expr(t_open_expr)}"
+            )
         if self.big_o:
             procedure_steps.append(f"{symbol_name} = {self.big_o}")
         if self.big_omega:
@@ -1726,7 +1812,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                     f"Solo se permiten variables de tamaño (n, m, etc.), símbolos C_k y t_*. Expresión: {result}"
                 )
 
-    def _latex_to_sympy_expr(self, latex_str: str, variable: str = "n") -> Optional[Expr]:
+    def _latex_to_sympy_expr(
+        self, latex_str: str, variable: str = "n"
+    ) -> Optional[Expr]:
         """
         Convierte una expresión LaTeX a SymPy Expr.
 
@@ -1768,7 +1856,9 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
 
             return sympify(expr_str, locals=syms)
         except Exception as e:
-            print(f"[IterativeAnalyzer] Error en _latex_to_sympy_expr para {latex_str}: {e}")
+            print(
+                f"[IterativeAnalyzer] Error en _latex_to_sympy_expr para {latex_str}: {e}"
+            )
             return None
 
     def visit(self, node: Any, mode: str = "worst") -> None:

@@ -14,5 +14,7 @@ END
 
 
 def test_tribonacci_heavy_case_remains_stable():
-    result = analyze_algorithm(TRIBONACCI, mode="worst", preferred_method="characteristic_equation")
+    result = analyze_algorithm(
+        TRIBONACCI, mode="worst", preferred_method="characteristic_equation"
+    )
     assert result.get("ok"), result.get("errors", [])

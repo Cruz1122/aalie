@@ -15,7 +15,9 @@ END
 
 
 def test_tribonacci_oracle_characteristic():
-    result = analyze_algorithm(TRIBONACCI, mode="worst", preferred_method="characteristic_equation")
+    result = analyze_algorithm(
+        TRIBONACCI, mode="worst", preferred_method="characteristic_equation"
+    )
     assert result.get("ok"), result.get("errors", [])
     char_eq = result.get("totals", {}).get("characteristic_equation", {})
     assert char_eq.get("method") == "characteristic_equation"

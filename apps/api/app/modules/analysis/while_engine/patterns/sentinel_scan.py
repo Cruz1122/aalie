@@ -39,7 +39,10 @@ def _find_monotone_linear_index(updates: Any) -> Optional[str]:
             continue
         for u in getattr(summary, "must_updates", []) or []:
             if u.get("type") == "num" and u.get("monotone") is True:
-                if u.get("operator") == "+" and str(u.get("constant", "")).strip() == "1":
+                if (
+                    u.get("operator") == "+"
+                    and str(u.get("constant", "")).strip() == "1"
+                ):
                     return str(v_name)
     return None
 
@@ -83,4 +86,3 @@ class SentinelScanPattern(WhilePattern):
 
     def explain(self, while_ctx: Dict[str, Any]) -> list:
         return ["Sentinel scan: i increases by 1 until A[i] == x"]
-

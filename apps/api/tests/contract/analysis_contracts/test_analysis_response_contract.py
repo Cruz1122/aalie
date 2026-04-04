@@ -1,7 +1,10 @@
 import pytest
 
 from app.modules.analysis.service import analyze_algorithm
-from tests._shared.helpers.contract_asserts import assert_case_shape, assert_contract_shape
+from tests._shared.helpers.contract_asserts import (
+    assert_case_shape,
+    assert_contract_shape,
+)
 
 pytestmark = [pytest.mark.contract]
 

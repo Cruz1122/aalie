@@ -26,7 +26,9 @@ END
     assert res.status_code == 200
     payload = res.json()
     assert payload["ok"] is True
-    notation = payload["totals"].get("big_theta", "") or payload["totals"].get("big_o", "")
+    notation = payload["totals"].get("big_theta", "") or payload["totals"].get(
+        "big_o", ""
+    )
     assert notation_has_complexity(notation, "quadratic")
 
 
@@ -43,12 +45,16 @@ END
     assert res.status_code == 200
     payload = res.json()
     assert payload["ok"] is True
-    notation = payload["totals"].get("big_theta", "") or payload["totals"].get("big_o", "")
+    notation = payload["totals"].get("big_theta", "") or payload["totals"].get(
+        "big_o", ""
+    )
     assert notation_has_complexity(notation, "log")
 
 
 def test_analyze_open_surfaces_invalid_source_as_error_payload():
-    res = client.post("/analyze/open", json={"source": "invalid code {", "mode": "worst"})
+    res = client.post(
+        "/analyze/open", json={"source": "invalid code {", "mode": "worst"}
+    )
     assert res.status_code == 200
     payload = res.json()
     assert payload["ok"] is False

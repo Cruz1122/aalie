@@ -49,7 +49,11 @@ class IfVisitor:
 
         # 1) Guardia: siempre se evalúa una vez
         ck_guard = self.C()  # generar siguiente constante
-        ops = self._ops_of_expr(node.get("test", {})) if hasattr(self, "_ops_of_expr") else 1
+        ops = (
+            self._ops_of_expr(node.get("test", {}))
+            if hasattr(self, "_ops_of_expr")
+            else 1
+        )
         ops = max(1, ops)  # al menos 1 (comparación)
         self.add_row(
             line=line,
@@ -142,7 +146,10 @@ class IfVisitor:
             # Helper para detectar si una rama contiene early returns
             def has_early_return(rows):
                 for row in rows:
-                    if row.get("kind") in ("return", "break") and row.get("count") != "1":
+                    if (
+                        row.get("kind") in ("return", "break")
+                        and row.get("count") != "1"
+                    ):
                         return True
                 return False
 
@@ -280,11 +287,15 @@ class IfVisitor:
                                 if hasattr(var_sym, "name"):
                                     context = {"loop_var": var_sym.name}
                         p_str = self.avg_model.get_probability(condition_str, context)
-                        p_sympy = self.avg_model.get_probability_sympy(condition_str, context)
+                        p_sympy = self.avg_model.get_probability_sympy(
+                            condition_str, context
+                        )
 
                     # Aplicar probabilidades normalmente
                     if then_buf:
-                        then_multiplied = multiply_by_probability(then_buf, p_sympy, p_str, "then")
+                        then_multiplied = multiply_by_probability(
+                            then_buf, p_sympy, p_str, "then"
+                        )
                         self.rows.extend(then_multiplied)
                     if else_buf:
                         one_minus_p_sympy = Integer(1) - p_sympy
@@ -327,7 +338,9 @@ class IfVisitor:
 
             # Procesar THEN con probabilidad p
             if then_buf:
-                then_multiplied = multiply_by_probability(then_buf, p_sympy, p_str, "then")
+                then_multiplied = multiply_by_probability(
+                    then_buf, p_sympy, p_str, "then"
+                )
                 self.rows.extend(then_multiplied)
 
             # Procesar ELSE con probabilidad (1-p)

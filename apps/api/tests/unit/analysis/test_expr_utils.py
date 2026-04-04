@@ -19,7 +19,6 @@ from app.modules.analysis.ir.expr_utils import (
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-
 class TestExprToStr:
     def test_none(self):
         assert expr_to_str(None) == ""

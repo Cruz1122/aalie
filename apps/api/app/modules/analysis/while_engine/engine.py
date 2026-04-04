@@ -15,16 +15,16 @@ from .classifier import classify_while
 from .control_variables import detect_control_variables
 from .guard_analysis import analyze_guard_for_engine
 from .patterns.binary_search_interval import BinarySearchIntervalPattern
-from .patterns.gap_shrink_then_scan import GapShrinkThenScanPattern
 from .patterns.euclid_mod import EuclidModPattern
-from .patterns.sentinel_scan import SentinelScanPattern
 from .patterns.flag_kill import FlagKillPattern
+from .patterns.gap_shrink_then_scan import GapShrinkThenScanPattern
 from .patterns.geometric_growth import GeometricGrowthPattern
-from .patterns.phase_loop_composition import PhaseLoopCompositionPattern
 from .patterns.gnome_sort_cursor import GnomeSortCursorPattern
 from .patterns.interval_shrink import IntervalShrinkPattern
-from .patterns.merge_two_pointers import MergeTwoPointersPattern
 from .patterns.linear_counter import LinearCounterPattern
+from .patterns.merge_two_pointers import MergeTwoPointersPattern
+from .patterns.phase_loop_composition import PhaseLoopCompositionPattern
+from .patterns.sentinel_scan import SentinelScanPattern
 from .patterns.shrinking_window_bidirectional import (
     ShrinkingWindowBidirectionalPattern,
 )
@@ -177,7 +177,11 @@ class WhileEngine:
         body = node.get("body")
         mode = input_data.mode
         parent = input_data.parent_context
-        L = node.get("pos", {}).get("line", 0) if isinstance(node.get("pos"), dict) else 0
+        L = (
+            node.get("pos", {}).get("line", 0)
+            if isinstance(node.get("pos"), dict)
+            else 0
+        )
 
         # 1) Guard
         guard = analyze_guard_for_engine(test)
@@ -232,7 +236,9 @@ class WhileEngine:
         control = detect_control_variables(guard, updates, input_data.symbol_table)
 
         # Extraer variable, limit, change_rule para visitor
-        var_name = evidence.get("var") or (control.primary_numeric_controller if control else None)
+        var_name = evidence.get("var") or (
+            control.primary_numeric_controller if control else None
+        )
         limit = evidence.get("limit", "n")
         op_rel = evidence.get("op", "<")
         change_rule = {}
@@ -260,7 +266,9 @@ class WhileEngine:
         for pattern_name, pattern in _PATTERNS:
             if pattern.matches(while_ctx):
                 iter_result = pattern.derive_iterations(while_ctx)
-                pattern_reason_code = getattr(iter_result, "reason_code", None) or reason_code
+                pattern_reason_code = (
+                    getattr(iter_result, "reason_code", None) or reason_code
+                )
                 # El patrón es autoritativo: usar su cota cuando coincida
                 if iter_result.exact_symbolic_bound:
                     iterations_expr = iter_result.exact_symbolic_bound
@@ -273,8 +281,12 @@ class WhileEngine:
                 iterations_class = getattr(
                     iter_result, "iterations_class", None
                 ) or self._infer_iterations_class(iterations_expr, asymptotic_class)
-                effective_status = "bounded" if iter_result.exact_symbolic_bound else "unknown"
-                block_status = "available" if iter_result.exact_symbolic_bound else "partial"
+                effective_status = (
+                    "bounded" if iter_result.exact_symbolic_bound else "unknown"
+                )
+                block_status = (
+                    "available" if iter_result.exact_symbolic_bound else "partial"
+                )
                 dominant_controller = (
                     control.primary_numeric_controller
                     or control.primary_boolean_controller
@@ -291,13 +303,17 @@ class WhileEngine:
                     evidence_level=getattr(iter_result, "evidence_level", None),
                     reason_code=pattern_reason_code,
                     dominant_controller=dominant_controller,
-                    iterations_expr=(iterations_expr if iter_result.exact_symbolic_bound else None),
+                    iterations_expr=(
+                        iterations_expr if iter_result.exact_symbolic_bound else None
+                    ),
                     iterations_class=iterations_class,
                     diagnostics=pattern.explain(while_ctx),
                 )
                 return WhileAnalysisResult(
                     status=effective_status,
-                    termination=("proven_terminating" if progress.proven else "not_proven"),
+                    termination=(
+                        "proven_terminating" if progress.proven else "not_proven"
+                    ),
                     iterations_expr=iterations_expr,
                     asymptotic_class=asymptotic_class,
                     dominant_controller=dominant_controller,

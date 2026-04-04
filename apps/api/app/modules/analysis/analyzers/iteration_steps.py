@@ -214,7 +214,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             "final_expression_built": _title(
                 ctx.locale, "Forma final de T(n)", "Final T(n) expression"
             ),
-            "dominant_term_identified": _title(ctx.locale, "Término dominante", "Dominant term"),
+            "dominant_term_identified": _title(
+                ctx.locale, "Término dominante", "Dominant term"
+            ),
             "asymptotic_concluded": _title(
                 ctx.locale, "Conclusión asintótica", "Asymptotic conclusion"
             ),
@@ -255,7 +257,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             index=2,
             step_id="iter_s2",
             kind="applicability_validated",
-            title=_title(ctx.locale, "Validación de aplicabilidad", "Applicability validation"),
+            title=_title(
+                ctx.locale, "Validación de aplicabilidad", "Applicability validation"
+            ),
             status="complete",
             confidence="high",
             summary_key="iteration.applicability_validated.supported",
@@ -281,12 +285,18 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             ),
             concept_key="concept.iteration.base_case_identified",
             warning_key=(
-                "warning.iteration.missing_base_case" if step3_status == "partial" else None
+                "warning.iteration.missing_base_case"
+                if step3_status == "partial"
+                else None
             ),
             primary_latex=(
                 f"T({ctx.base_case_index})={ctx.base_case_value}"
                 if ctx.base_case_index is not None and ctx.base_case_value is not None
-                else (f"T({ctx.base_case_index})" if ctx.base_case_index is not None else None)
+                else (
+                    f"T({ctx.base_case_index})"
+                    if ctx.base_case_index is not None
+                    else None
+                )
             ),
             payload={
                 "baseCase": {
@@ -339,7 +349,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             index=5,
             step_id="iter_s5",
             kind="k_pattern_generalized",
-            title=_title(ctx.locale, "Patrón tras k expansiones", "Pattern after k expansions"),
+            title=_title(
+                ctx.locale, "Patrón tras k expansiones", "Pattern after k expansions"
+            ),
             status="complete",
             confidence="high",
             summary_key="iteration.k_pattern_generalized.standard",
@@ -387,7 +399,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             index=7,
             step_id="iter_s7",
             kind="summation_built",
-            title=_title(ctx.locale, "Construcción de sumatoria", "Summation construction"),
+            title=_title(
+                ctx.locale, "Construcción de sumatoria", "Summation construction"
+            ),
             status="complete",
             confidence="high",
             summary_key="iteration.summation_built.standard",
@@ -412,7 +426,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             index=8,
             step_id="iter_s8",
             kind="summation_simplified",
-            title=_title(ctx.locale, "Simplificación de sumatoria", "Summation simplification"),
+            title=_title(
+                ctx.locale, "Simplificación de sumatoria", "Summation simplification"
+            ),
             status=step8_status,
             confidence="medium" if step8_status == "partial" else "high",
             summary_key=(
@@ -422,13 +438,17 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             ),
             concept_key="concept.iteration.summation_simplified",
             warning_key=(
-                "warning.iteration.summation_partial" if step8_status == "partial" else None
+                "warning.iteration.summation_partial"
+                if step8_status == "partial"
+                else None
             ),
             primary_latex=ctx.summation_evaluated,
             payload={
                 "symbolicResult": ctx.summation_evaluated,
                 "supportReason": (
-                    "ITER_SUMMATION_PARTIAL" if step8_status == "partial" else "complete"
+                    "ITER_SUMMATION_PARTIAL"
+                    if step8_status == "partial"
+                    else "complete"
                 ),
             },
             derivation={
@@ -439,7 +459,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
     )
 
     step9_status: StepStatus = (
-        "partial" if step3_status == "partial" or step8_status == "partial" else "complete"
+        "partial"
+        if step3_status == "partial" or step8_status == "partial"
+        else "complete"
     )
     steps.append(
         make_recursive_step(
@@ -490,7 +512,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
         )
     )
 
-    has_prior_partial = any(s.get("status") in {"partial", "unsupported", "error"} for s in steps)
+    has_prior_partial = any(
+        s.get("status") in {"partial", "unsupported", "error"} for s in steps
+    )
     step11_status: StepStatus = (
         "partial" if has_prior_partial or ctx.asymptotic_partial else "complete"
     )
@@ -521,7 +545,9 @@ def build_iteration_step_bundle(ctx: IterationStepContext) -> Dict[str, Any]:
             payload={
                 "asymptoticResult": ctx.theta,
                 "supportReason": (
-                    "ITER_ASYMPTOTIC_HEURISTIC" if ctx.asymptotic_partial else "complete"
+                    "ITER_ASYMPTOTIC_HEURISTIC"
+                    if ctx.asymptotic_partial
+                    else "complete"
                 ),
             },
             derivation={

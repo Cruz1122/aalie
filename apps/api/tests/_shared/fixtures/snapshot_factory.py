@@ -37,7 +37,10 @@ def build_minimal_snapshot_payload(source: str) -> dict:
         "locale": "en",
         "includeTraceCases": ["worst"],
         "cachedParse": parse_res,
-        "cachedClassify": {"kind": classify_res.get("kind"), "method": classify_res.get("method")},
+        "cachedClassify": {
+            "kind": classify_res.get("kind"),
+            "method": classify_res.get("method"),
+        },
         "cachedAnalyze": analyze_res,
         "cachedTraceByCase": {"worst": trace_res},
     }

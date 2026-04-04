@@ -87,4 +87,6 @@ class MergeTwoPointersPattern(WhilePattern):
         )
 
     def explain(self, while_ctx: Dict[str, Any]) -> list:
-        return ["Merge two pointers: AND of two bounds; each iteration advances one index"]
+        return [
+            "Merge two pointers: AND of two bounds; each iteration advances one index"
+        ]

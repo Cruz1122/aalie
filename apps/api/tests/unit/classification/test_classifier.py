@@ -18,7 +18,6 @@ from app.modules.classification.classifier import (
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-
 class TestDetectAlgorithmKind:
     """Tests para la función detect_algorithm_kind."""
 

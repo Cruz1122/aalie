@@ -141,7 +141,9 @@ _MASTER_TITLE_TRANSLATIONS_ES = {
     "Asymptotic conclusion": "Conclusión asintótica",
 }
 
-_MASTER_TITLE_TRANSLATIONS_EN = {value: key for key, value in _MASTER_TITLE_TRANSLATIONS_ES.items()}
+_MASTER_TITLE_TRANSLATIONS_EN = {
+    value: key for key, value in _MASTER_TITLE_TRANSLATIONS_ES.items()
+}
 
 _MASTER_TEXT_TRANSLATIONS_ES = {
     "The recurrence is classified as Case 1.": "La recurrencia se clasifica como Caso 1.",
@@ -155,7 +157,9 @@ _MASTER_TEXT_TRANSLATIONS_ES = {
     "Master Theorem is not applicable for this recurrence under current coverage.": "Se concluye que el Teorema Maestro no aplica en esta recurrencia bajo cobertura actual.",
 }
 
-_MASTER_TEXT_TRANSLATIONS_EN = {value: key for key, value in _MASTER_TEXT_TRANSLATIONS_ES.items()}
+_MASTER_TEXT_TRANSLATIONS_EN = {
+    value: key for key, value in _MASTER_TEXT_TRANSLATIONS_ES.items()
+}
 
 
 def _localize_analysis_text(value: Any, i18n: Dict[str, Any]) -> str:
@@ -208,7 +212,9 @@ def _localize_analysis_text(value: Any, i18n: Dict[str, Any]) -> str:
     return text
 
 
-def _build_line_cost_table(line_costs: List[Dict[str, Any]], i18n: Dict[str, Any]) -> DocumentTable:
+def _build_line_cost_table(
+    line_costs: List[Dict[str, Any]], i18n: Dict[str, Any]
+) -> DocumentTable:
     headers = (
         ["Línea", "Tipo", "Costo base", "Conteo (sumatoria)", "Conteo simplificado"]
         if i18n["locale"] == "es"
@@ -293,12 +299,18 @@ def _format_linear_expression(value: Dict[str, int]) -> str:
     return " ".join(pieces)
 
 
-def _build_count_summation_expression(line_costs: List[Dict[str, Any]]) -> Dict[str, Optional[str]]:
+def _build_count_summation_expression(
+    line_costs: List[Dict[str, Any]]
+) -> Dict[str, Optional[str]]:
     terms = [
-        _normalize_math_expression(str(line.get("count") or line.get("count_raw") or "0"))
+        _normalize_math_expression(
+            str(line.get("count") or line.get("count_raw") or "0")
+        )
         for line in line_costs
     ]
-    structural = " + ".join(_wrap_summation_term(term) for term in terms) if terms else "0"
+    structural = (
+        " + ".join(_wrap_summation_term(term) for term in terms) if terms else "0"
+    )
     parsed = [_parse_linear_count_expression(term) for term in terms]
     if any(item is None for item in parsed):
         return {"structural": structural, "simplified": None}
@@ -327,7 +339,11 @@ def _ensure_tn_prefix(expression: str) -> str:
     normalized = str(expression).strip()
     if not normalized:
         return normalized
-    return normalized if re.match(r"^T\s*\(\s*n\s*\)\s*=", normalized) else f"T(n) = {normalized}"
+    return (
+        normalized
+        if re.match(r"^T\s*\(\s*n\s*\)\s*=", normalized)
+        else f"T(n) = {normalized}"
+    )
 
 
 def _extract_selected_loop_lines(
@@ -342,7 +358,9 @@ def _extract_selected_loop_lines(
     for line_number in range(line_start, line_end + 1):
         if line_number - 1 >= len(source_lines):
             continue
-        picked.append({"lineNumber": line_number, "text": source_lines[line_number - 1].rstrip()})
+        picked.append(
+            {"lineNumber": line_number, "text": source_lines[line_number - 1].rstrip()}
+        )
     return picked
 
 
@@ -379,12 +397,16 @@ def _build_executive_summary_section(
         ((iterative.get("data") or {}).get("loopInvariant") or {}).get("data")
         if snapshot.get("algorithmType") == "iterative"
         and is_section_available(iterative)
-        and is_section_available(((iterative.get("data") or {}).get("loopInvariant") or {}))
+        and is_section_available(
+            ((iterative.get("data") or {}).get("loopInvariant") or {})
+        )
         else None
     )
     if snapshot.get("algorithmType") == "iterative":
         behaviour = ""
-        if isinstance(loop_invariant, dict) and isinstance(loop_invariant.get("behaviour"), str):
+        if isinstance(loop_invariant, dict) and isinstance(
+            loop_invariant.get("behaviour"), str
+        ):
             behaviour = (
                 loop_invariant["behaviour"]
                 .strip()
@@ -418,12 +440,15 @@ def _build_executive_summary_section(
         )
     blocks.append({"kind": "paragraph", "text": i18n["parseSummaryOk"]})
     global_cases = (snapshot.get("globalResult") or {}).get("cases") or {}
-    available_cases = [case_name for case_name in CASE_ORDER if global_cases.get(case_name)]
+    available_cases = [
+        case_name for case_name in CASE_ORDER if global_cases.get(case_name)
+    ]
     if available_cases:
         complexity_by_case = [
             {
                 "caseName": case_name,
-                "complexity": pick_case_complexity(snapshot, case_name) or i18n["notAvailable"],
+                "complexity": pick_case_complexity(snapshot, case_name)
+                or i18n["notAvailable"],
             }
             for case_name in available_cases
         ]
@@ -470,7 +495,9 @@ def _build_executive_summary_section(
         blocks.append(
             {
                 "kind": "paragraph",
-                "text": localize(i18n, "Advertencias detectadas:", "Detected warnings:"),
+                "text": localize(
+                    i18n, "Advertencias detectadas:", "Detected warnings:"
+                ),
             }
         )
         blocks.append({"kind": "list", "items": warning_items})
@@ -482,7 +509,8 @@ def _build_executive_summary_section(
 def _build_pseudocode_section(snapshot: Dict[str, Any]) -> DocumentSection:
     return DocumentSection(
         id="pseudocode",
-        title=((snapshot.get("meta") or {}).get("algorithm") or {}).get("name") or "algorithm",
+        title=((snapshot.get("meta") or {}).get("algorithm") or {}).get("name")
+        or "algorithm",
         blocks=[
             {
                 "kind": "code",
@@ -493,14 +521,19 @@ def _build_pseudocode_section(snapshot: Dict[str, Any]) -> DocumentSection:
     )
 
 
-def _build_global_result_section(snapshot: Dict[str, Any], i18n: Dict[str, Any]) -> DocumentSection:
+def _build_global_result_section(
+    snapshot: Dict[str, Any], i18n: Dict[str, Any]
+) -> DocumentSection:
     blocks: List[Dict[str, Any]] = []
     global_cases = (snapshot.get("globalResult") or {}).get("cases") or {}
-    available_cases = [case_name for case_name in CASE_ORDER if global_cases.get(case_name)]
+    available_cases = [
+        case_name for case_name in CASE_ORDER if global_cases.get(case_name)
+    ]
     complexity_by_case = [
         {
             "caseName": case_name,
-            "complexity": pick_case_complexity(snapshot, case_name) or i18n["notAvailable"],
+            "complexity": pick_case_complexity(snapshot, case_name)
+            or i18n["notAvailable"],
         }
         for case_name in available_cases
     ]
@@ -573,12 +606,16 @@ def _build_global_result_section(snapshot: Dict[str, Any], i18n: Dict[str, Any])
                 blocks.append(
                     {
                         "kind": "list",
-                        "items": [_localize_analysis_text(item, i18n) for item in steps],
+                        "items": [
+                            _localize_analysis_text(item, i18n) for item in steps
+                        ],
                     }
                 )
     if not blocks:
         blocks.append({"kind": "paragraph", "text": i18n["pedagogicalNoData"]})
-    return DocumentSection(id="global-result", title=i18n["globalResultTitle"], blocks=blocks)
+    return DocumentSection(
+        id="global-result", title=i18n["globalResultTitle"], blocks=blocks
+    )
 
 
 def _build_hybrid_process_section(
@@ -595,7 +632,9 @@ def _build_hybrid_process_section(
         },
         {
             "kind": "subsection",
-            "title": localize(i18n, "Proceso de análisis híbrido", "Hybrid analysis process"),
+            "title": localize(
+                i18n, "Proceso de análisis híbrido", "Hybrid analysis process"
+            ),
         },
         {
             "kind": "list",
@@ -624,7 +663,9 @@ def _build_hybrid_process_section(
         },
     ]
     global_cases = (snapshot.get("globalResult") or {}).get("cases") or {}
-    available_cases = [case_name for case_name in CASE_ORDER if global_cases.get(case_name)]
+    available_cases = [
+        case_name for case_name in CASE_ORDER if global_cases.get(case_name)
+    ]
     if available_cases:
         blocks.extend(
             [
@@ -642,7 +683,8 @@ def _build_hybrid_process_section(
                         rows=[
                             [
                                 _case_label(case_name, i18n),
-                                pick_case_complexity(snapshot, case_name) or i18n["notAvailable"],
+                                pick_case_complexity(snapshot, case_name)
+                                or i18n["notAvailable"],
                             ]
                             for case_name in available_cases
                         ],
@@ -652,7 +694,9 @@ def _build_hybrid_process_section(
             ]
         )
     recursive = snapshot.get("recursive") or {}
-    selected_method_section = ((recursive.get("data") or {}).get("selectedMethod")) or {}
+    selected_method_section = (
+        (recursive.get("data") or {}).get("selectedMethod")
+    ) or {}
     if is_section_available(selected_method_section):
         method = selected_method_section.get("data")
         blocks.append(
@@ -686,11 +730,16 @@ def _normalize_iterative_trace_steps(steps: Iterable[Any]) -> List[_IterativeTra
         iteration = None
         if iteration_raw:
             iteration = {}
-            if isinstance(iteration_raw.get("loopVar"), str) and iteration_raw["loopVar"].strip():
+            if (
+                isinstance(iteration_raw.get("loopVar"), str)
+                and iteration_raw["loopVar"].strip()
+            ):
                 iteration["loopVar"] = iteration_raw["loopVar"]
             current_value = _as_number(iteration_raw.get("currentValue"))
             max_value = _as_number(iteration_raw.get("maxValue"))
-            iteration_index = _as_number(iteration_raw.get("iteration", iteration_raw.get("index")))
+            iteration_index = _as_number(
+                iteration_raw.get("iteration", iteration_raw.get("index"))
+            )
             if current_value is not None:
                 iteration["currentValue"] = current_value
             if max_value is not None:
@@ -699,11 +748,15 @@ def _normalize_iterative_trace_steps(steps: Iterable[Any]) -> List[_IterativeTra
                 iteration["iteration"] = iteration_index
         normalized.append(
             _IterativeTraceStep(
-                stepNumber=_as_number(raw.get("step_number", raw.get("stepNumber"))) or (index + 1),
+                stepNumber=_as_number(raw.get("step_number", raw.get("stepNumber")))
+                or (index + 1),
                 line=_as_number(raw.get("line")),
                 eventKind=str(raw.get("eventKind") or raw.get("kind") or "other"),
                 description=str(raw.get("description") or "").strip(),
-                variables=_as_record(raw.get("variablesSnapshot") or raw.get("variables")) or {},
+                variables=_as_record(
+                    raw.get("variablesSnapshot") or raw.get("variables")
+                )
+                or {},
                 variablesChanged=_as_record(
                     raw.get("variables_changed") or raw.get("variablesChanged")
                 )
@@ -729,7 +782,9 @@ def _format_state_value(value: Any) -> str:
         return f"[{preview}{', ...' if len(value) > 5 else ''}]"
     if isinstance(value, dict):
         items = list(value.items())[:3]
-        preview = ", ".join(f"{key}:{_format_state_value(nested)}" for key, nested in items)
+        preview = ", ".join(
+            f"{key}:{_format_state_value(nested)}" for key, nested in items
+        )
         return f"{{{preview}{', ...' if len(value) > 3 else ''}}}"
     return str(value)
 
@@ -761,7 +816,11 @@ def _build_changes(
         return [
             {
                 "name": name,
-                "before": ((previous or {}).get("variables", {}).get(name) if previous else None),
+                "before": (
+                    (previous or {}).get("variables", {}).get(name)
+                    if previous
+                    else None
+                ),
                 "after": after,
             }
             for name, after in changes_raw.items()
@@ -787,8 +846,12 @@ def _pick_relevant_state_variable_names(
     for index, step in enumerate(steps):
         previous = steps[index - 1] if index > 0 else None
         for change in _build_changes(step, previous):
-            change_frequency[change["name"]] = change_frequency.get(change["name"], 0) + 1
-    for name, _ in sorted(change_frequency.items(), key=lambda item: (-item[1], item[0])):
+            change_frequency[change["name"]] = (
+                change_frequency.get(change["name"], 0) + 1
+            )
+    for name, _ in sorted(
+        change_frequency.items(), key=lambda item: (-item[1], item[0])
+    ):
         if name not in seen:
             seen.add(name)
             preferred.append(name)
@@ -845,7 +908,10 @@ def _pick_stable_trace_inputs(
         is_stable = True
         for step in steps:
             variables = step.get("variables") or {}
-            if name not in variables or _stable_value_fingerprint(variables[name]) != fingerprint:
+            if (
+                name not in variables
+                or _stable_value_fingerprint(variables[name]) != fingerprint
+            ):
                 is_stable = False
                 break
         if is_stable:
@@ -857,7 +923,9 @@ def _build_step_context(step: _IterativeTraceStep, i18n: Dict[str, Any]) -> str:
     iteration = step.get("iteration") or {}
     if step["eventKind"] == "loop_enter" and iteration.get("loopVar"):
         return f"{iteration['loopVar']}={iteration.get('currentValue', '?')}..{iteration.get('maxValue', '?')}"
-    if step["eventKind"] in {"loop_iter_enter", "loop_iter_exit"} and iteration.get("loopVar"):
+    if step["eventKind"] in {"loop_iter_enter", "loop_iter_exit"} and iteration.get(
+        "loopVar"
+    ):
         return localize(
             i18n,
             f"iteración {iteration.get('iteration', '?')} ({iteration['loopVar']}={iteration.get('currentValue', '?')})",
@@ -886,18 +954,22 @@ def _build_case_trace_executive_items(
     case_name: str,
     i18n: Dict[str, Any],
 ) -> Dict[str, Any]:
-    loop_enter_step = next((step for step in steps if step["eventKind"] == "loop_enter"), None)
+    loop_enter_step = next(
+        (step for step in steps if step["eventKind"] == "loop_enter"), None
+    )
     iteration_steps = [step for step in steps if step["eventKind"] == "loop_iter_enter"]
     first_iteration = iteration_steps[0] if iteration_steps else None
     last_iteration = iteration_steps[-1] if iteration_steps else None
     control_variable = (
         ((loop_enter_step or {}).get("iteration") or {}).get("loopVar")
         or ((first_iteration or {}).get("iteration") or {}).get("loopVar")
-        or (((selected_loop or {}).get("controlVariables") or [i18n["notAvailable"]])[0])
+        or (
+            ((selected_loop or {}).get("controlVariables") or [i18n["notAvailable"]])[0]
+        )
     )
-    min_control = (((loop_enter_step or {}).get("iteration") or {}).get("currentValue")) or (
-        ((first_iteration or {}).get("iteration") or {}).get("currentValue")
-    )
+    min_control = (
+        ((loop_enter_step or {}).get("iteration") or {}).get("currentValue")
+    ) or (((first_iteration or {}).get("iteration") or {}).get("currentValue"))
     max_control = (
         (((loop_enter_step or {}).get("iteration") or {}).get("maxValue"))
         or (((last_iteration or {}).get("iteration") or {}).get("currentValue"))
@@ -927,15 +999,19 @@ def _build_case_trace_executive_items(
     scalar_inputs = [
         entry for entry in stable_inputs if not isinstance(entry["value"], (list, dict))
     ]
-    tabulated_inputs = [entry for entry in stable_inputs if isinstance(entry["value"], list)]
+    tabulated_inputs = [
+        entry for entry in stable_inputs if isinstance(entry["value"], list)
+    ]
     scalar_summary = (
         ", ".join(
-            f"{entry['name']}={_format_state_value(entry['value'])}" for entry in scalar_inputs
+            f"{entry['name']}={_format_state_value(entry['value'])}"
+            for entry in scalar_inputs
         )
         or i18n["notAvailable"]
     )
     tabulated_summary = ", ".join(
-        f"{entry['name']}={_format_state_value(entry['value'])}" for entry in tabulated_inputs
+        f"{entry['name']}={_format_state_value(entry['value'])}"
+        for entry in tabulated_inputs
     ) or localize(i18n, "no reportados en el trace", "not reported in trace")
     return {
         "header": localize(
@@ -944,7 +1020,8 @@ def _build_case_trace_executive_items(
             f"Execution trace ({_case_label(case_name, i18n)} case)",
         ),
         "items": [
-            ((snapshot.get("meta") or {}).get("algorithm") or {}).get("name") or "algorithm",
+            ((snapshot.get("meta") or {}).get("algorithm") or {}).get("name")
+            or "algorithm",
             f"{localize(i18n, 'Total de pasos observados', 'Total observed steps')}: {len(steps)}",
             f"{localize(i18n, 'Total de iteraciones observadas del FOR', 'Observed FOR iterations')}: {len(iteration_steps)}",
             f"{localize(i18n, 'Variable de control', 'Control variable')}: {control_range}",
@@ -993,7 +1070,9 @@ def _build_iterative_trace_table(
                 _event_label(step["eventKind"], i18n),
                 _build_step_context(step, i18n),
                 _build_state_change_text(step, previous),
-                _build_relevant_state_snapshot(step, relevant_state_variables, previous),
+                _build_relevant_state_snapshot(
+                    step, relevant_state_variables, previous
+                ),
                 (
                     line_cost_by_line.get(line, step.get("cost") or "-")
                     if isinstance(line, int)
@@ -1037,10 +1116,16 @@ def _build_iterative_grouped_timeline_blocks(
         return []
     blocks: List[Dict[str, Any]] = []
     first_loop_enter_index = next(
-        (index for index, step in enumerate(steps) if step["eventKind"] == "loop_enter"),
+        (
+            index
+            for index, step in enumerate(steps)
+            if step["eventKind"] == "loop_enter"
+        ),
         -1,
     )
-    initialization_slice = steps[:first_loop_enter_index] if first_loop_enter_index > 0 else []
+    initialization_slice = (
+        steps[:first_loop_enter_index] if first_loop_enter_index > 0 else []
+    )
     initialization_items = []
     for index, step in enumerate(initialization_slice):
         summary = _summarize_step_for_timeline(
@@ -1053,12 +1138,16 @@ def _build_iterative_grouped_timeline_blocks(
             [
                 {
                     "kind": "heading",
-                    "text": localize(i18n, "Nivel 1: Inicialización", "Level 1: Initialization"),
+                    "text": localize(
+                        i18n, "Nivel 1: Inicialización", "Level 1: Initialization"
+                    ),
                 },
                 {"kind": "list", "items": initialization_items},
             ]
         )
-    loop_enter_step = steps[first_loop_enter_index] if first_loop_enter_index >= 0 else None
+    loop_enter_step = (
+        steps[first_loop_enter_index] if first_loop_enter_index >= 0 else None
+    )
     if loop_enter_step:
         iteration_data = loop_enter_step.get("iteration") or {}
         loop_var = iteration_data.get("loopVar") or "i"
@@ -1095,7 +1184,9 @@ def _build_iterative_grouped_timeline_blocks(
                 continue
             if step["eventKind"] == "return_emit":
                 break
-            summary = _summarize_step_for_timeline(step, steps[index - 1] if index > 0 else None)
+            summary = _summarize_step_for_timeline(
+                step, steps[index - 1] if index > 0 else None
+            )
             if not summary:
                 continue
             if current_iteration:
@@ -1125,7 +1216,11 @@ def _build_iterative_grouped_timeline_blocks(
                     {
                         "kind": "list",
                         "items": group["items"]
-                        or [localize(i18n, "Sin cambios relevantes", "No relevant changes")],
+                        or [
+                            localize(
+                                i18n, "Sin cambios relevantes", "No relevant changes"
+                            )
+                        ],
                     },
                 ]
             )
@@ -1161,7 +1256,9 @@ def _build_iterative_invariant_section(
     loop_invariant_section = ((iterative.get("data") or {}).get("loopInvariant")) or {}
     blocks: List[Dict[str, Any]] = []
     if not is_section_available(loop_invariant_section):
-        status_block = build_status_block("iterative.loopInvariant", loop_invariant_section, i18n)
+        status_block = build_status_block(
+            "iterative.loopInvariant", loop_invariant_section, i18n
+        )
         if status_block:
             blocks.append(status_block)
         return DocumentSection(
@@ -1197,7 +1294,9 @@ def _build_iterative_invariant_section(
             ),
             {
                 "kind": "subsection",
-                "title": localize(i18n, "Propiedad del invariante", "Invariant property"),
+                "title": localize(
+                    i18n, "Propiedad del invariante", "Invariant property"
+                ),
             },
             {
                 "kind": "paragraph",
@@ -1261,7 +1360,12 @@ def _build_iterative_case_analysis_section(
             (data.get("asymptoticProcedure") or {}).get(case_name) or []
         )
         global_case = global_cases.get(case_name) or {}
-        if not global_case and not line_costs and not asymptotic_procedure and not case_walkthrough:
+        if (
+            not global_case
+            and not line_costs
+            and not asymptotic_procedure
+            and not case_walkthrough
+        ):
             continue
         blocks.extend(
             [
@@ -1285,7 +1389,9 @@ def _build_iterative_case_analysis_section(
             blocks.append(
                 {
                     "kind": "subsection",
-                    "title": localize(i18n, "Desarrollo paso a paso", "Step-by-step walkthrough"),
+                    "title": localize(
+                        i18n, "Desarrollo paso a paso", "Step-by-step walkthrough"
+                    ),
                 }
             )
             for step in case_walkthrough:
@@ -1300,10 +1406,17 @@ def _build_iterative_case_analysis_section(
                             "explanation": _build_recursive_step_explanation(
                                 step.get("summary"), step.get("conceptNote"), i18n
                             ),
-                            "warning": _localize_analysis_text(step.get("warning"), i18n) or None,
+                            "warning": _localize_analysis_text(
+                                step.get("warning"), i18n
+                            )
+                            or None,
                             "supportReason": _localize_analysis_text(
                                 (
-                                    ((step.get("derivation") or {}).get("supportReason"))
+                                    (
+                                        (step.get("derivation") or {}).get(
+                                            "supportReason"
+                                        )
+                                    )
                                     if isinstance(step.get("derivation"), dict)
                                     else None
                                 ),
@@ -1322,14 +1435,18 @@ def _build_iterative_case_analysis_section(
             else count_sum["structural"]
         )
         final_complexity = (
-            global_case.get("big_theta") or global_case.get("big_o") or global_case.get("big_omega")
+            global_case.get("big_theta")
+            or global_case.get("big_o")
+            or global_case.get("big_omega")
         )
         simplified_cost = global_case.get("T_polynomial") or global_case.get("T_open")
         blocks.extend(
             [
                 {
                     "kind": "heading",
-                    "text": localize(i18n, "Suma de conteos por línea", "Sum of per-line counts"),
+                    "text": localize(
+                        i18n, "Suma de conteos por línea", "Sum of per-line counts"
+                    ),
                 },
                 {"kind": "formula", "formula": count_formula},
                 {
@@ -1342,7 +1459,9 @@ def _build_iterative_case_analysis_section(
                 },
                 {
                     "kind": "heading",
-                    "text": localize(i18n, "Forma simplificada del costo", "Simplified cost form"),
+                    "text": localize(
+                        i18n, "Forma simplificada del costo", "Simplified cost form"
+                    ),
                 },
                 {
                     "kind": "formula",
@@ -1419,13 +1538,16 @@ def _build_iterative_trace_section(
         {
             "caseName": case_name,
             "steps": _normalize_iterative_trace_steps(
-                (((trace_section.get("data") or {}).get(case_name)) or {}).get("steps") or []
+                (((trace_section.get("data") or {}).get(case_name)) or {}).get("steps")
+                or []
             ),
         }
         for case_name in CASE_ORDER
         if (((trace_section.get("data") or {}).get(case_name)) or {}).get("steps")
     ]
-    representative = next((entry for entry in trace_cases if entry["caseName"] == "worst"), None)
+    representative = next(
+        (entry for entry in trace_cases if entry["caseName"] == "worst"), None
+    )
     if not representative:
         return DocumentSection(
             id="iterative-trace",
@@ -1463,7 +1585,9 @@ def _build_iterative_trace_section(
         [
             {
                 "kind": "subsection",
-                "title": localize(i18n, "Capa 1: Resumen ejecutivo", "Layer 1: Executive summary"),
+                "title": localize(
+                    i18n, "Capa 1: Resumen ejecutivo", "Layer 1: Executive summary"
+                ),
             },
             {
                 "kind": "paragraph",
@@ -1510,7 +1634,9 @@ def _build_iterative_trace_section(
             *_build_iterative_grouped_timeline_blocks(representative["steps"], i18n),
         ]
     )
-    return DocumentSection(id="iterative-trace", title=i18n["traceTitle"], blocks=blocks)
+    return DocumentSection(
+        id="iterative-trace", title=i18n["traceTitle"], blocks=blocks
+    )
 
 
 def _method_precision_label(precision: str, i18n: Dict[str, Any]) -> str:
@@ -1521,7 +1647,9 @@ def _method_precision_label(precision: str, i18n: Dict[str, Any]) -> str:
     }.get(precision, precision)
 
 
-def _get_method_precision(method: str, recurrence_type: Optional[str], recommended: bool) -> str:
+def _get_method_precision(
+    method: str, recurrence_type: Optional[str], recommended: bool
+) -> str:
     if recommended:
         return "high"
     if recurrence_type in {"divide_conquer", "divide_conquer_multi"}:
@@ -1632,14 +1760,18 @@ def _get_not_applicable_method_reason(
     )
 
 
-def _build_recursive_call_trace_summary(trace: Dict[str, Any], i18n: Dict[str, Any]) -> List[str]:
+def _build_recursive_call_trace_summary(
+    trace: Dict[str, Any], i18n: Dict[str, Any]
+) -> List[str]:
     items: List[str] = []
     for case_name in CASE_ORDER:
         data = (trace or {}).get(case_name)
         if not isinstance(data, dict):
             continue
         summary = data.get("summary") if isinstance(data.get("summary"), dict) else {}
-        diagnostics = data.get("diagnostics") if isinstance(data.get("diagnostics"), dict) else {}
+        diagnostics = (
+            data.get("diagnostics") if isinstance(data.get("diagnostics"), dict) else {}
+        )
         truncated = (
             localize(i18n, "trazado truncado", "trace truncated")
             if diagnostics.get("truncated")
@@ -1662,10 +1794,14 @@ def _build_recursive_step_explanation(
         trimmed = value.strip()
         if trimmed.startswith("$$") and trimmed.endswith("$$") and len(trimmed) > 4:
             inner = trimmed[2:-2].strip()
-            return inner if re.search(r"[A-Za-zÀ-ÿ]", inner) and " " in inner else trimmed
+            return (
+                inner if re.search(r"[A-Za-zÀ-ÿ]", inner) and " " in inner else trimmed
+            )
         if trimmed.startswith("$") and trimmed.endswith("$") and len(trimmed) > 2:
             inner = trimmed[1:-1].strip()
-            return inner if re.search(r"[A-Za-zÀ-ÿ]", inner) and " " in inner else trimmed
+            return (
+                inner if re.search(r"[A-Za-zÀ-ÿ]", inner) and " " in inner else trimmed
+            )
         return trimmed
 
     summary_text = _localize_analysis_text(unwrap(str(summary or "")), i18n)
@@ -1687,7 +1823,9 @@ def _normalize_execution_trace_graph_payload(
         if isinstance((trace_case or {}).get("reportTraceGraph"), dict)
         else {}
     )
-    graph = report_trace.get("graph") if isinstance(report_trace.get("graph"), dict) else {}
+    graph = (
+        report_trace.get("graph") if isinstance(report_trace.get("graph"), dict) else {}
+    )
     nodes = [
         {
             "id": str(node.get("id") or "").strip(),
@@ -1701,7 +1839,9 @@ def _normalize_execution_trace_graph_payload(
                 "microseconds": ((node.get("data") or {}).get("microseconds")),
                 "tokens": ((node.get("data") or {}).get("tokens")),
             },
-            "parentId": (node.get("parentId") if isinstance(node.get("parentId"), str) else None),
+            "parentId": (
+                node.get("parentId") if isinstance(node.get("parentId"), str) else None
+            ),
         }
         for node in graph.get("nodes") or []
         if isinstance(node, dict) and str(node.get("id") or "").strip()
@@ -1723,7 +1863,9 @@ def _normalize_execution_trace_graph_payload(
         and str(edge.get("target") or "").strip() in node_ids
     ]
     summary = report_trace.get("summary") or ((trace_case or {}).get("summary")) or {}
-    diagnostics = report_trace.get("diagnostics") or ((trace_case or {}).get("diagnostics")) or {}
+    diagnostics = (
+        report_trace.get("diagnostics") or ((trace_case or {}).get("diagnostics")) or {}
+    )
     return {
         "title": "Seguimiento de ejecución recursiva",
         "caseName": "worst",
@@ -1758,7 +1900,9 @@ def _confidence_descriptor(confidence: str, i18n: Dict[str, Any]) -> str:
     }.get(confidence, confidence)
 
 
-def _explain_pattern_name(pattern_name: str, confidence: float, i18n: Dict[str, Any]) -> str:
+def _explain_pattern_name(
+    pattern_name: str, confidence: float, i18n: Dict[str, Any]
+) -> str:
     pct = f"{confidence * 100:.0f}%"
     key = str(pattern_name or "").lower()
     if key == "reduction":
@@ -1798,7 +1942,9 @@ def _pedagogical_hardware_reason(raw: str, i18n: Dict[str, Any]) -> str:
     return cleaned
 
 
-def _build_gpu_cpu_blocks(gpu_cpu: Dict[str, Any], i18n: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _build_gpu_cpu_blocks(
+    gpu_cpu: Dict[str, Any], i18n: Dict[str, Any]
+) -> List[Dict[str, Any]]:
     confidence_label = {
         "high": localize(i18n, "Alta", "High"),
         "medium": localize(i18n, "Media", "Medium"),
@@ -1947,7 +2093,10 @@ def _build_recursive_section(
             ]
         )
     methods_available_section = data.get("methodsAvailable") or {}
-    if is_section_available(methods_available_section) and methods_available_section["data"]:
+    if (
+        is_section_available(methods_available_section)
+        and methods_available_section["data"]
+    ):
         recurrence_type = (
             recurrence_section.get("data", {}).get("type")
             if is_section_available(recurrence_section)
@@ -1972,7 +2121,9 @@ def _build_recursive_section(
             else methods_available_section["data"][0]
         )
         available_set = set(methods_available_section["data"])
-        available_methods = [method for method in ALL_RECURSIVE_METHODS if method in available_set]
+        available_methods = [
+            method for method in ALL_RECURSIVE_METHODS if method in available_set
+        ]
         unavailable_methods = [
             method for method in ALL_RECURSIVE_METHODS if method not in available_set
         ]
@@ -2020,7 +2171,9 @@ def _build_recursive_section(
                 },
                 {
                     "kind": "subsection",
-                    "title": localize(i18n, "Métodos no disponibles", "Unavailable methods"),
+                    "title": localize(
+                        i18n, "Métodos no disponibles", "Unavailable methods"
+                    ),
                 },
                 {
                     "kind": "paragraph",
@@ -2054,7 +2207,9 @@ def _build_recursive_section(
             blocks.append(
                 {
                     "kind": "subsection",
-                    "title": localize(i18n, "Desarrollo paso a paso", "Step-by-step walkthrough"),
+                    "title": localize(
+                        i18n, "Desarrollo paso a paso", "Step-by-step walkthrough"
+                    ),
                 }
             )
             for step in steps:
@@ -2071,10 +2226,17 @@ def _build_recursive_section(
                             "explanation": _build_recursive_step_explanation(
                                 step.get("summary"), step.get("conceptNote"), i18n
                             ),
-                            "warning": _localize_analysis_text(step.get("warning"), i18n) or None,
+                            "warning": _localize_analysis_text(
+                                step.get("warning"), i18n
+                            )
+                            or None,
                             "supportReason": _localize_analysis_text(
                                 (
-                                    ((step.get("derivation") or {}).get("supportReason"))
+                                    (
+                                        (step.get("derivation") or {}).get(
+                                            "supportReason"
+                                        )
+                                    )
                                     if isinstance(step.get("derivation"), dict)
                                     else None
                                 ),
@@ -2125,7 +2287,9 @@ def _build_recursive_section(
                 (i18n["pedagogicalFinalComplexityLabel"], "theta"),
             ):
                 if closed_form.get(key):
-                    blocks.append({"kind": "formula", "label": label, "formula": closed_form[key]})
+                    blocks.append(
+                        {"kind": "formula", "label": label, "formula": closed_form[key]}
+                    )
     call_trace_section = data.get("callTrace") or {}
     if is_section_available(call_trace_section):
         trace_items = _build_recursive_call_trace_summary(
@@ -2193,7 +2357,9 @@ def _build_recursive_section(
             [
                 {
                     "kind": "subsection",
-                    "title": localize(i18n, "Conclusión asintótica", "Asymptotic conclusion"),
+                    "title": localize(
+                        i18n, "Conclusión asintótica", "Asymptotic conclusion"
+                    ),
                 },
                 {
                     "kind": "formula",
@@ -2256,7 +2422,9 @@ def _build_comparative_section(
                 [
                     {
                         "kind": "paragraph",
-                        "text": localize(i18n, "Coincidencias principales:", "Main matches:"),
+                        "text": localize(
+                            i18n, "Coincidencias principales:", "Main matches:"
+                        ),
                     },
                     {"kind": "list", "items": list(normalized.get("matches") or [])},
                 ]
@@ -2266,7 +2434,9 @@ def _build_comparative_section(
                 [
                     {
                         "kind": "paragraph",
-                        "text": localize(i18n, "Diferencias principales:", "Main differences:"),
+                        "text": localize(
+                            i18n, "Diferencias principales:", "Main differences:"
+                        ),
                     },
                     {
                         "kind": "list",
@@ -2285,7 +2455,9 @@ def _build_comparative_section(
     )
 
 
-def _build_conclusions_section(snapshot: Dict[str, Any], i18n: Dict[str, Any]) -> DocumentSection:
+def _build_conclusions_section(
+    snapshot: Dict[str, Any], i18n: Dict[str, Any]
+) -> DocumentSection:
     items: List[str] = []
     if snapshot.get("algorithmType") == "iterative":
         items.extend(
@@ -2308,7 +2480,9 @@ def _build_conclusions_section(snapshot: Dict[str, Any], i18n: Dict[str, Any]) -
                 "The loop invariant is consistent with state evolution and supports traversal correctness.",
             )
             if is_section_available(iterative)
-            and is_section_available(((iterative.get("data") or {}).get("loopInvariant") or {}))
+            and is_section_available(
+                ((iterative.get("data") or {}).get("loopInvariant") or {})
+            )
             else localize(
                 i18n,
                 "La validación del invariante quedó limitada por disponibilidad de datos.",
@@ -2372,7 +2546,9 @@ def _build_conclusions_section(snapshot: Dict[str, Any], i18n: Dict[str, Any]) -
             )
             recursive = snapshot.get("recursive") or {}
             selected_method = (
-                (((recursive.get("data") or {}).get("selectedMethod")) or {}).get("data")
+                (((recursive.get("data") or {}).get("selectedMethod")) or {}).get(
+                    "data"
+                )
                 if is_section_available(recursive)
                 else None
             )
@@ -2398,7 +2574,9 @@ def _build_conclusions_section(snapshot: Dict[str, Any], i18n: Dict[str, Any]) -
         if items
         else [{"kind": "paragraph", "text": i18n["pedagogicalNoData"]}]
     )
-    return DocumentSection(id="conclusions", title=i18n["conclusionsTitle"], blocks=blocks)
+    return DocumentSection(
+        id="conclusions", title=i18n["conclusionsTitle"], blocks=blocks
+    )
 
 
 def build_document_model(snapshot: Dict[str, Any]) -> DocumentModel:
@@ -2409,7 +2587,9 @@ def build_document_model(snapshot: Dict[str, Any]) -> DocumentModel:
         institutionLineC=i18n["institutionLineC"],
         reportCode=f"AALIE-EXP-{str(snapshot.get('snapshotId') or '')[:8].upper()}",
         reportVersion=f"snapshot-{snapshot.get('schemaVersion')}",
-        reportDate=_parse_date_for_report(i18n["locale"], str(snapshot.get("createdAt") or "")),
+        reportDate=_parse_date_for_report(
+            i18n["locale"], str(snapshot.get("createdAt") or "")
+        ),
     )
     algorithm_type = snapshot.get("algorithmType")
     if algorithm_type == "iterative":
@@ -2431,7 +2611,9 @@ def build_document_model(snapshot: Dict[str, Any]) -> DocumentModel:
             (
                 _build_iterative_invariant_section(snapshot, i18n)
                 if is_section_available(iterative)
-                and is_section_available(((iterative.get("data") or {}).get("loopInvariant") or {}))
+                and is_section_available(
+                    ((iterative.get("data") or {}).get("loopInvariant") or {})
+                )
                 else None
             ),
             _build_recursive_section(snapshot, i18n),

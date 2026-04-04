@@ -75,7 +75,9 @@ def explain_step(step: Dict[str, Any], locale: str = "en") -> str:
         result = decision.get("result", False)
         if locale == "en":
             return f"The condition {cond} evaluates to {str(result).lower()}."
-        return _t("condition_eval_true" if result else "condition_eval_false", condition=cond)
+        return _t(
+            "condition_eval_true" if result else "condition_eval_false", condition=cond
+        )
 
     if kind == "assign":
         if locale == "en":
@@ -94,14 +96,18 @@ def explain_step(step: Dict[str, Any], locale: str = "en") -> str:
     if kind == "return_emit":
         if "value" in desc.lower() or "retorno" in desc.lower():
             # Extraer valor de desc si es posible
-            return _t("return_emit", value=desc.split(":")[-1].strip() if ":" in desc else "?")
+            return _t(
+                "return_emit", value=desc.split(":")[-1].strip() if ":" in desc else "?"
+            )
         return _t("return_emit", value=desc)
 
     if kind == "call_enter":
         rec = step.get("recursion", {})
         proc = rec.get("procedure", "?")
         params = rec.get("params", {})
-        pstr = ", ".join(f"{k}={_format_param_for_explanation(v)}" for k, v in params.items())
+        pstr = ", ".join(
+            f"{k}={_format_param_for_explanation(v)}" for k, v in params.items()
+        )
         if locale == "en":
             return f"Entering call {proc}({pstr})"
         return _t("call_enter", proc=proc, params=pstr)
@@ -123,7 +129,9 @@ def _call_to_explanation_line(call: Dict[str, Any], locale: str) -> str:
     """Línea legible para una llamada: fn(nodo=1→2→3, valor=4) → resultado."""
     fn = call.get("function_name") or "proc"
     params = call.get("params", {})
-    pstr = ", ".join(f"{k}={_format_param_for_explanation(v)}" for k, v in params.items())
+    pstr = ", ".join(
+        f"{k}={_format_param_for_explanation(v)}" for k, v in params.items()
+    )
     ret = call.get("return_value")
     base = call.get("is_base_case", False)
     if locale == "es":
@@ -215,7 +223,9 @@ def build_explanation_summary(trace: Dict[str, Any], locale: str = "en") -> str:
     return explain_recursion_tree(trace, locale).split("\n\n")[0]
 
 
-def build_explanation_events(trace: Dict[str, Any], locale: str = "en") -> List[Dict[str, Any]]:
+def build_explanation_events(
+    trace: Dict[str, Any], locale: str = "en"
+) -> List[Dict[str, Any]]:
     """
     Lista de eventos relevantes (call_enter, return_emit, condition_eval).
 
@@ -252,7 +262,9 @@ def explain_node(trace: Dict[str, Any], node_id: str, locale: str = "en") -> str
         if str(cid) == str(node_id) or f"call_{cid}" == str(node_id):
             fn = c.get("function_name") or "proc"
             params = c.get("params", {})
-            pstr = ", ".join(f"{k}={_format_param_for_explanation(v)}" for k, v in params.items())
+            pstr = ", ".join(
+                f"{k}={_format_param_for_explanation(v)}" for k, v in params.items()
+            )
             ret = c.get("return_value")
             base = c.get("is_base_case", False)
             if locale == "es":

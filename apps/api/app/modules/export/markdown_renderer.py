@@ -28,7 +28,11 @@ def _render_table(table: DocumentTable) -> str:
     lines.append(f"| {' | '.join(headers)} |")
     align_markers = []
     for index, _header in enumerate(headers):
-        align = (table.align or [])[index] if table.align and index < len(table.align) else "left"
+        align = (
+            (table.align or [])[index]
+            if table.align and index < len(table.align)
+            else "left"
+        )
         align_markers.append(
             ":---:" if align == "center" else "---:" if align == "right" else "---"
         )
@@ -60,7 +64,9 @@ def _render_status(status: Dict[str, object], i18n: Dict[str, object]) -> str:
     ]
     todos = status.get("todos") or []
     if todos:
-        lines.append(f"> {i18n['todoPrefix']}: {'; '.join(str(todo) for todo in todos)}")
+        lines.append(
+            f"> {i18n['todoPrefix']}: {'; '.join(str(todo) for todo in todos)}"
+        )
     return "\n".join(lines)
 
 
@@ -130,7 +136,9 @@ def _render_block(block: Dict[str, object], i18n: Dict[str, object]) -> str:
             f"**{i18n['caseHeaderLabel']}:** {i18n['caseLabels'][diagram.get('caseName')]}",
             f"**{i18n['pedagogicalTraceTitle']}:** {rendered['stats']['totalCalls']} {'llamadas' if i18n['locale'] == 'es' else 'calls'}, {'profundidad máxima' if i18n['locale'] == 'es' else 'max depth'} {rendered['stats']['maxDepth']}",
         ]
-        if rendered["stats"].get("collapsedNodes") or rendered["stats"].get("reductionNote"):
+        if rendered["stats"].get("collapsedNodes") or rendered["stats"].get(
+            "reductionNote"
+        ):
             lines.append(
                 f"**{'Reducción visual' if i18n['locale'] == 'es' else 'Visual reduction'}:** "
                 + (

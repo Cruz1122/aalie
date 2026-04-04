@@ -61,7 +61,9 @@ def make_recursive_step(
     summary = render_template(template_strings, locale, summary_key, params)
     concept = render_template(template_strings, locale, concept_key, params)
     warning = (
-        render_template(template_strings, locale, warning_key, params) if warning_key else None
+        render_template(template_strings, locale, warning_key, params)
+        if warning_key
+        else None
     )
     step: Dict[str, Any] = {
         "id": step_id,

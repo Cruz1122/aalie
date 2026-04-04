@@ -44,18 +44,22 @@ except ImportError:
             )
 
 
-from tools.check_contract_impact import (
+from tools.check_contract_impact import (  # noqa: E402
     check_contract_impact as check_contract_impact_tool,
 )
-from tools.detect_recursive_family import (
+from tools.detect_recursive_family import (  # noqa: E402
     detect_recursive_family as detect_recursive_family_tool,
 )
-from tools.evaluate_while_case import evaluate_while_case as evaluate_while_case_tool
-from tools.generate_test_oracle_stub import (
+from tools.evaluate_while_case import (
+    evaluate_while_case as evaluate_while_case_tool,
+)  # noqa: E402
+from tools.generate_test_oracle_stub import (  # noqa: E402
     generate_test_oracle_stub as generate_test_oracle_stub_tool,
 )
-from tools.get_change_context import get_change_context as get_change_context_tool
-from tools.validate_snapshot_contract import (
+from tools.get_change_context import (
+    get_change_context as get_change_context_tool,
+)  # noqa: E402
+from tools.validate_snapshot_contract import (  # noqa: E402
     validate_snapshot_contract as validate_snapshot_contract_tool,
 )
 

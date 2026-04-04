@@ -100,7 +100,9 @@ class TestClassifyAlgorithm:
 
     @patch("app.modules.classification.service.parse_source")
     @patch("app.modules.classification.service.detect_algorithm_kind")
-    def test_propagates_hybrid_kind_without_reclassification(self, mock_detect, mock_parse):
+    def test_propagates_hybrid_kind_without_reclassification(
+        self, mock_detect, mock_parse
+    ):
         """Test: Preserva el kind detectado por el clasificador"""
         mock_parse.return_value = {"ok": True, "ast": {"type": "Program", "body": []}}
         mock_detect.return_value = "hybrid"

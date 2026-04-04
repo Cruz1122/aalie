@@ -148,7 +148,10 @@ def _has_recursive_calls(proc_def: Dict[str, Any], proc_name: str) -> bool:
     """
     # Obtener el cuerpo del procedimiento
     proc_body = (
-        proc_def.get("body") or proc_def.get("block") or proc_def.get("statements") or proc_def
+        proc_def.get("body")
+        or proc_def.get("block")
+        or proc_def.get("statements")
+        or proc_def
     )
 
     return _search_recursive_calls(proc_body, proc_name)
@@ -181,7 +184,9 @@ def _search_recursive_calls(node: Any, proc_name: str) -> bool:
             or node.get("callee")
             or node.get("function")
             or (
-                node.get("target", {}).get("name") if isinstance(node.get("target"), dict) else None
+                node.get("target", {}).get("name")
+                if isinstance(node.get("target"), dict)
+                else None
             )
         )
         # Comparar sin importar mayúsculas/minúsculas

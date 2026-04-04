@@ -11,7 +11,9 @@ from pathlib import Path
 def pytest_configure(config):
     """Registra markers para evitar PytestUnknownMarkWarning cuando pyproject no se carga."""
     config.addinivalue_line("markers", "fast: fast lane tests for PR feedback")
-    config.addinivalue_line("markers", "oracle: semantic oracle tests (real expected output)")
+    config.addinivalue_line(
+        "markers", "oracle: semantic oracle tests (real expected output)"
+    )
     config.addinivalue_line("markers", "unit: unit tests (fast, isolated)")
     config.addinivalue_line(
         "markers", "component: component/integration tests (few canonical algorithms)"
@@ -25,11 +27,16 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "export: export contract/integration tests")
     config.addinivalue_line("markers", "trace: trace/structured-trace tests")
     config.addinivalue_line("markers", "iterative: tests involving iterative analysis")
-    config.addinivalue_line("markers", "while_loop: tests involving while-loop analysis")
+    config.addinivalue_line(
+        "markers", "while_loop: tests involving while-loop analysis"
+    )
     config.addinivalue_line("markers", "while: tests involving WHILE loops")
     config.addinivalue_line("markers", "recursive: tests involving recursive analysis")
     config.addinivalue_line("markers", "dp: tests involving DP algorithms")
-    config.addinivalue_line("markers", "benchmark: performance/regression benchmark tests")
+    config.addinivalue_line(
+        "markers", "benchmark: performance/regression benchmark tests"
+    )
+
 
 def pytest_ignore_collect(collection_path: Path, config) -> bool:  # type: ignore[override]
     """

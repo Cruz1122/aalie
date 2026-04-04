@@ -70,7 +70,9 @@ class ExecutionStep:
     kind: str  # eventKind: "assign" | "condition_eval" | "loop_enter" | ...
     variables: Dict[str, Any]  # variablesSnapshot
     variables_changed: Optional[Dict[str, Any]] = None  # Diff respecto al paso anterior
-    iteration: Optional[Dict[str, Any]] = None  # Para bucles: {loopVar, currentValue, maxValue}
+    iteration: Optional[Dict[str, Any]] = (
+        None  # Para bucles: {loopVar, currentValue, maxValue}
+    )
     recursion: Optional[Dict[str, Any]] = (
         None  # Para recursión: {depth, callId, params, parentCallId}
     )
@@ -79,7 +81,9 @@ class ExecutionStep:
     description: Optional[str] = None  # Descripción del paso
     microseconds: Optional[float] = None  # Tiempo estimado en microsegundos
     tokens: Optional[int] = None  # Número de operaciones elementales (tokens)
-    decision: Optional[Dict[str, Any]] = None  # {conditionText, result} para condition_eval
+    decision: Optional[Dict[str, Any]] = (
+        None  # {conditionText, result} para condition_eval
+    )
 
 
 @dataclass
@@ -221,7 +225,9 @@ class TraceBuilder:
 
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
-        parent_id = parent_call_id or (self.recursion_stack[-1] if self.recursion_stack else None)
+        parent_id = parent_call_id or (
+            self.recursion_stack[-1] if self.recursion_stack else None
+        )
 
         call = RecursionCall(
             id=call_id,
@@ -301,7 +307,9 @@ class TraceBuilder:
             if d.get("variables_changed") is None:
                 d.pop("variables_changed", None)
             if d.get("recursion") and isinstance(d["recursion"], dict):
-                d["recursion"]["params"] = _serialize_value(d["recursion"].get("params", {}))
+                d["recursion"]["params"] = _serialize_value(
+                    d["recursion"].get("params", {})
+                )
             d["eventKind"] = d.get("kind", "")
             return d
 
@@ -311,7 +319,9 @@ class TraceBuilder:
         if self.recursion_calls:
             # Encontrar la raíz (llamada sin padre)
             root_calls = [
-                call_id for call_id, call in self.recursion_calls.items() if call.depth == 0
+                call_id
+                for call_id, call in self.recursion_calls.items()
+                if call.depth == 0
             ]
 
             calls_list = []
@@ -324,7 +334,8 @@ class TraceBuilder:
                 d["return_value"] = _serialize_value(d.get("return_value"))
                 if c.base_case is not None:
                     d["is_base_case"] = bool(
-                        c.base_case.get("detected", False) and c.base_case.get("matched", False)
+                        c.base_case.get("detected", False)
+                        and c.base_case.get("matched", False)
                     )
                 else:
                     d["is_base_case"] = False

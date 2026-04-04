@@ -80,7 +80,9 @@ def test_binary_search_publishes_semantic_while_block_without_t_while():
     assert while_blocks[0].get("patternUsed") == "binary_search_interval"
     assert while_blocks[0].get("status") == "available"
     assert "log" in str(totals.get("big_theta", "") or totals.get("big_o", "")).lower()
-    assert any(row.get("loopBlockRef") == while_blocks[0]["id"] for row in worst["byLine"])
+    assert any(
+        row.get("loopBlockRef") == while_blocks[0]["id"] for row in worst["byLine"]
+    )
 
 
 def test_ternary_search_publishes_interval_shrink_logarithmic_block():

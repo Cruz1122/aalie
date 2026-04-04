@@ -17,7 +17,9 @@ def _op_norm(op: Any) -> str:
     return str(op or "").strip().lower()
 
 
-def _find_gap_update_constants(while_node: Dict[str, Any]) -> Optional[Tuple[int, Optional[int]]]:
+def _find_gap_update_constants(
+    while_node: Dict[str, Any]
+) -> Optional[Tuple[int, Optional[int]]]:
     """
     Intenta extraer constantes del update a gap:
       1) gap <- gap DIV c    -> devuelve (c, None)
@@ -39,41 +41,81 @@ def _find_gap_update_constants(while_node: Dict[str, Any]) -> Optional[Tuple[int
 
         if str(n.get("type", "")).lower() == "assign":
             target = n.get("target") or {}
-            if isinstance(target, dict) and str(target.get("type", "")).lower() == "identifier":
+            if (
+                isinstance(target, dict)
+                and str(target.get("type", "")).lower() == "identifier"
+            ):
                 if target.get("name") == "gap":
                     value = n.get("value") or {}
-                    if isinstance(value, dict) and str(value.get("type", "")).lower() == "binary":
+                    if (
+                        isinstance(value, dict)
+                        and str(value.get("type", "")).lower() == "binary"
+                    ):
                         op = _op_norm(value.get("op") or value.get("operator"))
                         if op in ("div", "/") or op == "div":
                             left = value.get("left") or {}
                             right = value.get("right") or {}
                             # gap DIV c
-                            if isinstance(left, dict) and str(left.get("type", "")).lower() == "identifier" and left.get("name") == "gap":
-                                if isinstance(right, dict) and str(right.get("type", "")).lower() in ("number", "literal"):
+                            if (
+                                isinstance(left, dict)
+                                and str(left.get("type", "")).lower() == "identifier"
+                                and left.get("name") == "gap"
+                            ):
+                                if isinstance(right, dict) and str(
+                                    right.get("type", "")
+                                ).lower() in ("number", "literal"):
                                     try:
                                         return (int(float(right.get("value"))), None)
                                     except Exception:
                                         return None
                             # (gap * a) DIV b
-                            if isinstance(left, dict) and str(left.get("type", "")).lower() == "binary":
+                            if (
+                                isinstance(left, dict)
+                                and str(left.get("type", "")).lower() == "binary"
+                            ):
                                 lop = _op_norm(left.get("op") or left.get("operator"))
                                 if lop == "*" and (
-                                    (isinstance(left.get("left"), dict) and str(left["left"].get("type","")).lower() in ("number","literal"))
-                                    or (isinstance(left.get("right"), dict) and str(left["right"].get("type","")).lower() in ("number","literal"))
+                                    (
+                                        isinstance(left.get("left"), dict)
+                                        and str(left["left"].get("type", "")).lower()
+                                        in ("number", "literal")
+                                    )
+                                    or (
+                                        isinstance(left.get("right"), dict)
+                                        and str(left["right"].get("type", "")).lower()
+                                        in ("number", "literal")
+                                    )
                                 ):
                                     # esperamos (gap * a)
                                     # localizar gap en uno de los lados
                                     lleft = left.get("left")
                                     lright = left.get("right")
                                     multiplicand = None
-                                    if isinstance(lleft, dict) and str(lleft.get("type","")).lower() == "identifier" and lleft.get("name") == "gap":
+                                    if (
+                                        isinstance(lleft, dict)
+                                        and str(lleft.get("type", "")).lower()
+                                        == "identifier"
+                                        and lleft.get("name") == "gap"
+                                    ):
                                         multiplicand = lright
-                                    elif isinstance(lright, dict) and str(lright.get("type","")).lower() == "identifier" and lright.get("name") == "gap":
+                                    elif (
+                                        isinstance(lright, dict)
+                                        and str(lright.get("type", "")).lower()
+                                        == "identifier"
+                                        and lright.get("name") == "gap"
+                                    ):
                                         multiplicand = lleft
-                                    if multiplicand and isinstance(multiplicand, dict) and str(multiplicand.get("type","")).lower() in ("number","literal"):
+                                    if (
+                                        multiplicand
+                                        and isinstance(multiplicand, dict)
+                                        and str(multiplicand.get("type", "")).lower()
+                                        in ("number", "literal")
+                                    ):
                                         try:
                                             a = int(float(multiplicand.get("value")))
-                                            if isinstance(right, dict) and str(right.get("type","")).lower() in ("number","literal"):
+                                            if isinstance(right, dict) and str(
+                                                right.get("type", "")
+                                            ).lower() in ("number", "literal"):
                                                 b = int(float(right.get("value")))
                                                 return (b, a)
                                         except Exception:
@@ -105,7 +147,6 @@ class GapShrinkThenScanPattern(WhilePattern):
     def matches(self, while_ctx: Dict[str, Any]) -> bool:
         guard_info = while_ctx.get("guard_info")
         while_node = while_ctx.get("while_node") or {}
-        updates = while_ctx.get("updates") or {}
         if not guard_info or not while_node:
             return False
         if not _guard_mentions_gap(guard_info):
@@ -167,5 +208,6 @@ class GapShrinkThenScanPattern(WhilePattern):
         )
 
     def explain(self, while_ctx: Dict[str, Any]) -> list:
-        return ["Gap shrink (DIV): outer while is logarithmic"]  # nota: clase pedagógica
-
+        return [
+            "Gap shrink (DIV): outer while is logarithmic"
+        ]  # nota: clase pedagógica

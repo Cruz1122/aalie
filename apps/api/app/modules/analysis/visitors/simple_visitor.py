@@ -41,7 +41,9 @@ class SimpleVisitor:
         """
         line = node.get("pos", {}).get("line", 0)
         ops = (
-            self._ops_of_lvalue(node.get("target", {})) + self._ops_of_expr(node.get("value")) + 1
+            self._ops_of_lvalue(node.get("target", {}))
+            + self._ops_of_expr(node.get("value"))
+            + 1
         )  # +1 asignación
         ck = self.C()
         self.add_row(line, "assign", ck, Integer(1), ops=ops)
@@ -57,7 +59,9 @@ class SimpleVisitor:
         Author: Juan Camilo Cruz Parra (@Cruz1122)
         """
         line = node.get("pos", {}).get("line", 0)
-        ops = 1 + sum(self._ops_of_expr(arg) for arg in node.get("args", []))  # 1 llamada + args
+        ops = 1 + sum(
+            self._ops_of_expr(arg) for arg in node.get("args", [])
+        )  # 1 llamada + args
         ck = self.C()
         self.add_row(line, "call", ck, Integer(1), ops=ops)
 
@@ -141,7 +145,9 @@ class SimpleVisitor:
             mode: Modo de análisis
         """
         line = node.get("pos", {}).get("line", 0)
-        ops = 1 + sum(self._ops_of_expr(arg) for arg in node.get("args", []))  # 1 print + args
+        ops = 1 + sum(
+            self._ops_of_expr(arg) for arg in node.get("args", [])
+        )  # 1 print + args
         ck = self.C()
         self.add_row(line, "print", ck, Integer(1), ops=ops)
 
@@ -241,7 +247,11 @@ class SimpleVisitor:
 
         # Operación binaria: left + right + 1 (op)
         elif t.lower() == "binary":
-            return self._ops_of_expr(e.get("left", {})) + self._ops_of_expr(e.get("right", {})) + 1
+            return (
+                self._ops_of_expr(e.get("left", {}))
+                + self._ops_of_expr(e.get("right", {}))
+                + 1
+            )
 
         # Operación unaria
         elif t.lower() == "unary":

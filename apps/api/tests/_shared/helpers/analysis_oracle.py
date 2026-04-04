@@ -14,7 +14,9 @@ def assert_analysis_oracle(
     name: str = "",
 ) -> None:
     """Canonical oracle assertion for semantic complexity expectations."""
-    assert result.get("ok"), f"{name}: analyze_algorithm failed: {result.get('errors', [])}"
+    assert result.get(
+        "ok"
+    ), f"{name}: analyze_algorithm failed: {result.get('errors', [])}"
     assert_all_cases_complexity(
         result,
         expected_worst,

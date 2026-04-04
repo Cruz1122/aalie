@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-import sys
 import unicodedata
 from pathlib import Path
 
@@ -159,7 +158,9 @@ def extract_next_routes() -> set[tuple[str, str]]:
         parts = [part for part in rel.parts if part]
         route_path = "/api/" + "/".join(parts)
         text = route_file.read_text(encoding="utf-8")
-        for method in re.findall(r"export async function (GET|POST|PUT|DELETE|PATCH)\(", text):
+        for method in re.findall(
+            r"export async function (GET|POST|PUT|DELETE|PATCH)\(", text
+        ):
             routes.add((method, route_path.rstrip("/")))
     return routes
 
@@ -207,8 +208,12 @@ def extract_env_vars() -> set[str]:
 
 
 def extract_snapshot_versions() -> tuple[str | None, str | None]:
-    ts_text = (ROOT / "packages/types/src/export-snapshot.ts").read_text(encoding="utf-8")
-    py_text = (ROOT / "apps/api/app/modules/export/constants.py").read_text(encoding="utf-8")
+    ts_text = (ROOT / "packages/types/src/export-snapshot.ts").read_text(
+        encoding="utf-8"
+    )
+    py_text = (ROOT / "apps/api/app/modules/export/constants.py").read_text(
+        encoding="utf-8"
+    )
     ts_match = re.search(r'SNAPSHOT_SCHEMA_VERSION = "([^"]+)"', ts_text)
     py_match = re.search(r'SNAPSHOT_SCHEMA_VERSION = "([^"]+)"', py_text)
     return (
@@ -232,7 +237,9 @@ def main() -> int:
         rel = str(file.relative_to(DOCS))
         text = file.read_text(encoding="utf-8")
         normalized = normalize(text)
-        if not re.search(r"\*\*tipo:\*\*\s*(normativa|descriptiva|legacy)", normalize(text)):
+        if not re.search(
+            r"\*\*tipo:\*\*\s*(normativa|descriptiva|legacy)", normalize(text)
+        ):
             error(f"Falta etiqueta de tipo en docs/{rel}", errors)
         for heading in REQUIRED_SECTION_HEADINGS:
             if f"## {heading}" not in normalized:
@@ -267,7 +274,10 @@ def main() -> int:
     env_doc = read("06-operations/environment-variables.md")
     for env_var in sorted(extract_env_vars()):
         if env_var not in env_doc:
-            error(f"La variable {env_var} no esta documentada en environment-variables.md", errors)
+            error(
+                f"La variable {env_var} no esta documentada en environment-variables.md",
+                errors,
+            )
 
     ts_version, py_version = extract_snapshot_versions()
     if not ts_version or not py_version:
@@ -283,7 +293,10 @@ def main() -> int:
             "04-api/schemas/snapshot-schema.md",
         ]:
             if ts_version not in read(doc):
-                error(f"docs/{doc} no menciona la version de snapshot {ts_version}", errors)
+                error(
+                    f"docs/{doc} no menciona la version de snapshot {ts_version}",
+                    errors,
+                )
 
     if errors:
         print("docs-contracts: FAIL")

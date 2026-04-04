@@ -15,7 +15,9 @@ def test_analyze_open_fast_endpoint():
   END
 END
 """
-    res = client.post("/analyze/open", json={"source": source, "mode": "worst", "locale": "en"})
+    res = client.post(
+        "/analyze/open", json={"source": source, "mode": "worst", "locale": "en"}
+    )
     assert res.status_code == 200
     payload = res.json()
     assert payload.get("ok") is True

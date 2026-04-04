@@ -192,7 +192,9 @@ def build_master_step_bundle(ctx: MasterStepContext) -> Dict[str, Any]:
             index=2,
             step_id="master_s2",
             kind="master_form_validated",
-            title=_title(ctx.locale, "Validación de forma maestra", "Master-form validation"),
+            title=_title(
+                ctx.locale, "Validación de forma maestra", "Master-form validation"
+            ),
             status=step2_status,
             confidence="high" if is_form_supported else "low",
             summary_key=(
@@ -416,7 +418,9 @@ def build_master_step_bundle(ctx: MasterStepContext) -> Dict[str, Any]:
             confidence="high" if step7_status == "complete" else "medium",
             summary_key=step7_summary,
             concept_key="concept.master.master_case_evaluated",
-            primary_latex=(f"\\text{{Caso {ctx.case_candidate}}}" if ctx.case_candidate else None),
+            primary_latex=(
+                f"\\text{{Caso {ctx.case_candidate}}}" if ctx.case_candidate else None
+            ),
             payload={"caseCandidate": ctx.case_candidate},
             blocked_by=["master_s6"] if step7_status != "complete" else [],
         )
@@ -479,7 +483,9 @@ def build_master_step_bundle(ctx: MasterStepContext) -> Dict[str, Any]:
             index=9,
             step_id="master_s9",
             kind="master_applicability_decided",
-            title=_title(ctx.locale, "Decisión de aplicabilidad", "Applicability decision"),
+            title=_title(
+                ctx.locale, "Decisión de aplicabilidad", "Applicability decision"
+            ),
             status=step9_status,
             confidence="high" if step9_status == "complete" else "medium",
             summary_key=step9_summary,

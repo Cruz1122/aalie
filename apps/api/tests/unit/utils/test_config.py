@@ -20,7 +20,6 @@ from app.core.config import (
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-
 class TestAsBool:
     """Tests para la funcion _as_bool."""
 

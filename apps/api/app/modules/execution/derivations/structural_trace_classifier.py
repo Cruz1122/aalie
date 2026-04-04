@@ -61,7 +61,9 @@ def _count_children_per_call(calls: List[Dict[str, Any]]) -> Dict[str, int]:
     return {c["id"]: len(c.get("children", [])) for c in calls}
 
 
-def _has_partition_like_pattern(steps: List[Dict[str, Any]], calls: List[Dict[str, Any]]) -> bool:
+def _has_partition_like_pattern(
+    steps: List[Dict[str, Any]], calls: List[Dict[str, Any]]
+) -> bool:
     """
     Detecta patrón tipo quicksort: asignación que produce índice + 2 subllamadas.
     Heurística: hay asignaciones a variable índice (q, pivot, mid) antes de las subllamadas.
@@ -85,7 +87,9 @@ def _has_partition_like_pattern(steps: List[Dict[str, Any]], calls: List[Dict[st
     return len(two_child_calls) >= 1 and len(assign_vars) >= 1
 
 
-def _has_merge_like_pattern(steps: List[Dict[str, Any]], calls: List[Dict[str, Any]]) -> bool:
+def _has_merge_like_pattern(
+    steps: List[Dict[str, Any]], calls: List[Dict[str, Any]]
+) -> bool:
     """
     Detecta patrón merge: subllamadas primero, luego operación de combinación.
     Heurística: tras volver de subllamadas debe aparecer evidencia real de combinación
@@ -110,13 +114,16 @@ def _has_merge_like_pattern(steps: List[Dict[str, Any]], calls: List[Dict[str, A
 
         if kind in {"call_spawn_child", "call_enter"}:
             proc = str(((step.get("recursion") or {}).get("procedure")) or "").lower()
-            if proc and any(token in proc for token in ("merge", "mezclar", "combine", "combinar")):
+            if proc and any(
+                token in proc for token in ("merge", "mezclar", "combine", "combinar")
+            ):
                 merge_keywords_after_resume += 1
             continue
 
         if kind == "assign":
             if "[" in description or any(
-                token in description for token in ("merge", "mezclar", "combine", "combinar")
+                token in description
+                for token in ("merge", "mezclar", "combine", "combinar")
             ):
                 collection_writes_after_resume += 1
             continue
@@ -124,7 +131,10 @@ def _has_merge_like_pattern(steps: List[Dict[str, Any]], calls: List[Dict[str, A
         if kind in {"return_emit", "call_exit"}:
             continue
 
-        if any(token in description for token in ("merge", "mezclar", "combine", "combinar")):
+        if any(
+            token in description
+            for token in ("merge", "mezclar", "combine", "combinar")
+        ):
             merge_keywords_after_resume += 1
 
     return merge_keywords_after_resume >= 1 or collection_writes_after_resume >= 2
@@ -143,7 +153,9 @@ def _has_backtracking_pattern(steps: List[Dict[str, Any]]) -> bool:
     return has_condition and has_assign and has_recursive_call
 
 
-def _is_tail_recursive(calls: List[Dict[str, Any]], child_counts: Dict[str, int]) -> bool:
+def _is_tail_recursive(
+    calls: List[Dict[str, Any]], child_counts: Dict[str, int]
+) -> bool:
     """
     Tail recursive: cada nodo tiene 0 o 1 hijo; el hijo está "al final" (única rama).
     """
@@ -154,7 +166,9 @@ def _is_tail_recursive(calls: List[Dict[str, Any]], child_counts: Dict[str, int]
     return True
 
 
-def _is_single_branch_search(calls: List[Dict[str, Any]], child_counts: Dict[str, int]) -> bool:
+def _is_single_branch_search(
+    calls: List[Dict[str, Any]], child_counts: Dict[str, int]
+) -> bool:
     """
     Single branch: cada nodo tiene como máximo 1 hijo efectivo (la otra rama es base/return).
     """
@@ -169,7 +183,9 @@ def _has_auxiliary_operation_iterative(steps: List[Dict[str, Any]]) -> bool:
     """
     Iterativo con operación auxiliar: muchos assigns en contexto de loop, o swap/update.
     """
-    assign_count = sum(1 for s in steps if (s.get("kind") or s.get("eventKind")) == "assign")
+    assign_count = sum(
+        1 for s in steps if (s.get("kind") or s.get("eventKind")) == "assign"
+    )
     loop_count = sum(
         1
         for s in steps
@@ -276,7 +292,9 @@ def classify_structural_trace(trace: Dict[str, Any]) -> StructuralTraceClassific
             # tail: factorial acumulativo, etc. (una llamada al final)
             # Heurística: si hay muchas condition_eval -> single_branch_search
             condition_count = sum(
-                1 for s in steps if (s.get("kind") or s.get("eventKind")) == "condition_eval"
+                1
+                for s in steps
+                if (s.get("kind") or s.get("eventKind")) == "condition_eval"
             )
             if condition_count >= 2:
                 return StructuralTraceClassification(

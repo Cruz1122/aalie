@@ -218,7 +218,9 @@ END
     assert parsed.get("ok") is True
     ast = parsed.get("ast")
     assert isinstance(ast, dict)
-    executor = CodeExecutor(ast, input_size=4, case="worst", initial_variables={"A": [4, 3, 2, 1]})
+    executor = CodeExecutor(
+        ast, input_size=4, case="worst", initial_variables={"A": [4, 3, 2, 1]}
+    )
 
     trace = executor.execute()
     steps = trace.get("steps", [])

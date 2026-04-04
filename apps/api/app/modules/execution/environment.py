@@ -67,7 +67,9 @@ class ExecutionEnvironment:
         if self.scope_stack:
             self.variables = self.scope_stack.pop()
 
-    def set_variable(self, name: str, value: Union[int, float, str, Expr, List[Any], Any]) -> None:
+    def set_variable(
+        self, name: str, value: Union[int, float, str, Expr, List[Any], Any]
+    ) -> None:
         """
         Establece el valor de una variable.
 
@@ -269,13 +271,22 @@ class ExecutionEnvironment:
                     if isinstance(var_value, (int, float)):
                         subs_dict[self.expr_converter.get_symbol(var_name)] = var_value
                 # Fallback: variable principal no en scope (ej. llamada inicial)
-                if self.variable_name not in self.variables and self.input_size is not None:
-                    subs_dict[self.expr_converter.get_symbol(self.variable_name)] = self.input_size
+                if (
+                    self.variable_name not in self.variables
+                    and self.input_size is not None
+                ):
+                    subs_dict[self.expr_converter.get_symbol(self.variable_name)] = (
+                        self.input_size
+                    )
                 evaluated = sympy_expr.subs(subs_dict)
 
                 # Intentar evaluar numéricamente
                 if evaluated.is_number:
-                    return float(evaluated) if isinstance(evaluated, float) else int(evaluated)
+                    return (
+                        float(evaluated)
+                        if isinstance(evaluated, float)
+                        else int(evaluated)
+                    )
 
                 # Si no es completamente numérico, retornar la expresión simplificada
                 return evaluated

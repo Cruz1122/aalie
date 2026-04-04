@@ -74,9 +74,10 @@ def _assigns_var_step(stmt: Any, var_name: str, op: str) -> bool:
 def _is_index_of_array(node: Any, array_name: str, index_name: str) -> bool:
     if _node_type(node) != "index":
         return False
-    return _identifier_name(node.get("target")) == array_name and _identifier_name(
-        node.get("index")
-    ) == index_name
+    return (
+        _identifier_name(node.get("target")) == array_name
+        and _identifier_name(node.get("index")) == index_name
+    )
 
 
 def _is_index_of_array_minus_one(node: Any, array_name: str, index_name: str) -> bool:
@@ -98,18 +99,20 @@ def _is_adjacent_compare(test: Any, index_name: str) -> Optional[str]:
     array_name = _identifier_name(left.get("target"))
     if not array_name or _identifier_name(right.get("target")) != array_name:
         return None
-    if _is_index_of_array(left, array_name, index_name) and _is_index_of_array_minus_one(
-        right, array_name, index_name
-    ):
+    if _is_index_of_array(
+        left, array_name, index_name
+    ) and _is_index_of_array_minus_one(right, array_name, index_name):
         return array_name
-    if _is_index_of_array_minus_one(left, array_name, index_name) and _is_index_of_array(
-        right, array_name, index_name
-    ):
+    if _is_index_of_array_minus_one(
+        left, array_name, index_name
+    ) and _is_index_of_array(right, array_name, index_name):
         return array_name
     return None
 
 
-def _has_adjacent_swap(statements: List[Dict[str, Any]], array_name: str, index_name: str) -> bool:
+def _has_adjacent_swap(
+    statements: List[Dict[str, Any]], array_name: str, index_name: str
+) -> bool:
     saw_down_step = False
     saw_forward_value = False
     saw_backward_value = False
@@ -171,7 +174,10 @@ class GnomeSortCursorPattern(WhilePattern):
 
         outer_if = body_statements[0]
         outer_test = outer_if.get("test") or {}
-        if _node_type(outer_test) != "binary" or _node_op(outer_test) not in {"=", "=="}:
+        if _node_type(outer_test) != "binary" or _node_op(outer_test) not in {
+            "=",
+            "==",
+        }:
             return False
         if _identifier_name(outer_test.get("left")) != index_name:
             return False

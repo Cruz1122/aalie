@@ -127,7 +127,9 @@ END
         ),
     ],
 )
-def test_loop_invariant_core_patterns(name, source, expected_patterns, expected_node_type):
+def test_loop_invariant_core_patterns(
+    name, source, expected_patterns, expected_node_type
+):
     data = _analyze_loop_invariant(source, locale="en")
     assert data["ok"] is True, name
     _assert_loop_invariant_shape(data)
@@ -148,5 +150,8 @@ END
 """
     first = _analyze_loop_invariant(source, locale="es")
     second = _analyze_loop_invariant(source, locale="es")
-    assert first["loopInvariant"]["selectedLoop"] == second["loopInvariant"]["selectedLoop"]
+    assert (
+        first["loopInvariant"]["selectedLoop"]
+        == second["loopInvariant"]["selectedLoop"]
+    )
     assert first["loopInvariant"]["invariant"] == second["loopInvariant"]["invariant"]

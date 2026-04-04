@@ -14,5 +14,7 @@ END
 
 
 def test_sparse_linear_recurrence_heavy_case_still_supported():
-    result = analyze_algorithm(SOURCE, mode="worst", preferred_method="characteristic_equation")
+    result = analyze_algorithm(
+        SOURCE, mode="worst", preferred_method="characteristic_equation"
+    )
     assert result.get("ok"), result.get("errors", [])

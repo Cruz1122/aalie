@@ -6,7 +6,7 @@ y casos (best/worst/average).
 """
 
 import pytest
-from sympy import Rational, Symbol, Sum
+from sympy import Rational, Sum, Symbol
 
 from app.modules.analysis.analyzers.iterative import IterativeAnalyzer
 from app.modules.analysis.service import analyze_algorithm
@@ -287,7 +287,9 @@ class TestIterativeAnalyzer:
         # (esto reproduce el bug observado donde inicio se terminó sustituyendo a n).
         analyzer.loop_index_vars = {"inicio"}
 
-        n_pos = Symbol("n", integer=True, positive=True)  # como usa ExprConverter para la variable principal
+        n_pos = Symbol(
+            "n", integer=True, positive=True
+        )  # como usa ExprConverter para la variable principal
         inicio = Symbol("inicio", real=True)
         i = Symbol("i", integer=True)
 

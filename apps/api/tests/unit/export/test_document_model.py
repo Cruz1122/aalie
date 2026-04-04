@@ -290,7 +290,9 @@ def test_build_document_model_keeps_all_iteration_expansions_in_pedagogical_step
     model = build_document_model(snapshot)
     section = next(section for section in model.sections if section.id == "recursive")
     pedagogical_step = next(
-        block["step"] for block in section.blocks if block.get("kind") == "pedagogicalStep"
+        block["step"]
+        for block in section.blocks
+        if block.get("kind") == "pedagogicalStep"
     )
 
     assert pedagogical_step["title"] == "Primeras expansiones"

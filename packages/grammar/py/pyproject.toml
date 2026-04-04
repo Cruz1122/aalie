@@ -39,6 +39,9 @@ where = ["src"]
 line-length = 88
 target-version = ['py311']
 
+[tool.ruff]
+extend-exclude = ["src/aa_grammar/generated"]
+
 [tool.isort]
 profile = "black"
 line_length = 88

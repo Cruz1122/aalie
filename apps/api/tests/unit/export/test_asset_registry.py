@@ -10,7 +10,6 @@ from app.modules.export.asset_registry import (
 pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
 
 
-
 def test_asset_registry_resolves_backend_owned_export_assets():
     registry = resolve_latex_asset_registry()
 

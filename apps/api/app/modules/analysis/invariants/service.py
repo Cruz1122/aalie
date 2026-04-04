@@ -136,7 +136,9 @@ def generate_loop_invariant(
             "incremental_build",
             "extrema_generic",
         }
-        ambiguous_accumulation = pattern == "accumulation" and len(selected.accumulators) > 1
+        ambiguous_accumulation = (
+            pattern == "accumulation" and len(selected.accumulators) > 1
+        )
         if (
             pattern == "unknown"
             or classification.confidence < 0.72
@@ -154,7 +156,9 @@ def generate_loop_invariant(
     if status == "low_confidence":
         output_confidence = min(output_confidence, 0.69)
 
-    state_variables = sorted(set(selected.body_writes).union(set(selected.accumulators)))
+    state_variables = sorted(
+        set(selected.body_writes).union(set(selected.accumulators))
+    )
 
     detected_features = sorted(
         set(selected.detected_features)

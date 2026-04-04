@@ -117,13 +117,16 @@ def _has_returning_equality(node: Any, helper_names: set[str]) -> bool:
         left = test.get("left") if isinstance(test, dict) else None
         right = test.get("right") if isinstance(test, dict) else None
         if op in {"=", "=="} and (
-            _index_uses_helper(left, helper_names) or _index_uses_helper(right, helper_names)
+            _index_uses_helper(left, helper_names)
+            or _index_uses_helper(right, helper_names)
         ):
             consequent, alternate = _if_branches(node)
             if _contains_return(consequent) or _contains_return(alternate):
                 return True
     for value in node.values():
-        if isinstance(value, (dict, list)) and _has_returning_equality(value, helper_names):
+        if isinstance(value, (dict, list)) and _has_returning_equality(
+            value, helper_names
+        ):
             return True
     return False
 
@@ -194,7 +197,9 @@ def _extract_generic_interval_helper(
             return {
                 "helper": target,
                 "kind": (
-                    "midpoint" if _is_sum_of_vars(left_expr, left_name, right_name) else "width"
+                    "midpoint"
+                    if _is_sum_of_vars(left_expr, left_name, right_name)
+                    else "width"
                 ),
             }
     return None
@@ -226,7 +231,9 @@ def _is_boundary_update(value: Any, helper_name: str, operator: str) -> bool:
     op = _node_op(value)
     if op != operator:
         return False
-    helper_side = _identifier_name(value.get("left")) or _identifier_name(value.get("right"))
+    helper_side = _identifier_name(value.get("left")) or _identifier_name(
+        value.get("right")
+    )
     const_side = (
         value.get("right")
         if _identifier_name(value.get("left")) == helper_name
@@ -275,11 +282,15 @@ def _boundary_updates_from_helpers(
     return left_updated or right_updated
 
 
-def _infer_interval_size_symbol(while_ctx: Dict[str, Any], left_name: str, right_name: str) -> str:
+def _infer_interval_size_symbol(
+    while_ctx: Dict[str, Any], left_name: str, right_name: str
+) -> str:
     parent = while_ctx.get("parent_context")
     while_node = while_ctx.get("while_node") or {}
     while_line = (
-        while_node.get("pos", {}).get("line", 0) if isinstance(while_node.get("pos"), dict) else 0
+        while_node.get("pos", {}).get("line", 0)
+        if isinstance(while_node.get("pos"), dict)
+        else 0
     )
     if not isinstance(parent, dict):
         return "n"
@@ -329,7 +340,11 @@ def interval_shrink_signature(while_ctx: Dict[str, Any]) -> Optional[Dict[str, A
     atoms = getattr(guard, "atoms", []) or []
     interval_atom = None
     for atom in atoms:
-        if isinstance(atom, dict) and atom.get("two_vars") and atom.get("op") in {"<=", "<"}:
+        if (
+            isinstance(atom, dict)
+            and atom.get("two_vars")
+            and atom.get("op") in {"<=", "<"}
+        ):
             interval_atom = atom
             break
     if not interval_atom:
@@ -348,14 +363,18 @@ def interval_shrink_signature(while_ctx: Dict[str, Any]) -> Optional[Dict[str, A
     midpoint = _extract_midpoint_helper(assignments, left_name, right_name)
     if midpoint:
         helper_name, divisor = midpoint
-        if _boundary_updates_from_helpers(assignments, left_name, right_name, {helper_name}):
+        if _boundary_updates_from_helpers(
+            assignments, left_name, right_name, {helper_name}
+        ):
             return {
                 "kind": "midpoint",
                 "left": left_name,
                 "right": right_name,
                 "divisor": divisor,
                 "helper_names": {helper_name},
-                "size_symbol": _infer_interval_size_symbol(while_ctx, left_name, right_name),
+                "size_symbol": _infer_interval_size_symbol(
+                    while_ctx, left_name, right_name
+                ),
             }
 
     width = _extract_width_helper(assignments, left_name, right_name)
@@ -363,29 +382,39 @@ def interval_shrink_signature(while_ctx: Dict[str, Any]) -> Optional[Dict[str, A
         helper_name, divisor = width
         helper_names = {helper_name}
         helper_names.update(
-            _extract_offset_helpers(assignments, left_name, right_name, helper_name).values()
+            _extract_offset_helpers(
+                assignments, left_name, right_name, helper_name
+            ).values()
         )
-        if _boundary_updates_from_helpers(assignments, left_name, right_name, helper_names):
+        if _boundary_updates_from_helpers(
+            assignments, left_name, right_name, helper_names
+        ):
             return {
                 "kind": "width",
                 "left": left_name,
                 "right": right_name,
                 "divisor": divisor,
                 "helper_names": helper_names,
-                "size_symbol": _infer_interval_size_symbol(while_ctx, left_name, right_name),
+                "size_symbol": _infer_interval_size_symbol(
+                    while_ctx, left_name, right_name
+                ),
             }
 
     generic = _extract_generic_interval_helper(assignments, left_name, right_name)
     if generic:
         helper_names = {str(generic.get("helper") or "")}
-        if _boundary_updates_from_helpers(assignments, left_name, right_name, helper_names):
+        if _boundary_updates_from_helpers(
+            assignments, left_name, right_name, helper_names
+        ):
             return {
                 "kind": "generic",
                 "left": left_name,
                 "right": right_name,
                 "divisor": None,
                 "helper_names": helper_names,
-                "size_symbol": _infer_interval_size_symbol(while_ctx, left_name, right_name),
+                "size_symbol": _infer_interval_size_symbol(
+                    while_ctx, left_name, right_name
+                ),
             }
 
     return None
@@ -458,7 +487,9 @@ class IntervalShrinkPattern(WhilePattern):
         left_name = signature.get("left", "left")
         right_name = signature.get("right", "right")
         if isinstance(divisor, int) and divisor > 1:
-            return [f"Interval shrink: {left_name}..{right_name} reduces by factor {divisor}"]
+            return [
+                f"Interval shrink: {left_name}..{right_name} reduces by factor {divisor}"
+            ]
         return [
             f"Interval shrink: {left_name}..{right_name} decreases monotonically but the shrink factor is not fully proven"
         ]

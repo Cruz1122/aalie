@@ -229,14 +229,20 @@ class TestRecursiveAlgorithmsPseudocode:
 
     def test_merge_sort_theta_n_log_n(self):
         """Merge sort debe dar Θ(n log n) y validar todos los casos."""
-        result = analyze_algorithm(MERGE_SORT_PSEUDOCODE, mode="all", preferred_method="master")
+        result = analyze_algorithm(
+            MERGE_SORT_PSEUDOCODE, mode="all", preferred_method="master"
+        )
         assert result.get(
             "ok"
         ), f"Parser/RecursiveAnalyzer debe soportar merge sort: {result.get('errors', [])}"
         worst = result.get("worst", {})
         totals = worst.get("totals", {})
         master = totals.get("master", {})
-        theta = master.get("theta", "") or totals.get("big_theta", "") or totals.get("big_o", "")
+        theta = (
+            master.get("theta", "")
+            or totals.get("big_theta", "")
+            or totals.get("big_o", "")
+        )
         # Idealmente Θ(n log n); si no se captura el costo del merge, puede dar Θ(n)
         assert "n" in theta.lower(), f"Merge sort debe contener n: theta={theta}"
         assert_all_cases_complexity(
@@ -265,7 +271,9 @@ class TestRecursiveAlgorithmsPseudocode:
 
     def test_max_por_mitades_is_deterministic_theta_n(self):
         """maxPorMitades no tiene poda: best/avg = same_as_worst y Θ(n)."""
-        result = analyze_algorithm(MAX_POR_MITADES_PSEUDOCODE, mode="all", preferred_method="master")
+        result = analyze_algorithm(
+            MAX_POR_MITADES_PSEUDOCODE, mode="all", preferred_method="master"
+        )
         assert result.get("ok"), result.get("errors", [])
         assert result.get("has_case_variability") is False
         assert result.get("best") == "same_as_worst"
@@ -337,7 +345,9 @@ class TestTetranacciCharacteristicEquation:
         )
         elapsed = time.perf_counter() - t0
         assert result.get("ok"), result.get("errors", [])
-        assert elapsed < 45.0, f"análisis Tetranacci excede tope razonable: {elapsed:.1f}s"
+        assert (
+            elapsed < 45.0
+        ), f"análisis Tetranacci excede tope razonable: {elapsed:.1f}s"
 
         char_eq = result.get("totals", {}).get("characteristic_equation", {})
         theta = char_eq.get("theta") or ""
@@ -359,7 +369,9 @@ class TestTetranacciCharacteristicEquation:
 
         bundle = char_eq.get("step_by_step", {})
         assert bundle.get("method") == "characteristic_equation"
-        assert isinstance(bundle.get("steps"), list) and len(bundle.get("steps", [])) > 0
+        assert (
+            isinstance(bundle.get("steps"), list) and len(bundle.get("steps", [])) > 0
+        )
 
 
 class TestDynamicProgrammingValidation:
@@ -412,7 +424,10 @@ class TestDynamicProgrammingValidation:
 
         assert char_eq.get("dp_validation", {}).get("status") == "rejected"
         assert char_eq.get("dp_version") is None
-        assert "solapamiento" in char_eq.get("dp_validation", {}).get("reasons", [""])[0].lower()
+        assert (
+            "solapamiento"
+            in char_eq.get("dp_validation", {}).get("reasons", [""])[0].lower()
+        )
 
     def test_sparse_linear_recurrence_detects_linear_shift_family(self):
         """Debe detectarse como familia linear_shift para análisis por ecuación característica."""
@@ -456,7 +471,9 @@ class TestDynamicProgrammingValidation:
         assert isinstance(bundle, dict)
         assert bundle.get("method") == "characteristic_equation"
         assert bundle.get("version") == "ceq_steps_v1"
-        assert isinstance(bundle.get("steps"), list) and len(bundle.get("steps", [])) > 0
+        assert (
+            isinstance(bundle.get("steps"), list) and len(bundle.get("steps", [])) > 0
+        )
 
     def test_fibonacci_reports_supported_patterns_besides_rolling_window(self):
         """Fibonacci debe reportar métodos DP alternativos además de rolling window."""
@@ -468,7 +485,9 @@ class TestDynamicProgrammingValidation:
 
         assert result.get("ok"), result.get("errors", [])
         validation = (
-            result.get("totals", {}).get("characteristic_equation", {}).get("dp_validation", {})
+            result.get("totals", {})
+            .get("characteristic_equation", {})
+            .get("dp_validation", {})
         )
 
         assert validation.get("primary_pattern") == "rolling_window"
@@ -487,7 +506,9 @@ class TestDynamicProgrammingValidation:
 
     def test_detect_methods_reports_tabulation_for_sparse_linear_recurrence(self):
         """Detect-methods debe propagar metadata de tabulación en recurrencias lineales dispersas."""
-        result = detect_methods(SPARSE_LINEAR_RECURSIVE_PSEUDOCODE, algorithm_kind="recursive")
+        result = detect_methods(
+            SPARSE_LINEAR_RECURSIVE_PSEUDOCODE, algorithm_kind="recursive"
+        )
 
         assert result.get("ok"), result.get("errors", [])
         dp_validation = result.get("recurrence_info", {}).get("dp_validation", {})
@@ -498,7 +519,9 @@ class TestDynamicProgrammingValidation:
 
     def test_detect_methods_single_branch_divide_conquer_offers_multiple_methods(self):
         """Rama única divide-conquer debe listar master, árbol e iteración (default: master)."""
-        result = detect_methods(FAST_POWER_RECURSIVE_PSEUDOCODE, algorithm_kind="recursive")
+        result = detect_methods(
+            FAST_POWER_RECURSIVE_PSEUDOCODE, algorithm_kind="recursive"
+        )
 
         assert result.get("ok"), result.get("errors", [])
         methods = result.get("applicable_methods", [])
@@ -535,7 +558,9 @@ class TestDynamicProgrammingValidation:
         step5 = steps[4]
         assert step5.get("kind") == "characteristic_polynomial_built"
 
-    def test_tribonacci_characteristic_keeps_theta_and_marks_partial_base_resolution(self):
+    def test_tribonacci_characteristic_keeps_theta_and_marks_partial_base_resolution(
+        self,
+    ):
         """Tribonacci debe resolver rápido sin bloquear solve exacto de constantes."""
         result = analyze_algorithm(
             TRIBONACCI_RECURSIVE_PSEUDOCODE,
@@ -559,7 +584,9 @@ class TestDynamicProgrammingValidation:
             {},
         )
         assert base_step.get("status") == "partial"
-        assert "CEQ_SYMBOLIC_CONSTANT_SOLVER_SKIPPED" in base_step.get("audit", {}).get("codes", [])
+        assert "CEQ_SYMBOLIC_CONSTANT_SOLVER_SKIPPED" in base_step.get("audit", {}).get(
+            "codes", []
+        )
 
         resolution = char_eq.get("constant_resolution", {})
         assert resolution.get("status") == "partial"
@@ -1551,14 +1578,18 @@ class TestRecursiveAlgorithms:
         assert "master" in totals, "Debe tener master theorem"
 
         recurrence = totals["recurrence"]
-        assert recurrence["a"] == 1, f"a debe ser 1 (llamadas en if-else), obtuvo {recurrence['a']}"
+        assert (
+            recurrence["a"] == 1
+        ), f"a debe ser 1 (llamadas en if-else), obtuvo {recurrence['a']}"
         assert recurrence["b"] == 2.0, f"b debe ser 2.0, obtuvo {recurrence['b']}"
 
         master = totals["master"]
         assert "theta" in master, "Debe tener theta"
         theta = master["theta"]
         # Binary search: T(n)=T(n/2)+Θ(1) -> Θ(log n)
-        assert "log" in theta.lower(), f"Binary search debe ser Θ(log n), obtuvo: {theta}"
+        assert (
+            "log" in theta.lower()
+        ), f"Binary search debe ser Θ(log n), obtuvo: {theta}"
 
     def test_strassen_case_1(self):
         """Test: Strassen - Caso 1 - T(n) = 7T(n/2) + Θ(n²) -> Θ(n^log₂7) ≈ Θ(n^2.81)"""
@@ -1579,11 +1610,15 @@ class TestRecursiveAlgorithms:
         assert recurrence["b"] == 2.0, f"b debe ser 2.0, obtuvo {recurrence['b']}"
 
         master = totals["master"]
-        assert master["case"] == 1, f"Debe ser Caso 1 (f(n) < n^(log_b a)), obtuvo {master['case']}"
+        assert (
+            master["case"] == 1
+        ), f"Debe ser Caso 1 (f(n) < n^(log_b a)), obtuvo {master['case']}"
         assert "theta" in master, "Debe tener theta"
         theta = master["theta"]
         # Debe contener exponente aproximadamente 2.81
-        assert "n^{" in theta or "n^" in theta, f"Theta debe tener exponente, obtuvo {theta}"
+        assert (
+            "n^{" in theta or "n^" in theta
+        ), f"Theta debe tener exponente, obtuvo {theta}"
 
     def test_merge_sort_3_ways_case_2(self):
         """Test: Merge Sort 3 vías - Caso 2 - T(n) = 3T(n/3) + Θ(n) -> Θ(n log n)"""
@@ -1813,9 +1848,13 @@ class TestRecursiveAlgorithms:
         ast = self.create_fibonacci_ast()
 
         # Especificar preferred_method para forzar uso de ecuación característica
-        result = analyzer.analyze(ast, mode="worst", preferred_method="characteristic_equation")
+        result = analyzer.analyze(
+            ast, mode="worst", preferred_method="characteristic_equation"
+        )
 
-        assert result.get("ok"), f"Análisis debe ser exitoso: {result.get('errors', [])}"
+        assert result.get(
+            "ok"
+        ), f"Análisis debe ser exitoso: {result.get('errors', [])}"
         assert "totals" in result, "Debe tener totals"
         totals = result["totals"]
         assert "recurrence" in totals, "Debe tener recurrencia"
@@ -1843,7 +1882,9 @@ class TestRecursiveAlgorithms:
         # Especificar preferred_method para forzar uso de árbol de recursión
         result = analyzer.analyze(ast, mode="worst", preferred_method="recursion_tree")
 
-        assert result.get("ok"), f"Análisis debe ser exitoso: {result.get('errors', [])}"
+        assert result.get(
+            "ok"
+        ), f"Análisis debe ser exitoso: {result.get('errors', [])}"
         assert "totals" in result, "Debe tener totals"
         totals = result["totals"]
         assert "recurrence" in totals, "Debe tener recurrencia"
@@ -1858,7 +1899,9 @@ class TestRecursiveAlgorithms:
                 assert "levels" in recursion_tree, "Debe tener levels"
                 assert "height" in recursion_tree, "Debe tener height"
                 assert "summation" in recursion_tree, "Debe tener summation"
-                assert "dominating_level" in recursion_tree, "Debe tener dominating_level"
+                assert (
+                    "dominating_level" in recursion_tree
+                ), "Debe tener dominating_level"
                 assert "theta" in recursion_tree, "Debe tener theta"
 
     def test_preferred_method_priority(self):
@@ -1886,7 +1929,9 @@ class TestRecursiveAlgorithms:
         analyzer = RecursiveAnalyzer()
         ast = self.create_fibonacci_ast()
 
-        result = analyzer.analyze(ast, mode="worst", preferred_method="characteristic_equation")
+        result = analyzer.analyze(
+            ast, mode="worst", preferred_method="characteristic_equation"
+        )
 
         if result.get("ok"):
             totals = result.get("totals", {})

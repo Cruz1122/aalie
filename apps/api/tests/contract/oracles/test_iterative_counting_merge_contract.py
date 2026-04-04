@@ -73,7 +73,9 @@ def _assert_theta_like_n_plus_m(theta: str) -> None:
 class TestCountingSortContract:
     def test_counting_sort_all_modes_no_i_while_and_nk(self):
         for mode in ("worst", "best", "avg"):
-            out = analyze_algorithm(COUNTING_SORT, mode=mode, algorithm_kind="iterative")
+            out = analyze_algorithm(
+                COUNTING_SORT, mode=mode, algorithm_kind="iterative"
+            )
             assert out.get("ok") is not False, (mode, out.get("errors"))
             totals = out.get("totals") or {}
             _notation_has_no_open_while(totals)

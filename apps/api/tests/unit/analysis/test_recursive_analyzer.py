@@ -3464,7 +3464,12 @@ class TestRecursiveAnalyzerDPValidation:
                         },
                         "consequent": {
                             "type": "Block",
-                            "body": [{"type": "Return", "value": {"type": "Literal", "value": 0}}],
+                            "body": [
+                                {
+                                    "type": "Return",
+                                    "value": {"type": "Literal", "value": 0},
+                                }
+                            ],
                         },
                         "alternate": {
                             "type": "Block",
@@ -3486,7 +3491,10 @@ class TestRecursiveAnalyzerDPValidation:
                                         {
                                             "type": "Binary",
                                             "op": "+",
-                                            "left": {"type": "Identifier", "name": "medio"},
+                                            "left": {
+                                                "type": "Identifier",
+                                                "name": "medio",
+                                            },
                                             "right": {"type": "Literal", "value": 1},
                                         },
                                         {"type": "Identifier", "name": "fin"},
@@ -3546,7 +3554,12 @@ class TestRecursiveAnalyzerDPValidation:
                         },
                         "consequent": {
                             "type": "Block",
-                            "body": [{"type": "Return", "value": {"type": "Literal", "value": 1}}],
+                            "body": [
+                                {
+                                    "type": "Return",
+                                    "value": {"type": "Literal", "value": 1},
+                                }
+                            ],
                         },
                         "alternate": {
                             "type": "Block",
@@ -3568,7 +3581,9 @@ class TestRecursiveAnalyzerDPValidation:
         self.analyzer.proc_def = proc_def
         self.analyzer.procedure_name = "spanBase"
         profile = self.analyzer._build_recursive_expansion_profile(proc_def)
-        assert profile.base_case_guards, "Debe detectar alguna guarda estructural de caso base"
+        assert (
+            profile.base_case_guards
+        ), "Debe detectar alguna guarda estructural de caso base"
 
     def test_guard_x_eq_target_is_not_structural_base_case(self):
         """Test: x==target no se clasifica como guarda estructural de tamaño."""
@@ -3589,11 +3604,18 @@ class TestRecursiveAnalyzerDPValidation:
                         },
                         "consequent": {
                             "type": "Block",
-                            "body": [{"type": "Return", "value": {"type": "Literal", "value": 0}}],
+                            "body": [
+                                {
+                                    "type": "Return",
+                                    "value": {"type": "Literal", "value": 0},
+                                }
+                            ],
                         },
                         "alternate": {
                             "type": "Block",
-                            "body": [{"type": "Call", "name": "binarySearch", "args": []}],
+                            "body": [
+                                {"type": "Call", "name": "binarySearch", "args": []}
+                            ],
                         },
                     }
                 ],
@@ -3603,10 +3625,16 @@ class TestRecursiveAnalyzerDPValidation:
         self.analyzer.procedure_name = "binarySearch"
         profile = self.analyzer._build_recursive_expansion_profile(proc_def)
         # Si hay guarda, debe estar clasificada como dependiente de datos o unknown, no base structural.
-        assert not any(g.kind == "structural_base_case" for g in profile.data_dependent_guards)
-        assert any(
-            g.kind in {"data_dependent", "unknown"} for g in profile.data_dependent_guards
-        ) or profile.has_pruning is True
+        assert not any(
+            g.kind == "structural_base_case" for g in profile.data_dependent_guards
+        )
+        assert (
+            any(
+                g.kind in {"data_dependent", "unknown"}
+                for g in profile.data_dependent_guards
+            )
+            or profile.has_pruning is True
+        )
 
     def test_has_return_before_recursive_calls_if_then_else(self):
         """Test: _has_return_before_recursive_calls detecta patrón IF-THEN-ELSE con return en THEN"""

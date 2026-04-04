@@ -438,7 +438,10 @@ class TestAnalyzeAlgorithm:
         mock_analyzer_worst = MagicMock()
         mock_analyzer_best = MagicMock()
         mock_analyzer_worst.analyze.return_value = object()
-        mock_analyzer_best.analyze.return_value = {"ok": True, "totals": {"T_open": "n"}}
+        mock_analyzer_best.analyze.return_value = {
+            "ok": True,
+            "totals": {"T_open": "n"},
+        }
         mock_registry.get.return_value = MagicMock(
             side_effect=[mock_analyzer_worst, mock_analyzer_best]
         )

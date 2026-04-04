@@ -223,7 +223,9 @@ def test_benchmark_while_algorithm(name: str, source: str, expected: dict) -> No
         assert r.get("ok"), f"{name} {mode}: análisis falló: {r.get('errors', [])}"
         theta = r.get("totals", {}).get("big_theta", "")
         results[mode] = theta
-    print(f"  {name}: best={results['best']} worst={results['worst']} avg={results['avg']} OK")
+    print(
+        f"  {name}: best={results['best']} worst={results['worst']} avg={results['avg']} OK"
+    )
 
 
 def test_benchmark_summary() -> None:
@@ -236,10 +238,14 @@ def test_benchmark_summary() -> None:
             for mode in ["best", "worst", "avg"]:
                 r = analyze_algorithm(source=source, mode=mode)
                 if not r.get("ok"):
-                    raise AssertionError(f"{mode}: análisis falló: {r.get('errors', [])}")
+                    raise AssertionError(
+                        f"{mode}: análisis falló: {r.get('errors', [])}"
+                    )
                 theta = r.get("totals", {}).get("big_theta", "")
                 if theta and not _theta_matches(expected.get(mode, ""), theta):
-                    raise AssertionError(f"{mode}: esperado {expected.get(mode)}, obtuvo {theta}")
+                    raise AssertionError(
+                        f"{mode}: esperado {expected.get(mode)}, obtuvo {theta}"
+                    )
             passed += 1
             print(f"  [OK] {name}")
         except Exception as e:

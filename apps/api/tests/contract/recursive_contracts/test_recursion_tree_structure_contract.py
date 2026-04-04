@@ -62,7 +62,9 @@ END
 
 
 def test_merge_sort_tree_levels_and_labels():
-    result = analyze_algorithm(MERGE_SORT, mode="worst", preferred_method="recursion_tree")
+    result = analyze_algorithm(
+        MERGE_SORT, mode="worst", preferred_method="recursion_tree"
+    )
     assert result.get("ok"), result.get("errors", [])
     recursion_tree = result.get("totals", {}).get("recursion_tree", {})
     assert recursion_tree.get("recurrence_type") == "divide_conquer"
@@ -72,13 +74,17 @@ def test_merge_sort_tree_levels_and_labels():
     assert "n" in levels[0].get("subproblem_size_latex", "")
     assert "2" in levels[1].get("num_nodes_latex", "")
     assert "n/2" in levels[1].get("subproblem_size_latex", "").replace(" ", "")
-    assert "log" in recursion_tree.get("height", "").lower() or "2" in recursion_tree.get("height", "")
+    assert "log" in recursion_tree.get(
+        "height", ""
+    ).lower() or "2" in recursion_tree.get("height", "")
     theta = recursion_tree.get("theta", "")
     assert "n" in theta and ("log" in theta.lower() or "\\log" in theta)
 
 
 def test_merge_sort_tree_has_required_fields():
-    result = analyze_algorithm(MERGE_SORT, mode="worst", preferred_method="recursion_tree")
+    result = analyze_algorithm(
+        MERGE_SORT, mode="worst", preferred_method="recursion_tree"
+    )
     assert result.get("ok")
     levels = result.get("totals", {}).get("recursion_tree", {}).get("levels", [])
     for level in levels:

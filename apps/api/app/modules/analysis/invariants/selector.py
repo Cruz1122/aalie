@@ -171,7 +171,11 @@ def _score_loop(facts: LoopFacts) -> Dict[str, float]:
 
     purpose_weight = (
         (2.8 if _contains_feature(facts, "has_swap_like_update") else 0.0)
-        + (1.8 if _contains_feature(facts, "has_adjacent_collection_comparison") else 0.0)
+        + (
+            1.8
+            if _contains_feature(facts, "has_adjacent_collection_comparison")
+            else 0.0
+        )
         + (2.4 if _contains_feature(facts, "has_collection_target_comparison") else 0.0)
         + (2.1 if _contains_feature(facts, "has_two_pointer_control") else 0.0)
         + (1.6 if _contains_feature(facts, "has_prefix_write") else 0.0)
@@ -185,7 +189,11 @@ def _score_loop(facts: LoopFacts) -> Dict[str, float]:
         trivial_penalty += 4.0
     if facts.non_trivial_statement_count <= 1:
         trivial_penalty += 2.8
-    if facts.assignment_count <= 1 and facts.conditional_count == 0 and facts.return_count == 0:
+    if (
+        facts.assignment_count <= 1
+        and facts.conditional_count == 0
+        and facts.return_count == 0
+    ):
         trivial_penalty += 1.8
     if not facts.body_writes:
         trivial_penalty += 1.5

@@ -52,7 +52,10 @@ def _find_initial_value(
             break
         if stmt.get("type", "").lower() == "assign":
             target = stmt.get("target", {})
-            if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
+            if (
+                isinstance(target, dict)
+                and target.get("type", "").lower() == "identifier"
+            ):
                 if target.get("name", "") == var_name:
                     val = stmt.get("value", {})
                     if isinstance(val, dict):
@@ -252,7 +255,9 @@ def classify_while(
             # Caso común: i < n, ambos son identificadores pero solo i se actualiza.
             # Si la "variable límite" no cambia dentro del while, tratarla como cota fija.
             limit_var = atom.get("limit")
-            limit_summary = updates.get(limit_var) if isinstance(limit_var, str) else None
+            limit_summary = (
+                updates.get(limit_var) if isinstance(limit_var, str) else None
+            )
             limit_has_updates = bool(
                 limit_summary
                 and (
@@ -383,7 +388,9 @@ def classify_while(
                 if change_op in ("/", "//", "div") and op in (">", ">="):
                     try:
                         is_zero = limit in ("0", "0.0") or (
-                            isinstance(limit, str) and limit.isdigit() and int(limit) == 0
+                            isinstance(limit, str)
+                            and limit.isdigit()
+                            and int(limit) == 0
                         )
                     except (ValueError, TypeError):
                         is_zero = False
@@ -524,7 +531,9 @@ def classify_while(
                 )
             )
 
-        bounded = [r for r in sub_results if r.status == "bounded" and r.iterations_expr]
+        bounded = [
+            r for r in sub_results if r.status == "bounded" and r.iterations_expr
+        ]
         if not bounded:
             return ClassifyResult(status="unknown", reason_code="while_and_unknown")
 

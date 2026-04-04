@@ -137,18 +137,13 @@ class ASTBuilder(LanguageVisitor):
         if has_range:
             # Contar dimensiones antes del RANGE iterando sobre los hijos
             dim_count_before = 0
-            for child in ctx.children:
+            for child in ctx.children or []:
                 if isinstance(child, LanguageParser.ArrayDimContext):
                     dim_count_before += 1
                 elif hasattr(child, "symbol") and child.symbol:
                     # Verificar si es el token RANGE
-                    try:
-                        from .generated.LanguageParser import LanguageParser
-
-                        if child.symbol.type == LanguageParser.RANGE:
-                            break
-                    except:
-                        pass
+                    if child.symbol.type == LanguageParser.RANGE:
+                        break
 
             # Dividir dimensiones
             start_dims = all_dims[:dim_count_before] if dim_count_before > 0 else []

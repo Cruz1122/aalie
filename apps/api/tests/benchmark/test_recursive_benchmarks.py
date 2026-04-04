@@ -1,4 +1,3 @@
-
 import pytest
 
 from app.modules.analysis.service import analyze_algorithm

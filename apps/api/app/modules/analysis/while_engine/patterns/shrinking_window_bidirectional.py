@@ -15,9 +15,14 @@ from .base import IterationBoundResult, TerminationResult, WhilePattern
 def _find_two_var_relation(guard_info: Any) -> Optional[Dict[str, Any]]:
     atoms = getattr(guard_info, "atoms", None) or []
     for atom in atoms:
-        if isinstance(atom, dict) and atom.get("two_vars") and atom.get("op") in (
-            "<=",
-            "<",
+        if (
+            isinstance(atom, dict)
+            and atom.get("two_vars")
+            and atom.get("op")
+            in (
+                "<=",
+                "<",
+            )
         ):
             return atom
     return None
@@ -96,4 +101,3 @@ class ShrinkingWindowBidirectionalPattern(WhilePattern):
 
     def explain(self, while_ctx: Dict[str, Any]) -> list:
         return ["Two-pointer shrinking window: left increases, right decreases"]
-

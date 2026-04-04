@@ -19,7 +19,6 @@ from app.modules.export.trace_diagram import (
 pytestmark = [pytest.mark.unit, pytest.mark.fast, pytest.mark.export]
 
 
-
 def _small_graph():
     return {
         "nodes": [

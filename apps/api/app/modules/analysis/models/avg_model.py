@@ -16,7 +16,9 @@ class AvgModel:
     Author: Juan Camilo Cruz Parra (@Cruz1122)
     """
 
-    def __init__(self, mode: str = "uniform", predicates: Optional[Dict[str, str]] = None):
+    def __init__(
+        self, mode: str = "uniform", predicates: Optional[Dict[str, str]] = None
+    ):
         """
         Inicializa el modelo probabilístico.
 
@@ -34,7 +36,9 @@ class AvgModel:
         self.predicates = predicates or {}
         self._symbol_counter = 0  # Para generar símbolos únicos p, q, r, etc.
 
-    def get_probability(self, predicate: str, context: Optional[Dict[str, Any]] = None) -> str:
+    def get_probability(
+        self, predicate: str, context: Optional[Dict[str, Any]] = None
+    ) -> str:
         """
         Obtiene la probabilidad para un predicado dado.
 
@@ -165,7 +169,9 @@ class AvgModel:
                 )
                 if len(self.predicates) > 2:
                     predicates_str += "..."
-                note = labels["model_uniform_predicates"].format(predicates_str=predicates_str)
+                note = labels["model_uniform_predicates"].format(
+                    predicates_str=predicates_str
+                )
             else:
                 note = labels["model_uniform_half"]
         else:  # symbolic
@@ -175,7 +181,9 @@ class AvgModel:
                 )
                 if len(self.predicates) > 2:
                     predicates_str += "..."
-                note = labels["model_symbolic_predicates"].format(predicates_str=predicates_str)
+                note = labels["model_symbolic_predicates"].format(
+                    predicates_str=predicates_str
+                )
             else:
                 note = labels["model_symbolic_p"]
         return {"mode": self.mode, "note": note}

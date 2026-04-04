@@ -36,7 +36,8 @@ def _contains_unresolved_symbols(s: str) -> bool:
         "I_{while" in sl
         or "i_{while" in sl
         or "t_{while" in sl
-        or "t_{" in sl and "while" in sl
+        or "t_{" in sl
+        and "while" in sl
         or "\\infty" in sl
         or "infty" in sl.lower()
     )
@@ -44,7 +45,7 @@ def _contains_unresolved_symbols(s: str) -> bool:
 
 def _parse_expr_latex(expr: str):
     # Import local para no penalizar imports en rutas que no se usan.
-    from sympy import Symbol, sqrt, sympify
+    from sympy import sqrt
 
     expr = _clean_latex(expr)
     if not expr:
@@ -136,7 +137,7 @@ def _latex_subset_to_sympy_expr(latex: str, *, phi_const):
     """
     Convierte un subconjunto de LaTeX a una expresión evaluable por sympy.
     """
-    from sympy import sqrt, sympify
+    from sympy import sympify
 
     s = latex.strip()
     if not s:
@@ -297,4 +298,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

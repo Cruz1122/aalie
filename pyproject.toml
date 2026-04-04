@@ -1,0 +1,2 @@
+[tool.ruff]
+extend-exclude = ["packages/grammar/out/py"]

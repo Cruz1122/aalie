@@ -10,7 +10,9 @@ from ..parsing.service import parse_source
 from .classifier import detect_algorithm_kind
 
 
-def classify_algorithm(source: str = None, ast: Dict[str, Any] = None) -> Dict[str, Any]:
+def classify_algorithm(
+    source: str = None, ast: Dict[str, Any] = None
+) -> Dict[str, Any]:
     """
     Clasifica un algoritmo a partir de código fuente o de un AST.
 
@@ -41,7 +43,9 @@ def classify_algorithm(source: str = None, ast: Dict[str, Any] = None) -> Dict[s
             if not isinstance(source, str):
                 return {
                     "ok": False,
-                    "errors": [{"message": "El campo 'source' debe ser una cadena de texto"}],
+                    "errors": [
+                        {"message": "El campo 'source' debe ser una cadena de texto"}
+                    ],
                 }
 
             # Parsear el código fuente

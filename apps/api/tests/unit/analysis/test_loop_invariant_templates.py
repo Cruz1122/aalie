@@ -11,7 +11,6 @@ from app.modules.analysis.invariants.templates import (
 pytestmark = [pytest.mark.unit, pytest.mark.fast]
 
 
-
 def make_facts(**overrides) -> LoopFacts:
     base = LoopFacts(
         node={"type": "For"},

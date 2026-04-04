@@ -19,7 +19,9 @@ class ProgressProof:
 
     proven: bool
     ranking_expr: Optional[Expr] = None
-    bound_kind: str = "unknown"  # linear | logarithmic | interval | modular | boolean | unknown
+    bound_kind: str = (
+        "unknown"  # linear | logarithmic | interval | modular | boolean | unknown
+    )
     must_progress: bool = False
     may_stall: bool = False
     may_reset: bool = False

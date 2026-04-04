@@ -39,7 +39,9 @@ def _render_institutional_code(block: Dict[str, object]) -> str:
         )
     output = []
     if block.get("title"):
-        output.append(rf"\GraySubsection{{{escape_latex_text(str(block.get('title')))}}}")
+        output.append(
+            rf"\GraySubsection{{{escape_latex_text(str(block.get('title')))}}}"
+        )
     output.extend(
         [
             r"\begin{center}",
@@ -140,7 +142,8 @@ def _render_table(table: DocumentTable, i18n: Dict[str, object]) -> str:
         else:
             for row in table.rows:
                 lines.append(
-                    " & ".join(render_latex_cell_value(str(cell)) for cell in row) + r" \\"
+                    " & ".join(render_latex_cell_value(str(cell)) for cell in row)
+                    + r" \\"
                 )
         lines.extend([r"\end{longtable}", r"\endgroup"])
         return "\n".join(lines)
@@ -163,7 +166,9 @@ def _render_table(table: DocumentTable, i18n: Dict[str, object]) -> str:
         )
     else:
         for row in table.rows:
-            lines.append(" & ".join(render_latex_cell_value(str(cell)) for cell in row) + r" \\")
+            lines.append(
+                " & ".join(render_latex_cell_value(str(cell)) for cell in row) + r" \\"
+            )
     lines.extend([r"\bottomrule", r"\end{tabularx}", r"\endgroup", r"\end{center}"])
     return "\n".join(lines)
 
@@ -187,7 +192,9 @@ def _render_block(block: Dict[str, object], i18n: Dict[str, object]) -> str:
     if kind == "heading":
         return rf"\paragraph{{{escape_latex_text(str(block.get('text') or ''))}}}"
     if kind == "emphasis":
-        return rf"\textbf{{\textit{{{escape_latex_text(str(block.get('text') or ''))}}}}}"
+        return (
+            rf"\textbf{{\textit{{{escape_latex_text(str(block.get('text') or ''))}}}}}"
+        )
     if kind == "paragraph":
         return render_latex_text_with_inline_math(str(block.get("text") or ""))
     if kind == "list":
@@ -246,7 +253,9 @@ def _render_block(block: Dict[str, object], i18n: Dict[str, object]) -> str:
         if step.get("warning"):
             lines.append(
                 r"{\footnotesize\textit{"
-                + escape_latex_text("Advertencia" if i18n["locale"] == "es" else "Warning")
+                + escape_latex_text(
+                    "Advertencia" if i18n["locale"] == "es" else "Warning"
+                )
                 + ": "
                 + render_latex_text_with_embedded_math(str(step.get("warning") or ""))
                 + "}}"
@@ -256,7 +265,9 @@ def _render_block(block: Dict[str, object], i18n: Dict[str, object]) -> str:
                 r"{\footnotesize\textit{"
                 + escape_latex_text("Soporte" if i18n["locale"] == "es" else "Support")
                 + ": "
-                + render_latex_text_with_embedded_math(str(step.get("supportReason") or ""))
+                + render_latex_text_with_embedded_math(
+                    str(step.get("supportReason") or "")
+                )
                 + "}}"
             )
         return "\n".join(lines)
@@ -342,7 +353,9 @@ def render_latex_report(
         "%%__VERSION_LABEL__%%": escape_latex_text(str(i18n["versionLabel"])),
         "%%__DATE_LABEL__%%": escape_latex_text(str(i18n["dateLabel"])),
         "%%__DISCLAIMER__%%": escape_latex_text(model.disclaimer),
-        "%%__EXECUTIVE_SUMMARY_TITLE__%%": escape_latex_text(str(i18n["executiveSummaryTitle"])),
+        "%%__EXECUTIVE_SUMMARY_TITLE__%%": escape_latex_text(
+            str(i18n["executiveSummaryTitle"])
+        ),
         "%%__EXECUTIVE_SUMMARY_BODY__%%": executive_body,
         "%%__CONTENT_SECTIONS__%%": "\n\n".join(content_sections),
     }

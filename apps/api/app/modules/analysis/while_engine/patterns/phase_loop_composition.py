@@ -20,6 +20,7 @@ from .base import IterationBoundResult, TerminationResult, WhilePattern
 def _op_norm(op: Any) -> str:
     return str(op or "").strip().lower()
 
+
 def _walk_ast(node: Any):
     if isinstance(node, list):
         for it in node:
@@ -84,7 +85,10 @@ def _find_fin_update_step_var(
         if str(node.get("type", "")).lower() != "assign":
             continue
         target = node.get("target") or {}
-        if not isinstance(target, dict) or str(target.get("type", "")).lower() != "identifier":
+        if (
+            not isinstance(target, dict)
+            or str(target.get("type", "")).lower() != "identifier"
+        ):
             continue
         if str(target.get("name") or "").strip() != fin_var:
             continue
@@ -193,4 +197,3 @@ class PhaseLoopCompositionPattern(WhilePattern):
 
     def explain(self, while_ctx: Dict[str, Any]) -> list:
         return ["Jump search: phase jump count ~ n/paso"]
-

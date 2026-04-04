@@ -48,7 +48,9 @@ class WhileRepeatVisitor:
 
     def loop_iterations_symbol(self, kind: str, line: int) -> Symbol:
         """Símbolo estructural para un bloque de loop no cerrado exactamente."""
-        return Symbol(self.loop_iterations_symbol_name(kind, line), real=True, positive=True)
+        return Symbol(
+            self.loop_iterations_symbol_name(kind, line), real=True, positive=True
+        )
 
     def _block_to_dict(self, block: Any) -> Dict[str, Any]:
         if isinstance(block, dict):
@@ -83,11 +85,16 @@ class WhileRepeatVisitor:
             elif "1" == str(iterations_expr or "").strip():
                 iterations_class = "constant"
         block_id = str(existing.get("id") or f"while_L{line}")
-        rendered_iterations = iterations_expr or self.loop_iterations_symbol_name("while", line)
-        per_iteration_cost_expr = (
-            existing.get("per_iteration_cost_expr") or f"C_{{guard,{line}}} + C_{{body,{line}}}"
+        rendered_iterations = iterations_expr or self.loop_iterations_symbol_name(
+            "while", line
         )
-        exit_check_cost_expr = existing.get("exit_check_cost_expr") or f"C_{{guard_exit,{line}}}"
+        per_iteration_cost_expr = (
+            existing.get("per_iteration_cost_expr")
+            or f"C_{{guard,{line}}} + C_{{body,{line}}}"
+        )
+        exit_check_cost_expr = (
+            existing.get("exit_check_cost_expr") or f"C_{{guard_exit,{line}}}"
+        )
         expanded_cost_expr = existing.get("expanded_cost_expr")
         if not expanded_cost_expr:
             if status == "unbounded":
@@ -101,7 +108,8 @@ class WhileRepeatVisitor:
             "pattern_used": existing.get("pattern_used") or closure_info.get("pattern"),
             "evidence_level": existing.get("evidence_level")
             or ("strong" if status in {"available", "unbounded"} else "weak"),
-            "reason_code": existing.get("reason_code") or closure_info.get("reason_code"),
+            "reason_code": existing.get("reason_code")
+            or closure_info.get("reason_code"),
             "dominant_controller": existing.get("dominant_controller")
             or closure_info.get("variable"),
             "iterations_expr": iterations_expr,
@@ -155,7 +163,9 @@ class WhileRepeatVisitor:
                 continue
             ops_val = row.get("ops", 1)
             base_terms.append(
-                Integer(ops_val) * base_count if ops_val not in (None, 1) else base_count
+                Integer(ops_val) * base_count
+                if ops_val not in (None, 1)
+                else base_count
             )
 
         try:
@@ -212,7 +222,9 @@ class WhileRepeatVisitor:
                 i += 1
             arg = expr_str[start : i - 1]
             expr_str = (
-                expr_str[: log_match.start()] + f"log({arg}, {log_match.group(1)})" + expr_str[i:]
+                expr_str[: log_match.start()]
+                + f"log({arg}, {log_match.group(1)})"
+                + expr_str[i:]
             )
         expr_str = re.sub(r"\\log\s*\(([^)]+)\)", r"log(\1)", expr_str)
         expr_str = re.sub(r"\\frac\{([^}]+)\}\{([^}]+)\}", r"(\1)/(\2)", expr_str)
@@ -317,8 +329,12 @@ class WhileRepeatVisitor:
         right_str = self._expr_to_str(right)
 
         # Verificar si alguno es un identificador simple (variable)
-        left_is_var = isinstance(left, dict) and left.get("type", "").lower() == "identifier"
-        right_is_var = isinstance(right, dict) and right.get("type", "").lower() == "identifier"
+        left_is_var = (
+            isinstance(left, dict) and left.get("type", "").lower() == "identifier"
+        )
+        right_is_var = (
+            isinstance(right, dict) and right.get("type", "").lower() == "identifier"
+        )
 
         # Determinar variable y límite
         if left_is_var and not right_is_var:
@@ -390,7 +406,10 @@ class WhileRepeatVisitor:
             value = node.get("value", {})
 
             # Verificar si el target es la variable de control
-            if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
+            if (
+                isinstance(target, dict)
+                and target.get("type", "").lower() == "identifier"
+            ):
                 if target.get("name", "") == var_name:
                     assignments.append({"target": target, "value": value, "node": node})
 
@@ -427,7 +446,9 @@ class WhileRepeatVisitor:
                     elif isinstance(child, list):
                         for item in child:
                             if isinstance(item, dict):
-                                self._find_assignments_to_var(item, var_name, assignments)
+                                self._find_assignments_to_var(
+                                    item, var_name, assignments
+                                )
 
     def _find_initial_value_of_var(
         self,
@@ -449,7 +470,9 @@ class WhileRepeatVisitor:
         # Buscar en el contexto padre (bloque que contiene el while)
         if parent_context:
             assignments = []
-            self._find_assignments_before_line(parent_context, var_name, while_line, assignments)
+            self._find_assignments_before_line(
+                parent_context, var_name, while_line, assignments
+            )
 
             if assignments:
                 # Tomar la última asignación encontrada (la más cercana al while)
@@ -462,7 +485,9 @@ class WhileRepeatVisitor:
         root_ast = getattr(self, "root_ast", None)
         if root_ast:
             assignments = []
-            self._find_assignments_before_line(root_ast, var_name, while_line, assignments)
+            self._find_assignments_before_line(
+                root_ast, var_name, while_line, assignments
+            )
             if assignments:
                 last_assign = assignments[-1]
                 value = last_assign.get("value")
@@ -511,7 +536,10 @@ class WhileRepeatVisitor:
                 # Si es una asignación a la variable, agregarla
                 if stmt.get("type", "").lower() == "assign":
                     target = stmt.get("target", {})
-                    if isinstance(target, dict) and target.get("type", "").lower() == "identifier":
+                    if (
+                        isinstance(target, dict)
+                        and target.get("type", "").lower() == "identifier"
+                    ):
                         if target.get("name", "") == var_name:
                             assignments.append(
                                 {
@@ -523,7 +551,9 @@ class WhileRepeatVisitor:
                             )
                 else:
                     # Buscar recursivamente en otros tipos de nodos
-                    self._find_assignments_before_line(stmt, var_name, target_line, assignments)
+                    self._find_assignments_before_line(
+                        stmt, var_name, target_line, assignments
+                    )
         else:
             # Buscar en otros campos comunes
             for key in ["body", "consequent", "alternate"]:
@@ -579,7 +609,10 @@ class WhileRepeatVisitor:
                 val_right = value.get("right", {})
 
                 # Verificar si left o right es la variable
-                if isinstance(val_left, dict) and val_left.get("type", "").lower() == "identifier":
+                if (
+                    isinstance(val_left, dict)
+                    and val_left.get("type", "").lower() == "identifier"
+                ):
                     if val_left.get("name", "") == var_name:
                         # i op constante
                         if val_op in ("+", "-", "*", "/"):
@@ -703,7 +736,10 @@ class WhileRepeatVisitor:
 
             if isinstance(left, dict) and left.get("type", "").lower() == "identifier":
                 condition_vars.append(left.get("name", ""))
-            if isinstance(right, dict) and right.get("type", "").lower() == "identifier":
+            if (
+                isinstance(right, dict)
+                and right.get("type", "").lower() == "identifier"
+            ):
                 condition_vars.append(right.get("name", ""))
 
         # Si hay exactamente 2 variables, puede ser convergencia
@@ -718,7 +754,10 @@ class WhileRepeatVisitor:
             # Buscar asignaciones en el cuerpo
             if isinstance(body, dict) and body.get("type", "").lower() == "block":
                 for stmt in body.get("body", []):
-                    if isinstance(stmt, dict) and stmt.get("type", "").lower() == "assign":
+                    if (
+                        isinstance(stmt, dict)
+                        and stmt.get("type", "").lower() == "assign"
+                    ):
                         target = stmt.get("target", {})
                         value = stmt.get("value", {})
 
@@ -742,19 +781,25 @@ class WhileRepeatVisitor:
                                     # Verificar que right_part sea 2 (o algún entero)
                                     if (
                                         isinstance(right_part, dict)
-                                        and right_part.get("type", "").lower() == "literal"
+                                        and right_part.get("type", "").lower()
+                                        == "literal"
                                     ):
                                         divisor = right_part.get("value")
                                         if divisor == 2 or divisor == "2":
                                             # Verificar que left_part sea (var1 + var2)
                                             if (
                                                 isinstance(left_part, dict)
-                                                and left_part.get("type", "").lower() == "binary"
+                                                and left_part.get("type", "").lower()
+                                                == "binary"
                                             ):
                                                 inner_op = left_part.get("op", "")
                                                 if inner_op == "+":
-                                                    inner_left = left_part.get("left", {})
-                                                    inner_right = left_part.get("right", {})
+                                                    inner_left = left_part.get(
+                                                        "left", {}
+                                                    )
+                                                    inner_right = left_part.get(
+                                                        "right", {}
+                                                    )
 
                                                     # Verificar que ambos sean var1 y var2
                                                     left_name = (
@@ -872,7 +917,8 @@ class WhileRepeatVisitor:
                 return False
             left_expr = node.get("left", {})
             if not (
-                isinstance(left_expr, dict) and left_expr.get("type", "").lower() == "identifier"
+                isinstance(left_expr, dict)
+                and left_expr.get("type", "").lower() == "identifier"
             ):
                 return False
             return left_expr.get("name", "") == var_name
@@ -889,10 +935,16 @@ class WhileRepeatVisitor:
             left_expr = node.get("left", {})
             right_expr = node.get("right", {})
             # Lado izquierdo: acceso a array A[i]
-            if not (isinstance(left_expr, dict) and left_expr.get("type", "").lower() == "index"):
+            if not (
+                isinstance(left_expr, dict)
+                and left_expr.get("type", "").lower() == "index"
+            ):
                 return False
             index = left_expr.get("index", {})
-            if not (isinstance(index, dict) and index.get("type", "").lower() == "identifier"):
+            if not (
+                isinstance(index, dict)
+                and index.get("type", "").lower() == "identifier"
+            ):
                 return False
             if index.get("name", "") != var_name:
                 return False
@@ -967,7 +1019,10 @@ class WhileRepeatVisitor:
                         cons_body = [cons] if cons else []
                     if self._has_non_control_comparison(t, var_name):
                         for stmt in cons_body:
-                            if isinstance(stmt, dict) and stmt.get("type", "").lower() == "assign":
+                            if (
+                                isinstance(stmt, dict)
+                                and stmt.get("type", "").lower() == "assign"
+                            ):
                                 target = stmt.get("target", {})
                                 if (
                                     isinstance(target, dict)
@@ -1025,7 +1080,9 @@ class WhileRepeatVisitor:
 
             # Verificar si alguna parte es un acceso a array o una variable diferente
             left_type = left.get("type", "").lower() if isinstance(left, dict) else ""
-            right_type = right.get("type", "").lower() if isinstance(right, dict) else ""
+            right_type = (
+                right.get("type", "").lower() if isinstance(right, dict) else ""
+            )
 
             # Verificar acceso a array (puede ser "Index", "ArrayAccess", "IndexSuffix", "lvalue", etc.)
             # El AST usa "Index" para acceso a array: {type: "Index", target: {...}, index: {...}}
@@ -1125,7 +1182,9 @@ class WhileRepeatVisitor:
                     break
         if not limit:
             return None
-        initial_value = self._find_initial_value_of_var(var_name, while_line, parent_context)
+        initial_value = self._find_initial_value_of_var(
+            var_name, while_line, parent_context
+        )
         iterations = self._calculate_iterations(
             var_name, initial_value, change_rule, limit, operator, "best"
         )
@@ -1175,8 +1234,12 @@ class WhileRepeatVisitor:
         op = (test.get("op") or test.get("operator", "")).lower()
         left = test.get("left", {})
         right = test.get("right", {})
-        left_id = isinstance(left, dict) and left.get("type", "").lower() == "identifier"
-        right_id = isinstance(right, dict) and right.get("type", "").lower() == "identifier"
+        left_id = (
+            isinstance(left, dict) and left.get("type", "").lower() == "identifier"
+        )
+        right_id = (
+            isinstance(right, dict) and right.get("type", "").lower() == "identifier"
+        )
 
         def _is_const(expr: Any) -> bool:
             if not isinstance(expr, dict):
@@ -1184,7 +1247,9 @@ class WhileRepeatVisitor:
             t = expr.get("type", "").lower()
             if t in ("number", "literal"):
                 return True
-            if t == "identifier" and (expr.get("name", "").lower() in ("true", "false", "t", "f")):
+            if t == "identifier" and (
+                expr.get("name", "").lower() in ("true", "false", "t", "f")
+            ):
                 return True
             return False
 
@@ -1207,7 +1272,9 @@ class WhileRepeatVisitor:
             return None
         left = test.get("left", {})
         right = test.get("right", {})
-        left_id = isinstance(left, dict) and left.get("type", "").lower() == "identifier"
+        left_id = (
+            isinstance(left, dict) and left.get("type", "").lower() == "identifier"
+        )
         if left_id:
             return left.get("name", "") or None
         if isinstance(right, dict) and right.get("type", "").lower() == "identifier":
@@ -1306,10 +1373,15 @@ class WhileRepeatVisitor:
             if isinstance(n, dict):
                 if n.get("type", "").lower() == "assign":
                     val = n.get("value", {})
-                    if isinstance(val, dict) and val.get("type", "").lower() == "binary":
+                    if (
+                        isinstance(val, dict)
+                        and val.get("type", "").lower() == "binary"
+                    ):
                         vop = (val.get("op") or val.get("operator", "")).lower()
-                        if vop == "-" and isinstance(val.get("left"), dict) and isinstance(
-                            val.get("right"), dict
+                        if (
+                            vop == "-"
+                            and isinstance(val.get("left"), dict)
+                            and isinstance(val.get("right"), dict)
                         ):
                             lft, rgt = val["left"], val["right"]
                             if (
@@ -1318,9 +1390,10 @@ class WhileRepeatVisitor:
                                 and lft.get("index", {}).get("name") == index_var
                             ):
                                 rv = rgt.get("value", rgt.get("name"))
-                                if rgt.get("type", "").lower() in ("number", "literal") and str(
-                                    rv
-                                ) in ("1", "1.0"):
+                                if rgt.get("type", "").lower() in (
+                                    "number",
+                                    "literal",
+                                ) and str(rv) in ("1", "1.0"):
                                     found = True
                 for v in n.values():
                     walk(v)
@@ -1331,7 +1404,9 @@ class WhileRepeatVisitor:
         walk(body_node)
         return found
 
-    def _match_frequency_drain_while(self, node: Dict[str, Any]) -> Optional[Dict[str, str]]:
+    def _match_frequency_drain_while(
+        self, node: Dict[str, Any]
+    ) -> Optional[Dict[str, str]]:
         """
         WHILE (C[idx] > 0) con decremento unitario en la misma celda (counting sort).
         """
@@ -1342,7 +1417,12 @@ class WhileRepeatVisitor:
         if not isinstance(test, dict):
             return None
         op = (test.get("op") or test.get("operator", "")).lower()
-        if str(test.get("type", "")).lower() != "binary" or op not in (">", ">=", "<", "<="):
+        if str(test.get("type", "")).lower() != "binary" or op not in (
+            ">",
+            ">=",
+            "<",
+            "<=",
+        ):
             return None
         left, right = test.get("left", {}), test.get("right", {})
         if op in ("<", "<="):
@@ -1351,7 +1431,10 @@ class WhileRepeatVisitor:
             return None
         tgt = left.get("target", {})
         idx = left.get("index", {})
-        if tgt.get("type", "").lower() != "identifier" or idx.get("type", "").lower() != "identifier":
+        if (
+            tgt.get("type", "").lower() != "identifier"
+            or idx.get("type", "").lower() != "identifier"
+        ):
             return None
         arr_name = str(tgt.get("name", "") or "")
         idx_var = str(idx.get("name", "") or "")
@@ -1370,7 +1453,9 @@ class WhileRepeatVisitor:
             return None
         return {"array_name": arr_name, "index_var": idx_var}
 
-    def _sum_span_expr_for_loop_var(self, mult_expr: Any, var_name: str) -> Optional[Expr]:
+    def _sum_span_expr_for_loop_var(
+        self, mult_expr: Any, var_name: str
+    ) -> Optional[Expr]:
         """Si mult_expr es Sum(1, (var, a, b)), devuelve (b - a + 1) si var coincide."""
         if not isinstance(mult_expr, Sum):
             return None
@@ -1491,7 +1576,9 @@ class WhileRepeatVisitor:
                     if not flag_name or flag_name == var_name:
                         return False
                     # Buscar valor inicial antes de la línea del while
-                    initial_val = self._find_initial_value_of_var(flag_name, L, parent_context)
+                    initial_val = self._find_initial_value_of_var(
+                        flag_name, L, parent_context
+                    )
                     if not initial_val:
                         return False
                     return initial_val.upper() in (
@@ -1501,7 +1588,9 @@ class WhileRepeatVisitor:
                         "FALSE",
                     )
 
-                def _extract_flag_identifier_node(expr: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+                def _extract_flag_identifier_node(
+                    expr: Dict[str, Any]
+                ) -> Optional[Dict[str, Any]]:
                     """
                     Devuelve un nodo Identifier que represente una bandera booleana en la condición.
 
@@ -1617,10 +1706,14 @@ class WhileRepeatVisitor:
                         "initial_value": None,
                         "change_rule": {"operator": "+", "constant": "1"},
                         "limit": (
-                            condition_info_pre.get("limit", "n") if condition_info_pre else "n"
+                            condition_info_pre.get("limit", "n")
+                            if condition_info_pre
+                            else "n"
                         ),
                         "operator": (
-                            condition_info_pre.get("operator", "<") if condition_info_pre else "<"
+                            condition_info_pre.get("operator", "<")
+                            if condition_info_pre
+                            else "<"
                         ),
                         "iterations": "1",
                         "success": True,
@@ -1656,7 +1749,10 @@ class WhileRepeatVisitor:
                 if isinstance(n, dict):
                     if n.get("type", "").lower() == "assign":
                         t = n.get("target", {})
-                        if isinstance(t, dict) and t.get("type", "").lower() == "identifier":
+                        if (
+                            isinstance(t, dict)
+                            and t.get("type", "").lower() == "identifier"
+                        ):
                             assigned_vars.add(t.get("name", ""))
                     for v in n.values():
                         _collect_vars(v)
@@ -1714,7 +1810,10 @@ class WhileRepeatVisitor:
                         "cost_block": engine_result.cost_block,
                     }
                 if engine_result.status == "unbounded":
-                    if mode == "best" and engine_result.reason_code == "while_no_progress_must":
+                    if (
+                        mode == "best"
+                        and engine_result.reason_code == "while_no_progress_must"
+                    ):
                         param_bounded = self._try_param_controlled_best_case(
                             body,
                             guard,
@@ -1728,14 +1827,20 @@ class WhileRepeatVisitor:
                     return {
                         "success": True,
                         "status": "unbounded",
-                        "reason_code": engine_result.reason_code or "while_unbounded_unknown",
+                        "reason_code": engine_result.reason_code
+                        or "while_unbounded_unknown",
                         "evidence": engine_result.evidence or {},
                         "cost_block": engine_result.cost_block,
                     }
             except Exception:
                 # Si el engine falla, usar el clasificador para no perder bounded/unbounded
-                result_fallback = classify_while(guard, updates, mode, parent_context, L)
-                if result_fallback.status == "bounded" and result_fallback.iterations_expr:
+                result_fallback = classify_while(
+                    guard, updates, mode, parent_context, L
+                )
+                if (
+                    result_fallback.status == "bounded"
+                    and result_fallback.iterations_expr
+                ):
                     ev = result_fallback.evidence
                     op_rule = ev.get("change_operator") if ev else None
                     const_rule = ev.get("change_constant") if ev else None
@@ -1762,7 +1867,10 @@ class WhileRepeatVisitor:
                         "reason_code": result_fallback.reason_code,
                     }
                 if result_fallback.status == "unbounded":
-                    if mode == "best" and result_fallback.reason_code == "while_no_progress_must":
+                    if (
+                        mode == "best"
+                        and result_fallback.reason_code == "while_no_progress_must"
+                    ):
                         param_bounded = self._try_param_controlled_best_case(
                             body,
                             guard,
@@ -1776,7 +1884,8 @@ class WhileRepeatVisitor:
                     return {
                         "success": True,
                         "status": "unbounded",
-                        "reason_code": result_fallback.reason_code or "while_unbounded_unknown",
+                        "reason_code": result_fallback.reason_code
+                        or "while_unbounded_unknown",
                         "evidence": result_fallback.evidence or {},
                     }
             result = classify_while(guard, updates, mode, parent_context, L)
@@ -1867,8 +1976,12 @@ class WhileRepeatVisitor:
                     "pattern_note": pattern_info.get("note", ""),
                 }
             # Búsqueda lineal con flag en avg: E[iteraciones] ≈ (n+1)/2 (no usar modelo geométrico)
-            if mode == "avg" and self._is_linear_search_flag_pattern(test, body, var_name):
-                initial_val = self._find_initial_value_of_var(var_name, L, parent_context) or "0"
+            if mode == "avg" and self._is_linear_search_flag_pattern(
+                test, body, var_name
+            ):
+                initial_val = (
+                    self._find_initial_value_of_var(var_name, L, parent_context) or "0"
+                )
                 return {
                     "variable": var_name,
                     "initial_value": initial_val,
@@ -2062,7 +2175,9 @@ class WhileRepeatVisitor:
             # O si es unbounded por param-controlled (no_progress_must): NO aplicar modelo geométrico
             # O si es WHILE con AND y array (ej: find_last_index): E[iteraciones] ≈ (n+1)/2, no 1/p
             test = node.get("test", {})
-            closure_info_pattern = self._analyze_while_closure(node, parent_context, mode)
+            closure_info_pattern = self._analyze_while_closure(
+                node, parent_context, mode
+            )
             skip_geometric = False
             if closure_info_pattern:
                 if (
@@ -2088,9 +2203,9 @@ class WhileRepeatVisitor:
                     var_tmp = closure_info_pattern.get("variable", "")
                     if not self._is_positive_prefix_guard(test, var_tmp):
                         skip_geometric = True
-                elif closure_info_pattern.get("status") == "unbounded" and closure_info_pattern.get(
-                    "reason_code"
-                ) in (
+                elif closure_info_pattern.get(
+                    "status"
+                ) == "unbounded" and closure_info_pattern.get("reason_code") in (
                     "while_no_progress_must",
                     "while_or_no_progress",
                 ):
@@ -2188,7 +2303,9 @@ class WhileRepeatVisitor:
                         )
                         return
                     except Exception as e:
-                        print(f"[WhileRepeatVisitor] Error calculando E[#iteraciones] = 1/p: {e}")
+                        print(
+                            f"[WhileRepeatVisitor] Error calculando E[#iteraciones] = 1/p: {e}"
+                        )
                         # Continuar con análisis de cierre como fallback
 
         # Paso 2: Intentar análisis de cierre (para todos los modos, incluyendo avg como fallback)
@@ -2196,7 +2313,9 @@ class WhileRepeatVisitor:
         self._frequency_drain = None
         drain = self._match_frequency_drain_while(node)
         if drain and getattr(self, "loop_stack", None):
-            span_expr = self._sum_span_expr_for_loop_var(self.loop_stack[-1], drain["index_var"])
+            span_expr = self._sum_span_expr_for_loop_var(
+                self.loop_stack[-1], drain["index_var"]
+            )
             if span_expr is not None:
                 popped_freq_mult = self.loop_stack.pop()
                 self._frequency_drain = {**drain, "outer_span": span_expr}
@@ -2236,7 +2355,11 @@ class WhileRepeatVisitor:
             t_sym = self.loop_iterations_symbol("while", L)
             ck_cond = self.C()
             cond_count = t_sym + Integer(1)
-            ops = self._ops_of_expr(node.get("test", {})) if hasattr(self, "_ops_of_expr") else 1
+            ops = (
+                self._ops_of_expr(node.get("test", {}))
+                if hasattr(self, "_ops_of_expr")
+                else 1
+            )
             ops = max(1, ops)
             self.add_row(
                 line=L,
@@ -2283,7 +2406,9 @@ class WhileRepeatVisitor:
             operator = closure_info["operator"]
             initial_value = closure_info.get("initial_value")
             if best_body_return_single_pass and not initial_value and var_name:
-                initial_value = self._find_initial_value_of_var(var_name, L, parent_context)
+                initial_value = self._find_initial_value_of_var(
+                    var_name, L, parent_context
+                )
                 if not initial_value and var_name in ("i", "j", "k"):
                     initial_value = "1"
             pattern = closure_info.get("pattern")
@@ -2308,10 +2433,14 @@ class WhileRepeatVisitor:
                     else:
                         # Es una expresión log en LaTeX, convertir a SymPy
                         # Ejemplo: "\\log_{2}(n)" -> log(n, 2)
-                        limit_expr = sp_sympify(limit) if isinstance(limit, str) else limit
+                        limit_expr = (
+                            sp_sympify(limit) if isinstance(limit, str) else limit
+                        )
                         iterations_expr = log(limit_expr, 2)
                 except Exception as e:
-                    print(f"[WhileRepeatVisitor] Error convirtiendo log expression: {e}")
+                    print(
+                        f"[WhileRepeatVisitor] Error convirtiendo log expression: {e}"
+                    )
                     # Fallback: usar ceil(log(n))
                     n_sym = Sym("n")
                     iterations_expr = ceiling(log(n_sym, 2))
@@ -2335,16 +2464,22 @@ class WhileRepeatVisitor:
                     # Ejemplo: WHILE (j <= i) dentro de WHILE (i <= n). Aquí i cambia; sustituir i->1
                     # colapsa la sumatoria triangular y rompe Θ(n²).
                     try:
-                        loop_vars = set(getattr(self, "loop_index_vars", set()) or set())
+                        loop_vars = set(
+                            getattr(self, "loop_index_vars", set()) or set()
+                        )
                     except Exception:
                         loop_vars = set()
                     if limit not in loop_vars:
-                        initial_limit = self._find_initial_value_of_var(limit, L, parent_context)
+                        initial_limit = self._find_initial_value_of_var(
+                            limit, L, parent_context
+                        )
                         if initial_limit:
                             try:
                                 lim_sym = self._str_to_sympy(limit)
                                 init_sym = self._str_to_sympy(initial_limit)
-                                iterations_expr = iterations_expr.subs(lim_sym, init_sym)
+                                iterations_expr = iterations_expr.subs(
+                                    lim_sym, init_sym
+                                )
                             except Exception:
                                 pass
 
@@ -2383,7 +2518,9 @@ class WhileRepeatVisitor:
                 # Solo construir Sum(1,(var,start,end)) cuando hay un límite explícito.
                 # Si no hay limit (ej. while_flag_aux_increase_bound con WHILE(flag) e i<-i+1),
                 # mantener mult_expr = iterations_expr (ej. n) para no generar Sum(i,1,0)=0.
-                has_explicit_limit = limit and (not isinstance(limit, str) or limit.strip())
+                has_explicit_limit = limit and (
+                    not isinstance(limit, str) or limit.strip()
+                )
                 if (
                     block["status"] == "available"
                     and not iterations_is_one
@@ -2472,7 +2609,9 @@ class WhileRepeatVisitor:
                         initial_value=initial_value,
                     )
                 else:
-                    note_text = self._note("while_best_false_start_no_init", L=L, var_name=var_name)
+                    note_text = self._note(
+                        "while_best_false_start_no_init", L=L, var_name=var_name
+                    )
             elif mode_info == "best":
                 if initial_value:
                     note_text = self._note(
@@ -2540,7 +2679,11 @@ class WhileRepeatVisitor:
                         limit=limit,
                     )
 
-            ops = self._ops_of_expr(node.get("test", {})) if hasattr(self, "_ops_of_expr") else 1
+            ops = (
+                self._ops_of_expr(node.get("test", {}))
+                if hasattr(self, "_ops_of_expr")
+                else 1
+            )
             ops = max(1, ops)
             self.add_row(
                 line=L,
@@ -2567,7 +2710,8 @@ class WhileRepeatVisitor:
 
             # Best case param-controlled: IF(param=const) debe tomar THEN (param habilita progreso)
             param_controlled = (
-                mode == "best" and closure_info.get("reason_code") == "while_param_enables"
+                mode == "best"
+                and closure_info.get("reason_code") == "while_param_enables"
             )
             if param_controlled:
                 setattr(self, "_param_controlled_if_take_then", True)
@@ -2622,7 +2766,9 @@ class WhileRepeatVisitor:
                 block["id"],
                 body_row_start=body_row_start,
                 multiplier_expr=(
-                    mult_expr if not (mode == "best" and iterations == "0") else Integer(0)
+                    mult_expr
+                    if not (mode == "best" and iterations == "0")
+                    else Integer(0)
                 ),
                 guard_ops=ops,
                 fallback_line=L,
@@ -2643,7 +2789,11 @@ class WhileRepeatVisitor:
             # 1) Condición: se evalúa (t + 1) veces
             ck_cond = self.C()
             cond_count = t_sym + Integer(1)
-            ops = self._ops_of_expr(node.get("test", {})) if hasattr(self, "_ops_of_expr") else 1
+            ops = (
+                self._ops_of_expr(node.get("test", {}))
+                if hasattr(self, "_ops_of_expr")
+                else 1
+            )
             ops = max(1, ops)
             self.add_row(
                 line=L,
@@ -2743,7 +2893,11 @@ class WhileRepeatVisitor:
         # 2) Condición: se evalúa también (1 + t_{repeat_L}) veces
         ck_cond = self.C()
         cond_count = Integer(1) + t_sym
-        ops = self._ops_of_expr(node.get("test", {})) if hasattr(self, "_ops_of_expr") else 1
+        ops = (
+            self._ops_of_expr(node.get("test", {}))
+            if hasattr(self, "_ops_of_expr")
+            else 1
+        )
         ops = max(1, ops)
         self.add_row(
             line=L,

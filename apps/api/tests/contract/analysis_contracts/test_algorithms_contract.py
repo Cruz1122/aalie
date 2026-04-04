@@ -17,6 +17,7 @@ CONTRACT_ALGORITHMS = [
     # Añadir aquí los 21 algoritmos según se creen .txt y .json
 ]
 
+
 @pytest.mark.parametrize(
     "family,name", CONTRACT_ALGORITHMS, ids=[f"{f}/{n}" for f, n in CONTRACT_ALGORITHMS]
 )
