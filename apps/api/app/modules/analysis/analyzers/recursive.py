@@ -4031,6 +4031,19 @@ class RecursiveAnalyzer(BaseAnalyzer):
                     reason_codes.append(guard.pattern)
                     # unknown no autoriza pruning fuerte, pero sí indica posible variabilidad
 
+            # Variante: return temprano en una rama, sin recursión en el IF,
+            # pero el procedimiento sí contiene llamadas recursivas en el flujo posterior.
+            # Esto cubre patrones como ternary search:
+            #   IF (A[m1]==x) RETURN ...
+            #   IF (A[m2]==x) RETURN ...
+            #   ... RETURN ternarySearchRec(...)
+            if (then_returns or else_returns) and not (then_has_rec or else_has_rec):
+                if guard and guard.kind == "data_dependent" and recursive_calls:
+                    data_dependent_guards.append(guard)
+                    reason_codes.append(guard.pattern)
+                    has_pruning = True
+                    continue
+
         # Determinismo de expansión (heurística fuerte)
         determinism = self._assess_same_expansion_above_base(
             proc_def,
@@ -4213,6 +4226,31 @@ class RecursiveAnalyzer(BaseAnalyzer):
 
         line = condition.get("pos", {}).get("line") if isinstance(condition.get("pos"), dict) else None
 
+        # Caso especial (contractual): igualdad de "clave" en estructura tipo búsqueda.
+        #
+        # Ejemplos:
+        # - A[mid] == x  → puede retornar inmediatamente sin expandir recursión (best-case data-dependent).
+        # - A[m1] == x / A[m2] == x (ternary search) idem.
+        #
+        # Importante: aunque `mid/m1/m2` sean size-related, el evento de igualdad depende del dato,
+        # no del tamaño; esto cuenta como pruning dependiente de datos.
+        def _is_index(node: Any) -> bool:
+            return isinstance(node, dict) and (node.get("type", "") or "").lower() == "index"
+
+        if op in {"==", "==="}:
+            if _is_index(left) or _is_index(right):
+                # Identificar la "clave" como el identificador no size-related (típicamente x).
+                # Si no hay ninguno, degradar a unknown.
+                non_size_ids = set([n for n in left_ids.union(right_ids) if n not in size_symbols])
+                if non_size_ids:
+                    return GuardEvidence(
+                        node=condition,
+                        kind="data_dependent",
+                        pattern="data_pruning_key_equality",
+                        line=line if isinstance(line, int) else None,
+                        related_size_symbols=set(),
+                    )
+
         # Nivel 1: comparación con constante sobre size-related
         if op in {"<=", "<", "==", "==="} and related:
             right_type = (right.get("type", "") or "").lower() if isinstance(right, dict) else ""
@@ -4359,14 +4397,15 @@ class RecursiveAnalyzer(BaseAnalyzer):
         """
         if not recursive_calls:
             return False
-        body = proc_def.get("body", {}) or proc_def.get("block", {})
-        # Reusar el detector existente, pero bloqueando explícitamente guardas de caso base.
-        # Si el detector encuentra return temprano y NO hay evidencia de caso base, marcamos True.
-        if self._has_return_before_recursive_calls(body, recursive_calls):
-            if base_case_guards:
-                return False
-            return True
-        return False
+        # Usar el detector contractual de early-return (excluye caso base por tamaño).
+        # Importante: un ProcDef puede tener base case estructural (p.ej. inicio > fin)
+        # y aun así tener un early-return dependiente de datos (p.ej. A[mid] == x).
+        prev_proc_def = self.proc_def
+        try:
+            self.proc_def = proc_def
+            return bool(self._detect_early_return())
+        finally:
+            self.proc_def = prev_proc_def
 
     def _classify_case_variability(
         self, profile: RecursiveExpansionProfile

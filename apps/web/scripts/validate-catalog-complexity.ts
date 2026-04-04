@@ -4,9 +4,10 @@
  *
  * Requisito: API en API_BASE_URL (default http://localhost:8000).
  *
- * Salidas:
+ * Salidas principales:
  * - scripts/output/catalog-complexity-snapshot.json
- * - scripts/output/catalog-complexity-report.md
+ * - scripts/output/catalog-complexity-report-technical.md
+ * - scripts/output/catalog-complexity-report-executive.md
  */
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -1014,19 +1015,9 @@ async function main(): Promise<void> {
     OUTPUT_DIR,
     "catalog-complexity-report-executive.md",
   );
-  const reportCompatPath = path.join(OUTPUT_DIR, "catalog-complexity-report.md");
 
   writeFileSync(reportTechnicalPath, md.join("\n"), "utf8");
   writeFileSync(reportExecutivePath, mdExecutive.join("\n"), "utf8");
-  // Compatibilidad: mantener el nombre histórico como "technical".
-  writeFileSync(reportCompatPath, md.join("\n"), "utf8");
-
-  console.log(`Wrote ${snapshotPath}`);
-  console.log(`Wrote ${reportTechnicalPath}`);
-  console.log(`Wrote ${reportExecutivePath}`);
-  console.log(
-    `Summary: content_fail=${contentFail}/${caseAll} literal_fail=${literalFail}/${caseAll} api_errors=${apiErrors}`,
-  );
 }
 
 // Fix: exp.note should be r.expected.note in loop

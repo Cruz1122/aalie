@@ -31,6 +31,18 @@ class EuclidModPattern(WhilePattern):
         )
 
     def derive_iterations(self, while_ctx: Dict[str, Any]) -> IterationBoundResult:
+        mode = str(while_ctx.get("mode") or "worst")
+        if mode == "best":
+            # Best-case: el bucle puede no ejecutarse (p.ej. b = 0 inicialmente).
+            # El costo queda dominado por el chequeo de salida del guard => O(1).
+            return IterationBoundResult(
+                exact_symbolic_bound="0",
+                asymptotic_bound="O(1)",
+                not_proven=False,
+                iterations_class="constant",
+                evidence_level="strong",
+                reason_code="euclid_mod_best_zero_iterations",
+            )
         return IterationBoundResult(
             exact_symbolic_bound="min(a, b)",
             asymptotic_bound="O(log(min(a,b)))",

@@ -76,7 +76,7 @@
     },
     "factorial-iterativo": {
       "catalogTitleEs": "Factorial iterativo",
-      "best": "O(1)",
+      "best": "O(n)",
       "avg": "O(n)",
       "worst": "O(n)",
       "note": "mejor caso solo base",
@@ -412,7 +412,7 @@
     },
     "binary-search-first-occurrence": {
       "catalogTitleEs": "Binary Search primera ocurrencia",
-      "best": "O(1)",
+      "best": "O(\\log n)",
       "avg": "O(\\log n)",
       "worst": "O(\\log n)",
       "note": "sigue a la izquierda",
@@ -420,7 +420,7 @@
     },
     "binary-search-last-occurrence": {
       "catalogTitleEs": "Binary Search ultima ocurrencia",
-      "best": "O(1)",
+      "best": "O(\\log n)",
       "avg": "O(\\log n)",
       "worst": "O(\\log n)",
       "note": "sigue a la derecha",
@@ -428,7 +428,7 @@
     },
     "conteo-recursivo-regresivo": {
       "catalogTitleEs": "Conteo recursivo regresivo",
-      "best": "O(1)",
+      "best": "O(n)",
       "avg": "O(n)",
       "worst": "O(n)",
       "note": "base trivial",
@@ -436,7 +436,7 @@
     },
     "conteo-recursivo-digitos": {
       "catalogTitleEs": "Conteo recursivo de digitos",
-      "best": "O(1)",
+      "best": "O(\\log n)",
       "avg": "O(\\log n)",
       "worst": "O(\\log n)",
       "note": "base 10",
@@ -452,7 +452,7 @@
     },
     "exponenciacion-rapida": {
       "catalogTitleEs": "Exponenciacion rapida",
-      "best": "O(1)",
+      "best": "O(\\log n)",
       "avg": "O(\\log n)",
       "worst": "O(\\log n)",
       "note": "divide exponente por 2",
@@ -460,7 +460,7 @@
     },
     "factorial-recursivo": {
       "catalogTitleEs": "Factorial recursivo",
-      "best": "O(1)",
+      "best": "O(n)",
       "avg": "O(n)",
       "worst": "O(n)",
       "note": "una llamada por nivel",
@@ -492,7 +492,7 @@
     },
     "josephus-recursivo": {
       "catalogTitleEs": "Josephus recursivo",
-      "best": "O(1)",
+      "best": "O(n)",
       "avg": "O(n)",
       "worst": "O(n)",
       "note": "una llamada por nivel",
@@ -524,7 +524,7 @@
     },
     "numeros-binarios-por-division-entre-2": {
       "catalogTitleEs": "Numeros binarios por division entre 2",
-      "best": "O(1)",
+      "best": "O(\\log n)",
       "avg": "O(\\log n)",
       "worst": "O(\\log n)",
       "note": "una llamada por bit",
@@ -540,7 +540,7 @@
     },
     "potencia-modular-rapida": {
       "catalogTitleEs": "Potencia modular rapida",
-      "best": "O(1)",
+      "best": "O(\\log n)",
       "avg": "O(\\log n)",
       "worst": "O(\\log n)",
       "note": "exponente",
@@ -548,7 +548,7 @@
     },
     "potencia-recursiva-naive": {
       "catalogTitleEs": "Potencia recursiva naive",
-      "best": "O(1)",
+      "best": "O(n)",
       "avg": "O(n)",
       "worst": "O(n)",
       "note": "una multiplicaci\u00f3n por nivel",
@@ -564,7 +564,7 @@
     },
     "recursive-sum-of-digits": {
       "catalogTitleEs": "Suma recursiva de digitos",
-      "best": "O(1)",
+      "best": "O(\\log n)",
       "avg": "O(\\log n)",
       "worst": "O(\\log n)",
       "note": "base 10",
@@ -580,7 +580,7 @@
     },
     "suma-de-1-a-n-recursiva": {
       "catalogTitleEs": "Suma de 1..n recursiva",
-      "best": "O(1)",
+      "best": "O(n)",
       "avg": "O(n)",
       "worst": "O(n)",
       "note": "una llamada por nivel",
@@ -588,7 +588,7 @@
     },
     "suma-de-arreglo-recursiva": {
       "catalogTitleEs": "Suma de arreglo recursiva",
-      "best": "O(1)",
+      "best": "O(n)",
       "avg": "O(n)",
       "worst": "O(n)",
       "note": "una llamada por nivel",
@@ -664,7 +664,7 @@
       "avg": "O(2^n)",
       "worst": "O(2^n)",
       "note": "ra\u00edz dominante 2",
-      "expectedConfidence": "hard_oracle"
+      "expectedConfidence": "approx_symbolic"
     },
     "k-step-stairs": {
       "catalogTitleEs": "Escaleras de K pasos",
@@ -704,7 +704,7 @@
       "avg": "O((1+\\sqrt{2})^n)",
       "worst": "O((1+\\sqrt{2})^n)",
       "note": "\u2248 2.4142^n",
-      "expectedConfidence": "hard_oracle"
+      "expectedConfidence": "approx_symbolic"
     },
     "perrin-sequence": {
       "catalogTitleEs": "Secuencia de Perrin",
