@@ -12,8 +12,8 @@ OBJETIVO PRINCIPAL
 LINEAMIENTOS ESTRICTOS
 - No inventes procedimientos adicionales ni cambies el nombre del procedimiento principal.
 - No agregues explicaciones, comentarios extra ni texto fuera del código.
-- Respeta las reglas críticas de la gramática: uso obligatorio de BEGIN/END (o llaves) en IF/ELSE, DO en WHILE/FOR, operadores permitidos (MOD, DIV, etc.) y ausencia de caracteres especiales (sin tildes ni ñ).
-- Todas las variables se asignan sin tipos; usa únicamente <- o :=.
+- Respeta las reglas críticas de la gramática: uso obligatorio de BEGIN/END (o llaves) en IF/ELSE, DO en WHILE/FOR, operadores permitidos (MOD, DIV, etc.) y ausencia de caracteres especiales no oficiales.
+- Todas las variables se asignan sin tipos; usa únicamente <- como sintaxis visible final.
 - Termina cada sentencia con punto y coma.
 - Si necesitas remover o agregar líneas, hazlo de manera consistente y reporta los números de línea en removedLines/addedLines.
 

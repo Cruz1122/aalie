@@ -36,7 +36,7 @@ export interface ExampleCatalogItem {
   family: ExampleFamily;
   difficulty: ExampleDifficulty;
   catalogTier: CatalogTier;
-  sourceCode: string;
+  sourceCodeByLocale: Record<ExampleLocale, string>;
   verifiedMethods: RecursiveMethodBadge[];
   enabled: boolean;
   copy: Record<ExampleLocale, ExampleCatalogCopy>;
@@ -103,6 +103,117 @@ export const EXAMPLE_FAMILY_ICONS: Record<ExampleFamily, string> = {
 
 const code = (...lines: string[]): string => lines.join("\n");
 
+const SOURCE_KEYWORDS = new Set([
+  "BEGIN",
+  "END",
+  "IF",
+  "THEN",
+  "ELSE",
+  "FOR",
+  "TO",
+  "WHILE",
+  "DO",
+  "REPEAT",
+  "UNTIL",
+  "CALL",
+  "RETURN",
+  "PRINT",
+  "MOD",
+  "DIV",
+  "AND",
+  "OR",
+  "NOT",
+  "NULL",
+  "true",
+  "false",
+]);
+
+const SOURCE_IDENTIFIER_TRANSLATIONS: Record<string, string> = {
+  anterior: "previous",
+  ascendente: "ascending",
+  auxiliar: "auxiliary",
+  bubbleSortMejorado: "improvedBubbleSort",
+  clave: "key",
+  conteoRegresivo: "recursiveCountdown",
+  cruz: "cross",
+  cruzadas: "crossing",
+  der: "right",
+  derecha: "right",
+  destino: "destination",
+  euclidesIterativo: "iterativeEuclid",
+  euclidesRecursivo: "recursiveEuclid",
+  factorialIterativo: "iterativeFactorial",
+  factorialRecursivo: "recursiveFactorial",
+  fila: "row",
+  fin: "end",
+  ganadorDer: "rightWinner",
+  ganadorIzq: "leftWinner",
+  indice: "index",
+  inicio: "start",
+  intercambio: "swapped",
+  iteraciones: "iterations",
+  izq: "left",
+  izquierda: "left",
+  maxPorMitades: "maxByHalves",
+  maximumSubarrayCuadratico: "quadraticMaximumSubarray",
+  med: "mid",
+  medio: "middle",
+  mejor: "best",
+  mejorActual: "currentBest",
+  mejorGlobal: "globalBest",
+  mergeDosArreglos: "mergeTwoArrays",
+  minIndice: "minIndex",
+  minPorMitades: "minByHalves",
+  mitad: "mid",
+  multiplo: "multiple",
+  ordenarTres: "sortThree",
+  origen: "source",
+  padre: "parent",
+  paso: "step",
+  pivote: "pivot",
+  pref: "prefix",
+  primo: "prime",
+  productoArrayMitades: "halfArrayProduct",
+  resto: "remainder",
+  resultado: "result",
+  suma: "sum",
+  sumaArreglo: "arraySum",
+  sumaArrayMitades: "halfArraySum",
+  tam: "size",
+  tercio: "third",
+  ternarySearchIterativo: "iterativeTernarySearch",
+  ultimo: "last",
+  valor: "value",
+};
+
+const SOURCE_IDENTIFIER_REGEX = /[A-Za-z_][A-Za-z0-9_]*/g;
+
+const translateSourceIdentifier = (token: string): string => {
+  if (SOURCE_KEYWORDS.has(token)) {
+    return token;
+  }
+
+  return SOURCE_IDENTIFIER_TRANSLATIONS[token] ?? token;
+};
+
+const translateSourceToEnglish = (sourceCode: string): string =>
+  sourceCode
+    .split("\n")
+    .map((line) =>
+      line.replace(SOURCE_IDENTIFIER_REGEX, (token) =>
+        translateSourceIdentifier(token),
+      ),
+    )
+    .join("\n");
+
+const buildSourceCodeByLocale = (
+  sourceCodeEs: string,
+  sourceCodeEn?: string,
+): Record<ExampleLocale, string> => ({
+  es: sourceCodeEs,
+  en: sourceCodeEn ?? translateSourceToEnglish(sourceCodeEs),
+});
+
 const buildCopy = (
   _category: ExampleCategory,
   titleEs: string,
@@ -127,13 +238,15 @@ const buildCopy = (
 });
 
 const createExample = (
-  item: Omit<ExampleCatalogItem, "copy" | "catalogTier"> & {
+  item: Omit<ExampleCatalogItem, "copy" | "catalogTier" | "sourceCodeByLocale"> & {
     titleEs: string;
     titleEn: string;
     summaryEs: string;
     summaryEn: string;
     tagsEs: string[];
     tagsEn: string[];
+    sourceCodeEs: string;
+    sourceCodeEn?: string;
     catalogTier?: CatalogTier;
   },
 ): ExampleCatalogItem => ({
@@ -143,7 +256,10 @@ const createExample = (
   family: item.family,
   difficulty: item.difficulty,
   catalogTier: item.catalogTier ?? "contractual",
-  sourceCode: item.sourceCode,
+  sourceCodeByLocale: buildSourceCodeByLocale(
+    item.sourceCodeEs,
+    item.sourceCodeEn,
+  ),
   verifiedMethods: item.verifiedMethods,
   enabled: item.enabled,
   copy: buildCopy(
@@ -174,7 +290,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Narrows the sorted range by half each iteration until the key is found or the interval empties.",
     tagsEs: ["busqueda", "logaritmico", "while"],
     tagsEn: ["search", "logarithmic", "while"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "binarySearchIter(A[n], n, x) BEGIN",
       "    izq <- 1;",
       "    der <- n;",
@@ -210,7 +326,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Sorts by comparing adjacent elements and works as a stable reference for quadratic iterative cases.",
     tagsEs: ["ordenamiento", "cuadratico", "intercambios"],
     tagsEn: ["sorting", "quadratic", "swaps"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "bubbleSort(A[n], n) BEGIN",
       "    FOR i <- 1 TO n - 1 DO BEGIN",
       "        FOR j <- 1 TO n - i DO BEGIN",
@@ -241,7 +357,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Stops early when a pass makes no swaps while staying in plain loops and arrays.",
     tagsEs: ["ordenamiento", "bandera", "early exit"],
     tagsEn: ["sorting", "flag", "early exit"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "bubbleSortMejorado(A[n], n) BEGIN",
       "    i <- 1;",
       "    WHILE (i <= n - 1) DO BEGIN",
@@ -279,7 +395,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Alternates forward and backward passes over the active range using indices only.",
     tagsEs: ["ordenamiento", "dos direcciones", "burbuja"],
     tagsEn: ["sorting", "bidirectional", "bubble"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "cocktailShakerSort(A[n], n) BEGIN",
       "    inicio <- 1;",
       "    fin <- n;",
@@ -323,7 +439,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Uses a shrinking gap factor down to 1, comparing far-apart pairs like a wide bubble pass.",
     tagsEs: ["ordenamiento", "gap", "shell-like"],
     tagsEn: ["sorting", "gap", "shell-like"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "combSort(A[n], n) BEGIN",
       "    gap <- n;",
       "    intercambio <- true;",
@@ -364,7 +480,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Counts frequencies and rebuilds the array in several linear passes over indices and occurrences.",
     tagsEs: ["ordenamiento", "frecuencias", "lineal"],
     tagsEn: ["sorting", "frequencies", "linear"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "countingSort(A[n], n, k) BEGIN",
       "    FOR i <- 0 TO k DO BEGIN",
       "        C[i] <- 0;",
@@ -400,7 +516,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Maintains three regions and is useful to study linear partitions with multiple pointers.",
     tagsEs: ["particion", "dos punteros", "lineal"],
     tagsEn: ["partition", "two pointers", "linear"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "dutchFlag(A[n], n, pivot) BEGIN",
       "    low <- 1;",
       "    mid <- 1;",
@@ -445,7 +561,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "A short and reliable sample to study a loop with geometric reduction on the state size.",
     tagsEs: ["mcd", "mod", "logaritmico"],
     tagsEn: ["gcd", "mod", "logarithmic"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "euclidesIterativo(a, b) BEGIN",
       "    WHILE (b != 0) DO BEGIN",
       "        temp <- b;",
@@ -472,7 +588,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Compares every pair (i, j) with i < j and swaps when needed; straightforward nested loops on the array.",
     tagsEs: ["ordenamiento", "pares", "cuadratico"],
     tagsEn: ["sorting", "pairs", "quadratic"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "exchangeSort(A[n], n) BEGIN",
       "    FOR i <- 1 TO n - 1 DO BEGIN",
       "        FOR j <- i + 1 TO n DO BEGIN",
@@ -503,7 +619,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "A basic linear sample that advances a simple control variable while accumulating a product.",
     tagsEs: ["factorial", "for", "lineal"],
     tagsEn: ["factorial", "for", "linear"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "factorialIterativo(n) BEGIN",
       "    resultado <- 1;",
       "    FOR i <- 2 TO n DO BEGIN",
@@ -529,7 +645,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Moves forward when the left neighbor is ordered; otherwise swaps and steps back one place.",
     tagsEs: ["ordenamiento", "retroceso", "simple"],
     tagsEn: ["sorting", "backtrack", "simple"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "gnomeSort(A[n], n) BEGIN",
       "    i <- 2;",
       "    WHILE (i <= n) DO BEGIN",
@@ -568,7 +684,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Builds the sorted array by inserting each key into place and exposes a classic inner while loop.",
     tagsEs: ["ordenamiento", "insercion", "while"],
     tagsEn: ["sorting", "insertion", "while"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "insertionSort(A[n], n) BEGIN",
       "    FOR i <- 2 TO n DO BEGIN",
       "        clave <- A[i];",
@@ -599,7 +715,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Alternates block jumps with a short linear scan and is useful to study two consecutive loops.",
     tagsEs: ["busqueda", "saltos", "bloques"],
     tagsEn: ["search", "jumps", "blocks"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "jumpSearch(A[n], n, x, paso) BEGIN",
       "    inicio <- 1;",
       "    fin <- paso;",
@@ -635,7 +751,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Tracks a best local prefix and a global optimum in a single linear pass.",
     tagsEs: ["subarreglo", "dp", "lineal"],
     tagsEn: ["subarray", "dp", "linear"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "kadane(A[n], n) BEGIN",
       "    mejorActual <- A[1];",
       "    mejorGlobal <- A[1];",
@@ -670,7 +786,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Traverses the array sequentially and serves as a minimal reference for iterative searches.",
     tagsEs: ["busqueda", "lineal", "for"],
     tagsEn: ["search", "linear", "for"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "linearSearch(A[n], n, x) BEGIN",
       "    FOR i <- 1 TO n DO BEGIN",
       "        IF (A[i] = x) THEN BEGIN",
@@ -697,7 +813,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Iterates over all starting points and expands running sums to contrast with Kadane.",
     tagsEs: ["subarreglo", "cuadratico", "doble bucle"],
     tagsEn: ["subarray", "quadratic", "nested loops"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "maximumSubarrayCuadratico(A[n], n) BEGIN",
       "    mejor <- A[1];",
       "    FOR i <- 1 TO n DO BEGIN",
@@ -729,7 +845,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Uses two pointers and a temporary output to study a classic linear merge.",
     tagsEs: ["merge", "dos punteros", "lineal"],
     tagsEn: ["merge", "two pointers", "linear"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "mergeDosArreglos(A[n], n, B[m], m) BEGIN",
       "    i <- 1;",
       "    j <- 1;",
@@ -765,7 +881,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Numerical sample with successive refinements and a tolerance-based stopping rule.",
     tagsEs: ["numerico", "aproximacion", "repeat"],
     tagsEn: ["numeric", "approximation", "repeat"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "newtonRaphson(x0, iteraciones) BEGIN",
       "    x <- x0;",
       "    FOR i <- 1 TO iteraciones DO BEGIN",
@@ -791,7 +907,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Builds a reusable cumulative sum and is ideal to study simple linear dependencies.",
     tagsEs: ["prefijos", "acumulado", "lineal"],
     tagsEn: ["prefix", "cumulative", "linear"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "prefixSum(A[n], n) BEGIN",
       "    pref[1] <- A[1];",
       "    FOR i <- 2 TO n DO BEGIN",
@@ -817,7 +933,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Finds the remaining minimum and places it at the front on each iteration.",
     tagsEs: ["ordenamiento", "seleccion", "cuadratico"],
     tagsEn: ["sorting", "selection", "quadratic"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "selectionSort(A[n], n) BEGIN",
       "    FOR i <- 1 TO n - 1 DO BEGIN",
       "        minIndice <- i;",
@@ -850,7 +966,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Places the key at the end and uses one loop without a double test each step.",
     tagsEs: ["busqueda", "centinela", "arreglo"],
     tagsEn: ["search", "sentinel", "array"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "sentinelLinearSearch(A[n], n, x) BEGIN",
       "    ultimo <- A[n];",
       "    A[n] <- x;",
@@ -882,7 +998,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Refines the array through decreasing gaps and shows multiple levels of iterative nesting.",
     tagsEs: ["ordenamiento", "gaps", "incrementos"],
     tagsEn: ["sorting", "gaps", "increments"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "shellSort(A[n], n) BEGIN",
       "    gap <- n DIV 2;",
       "    WHILE (gap > 0) DO BEGIN",
@@ -917,7 +1033,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Marks multiples in a boolean table and works well to study nested loops with jumps.",
     tagsEs: ["primos", "criba", "matriz logica"],
     tagsEn: ["primes", "sieve", "boolean table"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "sieveEratosthenes(n) BEGIN",
       "    FOR i <- 2 TO n DO BEGIN",
       "        primo[i] <- true;",
@@ -951,7 +1067,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Accumulates every element in the array in a single linear scan.",
     tagsEs: ["suma", "lineal", "for"],
     tagsEn: ["sum", "linear", "for"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "sumaArreglo(A[n], n) BEGIN",
       "    suma <- 0;",
       "    FOR i <- 1 TO n DO BEGIN",
@@ -977,7 +1093,7 @@ const iterativeExamples: ExampleCatalogItem[] = [
       "Splits the range into three sections per iteration over a sorted array.",
     tagsEs: ["busqueda", "ternaria", "logaritmico"],
     tagsEn: ["search", "ternary", "logarithmic"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "ternarySearchIterativo(A[n], n, x) BEGIN",
       "    izq <- 1;",
       "    der <- n;",
@@ -1026,7 +1142,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Sorts two halves in opposite directions and merges them with a recursive bitonic pattern.",
     tagsEs: ["bitonic", "merge", "divide y venceras"],
     tagsEn: ["bitonic", "merge", "divide and conquer"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "bitonicSort(A[n], inicio, fin, ascendente) BEGIN",
       "    IF (fin - inicio <= 0) THEN BEGIN",
       "        RETURN 0;",
@@ -1089,7 +1205,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Splits the array, counts on each half, and accumulates cross inversions while merging.",
     tagsEs: ["merge", "inversiones", "divide y venceras"],
     tagsEn: ["merge", "inversions", "divide and conquer"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "countInversions(A[n], inicio, fin) BEGIN",
       "    IF (inicio >= fin) THEN BEGIN",
       "        RETURN 0;",
@@ -1118,7 +1234,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Splits the range and sums occurrences of x in each half down to single-position bases.",
     tagsEs: ["conteo", "mitades", "arreglo"],
     tagsEn: ["count", "halves", "array"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "countOccurrencesDC(A[n], inicio, fin, x) BEGIN",
       "    IF (inicio > fin) THEN BEGIN",
       "        RETURN 0;",
@@ -1152,7 +1268,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Shows a ternary split of the multiplication work with an algebraic combine phase at the end.",
     tagsEs: ["karatsuba", "multiplicacion", "subproblemas"],
     tagsEn: ["karatsuba", "multiplication", "subproblems"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "karatsuba(x, y, n) BEGIN",
       "    IF (n <= 1) THEN BEGIN",
       "        RETURN x * y;",
@@ -1181,7 +1297,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Obtains candidates per half and validates them in the combine phase.",
     tagsEs: ["mayoria", "combinacion", "recursivo"],
     tagsEn: ["majority", "combine", "recursive"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "majorityElement(A[n], inicio, fin) BEGIN",
       "    IF (inicio = fin) THEN BEGIN",
       "        RETURN A[inicio];",
@@ -1212,7 +1328,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Splits the array into two halves and combines the maximum and minimum from each branch.",
     tagsEs: ["maximo", "minimo", "torneo"],
     tagsEn: ["maximum", "minimum", "tournament"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "maxMinTournament(A[n], inicio, fin) BEGIN",
       "    IF (inicio = fin) THEN BEGIN",
       "        RETURN A[inicio];",
@@ -1240,7 +1356,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Combines the best subarray in each half with a crossing segment through the midpoint.",
     tagsEs: ["subarreglo", "cruce", "mitad"],
     tagsEn: ["subarray", "crossing", "midpoint"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "maxSubarrayDC(A[n], inicio, fin) BEGIN",
       "    IF (inicio = fin) THEN BEGIN",
       "        RETURN A[inicio];",
@@ -1275,7 +1391,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Splits the segment set in two groups, merges each group recursively, and combines.",
     tagsEs: ["merge", "k vias", "divide y venceras"],
     tagsEn: ["merge", "k-way", "divide and conquer"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "mergeKSorted(A[n], inicio, fin, k) BEGIN",
       "    IF (k <= 1) THEN BEGIN",
       "        RETURN 0;",
@@ -1304,7 +1420,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Splits the array in half, sorts each half, and merges them in linear time.",
     tagsEs: ["ordenamiento", "merge", "divide y venceras"],
     tagsEn: ["sorting", "merge", "divide and conquer"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "mergeSort(A[n], inicio, fin) BEGIN",
       "    IF (inicio < fin) THEN BEGIN",
       "        medio <- (inicio + fin) DIV 2;",
@@ -1350,7 +1466,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Splits the range into thirds, sorts each part recursively, and merges in one pass.",
     tagsEs: ["merge", "tres vias", "particion"],
     tagsEn: ["merge", "three-way", "partition"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "mergeSort3Way(A[n], inicio, fin) BEGIN",
       "    IF (fin - inicio <= 1) THEN BEGIN",
       "        RETURN 0;",
@@ -1383,7 +1499,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Splits the polynomials in halves and combines partial products at the end.",
     tagsEs: ["polinomios", "multiplicacion", "conquista"],
     tagsEn: ["polynomials", "multiplication", "conquer"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "multiplyPolynomial(A[n], B[n], n) BEGIN",
       "    IF (n <= 1) THEN BEGIN",
       "        RETURN A[1] * B[1];",
@@ -1413,7 +1529,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Partitions around a pivot and solves the two remaining regions recursively.",
     tagsEs: ["ordenamiento", "pivote", "particion"],
     tagsEn: ["sorting", "pivot", "partition"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "quickSort(A[n], izq, der) BEGIN",
       "    IF (izq < der) THEN BEGIN",
       "        pivote <- A[der];",
@@ -1453,7 +1569,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Picks a random pivot index, moves it to the end, and applies the standard partition.",
     tagsEs: ["ordenamiento", "pivote", "azar"],
     tagsEn: ["sorting", "pivot", "random"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "quickSortRand(A[n], izq, der) BEGIN",
       "    IF (izq < der) THEN BEGIN",
       "        r <- randomInt(izq, der);",
@@ -1497,7 +1613,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Uses A[left], A[mid], and A[right] to choose a pivot and reduce worst cases on sorted data.",
     tagsEs: ["ordenamiento", "mediana", "pivote"],
     tagsEn: ["sorting", "median", "pivot"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "quickSortMedian3(A[n], izq, der) BEGIN",
       "    IF (izq < der) THEN BEGIN",
       "        med <- (izq + der) DIV 2;",
@@ -1538,7 +1654,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Separates elements less than, equal to, and greater than the pivot in one flag-style pass.",
     tagsEs: ["ordenamiento", "dutch flag", "pivote"],
     tagsEn: ["sorting", "dutch flag", "pivot"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "quickSort3Way(A[n], izq, der) BEGIN",
       "    IF (izq < der) THEN BEGIN",
       "        pivote <- A[izq];",
@@ -1588,7 +1704,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Uses the middle element of the range as the pivot before partitioning into two subproblems.",
     tagsEs: ["ordenamiento", "pivote", "medio"],
     tagsEn: ["sorting", "pivot", "middle"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "quickSortMid(A[n], izq, der) BEGIN",
       "    IF (izq < der) THEN BEGIN",
       "        med <- (izq + der) DIV 2;",
@@ -1632,7 +1748,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Recursively multiplies the product of the left half by the product of the right half.",
     tagsEs: ["producto", "mitades", "arreglo"],
     tagsEn: ["product", "halves", "array"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "productoArrayMitades(A[n], inicio, fin) BEGIN",
       "    IF (inicio = fin) THEN BEGIN",
       "        RETURN A[inicio];",
@@ -1660,7 +1776,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Recursive sum in a binary tree of ranges down to single elements.",
     tagsEs: ["suma", "mitades", "reduccion"],
     tagsEn: ["sum", "halves", "reduction"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "sumaArrayMitades(A[n], inicio, fin) BEGIN",
       "    IF (inicio = fin) THEN BEGIN",
       "        RETURN A[inicio];",
@@ -1688,7 +1804,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Splits the array into two branches and combines local winners at the root.",
     tagsEs: ["torneo", "arbol", "estructura"],
     tagsEn: ["tournament", "tree", "structure"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "buildTournamentTree(A[n], inicio, fin) BEGIN",
       "    IF (inicio = fin) THEN BEGIN",
       "        RETURN A[inicio];",
@@ -1719,7 +1835,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Binary tournament that propagates the best value from each half toward the root.",
     tagsEs: ["torneo", "ganador", "mitades"],
     tagsEn: ["tournament", "winner", "halves"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "tournamentWinner(A[n], inicio, fin) BEGIN",
       "    IF (inicio = fin) THEN BEGIN",
       "        RETURN A[inicio];",
@@ -1750,7 +1866,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Finds the global maximum as the larger of the maxima of each half.",
     tagsEs: ["maximo", "mitades", "arreglo"],
     tagsEn: ["maximum", "halves", "array"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "maxPorMitades(A[n], inicio, fin) BEGIN",
       "    IF (inicio = fin) THEN BEGIN",
       "        RETURN A[inicio];",
@@ -1781,7 +1897,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Finds the global minimum as the smaller of the minima of each half.",
     tagsEs: ["minimo", "mitades", "arreglo"],
     tagsEn: ["minimum", "halves", "array"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "minPorMitades(A[n], inicio, fin) BEGIN",
       "    IF (inicio = fin) THEN BEGIN",
       "        RETURN A[inicio];",
@@ -1812,7 +1928,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Sorts intervals by halves and merges overlaps in the combine phase.",
     tagsEs: ["intervalos", "merge", "solapamiento"],
     tagsEn: ["intervals", "merge", "overlap"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "mergeIntervalsDC(I[n], inicio, fin) BEGIN",
       "    IF (inicio >= fin) THEN BEGIN",
       "        RETURN 0;",
@@ -1841,7 +1957,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Binary reduction for sums: each tree level adds two subresults of roughly equal size.",
     tagsEs: ["suma", "reduccion", "arbol binario"],
     tagsEn: ["sum", "reduction", "binary tree"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "binaryReductionSum(A[n], inicio, fin) BEGIN",
       "    IF (inicio = fin) THEN BEGIN",
       "        RETURN A[inicio];",
@@ -1869,7 +1985,7 @@ const divideAndConquerExamples: ExampleCatalogItem[] = [
       "Traverses a matrix by quadrants and makes a clear four-way divide-and-conquer pattern visible.",
     tagsEs: ["matriz", "z-order", "cuadrantes"],
     tagsEn: ["matrix", "z-order", "quadrants"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "zOrder(M[n], fila, col, tam) BEGIN",
       "    IF (tam = 1) THEN BEGIN",
       "        RETURN M[fila][col];",
@@ -1901,7 +2017,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "Reduces the range to a single half and is one of the most reliable cases in the recursive catalog.",
     tagsEs: ["busqueda", "mitad", "logaritmico"],
     tagsEn: ["search", "half", "logarithmic"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "binarySearchRec(A[n], x, inicio, fin) BEGIN",
       "    IF (inicio > fin) THEN BEGIN",
       "        RETURN -1;",
@@ -1937,7 +2053,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "In a sorted array with duplicates, finds the first position where x appears.",
     tagsEs: ["busqueda", "duplicados", "borde"],
     tagsEn: ["search", "duplicates", "boundary"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "binarySearchFirst(A[n], x, inicio, fin) BEGIN",
       "    IF (inicio > fin) THEN BEGIN",
       "        RETURN -1;",
@@ -1973,7 +2089,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "In a sorted array with duplicates, finds the last position where x appears.",
     tagsEs: ["busqueda", "duplicados", "borde"],
     tagsEn: ["search", "duplicates", "boundary"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "binarySearchLast(A[n], x, inicio, fin) BEGIN",
       "    IF (inicio > fin) THEN BEGIN",
       "        RETURN -1;",
@@ -2009,7 +2125,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "Counts how many steps are needed to bring n down to zero by subtracting one each time.",
     tagsEs: ["conteo", "decremento", "lineal"],
     tagsEn: ["count", "decrement", "linear"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "conteoRegresivo(n) BEGIN",
       "    IF (n <= 0) THEN BEGIN",
       "        RETURN 0;",
@@ -2034,7 +2150,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "Counts the digits of a positive integer by dividing by 10 at each level.",
     tagsEs: ["digitos", "division", "logaritmico"],
     tagsEn: ["digits", "division", "logarithmic"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "countDigitsRec(n) BEGIN",
       "    IF (n < 10) THEN BEGIN",
       "        RETURN 1;",
@@ -2059,7 +2175,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "A short, stable case for reduction by modulo until the final divisor is reached.",
     tagsEs: ["mcd", "mod", "recursivo"],
     tagsEn: ["gcd", "mod", "recursive"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "euclidesRecursivo(a, b) BEGIN",
       "    IF (b = 0) THEN BEGIN",
       "        RETURN a;",
@@ -2084,7 +2200,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "Reduces the exponent by half on each call and reuses the central subresult.",
     tagsEs: ["potencias", "halving", "logaritmico"],
     tagsEn: ["powers", "halving", "logarithmic"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "fastPower(x, n) BEGIN",
       "    IF (n = 0) THEN BEGIN",
       "        RETURN 1;",
@@ -2114,7 +2230,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "A single recursive call per level: n times factorial of n - 1 down to the base.",
     tagsEs: ["factorial", "decremento", "lineal"],
     tagsEn: ["factorial", "decrement", "linear"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "factorialRecursivo(n) BEGIN",
       "    IF (n <= 1) THEN BEGIN",
       "        RETURN 1;",
@@ -2139,7 +2255,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "Processes one element per call and compares it against the maximum of the remaining prefix.",
     tagsEs: ["maximo", "decremento", "lineal"],
     tagsEn: ["maximum", "decrement", "linear"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "findMaximumRec(A[n], n) BEGIN",
       "    IF (n = 1) THEN BEGIN",
       "        RETURN A[1];",
@@ -2168,7 +2284,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "Mirror of maximum: compares the last element with the minimum of the length n - 1 prefix.",
     tagsEs: ["minimo", "decremento", "lineal"],
     tagsEn: ["minimum", "decrement", "linear"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "findMinimumRec(A[n], n) BEGIN",
       "    IF (n = 1) THEN BEGIN",
       "        RETURN A[1];",
@@ -2196,7 +2312,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     summaryEn: "Sorts the prefix of length n-1 and then inserts the last key.",
     tagsEs: ["ordenamiento", "insercion", "decremento"],
     tagsEn: ["sorting", "insertion", "decrement"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "insertionSortRec(A[n], n) BEGIN",
       "    IF (n <= 1) THEN BEGIN",
       "        RETURN 0;",
@@ -2229,7 +2345,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "Reduces the problem by one person per call and then rebuilds the survivor position.",
     tagsEs: ["josephus", "clasico", "decremento"],
     tagsEn: ["josephus", "classic", "decrement"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "josephus(n, k) BEGIN",
       "    IF (n = 1) THEN BEGIN",
       "        RETURN 1;",
@@ -2253,7 +2369,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "Reduces the position and row until a short base case is reached.",
     tagsEs: ["gramatica", "simbolo", "halving"],
     tagsEn: ["grammar", "symbol", "halving"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "kthSymbol(fila, k) BEGIN",
       "    IF (fila = 1) THEN BEGIN",
       "        RETURN 0;",
@@ -2285,7 +2401,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "Processes one position per call and stops when it finds the element or exhausts the array.",
     tagsEs: ["busqueda", "lineal", "recursivo"],
     tagsEn: ["search", "linear", "recursive"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "linearSearchRec(A[n], x, i, n) BEGIN",
       "    IF (i > n) THEN BEGIN",
       "        RETURN -1;",
@@ -2313,7 +2429,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "Reduces the problem by one element and compares against the maximum of the rest.",
     tagsEs: ["maximo", "decremento", "arreglo"],
     tagsEn: ["maximum", "decrement", "array"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "arrayMaxDivideByOne(A[n], n) BEGIN",
       "    IF (n = 1) THEN BEGIN",
       "        RETURN A[1];",
@@ -2342,7 +2458,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "Reduces the number by half and rebuilds its digits on the way back.",
     tagsEs: ["binario", "division", "mitad"],
     tagsEn: ["binary", "division", "half"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "binaryDigits(n) BEGIN",
       "    IF (n < 2) THEN BEGIN",
       "        RETURN n;",
@@ -2367,7 +2483,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "Compares characters at the ends and moves inward with two indices.",
     tagsEs: ["palindromo", "cadenas", "dos indices"],
     tagsEn: ["palindrome", "strings", "two indices"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "palindromeRec(S[n], izq, der) BEGIN",
       "    IF (izq >= der) THEN BEGIN",
       "        RETURN 1;",
@@ -2394,7 +2510,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "Reduces the exponent and preserves the modulus in each combine step.",
     tagsEs: ["modular", "potencia", "halving"],
     tagsEn: ["modular", "power", "halving"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "fastModPower(x, n, m) BEGIN",
       "    IF (n = 0) THEN BEGIN",
       "        RETURN 1;",
@@ -2424,7 +2540,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "Multiplies x by x^(n-1) with one recursion per level; linear cost in n.",
     tagsEs: ["potencia", "naive", "lineal"],
     tagsEn: ["power", "naive", "linear"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "powerNaive(x, n) BEGIN",
       "    IF (n = 0) THEN BEGIN",
       "        RETURN 1;",
@@ -2449,7 +2565,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "Fixes the first position, finds the remaining minimum, and continues over the suffix.",
     tagsEs: ["ordenamiento", "seleccion", "sufijo"],
     tagsEn: ["sorting", "selection", "suffix"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "selectionSortRec(A[n], inicio, n) BEGIN",
       "    IF (inicio >= n) THEN BEGIN",
       "        RETURN 0;",
@@ -2481,7 +2597,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     summaryEn: "Removes one digit per call until the number reaches zero.",
     tagsEs: ["digitos", "suma", "division"],
     tagsEn: ["digits", "sum", "division"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "sumDigits(n) BEGIN",
       "    IF (n = 0) THEN BEGIN",
       "        RETURN 0;",
@@ -2504,7 +2620,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     summaryEn: "Swaps extremes and shrinks the interval toward the center.",
     tagsEs: ["cadenas", "invertir", "dos indices"],
     tagsEn: ["strings", "reverse", "two indices"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "reverseStringRec(S[n], izq, der) BEGIN",
       "    IF (izq >= der) THEN BEGIN",
       "        RETURN 0;",
@@ -2530,7 +2646,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
     summaryEn: "Reduces by one and accumulates the current term.",
     tagsEs: ["suma", "lineal", "decremento"],
     tagsEn: ["sum", "linear", "decrement"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "sumOneToN(n) BEGIN",
       "    IF (n <= 1) THEN BEGIN",
       "        RETURN n;",
@@ -2555,7 +2671,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "Consumes one element per call and delegates the rest of the work to the suffix.",
     tagsEs: ["arreglo", "suma", "lineal"],
     tagsEn: ["array", "sum", "linear"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "sumArrayRec(A[n], n) BEGIN",
       "    IF (n = 0) THEN BEGIN",
       "        RETURN 0;",
@@ -2580,7 +2696,7 @@ const decreaseAndConquerExamples: ExampleCatalogItem[] = [
       "Reduces the interval to one of three possible blocks on each call.",
     tagsEs: ["busqueda", "ternaria", "bloques"],
     tagsEn: ["search", "ternary", "blocks"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "ternarySearchRec(A[n], x, izq, der) BEGIN",
       "    IF (izq > der) THEN BEGIN",
       "        RETURN -1;",
@@ -2622,7 +2738,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Classic linear recurrence that connects naturally with the characteristic equation.",
     tagsEs: ["cadenas", "binarias", "sin consecutivos"],
     tagsEn: ["strings", "binary", "no consecutive ones"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "countBinaryStringsOnes(n) BEGIN",
       "    IF (n <= 1) THEN BEGIN",
       "        RETURN 2;",
@@ -2647,7 +2763,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Analogous to the no-11 case: forbids 00 and yields the same Fibonacci-style count.",
     tagsEs: ["cadenas", "ceros", "recurrencia"],
     tagsEn: ["strings", "zeros", "recurrence"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "countBinaryStringsZeros(n) BEGIN",
       "    IF (n <= 1) THEN BEGIN",
       "        RETURN 2;",
@@ -2672,7 +2788,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Counts paths with steps of 1 and 2, yielding a classic linear recurrence.",
     tagsEs: ["escaleras", "fibonacci", "recurrencia"],
     tagsEn: ["stairs", "fibonacci", "recurrence"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "climbingStairs(n) BEGIN",
       "    IF (n <= 1) THEN BEGIN",
       "        RETURN 1;",
@@ -2697,7 +2813,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Another short linear recurrence for counting paths with small jumps.",
     tagsEs: ["caminos", "pasos", "lineal"],
     tagsEn: ["paths", "steps", "linear"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "countWaysToReachN(n) BEGIN",
       "    IF (n <= 1) THEN BEGIN",
       "        RETURN 1;",
@@ -2722,7 +2838,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Counts step sequences that sum to n using only 1, 2, or 3 (order-3 recurrence).",
     tagsEs: ["pasos", "tribonacci", "distancia"],
     tagsEn: ["steps", "tribonacci-like", "distance"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "coverDistance123(n) BEGIN",
       "    IF (n <= 0) THEN BEGIN",
       "        RETURN 1;",
@@ -2753,7 +2869,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Core catalog reference for the characteristic equation and exponential growth.",
     tagsEs: ["fibonacci", "secuencia", "clasico"],
     tagsEn: ["fibonacci", "sequence", "classic"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "fibonacci(n) BEGIN",
       "    IF (n <= 1) THEN BEGIN",
       "        RETURN n;",
@@ -2778,7 +2894,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Houses in a line with no two adjacent occupied: same recurrence as 1-2 stairs.",
     tagsEs: ["casas", "adyacencia", "fibonacci"],
     tagsEn: ["houses", "adjacency", "fibonacci"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "housePlacements1D(n) BEGIN",
       "    IF (n <= 1) THEN BEGIN",
       "        RETURN n + 1;",
@@ -2803,7 +2919,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "J(n) = J(n-1) + 2*J(n-2); distinct coefficients from Fibonacci, same order.",
     tagsEs: ["jacobsthal", "recurrencia", "lineal"],
     tagsEn: ["jacobsthal", "recurrence", "linear"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "jacobsthal(n) BEGIN",
       "    IF (n = 0) THEN BEGIN",
       "        RETURN 0;",
@@ -2831,7 +2947,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Pedagogical stairs variant with several branches controlled by a fixed constant.",
     tagsEs: ["escaleras", "k pasos", "recurrencia"],
     tagsEn: ["stairs", "k steps", "recurrence"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "kStepStairs(n) BEGIN",
       "    IF (n <= 1) THEN BEGIN",
       "        RETURN 1;",
@@ -2858,7 +2974,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     summaryEn: "Fibonacci-like sequence with different initial conditions.",
     tagsEs: ["lucas", "secuencia", "lineal"],
     tagsEn: ["lucas", "sequence", "linear"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "lucas(n) BEGIN",
       "    IF (n = 0) THEN BEGIN",
       "        RETURN 2;",
@@ -2886,7 +3002,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Narayana's delayed third-order rule for cattle population growth.",
     tagsEs: ["narayana", "orden 3", "vacas"],
     tagsEn: ["narayana", "order 3", "cows"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "narayanaCows(n) BEGIN",
       "    IF (n <= 2) THEN BEGIN",
       "        RETURN 1;",
@@ -2911,7 +3027,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "P(n) = P(n-2) + P(n-3) with three seeds; grows more slowly than Fibonacci.",
     tagsEs: ["padovan", "orden 3", "suma desfasada"],
     tagsEn: ["padovan", "order 3", "shifted sum"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "padovan(n) BEGIN",
       "    IF (n = 0 OR n = 1) THEN BEGIN",
       "        RETURN 1;",
@@ -2939,7 +3055,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Second-order linear recurrence that broadens the characteristic-equation batch.",
     tagsEs: ["pell", "secuencia", "ecuacion caracteristica"],
     tagsEn: ["pell", "sequence", "characteristic equation"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "pell(n) BEGIN",
       "    IF (n <= 1) THEN BEGIN",
       "        RETURN n;",
@@ -2964,7 +3080,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Third-order linear sequence useful to expand the verified-example set.",
     tagsEs: ["perrin", "orden 3", "secuencia"],
     tagsEn: ["perrin", "order 3", "sequence"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "perrin(n) BEGIN",
       "    IF (n = 0) THEN BEGIN",
       "        RETURN 3;",
@@ -2995,7 +3111,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Classic monthly rabbit-pair model: same recurrence as Fibonacci.",
     tagsEs: ["conejos", "fibonacci", "poblacion"],
     tagsEn: ["rabbits", "fibonacci", "population"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "rabbitFib(n) BEGIN",
       "    IF (n <= 1) THEN BEGIN",
       "        RETURN n;",
@@ -3020,7 +3136,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Climb n stairs with steps 1, 2, or 3: three recursive branches per step.",
     tagsEs: ["escaleras", "tres pasos", "recurrencia"],
     tagsEn: ["stairs", "three steps", "recurrence"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "staircase123(n) BEGIN",
       "    IF (n < 0) THEN BEGIN",
       "        RETURN 0;",
@@ -3048,7 +3164,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Four previous terms sum to the next; extends Tribonacci to fourth order.",
     tagsEs: ["tetranacci", "orden 4", "lineal"],
     tagsEn: ["tetranacci", "order 4", "linear"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "tetranacci(n) BEGIN",
       "    IF (n <= 2) THEN BEGIN",
       "        RETURN 0;",
@@ -3075,7 +3191,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     summaryEn: "Classic problem with two calls on n-1 and constant local work.",
     tagsEs: ["hanoi", "clasico", "dos ramas"],
     tagsEn: ["hanoi", "classic", "two branches"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "hanoi(n, origen, destino, auxiliar) BEGIN",
       "    IF (n = 1) THEN BEGIN",
       "        RETURN 1;",
@@ -3102,7 +3218,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Extends the Fibonacci pattern to three branches over constant shifts.",
     tagsEs: ["tribonacci", "orden 3", "secuencia"],
     tagsEn: ["tribonacci", "order 3", "sequence"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "tribonacci(n) BEGIN",
       "    IF (n <= 1) THEN BEGIN",
       "        RETURN 0;",
@@ -3130,7 +3246,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Counts 2xn tilings with a short and highly didactic linear recurrence.",
     tagsEs: ["tiling", "domino", "secuencia"],
     tagsEn: ["tiling", "domino", "sequence"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "waysToTile2xN(n) BEGIN",
       "    IF (n <= 2) THEN BEGIN",
       "        RETURN n;",
@@ -3155,7 +3271,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Ordered compositions with fixed pieces: recurrence with four shifts.",
     tagsEs: ["composicion", "1 3 4", "recurrencia"],
     tagsEn: ["composition", "1 3 4", "recurrence"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "waysWriteN134(n) BEGIN",
       "    IF (n = 0) THEN BEGIN",
       "        RETURN 1;",
@@ -3183,7 +3299,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Cover a 1xn strip with tiles of length 1 or 2: Fibonacci-style count.",
     tagsEs: ["domino", "tiling", "fibonacci"],
     tagsEn: ["domino", "tiling", "fibonacci"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "dominoTiling1xn(n) BEGIN",
       "    IF (n <= 1) THEN BEGIN",
       "        RETURN 1;",
@@ -3208,7 +3324,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
       "Ways to reach pad n with short jumps; matches 1-2 climbing stairs.",
     tagsEs: ["rana", "saltos", "fibonacci"],
     tagsEn: ["frog", "jumps", "fibonacci"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "frogJump12(n) BEGIN",
       "    IF (n <= 1) THEN BEGIN",
       "        RETURN 1;",
@@ -3232,7 +3348,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     summaryEn: "Three transitions per position; Tribonacci-shaped counting.",
     tagsEs: ["rana", "tribonacci", "saltos"],
     tagsEn: ["frog", "tribonacci", "jumps"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "frogJump123(n) BEGIN",
       "    IF (n < 0) THEN BEGIN",
       "        RETURN 0;",
@@ -3259,7 +3375,7 @@ const decreaseByOneExamples: ExampleCatalogItem[] = [
     summaryEn: "Counts length-n paths along a line using steps of 1 or 2.",
     tagsEs: ["caminos", "saltos", "fibonacci"],
     tagsEn: ["paths", "jumps", "fibonacci"],
-    sourceCode: code(
+    sourceCodeEs: code(
       "countPathsJumps12(n) BEGIN",
       "    IF (n <= 1) THEN BEGIN",
       "        RETURN 1;",
@@ -3350,6 +3466,11 @@ export const searchExamples = (
 export const getCategoryMeta = (
   category: ExampleCategory,
 ): ExampleCategoryMeta => EXAMPLE_CATEGORY_META[category];
+
+export const getLocalizedExampleSource = (
+  example: ExampleCatalogItem,
+  locale: ExampleLocale,
+): string => example.sourceCodeByLocale[locale];
 
 export const findExampleBySlug = (
   slug: string,

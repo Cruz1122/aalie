@@ -14,6 +14,7 @@ import {
   filterByMethods,
   getCategoryMeta,
   getExamplesByCategory,
+  getLocalizedExampleSource,
   isRecursiveCategory,
   type ExampleCatalogItem,
   type ExampleCategory,
@@ -134,7 +135,7 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
 
   const handleAnalyze = (example: ExampleCatalogItem) => {
     setAnalyzingExampleId(example.id);
-    void runAnalysis(example.sourceCode);
+    void runAnalysis(getLocalizedExampleSource(example, locale));
   };
 
   const toggleMethod = (method: RecursiveMethodBadge) => {

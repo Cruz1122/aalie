@@ -52,8 +52,11 @@ El backend (Python) NO forma parte de los workspaces de pnpm.
 - Editor Monaco (VS Code en el navegador)
 - Syntax highlighting para pseudocódigo
 - Validación en tiempo real con Web Workers
-- Autocompletado y numeración de líneas
-- Múltiples operadores de asignación soportados
+- Autocompletado contextual con prioridad para parámetros y variables locales
+- Inserción bilingüe de snippets y algoritmos según locale (`es` / `en`)
+- Panel lateral curado de ayuda de escritura con paginación responsive
+- Numeración de líneas
+- La sintaxis visible enseña la asignación oficial `<-`
 
 ### Asistente IA
 - Chatbot integrado con modelos de lenguaje

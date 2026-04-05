@@ -289,6 +289,24 @@
       "exportingReport": "Descargando reporte...",
       "exportNoData": "No hay análisis para exportar"
     },
+    "editorSupport": {
+      "title": "Ayuda de escritura",
+      "subtitle": "Pasa el cursor por un bloque para ver cuándo usarlo y qué idea te ayuda a escribirlo mejor.",
+      "helpDefaultTitle": "Pasa el cursor sobre un bloque",
+      "helpDefaultDetails": "Verás una ayuda breve sobre cuándo usarlo y cómo empezar a escribirlo.",
+      "helpExamplePrefix": "Uso:",
+      "helpPreviewPrefix": "Uso en nuestra gramática:",
+      "expand": "Expandir",
+      "collapse": "Colapsar",
+      "categories": {
+        "recommended": "Recomendados",
+        "conditions": "Condiciones",
+        "loops": "Ciclos",
+        "functions": "Funciones y retornos",
+        "templates": "Plantillas",
+        "other": "Otros"
+      }
+    },
     "loopInvariant": {
       "title": "Loop Invariant Determinista",
       "modal": {

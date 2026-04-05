@@ -13,7 +13,9 @@ import ReactDOM from "react-dom";
 
 import AAButton from "@/components/AAButton";
 import { AAProgressLoader } from "@/components/AAProgressLoader";
-import { AnalyzerEditor } from "@/components/AnalyzerEditor";
+import {
+  AnalyzerEditor,
+} from "@/components/AnalyzerEditor";
 import { ASTTreeView } from "@/components/ASTTreeView";
 import ChatBot from "@/components/ChatBot";
 import ComparisonModal from "@/components/ComparisonModal";
@@ -35,6 +37,7 @@ import RecursiveAnalysisView from "@/components/RecursiveAnalysisView";
 import RepairModal from "@/components/RepairModal";
 import TraceDedicatedView from "@/components/TraceDedicatedView";
 import TxtImportModal from "@/components/TxtImportModal";
+import { getImportNormalizationSuggestions } from "@/features/analyzer/editor-support/parser/normalizeImportSuggestions";
 import { requestTraceRefresh } from "@/hooks/trace/useTraceRefreshOnAnalysis";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
@@ -355,9 +358,16 @@ export default function AnalyzerPage() {
         setLocalParseOk(true);
         setPendingImportSourceForRepair(null);
         setPendingImportErrorsForRepair(undefined);
+        const suggestions = getImportNormalizationSuggestions(
+          validation.normalizedSource,
+        );
         setTxtImportModal({
           title: tView("txtImportSuccessTitle"),
           description: tView("txtImportSuccess"),
+          details:
+            suggestions.length > 0
+              ? suggestions.map((suggestion) => suggestion.reason)
+              : undefined,
         });
       } else {
         const errors = parseRes.errors || undefined;
@@ -388,7 +398,12 @@ export default function AnalyzerPage() {
           description: hasApiKey
             ? tView("txtImportParseFailed")
             : tView("txtImportParseFailedNoAi"),
-          details: errorDetails,
+          details: [
+            ...errorDetails,
+            ...getImportNormalizationSuggestions(validation.normalizedSource).map(
+              (suggestion) => suggestion.reason,
+            ),
+          ],
           showRepairAction: hasApiKey,
         });
         setPendingImportSourceForRepair(validation.normalizedSource);
@@ -2581,77 +2596,83 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                       </span>{" "}
                       {tView("sourceCode")}
                     </h2>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => txtInputRef.current?.click()}
-                        disabled={isImportingTxt}
-                        className="flex items-center justify-center w-8 h-8 rounded-md text-[13px] font-medium transition-all hover:scale-[1.05] focus:outline-none focus:ring-1 focus:ring-slate-400/50 bg-slate-500/10 border border-slate-500/20 hover:bg-slate-500/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group text-slate-300"
-                        title={
-                          isImportingTxt
-                            ? tView("importingTxt")
-                            : tView("importTxt")
-                        }
-                      >
-                        {isImportingTxt ? (
-                          <span className="material-symbols-outlined text-sm animate-spin">
-                            progress_activity
-                          </span>
-                        ) : (
-                          <span className="material-symbols-outlined text-[18px]">
-                            upload
-                          </span>
-                        )}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                          {tView("importTxt")}
-                        </div>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowExportModal(true)}
-                        disabled={
-                          !data ||
-                          (!data.worst && !data.best && !data.avg) ||
-                          analyzing ||
-                          isExporting
-                        }
-                        className="flex items-center justify-center w-8 h-8 rounded-md text-[13px] font-medium transition-all hover:scale-[1.05] focus:outline-none focus:ring-1 focus:ring-slate-400/50 bg-slate-500/10 border border-slate-500/20 hover:bg-slate-500/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group text-slate-300"
-                        title={tView("exportReport")}
-                      >
-                        <span className="material-symbols-outlined text-[18px]">
-                          download
-                        </span>
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
-                          {tView("exportReport")}
-                        </div>
-                      </button>
-                      <AAButton
-                        onClick={handleAnalyze}
-                        disabled={isButtonDisabled}
-                        variant="primary"
-                        size="sm"
-                        className="w-[95px] h-[32px] min-w-[95px] text-xs font-semibold px-2"
-                      >
-                        {analyzing ? (
-                          <div className="relative">
-                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-ping absolute" />
-                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => txtInputRef.current?.click()}
+                          disabled={isImportingTxt}
+                          className="flex items-center justify-center w-8 h-8 rounded-md text-[13px] font-medium transition-all hover:scale-[1.05] focus:outline-none focus:ring-1 focus:ring-slate-400/50 bg-slate-500/10 border border-slate-500/20 hover:bg-slate-500/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group text-slate-300"
+                          title={
+                            isImportingTxt
+                              ? tView("importingTxt")
+                              : tView("importTxt")
+                          }
+                        >
+                          {isImportingTxt ? (
+                            <span className="material-symbols-outlined text-sm animate-spin">
+                              progress_activity
+                            </span>
+                          ) : (
+                            <span className="material-symbols-outlined text-[18px]">
+                              upload
+                            </span>
+                          )}
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                            {tView("importTxt")}
                           </div>
-                        ) : (
-                          tView("analyze")
-                        )}
-                      </AAButton>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowExportModal(true)}
+                          disabled={
+                            !data ||
+                            (!data.worst && !data.best && !data.avg) ||
+                            analyzing ||
+                            isExporting
+                          }
+                          className="flex items-center justify-center w-8 h-8 rounded-md text-[13px] font-medium transition-all hover:scale-[1.05] focus:outline-none focus:ring-1 focus:ring-slate-400/50 bg-slate-500/10 border border-slate-500/20 hover:bg-slate-500/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 relative group text-slate-300"
+                          title={tView("exportReport")}
+                        >
+                          <span className="material-symbols-outlined text-[18px]">
+                            download
+                          </span>
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-slate-600">
+                            {tView("exportReport")}
+                          </div>
+                        </button>
+                        <AAButton
+                          onClick={handleAnalyze}
+                          disabled={isButtonDisabled}
+                          variant="primary"
+                          size="sm"
+                          className="w-[95px] h-[32px] min-w-[95px] text-xs font-semibold px-2"
+                        >
+                          {analyzing ? (
+                            <div className="relative">
+                              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-ping absolute" />
+                              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                            </div>
+                          ) : (
+                            tView("analyze")
+                          )}
+                        </AAButton>
+                      </div>
                     </div>
                   </div>
                   <div className="flex-1 min-h-0 overflow-hidden">
-                    <AnalyzerEditor
-                      initialValue={source}
-                      onChange={setSource}
-                      onAstChange={setAst}
-                      onParseStatusChange={handleParseStatusChange}
-                      onErrorsChange={handleErrorsChange}
-                      height="100%"
-                    />
+                    <div className="flex h-full min-h-0 flex-col">
+                      <div className="min-h-0 flex-1">
+                        <AnalyzerEditor
+                          initialValue={source}
+                          onChange={setSource}
+                          onAstChange={setAst}
+                          onParseStatusChange={handleParseStatusChange}
+                          onErrorsChange={handleErrorsChange}
+                          height="100%"
+                        />
+                      </div>
+                    </div>
                     <input
                       ref={txtInputRef}
                       type="file"

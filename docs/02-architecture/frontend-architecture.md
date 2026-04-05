@@ -31,6 +31,8 @@ Cubre el flujo del analizador, el BFF Next, la persistencia local y las vistas p
 ### Componentes críticos
 
 - `AnalyzerEditor`: edición y validación local.
+- `EditorSupportPanel`: panel lateral curado de escritura rápida.
+- `PaginationControls`: paginación compartida para examples y panel de snippets.
 - `IterativeAnalysisView` y `RecursiveAnalysisView`: render de resultados.
 - `TraceDedicatedView`: seguimiento operativo.
 - `ExportFormatSelector`: descarga de artefactos.
@@ -45,15 +47,26 @@ Cubre el flujo del analizador, el BFF Next, la persistencia local y las vistas p
 ### Flujo editor -> análisis -> vistas
 
 1. edición o importación `.txt`;
-2. parseo/validación;
-3. clasificación y detección de métodos;
-4. análisis;
-5. render de vista iterativa o recursiva;
-6. trace, comparación LLM y export sobre el mismo estado.
+2. autocompletado y ayudas de escritura;
+3. parseo/validación;
+4. clasificación y detección de métodos;
+5. análisis;
+6. render de vista iterativa o recursiva;
+7. trace, comparación LLM y export sobre el mismo estado.
+
+### Soporte de escritura y catálogo
+
+- `features/analyzer/editor-support/catalog/snippetCatalog.ts` define el catálogo curado visible del panel, la localización del texto insertado y la derivación de secciones;
+- `features/analyzer/editor-support/catalog/algorithmCompletionSnippets.ts` deriva snippets de autocompletado a partir del catálogo de ejemplos habilitados;
+- `features/analyzer/editor-support/monaco/completionCandidates.ts` construye las sugerencias de Monaco con prioridad estable: identificadores locales, snippets regulares y algoritmos completos;
+- `features/analyzer/editor-support/monaco/registerPseudocodeCompletionProvider.ts` registra completions por locale y vuelve a montarlos cuando cambia el idioma activo;
+- `features/analyzer/editor-support/monaco/contextInsertionRules.ts` aplica la inserción localizada final dentro del editor.
 
 ### Features activas de UI
 
 - AST y errores de parseo;
+- autocompletado contextual bilingüe;
+- panel de snippets/plantillas paginado;
 - selector de método recursivo;
 - loop invariant;
 - trace dedicado;

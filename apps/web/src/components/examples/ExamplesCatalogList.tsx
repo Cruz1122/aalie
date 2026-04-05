@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 
+import { PaginationControls } from "@/components/PaginationControls";
 import type { ExampleCatalogItem, ExampleLocale } from "@/lib/examples/catalog";
 
 import { ExampleCatalogCard } from "./ExampleCatalogCard";
@@ -85,44 +86,11 @@ export function ExamplesCatalogList({
           />
         ))}
       </section>
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <button
-            type="button"
-            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-            disabled={currentPage === 1}
-            className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-300 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            ‹
-          </button>
-          {Array.from({ length: totalPages }, (_, index) => index + 1).map(
-            (page) => (
-              <button
-                key={page}
-                type="button"
-                onClick={() => setCurrentPage(page)}
-                className={`rounded-lg border px-2.5 py-1 text-xs transition-colors ${
-                  page === currentPage
-                    ? "border-primary/50 bg-primary/20 text-primary-light"
-                    : "border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:text-white"
-                }`}
-              >
-                {page}
-              </button>
-            ),
-          )}
-          <button
-            type="button"
-            onClick={() =>
-              setCurrentPage((page) => Math.min(totalPages, page + 1))
-            }
-            disabled={currentPage === totalPages}
-            className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-300 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            ›
-          </button>
-        </div>
-      )}
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 }

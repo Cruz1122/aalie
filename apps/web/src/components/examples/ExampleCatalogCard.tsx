@@ -11,6 +11,7 @@ import type {
 } from "@/lib/examples/catalog";
 import {
   EXAMPLE_FAMILY_ICONS,
+  getLocalizedExampleSource,
   getMethodTranslationKey,
   isRecursiveCategory,
 } from "@/lib/examples/catalog";
@@ -126,6 +127,7 @@ export function ExampleCatalogCard({
     : t("examples.kind.iterative");
   const familyLabel = t(FAMILY_LABEL_KEYS[example.family]);
   const behaviorIcon = EXAMPLE_FAMILY_ICONS[example.family];
+  const localizedSource = getLocalizedExampleSource(example, locale);
 
   return (
     <article
@@ -142,7 +144,7 @@ export function ExampleCatalogCard({
             </div>
             <div className="scrollbar-custom overscroll-contain flex-1 min-h-0 overflow-y-auto overflow-x-auto p-3">
               <code className="block min-w-min whitespace-pre font-mono text-[11px] leading-relaxed text-slate-100">
-                {example.sourceCode.split("\n").map((line, index) => (
+                {localizedSource.split("\n").map((line, index) => (
                   <div key={`${example.id}-line-${index}`}>
                     {renderGrammarLine(line)}
                   </div>

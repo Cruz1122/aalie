@@ -11,8 +11,10 @@ import {
 import ReactDOM from "react-dom";
 
 import { useAnalysisProgressContext } from "@/contexts/AnalysisProgressContext";
+import type { SnippetDefinition } from "@/features/analyzer/editor-support/catalog/snippetCatalog";
+import { getImportNormalizationSuggestions } from "@/features/analyzer/editor-support/parser/normalizeImportSuggestions";
+import { EditorSupportPanel } from "@/features/analyzer/editor-support/ui/EditorSupportPanel";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useRunAnalysis } from "@/hooks/useRunAnalysis";
 import {
   MAX_TXT_IMPORT_BYTES,
@@ -22,7 +24,10 @@ import {
 import { GrammarApiService } from "@/services/grammar-api";
 
 import AAButton from "./AAButton";
-import { AnalyzerEditor } from "./AnalyzerEditor";
+import {
+  AnalyzerEditor,
+  type AnalyzerEditorHandle,
+} from "./AnalyzerEditor";
 import { ASTTreeView } from "./ASTTreeView";
 import RepairModal from "./RepairModal";
 import TxtImportModal from "./TxtImportModal";
@@ -105,7 +110,6 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     },
     ref,
   ) {
-    const isDesktop = useMediaQuery("(min-width: 1024px)");
     const t = useTranslations("analyzer.messages");
     const locale = useLocale();
     const tManual = useTranslations("analyzer.manualMode");
@@ -163,6 +167,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
       null,
     );
     const [hasValidApiKey, setHasValidApiKey] = useState<boolean>(false);
+    const editorRef = useRef<AnalyzerEditorHandle | null>(null);
 
     const { state: analysisState } = useAnalysisProgressContext();
     const { runAnalysis } = useRunAnalysis({
@@ -428,9 +433,16 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
           setLocalParseOk(true);
           setPendingImportSourceForRepair(null);
           setPendingImportErrorsForRepair(undefined);
+          const suggestions = getImportNormalizationSuggestions(
+            validation.normalizedSource,
+          );
           setTxtImportModal({
             title: tView("txtImportSuccessTitle"),
             description: tView("txtImportSuccess"),
+            details:
+              suggestions.length > 0
+                ? suggestions.map((suggestion) => suggestion.reason)
+                : undefined,
           });
           return;
         }
@@ -460,7 +472,12 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
           description: hasValidApiKey
             ? tView("txtImportParseFailed")
             : tView("txtImportParseFailedNoAi"),
-          details: errorDetails,
+          details: [
+            ...errorDetails,
+            ...getImportNormalizationSuggestions(validation.normalizedSource).map(
+              (suggestion) => suggestion.reason,
+            ),
+          ],
           showRepairAction: hasValidApiKey,
         });
         setPendingImportSourceForRepair(validation.normalizedSource);
@@ -498,28 +515,68 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
     );
 
     return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center">
-          {/* Contenedor flex: editor a la izquierda, botón Analizar a la derecha; items-start evita espacio muerto */}
-          <div className="flex flex-col lg:flex-row gap-6 w-full items-start">
-            {/* Editor de Código con Monaco - 75% en desktop, 100% en mobile; tooltips Verificar parse y Ver AST en esquina */}
-            <div className="w-full lg:w-[75%]">
-              <AnalyzerEditor
-                initialValue={code}
-                onChange={setCode}
-                onAstChange={setAst}
-                onParseStatusChange={handleParseStatusChange}
-                onVerifyParse={handleAnalyzeCode}
-                onViewAst={() => setShowAstModal(true)}
-                isVerifyingParse={isVerifyingParse}
-                canViewAst={localParseOk && ast != null}
-                hasCode={code.trim() !== ""}
-                verifyParseResult={verifyParseResult}
-                showAIHelpButton={
-                  showAIHelpButton && !!backendParseError && hasValidApiKey
-                }
-                onAIHelpClick={async () => {
-                  const errorMessage = `Necesito ayuda con un error de sintaxis en mi código de pseudocódigo.
+          <div className="flex w-full flex-col gap-4">
+            <div className="flex min-h-0 flex-col gap-4 md:flex-row md:items-stretch">
+                <div className="h-[400px] min-h-0 min-w-0 flex-1 space-y-4 md:h-[490px] md:flex-none md:basis-[calc(100%-376px)] md:max-w-[calc(100%-376px)] lg:basis-[calc(100%-516px)] lg:max-w-[calc(100%-516px)] xl:flex-1 xl:basis-0 xl:max-w-none">
+                <AnalyzerEditor
+                  ref={editorRef}
+                  initialValue={code}
+                  onChange={setCode}
+                  onAstChange={setAst}
+                  onParseStatusChange={handleParseStatusChange}
+                  onVerifyParse={handleAnalyzeCode}
+                  onViewAst={() => setShowAstModal(true)}
+                  isVerifyingParse={isVerifyingParse}
+                  canViewAst={localParseOk && ast != null}
+                  hasCode={code.trim() !== ""}
+                  verifyParseResult={verifyParseResult}
+                  showAIHelpButton={
+                    showAIHelpButton && !!backendParseError && hasValidApiKey
+                  }
+                  topRightActions={
+                    <>
+                      <div className="rounded-full bg-[#101820] p-0.5 shadow-lg">
+                        <button
+                          type="button"
+                          onClick={() => txtInputRef.current?.click()}
+                          disabled={isImportingTxt}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-500/20 bg-slate-500/12 text-slate-300/70 transition-all duration-300 ease-out hover:bg-slate-500/25 hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-40"
+                          title={
+                            isImportingTxt
+                              ? tView("importingTxt")
+                              : tView("importTxt")
+                          }
+                        >
+                          <span className="material-symbols-outlined text-[16px]">
+                            {isImportingTxt ? "progress_activity" : "upload"}
+                          </span>
+                        </button>
+                      </div>
+                      <div className="rounded-full bg-[#101820] p-0.5 shadow-lg">
+                        <button
+                          type="button"
+                          onClick={handleAnalyzeComplexity}
+                          disabled={
+                            isAnalyzing || !localParseOk || code.trim() === ""
+                          }
+                          className="inline-flex h-8 min-w-[95px] items-center justify-center rounded-full border border-blue-500/20 bg-blue-500/12 px-3 text-xs font-semibold text-blue-300/70 transition-all duration-300 ease-out hover:bg-blue-500/25 hover:text-blue-300 disabled:cursor-not-allowed disabled:opacity-40"
+                          title={
+                            isAnalyzing
+                              ? tManual("analyzing")
+                              : tManual("analyzeComplexity")
+                          }
+                        >
+                          {isAnalyzing
+                            ? tManual("analyzing")
+                            : tManual("analyzeComplexity")}
+                        </button>
+                      </div>
+                    </>
+                  }
+                  onAIHelpClick={async () => {
+                    const errorMessage = `Necesito ayuda con un error de sintaxis en mi código de pseudocódigo.
 
 **CÓDIGO ADJUNTO:**
 \`\`\`pseudocode
@@ -578,64 +635,23 @@ Por favor, analiza el código y el error, identifica la causa del problema y pro
                     setTimeout(() => onOpenChat(), 150);
                   }, 100);
                 }}
-                height={isDesktop ? "420px" : "280px"}
-              />
-            </div>
-
-            {/* Botón Analizar - 25% en desktop, 100% en mobile; AAButton primary como cards de ejemplos */}
-            <div className="w-full lg:w-[25%] flex flex-col gap-3 relative z-10">
-              <button
-                type="button"
-                onClick={() => txtInputRef.current?.click()}
-                disabled={isImportingTxt}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 sm:px-6 rounded-xl text-white text-xs sm:text-sm font-semibold transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-cyan-400/50 bg-gradient-to-br from-cyan-500/20 to-cyan-500/20 border border-cyan-500/30 hover:from-cyan-500/30 hover:to-cyan-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
-              >
-                {isImportingTxt ? (
-                  <>
-                    <span className="material-symbols-outlined text-base animate-spin">
-                      progress_activity
-                    </span>
-                    {tView("importingTxt")}
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-base">
-                      upload
-                    </span>
-                    {tView("importTxt")}
-                  </>
-                )}
-              </button>
-              <input
-                ref={txtInputRef}
-                type="file"
-                accept=".txt,text/plain"
-                className="hidden"
-                onChange={handleTxtImport}
-              />
-              <AAButton
-                onClick={handleAnalyzeComplexity}
-                disabled={isAnalyzing || !localParseOk || code.trim() === ""}
-                variant="primary"
-                size="lg"
-                className="w-full py-2.5 px-4 sm:px-6 text-xs sm:text-sm"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <span className="material-symbols-outlined text-base animate-spin">
-                      progress_activity
-                    </span>{" "}
-                    {tManual("analyzing")}
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-base">
-                      play_arrow
-                    </span>{" "}
-                    {tManual("analyzeComplexity")}
-                  </>
-                )}
-              </AAButton>
+                  height="100%"
+                />
+                <input
+                  ref={txtInputRef}
+                  type="file"
+                  accept=".txt,text/plain"
+                  className="hidden"
+                  onChange={handleTxtImport}
+                />
+              </div>
+              <div className="hidden h-[400px] min-h-0 shrink-0 overflow-hidden md:block md:h-[490px] md:w-[360px] lg:w-[500px] xl:w-[500px]">
+                <EditorSupportPanel
+                  onInsert={(snippet: SnippetDefinition) => {
+                    editorRef.current?.insertSnippet(snippet);
+                  }}
+                />
+              </div>
             </div>
           </div>
 

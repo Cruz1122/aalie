@@ -288,6 +288,24 @@
       "exportingReport": "Exporting report...",
       "exportNoData": "No analysis to export"
     },
+    "editorSupport": {
+      "title": "Writing Support",
+      "subtitle": "Hover a block to see when to use it and the key idea behind writing it correctly.",
+      "helpDefaultTitle": "Hover a block",
+      "helpDefaultDetails": "You will see a short hint about when to use it and how to start writing it.",
+      "helpExamplePrefix": "Use:",
+      "helpPreviewPrefix": "In our grammar:",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "categories": {
+        "recommended": "Recommended",
+        "conditions": "Conditions",
+        "loops": "Loops",
+        "functions": "Functions and returns",
+        "templates": "Templates",
+        "other": "Other"
+      }
+    },
     "loopInvariant": {
       "title": "Deterministic Loop Invariant",
       "modal": {

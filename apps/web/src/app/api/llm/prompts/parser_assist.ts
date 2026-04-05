@@ -38,7 +38,7 @@ export const parserAssistBase = `Eres un analizador y generador de algoritmos us
      Ejemplo correcto: RETURN n * factorial(n - 1); (parte de una expresión)
      Ejemplo incorrecto: RETURN n * CALL factorial(n - 1); (ERROR: CALL no se usa en expresiones)
  - Variables: NO tienen tipos ni prefijos (NO usar int, string, var, etc.). Simplemente se asigna el valor directamente (ej: x <- 5; nombre <- "Juan";)
- - Asignación: usar alguno de estos operadores: <-, :=
+ - Asignación visible oficial: usar <-
  - PROHIBIDO inicializar múltiples variables con comas en una sola línea (ej: a, b, c <- 1, 2, 3 NO está permitido)
  - Cada variable debe inicializarse independientemente en líneas separadas (ej: a <- 1; b <- 2; c <- 3;)
  - Condicional: IF (condición) THEN BEGIN ... END ELSE BEGIN ... END (también puedes usar llaves: IF (condición) THEN { ... } ELSE { ... })
@@ -50,7 +50,7 @@ export const parserAssistBase = `Eres un analizador y generador de algoritmos us
 - ⚠️ NOTACIÓN DE PARÁMETROS DE ARRAYS: Los parámetros de arrays en las definiciones de procedimientos deben usar la notación A[n], NO nombres genéricos como "array". Ejemplo correcto: mergesort(A[n], izq, der) BEGIN ... END. Ejemplo incorrecto: mergesort(array, izq, der) BEGIN ... END
 - Punto y coma al final de cada sentencia (excepto después de END)
  - Incremento: x <- x + 1
- - Operadores: =, <>, !=, ≠, <, >, <=, ≤, >=, ≥, AND, OR
+ - Operadores visibles oficiales: =, !=, <, >, <=, >=, AND, OR
  - Comentarios: usar // para comentarios de una línea (ej: // esto es un comentario). PROHIBIDO usar -- para comentarios.
  - Caracteres en código: PROHIBIDO usar caracteres especiales como tildes (á, é, í, ó, ú), ñ, u otros caracteres no ASCII en nombres de variables, funciones o código. Usar solo letras del alfabeto inglés (a-z, A-Z), números (0-9) y símbolos estándar.
 - ⚠️ OPERADOR MÓDULO: usar MOD, NO usar % (ej: IF (n MOD 2 = 0) THEN ... NO IF (n % 2 = 0))

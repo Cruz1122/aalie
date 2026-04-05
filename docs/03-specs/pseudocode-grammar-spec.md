@@ -24,13 +24,14 @@ Aplica al parser ANTLR y al AST canónico generado desde `source`.
 - sentencias: `assignment`, `call`, `print`, `if`, `while`, `repeat`, `for`, `return`, `declVector`
 - parámetros: escalares, arrays, objetos
 - expresiones: binarias, unarias, llamadas, índices, campos, literales
-- comentarios: `//` y `►`
+- comentarios: `//` como sintaxis oficial visible; `►` solo como compatibilidad legacy
 
 ### Diferencia entre gramática ideal y efectiva
 
 - la gramática puede aceptar más formas de entrada que las plenamente soportadas por el motor de análisis;
 - parsear correctamente no implica que WHILE, recurrencias o simplificaciones queden cubiertas con conclusión fuerte;
-- los alias Unicode y operadores alternativos existen a nivel de parseo, pero el equipo debe preferir formas ASCII en ejemplos y soporte.
+- la sintaxis oficial visible del producto es ASCII: `//`, `<-`, `<=`, `>=`, `!=`;
+- los alias Unicode y operadores alternativos existen a nivel de parseo solo como compatibilidad legacy y no deben enseñarse en ejemplos, snippets ni microcopy.
 
 ## Inputs
 
@@ -47,6 +48,7 @@ Aplica al parser ANTLR y al AST canónico generado desde `source`.
 - toda estructura de control usa `block` completo;
 - `returnStmt` exige expresión;
 - `callStmt` con `CALL`; `callExpr` sin `CALL`.
+- la UI debe enseñar una sola sintaxis oficial visible en ASCII.
 
 ## Errores esperables
 

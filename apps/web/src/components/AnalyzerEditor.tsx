@@ -2,8 +2,21 @@
 import type { ParseError, Program } from "@aa/types";
 import MonacoEditor, { Monaco as MonacoReact } from "@monaco-editor/react";
 import type * as Monaco from "monaco-editor";
-import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+
+import type { SnippetDefinition } from "@/features/analyzer/editor-support/catalog/snippetCatalog";
+import { insertSnippetIntoEditor } from "@/features/analyzer/editor-support/monaco/contextInsertionRules";
+import { registerPseudocodeCommands } from "@/features/analyzer/editor-support/monaco/registerPseudocodeCommands";
+import { registerPseudocodeCompletionProvider } from "@/features/analyzer/editor-support/monaco/registerPseudocodeCompletionProvider";
+import { useDebouncedSyntaxHints } from "@/features/analyzer/editor-support/parser/validateSourceDebounced";
 
 import AALIEIcon from "./AALIEIcon";
 import { useParseWorker } from "../hooks/useParseWorker";
@@ -34,6 +47,12 @@ interface AnalyzerEditorProps {
   /** Mostrar botón Ayuda con IA en esquina */
   readonly showAIHelpButton?: boolean;
   readonly onAIHelpClick?: () => void;
+  readonly topRightActions?: ReactNode;
+}
+
+export interface AnalyzerEditorHandle {
+  insertSnippet: (snippet: SnippetDefinition) => void;
+  focus: () => void;
 }
 
 /**
@@ -57,7 +76,10 @@ interface AnalyzerEditorProps {
  * />
  * ```
  */
-export function AnalyzerEditor(props: AnalyzerEditorProps) {
+export const AnalyzerEditor = forwardRef<
+  AnalyzerEditorHandle,
+  AnalyzerEditorProps
+>(function AnalyzerEditor(props, ref) {
   const {
     initialValue = "",
     onChange,
@@ -73,9 +95,11 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
     verifyParseResult = null,
     showAIHelpButton = false,
     onAIHelpClick,
+    topRightActions,
   } = props;
   const [code, setCode] = useState(initialValue);
   const tManual = useTranslations("analyzer.manualMode");
+  const locale = useLocale();
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<MonacoReact | null>(null);
   const editorContainerRef = useRef<HTMLDivElement | null>(null);
@@ -83,7 +107,7 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
   const [isEditorReady, setIsEditorReady] = useState(false);
   const [monacoMountKey, setMonacoMountKey] = useState(0);
   const didRemountAfterZeroHeightRef = useRef(false);
-  const [measuredHeight, setMeasuredHeight] = useState<number | null>(null);
+  const [, setMeasuredHeight] = useState<number | null>(null);
   const lastMeasuredHeightRef = useRef<number | null>(null);
   const hasFrozenMeasuredHeightRef = useRef(false);
 
@@ -108,6 +132,7 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
 
   // Parsear código con worker
   const parseResult = useParseWorker(code);
+  const syntaxHints = useDebouncedSyntaxHints(parseResult);
 
   // Actualizar markers cuando cambien los errores
   useEffect(() => {
@@ -147,6 +172,14 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
     }
   }, [parseResult.errors]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (!isEditorReady || !monacoRef.current) {
+      return;
+    }
+
+    registerPseudocodeCompletionProvider(monacoRef.current, locale);
+  }, [isEditorReady, locale]);
+
   /**
    * Maneja el montaje del editor y configura el lenguaje pseudocódigo.
    * @param editor - Instancia del editor de Monaco
@@ -163,6 +196,8 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
 
     // Registrar lenguaje pseudocódigo
     registerPseudocodeLanguage(monaco);
+    registerPseudocodeCompletionProvider(monaco, locale);
+    registerPseudocodeCommands(editor, monaco);
 
     // Aplicar tema
     monaco.editor.setTheme("pseudocode-theme");
@@ -229,12 +264,20 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
     };
   }, [isEditorReady]);
 
-  const shouldUseMeasuredHeight = height == null || height === "100%";
-  const monacoHeightProp = shouldUseMeasuredHeight
-    ? measuredHeight == null
-      ? "100%"
-      : measuredHeight
-    : (height ?? "300px");
+  const monacoHeightProp = height ?? "100%";
+  const editorPadding =
+    topRightActions != null || onVerifyParse != null || onViewAst != null
+      ? { top: 44, bottom: 36 }
+      : { top: 20, bottom: 24 };
+  const hasLocalParseErrors =
+    Boolean(code.trim()) &&
+    !parseResult.isParsing &&
+    !parseResult.ok &&
+    (parseResult.errors?.length ?? 0) > 0;
+  const localParseTooltip =
+    syntaxHints[0]?.message ??
+    parseResult.errors?.[0]?.message ??
+    tManual("verifyParse");
 
   /**
    * Maneja los cambios en el contenido del editor.
@@ -248,76 +291,106 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
     }
   }
 
+  useImperativeHandle(
+    ref,
+    () => ({
+      insertSnippet(snippet) {
+        if (!editorRef.current) return;
+        insertSnippetIntoEditor(editorRef.current, snippet, locale);
+      },
+      focus() {
+        editorRef.current?.focus();
+      },
+    }),
+  );
+
   return (
     <div className="relative flex h-full min-h-0 flex-col">
       {/* Botones fuera del overflow-hidden para que los tooltips no se recorten */}
-      {(onVerifyParse != null || onViewAst != null || showAIHelpButton) && (
-        <div className="absolute top-2 right-5 flex gap-1 z-20">
-          {showAIHelpButton && onAIHelpClick != null && (
-            <button
-              type="button"
-              onClick={onAIHelpClick}
-              className="w-8 h-8 rounded-full bg-purple-500/12 border border-purple-500/20 text-purple-300/70 hover:bg-purple-500/25 hover:text-purple-300 transition-all duration-300 ease-out flex items-center justify-center animate-pulse-slow"
-              title={tManual("aiHelp")}
-            >
-              <AALIEIcon size={20} />
-            </button>
-          )}
-          {onVerifyParse != null && (
-            <button
-              type="button"
-              onClick={onVerifyParse}
-              disabled={isVerifyingParse || !hasCode}
-              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ease-out disabled:opacity-40 disabled:cursor-not-allowed ${
-                verifyParseResult != null
-                  ? verifyParseResult.success
-                    ? "bg-emerald-500/12 border border-emerald-500/20 text-emerald-300/70 hover:bg-emerald-500/25 hover:text-emerald-300"
-                    : "bg-red-500/12 border border-red-500/20 text-red-300/70 hover:bg-red-500/25 hover:text-red-300"
-                  : "bg-blue-500/12 border border-blue-500/20 text-blue-300/70 hover:bg-blue-500/25 hover:text-blue-300"
-              }`}
-              title={verifyParseResult?.message ?? tManual("verifyParse")}
-            >
-              {isVerifyingParse ? (
-                <span
-                  className="material-symbols-outlined animate-spin"
-                  style={{ fontSize: 16 }}
+      {(topRightActions != null ||
+        onVerifyParse != null ||
+        onViewAst != null ||
+        showAIHelpButton) && (
+        <div className="absolute top-2 right-5 z-20 flex items-center gap-1">
+            {showAIHelpButton && onAIHelpClick != null && (
+              <div className="rounded-full bg-[#101820] p-0.5 shadow-lg">
+                <button
+                  type="button"
+                  onClick={onAIHelpClick}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-purple-500/20 bg-purple-500/12 text-purple-300/70 transition-all duration-300 ease-out hover:bg-purple-500/25 hover:text-purple-300 animate-pulse-slow"
+                  title={tManual("aiHelp")}
                 >
-                  progress_activity
-                </span>
-              ) : verifyParseResult != null ? (
-                <span
-                  key={verifyParseResult.success ? "ok" : "err"}
-                  className="material-symbols-outlined animate-fade-in"
-                  style={{ fontSize: 16 }}
-                >
-                  {verifyParseResult.success ? "check_circle" : "error"}
-                </span>
-              ) : (
-                <span
-                  className="material-symbols-outlined"
-                  style={{ fontSize: 16 }}
-                >
-                  check_circle
-                </span>
-              )}
-            </button>
-          )}
-          {onViewAst != null && (
-            <button
-              type="button"
-              onClick={onViewAst}
-              disabled={!canViewAst}
-              className="w-8 h-8 rounded-full bg-amber-500/12 border border-amber-500/20 text-amber-300/70 hover:bg-amber-500/25 hover:text-amber-300 transition-all duration-300 ease-out disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
-              title={tManual("viewAst")}
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: 16 }}
+                  <AALIEIcon size={20} />
+                </button>
+              </div>
+            )}
+            {onVerifyParse != null && (
+              <div className="rounded-full bg-[#101820] p-0.5 shadow-lg">
+                <button
+                  type="button"
+                  onClick={onVerifyParse}
+                  disabled={isVerifyingParse || !hasCode}
+                className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 ease-out disabled:cursor-not-allowed disabled:opacity-40 ${
+                  verifyParseResult != null
+                    ? verifyParseResult.success
+                      ? "border border-emerald-500/20 bg-emerald-500/12 text-emerald-300/70 hover:bg-emerald-500/25 hover:text-emerald-300"
+                      : "border border-red-500/20 bg-red-500/12 text-red-300/70 hover:bg-red-500/25 hover:text-red-300"
+                    : hasLocalParseErrors
+                      ? "animate-pulse-slow border border-red-500/20 bg-red-500/12 text-red-300/70 hover:bg-red-500/25 hover:text-red-300"
+                      : "border border-blue-500/20 bg-blue-500/12 text-blue-300/70 hover:bg-blue-500/25 hover:text-blue-300"
+                }`}
+                title={
+                  verifyParseResult?.message ??
+                  (hasLocalParseErrors ? localParseTooltip : tManual("verifyParse"))
+                }
               >
-                account_tree
-              </span>
-            </button>
-          )}
+                {isVerifyingParse ? (
+                  <span
+                      className="material-symbols-outlined animate-spin"
+                      style={{ fontSize: 16 }}
+                    >
+                      progress_activity
+                    </span>
+                ) : verifyParseResult != null ? (
+                  <span
+                    key={verifyParseResult.success ? "ok" : "err"}
+                      className="material-symbols-outlined animate-fade-in"
+                      style={{ fontSize: 16 }}
+                  >
+                    {verifyParseResult.success ? "check_circle" : "error"}
+                  </span>
+                ) : hasLocalParseErrors ? (
+                  <span className="text-[16px] font-bold leading-none">!</span>
+                ) : (
+                  <span
+                    className="material-symbols-outlined"
+                      style={{ fontSize: 16 }}
+                    >
+                      check_circle
+                    </span>
+                  )}
+                </button>
+              </div>
+            )}
+            {onViewAst != null && (
+              <div className="rounded-full bg-[#101820] p-0.5 shadow-lg">
+                <button
+                  type="button"
+                  onClick={onViewAst}
+                  disabled={!canViewAst}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-500/20 bg-amber-500/12 text-amber-300/70 transition-all duration-300 ease-out hover:bg-amber-500/25 hover:text-amber-300 disabled:cursor-not-allowed disabled:opacity-40"
+                  title={tManual("viewAst")}
+                >
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: 16 }}
+                  >
+                    account_tree
+                  </span>
+                </button>
+              </div>
+            )}
+            {topRightActions}
         </div>
       )}
       {/* Editor: glass-card-editor sin hover difuminado */}
@@ -363,7 +436,7 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
             cursorBlinking: "smooth",
             cursorSmoothCaretAnimation: "on",
             roundedSelection: true,
-            padding: { top: 16, bottom: 16 },
+            padding: editorPadding,
             lineHeight: 1.6,
             bracketPairColorization: {
               enabled: true,
@@ -373,9 +446,16 @@ export function AnalyzerEditor(props: AnalyzerEditorProps) {
               bracketPairs: true,
             },
             renderLineHighlight: "none",
+            wordBasedSuggestions: "off",
+            lightbulb: {
+              enabled: false,
+            },
+            suggest: {
+              showWords: false,
+            },
           }}
         />
       </div>
     </div>
   );
-}
+});

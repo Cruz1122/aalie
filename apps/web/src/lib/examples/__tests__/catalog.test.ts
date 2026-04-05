@@ -2,8 +2,10 @@ import {
   EXAMPLE_CATEGORY_ORDER,
   examplesCatalog,
   filterByMethods,
+  findExampleBySlug,
   getEnabledExamples,
   getExamplesByCategory,
+  getLocalizedExampleSource,
   isRecursiveCategory,
   searchExamples,
   sortByLocalizedTitle,
@@ -27,6 +29,16 @@ describe("examples catalog integrity", () => {
     const slugs = examplesCatalog.map((item) => item.slug);
     expect(new Set(ids).size).toBe(ids.length);
     expect(new Set(slugs).size).toBe(slugs.length);
+  });
+
+  it("keeps localized source code for every algorithm", () => {
+    expect(
+      examplesCatalog.every(
+        (item) =>
+          item.sourceCodeByLocale.es.trim().length > 0 &&
+          item.sourceCodeByLocale.en.trim().length > 0,
+      ),
+    ).toBe(true);
   });
 
   it("keeps iterative examples without recursive badges", () => {
@@ -88,5 +100,15 @@ describe("examples catalog integrity", () => {
           item.verifiedMethods.includes("TM"),
       ).toBe(true);
     }
+  });
+
+  it("returns the source code localized to english", () => {
+    const example = findExampleBySlug("binary-search-iterativa");
+
+    expect(example).toBeDefined();
+    expect(getLocalizedExampleSource(example!, "en")).toContain("left <- 1;");
+    expect(getLocalizedExampleSource(example!, "en")).toContain(
+      "WHILE (left <= right) DO BEGIN",
+    );
   });
 });

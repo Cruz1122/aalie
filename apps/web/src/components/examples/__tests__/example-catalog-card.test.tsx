@@ -51,6 +51,11 @@ if (!example) {
   throw new Error("missing fixture example");
 }
 
+const binaryExample = findExampleBySlug("binary-search-iterativa");
+if (!binaryExample) {
+  throw new Error("missing binary search fixture example");
+}
+
 describe("ExampleCatalogCard", () => {
   it("expands and collapses source code", () => {
     render(
@@ -92,6 +97,35 @@ describe("ExampleCatalogCard", () => {
     fireEvent.click(screen.getByRole("button", { name: /Analizar/i }));
     expect(onAnalyze).toHaveBeenCalledTimes(1);
     expect(onAnalyze.mock.calls[0][0].id).toBe(example.id);
+  });
+
+  it("renders english source code when the card locale is english", () => {
+    render(
+      <ExampleCatalogCard
+        example={binaryExample}
+        locale="en"
+        analyzingExampleId={null}
+        onAnalyze={vi.fn()}
+        viewLabel="View algorithm"
+        hideLabel="Hide algorithm"
+        analyzeLabel="Analyze"
+        analyzingLabel="Analyzing..."
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /View algorithm/i }));
+    expect(
+      screen.getByText((_, node) =>
+        node?.tagName === "CODE" &&
+        (node.textContent?.includes("left <- 1;") ?? false),
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, node) =>
+        node?.tagName === "CODE" &&
+        (node.textContent?.includes("WHILE (left <= right) DO BEGIN") ?? false),
+      ),
+    ).toBeInTheDocument();
   });
 
   it("shows a tier chip when catalogTier is not contractual", () => {

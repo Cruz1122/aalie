@@ -60,6 +60,7 @@ o
 
 - el backend conserva compatibilidad `input | source`;
 - el proxy Next hoy entrega `input`.
+- el parser mantiene compatibilidad legacy para algunos símbolos no ASCII, pero la sintaxis oficial visible del producto sigue siendo ASCII.
 
 ## Ejemplos
 
