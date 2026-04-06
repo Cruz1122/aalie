@@ -22,7 +22,7 @@ interface InlineRichTextRendererProps {
 
 const colorTokenClassNames: Record<string, string> = {
   primary: "text-sky-300",
-  success: "text-emerald-300",
+  success: "text-sky-300",
   warning: "text-amber-300",
   danger: "text-rose-300",
   muted: "text-slate-400",

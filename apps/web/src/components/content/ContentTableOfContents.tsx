@@ -80,7 +80,7 @@ export function ContentTableOfContents({
                       <span
                         className={`mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border text-[11px] ${
                           isCompleted
-                            ? "border-emerald-400/50 bg-emerald-500/15 text-emerald-200"
+                            ? "border-primary/45 bg-primary/15 text-sky-100"
                             : "border-white/10 bg-white/5 text-slate-400"
                         }`}
                       >

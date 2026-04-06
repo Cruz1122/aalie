@@ -19,7 +19,7 @@ export function UserGuideCard({ module, progress }: UserGuideCardProps) {
   return (
     <article className="documentation-card glass-card relative flex h-full flex-col rounded-2xl border border-white/10 p-4 sm:p-5">
       <div className="absolute right-4 top-4">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-400/20 bg-sky-500/10 px-2.5 py-1 text-xs font-semibold text-sky-100">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-sky-100">
           <Clock3 size={13} />
           {module.estimatedMinutes ? `${module.estimatedMinutes} min` : "—"}
         </span>
@@ -62,7 +62,7 @@ export function UserGuideCard({ module, progress }: UserGuideCardProps) {
           className="h-2.5 overflow-hidden rounded-full bg-white/5"
         >
           <div
-            className="h-full rounded-full bg-gradient-to-r from-sky-400 to-cyan-300 transition-[width]"
+            className="h-full rounded-full bg-gradient-to-r from-primary to-sky-400 transition-[width]"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -71,7 +71,7 @@ export function UserGuideCard({ module, progress }: UserGuideCardProps) {
       <div className="mt-4">
         <NavigationLink
           href={module.route}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-sky-400/30 bg-sky-500/10 px-4 py-2.5 text-sm font-semibold text-sky-100 transition-colors hover:bg-sky-500/20"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary/35 bg-primary/10 px-4 py-2.5 text-sm font-semibold text-sky-100 transition-colors hover:bg-primary/20"
           title={module.title}
         >
           {t("openModule")}

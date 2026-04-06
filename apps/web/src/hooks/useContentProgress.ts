@@ -148,9 +148,7 @@ export function useSectionCompletionTracking({
   const completedSectionIdsRef = useRef<string[]>(EMPTY_COMPLETED_SECTION_IDS);
 
   const getCompletedSectionIdsSnapshot = useCallback((): string[] => {
-    const next = Array.from(
-      getCompletedSectionIds(spaceId, module.moduleId),
-    );
+    const next = Array.from(getCompletedSectionIds(spaceId, module.moduleId));
     const prev = completedSectionIdsRef.current;
     if (prev && sectionIdsSnapshotEqual(prev, next)) {
       return prev;

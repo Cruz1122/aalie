@@ -7,97 +7,78 @@
   --primary-color: #0d7ff2;
 }
 
-/* Efectos Glassmorphism */
+/* Paneles “glass”: fondo sólido semitransparente, sin backdrop-filter (evita artefactos GPU en hover) */
 .glass {
-  background: rgba(24, 36, 49, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(22, 32, 44, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: none;
-  transform: translateZ(0);
-  isolation: isolate;
 }
 
 .glass-header {
-  background: rgba(16, 26, 35, 0.8);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(34, 54, 73, 0.5);
-  transform: translateZ(0);
-  isolation: isolate;
+  background: rgba(16, 26, 35, 0.96);
+  border-bottom: 1px solid rgba(34, 54, 73, 0.55);
   position: relative;
   z-index: 1;
 }
 
 .glass-card {
-  background: rgba(24, 36, 49, 0.6);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(24, 36, 49, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: none;
-  transition: all 0.3s ease;
-  isolation: isolate;
   position: relative;
   z-index: 1;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .glass-card:hover {
-  background: rgba(24, 36, 49, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: none;
+  background: rgba(28, 42, 56, 0.98);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
-/* Editor: sin efecto hover (sombra difuminada); z-index bajo; sin sombra azul debajo */
+/* Editor: sin hover destacado; z-index bajo */
 .glass-card-editor {
   z-index: 0;
   box-shadow: none;
 }
+
 .glass-card-editor:hover {
-  background: rgba(24, 36, 49, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: none;
+  background: rgba(24, 36, 49, 0.94);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* glass-button eliminado: usar AAButton con variant="primary" (estilo de cards de ejemplos) */
 
 .glass-secondary {
-  background: rgba(34, 54, 73, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  isolation: isolate;
+  background: rgba(34, 54, 73, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   position: relative;
   z-index: 1;
 }
 
 .glass-secondary:hover {
-  background: rgba(42, 63, 83, 0.8);
+  background: rgba(40, 60, 80, 0.96);
 }
 
 .glass-modal-overlay {
   background: linear-gradient(
     135deg,
-    rgba(16, 26, 35, 0.6) 0%,
-    rgba(15, 20, 25, 0.8) 50%,
-    rgba(16, 26, 35, 0.9) 100%
+    rgba(16, 26, 35, 0.88) 0%,
+    rgba(15, 20, 25, 0.93) 50%,
+    rgba(16, 26, 35, 0.96) 100%
   );
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  transform: translateZ(0);
   z-index: 1;
 }
 
-/* Overlay para manual mode: blur en fondo + oscurece; el contenedor también tiene blur */
+/* Overlay manual mode: mismo criterio sin blur */
 .glass-modal-overlay-container-only {
   background: linear-gradient(
     135deg,
-    rgba(16, 26, 35, 0.5) 0%,
-    rgba(15, 20, 25, 0.7) 50%,
-    rgba(16, 26, 35, 0.85) 100%
+    rgba(16, 26, 35, 0.82) 0%,
+    rgba(15, 20, 25, 0.9) 50%,
+    rgba(16, 26, 35, 0.95) 100%
   );
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transform: translateZ(0);
   z-index: 1;
 }
 
@@ -109,25 +90,17 @@
 }
 
 .glass-modal-header {
-  background: rgba(16, 26, 35, 0.9);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(16, 26, 35, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: none;
-  transform: translateZ(0);
-  isolation: isolate;
   position: relative;
   z-index: 1;
 }
 
 .glass-modal-container {
-  background: rgba(24, 36, 49, 0.4);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(22, 32, 44, 0.97);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: none;
-  transform: translateZ(0);
-  isolation: isolate;
   position: relative;
   z-index: 1;
 }
@@ -600,10 +573,9 @@ kbd {
   cursor: zoom-in;
 }
 
-/* Mejoras para el backdrop del modal con zoom */
+/* Backdrop modal con zoom (sin blur: mismo criterio que glass) */
 .modal-backdrop-zoomed {
-  backdrop-filter: blur(20px);
-  background: rgba(16, 26, 35, 0.95);
+  background: rgba(16, 26, 35, 0.97);
 }
 
 /* Estilos para modal fullscreen sin scroll */
