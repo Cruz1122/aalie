@@ -256,7 +256,9 @@ const createCustomCode = (
       );
 
       if (mathRender.renderAs === "latex") {
-        return <Formula latex={mathRender.normalized} className="align-middle" />;
+        return (
+          <Formula latex={mathRender.normalized} className="align-middle" />
+        );
       }
 
       return (

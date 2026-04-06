@@ -31,10 +31,18 @@ def pytest_configure(config):
         "markers", "while_loop: tests involving while-loop analysis"
     )
     config.addinivalue_line("markers", "while: tests involving WHILE loops")
+    config.addinivalue_line(
+        "markers",
+        "while_domain: tests del dominio WHILE (engine, patrones, metamórficos)",
+    )
     config.addinivalue_line("markers", "recursive: tests involving recursive analysis")
     config.addinivalue_line("markers", "dp: tests involving DP algorithms")
     config.addinivalue_line(
         "markers", "benchmark: performance/regression benchmark tests"
+    )
+    config.addinivalue_line(
+        "markers",
+        "regression: síntomas explícitos de informes / catálogo (no duplicar oráculos)",
     )
 
 

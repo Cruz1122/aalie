@@ -13,9 +13,7 @@ import ReactDOM from "react-dom";
 
 import AAButton from "@/components/AAButton";
 import { AAProgressLoader } from "@/components/AAProgressLoader";
-import {
-  AnalyzerEditor,
-} from "@/components/AnalyzerEditor";
+import { AnalyzerEditor } from "@/components/AnalyzerEditor";
 import { EmbeddedAssistantLauncher } from "@/components/assistant/EmbeddedAssistantLauncher";
 import { ASTTreeView } from "@/components/ASTTreeView";
 import ComparisonModal from "@/components/ComparisonModal";
@@ -705,9 +703,9 @@ export default function AnalyzerPage() {
             : tView("txtImportParseFailedNoAi"),
           details: [
             ...errorDetails,
-            ...getImportNormalizationSuggestions(validation.normalizedSource).map(
-              (suggestion) => suggestion.reason,
-            ),
+            ...getImportNormalizationSuggestions(
+              validation.normalizedSource,
+            ).map((suggestion) => suggestion.reason),
           ],
           showRepairAction: hasApiKey,
         });
@@ -1163,13 +1161,14 @@ export default function AnalyzerPage() {
       }
 
       // Preparar todos los datos del análisis para enviar al LLM
-      const fullAnalysisData = buildLlmComparisonPayload({
-        data,
-        isRecursive,
-        worst: ownCoreDataWorst,
-        best: ownCoreDataBest,
-        avg: ownCoreDataAvg,
-      }) ?? {};
+      const fullAnalysisData =
+        buildLlmComparisonPayload({
+          data,
+          isRecursive,
+          worst: ownCoreDataWorst,
+          best: ownCoreDataBest,
+          avg: ownCoreDataAvg,
+        }) ?? {};
 
       // Detectar el método usado en el análisis propio (si es recursivo)
       let ownMethod: string | undefined = undefined;
@@ -2830,8 +2829,14 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         ),
         availability:
           data && (data.worst || data.best || data.avg)
-            ? text("Disponible con analisis completo", "Available with completed analysis")
-            : text("Requiere un analisis completo", "Requires a completed analysis"),
+            ? text(
+                "Disponible con analisis completo",
+                "Available with completed analysis",
+              )
+            : text(
+                "Requiere un analisis completo",
+                "Requires a completed analysis",
+              ),
       },
       {
         id: "view-ast",
@@ -2856,7 +2861,10 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         ),
         availability: hasComparableData
           ? text("Disponible ahora", "Available now")
-          : text("Requiere analisis formal completo", "Requires completed formal analysis"),
+          : text(
+              "Requiere analisis formal completo",
+              "Requires completed formal analysis",
+            ),
       },
       {
         id: "compare-with-llm",
@@ -2884,7 +2892,10 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         ),
         availability: loopInvariantData
           ? text("Disponible ahora", "Available now")
-          : text("Disponible cuando se detecta un invariante", "Available when an invariant is detected"),
+          : text(
+              "Disponible cuando se detecta un invariante",
+              "Available when an invariant is detected",
+            ),
       },
       {
         id: "gpu-vs-cpu",
@@ -2897,7 +2908,10 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         availability:
           ast && hasComparableData
             ? text("Disponible ahora", "Available now")
-            : text("Requiere AST y analisis completo", "Requires AST and completed analysis"),
+            : text(
+                "Requiere AST y analisis completo",
+                "Requires AST and completed analysis",
+              ),
       },
       {
         id: "repair-with-ai",
@@ -2907,10 +2921,9 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
           "Intenta reparar pseudocodigo con errores de gramatica usando IA.",
           "Attempt to repair pseudocode with grammar issues using AI.",
         ),
-        availability:
-          hasApiKey
-            ? text("Disponible con API key", "Available with API key")
-            : text("Requiere API key", "Requires API key"),
+        availability: hasApiKey
+          ? text("Disponible con API key", "Available with API key")
+          : text("Requiere API key", "Requires API key"),
       },
     ];
   }, [
@@ -2946,7 +2959,9 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         id: "ast-modal",
         title: tView("abstractSyntaxTree"),
         description:
-          viewMode === "tree" ? tView("astTreeViewDesc") : tView("astJsonViewDesc"),
+          viewMode === "tree"
+            ? tView("astTreeViewDesc")
+            : tView("astJsonViewDesc"),
         notes: [`viewMode=${viewMode}`],
       };
     }
@@ -2996,7 +3011,9 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
     if (showComparisonModal) {
       const ownWorst = extractCoreData(data?.worst || null);
       const ownBest = extractCoreData(
-        data?.best === "same_as_worst" ? data?.worst || null : data?.best || null,
+        data?.best === "same_as_worst"
+          ? data?.worst || null
+          : data?.best || null,
       );
       const ownAvg = extractCoreData(
         data?.avg === "same_as_worst" ? data?.worst || null : data?.avg || null,
@@ -3079,30 +3096,27 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
           ),
           ...gpuCpuAnalysis.reasons.blockers
             .slice(0, 2)
-            .map(
-              (reason) =>
-                text(
-                  `Bloqueador: ${truncateAssistantDetail(reason)}.`,
-                  `Blocker: ${truncateAssistantDetail(reason)}.`,
-                ),
+            .map((reason) =>
+              text(
+                `Bloqueador: ${truncateAssistantDetail(reason)}.`,
+                `Blocker: ${truncateAssistantDetail(reason)}.`,
+              ),
             ),
           ...gpuCpuAnalysis.reasons.positive
             .slice(0, 2)
-            .map(
-              (reason) =>
-                text(
-                  `A favor: ${truncateAssistantDetail(reason)}.`,
-                  `Positive signal: ${truncateAssistantDetail(reason)}.`,
-                ),
+            .map((reason) =>
+              text(
+                `A favor: ${truncateAssistantDetail(reason)}.`,
+                `Positive signal: ${truncateAssistantDetail(reason)}.`,
+              ),
             ),
           ...gpuCpuAnalysis.reasons.negative
             .slice(0, 2)
-            .map(
-              (reason) =>
-                text(
-                  `En contra: ${truncateAssistantDetail(reason)}.`,
-                  `Negative signal: ${truncateAssistantDetail(reason)}.`,
-                ),
+            .map((reason) =>
+              text(
+                `En contra: ${truncateAssistantDetail(reason)}.`,
+                `Negative signal: ${truncateAssistantDetail(reason)}.`,
+              ),
             ),
           ...gpuCpuAnalysis.detectedPatterns
             .slice(0, 3)
@@ -3233,121 +3247,124 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
     tView,
     viewMode,
   ]);
-  const assistantContext = useMemo<AssistantContext>(
-    () => {
-      const notes: string[] = [];
+  const assistantContext = useMemo<AssistantContext>(() => {
+    const notes: string[] = [];
 
-      if (analysisError) {
-        notes.push(analysisError);
-      }
-      if (parseErrors && parseErrors.length > 0) {
-        notes.push(
-          ...parseErrors
-            .slice(0, 3)
-            .map((error) => error.message || "Parse error"),
-        );
-      }
-      if (loopInvariantData) {
-        notes.push("Loop invariant available");
-      }
-      if (data?.best === "same_as_worst") {
-        notes.push("Best case reuses worst-case result");
-      }
-      if (data?.avg === "same_as_worst") {
-        notes.push("Average case reuses worst-case result");
-      }
-
-      const cases = [
-        buildFormalCaseSummary("worst", data?.worst || null),
-        buildFormalCaseSummary(
-          "best",
-          data?.best === "same_as_worst" ? data?.worst || null : data?.best || null,
-        ),
-        buildFormalCaseSummary(
-          "avg",
-          data?.avg === "same_as_worst" ? data?.worst || null : data?.avg || null,
-        ),
-      ].filter(
-        (
-          entry,
-        ): entry is NonNullable<ReturnType<typeof buildFormalCaseSummary>> =>
-          entry !== null,
+    if (analysisError) {
+      notes.push(analysisError);
+    }
+    if (parseErrors && parseErrors.length > 0) {
+      notes.push(
+        ...parseErrors
+          .slice(0, 3)
+          .map((error) => error.message || "Parse error"),
       );
+    }
+    if (loopInvariantData) {
+      notes.push("Loop invariant available");
+    }
+    if (data?.best === "same_as_worst") {
+      notes.push("Best case reuses worst-case result");
+    }
+    if (data?.avg === "same_as_worst") {
+      notes.push("Average case reuses worst-case result");
+    }
 
-      return {
-        surface: "analyzer",
-        locale,
-        pageContext: {
-          route: "/analyzer",
-          view: analyzerViewMode,
-          title: tView("analyze"),
-          description:
-            analyzerViewMode === "trace"
-              ? tView("viewExecutionTrace")
-              : tView("analyze"),
-          notes: [
-            `selectedCase=${selectedCase}`,
-            `parseOk=${localParseOk ? "true" : "false"}`,
-            `importTxt=true`,
-            `exportReport=${data && (data.worst || data.best || data.avg) ? "enabled" : "disabled"}`,
-            `compareWithLLM=${hasApiKey && hasComparableData ? "enabled" : "disabled"}`,
-            `executionTrace=${hasComparableData ? "enabled" : "disabled"}`,
-            `gpuVsCpu=${ast && hasComparableData ? "enabled" : "disabled"}`,
-            `loopInvariant=${loopInvariantData ? "enabled" : "disabled"}`,
-          ],
-        },
-        sourceCode: source.trim() || undefined,
-        formalAnalysisSummary: {
-          parseStatus: source.trim()
-            ? localParseOk
-              ? "ok"
-              : parseErrors && parseErrors.length > 0
-                ? "error"
-                : "unknown"
-            : "idle",
-          analysisStatus: analyzing
-            ? "running"
-            : analysisError
-              ? "error"
-              : data
-                ? "complete"
-                : "idle",
-          algorithmType: algorithmType
-            ? tAlgorithmType(algorithmType === "unknown" ? "unknown" : algorithmType)
-            : undefined,
-          selectedCase,
-          selectedMethod: analysisMethodKey ? tMethods(analysisMethodKey) : undefined,
-          hasCaseVariability: data?.has_case_variability === true,
-          cases,
-          notes,
-        },
-        focusedPanel,
-        availableFeatures: analyzerFeatures,
-      };
-    },
-    [
-      algorithmType,
-      analysisError,
-      analysisMethodKey,
-      analyzerViewMode,
-      analyzing,
-      analyzerFeatures,
-      data,
-      focusedPanel,
-      hasApiKey,
-      hasComparableData,
-      ast,
+    const cases = [
+      buildFormalCaseSummary("worst", data?.worst || null),
+      buildFormalCaseSummary(
+        "best",
+        data?.best === "same_as_worst"
+          ? data?.worst || null
+          : data?.best || null,
+      ),
+      buildFormalCaseSummary(
+        "avg",
+        data?.avg === "same_as_worst" ? data?.worst || null : data?.avg || null,
+      ),
+    ].filter(
+      (
+        entry,
+      ): entry is NonNullable<ReturnType<typeof buildFormalCaseSummary>> =>
+        entry !== null,
+    );
+
+    return {
+      surface: "analyzer",
       locale,
-      localParseOk,
-      loopInvariantData,
-      parseErrors,
-      selectedCase,
-      source,
-      tAlgorithmType,
-      tMethods,
-      tView,
-    ],
-  );
+      pageContext: {
+        route: "/analyzer",
+        view: analyzerViewMode,
+        title: tView("analyze"),
+        description:
+          analyzerViewMode === "trace"
+            ? tView("viewExecutionTrace")
+            : tView("analyze"),
+        notes: [
+          `selectedCase=${selectedCase}`,
+          `parseOk=${localParseOk ? "true" : "false"}`,
+          `importTxt=true`,
+          `exportReport=${data && (data.worst || data.best || data.avg) ? "enabled" : "disabled"}`,
+          `compareWithLLM=${hasApiKey && hasComparableData ? "enabled" : "disabled"}`,
+          `executionTrace=${hasComparableData ? "enabled" : "disabled"}`,
+          `gpuVsCpu=${ast && hasComparableData ? "enabled" : "disabled"}`,
+          `loopInvariant=${loopInvariantData ? "enabled" : "disabled"}`,
+        ],
+      },
+      sourceCode: source.trim() || undefined,
+      formalAnalysisSummary: {
+        parseStatus: source.trim()
+          ? localParseOk
+            ? "ok"
+            : parseErrors && parseErrors.length > 0
+              ? "error"
+              : "unknown"
+          : "idle",
+        analysisStatus: analyzing
+          ? "running"
+          : analysisError
+            ? "error"
+            : data
+              ? "complete"
+              : "idle",
+        algorithmType: algorithmType
+          ? tAlgorithmType(
+              algorithmType === "unknown" ? "unknown" : algorithmType,
+            )
+          : undefined,
+        selectedCase,
+        selectedMethod: analysisMethodKey
+          ? tMethods(analysisMethodKey)
+          : undefined,
+        hasCaseVariability: data?.has_case_variability === true,
+        cases,
+        notes,
+      },
+      focusedPanel,
+      availableFeatures: analyzerFeatures,
+    };
+  }, [
+    algorithmType,
+    analysisError,
+    analysisMethodKey,
+    analyzerViewMode,
+    analyzing,
+    analyzerFeatures,
+    data,
+    focusedPanel,
+    hasApiKey,
+    hasComparableData,
+    ast,
+    locale,
+    localParseOk,
+    loopInvariantData,
+    parseErrors,
+    selectedCase,
+    source,
+    tAlgorithmType,
+    tMethods,
+    tView,
+  ]);
 
   return (
     <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">

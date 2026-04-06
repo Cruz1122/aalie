@@ -35,13 +35,18 @@ export function mapParseErrorsToSyntaxHints(
         status: "invalid",
         code: "dangling-else",
         message: "Este ELSE necesita un IF anterior.",
-        suggestion: "Revisa que el ELSE esté unido a un IF completo con BEGIN y END.",
+        suggestion:
+          "Revisa que el ELSE esté unido a un IF completo con BEGIN y END.",
         line: error.line,
         column: error.column,
       };
     }
 
-    if (message.includes(":=") || message.includes("🡨") || message.includes("←")) {
+    if (
+      message.includes(":=") ||
+      message.includes("🡨") ||
+      message.includes("←")
+    ) {
       return {
         status: "invalid",
         code: "assign-ascii",

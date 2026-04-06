@@ -10,14 +10,16 @@ describe("user-guide legacy regression", () => {
     expect(
       existsSync(path.join(webRoot, "src/hooks/useUserGuideSections.ts")),
     ).toBe(false);
-    expect(
-      existsSync(path.join(webRoot, "src/types/user-guide.ts")),
-    ).toBe(false);
+    expect(existsSync(path.join(webRoot, "src/types/user-guide.ts"))).toBe(
+      false,
+    );
     expect(
       existsSync(path.join(webRoot, "src/components/UserGuideModal.tsx")),
     ).toBe(false);
     expect(
-      existsSync(path.join(webRoot, "src/components/UserGuideTableOfContents.tsx")),
+      existsSync(
+        path.join(webRoot, "src/components/UserGuideTableOfContents.tsx"),
+      ),
     ).toBe(false);
   });
 

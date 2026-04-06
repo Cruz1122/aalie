@@ -76,7 +76,9 @@ function AssistantFramePageContent() {
     <div className="h-screen w-full bg-[#101a23]">
       <ChatBot
         isOpen
-        onClose={() => postToParent(createAssistantRequestCloseMessage(surface))}
+        onClose={() =>
+          postToParent(createAssistantRequestCloseMessage(surface))
+        }
         messages={messages}
         setMessages={setMessages}
         assistantContext={assistantContext}

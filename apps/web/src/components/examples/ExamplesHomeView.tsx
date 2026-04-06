@@ -173,7 +173,8 @@ export function ExamplesHomeView() {
                 `matchedExamples=${topMatches.length}`,
                 ...topMatches.map(
                   (item) =>
-                    getLocalizedExampleContent(item, catalogItems, locale).title,
+                    getLocalizedExampleContent(item, catalogItems, locale)
+                      .title,
                 ),
               ]
             : undefined,

@@ -43,6 +43,15 @@ class MergeTwoPointersPattern(WhilePattern):
             su = updates.get(v)
             if not su:
                 return False
+            # En merge clásico, cada iteración avanza uno de los punteros según la rama.
+            # Si ambos punteros tienen incremento MUST en el mismo ciclo, es más bien
+            # un contador lineal compuesto (ej. i<-i+1 y j<-j+1 simultáneamente).
+            has_must_inc = any(
+                u.get("type") == "num" and u.get("operator") == "+"
+                for u in (su.must_updates or [])
+            )
+            if has_must_inc:
+                return False
             inc = False
             for u in su.must_updates + su.may_updates:
                 if u.get("type") == "num" and u.get("operator") == "+":

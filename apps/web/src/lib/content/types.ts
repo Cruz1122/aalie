@@ -1,7 +1,4 @@
-import type {
-  CatalogModule,
-  SearchIndexEntry,
-} from "@aa/content-catalog";
+import type { CatalogModule, SearchIndexEntry } from "@aa/content-catalog";
 
 export interface ContentSpaceSummary {
   spaceId: string;

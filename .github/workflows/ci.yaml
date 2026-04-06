@@ -38,6 +38,7 @@ concurrency:
 jobs:
   # Job principal: Build crítico (debe pasar)
   build:
+    name: "Build (web + API smoke)"
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -101,6 +102,7 @@ jobs:
         run: python -c "import fastapi; print('✅ FastAPI:', fastapi.__version__)"
 
   test-pr-gate:
+    name: "Tests (PR gate: fast + oracle, con cobertura)"
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -157,6 +159,7 @@ jobs:
           echo "📊 Coverage report available in artifacts"
 
   test-extended-lanes:
+    name: "Tests (extendido: contract + system, sin duplicar PR gate)"
     runs-on: ubuntu-latest
     timeout-minutes: 25
     continue-on-error: true
@@ -195,10 +198,11 @@ jobs:
       - name: Run extended validation lanes (non-blocking)
         working-directory: apps/api
         run: |
-          echo "🧪 Running extended lanes: fast + oracle + contract + system..."
-          pytest tests/ -v --tb=short -n auto --dist=worksteal -m "fast or oracle or contract or system"
+          echo "🧪 Running extended lanes: contract + system (PR gate ya cubre fast + oracle)..."
+          pytest tests/ -v --tb=short -n auto --dist=worksteal -m "contract or system"
 
   test-nightly-lanes:
+    name: "Tests (nightly: slow + stress + export + benchmark)"
     if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -238,6 +242,7 @@ jobs:
           pytest tests/ -v --tb=short -n auto --dist=worksteal -m "slow or stress or export or benchmark"
 
   lint-web:
+    name: "Lint (web: eslint + prettier check)"
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -279,6 +284,7 @@ jobs:
         run: pnpm -C apps/web format
 
   lint-api:
+    name: "Lint (api: ruff check)"
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -307,6 +313,7 @@ jobs:
 
 
   docs-contracts:
+    name: "Docs contracts (validate)"
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -324,6 +331,7 @@ jobs:
 
   # Job de Docker: Verifica que las imágenes construyen
   docker-integration:
+    name: "Docker integration (build + compose config)"
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [build, test-pr-gate, lint-web, lint-api, docs-contracts]  # Solo corre si build, PR gate, lint y docs pasan

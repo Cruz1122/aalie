@@ -67,9 +67,8 @@ export function useTraceController(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fetchCompleted, setFetchCompleted] = useState(false);
-  const [structuredDiagram, setStructuredDiagram] = useState<StructuredTrace | null>(
-    null,
-  );
+  const [structuredDiagram, setStructuredDiagram] =
+    useState<StructuredTrace | null>(null);
   const [algorithmKind, setAlgorithmKind] = useState<string | null>(null);
   const [exampleArray, setExampleArray] = useState<number[]>([]);
   // Permite cancelar requests anteriores cuando llega uno nuevo

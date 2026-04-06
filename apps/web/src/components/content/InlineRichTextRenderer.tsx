@@ -28,12 +28,7 @@ const colorTokenClassNames: Record<string, string> = {
   muted: "text-slate-400",
 };
 
-function renderLink(
-  text: string,
-  href: string,
-  key: string,
-  title?: string,
-) {
+function renderLink(text: string, href: string, key: string, title?: string) {
   if (href.startsWith("http://") || href.startsWith("https://")) {
     return (
       <a
@@ -78,12 +73,23 @@ export function InlineRichTextRenderer({
           case "text":
             return <span key={key}>{span.text}</span>;
           case "strong":
-            return <strong key={key} className="font-semibold text-white">{span.text}</strong>;
+            return (
+              <strong key={key} className="font-semibold text-white">
+                {span.text}
+              </strong>
+            );
           case "emphasis":
-            return <em key={key} className="italic text-slate-100">{span.text}</em>;
+            return (
+              <em key={key} className="italic text-slate-100">
+                {span.text}
+              </em>
+            );
           case "underline":
             return (
-              <span key={key} className="underline decoration-slate-400/70 underline-offset-2">
+              <span
+                key={key}
+                className="underline decoration-slate-400/70 underline-offset-2"
+              >
                 {span.text}
               </span>
             );
@@ -106,7 +112,9 @@ export function InlineRichTextRenderer({
               </code>
             );
           case "inlineMath":
-            return <Formula key={key} latex={span.latex} className="align-middle" />;
+            return (
+              <Formula key={key} latex={span.latex} className="align-middle" />
+            );
           case "link": {
             const href =
               span.target.kind === "external"
@@ -169,7 +177,9 @@ export function InlineRichTextRenderer({
             return (
               <span
                 key={key}
-                className={colorTokenClassNames[span.token] ?? colorTokenClassNames.muted}
+                className={
+                  colorTokenClassNames[span.token] ?? colorTokenClassNames.muted
+                }
               >
                 {span.text}
               </span>

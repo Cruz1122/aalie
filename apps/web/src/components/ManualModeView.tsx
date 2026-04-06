@@ -24,10 +24,7 @@ import {
 import { GrammarApiService } from "@/services/grammar-api";
 
 import AAButton from "./AAButton";
-import {
-  AnalyzerEditor,
-  type AnalyzerEditorHandle,
-} from "./AnalyzerEditor";
+import { AnalyzerEditor, type AnalyzerEditorHandle } from "./AnalyzerEditor";
 import { ASTTreeView } from "./ASTTreeView";
 import RepairModal from "./RepairModal";
 import TxtImportModal from "./TxtImportModal";
@@ -474,9 +471,9 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
             : tView("txtImportParseFailedNoAi"),
           details: [
             ...errorDetails,
-            ...getImportNormalizationSuggestions(validation.normalizedSource).map(
-              (suggestion) => suggestion.reason,
-            ),
+            ...getImportNormalizationSuggestions(
+              validation.normalizedSource,
+            ).map((suggestion) => suggestion.reason),
           ],
           showRepairAction: hasValidApiKey,
         });
@@ -519,7 +516,7 @@ const ManualModeView = forwardRef<ManualModeViewHandle, ManualModeViewProps>(
         <div className="flex flex-col items-center">
           <div className="flex w-full flex-col gap-4">
             <div className="flex min-h-0 flex-col gap-4 md:flex-row md:items-stretch">
-                <div className="h-[400px] min-h-0 min-w-0 flex-1 space-y-4 md:h-[490px] md:flex-none md:basis-[calc(100%-376px)] md:max-w-[calc(100%-376px)] lg:basis-[calc(100%-516px)] lg:max-w-[calc(100%-516px)] xl:flex-1 xl:basis-0 xl:max-w-none">
+              <div className="h-[400px] min-h-0 min-w-0 flex-1 space-y-4 md:h-[490px] md:flex-none md:basis-[calc(100%-376px)] md:max-w-[calc(100%-376px)] lg:basis-[calc(100%-516px)] lg:max-w-[calc(100%-516px)] xl:flex-1 xl:basis-0 xl:max-w-none">
                 <AnalyzerEditor
                   ref={editorRef}
                   initialValue={code}
@@ -591,50 +588,50 @@ ${backendParseError}
 **SOLICITUD:**
 Por favor, analiza el código y el error, identifica la causa del problema y proporciona una solución corregida. Explica qué estaba mal y cómo solucionarlo.`;
 
-                  const newMessage: Message = {
-                    id: `user-help-${Date.now()}`,
-                    content: errorMessage,
-                    sender: "user",
-                    timestamp: new Date(),
-                  };
+                    const newMessage: Message = {
+                      id: `user-help-${Date.now()}`,
+                      content: errorMessage,
+                      sender: "user",
+                      timestamp: new Date(),
+                    };
 
-                  const codeHash = code.trim().slice(0, 100);
-                  const errorHash =
-                    backendParseError?.trim().slice(0, 50) || "";
-                  const messageExists = messages.some(
-                    (msg) =>
-                      msg.sender === "user" &&
-                      msg.content.includes("**CÓDIGO ADJUNTO:**") &&
-                      msg.content.includes(codeHash) &&
-                      msg.content.includes(errorHash),
-                  );
+                    const codeHash = code.trim().slice(0, 100);
+                    const errorHash =
+                      backendParseError?.trim().slice(0, 50) || "";
+                    const messageExists = messages.some(
+                      (msg) =>
+                        msg.sender === "user" &&
+                        msg.content.includes("**CÓDIGO ADJUNTO:**") &&
+                        msg.content.includes(codeHash) &&
+                        msg.content.includes(errorHash),
+                    );
 
-                  if (messageExists) {
-                    onSwitchToAIMode();
-                    setTimeout(() => onOpenChat(), 100);
-                    return;
-                  }
+                    if (messageExists) {
+                      onSwitchToAIMode();
+                      setTimeout(() => onOpenChat(), 100);
+                      return;
+                    }
 
-                  setMessages((prev) =>
-                    prev.length > 0
-                      ? [...prev, newMessage]
-                      : [
-                          {
-                            id: "welcome",
-                            content:
-                              "¡Hola! Soy AALIE (Algorithmic Analysis Live Interaction Expert), tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
-                            sender: "bot",
-                            timestamp: new Date(),
-                          },
-                          newMessage,
-                        ],
-                  );
+                    setMessages((prev) =>
+                      prev.length > 0
+                        ? [...prev, newMessage]
+                        : [
+                            {
+                              id: "welcome",
+                              content:
+                                "¡Hola! Soy AALIE (Algorithmic Analysis Live Interaction Expert), tu asistente para análisis de algoritmos. ¿En qué puedo ayudarte hoy?",
+                              sender: "bot",
+                              timestamp: new Date(),
+                            },
+                            newMessage,
+                          ],
+                    );
 
-                  setTimeout(() => {
-                    onSwitchToAIMode();
-                    setTimeout(() => onOpenChat(), 150);
-                  }, 100);
-                }}
+                    setTimeout(() => {
+                      onSwitchToAIMode();
+                      setTimeout(() => onOpenChat(), 150);
+                    }, 100);
+                  }}
                   height="100%"
                 />
                 <input

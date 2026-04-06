@@ -31,7 +31,11 @@ describe("searchContentIndex", () => {
   });
 
   it("resolves CALL to the first module syntax section", () => {
-    const results = searchContentIndex(landing.searchIndex, landing.modules, "CALL");
+    const results = searchContentIndex(
+      landing.searchIndex,
+      landing.modules,
+      "CALL",
+    );
 
     expect(results[0]?.entry.title).toBe("Sintaxis mínima para seguir la guía");
     expect(results[0]?.entry.route).toBe(

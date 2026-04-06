@@ -115,7 +115,11 @@ export function UserGuideModuleView({ data }: UserGuideModuleViewProps) {
       <main className="z-10 flex-1 p-4 sm:p-6 lg:p-8">
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-10">
           {data.module.chapters.map((chapter) => (
-            <section key={chapter.chapterId} id={chapter.slug} className="space-y-10">
+            <section
+              key={chapter.chapterId}
+              id={chapter.slug}
+              className="space-y-10"
+            >
               <header className="border-b border-white/10 pb-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
                   {chapter.title}

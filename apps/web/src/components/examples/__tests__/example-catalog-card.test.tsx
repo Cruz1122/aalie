@@ -115,15 +115,18 @@ describe("ExampleCatalogCard", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /View algorithm/i }));
     expect(
-      screen.getByText((_, node) =>
-        node?.tagName === "CODE" &&
-        (node.textContent?.includes("left <- 1;") ?? false),
+      screen.getByText(
+        (_, node) =>
+          node?.tagName === "CODE" &&
+          (node.textContent?.includes("left <- 1;") ?? false),
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, node) =>
-        node?.tagName === "CODE" &&
-        (node.textContent?.includes("WHILE (left <= right) DO BEGIN") ?? false),
+      screen.getByText(
+        (_, node) =>
+          node?.tagName === "CODE" &&
+          (node.textContent?.includes("WHILE (left <= right) DO BEGIN") ??
+            false),
       ),
     ).toBeInTheDocument();
   });

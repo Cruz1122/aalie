@@ -17,18 +17,18 @@ describe("completion candidates", () => {
   ].join("\n");
 
   it("extracts parameters before variables without duplicates", () => {
-    expect(extractIdentifierCandidates(source, "").map((item) => item.label)).toEqual(
-      ["A", "n", "x", "left", "right", "i", "sum"],
-    );
+    expect(
+      extractIdentifierCandidates(source, "").map((item) => item.label),
+    ).toEqual(["A", "n", "x", "left", "right", "i", "sum"]);
   });
 
   it("orders local identifiers before snippets and limits the list to five", () => {
     const candidates = buildCompletionCandidates(source, "", "en");
 
     expect(candidates).toHaveLength(5);
-    expect(candidates.every((candidate) => candidate.type === "identifier")).toBe(
-      true,
-    );
+    expect(
+      candidates.every((candidate) => candidate.type === "identifier"),
+    ).toBe(true);
     expect(candidates.map((candidate) => candidate.key)).toEqual([
       "parameter:a",
       "parameter:n",

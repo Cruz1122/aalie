@@ -171,7 +171,9 @@ export async function POST(req: NextRequest) {
       prompt,
     ].filter((entry): entry is string => Boolean(entry));
     const userPrompt = promptBlocks.join("\n\n");
-    const messages = [{ role: "system", content: effectiveConfig.systemPrompt }];
+    const messages = [
+      { role: "system", content: effectiveConfig.systemPrompt },
+    ];
     if (chatHistory && Array.isArray(chatHistory)) {
       messages.push(...chatHistory.slice(-10));
     }

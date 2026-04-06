@@ -425,7 +425,7 @@ El proyecto utiliza **GitHub Actions** para automatización continua de builds, 
 
 3. **Quality** - Verificación de calidad de código
    - ESLint y Prettier para frontend
-   - Ruff y Black para backend
+   - Ruff (lint y format) para backend
    - No bloquea el build principal
 
 4. **Docker Integration** - Verificación de contenedores

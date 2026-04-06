@@ -10,10 +10,10 @@ vi.mock("next-intl", () => ({
   useLocale: () => "en",
   useTranslations: () => (key: string) =>
     (
-      {
+      ({
         launcherAriaLabel: "Open analysis assistant",
         embeddedFrameTitle: "Embedded analysis assistant",
-      } as Record<string, string>
+      }) as Record<string, string>
     )[key] ?? key,
 }));
 

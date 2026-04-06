@@ -65,10 +65,8 @@ function renderActionLink(
   key: string,
 ) {
   const className = {
-    primary:
-      "border-sky-400/40 bg-sky-500/15 text-sky-100 hover:bg-sky-500/20",
-    secondary:
-      "border-white/15 bg-white/5 text-white hover:bg-white/10",
+    primary: "border-sky-400/40 bg-sky-500/15 text-sky-100 hover:bg-sky-500/20",
+    secondary: "border-white/15 bg-white/5 text-white hover:bg-white/10",
     ghost: "border-transparent bg-transparent text-slate-200 hover:bg-white/5",
   }[variant];
 
@@ -135,9 +133,16 @@ function ListItems({
   const ListTag = ordered ? "ol" : "ul";
 
   return (
-    <ListTag className={ordered ? "list-decimal space-y-2 pl-5" : "list-disc space-y-2 pl-5"}>
+    <ListTag
+      className={
+        ordered ? "list-decimal space-y-2 pl-5" : "list-disc space-y-2 pl-5"
+      }
+    >
       {items.map((item, index) => (
-        <li key={`${index}-${item.content.length}`} className="text-sm leading-7 text-slate-200">
+        <li
+          key={`${index}-${item.content.length}`}
+          className="text-sm leading-7 text-slate-200"
+        >
           <InlineRichTextRenderer
             content={item.content}
             targetMap={targetMap}
@@ -232,7 +237,8 @@ export function ContentBlockRenderer({
     case "proof":
     case "example":
     case "exerciseSolution": {
-      const frameClassName = frameToneClassNames[block.type === "note" ? block.variant : block.type];
+      const frameClassName =
+        frameToneClassNames[block.type === "note" ? block.variant : block.type];
       return (
         <section
           id={block.id}
@@ -264,7 +270,9 @@ export function ContentBlockRenderer({
             </span>
             <div className="min-w-0 flex-1 space-y-2">
               {block.title ? (
-                <div className="text-xs font-medium text-slate-500">{block.title}</div>
+                <div className="text-xs font-medium text-slate-500">
+                  {block.title}
+                </div>
               ) : null}
               <NestedBlocks
                 blocks={block.blocks}
@@ -299,7 +307,12 @@ export function ContentBlockRenderer({
           </p>
           {solutionHref ? (
             <div className="mt-4">
-              {renderActionLink(t("viewSolution"), solutionHref, "ghost", block.id)}
+              {renderActionLink(
+                t("viewSolution"),
+                solutionHref,
+                "ghost",
+                block.id,
+              )}
             </div>
           ) : null}
         </section>
@@ -308,7 +321,10 @@ export function ContentBlockRenderer({
     case "algorithm":
     case "code":
       return (
-        <section id={block.id} className="overflow-hidden border border-white/10 bg-[#0d1219]">
+        <section
+          id={block.id}
+          className="overflow-hidden border border-white/10 bg-[#0d1219]"
+        >
           {block.title ? (
             <header className="border-b border-white/10 px-3 py-2 text-xs font-medium text-slate-400">
               {block.title}
@@ -356,7 +372,10 @@ export function ContentBlockRenderer({
                 {block.rows.map((row, rowIndex) => (
                   <tr key={`${block.id}-${rowIndex}`}>
                     {row.cells.map((cell, cellIndex) => (
-                      <td key={`${block.id}-${rowIndex}-${cellIndex}`} className="px-4 py-3 align-top text-slate-200">
+                      <td
+                        key={`${block.id}-${rowIndex}-${cellIndex}`}
+                        className="px-4 py-3 align-top text-slate-200"
+                      >
                         <InlineRichTextRenderer
                           content={cell}
                           targetMap={targetMap}
@@ -411,13 +430,19 @@ export function ContentBlockRenderer({
     }
     case "equationBlock":
       return (
-        <div id={block.id} className="overflow-x-auto rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-5 text-center">
+        <div
+          id={block.id}
+          className="overflow-x-auto rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-5 text-center"
+        >
           <Formula latex={block.latex} display />
         </div>
       );
     case "cheatsheet":
       return (
-        <section id={block.id} className="space-y-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+        <section
+          id={block.id}
+          className="space-y-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4"
+        >
           {block.title ? (
             <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">
               {block.title}
@@ -425,7 +450,10 @@ export function ContentBlockRenderer({
           ) : null}
           <div className="grid gap-3 md:grid-cols-2">
             {block.items.map((item) => (
-              <div key={`${block.id}-${item.label}`} className="rounded-xl border border-white/10 bg-white/5 p-3">
+              <div
+                key={`${block.id}-${item.label}`}
+                className="rounded-xl border border-white/10 bg-white/5 p-3"
+              >
                 <div className="mb-1 text-xs uppercase tracking-[0.2em] text-slate-400">
                   {item.label}
                 </div>

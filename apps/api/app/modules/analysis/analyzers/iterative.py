@@ -1313,6 +1313,19 @@ class IterativeAnalyzer(BaseAnalyzer, ForVisitor, IfVisitor, WhileRepeatVisitor,
                 # Bucles unbounded: complejidad tiende a infinito
                 has_unbounded = any(r.get("unbounded") for r in self.rows)
                 main_var = getattr(self, "variable", "n") or "n"
+                expr_symbol_names = {
+                    getattr(s, "name", "") for s in getattr(t_open_expr, "free_symbols", set())
+                }
+                # Si la variable detectada es un parámetro de arreglo (ej. A) pero la
+                # expresión final está en función de n, usar n para extraer la clase.
+                if main_var in (getattr(self, "_array_param_names", set()) or set()) and (
+                    "n" in expr_symbol_names
+                ):
+                    main_var = "n"
+                elif main_var not in expr_symbol_names and "n" in expr_symbol_names:
+                    main_var = "n"
+                elif main_var not in expr_symbol_names and len(expr_symbol_names) == 1:
+                    main_var = next(iter(expr_symbol_names))
                 expr_has_size = any(
                     getattr(s, "name", "") == main_var for s in t_open_expr.free_symbols
                 )

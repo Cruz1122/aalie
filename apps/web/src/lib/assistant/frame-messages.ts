@@ -9,13 +9,11 @@ interface AssistantFrameBaseMessage {
   surface: AssistantSurface;
 }
 
-export interface AssistantFrameReadyMessage
-  extends AssistantFrameBaseMessage {
+export interface AssistantFrameReadyMessage extends AssistantFrameBaseMessage {
   type: "ASSISTANT_FRAME_READY";
 }
 
-export interface AssistantContextSyncMessage
-  extends AssistantFrameBaseMessage {
+export interface AssistantContextSyncMessage extends AssistantFrameBaseMessage {
   type: "ASSISTANT_CONTEXT_SYNC";
   context: AssistantContext;
 }

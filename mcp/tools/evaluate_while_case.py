@@ -140,10 +140,21 @@ def _update_summary(updates: dict[str, Any]) -> dict[str, Any]:
 
 
 def _resolve_dominant_controller(engine_result: Any, control: Any) -> str | None:
+    evidenced = getattr(engine_result, "variable", None) or (
+        (getattr(engine_result, "evidence", None) or {}).get("var")
+    )
+    raw_dominant = getattr(engine_result, "dominant_controller", None)
+    # Pares acoplados (p. ej. "n..i") no son una sola variable de control;
+    # preferir la variable del classify/evidence (iterador del guard).
+    if (
+        isinstance(raw_dominant, str)
+        and ".." in raw_dominant
+        and evidenced
+    ):
+        return str(evidenced).strip() or None
     raw = (
-        getattr(engine_result, "dominant_controller", None)
-        or getattr(engine_result, "variable", None)
-        or ((getattr(engine_result, "evidence", None) or {}).get("var"))
+        raw_dominant
+        or evidenced
         or getattr(control, "primary_numeric_controller", None)
         or getattr(control, "primary_boolean_controller", None)
     )

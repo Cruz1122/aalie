@@ -291,18 +291,15 @@ export const AnalyzerEditor = forwardRef<
     }
   }
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      insertSnippet(snippet) {
-        if (!editorRef.current) return;
-        insertSnippetIntoEditor(editorRef.current, snippet, locale);
-      },
-      focus() {
-        editorRef.current?.focus();
-      },
-    }),
-  );
+  useImperativeHandle(ref, () => ({
+    insertSnippet(snippet) {
+      if (!editorRef.current) return;
+      insertSnippetIntoEditor(editorRef.current, snippet, locale);
+    },
+    focus() {
+      editorRef.current?.focus();
+    },
+  }));
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
@@ -312,24 +309,24 @@ export const AnalyzerEditor = forwardRef<
         onViewAst != null ||
         showAIHelpButton) && (
         <div className="absolute top-2 right-5 z-20 flex items-center gap-1">
-            {showAIHelpButton && onAIHelpClick != null && (
-              <div className="rounded-full bg-[#101820] p-0.5 shadow-lg">
-                <button
-                  type="button"
-                  onClick={onAIHelpClick}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-purple-500/20 bg-purple-500/12 text-purple-300/70 transition-all duration-300 ease-out hover:bg-purple-500/25 hover:text-purple-300 animate-pulse-slow"
-                  title={tManual("aiHelp")}
-                >
-                  <AALIEIcon size={20} />
-                </button>
-              </div>
-            )}
-            {onVerifyParse != null && (
-              <div className="rounded-full bg-[#101820] p-0.5 shadow-lg">
-                <button
-                  type="button"
-                  onClick={onVerifyParse}
-                  disabled={isVerifyingParse || !hasCode}
+          {showAIHelpButton && onAIHelpClick != null && (
+            <div className="rounded-full bg-[#101820] p-0.5 shadow-lg">
+              <button
+                type="button"
+                onClick={onAIHelpClick}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-purple-500/20 bg-purple-500/12 text-purple-300/70 transition-all duration-300 ease-out hover:bg-purple-500/25 hover:text-purple-300 animate-pulse-slow"
+                title={tManual("aiHelp")}
+              >
+                <AALIEIcon size={20} />
+              </button>
+            </div>
+          )}
+          {onVerifyParse != null && (
+            <div className="rounded-full bg-[#101820] p-0.5 shadow-lg">
+              <button
+                type="button"
+                onClick={onVerifyParse}
+                disabled={isVerifyingParse || !hasCode}
                 className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 ease-out disabled:cursor-not-allowed disabled:opacity-40 ${
                   verifyParseResult != null
                     ? verifyParseResult.success
@@ -341,21 +338,23 @@ export const AnalyzerEditor = forwardRef<
                 }`}
                 title={
                   verifyParseResult?.message ??
-                  (hasLocalParseErrors ? localParseTooltip : tManual("verifyParse"))
+                  (hasLocalParseErrors
+                    ? localParseTooltip
+                    : tManual("verifyParse"))
                 }
               >
                 {isVerifyingParse ? (
                   <span
-                      className="material-symbols-outlined animate-spin"
-                      style={{ fontSize: 16 }}
-                    >
-                      progress_activity
-                    </span>
+                    className="material-symbols-outlined animate-spin"
+                    style={{ fontSize: 16 }}
+                  >
+                    progress_activity
+                  </span>
                 ) : verifyParseResult != null ? (
                   <span
                     key={verifyParseResult.success ? "ok" : "err"}
-                      className="material-symbols-outlined animate-fade-in"
-                      style={{ fontSize: 16 }}
+                    className="material-symbols-outlined animate-fade-in"
+                    style={{ fontSize: 16 }}
                   >
                     {verifyParseResult.success ? "check_circle" : "error"}
                   </span>
@@ -364,33 +363,33 @@ export const AnalyzerEditor = forwardRef<
                 ) : (
                   <span
                     className="material-symbols-outlined"
-                      style={{ fontSize: 16 }}
-                    >
-                      check_circle
-                    </span>
-                  )}
-                </button>
-              </div>
-            )}
-            {onViewAst != null && (
-              <div className="rounded-full bg-[#101820] p-0.5 shadow-lg">
-                <button
-                  type="button"
-                  onClick={onViewAst}
-                  disabled={!canViewAst}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-500/20 bg-amber-500/12 text-amber-300/70 transition-all duration-300 ease-out hover:bg-amber-500/25 hover:text-amber-300 disabled:cursor-not-allowed disabled:opacity-40"
-                  title={tManual("viewAst")}
-                >
-                  <span
-                    className="material-symbols-outlined"
                     style={{ fontSize: 16 }}
                   >
-                    account_tree
+                    check_circle
                   </span>
-                </button>
-              </div>
-            )}
-            {topRightActions}
+                )}
+              </button>
+            </div>
+          )}
+          {onViewAst != null && (
+            <div className="rounded-full bg-[#101820] p-0.5 shadow-lg">
+              <button
+                type="button"
+                onClick={onViewAst}
+                disabled={!canViewAst}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-500/20 bg-amber-500/12 text-amber-300/70 transition-all duration-300 ease-out hover:bg-amber-500/25 hover:text-amber-300 disabled:cursor-not-allowed disabled:opacity-40"
+                title={tManual("viewAst")}
+              >
+                <span
+                  className="material-symbols-outlined"
+                  style={{ fontSize: 16 }}
+                >
+                  account_tree
+                </span>
+              </button>
+            </div>
+          )}
+          {topRightActions}
         </div>
       )}
       {/* Editor: glass-card-editor sin hover difuminado */}

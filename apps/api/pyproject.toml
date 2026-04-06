@@ -18,14 +18,10 @@ target-version = "py311"
 
 [tool.ruff.lint]
 extend-select = ["I"]  # import sorting
-ignore = ["E501"]      # dejamos el ancho a Black
+ignore = ["E501"]      # dejamos el ancho a ruff format
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]
-
-[tool.black]
-line-length = 100
-target-version = ["py311"]
 
 [tool.coverage.run]
 source = ["app"]

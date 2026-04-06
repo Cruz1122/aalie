@@ -264,8 +264,13 @@ class WhileEngine:
                 # El patrón es autoritativo: usar su cota cuando coincida
                 if iter_result.exact_symbolic_bound:
                     iterations_expr = iter_result.exact_symbolic_bound
-                # Best case: si classify ya dio 1 (flag kill), preferir sobre linear_counter
-                if mode == "best" and str(classify_result.iterations_expr) == "1":
+                # Best case: si classify ya dio 1 (flag kill), preferir sobre linear_counter.
+                # No aplicar esta preferencia a patrones logarítmicos (ej. euclid_mod, binary_search_interval).
+                if (
+                    mode == "best"
+                    and pattern_name == "linear_counter"
+                    and str(classify_result.iterations_expr) == "1"
+                ):
                     iterations_expr = "1"
                     asymptotic_class = "O(1)"
                 else:

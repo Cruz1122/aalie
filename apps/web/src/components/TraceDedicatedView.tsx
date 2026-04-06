@@ -158,10 +158,14 @@ export default function TraceDedicatedView({
       return initialVariablesOverride;
     }
 
-    const rootCallId = trace?.ok ? trace.trace?.callTreeSource?.root_calls?.[0] : null;
+    const rootCallId = trace?.ok
+      ? trace.trace?.callTreeSource?.root_calls?.[0]
+      : null;
     const rootCall =
       rootCallId && trace?.ok
-        ? trace.trace?.callTreeSource?.calls?.find((call) => call.id === rootCallId)
+        ? trace.trace?.callTreeSource?.calls?.find(
+            (call) => call.id === rootCallId,
+          )
         : null;
     if (rootCall?.params && Object.keys(rootCall.params).length > 0) {
       return rootCall.params as Record<string, unknown>;

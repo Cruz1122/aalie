@@ -18,8 +18,7 @@ function buildIdentifierCompletion(
 ): Monaco.languages.CompletionItem {
   const detail =
     candidate.identifierKind === "parameter" ? "Parameter" : "Variable";
-  const sortText =
-    candidate.identifierKind === "parameter" ? "00000" : "00001";
+  const sortText = candidate.identifierKind === "parameter" ? "00000" : "00001";
 
   return {
     label: candidate.label,
@@ -46,8 +45,8 @@ export function registerPseudocodeCompletionProvider(
   const disposable = monaco.languages.registerCompletionItemProvider(
     "pseudocode",
     {
-      triggerCharacters: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        .split(""),
+      triggerCharacters:
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""),
       provideCompletionItems(model, position) {
         const word = model.getWordUntilPosition(position);
         const range = {

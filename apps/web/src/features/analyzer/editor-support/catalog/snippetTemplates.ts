@@ -30,7 +30,8 @@ export const snippetTemplates: SnippetDefinition[] = [
     ].join("\n"),
     placeholders: ["x", "inicio", "fin"],
     documentationShort: "Inserta una plantilla recursiva de búsqueda binaria.",
-    documentationPedagogical: "Úsala cuando el rango se parte por la mitad en cada paso.",
+    documentationPedagogical:
+      "Úsala cuando el rango se parte por la mitad en cada paso.",
     preview: "Firma + caso base + mitad + llamadas recursivas",
     contextRules: ["lineStart"],
     requiresSelection: false,
@@ -40,7 +41,8 @@ export const snippetTemplates: SnippetDefinition[] = [
     exampleAlgorithmKind: "recursive",
     supportsAnalyze: true,
     supportsDetectMethods: true,
-    expectedUseCase: "Práctica de divide y vencerás con búsqueda en arreglo ordenado.",
+    expectedUseCase:
+      "Práctica de divide y vencerás con búsqueda en arreglo ordenado.",
   },
   {
     id: "template-factorial",
@@ -60,7 +62,8 @@ export const snippetTemplates: SnippetDefinition[] = [
     ].join("\n"),
     placeholders: ["n"],
     documentationShort: "Inserta una plantilla recursiva lineal de factorial.",
-    documentationPedagogical: "Úsala para practicar caso base y retorno recursivo simple.",
+    documentationPedagogical:
+      "Úsala para practicar caso base y retorno recursivo simple.",
     preview: "Caso base + retorno n * factorial(n - 1)",
     contextRules: ["lineStart"],
     requiresSelection: false,
@@ -90,7 +93,8 @@ export const snippetTemplates: SnippetDefinition[] = [
     ].join("\n"),
     placeholders: ["n"],
     documentationShort: "Inserta la versión recursiva clásica de Fibonacci.",
-    documentationPedagogical: "Úsala para practicar doble rama recursiva y comparación con DP.",
+    documentationPedagogical:
+      "Úsala para practicar doble rama recursiva y comparación con DP.",
     preview: "Caso base + dos llamadas recursivas",
     contextRules: ["lineStart"],
     requiresSelection: false,
@@ -100,7 +104,8 @@ export const snippetTemplates: SnippetDefinition[] = [
     exampleAlgorithmKind: "recursive",
     supportsAnalyze: true,
     supportsDetectMethods: true,
-    expectedUseCase: "Práctica de branching recursivo y discusión de memoización.",
+    expectedUseCase:
+      "Práctica de branching recursivo y discusión de memoización.",
   },
   {
     id: "template-merge-sort",
@@ -124,7 +129,8 @@ export const snippetTemplates: SnippetDefinition[] = [
     ].join("\n"),
     placeholders: ["A[n]", "izq", "der"],
     documentationShort: "Inserta una plantilla base de merge sort.",
-    documentationPedagogical: "Úsala para practicar divide y vencerás con combinación explícita.",
+    documentationPedagogical:
+      "Úsala para practicar divide y vencerás con combinación explícita.",
     preview: "Partición + dos CALL + merge",
     contextRules: ["lineStart"],
     requiresSelection: false,
@@ -157,7 +163,8 @@ export const snippetTemplates: SnippetDefinition[] = [
     ].join("\n"),
     placeholders: ["A[n]", "izq", "der"],
     documentationShort: "Inserta una plantilla base de quicksort.",
-    documentationPedagogical: "Úsala para practicar escritura y análisis parcial de partición recursiva.",
+    documentationPedagogical:
+      "Úsala para practicar escritura y análisis parcial de partición recursiva.",
     preview: "partition + dos CALL recursivos",
     contextRules: ["lineStart"],
     requiresSelection: false,
@@ -167,7 +174,8 @@ export const snippetTemplates: SnippetDefinition[] = [
     exampleAlgorithmKind: "recursive",
     supportsAnalyze: true,
     supportsDetectMethods: true,
-    expectedUseCase: "Práctica de escritura y análisis guiado con cobertura parcial.",
+    expectedUseCase:
+      "Práctica de escritura y análisis guiado con cobertura parcial.",
   },
   {
     id: "template-linear-traversal",
@@ -187,7 +195,8 @@ export const snippetTemplates: SnippetDefinition[] = [
     ].join("\n"),
     placeholders: ["A[n]", "n"],
     documentationShort: "Inserta una plantilla base para recorrer un arreglo.",
-    documentationPedagogical: "Úsala cuando el algoritmo visita cada posición una vez.",
+    documentationPedagogical:
+      "Úsala cuando el algoritmo visita cada posición una vez.",
     preview: "FOR i <- 1 TO n",
     contextRules: ["lineStart"],
     requiresSelection: false,
@@ -217,8 +226,10 @@ export const snippetTemplates: SnippetDefinition[] = [
       "END",
     ].join("\n"),
     placeholders: ["A[n]", "n"],
-    documentationShort: "Inserta una plantilla de suma acumulada sobre arreglo.",
-    documentationPedagogical: "Úsala para practicar acumuladores y recorridos completos.",
+    documentationShort:
+      "Inserta una plantilla de suma acumulada sobre arreglo.",
+    documentationPedagogical:
+      "Úsala para practicar acumuladores y recorridos completos.",
     preview: "suma <- suma + A[i]",
     contextRules: ["lineStart"],
     requiresSelection: false,
@@ -252,7 +263,8 @@ export const snippetTemplates: SnippetDefinition[] = [
     ].join("\n"),
     placeholders: ["n", "memo[n]"],
     documentationShort: "Inserta una plantilla recursiva con memoización.",
-    documentationPedagogical: "Úsala cuando quieres recordar resultados ya calculados.",
+    documentationPedagogical:
+      "Úsala cuando quieres recordar resultados ya calculados.",
     preview: "Chequeo de memo + guardado + retorno",
     contextRules: ["lineStart"],
     requiresSelection: false,
@@ -283,8 +295,10 @@ export const snippetTemplates: SnippetDefinition[] = [
       "END",
     ].join("\n"),
     placeholders: ["n", "dp[n]"],
-    documentationShort: "Inserta una plantilla base de programación dinámica tabulada.",
-    documentationPedagogical: "Úsala cuando el resultado se construye desde casos base hacia arriba.",
+    documentationShort:
+      "Inserta una plantilla base de programación dinámica tabulada.",
+    documentationPedagogical:
+      "Úsala cuando el resultado se construye desde casos base hacia arriba.",
     preview: "Casos base + FOR + dp[i]",
     contextRules: ["lineStart"],
     requiresSelection: false,

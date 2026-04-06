@@ -63,7 +63,8 @@ export default function ChatBot({
     availabilityOverride == null && isOpen,
   );
   const availability = availabilityOverride ?? hookAvailability;
-  const isCheckingAvailability = availability.isChecking && !availability.hasAny;
+  const isCheckingAvailability =
+    availability.isChecking && !availability.hasAny;
   const showApiKeyCard = !isCheckingAvailability && !availability.hasAny;
   const closeButtonTitle = closeTitle || t("backToHome");
 
@@ -102,7 +103,9 @@ export default function ChatBot({
               (message) =>
                 message.id === retryMessageId && message.sender === "user",
             )
-          : [...messages].reverse().find((message) => message.sender === "user");
+          : [...messages]
+              .reverse()
+              .find((message) => message.sender === "user");
 
         if (!lastUserMessage) {
           setIsTyping(false);
@@ -121,7 +124,10 @@ export default function ChatBot({
           assistantContext,
         );
 
-        setMessages((previous) => [...previous, createBotMessage(responseText)]);
+        setMessages((previous) => [
+          ...previous,
+          createBotMessage(responseText),
+        ]);
       } catch (error) {
         console.error("Error generando respuesta:", error);
 
@@ -130,13 +136,18 @@ export default function ChatBot({
               (message) =>
                 message.id === retryMessageId && message.sender === "user",
             )
-          : [...messages].reverse().find((message) => message.sender === "user");
+          : [...messages]
+              .reverse()
+              .find((message) => message.sender === "user");
 
-        const rawMessage = error instanceof Error ? error.message : String(error);
+        const rawMessage =
+          error instanceof Error ? error.message : String(error);
         const translatedError = tMessages(translateLlmError(rawMessage));
         const errorResponse: ChatMessage = {
           id: `bot-error-${Date.now()}`,
-          content: isGeminiLikeError(error) ? translatedError : t("errorGeneric"),
+          content: isGeminiLikeError(error)
+            ? translatedError
+            : t("errorGeneric"),
           sender: "bot",
           timestamp: new Date(),
           isError: true,
@@ -173,7 +184,9 @@ export default function ChatBot({
       return;
     }
 
-    const lastUserIdx = [...messages].map((message) => message.sender).lastIndexOf("user");
+    const lastUserIdx = [...messages]
+      .map((message) => message.sender)
+      .lastIndexOf("user");
     if (lastUserIdx === -1) {
       return;
     }
@@ -214,7 +227,12 @@ export default function ChatBot({
   }, [isOpen]);
 
   useEffect(() => {
-    if (isOpen && inputRef.current && !showApiKeyCard && !isCheckingAvailability) {
+    if (
+      isOpen &&
+      inputRef.current &&
+      !showApiKeyCard &&
+      !isCheckingAvailability
+    ) {
       setTimeout(() => {
         inputRef.current?.focus();
       }, 300);
@@ -403,7 +421,9 @@ export default function ChatBot({
           <>
             <div className="flex-1 overflow-y-auto p-2.5 space-y-2.5 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
               {messages.map((message) => {
-                const isNewMessage = !animatedMessagesRef.current.has(message.id);
+                const isNewMessage = !animatedMessagesRef.current.has(
+                  message.id,
+                );
                 if (isNewMessage) {
                   animatedMessagesRef.current.add(message.id);
                 }
@@ -412,7 +432,9 @@ export default function ChatBot({
                   <div
                     key={message.id}
                     className={`flex items-start gap-2 ${
-                      message.sender === "user" ? "flex-row-reverse" : "flex-row"
+                      message.sender === "user"
+                        ? "flex-row-reverse"
+                        : "flex-row"
                     } ${isNewMessage ? "chat-message-slide-in" : ""}`}
                   >
                     <div
@@ -438,7 +460,9 @@ export default function ChatBot({
                     >
                       <div
                         className={`min-w-0 max-w-full overflow-hidden ${
-                          message.sender === "bot" ? "px-2 py-1.5" : "px-2.5 py-1.5"
+                          message.sender === "bot"
+                            ? "px-2 py-1.5"
+                            : "px-2.5 py-1.5"
                         } rounded-xl ${
                           message.sender === "user"
                             ? "bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30"
@@ -454,10 +478,13 @@ export default function ChatBot({
                             );
 
                             if (isAIHelpMessage) {
-                              const codeRegex = /```pseudocode\n([\s\S]*?)\n```/;
+                              const codeRegex =
+                                /```pseudocode\n([\s\S]*?)\n```/;
                               const errorRegex = /```error\n([\s\S]*?)\n```/;
                               const codeMatch = codeRegex.exec(message.content);
-                              const errorMatch = errorRegex.exec(message.content);
+                              const errorMatch = errorRegex.exec(
+                                message.content,
+                              );
 
                               return (
                                 <div className="space-y-2.5 min-w-0 max-w-[min(100%,420px)]">
@@ -502,10 +529,14 @@ export default function ChatBot({
                                 <button
                                   onClick={() => {
                                     setMessages((previous) =>
-                                      previous.filter((entry) => entry.id !== message.id),
+                                      previous.filter(
+                                        (entry) => entry.id !== message.id,
+                                      ),
                                     );
                                     setTimeout(() => {
-                                      void generateBotResponse(message.retryMessageId);
+                                      void generateBotResponse(
+                                        message.retryMessageId,
+                                      );
                                     }, 100);
                                   }}
                                   disabled={isTyping}

@@ -83,8 +83,10 @@ export function searchContentIndex(
         score += 10;
 
       if (tags.some((value) => value === normalizedQuery)) score += 24;
-      else if (tags.some((value) => value.startsWith(normalizedQuery))) score += 16;
-      else if (tags.some((value) => value.includes(normalizedQuery))) score += 8;
+      else if (tags.some((value) => value.startsWith(normalizedQuery)))
+        score += 16;
+      else if (tags.some((value) => value.includes(normalizedQuery)))
+        score += 8;
 
       if (text.includes(normalizedQuery)) score += 6;
 
@@ -96,8 +98,7 @@ export function searchContentIndex(
       };
     })
     .filter(
-      (match): match is ContentSearchMatch =>
-        match !== null && match.score > 0,
+      (match): match is ContentSearchMatch => match !== null && match.score > 0,
     )
     .sort((left, right) => {
       if (right.score !== left.score) {

@@ -80,7 +80,7 @@ END
         (
             "binary_interval",
             BINARY_INTERVAL,
-            "\\Theta(\\log(x))",
+            "\\Theta(\\log(n))",
             "binary_search_interval",
             "available",
             "logarithmic",

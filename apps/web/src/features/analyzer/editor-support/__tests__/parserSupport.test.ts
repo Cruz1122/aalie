@@ -3,7 +3,9 @@ import { mapParseErrorsToSyntaxHints } from "../parser/syntaxHintMapper";
 
 describe("parser support helpers", () => {
   it("detects unicode normalization suggestions without mutating text", () => {
-    const suggestions = getImportNormalizationSuggestions("a 🡨 b;\n► comentario\nx ≤ y");
+    const suggestions = getImportNormalizationSuggestions(
+      "a 🡨 b;\n► comentario\nx ≤ y",
+    );
     expect(suggestions.map((item) => item.to)).toEqual(
       expect.arrayContaining(["<-", "//", "<="]),
     );

@@ -16,7 +16,9 @@ function readStore(): ProgressStore {
     return {};
   }
 
-  const raw = globalThis.window.localStorage.getItem(CONTENT_PROGRESS_STORAGE_KEY);
+  const raw = globalThis.window.localStorage.getItem(
+    CONTENT_PROGRESS_STORAGE_KEY,
+  );
   if (!raw) {
     return {};
   }
@@ -68,9 +70,7 @@ export function markSectionCompleted(
   writeStore(store);
 }
 
-export function subscribeToProgressChanges(
-  onChange: () => void,
-): () => void {
+export function subscribeToProgressChanges(onChange: () => void): () => void {
   if (!isBrowser()) {
     return () => undefined;
   }

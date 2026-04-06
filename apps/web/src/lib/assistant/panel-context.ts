@@ -71,8 +71,10 @@ export function buildBundleDetailNotes(
 
   bundle.steps.slice(0, maxSteps).forEach((step, index) => {
     const translatedTitle =
-      truncateAssistantDetail(translateBackendContent(step.title, safeLocale), 120) ||
-      step.title;
+      truncateAssistantDetail(
+        translateBackendContent(step.title, safeLocale),
+        120,
+      ) || step.title;
     const translatedSummary =
       truncateAssistantDetail(
         translateBackendContent(step.summary, safeLocale),

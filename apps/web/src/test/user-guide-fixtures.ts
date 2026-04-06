@@ -11,17 +11,16 @@ export function getUserGuideLandingFixture(locale = "es") {
   );
 }
 
-export function getUserGuideModuleFixture(
-  moduleSlug: string,
-  locale = "es",
-) {
+export function getUserGuideModuleFixture(moduleSlug: string, locale = "es") {
   const data = buildUserGuideModuleDataFromBundle(
     getSpaceBundle("user-guide", locale),
     moduleSlug,
   );
 
   if (!data) {
-    throw new Error(`User guide module fixture not found for slug: ${moduleSlug}`);
+    throw new Error(
+      `User guide module fixture not found for slug: ${moduleSlug}`,
+    );
   }
 
   return data;

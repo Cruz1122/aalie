@@ -163,7 +163,9 @@ async function fetchJsonWithRetry(
       const res = await fetch(url, { ...init, signal: controller.signal });
       const text = await res.text();
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status} ${res.statusText}: ${text.slice(0, 500)}`);
+        throw new Error(
+          `HTTP ${res.status} ${res.statusText}: ${text.slice(0, 500)}`,
+        );
       }
       try {
         return JSON.parse(text) as unknown;
@@ -219,11 +221,7 @@ function getNotationForCompare(c: AnalyzeCase | undefined): string {
 
 /** Quita delimitadores LaTeX comunes y espacios externos. */
 function stripMathDelims(s: string): string {
-  return s
-    .trim()
-    .replace(/^\$+/, "")
-    .replace(/\$+$/, "")
-    .trim();
+  return s.trim().replace(/^\$+/, "").replace(/\$+$/, "").trim();
 }
 
 /**
@@ -387,14 +385,19 @@ function looksUnsupported(obtained: string): boolean {
   );
 }
 
-function detectMainSizeVarRaw(s: string): "n" | "N" | "k" | "t" | "min(a,b)" | null {
+function detectMainSizeVarRaw(
+  s: string,
+): "n" | "N" | "k" | "t" | "min(a,b)" | null {
   const raw = stripMathDelims(stripBackticksOrMath(s));
 
   // Nota: aquí NO normalizamos a minúsculas para no perder N vs n.
   if (/\bN\b/.test(raw)) return "N";
   if (/\bk\b/.test(raw)) return "k";
   if (/\bt\b/.test(raw)) return "t";
-  if (/\\min\s*\(\s*a\s*,\s*b\s*\)/.test(raw) || /min\s*\(\s*a\s*,\s*b\s*\)/.test(raw)) {
+  if (
+    /\\min\s*\(\s*a\s*,\s*b\s*\)/.test(raw) ||
+    /min\s*\(\s*a\s*,\s*b\s*\)/.test(raw)
+  ) {
     return "min(a,b)";
   }
   // n aparece mucho en expresiones; usar límites básicos.
@@ -405,8 +408,15 @@ function detectMainSizeVarRaw(s: string): "n" | "N" | "k" | "t" | "min(a,b)" | n
 function isPhiDominantSpecialEq(expected: string, obtained: string): boolean {
   const e = stripMathDelims(expected).toLowerCase();
   const o = stripMathDelims(obtained).toLowerCase();
-  const eHasPhi = e.includes("\\varphi") || e.includes("varphi") || e.includes("\\phi") || e.includes("phi");
-  const oHasSqrt5 = o.includes("sqrt{5}") || o.includes("\\sqrt{5}".toLowerCase()) || o.includes("sqrt(5)");
+  const eHasPhi =
+    e.includes("\\varphi") ||
+    e.includes("varphi") ||
+    e.includes("\\phi") ||
+    e.includes("phi");
+  const oHasSqrt5 =
+    o.includes("sqrt{5}") ||
+    o.includes("\\sqrt{5}".toLowerCase()) ||
+    o.includes("sqrt(5)");
   // Ambos suelen incluir potencia ^n.
   const bothHavePowN = /\\?\^\{?n\}?/.test(o) && /\\?\^\{?n\}?/.test(e);
   return eHasPhi && oHasSqrt5 && bothHavePowN;
@@ -415,7 +425,8 @@ function isPhiDominantSpecialEq(expected: string, obtained: string): boolean {
 function isKaratsubaLogSpecialEq(expected: string, obtained: string): boolean {
   const e = stripMathDelims(expected).toLowerCase();
   const o = stripMathDelims(obtained).toLowerCase();
-  const eHasLogBase2 = e.includes("log_2") || e.includes("log{2}") || e.includes("log2");
+  const eHasLogBase2 =
+    e.includes("log_2") || e.includes("log{2}") || e.includes("log2");
   const oHasLogRatio =
     o.includes("log") &&
     (o.includes("log{") || o.includes("log(") || o.includes("\\log")) &&
@@ -434,8 +445,15 @@ function classifyDiscrepancy(args: {
   literalMatch: boolean;
   sizeMeta?: SizeMetaRow;
 }): DiscrepancyClass {
-  const { exp, expected, obtained, contentMatch, literalMatch, sizeMeta, caseKey } =
-    args;
+  const {
+    exp,
+    expected,
+    obtained,
+    contentMatch,
+    literalMatch,
+    sizeMeta,
+    caseKey,
+  } = args;
 
   if (looksUnsupported(obtained)) {
     return "unsupported_or_inconclusive_expected";
@@ -446,7 +464,11 @@ function classifyDiscrepancy(args: {
   }
 
   // Equivalencias simbólicas conocidas (sin canonicalizador completo todavía).
-  if (contentMatch || isPhiDominantSpecialEq(expected, obtained) || isKaratsubaLogSpecialEq(expected, obtained)) {
+  if (
+    contentMatch ||
+    isPhiDominantSpecialEq(expected, obtained) ||
+    isKaratsubaLogSpecialEq(expected, obtained)
+  ) {
     return "symbolic_equivalent";
   }
 
@@ -513,7 +535,10 @@ function classifyDiscrepancy(args: {
 }
 
 /** Ajusta la cadena obtenida solo para comparación cuando el catálogo y el motor usan distinto símbolo de tamaño (p. ej. N vs n). */
-function applySizeAliasForCompare(obtained: string, sizeMeta?: SizeMetaRow): string {
+function applySizeAliasForCompare(
+  obtained: string,
+  sizeMeta?: SizeMetaRow,
+): string {
   if (!sizeMeta?.primarySize || !sizeMeta?.enginePrimarySize) return obtained;
   if (sizeMeta.primarySize === "N" && sizeMeta.enginePrimarySize === "n") {
     let s = obtained;
@@ -731,7 +756,10 @@ async function main(): Promise<void> {
     });
   }
 
-  const snapshotPath = path.join(OUTPUT_DIR, "catalog-complexity-snapshot.json");
+  const snapshotPath = path.join(
+    OUTPUT_DIR,
+    "catalog-complexity-snapshot.json",
+  );
   writeFileSync(snapshotPath, JSON.stringify(snapshot, null, 2), "utf8");
 
   let caseAll = 0;
@@ -860,7 +888,8 @@ async function main(): Promise<void> {
   for (const r of reportRows) {
     const needsDetail =
       !r.analyzeOk ||
-      (r.analyzeOk && r.rowResults.some((c) => c.discrepancyClass !== "exact_match"));
+      (r.analyzeOk &&
+        r.rowResults.some((c) => c.discrepancyClass !== "exact_match"));
     if (!needsDetail) {
       continue;
     }
@@ -977,7 +1006,9 @@ async function main(): Promise<void> {
   }
   mdExecutive.push("");
 
-  mdExecutive.push("## Top 10 bugs reales (engine_bug_likely + policy_best_mismatch)");
+  mdExecutive.push(
+    "## Top 10 bugs reales (engine_bug_likely + policy_best_mismatch)",
+  );
   mdExecutive.push("");
   mdExecutive.push(
     "| Algoritmo | Categoria | Casos engine_bug_likely+policy_best_mismatch |",
