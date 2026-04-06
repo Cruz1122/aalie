@@ -1,5 +1,5 @@
 "use client";
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 
 import { renderLatexToHtml } from "@/lib/katex";
 

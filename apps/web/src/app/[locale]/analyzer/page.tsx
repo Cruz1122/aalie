@@ -16,8 +16,8 @@ import { AAProgressLoader } from "@/components/AAProgressLoader";
 import {
   AnalyzerEditor,
 } from "@/components/AnalyzerEditor";
+import { EmbeddedAssistantLauncher } from "@/components/assistant/EmbeddedAssistantLauncher";
 import { ASTTreeView } from "@/components/ASTTreeView";
-import ChatBot from "@/components/ChatBot";
 import ComparisonModal from "@/components/ComparisonModal";
 import ExportFormatSelector, {
   ExportFormatType,
@@ -41,7 +41,17 @@ import { getImportNormalizationSuggestions } from "@/features/analyzer/editor-su
 import { requestTraceRefresh } from "@/hooks/trace/useTraceRefreshOnAnalysis";
 import { useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { getApiKey, getApiKeyStatus } from "@/hooks/useApiKey";
-import { useChatHistory } from "@/hooks/useChatHistory";
+import {
+  buildBundleDetailNotes,
+  normalizeAssistantLocale,
+  truncateAssistantDetail,
+} from "@/lib/assistant/panel-context";
+import type {
+  AssistantContext,
+  AssistantFeatureContext,
+  AssistantFocusedPanelContext,
+} from "@/lib/assistant/types";
+import { translateBackendContent } from "@/lib/backend-content-translator";
 import {
   extractCoreData,
   isRecursiveAnalysis,
@@ -66,6 +76,283 @@ function extractProcedureNameFromSource(src: string): string | null {
   if (!match) return null;
   const name = match[2] || "";
   return name.trim() ? name.trim() : null;
+}
+
+function buildFormalCaseSummary(
+  caseId: "worst" | "best" | "avg",
+  analysis: AnalyzeOpenResponse | null,
+) {
+  const core = extractCoreData(analysis);
+  if (!core) {
+    return null;
+  }
+
+  return {
+    caseId,
+    bigO: core.big_o,
+    bigOmega: core.big_omega,
+    bigTheta: core.big_theta,
+    efficiencyEquation: core.T_open,
+    groupedCostExpression: core.T_polynomial,
+  };
+}
+
+function panelText(locale: "es" | "en", es: string, en: string) {
+  return locale === "es" ? es : en;
+}
+
+function appendPanelDetail(
+  details: string[],
+  value: string | null | undefined,
+): void {
+  if (value) {
+    details.push(value);
+  }
+}
+
+function summarizePanelText(
+  locale: "es" | "en",
+  value: string | undefined | null,
+  maxChars = 320,
+) {
+  return truncateAssistantDetail(
+    translateBackendContent(value ?? "", normalizeAssistantLocale(locale)),
+    maxChars,
+  );
+}
+
+function summarizePanelSequence(
+  locale: "es" | "en",
+  values: string[] | undefined,
+  labels: { es: string; en: string },
+  limit = 2,
+): string[] {
+  return (values ?? [])
+    .slice(0, limit)
+    .map((value, index) => {
+      const summary = summarizePanelText(locale, value);
+      if (!summary) {
+        return null;
+      }
+
+      return `${panelText(locale, labels.es, labels.en)} ${index + 1}: ${summary}`;
+    })
+    .filter((value): value is string => Boolean(value));
+}
+
+function buildLineProcedureDetails(args: {
+  locale: "es" | "en";
+  selectedCaseLabel: string;
+  selectedLine: number | null;
+  analysisData: AnalyzeOpenResponse | undefined;
+}): string[] {
+  const { locale, selectedCaseLabel, selectedLine, analysisData } = args;
+  const details: string[] = [
+    panelText(
+      locale,
+      `Caso visible en el modal: ${selectedCaseLabel}.`,
+      `Case visible in the modal: ${selectedCaseLabel}.`,
+    ),
+  ];
+
+  if (selectedLine == null) {
+    return details;
+  }
+
+  appendPanelDetail(
+    details,
+    panelText(
+      locale,
+      `Linea seleccionada: ${selectedLine}.`,
+      `Selected line: ${selectedLine}.`,
+    ),
+  );
+
+  const lineData =
+    analysisData?.byLine.find((line) => line.line === selectedLine) ?? null;
+
+  if (!lineData) {
+    appendPanelDetail(
+      details,
+      panelText(
+        locale,
+        "No hay detalle de costo asociado a esa linea en los resultados visibles.",
+        "There is no visible cost detail associated with that line.",
+      ),
+    );
+    return details;
+  }
+
+  appendPanelDetail(
+    details,
+    panelText(
+      locale,
+      `Tipo de instruccion: ${lineData.kind}.`,
+      `Instruction kind: ${lineData.kind}.`,
+    ),
+  );
+  appendPanelDetail(
+    details,
+    lineData.ops != null
+      ? panelText(
+          locale,
+          `Operaciones elementales por ejecucion: ${lineData.ops}.`,
+          `Elementary operations per execution: ${lineData.ops}.`,
+        )
+      : null,
+  );
+  appendPanelDetail(
+    details,
+    lineData.ck
+      ? panelText(
+          locale,
+          `Costo elemental de la linea: ${lineData.ck}.`,
+          `Line elementary cost: ${lineData.ck}.`,
+        )
+      : null,
+  );
+  appendPanelDetail(
+    details,
+    lineData.count
+      ? panelText(
+          locale,
+          `Conteo simplificado visible: ${lineData.count}.`,
+          `Visible simplified count: ${lineData.count}.`,
+        )
+      : null,
+  );
+  appendPanelDetail(
+    details,
+    lineData.count_raw && lineData.count_raw !== lineData.count
+      ? panelText(
+          locale,
+          `Conteo antes de simplificar: ${lineData.count_raw}.`,
+          `Count before simplification: ${lineData.count_raw}.`,
+        )
+      : null,
+  );
+  appendPanelDetail(
+    details,
+    lineData.note
+      ? panelText(
+          locale,
+          `Nota del analisis: ${summarizePanelText(locale, lineData.note)}`,
+          `Analysis note: ${summarizePanelText(locale, lineData.note)}`,
+        )
+      : null,
+  );
+
+  details.push(
+    ...summarizePanelSequence(
+      locale,
+      lineData.line_procedure,
+      { es: "Paso de conteo", en: "Counting step" },
+      2,
+    ),
+  );
+  details.push(
+    ...buildBundleDetailNotes(lineData.step_by_step, locale, {
+      maxSteps: 2,
+      includeMath: true,
+    }),
+  );
+
+  return details;
+}
+
+function buildGeneralProcedureDetails(args: {
+  locale: "es" | "en";
+  caseLabel: string;
+  analysisData: AnalyzeOpenResponse | undefined;
+}): string[] {
+  const { locale, caseLabel, analysisData } = args;
+  const details: string[] = [
+    panelText(
+      locale,
+      `Caso visible en el modal: ${caseLabel}.`,
+      `Case visible in the modal: ${caseLabel}.`,
+    ),
+  ];
+
+  if (!analysisData) {
+    appendPanelDetail(
+      details,
+      panelText(
+        locale,
+        "El modal no tiene datos de procedimiento visibles en este momento.",
+        "The modal has no visible procedure data right now.",
+      ),
+    );
+    return details;
+  }
+
+  appendPanelDetail(
+    details,
+    analysisData.totals.T_open
+      ? panelText(
+          locale,
+          `Ecuacion de eficiencia visible: ${analysisData.totals.T_open}.`,
+          `Visible efficiency equation: ${analysisData.totals.T_open}.`,
+        )
+      : null,
+  );
+  appendPanelDetail(
+    details,
+    analysisData.totals.T_polynomial
+      ? panelText(
+          locale,
+          `Forma agrupada visible por potencias o terminos dominantes: ${analysisData.totals.T_polynomial}.`,
+          `Visible grouped form by powers or dominant terms: ${analysisData.totals.T_polynomial}.`,
+        )
+      : null,
+  );
+  appendPanelDetail(
+    details,
+    analysisData.totals.big_theta
+      ? panelText(
+          locale,
+          `Theta final visible: ${analysisData.totals.big_theta}.`,
+          `Visible final theta: ${analysisData.totals.big_theta}.`,
+        )
+      : null,
+  );
+
+  details.push(
+    ...summarizePanelSequence(
+      locale,
+      analysisData.totals.procedure,
+      { es: "Paso general", en: "General step" },
+      2,
+    ),
+  );
+  details.push(
+    ...buildBundleDetailNotes(analysisData.totals.step_by_step, locale, {
+      maxSteps: 3,
+      includeMath: true,
+    }),
+  );
+
+  return details;
+}
+
+function formatCaseComparisonNote(
+  locale: "es" | "en",
+  label: string,
+  data: CoreAnalysisData | null | undefined,
+) {
+  if (!data) {
+    return panelText(
+      locale,
+      `${label}: sin datos visibles.`,
+      `${label}: no visible data.`,
+    );
+  }
+
+  return panelText(
+    locale,
+    `${label}: O=${data.big_o || "n/a"}, Ω=${data.big_omega || "n/a"}, Θ=${data.big_theta || "n/a"}.`,
+    `${label}: O=${data.big_o || "n/a"}, Ω=${data.big_omega || "n/a"}, Θ=${data.big_theta || "n/a"}.`,
+  );
 }
 
 import {
@@ -97,6 +384,15 @@ export default function AnalyzerPage() {
   const tView = useTranslations("analyzer.view");
   const tMessages = useTranslations("analyzer.messages");
   const tExport = useTranslations("analyzer.exportSelector");
+  const tCases = useTranslations("analyzer.cases");
+  const tExecutionTrace = useTranslations("analyzer.executionTrace");
+  const tLoopInvariant = useTranslations("analyzer.loopInvariant");
+  const tProcedureModal = useTranslations("analyzer.procedureModal");
+  const tGeneralProcedureModal = useTranslations(
+    "analyzer.generalProcedureModal",
+  );
+  const tGpuCpuModal = useTranslations("analyzer.gpuCpuModal");
+  const tMethodSelector = useTranslations("analyzer.methodSelector");
   const tCommon = useTranslations("common");
   const getMessage = (key: string) => t(key);
 
@@ -188,9 +484,6 @@ export default function AnalyzerPage() {
   const txtInputRef = useRef<HTMLInputElement | null>(null);
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<"tree" | "json">("tree");
-  // Estados del chat
-  const { messages, setMessages } = useChatHistory();
-  const [isChatOpen, setIsChatOpen] = useState(false);
   // Estado para modal de reparación
   const [showRepairModal, setShowRepairModal] = useState(false);
   const [pendingImportSourceForRepair, setPendingImportSourceForRepair] =
@@ -225,6 +518,18 @@ export default function AnalyzerPage() {
   const [gpuCpuAnalysis, setGpuCpuAnalysis] =
     useState<GPUCPUAnalysisResult | null>(null);
   const [showLoopInvariantModal, setShowLoopInvariantModal] = useState(false);
+  const [recursiveFocusedPanel, setRecursiveFocusedPanel] =
+    useState<AssistantFocusedPanelContext | null>(null);
+  const [traceFocusedPanel, setTraceFocusedPanel] =
+    useState<AssistantFocusedPanelContext | null>(null);
+  const [analysisMethodKey, setAnalysisMethodKey] = useState<
+    | "characteristicEquation"
+    | "iterationMethod"
+    | "recursionTree"
+    | "masterTheorem"
+    | "iterativeAnalysis"
+    | null
+  >(null);
 
   // Estados de exportación de reporte
   const [showExportModal, setShowExportModal] = useState(false);
@@ -471,6 +776,7 @@ export default function AnalyzerPage() {
     setAlgorithmType(undefined);
     setIsAnalysisComplete(false);
     setAnalysisError(null);
+    setAnalysisMethodKey(null);
 
     try {
       // 1) Parsear el código (0-20%)
@@ -732,6 +1038,7 @@ export default function AnalyzerPage() {
         );
         await new Promise((resolve) => setTimeout(resolve, 300));
       }
+      setAnalysisMethodKey(methodKey);
 
       // Actualizar los datos con todos los casos (worst, best y avg si está disponible)
       setData({
@@ -2468,6 +2775,579 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
     analyzing || !source.trim() || !localParseOk || isExporting;
   const loopInvariantData =
     data?.loopInvariant || data?.worst?.loopInvariant || null;
+  const selectedAnalysisData = useMemo<AnalyzeOpenResponse | undefined>(() => {
+    if (selectedCase === "worst") {
+      return data?.worst || undefined;
+    }
+
+    if (selectedCase === "best") {
+      return (
+        (data?.best === "same_as_worst" ? data?.worst : data?.best) || undefined
+      );
+    }
+
+    return (
+      (data?.avg === "same_as_worst" ? data?.worst : data?.avg) || undefined
+    );
+  }, [data, selectedCase]);
+  const generalProcedureData = useMemo<AnalyzeOpenResponse | undefined>(() => {
+    if (generalProcedureCase === "worst") {
+      return data?.worst || undefined;
+    }
+
+    if (generalProcedureCase === "best") {
+      return (
+        (data?.best === "same_as_worst" ? data?.worst : data?.best) || undefined
+      );
+    }
+
+    return (
+      (data?.avg === "same_as_worst" ? data?.worst : data?.avg) || undefined
+    );
+  }, [data, generalProcedureCase]);
+  const analyzerFeatures = useMemo<AssistantFeatureContext[]>(() => {
+    const isSpanish = locale === "es";
+    const text = (es: string, en: string) => (isSpanish ? es : en);
+
+    return [
+      {
+        id: "import-txt",
+        title: tView("importTxt"),
+        location: "/analyzer",
+        description: text(
+          "Carga pseudocodigo desde un archivo .txt al editor principal.",
+          "Load pseudocode from a .txt file into the main editor.",
+        ),
+        availability: text("Disponible siempre", "Always available"),
+      },
+      {
+        id: "export-report",
+        title: tView("exportReport"),
+        location: "/analyzer",
+        description: text(
+          "Descarga el reporte del analisis en PDF o Markdown.",
+          "Download the analysis report as PDF or Markdown.",
+        ),
+        availability:
+          data && (data.worst || data.best || data.avg)
+            ? text("Disponible con analisis completo", "Available with completed analysis")
+            : text("Requiere un analisis completo", "Requires a completed analysis"),
+      },
+      {
+        id: "view-ast",
+        title: tView("viewAst"),
+        location: "/analyzer",
+        description: text(
+          "Abre el AST en vista de arbol o JSON para inspeccionar el parseo.",
+          "Open the AST in tree or JSON view to inspect parsing output.",
+        ),
+        availability:
+          localParseOk && ast
+            ? text("Disponible ahora", "Available now")
+            : text("Requiere AST valido", "Requires a valid AST"),
+      },
+      {
+        id: "execution-trace",
+        title: tView("viewExecutionTrace"),
+        location: "/analyzer",
+        description: text(
+          "Muestra el seguimiento paso a paso y el diagrama de ejecucion.",
+          "Show step-by-step execution tracing and execution diagrams.",
+        ),
+        availability: hasComparableData
+          ? text("Disponible ahora", "Available now")
+          : text("Requiere analisis formal completo", "Requires completed formal analysis"),
+      },
+      {
+        id: "compare-with-llm",
+        title: tView("compareWithLLM"),
+        location: "/analyzer",
+        description: text(
+          "Contrasta el resultado formal con una lectura complementaria del LLM.",
+          "Contrast the formal result with a complementary LLM reading.",
+        ),
+        availability:
+          hasApiKey && hasComparableData
+            ? text("Disponible ahora", "Available now")
+            : text(
+                "Requiere API key y analisis completo",
+                "Requires API key and completed analysis",
+              ),
+      },
+      {
+        id: "loop-invariant",
+        title: tView("viewLoopInvariant"),
+        location: "/analyzer",
+        description: text(
+          "Explica el loop invariant determinista detectado para el ciclo seleccionado.",
+          "Explain the deterministic loop invariant detected for the selected loop.",
+        ),
+        availability: loopInvariantData
+          ? text("Disponible ahora", "Available now")
+          : text("Disponible cuando se detecta un invariante", "Available when an invariant is detected"),
+      },
+      {
+        id: "gpu-vs-cpu",
+        title: tView("gpuVsCpuAnalysis"),
+        location: "/analyzer",
+        description: text(
+          "Evalua si la estructura del algoritmo se adapta mejor a CPU, GPU o un enfoque hibrido.",
+          "Evaluate whether the algorithm structure fits CPU, GPU, or a hybrid approach better.",
+        ),
+        availability:
+          ast && hasComparableData
+            ? text("Disponible ahora", "Available now")
+            : text("Requiere AST y analisis completo", "Requires AST and completed analysis"),
+      },
+      {
+        id: "repair-with-ai",
+        title: tView("repairWithAI"),
+        location: "/analyzer",
+        description: text(
+          "Intenta reparar pseudocodigo con errores de gramatica usando IA.",
+          "Attempt to repair pseudocode with grammar issues using AI.",
+        ),
+        availability:
+          hasApiKey
+            ? text("Disponible con API key", "Available with API key")
+            : text("Requiere API key", "Requires API key"),
+      },
+    ];
+  }, [
+    ast,
+    data,
+    hasApiKey,
+    hasComparableData,
+    locale,
+    localParseOk,
+    loopInvariantData,
+    tView,
+  ]);
+  const focusedPanel = useMemo<AssistantFocusedPanelContext | undefined>(() => {
+    const safeLocale = normalizeAssistantLocale(locale);
+    const text = (es: string, en: string) => panelText(safeLocale, es, en);
+    const selectedCaseLabel = tCases(selectedCase);
+    const generalProcedureCaseLabel = tCases(generalProcedureCase);
+
+    if (showMethodSelector) {
+      return {
+        id: "method-selector",
+        title: tMethodSelector("title"),
+        description: tMethodSelector("subtitle"),
+        notes: [
+          `defaultMethod=${defaultMethod}`,
+          `applicableMethods=${applicableMethods.join(", ")}`,
+        ],
+      };
+    }
+
+    if (showAstModal && ast) {
+      return {
+        id: "ast-modal",
+        title: tView("abstractSyntaxTree"),
+        description:
+          viewMode === "tree" ? tView("astTreeViewDesc") : tView("astJsonViewDesc"),
+        notes: [`viewMode=${viewMode}`],
+      };
+    }
+
+    if (open) {
+      return {
+        id: "line-procedure-modal",
+        title:
+          selectedLine == null
+            ? tProcedureModal("titleComplete")
+            : tProcedureModal("titleLine", { line: selectedLine }),
+        description:
+          selectedLine == null
+            ? text(
+                `Desglose exacto del procedimiento por linea para el caso ${selectedCaseLabel} visible.`,
+                `Exact line-by-line procedure breakdown for the visible ${selectedCaseLabel} case.`,
+              )
+            : text(
+                `Desglose exacto de la linea ${selectedLine} en el caso ${selectedCaseLabel} visible.`,
+                `Exact breakdown of line ${selectedLine} in the visible ${selectedCaseLabel} case.`,
+              ),
+        notes: buildLineProcedureDetails({
+          locale: safeLocale,
+          selectedCaseLabel,
+          selectedLine,
+          analysisData: selectedAnalysisData,
+        }),
+      };
+    }
+
+    if (openGeneral) {
+      return {
+        id: "general-procedure-modal",
+        title: `${tGeneralProcedureModal("title")} - ${generalProcedureCaseLabel}`,
+        description: text(
+          `Procedimiento completo visible para el caso ${generalProcedureCaseLabel}.`,
+          `Full visible procedure for the ${generalProcedureCaseLabel} case.`,
+        ),
+        notes: buildGeneralProcedureDetails({
+          locale: safeLocale,
+          caseLabel: generalProcedureCaseLabel,
+          analysisData: generalProcedureData,
+        }),
+      };
+    }
+
+    if (showComparisonModal) {
+      const ownWorst = extractCoreData(data?.worst || null);
+      const ownBest = extractCoreData(
+        data?.best === "same_as_worst" ? data?.worst || null : data?.best || null,
+      );
+      const ownAvg = extractCoreData(
+        data?.avg === "same_as_worst" ? data?.worst || null : data?.avg || null,
+      );
+      const llmWorst = llmAnalysisData?.worst || null;
+      const llmBest = llmAnalysisData?.best || null;
+      const llmAvg = llmAnalysisData?.avg || null;
+
+      return {
+        id: "llm-comparison-modal",
+        title: tView("comparisonWithLlm"),
+        description: text(
+          "Comparacion lado a lado entre el analisis formal de la app y la lectura complementaria del LLM.",
+          "Side-by-side comparison between the app's formal analysis and the LLM's complementary reading.",
+        ),
+        notes: [
+          text(
+            `Tipo de analisis comparado: ${isRecursiveAnalysis(data?.worst || null) ? "recursivo" : "iterativo"}.`,
+            `Compared analysis kind: ${isRecursiveAnalysis(data?.worst || null) ? "recursive" : "iterative"}.`,
+          ),
+          formatCaseComparisonNote(
+            safeLocale,
+            text(`${tCases("worst")} formal`, `${tCases("worst")} formal`),
+            ownWorst,
+          ),
+          formatCaseComparisonNote(
+            safeLocale,
+            text(`${tCases("best")} formal`, `${tCases("best")} formal`),
+            ownBest,
+          ),
+          formatCaseComparisonNote(
+            safeLocale,
+            text(`${tCases("average")} formal`, `${tCases("average")} formal`),
+            ownAvg,
+          ),
+          formatCaseComparisonNote(
+            safeLocale,
+            text(`${tCases("worst")} LLM`, `${tCases("worst")} LLM`),
+            llmWorst,
+          ),
+          formatCaseComparisonNote(
+            safeLocale,
+            text(`${tCases("best")} LLM`, `${tCases("best")} LLM`),
+            llmBest,
+          ),
+          formatCaseComparisonNote(
+            safeLocale,
+            text(`${tCases("average")} LLM`, `${tCases("average")} LLM`),
+            llmAvg,
+          ),
+          ...(llmNote
+            ? [
+                text(
+                  `Nota visible del contraste: ${truncateAssistantDetail(llmNote)}.`,
+                  `Visible comparison note: ${truncateAssistantDetail(llmNote)}.`,
+                ),
+              ]
+            : []),
+        ],
+      };
+    }
+
+    if (showGPUCPUModal && gpuCpuAnalysis) {
+      return {
+        id: "gpu-cpu-modal",
+        title: tGpuCpuModal("title"),
+        description: gpuCpuAnalysis.summary,
+        notes: [
+          text(
+            `Recomendacion principal visible: ${gpuCpuAnalysis.primaryRecommendation}.`,
+            `Visible primary recommendation: ${gpuCpuAnalysis.primaryRecommendation}.`,
+          ),
+          text(
+            `Confianza visible: ${gpuCpuAnalysis.confidence}.`,
+            `Visible confidence: ${gpuCpuAnalysis.confidence}.`,
+          ),
+          text(
+            `Puntajes visibles: GPU ${gpuCpuAnalysis.scores.gpu}, CPU ${gpuCpuAnalysis.scores.cpu}, Hibrido ${gpuCpuAnalysis.scores.hybrid}.`,
+            `Visible scores: GPU ${gpuCpuAnalysis.scores.gpu}, CPU ${gpuCpuAnalysis.scores.cpu}, Hybrid ${gpuCpuAnalysis.scores.hybrid}.`,
+          ),
+          ...gpuCpuAnalysis.reasons.blockers
+            .slice(0, 2)
+            .map(
+              (reason) =>
+                text(
+                  `Bloqueador: ${truncateAssistantDetail(reason)}.`,
+                  `Blocker: ${truncateAssistantDetail(reason)}.`,
+                ),
+            ),
+          ...gpuCpuAnalysis.reasons.positive
+            .slice(0, 2)
+            .map(
+              (reason) =>
+                text(
+                  `A favor: ${truncateAssistantDetail(reason)}.`,
+                  `Positive signal: ${truncateAssistantDetail(reason)}.`,
+                ),
+            ),
+          ...gpuCpuAnalysis.reasons.negative
+            .slice(0, 2)
+            .map(
+              (reason) =>
+                text(
+                  `En contra: ${truncateAssistantDetail(reason)}.`,
+                  `Negative signal: ${truncateAssistantDetail(reason)}.`,
+                ),
+            ),
+          ...gpuCpuAnalysis.detectedPatterns
+            .slice(0, 3)
+            .map((pattern) =>
+              text(
+                `Patron detectado: ${pattern.name} (${Math.round(pattern.confidence * 100)}%).`,
+                `Detected pattern: ${pattern.name} (${Math.round(pattern.confidence * 100)}%).`,
+              ),
+            ),
+        ],
+      };
+    }
+
+    if (showLoopInvariantModal && loopInvariantData) {
+      return {
+        id: "loop-invariant-modal",
+        title: tLoopInvariant("modal.title"),
+        description: loopInvariantData.didacticSummary,
+        notes: [
+          text(
+            `Estado visible: ${loopInvariantData.status}.`,
+            `Visible status: ${loopInvariantData.status}.`,
+          ),
+          text(
+            `Patron visible: ${loopInvariantData.selectedLoop.patternType}.`,
+            `Visible pattern: ${loopInvariantData.selectedLoop.patternType}.`,
+          ),
+          loopInvariantData.selectedLoop.nodeType
+            ? text(
+                `Loop analizado: ${loopInvariantData.selectedLoop.nodeType}${
+                  loopInvariantData.selectedLoop.lineStart != null
+                    ? ` (lineas ${loopInvariantData.selectedLoop.lineStart}-${loopInvariantData.selectedLoop.lineEnd ?? loopInvariantData.selectedLoop.lineStart})`
+                    : ""
+                }.`,
+                `Analyzed loop: ${loopInvariantData.selectedLoop.nodeType}${
+                  loopInvariantData.selectedLoop.lineStart != null
+                    ? ` (lines ${loopInvariantData.selectedLoop.lineStart}-${loopInvariantData.selectedLoop.lineEnd ?? loopInvariantData.selectedLoop.lineStart})`
+                    : ""
+                }.`,
+              )
+            : null,
+          loopInvariantData.invariant.propertyStatement
+            ? text(
+                `Propiedad visible: ${summarizePanelText(safeLocale, loopInvariantData.invariant.propertyStatement)}.`,
+                `Visible property: ${summarizePanelText(safeLocale, loopInvariantData.invariant.propertyStatement)}.`,
+              )
+            : null,
+          loopInvariantData.invariant.initialization
+            ? text(
+                `Inicializacion visible: ${summarizePanelText(safeLocale, loopInvariantData.invariant.initialization)}.`,
+                `Visible initialization: ${summarizePanelText(safeLocale, loopInvariantData.invariant.initialization)}.`,
+              )
+            : null,
+          loopInvariantData.invariant.maintenance
+            ? text(
+                `Mantenimiento visible: ${summarizePanelText(safeLocale, loopInvariantData.invariant.maintenance)}.`,
+                `Visible maintenance: ${summarizePanelText(safeLocale, loopInvariantData.invariant.maintenance)}.`,
+              )
+            : null,
+          loopInvariantData.invariant.finalization
+            ? text(
+                `Cierre visible: ${summarizePanelText(safeLocale, loopInvariantData.invariant.finalization)}.`,
+                `Visible finalization: ${summarizePanelText(safeLocale, loopInvariantData.invariant.finalization)}.`,
+              )
+            : null,
+        ].filter((entry): entry is string => Boolean(entry)),
+      };
+    }
+
+    if (analyzerViewMode === "trace") {
+      return (
+        traceFocusedPanel || {
+          id: "execution-trace-view",
+          title: tExecutionTrace("title"),
+          description: tView("viewExecutionTrace"),
+          notes: [
+            text(
+              `Caso visible en seguimiento: ${tCases(executionTraceCase)}.`,
+              `Case visible in trace view: ${tCases(executionTraceCase)}.`,
+            ),
+            text(
+              "La vista muestra el recorrido paso a paso de ejecucion sobre el codigo actual.",
+              "The view shows the step-by-step execution trace over the current code.",
+            ),
+          ],
+        }
+      );
+    }
+
+    if (recursiveFocusedPanel) {
+      return recursiveFocusedPanel;
+    }
+
+    return undefined;
+  }, [
+    analyzerViewMode,
+    applicableMethods,
+    ast,
+    data,
+    defaultMethod,
+    executionTraceCase,
+    generalProcedureCase,
+    generalProcedureData,
+    gpuCpuAnalysis,
+    llmNote,
+    llmAnalysisData,
+    locale,
+    loopInvariantData,
+    open,
+    openGeneral,
+    recursiveFocusedPanel,
+    traceFocusedPanel,
+    selectedCase,
+    selectedAnalysisData,
+    selectedLine,
+    showAstModal,
+    showComparisonModal,
+    showGPUCPUModal,
+    showLoopInvariantModal,
+    showMethodSelector,
+    tCases,
+    tExecutionTrace,
+    tGeneralProcedureModal,
+    tGpuCpuModal,
+    tLoopInvariant,
+    tMethodSelector,
+    tProcedureModal,
+    tView,
+    viewMode,
+  ]);
+  const assistantContext = useMemo<AssistantContext>(
+    () => {
+      const notes: string[] = [];
+
+      if (analysisError) {
+        notes.push(analysisError);
+      }
+      if (parseErrors && parseErrors.length > 0) {
+        notes.push(
+          ...parseErrors
+            .slice(0, 3)
+            .map((error) => error.message || "Parse error"),
+        );
+      }
+      if (loopInvariantData) {
+        notes.push("Loop invariant available");
+      }
+      if (data?.best === "same_as_worst") {
+        notes.push("Best case reuses worst-case result");
+      }
+      if (data?.avg === "same_as_worst") {
+        notes.push("Average case reuses worst-case result");
+      }
+
+      const cases = [
+        buildFormalCaseSummary("worst", data?.worst || null),
+        buildFormalCaseSummary(
+          "best",
+          data?.best === "same_as_worst" ? data?.worst || null : data?.best || null,
+        ),
+        buildFormalCaseSummary(
+          "avg",
+          data?.avg === "same_as_worst" ? data?.worst || null : data?.avg || null,
+        ),
+      ].filter(
+        (
+          entry,
+        ): entry is NonNullable<ReturnType<typeof buildFormalCaseSummary>> =>
+          entry !== null,
+      );
+
+      return {
+        surface: "analyzer",
+        locale,
+        pageContext: {
+          route: "/analyzer",
+          view: analyzerViewMode,
+          title: tView("analyze"),
+          description:
+            analyzerViewMode === "trace"
+              ? tView("viewExecutionTrace")
+              : tView("analyze"),
+          notes: [
+            `selectedCase=${selectedCase}`,
+            `parseOk=${localParseOk ? "true" : "false"}`,
+            `importTxt=true`,
+            `exportReport=${data && (data.worst || data.best || data.avg) ? "enabled" : "disabled"}`,
+            `compareWithLLM=${hasApiKey && hasComparableData ? "enabled" : "disabled"}`,
+            `executionTrace=${hasComparableData ? "enabled" : "disabled"}`,
+            `gpuVsCpu=${ast && hasComparableData ? "enabled" : "disabled"}`,
+            `loopInvariant=${loopInvariantData ? "enabled" : "disabled"}`,
+          ],
+        },
+        sourceCode: source.trim() || undefined,
+        formalAnalysisSummary: {
+          parseStatus: source.trim()
+            ? localParseOk
+              ? "ok"
+              : parseErrors && parseErrors.length > 0
+                ? "error"
+                : "unknown"
+            : "idle",
+          analysisStatus: analyzing
+            ? "running"
+            : analysisError
+              ? "error"
+              : data
+                ? "complete"
+                : "idle",
+          algorithmType: algorithmType
+            ? tAlgorithmType(algorithmType === "unknown" ? "unknown" : algorithmType)
+            : undefined,
+          selectedCase,
+          selectedMethod: analysisMethodKey ? tMethods(analysisMethodKey) : undefined,
+          hasCaseVariability: data?.has_case_variability === true,
+          cases,
+          notes,
+        },
+        focusedPanel,
+        availableFeatures: analyzerFeatures,
+      };
+    },
+    [
+      algorithmType,
+      analysisError,
+      analysisMethodKey,
+      analyzerViewMode,
+      analyzing,
+      analyzerFeatures,
+      data,
+      focusedPanel,
+      hasApiKey,
+      hasComparableData,
+      ast,
+      locale,
+      localParseOk,
+      loopInvariantData,
+      parseErrors,
+      selectedCase,
+      source,
+      tAlgorithmType,
+      tMethods,
+      tView,
+    ],
+  );
 
   return (
     <div className="relative flex size-full min-h-screen flex-col overflow-x-hidden">
@@ -2567,6 +3447,7 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                 ast={ast}
                 caseType={executionTraceCase}
                 onCaseChange={setExecutionTraceCase}
+                onAssistantFocusedPanelChange={setTraceFocusedPanel}
                 onBack={() => {
                   setIsSwitchingTrace(true);
                   setTimeout(() => {
@@ -2844,7 +3725,14 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
                             avg: data.avg ?? null,
                           }
                         : null;
-                      return <RecursiveAnalysisView data={dataWithAvg} />;
+                      return (
+                        <RecursiveAnalysisView
+                          data={dataWithAvg}
+                          onAssistantFocusedPanelChange={
+                            setRecursiveFocusedPanel
+                          }
+                        />
+                      );
                     } else {
                       // Asegurar que avg esté definido (null en lugar de undefined)
                       const dataWithAvg: {
@@ -2881,34 +3769,14 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
         open={open}
         onClose={() => setOpen(false)}
         selectedLine={selectedLine}
-        analysisData={
-          selectedCase === "worst"
-            ? data?.worst || undefined
-            : selectedCase === "best"
-              ? (data?.best === "same_as_worst" ? data?.worst : data?.best) ||
-                undefined
-              : selectedCase === "average"
-                ? (data?.avg === "same_as_worst" ? data?.worst : data?.avg) ||
-                  undefined
-                : undefined
-        }
+        analysisData={selectedAnalysisData}
       />
       {/* Modal de procedimiento general */}
       <GeneralProcedureModal
         open={openGeneral}
         onClose={() => setOpenGeneral(false)}
         caseType={generalProcedureCase}
-        data={
-          generalProcedureCase === "worst"
-            ? data?.worst || undefined
-            : generalProcedureCase === "best"
-              ? (data?.best === "same_as_worst" ? data?.worst : data?.best) ||
-                undefined
-              : generalProcedureCase === "average"
-                ? (data?.avg === "same_as_worst" ? data?.worst : data?.avg) ||
-                  undefined
-                : undefined
-        }
+        data={generalProcedureData}
       />
 
       {/* Modal AST - Portal a body para que sea overlay fijo */}
@@ -3016,18 +3884,13 @@ ${JSON.stringify(fullAnalysisData, null, 2)}${methodInstruction}${(() => {
           document.body,
         )}
 
-      {/* ChatBot */}
-      <ChatBot
-        isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
-        messages={messages}
-        setMessages={setMessages}
+      <EmbeddedAssistantLauncher
+        surface="analyzer"
+        assistantContext={assistantContext}
         onAnalyzeCode={(code: string) => {
-          // Guardar código y recargar la página con el nuevo código
           if (globalThis.window !== undefined) {
             sessionStorage.setItem("analyzerCode", code);
           }
-          // Recargar para que el código se cargue desde sessionStorage
           globalThis.window.location.reload();
         }}
       />

@@ -3,10 +3,17 @@
 import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useState } from "react";
 
+import { EmbeddedAssistantLauncher } from "@/components/assistant/EmbeddedAssistantLauncher";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { useNavigation } from "@/contexts/NavigationContext";
+import { useRunAnalysis } from "@/hooks/useRunAnalysis";
 import { useRouter } from "@/i18n/navigation";
+import type { AssistantContext } from "@/lib/assistant/types";
+import {
+  buildAssistantExampleListContext,
+  buildAssistantExampleSectionsContext,
+} from "@/lib/examples/assistant-context";
 import {
   getEnabledExamples,
   getMethodTranslationKey,
@@ -42,6 +49,7 @@ export function ExamplesHomeView() {
   const router = useRouter();
   const { finishNavigation } = useNavigation();
   const [query, setQuery] = useState("");
+  const { runAnalysis } = useRunAnalysis();
 
   useEffect(() => {
     finishNavigation();
@@ -149,6 +157,46 @@ export function ExamplesHomeView() {
     setQuery("");
   };
 
+  const assistantContext = useMemo<AssistantContext>(
+    () => ({
+      surface: "examples",
+      locale,
+      pageContext: {
+        route: "/examples",
+        view: "home",
+        title: t("title"),
+        description: t("subtitle"),
+        query: query.trim() || undefined,
+        notes:
+          topMatches.length > 0
+            ? [
+                `matchedExamples=${topMatches.length}`,
+                ...topMatches.map(
+                  (item) =>
+                    getLocalizedExampleContent(item, catalogItems, locale).title,
+                ),
+              ]
+            : undefined,
+      },
+      exampleSections: buildAssistantExampleSectionsContext(
+        catalogItems,
+        locale,
+        tGlobal,
+      ),
+      visibleExamples:
+        topMatches.length > 0
+          ? buildAssistantExampleListContext(
+              topMatches,
+              catalogItems,
+              locale,
+              tGlobal,
+              { includeSource: true },
+            )
+          : undefined,
+    }),
+    [catalogItems, locale, query, t, tGlobal, topMatches],
+  );
+
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden">
       <Header />
@@ -243,6 +291,13 @@ export function ExamplesHomeView() {
           <ExamplesTypeSelector ctaLabel={t("viewFamily")} />
         </section>
       </main>
+      <EmbeddedAssistantLauncher
+        surface="examples"
+        assistantContext={assistantContext}
+        onAnalyzeCode={(code) => {
+          void runAnalysis(code);
+        }}
+      />
       <Footer />
     </div>
   );

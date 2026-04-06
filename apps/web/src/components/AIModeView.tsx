@@ -1,6 +1,8 @@
 import { Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import type { AssistantContext } from "@/lib/assistant/types";
+
 import AALIEIcon from "./AALIEIcon";
 import ChatBot from "./ChatBot";
 
@@ -31,6 +33,7 @@ interface AIModeViewProps {
   readonly onSuggestionClick: (suggestion: string) => void;
   readonly onClose: () => void;
   readonly onAnalyzeCode?: (code: string) => void;
+  readonly assistantContext?: AssistantContext | null;
 }
 
 /**
@@ -71,6 +74,7 @@ export default function AIModeView({
   onSuggestionClick,
   onClose,
   onAnalyzeCode,
+  assistantContext = null,
 }: AIModeViewProps) {
   const t = useTranslations("home");
   if (chatOpen) {
@@ -82,6 +86,8 @@ export default function AIModeView({
           messages={messages}
           setMessages={setMessages}
           onAnalyzeCode={onAnalyzeCode}
+          assistantContext={assistantContext}
+          welcomeMessage={t("welcome")}
         />
       </div>
     );

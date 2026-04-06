@@ -2,8 +2,14 @@
 
 import type { AnalyzeOpenResponse } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
+import {
+  buildBundleDetailNotes,
+  normalizeAssistantLocale,
+  truncateAssistantDetail,
+} from "@/lib/assistant/panel-context";
+import type { AssistantFocusedPanelContext } from "@/lib/assistant/types";
 import { translateBackendContent } from "@/lib/backend-content-translator";
 
 import CharacteristicEquationModal from "./CharacteristicEquationModal";
@@ -615,6 +621,30 @@ const renderRecurrenceParameters = (
   );
 };
 
+function recursivePanelText(locale: "es" | "en", es: string, en: string) {
+  return locale === "es" ? es : en;
+}
+
+function appendRecursiveDetail(
+  details: string[],
+  value: string | null | undefined,
+): void {
+  if (value) {
+    details.push(value);
+  }
+}
+
+function summarizeRecursiveText(
+  locale: "es" | "en",
+  value: string | undefined | null,
+  maxChars = 320,
+) {
+  return truncateAssistantDetail(
+    translateBackendContent(value ?? "", normalizeAssistantLocale(locale)),
+    maxChars,
+  );
+}
+
 interface ActionButtonsProps {
   readonly tView: (k: string) => string;
   readonly isCharacteristicMethod: boolean;
@@ -1021,6 +1051,9 @@ interface RecursiveAnalysisViewProps {
     best: AnalyzeOpenResponse | "same_as_worst" | null;
     avg: AnalyzeOpenResponse | "same_as_worst" | null;
   } | null;
+  readonly onAssistantFocusedPanelChange?: (
+    panel: AssistantFocusedPanelContext | null,
+  ) => void;
 }
 
 /**
@@ -1045,6 +1078,7 @@ interface RecursiveAnalysisViewProps {
  */
 export default function RecursiveAnalysisView({
   data,
+  onAssistantFocusedPanelChange,
 }: RecursiveAnalysisViewProps) {
   const locale = useLocale() as "en" | "es";
   const tCases = useTranslations("analyzer.cases");
@@ -1052,16 +1086,15 @@ export default function RecursiveAnalysisView({
   const tRecursionTree = useTranslations("analyzer.recursionTree");
   const tView = useTranslations("analyzer.view");
 
-  const getMethodBadgeText = (
-    isChar: boolean,
-    isIter: boolean,
-    isTree: boolean,
-  ) => {
-    if (isChar) return tMethods("characteristicEquation");
-    if (isIter) return tMethods("iterationMethod");
-    if (isTree) return tMethods("recursionTree");
-    return tMethods("masterTheorem");
-  };
+  const getMethodBadgeText = useCallback(
+    (isChar: boolean, isIter: boolean, isTree: boolean) => {
+      if (isChar) return tMethods("characteristicEquation");
+      if (isIter) return tMethods("iterationMethod");
+      if (isTree) return tMethods("recursionTree");
+      return tMethods("masterTheorem");
+    },
+    [tMethods],
+  );
 
   // Memoizar los datos para evitar recálculos innecesarios
   const analysisData = useMemo(() => {
@@ -1208,6 +1241,491 @@ export default function RecursiveAnalysisView({
   // Detectar si hay diferencias entre los casos
   const hasDifferentComplexities =
     bestT !== worstT || bestT !== avgT || worstT !== avgT;
+
+  const recursiveFocusedPanel = useMemo<AssistantFocusedPanelContext | null>(() => {
+    const methodLabel = getMethodBadgeText(
+      isCharacteristicMethod,
+      isIterationMethod,
+      isRecursionTreeMethod,
+    );
+    const recurrenceForm = recurrence?.form;
+    const detailsForMethodModal = () => {
+      const details: string[] = [
+        recursivePanelText(
+          locale,
+          `Metodo visible: ${methodLabel}.`,
+          `Visible method: ${methodLabel}.`,
+        ),
+        recursivePanelText(
+          locale,
+          `Caso visible: ${tCases(selectedCase)}.`,
+          `Visible case: ${tCases(selectedCase)}.`,
+        ),
+      ];
+
+      appendRecursiveDetail(
+        details,
+        recurrenceForm
+          ? recursivePanelText(
+              locale,
+              `Recurrencia visible: ${recurrenceForm}.`,
+              `Visible recurrence: ${recurrenceForm}.`,
+            )
+          : null,
+      );
+      appendRecursiveDetail(
+        details,
+        currentTheta
+          ? recursivePanelText(
+              locale,
+              `Theta visible en el modal: ${currentTheta}.`,
+              `Visible theta in the modal: ${currentTheta}.`,
+            )
+          : null,
+      );
+
+      if (isCharacteristicMethod && characteristicEquation) {
+        appendRecursiveDetail(
+          details,
+          characteristicEquation.equation
+            ? recursivePanelText(
+                locale,
+                `Ecuacion caracteristica visible: ${characteristicEquation.equation}.`,
+                `Visible characteristic equation: ${characteristicEquation.equation}.`,
+              )
+            : null,
+        );
+        appendRecursiveDetail(
+          details,
+          characteristicEquation.closed_form
+            ? recursivePanelText(
+                locale,
+                `Forma cerrada visible: ${characteristicEquation.closed_form}.`,
+                `Visible closed form: ${characteristicEquation.closed_form}.`,
+              )
+            : null,
+        );
+        appendRecursiveDetail(
+          details,
+          characteristicEquation.dominant_root
+            ? recursivePanelText(
+                locale,
+                `Raiz dominante visible: ${characteristicEquation.dominant_root}.`,
+                `Visible dominant root: ${characteristicEquation.dominant_root}.`,
+              )
+            : null,
+        );
+        details.push(
+          ...buildBundleDetailNotes(characteristicEquation.step_by_step, locale, {
+            maxSteps: 3,
+            includeMath: true,
+          }),
+        );
+      } else if (isIterationMethod && iteration) {
+        appendRecursiveDetail(
+          details,
+          iteration.g_function
+            ? recursivePanelText(
+                locale,
+                `Funcion de reduccion visible: ${iteration.g_function}.`,
+                `Visible reduction function: ${iteration.g_function}.`,
+              )
+            : null,
+        );
+        appendRecursiveDetail(
+          details,
+          iteration.general_form
+            ? recursivePanelText(
+                locale,
+                `Forma general visible: ${iteration.general_form}.`,
+                `Visible general form: ${iteration.general_form}.`,
+              )
+            : null,
+        );
+        appendRecursiveDetail(
+          details,
+          iteration.base_case?.condition
+            ? recursivePanelText(
+                locale,
+                `Caso base visible: ${iteration.base_case.condition}; k = ${iteration.base_case.k}.`,
+                `Visible base case: ${iteration.base_case.condition}; k = ${iteration.base_case.k}.`,
+              )
+            : null,
+        );
+        appendRecursiveDetail(
+          details,
+          iteration.summation?.evaluated
+            ? recursivePanelText(
+                locale,
+                `Sumatoria evaluada visible: ${iteration.summation.evaluated}.`,
+                `Visible evaluated summation: ${iteration.summation.evaluated}.`,
+              )
+            : null,
+        );
+        details.push(
+          ...buildBundleDetailNotes(iteration.step_by_step, locale, {
+            maxSteps: 3,
+            includeMath: true,
+          }),
+        );
+      } else if (isRecursionTreeMethod && recursionTree) {
+        appendRecursiveDetail(
+          details,
+          recursionTree.height
+            ? recursivePanelText(
+                locale,
+                `Altura visible del arbol: ${recursionTree.height}.`,
+                `Visible tree height: ${recursionTree.height}.`,
+              )
+            : null,
+        );
+        appendRecursiveDetail(
+          details,
+          recursionTree.dominating_level?.reason
+            ? recursivePanelText(
+                locale,
+                `Nivel dominante visible: ${recursionTree.dominating_level.level} (${summarizeRecursiveText(locale, recursionTree.dominating_level.reason)}).`,
+                `Visible dominating level: ${recursionTree.dominating_level.level} (${summarizeRecursiveText(locale, recursionTree.dominating_level.reason)}).`,
+              )
+            : null,
+        );
+        recursionTree.table_by_levels.slice(0, 2).forEach((level) => {
+          appendRecursiveDetail(
+            details,
+            recursivePanelText(
+              locale,
+              `Nivel ${level.level}: nodos ${level.num_nodes}, costo total ${level.total_cost}.`,
+              `Level ${level.level}: nodes ${level.num_nodes}, total cost ${level.total_cost}.`,
+            ),
+          );
+        });
+        details.push(
+          ...buildBundleDetailNotes(recursionTree.step_by_step, locale, {
+            maxSteps: 3,
+            includeMath: true,
+          }),
+        );
+      } else if (currentMaster) {
+        appendRecursiveDetail(
+          details,
+          currentMaster.case != null
+            ? recursivePanelText(
+                locale,
+                `Caso visible del teorema maestro: ${currentMaster.case}.`,
+                `Visible master theorem case: ${currentMaster.case}.`,
+              )
+            : null,
+        );
+        appendRecursiveDetail(
+          details,
+          currentMaster.nlogba
+            ? recursivePanelText(
+                locale,
+                `Comparador visible nlog_b(a): ${currentMaster.nlogba}.`,
+                `Visible nlog_b(a) comparator: ${currentMaster.nlogba}.`,
+              )
+            : null,
+        );
+        appendRecursiveDetail(
+          details,
+          currentMaster.comparison
+            ? recursivePanelText(
+                locale,
+                `Comparacion visible con f(n): ${currentMaster.comparison}.`,
+                `Visible comparison against f(n): ${currentMaster.comparison}.`,
+              )
+            : null,
+        );
+        appendRecursiveDetail(
+          details,
+          currentMaster.regularity?.note
+            ? recursivePanelText(
+                locale,
+                `Regularidad visible: ${summarizeRecursiveText(locale, currentMaster.regularity.note)}.`,
+                `Visible regularity note: ${summarizeRecursiveText(locale, currentMaster.regularity.note)}.`,
+              )
+            : null,
+        );
+        details.push(
+          ...buildBundleDetailNotes(currentMaster.step_by_step, locale, {
+            maxSteps: 3,
+            includeMath: true,
+          }),
+        );
+      }
+
+      return details;
+    };
+
+    if (showCharacteristicModal) {
+      return {
+        id: "characteristic-equation-modal",
+        title:
+          locale === "es" ? "Ecuacion caracteristica" : "Characteristic equation",
+        description:
+          locale === "es"
+            ? "Desarrollo visible del metodo de ecuacion caracteristica para la recurrencia actual."
+            : "Visible characteristic-equation method development for the current recurrence.",
+        notes: [
+          recursivePanelText(
+            locale,
+            `Metodo visible: ${methodLabel}.`,
+            `Visible method: ${methodLabel}.`,
+          ),
+          ...(recurrenceForm
+            ? [
+                recursivePanelText(
+                  locale,
+                  `Recurrencia visible: ${recurrenceForm}.`,
+                  `Visible recurrence: ${recurrenceForm}.`,
+                ),
+              ]
+            : []),
+          ...(characteristicEquation?.equation
+            ? [
+                recursivePanelText(
+                  locale,
+                  `Ecuacion visible: ${characteristicEquation.equation}.`,
+                  `Visible equation: ${characteristicEquation.equation}.`,
+                ),
+              ]
+            : []),
+          ...(characteristicEquation?.general_solution
+            ? [
+                recursivePanelText(
+                  locale,
+                  `Solucion general visible: ${characteristicEquation.general_solution}.`,
+                  `Visible general solution: ${characteristicEquation.general_solution}.`,
+                ),
+              ]
+            : []),
+          ...(characteristicEquation?.theta || theta || T_open
+            ? [
+                recursivePanelText(
+                  locale,
+                  `Theta visible: ${characteristicEquation?.theta || theta || T_open}.`,
+                  `Visible theta: ${characteristicEquation?.theta || theta || T_open}.`,
+                ),
+              ]
+            : []),
+          ...buildBundleDetailNotes(characteristicEquation?.step_by_step, locale, {
+            maxSteps: 3,
+            includeMath: true,
+          }),
+        ],
+      };
+    }
+
+    if (showProcedureModal) {
+      return {
+        id: "recursive-step-by-step-modal",
+        title: tView("viewStepByStep"),
+        description: recursivePanelText(
+          locale,
+          `Procedimiento paso a paso visible del metodo ${methodLabel}.`,
+          `Visible step-by-step procedure for the ${methodLabel} method.`,
+        ),
+        notes: detailsForMethodModal(),
+      };
+    }
+
+    if (showTreeModal) {
+      const treeDetails: string[] = [
+        recursivePanelText(
+          locale,
+          `Metodo visible: ${methodLabel}.`,
+          `Visible method: ${methodLabel}.`,
+        ),
+      ];
+
+      appendRecursiveDetail(
+        treeDetails,
+        recurrence?.type
+          ? recursivePanelText(
+              locale,
+              `Tipo de recurrencia visible: ${recurrence.type}.`,
+              `Visible recurrence type: ${recurrence.type}.`,
+            )
+          : null,
+      );
+      appendRecursiveDetail(
+        treeDetails,
+        recurrenceForm
+          ? recursivePanelText(
+              locale,
+              `Recurrencia visible: ${recurrenceForm}.`,
+              `Visible recurrence: ${recurrenceForm}.`,
+            )
+          : null,
+      );
+
+      if (recursionTree) {
+        appendRecursiveDetail(
+          treeDetails,
+          recursionTree.height
+            ? recursivePanelText(
+                locale,
+                `Altura visible del arbol: ${recursionTree.height}.`,
+                `Visible tree height: ${recursionTree.height}.`,
+              )
+            : null,
+        );
+        recursionTree.table_by_levels.slice(0, 3).forEach((level) => {
+          appendRecursiveDetail(
+            treeDetails,
+            recursivePanelText(
+              locale,
+              `Nivel ${level.level}: ${level.num_nodes} nodos, subproblema ${level.subproblem_size}, costo total ${level.total_cost}.`,
+              `Level ${level.level}: ${level.num_nodes} nodes, subproblem ${level.subproblem_size}, total cost ${level.total_cost}.`,
+            ),
+          );
+        });
+        appendRecursiveDetail(
+          treeDetails,
+          recursionTree.theta
+            ? recursivePanelText(
+                locale,
+                `Theta visible del arbol: ${recursionTree.theta}.`,
+                `Visible tree theta: ${recursionTree.theta}.`,
+              )
+            : null,
+        );
+      } else if (characteristicEquation) {
+        appendRecursiveDetail(
+          treeDetails,
+          characteristicEquation.growth_rate != null
+            ? recursivePanelText(
+                locale,
+                `Tasa de crecimiento visible: ${characteristicEquation.growth_rate}.`,
+                `Visible growth rate: ${characteristicEquation.growth_rate}.`,
+              )
+            : null,
+        );
+        appendRecursiveDetail(
+          treeDetails,
+          characteristicEquation.theta
+            ? recursivePanelText(
+                locale,
+                `Theta visible del arbol derivado: ${characteristicEquation.theta}.`,
+                `Visible derived-tree theta: ${characteristicEquation.theta}.`,
+              )
+            : null,
+        );
+      }
+
+      return {
+        id: "recursive-tree-modal",
+        title: tView("viewRecurrenceTree"),
+        description:
+          locale === "es"
+            ? "Visualizacion visible del arbol de recurrencia o del arbol derivado del metodo actual."
+            : "Visible recurrence-tree view or derived tree for the current method.",
+        notes: treeDetails,
+      };
+    }
+
+    if (showDPModal) {
+      const dpDetails: string[] = [
+        recursivePanelText(
+          locale,
+          `Estado visible de aplicabilidad DP: ${dpApplicability.status}.`,
+          `Visible DP applicability status: ${dpApplicability.status}.`,
+        ),
+      ];
+
+      appendRecursiveDetail(
+        dpDetails,
+        characteristicEquation?.dp_version?.pattern
+          ? recursivePanelText(
+              locale,
+              `Patron DP visible: ${characteristicEquation.dp_version.pattern}.`,
+              `Visible DP pattern: ${characteristicEquation.dp_version.pattern}.`,
+            )
+          : null,
+      );
+      appendRecursiveDetail(
+        dpDetails,
+        characteristicEquation?.dp_version
+          ? recursivePanelText(
+              locale,
+              `Complejidad visible de la version DP: tiempo ${characteristicEquation.dp_version.time_complexity}, espacio ${characteristicEquation.dp_version.space_complexity}.`,
+              `Visible DP-version complexity: time ${characteristicEquation.dp_version.time_complexity}, space ${characteristicEquation.dp_version.space_complexity}.`,
+            )
+          : null,
+      );
+      appendRecursiveDetail(
+        dpDetails,
+        characteristicEquation?.dp_version?.recursive_complexity
+          ? recursivePanelText(
+              locale,
+              `Complejidad visible de la version recursiva: ${characteristicEquation.dp_version.recursive_complexity}.`,
+              `Visible recursive-version complexity: ${characteristicEquation.dp_version.recursive_complexity}.`,
+            )
+          : null,
+      );
+      appendRecursiveDetail(
+        dpDetails,
+        characteristicEquation?.dp_optimized_version
+          ? recursivePanelText(
+              locale,
+              `Version optimizada visible: tiempo ${characteristicEquation.dp_optimized_version.time_complexity}, espacio ${characteristicEquation.dp_optimized_version.space_complexity}.`,
+              `Visible optimized version: time ${characteristicEquation.dp_optimized_version.time_complexity}, space ${characteristicEquation.dp_optimized_version.space_complexity}.`,
+            )
+          : null,
+      );
+      appendRecursiveDetail(
+        dpDetails,
+        characteristicEquation?.dp_equivalence
+          ? recursivePanelText(
+              locale,
+              `Equivalencia visible: ${summarizeRecursiveText(locale, characteristicEquation.dp_equivalence)}.`,
+              `Visible equivalence: ${summarizeRecursiveText(locale, characteristicEquation.dp_equivalence)}.`,
+            )
+          : null,
+      );
+
+      return {
+        id: "dp-version-modal",
+        title: tView("viewDPVersion"),
+        description:
+          locale === "es"
+            ? "Hipotesis visible de programacion dinamica asociada a la recurrencia actual."
+            : "Visible dynamic-programming hypothesis associated with the current recurrence.",
+        notes: dpDetails,
+      };
+    }
+
+    return null;
+  }, [
+    T_open,
+    characteristicEquation,
+    currentTheta,
+    currentMaster,
+    dpApplicability.status,
+    getMethodBadgeText,
+    isCharacteristicMethod,
+    isIterationMethod,
+    isRecursionTreeMethod,
+    iteration,
+    locale,
+    recurrence,
+    recursionTree,
+    selectedCase,
+    showCharacteristicModal,
+    showDPModal,
+    showProcedureModal,
+    showTreeModal,
+    tCases,
+    tView,
+    theta,
+  ]);
+
+  useEffect(() => {
+    onAssistantFocusedPanelChange?.(recursiveFocusedPanel);
+    return () => {
+      onAssistantFocusedPanelChange?.(null);
+    };
+  }, [onAssistantFocusedPanelChange, recursiveFocusedPanel]);
 
   // Debug: log solo una vez cuando cambian los datos
   useEffect(() => {

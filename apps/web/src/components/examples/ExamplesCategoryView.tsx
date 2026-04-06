@@ -4,12 +4,18 @@ import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useState } from "react";
 
+import { EmbeddedAssistantLauncher } from "@/components/assistant/EmbeddedAssistantLauncher";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { NavigationFooter } from "@/components/NavigationFooter";
 import { PageHeader } from "@/components/PageHeader";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useRunAnalysis } from "@/hooks/useRunAnalysis";
+import type { AssistantContext } from "@/lib/assistant/types";
+import {
+  buildAssistantExampleContext,
+  buildAssistantExampleListContext,
+} from "@/lib/examples/assistant-context";
 import {
   filterByMethods,
   getCategoryMeta,
@@ -120,6 +126,14 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
         null)
       : null;
 
+  const selectedExample = useMemo(
+    () =>
+      selectedSlug != null
+        ? visibleExamples.find((example) => example.slug === selectedSlug) || null
+        : null,
+    [selectedSlug, visibleExamples],
+  );
+
   useEffect(() => {
     if (!selectedExampleId) {
       return;
@@ -145,6 +159,56 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
         : [...previous, method],
     );
   };
+
+  const assistantContext = useMemo<AssistantContext>(
+    () => ({
+      surface: "examples",
+      locale,
+      pageContext: {
+        route: `/examples/${category}`,
+        view: "category",
+        title: tGlobal(CATEGORY_LABEL_KEYS[category]),
+        description: tGlobal(CATEGORY_OFFTEXT_KEYS[category]),
+        query: query.trim() || undefined,
+        filters:
+          recursiveCategory && selectedMethods.length > 0
+            ? selectedMethods
+            : undefined,
+        notes: [
+          `visibleExamples=${visibleExamples.length}`,
+          ...(selectedSlug ? [`focusedExample=${selectedSlug}`] : []),
+        ],
+      },
+      example: selectedExample
+        ? buildAssistantExampleContext(
+            selectedExample,
+            catalogItems,
+            locale,
+            tGlobal,
+            { includeSource: true },
+          )
+        : undefined,
+      visibleExamples: buildAssistantExampleListContext(
+        visibleExamples,
+        catalogItems,
+        locale,
+        tGlobal,
+        { includeSource: true },
+      ),
+    }),
+    [
+      catalogItems,
+      category,
+      locale,
+      query,
+      recursiveCategory,
+      selectedExample,
+      selectedMethods,
+      selectedSlug,
+      tGlobal,
+      visibleExamples,
+    ],
+  );
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden">
@@ -204,6 +268,13 @@ export function ExamplesCategoryView({ category }: ExamplesCategoryViewProps) {
           />
         </div>
       </main>
+      <EmbeddedAssistantLauncher
+        surface="examples"
+        assistantContext={assistantContext}
+        onAnalyzeCode={(code) => {
+          void runAnalysis(code);
+        }}
+      />
       <Footer />
     </div>
   );

@@ -937,12 +937,16 @@
     "assistantTitle": "Algorithmic Analysis Live Interaction Expert",
     "clearConversation": "Clear conversation",
     "backToHome": "Back to home",
+    "closeAssistant": "Close assistant",
     "unavailable": "AALIE unavailable",
     "apiKeyRequired": "AALIE requires a Gemini API Key to work. Configure your API Key to enable AI functions. You can get it at",
     "placeholder": "Type your message...",
     "helpRequest": "Help me fix this error",
     "retry": "Retry",
-    "errorGeneric": "Sorry, I had a problem processing your message. Could you try again?"
+    "errorGeneric": "Sorry, I had a problem processing your message. Could you try again?",
+    "launcherAriaLabel": "Open analysis assistant",
+    "embeddedFrameTitle": "Embedded analysis assistant",
+    "embeddedWelcome": "I'm AALIE. I can help explain what you're viewing, suggest next steps, and add context, but the app's formal analysis remains the source of truth."
   },
   "userGuide": {
     "title": "User Guide",

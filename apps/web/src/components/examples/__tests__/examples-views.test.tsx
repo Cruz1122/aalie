@@ -9,6 +9,7 @@ import { ExamplesHomeView } from "@/components/examples/ExamplesHomeView";
 const runAnalysisMock = vi.fn();
 const finishNavigationMock = vi.fn();
 const pushMock = vi.fn();
+const embeddedAssistantLauncherMock = vi.fn();
 
 vi.mock("next-intl", () => ({
   useLocale: () => "es",
@@ -127,11 +128,19 @@ vi.mock("@/components/NavigationLink", () => ({
   ),
 }));
 
+vi.mock("@/components/assistant/EmbeddedAssistantLauncher", () => ({
+  EmbeddedAssistantLauncher: (props: unknown) => {
+    embeddedAssistantLauncherMock(props);
+    return <div data-testid="assistant-launcher" />;
+  },
+}));
+
 describe("Examples views", () => {
   beforeEach(() => {
     runAnalysisMock.mockReset();
     finishNavigationMock.mockReset();
     pushMock.mockReset();
+    embeddedAssistantLauncherMock.mockReset();
   });
 
   it("shows top results dropdown and redirects from home", () => {
@@ -140,6 +149,22 @@ describe("Examples views", () => {
     fireEvent.change(screen.getByLabelText("buscar ejemplos"), {
       target: { value: "fibonacci" },
     });
+
+    const launcherProps = embeddedAssistantLauncherMock.mock.calls.at(-1)?.[0] as {
+      assistantContext: {
+        exampleSections?: Array<{ title: string }>;
+        visibleExamples?: Array<{ title: string; source?: string }>;
+      };
+    };
+    expect(launcherProps.assistantContext.exampleSections).toHaveLength(4);
+    expect(
+      launcherProps.assistantContext.exampleSections?.some(
+        (section) => section.title === "Divide y vencerás",
+      ),
+    ).toBe(true);
+    expect(
+      launcherProps.assistantContext.visibleExamples?.[0]?.source,
+    ).toContain("BEGIN");
 
     const firstResult = screen.getAllByRole("button", { name: /fibonacci/i })[0];
     fireEvent.click(firstResult);
@@ -161,6 +186,20 @@ describe("Examples views", () => {
     const analyzeButtons = screen.getAllByRole("button", { name: /Analizar/i });
     fireEvent.click(analyzeButtons[0]);
     expect(runAnalysisMock).toHaveBeenCalledTimes(1);
+
+    const launcherProps = embeddedAssistantLauncherMock.mock.calls.at(-1)?.[0] as {
+      assistantContext: {
+        visibleExamples?: Array<{ title: string; source?: string }>;
+      };
+    };
+    expect(launcherProps.assistantContext.visibleExamples?.length).toBeGreaterThan(
+      0,
+    );
+    expect(
+      launcherProps.assistantContext.visibleExamples?.every((example) =>
+        example.source?.includes("BEGIN"),
+      ),
+    ).toBe(true);
   });
 
   it("hides recursive method filters for iterative category", () => {

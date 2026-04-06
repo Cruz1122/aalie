@@ -1,3 +1,5 @@
+import React from "react";
+
 interface PaginationControlsProps {
   readonly currentPage: number;
   readonly totalPages: number;

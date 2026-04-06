@@ -2,11 +2,13 @@
 
 import type { Program } from "@aa/types";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 
 import { useTraceController } from "@/hooks/trace/useTraceController";
 import { useTraceRefreshOnAnalysis } from "@/hooks/trace/useTraceRefreshOnAnalysis";
+import { buildTraceFocusedPanelContext } from "@/lib/assistant/trace-focused-panel";
+import type { AssistantFocusedPanelContext } from "@/lib/assistant/types";
 import type { CaseType } from "@/types/trace";
 
 import ExecutionGraphView from "./ExecutionGraphView";
@@ -28,6 +30,9 @@ interface TraceDedicatedViewProps {
   onCaseChange: (caseType: CaseType) => void;
   onBack: () => void;
   hasApiKey?: boolean;
+  onAssistantFocusedPanelChange?: (
+    panel: AssistantFocusedPanelContext | null,
+  ) => void;
 }
 
 export default function TraceDedicatedView({
@@ -37,9 +42,11 @@ export default function TraceDedicatedView({
   onCaseChange,
   onBack,
   hasApiKey: _hasApiKey = false,
+  onAssistantFocusedPanelChange,
 }: TraceDedicatedViewProps) {
   const locale = useLocale();
   const t = useTranslations("analyzer.executionTrace");
+  const tCases = useTranslations("analyzer.cases");
   const [inputSize, setInputSize] = useState<number>(4);
   const [debouncedInputSize, setDebouncedInputSize] = useState<number>(4);
   const [currentStep, setCurrentStep] = useState(0);
@@ -142,6 +149,79 @@ export default function TraceDedicatedView({
       : null;
   const currentLine = currentStepData?.line || 0;
   const totalSteps = stepsToUse.length;
+
+  const assistantInitialVariables = useMemo(() => {
+    if (
+      initialVariablesOverride &&
+      Object.keys(initialVariablesOverride).length > 0
+    ) {
+      return initialVariablesOverride;
+    }
+
+    const rootCallId = trace?.ok ? trace.trace?.callTreeSource?.root_calls?.[0] : null;
+    const rootCall =
+      rootCallId && trace?.ok
+        ? trace.trace?.callTreeSource?.calls?.find((call) => call.id === rootCallId)
+        : null;
+    if (rootCall?.params && Object.keys(rootCall.params).length > 0) {
+      return rootCall.params as Record<string, unknown>;
+    }
+
+    const firstStepVariables =
+      trace?.ok && trace.trace?.steps?.[0]?.variables
+        ? (trace.trace.steps[0].variables as Record<string, unknown>)
+        : null;
+    return firstStepVariables && Object.keys(firstStepVariables).length > 0
+      ? firstStepVariables
+      : null;
+  }, [initialVariablesOverride, trace]);
+
+  const assistantFocusedPanel = useMemo(
+    () =>
+      buildTraceFocusedPanelContext({
+        locale,
+        caseLabel: tCases(caseType),
+        traceKind: algorithmKind ?? traceConfig.kind,
+        inputSize: debouncedInputSize,
+        currentStepIndex: currentStep,
+        totalSteps,
+        currentStep: currentStepData,
+        initialVariables: assistantInitialVariables,
+        structuredTrace: structuredDiagram,
+        traceSummary: trace?.ok ? trace.trace?.summary : undefined,
+        loading,
+        error,
+        fetchCompleted,
+      }),
+    [
+      algorithmKind,
+      assistantInitialVariables,
+      caseType,
+      currentStep,
+      currentStepData,
+      debouncedInputSize,
+      error,
+      fetchCompleted,
+      loading,
+      locale,
+      structuredDiagram,
+      tCases,
+      totalSteps,
+      trace,
+      traceConfig.kind,
+    ],
+  );
+
+  useEffect(() => {
+    onAssistantFocusedPanelChange?.(assistantFocusedPanel);
+  }, [assistantFocusedPanel, onAssistantFocusedPanelChange]);
+
+  useEffect(
+    () => () => {
+      onAssistantFocusedPanelChange?.(null);
+    },
+    [onAssistantFocusedPanelChange],
+  );
 
   return (
     <div className="flex flex-col h-full min-h-0">

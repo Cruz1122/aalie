@@ -29,8 +29,8 @@ Cubre frontend, BFF LLM y backend API.
 | `API_INTERNAL_BASE_URL` | URL interna backend en SSR/Docker | opcional |
 | `DOCKER` | activa fallback `http://api:8000` | opcional |
 | `NODE_ENV` | comportamiento de build/debug del frontend | opcional |
-| `NEXT_PUBLIC_API_KEY` | fallback pública de API key | opcional |
-| `API_KEY` | API key del servidor para Gemini | opcional |
+| `NEXT_PUBLIC_API_KEY` | fallback pública heredada para cliente; no debe usarse como mecanismo principal de despliegue | opcional |
+| `API_KEY` | API key del servidor para Gemini y fuente preferida para habilitar funciones LLM | opcional |
 | `GEMINI_ENDPOINT_BASE` | endpoint base del proveedor | opcional |
 | `LLM_MODEL_PARSER_ASSIST` | modelo por job | opcional |
 | `LLM_MODEL_GENERAL` | modelo por job | opcional |
@@ -53,7 +53,18 @@ Cubre frontend, BFF LLM y backend API.
 ## Ejemplos
 
 - en Docker web usa `API_INTERNAL_BASE_URL=http://api:8000`;
-- para soporte LLM servidor se configura `API_KEY`.
+- para soporte LLM servidor se configura `API_KEY`;
+- el asistente embebido se habilita solo si existe `API_KEY` válida en servidor o API key válida almacenada localmente por el usuario;
+- con `API_KEY` válida, el BFF `/api/llm` no necesita que el navegador reenvíe una key en cada apertura del chat.
+
+## Comportamiento del asistente embebido
+
+- superficies: `/analyzer`, `/examples`, `/user-guide`;
+- activación: `getApiKeyStatus().hasAny === true`;
+- sin key válida: no se renderiza launcher ni iframe;
+- con key válida: se muestra launcher flotante y el iframe interno comparte UI con el chatbot base;
+- el contexto se sincroniza por `postMessage` mismo-origen y cambia en vivo con la vista actual;
+- el historial embebido persiste entre navegación y es independiente del chatbot de home.
 
 ## Limites conocidos
 

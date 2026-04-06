@@ -958,12 +958,16 @@
     "assistantTitle": "Experto en Interacción en Vivo de Análisis Algorítmico",
     "clearConversation": "Limpiar conversación",
     "backToHome": "Volver al inicio",
+    "closeAssistant": "Cerrar asistente",
     "unavailable": "AALIE no disponible",
     "apiKeyRequired": "AALIE requiere una API Key de Gemini para funcionar. Configura tu API Key para habilitar las funciones con IA. Puedes obtenerla en",
     "placeholder": "Escribe tu mensaje...",
     "helpRequest": "Ayúdame a solucionar este error",
     "retry": "Reintentar",
-    "errorGeneric": "Disculpa, tuve un problema al procesar tu mensaje. ¿Podrías intentarlo de nuevo?"
+    "errorGeneric": "Disculpa, tuve un problema al procesar tu mensaje. ¿Podrías intentarlo de nuevo?",
+    "launcherAriaLabel": "Abrir asistente de análisis",
+    "embeddedFrameTitle": "Asistente de análisis embebido",
+    "embeddedWelcome": "Soy AALIE. Puedo ayudarte a explicar lo que estás viendo, orientar los siguientes pasos y ampliar el contexto, pero el análisis formal de la app sigue siendo la fuente de verdad."
   },
   "userGuide": {
     "title": "Guía de Usuario",

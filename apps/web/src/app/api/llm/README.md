@@ -30,6 +30,7 @@
   const model = config.model;
   ```
 - Los endpoints nunca almacenan lógica de modelo o prompt localmente.
+- `POST /api/llm` acepta `assistantContext` opcional para serializar contexto curado de `/analyzer`, `/examples` y `/user-guide` sin duplicar prompts por superficie.
 
 ### Consumo de status/modelos activos
 
@@ -101,6 +102,14 @@ fetch("/api/llm/status")
     // Mostrar badge, usar para analytics, etc.
   });
 ```
+
+### Contexto estructurado del asistente embebido
+
+- Cuando el chat se usa desde el iframe embebido, el frontend envía `assistantContext` con la superficie (`analyzer`, `examples`, `user-guide`), metadatos de la vista y, si aplica, un resumen formal curado.
+- El endpoint transforma ese contexto en un preámbulo determinista y agrega reglas explícitas para que el asistente trate el análisis formal como fuente de verdad.
+- Si existe un panel o modal en foco, ese bloque se serializa antes que el análisis formal para darle prioridad semántica en preguntas ambiguas.
+- En `analyzer` el contexto puede incluir seguimiento de ejecución con resumen curado del diagrama visible, parámetros iniciales, paso activo y patrón estructural detectado.
+- El asistente embebido persiste historial entre navegación y mantiene una conversación separada del chatbot de home.
 
 ---
 

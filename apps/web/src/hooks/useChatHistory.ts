@@ -1,21 +1,49 @@
 import { useEffect, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
+
+import type {
+  AssistantSurface,
+  ChatMessage as Message,
+} from "@/lib/assistant/types";
 
 /**
  * Interfaz para mensajes del chat.
  */
-interface Message {
-  id: string;
-  content: string;
-  sender: "user" | "bot";
-  timestamp: Date;
-  isError?: boolean;
-  retryMessageId?: string;
+const STORAGE_KEY = "aa_chat_messages";
+const EMBEDDED_ASSISTANT_STORAGE_KEY = "aa_embedded_assistant_messages";
+
+type ChatHistoryStorageMode = "session" | "local";
+
+interface UseChatHistoryOptions {
+  storage?: ChatHistoryStorageMode;
+  fallbackStorage?: ChatHistoryStorageMode;
 }
 
-const STORAGE_KEY = "aa_chat_messages";
+interface UseChatHistoryResult {
+  messages: Message[];
+  setMessages: Dispatch<SetStateAction<Message[]>>;
+  isReady: boolean;
+}
+
+function getStorage(mode: ChatHistoryStorageMode): Storage | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return mode === "local" ? window.localStorage : window.sessionStorage;
+}
+
+export function getAssistantChatStorageKey(surface: AssistantSurface) {
+  void surface;
+  return EMBEDDED_ASSISTANT_STORAGE_KEY;
+}
+
+export function getEmbeddedAssistantChatStorageKey() {
+  return EMBEDDED_ASSISTANT_STORAGE_KEY;
+}
 
 /**
- * Hook para gestionar el historial de mensajes del chat con persistencia en sessionStorage.
+ * Hook para gestionar el historial de mensajes del chat con persistencia configurable.
  * Restaura el historial al montar y lo guarda automáticamente en cada cambio.
  *
  * @returns Objeto con los mensajes y función para actualizarlos
@@ -26,17 +54,44 @@ const STORAGE_KEY = "aa_chat_messages";
  * const { messages, setMessages } = useChatHistory();
  * ```
  */
-export function useChatHistory() {
+export function useChatHistory(
+  storageKey = STORAGE_KEY,
+  options: UseChatHistoryOptions = {},
+): UseChatHistoryResult {
+  const storageMode = options.storage ?? "session";
+  const fallbackStorageMode = options.fallbackStorage;
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isReady, setIsReady] = useState(false);
 
-  // Restaurar historial desde sessionStorage al montar
+  // Restaurar historial desde el storage configurado al montar
   useEffect(() => {
+    setIsReady(false);
+
     try {
-      const raw = sessionStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+      const storage = getStorage(storageMode);
+      const fallbackStorage =
+        fallbackStorageMode != null ? getStorage(fallbackStorageMode) : null;
+
+      let raw = storage?.getItem(storageKey) ?? null;
+      if (!raw && fallbackStorage) {
+        raw = fallbackStorage.getItem(storageKey);
+        if (raw && storage) {
+          storage.setItem(storageKey, raw);
+        }
+      }
+
+      if (!raw) {
+        setMessages([]);
+        setIsReady(true);
+        return;
+      }
 
       const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return;
+      if (!Array.isArray(parsed)) {
+        setMessages([]);
+        setIsReady(true);
+        return;
+      }
 
       setMessages(
         parsed.map((m: unknown) => {
@@ -52,23 +107,34 @@ export function useChatHistory() {
         }),
       );
     } catch {
-      // noop
+      setMessages([]);
+    } finally {
+      setIsReady(true);
     }
-  }, []);
+  }, [fallbackStorageMode, storageKey, storageMode]);
 
-  // Guardar historial en sessionStorage en cada cambio
+  // Guardar historial en el storage configurado en cada cambio
   useEffect(() => {
+    if (!isReady) {
+      return;
+    }
+
     try {
+      const storage = getStorage(storageMode);
+      if (!storage) {
+        return;
+      }
+
       const serializable = messages.map((m: Message) => ({
         ...m,
         timestamp:
           m.timestamp instanceof Date ? m.timestamp.toISOString() : m.timestamp,
       }));
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
+      storage.setItem(storageKey, JSON.stringify(serializable));
     } catch {
       // noop
     }
-  }, [messages]);
+  }, [isReady, messages, storageKey, storageMode]);
 
-  return { messages, setMessages };
+  return { messages, setMessages, isReady };
 }

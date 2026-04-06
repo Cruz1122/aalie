@@ -51,10 +51,18 @@ Cubre flujo manual, ejemplos, `.txt`, trace, loop invariant, GPU/CPU y comparaci
 ### Herramientas auxiliares
 
 - panel lateral de ayuda de escritura;
-- `loopInvariant`
-- `trace`
-- `GPU vs CPU`
+- `loopInvariant`;
+- `trace`;
+- `GPU vs CPU`;
 - comparación con LLM
+
+### Flujo con asistente embebido
+
+- abrir `/analyzer` con API key válida disponible;
+- usar el launcher flotante de la esquina inferior derecha;
+- si hay un modal o panel abierto, las preguntas ambiguas como "que es esto" o "que paso aqui" se responden primero respecto a esa vista;
+- si no hay modal en foco, el asistente toma como base la vista activa del analizador y el resumen formal disponible;
+- en seguimiento, el contexto incluye parametros visibles, paso actual y un resumen curado del diagrama, y se actualiza cuando cambian caso, `n` o variables iniciales.
 
 ## Ejemplos
 
@@ -63,6 +71,7 @@ Cubre flujo manual, ejemplos, `.txt`, trace, loop invariant, GPU/CPU y comparaci
 ## Limites conocidos
 
 - LLM y comparación pueden no estar disponibles.
+- el asistente no sustituye resultados formales; explica o amplia sobre lo visible.
 
 ## Archivos relacionados
 
