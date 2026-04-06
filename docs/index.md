@@ -96,13 +96,19 @@ Contrato obligatorio:
 
 1. `08-content/content-model.md`
 2. `08-content/course-json-schema.md`
-3. `08-content/quiz-json-schema.md`
-4. `08-content/authoring-guide.md`
+3. `08-content/block-json-schema.md`
+4. `08-content/inline-rich-text-schema.md`
+5. `08-content/content-validation.md`
+6. `08-content/search-indexing.md`
+7. `08-content/progress-model.md`
+8. `08-content/quiz-json-schema.md`
+9. `08-content/authoring-guide.md`
 
 ## Ejemplos
 
 - Si una ruta HTTP cambia, actualizar primero `04-api/` y luego validar `scripts/check_docs_contracts.py`.
 - Si una regla de WHILE cambia, actualizar `03-specs/while-heuristics-spec.md`, el ADR relevante si cambia una decisión, y los tests contract.
+- Si cambia el contrato de contenido, actualizar `08-content/`, `packages/content-catalog/` y el ADR `09-decisions/adr-008-unified-content-spaces.md`.
 
 ## Límites conocidos
 

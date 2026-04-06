@@ -11,6 +11,7 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "test:docs-contracts": "python3 scripts/check_docs_contracts.py",
+    "validate:content-catalog": "pnpm -C packages/content-catalog validate",
     "lint:web": "pnpm -C apps/web lint",
     "lint:web:fix": "pnpm -C apps/web lint:fix",
     "format:web": "pnpm -C apps/web format",

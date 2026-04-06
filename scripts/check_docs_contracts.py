@@ -63,6 +63,11 @@ REQUIRED_FILES = [
     "07-user/faq.md",
     "08-content/content-model.md",
     "08-content/course-json-schema.md",
+    "08-content/block-json-schema.md",
+    "08-content/inline-rich-text-schema.md",
+    "08-content/content-validation.md",
+    "08-content/search-indexing.md",
+    "08-content/progress-model.md",
     "08-content/quiz-json-schema.md",
     "08-content/authoring-guide.md",
     "09-decisions/adr-001-docs-restructure.md",
@@ -72,6 +77,7 @@ REQUIRED_FILES = [
     "09-decisions/adr-005-frontend-llm-configuration.md",
     "09-decisions/adr-006-no-fallback-ui-for-inconclusive-main-path.md",
     "09-decisions/adr-007-versioned-schemas.md",
+    "09-decisions/adr-008-unified-content-spaces.md",
 ]
 
 REMOVED_LEGACY_PATHS = [

@@ -4,66 +4,80 @@
 
 ## Propósito
 
-Definir el contrato de módulos de contenido antes de su render automático en la app.
+Definir el contrato operativo que conecta el catálogo de contenido con el renderer futuro y con la validación automática del repo.
 
 ## Alcance
 
-Aplica a curso, módulo, capítulo, bloques y referencias internas.
+Aplica a espacios, módulos, capítulos, secciones, bloques, referencias internas, búsqueda y progreso.
 
 ## Fuente de verdad
 
 - `08-content/content-model.md`
 - `08-content/course-json-schema.md`
+- `packages/content-catalog/`
 
 ## Estructura
 
-### Entidades previstas
+### Entidades contractuales
 
-- curso;
-- módulo;
-- capítulo;
-- bloque de contenido;
-- referencias cruzadas, assets y metadata pedagogica.
+- `space`;
+- `module`;
+- `chapter`;
+- `section`;
+- `block`;
+- `resource`;
+- `term`.
 
 ## Inputs
 
-- JSON del curso;
-- assets y referencias internas;
-- metadata de render.
+- `space.json` descubierto en `catalog/spaces/*/*/`;
+- módulos `*.module.json` descubiertos en `modules/`;
+- resources y references declaradas por módulo;
+- estado de secciones completadas para progreso.
 
 ## Outputs
 
-- estructura normalizada consumible por renderer futuro;
-- validación automática del authoring.
+- bundles normalizados con rutas derivadas;
+- índice de búsqueda desde JSON;
+- porcentaje de progreso por módulo;
+- reporte de validación schema + semántica.
 
 ## Invariantes
 
-- agregar contenido no debe exigir tocar lógica de render;
-- la jerarquía curso -> módulo -> capítulo es estable;
-- los bloques deben ser serializables y renderizables sin inferencia ad hoc.
+- agregar un módulo no exige tocar rutas ni componentes específicos;
+- la jerarquía estable es `space -> module -> chapter -> section -> block`;
+- el renderer decide solo por `block.type` y `target.kind`;
+- la búsqueda no depende del DOM renderizado;
+- el progreso se calcula por `section`.
 
 ## Errores esperables
 
-- ids duplicados;
-- referencias a assets o módulos inexistentes;
-- bloques sin tipo renderizable.
+- schema inválido;
+- `spaceId` o `locale` inconsistentes con el directorio;
+- IDs duplicados u órdenes repetidos;
+- recursos, términos o targets internos rotos;
+- módulos publicados sin progreso computable.
 
 ## Ejemplos
 
 ### Ejemplos validos
 
-- curso con módulos, capítulos y bloques `markdown`, `formula`, `callout`.
+- `/user-guide` y `/course` descubiertos como espacios distintos con el mismo contrato.
+- módulo teórico con `theorem`, `proof`, `exercise` y `figure` sin lógica ad hoc.
 
 ### Ejemplos no soportados
 
-- contenido cuya estructura dependa de código custom por módulo;
-- bloques sin tipo ni payload validable.
+- contenido que requiera componentes exclusivos por `moduleId`;
+- módulos cuyo route path venga hardcodeado fuera de `space.slug` y `module.slug`;
+- bloques libres de tipo `markdown` o `html`.
 
 ## Limites conocidos
 
-- Esta spec es pre-implementación; no documenta una página de contenido ya disponible en la app.
+- esta spec no ejecuta aún la migración de la UI viva a páginas genéricas de contenido;
+- la persistencia cross-device de progreso queda fuera de esta fase.
 
 ## Archivos relacionados
 
 - `quizzes-spec.md`
 - `../08-content/course-json-schema.md`
+- `../09-decisions/adr-008-unified-content-spaces.md`

@@ -4,43 +4,67 @@
 
 ## Propósito
 
-Definir reglas para crear contenido y quizzes sin tocar lógica de render.
+Dar una convención operativa clara para crear o ampliar espacios y módulos sin tocar código de render ni rutas.
 
 ## Alcance
 
-Aplica a autores de JSON de curso y de preguntas.
+Aplica a autores de contenido en `packages/content-catalog/catalog/` y a quienes mantengan los schemas y validaciones asociadas.
 
 ## Fuente de verdad
 
-- `content-model.md`
+- `packages/content-catalog/catalog/`
+- `packages/content-catalog/scripts/validate-content-catalog.ts`
 - `course-json-schema.md`
-- `quiz-json-schema.md`
 
 ## Estructura
 
-### Reglas
+### Layout oficial
 
-- ids estables y únicos;
-- versión explícita del documento;
-- referencias internas validables;
-- bloques y preguntas con tipo determinista;
-- feedback siempre enlazado a contenido relevante.
+- `packages/content-catalog/catalog/spaces/<spaceId>/<locale>/space.json`
+- `packages/content-catalog/catalog/spaces/<spaceId>/<locale>/modules/<order>-<slug>.module.json`
 
-### Validaciones
+### Checklist para crear un espacio nuevo
 
-- no repetir ids;
-- no dejar referencias rotas;
-- no mezclar campos de tipos distintos en un mismo bloque/pregunta.
+- crear `space.json` con `spaceId`, `slug`, `kind`, `search` y `progress`;
+- usar un `slug` que defina la ruta pública del espacio;
+- crear al menos un módulo publicado o draft bajo `modules/`.
+
+### Checklist para crear un módulo nuevo
+
+- elegir `moduleId` con prefijo `mod-`;
+- usar filename `NN-slug.module.json`;
+- declarar `chapters[]`, `sections[]` y `blocks[]` tipados;
+- completar `searchMeta`, `tags`, `learningObjectives` cuando apliquen;
+- ejecutar `pnpm -C packages/content-catalog validate`.
+
+### Reglas de authoring
+
+- no duplicar lógica de UI dentro del JSON;
+- no usar HTML o Markdown libre como contrato;
+- declarar recursos una sola vez y referenciarlos por ID;
+- usar `target.kind + target.ref` para navegación interna;
+- usar `section` como unidad de lectura/progreso en v1.
+
+### Errores frecuentes
+
+- filename que no coincide con `order + slug`;
+- `sectionId` o `block.id` duplicados;
+- `resourceRef` sin resource declarado;
+- `solutionRef` apuntando a un bloque inexistente;
+- olvidar `trackProgress` en una sección publicada.
 
 ## Ejemplos
 
-- agregar un capítulo nuevo solo debe modificar JSON, no código.
+- la guía de usuario ya existe como `spaceId = user-guide` con módulo `mod-guia-de-uso`.
+- el curso teórico ya existe como `spaceId = theory` y `slug = course`.
 
 ## Limites conocidos
 
-- hasta que exista renderer de contenido, esta guía funciona como contrato previo de authoring.
+- v1 no ofrece aún editor visual de authoring;
+- assets backend se referencian por `assetId`, pero su gestión fuera del catálogo sigue siendo externa.
 
 ## Archivos relacionados
 
 - `course-json-schema.md`
-- `quiz-json-schema.md`
+- `content-validation.md`
+- `progress-model.md`

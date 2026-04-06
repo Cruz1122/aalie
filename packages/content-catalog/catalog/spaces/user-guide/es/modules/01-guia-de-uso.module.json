@@ -1,0 +1,439 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-guia-de-uso",
+  "slug": "guia-de-uso",
+  "title": "Guia de uso de AALIE",
+  "shortTitle": "Guia de uso",
+  "order": 1,
+  "locale": "es",
+  "version": "1.0.0",
+  "status": "published",
+  "summary": "Recorre editor, sintaxis visible, analisis y soporte desde un solo contrato declarativo.",
+  "difficulty": "foundational",
+  "estimatedMinutes": 45,
+  "tags": ["guia", "editor", "gramatica", "analisis"],
+  "searchMeta": {
+    "aliases": ["manual de uso", "documentacion de usuario"],
+    "keywords": ["monaco", "shortcuts", "pseudocodigo", "aalie"]
+  },
+  "prerequisites": {
+    "modules": [],
+    "sections": []
+  },
+  "relatedModuleIds": [],
+  "learningObjectives": [
+    {
+      "objectiveId": "usar-editor",
+      "text": "Identificar el flujo operativo del editor y las ayudas visibles."
+    },
+    {
+      "objectiveId": "leer-resultados",
+      "text": "Reconocer donde se leen resultados, errores y rutas de soporte."
+    }
+  ],
+  "resources": {
+    "images": [
+      {
+        "resourceId": "img-editor-overview",
+        "kind": "image",
+        "source": {
+          "kind": "backendAsset",
+          "assetId": "asset_user_guide_editor"
+        },
+        "alt": "Vista general del editor y sus paneles.",
+        "caption": "El editor concentra escritura, validacion y acciones de analisis."
+      }
+    ],
+    "figures": [],
+    "references": [
+      {
+        "resourceId": "ref-examples-catalog",
+        "kind": "reference",
+        "label": "Catalogo de ejemplos de AALIE",
+        "refType": "website",
+        "url": "https://aalie.dev/examples"
+      }
+    ]
+  },
+  "terms": [
+    {
+      "termId": "term-monaco-editor",
+      "label": "Monaco Editor",
+      "aliases": ["editor Monaco"],
+      "definition": "Editor embebido que ofrece resaltado, errores y ayudas de escritura en tiempo real."
+    },
+    {
+      "termId": "term-pseudocodigo-estructurado",
+      "label": "Pseudocodigo estructurado",
+      "aliases": ["pseudocodigo"],
+      "definition": "Lenguaje visible de entrada con asignacion, control de flujo y procedimientos compatibles con el parser."
+    },
+    {
+      "termId": "term-aalie-assistant",
+      "label": "AALIE",
+      "aliases": ["assistant", "asistente"],
+      "definition": "Asistente embebido que puede explicar, analizar y sugerir acciones a partir del contexto actual."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-introduccion-y-editor",
+      "slug": "introduccion-y-editor",
+      "title": "Introduccion y editor",
+      "order": 1,
+      "summary": "Base operativa para entrar a la app y trabajar con el editor.",
+      "sections": [
+        {
+          "sectionId": "sec-introduccion",
+          "slug": "introduccion",
+          "title": "Que hace AALIE y como esta organizada la guia",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 5,
+          "learningObjectives": [
+            {
+              "objectiveId": "ubicar-superficies",
+              "text": "Ubicar guia, editor y catalogo de ejemplos en la misma experiencia."
+            }
+          ],
+          "searchMeta": {
+            "aliases": ["bienvenida"],
+            "keywords": ["guia", "cards", "modulos"]
+          },
+          "blocks": [
+            {
+              "id": "blk-intro-heading",
+              "type": "heading",
+              "level": 2,
+              "content": [
+                { "type": "text", "text": "Panorama general" }
+              ]
+            },
+            {
+              "id": "blk-intro-paragraph",
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "AALIE permite escribir " },
+                { "type": "term", "text": "pseudocodigo estructurado", "termRef": "term-pseudocodigo-estructurado", "display": "tooltip" },
+                { "type": "text", "text": ", analizar complejidad y recibir ayuda contextual desde " },
+                { "type": "strong", "text": "una misma interfaz" },
+                { "type": "text", "text": "." }
+              ]
+            },
+            {
+              "id": "blk-intro-paragraph-examples",
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Si quieres practicar de inmediato, visita " },
+                { "type": "link", "text": "Ejemplos", "target": { "kind": "external", "ref": "/examples" } },
+                { "type": "text", "text": " o salta a la seccion de " },
+                { "type": "link", "text": "asignacion", "target": { "kind": "section", "ref": "sec-sintaxis-asignacion" } },
+                { "type": "text", "text": "." }
+              ]
+            },
+            {
+              "id": "blk-intro-image",
+              "type": "image",
+              "resourceRef": "img-editor-overview",
+              "display": {
+                "width": "large",
+                "captionPosition": "bottom"
+              }
+            },
+            {
+              "id": "blk-intro-note",
+              "type": "note",
+              "variant": "info",
+              "title": "Principio de navegacion",
+              "blocks": [
+                {
+                  "id": "blk-intro-note-paragraph",
+                  "type": "paragraph",
+                  "content": [
+                    { "type": "text", "text": "La guia y los cursos teoricos deben renderizarse con la misma logica de descubrimiento, rutas y bloques." }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-intro-buttons",
+              "type": "buttonRow",
+              "buttons": [
+                {
+                  "label": "Ir a ejemplos",
+                  "target": { "kind": "external", "ref": "/examples" },
+                  "variant": "primary"
+                },
+                {
+                  "label": "Ver sintaxis de asignacion",
+                  "target": { "kind": "section", "ref": "sec-sintaxis-asignacion" },
+                  "variant": "ghost"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-editor-productivo",
+          "slug": "editor-productivo",
+          "title": "Trabajo productivo en el editor",
+          "order": 2,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 8,
+          "prerequisites": {
+            "sections": [
+              { "id": "sec-introduccion", "kind": "required" }
+            ]
+          },
+          "searchMeta": {
+            "aliases": ["uso del editor"],
+            "keywords": ["autocompletado", "atajos", "validacion"]
+          },
+          "blocks": [
+            {
+              "id": "blk-editor-paragraph",
+              "type": "paragraph",
+              "content": [
+                { "type": "term", "text": "Monaco Editor", "termRef": "term-monaco-editor", "display": "tooltip" },
+                { "type": "text", "text": " concentra escritura, diagnosticos y acciones de analisis sin exigir pasos manuales fuera del flujo principal." }
+              ]
+            },
+            {
+              "id": "blk-editor-list",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    { "type": "text", "text": "Autocompletado contextual con prioridad para variables y snippets locales." }
+                  ]
+                },
+                {
+                  "content": [
+                    { "type": "text", "text": "Numeracion de lineas, indentacion y busqueda/reemplazo en el mismo panel." }
+                  ]
+                },
+                {
+                  "content": [
+                    { "type": "text", "text": "Errores y advertencias visibles antes de lanzar un analisis completo." }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-editor-table",
+              "type": "table",
+              "title": "Atajos visibles",
+              "columns": [
+                { "key": "shortcut", "label": "Atajo" },
+                { "key": "action", "label": "Accion" }
+              ],
+              "rows": [
+                { "cells": [[{ "type": "inlineCode", "text": "Ctrl+S" }], [{ "type": "text", "text": "Analizar o guardar cambios segun la superficie." }]] },
+                { "cells": [[{ "type": "inlineCode", "text": "Ctrl+F" }], [{ "type": "text", "text": "Buscar dentro del documento." }]] },
+                { "cells": [[{ "type": "inlineCode", "text": "Ctrl+H" }], [{ "type": "text", "text": "Reemplazar coincidencias." }]] },
+                { "cells": [[{ "type": "inlineCode", "text": "Ctrl+/" }], [{ "type": "text", "text": "Comentar o descomentar lineas." }]] },
+                { "cells": [[{ "type": "inlineCode", "text": "Tab" }], [{ "type": "text", "text": "Indentar el bloque seleccionado." }]] },
+                { "cells": [[{ "type": "inlineCode", "text": "Shift+Tab" }], [{ "type": "text", "text": "Quitar indentacion." }]] }
+              ]
+            },
+            {
+              "id": "blk-editor-cheatsheet",
+              "type": "cheatsheet",
+              "title": "Reglas rapidas del editor",
+              "items": [
+                {
+                  "label": "Validacion",
+                  "value": [{ "type": "text", "text": "Los errores sintacticos aparecen antes del analisis." }]
+                },
+                {
+                  "label": "Autocompletado",
+                  "value": [{ "type": "text", "text": "Se adapta al locale y al contexto actual." }]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "chapterId": "cap-gramatica-y-soporte",
+      "slug": "gramatica-y-soporte",
+      "title": "Gramatica visible y soporte",
+      "order": 2,
+      "sections": [
+        {
+          "sectionId": "sec-sintaxis-procedimientos",
+          "slug": "sintaxis-procedimientos",
+          "title": "Procedimientos y estructura base",
+          "order": 1,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 7,
+          "searchMeta": {
+            "aliases": ["procedimientos"],
+            "keywords": ["begin", "end", "parametros"]
+          },
+          "blocks": [
+            {
+              "id": "blk-proc-paragraph",
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Todo procedimiento visible conserva una forma canonica con nombre, parametros y bloque " },
+                { "type": "inlineCode", "text": "BEGIN ... END" },
+                { "type": "text", "text": "." }
+              ]
+            },
+            {
+              "id": "blk-proc-algorithm",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Plantilla minima",
+              "code": "nombreProcedimiento(parametros) BEGIN\n    sentencias...\nEND",
+              "caption": "Forma base visible en la guia."
+            },
+            {
+              "id": "blk-proc-definition",
+              "type": "definition",
+              "title": "Formas comunes de firma",
+              "blocks": [
+                {
+                  "id": "blk-proc-definition-paragraph",
+                  "type": "paragraph",
+                  "content": [
+                    { "type": "text", "text": "La firma puede incluir escalares, arreglos dimensionados y parametros con tipos pedagogicos." }
+                  ]
+                },
+                {
+                  "id": "blk-proc-definition-list",
+                  "type": "list",
+                  "style": "unordered",
+                  "items": [
+                    { "content": [{ "type": "inlineCode", "text": "factorial(n)" }] },
+                    { "content": [{ "type": "inlineCode", "text": "buscar(A[n], x)" }] },
+                    { "content": [{ "type": "inlineCode", "text": "procesar(Lista lista)" }] }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-sintaxis-asignacion",
+          "slug": "sintaxis-asignacion",
+          "title": "Variables y asignacion",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 6,
+          "prerequisites": {
+            "sections": [
+              { "id": "sec-sintaxis-procedimientos", "kind": "recommended" }
+            ]
+          },
+          "searchMeta": {
+            "aliases": ["asignacion"],
+            "keywords": ["<-", ":=", "unicode"]
+          },
+          "blocks": [
+            {
+              "id": "blk-asig-paragraph",
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "La guia recomienda " },
+                { "type": "inlineCode", "text": "<-" },
+                { "type": "text", "text": " como operador principal de asignacion, aunque el parser reconoce variantes pedagogicas." }
+              ]
+            },
+            {
+              "id": "blk-asig-code",
+              "type": "code",
+              "language": "pseudocode",
+              "title": "Variantes aceptadas",
+              "code": "variable <- expresion;\nvariable := expresion;\nvariable <- resultado + 1;"
+            },
+            {
+              "id": "blk-asig-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "Consistencia visible",
+              "blocks": [
+                {
+                  "id": "blk-asig-note-paragraph",
+                  "type": "paragraph",
+                  "content": [
+                    { "type": "text", "text": "Usar un solo estilo por documento reduce ruido al validar y explicar errores." }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-analisis-y-soporte",
+          "slug": "analisis-y-soporte",
+          "title": "Analisis, resultados y soporte",
+          "order": 3,
+          "kind": "troubleshooting",
+          "trackProgress": true,
+          "estimatedMinutes": 9,
+          "searchMeta": {
+            "aliases": ["errores frecuentes"],
+            "keywords": ["unexpected token", "missing begin", "api"]
+          },
+          "blocks": [
+            {
+              "id": "blk-soporte-callout",
+              "type": "callout",
+              "title": "Como analizar desde el editor",
+              "blocks": [
+                {
+                  "id": "blk-soporte-callout-list",
+                  "type": "list",
+                  "style": "ordered",
+                  "items": [
+                    { "content": [{ "type": "text", "text": "Escribe o importa pseudocodigo valido." }] },
+                    { "content": [{ "type": "text", "text": "Corrige errores marcados por el editor." }] },
+                    { "content": [{ "type": "text", "text": "Lanza el analisis y revisa costos por linea, casos y trazas." }] }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-soporte-quote",
+              "type": "quote",
+              "content": [
+                { "type": "text", "text": "La mejor ruta de soporte es corregir primero la sintaxis visible y solo despues pedir ayuda asistida." }
+              ],
+              "attribution": "Convencion operativa de la guia"
+            },
+            {
+              "id": "blk-soporte-reference-list",
+              "type": "referenceList",
+              "references": ["ref-examples-catalog"]
+            },
+            {
+              "id": "blk-soporte-divider",
+              "type": "divider"
+            },
+            {
+              "id": "blk-soporte-paragraph",
+              "type": "paragraph",
+              "content": [
+                { "type": "text", "text": "Errores comunes: " },
+                { "type": "highlight", "text": "unexpected token", "tone": "red" },
+                { "type": "text", "text": ", " },
+                { "type": "highlight", "text": "missing BEGIN or END", "tone": "yellow" },
+                { "type": "text", "text": " y falta de punto y coma." }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

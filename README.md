@@ -141,8 +141,8 @@ El backend (Python) NO forma parte de los workspaces de pnpm.
 - [x] Tests exhaustivos
 
 **Documentación:**
-- [x] Documentación de API (`docs/api/`)
-- [x] Documentación de aplicación web (`docs/app/`)
+- [x] Documentación contractual centralizada en `docs/`
+- [x] Catálogo unificado de contenido en `packages/content-catalog/`
 - [x] Guía de usuario rediseñada
 - [x] README completo
 
@@ -307,11 +307,16 @@ algorithmic-analysis/
 │   ├── grammar/          # Gramática ANTLR4 y codegen (TS/Py)
 │   │   ├── grammar/      # Archivos .g4
 │   │   └── src/          # Parsers generados
+│   ├── content-catalog/  # Schemas, catálogo y validación de contenido
+│   │   ├── catalog/      # Espacios y módulos JSON
+│   │   ├── schemas/      # JSON Schemas del contrato
+│   │   └── src/          # Discovery, search, progress y validate
 │   └── types/            # Tipos compartidos (TypeScript)
 │       └── src/          # Definiciones de tipos
-├── docs/                 # Documentación técnica
-│   ├── api/              # Documentación de API
-│   └── app/              # Documentación de aplicación web
+├── docs/                 # Documentación contractual y operativa
+│   ├── 03-specs/         # Specs del motor y catálogos
+│   ├── 08-content/       # Contrato del contenido unificado
+│   └── 09-decisions/     # ADRs
 ├── infra/                # Docker Compose
 └── pnpm-workspace.yaml   # Configuración de workspaces
 ```
@@ -324,45 +329,16 @@ Incluyen solo `apps/web` y `packages/*` para evitar mezclar Python con Node.
 
 ### Documentación Técnica
 
-- **[Documentación de API](docs/api/README.md)** - Endpoints, modelos, arquitectura
-  - [Endpoints REST](docs/api/endpoints.md)
-  - [Modelos de Datos](docs/api/models.md)
-  - [Arquitectura del Backend](docs/api/architecture.md)
-  - [Manejo de Errores](docs/api/errors.md)
-  - **Nuevos documentos técnicos:**
-    - [Trace Endpoint](docs/api/trace-endpoint.md) - Funcionamiento del endpoint `/trace`
-    - [Análisis Recursivo](docs/api/recursive-analysis.md) - Detección de métodos y análisis
-    - [Integración de SymPy](docs/api/sympy-integration.md) - Uso de SymPy para matemáticas simbólicas
-
-- **[Documentación de Aplicación Web](docs/app/README.md)** - Frontend, componentes, routing
-  - [Arquitectura](docs/app/architecture.md)
-  - [Componentes](docs/app/components.md)
-  - [Sistema de Rutas](docs/app/routing.md)
-  - [Gestión de Estado](docs/app/state-management.md)
-  - [Sistema de Diseño](docs/app/styling.md)
-  - [Integración con API](docs/app/api-integration.md)
-  - **Documentos técnicos adicionales:**
-    - [React Flow](docs/app/react-flow.md) - Visualización de diagramas interactivos
-    - [GPU vs CPU Comparison](docs/app/gpu-cpu-comparison.md) - Sistema de análisis GPU/CPU
-    - [LLM Comparison](docs/app/llm-comparison.md) - Comparación con análisis de LLM
-    - [Pseudocode Tracking](docs/app/pseudocode-tracking.md) - Seguimiento de ejecución
-    - [API Key Configuration](docs/app/api-key-configuration.md) - Configuración de API key
-    - [Internacionalización, Labels y Prompts](docs/app/i18n-labels-prompts.md) - i18n, labels y prompts parametrizados por idioma
-
-- **[Documentación de LLM](docs/llm/usage-and-models.md)** - Uso de modelos de lenguaje
-  - Jobs disponibles y modelos usados
-  - Configuración centralizada
-  - Endpoints de LLM
-
-- **[Documentación de Desarrollo](docs/development/request-flow.md)** - Flujo de peticiones
-  - Flujo completo desde frontend hasta backend
-  - Proxies de Next.js API routes
-  - Manejo de errores y estados de carga
+- **[Mapa principal de documentación](docs/README.md)** - Puerta de entrada contractual del repo.
+- **[Mapa de navegación](docs/index.md)** - Ruta corta para ubicar specs, API, calidad y contenido.
+- **[Contrato del catálogo unificado](docs/08-content/content-model.md)** - Modelo `space -> module -> chapter -> section -> block`.
+- **[Schemas y catálogo real](packages/content-catalog/)** - Implementación canónica de contenido, búsqueda, progreso y validación.
 
 ### Documentación de Usuario
 
-- **[Guía de Usuario](apps/web/src/app/user-guide/page.tsx)** - Tutorial completo en la aplicación
-- **[Gramática y Sintaxis](packages/grammar/grammar/README.md)** - Referencia de sintaxis
+- **[Guía de usuario contractual](docs/07-user/user-guide.md)** - Uso operativo del sistema.
+- **[Guía viva en la app](apps/web/src/app/[locale]/user-guide/page.tsx)** - UI actual aún no migrada al renderer genérico.
+- **[Gramática y sintaxis](docs/03-specs/pseudocode-grammar-spec.md)** - Contrato visible del lenguaje.
 
 ### Guía de Desarrollo
 
@@ -388,6 +364,9 @@ pytest tests/ --cov=app --cov-report=term --cov-report=html
 # Tests de la gramática
 cd packages/grammar
 npm run verify
+
+# Validar catálogo de contenido
+pnpm validate:content-catalog
 ```
 
 ### Cobertura de Código

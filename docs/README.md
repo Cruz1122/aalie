@@ -38,7 +38,7 @@ No es un repositorio de informes académicos ni de historiales de sprint.
 - `05-quality/`: estrategia de pruebas, oráculos, cobertura y rendimiento.
 - `06-operations/`: desarrollo local, variables de entorno, despliegue y soporte.
 - `07-user/`: guías operativas del usuario final.
-- `08-content/`: contratos normativos para contenido y quizzes.
+- `08-content/`: contratos normativos del catálogo unificado de contenido y quizzes.
 - `09-decisions/`: ADRs vigentes.
 
 Entradas recomendadas por perfil:
@@ -49,6 +49,7 @@ Entradas recomendadas por perfil:
 - Operación: `06-operations/local-development.md` -> `06-operations/troubleshooting.md`.
 - Usuario/docente: `07-user/user-guide.md`.
 - Autor de contenido: `08-content/authoring-guide.md`.
+- Implementación canónica del catálogo: `packages/content-catalog/`.
 
 ### Ruta crítica obligatoria
 
@@ -73,8 +74,8 @@ Si el cambio afecta interfaces externas, sumar además `04-api/` y `05-quality/t
 
 ## Limites conocidos
 
-- Algunas secciones de `08-content/` son contratos pre-implementación y no describen flujos ya disponibles en la app.
-- La documentación de usuario no cubre features no expuestas hoy en UI.
+- la migración de `/user-guide` al renderer genérico de contenido sigue siendo una fase posterior;
+- la documentación de usuario no cubre features no expuestas hoy en UI.
 
 ## Archivos relacionados
 
