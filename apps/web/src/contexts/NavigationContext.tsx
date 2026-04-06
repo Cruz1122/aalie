@@ -62,7 +62,7 @@ export function NavigationProvider({
   }, []);
 
   const startNavigation = useCallback(() => {
-    setIsLoading(true);
+    setIsLoading((previous) => (previous ? previous : true));
     // Auto-hide después de 10 segundos para evitar que se quede pegado si algo falla
     if (navigationTimeoutRef.current) {
       clearTimeout(navigationTimeoutRef.current);
@@ -73,7 +73,7 @@ export function NavigationProvider({
   }, []);
 
   const finishNavigation = useCallback(() => {
-    setIsLoading(false);
+    setIsLoading((previous) => (previous ? false : previous));
     if (navigationTimeoutRef.current) {
       clearTimeout(navigationTimeoutRef.current);
     }
