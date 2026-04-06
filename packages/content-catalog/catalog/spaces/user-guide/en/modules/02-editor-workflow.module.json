@@ -1,0 +1,433 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-editor",
+  "slug": "editor-workflow",
+  "title": "Editor workflow",
+  "shortTitle": "Editor",
+  "order": 2,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "published",
+  "summary": "Monaco, diagnostics, shortcuts, and the productive writing flow before formal analysis.",
+  "difficulty": "foundational",
+  "estimatedMinutes": 12,
+  "tags": [
+    "editor",
+    "monaco",
+    "validation",
+    "shortcuts"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "monaco editor",
+      "pseudocode editor"
+    ],
+    "keywords": [
+      "autocomplete",
+      "errors",
+      "ctrl+s",
+      "search"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-introduccion",
+        "kind": "recommended"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-introduccion",
+    "mod-user-guide-grammar"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-editor-flujo",
+      "text": "Work inside the editor without relying on steps outside the main workflow."
+    }
+  ],
+  "terms": [
+    {
+      "termId": "term-monaco-editor",
+      "label": "Monaco Editor",
+      "aliases": [
+        "Monaco"
+      ],
+      "definition": "Embedded editor with autocomplete, line numbers, search, and visible diagnostics."
+    },
+    {
+      "termId": "term-diagnostics",
+      "label": "diagnostics",
+      "aliases": [
+        "editor diagnostics"
+      ],
+      "definition": "Errors and warnings shown before a full formal analysis runs."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-editor-operativo",
+      "slug": "editor-basics",
+      "title": "Working productively in the editor",
+      "order": 1,
+      "summary": "Authoring, validation, and visible shortcuts.",
+      "sections": [
+        {
+          "sectionId": "sec-funciones-basicas",
+          "slug": "basic-features",
+          "title": "Basic features",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 4,
+          "searchMeta": {
+            "aliases": [
+              "editor usage"
+            ],
+            "keywords": [
+              "autocomplete",
+              "search",
+              "replace"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-editor-basic-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "term",
+                  "text": "Monaco Editor",
+                  "termRef": "term-monaco-editor",
+                  "display": "tooltip"
+                },
+                {
+                  "type": "text",
+                  "text": " keeps writing, highlighting, autocomplete, and analysis actions in the same surface."
+                }
+              ]
+            },
+            {
+              "id": "blk-editor-basic-list",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Context-aware autocomplete that prioritizes local variables, parameters, and short snippets."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Line numbers, indentation, search, and replace in the same panel."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Text import and editing before running complexity analysis."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-editor-basic-note",
+              "type": "note",
+              "variant": "success",
+              "title": "Recommended workflow",
+              "blocks": [
+                {
+                  "id": "blk-editor-basic-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Fix visible parse issues first, then run the analysis, and only after that open trace, export, or LLM comparison if they truly help."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-validacion-en-tiempo-real",
+          "slug": "real-time-validation",
+          "title": "Real-time validation",
+          "order": 2,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 4,
+          "searchMeta": {
+            "aliases": [
+              "diagnostics"
+            ],
+            "keywords": [
+              "unexpected token",
+              "parse",
+              "warning"
+            ]
+          },
+          "prerequisites": {
+            "sections": [
+              {
+                "id": "sec-funciones-basicas",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-editor-validation-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Before formal analysis, the UI shows parse "
+                },
+                {
+                  "type": "term",
+                  "text": "diagnostics",
+                  "termRef": "term-diagnostics",
+                  "display": "tooltip"
+                },
+                {
+                  "type": "text",
+                  "text": " and editor warnings so you can correct the code while you write."
+                }
+              ]
+            },
+            {
+              "id": "blk-editor-validation-list",
+              "type": "list",
+              "style": "ordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Syntax errors block strong formal conclusions until parsing is valid."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Warnings help detect incomplete blocks, mismatched delimiters, or suspicious structures."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "AI repair is optional and API-key dependent; it does not replace the project’s real grammar."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-editor-validation-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "What not to assume",
+              "blocks": [
+                {
+                  "id": "blk-editor-validation-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "A program that parses successfully does not guarantee that every later heuristic will produce a strong conclusion; this matters especially for "
+                    },
+                    {
+                      "type": "inlineCode",
+                      "text": "WHILE"
+                    },
+                    {
+                      "type": "text",
+                      "text": " and some auxiliary artifacts."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-atajos-de-teclado",
+          "slug": "keyboard-shortcuts",
+          "title": "Keyboard shortcuts",
+          "order": 3,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 4,
+          "searchMeta": {
+            "aliases": [
+              "shortcuts"
+            ],
+            "keywords": [
+              "ctrl+s",
+              "ctrl+f",
+              "ctrl+h",
+              "tab"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-editor-shortcuts-table",
+              "type": "table",
+              "title": "Visible shortcuts",
+              "columns": [
+                {
+                  "key": "shortcut",
+                  "label": "Shortcut"
+                },
+                {
+                  "key": "action",
+                  "label": "Action"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "Ctrl+S"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Analyze or save changes depending on the current surface."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "Ctrl+F"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Search inside the current document."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "Ctrl+H"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Replace visible matches."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "Ctrl+/"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Comment or uncomment selected lines."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "Tab"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Indent the active block."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "Shift+Tab"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Remove indentation."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-editor-shortcuts-cheat",
+              "type": "cheatsheet",
+              "title": "Quick rules",
+              "items": [
+                {
+                  "label": "Search",
+                  "value": [
+                    {
+                      "type": "text",
+                      "text": "It works inside the loaded document; it does not replace the guide’s structured search."
+                    }
+                  ]
+                },
+                {
+                  "label": "Save",
+                  "value": [
+                    {
+                      "type": "text",
+                      "text": "Use it as an operational gesture; the exact effect depends on the active view."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

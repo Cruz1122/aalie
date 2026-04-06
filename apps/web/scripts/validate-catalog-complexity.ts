@@ -622,7 +622,7 @@ async function main(): Promise<void> {
 
     let preferredMethod: string | undefined;
     if (isRecursiveCategory(example.category)) {
-      const dm = await detectMethods(example.sourceCode);
+      const dm = await detectMethods(example.sourceCodeByLocale.es);
       if (dm.ok && dm.default_method) {
         preferredMethod = dm.default_method;
       } else {
@@ -647,7 +647,7 @@ async function main(): Promise<void> {
 
     let response: AnalyzeAllJson = {};
     try {
-      response = await analyzeOpenAll(example.sourceCode, {
+      response = await analyzeOpenAll(example.sourceCodeByLocale.es, {
         algorithmKind: isRecursiveCategory(example.category)
           ? "recursive"
           : undefined,
@@ -904,7 +904,7 @@ async function main(): Promise<void> {
     md.push("#### Pseudocódigo analizado");
     md.push("");
     md.push("```text");
-    md.push(ex.sourceCode);
+    md.push(ex.sourceCodeByLocale.es);
     md.push("```");
     md.push("");
 

@@ -350,10 +350,15 @@ const CustomPre = (props: any) => {
     }
 
     if (React.isValidElement(node)) {
-      if (typeof node.props.className === "string") {
-        return node.props.className;
+      const element = node as React.ReactElement<{
+        className?: string;
+        children?: React.ReactNode;
+      }>;
+
+      if (typeof element.props.className === "string") {
+        return element.props.className;
       }
-      return extractCodeClassName(node.props.children);
+      return extractCodeClassName(element.props.children);
     }
 
     if (typeof node === "object") {

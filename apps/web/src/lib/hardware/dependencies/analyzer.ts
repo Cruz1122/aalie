@@ -282,33 +282,33 @@ export function analyzeDependencies(ast: Program): DependencyProfile {
           "body" in n &&
           isAstRecord(n.body) &&
           "body" in n.body &&
-          Array.isArray((n.body as Block).body)
+          Array.isArray(n.body.body)
         ) {
-          for (const child of (n.body as Block).body) scanForRecursion(child);
+          for (const child of n.body.body) scanForRecursion(child);
         }
         if (
           "consequent" in n &&
-          isAstRecord((n as If).consequent) &&
-          Array.isArray((n as If).consequent.body)
+          isAstRecord(n.consequent) &&
+          Array.isArray(n.consequent.body)
         ) {
-          for (const child of (n as If).consequent.body)
-            scanForRecursion(child);
+          for (const child of n.consequent.body) scanForRecursion(child);
           if (
-            (n as If).alternate &&
-            isAstRecord((n as If).alternate) &&
-            Array.isArray((n as If).alternate!.body)
+            "alternate" in n &&
+            n.alternate &&
+            isAstRecord(n.alternate) &&
+            Array.isArray(n.alternate.body)
           )
-            for (const child of (n as If).alternate!.body)
-              scanForRecursion(child);
+            for (const child of n.alternate.body) scanForRecursion(child);
         }
-        if ("args" in n && Array.isArray((n as { args?: unknown }).args))
-          for (const arg of (n as { args: AstNode[] }).args)
-            scanForRecursion(arg);
-        if ("value" in n && (n as Return).value)
-          scanForRecursion((n as Return).value);
+        if ("args" in n && Array.isArray(n.args)) {
+          for (const arg of n.args) scanForRecursion(arg);
+        }
+        if ("value" in n && n.value) {
+          scanForRecursion(n.value);
+        }
         if ("left" in n && "right" in n) {
-          scanForRecursion((n as Binary).left);
-          scanForRecursion((n as Binary).right);
+          scanForRecursion(n.left);
+          scanForRecursion(n.right);
         }
       }
       for (const stmt of proc.body.body) scanForRecursion(stmt);

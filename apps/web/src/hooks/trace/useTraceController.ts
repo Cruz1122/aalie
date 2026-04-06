@@ -5,9 +5,9 @@ import { useCallback, useState, useRef, useMemo } from "react";
 import type {
   CaseType,
   TraceApiResponse,
-  TraceGraph,
   TraceConfig,
   InternalInput,
+  StructuredTrace,
 } from "@/types/trace";
 
 import { useTraceCache } from "./useTraceCache";
@@ -30,11 +30,7 @@ export interface UseTraceControllerResult {
   /** true una vez que el primer fetch completó (con éxito o fallo). */
   fetchCompleted: boolean;
   /** Diagrama estructurado (única fuente). */
-  structuredDiagram: {
-    graph: TraceGraph;
-    patternKind: string;
-    classification: { evidence: string[] };
-  } | null;
+  structuredDiagram: StructuredTrace | null;
   algorithmKind: string | null;
   traceConfig: TraceConfig;
   loadTrace: (
@@ -71,11 +67,9 @@ export function useTraceController(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fetchCompleted, setFetchCompleted] = useState(false);
-  const [structuredDiagram, setStructuredDiagram] = useState<{
-    graph: TraceGraph;
-    patternKind: string;
-    classification: { evidence: string[] };
-  } | null>(null);
+  const [structuredDiagram, setStructuredDiagram] = useState<StructuredTrace | null>(
+    null,
+  );
   const [algorithmKind, setAlgorithmKind] = useState<string | null>(null);
   const [exampleArray, setExampleArray] = useState<number[]>([]);
   // Permite cancelar requests anteriores cuando llega uno nuevo
@@ -210,11 +204,7 @@ export function useTraceController(
             );
             const st = cachedData.derived?.structuredTrace;
             if (st?.graph && (st.graph.nodes?.length ?? 0) > 0) {
-              setStructuredDiagram({
-                graph: st.graph,
-                patternKind: st.patternKind,
-                classification: st.classification,
-              });
+              setStructuredDiagram(st);
             } else {
               setStructuredDiagram(null);
             }
@@ -250,11 +240,7 @@ export function useTraceController(
 
         const st = data.derived?.structuredTrace;
         if (st?.graph && (st.graph.nodes?.length ?? 0) > 0) {
-          setStructuredDiagram({
-            graph: st.graph,
-            patternKind: st.patternKind,
-            classification: st.classification,
-          });
+          setStructuredDiagram(st);
         } else {
           setStructuredDiagram(null);
         }

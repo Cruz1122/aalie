@@ -1,0 +1,755 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-analysis",
+  "slug": "complexity-analysis",
+  "title": "Complexity analysis",
+  "shortTitle": "Analysis",
+  "order": 4,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "published",
+  "summary": "The engine contract, result reading, limits, trace, LLM comparison, and the auxiliary GPU vs CPU panel.",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 20,
+  "tags": [
+    "analysis",
+    "T_open",
+    "byLine",
+    "trace",
+    "llm"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "analysis engine",
+      "complexity"
+    ],
+    "keywords": [
+      "AST",
+      "classify",
+      "byLine",
+      "T_open",
+      "loop invariant"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-grammar",
+        "kind": "required"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-grammar",
+    "mod-user-guide-examples",
+    "mod-user-guide-troubleshooting"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-pipeline",
+      "text": "Explain the real engine pipeline without inventing an idealized UX."
+    },
+    {
+      "objectiveId": "obj-leer-resultados",
+      "text": "Interpret byLine, T_open, T_polynomial, and asymptotic bounds contractually."
+    }
+  ],
+  "terms": [
+    {
+      "termId": "term-by-line",
+      "label": "byLine",
+      "aliases": [
+        "per-line costs"
+      ],
+      "definition": "Contractual table that reports elemental cost, execution count, and total cost per line."
+    },
+    {
+      "termId": "term-t-open",
+      "label": "T_open",
+      "aliases": [
+        "open cost equation"
+      ],
+      "definition": "Open symbolic cost expression before final algebraic closure."
+    },
+    {
+      "termId": "term-t-polynomial",
+      "label": "T_polynomial",
+      "aliases": [
+        "simplified form"
+      ],
+      "definition": "Best defensible simplified form derived from T_open when the engine can publish it without inventing steps."
+    },
+    {
+      "termId": "term-loop-invariant",
+      "label": "loopInvariant",
+      "aliases": [
+        "loop invariant"
+      ],
+      "definition": "Auxiliary pedagogical artifact tied to the main loop; it does not govern the computed complexity."
+    },
+    {
+      "termId": "term-structured-trace",
+      "label": "structuredTrace",
+      "aliases": [
+        "structured trace"
+      ],
+      "definition": "Contractual derived artifact for diagrams that must stay coherent with the base trace."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-flujo-del-motor",
+      "slug": "engine-flow",
+      "title": "Engine flow",
+      "order": 1,
+      "summary": "How code enters the engine and what the main service returns.",
+      "sections": [
+        {
+          "sectionId": "sec-flujo-desde-el-editor",
+          "slug": "editor-flow",
+          "title": "Flow from the editor",
+          "order": 1,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 4,
+          "searchMeta": {
+            "aliases": [
+              "analyze complexity"
+            ],
+            "keywords": [
+              "editor",
+              "parse",
+              "classify",
+              "analyzer"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-analysis-editor-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The contractual engine flow is "
+                },
+                {
+                  "type": "inlineCode",
+                  "text": "AST -> classify -> analyzer -> byLine/totals -> T_open -> T_polynomial -> bounds"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-analysis-editor-list",
+              "type": "list",
+              "style": "ordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "A valid parse is required first; without an AST there is no defensible formal analysis."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Classification decides whether the operational path is iterative, recursive, or hybrid."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The primary result lives in byLine and totals; other artifacts accompany that output but do not replace it."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-analysis-editor-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "Real precondition",
+              "blocks": [
+                {
+                  "id": "blk-analysis-editor-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "If parsing fails, any later help is only orienting. The source of truth for formal analysis starts after the AST exists."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-analisis-desde-aalie",
+          "slug": "analysis-from-aalie",
+          "title": "Analysis from AALIE",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "searchMeta": {
+            "aliases": [
+              "aalie chat"
+            ],
+            "keywords": [
+              "pseudocode block",
+              "assistant"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-analysis-aalie-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "When the assistant receives a pseudocode block or focused-page context, it can guide the workflow and explain results; even then, the formal analysis visible in the app remains the source of truth."
+                }
+              ]
+            },
+            {
+              "id": "blk-analysis-aalie-list",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Use it for orientation, step explanations, and next operational moves."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Do not use it as a substitute for byLine, T_open, or the visible asymptotic bounds."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "If complete formal analysis is missing, treat the assistant response as contextual help, not as the final mathematical verdict."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-analysis-aalie-note",
+              "type": "note",
+              "variant": "success",
+              "title": "Good use",
+              "blocks": [
+                {
+                  "id": "blk-analysis-aalie-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "AALIE is most useful when a concrete view is already open and you want help understanding what it means or what to inspect next."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-interpretacion-de-resultados",
+          "slug": "reading-results",
+          "title": "Reading results",
+          "order": 3,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 5,
+          "searchMeta": {
+            "aliases": [
+              "read results"
+            ],
+            "keywords": [
+              "byLine",
+              "T_open",
+              "T_polynomial",
+              "big o"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-analysis-results-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "term",
+                  "text": "byLine",
+                  "termRef": "term-by-line",
+                  "display": "tooltip"
+                },
+                {
+                  "type": "text",
+                  "text": " shows elemental cost, execution count, and total cost per line. Then "
+                },
+                {
+                  "type": "term",
+                  "text": "T_open",
+                  "termRef": "term-t-open",
+                  "display": "tooltip"
+                },
+                {
+                  "type": "text",
+                  "text": " preserves the symbolic structure before any defensible closure."
+                }
+              ]
+            },
+            {
+              "id": "blk-analysis-results-table",
+              "type": "table",
+              "title": "Minimum reading of the result",
+              "columns": [
+                {
+                  "key": "artifact",
+                  "label": "Artifact"
+                },
+                {
+                  "key": "question",
+                  "label": "What it answers"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "term",
+                        "text": "byLine",
+                        "termRef": "term-by-line",
+                        "display": "tooltip"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "What each line costs and how many times it runs."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "term",
+                        "text": "T_open",
+                        "termRef": "term-t-open",
+                        "display": "tooltip"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "What the open cost equation looks like before algebraic closure."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "term",
+                        "text": "T_polynomial",
+                        "termRef": "term-t-polynomial",
+                        "display": "tooltip"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "What the best defensible simplified form is."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Big-O / Big-Ω / Big-Θ"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "What asymptotic reading the app publishes for the selected case."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-analysis-results-equation",
+              "type": "equationBlock",
+              "latex": "T_{open}(n)=\\sum_{k=1}^{m} C_k \\cdot e_k(n)",
+              "align": "center"
+            },
+            {
+              "id": "blk-analysis-results-definition",
+              "type": "definition",
+              "title": "Contractual rule",
+              "blocks": [
+                {
+                  "id": "blk-analysis-results-definition-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "term",
+                      "text": "T_polynomial",
+                      "termRef": "term-t-polynomial",
+                      "display": "tooltip"
+                    },
+                    {
+                      "type": "text",
+                      "text": " may only be derived from "
+                    },
+                    {
+                      "type": "term",
+                      "text": "T_open",
+                      "termRef": "term-t-open",
+                      "display": "tooltip"
+                    },
+                    {
+                      "type": "text",
+                      "text": " through defensible symbolic transformations, not through an independent recomputation of the algorithm."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-analysis-results-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "Partial states are real",
+              "blocks": [
+                {
+                  "id": "blk-analysis-results-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The engine may publish partial states or missing auxiliary artifacts without inventing conclusions. That is expected contractual behavior."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "chapterId": "cap-artefactos-auxiliares",
+      "slug": "auxiliary-artifacts",
+      "title": "Auxiliary artifacts and limits",
+      "order": 2,
+      "summary": "LLM comparison, GPU vs CPU, and structured trace.",
+      "sections": [
+        {
+          "sectionId": "sec-comparacion-llm",
+          "slug": "llm-comparison",
+          "title": "LLM comparison",
+          "order": 1,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "searchMeta": {
+            "aliases": [
+              "llm comparison"
+            ],
+            "keywords": [
+              "compare with llm",
+              "cross-check"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-analysis-llm-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "LLM comparison is an optional fast cross-check surface. It never replaces the engine’s formal visible output."
+                }
+              ]
+            },
+            {
+              "id": "blk-analysis-llm-list",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "It helps catch discrepancies, ambiguous phrasing, or hidden assumptions worth reviewing."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "It does not prove mathematical correctness by itself."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "If the formal analysis is missing or partial, the LLM cross-check must also be read cautiously."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-analysis-llm-note",
+              "type": "note",
+              "variant": "info",
+              "title": "Correct reading",
+              "blocks": [
+                {
+                  "id": "blk-analysis-llm-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Treat it as a complementary second opinion, not as the referee of the complexity published by the app."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-gpu-vs-cpu",
+          "slug": "gpu-vs-cpu",
+          "title": "GPU vs CPU",
+          "order": 2,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 2,
+          "searchMeta": {
+            "aliases": [
+              "gpu cpu"
+            ],
+            "keywords": [
+              "heuristic",
+              "parallelism",
+              "branching"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-analysis-gpu-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The GPU vs CPU panel is auxiliary. It summarizes structural traits of the algorithm to suggest whether parallel execution might be favorable."
+                }
+              ]
+            },
+            {
+              "id": "blk-analysis-gpu-list",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Recursive depth and call-tree shape."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Branching, apparent independence between operations, and large loops."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Array access patterns and operation load that could benefit from parallelism."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-analysis-gpu-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "It does not promise speedup",
+              "blocks": [
+                {
+                  "id": "blk-analysis-gpu-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The visible recommendation does not replace benchmarking and does not model real hardware. It is a reading heuristic, not a contractual performance guarantee."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-trace-y-loop-invariant",
+          "slug": "trace-and-loop-invariant",
+          "title": "Trace and loop invariant",
+          "order": 3,
+          "kind": "theory",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "searchMeta": {
+            "aliases": [
+              "trace"
+            ],
+            "keywords": [
+              "structuredTrace",
+              "loopInvariant",
+              "callTreeSource"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-analysis-trace-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Execution trace exposes instrumented steps and may attach "
+                },
+                {
+                  "type": "term",
+                  "text": "structuredTrace",
+                  "termRef": "term-structured-trace",
+                  "display": "tooltip"
+                },
+                {
+                  "type": "text",
+                  "text": " for diagrams. "
+                },
+                {
+                  "type": "term",
+                  "text": "loopInvariant",
+                  "termRef": "term-loop-invariant",
+                  "display": "tooltip"
+                },
+                {
+                  "type": "text",
+                  "text": " is an auxiliary pedagogical artifact tied to the main loop."
+                }
+              ]
+            },
+            {
+              "id": "blk-analysis-trace-list",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "In iterative algorithms, the trace explains state mutations, conditions, and final output."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "In recursive algorithms, it may include callTreeSource and a derived structural classification."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "If structuredTrace cannot be derived, the base trace is still valid."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "loopInvariant does not alter the computed complexity; it accompanies the analysis."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-analysis-trace-code",
+              "type": "code",
+              "language": "json",
+              "title": "Minimum derived shape",
+              "code": "{\n  \"derived\": {\n    \"structuredTrace\": {\n      \"patternKind\": \"unknown\",\n      \"graph\": [],\n      \"classification\": \"degraded\"\n    }\n  }\n}"
+            },
+            {
+              "id": "blk-analysis-trace-note",
+              "type": "note",
+              "variant": "info",
+              "title": "Correct degradation",
+              "blocks": [
+                {
+                  "id": "blk-analysis-trace-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "If an auxiliary artifact cannot be derived, the UI should degrade visually without reinterpreting steps or contradicting the base trace."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

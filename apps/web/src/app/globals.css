@@ -351,7 +351,8 @@ body {
 
 /* Cards de documentación - altura fija para alineación */
 .documentation-card {
-  height: 300px;
+  min-height: 320px;
+  height: 100%;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -690,14 +691,8 @@ dialog::backdrop {
 .inline-code-math,
 .inline-code-math * {
   font-family:
-    ui-monospace,
-    SFMono-Regular,
-    Menlo,
-    Monaco,
-    Consolas,
-    "Liberation Mono",
-    "Courier New",
-    monospace !important;
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace !important;
   font-style: normal !important;
   color: inherit;
   letter-spacing: 0 !important;

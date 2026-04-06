@@ -4,6 +4,7 @@ import type {
   CatalogSpace,
   ContentBlock,
   InlineSpan,
+  LoadedSpaceBundle,
   RichText,
   SearchIndexEntry,
 } from "./types.js";
@@ -164,4 +165,23 @@ export function buildModuleSearchIndex(
   }
 
   return entries;
+}
+
+export interface BuildSpaceSearchIndexOptions {
+  moduleId?: string;
+}
+
+export function buildSpaceSearchIndex(
+  bundle: LoadedSpaceBundle,
+  options: BuildSpaceSearchIndexOptions = {},
+): SearchIndexEntry[] {
+  const { moduleId } = options;
+
+  return bundle.modules.flatMap(({ module }) => {
+    if (moduleId && module.moduleId !== moduleId) {
+      return [];
+    }
+
+    return buildModuleSearchIndex(bundle.space, module);
+  });
 }

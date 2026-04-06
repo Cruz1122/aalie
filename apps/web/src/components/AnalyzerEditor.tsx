@@ -447,9 +447,6 @@ export const AnalyzerEditor = forwardRef<
             },
             renderLineHighlight: "none",
             wordBasedSuggestions: "off",
-            lightbulb: {
-              enabled: false,
-            },
             suggest: {
               showWords: false,
             },

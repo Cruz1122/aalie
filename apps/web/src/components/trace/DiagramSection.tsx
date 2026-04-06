@@ -2,18 +2,12 @@
 
 import { useTranslations } from "next-intl";
 
-import type { TraceGraph } from "@/types/trace";
+import type { StructuredTrace } from "@/types/trace";
 
 import ExecutionGraphView from "../ExecutionGraphView";
 
-interface StructuredDiagram {
-  graph: TraceGraph;
-  patternKind: string;
-  classification: { evidence: string[] };
-}
-
 interface DiagramSectionProps {
-  structuredDiagram?: StructuredDiagram | null;
+  structuredDiagram?: StructuredTrace | null;
   loading?: boolean;
   inputSize?: number;
   initialVariablesSummary?: string;

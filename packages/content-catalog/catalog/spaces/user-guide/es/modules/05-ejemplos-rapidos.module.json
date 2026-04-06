@@ -1,0 +1,273 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-examples",
+  "slug": "ejemplos-rapidos",
+  "title": "Ejemplos rápidos",
+  "shortTitle": "Ejemplos",
+  "order": 5,
+  "locale": "es",
+  "version": "1.0.0",
+  "status": "published",
+  "summary": "Recorre ejemplos cortos para entender la forma correcta de escribir algoritmos y ver qué tipo de análisis produce la plataforma.",
+  "difficulty": "basic",
+  "estimatedMinutes": 10,
+  "tags": [
+    "ejemplos",
+    "factorial",
+    "busqueda lineal"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "snippets"
+    ],
+    "keywords": [
+      "factorial",
+      "linear search",
+      "examples"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-grammar",
+        "kind": "recommended"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-grammar",
+    "mod-user-guide-analysis"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-ejemplos",
+      "text": "Usar ejemplos cortos como referencia de sintaxis visible y casos básicos de análisis."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-snippets-base",
+      "slug": "snippets-base",
+      "title": "Snippets base",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-factorial",
+          "slug": "factorial",
+          "title": "Factorial",
+          "order": 1,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "searchMeta": {
+            "aliases": [
+              "factorial iterativo"
+            ],
+            "keywords": [
+              "FOR",
+              "RETURN"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-examples-factorial-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Este snippet resume asignación, "
+                },
+                {
+                  "type": "inlineCode",
+                  "text": "FOR"
+                },
+                {
+                  "type": "text",
+                  "text": " y "
+                },
+                {
+                  "type": "inlineCode",
+                  "text": "RETURN"
+                },
+                {
+                  "type": "text",
+                  "text": " en una forma pequeña y verificable."
+                }
+              ]
+            },
+            {
+              "id": "blk-examples-factorial-code",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Factorial iterativo",
+              "code": "factorial(n) BEGIN\n  resultado <- 1;\n  FOR i <- 2 TO n DO BEGIN\n    resultado <- resultado * i;\n  END\n  RETURN resultado;\nEND"
+            },
+            {
+              "id": "blk-examples-factorial-note",
+              "type": "note",
+              "variant": "info",
+              "title": "Qué mirar",
+              "blocks": [
+                {
+                  "id": "blk-examples-factorial-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Úsalo para comprobar la forma visible del ciclo y para contrastar luego la lectura de costos por línea."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-busqueda-lineal",
+          "slug": "busqueda-lineal",
+          "title": "Búsqueda lineal",
+          "order": 2,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "searchMeta": {
+            "aliases": [
+              "linear search"
+            ],
+            "keywords": [
+              "IF",
+              "array",
+              "return -1"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-examples-search-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "La búsqueda lineal permite discutir mejor, peor y promedio sobre una estructura iterativa simple."
+                }
+              ]
+            },
+            {
+              "id": "blk-examples-search-code",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Búsqueda lineal",
+              "code": "busquedaLineal(A[n], x, n) BEGIN\n  FOR i <- 1 TO n DO BEGIN\n    IF (A[i] = x) THEN BEGIN\n      RETURN i;\n    END\n  END\n  RETURN -1;\nEND"
+            },
+            {
+              "id": "blk-examples-search-note",
+              "type": "note",
+              "variant": "success",
+              "title": "Lectura útil",
+              "blocks": [
+                {
+                  "id": "blk-examples-search-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Es un ejemplo corto para entender por qué la UI puede distinguir mejor, peor y caso promedio cuando el modelo lo permite."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-catalogo-de-ejemplos",
+          "slug": "catalogo-de-ejemplos",
+          "title": "Catálogo de ejemplos",
+          "order": 3,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 4,
+          "searchMeta": {
+            "aliases": [
+              "examples catalog"
+            ],
+            "keywords": [
+              "catalogo",
+              "ejemplos precargados"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-examples-catalog-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Cuando necesites más variedad, abre el catálogo completo para comparar familias iterativas y recursivas sin escribir todo desde cero."
+                }
+              ]
+            },
+            {
+              "id": "blk-examples-catalog-divider",
+              "type": "divider"
+            },
+            {
+              "id": "blk-examples-catalog-list",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Filtra por categoría, familia y métodos verificados."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Abre un ejemplo concreto y úsalo como base para experimentar en el analizador."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Toma el snippet como referencia de sintaxis visible, no como sustituto de la documentación contractual."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-examples-catalog-buttons",
+              "type": "buttonRow",
+              "buttons": [
+                {
+                  "label": "Abrir /examples",
+                  "target": {
+                    "kind": "external",
+                    "ref": "/examples"
+                  },
+                  "variant": "primary"
+                },
+                {
+                  "label": "Volver a análisis",
+                  "target": {
+                    "kind": "module",
+                    "ref": "mod-user-guide-analysis"
+                  },
+                  "variant": "secondary"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

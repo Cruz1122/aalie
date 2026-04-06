@@ -712,8 +712,9 @@ export function validateCatalog(): ValidationReport {
     validateSchemaDocuments(bundle, issues);
 
     const spaceRoute = deriveSpaceRoute(bundle.space);
+    const localizedSpaceRoute = `${bundle.space.locale}:${spaceRoute}`;
     if (bundle.space.status === "published") {
-      if (spaceRoutes.has(spaceRoute)) {
+      if (spaceRoutes.has(localizedSpaceRoute)) {
         issues.push(
           createIssue(
             "error",
@@ -723,7 +724,7 @@ export function validateCatalog(): ValidationReport {
           ),
         );
       }
-      spaceRoutes.add(spaceRoute);
+      spaceRoutes.add(localizedSpaceRoute);
     }
 
     for (const loadedModule of bundle.modules) {

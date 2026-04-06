@@ -1,0 +1,586 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-grammar",
+  "slug": "grammar-syntax",
+  "title": "Grammar syntax",
+  "shortTitle": "Grammar",
+  "order": 3,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "published",
+  "summary": "Official visible syntax: ASCII, full blocks, explicit CALL, and examples aligned with the current grammar contract.",
+  "difficulty": "basic",
+  "estimatedMinutes": 18,
+  "tags": [
+    "grammar",
+    "pseudocode",
+    "call",
+    "print"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "syntax",
+      "visible grammar"
+    ],
+    "keywords": [
+      "CALL",
+      "PRINT",
+      "FOR",
+      "WHILE",
+      "arrays"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-editor",
+        "kind": "recommended"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-editor",
+    "mod-user-guide-analysis",
+    "mod-user-guide-examples"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-sintaxis-visible",
+      "text": "Use the official visible syntax without teaching legacy aliases as the main form."
+    },
+    {
+      "objectiveId": "obj-call",
+      "text": "Distinguish a sentential CALL from a call embedded in an expression."
+    }
+  ],
+  "terms": [
+    {
+      "termId": "term-call-stmt",
+      "label": "CALL",
+      "aliases": [
+        "callStmt"
+      ],
+      "definition": "Visible form required for a call used as a full statement."
+    },
+    {
+      "termId": "term-assignment",
+      "label": "assignment",
+      "aliases": [
+        "asignación"
+      ],
+      "definition": "Operation that writes a value using the recommended visible <- syntax."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-bases-del-lenguaje",
+      "slug": "language-basics",
+      "title": "Language basics",
+      "order": 1,
+      "summary": "Procedures, assignment, and control flow.",
+      "sections": [
+        {
+          "sectionId": "sec-procedimientos-y-call",
+          "slug": "procedures-and-call",
+          "title": "Procedures and CALL",
+          "order": 1,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 4,
+          "searchMeta": {
+            "aliases": [
+              "procedures"
+            ],
+            "keywords": [
+              "CALL",
+              "BEGIN",
+              "END",
+              "return"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-grammar-proc-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The product’s visible form uses procedures with full blocks and sentential calls through "
+                },
+                {
+                  "type": "term",
+                  "text": "CALL",
+                  "termRef": "term-call-stmt",
+                  "display": "highlight"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-grammar-proc-code",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Basic structure",
+              "code": "process(A[n], n) BEGIN\n  total <- 0;\n  FOR i <- 1 TO n DO BEGIN\n    total <- total + A[i];\n  END\n  RETURN total;\nEND"
+            },
+            {
+              "id": "blk-grammar-proc-call",
+              "type": "code",
+              "language": "text",
+              "title": "Sentential call vs expression",
+              "code": "CALL process(A, n);\nresult <- process(A, n);",
+              "caption": "Use CALL only when the call is a full statement."
+            },
+            {
+              "id": "blk-grammar-proc-note",
+              "type": "note",
+              "variant": "info",
+              "title": "Visible convention",
+              "blocks": [
+                {
+                  "id": "blk-grammar-proc-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The UI teaches a single visible ASCII syntax. If the parser accepts legacy variants, that does not make them the pedagogical default."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-variables-y-asignacion",
+          "slug": "variables-and-assignment",
+          "title": "Variables and assignment",
+          "order": 2,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "searchMeta": {
+            "aliases": [
+              "assignment"
+            ],
+            "keywords": [
+              "<-",
+              "//",
+              "variables"
+            ]
+          },
+          "prerequisites": {
+            "sections": [
+              {
+                "id": "sec-procedimientos-y-call",
+                "kind": "recommended"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-grammar-assign-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The recommended visible syntax for "
+                },
+                {
+                  "type": "term",
+                  "text": "assignment",
+                  "termRef": "term-assignment",
+                  "display": "tooltip"
+                },
+                {
+                  "type": "text",
+                  "text": " is "
+                },
+                {
+                  "type": "inlineCode",
+                  "text": "<-"
+                },
+                {
+                  "type": "text",
+                  "text": ", and visible comments use "
+                },
+                {
+                  "type": "inlineCode",
+                  "text": "//"
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-grammar-assign-code",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Recommended assignment",
+              "code": "sum <- a + b;\nisValid <- (x >= 0) AND (x != 10);\n// visible comment\ncounter <- counter + 1;"
+            },
+            {
+              "id": "blk-grammar-assign-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "Compatibility is not pedagogy",
+              "blocks": [
+                {
+                  "id": "blk-grammar-assign-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Unicode aliases and legacy operators may exist at parse level, but they should not appear as primary syntax in snippets, helpers, or guide microcopy."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-estructuras-de-control",
+          "slug": "control-structures",
+          "title": "Control structures",
+          "order": 3,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 5,
+          "searchMeta": {
+            "aliases": [
+              "if for while repeat"
+            ],
+            "keywords": [
+              "IF",
+              "FOR",
+              "WHILE",
+              "REPEAT"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-grammar-control-heading-if",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "inlineCode",
+                  "text": "IF / ELSE"
+                }
+              ]
+            },
+            {
+              "id": "blk-grammar-control-if",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Selection",
+              "code": "IF (x > 0) THEN BEGIN\n  PRINT(\"positive\");\nEND\nELSE BEGIN\n  PRINT(\"not positive\");\nEND"
+            },
+            {
+              "id": "blk-grammar-control-heading-loops",
+              "type": "heading",
+              "level": 3,
+              "content": [
+                {
+                  "type": "inlineCode",
+                  "text": "FOR / WHILE / REPEAT"
+                }
+              ]
+            },
+            {
+              "id": "blk-grammar-control-loops",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Loops",
+              "code": "FOR i <- 1 TO n DO BEGIN\n  PRINT(i);\nEND\n\nWHILE (i <= n) DO BEGIN\n  i <- i + 1;\nEND\n\nREPEAT\n  i <- i - 1;\nUNTIL (i = 0);"
+            },
+            {
+              "id": "blk-grammar-control-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "Syntactic invariant",
+              "blocks": [
+                {
+                  "id": "blk-grammar-control-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Every control structure uses a full block. There is no indentation-only syntax and no "
+                    },
+                    {
+                      "type": "inlineCode",
+                      "text": "for-each"
+                    },
+                    {
+                      "type": "text",
+                      "text": " in the current visible grammar."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "chapterId": "cap-expresiones-y-datos",
+      "slug": "expressions-and-data",
+      "title": "Expressions and data",
+      "order": 2,
+      "summary": "Operators, arrays, objects, and visible output.",
+      "sections": [
+        {
+          "sectionId": "sec-operadores",
+          "slug": "operators",
+          "title": "Operators",
+          "order": 1,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 2,
+          "searchMeta": {
+            "aliases": [
+              "arithmetic operators"
+            ],
+            "keywords": [
+              "DIV",
+              "MOD",
+              "AND",
+              "OR"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-grammar-operators-table",
+              "type": "table",
+              "title": "Visible operators",
+              "columns": [
+                {
+                  "key": "family",
+                  "label": "Family"
+                },
+                {
+                  "key": "ops",
+                  "label": "Operators"
+                },
+                {
+                  "key": "note",
+                  "label": "Usage"
+                }
+              ],
+              "rows": [
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Arithmetic"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "+ - * / DIV MOD"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Numeric computation and integer remainder."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Relational"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "= != < > <= >="
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Explicit comparison inside conditions."
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "cells": [
+                    [
+                      {
+                        "type": "text",
+                        "text": "Logical"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "inlineCode",
+                        "text": "AND OR NOT"
+                      }
+                    ],
+                    [
+                      {
+                        "type": "text",
+                        "text": "Readable boolean composition."
+                      }
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-grammar-operators-code",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Examples",
+              "code": "result <- (a + b) * c;\nisValid <- (x > 0) AND (x < 100);\nquotient <- total DIV amount;\nremainder <- total MOD amount;"
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-arrays-y-objetos",
+          "slug": "arrays-and-objects",
+          "title": "Arrays and objects",
+          "order": 2,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 2,
+          "searchMeta": {
+            "aliases": [
+              "arrays"
+            ],
+            "keywords": [
+              "A[i]",
+              "obj.field",
+              "matrix"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-grammar-arrays-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The grammar accepts arrays and objects. The fact that something parses does not mean every later analysis layer gives it strong mathematical coverage."
+                }
+              ]
+            },
+            {
+              "id": "blk-grammar-arrays-code",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Access and update",
+              "code": "A[10];\nmatrix[5][5];\n\nobj.value <- 10;\nelement <- A[i];\nvalue <- matrix[i][j];\nmatrix[i][j] <- obj.value + A[i];"
+            },
+            {
+              "id": "blk-grammar-arrays-note",
+              "type": "note",
+              "variant": "info",
+              "title": "Important limit",
+              "blocks": [
+                {
+                  "id": "blk-grammar-arrays-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Arrays and objects are grammar-level features, but analytical coverage depends on the visitor and the available method."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-print-y-salida",
+          "slug": "print-and-output",
+          "title": "PRINT and output",
+          "order": 3,
+          "kind": "reference",
+          "trackProgress": true,
+          "estimatedMinutes": 2,
+          "searchMeta": {
+            "aliases": [
+              "print"
+            ],
+            "keywords": [
+              "PRINT",
+              "output",
+              "strings"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-grammar-print-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "The guide teaches "
+                },
+                {
+                  "type": "inlineCode",
+                  "text": "PRINT"
+                },
+                {
+                  "type": "text",
+                  "text": " in uppercase to stay aligned with the rest of the visible keywords."
+                }
+              ]
+            },
+            {
+              "id": "blk-grammar-print-code",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Basic output",
+              "code": "PRINT(\"Hello world\");\nPRINT(\"Total: \", result);\nPRINT(\"Value of n: \" + n);\nPRINT(\"He said \"hello\" and left\");"
+            },
+            {
+              "id": "blk-grammar-print-list",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "You can print literals, variables, and evaluable expressions."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Keep quotes and separators explicit; if output is purely pedagogical, do not confuse it with formal cost."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

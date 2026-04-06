@@ -4,79 +4,91 @@
 
 ## Propósito
 
-Explicar cómo usar AALIE sin depender de capturas ni descubrir contratos por prueba y error.
+Documentar la guía de usuario como space de contenido tipado, navegable por módulos y renderizado desde el catálogo unificado.
 
 ## Alcance
 
-Cubre editor, análisis, trace, export, ejemplos y asistencia opcional.
+Cubre la experiencia de `/user-guide` y `/user-guide/[moduleSlug]`, su fuente de verdad, navegación, búsqueda local, progreso y relación con el analizador.
 
 ## Fuente de verdad
 
-- flujo real de `apps/web/src/app/[locale]/analyzer/page.tsx`
-- componentes del analizador
+- catálogo canónico en `packages/content-catalog/catalog/spaces/user-guide/<locale>/`
+- contrato JSON y validación en `packages/content-catalog/`
+- loader web en `apps/web/src/lib/content/user-guide.ts`
+- renderers genéricos en `apps/web/src/components/content/`
 
 ## Estructura
 
-### Flujo base
+### Rutas oficiales
 
-1. escribir o importar pseudocódigo;
-2. usar ayudas de escritura del editor para insertar snippets o plantillas compatibles con el parser real;
-3. corregir errores de parseo;
-4. ejecutar análisis;
-5. revisar resultado iterativo o recursivo;
-6. abrir trace, invariant o export según necesidad.
+- `/${locale}/user-guide`: landing de módulos con cards, búsqueda global y progreso agregado
+- `/${locale}/user-guide/[moduleSlug]`: lectura completa del módulo con tabla de contenidos, anchors y navegación anterior/siguiente
 
-### Ayudas de escritura del editor
+### Jerarquía de contenido
 
-- el editor usa Monaco con autocompletado contextual limitado a 5 sugerencias por interacción;
-- la prioridad visible es: parámetros del procedimiento actual, variables detectadas, snippets cortos y por último algoritmos completos;
-- las sugerencias duplicadas se eliminan antes de mostrarse;
-- el idioma de inserción sigue el locale activo: en `es` se inserta pseudocódigo localizado en español y en `en` se inserta la variante inglesa del mismo bloque;
-- el autocompletado incluye snippets base, plantillas canónicas y todos los algoritmos habilitados del catálogo de ejemplos;
-- los algoritmos completos aparecen con menor prioridad que los snippets cortos para no tapar las ayudas locales de escritura.
+- `space -> module -> chapter -> section -> block`
+- la guía se publica hoy con 6 módulos por locale:
+  - introducción
+  - uso del editor
+  - sintaxis de la gramática
+  - análisis de complejidad
+  - ejemplos rápidos
+  - solución de problemas
+- el contenido pedagógico vive dentro de los `*.module.json`; `messages/*.json` conserva solo chrome UI compartido (`contentUi`)
 
-### Panel lateral de ayuda
+### Render y navegación
 
-- el panel lateral mantiene categorías curadas para escritura rápida: `recommended`, `conditions`, `loops`, `functions`, `templates` y `other`;
-- `templates` expone el catálogo completo de plantillas y algoritmos, paginado;
-- la paginación del panel muestra 6 bloques por página en `md/lg` y 9 en `xl`;
-- cuando hay más de 5 páginas, el paginador se abrevia con elipsis pero conserva una huella visual constante para evitar saltos de layout;
-- las pestañas de categoría no usan scroll horizontal: se comprimen en una grilla adaptable según el ancho disponible.
+- la landing ya no renderiza contenido completo ni abre un modal; solo usa metadatos de módulo
+- cada card navega a una página de módulo completa
+- la tabla de contenidos se genera desde `chapters[]` y `sections[]`
+- los bloques se renderizan con `ContentBlockRenderer`
+- el texto enriquecido inline se renderiza con `InlineRichTextRenderer`
+- los links internos usan refs neutrales `{ kind, ref }` resueltos a rutas y anchors localizados
+- no existe lógica por `moduleId` para decidir qué componente usar
 
-### Sintaxis oficial visible
+### Búsqueda
 
-- comentarios: `//`
-- asignación: `<-`
-- relacionales: `<=`, `>=`, `!=`
-- keywords en mayúscula
+- la landing indexa todo el space `user-guide`
+- la página de módulo restringe la búsqueda al módulo actual
+- el índice se construye desde JSON: títulos, texto inline, tags, aliases, términos, captions y referencias
+- no hay scraping del DOM renderizado
 
-### Lo que entrega el sistema
+### Progreso
 
-- costos por línea;
-- `T_open` y notaciones;
-- método recursivo aplicable cuando existe;
-- trace concreto;
-- export institucional;
-- apoyo LLM opcional.
+- la unidad oficial es `section`
+- la persistencia local usa `aalie.contentProgress.v1`
+- la clave estable es `spaceId/moduleId/sectionId`
+- una sección trackeable se marca completada cuando su root alcanza al menos 50% de visibilidad durante 1000 ms continuos
+- el porcentaje de módulo y del space se deriva solo de secciones trackeables
 
-### Señales de validación visibles
+### Alineación con el analizador
 
-- los errores gramaticales se marcan directamente en Monaco y en el estado de parseo;
-- el bombillo flotante de sugerencias gramaticales ya no forma parte de la UI operativa del analizador;
-- la reparación con IA sigue disponible cuando el parseo falla y existe API key.
+- el módulo de sintaxis expone como forma visible oficial `//`, `<-`, `CALL`, `FOR`, `WHILE`, `REPEAT`, `IF`, `PRINT`
+- alias unicode o estilos legacy solo aparecen como compatibilidad, no como forma principal
+- el módulo de análisis describe el pipeline determinista real del motor y separa explícitamente asistencia LLM opcional de resultados del analizador
+
+### Validación
+
+- todos los módulos de guía se validan contra JSON Schema y validaciones semánticas antes de renderizar
+- slugs, ids, refs internas y recursos deben resolver en build/test
 
 ## Ejemplos
 
-- usar ejemplos precargados para comparar algoritmos canónicos;
-- exportar el resultado en Markdown o PDF.
+- `/${locale}/user-guide` muestra las 6 cards de módulo usando solo metadatos de catálogo y progreso derivado
+- `/${locale}/user-guide/sintaxis-de-la-gramatica` renderiza capítulos, secciones, snippets y TOC desde `03-sintaxis-de-la-gramatica.module.json`
+- búsquedas como `semicolon`, `CALL` o `analizar complejidad` resuelven desde el índice estructurado sin inspeccionar el DOM
 
 ## Limites conocidos
 
-- el sistema puede declarar casos no concluyentes y eso es parte del comportamiento esperado;
-- algunas ayudas dependen de API key.
+- esta fase migra solo `user-guide`; la generalización de rutas a cualquier `spaceSlug` queda para la fase de `course`
+- la UI actual degrada `backendAsset` a placeholder si no existe aún un resolver web de assets
+- el progreso es local al navegador hasta que exista persistencia remota
 
 ## Archivos relacionados
 
+- `../08-content/content-model.md`
+- `../08-content/course-json-schema.md`
+- `../08-content/progress-model.md`
 - `analyzer-workflows.md`
 - `recursive-analysis-guide.md`
 - `exports-guide.md`

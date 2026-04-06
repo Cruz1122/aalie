@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 
 import ChatBot from "@/components/ChatBot";
 import {
@@ -19,7 +19,7 @@ import type { AssistantContext } from "@/lib/assistant/types";
 import { isAssistantSurface } from "@/lib/assistant/types";
 import { createBotMessage } from "@/lib/chatbot-core";
 
-export default function AssistantFramePage() {
+function AssistantFramePageContent() {
   const searchParams = useSearchParams();
   const t = useTranslations("chat");
   const rawSurface = searchParams.get("surface");
@@ -94,5 +94,13 @@ export default function AssistantFramePage() {
         }
       />
     </div>
+  );
+}
+
+export default function AssistantFramePage() {
+  return (
+    <Suspense fallback={<div className="h-screen w-full bg-[#101a23]" />}>
+      <AssistantFramePageContent />
+    </Suspense>
   );
 }

@@ -10,7 +10,7 @@ import type {
   CaseType,
   TraceApiResponse,
   TraceConfig,
-  TraceGraph,
+  StructuredTrace,
 } from "@/types/trace";
 
 import AALIEIcon from "../AALIEIcon";
@@ -24,12 +24,6 @@ import StepInfo from "./StepInfo";
 import TraceToolbar from "./TraceToolbar";
 import VariablesPanel from "./VariablesPanel";
 
-interface StructuredDiagram {
-  graph: TraceGraph;
-  patternKind: string;
-  classification: { evidence: string[] };
-}
-
 interface StructuredTraceContentProps {
   ast?: Program | null;
   source: string;
@@ -42,7 +36,7 @@ interface StructuredTraceContentProps {
   setDebouncedInputSize: (value: number) => void;
   trace: TraceApiResponse | null;
   loading: boolean;
-  structuredDiagram: StructuredDiagram | null;
+  structuredDiagram: StructuredTrace | null;
   currentStep: number;
   setCurrentStep: (step: number) => void;
   isPlaying: boolean;

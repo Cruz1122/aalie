@@ -1,0 +1,360 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-introduccion",
+  "slug": "introduction",
+  "title": "Introduction",
+  "shortTitle": "Introduction",
+  "order": 1,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "published",
+  "summary": "Understand what AALIE solves, how this guide is organized, and how to move across modules with deep links and section progress.",
+  "difficulty": "foundational",
+  "estimatedMinutes": 8,
+  "tags": [
+    "guide",
+    "introduction",
+    "navigation",
+    "aalie"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "general overview",
+      "how to use AALIE"
+    ],
+    "keywords": [
+      "modules",
+      "progress",
+      "route",
+      "deep link"
+    ]
+  },
+  "prerequisites": {
+    "modules": [],
+    "sections": []
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-editor",
+    "mod-user-guide-grammar"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-ubicar-superficies",
+      "text": "Locate the editor, analyzer, examples, and guide inside the same product experience."
+    },
+    {
+      "objectiveId": "obj-leer-estructura",
+      "text": "Understand that the guide is now consumed as linkable modules and sections."
+    }
+  ],
+  "terms": [
+    {
+      "termId": "term-aalie",
+      "label": "AALIE",
+      "aliases": [
+        "assistant",
+        "analyzer"
+      ],
+      "definition": "Application that combines pseudocode authoring, formal analysis, pedagogical trace, and contextual help."
+    },
+    {
+      "termId": "term-content-space",
+      "label": "content space",
+      "aliases": [
+        "space"
+      ],
+      "definition": "Autodetectable group of modules that shares routes, search, and progress under one contract."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-bienvenida",
+      "slug": "welcome",
+      "title": "Welcome and navigation",
+      "order": 1,
+      "summary": "What the app does and how to move through the guide without a modal.",
+      "sections": [
+        {
+          "sectionId": "sec-panorama-general",
+          "slug": "general-overview",
+          "title": "General overview",
+          "order": 1,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 4,
+          "learningObjectives": [
+            {
+              "objectiveId": "obj-panorama",
+              "text": "Identify the main visible surfaces in AALIE."
+            }
+          ],
+          "searchMeta": {
+            "aliases": [
+              "welcome"
+            ],
+            "keywords": [
+              "editor",
+              "analysis",
+              "trace",
+              "assistant"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-panorama-heading",
+              "type": "heading",
+              "level": 2,
+              "content": [
+                {
+                  "type": "text",
+                  "text": "General overview"
+                }
+              ]
+            },
+            {
+              "id": "blk-panorama-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "term",
+                  "text": "AALIE",
+                  "termRef": "term-aalie",
+                  "display": "tooltip"
+                },
+                {
+                  "type": "text",
+                  "text": " combines a pseudocode editor, formal complexity analysis, pedagogical trace, and contextual help in one experience."
+                }
+              ]
+            },
+            {
+              "id": "blk-panorama-list",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Write or import pseudocode that matches the product’s visible grammar."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Run the analysis to obtain per-line costs, "
+                    },
+                    {
+                      "type": "inlineCode",
+                      "text": "T_open"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", and asymptotic bounds without leaving the main flow."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Open examples, trace, loop invariant, or LLM comparison only when they add value to the current reading."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-panorama-note",
+              "type": "note",
+              "variant": "info",
+              "title": "What changed in this guide",
+              "blocks": [
+                {
+                  "id": "blk-panorama-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "The guide no longer lives in cards plus a modal. It now behaves as a "
+                    },
+                    {
+                      "type": "term",
+                      "text": "content space",
+                      "termRef": "term-content-space",
+                      "display": "tooltip"
+                    },
+                    {
+                      "type": "text",
+                      "text": " with modules, chapters, and linkable sections."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-navegacion-y-siguientes-pasos",
+          "slug": "navigation-and-next-steps",
+          "title": "Navigation and next steps",
+          "order": 2,
+          "kind": "overview",
+          "trackProgress": true,
+          "estimatedMinutes": 4,
+          "searchMeta": {
+            "aliases": [
+              "how to read the guide"
+            ],
+            "keywords": [
+              "table of contents",
+              "anchors",
+              "modules"
+            ]
+          },
+          "prerequisites": {
+            "sections": [
+              {
+                "id": "sec-panorama-general",
+                "kind": "required"
+              }
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-nav-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Each module has its own table of contents, section progress, and direct links to concrete topics. You can start with "
+                },
+                {
+                  "type": "link",
+                  "text": "Basic features",
+                  "target": {
+                    "kind": "section",
+                    "ref": "sec-funciones-basicas"
+                  }
+                },
+                {
+                  "type": "text",
+                  "text": ", review "
+                },
+                {
+                  "type": "link",
+                  "text": "Procedures and CALL",
+                  "target": {
+                    "kind": "section",
+                    "ref": "sec-procedimientos-y-call"
+                  }
+                },
+                {
+                  "type": "text",
+                  "text": ", or jump to "
+                },
+                {
+                  "type": "link",
+                  "text": "Examples",
+                  "target": {
+                    "kind": "external",
+                    "ref": "/examples"
+                  }
+                },
+                {
+                  "type": "text",
+                  "text": "."
+                }
+              ]
+            },
+            {
+              "id": "blk-nav-cheat",
+              "type": "cheatsheet",
+              "title": "How to read this guide",
+              "items": [
+                {
+                  "label": "Cards",
+                  "value": [
+                    {
+                      "type": "text",
+                      "text": "They only summarize modules; the full content lives in the module route."
+                    }
+                  ]
+                },
+                {
+                  "label": "Progress",
+                  "value": [
+                    {
+                      "type": "text",
+                      "text": "It is computed from visible sections, not from closing a modal or scroll hacks."
+                    }
+                  ]
+                },
+                {
+                  "label": "Search",
+                  "value": [
+                    {
+                      "type": "text",
+                      "text": "It indexes titles, text, terms, and captions from JSON without scraping the DOM."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-nav-callout",
+              "type": "callout",
+              "title": "Recommended route",
+              "blocks": [
+                {
+                  "id": "blk-nav-callout-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "If you are new here, walk through the modules in this order: introduction, editor, grammar, analysis, examples, and troubleshooting."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-nav-buttons",
+              "type": "buttonRow",
+              "buttons": [
+                {
+                  "label": "Open editor workflow",
+                  "target": {
+                    "kind": "module",
+                    "ref": "mod-user-guide-editor"
+                  },
+                  "variant": "primary"
+                },
+                {
+                  "label": "Open /examples",
+                  "target": {
+                    "kind": "external",
+                    "ref": "/examples"
+                  },
+                  "variant": "secondary"
+                },
+                {
+                  "label": "Review grammar",
+                  "target": {
+                    "kind": "section",
+                    "ref": "sec-procedimientos-y-call"
+                  },
+                  "variant": "ghost"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

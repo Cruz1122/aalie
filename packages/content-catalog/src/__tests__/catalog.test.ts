@@ -2,29 +2,37 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  buildSpaceSearchIndex,
   buildModuleSearchIndex,
   computeModuleProgress,
   deriveModuleRoute,
   deriveSpaceRoute,
   discoverSpaces,
+  getModuleBySlug,
+  getSpaceBundle,
   resolveTarget,
   validateCatalog,
 } from "../index.js";
 
 test("discoverSpaces loads published spaces and modules from filesystem", () => {
   const spaces = discoverSpaces();
-
-  assert.equal(spaces.length, 2);
-  assert.deepEqual(
-    spaces.map((bundle) => bundle.space.spaceId),
-    ["theory", "user-guide"],
+  const spaceKeys = spaces.map(
+    (bundle) => `${bundle.space.spaceId}:${bundle.space.locale}`,
   );
-  assert.equal(spaces[0].modules.length, 1);
-  assert.equal(spaces[1].modules.length, 1);
+
+  assert.equal(spaces.length, 3);
+  assert.deepEqual(spaceKeys, [
+    "theory:es",
+    "user-guide:en",
+    "user-guide:es",
+  ]);
+  assert.equal(getSpaceBundle("user-guide", "es").modules.length, 6);
+  assert.equal(getSpaceBundle("user-guide", "en").modules.length, 6);
 });
 
 test("routes are derived from space and module slugs without manual mapping", () => {
-  const [theoryBundle, guideBundle] = discoverSpaces();
+  const theoryBundle = getSpaceBundle("theory", "es");
+  const guideBundle = getSpaceBundle("user-guide", "es");
 
   assert.equal(deriveSpaceRoute(theoryBundle.space), "/course");
   assert.equal(
@@ -34,7 +42,7 @@ test("routes are derived from space and module slugs without manual mapping", ()
   assert.equal(deriveSpaceRoute(guideBundle.space), "/user-guide");
   assert.equal(
     deriveModuleRoute(guideBundle.space, guideBundle.modules[0].module),
-    "/user-guide/guia-de-uso",
+    "/user-guide/introduccion",
   );
 });
 
@@ -53,11 +61,11 @@ test("module progress is computed from trackable sections only", () => {
 });
 
 test("resolveTarget finds internal sections, terms and blocks by neutral target refs", () => {
-  const [, guideBundle] = discoverSpaces();
+  const guideBundle = getSpaceBundle("user-guide", "es");
 
   const section = resolveTarget(guideBundle, {
     kind: "section",
-    ref: "sec-sintaxis-asignacion",
+    ref: "sec-variables-y-asignacion",
   });
   const term = resolveTarget(guideBundle, {
     kind: "term",
@@ -65,12 +73,28 @@ test("resolveTarget finds internal sections, terms and blocks by neutral target 
   });
   const block = resolveTarget(guideBundle, {
     kind: "block",
-    ref: "blk-asig-note-paragraph",
+    ref: "blk-grammar-assign-note-p1",
   });
 
-  assert.equal(section?.title, "Variables y asignacion");
+  assert.equal(section?.title, "Variables y asignación");
   assert.equal(term?.title, "Monaco Editor");
   assert.equal(block?.kind, "block");
+});
+
+test("space helpers resolve bundles, module slugs, and aggregate search across modules", () => {
+  const guideBundle = getSpaceBundle("user-guide", "en");
+  const module = getModuleBySlug(guideBundle, "grammar-syntax");
+  const entries = buildSpaceSearchIndex(guideBundle, {
+    moduleId: "mod-user-guide-grammar",
+  });
+
+  assert.equal(module?.module.moduleId, "mod-user-guide-grammar");
+  assert.ok(
+    entries.some((entry) => entry.sectionId === "sec-procedimientos-y-call"),
+  );
+  assert.ok(
+    entries.every((entry) => entry.moduleId === "mod-user-guide-grammar"),
+  );
 });
 
 test("search index is generated from JSON content, metadata, terms and captions", () => {

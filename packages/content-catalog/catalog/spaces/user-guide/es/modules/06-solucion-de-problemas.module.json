@@ -1,0 +1,407 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-troubleshooting",
+  "slug": "solucion-de-problemas",
+  "title": "Solución de problemas",
+  "shortTitle": "Problemas",
+  "order": 6,
+  "locale": "es",
+  "version": "1.0.0",
+  "status": "published",
+  "summary": "Reúne los errores más comunes y te dice qué revisar primero para corregirlos rápido, incluso si apenas estás empezando.",
+  "difficulty": "basic",
+  "estimatedMinutes": 12,
+  "tags": [
+    "errores",
+    "unexpected token",
+    "semicolon",
+    "api"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "errores frecuentes",
+      "troubleshooting"
+    ],
+    "keywords": [
+      "unexpected token",
+      "missing semicolon",
+      "api unavailable"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-analysis",
+        "kind": "recommended"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-analysis",
+    "mod-user-guide-grammar"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-troubleshooting",
+      "text": "Corregir fallos comunes antes de culpar al parser o al motor sin evidencia."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-errores-frecuentes",
+      "slug": "errores-frecuentes",
+      "title": "Errores frecuentes",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-unexpected-token",
+          "slug": "unexpected-token",
+          "title": "unexpected token",
+          "order": 1,
+          "kind": "troubleshooting",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "searchMeta": {
+            "aliases": [
+              "token inesperado"
+            ],
+            "keywords": [
+              "unexpected token",
+              "parse error"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-trouble-token-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Este error suele indicar que la entrada no coincide con la gramática visible del producto en ese punto exacto."
+                }
+              ]
+            },
+            {
+              "id": "blk-trouble-token-list",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Causa: "
+                    },
+                    {
+                      "type": "text",
+                      "text": "keywords fuera de forma visible, delimitadores desbalanceados o una construcción no soportada."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Solución: "
+                    },
+                    {
+                      "type": "text",
+                      "text": "revisa paréntesis, corchetes, bloques y vuelve a la sintaxis oficial en ASCII antes de probar reparaciones con IA."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-trouble-token-note",
+              "type": "note",
+              "variant": "danger",
+              "title": "Chequeo rápido",
+              "blocks": [
+                {
+                  "id": "blk-trouble-token-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Antes de asumir un bug del parser, confirma "
+                    },
+                    {
+                      "type": "inlineCode",
+                      "text": "BEGIN/END"
+                    },
+                    {
+                      "type": "text",
+                      "text": ", "
+                    },
+                    {
+                      "type": "inlineCode",
+                      "text": "CALL"
+                    },
+                    {
+                      "type": "text",
+                      "text": " y la forma visible de comentarios y asignación."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-missing-begin-o-end",
+          "slug": "missing-begin-o-end",
+          "title": "missing BEGIN o END",
+          "order": 2,
+          "kind": "troubleshooting",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "searchMeta": {
+            "aliases": [
+              "bloque incompleto"
+            ],
+            "keywords": [
+              "BEGIN",
+              "END"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-trouble-begin-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Las estructuras de control y los procedimientos usan bloques completos. Si falta "
+                },
+                {
+                  "type": "inlineCode",
+                  "text": "BEGIN"
+                },
+                {
+                  "type": "text",
+                  "text": " o "
+                },
+                {
+                  "type": "inlineCode",
+                  "text": "END"
+                },
+                {
+                  "type": "text",
+                  "text": ", el parseo se rompe cascada abajo."
+                }
+              ]
+            },
+            {
+              "id": "blk-trouble-begin-code",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Forma válida",
+              "code": "IF (condicion) THEN BEGIN\n  PRINT(\"ok\");\nEND"
+            },
+            {
+              "id": "blk-trouble-begin-list",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Causa: "
+                    },
+                    {
+                      "type": "text",
+                      "text": "copiar una estructura incompleta o intentar escribir pseudocódigo estilo indentación."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Solución: "
+                    },
+                    {
+                      "type": "text",
+                      "text": "cierra cada bloque en cuanto lo abras y valida de nuevo antes de seguir editando."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-missing-semicolon",
+          "slug": "missing-semicolon",
+          "title": "missing semicolon",
+          "order": 3,
+          "kind": "troubleshooting",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "searchMeta": {
+            "aliases": [
+              "semicolon"
+            ],
+            "keywords": [
+              "missing semicolon",
+              ";"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-trouble-semicolon-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Cuando falta un "
+                },
+                {
+                  "type": "inlineCode",
+                  "text": ";"
+                },
+                {
+                  "type": "text",
+                  "text": " en asignaciones o sentencias relevantes, el parser puede reportar errores en la línea actual o en la siguiente."
+                }
+              ]
+            },
+            {
+              "id": "blk-trouble-semicolon-list",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Causa: "
+                    },
+                    {
+                      "type": "text",
+                      "text": "edición rápida dentro de bloques con varias sentencias consecutivas."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Solución: "
+                    },
+                    {
+                      "type": "text",
+                      "text": "revisa la sentencia previa a la línea marcada y normaliza el snippet antes de relanzar el análisis."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-trouble-semicolon-note",
+              "type": "note",
+              "variant": "warning",
+              "title": "Pista útil",
+              "blocks": [
+                {
+                  "id": "blk-trouble-semicolon-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Este fallo aparece mucho al copiar ejemplos o al convertir texto libre en pseudocódigo estructurado."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-api-no-disponible",
+          "slug": "api-no-disponible",
+          "title": "API no disponible",
+          "order": 4,
+          "kind": "troubleshooting",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "searchMeta": {
+            "aliases": [
+              "api unavailable"
+            ],
+            "keywords": [
+              "api key",
+              "repair with ai",
+              "offline"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-trouble-api-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Las funciones con IA dependen de disponibilidad externa y, en algunos casos, de una API key válida. El análisis formal base no debería depender de eso."
+                }
+              ]
+            },
+            {
+              "id": "blk-trouble-api-list",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Causa: "
+                    },
+                    {
+                      "type": "text",
+                      "text": "servicio no disponible, API key ausente o configuración local incompleta."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "strong",
+                      "text": "Solución: "
+                    },
+                    {
+                      "type": "text",
+                      "text": "verifica el estado del backend, la API key y sigue trabajando con el flujo formal visible mientras la integración vuelve."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-trouble-api-note",
+              "type": "note",
+              "variant": "info",
+              "title": "Límite operativo",
+              "blocks": [
+                {
+                  "id": "blk-trouble-api-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Comparación LLM, reparación con IA y algunas ayudas del asistente pueden degradarse sin invalidar parseo, byLine o notaciones ya calculadas."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

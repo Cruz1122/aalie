@@ -49,7 +49,7 @@ async function main(): Promise<void> {
   let warnings = 0;
 
   for (const example of examplesCatalog) {
-    const parseResult = await parseSource(example.sourceCode);
+    const parseResult = await parseSource(example.sourceCodeByLocale.es);
     if (!parseResult.ok) {
       const reason = parseResult.errors?.[0]?.message || "parse failed";
       if (example.enabled) {
@@ -76,7 +76,7 @@ async function main(): Promise<void> {
       continue;
     }
 
-    const detectResult = await detectMethods(example.sourceCode);
+    const detectResult = await detectMethods(example.sourceCodeByLocale.es);
     if (!detectResult.ok || !detectResult.applicable_methods) {
       const reason =
         detectResult.errors?.[0]?.message || "detect-methods failed";

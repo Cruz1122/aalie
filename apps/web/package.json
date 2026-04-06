@@ -23,6 +23,7 @@
     "validate:catalog-complexity": "node --import tsx scripts/validate-catalog-complexity.ts"
   },
   "dependencies": {
+    "@aa/content-catalog": "workspace:^",
     "@aa/grammar": "workspace:^",
     "@aa/types": "workspace:^",
     "antlr4ts": "0.5.0-alpha.4",

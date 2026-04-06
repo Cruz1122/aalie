@@ -1,0 +1,273 @@
+{
+  "schema": "aalie.content.module",
+  "schemaVersion": "1.0.0",
+  "spaceId": "user-guide",
+  "moduleId": "mod-user-guide-examples",
+  "slug": "quick-examples",
+  "title": "Quick examples",
+  "shortTitle": "Examples",
+  "order": 5,
+  "locale": "en",
+  "version": "1.0.0",
+  "status": "published",
+  "summary": "Canonical snippets to recognize visible syntax and jump into the full examples catalog.",
+  "difficulty": "basic",
+  "estimatedMinutes": 10,
+  "tags": [
+    "examples",
+    "factorial",
+    "linear search"
+  ],
+  "searchMeta": {
+    "aliases": [
+      "snippets"
+    ],
+    "keywords": [
+      "factorial",
+      "linear search",
+      "examples"
+    ]
+  },
+  "prerequisites": {
+    "modules": [
+      {
+        "id": "mod-user-guide-grammar",
+        "kind": "recommended"
+      }
+    ]
+  },
+  "relatedModuleIds": [
+    "mod-user-guide-grammar",
+    "mod-user-guide-analysis"
+  ],
+  "learningObjectives": [
+    {
+      "objectiveId": "obj-ejemplos",
+      "text": "Use short examples as visible-syntax references and simple analysis cases."
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "cap-snippets-base",
+      "slug": "base-snippets",
+      "title": "Base snippets",
+      "order": 1,
+      "sections": [
+        {
+          "sectionId": "sec-factorial",
+          "slug": "factorial",
+          "title": "Factorial",
+          "order": 1,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "searchMeta": {
+            "aliases": [
+              "iterative factorial"
+            ],
+            "keywords": [
+              "FOR",
+              "RETURN"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-examples-factorial-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "This snippet compresses assignment, "
+                },
+                {
+                  "type": "inlineCode",
+                  "text": "FOR"
+                },
+                {
+                  "type": "text",
+                  "text": ", and "
+                },
+                {
+                  "type": "inlineCode",
+                  "text": "RETURN"
+                },
+                {
+                  "type": "text",
+                  "text": " into a small, verifiable form."
+                }
+              ]
+            },
+            {
+              "id": "blk-examples-factorial-code",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Iterative factorial",
+              "code": "factorial(n) BEGIN\n  result <- 1;\n  FOR i <- 2 TO n DO BEGIN\n    result <- result * i;\n  END\n  RETURN result;\nEND"
+            },
+            {
+              "id": "blk-examples-factorial-note",
+              "type": "note",
+              "variant": "info",
+              "title": "What to inspect",
+              "blocks": [
+                {
+                  "id": "blk-examples-factorial-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Use it to verify the visible loop form and later compare it with per-line cost reading."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-busqueda-lineal",
+          "slug": "linear-search",
+          "title": "Linear search",
+          "order": 2,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 3,
+          "searchMeta": {
+            "aliases": [
+              "linear search"
+            ],
+            "keywords": [
+              "IF",
+              "array",
+              "return -1"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-examples-search-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Linear search is a compact way to discuss best, worst, and average behavior on a simple iterative structure."
+                }
+              ]
+            },
+            {
+              "id": "blk-examples-search-code",
+              "type": "algorithm",
+              "language": "pseudocode",
+              "title": "Linear search",
+              "code": "linearSearch(A[n], x, n) BEGIN\n  FOR i <- 1 TO n DO BEGIN\n    IF (A[i] = x) THEN BEGIN\n      RETURN i;\n    END\n  END\n  RETURN -1;\nEND"
+            },
+            {
+              "id": "blk-examples-search-note",
+              "type": "note",
+              "variant": "success",
+              "title": "Useful reading",
+              "blocks": [
+                {
+                  "id": "blk-examples-search-note-p1",
+                  "type": "paragraph",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "It is a short example for understanding why the UI can separate best, worst, and average cases when the model supports it."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sectionId": "sec-catalogo-de-ejemplos",
+          "slug": "examples-catalog",
+          "title": "Examples catalog",
+          "order": 3,
+          "kind": "example",
+          "trackProgress": true,
+          "estimatedMinutes": 4,
+          "searchMeta": {
+            "aliases": [
+              "examples catalog"
+            ],
+            "keywords": [
+              "catalog",
+              "preloaded examples"
+            ]
+          },
+          "blocks": [
+            {
+              "id": "blk-examples-catalog-p1",
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "When you need more variety, open the full catalog to compare iterative and recursive families without writing everything from scratch."
+                }
+              ]
+            },
+            {
+              "id": "blk-examples-catalog-divider",
+              "type": "divider"
+            },
+            {
+              "id": "blk-examples-catalog-list",
+              "type": "list",
+              "style": "unordered",
+              "items": [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Filter by category, family, and verified methods."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Open a concrete example and use it as a base in the analyzer."
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Treat the snippet as a visible-syntax reference, not as a replacement for contractual documentation."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "blk-examples-catalog-buttons",
+              "type": "buttonRow",
+              "buttons": [
+                {
+                  "label": "Open /examples",
+                  "target": {
+                    "kind": "external",
+                    "ref": "/examples"
+                  },
+                  "variant": "primary"
+                },
+                {
+                  "label": "Back to analysis",
+                  "target": {
+                    "kind": "module",
+                    "ref": "mod-user-guide-analysis"
+                  },
+                  "variant": "secondary"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

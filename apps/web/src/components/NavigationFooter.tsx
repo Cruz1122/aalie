@@ -11,7 +11,7 @@ export interface NavLinkConfig {
 }
 
 interface NavigationFooterProps {
-  /** Namespace de traducciones (ej: "userGuide") */
+  /** Namespace de traducciones (ej: "contentUi") */
   namespace: string;
   /** Enlace "anterior" (izquierda) */
   prev?: NavLinkConfig;

@@ -84,6 +84,37 @@ export function loadSpaceBundle(spaceDirectory: string): LoadedSpaceBundle {
   };
 }
 
+export interface GetSpaceBundleOptions {
+  catalogRoot?: string;
+}
+
+export function getSpaceBundle(
+  spaceId: string,
+  locale: string,
+  options: GetSpaceBundleOptions = {},
+): LoadedSpaceBundle {
+  const { catalogRoot = DEFAULT_CATALOG_ROOT } = options;
+  const spaceDirectory = path.join(catalogRoot, "spaces", spaceId, locale);
+  const spaceFilePath = path.join(spaceDirectory, "space.json");
+
+  if (!fs.existsSync(spaceFilePath)) {
+    throw new Error(
+      `Content space ${spaceId} with locale ${locale} was not found at ${spaceFilePath}`,
+    );
+  }
+
+  return loadSpaceBundle(spaceDirectory);
+}
+
+export function getModuleBySlug(
+  bundle: LoadedSpaceBundle,
+  slug: string,
+): LoadedModule | null {
+  return (
+    bundle.modules.find((loadedModule) => loadedModule.module.slug === slug) ?? null
+  );
+}
+
 export function resolveTarget(
   bundle: LoadedSpaceBundle,
   target: TargetRef,
